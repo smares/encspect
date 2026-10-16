@@ -458,6 +458,39 @@ public class MemoryTests(ITestOutputHelper output)
         Bounded("voids.mka", MatroskaBuilder.File([MatroskaBuilder.OpusTracks(), .. Enumerable.Repeat(MatroskaBuilder.Void(0), 1_000_000)]), 400_000_000, "matroska.too-many-elements");
     }
 
+    // A block of seven bytes can state 256 frames of no bytes: the frames of laced blocks are counted against a budget, and fixed-size lacing
+    // keeps no sizes, so 100,000 such blocks (700 KB of file, 25.6 million frames) cost a record per block and the frames up to the budget.
+    [Fact]
+    public void LacedBlocksOfEmptyFramesStayBounded()
+    {
+        byte[] block = MatroskaBuilder.EmptyLacedBlock();
+        byte[] cluster = MatroskaBuilder.Cluster(0, [.. Enumerable.Repeat(block, 100_000)]);
+
+        // Without a track the blocks are only recorded; with an Opus track every frame also goes to the codec parser as an empty packet.
+        Bounded("laced.mka", MatroskaBuilder.Concat(MatroskaBuilder.Header(), MatroskaBuilder.Segment(cluster)), 50_000_000, "matroska.too-many-elements");
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("laced-opus.mka", new MemoryStream(MatroskaBuilder.File(MatroskaBuilder.OpusTracks(), cluster)));
+        watch.Stop();
+        Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        long live = GC.GetTotalMemory(forceFullCollection: true);
+        output.WriteLine($"laced-opus.mka: {live / 1_000_000} MB live, {watch.Elapsed.TotalSeconds:0.0} s");
+        Assert.True(live < 500_000_000, $"The live heap is {live / 1_000_000} MB.");
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(120), $"The analysis took {watch.Elapsed.TotalSeconds:0} s.");
+        GC.KeepAlive(report);
+    }
+
+    // Xiph lacing stores a size per frame, and each costs at least a byte of the file: 100,000 blocks of 255 one-byte frames.
+    [Fact]
+    public void XiphLacedBlocksStayBounded()
+    {
+        byte[] header = [0x81, 0x00, 0x00, 0x02, 0xFE];
+        byte[] sizes = Enumerable.Repeat((byte)1, 254).ToArray();
+        byte[] block = MatroskaBuilder.Element(0xA3, MatroskaBuilder.Concat(header, sizes, new byte[255]));
+        byte[] cluster = MatroskaBuilder.Cluster(0, [.. Enumerable.Repeat(block, 8_000)]);
+        Bounded("xiph.mka", MatroskaBuilder.File(MatroskaBuilder.OpusTracks(), cluster), 250_000_000, "matroska.too-many-elements", expectFinding: false);
+    }
+
     // PCM payloads, which no codec parser takes: the container's own records.
     [Fact]
     public void ManyAsfPcmPayloadsStayCompact()

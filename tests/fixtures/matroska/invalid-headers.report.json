@@ -859,6 +859,7 @@
         "duration": 0.0535,
         "averageBitrate": 16.133333333333333,
         "isVbr": true,
+        "playbackGroup": 1,
         "series": [
           {
             "name": "Bitrate",
@@ -891,7 +892,7 @@
     ],
     "findings": [
       {
-        "severity": "Error",
+        "severity": "Warning",
         "code": "matroska.element-header-invalid",
         "message": "No element can be read at 0x3E, in the Info: it begins with a byte of zero bits, so it is no variable-size integer of eight octets or fewer (RFC 8794, section 4.1). The 5 bytes from there are not read.",
         "offset": 62,
@@ -905,7 +906,7 @@
         "count": 1
       },
       {
-        "severity": "Error",
+        "severity": "Warning",
         "code": "matroska.element-header-invalid",
         "message": "No element can be read at 0x125, in the BlockGroup at 0xF5: it begins with a byte of zero bits, so it is no variable-size integer of eight octets or fewer (RFC 8794, section 4.1). The 4 bytes from there are not read.",
         "offset": 293,
@@ -920,7 +921,7 @@
         "count": 1
       },
       {
-        "severity": "Error",
+        "severity": "Warning",
         "code": "matroska.element-header-invalid",
         "message": "No element can be read at 0x129, in the Cluster at 0x8F: it begins with a byte of zero bits, so it is no variable-size integer of eight octets or fewer (RFC 8794, section 4.1). The 5 bytes from there are not read.",
         "offset": 297,
@@ -934,7 +935,7 @@
         "count": 1
       },
       {
-        "severity": "Error",
+        "severity": "Warning",
         "code": "matroska.element-header-invalid",
         "message": "No element can be read at 0x12E, in the Segment: it begins with a byte of zero bits, so it is no variable-size integer of eight octets or fewer (RFC 8794, section 4.1). The 7 bytes from there are not read.",
         "offset": 302,

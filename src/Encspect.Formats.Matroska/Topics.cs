@@ -9,7 +9,4 @@ internal static class Topics
     public const string Tracks = "matroska-tracks";
     public const string Timestamps = "matroska-timestamps";
     public const string Crc = "crc";
-    public const string EncoderDetection = "encoder-detection";
-    public const string ChannelLayouts = "channel-layouts";
-    public const string OpusPreSkip = "opus-pre-skip";
 }

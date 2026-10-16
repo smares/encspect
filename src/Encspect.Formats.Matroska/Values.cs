@@ -9,7 +9,7 @@ internal static class Values
     private static readonly HashSet<string> Booleans =
     [
         "FlagEnabled", "FlagDefault", "FlagForced", "FlagHearingImpaired", "FlagVisualImpaired", "FlagTextDescriptions", "FlagOriginal",
-        "FlagCommentary", "FlagLacing", "EditionFlagDefault", "EditionFlagOrdered", "ChapterFlagHidden", "TagDefault",
+        "FlagCommentary", "FlagLacing", "EditionFlagDefault", "EditionFlagOrdered", "EditionFlagHidden", "ChapterFlagHidden", "ChapterFlagEnabled", "TagDefault",
         "TagDefaultBogus", "CodecDecodeAll", "TrickTrackFlag",
     ];
 

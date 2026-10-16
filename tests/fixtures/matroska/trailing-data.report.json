@@ -726,6 +726,7 @@
         "duration": 0.0335,
         "averageBitrate": 16.2,
         "isVbr": true,
+        "playbackGroup": 1,
         "series": [
           {
             "name": "Bitrate",
@@ -756,7 +757,7 @@
     ],
     "findings": [
       {
-        "severity": "Error",
+        "severity": "Warning",
         "code": "matroska.element-header-invalid",
         "message": "No element can be read at 0x126: it begins with a byte of zero bits, so it is no variable-size integer of eight octets or fewer (RFC 8794, section 4.1). The 17 bytes from there are not read.",
         "offset": 294,

@@ -24,8 +24,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 # --- The schema ---------------------------------------------------------------------------------
 
-_ELEMENT = re.compile(r'new\((0x[0-9A-F]+), "([^"]+)", ElementType\.(\w+), "((?:[^"\\]|\\.)*)"')
+_ELEMENT = re.compile(r'new\((0x[0-9A-F]+), "([^"]+)", ElementType\.(\w+), "((?:[^"\\]|\\.)*)".*?(?:defaultValue: "([^"]*)")?\),$', re.M)
 MASTER, UNSIGNED, SIGNED, FLOAT, STRING, UTF8, DATE, BINARY = "Master", "Unsigned", "Signed", "Float", "String", "Utf8", "Date", "Binary"
+
+
+DEFAULTS = {}
 
 
 def _load():
@@ -34,6 +37,8 @@ def _load():
     for m in _ELEMENT.finditer(text):
         path = m.group(4).replace("\\\\", "\\").replace("+", "")
         table[int(m.group(1), 16)] = (m.group(2), m.group(3), path)
+        if m.group(5) is not None:
+            DEFAULTS[int(m.group(1), 16)] = m.group(5)
     return table
 
 
@@ -241,6 +246,9 @@ ID = {
     "AttachedFile": 0x61A7, "FileName": 0x466E, "FileMediaType": 0x4660, "FileData": 0x465C, "FileUID": 0x46AE,
     "SilentTracks": 0x5854, "SilentTrackNumber": 0x58D7,
 }
+
+for _name, _ident in NAMES.items():
+    ID.setdefault(_name, _ident)
 
 
 def ebml_header(doctype="matroska", doctype_version=4, read_version=2, max_id=4, max_size=8, extra=()):
@@ -645,14 +653,18 @@ class Reader:
                 return
             child, next_position, _ = self.element(h, position, node.id, end, depth)
             node.children.append(child)
-            if h[0] == CRC32 and position == start and complete and h[3] == 4:
+            if h[0] == CRC32 and position == start and complete and h[3] == 4 and position + h[1] + h[2] + 4 <= end:
                 child.children = [Element("Computed", position + h[1] + h[2], 4)]
             position = next_position
 
     def leaf(self, ident, kind, start, end):
         data = self.data[start:end]
         value = None
-        if kind == UNSIGNED and len(data) <= 8:
+        if not data and ident in DEFAULTS:
+            # An empty element has its default value (RFC 8794, section 6.1).
+            default = DEFAULTS[ident]
+            value = int(default) if kind in (UNSIGNED, SIGNED) else float(default) if kind == FLOAT else default if kind in (STRING, UTF8) else None
+        elif kind == UNSIGNED and len(data) <= 8:
             value = int.from_bytes(data, "big")
         elif kind == SIGNED and len(data) <= 8:
             value = int.from_bytes(data, "big", signed=True) if data else 0
@@ -761,7 +773,7 @@ class Reader:
                 position = end
                 break
             cid, cil, csl, csize, _ = ch
-            if unknown and (cid == EBML or is_top_level(cid)):
+            if unknown and (cid in (EBML, SEGMENT) or is_top_level(cid)):
                 end = position
                 break
             c_data = position + cil + csl
@@ -786,7 +798,7 @@ class Reader:
                 items.append(Element("Timestamp", position, c_len, ident=cid))
             elif cid == CRC32:
                 node = Element("CRC-32", position, c_len, ident=cid)
-                if seen == 0 and csize == 4 and complete:
+                if seen == 0 and csize == 4 and complete and c_data + 4 <= child_end:
                     node.children = [Element("Computed", c_data, 4)]
                 items.append(node)
             else:
@@ -845,7 +857,7 @@ class Reader:
                 children.append(Element("Unparsed Data", position, end - position))
                 position = end
                 break
-            if unknown and ch[0] == EBML:
+            if unknown and ch[0] in (EBML, SEGMENT):
                 end = position
                 break
             if ch[0] == CLUSTER:
@@ -854,7 +866,7 @@ class Reader:
                 continue
             node, position, complete = self.element(ch, position, SEGMENT, end, 2)
             children.append(node)
-            if ch[0] == CRC32 and node.offset == start and complete and ch[3] == 4:
+            if ch[0] == CRC32 and node.offset == start and complete and ch[3] == 4 and node.offset + ch[1] + ch[2] + 4 <= end:
                 node.children = [Element("Computed", node.offset + ch[1] + ch[2], 4)]
         info["length"] = end - h_off
         info["declared_end"] = declared

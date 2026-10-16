@@ -18,6 +18,9 @@ internal sealed partial class FileReader(ParseContext context)
     // Block records, Cluster items and BlockGroup children together.
     internal const long MaxRecords = 6_000_000;
 
+    // The frames of laced blocks kept in all; they cost a record in a codec parser each.
+    internal const long MaxLacedFrames = 4_000_000;
+
     private const int MaxText = 1 << 16;
     private const int MaxShownText = 2048;
 
@@ -32,6 +35,8 @@ internal sealed partial class FileReader(ParseContext context)
     private bool _budgetReported;
     private long _records;
     private bool _recordsReported;
+    private long _lacedFrames;
+    private bool _lacedFramesReported;
 
     public void Run()
     {
@@ -119,7 +124,7 @@ internal sealed partial class FileReader(ParseContext context)
             HeaderProblem.NotAnInteger => "it begins with a byte of zero bits, so it is no variable-size integer of eight octets or fewer (RFC 8794, section 4.1)",
             _ => "its Element ID is longer than the document's EBMLMaxIDLength allows or is the reserved value 0xFF (RFC 8794, section 5)",
         };
-        _findings.AddNow(problem == HeaderProblem.Truncated ? Severity.Warning : Severity.Error, "matroska.element-header-invalid",
+        _findings.AddNow(Severity.Warning, "matroska.element-header-invalid",
             $"No element can be read at 0x{start:X}{(where is null ? string.Empty : $", {where}")}: {why}. The {Bytes(end - start)} from there are not read.", rest);
         return rest;
     }

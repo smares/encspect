@@ -43,6 +43,9 @@ public sealed partial class VorbisParser
         // Packets that span pages, by index: their file ranges.
         public Dictionary<int, ByteRange[]> Ranges { get; } = [];
 
+        // Packets a container changed (MappedBytes.IsOpaque): their parts map to the whole range.
+        public HashSet<int> Opaque { get; } = [];
+
         public int ModeBits { get; set; }
 
         public int Blocksize0 { get; set; }
@@ -343,9 +346,13 @@ public sealed partial class VorbisParser
             int index = _records.Packets.Count;
             PacketRecord record = Read(packet);
             _records.Add(packet.FileStart, record);
-            if (packet.FileEnd - packet.FileStart != packet.Length)
+            if (packet.IsOpaque || packet.FileEnd - packet.FileStart != packet.Length)
             {
                 _records.Ranges[index] = [.. packet.FileRanges()];
+                if (packet.IsOpaque)
+                {
+                    _records.Opaque.Add(index);
+                }
             }
 
             _packets++;

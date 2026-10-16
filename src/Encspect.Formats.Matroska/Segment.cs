@@ -36,7 +36,7 @@ internal sealed partial class FileReader
                 break;
             }
 
-            if (segment.IsSizeUnknown && child.Id == Schema.Ebml)
+            if (segment.IsSizeUnknown && child.Id is Schema.Ebml or Schema.Segment)
             {
                 end = segment.End = position;
                 break;
@@ -87,7 +87,7 @@ internal sealed partial class FileReader
         else if (segment.IsSizeUnknown)
         {
             _findings.AddNow(Severity.Info, "matroska.segment-size-unknown",
-                "The Segment's size is unknown (all its bits are set), as a stream written live leaves it; it runs to the end of the file (RFC 8794, section 6.2; RFC 9559, section 23.2).", segment.Node);
+                "The Segment's size is unknown (all its bits are set), as a stream written live leaves it; it ends where the data ends or the next Segment or EBML Header starts (RFC 8794, section 6.2; RFC 9559, section 23.2).", segment.Node);
         }
         else if (declaredEnd > _reader.End)
         {

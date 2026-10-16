@@ -2384,6 +2384,7 @@
         "duration": 0.2935,
         "averageBitrate": 16.32,
         "isVbr": true,
+        "playbackGroup": 1,
         "series": [
           {
             "name": "Bitrate",
@@ -2442,7 +2443,7 @@
       {
         "severity": "Info",
         "code": "matroska.segment-size-unknown",
-        "message": "The Segment's size is unknown (all its bits are set), as a stream written live leaves it; it runs to the end of the file (RFC 8794, section 6.2; RFC 9559, section 23.2).",
+        "message": "The Segment's size is unknown (all its bits are set), as a stream written live leaves it; it ends where the data ends or the next Segment or EBML Header starts (RFC 8794, section 6.2; RFC 9559, section 23.2).",
         "offset": 40,
         "length": 867,
         "path": [

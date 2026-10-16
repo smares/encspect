@@ -855,7 +855,7 @@ jobs:
       - name: Drop downloads nobody has used for a month
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
-      # mkvtoolnix 81, ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were checked with.
+      # mkvtoolnix 82.0, ffmpeg 6.1 and MediaInfo 24.01 from Ubuntu 24.04, the versions the manifests were checked with.
       - name: Install mkvtoolnix, ffmpeg and mediainfo
         run: |
           sudo apt-get update

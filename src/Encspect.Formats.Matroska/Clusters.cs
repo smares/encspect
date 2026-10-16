@@ -40,7 +40,7 @@ internal sealed partial class FileReader
             if (problem != HeaderProblem.None)
             {
                 AddUnparsedItem(records, position, end);
-                _findings.AddNow(problem == HeaderProblem.Truncated ? Severity.Warning : Severity.Error, "matroska.element-header-invalid",
+                _findings.AddNow(Severity.Warning, "matroska.element-header-invalid",
                     $"No element can be read at 0x{position:X}, in the Cluster at 0x{header.Offset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there are not read.",
                     Unparsed(position, end, "the Cluster"));
                 position = end;
@@ -48,7 +48,7 @@ internal sealed partial class FileReader
             }
 
             ElementDefinition? definition = Schema.Find(child.Id);
-            if (unknown && (child.Id == Schema.Ebml || definition is { IsTopLevel: true }))
+            if (unknown && (child.Id is Schema.Ebml or Schema.Segment || definition is { IsTopLevel: true }))
             {
                 end = position;
                 break;
@@ -94,7 +94,7 @@ internal sealed partial class FileReader
             else if (child.Id == Schema.Crc32)
             {
                 var item = new Item { Kind = ItemKind.Crc, Id = (uint)child.Id, Offset = child.Offset, HeaderLength = (byte)child.Length, DataLength = childEnd - child.DataOffset };
-                if (seen == 0 && child.Size == 4 && isComplete)
+                if (seen == 0 && child.Size == 4 && childEnd - child.DataOffset == 4 && isComplete)
                 {
                     _reader.Position = child.DataOffset;
                     item.Value = _reader.ReadUInt32LittleEndian();
@@ -107,10 +107,10 @@ internal sealed partial class FileReader
                         $"{(count == 1 ? "A CRC-32 element is" : $"{count} CRC-32 elements are")} not the first child of {(count == 1 ? "its" : "their")} parent, as RFC 8794 requires (section 11.3.1), so {(count == 1 ? "it is" : "they are")} not checked; the first is in the Cluster at 0x{header.Offset:X}.");
                     item.Kind = ItemKind.Element;
                 }
-                else if (child.Size != 4)
+                else if (child.Size != 4 || childEnd - child.DataOffset < 4)
                 {
                     _findings.Add(Severity.Warning, "matroska.crc-size", new Node("CRC-32", child.Offset, childEnd - child.Offset), count =>
-                        $"{(count == 1 ? "A CRC-32 element holds" : $"{count} CRC-32 elements hold")} other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, in the Cluster at 0x{child.Offset:X}, holds {Bytes((long)(child.Size ?? 0))}, so {(count == 1 ? "it is" : "they are")} not checked.");
+                        $"{(count == 1 ? "A CRC-32 element holds" : $"{count} CRC-32 elements hold")} other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, in the Cluster at 0x{child.Offset:X}, holds {Bytes(Math.Min((long)Math.Min(child.Size ?? 0, long.MaxValue), childEnd - child.DataOffset))}, so {(count == 1 ? "it is" : "they are")} not checked.");
                     item.Kind = ItemKind.Element;
                 }
                 else

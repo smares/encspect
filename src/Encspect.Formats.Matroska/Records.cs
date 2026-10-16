@@ -62,6 +62,9 @@ internal enum BlockStatus : byte
 
     // The data is larger than a block record holds, so no frame is read.
     TooLarge = 8,
+
+    // The file's laced blocks hold more frames than the analysis keeps, so no frame of this one is read.
+    FramesLimit = 16,
 }
 
 internal enum Lacing : byte
@@ -130,11 +133,16 @@ internal sealed class Records
 
     public ChunkedList<BlockRecord> Blocks { get; } = new();
 
-    // The sizes of all the frames of each laced block, the last included.
+    // The sizes of all the frames of each block with Xiph or EBML lacing, the last included. Fixed-size lacing stores none.
     public ChunkedList<int> LaceSizes { get; } = new();
 
     // The Segment's top-level children in file order: a Cluster by its record (Index), another element by its node.
     public ChunkedList<TopLevel> Entries { get; } = new();
+
+    // The size of frame i of a block whose frames were read.
+    public long FrameSize(in BlockRecord block, int i) => block.Frames <= 1 ? block.End - block.FramesOffset
+        : block.Lacing == Lacing.FixedSize ? (block.End - block.FramesOffset) / block.Frames
+        : LaceSizes[block.Lace + i];
 
     public List<Node> Nodes { get; } = [];
 

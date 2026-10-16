@@ -58,6 +58,9 @@ internal static class MatroskaBuilder
         return Element(0xA3, Concat([header, frame]));
     }
 
+    // A SimpleBlock of fixed-size lacing that states 256 frames of no bytes: seven bytes of file.
+    public static byte[] EmptyLacedBlock() => Element(0xA3, [0x81, 0x00, 0x00, 0x84, 0xFF]);
+
     public static byte[] Cluster(long timestamp, params byte[][] children) => Element(0x1F43B675, Concat([Unsigned(0xE7, (ulong)timestamp), .. children]));
 
     public static byte[] Segment(params byte[][] children) => Concat([[0x18, 0x53, 0x80, 0x67, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], .. children]);
@@ -85,6 +88,30 @@ internal static class MatroskaBuilder
         }
 
         return stream.ToArray();
+    }
+
+    // A Segment of unknown size with two stereo-less Opus tracks (1 and 2), each with the given number of blocks of 20 ms in one Cluster.
+    public static byte[] TwoOpusTracksSegment(int blocks)
+    {
+        byte[] head = new byte[19];
+        Encoding.ASCII.GetBytes("OpusHead").CopyTo(head, 0);
+        head[8] = 1;
+        head[9] = 2;
+        BinaryPrimitives.WriteUInt16LittleEndian(head.AsSpan(10), 312);
+        BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(12), 48000);
+        byte[] rate = new byte[8];
+        BinaryPrimitives.WriteDoubleBigEndian(rate, 48000);
+        byte[] Track(uint number) => Element(0xAE, Unsigned(0xD7, number), Unsigned(0x73C5, number), Unsigned(0x83, 2), Text(0x86, "A_OPUS"), Element(0x63A2, head),
+            Unsigned(0x56AA, 6_500_000), Element(0xE1, Element(0xB5, rate), Unsigned(0x9F, 2)));
+        byte[] frame = [0xFC, 0xFF, 0xFE];
+        var items = new List<byte[]>();
+        for (int i = 0; i < blocks; i++)
+        {
+            items.Add(SimpleBlock(1, i * 20, frame));
+            items.Add(SimpleBlock(2, i * 20, frame));
+        }
+
+        return Segment(Element(0x1654AE6B, Track(1), Track(2)), Cluster(0, [.. items]));
     }
 
     public static byte[] Concat(params byte[][] parts)

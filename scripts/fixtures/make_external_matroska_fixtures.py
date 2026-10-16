@@ -91,7 +91,7 @@ FIXTURES = {
     "external-mkvmerge-metadata": ("mkvmerge", ["ogg/external-ffmpeg-libopus.opus"],
                                    ["--title", "A title", "--track-name", "0:A track", "--language", "0:fra", "--chapters", "chapters.txt", "--global-tags", "tags.xml",
                                     "--attach-file", "cover.jpg", "--attachment-mime-type", "image/jpeg"], [("Opus", 48000, 2)],
-                                   [("matroska.unknown-element", "3 elements are none the Matroska schema lists")], "mka"),
+                                   [], "mka"),
 }
 
 

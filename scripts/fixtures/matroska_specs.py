@@ -8,6 +8,10 @@ pinned by their SHA-256, into a directory outside the repository, which may not 
 - RFC 8794, Extensible Binary Meta Language (July 2020): variable-size integers (section 4), element IDs
   and sizes (sections 5 and 6, including unknown sizes), the EBML header (section 11.2), the CRC-32 and Void
   elements (section 11.3).
+- The Matroska element registry, ebml_matroska.xml of github.com/ietf-wg-cellar/matroska-specification, pinned by the commit
+  1a943ead9bb4c67b02b966cebafe51c8c074e703 (and the file's SHA-256): the elements RFC 9559 does not list that muxers write (the
+  hidden flag of an edition, the enabled flag of a chapter, the chapter's tracks, the minimum-version-5 elements), and the default
+  value of every element (RFC 8794, section 6.1: an empty element has it).
 - draft-ietf-cellar-codec-20, Matroska Codec Mapping (August 2026): the codec IDs and what each stores in
   CodecPrivate and in the frames (section 3.4 for audio). It is the registry of the codec IDs the parser
   routes by.
@@ -30,6 +34,8 @@ SPECS = [
      ["https://www.rfc-editor.org/rfc/rfc9559.txt", "https://www.ietf.org/rfc/rfc9559.txt"]),
     ("rfc8794.txt", "3b39e9f494f040e3b7b91d9bbe2441af5f4b4e2ae4a374b8dcf917ab9aecd409",
      ["https://www.rfc-editor.org/rfc/rfc8794.txt", "https://www.ietf.org/rfc/rfc8794.txt"]),
+    ("ebml_matroska.xml", "a42a9c6ea47dfd83589ce04a508b6a7f5d038560cee11dee1e4cbe2e746d0939",
+     ["https://raw.githubusercontent.com/ietf-wg-cellar/matroska-specification/1a943ead9bb4c67b02b966cebafe51c8c074e703/ebml_matroska.xml"]),
     ("draft-ietf-cellar-codec-20.txt", "7d4bf97dff8c126183c66dfe9d7983065fc44493efe5f45ddb16a74e244d60aa",
      ["https://www.ietf.org/archive/id/draft-ietf-cellar-codec-20.txt"]),
 ]

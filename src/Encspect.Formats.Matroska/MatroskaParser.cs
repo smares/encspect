@@ -28,8 +28,9 @@ public sealed class MatroskaParser : IFormatParser
         return Detect(reader, context.CancellationToken).Result;
     }
 
-    // The end of the last Segment by its own account, which may lie past the end of a truncated file; the end of the data where a
-    // Segment's size is unknown (a live stream), which owns whatever follows. A tag after it is the file's, not an element's.
+    // The end of the last Segment by its own account, which may lie past the end of a truncated file; where a Segment's size is
+    // unknown (a live stream) the end of the Top-Level Elements and Cluster children that follow one another from its start. A tag after
+    // it is the file's, not an element's.
     public long? DeclaredEnd(SniffContext context)
     {
         ByteReader reader = context.Reader;
@@ -61,7 +62,7 @@ public sealed class MatroskaParser : IFormatParser
             {
                 if (header.IsUnknownSize)
                 {
-                    return reader.End;
+                    return ElementsEnd(reader, header.DataOffset, context.CancellationToken);
                 }
 
                 end = position = header.End!.Value;
@@ -69,13 +70,79 @@ public sealed class MatroskaParser : IFormatParser
             else if (Schema.Find(header.Id) is { IsTopLevel: true })
             {
                 // A file cut at its start: the Top-Level Elements it holds.
-                (int elements, long chainEnd) = Chain(reader, position, reader.End, context.CancellationToken);
-                return elements > 0 ? chainEnd : end;
+                (int elements, _) = Chain(reader, position, reader.End, context.CancellationToken);
+                return elements > 0 ? ElementsEnd(reader, position, context.CancellationToken) : end;
             }
             else
             {
                 break;
             }
+        }
+
+        return end;
+    }
+
+    // Where the Top-Level Elements from position end: each is a Top-Level Element the schema lists, and a Cluster of unknown size runs
+    // while its children are elements the schema places in a Cluster (an unknown-size Cluster ends at the first element that is not,
+    // RFC 8794 section 6.2). An element the data cuts short owns the rest of the data. Bytes after the last whole element, such as a tag
+    // appended to a live recording, are not the elements'.
+    private static long ElementsEnd(ByteReader reader, long position, CancellationToken cancellationToken)
+    {
+        ElementDefinition? clusterDefinition = Schema.Find(Schema.Cluster);
+        long end = position;
+        int steps = 0;
+        while (position + 2 <= reader.End)
+        {
+            if (++steps % 4096 == 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            if (Ebml.TryReadHeader(reader, position, reader.End, 4, 8, out ElementHeader header) != HeaderProblem.None
+                || (Schema.Find(header.Id) is not { IsTopLevel: true } && header.Id != Schema.Void && header.Id != Schema.Crc32))
+            {
+                break;
+            }
+
+            if (header.IsUnknownSize)
+            {
+                if (header.Id != Schema.Cluster)
+                {
+                    break;
+                }
+
+                position = header.DataOffset;
+                while (position + 2 <= reader.End)
+                {
+                    if (++steps % 4096 == 0)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                    }
+
+                    if (Ebml.TryReadHeader(reader, position, reader.End, 4, 8, out ElementHeader child) != HeaderProblem.None || child.IsUnknownSize
+                        || Schema.Find(child.Id) is not { } definition || !Schema.IsChildOf(definition, clusterDefinition) || definition.IsTopLevel)
+                    {
+                        break;
+                    }
+
+                    if (child.End!.Value > reader.End)
+                    {
+                        return reader.End;
+                    }
+
+                    position = child.End.Value;
+                }
+
+                end = position;
+                continue;
+            }
+
+            if (header.End!.Value > reader.End)
+            {
+                return reader.End;
+            }
+
+            position = end = header.End.Value;
         }
 
         return end;
@@ -178,7 +245,7 @@ public sealed class MatroskaParser : IFormatParser
             return new Detection(new SniffResult(100, start, 2, Note: $"DocType {docType}", End: Math.Min(next.DataOffset, reader.End)), docType);
         }
 
-        return new Detection(new SniffResult(headerEnd >= reader.End ? 100 : 90, start, 1, Note: $"DocType {docType}, no Segment after the header", End: headerEnd), docType);
+        return new Detection(new SniffResult(90, start, 1, Note: $"DocType {docType}, no Segment after the header", End: headerEnd), docType);
     }
 
     // Counts the Top-Level Elements from position that follow one another and fit in the data (the last may run to its end), at most

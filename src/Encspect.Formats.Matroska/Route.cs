@@ -11,7 +11,6 @@ internal sealed partial class FileReader
 
     private void RouteTracks(SegmentState segment)
     {
-        int streamsBefore = _context.Streams.Count;
         foreach (TrackInfo track in segment.Tracks)
         {
             string label = track.Number is { } n ? $"Track {n}" : "A track without a number";
@@ -23,7 +22,15 @@ internal sealed partial class FileReader
                 continue;
             }
 
+            // The audio tracks of a Segment play together, so a summary of the file does not add their durations up. A track whose codec
+            // reported several streams in a row (chained Ogg streams) is not marked: those follow one another.
+            int streamsBefore = _context.Streams.Count;
             RouteAudio(segment, track, label);
+            List<StreamInfo> made = [.. _context.Streams.Skip(streamsBefore)];
+            if (made.Count == 1)
+            {
+                _context.UpdateStream(made[0], made[0] with { PlaybackGroup = segment.Number });
+            }
         }
 
         // WRITER CLAIMS (not implemented here): the Segment's MuxingApp and WritingApp (segment.MuxingApp, segment.WritingApp and their
@@ -32,16 +39,6 @@ internal sealed partial class FileReader
         // encoder/writer split lands (branch feature/encoder-writer: ClaimRole.Writer and StreamInfo.Writer), add one writer claim per
         // element here, after the streams are routed, with the element's node as evidence, and attach it to every audio stream of the Segment.
         // The audio encoder stays decided by the codec parsers.
-
-        // The audio tracks of a Segment play together, so a summary of the file does not add their durations up.
-        List<StreamInfo> added = [.. _context.Streams.Skip(streamsBefore)];
-        if (added.Count > 1)
-        {
-            foreach (StreamInfo stream in added)
-            {
-                _context.UpdateStream(stream, stream with { IsParallel = true });
-            }
-        }
     }
 
     private void RouteAudio(SegmentState segment, TrackInfo track, string label)
@@ -86,9 +83,29 @@ internal sealed partial class FileReader
         MappedBytes? privateData = null;
         if (track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0 && track.CodecPrivateLength <= MaxInflated)
         {
-            privateData = priv is null
-                ? new MappedBytes(ReadAt(track.CodecPrivateOffset, (int)track.CodecPrivateLength), track.CodecPrivateOffset)
-                : priv.Decode(ReadAt(track.CodecPrivateOffset, (int)track.CodecPrivateLength), track.CodecPrivateOffset, this);
+            try
+            {
+                privateData = priv is null
+                    ? new MappedBytes(ReadAt(track.CodecPrivateOffset, (int)track.CodecPrivateLength), track.CodecPrivateOffset)
+                    : priv.Decode(ReadAt(track.CodecPrivateOffset, (int)track.CodecPrivateLength), track.CodecPrivateOffset, this);
+            }
+            catch (InvalidDataException ex)
+            {
+                _findings.AddNow(Severity.Warning, "matroska.codec-private-invalid",
+                    $"The CodecPrivate of {label} cannot be read back from its ContentEncodings (RFC 9559, section 5.1.4.1.31): {ex.Message} Its frames cannot be analyzed.", track.CodecPrivateNode ?? anchor);
+                AddContainerStream(segment, track, null);
+                return;
+            }
+        }
+
+        // The legacy AAC IDs carry no CodecPrivate ("Initialization: none", draft-ietf-cellar-codec, section 3.4.2): the AudioSpecificConfig is
+        // worked out from the ID and the Audio element, as FFmpeg's matroskadec.c does, and mapped to the CodecID that gives its values.
+        Node? configurationNode = track.CodecPrivateNode;
+        if (privateData is null && codec == "aac" && track.CodecIdNode is { } idNode
+            && Codecs.LegacyAacConfig(codecId, track.SamplingFrequency, track.OutputSamplingFrequency, track.Channels) is { } synthesized)
+        {
+            privateData = MappedBytes.Opaque(synthesized, idNode.Offset, idNode.Offset + idNode.Length);
+            configurationNode = idNode;
         }
 
         List<MappedBytes> headers = [];
@@ -134,8 +151,8 @@ internal sealed partial class FileReader
         };
         _file.Add(node);
 
-        CodecConfiguration? configuration = privateData is not null && track.CodecPrivateNode is { } privateNode
-            ? new CodecConfiguration(privateData, privateNode) { Delay = track.CodecDelay / 1e9 }
+        CodecConfiguration? configuration = privateData is not null && configurationNode is { } privateNode
+            ? new CodecConfiguration(privateData, privateNode) { Delay = track.CodecDelay / 1e9, IsDelayMissing = track.CodecDelayNode is null }
             : null;
         int streamsBefore = _context.Streams.Count;
         bool routed = _context.ParsePackets(codec, node, Packets(segment, track, headers, frames), configuration);
@@ -237,9 +254,21 @@ internal sealed partial class FileReader
             long position = block.FramesOffset;
             for (int f = 0; f < block.Frames; f++)
             {
-                int size = block.Frames > 1 ? records.LaceSizes[block.Lace + f] : (int)(block.End - position);
+                int size = (int)records.FrameSize(block, f);
                 byte[] data = ReadAt(position, size);
-                yield return decoder is null ? new MappedBytes(data, position) : decoder.Decode(data, position, this);
+                MappedBytes packet;
+                try
+                {
+                    packet = decoder is null ? new MappedBytes(data, position) : decoder.Decode(data, position, this);
+                }
+                catch (InvalidDataException ex)
+                {
+                    _findings.AddNow(Severity.Warning, "matroska.frame-encoding-invalid",
+                        $"A frame of Track {number} at 0x{position:X} cannot be read back from the track's ContentEncodings (RFC 9559, section 5.1.4.1.31): {ex.Message} The frames from there on are not analyzed.", track.Node);
+                    yield break;
+                }
+
+                yield return packet;
                 position += size;
             }
         }
@@ -365,21 +394,35 @@ internal sealed partial class FileReader
 
         private static byte[] Inflate(byte[] data)
         {
-            using var input = new MemoryStream(data);
-            using var zlib = new ZLibStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            var buffer = new byte[8192];
-            int read;
-            while ((read = zlib.Read(buffer, 0, buffer.Length)) > 0)
+            bool isTooLarge = false;
+            try
             {
-                output.Write(buffer, 0, read);
-                if (output.Length > MaxInflated)
+                using var input = new MemoryStream(data);
+                using var zlib = new ZLibStream(input, CompressionMode.Decompress);
+                using var output = new MemoryStream();
+                var buffer = new byte[8192];
+                int read;
+                while ((read = zlib.Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    throw new InvalidDataException("A zlib-compressed frame inflates to more than the analyzer reads.");
+                    output.Write(buffer, 0, read);
+                    if (output.Length > MaxInflated)
+                    {
+                        isTooLarge = true;
+                        break;
+                    }
+                }
+
+                if (!isTooLarge)
+                {
+                    return output.ToArray();
                 }
             }
+            catch (Exception ex) when (ex is IOException or InvalidDataException)
+            {
+                throw new InvalidDataException("The zlib-compressed data is damaged or cut short (RFC 1950).");
+            }
 
-            return output.ToArray();
+            throw new InvalidDataException("The zlib-compressed data inflates to more than the analyzer reads.");
         }
     }
 }

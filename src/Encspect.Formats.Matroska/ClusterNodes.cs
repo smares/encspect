@@ -130,7 +130,7 @@ internal static class ClusterNodes
     {
         BlockRecord block = records.Blocks[index];
         ElementDefinition definition = Schema.Find(name == "Block" ? Schema.Block : Schema.SimpleBlock)!;
-        NodeValue? value = (block.Status & (BlockStatus.Short | BlockStatus.TooLarge)) != 0 ? NodeValue.Integer(0, "frames", "frame") : NodeValue.Integer(block.Frames, "frames", "frame");
+        NodeValue? value = (block.Status & (BlockStatus.Short | BlockStatus.TooLarge | BlockStatus.FramesLimit)) != 0 ? NodeValue.Integer(0, "frames", "frame") : NodeValue.Integer(block.Frames, "frames", "frame");
         return new Node(name, block.Offset, block.End - block.Offset, value, () => BlockChildren(records, index, name == "Block"))
         {
             Kind = NodeKind.Frame,
@@ -183,7 +183,7 @@ internal static class ClusterNodes
             if (laceLength > 0)
             {
                 lace.Add(new Node("Frame Count", laceStart, 1, NodeValue.Integer(block.Frames), null) { Description = Explain.LaceFrameCount });
-                if (laceLength > 1 && block.Frames > 1)
+                if (laceLength > 1 && block.Frames > 1 && block.Lacing != Lacing.FixedSize)
                 {
                     lace.Add(new Node("Frame Sizes", laceStart + 1, laceLength - 1, SizeList(records, block)) { Description = Explain.LaceSizes });
                 }
@@ -192,7 +192,7 @@ internal static class ClusterNodes
             children.Add(lace);
         }
 
-        if ((block.Status & BlockStatus.LaceInvalid) != 0)
+        if ((block.Status & (BlockStatus.LaceInvalid | BlockStatus.FramesLimit)) != 0)
         {
             if (framesAt < end)
             {
@@ -205,7 +205,7 @@ internal static class ClusterNodes
         long position = framesAt;
         for (int i = 0; i < block.Frames; i++)
         {
-            long size = block.Frames > 1 ? records.LaceSizes[block.Lace + i] : end - framesAt;
+            long size = records.FrameSize(block, i);
             children.Add(new Node("Frame", position, size, NodeValue.Integer(size, "bytes", "byte")) { Description = Explain.Frame });
             position += size;
         }

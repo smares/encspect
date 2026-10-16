@@ -21,7 +21,7 @@ What each format parser reads, checks and reports. Tags have their own pages und
 
 ## Common to every format
 
-- **Streams:** each format reports its audio streams with codec, sample rate, channels, duration, average bitrate, whether the bitrate varies, and the encoder with a confidence level. The summary and the CSV read the streams.
+- **Streams:** each format reports its audio streams with codec, sample rate, channels, duration, average bitrate, whether the bitrate varies, and the encoder with a confidence level. The summary and the CSV read the streams. Streams that play at the same time (the tracks of an MP4 movie or of a Matroska Segment) share a playback group, and the summary counts the longest of a group once.
 - **Series:** numbers for graphs, per frame or packet and per second of audio, such as the bitrate.
 - **Channel layout:** every stream names the speaker each channel feeds, in the stream's own order, with a common name such as 5.1 where it has one. Channels without a speaker position, such as the two programs of MPEG dual channel, are discrete. Each format's page says where its layout comes from.
 - **Findings:** damage and violations of a specification are findings that point to the node they concern. Damaged input never ends the analysis.

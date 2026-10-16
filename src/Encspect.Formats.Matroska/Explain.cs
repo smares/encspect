@@ -5,13 +5,10 @@ namespace Encspect.Formats.Matroska;
 internal static class Explain
 {
     public const string File = "A Matroska or WebM file: an EBML document, whose EBML Header names the document type and whose Segment holds the tracks and their frames (RFC 9559, section 4.5).";
-    public const string FileWithoutHeader = "A Matroska or WebM file that starts without its EBML Header, such as a recording that begins mid-file or a cut file (RFC 9559, section 4.5).";
     public const string SegmentWithoutHeader = "The Top-Level Elements of a Segment whose own element header is missing, because the file starts after it (RFC 9559, section 4.5).";
     public const string UnknownElement = "An element whose ID the Matroska schema does not list; readers skip it by its size (RFC 8794, section 6.1; RFC 9559, section 4.4).";
     public const string UnparsedData = "Bytes that start no element the analyzer can read, so they are not read as elements.";
-    public const string TrailingData = "Bytes after the last element of the document that are not an element.";
     public const string Computed = "The CRC-32 the analyzer computes over the Element Data of the CRC-32 element's parent after the CRC-32 element, to compare with the stored one (RFC 8794, section 11.3.1).";
-    public const string ElementTextTerminated = "The text without the zero octets that terminate it, which RFC 8794 allows after the text (section 13).";
 
     public const string TrackNumber = "The number of the track the block belongs to, a variable-size integer, which must match a TrackEntry's TrackNumber (RFC 9559, section 10).";
     public const string BlockTimestamp = "The block's timestamp as a signed 16-bit count of Track Ticks relative to the Cluster's Timestamp, the time of its first frame (RFC 9559, sections 10.1 and 11.2).";
@@ -29,8 +26,4 @@ internal static class Explain
     public const string BlockData = "The bytes of the block after its header, which the analyzer does not read as frames.";
 
     public const string TrackFrames = "The frames of an audio track put together from the blocks that carry them, handed to the codec parser of the track's codec ID.";
-    public const string TrackSummary = "The track's type, codec and audio settings in one line, from the TrackEntry.";
-    public const string SegmentSummary = "The Segment's tracks and clusters in one line.";
-    public const string ClusterSummary = "The blocks the Cluster holds.";
-    public const string Mixed = "Several values of the Matroska schema.";
 }

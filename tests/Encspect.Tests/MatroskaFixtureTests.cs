@@ -99,6 +99,11 @@ public class MatroskaFixtureTests
             {
                 CompareTree(entries[i][3], node.Children, $"{where}/{name}");
             }
+            else if (node.Name == "CodecID" && node.Value?.ToString()?.StartsWith("A_AAC/MPEG", StringComparison.Ordinal) == true)
+            {
+                // The AAC parser puts the AudioSpecificConfig worked out from a legacy ID under the CodecID that gives it.
+                Assert.Equal(["AudioSpecificConfig"], node.Children.Select(c => c.Name));
+            }
             else if (!isBlock && node.Name != "CodecPrivate")
             {
                 Assert.True(node.Children.Count == 0, $"{where}/{name} has children {string.Join(", ", node.Children.Select(c => c.Name))}.");

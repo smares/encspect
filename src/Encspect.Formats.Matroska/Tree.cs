@@ -138,7 +138,10 @@ internal sealed partial class FileReader
                 return;
             }
 
-            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, _document.MaxIdLength, _document.MaxSizeLength, out ElementHeader header);
+            // The EBML Header's own elements are read with the limits EBML defaults to; EBMLMaxIDLength and EBMLMaxSizeLength limit the Body (RFC 8794, section 11.2.4).
+            bool isHeader = definition.Id == Schema.Ebml;
+            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, isHeader ? Math.Max(4, _document.MaxIdLength) : _document.MaxIdLength,
+                isHeader ? Math.Max(8, _document.MaxSizeLength) : _document.MaxSizeLength, out ElementHeader header);
             if (problem != HeaderProblem.None)
             {
                 node.Add(Unparsed(position, end, problem, $"in the {definition.Name}"));
@@ -170,10 +173,13 @@ internal sealed partial class FileReader
     // The CRC-32 element's value against the CRC computed over the parent's data after it (RFC 8794 section 11.3.1).
     private void VerifyCrc(Node node, ElementHeader crc, long dataStart, long parentEnd, string parentName)
     {
-        if (crc.Size != 4)
+        // A CRC-32 element the parent's end cuts off holds fewer than its 4 bytes, wherever its own size says.
+        long available = Math.Max(0, parentEnd - crc.DataOffset);
+        if (crc.Size != 4 || available < 4)
         {
+            long held = Math.Min((long)Math.Min(crc.Size ?? 0, long.MaxValue), available);
             _findings.Add(Severity.Warning, "matroska.crc-size", node, count =>
-                $"{(count == 1 ? "A CRC-32 element holds" : $"{count} CRC-32 elements hold")} other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, in the {parentName} at 0x{crc.Offset:X}, holds {Bytes((long)(crc.Size ?? 0))}, so {(count == 1 ? "it is" : "they are")} not checked.");
+                $"{(count == 1 ? "A CRC-32 element holds" : $"{count} CRC-32 elements hold")} other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, in the {parentName} at 0x{crc.Offset:X}, holds {Bytes(held)}, so {(count == 1 ? "it is" : "they are")} not checked.");
             return;
         }
 
@@ -197,7 +203,7 @@ internal sealed partial class FileReader
             HeaderProblem.NotAnInteger => "it begins with a byte of zero bits, so it is no variable-size integer of eight octets or fewer (RFC 8794, section 4.1)",
             _ => "its Element ID is longer than the document's EBMLMaxIDLength allows or is the reserved value 0xFF (RFC 8794, section 5)",
         };
-        _findings.AddNow(problem == HeaderProblem.Truncated ? Severity.Warning : Severity.Error, "matroska.element-header-invalid",
+        _findings.AddNow(Severity.Warning, "matroska.element-header-invalid",
             $"No element can be read at 0x{start:X}, {where}: {why}. The {Bytes(end - start)} from there are not read.", rest);
         return rest;
     }
@@ -215,6 +221,29 @@ internal sealed partial class FileReader
         string? text = null;
         byte[]? bytes = null;
         bool valid = true;
+        if (length == 0 && definition.DefaultValue is { } fallback)
+        {
+            // An empty element has its default value (RFC 8794, section 6.1).
+            switch (definition.Type)
+            {
+                case ElementType.Unsigned or ElementType.Signed:
+                    long.TryParse(fallback, NumberStyles.Integer, CultureInfo.InvariantCulture, out s);
+                    u = (ulong)s;
+                    break;
+                case ElementType.Float:
+                    double.TryParse(fallback, NumberStyles.Float, CultureInfo.InvariantCulture, out d);
+                    break;
+                case ElementType.String or ElementType.Utf8:
+                    text = fallback;
+                    break;
+            }
+
+            bytes = [];
+            node.Value = Values.Of(definition, u, s, d, text, bytes, length);
+            Collect(definition, header, node, new Leaf(u, s, d, text, bytes, length));
+            return;
+        }
+
         switch (definition.Type)
         {
             case ElementType.Unsigned or ElementType.Signed:

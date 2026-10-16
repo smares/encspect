@@ -24,8 +24,8 @@ internal sealed partial class FileReader
         if (dataLength > MaxBlock)
         {
             block.Status = BlockStatus.TooLarge;
-            _findings.Add(Severity.Warning, "matroska.block-too-large", () => new Node(name, element.Offset, end - element.Offset), n =>
-                $"{(n == 1 ? "A block holds" : $"{n} blocks hold")} more than {MaxBlock >> 20} MiB, which no frame of a track needs; the first is the {name} at 0x{element.Offset:X} with {Bytes(dataLength)}. Its frames are not read.");
+            _findings.Add(Severity.Info, "matroska.block-too-large", () => new Node(name, element.Offset, end - element.Offset), n =>
+                $"{(n == 1 ? "A block holds" : $"{n} blocks hold")} more than the {MaxBlock >> 20} MiB the analysis reads from one block (the frames of an uncompressed video track can be larger); the first is the {name} at 0x{element.Offset:X} with {Bytes(dataLength)}. Its frames are not read.");
             return AddBlock(records, block, name, cluster.Timestamp);
         }
 
@@ -70,13 +70,19 @@ internal sealed partial class FileReader
 
         block.Frames = (ushort)count;
         block.FramesDelta = element.Length + fixedPart + (int)laceBytes;
+        if (count > 1 && !AccountFrames(count, element.Offset, name))
+        {
+            block.Status = BlockStatus.FramesLimit;
+            return AddBlock(records, block, name, cluster.Timestamp);
+        }
+
         if (count == 1)
         {
             block.Status = BlockStatus.LaceSingle;
             _findings.Add(Severity.Warning, "matroska.lacing-single", () => new Node(name, element.Offset, end - element.Offset), n =>
                 $"{(n == 1 ? "A block uses" : $"{n} blocks use")} lacing to store a single frame, which RFC 9559 forbids (section 10.3); the first is the {name} at 0x{element.Offset:X}.");
         }
-        else
+        else if (lacing != Lacing.FixedSize)
         {
             block.Lace = records.LaceSizes.Count;
             foreach (int size in _laceSizes)
@@ -86,6 +92,26 @@ internal sealed partial class FileReader
         }
 
         return AddBlock(records, block, name, cluster.Timestamp);
+    }
+
+    // Counts the frames of a laced block, and false once the file's blocks hold more than the analysis keeps: a block of seven bytes
+    // can state 256 frames of no bytes.
+    private bool AccountFrames(int count, long offset, string name)
+    {
+        _lacedFrames += count;
+        if (_lacedFrames <= MaxLacedFrames)
+        {
+            return true;
+        }
+
+        if (!_lacedFramesReported)
+        {
+            _lacedFramesReported = true;
+            _findings.AddNow(Severity.Warning, "matroska.too-many-elements",
+                $"The laced blocks of the file hold more than {MaxLacedFrames} frames; the frames of the blocks from the {name} at 0x{offset:X} on are not read.", new Node(name, offset, 0));
+        }
+
+        return false;
     }
 
     private static uint TrackNumberOf(ReadOnlySpan<byte> vint)
@@ -201,11 +227,7 @@ internal sealed partial class FileReader
                     return false;
                 }
 
-                for (int i = 0; i < count; i++)
-                {
-                    _laceSizes.Add((int)((remaining - 1) / count));
-                }
-
+                // Every frame has the same size, so none is stored (see Records.FrameSize).
                 return true;
 
             case Lacing.Xiph:
@@ -335,7 +357,7 @@ internal sealed partial class FileReader
             if (problem != HeaderProblem.None)
             {
                 records.Children.Add(new Child { Id = uint.MaxValue, Offset = position, DataLength = end - position, Depth = (byte)depth, Block = -1 });
-                _findings.AddNow(problem == HeaderProblem.Truncated ? Severity.Warning : Severity.Error, "matroska.element-header-invalid",
+                _findings.AddNow(Severity.Warning, "matroska.element-header-invalid",
                     $"No element can be read at 0x{position:X}, in the {parentName} at 0x{groupOffset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there are not read.",
                     Unparsed(position, end, "the " + parentName));
                 return blocks;

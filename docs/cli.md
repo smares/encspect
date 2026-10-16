@@ -127,6 +127,7 @@ A JSON report (schema version 1) is an object:
 - **Streams** are the audio streams as the format defines them; an MPEG stream continues across a tag embedded in it and ends where the version, layer or sample rate changes.
   - `nodes` are the paths of the nodes that hold the stream.
   - `duration` is in seconds and `averageBitrate` in kbps.
+  - `playbackGroup` is present on streams that play at the same time (the audio tracks of an MP4 movie or of a Matroska Segment): streams with the same number are one presentation, and a summary counts the longest of them once. Streams without it, and streams of different groups, follow one another and add up.
   - `channelLayout` lists the speaker each channel feeds, in the stream's channel order as its format defines it. A channel without a speaker position, such as either program of dual channel, is `"discrete"`.
   - `channelLayoutName` is the layout's common name where it has one: `mono`, `stereo`, `quadraphonic`, `5.1`, `7.1`, `22.2` and others.
   - `hasObjectAudio` is `true` for a stream whose data carry object audio that was parsed (E-AC-3 with joint object coding); DTS:X is reported through the profile and the `HasDtsX` statistics, not through this flag, and `jocObjectCount` is the number of objects its JOC payload reconstructs (joc_num_objects, not the OAMD object_count); both are left out otherwise.
@@ -146,7 +147,7 @@ The CSV row of a file has:
 
 - its format and the number of streams;
 - the first stream's codec;
-- the duration and samples of all streams together;
+- the duration and samples of all streams together, where streams that play at the same time (a playback group: the tracks of a movie or a Matroska Segment) count the longest once;
 - their average bitrate, weighted by duration;
 - the first stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);
 - the first encoder named and its confidence;

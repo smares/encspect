@@ -53,4 +53,65 @@ internal static class Codecs
     // audio, and WebVTT.
     public static bool IsWebM(string codecId) =>
         codecId is "V_VP8" or "V_VP9" or "V_AV1" or "A_VORBIS" or "A_OPUS" || codecId.StartsWith("D_WEBVTT/", StringComparison.Ordinal);
+
+    // The AudioSpecificConfig (ISO/IEC 14496-3, section 1.6.2.1) of a legacy A_AAC/MPEG2|4/* track, from the object type its ID names
+    // (MAIN 1, LC 2, SSR 3, LTP 4), the sampling frequency, the channel configuration and, for /SBR, the explicit signaling of
+    // SBR with the output sampling frequency. Null where the ID names no object type or the channels have no channel configuration.
+    public static byte[]? LegacyAacConfig(string codecId, double? samplingFrequency, double? outputSamplingFrequency, ulong? channels)
+    {
+        int objectType = codecId.Contains("/MAIN", StringComparison.Ordinal) ? 1
+            : codecId.Contains("/LC", StringComparison.Ordinal) ? 2
+            : codecId.Contains("/SSR", StringComparison.Ordinal) ? 3
+            : codecId.Contains("/LTP", StringComparison.Ordinal) ? 4 : 0;
+        int configuration = (channels ?? 1) switch { >= 1 and <= 6 => (int)(channels ?? 1), 8 => 7, _ => -1 };
+        if (objectType == 0 || configuration < 0)
+        {
+            return null;
+        }
+
+        double rate = samplingFrequency ?? 8000;
+        var bits = new List<bool>();
+        void Write(long value, int count)
+        {
+            for (int i = count - 1; i >= 0; i--)
+            {
+                bits.Add(((value >> i) & 1) != 0);
+            }
+        }
+
+        void WriteRate(double hz)
+        {
+            int index = Array.IndexOf(AacRates, (int)Math.Round(hz));
+            Write(index < 0 ? 15 : index, 4);
+            if (index < 0)
+            {
+                Write(Math.Clamp((long)Math.Round(hz), 0, 0xFFFFFF), 24);
+            }
+        }
+
+        Write(objectType, 5);
+        WriteRate(rate);
+        Write(configuration, 4);
+        Write(0, 3);
+        if (codecId.EndsWith("/SBR", StringComparison.Ordinal))
+        {
+            Write(0x2B7, 11);
+            Write(5, 5);
+            Write(1, 1);
+            WriteRate(outputSamplingFrequency ?? rate);
+        }
+
+        byte[] bytes = new byte[(bits.Count + 7) / 8];
+        for (int i = 0; i < bits.Count; i++)
+        {
+            if (bits[i])
+            {
+                bytes[i / 8] |= (byte)(0x80 >> (i % 8));
+            }
+        }
+
+        return bytes;
+    }
+
+    private static readonly int[] AacRates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
 }

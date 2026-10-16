@@ -409,8 +409,8 @@
                       "length": 116,
                       "children": [
                         {
-                          "name": "Unknown Element",
-                          "value": "ID 0x45BD, 1 byte",
+                          "name": "EditionFlagHidden",
+                          "value": false,
                           "offset": 6040,
                           "length": 4
                         },
@@ -457,8 +457,8 @@
                               "length": 3
                             },
                             {
-                              "name": "Unknown Element",
-                              "value": "ID 0x4598, 1 byte",
+                              "name": "ChapterFlagEnabled",
+                              "value": true,
                               "offset": 6082,
                               "length": 4
                             },
@@ -514,8 +514,8 @@
                               "length": 3
                             },
                             {
-                              "name": "Unknown Element",
-                              "value": "ID 0x4598, 1 byte",
+                              "name": "ChapterFlagEnabled",
+                              "value": true,
                               "offset": 6128,
                               "length": 4
                             },
@@ -6533,6 +6533,7 @@
         "duration": 1.5135,
         "averageBitrate": 148.67368421052632,
         "isVbr": true,
+        "playbackGroup": 1,
         "series": [
           {
             "name": "Bitrate",
@@ -6711,22 +6712,6 @@
         ]
       }
     ],
-    "findings": [
-      {
-        "severity": "Info",
-        "code": "matroska.unknown-element",
-        "message": "3 elements are none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID 0x45BD and lies at 0x1798, in the EditionEntry.",
-        "offset": 6040,
-        "length": 4,
-        "path": [
-          0,
-          1,
-          6,
-          0,
-          0
-        ],
-        "count": 3
-      }
-    ]
+    "findings": []
   }
 ]

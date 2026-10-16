@@ -50,6 +50,31 @@ public class MatroskaFindingTests
         TestFiles.CheckInsideParents(report.Root);
     }
 
+    // A tag appended to a live recording (Segment and Clusters of unknown size) belongs to the file: the Matroska parser's declared end stops
+    // at the last element the schema places there.
+    [Theory]
+    [InlineData("matroska/live-id3v1.mka", new[] { "ID3v1" })]
+    [InlineData("matroska/live-ape-id3v1.mka", new[] { "APE", "ID3v1" })]
+    public void ATagAfterALiveRecordingIsATag(string name, string[] tags)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        Assert.Equal(tags, report.Root.Children.Where(c => c.Kind == NodeKind.Tag).Select(c => c.Name));
+        Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.element-truncated" or "matroska.unknown-element" || f.Code.StartsWith("tag.", StringComparison.Ordinal));
+        Assert.Single(report.Streams);
+    }
+
+    [Fact]
+    public void ALegacyAacIdGetsTheConfigurationItsFieldsGive()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/aac-legacy-sbr.mka");
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "aac.no-configuration");
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(44100, stream.SampleRate);
+        Assert.Equal(2, stream.Channels);
+    }
+
     private sealed class ForcedMatroska : IFormatParser
     {
         private readonly MatroskaParser _parser = new();

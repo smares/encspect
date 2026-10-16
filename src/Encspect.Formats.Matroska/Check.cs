@@ -125,6 +125,12 @@ internal sealed partial class FileReader
     // The SeekHead's entries point at the Top-Level Elements they name (RFC 9559 sections 5.1.1 and 6.3).
     private void CheckSeeks(SegmentState segment)
     {
+        // A file cut at its start has lost the Segment's header, so no position counted from it can be resolved.
+        if (segment.IsHeaderMissing)
+        {
+            return;
+        }
+
         foreach ((ulong id, long position, Node node) in segment.Seeks)
         {
             if (id is Schema.Void or Schema.Crc32)
@@ -141,7 +147,7 @@ internal sealed partial class FileReader
                 continue;
             }
 
-            if (Ebml.TryReadHeader(_reader, absolute, segment.End, _document.MaxIdLength, _document.MaxSizeLength, out ElementHeader header) != HeaderProblem.None || header.Id != id)
+            if (Ebml.TryReadHeader(_reader, absolute, segment.End, segment.Document!.MaxIdLength, segment.Document.MaxSizeLength, out ElementHeader header) != HeaderProblem.None || header.Id != id)
             {
                 _findings.Add(Severity.Warning, "matroska.seek-position", node, count =>
                     $"{(count == 1 ? "A Seek entry does" : $"{count} Seek entries do")} not point at the element {(count == 1 ? "it names" : "they name")} (RFC 9559, section 5.1.1.1.2); the first names the {name} at position {position}, where the Segment has no such element.");
@@ -152,6 +158,11 @@ internal sealed partial class FileReader
     // A CuePoint's CueClusterPosition is the Segment position of a Cluster (RFC 9559 section 5.1.5.1.2.2).
     private void CheckCues(SegmentState segment)
     {
+        if (segment.IsHeaderMissing)
+        {
+            return;
+        }
+
         foreach ((long position, Node node) in segment.CuePositions)
         {
             if (!segment.ClusterPositions.Contains(position))

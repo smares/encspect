@@ -599,13 +599,189 @@ def _():
     return file_of(ebml_header())[:20]
 
 
+# --- Legacy AAC IDs, CRC-32 cut by its parent, empty elements, live files with tags, damaged encodings ---------------------
+
+
+ADTS = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "adts"
+
+
+def adts_frames(name):
+    """(object type, sampling frequency index, channel configuration, raw data blocks) of an ADTS file's frames, headers stripped."""
+    data = (ADTS / f"{name}.aac").read_bytes()
+    position = 0
+    frames = []
+    while position + 7 <= len(data) and data[position] == 0xFF and data[position + 1] & 0xF0 == 0xF0:
+        length = ((data[position + 3] & 3) << 11) | (data[position + 4] << 3) | (data[position + 5] >> 5)
+        header = 7 if data[position + 1] & 1 else 9
+        frames.append(data[position + header:position + length])
+        position += length
+    return (data[2] >> 6) + 1, (data[2] >> 2) & 15, ((data[2] & 1) << 2) | (data[3] >> 6), frames
+
+
+AAC_RATES = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350]
+
+
+def legacy_aac(codec, name, output_rate=None):
+    """A track with a legacy A_AAC/MPEG2|4/* ID, which has no CodecPrivate (draft-ietf-cellar-codec section 3.4.2 and following)."""
+    _, rate_index, channels, frames = adts_frames(name)
+    rate = float(AAC_RATES[rate_index])
+    extra = (flt(ID["OutputSamplingFrequency"], output_rate),) if output_rate else ()
+    track = audio_track(1, codec, channels, rate, audio_extra=extra)
+    items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames)]
+    return build(standard(cluster(0, *items), track=[track])), channels, int(output_rate or rate)
+
+
+@fixture("aac-legacy-lc", "A track with the legacy ID A_AAC/MPEG4/LC and no CodecPrivate: the AudioSpecificConfig is worked out from the ID and the Audio element "
+         "(the object type, the sampling frequency and the channels).", streams=[("AAC", 44100, 2)])
+def _():
+    return legacy_aac("A_AAC/MPEG4/LC", "stereo")[0]
+
+
+@fixture("aac-legacy-mpeg2-main", "A track with the legacy ID A_AAC/MPEG2/MAIN, whose frames use the main profile's prediction.", streams=[("AAC", 44100, 1)])
+def _():
+    return legacy_aac("A_AAC/MPEG2/MAIN", "main-prediction")[0]
+
+
+@fixture("aac-legacy-ltp", "A track with the legacy ID A_AAC/MPEG4/LTP, whose frames use long term prediction.", streams=[("AAC", 44100, 2)])
+def _():
+    return legacy_aac("A_AAC/MPEG4/LTP", "ltp")[0]
+
+
+@fixture("aac-legacy-ssr", "A track with the legacy ID A_AAC/MPEG4/SSR, whose frames carry gain control.", streams=[("AAC", 44100, 1)])
+def _():
+    return legacy_aac("A_AAC/MPEG4/SSR", "ssr-gain-control")[0]
+
+
+@fixture("aac-legacy-sbr", "A track with the legacy ID A_AAC/MPEG4/LC/SBR: the sampling frequency is the core's (22050 Hz) and the OutputSamplingFrequency the "
+         "SBR output's (44100 Hz), which the worked out AudioSpecificConfig signals explicitly.", streams=[("AAC", 44100, 2)])
+def _():
+    return legacy_aac("A_AAC/MPEG4/LC/SBR", "sbr-fixvar-resolutions", output_rate=44100.0)[0]
+
+
+@fixture("crc-cut-by-parent", "A Cues element that holds only the header of a CRC-32 element (BF 84) and no value: the parent ends before the CRC-32 element's 4 bytes.",
+         findings=[("matroska.crc-size", "holds 0 bytes"), ("matroska.element-overruns-parent", "CRC-32")], streams=[OPUS], valid=False)
+def _():
+    return build([ebml_header(), segment(info(), tracks(opus_track()), E(m.CUES, b"\xBF\x84"), cluster(0, *blocks(count=3)))])
+
+
+@fixture("crc-cut-at-end", "A file whose last element is a Tags element that holds only the header of a CRC-32 element (BF 84) and ends there.",
+         findings=[("matroska.crc-size", "holds 0 bytes"), ("matroska.element-truncated", "CRC-32")], streams=[OPUS], valid=False)
+def _():
+    return build([ebml_header(), segment(info(), tracks(opus_track()), cluster(0, *blocks(count=3)), E(m.TAGS, b"\xBF\x84"))])[:-2] + b"\xBF\x84"
+
+
+@fixture("cut-at-segment-seeks", "A file cut at the start of its Segment's data whose SeekHead and Cues, written for the whole file, give positions the cut file does not "
+         "have: they cannot be resolved, so no finding says they point nowhere.",
+         findings=[("matroska.no-ebml-header", "does not start with an EBML Header"), ("matroska.segment-header-missing", "no Segment element before them")],
+         streams=[OPUS], valid=False)
+def _():
+    def make(p):
+        head = seek_head((m.INFO, p.get("info", 0)), (m.TRACKS, p.get("tracks", 0)), (m.CLUSTER, p.get("c0", 0)), (m.CUES, p.get("cues", 0)))
+        inf, trk = info(), tracks(opus_track())
+        c0, c1 = cluster(0, *blocks(count=3)), cluster(60, *blocks(count=3, first=3))
+        cu = cues((0, 1, p.get("c0", 0)), (60, 1, p.get("c1", 0)))
+        seg = segment(head, inf, trk, c0, c1, cu)
+        return [ebml_header(), seg], {"info": inf, "tracks": trk, "c0": c0, "c1": c1, "cues": cu}, seg
+
+    data = laid_out(make)
+    # The cut drops the EBML Header and the Segment's header, and the SeekHead too, so the first element is the Info.
+    first = data.index(b"\x15\x49\xA9\x66")
+    return data[data.index(b"\x15\x49\xA9\x66", first + 4):]
+
+
+@fixture("empty-elements", "Elements with no data, which take their default values (RFC 8794 section 6.1): an empty TimestampScale (1,000,000), FlagLacing (1: lacing "
+         "allowed), FlagEnabled (1) and Language (\"eng\"), with a laced block that FlagLacing allows.", streams=[OPUS])
+def _():
+    track = master(ID["TrackEntry"], uint(ID["TrackNumber"], 1), uint(ID["TrackUID"], 0x1001), uint(ID["TrackType"], 2), E(ID["FlagEnabled"], b""), E(ID["FlagLacing"], b""),
+                   E(ID["Language"], b""), text(ID["CodecID"], "A_OPUS"), raw(ID["CodecPrivate"], opus_head()), uint(ID["CodecDelay"], 6_500_000),
+                   master(ID["Audio"], flt(ID["SamplingFrequency"], 48000.0), uint(ID["Channels"], 1)))
+    items = [simple_block(1, 0, [opus_packet(0), opus_packet(1)], lacing="xiph", key=True), simple_block(1, 40, opus_packet(2), key=True)]
+    inf = master(m.INFO, E(ID["TimestampScale"], b""), flt(ID["Duration"], 100.0), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "y"))
+    return build([ebml_header(), segment(inf, tracks(track), cluster(0, *items))])
+
+
+@fixture("registry-elements", "Elements the Matroska element registry lists and RFC 9559 does not, which muxers write: an edition's hidden flag and display strings, a "
+         "chapter's enabled flag, skip type and tracks, a tag's BlockAddIDValue and a track's Audio emphasis.", streams=[OPUS])
+def _():
+    chapters = master(m.CHAPTERS, master(ID["EditionEntry"], uint(ID["EditionUID"], 5), uint(ID["EditionFlagHidden"], 0), uint(ID["EditionFlagDefault"], 1),
+                                          master(ID["EditionDisplay"], text(ID["EditionString"], "Main"), text(ID["EditionLanguageIETF"], "en")),
+                                          master(ID["ChapterAtom"], uint(ID["ChapterUID"], 1), uint(ID["ChapterTimeStart"], 0), uint(ID["ChapterFlagEnabled"], 1),
+                                                 uint(ID["ChapterSkipType"], 1), master(ID["ChapterTrack"], uint(ID["ChapterTrackUID"], 0x1001)),
+                                                 master(ID["ChapterDisplay"], text(ID["ChapString"], "One")))))
+    track = opus_track(audio_extra=(uint(ID["Emphasis"], 0),))
+    tg = master(m.TAGS, master(ID["Tag"], master(ID["Targets"], uint(ID["TargetTypeValue"], 50), uint(ID["TagBlockAddIDValue"], 0)),
+                               master(ID["SimpleTag"], text(ID["TagName"], "TITLE"), text(ID["TagString"], "x"))))
+    return build([ebml_header(), segment(info(), tracks(track), chapters, tg, cluster(0, *blocks(count=3)))])
+
+
+@fixture("unknown-size-then-segment", "A Segment of unknown size whose last Cluster has the unknown size, followed by a second Segment: each ends where the next Segment "
+         "starts (RFC 8794 section 6.2).", findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")],
+         streams=[OPUS, ("Opus", 48000, 2)], valid=False)
+def _():
+    first = segment(info(), tracks(opus_track()), cluster(0, *blocks(count=3), unknown=True), unknown=True)
+    second = segment(info(), tracks(opus_track(1, 2)), cluster(0, *blocks(count=3, channels=2)))
+    return build([ebml_header(), first, second])
+
+
+ID3V1 = b"TAG" + b"A live recording".ljust(30, b"\0") + b"A speaker".ljust(30, b"\0") + b"A room".ljust(30, b"\0") + b"2024" + b"No comment".ljust(30, b"\0") + b"\x0c"
+
+
+def ape_tag():
+    """An APEv2 tag with a header, two items and a footer (APE tag specification 2.000)."""
+    def item(key, value):
+        return struct.pack("<II", len(value), 0) + key + b"\0" + value
+
+    items = item(b"Artist", b"A speaker") + item(b"Title", b"A live recording")
+    size = len(items) + 32
+    header = b"APETAGEX" + struct.pack("<IIII", 2000, size, 2, 0xA0000000) + bytes(8)
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, size, 2, 0x80000000) + bytes(8)
+    return header + items + footer
+
+
+def live_file():
+    clusters = [cluster(i * 100, *blocks(count=5, first=i * 5), unknown=True) for i in range(3)]
+    return build(standard(*clusters)[:1] + [segment(info(), tracks(opus_track()), *clusters, unknown=True)])
+
+
+@fixture("live-id3v1", "A live recording (Segment and Clusters of unknown size) with an ID3v1 tag appended: the tag after the last Cluster is the file's, not an element's.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
+def _():
+    return live_file(), ID3V1
+
+
+@fixture("live-ape-id3v1", "A live recording with an APEv2 tag and an ID3v1 tag appended.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
+def _():
+    return live_file(), ape_tag() + ID3V1
+
+
+@fixture("zlib-private-damaged", "A track whose CodecPrivate is zlib-compressed (scope 2) but holds bytes that are no zlib data: the track is reported with a finding, not "
+         "analyzed.", findings=[("matroska.codec-private-invalid", "cannot be read back")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=2, compression=0))
+    return build(standard(cluster(0, *blocks(count=3)), track=[opus_track(private=b"this is no zlib data at all", encodings=enc)]))
+
+
+@fixture("zlib-frames-damaged", "A track whose frames are zlib-compressed (scope 1) but of which the second block holds bytes that are no zlib data: the frames up to it are "
+         "analyzed and the rest are not.", findings=[("matroska.frame-encoding-invalid", "cannot be read back")], streams=[OPUS], valid=False)
+def _():
+    packed = [simple_block(1, 0, zlib.compress(opus_packet(0), 9), key=True), simple_block(1, 20, b"\x78\x9c not zlib", key=True),
+              simple_block(1, 40, zlib.compress(opus_packet(2), 9), key=True)]
+    enc = content_encodings(content_encoding(order=0, scope=1, compression=0))
+    return build(standard(cluster(0, *packed), track=[opus_track(encodings=enc)]))
+
+
 # --- Writing the files ---------------------------------------------------------------------------------
 
 
 def write(name, builder, description, findings, streams, valid, extension, checks):
     data = builder()
+    tail = b""
+    if isinstance(data, tuple):
+        # Bytes after the Segment's elements, such as a tag: the manifest is the file without them, which the host gives the tag parsers.
+        data, tail = data
     path = OUT / f"{name}.{extension}"
-    path.write_bytes(data)
+    path.write_bytes(data + tail)
     manifest = {"description": description}
     manifest.update(m.manifest(data))
     manifest["streams"] = [{"codec": c, "sample_rate": r, "channels": n} for c, r, n in streams] if streams is not None else None

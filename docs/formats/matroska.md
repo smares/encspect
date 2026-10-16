@@ -1,6 +1,6 @@
 # Matroska and WebM
 
-Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One parser, "Matroska", reads both; the file is reported as WebM when the EBML header's DocType is `webm`. Written from RFC 9559 (Matroska) and RFC 8794 (EBML), with the codec IDs of draft-ietf-cellar-codec-20 and the WebM Container Guidelines (webmproject.org/docs/container, cited by address, since a web page cannot be pinned). `matroska_specs.py` downloads the RFCs and the draft, pinned by their SHA-256; `matroska_tables.py` generates the element table (`Elements.cs`, 263 elements with their IDs, types, levels, defaults and descriptions) from them and checks it in CI.
+Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One parser, "Matroska", reads both; the file is reported as WebM when the EBML header's DocType is `webm`. Written from RFC 9559 (Matroska) and RFC 8794 (EBML), with the codec IDs of draft-ietf-cellar-codec-20 and the WebM Container Guidelines (webmproject.org/docs/container, cited by address, since a web page cannot be pinned). `matroska_specs.py` downloads the RFCs, the draft and the Matroska element registry (`ebml_matroska.xml`, pinned by commit and SHA-256), all pinned by their SHA-256; `matroska_tables.py` generates the element table (`Elements.cs`, 273 elements with their IDs, names, types, paths and default values, and descriptions) from them and checks it in CI. Ten elements muxers write are in the registry and not in RFC 9559 (EditionFlagHidden, ChapterFlagEnabled, ChapterTrack, ChapterTrackUID, ChapterSkipType, EditionDisplay, EditionString, EditionLanguageIETF, TagBlockAddIDValue and Emphasis); their descriptions cite "the Matroska element registry".
 
 ## What is read
 
@@ -13,15 +13,15 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 
 ## What is routed
 
-- **Audio frames** go to the codec parsers by codec ID, through the host's routes (`ParseStream` where the frames can be handed over as one payload, `ParsePackets` for packets as mapped bytes):
-  - `A_AAC` and the legacy `A_AAC/MPEG2/*` and `A_AAC/MPEG4/*` IDs to AAC (CodecPrivate is the AudioSpecificConfig);
+- **Audio frames** go to the codec parsers by codec ID, through the host's route `ParsePackets`, one packet per frame as mapped bytes:
+  - `A_AAC` to AAC (CodecPrivate is the AudioSpecificConfig); the legacy `A_AAC/MPEG2/*` and `A_AAC/MPEG4/*` IDs have no CodecPrivate, so the AudioSpecificConfig is worked out from the ID (object type MAIN 1, LC 2, SSR 3, LTP 4), the SamplingFrequency, the Channels and, for `/SBR`, the OutputSamplingFrequency (explicit SBR signaling), as FFmpeg's `matroskadec.c` does, and shown under the CodecID that gives its values;
   - `A_AC3` and `A_EAC3` to AC-3 and E-AC-3, `A_DTS` and its extensions to DTS;
   - `A_VORBIS` to Vorbis (CodecPrivate is the three headers in Xiph lacing, which are passed as the first packets) and `A_OPUS` to Opus (CodecPrivate is the OpusHead; CodecDelay is compared with the pre-skip, `opus.container-delay-differs`);
   - `A_MPEG/L1`, `A_MPEG/L2` and `A_MPEG/L3` are counted at container level (see below).
 - **The codec's stream is merged** into the file's streams as MP4's is (codec, sample rate, channels, duration, bitrate, encoder), and the Matroska track's own fields are compared with it: `matroska.sample-rate-differs`, `matroska.channels-differ`.
-- **Header stripping** is undone first. A track whose frames are zlib-compressed, or stripped and not AAC, Vorbis or Opus, is not routed, because the AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes: `matroska.track-encoding-not-read` says so. Encrypted tracks give `matroska.track-encrypted`.
+- **Header stripping and zlib** are undone first, for Opus and Vorbis only. A track of another codec whose frames are zlib-compressed or header-stripped is not routed, because the AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes: `matroska.track-encoding-not-read` says so. Encrypted tracks give `matroska.track-encrypted`. A frame or CodecPrivate that is no zlib data gives `matroska.frame-encoding-invalid` or `matroska.codec-private-invalid`; the frames before it are analyzed.
 - **Codec IDs without a parser** (FLAC, ALAC, TrueHD, TTA, WavPack, PCM, MLP, RealAudio, QuickTime and the rest) give an Info finding, `matroska.codec-not-analyzed`: their frames are counted and shown as blocks, and their parsers are not written yet (phase 3).
-- **Several audio tracks** play together, so their streams are marked `IsParallel`: the summary and the CSV count the longest track's duration and samples once instead of adding them up. JSON streams carry `"isParallel": true`.
+- **Several audio tracks** play together, so their streams share a `PlaybackGroup` (one per Segment): the summary and the CSV count the longest track's duration and samples once instead of adding them up, and two Segments add up. JSON streams carry `"playbackGroup"`. A track whose codec parser reports several streams in a row (chained Ogg streams) is not grouped.
 
 ## What is reported
 
@@ -30,7 +30,7 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 - Findings, all with the prefix `matroska.`:
   - **Structure:** `no-ebml-header`, `header-field`, `header-limits`, `header-version`, `doctype-unknown`, `segment-header-missing`, `segment-size-unknown`, `cluster-size-unknown`, `unknown-size-not-allowed`, `element-header-invalid`, `element-id-long`, `size-too-long`, `element-overruns-parent`, `element-truncated`, `misplaced-element`, `unknown-element`, `deprecated-element`, `too-deep`, `too-many-elements`, `value-size`, `invalid-text`, `uid-length`.
   - **Top level:** `missing-info`, `missing-tracks`, `no-clusters`, `seek-position`, `cue-position`, `crc-mismatch`, `crc-position`, `crc-size`.
-  - **Tracks:** `track-field`, `audio-fields`, `track-number-duplicate`, `track-empty`, `track-not-analyzed`, `track-encoding-not-read`, `track-encrypted`, `encoding-order`, `codec-private-missing`, `codec-private-invalid`, `codec-not-analyzed`, `sample-rate-differs`, `channels-differ`.
+  - **Tracks:** `track-field`, `audio-fields`, `track-number-duplicate`, `track-empty`, `track-not-analyzed`, `track-encoding-not-read`, `track-encrypted`, `encoding-order`, `frame-encoding-invalid`, `codec-private-missing`, `codec-private-invalid`, `codec-not-analyzed`, `sample-rate-differs`, `channels-differ`.
   - **Clusters and blocks:** `cluster-timestamp-missing`, `cluster-timestamp-position`, `timestamp-scale`, `timestamps-backwards`, `block-short`, `block-too-large`, `block-track-unknown`, `lacing-invalid`, `lacing-not-allowed`, `lacing-single`, `group-no-block`, `group-multiple-blocks`.
   - **WebM:** `webm-codec`, `webm-timestamp-scale` (WebM allows VP8, VP9, AV1, Vorbis, Opus and WebVTT, and wants a timestamp scale of 1,000,000).
 - A finding points to a node of the tree; those of a block point to its SimpleBlock or Block.
@@ -43,19 +43,20 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 ## Encoder detection
 
 - The audio encoder is decided by the codec parsers, from the frames they read.
-- MuxingApp and WritingApp (for example "Lavf60.16.100", "libebml v1.4.5 + libmatroska v1.7.1" and "mkvmerge v81.0") are shown as Info and Segment values. They name the program that wrote the container, not the audio encoder, so they do not become claims about the stream yet: the place for them is marked in `Route.cs` (`RouteTracks`), to be filled when the encoder and writer roles are split.
+- MuxingApp and WritingApp (for example "Lavf60.16.100", "libebml v1.4.5 + libmatroska v1.7.1" and "mkvmerge v82.0") are shown as Info and Segment values. They name the program that wrote the container, not the audio encoder, so they do not become claims about the stream yet: the place for them is marked in `Route.cs` (`RouteTracks`), to be filled when the encoder and writer roles are split.
 
 ## Detection
 
-- An EBML header at the start with a DocType of `matroska` or `webm`, followed by a Segment: class 100. A header with no Segment after it: 90 (100 when the data ends right after it). A header that does not hold (an ID or size that is not an EBML header's, or no DocType): 70. Any other DocType: not Matroska.
+- An EBML header at the start with a DocType of `matroska` or `webm`, followed by a Segment: class 100. A header with no Segment after it: 90. A header that does not hold (an ID or size that is not an EBML header's, or no DocType): 70. Any other DocType: not Matroska.
 - A Segment at the start with a consistent child, as in a file whose header was cut off: 80. A run of Top-Level Elements (or a Cluster with a Timestamp) from the start: 60.
-- `DeclaredEnd` is the end of the Segment when its size is known: a trailing ID3v1 or APE tag after it is the file's. A Segment of unknown size declares no end.
+- `DeclaredEnd` is the end of the Segment when its size is known. For a Segment of unknown size (a live recording) it is the end of the Top-Level Elements and, in a Cluster of unknown size, of the children the schema places in a Cluster: a trailing ID3v1 or APE tag after them is the file's, not an element's.
 - `--as matroska` (also `mkv`, `mka`, `webm`) reads any bytes as Matroska.
 
 ## Limits
 
 - Elements outside Clusters become nodes up to 250,000 in all (`matroska.too-many-elements`); nesting is read to 40 levels (`matroska.too-deep`).
 - A Cluster's blocks and elements are kept up to 6,000,000 records in all; a block of more than 64 MiB is not read (`matroska.block-too-large`).
+- The frames of laced blocks are counted against a budget of 4,000,000 in all (`matroska.too-many-elements`), since a block of seven bytes can state 256 frames of no bytes; fixed-size lacing keeps no sizes.
 - Memory is bounded by the compact records: `MemoryTests` hold the blocks to about 120 bytes each.
 
 ## Not covered
@@ -64,12 +65,11 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 - FLAC, ALAC, TrueHD, TTA, WavPack, PCM, MLP and the RealAudio and QuickTime IDs have no parser here (phase 3).
 - bzlib and lzo compression and all encryption are reported, not undone; zlib is inflated only for the codecs that can read opaque data.
 - `A_MS/ACM` (a WAVEFORMATEX) is not routed.
-- The legacy `A_AAC/MPEG2|4/*` IDs carry no AudioSpecificConfig, so the AAC parser warns about a missing configuration.
 - Video, subtitles and buttons are read at container level only; Chapters, Attachments and Tags are shown, not interpreted (a Tags value is not matched against a stream).
-- mkvmerge writes two elements (0x45BD and 0x4598) that RFC 9559 does not list; they are `matroska.unknown-element`.
+- DiscardPadding is read and shown but not applied: the Opus sample count of a track includes the padding at the end that DiscardPadding says a player drops.
 - Only the WebM restrictions on codecs and the timestamp scale are checked, not the rest of the guidelines.
 
 ## Fixtures and cross-checks
 
-- `tests/fixtures/matroska`: 54 hand-built files (`make_matroska_fixtures.py`, worked out by the independent writer and reader `matroska_model.py`) and 40 written by ffmpeg and mkvmerge (`make_external_matroska_fixtures.py`), with a manifest and a golden report each. See [development.md](../development.md).
+- `tests/fixtures/matroska`: 69 hand-built files (`make_matroska_fixtures.py`, worked out by the independent writer and reader `matroska_model.py`) and 40 written by ffmpeg and mkvmerge (`make_external_matroska_fixtures.py`), with a manifest and a golden report each. See [development.md](../development.md).
 - `crosscheck_matroska_fixtures.py` checks the manifests against mkvinfo, ffprobe (streams, packets and presentation times), ffmpeg decoding and MediaInfo.

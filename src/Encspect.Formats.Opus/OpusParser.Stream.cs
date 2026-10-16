@@ -23,6 +23,9 @@ public sealed partial class OpusParser
         // Packets that span pages, by index: their file ranges.
         public Dictionary<int, ByteRange[]> Ranges { get; } = [];
 
+        // Packets a container changed (MappedBytes.IsOpaque): their parts map to the whole range.
+        public HashSet<int> Opaque { get; } = [];
+
         public int Count { get; private set; }
 
         public long OffsetOf(int packet) => _seriesOffsets is { } offsets ? (long)offsets[packet] : _offsets![packet];
@@ -210,8 +213,9 @@ public sealed partial class OpusParser
             // Matroska's CodecDelay is the pre-skip in nanoseconds (the Matroska codec mapping, A_OPUS): 48,000 samples a second.
             if (context.Configuration?.Delay is { } delay && Math.Abs((delay * Rate) - head.PreSkip) >= 0.5)
             {
+                bool isMissing = context.Configuration.IsDelayMissing;
                 _findings.Add(Severity.Warning, "opus.container-delay-differs", Field("Pre-skip"), _ =>
-                    $"The container states a codec delay of {delay.ToString("0.#######", CultureInfo.InvariantCulture)} s, {(delay * Rate).ToString("0.#", CultureInfo.InvariantCulture)} samples at 48 kHz, but the identification header's pre-skip is {head.PreSkip} samples; the Matroska codec mapping makes the delay the pre-skip (draft-ietf-cellar-codec, section 3.4.32).");
+                    $"The container {(isMissing ? "has no codec delay (Matroska's CodecDelay is missing, so it is 0)" : $"states a codec delay of {delay.ToString("0.#######", CultureInfo.InvariantCulture)} s, {(delay * Rate).ToString("0.#", CultureInfo.InvariantCulture)} samples at 48 kHz")}, but the identification header's pre-skip is {head.PreSkip} samples; the Matroska codec mapping makes the delay the pre-skip (draft-ietf-cellar-codec, section 3.4.32).");
             }
 
             if ((head.Version & 0xF0) != 0)
@@ -340,9 +344,13 @@ public sealed partial class OpusParser
         {
             int index = _records.Count;
             _records.AddPacket(packet.FileStart);
-            if (packet.FileEnd - packet.FileStart != packet.Length)
+            if (packet.IsOpaque || packet.FileEnd - packet.FileStart != packet.Length)
             {
                 _records.Ranges[index] = [.. packet.FileRanges()];
+                if (packet.IsOpaque)
+                {
+                    _records.Opaque.Add(index);
+                }
             }
 
             _packets++;

@@ -19,8 +19,9 @@ internal enum ElementType : byte
 // itself (RFC 8794 section 11.1.6.2).
 internal sealed class ElementDefinition
 {
-    public ElementDefinition(uint id, string name, ElementType type, string path, string description, bool isUnknownSizeAllowed = false, bool isDeprecated = false)
+    public ElementDefinition(uint id, string name, ElementType type, string path, string description, bool isUnknownSizeAllowed = false, bool isDeprecated = false, string? defaultValue = null)
     {
+        DefaultValue = defaultValue;
         Id = id;
         Name = name;
         Type = type;
@@ -54,6 +55,9 @@ internal sealed class ElementDefinition
     public bool IsUnknownSizeAllowed { get; }
 
     public bool IsDeprecated { get; }
+
+    // The value of the element when it is empty or absent (RFC 8794 section 11.1.6.8 and 6.1), as the registry writes it, or null.
+    public string? DefaultValue { get; }
 
     // The CRC-32 and Void elements may be a child of any Master Element (RFC 8794 section 11.3).
     public bool IsGlobal => Id is Schema.Crc32 or Schema.Void;
