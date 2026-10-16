@@ -260,6 +260,9 @@ public class ProtectionTests
     [InlineData("matroska/encryption-missing.mka", "Matroska ContentEncryption", true, "matroska.encryption-missing")]
     [InlineData("matroska/encrypted-private.mka", "Matroska ContentEncryption, AES-CTR", false, "matroska.codec-private-encrypted")]
     [InlineData("matroska/encrypted-next-encoding.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-over-algorithm-none.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-over-3des.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-chain.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-aac.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-vorbis.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     public void MatroskaContentEncryptionIsProtection(string name, string scheme, bool isEncrypted, string code)
@@ -273,8 +276,20 @@ public class ProtectionTests
         Assert.Equal(StreamKind.Audio, stream.Kind);
         Assert.Contains(report.Findings, f => f.Code == code);
         Assert.DoesNotContain(report.Findings, f => f.Code == "matroska.track-encoding-not-read");
-        Assert.All(report.Findings, f => Assert.StartsWith("matroska.", f.Code, StringComparison.Ordinal));
+        Assert.All(report.Findings, f => Assert.True(f.Code.StartsWith("matroska.", StringComparison.Ordinal) || f.Code == "vorbis.writer-claim-differs", f.Code));
         Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
+    }
+
+    // The samples and the length of an encrypted Opus track equal the clear track's: the container's timing less the codec delay is what the
+    // Opus parser counts (the pre-skip).
+    [Fact]
+    public void MatroskaEncryptedOpusCountsTheSamplesTheClearTrackDoes()
+    {
+        StreamInfo encrypted = Assert.Single(Fixtures.AnalyzeMpeg("matroska/encrypted.mka").Streams);
+        StreamInfo clear = Assert.Single(Fixtures.AnalyzeMpeg("matroska/encryption-algorithm-default.mka").Streams);
+
+        Assert.Equal(clear.Samples, encrypted.Samples);
+        Assert.Equal(clear.Duration, encrypted.Duration, 6);
     }
 
     // An encrypted track still has a length, samples and a bitrate: the codec parser has no frame to count, so the container's timing stands in (as MP4's does).

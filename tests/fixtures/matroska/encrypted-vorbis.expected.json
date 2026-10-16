@@ -1,6 +1,6 @@
 {
- "description": "An A_VORBIS track with its three headers in a clear CodecPrivate (those of external-ffmpeg-vorbis) and encrypted frames: the Vorbis parser reads the headers, not the frames.",
- "length": 6377,
+ "description": "An A_VORBIS track with its three headers in a clear CodecPrivate and encrypted frames: the Vorbis parser reads the headers, not the frames. The headers are copied from external-ffmpeg-vorbis, so their vendor string names ffmpeg's muxer while the Segment names this generator.",
+ "length": 6385,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 4388,
+     "offset": 4396,
      "length": 1989,
      "timestamp": 0,
      "size_unknown": false,
@@ -28,11 +28,11 @@
    "info": {
     "timestamp_scale": 1000000,
     "duration": 100.0,
-    "muxing_app": "Lavf60.16.100",
-    "writing_app": "Lavf60.16.100"
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
    },
-   "length": 6337,
-   "declared_end": 6377
+   "length": 6345,
+   "declared_end": 6385
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   6337,
+   6345,
    [
     [
      "Info",
      46,
-     55,
+     63,
      [
       [
        "TimestampScale",
@@ -101,98 +101,98 @@
       [
        "MuxingApp",
        69,
-       16
+       20
       ],
       [
        "WritingApp",
-       85,
-       16
+       89,
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     101,
+     109,
      4287,
      [
       [
        "TrackEntry",
-       107,
+       115,
        4281,
        [
         [
          "TrackNumber",
-         110,
-         3
-        ],
-        [
-         "TrackUID",
-         113,
-         5
-        ],
-        [
-         "TrackType",
          118,
          3
         ],
         [
-         "CodecID",
+         "TrackUID",
          121,
+         5
+        ],
+        [
+         "TrackType",
+         126,
+         3
+        ],
+        [
+         "CodecID",
+         129,
          10
         ],
         [
          "CodecPrivate",
-         131,
+         139,
          4206
         ],
         [
          "ContentEncodings",
-         4337,
+         4345,
          36,
          [
           [
            "ContentEncoding",
-           4340,
+           4348,
            33,
            [
             [
              "ContentEncodingOrder",
-             4343,
-             4
-            ],
-            [
-             "ContentEncodingScope",
-             4347,
-             4
-            ],
-            [
-             "ContentEncodingType",
              4351,
              4
             ],
             [
-             "ContentEncryption",
+             "ContentEncodingScope",
              4355,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             4359,
+             4
+            ],
+            [
+             "ContentEncryption",
+             4363,
              18,
              [
               [
                "ContentEncAlgo",
-               4358,
+               4366,
                4
               ],
               [
                "ContentEncKeyID",
-               4362,
+               4370,
                4
               ],
               [
                "ContentEncAESSettings",
-               4366,
+               4374,
                7,
                [
                 [
                  "AESSettingsCipherMode",
-                 4369,
+                 4377,
                  4
                 ]
                ]
@@ -205,17 +205,17 @@
         ],
         [
          "Audio",
-         4373,
+         4381,
          15,
          [
           [
            "SamplingFrequency",
-           4375,
+           4383,
            10
           ],
           [
            "Channels",
-           4385,
+           4393,
            3
           ]
          ]
@@ -226,162 +226,162 @@
     ],
     [
      "Cluster",
-     4388,
+     4396,
      1989,
      [
       [
        "Timestamp",
-       4394,
+       4402,
        3
       ],
       [
        "SimpleBlock",
-       4397,
+       4405,
        66
       ],
       [
        "SimpleBlock",
-       4463,
+       4471,
        66
       ],
       [
        "SimpleBlock",
-       4529,
+       4537,
        66
       ],
       [
        "SimpleBlock",
-       4595,
+       4603,
        66
       ],
       [
        "SimpleBlock",
-       4661,
+       4669,
        66
       ],
       [
        "SimpleBlock",
-       4727,
+       4735,
        66
       ],
       [
        "SimpleBlock",
-       4793,
+       4801,
        66
       ],
       [
        "SimpleBlock",
-       4859,
+       4867,
        66
       ],
       [
        "SimpleBlock",
-       4925,
+       4933,
        66
       ],
       [
        "SimpleBlock",
-       4991,
+       4999,
        66
       ],
       [
        "SimpleBlock",
-       5057,
+       5065,
        66
       ],
       [
        "SimpleBlock",
-       5123,
+       5131,
        66
       ],
       [
        "SimpleBlock",
-       5189,
+       5197,
        66
       ],
       [
        "SimpleBlock",
-       5255,
+       5263,
        66
       ],
       [
        "SimpleBlock",
-       5321,
+       5329,
        66
       ],
       [
        "SimpleBlock",
-       5387,
+       5395,
        66
       ],
       [
        "SimpleBlock",
-       5453,
+       5461,
        66
       ],
       [
        "SimpleBlock",
-       5519,
+       5527,
        66
       ],
       [
        "SimpleBlock",
-       5585,
+       5593,
        66
       ],
       [
        "SimpleBlock",
-       5651,
+       5659,
        66
       ],
       [
        "SimpleBlock",
-       5717,
+       5725,
        66
       ],
       [
        "SimpleBlock",
-       5783,
+       5791,
        66
       ],
       [
        "SimpleBlock",
-       5849,
+       5857,
        66
       ],
       [
        "SimpleBlock",
-       5915,
+       5923,
        66
       ],
       [
        "SimpleBlock",
-       5981,
+       5989,
        66
       ],
       [
        "SimpleBlock",
-       6047,
+       6055,
        66
       ],
       [
        "SimpleBlock",
-       6113,
+       6121,
        66
       ],
       [
        "SimpleBlock",
-       6179,
+       6187,
        66
       ],
       [
        "SimpleBlock",
-       6245,
+       6253,
        66
       ],
       [
        "SimpleBlock",
-       6311,
+       6319,
        66
       ]
      ]
@@ -392,7 +392,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 4397,
+   "offset": 4405,
    "length": 66,
    "track": 1,
    "timestamp": 0,
@@ -401,14 +401,14 @@
    "lacing": "none",
    "frames": [
     [
-     4403,
+     4411,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 4463,
+   "offset": 4471,
    "length": 66,
    "track": 1,
    "timestamp": 23,
@@ -417,14 +417,14 @@
    "lacing": "none",
    "frames": [
     [
-     4469,
+     4477,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 4529,
+   "offset": 4537,
    "length": 66,
    "track": 1,
    "timestamp": 46,
@@ -433,14 +433,14 @@
    "lacing": "none",
    "frames": [
     [
-     4535,
+     4543,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 4595,
+   "offset": 4603,
    "length": 66,
    "track": 1,
    "timestamp": 69,
@@ -449,14 +449,14 @@
    "lacing": "none",
    "frames": [
     [
-     4601,
+     4609,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 4661,
+   "offset": 4669,
    "length": 66,
    "track": 1,
    "timestamp": 92,
@@ -465,14 +465,14 @@
    "lacing": "none",
    "frames": [
     [
-     4667,
+     4675,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 4727,
+   "offset": 4735,
    "length": 66,
    "track": 1,
    "timestamp": 115,
@@ -481,14 +481,14 @@
    "lacing": "none",
    "frames": [
     [
-     4733,
+     4741,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 4793,
+   "offset": 4801,
    "length": 66,
    "track": 1,
    "timestamp": 138,
@@ -497,14 +497,14 @@
    "lacing": "none",
    "frames": [
     [
-     4799,
+     4807,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 4859,
+   "offset": 4867,
    "length": 66,
    "track": 1,
    "timestamp": 161,
@@ -513,14 +513,14 @@
    "lacing": "none",
    "frames": [
     [
-     4865,
+     4873,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 4925,
+   "offset": 4933,
    "length": 66,
    "track": 1,
    "timestamp": 184,
@@ -529,14 +529,14 @@
    "lacing": "none",
    "frames": [
     [
-     4931,
+     4939,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 4991,
+   "offset": 4999,
    "length": 66,
    "track": 1,
    "timestamp": 207,
@@ -545,14 +545,14 @@
    "lacing": "none",
    "frames": [
     [
-     4997,
+     5005,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5057,
+   "offset": 5065,
    "length": 66,
    "track": 1,
    "timestamp": 230,
@@ -561,14 +561,14 @@
    "lacing": "none",
    "frames": [
     [
-     5063,
+     5071,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5123,
+   "offset": 5131,
    "length": 66,
    "track": 1,
    "timestamp": 253,
@@ -577,14 +577,14 @@
    "lacing": "none",
    "frames": [
     [
-     5129,
+     5137,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5189,
+   "offset": 5197,
    "length": 66,
    "track": 1,
    "timestamp": 276,
@@ -593,14 +593,14 @@
    "lacing": "none",
    "frames": [
     [
-     5195,
+     5203,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5255,
+   "offset": 5263,
    "length": 66,
    "track": 1,
    "timestamp": 299,
@@ -609,14 +609,14 @@
    "lacing": "none",
    "frames": [
     [
-     5261,
+     5269,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5321,
+   "offset": 5329,
    "length": 66,
    "track": 1,
    "timestamp": 322,
@@ -625,14 +625,14 @@
    "lacing": "none",
    "frames": [
     [
-     5327,
+     5335,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5387,
+   "offset": 5395,
    "length": 66,
    "track": 1,
    "timestamp": 345,
@@ -641,14 +641,14 @@
    "lacing": "none",
    "frames": [
     [
-     5393,
+     5401,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5453,
+   "offset": 5461,
    "length": 66,
    "track": 1,
    "timestamp": 368,
@@ -657,14 +657,14 @@
    "lacing": "none",
    "frames": [
     [
-     5459,
+     5467,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5519,
+   "offset": 5527,
    "length": 66,
    "track": 1,
    "timestamp": 391,
@@ -673,14 +673,14 @@
    "lacing": "none",
    "frames": [
     [
-     5525,
+     5533,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5585,
+   "offset": 5593,
    "length": 66,
    "track": 1,
    "timestamp": 414,
@@ -689,14 +689,14 @@
    "lacing": "none",
    "frames": [
     [
-     5591,
+     5599,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5651,
+   "offset": 5659,
    "length": 66,
    "track": 1,
    "timestamp": 437,
@@ -705,14 +705,14 @@
    "lacing": "none",
    "frames": [
     [
-     5657,
+     5665,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5717,
+   "offset": 5725,
    "length": 66,
    "track": 1,
    "timestamp": 460,
@@ -721,14 +721,14 @@
    "lacing": "none",
    "frames": [
     [
-     5723,
+     5731,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5783,
+   "offset": 5791,
    "length": 66,
    "track": 1,
    "timestamp": 483,
@@ -737,14 +737,14 @@
    "lacing": "none",
    "frames": [
     [
-     5789,
+     5797,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5849,
+   "offset": 5857,
    "length": 66,
    "track": 1,
    "timestamp": 506,
@@ -753,14 +753,14 @@
    "lacing": "none",
    "frames": [
     [
-     5855,
+     5863,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5915,
+   "offset": 5923,
    "length": 66,
    "track": 1,
    "timestamp": 529,
@@ -769,14 +769,14 @@
    "lacing": "none",
    "frames": [
     [
-     5921,
+     5929,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 5981,
+   "offset": 5989,
    "length": 66,
    "track": 1,
    "timestamp": 552,
@@ -785,14 +785,14 @@
    "lacing": "none",
    "frames": [
     [
-     5987,
+     5995,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 6047,
+   "offset": 6055,
    "length": 66,
    "track": 1,
    "timestamp": 575,
@@ -801,14 +801,14 @@
    "lacing": "none",
    "frames": [
     [
-     6053,
+     6061,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 6113,
+   "offset": 6121,
    "length": 66,
    "track": 1,
    "timestamp": 598,
@@ -817,14 +817,14 @@
    "lacing": "none",
    "frames": [
     [
-     6119,
+     6127,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 6179,
+   "offset": 6187,
    "length": 66,
    "track": 1,
    "timestamp": 621,
@@ -833,14 +833,14 @@
    "lacing": "none",
    "frames": [
     [
-     6185,
+     6193,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 6245,
+   "offset": 6253,
    "length": 66,
    "track": 1,
    "timestamp": 644,
@@ -849,14 +849,14 @@
    "lacing": "none",
    "frames": [
     [
-     6251,
+     6259,
      60
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 6311,
+   "offset": 6319,
    "length": 66,
    "track": 1,
    "timestamp": 667,
@@ -865,7 +865,7 @@
    "lacing": "none",
    "frames": [
     [
-     6317,
+     6325,
      60
     ]
    ]
@@ -878,7 +878,7 @@
    "type": 2,
    "codec": "A_VORBIS",
    "private": [
-    135,
+    143,
     4202
    ],
    "channels": 2,
@@ -902,7 +902,7 @@
  ],
  "writers": [
   {
-   "name": "FFmpeg (Lavf60.16.100)",
+   "name": "encspect fixtures",
    "confidence": "Low"
   }
  ],
@@ -917,6 +917,10 @@
   {
    "code": "matroska.track-encrypted",
    "contains": "is encrypted (AES-CTR)"
+  },
+  {
+   "code": "vorbis.writer-claim-differs",
+   "contains": "Lavf60.16.100"
   }
  ],
  "crosscheck": {
