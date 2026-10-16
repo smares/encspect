@@ -1,0 +1,339 @@
+{
+ "description": "A WritingApp that holds a libavcodec encoder ID (\"Lavc60.31.102 aac\") on an AAC track: it is a claim of the encoder role, which reaches the AAC parser (that names ffmpeg's native encoder only from the stream's own evidence); the MuxingApp's \"Lavf\" is the writer.",
+ "length": 3105,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 154,
+     "length": 2951,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "Lavf60.16.100",
+    "writing_app": "Lavc60.31.102 aac"
+   },
+   "length": 3065,
+   "declared_end": 3105
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   3065,
+   [
+    [
+     "Info",
+     46,
+     59,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       16
+      ],
+      [
+       "WritingApp",
+       85,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     105,
+     49,
+     [
+      [
+       "TrackEntry",
+       110,
+       44,
+       [
+        [
+         "TrackNumber",
+         112,
+         3
+        ],
+        [
+         "TrackUID",
+         115,
+         5
+        ],
+        [
+         "TrackType",
+         120,
+         3
+        ],
+        [
+         "CodecID",
+         123,
+         16
+        ],
+        [
+         "Audio",
+         139,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           141,
+           10
+          ],
+          [
+           "Channels",
+           151,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     154,
+     2951,
+     [
+      [
+       "Timestamp",
+       160,
+       3
+      ],
+      [
+       "SimpleBlock",
+       163,
+       371
+      ],
+      [
+       "SimpleBlock",
+       534,
+       376
+      ],
+      [
+       "SimpleBlock",
+       910,
+       371
+      ],
+      [
+       "SimpleBlock",
+       1281,
+       755
+      ],
+      [
+       "SimpleBlock",
+       2036,
+       693
+      ],
+      [
+       "SimpleBlock",
+       2729,
+       376
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 163,
+   "length": 371,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     170,
+     364
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 534,
+   "length": 376,
+   "track": 1,
+   "timestamp": 23,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     541,
+     369
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 910,
+   "length": 371,
+   "track": 1,
+   "timestamp": 46,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     917,
+     364
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1281,
+   "length": 755,
+   "track": 1,
+   "timestamp": 70,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1288,
+     748
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 2036,
+   "length": 693,
+   "track": 1,
+   "timestamp": 93,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     2043,
+     686
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 2729,
+   "length": 376,
+   "track": 1,
+   "timestamp": 116,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     2736,
+     369
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_AAC/MPEG4/LC",
+   "private": null,
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "FFmpeg (Lavf60.16.100)",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "AAC",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

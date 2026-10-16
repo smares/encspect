@@ -59,7 +59,7 @@ Without it, the output is unchanged.
 
 ### `--only-format`
 
-`--only-format mpeg` (or `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `ac-3`, `asf`, `dts`, `dts-hd`, several separated by commas) analyzes only files whose detected format starts with that name and skips the rest. Detection looks at the bytes, not the extension. A name that starts no known format is wrong usage, as is a missing list (`--only-format` followed by a file or folder).
+`--only-format mpeg` (or `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `ac-3`, `asf`, `dts`, `dts-hd`, `matroska`, several separated by commas) analyzes only files whose detected format starts with that name and skips the rest. Detection looks at the bytes, not the extension. A name that starts no known format is wrong usage, as is a missing list (`--only-format` followed by a file or folder).
 
 - **Names:** the same as for `--as` (see below), so `ac3` is `ac-3`. A prefix several formats share (`a`) selects all of them. `dts` is the DTS parser's own name, so `--only-format dts` selects raw DTS files and not `.dtshd` files, which are `dts-hd`.
 
@@ -67,8 +67,8 @@ Without it, the output is unchanged.
 
 `--as aac` skips format detection and analyzes every file as that format, for a file whose format detection does not find (a damaged one) or finds wrongly. The format is named like this, ignoring case, spaces, hyphens and underscores; one that fits no format, or several (`a`), is wrong usage, as is a missing name (`--as` followed by a file or folder).
 
-- **The formats and the start of their names:** `mpeg` (MPEG Audio), `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `ac-3` (also `ac3`), `asf`, `dts`, `dts-hd`.
-- **Other names a format goes by:** `mp1`, `mp2`, `mp3` for MPEG Audio; `m4a`, `m4b`, `mov`, `3gp` for MP4; `adts`, `adif` for AAC; `eac3`, `ec3` for AC-3; `vorbis`, `opus`, `speex`, `spx`, `oga` for Ogg; `wma` for ASF; `mpc` for Musepack; `wv` for WavPack. `dtshd` is the name of DTS-HD itself (ignoring the hyphen), so `--as dtshd` analyzes a file as a DTS-HD file, with its chunks; before the DTS-HD parser existed it meant DTS. `--as dts` reads the same file as a raw DTS stream.
+- **The formats and the start of their names:** `mpeg` (MPEG Audio), `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `ac-3` (also `ac3`), `asf`, `dts`, `dts-hd`, `matroska`.
+- **Other names a format goes by:** `mp1`, `mp2`, `mp3` for MPEG Audio; `m4a`, `m4b`, `mov`, `3gp` for MP4; `adts`, `adif` for AAC; `eac3`, `ec3` for AC-3; `vorbis`, `opus`, `speex`, `spx`, `oga` for Ogg; `wma` for ASF; `mkv`, `mka`, `webm` for Matroska; `mpc` for Musepack; `wv` for WavPack. `dtshd` is the name of DTS-HD itself (ignoring the hyphen), so `--as dtshd` analyzes a file as a DTS-HD file, with its chunks; before the DTS-HD parser existed it meant DTS. `--as dts` reads the same file as a raw DTS stream.
 
 - **Tags:** found as always; only the format parser changes. The forced format's declared size decides which signatures inside the data are no tags only where the format matches the data; otherwise the detected format's does, so forcing a format that is not there leaves the tags as detection finds them.
 - **Report:** says it was forced and what detection would have chosen (see "Format detection" below), in the text tree, in JSON and in the `format.forced` finding. A CSV row does not mark it: `--as` applies to the whole run, so the command line says which files were forced.
@@ -127,6 +127,7 @@ A JSON report (schema version 1) is an object:
 - **Streams** are the audio streams as the format defines them; an MPEG stream continues across a tag embedded in it and ends where the version, layer or sample rate changes.
   - `nodes` are the paths of the nodes that hold the stream.
   - `duration` is in seconds and `averageBitrate` in kbps.
+  - `playbackGroup` is present on the streams of the tracks of an MP4 movie or of a Matroska Segment, which play at the same time: streams with the same number are one presentation, and a summary counts the longest of them once (a movie with one audio track has a group of one). Streams without it, and streams of different groups, follow one another and add up.
   - `encoder` and `encoderConfidence` name the software that turned the audio into the stream; `writer` and `writerConfidence` the software that put it into the file (the muxer, the container writer, a tagger). They are resolved apart, each from its own evidence, and either is left out where nothing names one. A writer that differs from the encoder is not a conflict. `encoder` holds what the stream and the tags that name an encoder show (a TSSE frame, a BUILDVER chunk, ffmpeg's `Lavc…` ID); `writer` holds what the container's layout and the tags that name a writer show (ASF attributes, MP4's ©too and ©swr, an APEv2 Encoder item, ffmpeg's `Lavf…` text).
   - `channelLayout` lists the speaker each channel feeds, in the stream's channel order as its format defines it. A channel without a speaker position, such as either program of dual channel, is `"discrete"`.
   - `channelLayoutName` is the layout's common name where it has one: `mono`, `stereo`, `quadraphonic`, `5.1`, `7.1`, `22.2` and others.
@@ -150,7 +151,7 @@ The CSV row of a file has:
 
 - its format and the number of streams;
 - the first audio stream's codec;
-- the duration and samples of the audio streams together;
+- the duration and samples of the audio streams together, where streams that play at the same time (a playback group: the tracks of a movie or a Matroska Segment) count the longest once;
 - their average bitrate, weighted by duration;
 - the first audio stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);
 - the first encoder named by an audio stream and its confidence (`Encoder`, `Encoder Confidence`), and the first writer named by any stream and its confidence (a fact about the file) (`Writer`, `Writer Confidence`, the two columns after the encoder's);

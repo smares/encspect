@@ -72,6 +72,13 @@ AREAS = {
         "scripts": ["crosscheck_asf_fixtures.py", "wma_tables.py", "check_wmavoice_samples.py"],
         "globs": ["scripts/fixtures/make_*asf*", "scripts/fixtures/make_voice*", "scripts/fixtures/windows/**", "tests/conformance/wmavoice-samples.json"],
     },
+    "matroska-crosscheck": {
+        "projects": ["Encspect.Formats.Matroska", "Encspect.Formats.Aac", "Encspect.Formats.Ac3", "Encspect.Formats.Dts", "Encspect.Formats.Mpeg",
+                     "Encspect.Formats.Opus", "Encspect.Formats.Vorbis"],
+        "fixtures": ["matroska"],
+        "scripts": ["crosscheck_matroska_fixtures.py", "matroska_tables.py"],
+        "globs": ["scripts/fixtures/make_*matroska*"],
+    },
     "ac3-crosscheck": {
         "projects": ["Encspect.Formats.Ac3", "Encspect.Formats.Mp4"],
         "fixtures": ["ac3"],

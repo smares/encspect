@@ -132,6 +132,13 @@ public sealed partial class Mp4Parser
         }
 
         CompareLayouts(state, entry, streams, label);
+
+        // The tracks of one movie play at the same time; a track whose codec reported several streams in a row is not marked.
+        List<StreamInfo> made = [.. state.Context.Streams.Skip(streams)];
+        if (made.Count == 1)
+        {
+            state.Context.UpdateStream(made[0], made[0] with { PlaybackGroup = 1 });
+        }
     }
 
     // A protected track tells the reader so: its ciphertext is not read, or the scheme covers samples that are in the clear.

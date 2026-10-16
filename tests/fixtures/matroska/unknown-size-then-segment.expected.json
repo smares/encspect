@@ -1,0 +1,513 @@
+{
+ "description": "A Segment of unknown size whose last Cluster has the unknown size, followed by a second Segment: each ends where the next Segment starts (RFC 8794 section 6.2).",
+ "length": 606,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 173,
+     "length": 149,
+     "timestamp": 0,
+     "size_unknown": true,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": true,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 282,
+   "declared_end": 606
+  },
+  {
+   "offset": 322,
+   "clusters": [
+    {
+     "offset": 456,
+     "length": 150,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 284,
+   "declared_end": 606
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   282,
+   [
+    [
+     "Info",
+     45,
+     52,
+     [
+      [
+       "TimestampScale",
+       50,
+       7
+      ],
+      [
+       "MuxingApp",
+       57,
+       20
+      ],
+      [
+       "WritingApp",
+       77,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     97,
+     76,
+     [
+      [
+       "TrackEntry",
+       102,
+       71,
+       [
+        [
+         "TrackNumber",
+         104,
+         3
+        ],
+        [
+         "TrackUID",
+         107,
+         5
+        ],
+        [
+         "TrackType",
+         112,
+         3
+        ],
+        [
+         "CodecID",
+         115,
+         8
+        ],
+        [
+         "CodecPrivate",
+         123,
+         22
+        ],
+        [
+         "CodecDelay",
+         145,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         151,
+         7
+        ],
+        [
+         "Audio",
+         158,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           160,
+           10
+          ],
+          [
+           "Channels",
+           170,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     173,
+     149,
+     [
+      [
+       "Timestamp",
+       178,
+       3
+      ],
+      [
+       "SimpleBlock",
+       181,
+       46
+      ],
+      [
+       "SimpleBlock",
+       227,
+       47
+      ],
+      [
+       "SimpleBlock",
+       274,
+       48
+      ]
+     ]
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   322,
+   284,
+   [
+    [
+     "Info",
+     328,
+     52,
+     [
+      [
+       "TimestampScale",
+       333,
+       7
+      ],
+      [
+       "MuxingApp",
+       340,
+       20
+      ],
+      [
+       "WritingApp",
+       360,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     380,
+     76,
+     [
+      [
+       "TrackEntry",
+       385,
+       71,
+       [
+        [
+         "TrackNumber",
+         387,
+         3
+        ],
+        [
+         "TrackUID",
+         390,
+         5
+        ],
+        [
+         "TrackType",
+         395,
+         3
+        ],
+        [
+         "CodecID",
+         398,
+         8
+        ],
+        [
+         "CodecPrivate",
+         406,
+         22
+        ],
+        [
+         "CodecDelay",
+         428,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         434,
+         7
+        ],
+        [
+         "Audio",
+         441,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           443,
+           10
+          ],
+          [
+           "Channels",
+           453,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     456,
+     150,
+     [
+      [
+       "Timestamp",
+       462,
+       3
+      ],
+      [
+       "SimpleBlock",
+       465,
+       46
+      ],
+      [
+       "SimpleBlock",
+       511,
+       47
+      ],
+      [
+       "SimpleBlock",
+       558,
+       48
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 181,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     187,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 227,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     233,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 274,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     280,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 465,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     471,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 511,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     517,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 558,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     564,
+     42
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    126,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    409,
+    19
+   ],
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  },
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  },
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.segment-size-unknown",
+   "contains": "unknown"
+  },
+  {
+   "code": "matroska.cluster-size-unknown",
+   "contains": "unknown"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

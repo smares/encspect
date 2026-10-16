@@ -1,0 +1,258 @@
+{
+ "description": "A WebM file with an AAC track and a Matroska-only element, which the WebM Container Guidelines do not allow (the codec is AAC).",
+ "length": 183,
+ "format": "WebM",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "webm",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 36,
+   "clusters": [
+    {
+     "offset": 145,
+     "length": 38,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 147,
+   "declared_end": 183
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   36,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     7
+    ],
+    [
+     "DocTypeVersion",
+     28,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     32,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   36,
+   147,
+   [
+    [
+     "Info",
+     42,
+     63,
+     [
+      [
+       "TimestampScale",
+       47,
+       7
+      ],
+      [
+       "Duration",
+       54,
+       11
+      ],
+      [
+       "MuxingApp",
+       65,
+       20
+      ],
+      [
+       "WritingApp",
+       85,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     105,
+     40,
+     [
+      [
+       "TrackEntry",
+       110,
+       35,
+       [
+        [
+         "TrackNumber",
+         112,
+         3
+        ],
+        [
+         "TrackUID",
+         115,
+         5
+        ],
+        [
+         "TrackType",
+         120,
+         3
+        ],
+        [
+         "CodecID",
+         123,
+         7
+        ],
+        [
+         "Audio",
+         130,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           132,
+           10
+          ],
+          [
+           "Channels",
+           142,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     145,
+     38,
+     [
+      [
+       "Timestamp",
+       150,
+       3
+      ],
+      [
+       "SimpleBlock",
+       153,
+       15
+      ],
+      [
+       "SimpleBlock",
+       168,
+       15
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 153,
+   "length": 15,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     159,
+     9
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 168,
+   "length": 15,
+   "track": 1,
+   "timestamp": 23,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     174,
+     9
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_AAC",
+   "private": null,
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": null,
+ "findings": [
+  {
+   "code": "matroska.webm-codec",
+   "contains": "A_AAC"
+  },
+  {
+   "code": "aac.no-configuration",
+   "contains": "AudioSpecificConfig"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

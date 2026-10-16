@@ -15,9 +15,11 @@ copies still work.
 import hashlib
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
+import time
 
 # The Wayback Machine serves the capture of url closest to the given timestamp, a year or a full
 # capture time; "id_" asks for the file as captured, without the archive's banner.
@@ -47,11 +49,54 @@ BROWSER = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.
 BROWSER_PREFIXES = ("https://www.etsi.org/",)
 
 
-def download(url, path):
+# The Wayback Machine answers intermittent 404, 429 and 5xx for captures that it serves a minute later.
+# curl's own retries are too close together to outlast that, so an address there gets further attempts
+# after growing delays, up to ARCHIVE_BUDGET seconds of waiting in all per run so that many failing
+# addresses cannot use up a job's timeout.
+ARCHIVE_PREFIX = "https://web.archive.org/"
+ARCHIVE_DELAYS = (10, 30, 60)
+ARCHIVE_BUDGET = 900
+_waited = 0
+
+
+def retry_delay(url, error, attempt, waited=0):
+    """Seconds to wait before the next attempt at url after the failure error, which is curl's exit code
+    and message, or None when it is not retried. attempt counts the retries made so far; waited is the
+    time spent waiting so far. Only the Wayback Machine, and there only an HTTP 404, 429 or 5xx or a
+    failure to connect or transfer, is retried."""
+    if not url.startswith(ARCHIVE_PREFIX) or attempt >= len(ARCHIVE_DELAYS):
+        return None
+    code, message = error
+    if code == 22:
+        status = re.search(r"error: (\d{3})", message)
+        if not status or not (status.group(1) in ("404", "429") or status.group(1).startswith("5")):
+            return None
+    delay = ARCHIVE_DELAYS[attempt]
+    return delay if waited + delay <= ARCHIVE_BUDGET else None
+
+
+def download(url, path, sleep=time.sleep):
     """Downloads url to path; returns None when it worked, else curl's error. Every error is retried,
     refused connections too: the Wayback Machine refuses a client for a while after many downloads."""
+    global _waited
     if not has_token(url):
         return f"{TOKEN} is not set"
+    attempt = 0
+    while True:
+        error = _curl(url, path)
+        if error is None:
+            return None
+        delay = retry_delay(url, error, attempt, _waited)
+        if delay is None:
+            return error[1]
+        print(f"{url}: {error[1]}; retrying in {delay} s", file=sys.stderr)
+        _waited += delay
+        sleep(delay)
+        attempt += 1
+
+
+def _curl(url, path):
+    """One curl run: None when it worked, else (exit code, last line of its error message)."""
     # The token reaches curl on its standard input, not its command line, which other processes can read.
     header = f"Authorization: Bearer {os.environ[TOKEN]}\n" if url.startswith(PRIVATE) else ""
     # A server that stops sending mid-transfer would otherwise hold curl until the job's timeout: below
@@ -60,7 +105,10 @@ def download(url, path):
     result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "15", "--retry-all-errors", "--connect-timeout", "30",
                              "--speed-limit", "1024", "--speed-time", "60", "--max-time", "900", *agent,
                              "-H", "@-", "-o", str(path), url], input=header, capture_output=True, text=True)
-    return None if result.returncode == 0 else result.stderr.strip().splitlines()[-1] if result.stderr.strip() else f"curl exit {result.returncode}"
+    if result.returncode == 0:
+        return None
+    lines = result.stderr.strip().splitlines()
+    return result.returncode, lines[-1] if lines else f"curl exit {result.returncode}"
 
 
 def sha256(path):

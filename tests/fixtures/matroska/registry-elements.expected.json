@@ -1,0 +1,438 @@
+{
+ "description": "Elements the Matroska element registry lists and RFC 9559 does not, which muxers write: an edition's hidden flag and display strings, a chapter's enabled flag, skip type and tracks, a tag's BlockAddIDValue and a track's Audio emphasis.",
+ "length": 427,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 277,
+     "length": 150,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 387,
+   "declared_end": 427
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   387,
+   [
+    [
+     "Info",
+     46,
+     52,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "MuxingApp",
+       58,
+       20
+      ],
+      [
+       "WritingApp",
+       78,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     98,
+     80,
+     [
+      [
+       "TrackEntry",
+       103,
+       75,
+       [
+        [
+         "TrackNumber",
+         105,
+         3
+        ],
+        [
+         "TrackUID",
+         108,
+         5
+        ],
+        [
+         "TrackType",
+         113,
+         3
+        ],
+        [
+         "CodecID",
+         116,
+         8
+        ],
+        [
+         "CodecPrivate",
+         124,
+         22
+        ],
+        [
+         "CodecDelay",
+         146,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         152,
+         7
+        ],
+        [
+         "Audio",
+         159,
+         19,
+         [
+          [
+           "SamplingFrequency",
+           161,
+           10
+          ],
+          [
+           "Channels",
+           171,
+           3
+          ],
+          [
+           "Emphasis",
+           174,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Chapters",
+     178,
+     65,
+     [
+      [
+       "EditionEntry",
+       183,
+       60,
+       [
+        [
+         "EditionUID",
+         186,
+         4
+        ],
+        [
+         "EditionFlagHidden",
+         190,
+         4
+        ],
+        [
+         "EditionFlagDefault",
+         194,
+         4
+        ],
+        [
+         "EditionDisplay",
+         198,
+         15,
+         [
+          [
+           "EditionString",
+           201,
+           7
+          ],
+          [
+           "EditionLanguageIETF",
+           208,
+           5
+          ]
+         ]
+        ],
+        [
+         "ChapterAtom",
+         213,
+         30,
+         [
+          [
+           "ChapterUID",
+           215,
+           4
+          ],
+          [
+           "ChapterTimeStart",
+           219,
+           3
+          ],
+          [
+           "ChapterFlagEnabled",
+           222,
+           4
+          ],
+          [
+           "ChapterSkipType",
+           226,
+           4
+          ],
+          [
+           "ChapterTrack",
+           230,
+           6,
+           [
+            [
+             "ChapterTrackUID",
+             232,
+             4
+            ]
+           ]
+          ],
+          [
+           "ChapterDisplay",
+           236,
+           7,
+           [
+            [
+             "ChapString",
+             238,
+             5
+            ]
+           ]
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Tags",
+     243,
+     34,
+     [
+      [
+       "Tag",
+       248,
+       29,
+       [
+        [
+         "Targets",
+         251,
+         11,
+         [
+          [
+           "TargetTypeValue",
+           254,
+           4
+          ],
+          [
+           "TagBlockAddIDValue",
+           258,
+           4
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         262,
+         15,
+         [
+          [
+           "TagName",
+           265,
+           8
+          ],
+          [
+           "TagString",
+           273,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     277,
+     150,
+     [
+      [
+       "Timestamp",
+       283,
+       3
+      ],
+      [
+       "SimpleBlock",
+       286,
+       46
+      ],
+      [
+       "SimpleBlock",
+       332,
+       47
+      ],
+      [
+       "SimpleBlock",
+       379,
+       48
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 286,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     292,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 332,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     338,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 379,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     385,
+     42
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    127,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

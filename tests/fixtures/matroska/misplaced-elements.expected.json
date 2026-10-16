@@ -1,0 +1,342 @@
+{
+ "description": "Elements the schema places elsewhere: a SimpleBlock directly in the Segment, a Cluster in Info and an Info at the root of the document; and a Tags element of unknown size, where the schema allows none.",
+ "length": 332,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 192,
+     "length": 101,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "x"
+   },
+   "length": 283,
+   "declared_end": 323
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   283,
+   [
+    [
+     "Info",
+     46,
+     24,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Cluster",
+       58,
+       8,
+       [
+        [
+         "Timestamp",
+         63,
+         3
+        ]
+       ]
+      ],
+      [
+       "MuxingApp",
+       66,
+       4
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     70,
+     76,
+     [
+      [
+       "TrackEntry",
+       75,
+       71,
+       [
+        [
+         "TrackNumber",
+         77,
+         3
+        ],
+        [
+         "TrackUID",
+         80,
+         5
+        ],
+        [
+         "TrackType",
+         85,
+         3
+        ],
+        [
+         "CodecID",
+         88,
+         8
+        ],
+        [
+         "CodecPrivate",
+         96,
+         22
+        ],
+        [
+         "CodecDelay",
+         118,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         124,
+         7
+        ],
+        [
+         "Audio",
+         131,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           133,
+           10
+          ],
+          [
+           "Channels",
+           143,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "SimpleBlock",
+     146,
+     46
+    ],
+    [
+     "Cluster",
+     192,
+     101,
+     [
+      [
+       "Timestamp",
+       197,
+       3
+      ],
+      [
+       "SimpleBlock",
+       200,
+       46
+      ],
+      [
+       "SimpleBlock",
+       246,
+       47
+      ]
+     ]
+    ],
+    [
+     "Tags",
+     293,
+     30,
+     [
+      [
+       "Tag",
+       298,
+       25,
+       [
+        [
+         "Targets",
+         301,
+         7,
+         [
+          [
+           "TargetTypeValue",
+           304,
+           4
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         308,
+         15,
+         [
+          [
+           "TagName",
+           311,
+           8
+          ],
+          [
+           "TagString",
+           319,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ],
+  [
+   "Info",
+   323,
+   9,
+   [
+    [
+     "MuxingApp",
+     328,
+     4
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 200,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     206,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 246,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     252,
+     41
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    99,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "x",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.misplaced-element",
+   "contains": "3 elements are placed where the schema does not allow"
+  },
+  {
+   "code": "matroska.unknown-size-not-allowed",
+   "contains": "unknown size"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

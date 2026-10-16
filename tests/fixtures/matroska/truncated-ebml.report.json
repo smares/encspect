@@ -1,0 +1,74 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "truncated-ebml.mka",
+    "root": {
+      "name": "File",
+      "value": "Matroska",
+      "offset": 0,
+      "length": 20,
+      "children": [
+        {
+          "name": "Matroska",
+          "value": "no tracks",
+          "offset": 0,
+          "length": 20,
+          "children": [
+            {
+              "name": "EBML",
+              "offset": 0,
+              "length": 20,
+              "children": [
+                {
+                  "name": "EBMLVersion",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLReadVersion",
+                  "value": 1,
+                  "offset": 9,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxIDLength",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 13,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxSizeLength",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 17,
+                  "length": 3
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "matroska.element-truncated",
+        "message": "2 elements state a size that runs past the end of the file, which is cut short: the EBML at 0x0 states 35 bytes, 20 bytes more than the file holds.",
+        "offset": 0,
+        "length": 20,
+        "path": [
+          0,
+          0
+        ],
+        "count": 2
+      }
+    ]
+  }
+]

@@ -60,6 +60,35 @@ public partial class FindingCoverageTests
         Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
     }
 
+    [GeneratedRegex("\"(matroska\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex MatroskaCode();
+
+    [GeneratedRegex("\\[\"(matroska\\.[a-z0-9-]+)\"\\] =")]
+    private static partial Regex MatroskaTable();
+
+    // Every code the Matroska parser emits is listed by a fixture's manifest or raised by a crafted file of MatroskaFindingTests.
+    [Fact]
+    public void EveryMatroskaCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Formats.Matroska"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => MatroskaCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 40, $"Found only {emitted.Count} codes.");
+
+        var asserted = MatroskaTable().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "MatroskaFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "matroska"), "*.expected.json"))
+        {
+            foreach (Match m in MatroskaCode().Matches(File.ReadAllText(path)))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
+    }
+
     [GeneratedRegex("\"(dts\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex DtsCode();
 

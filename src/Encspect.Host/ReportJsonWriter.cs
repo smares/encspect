@@ -248,6 +248,11 @@ public static class ReportJsonWriter
             writer.WriteBoolean("isVbr", stream.IsVbr);
         }
 
+        if (stream.PlaybackGroup is { } group)
+        {
+            writer.WriteNumber("playbackGroup", group);
+        }
+
         if (stream.HasObjectAudio)
         {
             writer.WriteBoolean("hasObjectAudio", true);

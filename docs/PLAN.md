@@ -79,7 +79,7 @@ A stream carries `Series` for graphs, numbers with a unit over an x axis of fram
 - **Cancellation and progress:** `Analyzer.Analyze` and `AnalyzeFile` take `AnalysisOptions` with a cancellation token and an `IProgress<long>` of bytes read. Every read through `ByteReader` checks the token, and loops that only compute (the MPEG passes over all frames) check `ParseContext.CancellationToken` every few thousand frames; cancellation surfaces as `OperationCanceledException`. Progress is the furthest file offset the format parser has read, which only grows, and the file length once the analysis is done.
 - **Readers:** `ByteReader` reads a stream, never the whole file, with absolute file offsets also in a slice: `Read(Span<byte>)` without allocating, 16-, 32- and 64-bit unsigned integers in either byte order and 24-bit big-endian ones. `BitReader` reads up to 64 bits at a time from a byte array or `ReadOnlyMemory<byte>`, most significant bit first (MPEG, FLAC) or least significant bit first (Vorbis), and yields zero bits past the end with `IsOverrun` set.
 - **Tags are separate from formats,** because ID3, APE and Lyrics3 appear in many of them.
-- **Containers hand streams to codec parsers,** for example Ogg to Vorbis and Opus, MP4 to AAC and ALAC, WAV and MP4 to MPEG audio. Parsers never reference each other; they reach other parsers only through routes on their context, which the host serves. `ParseStream(codecId, parent, payload)` hands a payload that is one byte range (a WAV data chunk) to the `ICodecParser` with that ID, and `ParsePackets(codecId, parent, packets)` hands packets as mapped bytes (Ogg pages, MP4 samples), enumerated while the codec parser runs, so a container reads them lazily. `ParseTag(tagName, slice, parent)` hands a tag that a container holds whole (an ID3v2 tag in a RIFF or AIFF chunk, a FLAC Vorbis comment block) to the tag parser of that name, through `ITagParser.ParseWhole`, and `ParseTag(tagName, tag, parent)` with mapped bytes a tag a container or codec took apart (a Speex, Vorbis or Opus comment packet, which may span Ogg pages), through `ITagParser.ParseWhole(MappedBytes, CancellationToken)`; a tag parser that does not read mapped bytes finds no tag there. The routed parser adds its nodes under the container's node; its findings, streams and encoder claims join the container's, a tag is shown as top-level tags are, with its Detection, and its encoder claims reach the codecs routed after it. Both codec routes take an optional `CodecConfiguration`: what the container stores about the coding apart from its data, as mapped bytes with the container's node that holds them (MP4 keeps AAC's AudioSpecificConfig in the esds box inside moov, far from the samples in mdat, so the codec parser builds its configuration nodes there and its other nodes under the data's node), and whether the container states a variable or a constant bitrate. The routes keep the exception boundary: truncation, invalid data or a parser bug inside the routed data become findings on the container's node (`parse.truncated`, `parse.invalid`, `parse.failed`) and the container carries on; cancellation passes through. Routes nest a few levels at most (`parse.too-deep`). The MPEG parser is the codec `mpeg-audio` for one payload, which it analyzes as it would the same bytes as a file, at their file offsets. `DefaultParsers.Codecs` lists the codecs. `CodecConfiguration.Claims` carries encoder claims that hold for that one stream (MP4's layout of one track): the routed codec parser sees them in `EncoderClaims` after the file's claims, they never go back to the caller, and they take effect only through the host's router.
+- **Containers hand streams to codec parsers,** for example Ogg to Vorbis and Opus, MP4 to AAC and ALAC, WAV and MP4 to MPEG audio. Parsers never reference each other; they reach other parsers only through routes on their context, which the host serves. `ParseStream(codecId, parent, payload)` hands a payload that is one byte range (a WAV data chunk) to the `ICodecParser` with that ID, and `ParsePackets(codecId, parent, packets)` hands packets as mapped bytes (Ogg pages, MP4 samples), enumerated while the codec parser runs, so a container reads them lazily. `ParseTag(tagName, slice, parent)` hands a tag that a container holds whole (an ID3v2 tag in a RIFF or AIFF chunk, a FLAC Vorbis comment block) to the tag parser of that name, through `ITagParser.ParseWhole`, and `ParseTag(tagName, tag, parent)` with mapped bytes a tag a container or codec took apart (a Speex, Vorbis or Opus comment packet, which may span Ogg pages), through `ITagParser.ParseWhole(MappedBytes, CancellationToken)`; a tag parser that does not read mapped bytes finds no tag there. The routed parser adds its nodes under the container's node; its findings, streams and encoder claims join the container's, a tag is shown as top-level tags are, with its Detection, and its encoder claims reach the codecs routed after it. Both codec routes take an optional `CodecConfiguration`: what the container stores about the coding apart from its data, as mapped bytes with the container's node that holds them (MP4 keeps AAC's AudioSpecificConfig in the esds box inside moov, far from the samples in mdat, so the codec parser builds its configuration nodes there and its other nodes under the data's node), and whether the container states a variable or a constant bitrate. The routes keep the exception boundary: truncation, invalid data or a parser bug inside the routed data become findings on the container's node (`parse.truncated`, `parse.invalid`, `parse.failed`) and the container carries on; cancellation passes through. Routes nest a few levels at most (`parse.too-deep`). The MPEG parser is the codec `mpeg-audio` for one payload, which it analyzes as it would the same bytes as a file, at their file offsets. `DefaultParsers.Codecs` lists the codecs. Both routes also take optional `claims`, with or without a configuration: `CodecConfiguration.Claims` are what the container read about the coding (MP4's sample-entry layout), the route's `claims` what it states about the stream (a Matroska Segment's WritingApp and MuxingApp); the codec parser weighs both after the file's. What a codec parser claims itself (the comment of a Vorbis stream) stays with its stream and is not handed to the codec parsers that run after it. `CodecConfiguration.Claims` carries encoder claims that hold for that one stream (MP4's layout of one track): the routed codec parser sees them in `EncoderClaims` after the file's claims, they never go back to the caller, and they take effect only through the host's router.
 - **Mapped bytes:** `MappedBytes` holds bytes that a container or tag took apart (a packet put together from its pages, ID3v2 data with unsynchronization undone) with a map of segments back to the file: `OffsetOf`, `FileLength`, `FileRanges`, `Slice`, and opaque bytes (decompressed data) that map to their whole source. A `BitReader` over them maps bit positions to file offsets (`FileOffsetOf`), and `Node.FromMapped` and `Node.FromBits` over mapped bytes build nodes at the file bytes the fields came from. A packet a container hands to a codec also carries what the container knows about its place in the stream: `EndPosition`, the container's position at its end in the codec's units where it records one (Ogg's granule position, on the last packet a page completes), with `EndPositionField`, the node of that field, for findings; `IsEndOfStream` on the last packet of a stream the container says has ended; and `FollowsGap` on the first packet after packets the container lost, so a codec does not count positions across the gap.
 - **Node ranges:** a node whose bytes are not contiguous in the file, such as a packet that spans Ogg pages or a field that a page header splits, carries `Ranges`, its file ranges in order; its offset and length cover them from first to last, so containment, finding paths and the writers' nesting work on the covering range. JSON writes `ranges` as offset and length pairs; the text tree with `--offsets` adds them as `[0x1A, 40 bytes in 0x1A 2 bytes, 0x40 2 bytes]`.
 - **Declared end:** a container that states its own size (RIFF, FORM, a run of top-level MP4 boxes) says where it ends through `IFormatParser.DeclaredEnd`. Before it looks for trailing tags, the host asks the parser that sniffs best on the data after the leading tags; a trailing candidate that starts before that end is the container's own chunk, reported as a near miss naming the container, and the container hands it to the tag parser itself (an AIFF file's `ID3 ` chunk, which taggers write last). A tag after the declared end is the file's, as before. A parser returns null for a size it cannot trust, such as a placeholder.
@@ -370,6 +370,118 @@ DTS Coherent Acoustics is a format parser of its own (`src/Encspect.Formats.Dts`
 
 Not covered: the subframes and the extensions' audio data, the XLL band data and the parameters of its bands, DTS:X beyond its sync word, and the core's optional information beyond its flags.
 
+## Phase 3: Dolby TrueHD and MLP
+
+Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).
+
+**Sources**
+
+- FFmpeg n6.1.1 (`ffmpeg_sources.py` pins the release):
+  - `libavcodec/mlp_parse.c` and `mlp_parse.h`: the major sync.
+  - `mlp.c` and `mlp.h`: checksums, Huffman tables, channel tables.
+  - `mlp_parser.c`: framing and the access unit parity check.
+  - `mlpdec.c`: access unit, substream directory, restart header, decoding parameters, block data, substream parity and CRC, lossless check.
+  - `mlpdsp.c`: the lossless check's sample sum.
+  - `truehd_core_bsf.c` and `profiles.c`: the Atmos substream.
+  - `mlpenc.c`: a second reading of the fields the decoder skips.
+  - `libavformat/mlpdec.c` (raw probe), `isom_tags.c` and `mov.c` (`mlpa`, `dmlp`), `matroska.c` and `matroskadec.c`.
+- Public documents that were read:
+  - The AES paper "MLP Lossless Compression" (Stuart, Craven, Gerzon, Law and Wilson, AES 9th Regional Convention, Tokyo, 1999). It describes the stream's CRC check information, its lossless self-check and the substreams, but no bit layout.
+  - The Matroska codec mapping: `A_TRUEHD` and `A_MLP` frames are access units, without CodecPrivate.
+  - The MP4 registry entries `mlpa` and `dmlp`.
+- Documents that exist but have not been read:
+  - Dolby's "Dolby TrueHD high-level bitstream description" (2018).
+  - "MLP (Dolby TrueHD) streams within the ISO Base Media File Format" (version 1.0, 2009).
+  - Both are on developer.dolby.com. Reading them is the first step of the work; a field is added to the scope only if one of them or FFmpeg's source states it.
+
+**Read from the bitstream alone**
+
+- Framing:
+  - An access unit starts with a nibble and a 12-bit length in 16-bit words (4 to 8,190 bytes).
+  - Then comes a 16-bit timestamp that is not checked.
+  - Units follow each other without gaps.
+  - A major sync starts at byte 4 of its unit with 0xF8726FBA (TrueHD) or 0xF8726FBB (MLP).
+- Major sync size: 28 bytes, or 30 plus 2 per extension word where bit 0 of byte 25 is set (the high nibble of byte 26 counts the words).
+- Major sync fields:
+  - Stream type, and the sampling rate (48 or 44.1 kHz times 1, 2 or 4), which gives 40, 80 or 160 samples per access unit.
+  - MLP: bit depth and sampling rate per channel group, and the channel arrangement.
+  - TrueHD: the channel modifiers (stereo, Dolby Surround, Dolby Headphone, mono, Dolby Digital EX) and the channel assignments of the 6-channel and 8-channel presentations (13 flags: left/right, center, LFE, surrounds, height, wide, rear surrounds and more).
+  - The signature 0xB752 and the flags word.
+  - Variable or constant bit rate, peak data rate, substream count and the substream info bytes.
+- Major sync checksum:
+  - The last two bytes, little endian.
+  - A CRC-16 (polynomial 0x002D, start value 0) over the bytes before the last four.
+  - The two bytes before the checksum are XORed into the result instead of run through it.
+- Parity nibble: the four bytes of the unit header and the substream directory (without the major sync), XORed to one byte, must have a high nibble that is the complement of the low one (`mlp_parser.c` 135 to 158, `mlpdec.c` 1264 to 1270).
+- Substream directory:
+  - Per substream 16 bits: extra word present, bit clear when the substream starts with a restart header, check data present, one unknown bit, end offset in words (cumulative).
+  - A 16-bit extra word where flagged (TrueHD only).
+  - A unit with a major sync must have the restart bit clear in every entry, and one without it set.
+- Substream data starts with a block present bit and a restart present bit.
+- Restart header:
+  - A 13-bit sync 0x18F5 and a noise-type bit, which give 0x31EA or 0x31EB.
+  - Timestamp, first and last coded channel, last matrix channel, noise shift and noise generator seed.
+  - The check data flag and the lossless check byte.
+  - The channel assignment of every matrix channel.
+  - An 8-bit CRC over the header's bits from the third bit of the substream on.
+- Decoding parameters:
+  - Block size, matrices, output shifts and quantization steps.
+  - FIR and IIR filters with their orders, shifts and coefficients.
+  - Huffman offset, codebook and bypassed least significant bits.
+- End of stream: the marker 0xD234D234 (TrueHD adds a count of samples to drop).
+- Substream tail, where the directory says so:
+  - A parity byte: all bytes before it XORed with it give 0xA9.
+  - A CRC-8 (polynomial 0x63, start value 0x3C) over the bytes before the parity byte, with the last of them XORed in.
+- Block data (the Huffman-coded residuals) is read to find where a block ends and the next begins; that needs the three codebooks from `mlp.c` and no filter, matrix or noise processing.
+- A block's check data (a bit count and a byte after the block, flagged in the restart header) is not understood: FFmpeg stops with a request for samples, so no stream is known that sets it, and the analyzer reports the flag only.
+
+**Needs decoding**
+
+- The lossless check:
+  - Each restart header holds one byte that FFmpeg compares at the next restart header with the XOR of every output sample since the last one.
+  - Per sample and channel, the value is the 24-bit sample after the output shift, shifted left by its matrix channel, then folded to 8 bits (`mlpdsp.c` 100 to 126).
+  - It is not a function of the bitstream: it needs residuals, filters, matrices with the noise channels, bypassed bits and output shifts of every substream up to the highest one decoded.
+  - It therefore belongs to the decoders that verify stored checksums (phase 3, above).
+  - FFmpeg only logs a mismatch.
+  - The first restart interval of a file has no check, and neither does one after an end of stream marker.
+- Everything else FFmpeg verifies is in the list above. It only logs a failed substream parity, CRC-8 or restart header CRC, and stops the unit for a failed major sync CRC or parity nibble.
+
+**Atmos**
+
+- FFmpeg's rule (`mlpdec.c` 389 to 398, `profiles.c` 55 to 58):
+  - A TrueHD stream with four substreams and the top bit of the substream info byte set is "Dolby TrueHD + Dolby Atmos".
+  - The decoder never decodes the fourth substream; it comments that it holds non-audio data.
+- `truehd_core_bsf.c` (105 to 111) strips the layer:
+  - It keeps three substreams.
+  - It clears that bit and the two extended substream info bits (read by the major sync but unused in 6.1.1, commented as the 16-channel presentation).
+  - It clears the extension flag and recomputes the major sync CRC.
+- The analyzer reports:
+  - The flag, the substream count and the extended substream info bits.
+  - The major sync extension words as bytes.
+  - The fourth substream's length, and its parity and CRC where the directory flags them.
+- What the fourth substream and the extension words hold is not described by any source read so far, so `HasObjectAudio` and an object count stay unset, unlike for E-AC-3.
+
+**Containers**
+
+- Raw files:
+  - FFmpeg's probe (`libavformat/mlpdec.c` 34 to 56) walks the length words from each major sync and needs 100 chained units.
+  - The analyzer's detection follows the chain as for other formats (a major sync whose unit is followed by units that pass the parity nibble) with fewer.
+  - `.thd` and `.mlp` are the extensions.
+- MP4:
+  - Sample entry `mlpa` (TrueHD only in FFmpeg), one access unit per sample.
+  - A `dmlp` box of at least 10 bytes: the 32 bits that follow the sync word in the first major sync (sampling rate, channel modifiers and assignments), a 16-bit peak data rate and 4 reserved bytes (`mov.c` 7531 to 7564, `movenc.c` 859 to 886).
+  - FFmpeg's demuxer reads the first field only; the analyzer compares it with the stream's first major sync.
+- Matroska:
+  - `A_TRUEHD` and `A_MLP` blocks are access units without CodecPrivate.
+  - The Matroska parser reports them as `matroska.codec-not-analyzed` today; once the TrueHD codec parser exists, it routes those blocks to it.
+
+Not covered:
+
+- The contents of the fourth substream and of the major sync extension.
+- The audio itself beyond the lossless check.
+- TrueHD with the AC-3 core interleaved as on Blu-ray (FFmpeg's raw parser does not read it either).
+- Fields FFmpeg skips: the flags word and the substream info bits other than the Atmos bit are shown as raw values.
+
 ## Format detection
 
 Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and the host picks the format from the evidence of all of them, never from the order of the parser list.
@@ -396,15 +508,15 @@ Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and 
 
 | Class | Evidence |
 |---|---|
-| 100 | DTS-HD file: `DTSHDHDR` at the start followed by a chain of chunks that fit (8-character IDs of printable characters, sizes of 4 to 2^61 bytes); MP4's ftyp box; Ogg's chain of pages from the start; Musepack's magic number with a consistent SV7 header (version 7, a frame count, a max band from 1 to 31, a last frame of at most 1,152 samples) or an SV8 stream header; ASF's Header Object GUID; WavPack's block header followed by another or by the end |
+| 100 | Matroska or WebM: an EBML header with DocType matroska or webm followed by a Segment; DTS-HD file: `DTSHDHDR` at the start followed by a chain of chunks that fit (8-character IDs of printable characters, sizes of 4 to 2^61 bytes); MP4's ftyp box; Ogg's chain of pages from the start; Musepack's magic number with a consistent SV7 header (version 7, a frame count, a max band from 1 to 31, a last frame of at most 1,152 samples) or an SV8 stream header; ASF's Header Object GUID; WavPack's block header followed by another or by the end |
 | 95 | MP4's run of top-level boxes that holds moov, mdat or moof; Musepack versions 4 to 6 with three units or more |
 | 93 | DTS chain at the start |
 | 92 | AC-3 chain at the start |
 | 91 | ADTS chain at the start, ADIF header |
-| 90 | MPEG audio chain, wherever it starts in the first MiB; WavPack header whose block the data cuts short |
-| 80 | WavPack header at the start followed by bytes that are none; `DTSHDHDR` at the start with a first chunk the data cuts short or a chain that breaks after it |
-| 70 | `DTSHDHDR` at the start with a first chunk whose size is invalid |
-| 60 | Ogg chain further in (within 64 KiB); Musepack versions 4 to 6 with fewer than three units; "MP+" at the start of data whose SV7 header is not consistent; WavPack chain further in |
+| 90 | Matroska EBML header (DocType matroska or webm) with no Segment after it; MPEG audio chain, wherever it starts in the first MiB; WavPack header whose block the data cuts short |
+| 80 | Matroska Segment at the start with a consistent child (a file whose EBML header was cut off); WavPack header at the start followed by bytes that are none; `DTSHDHDR` at the start with a first chunk the data cuts short or a chain that breaks after it |
+| 70 | EBML header that does not hold (no DocType, or an invalid field); `DTSHDHDR` at the start with a first chunk whose size is invalid |
+| 60 | Matroska run of top-level elements, or a Cluster with a Timestamp, at the start; Ogg chain further in (within 64 KiB); Musepack versions 4 to 6 with fewer than three units; "MP+" at the start of data whose SV7 header is not consistent; WavPack chain further in |
 | 50 | AC-3, ADTS (with eight frames or frames to the end of the data) and DTS chain further in |
 | 30 | MPEG audio chain that is not credible: a free-format chain whose frames do not hold what their headers promise, or a protected chain further in than the start of the data none of whose frames passes its CRC |
 
@@ -501,7 +613,7 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
 | 2 (lossy) | MP4 and raw AAC (ADTS) with AAC LC, HE-AAC, HE-AAC v2 and xHE-AAC (USAC); Ogg with Vorbis, Opus and Speex (Ogg hands streams to codec parsers); Musepack SV4 to SV8; ASF with WMA standard and WMA Pro; AC-3 and E-AC-3; DTS core; WavPack, whose hybrid mode is lossy (a lossy .wv file and an optional .wvc correction file), with its lossless mode in the same parser |
 | 2 (lossy), continued | The steps listed under "Phase 2, continued" below, in that order |
 | Gate 2 | Pipeline green everywhere, review findings fixed |
-| 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, Monkey's Audio, TTA; Dolby TrueHD at header level (raw `.thd`, MP4 mlpa, Matroska), including whether an Atmos layer is present; lossless decoders that verify the stored checksums (WavPack MD5 and DSD, FLAC, ALAC, Monkey's Audio, TTA, WMA Lossless) |
+| 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, Monkey's Audio, TTA; Dolby TrueHD and MLP frame by frame, from FFmpeg's `mlpdec.c` (raw `.thd` and `.mlp`, MP4 `mlpa`, Matroska `A_TRUEHD` and `A_MLP`; see "Phase 3: Dolby TrueHD and MLP"), including whether an Atmos substream is present; lossless decoders that verify the stored checksums (WavPack MD5 and DSD, FLAC, ALAC, Monkey's Audio, TTA, WMA Lossless, Dolby TrueHD and MLP) |
 | Gate 3 | Pipeline green everywhere, review findings fixed |
 | 4 | TAK and OptimFROG at header level only |
 | Later, order not fixed | The items listed under "Later" below |
@@ -538,7 +650,17 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
    - Statistics and series: superframes, frames, samples (equal to the samples ffmpeg decodes, for every fixture and real file), bitrates, the frames by type, codebook and number of blocks. About 175 bytes are kept per superframe; at most 524,288 superframes and 262,144 packets are described. The average bitrate counts the packets' bytes, as for the other codecs; the superframes' bits are the average superframe bitrate.
    - Fixtures: 28 hand-built files (`make_voice_fixtures.py`, `voice_model.py`; also media objects of other sizes, errors that drop the rest of a media object, packets that change the residual flag, and a cache that overflows), which ffmpeg decodes to the analyzer's sample counts, also the damaged ones; the six Windows files (two of tones, four of a speech-like signal); and 11 real files from the FFmpeg sample archive checked in CI by SHA-256 (`check_wmavoice_samples.py`, `tests/conformance/wmavoice-samples.json`).
    - Articles: `wma-voice` (extended), `wma-voice-superframes` and `wma-voice-frames`. See docs/formats/asf-wma.md.
-6. Matroska and WebM (RFC 9559, RFC 8794): audio tracks are routed to the codec parsers, video tracks are read at container level only.
+6. Matroska and WebM (RFC 9559, RFC 8794): audio tracks are routed to the codec parsers, video tracks are read at container level only. Done (October 2026).
+   - One parser, "Matroska" (`src/Encspect.Formats.Matroska`), reported as WebM when the DocType is `webm`. The element table (`Elements.cs`, 273 elements with their defaults) is generated from the pinned RFCs and the Matroska element registry, `ebml_matroska.xml` pinned by commit and SHA-256, whose ten elements RFC 9559 does not list (an edition's hidden flag, a chapter's enabled flag, ChapterTrack and the minimum-version-5 elements) muxers write (`matroska_specs.py`, `matroska_tables.py --check`). An empty element takes its default (RFC 8794, section 6.1). Read: the EBML header, Segment, SeekHead, Info, Tracks with every TrackEntry, ContentEncodings, Cues, Chapters, Attachments, Tags, Void and CRC-32 (verified), unknown-size Segments and Clusters, all four lacing modes, and unknown or misplaced elements.
+   - Routes: AAC, AC-3, E-AC-3, DTS, Vorbis and Opus by codec ID through `ParsePackets`, with header stripping and zlib undone first for Opus and Vorbis only (the others place their nodes at the offsets of contiguous file bytes, so stripped or inflated frames of AAC, AC-3 and DTS are reported, not read; Matroska header stripping for them is listed under "Later"); the codec's stream is merged as MP4's is and compared with the TrackEntry. MPEG audio is counted at container level (its parser reads a contiguous payload). Codec IDs without a parser (FLAC, ALAC, TrueHD, TTA, WavPack, PCM and others) give an Info finding and belong to phase 3. Encrypted frames are reported, never decoded; so are bzlib and lzo compression.
+   - Memory: Cluster contents are compact records (about 120 bytes per block, up to 6,000,000), and elements outside Clusters are nodes up to 250,000; `MemoryTests` hold both.
+   - Legacy `A_AAC/MPEG2|4/*` IDs carry no CodecPrivate (draft-ietf-cellar-codec, section 3.4.2 and following): the AudioSpecificConfig is built from the ID, the sampling frequency, the channels and, for /SBR, the output sampling frequency, following ISO/IEC 14496-3, as FFmpeg's `matroskadec.c` does for the common rates, and shown under the CodecID that gives its values.
+   - Streams that play at the same time share a `StreamInfo.PlaybackGroup` (one per Matroska Segment, one per MP4 movie); the summary and the CSV count the longest of a group once and add up the groups and the streams without one. ASF's multi-bitrate streams are alternatives, not parallel streams, and are not grouped (see "Later").
+   - Live files: the `DeclaredEnd` of a Segment of unknown size is the end of the Top-Level Elements and Cluster children that follow one another, so a tag appended to a recording is the file's; an unknown-size Segment or Cluster also ends where a Segment starts.
+   - Limits: the frames of laced blocks are counted against a budget of 4,000,000 (a block of seven bytes can state 256 frames), and fixed-size lacing stores no sizes.
+   - Writer claims: the Segment's WritingApp and MuxingApp are claims of the writer role, WritingApp first (a `Lavc` encoder ID takes the encoder role), scoped to the Segment: they reach the codec parsers of its tracks through the route's `claims` and nobody else's. A MuxingApp that names the Matroska libraries is only evidence (the codec parsers get it only when there is no WritingApp); two apps that name different software are one `matroska.writer-claim-differs` per Segment. A contained Vorbis stream weighs the container's claims before its own comment (`vorbis.writer-claim-differs`). Streams whose parser names none get the Writer from the Matroska parser (`matroska.writer-other-format` for software known to write another format). A codec parser's claims no longer leave its stream (the router's pass-back is gone).
+   - Fixtures: 80 hand-built files (`make_matroska_fixtures.py`, with the independent `matroska_model.py`) and 43 from ffmpeg and mkvmerge, checked by `crosscheck_matroska_fixtures.py` against mkvinfo, ffprobe, ffmpeg and MediaInfo in the `matroska-crosscheck` job. See docs/formats/matroska.md.
+   - Articles: `ebml`, `matroska-container`, `matroska-lacing`, `matroska-tracks` and `matroska-timestamps`.
 7. DRM and protection reporting. Done (October 2026).
    - `StreamInfo.Protection` (`StreamProtection`: the scheme, whether the samples are encrypted, the DRM systems the file names) and `IsProtected`, which a container sets on the stream a codec parser reported (`UpdateStream`) or on one it builds; `CodecConfiguration.AreSamplesEncrypted` tells a codec parser that the container hands it a configuration and no packets, since ciphertext is no valid coding. JSON `isProtected` and `protection`, the CSV columns `Is Protected`, `Protection Scheme` and `DRM Systems`, the GUI's stream line and Protection column (summary cache format 4). See docs/cli.md and docs/gui.md.
    - ASF: the Content Encryption, Extended Content Encryption, Advanced Content Encryption and Digital Signature Objects (sections 3.14, 3.15, 4.13, 3.16, with 10.7 for the one system ID) and the Encrypted Content Flag (3.3) protect streams as the specification says: the first two cover the file, the Advanced Content Encryption Object the streams its records name (0 is the file), the flag its stream, the signature nothing. An encrypted stream is described from its WAVEFORMATEX by the WMA parsers, which read no packet. See docs/formats/asf-wma.md.
@@ -563,6 +685,10 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
   - WavPack 1 to 3.
   - Finding the `.wvc` that belongs to a `.wv` (host access to a companion file).
   - ASF script command and marker contents.
+  - MPEG audio as packets (MP4 and Matroska), which the MPEG parser reads only as one contiguous payload.
+  - `A_MS/ACM` routing by the WAVEFORMATEX format tag.
+  - Matroska header stripping for AAC, AC-3, DTS and MPEG audio: a two-range `MappedBytes` whose prefix maps to the ContentCompSettings bytes.
+  - ASF streams: parallel streams against multi-bitrate alternatives (the summary adds up the durations of an ASF file's streams, which are alternatives when they are bitrate variants of one presentation).
 
 A gate means the pipeline is green on every platform and the review agent's findings are resolved; the first gate also requires the shared contract to have settled. Gate 1 passed in October 2026: six independent reviews (ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI) found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract); the contract review's 12 gaps closed in four steps (#32 to #35): exception boundary, cancellation and parser contexts; typed data with node kinds, streams, series and linked findings; routes from containers to codec and tag parsers; compact MPEG frame records. TAK and OptimFROG are poorly documented, so they stay at header level. The entropy pass and the decoders are not tied to a phase yet. The GUI's first slice is built (October 2026): the main window with the folder tree, the file list and its background analysis, and the detail window with the structure tree, hex view, bits, findings and export. The second slice adds the graphs, linked to the tree, and the summary cache for folder views. HE-AAC and HE-AAC v2 may be signaled only inside the frames, in a fill element after the coded spectra, so the AAC parser reads each raw data block's Huffman-coded data far enough to reach it, without dequantizing or transforming; the same pass gives AAC's coding statistics (window sequences, mid/side and intensity stereo, TNS, noise substitution). For the other codecs, and for MP3 first, that depth stays the later entropy pass. Phase 2 began with the Ogg container and Speex (October 2026, see "Phase 2: Ogg, Speex, Vorbis and Opus"); Vorbis and Opus followed on the same container, as codec parsers without changes to it. Musepack SV7 and SV8 followed (see "Phase 2: Musepack"). AC-3 and E-AC-3 followed (see "Phase 2: AC-3 and E-AC-3"), then ASF with WMA (see "Phase 2: ASF and WMA"), WavPack (see "Phase 2: WavPack") and DTS core (see "Phase 2: DTS"). Phase 2 then continues in the order listed under "Phase 2, continued" (FAAC and Apple detection, Dolby Atmos, DTS-HD, WMA Voice, Matroska and WebM, protection reporting) before Gate 2; the lossless formats of phase 3 come after it.
 

@@ -107,6 +107,9 @@ public sealed class Analyzer
         ["spx"] = "Ogg",
         ["oga"] = "Ogg",
         ["wma"] = "ASF",
+        ["mkv"] = "Matroska",
+        ["mka"] = "Matroska",
+        ["webm"] = "Matroska",
         ["mpc"] = "Musepack",
         ["wv"] = "WavPack",
     };

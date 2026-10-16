@@ -51,6 +51,11 @@ public sealed record StreamInfo
 
     public bool IsVbr { get; init; }
 
+    // Streams of one group play at the same time, such as the tracks of a movie or of a Matroska Segment: a summary of the file counts the
+    // longest of them once instead of adding their durations and samples up. Streams in different groups, and streams without a group,
+    // follow one another (the regions of an MPEG file) and add up. The number only tells groups apart.
+    public int? PlaybackGroup { get; init; }
+
     // True where the stream's data carry object-based audio: for E-AC-3, joint object coding (JOC)
     // side information in an EMDF container (ETSI TS 103 420), the layer Dolby Atmos adds to a
     // channel-based stream. A stream that only signals it, as a container's configuration may, is not; nor is DTS:X, whose word after the band data is reported through the profile.
