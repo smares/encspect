@@ -117,6 +117,7 @@ internal sealed partial class FileReader
         Schema.Ebml => Topics.Ebml,
         Schema.Segment or Schema.Cluster or Schema.SeekHead or Schema.Cues or Schema.Chapters or Schema.Attachments or Schema.Tags => Topics.Container,
         Schema.Tracks or 0x6D80 => Topics.Tracks,
+        0x5035 or 0x47E1 or 0x47E7 or 0x47E8 or 0x5032 => Topics.ContentEncryption,
         0x2AD7B1 or Schema.Timestamp => Topics.Timestamps,
         Schema.Crc32 => Topics.Crc,
         Schema.SimpleBlock or Schema.Block => Topics.Lacing,
