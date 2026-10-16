@@ -421,11 +421,12 @@ internal sealed partial class FileReader
     {
         TrackStatistics statistics = track.Statistics;
         string codecId = track.CodecId ?? string.Empty;
-        // The samples of a track whose frames are not read come from the container's timing: for encrypted frames less the codec's delay, as the
-        // clear track's codec parser counts them, and for encodings that cannot be ordered, encrypted or not, from the timing alone.
+        // The samples of a track whose frames are not read come from the container's timing less the codec's delay, as the clear track's codec
+        // parser counts them: for encrypted frames, and for encodings that cannot be ordered, encrypted or not, whose CodecPrivate is not trusted, so
+        // that Opus takes the CodecDelay and not the OpusHead's pre-skip.
         bool areFramesEncrypted = protection is { IsEncrypted: true };
         bool areSamplesTimed = areFramesEncrypted || isUnordered;
-        double duration = areFramesEncrypted && !isUnordered ? EncryptedDuration(segment, track, privateData) : ContainerDuration(segment, track);
+        double duration = areSamplesTimed ? EncryptedDuration(segment, track, isUnordered ? null : privateData) : ContainerDuration(segment, track);
         double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
@@ -545,8 +546,11 @@ internal sealed partial class FileReader
             return plan;
         }
 
-        Cover? covering = null;
-        Cover? other = null;
+        Cover? first = null;
+        bool isFramesEncrypted = false;
+
+        // The CodecPrivate is covered only if the track has one.
+        bool hasPrivate = track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0;
         foreach (OrderedEncoding ordered in track.OrderedEncodings())
         {
             EncodingInfo encoding = ordered.Encoding;
@@ -559,7 +563,8 @@ internal sealed partial class FileReader
                 isEncryption = ordered.IsHiddenEncrypted;
                 if (isEncryption)
                 {
-                    cover = new Cover(ordered.HiderEncrypts ? EncryptionName(ordered.Hider) : null);
+                    // An encryption hidden in the chain may be the one that encrypts it, with an algorithm nobody can read: the scheme then has no algorithm.
+                    cover = new Cover(ordered.HiderEncrypts && !ordered.Hiders.Skip(1).Any(h => h.Type == 1) ? EncryptionName(ordered.Hider) : null);
                     problem = cover.Name is { } hiddenName ? $"encrypted ({hiddenName})" : "encrypted";
                 }
                 else
@@ -600,31 +605,32 @@ internal sealed partial class FileReader
             }
 
             plan.Frames.Apply(encoding.AppliesToFrames, isEncryption, problem, step);
-            plan.Private.Apply(encoding.AppliesToCodecPrivate, isEncryption, problem, step);
+            plan.Private.Apply(encoding.AppliesToCodecPrivate && hasPrivate, isEncryption, problem, step);
 
             // An encryption covers a part of the track only through its own scope (an encryption with bit 4 covers what the encoding it hides covers).
-            if (!encoding.AppliesToFrames && !encoding.AppliesToCodecPrivate)
+            if (!encoding.AppliesToFrames && !(encoding.AppliesToCodecPrivate && hasPrivate))
             {
                 continue;
             }
 
-            if (cover is not null && encoding.AppliesToFrames)
+            if (cover is not null)
             {
-                covering ??= cover;
-            }
-            else if (cover is not null)
-            {
-                other ??= cover;
+                first ??= cover;
+                if (encoding.AppliesToFrames)
+                {
+                    isFramesEncrypted = true;
+                }
             }
         }
 
-        // The scheme is the outermost encryption that covers the frames; with none, the first that covers something else, whose samples are in the clear.
-        if ((covering ?? other) is { } scheme)
+        // The scheme is that of the first encryption, from the highest order down, that covers a part of the track; the samples are encrypted when the
+        // frames are, and in the clear when only the CodecPrivate is.
+        if (first is not null)
         {
             plan.Protection = new StreamProtection
             {
-                Scheme = scheme.Name is { } name ? $"Matroska ContentEncryption, {name}" : "Matroska ContentEncryption",
-                IsEncrypted = covering is not null,
+                Scheme = first.Name is { } name ? $"Matroska ContentEncryption, {name}" : "Matroska ContentEncryption",
+                IsEncrypted = isFramesEncrypted,
             };
         }
 

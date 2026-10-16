@@ -792,7 +792,7 @@
         "playbackGroup": 1,
         "isProtected": true,
         "protection": {
-          "scheme": "Matroska ContentEncryption, AES-CTR",
+          "scheme": "Matroska ContentEncryption",
           "isEncrypted": true,
           "systems": []
         },
@@ -805,7 +805,7 @@
       {
         "severity": "Info",
         "code": "matroska.track-encrypted",
-        "message": "Track 1 (A_OPUS) is encrypted (AES-CTR), so its frames cannot be analyzed.",
+        "message": "Track 1 (A_OPUS) is encrypted, so its frames cannot be analyzed.",
         "offset": 175,
         "length": 33,
         "path": [

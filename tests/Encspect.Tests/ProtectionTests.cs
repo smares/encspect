@@ -262,7 +262,7 @@ public class ProtectionTests
     [InlineData("matroska/encrypted-next-encoding.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-over-algorithm-none.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
     [InlineData("matroska/encrypted-over-3des.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
-    [InlineData("matroska/encrypted-chain.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-chain.mka", "Matroska ContentEncryption", true, "matroska.track-encrypted")]
     [InlineData("matroska/compression-hides-encryption.mka", "Matroska ContentEncryption", true, "matroska.encoding-hidden")]
     [InlineData("matroska/encrypted-in-chain-middle.mka", "Matroska ContentEncryption", true, "matroska.encoding-hidden")]
     [InlineData("matroska/encrypted-aac-delay.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
@@ -314,15 +314,27 @@ public class ProtectionTests
         Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
     }
 
-    // Tied encodings give a clear and an encrypted track the same container timing: the length of the blocks, and the samples at the sampling frequency.
+    // An encryption of the CodecPrivate on a track that has none covers nothing: no protection (and, for Opus, the missing CodecPrivate is the finding).
+    [Fact]
+    public void MatroskaEncryptionOfAMissingCodecPrivateIsNotProtection()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/encrypted-private-missing.mka");
+
+        Assert.Null(Assert.Single(report.Streams).Protection);
+        Assert.Contains(report.Findings, f => f.Code == "matroska.encryption-covers-nothing");
+        Assert.Contains(report.Findings, f => f.Code == "matroska.codec-private-missing");
+    }
+
+    // Tied encodings give a clear and an encrypted track the same container timing less the CodecDelay (Opus, whose CodecPrivate is not trusted when the
+    // encodings cannot be ordered, takes the CodecDelay and not the OpusHead's pre-skip): 80 ms of blocks, 6.5 ms of delay, the rest at 48 kHz.
     [Fact]
     public void MatroskaTiedTracksHaveTheContainersTiming()
     {
         StreamInfo clear = Assert.Single(Fixtures.AnalyzeMpeg("matroska/same-order-two-compressions.mka").Streams);
         StreamInfo encrypted = Assert.Single(Fixtures.AnalyzeMpeg("matroska/same-order-encryption-and-stripping.mka").Streams);
 
-        Assert.Equal(0.08, clear.Duration, 6);
-        Assert.Equal(3840, clear.Samples);
+        Assert.Equal(0.0735, clear.Duration, 6);
+        Assert.Equal(3528, clear.Samples);
         Assert.Equal(clear.Duration, encrypted.Duration, 6);
         Assert.Equal(clear.Samples, encrypted.Samples);
     }

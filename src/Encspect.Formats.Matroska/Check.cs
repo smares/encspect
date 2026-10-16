@@ -132,13 +132,13 @@ internal sealed partial class FileReader
         {
             foreach (OrderedEncoding ordered in track.OrderedEncodings())
             {
-                CheckEncryption(which, ordered, node);
+                CheckEncryption(which, ordered, track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0, node);
             }
         }
     }
 
     // The ContentEncryption of a ContentEncoding (RFC 9559 sections 5.1.4.1.31.8 to 5.1.4.1.31.12): what the track's reader ignores or reads as clear.
-    private void CheckEncryption(string which, OrderedEncoding ordered, Node fallback)
+    private void CheckEncryption(string which, OrderedEncoding ordered, bool hasPrivate, Node fallback)
     {
         EncodingInfo encoding = ordered.Encoding;
         Node node = encoding.Node ?? fallback;
@@ -154,10 +154,10 @@ internal sealed partial class FileReader
             return;
         }
 
-        if (encoding.Type == 1 && !(encoding.HasEncryption && encoding.EncryptionAlgorithm == 0) && (encoding.Scope & 3) == 0 && !((encoding.Scope & 4) != 0 && ordered.HasNext))
+        if (encoding.Type == 1 && !(encoding.HasEncryption && encoding.EncryptionAlgorithm == 0) && (encoding.Scope & 1) == 0 && !((encoding.Scope & 2) != 0 && hasPrivate) && !((encoding.Scope & 4) != 0 && ordered.HasNext))
         {
             _findings.AddNow(Severity.Info, "matroska.encryption-covers-nothing",
-                $"{which} has a ContentEncoding of type 1 (encryption) whose ContentEncodingScope names neither the frames nor the CodecPrivate and which has no next ContentEncoding to hide (section 5.1.4.1.31.3), so it encrypts nothing and the track is not reported as protected by it.", node);
+                $"{which} has a ContentEncoding of type 1 (encryption) whose ContentEncodingScope names neither the frames nor a CodecPrivate the track has and which has no next ContentEncoding to hide (section 5.1.4.1.31.3), so it encrypts nothing and the track is not reported as protected by it.", node);
         }
 
         if (encoding.Type == 0 && encoding.HasEncryption)

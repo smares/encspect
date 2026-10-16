@@ -1,5 +1,5 @@
 {
- "description": "AES-CTR (scope 4) over 3DES (scope 4) over header stripping: each hides the next, so the scheme names the AES encryption and the stripped bytes are not used.",
+ "description": "AES-CTR (scope 4) over 3DES (scope 4) over header stripping: each hides the next. The 3DES encryption is hidden in the chain, so its algorithm cannot be read, and the stripping it hides counts as encrypted by an unknown algorithm: the scheme has no algorithm.",
  "length": 465,
  "format": "Matroska",
  "ebml": {
@@ -489,7 +489,7 @@
   },
   {
    "code": "matroska.track-encrypted",
-   "contains": "is encrypted (AES-CTR)"
+   "contains": "is encrypted, so"
   }
  ],
  "crosscheck": {

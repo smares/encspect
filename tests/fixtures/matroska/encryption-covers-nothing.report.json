@@ -1100,7 +1100,7 @@
       {
         "severity": "Info",
         "code": "matroska.encryption-covers-nothing",
-        "message": "Track 1 has a ContentEncoding of type 1 (encryption) whose ContentEncodingScope names neither the frames nor the CodecPrivate and which has no next ContentEncoding to hide (section 5.1.4.1.31.3), so it encrypts nothing and the track is not reported as protected by it.",
+        "message": "Track 1 has a ContentEncoding of type 1 (encryption) whose ContentEncodingScope names neither the frames nor a CodecPrivate the track has and which has no next ContentEncoding to hide (section 5.1.4.1.31.3), so it encrypts nothing and the track is not reported as protected by it.",
         "offset": 173,
         "length": 33,
         "path": [

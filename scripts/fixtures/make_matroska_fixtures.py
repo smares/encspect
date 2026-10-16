@@ -390,8 +390,9 @@ def _():
     return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
 
 
-@fixture("encrypted-chain", "AES-CTR (scope 4) over 3DES (scope 4) over header stripping: each hides the next, so the scheme names the AES encryption and the stripped bytes are not used.",
-         findings=[("matroska.encoding-hidden", "order 1 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.encoding-hidden", "order 0 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+@fixture("encrypted-chain", "AES-CTR (scope 4) over 3DES (scope 4) over header stripping: each hides the next. The 3DES encryption is hidden in the chain, so its algorithm cannot be "
+         "read, and the stripping it hides counts as encrypted by an unknown algorithm: the scheme has no algorithm.",
+         findings=[("matroska.encoding-hidden", "order 1 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.encoding-hidden", "order 0 whose settings are hidden by the ContentEncoding of order 2"), ("matroska.track-encrypted", "is encrypted, so")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=2, scope=4, encryption=5, cipher=1, key_id=b"\x03"), content_encoding(order=1, scope=4, encryption=2, key_id=b"\x04"),
                             content_encoding(order=0, scope=1, compression=3, settings=b"\xde\xad"))
@@ -514,6 +515,14 @@ def _():
          findings=NOT_ORDERED, streams=[("Opus", 48000, 1)], valid=False)
 def _():
     return tie_file(TIE_CASES["same-order-stray-encryption"])
+
+
+@fixture("encrypted-private-missing", "AES-CTR with scope 2 (the CodecPrivate) on a track that has none: the encryption covers nothing, so the track is not protected, and the Opus "
+         "track lacks the CodecPrivate it needs.",
+         findings=[("matroska.encryption-covers-nothing", "encrypts nothing"), ("matroska.codec-private-missing", "no CodecPrivate")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=2, encryption=5, cipher=1, key_id=b"\x03"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(private=None, encodings=enc)]))
 
 
 @fixture("encrypted-empty", "An encrypted track that no block uses: its protection is reported all the same.",
