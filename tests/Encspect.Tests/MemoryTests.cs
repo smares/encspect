@@ -709,18 +709,15 @@ public class MemoryTests(ITestOutputHelper output)
         return (report, kept, Math.Max(Math.Max(before, sampled), atEnd) - before);
     }
 
-    // What the analysis holds above the heap it ends with (report alive), read at fixed places in
-    // the input, not at fixed times: the stream the analysis reads from reads the live heap with
-    // the compacting collections of Live each time a read reaches the next eighth of the input
-    // (ProbeStream). That is the transient state of the analysis (what it held and let go of)
-    // without the report's own size and without the heap before the analysis, and it reads the
-    // same for the same input whatever the machine is doing. Two samplers gave up this test. With
-    // the heap before the analysis as the baseline, the 1 million packet peak read 3.4 MB too
-    // little on ubuntu-26.04 (1.15 bytes per further packet). A sampler of non-compacting
-    // collections, read above the end state, read 15.8 MB (x64) and 50 MB (arm64) at 4 million
-    // packets where it read 64 KB at 1 million, which no read of the heap with compacting
-    // collections shows. As with kept, two analyses are taken and the smaller excess counts. What
-    // the analysis holds only after its last read is not seen; what it keeps is bounded by kept.
+    // What the analysis holds above the heap it ends with (report alive), as the highest of the
+    // live heap read at 32 places in the input and by a thread that reads it every 300 ms, all by
+    // the compacting collections of Live, so only live objects count and no reading can be too
+    // high. The places are fixed fractions of the input, read after the read that reaches them in
+    // any pass over it (ProbeStream), so they do not depend on timing; the thread covers the work
+    // after the last read and the stretches between places, and its timing only decides whether
+    // it catches a transient that exists. docs/development.md, "Memory tests", gives the
+    // measurement, what it can and cannot see, and the failures that led to it. As with kept, two
+    // analyses are taken and the smaller excess counts.
     private static (Report Report, long Kept, long Excess) MeasureExcess(string name, byte[] data, byte[]? warmUp = null)
     {
         var analyzer = Analyzer.CreateDefault();
@@ -736,53 +733,120 @@ public class MemoryTests(ITestOutputHelper output)
         return (report, kept, Math.Min(Math.Max(0, highest - atEnd), Math.Max(0, secondHighest - atEnd)));
     }
 
-    // The live heap with the report alive and the highest live heap read while the input was read;
-    // the report is dropped on return.
+    // The live heap with the report alive and the highest live heap read during the analysis; the
+    // report is dropped on return. A measurement whose probes did not fire is a failure, not a pass.
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static (long WithReport, long Highest) ProbedAnalysis(Analyzer analyzer, string name, byte[] data)
     {
-        var stream = new ProbeStream(data, 8);
+        var stream = new ProbeStream(data);
+        bool done = false;
+        var sampler = new Thread(() =>
+        {
+            long next = 0;
+            while (!Volatile.Read(ref done))
+            {
+                if (Environment.TickCount64 >= next || stream.Ended)
+                {
+                    stream.Record(LiveOnce());
+                    next = Environment.TickCount64 + 300;
+                }
+                else
+                {
+                    Thread.Sleep(10);
+                }
+            }
+        });
+        sampler.Start();
         Report report = analyzer.Analyze(name, stream);
+        Volatile.Write(ref done, true);
+        sampler.Join();
+        Assert.True(stream.Probes >= ProbeStream.Places.Length, $"The input was probed {stream.Probes} times, fewer than its {ProbeStream.Places.Length} places.");
         long live = Live();
         GC.KeepAlive(report);
         return (live, stream.Highest);
     }
 
-    private sealed class ProbeStream(byte[] data, int parts) : MemoryStream(data)
+    private sealed class ProbeStream(byte[] data) : MemoryStream(data)
     {
-        private long _passed;
+        // Prime numerators of 137: irregular, fixed fractions of the input.
+        public static readonly int[] Places =
+            [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131];
 
-        public long Highest { get; private set; }
+        private const int Denominator = 137;
 
-        // Each time the position moves up to a new eighth of the input, whichever pass over the
-        // input that is (detection reads it before the parser does): a move back re-arms it.
+        private long _highest;
+        private int _passed;
+        private int _probes;
+        private long _endedUntil;
+
+        public long Highest => Volatile.Read(ref _highest);
+
+        public int Probes => Volatile.Read(ref _probes);
+
+        // True for half a second after a read has reached the end of the input, when what the
+        // analysis does next (checks, the stream info, the findings) is read back to back.
+        public bool Ended => Environment.TickCount64 < Volatile.Read(ref _endedUntil);
+
+        public void Record(long live)
+        {
+            long seen = Volatile.Read(ref _highest);
+            while (live > seen && Interlocked.CompareExchange(ref _highest, live, seen) is var current && current != seen)
+            {
+                seen = current;
+            }
+        }
+
+        // After a read, once for the places it reached whatever the pass over the input; a read
+        // back before a place makes it count again.
         private void Probe()
         {
-            long part = Position / (Length / parts);
-            if (part > _passed && part < parts)
+            long position = Position;
+            int passed = _passed;
+            while (passed > 0 && At(passed - 1) > position)
             {
-                Highest = Math.Max(Highest, Live());
+                passed--;
             }
 
-            _passed = part;
+            int reached = passed;
+            while (reached < Places.Length && At(reached) <= position)
+            {
+                reached++;
+            }
+
+            if (position >= Length)
+            {
+                Volatile.Write(ref _endedUntil, Environment.TickCount64 + 500);
+            }
+
+            _passed = reached;
+            if (reached > passed)
+            {
+                Interlocked.Increment(ref _probes);
+                Record(LiveOnce());
+            }
         }
+
+        private long At(int place) => Length * Places[place] / Denominator;
 
         public override int Read(byte[] buffer, int offset, int count)
         {
+            int read = base.Read(buffer, offset, count);
             Probe();
-            return base.Read(buffer, offset, count);
+            return read;
         }
 
         public override int Read(Span<byte> buffer)
         {
+            int read = base.Read(buffer);
             Probe();
-            return base.Read(buffer);
+            return read;
         }
 
         public override int ReadByte()
         {
+            int value = base.ReadByte();
             Probe();
-            return base.ReadByte();
+            return value;
         }
     }
 
@@ -843,6 +907,15 @@ public class MemoryTests(ITestOutputHelper output)
     {
         GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.FullBlocking);
         return info.HeapSizeBytes - info.FragmentedBytes;
+    }
+
+    // One such collection: a reading to compare with a bound of MB, taken while the analysis runs,
+    // where the repeats of Live (for what finalizers release) would cost seconds.
+    private static long LiveOnce()
+    {
+        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
+        return LastFullCollection();
     }
 
     // The live heap after full, compacting collections that also compact the large object heap,

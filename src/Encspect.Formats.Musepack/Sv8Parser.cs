@@ -236,8 +236,7 @@ internal static class Sv8Parser
             state.AudioPackets.Add(index);
             if (state.Header is null)
             {
-                state.Findings.Add(Severity.Warning, "musepack.audio-before-header", () => PacketShell(state, index),
-                    _ => $"An audio packet at 0x{packet.Offset:X} comes before any stream header packet, which the SV8 specification requires before the first audio packet.");
+                AudioBeforeHeader(state, index, packet);
             }
 
             if (packet.IsTruncated)
@@ -257,13 +256,11 @@ internal static class Sv8Parser
 
         if (!IsValidKey(packet.Key))
         {
-            state.Findings.Add(Severity.Warning, "musepack.key-invalid", () => PacketShell(state, index), count =>
-                $"{(count == 1 ? "A packet's key" : $"{count} packets' keys")}, first {KeyText(packet.Key)} at 0x{packet.Offset:X}, hold characters outside A to Z, which the SV8 specification does not allow; libmpcdec stops decoding at such a key.");
+            ReportKey(state, index, packet, "musepack.key-invalid");
         }
         else if (!IsReserved(packet.Key))
         {
-            state.Findings.Add(Severity.Info, "musepack.key-unknown", () => PacketShell(state, index), count =>
-                $"{(count == 1 ? "A packet has a key" : $"{count} packets have keys")} the SV8 specification does not reserve, first {KeyText(packet.Key)} at 0x{packet.Offset:X}; libmpcdec and ffmpeg skip packets they do not know.");
+            ReportKey(state, index, packet, "musepack.key-unknown");
         }
 
         // Past the cap, packets are not detailed, but those that describe the stream still are read.
@@ -320,16 +317,52 @@ internal static class Sv8Parser
 
         if (state.AudioPackets.Count > 0 && key is "RG" or "SO")
         {
-            state.Findings.Add(Severity.Warning, "musepack.packet-after-audio", WithoutChildren(node), _ =>
-                $"The {key} packet at 0x{packet.Offset:X} comes after the first audio packet; the SV8 specification requires it before.");
+            PacketAfterAudio(state, node, key, packet);
         }
 
         state.Detailed[index] = node;
     }
 
-    private static bool DescribesStream(ushort key) => KeyText(key) is "SH" or "RG" or "EI" or "SO" or "ST" or "SE";
+    // The findings repeated over many packets are kept out of Handle so that it allocates no closure
+    // per packet, and a case after the first only counts, building no delegate.
+    private static void ReportKey(State state, int index, Packet packet, string code)
+    {
+        if (state.Findings.Repeat(code))
+        {
+            return;
+        }
 
-    private static bool IsReserved(ushort key) => KeyText(key) is "SH" or "RG" or "EI" or "SO" or "AP" or "ST" or "CT" or "SE";
+        if (code == "musepack.key-invalid")
+        {
+            state.Findings.Add(Severity.Warning, code, () => PacketShell(state, index), count =>
+                $"{(count == 1 ? "A packet's key" : $"{count} packets' keys")}, first {KeyText(packet.Key)} at 0x{packet.Offset:X}, hold characters outside A to Z, which the SV8 specification does not allow; libmpcdec stops decoding at such a key.");
+        }
+        else
+        {
+            state.Findings.Add(Severity.Info, code, () => PacketShell(state, index), count =>
+                $"{(count == 1 ? "A packet has a key" : $"{count} packets have keys")} the SV8 specification does not reserve, first {KeyText(packet.Key)} at 0x{packet.Offset:X}; libmpcdec and ffmpeg skip packets they do not know.");
+        }
+    }
+
+    private static void AudioBeforeHeader(State state, int index, Packet packet)
+    {
+        if (state.Findings.Repeat("musepack.audio-before-header"))
+        {
+            return;
+        }
+
+        state.Findings.Add(Severity.Warning, "musepack.audio-before-header", () => PacketShell(state, index),
+            _ => $"An audio packet at 0x{packet.Offset:X} comes before any stream header packet, which the SV8 specification requires before the first audio packet.");
+    }
+
+    private static void PacketAfterAudio(State state, Node node, string key, Packet packet) =>
+        state.Findings.Add(Severity.Warning, "musepack.packet-after-audio", WithoutChildren(node), _ =>
+            $"The {key} packet at 0x{packet.Offset:X} comes after the first audio packet; the SV8 specification requires it before.");
+
+    private static bool DescribesStream(ushort key) =>
+        key == Key("SH") || key == Key("RG") || key == Key("EI") || key == Key("SO") || key == Key("ST") || key == Key("SE");
+
+    private static bool IsReserved(ushort key) => DescribesStream(key) || key == Key("AP") || key == Key("CT");
 
     // The packet's node with its key and size, before its fields are added.
     private static Node PacketShell(State state, int index)
