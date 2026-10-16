@@ -1,0 +1,112 @@
+{
+ "description": "An ID3v2 tag with three TSSE frames, five stereo core frames and an APEv2 tag. Two TSSE frames name different encoders, the third is ffmpeg's muxer version and names the writer, and the APEv2 Encoder item names LAME, which writes MPEG audio and not DTS, as the writer.",
+ "length": 2765,
+ "format": "DTS",
+ "frames": [
+  [
+   91,
+   512
+  ],
+  [
+   603,
+   512
+  ],
+  [
+   1115,
+   512
+  ],
+  [
+   1627,
+   512
+  ],
+  [
+   2139,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2560,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Encoder": "dtsenc 1.0",
+  "DTS/Writer": "FFmpeg (Lavf60.16.100)"
+ },
+ "findings": [
+  [
+   "id3v2.frame-duplicate",
+   "3 TSSE frames"
+  ],
+  [
+   "dts.encoder-claim",
+   "other 2.0"
+  ],
+  [
+   "dts.writer-claim-differs",
+   "APE Encoder item"
+  ],
+  [
+   "dts.writer-other-format",
+   "which writes MPEG audio, not DTS"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "ffprobe_packets": [
+   [
+    91,
+    512
+   ],
+   [
+    603,
+    512
+   ],
+   [
+    1115,
+    512
+   ],
+   [
+    1627,
+    512
+   ],
+   [
+    2139,
+    626
+   ]
+  ],
+  "ffprobe_packets_reason": "ffmpeg's last packet takes the APEv2 tag that ends the file into it",
+  "skip": {
+   "libdca": "libdca's tool does not skip tags."
+  }
+ },
+ "regions": [
+  [
+   "ID3v2",
+   0,
+   91
+  ],
+  [
+   "DTS",
+   91,
+   2560
+  ],
+  [
+   "APE",
+   2651,
+   114
+  ]
+ ]
+}

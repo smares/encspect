@@ -38,6 +38,7 @@ FFMPEG_VERSION = "ffmpeg version 6.1.1-3ubuntu5"
 GPAC_VERSION = "GPAC version 2.2.1"
 GPAC_TOOL = "GPAC-2.2.1-rev2.2.1+dfsg1-3.1build2"
 LAVC = "FFmpeg (Lavc60.31.102)"
+LAVF = "FFmpeg (Lavf60.16.100)"
 KEY = "000102030405060708090a0b0c0d0e0f"
 KID = "101112131415161718191a1b1c1d1e1f"
 KID_TEXT = "10111213-1415-1617-1819-1a1b1c1d1e1f"
@@ -165,9 +166,9 @@ def manifest_for(entry, path):
               "channel_layout": ["front left", "front right"] if is_aac else [],
               "samples": duration_samples(fields, entry["rate"]), "is_vbr": False,
               "protection": {"scheme": SCHEMES[entry["scheme"]], "is_encrypted": True, "systems": entry["systems"]}}
-    if entry["command"][0] == "MP4Box":
-        # With no frame to read, the only evidence is the writer's own tool atom, a claim of low confidence as in any file whose frames name nothing.
-        stream["encoder"] = [GPAC_TOOL, "Low"]
+    if is_aac:
+        # With no frame to read, the only evidence is the writer's own tool atom: a writer claim of low confidence, as in any file whose frames name nothing.
+        stream["writer"] = [GPAC_TOOL if entry["command"][0] == "MP4Box" else LAVF, "Low"]
     crosscheck = {"ffprobe": listed, "mp4box": True, "mp4box_samples": not listed, "faad": None,
                   "encryption": {"ffprobe": (None if "fragmented" in entry["name"] or entry["codec"] in REPACKETIZED else True), "mediainfo": "Encrypted"},
                   "skip": {"faad": "faad2 reads clear AAC only and rejects the encrypted sample entry."}}

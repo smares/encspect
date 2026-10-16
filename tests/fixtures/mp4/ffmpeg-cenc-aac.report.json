@@ -128,7 +128,29 @@
                       "kind": "Stream",
                       "value": "frames not read: encrypted",
                       "offset": 44,
-                      "length": 23881
+                      "length": 23881,
+                      "children": [
+                        {
+                          "name": "Writer",
+                          "value": "FFmpeg (Lavf60.16.100)",
+                          "offset": 44,
+                          "length": 23881,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 44,
+                              "length": 23881
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "MP4 ©too atom at 0x63E8 names \"Lavf60.16.100\"",
+                              "offset": 44,
+                              "length": 23881
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -2566,6 +2588,8 @@
           "isEncrypted": true,
           "systems": []
         },
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": []
       }
     ],

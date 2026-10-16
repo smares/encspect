@@ -148,6 +148,7 @@ public class DtsHdTests
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal("DTS-HD Encoder hand-built 1.2.3 (Jan  1 2026)", stream.Encoder);
         Assert.Equal(Confidence.Low, stream.EncoderConfidence);
+        Assert.Null(stream.Writer);
         Node build = report.Root.Children.Single(c => c.Name == "BUILDVER");
         Node evidence = Fixtures.Resolve(report.Root, "STRMDATA/DTS/Encoder/Evidence").Single();
         Assert.Contains($"at 0x{build.Children.Single(c => c.Name == "Text").Offset:X}", evidence.Value?.ToString());

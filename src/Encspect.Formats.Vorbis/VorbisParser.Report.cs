@@ -75,37 +75,34 @@ public sealed partial class VorbisParser
     private static partial Regex LancerVendor();
 
     // ffmpeg's ENCODER field after libvorbis or its native encoder: "Lavc60.31.102 libvorbis".
-    [GeneratedRegex(@"^Lavc\S* (lib)?vorbis$")]
+    [GeneratedRegex(@"^Lavc(\d\S*)? (lib)?vorbis$")]
     private static partial Regex FfmpegEncoder();
 
     private sealed partial class StreamState
     {
+        // The comment of the stream itself: only its claims count.
+        private List<EncoderClaim> CommentClaims() => _comment is { } tag
+            ? context.EncoderClaims.Where(c => c.Source.Offset >= tag.Offset && c.Source.End <= tag.End).ToList()
+            : [];
+
         // The encoder, from the comment's vendor string, which the library that encoded the audio
-        // writes, and its ENCODER field: oggenc leaves libvorbis' vendor string and writes no
-        // ENCODER field; ffmpeg writes its own version ("Lavf60.16.100") as the vendor and
-        // "Lavc60.31.102 libvorbis" or, for its native encoder, "Lavc60.31.102 vorbis" as ENCODER.
-        // Only the stream's own comment counts.
+        // writes (oggenc leaves libvorbis' vendor string), and an ENCODER field that is a libavcodec encoder ID. ffmpeg
+        // writes its own version ("Lavf60.16.100") as the vendor, which names the writer (AddWriter), and
+        // "Lavc60.31.102 libvorbis" or, for its native encoder, "Lavc60.31.102 vorbis" as ENCODER when it encodes.
         private Node? AddEncoder()
         {
-            List<EncoderClaim> claims = _comment is { } tag
-                ? context.EncoderClaims.Where(c => c.Source.Offset >= tag.Offset && c.Source.End <= tag.End).ToList()
-                : [];
-            EncoderClaim? vendor = claims.FirstOrDefault(c => c.Source.Name == "Vendor");
-            EncoderClaim? field = claims.FirstOrDefault(c => c.Source.Name != "Vendor");
+            List<EncoderClaim> encoders = [.. ClaimRoles.Encoders(CommentClaims())];
+            EncoderClaim? vendor = encoders.FirstOrDefault(c => c.Source.Name == "Vendor");
+            List<EncoderClaim> fields = encoders.Where(c => c.Source.Name != "Vendor").ToList();
+            EncoderClaim? field = fields.FirstOrDefault(c => FfmpegEncoder().IsMatch(c.Text));
 
             var evidence = new List<Node>();
             string? name = null;
             Confidence confidence = Confidence.Medium;
-            if (field is not null && FfmpegEncoder().IsMatch(field.Text))
-            {
-                name = $"FFmpeg ({field.Text})";
-                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes"));
-                if (vendor is not null)
-                {
-                    evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\""));
-                }
-            }
-            else if (vendor is not null && LibvorbisReleases.TryGetValue(vendor.Text, out string? release))
+            // One rule for a libavcodec encoder ID in the ENCODER field: one of this codec names an encoder (ffmpeg's) unless stream evidence names a
+            // real encoder first; one of another codec never becomes the encoder, stays as evidence under the Encoder node where there is one and is reported.
+            bool isOwn = field is not null;
+            if (vendor is not null && LibvorbisReleases.TryGetValue(vendor.Text, out string? release))
             {
                 name = $"libvorbis {release}";
                 confidence = Confidence.High;
@@ -134,15 +131,35 @@ public sealed partial class VorbisParser
                 name = $"libvorbis ({match.Groups[1].Value})";
                 evidence.Add(Evidence(vendor.Source, $"Vorbis comment vendor string \"{vendor.Text}\", libvorbis' form, of no release the analyzer knows"));
             }
+            else if (isOwn)
+            {
+                name = $"FFmpeg ({field!.Text})";
+                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes"));
+            }
+
+            foreach (EncoderClaim claim in fields)
+            {
+                if (FfmpegEncoder().IsMatch(claim.Text))
+                {
+                    if (!ReferenceEquals(claim, field) || !name!.StartsWith("FFmpeg", StringComparison.Ordinal))
+                    {
+                        evidence.Add(Evidence(claim.Source, $"Vorbis comment ENCODER field \"{claim.Text}\", which ffmpeg writes when it encodes"));
+                    }
+
+                    continue;
+                }
+
+                string text = claim.Text;
+                _findings.Add(Severity.Info, "vorbis.encoder-other-format", claim.Source, _ => $"The Vorbis comment ENCODER field names \"{text}\", an encoder of another codec, not of Vorbis.");
+                if (name is not null)
+                {
+                    evidence.Add(Evidence(claim.Source, $"Vorbis comment ENCODER field \"{text}\", an encoder of another codec, which does not count"));
+                }
+            }
 
             if (name is null)
             {
                 return null;
-            }
-
-            if (field is not null && !evidence.Any(e => e.Offset == field.Source.Offset))
-            {
-                evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\""));
             }
 
             long start = evidence.Min(e => e.Offset);
@@ -155,6 +172,22 @@ public sealed partial class VorbisParser
             }
 
             return _parent.Add(node);
+        }
+
+        // The writer, from the comment's ENCODER field and a vendor string that is a muxer's version.
+        private Node? AddWriter()
+        {
+            List<EncoderClaim> claims = CommentClaims();
+            if (_comment is not { } tag || !ClaimRoles.Writers(claims).Any())
+            {
+                return null;
+            }
+
+            Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, tag.Offset, tag.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+                (claim, text, name) => _findings.Add(Severity.Info, "vorbis.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+                isEvidenceAtSource: true,
+                format: new WriterDetection.StreamFormat(KnownWriters.Vorbis, "Vorbis", (claim, message, node) => _findings.Add(Severity.Info, "vorbis.writer-other-format", node, _ => message)));
+            return writer is null ? null : _parent.Add(writer);
         }
 
         private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text) { Description = Explain.Evidence };

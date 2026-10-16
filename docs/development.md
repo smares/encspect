@@ -131,7 +131,7 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 Every format has three kinds of fixture:
 
 - **Hand-built fixtures**, written by a script that CI reruns to check they are reproducible.
-- **Encoder-written fixtures**, written by real encoders. `--manifests-only` recomputes their manifests from the committed files without the encoders.
+- **Encoder-written fixtures**, written by real encoders. A manifest that lists the encoder a stream must be named by lists its writer too (`writer`; the MPEG manifests' `detected_writer`, present only where a writer is named, which `make_external_mpeg_fixtures.py --writers-only` recomputes in CI), since the two are resolved apart. `--manifests-only` recomputes their manifests from the committed files without the encoders.
 - **A cross-check script**, which confirms the manifests with other tools in its own CI job.
 
 | Format | Fixtures | Scripts | Checked against |
@@ -314,7 +314,7 @@ The models that compute the expected values are:
 - **MPEG-2 conformance:** `conformance_mpeg_audio.py` checks `tests/conformance/mpeg2-audio.json` against the ISO/IEC 13818-4 audio conformance streams. It downloads them, since they may not be redistributed.
 - **E-AC-3 object audio:** `check_eac3_samples.py` checks `tests/conformance/eac3-samples.json` against three of Dolby's JOC test files (DD+ Online Delivery Kit v1.4.1, copyrighted and for testing playback products, so downloaded and never committed) and three files from the FFmpeg sample archive (two with the adaptive hybrid transform, one E-AC-3 file with 352 bytes of junk in front whose frames' header bytes read as ADTS headers), with ffprobe, MediaInfo and the analyzer.
 - **mp3PRO:** `check_mp3pro_samples.py` checks `tests/conformance/mp3pro-samples.json` against three mp3PRO files from the FFmpeg sample archive, downloaded for the same reason.
-- **xHE-AAC by other encoders:** `check_usac_samples.py` checks `tests/conformance/usac-samples.json` against 13 downloaded files: Fraunhofer's demonstration files, the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite and one exhale file from it. The private repository holds copies as their fallback address.
+- **xHE-AAC by other encoders:** `check_usac_samples.py` checks `tests/conformance/usac-samples.json` against 13 downloaded files: Fraunhofer's demonstration files, the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite and one exhale file from it. It compares the encoder and the writer, each with its confidence: the tool atom of Fraunhofer's files and of the exhale file is a writer claim (low), and the Fraunhofer files name no encoder. The private repository holds copies as their fallback address.
   - Without `--analyzer`, a UsacConfig reader of its own reads each file's elements and configuration extensions from the DecoderSpecificInfo that MP4Box lists.
   - With `--analyzer`, the analyzer must show the same and name the encoder the manifest lists, so the exhale layout rule is held against files it must not match.
 - **HE-AAC by other encoders:** `check_sbr_samples.py` checks `tests/conformance/sbr-samples.json` against 13 downloaded files from FFmpeg's FATE suite: the MPEG-4 audio SBR and parametric stereo conformance streams (`al_sbr_*`) and Coding Technologies' aacPlus decoder check streams (`CT_DecoderCheck/File1` to `File7`; the `sbr_*` files there are the same bytes). They are fetched from the FATE server (`fate-suite.ffmpeg.org`), with copies in the private repository (`sbr/`) as the fallback.

@@ -505,6 +505,8 @@ public sealed partial class OpusParser
             }
 
             Node? encoder = AddEncoder();
+            Node? writer = AddWriter();
+            ClaimRoles.CompleteVersion(encoder, CommentClaims());
             Node? anchor = AddStatistics(samples, trim);
             Node? packets = AddPackets();
 
@@ -522,8 +524,10 @@ public sealed partial class OpusParser
                     Duration = samples / (double)Rate,
                     AverageBitrate = _decoded > 0 ? _bytes * 8.0 * Rate / _decoded / 1000 : null,
                     IsVbr = _sizesDiffer,
-                    Encoder = encoder?.Value?.ToString(),
-                    EncoderConfidence = encoder is null ? null : Enum.Parse<Confidence>(encoder.Children[0].Value!.ToString()),
+                    Encoder = ClaimRoles.Resolved(encoder).Name,
+                    EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,
+                    Writer = ClaimRoles.Resolved(writer).Name,
+                    WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
                     Series = Series(anchor, packets),
                 });
             }

@@ -1,5 +1,5 @@
 {
- "description": "xHE-AAC (USAC) files by other encoders than the fixtures' exhale, which show how each lays out its UsacConfig: the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite, Fraunhofer's demonstration files, and one exhale file from the FATE suite. They are downloaded and checked against their SHA-256 rather than committed. Per file: who wrote it, the elements of its UsacDecoderConfig (EXT with its extension element type: 0 fill, 3 audio pre-roll; CPE+MPS212 for a channel pair element with MPEG Surround 2-1-2 stereo), the types of its configuration extensions (2 loudness info, 7 stream ID), the encoder and confidence the analyzer must report, and its warnings and errors (\"findings\").",
+ "description": "xHE-AAC (USAC) files by other encoders than the fixtures' exhale, which show how each lays out its UsacConfig: the ISO/IEC 23003-3 conformance streams in FFmpeg's FATE suite, Fraunhofer's demonstration files, and one exhale file from the FATE suite. They are downloaded and checked against their SHA-256 rather than committed. Per file: who wrote it, the elements of its UsacDecoderConfig (EXT with its extension element type: 0 fill, 3 audio pre-roll; CPE+MPS212 for a channel pair element with MPEG Surround 2-1-2 stereo), the types of its configuration extensions (2 loudness info, 7 stream ID), the encoder and the writer, each with the confidence the analyzer must report (the tool atom of Fraunhofer's files is a writer claim, not an encoder's), and its warnings and errors (\"findings\").",
  "samples": [
   {
    "file": "Ext_2_c1_Ln_0x03.mp4",
@@ -14,6 +14,7 @@
     2
    ],
    "analyzer_encoder": null,
+   "analyzer_writer": null,
    "findings": []
   },
   {
@@ -27,6 +28,7 @@
    ],
    "config_extensions": [],
    "analyzer_encoder": null,
+   "analyzer_writer": null,
    "findings": []
   },
   {
@@ -40,6 +42,7 @@
    ],
    "config_extensions": [],
    "analyzer_encoder": null,
+   "analyzer_writer": null,
    "findings": []
   },
   {
@@ -53,6 +56,7 @@
    ],
    "config_extensions": [],
    "analyzer_encoder": null,
+   "analyzer_writer": null,
    "findings": []
   },
   {
@@ -66,6 +70,7 @@
    ],
    "config_extensions": [],
    "analyzer_encoder": null,
+   "analyzer_writer": null,
    "findings": []
   },
   {
@@ -79,6 +84,7 @@
    ],
    "config_extensions": [],
    "analyzer_encoder": null,
+   "analyzer_writer": null,
    "findings": []
   },
   {
@@ -92,6 +98,7 @@
    ],
    "config_extensions": [],
    "analyzer_encoder": null,
+   "analyzer_writer": null,
    "findings": []
   },
   {
@@ -105,6 +112,7 @@
    ],
    "config_extensions": [],
    "analyzer_encoder": null,
+   "analyzer_writer": null,
    "findings": []
   },
   {
@@ -123,6 +131,10 @@
     "exhale 1.2.2",
     "Medium"
    ],
+   "analyzer_writer": [
+    "exhale 1.2.2",
+    "Low"
+   ],
    "findings": [
     "mp4.duration-mismatch"
    ]
@@ -140,7 +152,8 @@
    "config_extensions": [
     2
    ],
-   "analyzer_encoder": [
+   "analyzer_encoder": null,
+   "analyzer_writer": [
     "Fraunhofer IIS MPEG-2/4/D Audio Encoder",
     "Low"
    ],
@@ -159,7 +172,8 @@
    "config_extensions": [
     2
    ],
-   "analyzer_encoder": [
+   "analyzer_encoder": null,
+   "analyzer_writer": [
     "Fraunhofer IIS MPEG-2/4/D Audio Encoder",
     "Low"
    ],
@@ -179,7 +193,8 @@
     7,
     2
    ],
-   "analyzer_encoder": [
+   "analyzer_encoder": null,
+   "analyzer_writer": [
     "Fraunhofer IIS MPEG-2/4/D Audio Encoder",
     "Low"
    ],
@@ -199,7 +214,8 @@
     7,
     2
    ],
-   "analyzer_encoder": [
+   "analyzer_encoder": null,
+   "analyzer_writer": [
     "Fraunhofer IIS MPEG-2/4/D Audio Encoder",
     "Low"
    ],

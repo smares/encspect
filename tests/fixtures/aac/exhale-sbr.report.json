@@ -2228,7 +2228,27 @@
                             },
                             {
                               "name": "Evidence",
-                              "value": "MP4 ©too atom (encoding tool) at 0x3C1 names \"exhale 1.2.2\"",
+                              "value": "The version comes from the MP4 ©too atom at 0x3C1, which names \"exhale 1.2.2\" as the writer: software of the same name",
+                              "offset": 1008,
+                              "length": 2650
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "exhale 1.2.2",
+                          "offset": 1008,
+                          "length": 2650,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 1008,
+                              "length": 2650
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "MP4 ©too atom at 0x3C1 names \"exhale 1.2.2\"",
                               "offset": 1008,
                               "length": 2650
                             }
@@ -2918,6 +2938,8 @@
         "isVbr": false,
         "encoder": "exhale 1.2.2",
         "encoderConfidence": "Medium",
+        "writer": "exhale 1.2.2",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

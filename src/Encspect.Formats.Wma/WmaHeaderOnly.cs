@@ -55,7 +55,7 @@ internal static class WmaHeaderOnly
             Topic = topic,
         });
 
-        (string? encoder, Confidence? confidence) = WmaEncoder.Apply(context, stream, findings, []);
+        WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings, []);
         double? duration = config.Duration;
         Node statistics = stream.Add(new Node("Statistics", parent.Offset, parent.Length, WmaStandardParser.Count(count, "packet", "packets"))
         {
@@ -110,8 +110,10 @@ internal static class WmaHeaderOnly
             Duration = duration ?? 0,
             AverageBitrate = nominal > 0 ? nominal : null,
             IsVbr = context.Configuration?.IsVbr ?? false,
-            Encoder = encoder,
-            EncoderConfidence = confidence,
+            Encoder = detected.Encoder,
+            EncoderConfidence = detected.EncoderConfidence,
+            Writer = detected.Writer,
+            WriterConfidence = detected.WriterConfidence,
         });
 
         findings.Flush(context);

@@ -4856,6 +4856,26 @@
                   "children": [
                     {
                       "name": "Encoder",
+                      "value": "Microsoft's Windows Media Audio encoder",
+                      "offset": 4931,
+                      "length": 11570,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Medium",
+                          "offset": 4931,
+                          "length": 11570
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "The codec data states 17408 samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them",
+                          "offset": 4931,
+                          "length": 11570
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Writer",
                       "value": "Windows Media Format SDK 12.0.26100.33438",
                       "offset": 4931,
                       "length": 11570,
@@ -4868,13 +4888,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "ASF header: WMFSDKVersion 12.0.26100.33438, a Codec List Object and a Compatibility Object in the Header Extension Object, the layout of the Windows Media Format SDK's writer. The writer states codec list \"Windows Media Audio 9.2\", \" 20 kbps, 22 kHz, stereo 1-pass CBR\"; IsVBR false (at 0x1195)",
-                          "offset": 4931,
-                          "length": 11570
-                        },
-                        {
-                          "name": "Evidence",
-                          "value": "The codec data states 17408 samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them",
+                          "value": "ASF header layout of the Windows Media Format SDK's writer: WMFSDKVersion 12.0.26100.33438, a Codec List Object and a Compatibility Object, which the files of Media Foundation's ASF sink lack. The writer states codec list \"Windows Media Audio 9.2\", \" 20 kbps, 22 kHz, stereo 1-pass CBR\"; IsVBR false (at 0x1195)",
                           "offset": 4931,
                           "length": 11570
                         },
@@ -16883,8 +16897,10 @@
         "duration": 3.01859410430839,
         "averageBitrate": 29.544879807692304,
         "isVbr": false,
-        "encoder": "Windows Media Format SDK 12.0.26100.33438",
+        "encoder": "Microsoft's Windows Media Audio encoder",
         "encoderConfidence": "Medium",
+        "writer": "Windows Media Format SDK 12.0.26100.33438",
+        "writerConfidence": "Medium",
         "series": [
           {
             "name": "Bitrate",
@@ -17091,7 +17107,7 @@
           0,
           1,
           7,
-          3
+          4
         ],
         "count": 1
       }

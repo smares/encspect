@@ -41,6 +41,26 @@
               ]
             },
             {
+              "name": "Writer",
+              "value": "FFmpeg",
+              "offset": 208,
+              "length": 1253,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 208,
+                  "length": 1253
+                },
+                {
+                  "name": "Evidence",
+                  "value": "LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag), with the encoder string \"Lavc60.31\" and ffmpeg's tag CRC (at 0x8D)",
+                  "offset": 208,
+                  "length": 1253
+                }
+              ]
+            },
+            {
               "name": "Statistics",
               "kind": "Statistics",
               "value": "6 frames, 0.157 s",
@@ -3690,6 +3710,8 @@
         "isVbr": false,
         "encoder": "FFmpeg (Lavc60.31)",
         "encoderConfidence": "Medium",
+        "writer": "FFmpeg",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",
@@ -3767,7 +3789,7 @@
         "length": 208,
         "path": [
           0,
-          2
+          3
         ],
         "count": 1
       }

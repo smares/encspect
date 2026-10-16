@@ -137,7 +137,7 @@ public sealed class NavigationTests
     private static FileRow Row(double duration)
     {
         var row = new FileRow($"/{Guid.NewGuid():N}.mp3", $"{duration}");
-        row.Apply(new FileSummary(new ReportSummary(row.Path, "MPEG Audio", 1, "MPEG-1 Layer III", duration, 1152, 128, 44100, null, null, null, null, [], 0, 0, 0), false, null));
+        row.Apply(new FileSummary(new ReportSummary(row.Path, "MPEG Audio", 1, "MPEG-1 Layer III", duration, 1152, 128, 44100, null, null, null, null, null, null, [], 0, 0, 0), false, null));
         return row;
     }
 }

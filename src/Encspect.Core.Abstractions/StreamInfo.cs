@@ -70,9 +70,19 @@ public sealed record StreamInfo
 
     public bool IsProtected => Protection is not null;
 
+    // The software that turned the audio into the coded stream, from the stream's own evidence or a tag that
+    // names an encoder, and how sure the analysis is; null where nothing names one.
     public string? Encoder { get; init; }
 
     public Confidence? EncoderConfidence { get; init; }
+
+    // The software that put the stream into the file (the muxer, the container writer, a tagger), from the
+    // file's layout and the tags that name a writer, and how sure the analysis is; null where nothing names
+    // one. It is resolved apart from the encoder and need not be the same software: a remuxed file has the
+    // encoder of its audio and the writer of its container.
+    public string? Writer { get; init; }
+
+    public Confidence? WriterConfidence { get; init; }
 
     public IReadOnlyList<Series> Series { get; init; } = [];
 }

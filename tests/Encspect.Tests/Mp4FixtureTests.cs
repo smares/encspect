@@ -54,6 +54,15 @@ public class Mp4FixtureTests
                 Assert.Null(stream.Encoder);
             }
 
+            if (expected.TryGetProperty("writer", out JsonElement writer))
+            {
+                Assert.Equal((writer[0].GetString(), writer[1].GetString()), (stream.Writer, stream.WriterConfidence?.ToString()));
+            }
+            else
+            {
+                Assert.Null(stream.Writer);
+            }
+
             Assert.All(stream.NodePaths, path => Assert.NotNull(path));
             CheckProtection(expected, stream);
         }

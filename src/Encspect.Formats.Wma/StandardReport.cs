@@ -31,7 +31,7 @@ internal static class StandardReport
             traits.Add(trait);
         }
 
-        (string? encoder, Confidence? confidence) = WmaEncoder.Apply(context, streamNode, findings, traits);
+        WmaEncoder.Detected detected = WmaEncoder.Apply(context, streamNode, findings, traits);
         Node? statistics = frameCount > 0 ? AddStatistics(streamNode, stream, samples, duration) : null;
         streamNode.Add(new Node("Superframes", parent.Offset, parent.Length, WmaStandardParser.Count(superframeCount, "superframe", "superframes"),
             () => new BlockedChildren([], superframeCount, nodes.SuperframeNode))
@@ -71,8 +71,10 @@ internal static class StandardReport
             Duration = duration,
             AverageBitrate = bitrate,
             IsVbr = context.Configuration?.IsVbr ?? false,
-            Encoder = encoder,
-            EncoderConfidence = confidence,
+            Encoder = detected.Encoder,
+            EncoderConfidence = detected.EncoderConfidence,
+            Writer = detected.Writer,
+            WriterConfidence = detected.WriterConfidence,
             Series = series,
         });
 

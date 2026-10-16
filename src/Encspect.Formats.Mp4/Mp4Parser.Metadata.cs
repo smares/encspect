@@ -166,7 +166,8 @@ public sealed partial class Mp4Parser
         string? text = value.AsText();
         if (itemType == "©too" && text is { Length: > 0 })
         {
-            state.Context.AddEncoderClaim(new EncoderClaim(text, item, "MP4 ©too atom (encoding tool)"));
+            // No Apple specification defines ©too, and ffmpeg's muxer writes its own version into it (movenc.c:4203-4204): the writer's.
+            state.Context.AddEncoderClaim(new EncoderClaim(text, item, "MP4 ©too atom", ClaimRole.Writer));
         }
 
         if (freeform == "iTunSMPB" && text is not null)

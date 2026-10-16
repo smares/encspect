@@ -208,11 +208,12 @@ public class WmaVoiceTests
     }
 
     [Fact]
-    public void TheEncoderIsNamedFromTheContainer()
+    public void TheWriterIsNamedFromTheContainerAndTheEncoderFromNothing()
     {
         StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg(Eight).Streams);
-        Assert.StartsWith("Windows Media Format SDK", stream.Encoder, StringComparison.Ordinal);
-        Assert.Equal(Confidence.Medium, stream.EncoderConfidence);
+        Assert.StartsWith("Windows Media Format SDK", stream.Writer, StringComparison.Ordinal);
+        Assert.Equal(Confidence.Medium, stream.WriterConfidence);
+        Assert.Null(stream.Encoder);
         Assert.False(stream.IsVbr);
     }
 
@@ -495,7 +496,7 @@ public class WmaVoiceTests
             "Superframe Start", "Unfinished Superframe", "Unread Bits",
             "Superframe", "Is Speech", "Has Sample Count", "Sample Count", "LSPs", "Additional Data",
             "Frame", "Frame Type", "Pitch", "Silence Gain", "Window Index", "Blocks", "Block 1", "Block 8",
-            "Encoder", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Duration", "Block Alignment", "Packet Bytes", "Average Bitrate", "Average Superframe Bitrate", "Nominal Bitrate",
+            "Writer", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Duration", "Block Alignment", "Packet Bytes", "Average Bitrate", "Average Superframe Bitrate", "Nominal Bitrate",
             "Smallest Superframe", "Largest Superframe", "Minimum Superframe Bitrate", "Maximum Superframe Bitrate", "Superframes Spanning Packets", "Most Superframes in a Packet",
             "Spillover Field", "Superframes with a Sample Count", "LSPs per Frame", "Superframes with Residual LSPs", "Superframes with Additional Data", "Uses Postfilter", "Pitch Range",
             "Ignored Bits", "Bits After the Last Superframe", "Skipped Spillover Bits", "Frame Types", "Fixed Codebooks", "Adaptive Codebooks", "Blocks per Frame", "Invalid Superframes",

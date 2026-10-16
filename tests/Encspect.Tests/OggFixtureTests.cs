@@ -194,6 +194,8 @@ public class OggFixtureTests
             Assert.Equal(encoder.GetProperty("name").GetString(), node.Value?.ToString());
             Assert.Equal(encoder.GetProperty("confidence").GetString(), Field(node, "Confidence"));
         }
+
+        CheckWriter(speex, stream);
     }
 
     // Vorbis: the identification header's fields, the comment, the setup header's summary and
@@ -350,6 +352,19 @@ public class OggFixtureTests
             Assert.Equal(encoder.GetProperty("name").GetString(), node.Value?.ToString());
             Assert.Equal(encoder.GetProperty("confidence").GetString(), Field(node, "Confidence"));
         }
+
+        CheckWriter(codec, stream);
+    }
+
+    // The writer is resolved apart from the encoder: a manifest that lists one lists the other where there is one.
+    private static void CheckWriter(JsonElement codec, Node stream)
+    {
+        if (codec.TryGetProperty("writer", out JsonElement writer))
+        {
+            Node node = stream.Children.Single(c => c.Name == "Writer");
+            Assert.Equal(writer.GetProperty("name").GetString(), node.Value?.ToString());
+            Assert.Equal(writer.GetProperty("confidence").GetString(), Field(node, "Confidence"));
+        }
     }
 
     // Statistics figures, and the entries of each list among them, as the manifest names them.
@@ -401,6 +416,12 @@ public class OggFixtureTests
             {
                 Assert.Equal(encoder.GetString(), stream.Encoder);
                 Assert.Equal(info.GetProperty("encoder_confidence").GetString(), stream.EncoderConfidence?.ToString());
+            }
+
+            if (info.TryGetProperty("writer", out JsonElement writer))
+            {
+                Assert.Equal(writer.GetString(), stream.Writer);
+                Assert.Equal(info.GetProperty("writer_confidence").GetString(), stream.WriterConfidence?.ToString());
             }
         }
     }

@@ -99,7 +99,7 @@ internal static class Adif
         Node? encoder = AacEncoder.Detect(
             signature is { } found ? new AacEncoder.Signature(found.Text, BlockNode(blocks, found.Index, null, null), found.Index) : null,
             claims,
-            (name, value, description) => Cover(name, value, NodeKind.Detail, description, name == "Encoder" ? Topics.EncoderDetection : null),
+            (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
             (claim, text, name) => findings.Add(Severity.Info, "aac.encoder-claim-differs", claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\", but the stream points to {name}; the tag may have been written by other software, or kept when the audio was re-encoded."),
             tally: log.Tally);
@@ -108,12 +108,24 @@ internal static class Adif
             leading.Add(encoder);
         }
 
+        Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
+            (claim, text, name) => findings.Add(Severity.Info, "aac.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            AacEncoder.WriterName,
+            format: new WriterDetection.StreamFormat(KnownWriters.Aac, "AAC", (claim, message, node) => findings.Add(Severity.Info, "aac.writer-other-format", node, _ => message)));
+        if (writer is not null)
+        {
+            leading.Add(writer);
+        }
+
+        ClaimRoles.CompleteVersion(encoder, claims, AacEncoder.WriterName);
+
         Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, kind, description), "Block", "Blocks", out Node bitrate);
         CodingStatistics.Add(statistics, log.Tally, log.Setup, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
         leading.Add(statistics);
         findings.Flush(context);
 
-        string? confidence = encoder?.Children.FirstOrDefault(c => c.Name == "Confidence")?.Value?.ToString();
+        (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
+        (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         context.AddStream(new StreamInfo
         {
             Nodes = [region],
@@ -126,8 +138,10 @@ internal static class Adif
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = header.IsVbr,
-            Encoder = encoder?.Value?.ToString(),
-            EncoderConfidence = Enum.TryParse(confidence, out Confidence parsed) ? parsed : null,
+            Encoder = encoderName,
+            EncoderConfidence = encoderConfidence,
+            Writer = writerName,
+            WriterConfidence = writerConfidence,
             Series = figures.Series(bitrate, context.CancellationToken),
         });
     }

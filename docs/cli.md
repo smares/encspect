@@ -109,7 +109,7 @@ A JSON report (schema version 1) is an object:
     { "name": "MPEG Audio", "kind": "Stream", "value": 10, "unit": "frames", "offset": 0, "length": 4096, "children": [ … ] } ] },
   "streams": [
     { "nodes": [[0]], "codec": "MPEG-1 Layer III", "sampleRate": 44100, "channels": 2, "channelMode": "Joint stereo",
-      "channelLayout": ["front left", "front right"], "channelLayoutName": "stereo", "samples": 11520, "duration": 0.26122448979591836, "averageBitrate": 138.97, "isVbr": true, "encoder": "LAME 3.100", "encoderConfidence": "High",
+      "channelLayout": ["front left", "front right"], "channelLayoutName": "stereo", "samples": 11520, "duration": 0.26122448979591836, "averageBitrate": 138.97, "isVbr": true, "encoder": "LAME 3.100", "encoderConfidence": "High", "writer": "FFmpeg (Lavf60.16.100)", "writerConfidence": "Low",
       "series": [ { "name": "Bitrate", "unit": "kbps", "axis": "frameOffset", "x": [0, 417, …], "values": [128, 160, …] } ] } ],
   "findings": [
     { "severity": "Warning", "code": "mpeg.crc-mismatch", "message": "2 frames fail the CRC check, …", "offset": 421, "length": 2, "path": [0, 4, 1], "count": 2 } ]
@@ -127,6 +127,7 @@ A JSON report (schema version 1) is an object:
 - **Streams** are the audio streams as the format defines them; an MPEG stream continues across a tag embedded in it and ends where the version, layer or sample rate changes.
   - `nodes` are the paths of the nodes that hold the stream.
   - `duration` is in seconds and `averageBitrate` in kbps.
+  - `encoder` and `encoderConfidence` name the software that turned the audio into the stream; `writer` and `writerConfidence` the software that put it into the file (the muxer, the container writer, a tagger). They are resolved apart, each from its own evidence, and either is left out where nothing names one. A writer that differs from the encoder is not a conflict. `encoder` holds what the stream and the tags that name an encoder show (a TSSE frame, a BUILDVER chunk, ffmpeg's `Lavc…` ID); `writer` holds what the container's layout and the tags that name a writer show (ASF attributes, MP4's ©too and ©swr, an APEv2 Encoder item, ffmpeg's `Lavf…` text).
   - `channelLayout` lists the speaker each channel feeds, in the stream's channel order as its format defines it. A channel without a speaker position, such as either program of dual channel, is `"discrete"`.
   - `channelLayoutName` is the layout's common name where it has one: `mono`, `stereo`, `quadraphonic`, `5.1`, `7.1`, `22.2` and others.
   - `hasObjectAudio` is `true` for a stream whose data carry object audio that was parsed (E-AC-3 with joint object coding); DTS:X is reported through the profile and the `HasDtsX` statistics, not through this flag, and `jocObjectCount` is the number of objects its JOC payload reconstructs (joc_num_objects, not the OAMD object_count); both are left out otherwise.
@@ -152,7 +153,7 @@ The CSV row of a file has:
 - the duration and samples of all streams together;
 - their average bitrate, weighted by duration;
 - the first stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);
-- the first encoder named and its confidence;
+- the first encoder named and its confidence (`Encoder`, `Encoder Confidence`), and the first writer named and its confidence (`Writer`, `Writer Confidence`, the two columns after the encoder's);
 - the tags, including those a container holds in its chunks;
 - the number of errors, warnings and infos;
 - `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known;

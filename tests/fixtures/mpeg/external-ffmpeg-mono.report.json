@@ -249,12 +249,32 @@
                   "value": "LAME tag written by FFmpeg (Lavc60.31)",
                   "offset": 186,
                   "length": 36
+                }
+              ]
+            },
+            {
+              "name": "Writer",
+              "value": "FFmpeg (Lavf60.16.100)",
+              "offset": 253,
+              "length": 4388,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 253,
+                  "length": 4388
                 },
                 {
                   "name": "Evidence",
                   "value": "ID3v2 TSSE frame at 0xA names \"Lavf60.16.100\"",
-                  "offset": 186,
-                  "length": 3859
+                  "offset": 253,
+                  "length": 4388
+                },
+                {
+                  "name": "Evidence",
+                  "value": "LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag), with the encoder string \"Lavc60.31\" and ffmpeg's tag CRC (at 0xBA)",
+                  "offset": 253,
+                  "length": 4388
                 }
               ]
             },
@@ -9868,6 +9888,8 @@
         "isVbr": false,
         "encoder": "LAME 3.100",
         "encoderConfidence": "Medium",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",
@@ -10005,7 +10027,7 @@
         "length": 208,
         "path": [
           1,
-          2
+          3
         ],
         "count": 1
       }

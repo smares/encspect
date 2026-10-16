@@ -10,14 +10,14 @@ against their SHA-256 rather than committed.
 
 The manifest is ours. Per file it records who wrote it, the elements of its UsacDecoderConfig ("SCE",
 "CPE", "LFE", "EXT" with its extension element type, "CPE+MPS212" for a channel pair element with MPEG
-Surround 2-1-2 stereo), the types of its configuration extensions, the encoder and confidence the
-analyzer must report, and its warnings and errors ("findings").
+Surround 2-1-2 stereo), the types of its configuration extensions, the encoder and the writer with the confidence
+the analyzer must report, and its warnings and errors ("findings").
 
 Without --analyzer, the elements and extensions are read with a UsacConfig reader written here from
 ISO/IEC 23003-3 5.2, apart from the analyzer, out of the DecoderSpecificInfo that MP4Box -diso
 (GPAC 2.2) lists; Mps212Config() follows ffmpeg's and fdk-aac's reading of it. The reader must end
 within the configuration's last byte. With --analyzer, the analyzer's report on every file (encspect
---ndjson) must show the same elements and extensions, the encoder and the findings.
+--ndjson) must show the same elements and extensions, the encoder, the writer and the findings.
 
 Needs curl and MP4Box. Usage:
 
@@ -211,6 +211,9 @@ def analyzer_problems(analyzer, path, sample):
     encoder = [streams[0]["encoder"], streams[0].get("encoderConfidence")] if streams and streams[0].get("encoder") else None
     if encoder != sample["analyzer_encoder"]:
         problems.append(f"the analyzer names the encoder {encoder}, the manifest {sample['analyzer_encoder']}")
+    writer = [streams[0]["writer"], streams[0].get("writerConfidence")] if streams and streams[0].get("writer") else None
+    if writer != sample["analyzer_writer"]:
+        problems.append(f"the analyzer names the writer {writer}, the manifest {sample['analyzer_writer']}")
     serious = sorted(f["code"] for f in report["findings"] if f["severity"] != "Info")
     if serious != sample.get("findings", []):
         problems.append(f"the analyzer reports {serious}")

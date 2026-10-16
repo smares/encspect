@@ -127,19 +127,24 @@ Format tag 0x000A, routed as the codec "wma-voice". Read as FFmpeg's `wmavoice.c
 
 ## Encoder detection
 
-The Encoder node of a stream lists its evidence, each at its bytes, and names the strongest.
+The Encoder node and the Writer node of a stream each list their evidence at its bytes and name the strongest. They are resolved apart: the encoder from the stream and its codec data, the writer from the container's layout and metadata. An ASF file's attributes (WMFSDKVersion, MediaFoundationVersion, WM/ToolName, WM/EncodingSettings) are claims of the writer role, since the Windows Media attribute lists give them to no encoder.
+
+### Encoder
 
 - **High:** ffmpeg's wmav1 and wmav2 encoders pad every superframe after its frame with 'N' bytes (`wmaenc.c`), with no bit reservoir and no variable block lengths. Two or more padded superframes, all of them 'N', name "FFmpeg (wmav2 encoder)".
-- **Medium, from the container's layout:** the files the project encoded on a Windows runner (wmvcore 12.0.26100) show two layouts that tell the writers apart. The objects are the specification's; that a writer chooses them is its habit.
-  - The Windows Media Format SDK's writer states WMFSDKVersion, writes a Codec List Object with a description such as "VBR Quality 75, 44 kHz, stereo 1-pass VBR", a Compatibility Object (section 4.12) in the Header Extension Object, and an Index Object (with a Simple Index Object of 0 entries) in its variable bitrate and Lossless files (12 of its 20 fixtures; its 8 constant bitrate files have none). The analyzer does not check the index.
-  - Media Foundation's ASF sink states MediaFoundationVersion, writes no Codec List Object, WMFSDKVersion, Compatibility Object or index (11 fixtures). The analyzer's rule for it also requires a Language List, Extended Stream Properties, a Metadata Object, a Padding Object and Stream Bitrate Properties, and its evidence text lists them as the layout; all 31 fixtures of both writers carry them, so they do not tell the writers apart. The evidence text overstates them (follow-up).
 - **Medium, from the codec data of versions 1 and 2:** Microsoft's encoders write a samples-per-block of 17 frames with the bit reservoir and variable block lengths; ffmpeg's write 0 and neither.
-- **Low:** a claim in the metadata (WMFSDKVersion, MediaFoundationVersion, WM/EncodingSettings, WM/ToolName), which survives a re-encode. ffmpeg's muxer writes its own version whatever encoded the stream, so alone it names none.
-- A claim that names another encoder than the evidence is an info finding.
+- Professional, Lossless and Voice have no trait of their own: their codec data and frames name no encoder, so only the writer is named.
+
+### Writer
+
+- **Medium, from the container's layout:** the files the project encoded on a Windows runner (wmvcore 12.0.26100) show two layouts that tell the writers apart. The objects are the specification's; that a writer chooses them is its habit.
+  - The Windows Media Format SDK's writer states WMFSDKVersion, writes a Codec List Object with a description such as "VBR Quality 75, 44 kHz, stereo 1-pass VBR", a Compatibility Object (section 4.12) in the Header Extension Object, and an Index Object (with a Simple Index Object of 0 entries) in its variable bitrate and Lossless files (12 of its 24 fixtures; its 12 constant bitrate files have none, 6 of them WMA Voice). The analyzer does not check the index.
+  - Media Foundation's ASF sink states MediaFoundationVersion, writes no Codec List Object, WMFSDKVersion, Compatibility Object or index (11 fixtures). A Language List, Extended Stream Properties, a Metadata Object, a Padding Object and Stream Bitrate Properties are in the files of both writers (all 35 Windows fixtures: 24 SDK, 11 Media Foundation), so they do not tell the writers apart. The rule for Media Foundation requires them anyway, as what "both Microsoft writers write", together with MediaFoundationVersion and none of the SDK's markers, so its medium confidence does not rest on one attribute and two absences; the evidence names what distinguishes the writers.
+- **Low:** a claim in the metadata (WMFSDKVersion, MediaFoundationVersion, WM/EncodingSettings, WM/ToolName), which survives a rewrite. ffmpeg's muxer version names FFmpeg as the writer.
+- Two claims of the writer role that name different software are an info finding (`wma.writer-claim-differs`); a claim of the encoder role that names another encoder than the stream is `wma.encoder-claim-differs`. A claim that names software known to write another format (the table in `KnownWriters`) is `wma.writer-other-format`. A writer that differs from the encoder is no finding by itself.
 - A layout names the writing software, not the encoding stage: the Windows Media Format SDK and Media Foundation both write the file around whatever codec they drive. That is why a writer version alone stays Low and the layout is Medium, never High.
 - What the writer says about its settings is added to that evidence, as its statement and not as something read from the audio: the Codec List Object's name and description ("Windows Media Audio 9.2", "VBR Quality 75, 44 kHz, stereo 1-pass VBR") and the IsVBR attribute. The stream's `isVbr` follows IsVBR. Media Foundation's files carry IsVBR but no Codec List.
 - Not used as evidence: `WMFSDKNeeded` and `DeviceConformanceTemplate`, which the SDK writes with fixed values.
-- Voice has no trait of its own: its 46 bytes of codec data and its frames name no encoder, so it is named by the container's layout and claims only.
 
 ## Observed in Microsoft's files
 

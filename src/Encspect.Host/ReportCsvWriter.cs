@@ -9,7 +9,7 @@ public static class ReportCsvWriter
     private static readonly string[] Columns =
     [
         "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
-        "Channel Layout", "Encoder", "Encoder Confidence", "Tags", "Errors", "Warnings", "Infos", "Has Object Audio", "JOC Object Count",
+        "Channel Layout", "Encoder", "Encoder Confidence", "Writer", "Writer Confidence", "Tags", "Errors", "Warnings", "Infos", "Has Object Audio", "JOC Object Count",
         "Is Protected", "Protection Scheme", "DRM Systems",
     ];
 
@@ -26,7 +26,7 @@ public static class ReportCsvWriter
             [
                 s.Source, s.Format, Count(s.Streams), s.Codec, Fixed(s.Duration, 3), s.Samples?.ToString(CultureInfo.InvariantCulture),
                 Fixed(s.AverageBitrate, 1), s.SampleRate?.ToString(CultureInfo.InvariantCulture), s.ChannelMode, s.ChannelLayoutText, s.Encoder,
-                s.EncoderConfidence?.ToString(), string.Join(", ", s.Tags), Count(s.Errors), Count(s.Warnings), Count(s.Infos),
+                s.EncoderConfidence?.ToString(), s.Writer, s.WriterConfidence?.ToString(), string.Join(", ", s.Tags), Count(s.Errors), Count(s.Warnings), Count(s.Infos),
                 s.Streams == 0 ? null : s.HasObjectAudio ? "true" : "false", s.JocObjectCount?.ToString(CultureInfo.InvariantCulture),
                 s.Streams == 0 ? null : s.IsProtected ? "true" : "false", string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems),
             ]);
@@ -46,7 +46,7 @@ public static class ReportCsvWriter
         writer.Write("\r\n");
     }
 
-    // Encoder names and paths come from files. Quoted where they hold a separator, quote or line
+    // Encoder and writer names and paths come from files. Quoted where they hold a separator, quote or line
     // break; a leading =, +, -, @ or control character gets an apostrophe, so a spreadsheet shows
     // the text instead of evaluating it as a formula.
     private static string Field(string? value)

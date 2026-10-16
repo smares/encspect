@@ -154,10 +154,24 @@
                               "value": "A fill element of access unit 1 at 0x30 holds \"libfaac 1.30\", which libfaac writes",
                               "offset": 48,
                               "length": 21426
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "FAAC 1.30",
+                          "offset": 48,
+                          "length": 21426,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 48,
+                              "length": 21426
                             },
                             {
                               "name": "Evidence",
-                              "value": "MP4 ©too atom (encoding tool) at 0x574F names \"FAAC 1.30\"",
+                              "value": "MP4 ©too atom at 0x574F names \"FAAC 1.30\"",
                               "offset": 48,
                               "length": 21426
                             }
@@ -46968,6 +46982,8 @@
         "isVbr": false,
         "encoder": "FAAC 1.30",
         "encoderConfidence": "High",
+        "writer": "FAAC 1.30",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

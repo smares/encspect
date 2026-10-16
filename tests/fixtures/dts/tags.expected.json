@@ -1,5 +1,5 @@
 {
- "description": "An ID3v2 tag, five stereo core frames, an APEv2 tag and an ID3v1 tag.",
+ "description": "An ID3v2 tag whose TSSE frame names the encoder, five stereo core frames, an APEv2 tag whose Encoder item names the writer and an ID3v1 tag.",
  "length": 2849,
  "format": "DTS",
  "frames": [
@@ -40,14 +40,10 @@
   }
  ],
  "fields": {
-  "DTS/Encoder": "dtsenc 1.0"
+  "DTS/Encoder": "dtsenc 1.0",
+  "DTS/Writer": "Hand-built"
  },
- "findings": [
-  [
-   "dts.encoder-claim",
-   "APE Encoder item"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "decode": true,

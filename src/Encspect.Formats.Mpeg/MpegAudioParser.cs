@@ -122,7 +122,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         foreach (RegionState region in stream.Regions)
         {
             ScanAncillary(stream, region);
-            region.Encoder = WeighClaims(stream, region, DetectEncoder(stream, region), context.EncoderClaims);
+            region.Encoder = WeighClaims(stream, region, DetectEncoder(stream, region), ClaimRoles.Encoders(context.EncoderClaims));
+            region.Writer = DetectWriter(stream, region, context.EncoderClaims);
+            ClaimRoles.CompleteVersion(region.Encoder, context.EncoderClaims);
         }
 
         AddStatistics(stream);
@@ -502,6 +504,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         if (region.Encoder is { } encoder)
         {
             nodes.Add(encoder);
+        }
+
+        if (region.Writer is { } writer)
+        {
+            nodes.Add(writer);
         }
 
         if (region.Enhancement is { } enhancement)
@@ -1459,6 +1466,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         public Node? UndefinedScalefactor { get; set; }
 
         public Node? Encoder { get; set; }
+
+        public Node? Writer { get; set; }
 
         // mp3PRO or MP3 Surround, and the Original File Length block, from the ancillary data.
         public Node? Enhancement { get; set; }

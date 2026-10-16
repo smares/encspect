@@ -1,5 +1,5 @@
 {
- "description": "exhale's layout of the UsacConfig with a tool atom that names another encoder: the stream's evidence names exhale, and the claim that differs is an info finding.",
+ "description": "exhale's layout of the UsacConfig with a tool atom that names other software: the stream's evidence names exhale as the encoder and the tool atom names the writer, two facts that do not conflict.",
  "length": 2169,
  "format": "MP4",
  "boxes": [
@@ -159,6 +159,10 @@
    "encoder": [
     "exhale",
     "Medium"
+   ],
+   "writer": [
+    "hand-built",
+    "Low"
    ]
   }
  ],
@@ -294,10 +298,6 @@
   [
    "aac.usac-frames-not-analyzed",
    "usacIndependencyFlag"
-  ],
-  [
-   "aac.encoder-claim-differs",
-   "names \"hand-built\", but the stream points to \"exhale\""
   ]
  ],
  "crosscheck": {

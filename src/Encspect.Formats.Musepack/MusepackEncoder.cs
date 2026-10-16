@@ -12,8 +12,10 @@ namespace Encspect.Formats.Musepack;
 // below, with high confidence), and that mpcenc of musepack_src r495 writes 1.30.1 (mpcenc/config.h).
 // mpc2sv8 converts SV7 to SV8 and writes the SV7 byte's hundreds as major, the rest as minor and
 // build 0 (mpc2sv8.c), which it did for mppenc 1.16's 116 as 1.16.0. Other versions follow
-// libmpcdec's reading with medium confidence. A tag's claim (EncoderClaim) alone names the
-// encoder as written with low confidence.
+// libmpcdec's reading with medium confidence. A claim of the encoder role (EncoderClaim, an ID3v2 TSSE
+// frame) alone names the encoder as written with low confidence; the claims of the writer role (an APEv2 Encoder
+// item, which Musepack SV8's chapters and trailing tags hold, and ffmpeg's muxer version) are resolved apart
+// (WriterDetection).
 internal static partial class MusepackEncoder
 {
     private const int MaxClaimedName = 64;
@@ -148,7 +150,7 @@ internal static partial class MusepackEncoder
             }
         }
 
-        foreach (EncoderClaim claim in claims)
+        foreach (EncoderClaim claim in ClaimRoles.Encoders(claims))
         {
             string text = claim.Text.Trim();
             if (text.Length == 0)

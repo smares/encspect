@@ -318,7 +318,7 @@ public class StreamTests
         ReportCsvWriter.Write([Fixtures.AnalyzeMpeg("stats/split-by-tag.mp3")], writer);
 
         string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        Assert.Equal("split-by-tag.mp3,MPEG Audio,1,MPEG-1 Layer III,0.261,11520,139.0,44100,Joint stereo,\"stereo (front left, front right)\",,,\"ID3v2, ID3v2\",0,0,0,false,,false,,", lines[1]);
+        Assert.Equal("split-by-tag.mp3,MPEG Audio,1,MPEG-1 Layer III,0.261,11520,139.0,44100,Joint stereo,\"stereo (front left, front right)\",,,,,\"ID3v2, ID3v2\",0,0,0,false,,false,,", lines[1]);
     }
 
     // The tags of a summary are the nodes of kind Tag, whatever they are named.

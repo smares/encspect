@@ -116,8 +116,8 @@ public sealed partial class Mp4Parser
             if (entry.DecoderSpecificInfo is { } data && entry.DecoderSpecificInfoNode is { } node)
             {
                 // The layout claim is about this track: the codec parser sees it, no other track does.
-                EncoderClaim? layout = codec == "aac" ? AppleEvidence(state, entry) : null;
-                configuration = new CodecConfiguration(data, node) { IsVbr = IsVbr(state, entry, first), Claims = layout is null ? [] : [layout] };
+                IReadOnlyList<EncoderClaim> layout = codec == "aac" ? AppleEvidence(state, entry) : [];
+                configuration = new CodecConfiguration(data, node) { IsVbr = IsVbr(state, entry, first), Claims = layout };
             }
 
             state.Context.ParsePackets(codec, samples, Packets(state, track), configuration);
@@ -205,7 +205,7 @@ public sealed partial class Mp4Parser
         }
     }
 
-    // The writer of the AAC track, from the way it lays out the file. Every AAC file afconvert encoded on macOS 15.7
+    // The software behind the AAC track, from the way it lays out the file. Every AAC file afconvert encoded on macOS 15.7
     // (59 files on each of arm64 and x86-64: AAC-LC including 5.1, HE-AAC, HE-AAC v2, AAC-LD and AAC-ELD, in M4A, M4B, MP4, 3GP and 3GP2)
     // has a DecoderConfigDescriptor whose stream type byte is 0x14, the reserved bit that ISO/IEC 14496-1 7.2.6.6
     // sets to 1 written as 0; all 85 esds boxes of the 86 other fixtures (ffmpeg, fdkaac, FAAC, MP4Box, hand-built) write 0x15. The M4A and M4B
@@ -213,38 +213,40 @@ public sealed partial class Mp4Parser
     // 4,096-byte boundary (afconvert's --no-filler changed nothing in these files). The writer also gives the padding to
     // every copy of packets (afconvert -d 0, run 4) and the stream type byte 0x14 to a copy of an ADTS source (an M4A
     // source keeps its own esds, with 0x15), but never the sbtd box, which records the PCM source of an encode: none of the
-    // copies has one. So the padding adds nothing beyond the byte in these data, and:
-    // - with an sbtd box, the claim names the encoder, with medium confidence;
-    // - with the padding alone, it names the writer, with low confidence: the encoder is Apple's unless the stream was copied.
+    // copies has one. So the padding adds nothing beyond the byte in these data, and the byte tells the writer of the file
+    // whether or not the writer encoded the audio:
+    // - the byte with the padding names the writer, "Apple AudioToolbox", with low confidence;
+    // - the byte with an sbtd box names the encoder, with medium confidence, in a claim of its own.
     // A remux by other software drops the traces and names nothing.
-    private static EncoderClaim? AppleEvidence(State state, SampleEntry entry)
+    private static IReadOnlyList<EncoderClaim> AppleEvidence(State state, SampleEntry entry)
     {
         if (entry.StreamTypeByte is not { } streamType || (streamType & 1) != 0 || (streamType >> 2) != 5)
         {
-            return null;
+            return [];
         }
 
         string stream = $"a DecoderConfigDescriptor whose stream type byte is 0x{streamType:X2} (reserved bit 0)";
+        var claims = new List<EncoderClaim>();
         if (entry.SourceBitDepthNode is not null)
         {
-            return new EncoderClaim("Apple AAC encoder (AudioToolbox)", entry.SourceBitDepthNode,
-                $"MP4 layout of Apple's AudioToolbox encoder: {stream} and an sbtd box in the sample entry, which records the PCM source of an encode")
+            claims.Add(new EncoderClaim("Apple AAC encoder (AudioToolbox)", entry.SourceBitDepthNode,
+                $"MP4 layout of Apple's AudioToolbox encoder: {stream} and an sbtd box in the sample entry, which records the PCM source of an encode", ClaimRole.Encoder)
             {
                 Confidence = Confidence.Medium,
                 IsLayout = true,
-            };
+            });
         }
 
-        if (!state.HasPageAlignedMdat)
+        if (state.HasPageAlignedMdat)
         {
-            return null;
+            claims.Add(new EncoderClaim("Apple AudioToolbox", entry.Node,
+                $"MP4 layout of Apple's AudioToolbox file writer: {stream} and a free box that pads the audio data to a 4,096-byte boundary", ClaimRole.Writer)
+            {
+                IsLayout = true,
+            });
         }
 
-        return new EncoderClaim("Apple AudioToolbox", entry.Node,
-            $"MP4 layout of Apple's AudioToolbox file writer: {stream} and a free box that pads the audio data to a 4,096-byte boundary")
-        {
-            IsLayout = true,
-        };
+        return claims;
     }
 
     // What the file says about the bitrate: Apple's encoder records its mode in Encoding Params, and

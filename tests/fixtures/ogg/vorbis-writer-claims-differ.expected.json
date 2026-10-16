@@ -1,0 +1,272 @@
+{
+ "length": 358,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 358
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 58,
+   "serial": 185270273,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 58,
+   "length": 198,
+   "serial": 185270273,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 256,
+   "length": 59,
+   "serial": 185270273,
+   "sequence": 2,
+   "granule": 11776,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 315,
+   "length": 43,
+   "serial": 185270273,
+   "sequence": 3,
+   "granule": 19968,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0B0B0001",
+   "codec": "Vorbis",
+   "link": 1,
+   "pages": 4,
+   "packets": 27,
+   "has_eos": true,
+   "vorbis": {
+    "header": {
+     "Packet Type": "1",
+     "Vorbis String": "vorbis",
+     "Vorbis Version": "0",
+     "Channels": "1",
+     "Channel Layout": "Mono: mono",
+     "Sample Rate": "44100 Hz",
+     "Bitrate Maximum": "0 (not set)",
+     "Bitrate Nominal": "0 (not set)",
+     "Bitrate Minimum": "0 (not set)",
+     "Bitrate Hint": "None set: the encoder gives no hint",
+     "Blocksize 0": "256 samples",
+     "Blocksize 1": "2048 samples",
+     "Framing Bit": "true"
+    },
+    "comment": {
+     "vendor": "Encspect fixture",
+     "comments": [
+      "ENCODER=Foo Muxer 1.0",
+      "ENCODER=Bar Tool 2.0",
+      "ENCODER=LAME 3.100"
+     ]
+    },
+    "setup": {
+     "value": "1 codebook, 1 floor, 1 residue, 1 mapping, 2 modes",
+     "groups": {
+      "Codebooks": "1 codebook",
+      "Time Domain Transforms": "1 placeholder",
+      "Floors": "1 floor, type 1",
+      "Residues": "1 residue, type 0",
+      "Mappings": "1 mapping, no coupling",
+      "Modes": "2 modes: 1 long, 1 short"
+     }
+    },
+    "packets": [
+     [
+      299,
+      1
+     ],
+     [
+      300,
+      1
+     ],
+     [
+      301,
+      1
+     ],
+     [
+      302,
+      1
+     ],
+     [
+      303,
+      1
+     ],
+     [
+      304,
+      1
+     ],
+     [
+      305,
+      1
+     ],
+     [
+      306,
+      1
+     ],
+     [
+      307,
+      1
+     ],
+     [
+      308,
+      1
+     ],
+     [
+      309,
+      1
+     ],
+     [
+      310,
+      1
+     ],
+     [
+      311,
+      1
+     ],
+     [
+      312,
+      1
+     ],
+     [
+      313,
+      1
+     ],
+     [
+      314,
+      1
+     ],
+     [
+      350,
+      1
+     ],
+     [
+      351,
+      1
+     ],
+     [
+      352,
+      1
+     ],
+     [
+      353,
+      1
+     ],
+     [
+      354,
+      1
+     ],
+     [
+      355,
+      1
+     ],
+     [
+      356,
+      1
+     ],
+     [
+      357,
+      1
+     ]
+    ],
+    "blocks": [
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "S0",
+     "S0",
+     "S0",
+     "S0",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1",
+     "L1"
+    ],
+    "statistics": {
+     "Packets": "24",
+     "Long Blocks": "20 packets (83.3%)",
+     "Short Blocks": "4 packets (16.7%)",
+     "Decoded Samples": "19968 samples",
+     "Start Offset": "0 samples",
+     "Start Trimming": "0 samples",
+     "End Trimming": "0 samples",
+     "Samples": "19968 samples",
+     "Duration": "0.453 s",
+     "IsVbr": "false",
+     "Average Bitrate": "0.4 kbps",
+     "Minimum Bitrate": "0.3 kbps",
+     "Maximum Bitrate": "2.8 kbps",
+     "Packet Sizes": "1 size",
+     "Packet Sizes/Long Blocks": "1 to 1 bytes, 1.0 on average",
+     "Packet Sizes/Short Blocks": "1 to 1 bytes, 1.0 on average",
+     "Modes": "2 modes used",
+     "Modes/Mode 0 (short block)": "4 packets (16.7%)",
+     "Modes/Mode 1 (long block)": "20 packets (83.3%)"
+    }
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Vorbis",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 19968,
+   "duration": 0.4527891156462585,
+   "average_bitrate": 0.42403846153846153,
+   "is_vbr": false,
+   "channel_mode": "Mono"
+  }
+ ],
+ "findings": [
+  {
+   "code": "vorbis.writer-claim-differs",
+   "contains": "ENCODER field names \"Bar Tool 2.0\""
+  },
+  {
+   "code": "vorbis.writer-other-format",
+   "contains": "which writes MPEG audio, not Vorbis"
+  }
+ ],
+ "crosscheck": {
+  "valid": true,
+  "skip": {}
+ }
+}
