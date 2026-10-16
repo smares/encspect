@@ -514,7 +514,9 @@ public class MemoryTests(ITestOutputHelper output)
     // run, so empty packets of an unknown key (3 bytes each) keep about nothing per packet. The
     // bound is on the growth from 1 to 4 million packets: what the report keeps whatever the count
     // (the detailed packets, pools the runtime holds on to) differs by platform and would otherwise
-    // dominate.
+    // dominate. The second figure is what the sampler read above the heap the analysis ends with
+    // (MeasureExcess), so it does not depend on the heap before the analysis, which is the same
+    // size for both counts only if nothing from earlier work is still alive when it is read.
     [Fact]
     public void UnknownSv8PacketsStayCompact()
     {
@@ -522,16 +524,16 @@ public class MemoryTests(ITestOutputHelper output)
         const int packets = 4_000_000;
         byte[] warmUp = Sv8EmptyPackets(5000, "XX"u8);
 
-        (_, long fewerKept, long fewerPeak) = Measure("unknown.mpc", Sv8EmptyPackets(fewer, "XX"u8), warmUp);
-        (Report report, long kept, long peak) = Measure("unknown.mpc", Sv8EmptyPackets(packets, "XX"u8), warmUp);
+        (_, long fewerKept, long fewerPeak) = MeasureExcess("unknown.mpc", Sv8EmptyPackets(fewer, "XX"u8), warmUp);
+        (Report report, long kept, long peak) = MeasureExcess("unknown.mpc", Sv8EmptyPackets(packets, "XX"u8), warmUp);
 
         Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
         Assert.Contains(report.Findings, f => f.Code == "musepack.key-unknown" && f.Message.StartsWith("4000000 packets", StringComparison.Ordinal));
         double keptPerPacket = (kept - fewerKept) / (double)(packets - fewer);
         double peakPerPacket = (peak - fewerPeak) / (double)(packets - fewer);
-        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes peak: {keptPerPacket:F2} and {peakPerPacket:F2} per further packet");
+        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes held above the end state: {keptPerPacket:F2} and {peakPerPacket:F2} per further packet");
         Assert.True(keptPerPacket < UndetailedPacketBound, $"The report keeps {keptPerPacket:F2} bytes per further packet.");
-        Assert.True(peakPerPacket < UndetailedPacketBound, $"The live heap grew by {peakPerPacket:F2} bytes per further packet.");
+        Assert.True(peakPerPacket < UndetailedPacketBound, $"The analysis held {peakPerPacket:F2} more bytes per further packet than it ends with.");
         GC.KeepAlive(report);
     }
 
@@ -699,22 +701,40 @@ public class MemoryTests(ITestOutputHelper output)
     // to 4 million packets, read 992 bytes for the first (macOS on x64) where the second read 3.5
     // MB, and failed with 1.17 bytes per further packet. The heap with the report alive, after the
     // analysis, is the least the analysis held at its end, so it counts as a reading too (the
-    // smaller of the two pairs' readings).
+    // smaller of the two pairs' readings). MeasureExcess is the variant for tests whose bound is on
+    // a growth between two counts and so must not depend on the heap before the analysis.
     private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data, byte[]? warmUp = null)
+    {
+        (Report report, long kept, long before, long sampled, long atEnd) = Run(name, data, warmUp);
+        return (report, kept, Math.Max(Math.Max(before, sampled), atEnd) - before);
+    }
+
+    // The same measurement with the peak as what the sampler read above the heap the analysis ends
+    // with, report alive: the transient state of the analysis (what it held and let go of), without
+    // the report's own size and without the heap before the analysis. That one is read once per
+    // call, and a few MB of earlier work still alive at that moment, gone by the end, shifted the
+    // peak of one count and not of the other: UnknownSv8PacketsStayCompact read 1.15 bytes per
+    // further packet on ubuntu-26.04 with its 1 million packet peak at about zero. A sampler that
+    // reads nothing late can only lower the figure, never fail a test.
+    private static (Report Report, long Kept, long Excess) MeasureExcess(string name, byte[] data, byte[]? warmUp = null)
+    {
+        (Report report, long kept, _, long sampled, long atEnd) = Run(name, data, warmUp);
+        return (report, kept, Math.Max(0, sampled - atEnd));
+    }
+
+    private static (Report Report, long Kept, long Before, long Sampled, long AtEnd) Run(string name, byte[] data, byte[]? warmUp)
     {
         var analyzer = Analyzer.CreateDefault();
         analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
         long before = Live();
-        long peak = before;
-        long withReport = SampledAnalysis(analyzer, name, data, ref peak);
+        long withReport = SampledAnalysis(analyzer, name, data, out long sampled);
         long withoutReport = Live();
         long secondWithReport = AnalysisWithReport(analyzer, name, data);
         long secondWithoutReport = Live();
         Report report = analyzer.Analyze(name, new MemoryStream(data));
         GC.KeepAlive(data);
         long kept = Math.Min(withReport - withoutReport, secondWithReport - secondWithoutReport);
-        long atEnd = Math.Min(withReport, secondWithReport);
-        return (report, kept, Math.Max(Volatile.Read(ref peak), atEnd) - before);
+        return (report, kept, before, sampled, Math.Min(withReport, secondWithReport));
     }
 
     // The live heap with the report of an analysis alive; the report is dropped on return.
@@ -730,12 +750,10 @@ public class MemoryTests(ITestOutputHelper output)
     // The live heap with the report of an analysis alive, read while a sampler thread forces
     // collections during it; the report is dropped on return.
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private static long SampledAnalysis(Analyzer analyzer, string name, byte[] data, ref long peak)
+    private static long SampledAnalysis(Analyzer analyzer, string name, byte[] data, out long sampled)
     {
-        long observed = Volatile.Read(ref peak);
-        long highest = observed;
         bool done = false;
-        long shared = observed;
+        long shared = 0;
         var sampler = new Thread(() =>
         {
             while (!Volatile.Read(ref done))
@@ -751,8 +769,7 @@ public class MemoryTests(ITestOutputHelper output)
         sampler.Join();
         long live = Live();
         GC.KeepAlive(report);
-        highest = Math.Max(highest, Volatile.Read(ref shared));
-        peak = highest;
+        sampled = Volatile.Read(ref shared);
         return live;
     }
 
