@@ -468,8 +468,9 @@ def gapless():
 
 
 def too_lavc():
-    """ffmpeg's AAC encoder signs the first access unit with its identification in a fill element before the channel pair element (every
-    256th access unit, unless bit-exact); the tool atom then holds that ID and the encoder's name."""
+    """ffmpeg's AAC encoder signs an access unit (every 256th, unless bit-exact) with its identification in a fill element before the channel
+    pair element. The tool atom is set to an encoder ID and name to exercise the rule that such text names the encoder; ffmpeg's muxer writes
+    its Lavf version there by default."""
     text = b"Lavc60.31.102"
     bits = Bits()
     # aacenc.c put_bitstream_info: the fill element's count (len + 2, with the escape count past 14), the extension type EXT_FILL, padding up to
@@ -485,8 +486,8 @@ def too_lavc():
     track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2))
     data, records, offsets = movie([track], moov_extra=[udta(ilst_meta(text_item(b"\xa9too", text.decode() + " aac")))])
     return [("aac-too-lavc", data, {
-        "description": "AAC LC signed by ffmpeg's encoder in a fill element of its first access unit, whose tool atom holds the same libavcodec encoder ID: the atom adds "
-                       "to the encoder's evidence and names no writer.",
+        "description": "AAC LC with ffmpeg's signature in a fill element of its first access unit, laid out as aacenc.c (n6.1.1, lines 787-802) writes it, and a tool atom set to "
+                       "a libavcodec encoder ID: the atom adds to the encoder's evidence and names no writer.",
         "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
         "streams": [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024, vbr=True, encoder=("FFmpeg (Lavc60.31.102)", "High"))],
         "units": unit_list(offsets[0], samples, 10), "fields": {},

@@ -18,7 +18,7 @@ references: ID3v2.3 section 4.2.1 and ID3v2.4 frames section 4.2.5 (TSSE); Vorbi
 - Vorbis comment vendor string: encoder. ENCODER field: writer; Vorbis I section 5.2.2 lists none, and RFC 7845 section 5.2 has applications "identify themselves" with it.
 - QuickTime ©swr, ASF WM/ToolName, Matroska WritingApp and MuxingApp: writer. MP4 ©too has no Apple specification: writer.
 - APEv2 Encoder item and ASF WMFSDKVersion: unverified, so writer.
-- In any of these fields, a `Lavc…` encoder ID names the encoder and a `Lavf…` muxer version the writer.
+- In any of these fields but ASF WMFSDKVersion and MediaFoundationVersion, a `Lavc…` encoder ID names the encoder and a `Lavf…` muxer version the writer.
 
 **Versions.** The encoder may take the version of a writer claim that is the encoder's own name followed by white space and a version, and the evidence says so. Another name lends nothing.
 

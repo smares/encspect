@@ -111,14 +111,36 @@ public class AsfFixtureTests
     [Fact]
     public void ALibavcodecToolNameIsEncoderEvidenceAndNoWriter()
     {
-        string path = Path.Combine(Fixtures.FixtureDirectory, "asf/tool-name-lavc.asf");
+        string path = Path.Combine(Fixtures.FixtureDirectory, "asf/derived-ffmpeg-wmav2-tool-name-lavc.asf");
         Report report = Analyzer.CreateDefault().Analyze(path, new MemoryStream(File.ReadAllBytes(path)));
 
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(("FFmpeg (wmav2 encoder)", Confidence.High), (stream.Encoder, stream.EncoderConfidence));
         Assert.Null(stream.Writer);
         Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
+        Node encoder = Find(report.Root, "Encoder");
+        Assert.Contains(encoder.Children, c => c.Name == "Evidence" && c.Value?.ToString()?.Contains("WM/ToolName", StringComparison.Ordinal) == true);
     }
+
+    // The version attributes of the two Microsoft writers are writer claims by what they name, whatever their text looks like.
+    [Theory]
+    [InlineData("WMFSDKVersion", "Windows Media Format SDK Lavc60.31.102 wmav2")]
+    [InlineData("MediaFoundationVersion", "Media Foundation Lavc60.31.102 wmav2")]
+    public void AVersionAttributeIsAlwaysAWriterClaim(string name, string writer)
+    {
+        byte[] value = System.Text.Encoding.Unicode.GetBytes("Lavc60.31.102 wmav2\0");
+        byte[] key = System.Text.Encoding.Unicode.GetBytes(name + "\0");
+        byte[] body = [1, 0, .. BitConverter.GetBytes((ushort)key.Length), .. key, 0, 0, .. BitConverter.GetBytes((ushort)value.Length), .. value];
+        byte[] data = AsfBuilder.InHeader("derived-ffmpeg-wmav2-tool-name-lavc", AsfBuilder.Object("D2D0A440-E307-11D2-97F0-00A0C95EA850", body));
+
+        Report report = Analyzer.CreateDefault().Analyze("version.asf", new MemoryStream(data));
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("FFmpeg (wmav2 encoder)", stream.Encoder);
+        Assert.Equal(writer, stream.Writer);
+    }
+
+    private static Node Find(Node node, string name) => node.Name == name ? node : node.Children.Select(c => Find(c, name)).FirstOrDefault(n => n is not null)!;
 
     private static List<string> Listed(JsonElement manifest, string property) =>
         [.. manifest.GetProperty(property).EnumerateArray().Select(e => $"{(e[0].GetString()!.Contains('-', StringComparison.Ordinal) ? "Unknown Object" : e[0].GetString())}@{e[1].GetInt64()}+{e[2].GetInt64()}")];

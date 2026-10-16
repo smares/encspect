@@ -1,5 +1,5 @@
 {
- "description": "The stream of an ffmpeg wmav2 file, whose superframes are padded with 'N' bytes, with a WM/ToolName attribute that holds ffmpeg's libavcodec encoder ID: the ID counts as encoder evidence only where the stream shows ffmpeg, as it does here, so it is listed under the encoder the stream names and the attribute names no writer.",
+ "description": "The ffmpeg wmav2 file external-ffmpeg-wmav2-mono-44k-48k.wma, whose superframes are padded with 'N' bytes, with a WM/ToolName attribute added that holds ffmpeg's libavcodec encoder ID: the ID counts as encoder evidence only where the stream shows ffmpeg, as it does here, so it is listed under the encoder the stream names and the attribute names no writer.",
  "format": "ASF",
  "length": 16540,
  "objects": [
@@ -1061,12 +1061,16 @@
   "file_size": 16540,
   "packets": 5,
   "play_duration": 50990000,
-  "send_duration": 0,
-  "preroll": 0,
+  "send_duration": 19990000,
+  "preroll": 3100,
   "flags": 2,
   "min_packet": 3200,
   "max_packet": 3200,
-  "max_bitrate": 0
+  "max_bitrate": 48000
+ },
+ "derived": {
+  "from": "external-ffmpeg-wmav2-mono-44k-48k.wma",
+  "note": "Not an encoder's output: the source file with one attribute added to its header."
  },
  "findings": [],
  "crosscheck": {

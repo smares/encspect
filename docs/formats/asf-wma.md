@@ -114,7 +114,7 @@ Format tag 0x000A, routed as the codec "wma-voice". Read as FFmpeg's `wmavoice.c
 
 ## Encoder detection
 
-The Encoder node and the Writer node of a stream each list their evidence at its bytes and name the strongest. They are resolved apart: the encoder from the stream and its codec data, the writer from the container's layout and metadata. An ASF file's attributes (WMFSDKVersion, MediaFoundationVersion, WM/ToolName, WM/EncodingSettings) are claims of the writer role, since the Windows Media attribute lists give them to no encoder. WMFSDKVersion and MediaFoundationVersion are always writer claims. In WM/ToolName, WM/Tool, WM/ToolVersion and WM/EncodingSettings, text that is ffmpeg's muxer version (`Lavf…`) is a writer claim anyway, and text that is a libavcodec encoder ID (`Lavc…`) is an encoder claim, which encoder detection weighs only where the stream itself shows ffmpeg.
+The Encoder node and the Writer node of a stream each list their evidence at its bytes and name the strongest. They are resolved apart: the encoder from the stream and its codec data, the writer from the container's layout and metadata. An ASF file's attributes (WMFSDKVersion, MediaFoundationVersion, WM/ToolName, WM/EncodingSettings) are claims of the writer role, since the Windows Media attribute lists give them to no encoder; WMFSDKVersion and MediaFoundationVersion stay so whatever their text. In WM/ToolName, WM/Tool, WM/ToolVersion and WM/EncodingSettings, text that is ffmpeg's muxer version (`Lavf…`) is a writer claim anyway, and text that is a libavcodec encoder ID (`Lavc…`) is an encoder claim, which encoder detection weighs only where the stream itself shows ffmpeg.
 
 ### Encoder
 
