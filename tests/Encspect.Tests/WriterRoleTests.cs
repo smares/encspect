@@ -329,6 +329,7 @@ public partial class WriterRoleTests
     [InlineData("LAME3.100", KnownWriters.WavPack, "MPEG audio")]
     [InlineData("FAAC2", KnownWriters.Usac, "AAC")]
     [InlineData("opusenc.exe", KnownWriters.Vorbis, "Opus")]
+    [InlineData("opusenc.exe 0.2", KnownWriters.Vorbis, "Opus")]
     public void SoftwareThatWritesAnotherFormatIsKnown(string writer, string kind, string writes) =>
         Assert.Equal(writes, KnownWriters.WritesInstead(writer, kind));
 
@@ -350,6 +351,7 @@ public partial class WriterRoleTests
     [InlineData("foobar2000 (LAME 3.100)", KnownWriters.WavPack)]
     [InlineData("LAMEenc", KnownWriters.WavPack)]
     [InlineData("LameXP", KnownWriters.WavPack)]
+    [InlineData("opusenc.executor", KnownWriters.Vorbis)]
     [InlineData("LAME-3.100", KnownWriters.WavPack)]
     [InlineData("RazorLame", KnownWriters.WavPack)]
     [InlineData("Windows Media Format SDK 12", KnownWriters.MpegAudio)]
@@ -448,7 +450,40 @@ public partial class WriterRoleTests
         Report report = Analyze(Path.GetFileName(path), Fixture(path));
         Assert.Equal(encoder, Assert.Single(report.Streams).Encoder);
         Assert.Single(report.Findings, f => f.Code == code + ".encoder-other-format");
+        Node node = Assert.Single(EncoderNodes(report));
+        string[] evidence = node.Children.Where(c => c.Name == "Evidence").Select(c => $"{c.Value}").ToArray();
+        Assert.Contains(evidence, e => e.Contains("an encoder of another codec", StringComparison.Ordinal));
+        Assert.Contains(evidence, e => e.Contains("which ffmpeg writes when it encodes", StringComparison.Ordinal));
     }
+
+    [Theory]
+    [InlineData("ogg/vorbis-encoder-fields.ogg", "FFmpeg (Lavc60.31.102 libvorbis)")]
+    [InlineData("ogg/opus-encoder-fields.opus", "FFmpeg (Lavc60.31.102 libopus)")]
+    public void EveryEncoderFieldIsWeighedNotTheFirst(string path, string encoder)
+    {
+        Report report = Analyze(Path.GetFileName(path), Fixture(path));
+        Assert.Equal(encoder, Assert.Single(report.Streams).Encoder);
+        Assert.Single(report.Findings, f => f.Code.EndsWith(".encoder-other-format", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ASpeexForeignIdNeverBecomesTheEncoderWhateverNamesIt()
+    {
+        Report speexenc = Analyze("a.spx", Fixture("ogg/encoder-other-format.spx"));
+        Assert.Equal("speexenc 1.2.1", Assert.Single(speexenc.Streams).Encoder);
+        Assert.Single(speexenc.Findings, f => f.Code == "speex.encoder-other-format");
+
+        Report header = Analyze("b.spx", Fixture("ogg/encoder-other-format-no-vendor.spx"));
+        StreamInfo stream = Assert.Single(header.Streams);
+        Assert.StartsWith("libspeex ", stream.Encoder, StringComparison.Ordinal);
+        Assert.Equal(Confidence.Low, stream.EncoderConfidence);
+        Assert.Single(header.Findings, f => f.Code == "speex.encoder-other-format");
+        Assert.Contains(EncoderNodes(header).SelectMany(n => n.Children), c => c.Name == "Evidence" && $"{c.Value}".Contains("an encoder of another codec", StringComparison.Ordinal));
+    }
+
+    private static IEnumerable<Node> EncoderNodes(Report report) => Walk(report.Root).Where(n => n.Name == "Encoder");
+
+    private static IEnumerable<Node> Walk(Node node) => new[] { node }.Concat(node.Children.SelectMany(Walk));
 
     // ---- the front ends
 

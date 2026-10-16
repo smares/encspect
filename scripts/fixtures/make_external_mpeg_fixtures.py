@@ -31,6 +31,11 @@ ffmpeg's tag names ffmpeg, so the LAME behind it is again known from ancillary d
 TwoLAME leaves no trace. An ID3v2 TSSE frame, which LAME's front end and ffmpeg's muxer write,
 names the encoder alone with low confidence and raises low-confidence evidence from the frames that
 names the same encoder to medium. "mp3guessenc_encoder_string" is the encoder string mp3guessenc finds.
+"detected_writer" is the writer the analyzer must name, present only where one is named: "FFmpeg" (low)
+for an ID3v2 TSSE frame that is ffmpeg's muxer version (or "FFmpeg (Lavf...)" with it) and for a LAME tag laid out as ffmpeg's muxer
+writes it (an encoder string of "Lavc..." or "Lavf...", or ffmpeg's tag CRC where LAME's would differ). It follows from the manifests' tags
+and the committed files alone, so "--writers-only" recomputes it without any encoder, adding it where the rule names a writer and
+removing it where it no longer does; CI's fixtures job runs that and fails on a difference.
 
 "mp3guessenc_guess" is the encoder mp3guessenc guesses, and for a stream with an OFL block,
 "mp3guessenc_ofl" the delay and original length mp3guessenc reads from it and "decoded_onset" the
@@ -814,14 +819,15 @@ def add_writers():
         if "vbr_header" not in manifest or "encoder" not in manifest or not data.exists():
             continue
         writer = detected_writer(manifest["vbr_header"], data)
-        if writer is not None and manifest.get("detected_writer") != writer:
+        if manifest.get("detected_writer") != writer:
             ordered = {}
             for key, value in manifest.items():
                 if key != "detected_writer":
                     ordered[key] = value
-                if key == "mp3guessenc_encoder_string":
+                if key == "mp3guessenc_encoder_string" and writer is not None:
                     ordered["detected_writer"] = writer
-            ordered.setdefault("detected_writer", writer)
+            if writer is not None:
+                ordered.setdefault("detected_writer", writer)
             path.write_text(json.dumps(ordered, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 

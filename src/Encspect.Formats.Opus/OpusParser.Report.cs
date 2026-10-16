@@ -30,7 +30,8 @@ public sealed partial class OpusParser
         {
             List<EncoderClaim> encoders = [.. ClaimRoles.Encoders(CommentClaims())];
             EncoderClaim? vendor = encoders.FirstOrDefault(c => c.Source.Name == "Vendor");
-            EncoderClaim? field = encoders.FirstOrDefault(c => c.Source.Name != "Vendor");
+            List<EncoderClaim> fields = encoders.Where(c => c.Source.Name != "Vendor").ToList();
+            EncoderClaim? field = fields.FirstOrDefault(c => FfmpegEncoder().IsMatch(c.Text));
             Match? library = vendor is null ? null : LibopusVendor().Match(vendor.Text);
 
             var evidence = new List<Node>();
@@ -38,7 +39,7 @@ public sealed partial class OpusParser
             Confidence confidence = Confidence.Medium;
             // One rule for a libavcodec encoder ID in the ENCODER field: one of this codec names an encoder (ffmpeg's) unless stream evidence names a
             // real encoder first; one of another codec never becomes the encoder, stays as evidence under the Encoder node where there is one and is reported.
-            bool isOwn = field is not null && FfmpegEncoder().IsMatch(field.Text);
+            bool isOwn = field is not null;
             if (vendor is not null && library is { Success: true })
             {
                 name = $"libopus {library.Groups[1].Value}";
@@ -50,13 +51,23 @@ public sealed partial class OpusParser
                 evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{field.Text}\", which ffmpeg writes when it encodes"));
             }
 
-            if (field is not null && !isOwn)
+            foreach (EncoderClaim claim in fields)
             {
-                string text = field.Text;
-                _findings.Add(Severity.Info, "opus.encoder-other-format", field.Source, _ => $"The Vorbis comment ENCODER field names \"{text}\", an encoder of another codec, not of Opus.");
+                if (FfmpegEncoder().IsMatch(claim.Text))
+                {
+                    if (!ReferenceEquals(claim, field) || !name!.StartsWith("FFmpeg", StringComparison.Ordinal))
+                    {
+                        evidence.Add(Evidence(claim.Source, $"Vorbis comment ENCODER field \"{claim.Text}\", which ffmpeg writes when it encodes"));
+                    }
+
+                    continue;
+                }
+
+                string text = claim.Text;
+                _findings.Add(Severity.Info, "opus.encoder-other-format", claim.Source, _ => $"The Vorbis comment ENCODER field names \"{text}\", an encoder of another codec, not of Opus.");
                 if (name is not null)
                 {
-                    evidence.Add(Evidence(field.Source, $"Vorbis comment ENCODER field \"{text}\", an encoder of another codec, which does not count"));
+                    evidence.Add(Evidence(claim.Source, $"Vorbis comment ENCODER field \"{text}\", an encoder of another codec, which does not count"));
                 }
             }
 

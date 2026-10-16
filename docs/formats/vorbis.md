@@ -25,7 +25,7 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
   - libvorbis by release;
   - aoTuV by release, from its sources and builds;
   - Lancer.
-- **Encoder, too:** an ENCODER field that is ffmpeg's libavcodec ID ("Lavc60.31.102 libvorbis"), shown as "FFmpeg (Lavc60.31.102 libvorbis)" with medium confidence (bit-exact, without a version: "Lavc libvorbis", shown "FFmpeg (Lavc libvorbis)"). A vendor string that names libvorbis wins over it; an ID of another codec's encoder never becomes the encoder, stays as evidence under it and is `vorbis.encoder-other-format`.
+- **Encoder, too:** an ENCODER field that is ffmpeg's libavcodec ID ("Lavc60.31.102 libvorbis"), shown as "FFmpeg (Lavc60.31.102 libvorbis)" with medium confidence (bit-exact, without a version: "Lavc libvorbis", shown "FFmpeg (Lavc libvorbis)"). A vendor string that names libvorbis wins over it; an ID of another codec's encoder never becomes the encoder, stays as evidence under it, as does an own ID that a vendor string outranks (every ENCODER field is weighed, not the first), and is `vorbis.encoder-other-format`.
 - **Writer:** any other ENCODER field, which section 5.2.2 of the Vorbis I specification does not list, and a vendor string that is ffmpeg's muxer version ("Lavf60.16.100"): ffmpeg rewrites the vendor string, so its Ogg Vorbis files name the writer "FFmpeg (Lavf60.16.100)". Two claims that name different software are `vorbis.writer-claim-differs`, and software known to write another format is `vorbis.writer-other-format`.
 
 ## Not yet covered

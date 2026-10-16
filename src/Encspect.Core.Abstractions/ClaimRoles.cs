@@ -10,6 +10,9 @@ public static partial class ClaimRoles
     // output format has, whatever encoded the audio (FFmpeg n6.1.1 libavformat/oggenc.c:281 writes LIBAVFORMAT_IDENT as the
     // vendor string, movenc.c:4203-4204 into ©too). In the LAME tag mp3enc.c:250-252 replaces the bit-exact encoder ID "Lavc libmp3lame"
     // with "Lavf lame" and mp3enc.c:258 writes a bare "Lavf" without any: the muxer wrote them, so they name the writer.
+    // This pattern tolerates leading white space and EncoderId does not: the muxer version is matched where tag text is taken as stored (an ID3v2
+    // TSSE or an APE item may be padded), a role decision that must not miss a padded muxer; an encoder ID only counts exactly as ffmpeg writes it,
+    // and the codecs' own patterns (VorbisParser, OpusParser, SpeexParser) are anchored the same way.
     [GeneratedRegex(@"^\s*Lavf(?![A-Za-z])", RegexOptions.CultureInvariant)]
     private static partial Regex MuxerVersion();
 

@@ -43,9 +43,10 @@ public static class KnownWriters
 
     // What the software named by a writer's text writes, as a label such as "MPEG audio", when it is listed and writes another kind
     // of stream than kind; null when the text names software that is not listed or writes that kind. A row matches only a text that
-    // starts with the software's name, followed by white space, a digit (its version, as in "LAME3.100") or the end of the text,
-    // so "opusenc.exe" counts too; "LAME-3.100" (a hyphen before the version) is left unlisted on purpose, since "Lame-o-matic" shows a hyphen alone says nothing,
-    // and "FAAC-based tool", "exhale_wrapper", "Lame-o-matic" and "foobar2000 (LAME 3.100)" name no listed software.
+    // starts with the software's name, optionally followed by ".exe", and then white space, a digit (its version, as in "LAME3.100")
+    // or the end of the text. So "opusenc.exe 0.2" counts, while "opusenc.executor", "FAAC-based tool", "exhale_wrapper", "Lame-o-matic"
+    // and "foobar2000 (LAME 3.100)" name no listed software. "LAME-3.100" (a hyphen before the version) is left unlisted on purpose:
+    // "Lame-o-matic" shows that a hyphen alone says nothing.
     public static string? WritesInstead(string writerText, string kind)
     {
         ArgumentNullException.ThrowIfNull(writerText);
@@ -53,14 +54,22 @@ public static class KnownWriters
         string text = writerText.TrimStart();
         foreach ((string name, (string rowKind, string label)) in Rows)
         {
-            if (text.StartsWith(name, StringComparison.OrdinalIgnoreCase)
-                && (text.Length == name.Length || char.IsWhiteSpace(text[name.Length]) || char.IsAsciiDigit(text[name.Length])
-                    || text.AsSpan(name.Length).StartsWith(".exe", StringComparison.OrdinalIgnoreCase)))
+            if (text.StartsWith(name, StringComparison.OrdinalIgnoreCase) && EndsName(text.AsSpan(name.Length)))
             {
                 return rowKind != kind ? label : null;
             }
         }
 
         return null;
+    }
+
+    private static bool EndsName(ReadOnlySpan<char> rest)
+    {
+        if (rest.StartsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            rest = rest[4..];
+        }
+
+        return rest.IsEmpty || char.IsWhiteSpace(rest[0]) || char.IsAsciiDigit(rest[0]);
     }
 }

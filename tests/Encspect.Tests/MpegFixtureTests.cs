@@ -38,6 +38,11 @@ public class MpegFixtureTests
             Assert.Equal(writer.GetProperty("name").GetString(), node.Value);
             Assert.Equal(writer.GetProperty("confidence").GetString(), node.Children.Single(c => c.Name == "Confidence").Value);
         }
+        else if (manifest.TryGetProperty("encoder", out _))
+        {
+            Node? node = Streams(report).SelectMany(s => s.Children).FirstOrDefault(c => c.Name == "Writer");
+            Assert.True(node is null, $"Unexpected writer {node?.Value}");
+        }
 
         if (manifest.TryGetProperty("detected_encoder", out JsonElement detected))
         {

@@ -340,13 +340,26 @@ def writer_claims_differ():
 
 
 def encoder_other_format():
-    # A libavcodec encoder ID of another codec in the ENCODER field never becomes the encoder (no other evidence names one here), and a finding says it is not Speex's.
+    # A libavcodec encoder ID of another codec in the ENCODER field never becomes the encoder: speexenc's vendor string names it (speexenc 1.2.1,
+    # high confidence), the ID stays as evidence under it, and a finding says it is not Speex's.
     f = Fixture("encoder-other-format")
     packets, granules = speex_packets(0, cbr(10, 3), comments=[b"ENCODER=Lavc60.31.102 libopus"])
     pages = m.pages_for(0x00C0FFF0, packets, granules, default_cuts(10))
     for p in pages:
         f.w.write(p)
     f.stream(0x00C0FFF0, pages)
+    f.finding("speex.encoder-other-format", "ENCODER field names \"Lavc60.31.102 libopus\"")
+    f.write()
+
+
+def encoder_other_format_no_vendor():
+    # The same ID with a vendor string that names no encoder: only the header's version names one (libspeex 1.2.1, low confidence), and the ID stays evidence under it.
+    f = Fixture("encoder-other-format-no-vendor")
+    packets, granules = speex_packets(0, cbr(10, 3), comments=[b"ENCODER=Lavc60.31.102 libopus"], vendor=b"Foo Tool")
+    pages = m.pages_for(0x00C0FFF1, packets, granules, default_cuts(10))
+    for p in pages:
+        f.w.write(p)
+    f.stream(0x00C0FFF1, pages)
     f.finding("speex.encoder-other-format", "ENCODER field names \"Lavc60.31.102 libopus\"")
     f.write()
 
@@ -782,7 +795,7 @@ def eos_inside_packet():
 
 FIXTURES = [
     narrowband, wideband, ultra_wideband, frames_and_stereo, multiplexed, chained, packet_spanning_pages, lacing_255,
-    comment_edge_cases, writer_claims_differ, encoder_other_format, comment_empty, unknown_codec, tags_around, tag_signature_in_last_page,
+    comment_edge_cases, writer_claims_differ, encoder_other_format, encoder_other_format_no_vendor, comment_empty, unknown_codec, tags_around, tag_signature_in_last_page,
     bad_crc, sequence_gap, truncated_page, missing_eos, garbage_between_pages, oggs_in_mp3, huge_lacing, continuation_errors,
     granule_errors, bos_missing, comment_invalid, header_invalid, header_bad_mode, header_short, frames_corrupt, deep_nesting,
     eos_inside_packet,
