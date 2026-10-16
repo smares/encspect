@@ -2,7 +2,7 @@ namespace Encspect.Core;
 
 // The content protection systems DASH-IF's registry lists by their system ID (the SystemID of a
 // pssh box, ISO/IEC 23001-7, and the UUID of a ContentProtection element), copied with the
-// registry's names (https://dashif.org/identifiers/content_protection/). scripts/fixtures/check_dashif_systems.py
+// registry's names (https://dashif.org/identifiers/content_protection/). scripts/fixtures/dashif_systems.py
 // holds the page by its SHA-256 and fails when this table and the page differ.
 public static class ProtectionSystems
 {

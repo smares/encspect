@@ -81,9 +81,10 @@ public sealed partial class Mp4Parser
         // names none) that a sample group of Common Encryption protects samples of.
         public List<string> Systems { get; } = [];
 
-        public int SampleEncryptionBoxes { get; set; }
-
         public HashSet<uint> SampleGroupProtectedTracks { get; } = [];
+
+        // The sample descriptions the track fragments of each track use (tfhd, else trex).
+        public Dictionary<uint, HashSet<uint>> FragmentDescriptions { get; } = [];
     }
 
     private sealed class Track(Node box)
@@ -144,9 +145,12 @@ public sealed partial class Mp4Parser
 
         public long GroupedClear { get; set; }
 
-        public bool HasUnplacedGroups { get; set; }
+        // The seig sample-to-group boxes of the sample table, counted once the descriptions are all read.
+        public List<(BoxFields Runs, uint Count)> EncryptionRuns { get; } = [];
 
-        public bool HasEncryptionRuns { get; set; }
+        public bool HasEncryptionRuns => EncryptionRuns.Count > 0;
+
+        public bool AreEncryptionRunsCounted { get; set; }
     }
 
     // One sample description of a track's stsd box: its format, the fields of an audio sample entry
@@ -200,18 +204,14 @@ public sealed partial class Mp4Parser
 
         public string? OriginalFormat { get; set; }
 
-        public Node? OriginalFormatNode { get; set; }
-
         public string? SchemeType { get; set; }
-
-        public uint? SchemeVersion { get; set; }
 
         public Node? SchemeNode { get; set; }
 
         public TrackEncryptionInfo? Encryption { get; set; }
     }
 
-    private sealed record TrackEncryptionInfo(int IsProtected, int IvSize, Node Node);
+    private sealed record TrackEncryptionInfo(int IsProtected, Node Node);
 
     private sealed record Edit(ulong SegmentDuration, long MediaTime, double Rate, Node Node);
 

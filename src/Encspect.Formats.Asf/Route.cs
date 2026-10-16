@@ -126,6 +126,12 @@ public sealed partial class AsfParser
         CheckEncryptedStreams(state);
         if (state.DataNode is null || state.Figures is null)
         {
+            // Without a Data Object there is nothing to read, but a protected stream is still reported as such.
+            foreach (StreamEntry stream in state.Streams)
+            {
+                AddProtectedStream(state, stream);
+            }
+
             return;
         }
 
@@ -136,12 +142,14 @@ public sealed partial class AsfParser
             if (!stream.IsAudio)
             {
                 state.Findings.AddNow(Severity.Info, "asf.stream-not-analyzed", $"Stream {stream.Number} is a {stream.TypeName.ToLowerInvariant()} stream, which is not analyzed; the file's packets are reported as they are.", anchor);
+                AddProtectedStream(state, stream);
                 continue;
             }
 
             if (stream.Format is not { } format)
             {
                 state.Findings.AddNow(Severity.Info, "asf.stream-not-analyzed", $"Stream {stream.Number} is an audio stream without a readable WAVEFORMATEX, so its coding is not analyzed.", anchor);
+                AddProtectedStream(state, stream);
                 continue;
             }
 
@@ -150,6 +158,7 @@ public sealed partial class AsfParser
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
                     $"Stream {stream.Number} is coded as {FormatTagName(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which has no parser here; its media objects are not analyzed.", anchor);
+                AddProtectedStream(state, stream);
                 continue;
             }
 
@@ -209,17 +218,49 @@ public sealed partial class AsfParser
         state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
             $"Stream {stream.Number} is encrypted, so its media objects cannot be analyzed; the stream is described by its header.", anchor);
         CodecConfiguration? configuration = ConfigurationOf(state, stream, format);
-        if (configuration is null)
+        int before = state.Context.Streams.Count;
+        if (configuration is not null)
         {
+            state.Context.ParsePackets(codec, state.DataNode!, [], configuration with { AreSamplesEncrypted = true });
+        }
+
+        if (state.Context.Streams.Count == before)
+        {
+            AddProtectedStream(state, stream);
             return;
         }
 
-        int before = state.Context.Streams.Count;
-        state.Context.ParsePackets(codec, state.DataNode!, [], configuration with { AreSamplesEncrypted = true });
         for (int i = before; i < state.Context.Streams.Count; i++)
         {
             state.Context.UpdateStream(state.Context.Streams[i], state.Context.Streams[i] with { Protection = protection });
         }
+    }
+
+    // The stream of a protected stream that no codec parser describes (a coding without a parser, video, a stream without a readable
+    // WAVEFORMATEX): the header's own account of it, so that its protection is reported all the same.
+    private static void AddProtectedStream(State state, StreamEntry stream)
+    {
+        if (ProtectionOf(state, stream) is not { } protection)
+        {
+            return;
+        }
+
+        Node parent = state.DataNode ?? stream.Properties!;
+        string name = stream.Format is { } format && stream.IsAudio ? FormatTagName(format.EffectiveTag) : stream.TypeName;
+        Node node = parent.Add(new Node($"Stream {stream.Number}", parent.Offset, parent.Length, NodeValue.Text("frames not read: encrypted"))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.EncryptedStream,
+            Topic = Topics.AsfContentProtection,
+        });
+        state.Context.AddStream(new StreamInfo
+        {
+            Nodes = [node],
+            Codec = name,
+            SampleRate = stream.Format?.SamplesPerSecond ?? 0,
+            Channels = stream.Format?.Channels ?? 0,
+            Protection = protection,
+        });
     }
 
     // Records of the Advanced Content Encryption Object that name a stream the header does not describe.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Writes the hand-built MP4 fixtures of protected tracks into tests/fixtures/mp4: Common Encryption (ISO/IEC 23001-7)
-in its four schemes, with tenc, pssh, senc, saiz, saio and a sample group of encryption parameters, FairPlay-style (drms)
+in its four schemes, with tenc, pssh, senc, saiz, saio and a sample group of encryption parameters, iTunes-style (drms)
 and Audible-style (aavd with an adrm box) entries built from the structures the sources name (VLC's libmp4.c, MediaInfo's
 File_Mpeg4, GStreamer's qtdemux and FFmpeg's mov.c), an iTunes purchase on a clear file, and damaged variants.
 
@@ -170,13 +170,22 @@ def clear_protected():
     track = Track(1, samples, 44100, 2, entry)
     data, records, offsets = movie([track])
     out.append(("cenc-clear-default", data, manifest(
-        "AAC LC in an enca entry whose tenc box sets the default IsProtected to false and whose track has no sample group that protects samples, as the clear "
-        "lead-in of a protected stream does: the samples are valid AAC access units, so they are read like those of an unprotected track, and the stream is "
+        "AAC LC in an enca entry whose tenc box sets the default IsProtected to false and whose track has no sample group that protects samples, a track of a protected stream that is wholly in the clear: the samples are valid AAC access units, so they are read like those of an unprotected track, and the stream is "
         "reported protected but not encrypted.", data, records, [dict(aac_stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True), protection=protection(SCHEMES[b"cenc"], False))],
         sample_rows(offsets[0], samples, 10), {TENC + "/Default IsProtected": "false", TENC: "not protected by default"},
-        [["mp4.protected-samples-clear", "read as they are"]], units_rows=unit_list(offsets[0], samples, 10),
+        [["mp4.protected-samples-clear", "none of its samples is encrypted"]], units_rows=unit_list(offsets[0], samples, 10),
         crosscheck={"ffprobe": True, "mp4box": True, "faad": None, "encryption": {"ffprobe": False, "mediainfo": "Encrypted"},
                     "skip": {"faad": "faad2 rejects the protected sample entry.", "faad_trace": "faad2 rejects the protected sample entry."}})))
+    alac = Box(b"enca", mp4a(2, 44100).payload, [sinf(frma(b"alac"), *cenc_sinf(is_protected=0, iv_size=0))])
+    name, data, result = encrypted(
+        "cenc-clear-unparsed", "An enca entry for ALAC, a coding that has no parser here, whose tenc box sets the default to not protected: none of the samples is encrypted, "
+        "but the track is covered by the scheme, so it is still a stream and is reported as protected but not encrypted.", alac, rate=44100, durations=[4096] * 30, codec="Apple Lossless",
+        scheme_name=SCHEMES[b"cenc"], mode=None, layout=False,
+        findings=[["mp4.codec-not-analyzed", "protected"], ["mp4.protected-samples-clear", "none of its samples is encrypted"]],
+        crosscheck={"ffprobe": False, "mp4box": False, "faad": None, "encryption": {"ffprobe": None, "mediainfo": "Encrypted"},
+                    "skip": {"all": "an ALAC entry without its alac box, which the tools read in their own ways"}})
+    result["streams"][0]["protection"]["is_encrypted"] = False
+    out.append((name, data, result))
     return out
 
 
@@ -194,6 +203,77 @@ def sample_groups():
         crosscheck={"ffprobe": True, "mp4box": True, "faad": None, "encryption": {"ffprobe": None, "mediainfo": "Encrypted"},
                     "skip": {"faad": "faad2 rejects the encrypted sample entry.", "ffprobe_encryption": "ffmpeg 6.1 marks packets encrypted from the tenc default only, so the packets of a track protected by a sample group alone carry no encryption info."}}),
     ]
+
+
+def fragmented_groups():
+    """A fragmented file whose tenc default is not protected, and whose track fragments mark their samples with a seig sample-to-group box: the group description
+    lies in the sample table's sgpd (the run's index 1) in one file and in the track fragment's own sgpd (index 0x10001) in the other (ISO/IEC 14496-12 8.9.4)."""
+    out = []
+    for name, in_table, text in [
+        ("cenc-fragmented-table-group", True, "the sample table's sgpd box describes the group (index 1)"),
+        ("cenc-fragmented-fragment-group", False, "each track fragment's own sgpd box describes the group (index 0x10001)"),
+    ]:
+        entry = encrypted_aac_entry(*cenc_sinf(is_protected=0, iv_size=0))
+        extra = [sgpd_seig([seig_entry(1, 8, KID)])] if in_table else []
+        stbl = box("stbl", b"", stsd(entry), stts([]), stsc([]), stsz([]), stco([]), *extra)
+        trak = box("trak", b"", tkhd(1, 0), box("mdia", b"", mdhd(44100, 0), hdlr(b"soun"), box("minf", b"", fullbox("smhd", 0, 0, bytes(4)), dinf(), stbl)))
+        mvex = box("mvex", b"", fullbox("trex", 0, 0, u32(1) + u32(1) + u32(1024) + u32(0) + u32(0)))
+        boxes = [ftyp(b"iso6", 0, (b"iso6", b"dash", b"mp41")), box("moov", b"", mvhd(1000, 0), trak, mvex)]
+        samples = ciphertext(20)
+        rows = []
+
+        def fragment(sequence, chunk, decode_time, offset):
+            ivs = b"".join(bytes([sequence, i]) * 4 for i in range(len(chunk)))
+            groups = [sbgp_seig([(len(chunk), 1)])] if in_table else [sgpd_seig([seig_entry(1, 8, KID)]), sbgp_seig([(len(chunk), 0x10001)])]
+
+            def build(data_offset):
+                sizes = b"".join(u32(len(s)) for s in chunk)
+                trun = fullbox("trun", 0, 0x201, u32(len(chunk)) + struct.pack(">i", data_offset) + sizes)
+                traf = box("traf", b"", fullbox("tfhd", 0, 0x20000, u32(1)), fullbox("tfdt", 1, 0, u64(decode_time)), *groups, senc(len(chunk), ivs), trun)
+                return box("moof", b"", fullbox("mfhd", 0, 0, u32(sequence)), traf)
+
+            moof_bytes, _ = write([build(0)], offset)
+            return [build(len(moof_bytes) + 8), box("mdat", b"".join(chunk))]
+
+        decode = 0
+        for sequence, start in enumerate(range(0, 20, 10)):
+            offset = len(write(boxes)[0])
+            chunk = samples[start:start + 10]
+            moof, mdat = fragment(sequence + 1, chunk, decode, offset)
+            boxes += [moof, mdat]
+            position = offset + len(write([moof], offset)[0]) + 8
+            for sample in chunk:
+                rows.append([position, len(sample)])
+                position += len(sample)
+            decode += len(chunk) * 1024
+        data, records = write(boxes)
+        out.append((name, data, manifest(
+            f"A fragmented MP4 of cenc AAC whose tenc box sets the default to not protected, but whose track fragments put every sample in a seig group that protects it; {text}. "
+            "The samples are pseudo-random bytes and must never be read as AAC.", data, records,
+            [dict(aac_stream("AAC LC", 44100, 2, "Stereo", 0, vbr=True), protection=protection(SCHEMES[b"cenc"], True))], rows,
+            {"MP4/moof/traf/sbgp": "seig", "MP4/moof/traf/senc": "10 samples"}, [SAMPLES_ENCRYPTED],
+            crosscheck={"ffprobe": False, "mp4box": True, "faad": None, "encryption": {"ffprobe": None, "mediainfo": "Encrypted"},
+                        "skip": {"faad": "faad2's MP4 reader reads samples from the sample tables only, which a fragmented file leaves empty.",
+                                 "ffprobe": "ffmpeg 6.1 marks packets encrypted from the tenc default only, and reads these samples as clear AAC.",
+                                 "mediainfo_duration": "a fragmented file's track header states no duration"}})))
+    return out
+
+
+def two_entries():
+    """A track with two sample entries, a clear mp4a first and an enca second, whose chunks all use the second."""
+    clear = mp4a(2, 44100, esds(0x40, LC, 0, 0))
+    entry = encrypted_aac_entry(*cenc_sinf())
+    samples = ciphertext(30)
+    track = Track(1, samples, 44100, 2, clear, stsc_box=stsc([(1, 10, 2)]), more_entries=[entry])
+    data, records, offsets = movie([track])
+    return [("cenc-second-entry", data, manifest(
+        "A track with two sample entries, a clear mp4a first and a cenc-protected enca second, whose chunks (stsc) all use the second entry: the samples are encrypted, "
+        "though the first entry is not protected, and are never read as AAC.", data, records,
+        [dict(coded_stream("AAC LC", 44100, 2, "Stereo", sum(track.durations)), protection=protection(SCHEMES[b"cenc"], True))],
+        sample_rows(offsets[0], samples, track.chunk), {STSD + "/enca": "enca (encrypted audio)", STSD + "/mp4a": "mp4a (MPEG-4 audio)"}, [SAMPLES_ENCRYPTED],
+        crosscheck={"ffprobe": False, "mp4box": True, "faad": None, "encryption": {"ffprobe": None, "mediainfo": None},
+                    "skip": {"faad": "faad2 reads the first sample entry, which is clear.", "ffprobe": "ffmpeg reads the first sample entry, which is clear, and its packets as AAC.",
+                             "mediainfo_duration": "MediaInfo reads the first sample entry"}}))]
 
 
 def ciphertext_crosscheck(coding):
@@ -230,20 +310,20 @@ def other_codecs():
     return out
 
 
-def fairplay():
+def itunes():
     """A drms entry as iTunes Store files carry it: esds and a sinf box whose schi holds the DRM atoms user, key, iviv and priv."""
     atoms = schi(Box(b"user", bytes(range(16))), Box(b"key ", bytes(range(32, 48))), Box(b"iviv", bytes(range(64, 80))), Box(b"priv", bytes(range(100, 160))))
-    entry = mp4a(2, 44100, esds(0x40, LC, 0, 0), sinf(frma(b"mp4a"), fullbox("schm", 0, 0, b"itun" + u32(0)), atoms), format=b"drms")
+    entry = mp4a(2, 44100, esds(0x40, LC, 0, 0), sinf(frma(b"mp4a"), atoms), format=b"drms")
     items = [
         text_item(b"\xa9nam", "Purchased title"), text_item(b"\xa9ART", "Purchased artist"),
         item(b"apID", data_atom(1, b"buyer@example.invalid")), item(b"purd", data_atom(1, b"2009-03-14 15:09:26")),
         item(b"ownr", data_atom(1, b"Test Owner")), item(b"cnID", data_atom(21, u32(123456))),
     ]
     name, data, result = encrypted(
-        "fairplay-drms", "A drms sample entry in an M4P file, as iTunes Store purchases of the FairPlay era carry it: esds, and a sinf box with the original format mp4a, a "
-        "schm box and a schi box that holds the DRM atoms user, key, iviv and priv. The iTunes metadata of the purchase (apID, purd, ownr, cnID) is metadata, not protection.",
-        entry, scheme_name="FairPlay (iTunes, drms)", extra_moov=[udta(ilst_meta(*items))], brand=ftyp(b"M4P ", 0, (b"M4P ", b"mp42", b"isom")),
-        fields={"MP4/moov/trak/mdia/minf/stbl/stsd/drms": "drms (FairPlay protected audio)", "MP4/moov/trak/mdia/minf/stbl/stsd/drms/sinf/schm/Scheme Type": "itun",
+        "itunes-drms", "A drms sample entry in an M4P file, as iTunes Store purchases carry it: esds, and a sinf box with the original format mp4a and a "
+        "schi box that holds the DRM atoms user, key, iviv and priv. The iTunes metadata of the purchase (apID, purd, ownr, cnID) is metadata, not protection.",
+        entry, scheme_name="iTunes protection (drms)", extra_moov=[udta(ilst_meta(*items))], brand=ftyp(b"M4P ", 0, (b"M4P ", b"mp42", b"isom")),
+        fields={"MP4/moov/trak/mdia/minf/stbl/stsd/drms": "drms (iTunes protected audio)",
                 "MP4/moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/key ": "", "MP4/ftyp": "M4P (Apple protected audio)",
                 "MP4/moov/udta/meta/iTunes Metadata/Account/data/Value": "buyer@example.invalid", "MP4/moov/udta/meta/iTunes Metadata/Owner/data/Value": "Test Owner"},
         crosscheck={"ffprobe": False, "mp4box": False, "faad": None, "encryption": {"mediainfo": "iTunes"},
@@ -419,9 +499,9 @@ def corrupt():
 
 
 def main():
-    fixtures = common_encryption() + clear_protected() + sample_groups() + other_codecs() + fragmented() + fairplay() + audible() + purchase_on_clear_file() + corrupt()
+    fixtures = common_encryption() + clear_protected() + sample_groups() + other_codecs() + fragmented() + itunes() + fragmented_groups() + two_entries() + audible() + purchase_on_clear_file() + corrupt()
     for name, data, result in fixtures:
-        extension = ".mp4" if name == "cenc-fragmented" else ".m4a"
+        extension = ".mp4" if name.startswith("cenc-fragmented") else ".m4a"
         MP4.mkdir(parents=True, exist_ok=True)
         (MP4 / (name + extension)).write_bytes(data)
         (MP4 / (name + ".expected.json")).write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

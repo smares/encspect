@@ -1,0 +1,299 @@
+{
+ "description": "An enca entry for ALAC, a coding that has no parser here, whose tenc box sets the default to not protected: none of the samples is encrypted, but the track is covered by the scheme, so it is still a stream and is reported as protected but not encrypted.",
+ "length": 11092,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   721
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   605
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   505
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   420
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   360
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   132
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   116
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   449,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   457,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   469,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   489,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   497,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   529,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   553,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   581,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   721,
+   28
+  ],
+  [
+   "mdat",
+   749,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "Apple Lossless",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": null,
+   "channel_layout": [],
+   "samples": 122880,
+   "is_vbr": false,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": false,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   757,
+   300
+  ],
+  [
+   1057,
+   337
+  ],
+  [
+   1394,
+   374
+  ],
+  [
+   1768,
+   321
+  ],
+  [
+   2089,
+   358
+  ],
+  [
+   2447,
+   305
+  ],
+  [
+   2752,
+   342
+  ],
+  [
+   3094,
+   379
+  ],
+  [
+   3473,
+   326
+  ],
+  [
+   3799,
+   363
+  ],
+  [
+   4162,
+   310
+  ],
+  [
+   4472,
+   347
+  ],
+  [
+   4819,
+   384
+  ],
+  [
+   5203,
+   331
+  ],
+  [
+   5534,
+   368
+  ],
+  [
+   5902,
+   315
+  ],
+  [
+   6217,
+   352
+  ],
+  [
+   6569,
+   389
+  ],
+  [
+   6958,
+   336
+  ],
+  [
+   7294,
+   373
+  ],
+  [
+   7667,
+   320
+  ],
+  [
+   7987,
+   357
+  ],
+  [
+   8344,
+   304
+  ],
+  [
+   8648,
+   341
+  ],
+  [
+   8989,
+   378
+  ],
+  [
+   9367,
+   325
+  ],
+  [
+   9692,
+   362
+  ],
+  [
+   10054,
+   309
+  ],
+  [
+   10363,
+   346
+  ],
+  [
+   10709,
+   383
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.codec-not-analyzed",
+   "protected"
+  ],
+  [
+   "mp4.protected-samples-clear",
+   "none of its samples is encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "all": "an ALAC entry without its alac box, which the tools read in their own ways"
+  }
+ }
+}

@@ -46,7 +46,7 @@ public sealed class WmaProParser : ICodecParser
 
         if (configuration.AreSamplesEncrypted)
         {
-            WmaStandardParser.AddBasicStream(context, parent, ProReport.CodecName, format, 3, configuration);
+            WmaStandardParser.AddBasicStream(context, parent, ProReport.CodecName, format, 3, configuration, ProExplain.Stream, Topics.WmaPro);
             findings.Flush(context);
             return;
         }
@@ -54,7 +54,7 @@ public sealed class WmaProParser : ICodecParser
         if (parameters.Error is { } error)
         {
             findings.AddNow(Severity.Warning, "wma.format-unsupported", $"The stream is not analyzed: {error}.", configuration.Parent);
-            WmaStandardParser.AddBasicStream(context, parent, ProReport.CodecName, format, 3);
+            WmaStandardParser.AddBasicStream(context, parent, ProReport.CodecName, format, 3, description: ProExplain.Stream, topic: Topics.WmaPro);
             findings.Flush(context);
             return;
         }

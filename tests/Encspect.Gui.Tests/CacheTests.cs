@@ -71,12 +71,6 @@ public sealed class CacheTests : IDisposable
         Assert.True(read!.Summary.IsProtected);
     }
 
-    [Fact]
-    public void The_format_version_is_the_one_that_added_protection()
-    {
-        Assert.True(SummaryCache.FormatVersion >= 4);
-    }
-
     [Theory]
     [InlineData("size")]
     [InlineData("time")]

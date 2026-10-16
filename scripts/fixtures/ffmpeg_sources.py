@@ -50,6 +50,7 @@ FILES = [
     "libavcodec/dca_exss.c", "libavcodec/dca_exss.h", "libavcodec/dca_lbr.c", "libavcodec/dca_xll.c", "libavcodec/dca_parser.c",
     "libavcodec/dca_sample_rate_tab.h", "libavcodec/dcadata.c", "libavcodec/dcadata.h", "libavcodec/dcadec.c",
     "libavcodec/dcaenc.c", "libavcodec/dcaenc.h", "libavformat/dtsdec.c", "libavformat/dtshddec.c", "libavformat/isom.c",
+    "libavformat/mov.c", "libavformat/isom.h", "libavformat/movenccenc.c", "libavutil/encryption_info.h",
 ]
 
 

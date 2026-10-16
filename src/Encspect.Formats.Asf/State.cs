@@ -252,8 +252,8 @@ internal sealed record ProtectionObject(string Scheme, Node Node, IReadOnlyList<
 // The schemes of the protection objects, in the project's wording.
 internal static class ProtectionSchemes
 {
-    public const string DrmVersion1 = "Microsoft Digital Rights Management version 1";
+    public const string DrmVersion1 = "Microsoft Digital Rights Manager version 1";
     public const string RightsManager7 = "Windows Media Rights Manager 7";
-    public const string AdvancedEncryption = "advanced content encryption";
-    public const string StreamFlag = "encrypted content flag";
+    public const string AdvancedEncryption = "Windows Media Advanced Content Encryption";
+    public const string StreamFlag = "Encrypted Content Flag (scheme not stated)";
 }

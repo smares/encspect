@@ -1,5 +1,5 @@
 {
- "description": "AAC LC in an enca entry whose tenc box sets the default IsProtected to false and whose track has no sample group that protects samples, as the clear lead-in of a protected stream does: the samples are valid AAC access units, so they are read like those of an unprotected track, and the stream is reported protected but not encrypted.",
+ "description": "AAC LC in an enca entry whose tenc box sets the default IsProtected to false and whose track has no sample group that protects samples, a track of a protected stream that is wholly in the clear: the samples are valid AAC access units, so they are read like those of an unprotected track, and the stream is reported protected but not encrypted.",
  "length": 1350,
  "format": "MP4",
  "boxes": [
@@ -329,7 +329,7 @@
  "findings": [
   [
    "mp4.protected-samples-clear",
-   "read as they are"
+   "none of its samples is encrypted"
   ]
  ],
  "crosscheck": {

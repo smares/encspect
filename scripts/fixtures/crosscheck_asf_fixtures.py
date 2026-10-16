@@ -158,7 +158,7 @@ def check_protection(name, manifest, path, problems):
     try:
         tags = json.loads(result.stdout).get("format", {}).get("tags", {}) if result.stdout.strip() else {}
     except json.JSONDecodeError:
-        skip(name, "ffprobe's ASF_ tags", "ffprobe fails on the damaged file")
+        skip(name, "ffprobe's ASF_ tags", "ffprobe's decoder rejects the configuration (block alignment 0)" if name.startswith("voice-config-") else "ffprobe fails on the damaged file")
         tags = None
     report = golden_report(path)
     encryption = next((n for n in nodes_of(report["root"]) if n["name"] == "Content Encryption Object"), None) if report else None

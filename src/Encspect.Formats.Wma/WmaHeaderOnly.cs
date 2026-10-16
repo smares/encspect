@@ -26,7 +26,7 @@ internal static class WmaHeaderOnly
 
         if (config.AreSamplesEncrypted)
         {
-            WmaStandardParser.AddBasicStream(context, context.Parent, codecName, format, 3, config);
+            WmaStandardParser.AddBasicStream(context, context.Parent, codecName, format, 3, config, ProExplain.EncryptedHeaderOnlyStream, topic);
             findings.Flush(context);
             return;
         }

@@ -100,7 +100,7 @@ public sealed partial class Mp4Parser
                 AudibleDrm(state, node, f);
                 return true;
             case "user" or "key " or "iviv" or "priv" when state.InSinf:
-                return FairPlayBox(state, node, f);
+                return ItunesProtectionBox(state, node, f);
             case "stts":
                 TimeToSample(state, node, f);
                 return true;

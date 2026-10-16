@@ -418,6 +418,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "mp4/cenc-ac3": {"channels": NO_CHANNELS},
     "mp4/cenc-dts": {"channels": NO_CHANNELS},
     "mp4/cenc-mpeg-audio": {"channels": NO_CHANNELS},
+    "mp4/cenc-clear-unparsed": {"channels": "MediaInfo 24.01 gives this track no channel count: it reads an ALAC track's channels from the alac box (File_Mpeg4_Elements.cpp), which the hand-built entry does not have"},
     "mp4/truncated-in-tenc": {"streams": "MediaInfo lists the audio track from its sample entry, which the cut leaves whole; the analyzer reports a stream only for samples its sample tables place (the cut file has no stts, stsc, stsz or stco box)"},
     "mp4/enca-no-sinf": {"format of an encrypted stream": NO_FORMAT},
     "mp4/sinf-no-frma": {"format of an encrypted stream": NO_FORMAT},
@@ -532,8 +533,8 @@ def check_mediainfo(path, tally, check=None):
         codec = stream["codec"]
         # MediaInfo reads the sample entry only (File_Mpeg4_Elements.cpp, the sample entry's codec: drms is "iTunes", enca "Encrypted").
         tally.compare("encryption", track.get("Encryption"), expected_encryption if stream.get("protection") else None)
-        if stream.get("protection", {}).get("isEncrypted"):
-            # No frames are read, so neither side counts any: the configuration's figures are compared.
+        if stream.get("protection", {}).get("isEncrypted") or (stream.get("isProtected") and codec == "Apple Lossless"):
+            # No frames are read (a coding with no parser reads none, encrypted or not), so neither side counts any: the configuration's figures are compared.
             tally.compare("format of an encrypted stream", track.get("Format"), ENCRYPTED_FORMATS.get(codec, codec if codec != "AAC LC" else "AAC"))
             tally.compare("sample rate", track.get("SamplingRate"), str(stream["sampleRate"]))
             tally.compare("channels", track.get("Channels", track.get("Channels_Original")), str(stream["channels"]))

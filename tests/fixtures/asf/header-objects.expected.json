@@ -288,7 +288,7 @@
   },
   {
    "code": "asf.content-encrypted",
-   "contains": "Digital Rights Management"
+   "contains": "Digital Rights Manager"
   },
   {
    "code": "asf.content-encrypted",
@@ -305,5 +305,19 @@
  ],
  "crosscheck": {
   "ffprobe": true
- }
+ },
+ "protection": [
+  {
+   "scheme": "Microsoft Digital Rights Manager version 1",
+   "is_encrypted": true,
+   "systems": [
+    "Windows Media DRM for network devices"
+   ]
+  },
+  {
+   "scheme": "Microsoft Digital Rights Manager version 1",
+   "is_encrypted": true,
+   "systems": []
+  }
+ ]
 }

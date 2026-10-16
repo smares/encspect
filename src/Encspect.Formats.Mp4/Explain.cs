@@ -14,7 +14,7 @@ internal static class Topics
     public const string Id3v2 = "id3v2";
     public const string ChannelLayouts = "channel-layouts";
     public const string CommonEncryption = "common-encryption";
-    public const string FairPlayAndAudible = "fairplay-and-audible";
+    public const string ItunesAndAudibleProtection = "itunes-and-audible-protection";
 }
 
 // What each MP4 node is, in the words the report shows next to it. Constants only, picked per box
@@ -127,7 +127,7 @@ internal static class Explain
     public const string SchemeUri = "A URI where more about the scheme can be found, present where flag 1 is set (ISO/IEC 14496-12 8.12.5).";
     public const string CryptByteBlock = "In a pattern scheme (cens, cbcs), how many 16-byte blocks of each pattern are encrypted; 0 with a skip of 0 means every block (ISO/IEC 23001-7).";
     public const string SkipByteBlock = "In a pattern scheme (cens, cbcs), how many 16-byte blocks of each pattern are left in the clear after the encrypted ones (ISO/IEC 23001-7).";
-    public const string DefaultIsProtected = "Whether the track's samples are encrypted unless a sample group says otherwise; false is how a clear lead-in or a track with no encryption is marked (ISO/IEC 23001-7).";
+    public const string DefaultIsProtected = "Whether the track's samples are encrypted unless a sample group says otherwise; false means the samples are in the clear by default, so that only the samples a sample group marks as protected are encrypted (ISO/IEC 23001-7).";
     public const string DefaultIvSize = "The size in bytes of the initialization vector each sample carries: 0 where one constant vector serves every sample, else 8 or 16 (ISO/IEC 23001-7).";
     public const string DefaultKid = "The ID of the key that encrypts the track's samples by default, a 16-byte identifier shown as a UUID; the key itself is not in the file (ISO/IEC 23001-7).";
     public const string ConstantIvSize = "The size in bytes of the constant initialization vector, 8 or 16 (ISO/IEC 23001-7).";
@@ -150,11 +150,13 @@ internal static class Explain
     public const string SampleEncryptionGroupEntry = "A group of samples with their own encryption parameters, which override the track's defaults (ISO/IEC 23001-7).";
     public const string GroupIsProtected = "Whether the samples of the group are encrypted (ISO/IEC 23001-7).";
     public const string GroupKid = "The ID of the key that encrypts the group's samples (ISO/IEC 23001-7).";
-    public const string FairPlayData = "Data of Apple's iTunes Store protection (FairPlay), whose layout no source the analyzer follows describes; it is not read.";
+    public const string ItunesProtectionData = "Data of Apple's iTunes Store protection, whose layout no source the analyzer follows describes; it is not read.";
     public const string AdrmLeading = "The first eight bytes of Audible's DRM box, which FFmpeg's reader skips (libavformat/mov.c, mov_read_adrm).";
     public const string AdrmBlob = "A 56-byte blob that FFmpeg decrypts with a key it derives from the account's activation bytes; not read here (libavformat/mov.c, mov_read_adrm).";
     public const string AdrmSkipped = "Four bytes between the blob and the checksum, which FFmpeg's reader skips (libavformat/mov.c, mov_read_adrm).";
     public const string AdrmChecksum = "20 bytes that FFmpeg compares with a SHA-1 it derives from the key and the activation bytes (libavformat/mov.c, mov_read_adrm).";
+    public const string UnanalyzedStream = "The stream of a track whose samples are not encrypted but whose coding is not analyzed yet, described by its sample entry and sample tables; its frames are not read.";
+
     public const string EncryptedStream = "The stream of a track whose samples are encrypted, described by its sample entry and sample tables; its frames are not read.";
     public const string SourceBitDepth = "The bit depth of the source audio as afconvert's files spell it: I for integer samples and the number of bits (I16 in the files seen).";
 
@@ -390,11 +392,11 @@ internal static class Explain
         "saiz" => "Sample auxiliary information sizes: the size of each sample's auxiliary information, which for encrypted tracks is the sample's initialization vector and subsample ranges (ISO/IEC 14496-12 8.7.8; ISO/IEC 23001-7).",
         "saio" => "Sample auxiliary information offsets: where the auxiliary information of the samples lies (ISO/IEC 14496-12 8.7.9; ISO/IEC 23001-7).",
         "adrm" => "Audible's DRM box in an aavd sample entry: a blob that FFmpeg decrypts with the account's activation bytes, and a checksum (FFmpeg's libavformat/mov.c, mov_read_adrm).",
-        "user" or "key " or "iviv" or "priv" => "A box of Apple's iTunes Store protection (FairPlay) in the scheme information of a drms entry; VLC's libmp4.c lists it as one of the DRM atoms and skips it, and its content is not described by any source the analyzer follows.",
+        "user" or "key " or "iviv" or "priv" => "A box of Apple's iTunes Store protection in the scheme information of a drms entry; VLC's libmp4.c lists it as one of the DRM atoms and skips it, and its content is not described by any source the analyzer follows.",
         "enca" => "Encrypted audio sample entry: audio whose samples are protected; its sinf box names the original format and the scheme (ISO/IEC 14496-12 8.12).",
         "encv" => "Encrypted video sample entry: video whose samples are protected; its sinf box names the original format and the scheme (ISO/IEC 14496-12 8.12).",
-        "drms" => "Apple's iTunes Store protected audio sample entry (FairPlay), laid out like the original entry, with the original format in its sinf box; MediaInfo reports its encryption as iTunes and VLC does not play it.",
-        "drmi" => "Apple's iTunes Store protected video sample entry (FairPlay); VLC's libmp4.c reads it as protected.",
+        "drms" => "Apple's iTunes Store protected audio sample entry, laid out like the original entry, with the original format in its sinf box; MediaInfo reports its encryption as iTunes and VLC does not play it.",
+        "drmi" => "Apple's iTunes Store protected video sample entry; VLC's libmp4.c reads it as protected.",
         "aavd" => "Audible's protected audio sample entry, laid out like mp4a with an esds box and an adrm box (GStreamer's qtdemux reads it so).",
         "sinf" => "Protection scheme information: how a protected track's samples are encrypted and what their original format was (ISO/IEC 14496-12 8.12.1).",
         "schi" => "Scheme information box: the data of a protection scheme (ISO/IEC 14496-12 8.12).",
@@ -429,7 +431,7 @@ internal static class Explain
         "mvex" or "mehd" or "trex" or "moof" or "mfhd" or "traf" or "tfhd" or "tfdt" or "trun" or "sidx" or "mfra" or "tfra" or "mfro" => Topics.FragmentedMp4,
         "meta" or "keys" or "ilst" or "data" or "mean" or "name" or "chpl" => Topics.ItunesMetadata,
         "sinf" or "schm" or "schi" or "tenc" or "pssh" or "senc" or "saiz" or "saio" or "enca" or "encv" => Topics.CommonEncryption,
-        "drms" or "drmi" or "aavd" or "adrm" or "user" or "key " or "iviv" or "priv" => Topics.FairPlayAndAudible,
+        "drms" or "drmi" or "aavd" or "adrm" or "user" or "key " or "iviv" or "priv" => Topics.ItunesAndAudibleProtection,
         "esds" => Topics.AudioSpecificConfig,
         "btrt" => Topics.BitrateModes,
         "ID32" => Topics.Id3v2,

@@ -14,7 +14,7 @@ public sealed record StreamProtection
     // not protected (ISO/IEC 23001-7).
     public bool IsEncrypted { get; init; }
 
-    // The DRM systems the file names, such as "Widevine" or "Microsoft PlayReady", in file order
+    // The DRM systems the file names, such as "Widevine Content Protection" or "Microsoft PlayReady", in file order
     // without repeats; a system the registry does not name is its system ID. Empty where the file
     // names none.
     public IReadOnlyList<string> Systems { get; init; } = [];

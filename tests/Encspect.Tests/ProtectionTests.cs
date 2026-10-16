@@ -77,7 +77,10 @@ public class ProtectionTests
     [InlineData("mp4/cenc-mpeg-audio.m4a")]
     [InlineData("mp4/cenc-sample-group.m4a")]
     [InlineData("mp4/cenc-fragmented.mp4")]
-    [InlineData("mp4/fairplay-drms.m4a")]
+    [InlineData("mp4/cenc-fragmented-table-group.mp4")]
+    [InlineData("mp4/cenc-fragmented-fragment-group.mp4")]
+    [InlineData("mp4/cenc-second-entry.m4a")]
+    [InlineData("mp4/itunes-drms.m4a")]
     [InlineData("mp4/audible-aavd.m4a")]
     public void EncryptedSamplesAreNotReadAsFrames(string name)
     {
@@ -121,7 +124,7 @@ public class ProtectionTests
     // The purchase's account, date and owner are tags of the file whatever protects the track.
     [Theory]
     [InlineData("mp4/itunes-purchase-clear.m4a", false)]
-    [InlineData("mp4/fairplay-drms.m4a", true)]
+    [InlineData("mp4/itunes-drms.m4a", true)]
     public void PurchaserItemsAreMetadata(string name, bool isProtected)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -169,9 +172,9 @@ public class ProtectionTests
 
     // The same stream with an Encrypted Content Flag is described by its header: no media object goes to the codec.
     [Theory]
-    [InlineData("asf/protected-drm1.asf", "Microsoft Digital Rights Management version 1")]
+    [InlineData("asf/protected-drm1.asf", "Microsoft Digital Rights Manager version 1")]
     [InlineData("asf/protected-extended.asf", "Windows Media Rights Manager 7")]
-    [InlineData("asf/protected-flag-only.asf", "encrypted content flag")]
+    [InlineData("asf/protected-flag-only.asf", "Encrypted Content Flag (scheme not stated)")]
     public void EncryptedAsfStreamsAreDescribedFromTheirHeader(string name, string scheme)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -202,6 +205,35 @@ public class ProtectionTests
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("wma.", StringComparison.Ordinal));
         Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
         Assert.True(stream.Duration > 0);
+    }
+
+    // A protected stream no codec parser describes is still a stream, so that its protection is reported: MPEG audio, video, a clear track of an unparsed coding.
+    [Theory]
+    [InlineData("asf/protected-mpeg-audio.asf", "MPEG audio layer III", true)]
+    [InlineData("asf/protected-video-only.asf", "Video", true)]
+    [InlineData("mp4/cenc-clear-unparsed.m4a", "Apple Lossless", false)]
+    public void ProtectedStreamsOfUnparsedCodingsAreReported(string name, string codec, bool isEncrypted)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(codec, stream.Codec);
+        Assert.Equal(isEncrypted, stream.Protection!.IsEncrypted);
+        Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
+    }
+
+    // An Advanced Content Encryption Object protects the streams its records name: none when it holds no record, and those of the part of a record read when
+    // the record is cut at the limit of entries read.
+    [Fact]
+    public void AdvancedContentEncryptionProtectsTheStreamsItsRecordsName()
+    {
+        Report empty = Fixtures.AnalyzeMpeg("asf/protected-advanced-no-records.asf");
+        Assert.All(empty.Streams, s => Assert.False(s.IsProtected));
+        Assert.Contains(empty.Findings, f => f.Code == "asf.content-encrypted" && f.Message.Contains("no content encryption record", StringComparison.Ordinal));
+
+        Report many = Fixtures.AnalyzeMpeg("asf/protected-advanced-many-records.asf");
+        Assert.Contains(many.Findings, f => f.Code == "asf.too-many-entries");
+        Assert.True(Assert.Single(many.Streams).IsProtected);
     }
 
     private static IEnumerable<Node> Descendants(Node node)

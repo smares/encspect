@@ -214,8 +214,10 @@ def header_file():
 fixture("header-objects", "Every other header object: a codec list, a script command, a marker, mutual exclusions, a stream prioritization, a bandwidth sharing, bitrate records, padding, two encryption objects, a signature, an object of no known GUID, and in the header extension a compatibility object, an advanced content encryption object and index parameters.",
         header_file,
         [finding("asf.unknown-object", "12345678-1234-1234-1234-123456789ABC"),
-         finding("asf.content-encrypted", "Digital Rights Management"), finding("asf.content-encrypted", "Windows Media Rights Manager"),
-         finding("asf.content-encrypted", "network devices"), finding("asf.index-missing", "no Index Object")])
+         finding("asf.content-encrypted", "Digital Rights Manager"), finding("asf.content-encrypted", "Windows Media Rights Manager"),
+         finding("asf.content-encrypted", "network devices"), finding("asf.index-missing", "no Index Object")],
+        protection=[{"scheme": "Microsoft Digital Rights Manager version 1", "is_encrypted": True, "systems": ["Windows Media DRM for network devices"]},
+                    {"scheme": "Microsoft Digital Rights Manager version 1", "is_encrypted": True, "systems": []}])
 
 
 def extended_file():
@@ -325,7 +327,7 @@ def protected(children, extension=b"", count=6):
 
 
 ENCRYPTED = finding("asf.codec-not-analyzed", "is encrypted")
-DRM1_FINDING = finding("asf.content-encrypted", "Digital Rights Management")
+DRM1_FINDING = finding("asf.content-encrypted", "Digital Rights Manager")
 EXTENDED_FINDING = finding("asf.content-encrypted", "Windows Media Rights Manager")
 ADVANCED_FINDING = finding("asf.content-encrypted", "network devices")
 
@@ -336,7 +338,7 @@ def scheme(name, systems=()):
 
 fixture("protected-drm1", "Windows Media Audio whose Stream Properties Object sets the Encrypted Content Flag, with a Content Encryption Object (Microsoft Digital Rights Manager version 1): "
         "a secret, the protection type DRM, a key ID and a license URL. The payloads are random bytes, so the stream is described by its header alone.",
-        protected([wma(1, encrypted=True), m.content_encryption()]), [DRM1_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Management version 1"))
+        protected([wma(1, encrypted=True), m.content_encryption()]), [DRM1_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
 def wma_codec(tag, extra, channels=2, rate=44100, align=743):
     return m.stream_properties(1, m.wave_format(tag, channels, rate, rate // 8, align, 16, extra), encrypted=True)
 
@@ -353,16 +355,16 @@ def voice_data():
 for tag, name, extra, codec in [(0x0162, "pro", PRO_DATA, "Windows Media Audio Professional"), (0x0163, "lossless", PRO_DATA, "Windows Media Audio Lossless")]:
     fixture(f"protected-wma-{name}", f"{codec}, in a stream whose Encrypted Content Flag is set and a Content Encryption Object: the stream is described by its WAVEFORMATEX and its {len(extra)} bytes of codec-specific data, "
             "and the encrypted media objects are not read.", protected([wma_codec(tag, extra), m.content_encryption()]), [DRM1_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
-            scheme("Microsoft Digital Rights Management version 1"))
+            scheme("Microsoft Digital Rights Manager version 1"))
 fixture("protected-wma-voice", "Windows Media Audio Voice, mono, in a stream whose Encrypted Content Flag is set and a Content Encryption Object: the stream is described by its WAVEFORMATEX and the 46 bytes of "
         "codec-specific data, and the encrypted media objects are not read.",
         protected([wma_codec(0x000A, voice_data(), channels=1, rate=8000, align=300), m.content_encryption()]), [DRM1_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
-        scheme("Microsoft Digital Rights Management version 1"))
+        scheme("Microsoft Digital Rights Manager version 1"))
 fixture("protected-extended", "Windows Media Audio with an Extended Content Encryption Object (Windows Media Rights Manager 7) and no Encrypted Content Flag: the object covers the whole file, "
         "so the stream is protected.",
         protected([wma(1), m.obj(m.EXTENDED_CONTENT_ENCRYPTION, struct.pack("<I", 5) + b"12345")]), [EXTENDED_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE, scheme("Windows Media Rights Manager 7"))
 fixture("protected-flag-only", "Windows Media Audio whose Stream Properties Object sets the Encrypted Content Flag and a file with no encryption object: the stream is encrypted, with no scheme named.",
-        protected([wma(1, encrypted=True)]), [ENCRYPTED], ENCRYPTED_FFPROBE, scheme("encrypted content flag"))
+        protected([wma(1, encrypted=True)]), [ENCRYPTED], ENCRYPTED_FFPROBE, scheme("Encrypted Content Flag (scheme not stated)"))
 def advanced_partial():
     records = [(DRM_SYSTEM, 1, [(1, stream_number(2))], b"abc"), (UNKNOWN_SYSTEM, 3, [(1, stream_number(7))], b"")]
     return m.asf_file([pcm(1), wma(2)], objects_in([1, 2], 6, 100, 512), 512, file_id=FILE_ID, play=1_000_000, extension=advanced(records))
@@ -371,27 +373,47 @@ def advanced_partial():
 fixture("protected-advanced", "An Advanced Content Encryption Object in the Header Extension Object with a record of the one system ID the specification lists (Windows Media DRM for network devices) "
         "for stream 2, the Windows Media Audio stream, and one of a system ID it does not list for stream 7, which the file does not have. A PCM stream 1 stays clear.",
         advanced_partial, [ADVANCED_FINDING, ENCRYPTED, finding("asf.encrypted-object-unknown-stream", "stream 7")], ENCRYPTED_FFPROBE,
-        [{"scheme": "advanced content encryption", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
+        [{"scheme": "Windows Media Advanced Content Encryption", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
 fixture("protected-advanced-whole-file", "An Advanced Content Encryption Object whose record names stream 0, the whole file, with a system ID the specification does not list: every stream is protected, "
         "and the system is named by its ID.",
         protected([wma(1)], extension=advanced([(UNKNOWN_SYSTEM, 2, [(1, stream_number(0))], b"data")])), [ADVANCED_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
-        [{"scheme": "advanced content encryption", "is_encrypted": True, "systems": [UNKNOWN_SYSTEM]}])
+        [{"scheme": "Windows Media Advanced Content Encryption", "is_encrypted": True, "systems": [UNKNOWN_SYSTEM]}])
 fixture("protected-all-objects", "Windows Media Audio covered by all three encryption objects and a Digital Signature Object: the first object in file order names the scheme, and the systems are those of the Advanced Content Encryption Object.",
         protected([wma(1, encrypted=True), m.content_encryption(), m.obj(m.EXTENDED_CONTENT_ENCRYPTION, struct.pack("<I", 2) + b"ab"), m.obj(m.DIGITAL_SIGNATURE, struct.pack("<II", 2, 4) + b"sign")],
                   extension=advanced([(DRM_SYSTEM, 1, [(1, stream_number(1))], b"")])), [DRM1_FINDING, EXTENDED_FINDING, ADVANCED_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
-        [{"scheme": "Microsoft Digital Rights Management version 1", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
+        [{"scheme": "Microsoft Digital Rights Manager version 1", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
 fixture("signature-only", "A Digital Signature Object and no encryption object: the signature protects nothing, so the file is not protected.",
         protected([pcm(1), m.obj(m.DIGITAL_SIGNATURE, struct.pack("<II", 2, 4) + b"sign")]), [], None, [])
 fixture("protection-wrong-fields", "A Content Encryption Object whose protection type is XYZ and a Digital Signature Object of signature type 7, where sections 3.14 and 3.16 give DRM and 2.",
         protected([wma(1), m.content_encryption(protection=b"XYZ\0"), m.obj(m.DIGITAL_SIGNATURE, struct.pack("<II", 7, 4) + b"sign")]),
-        [DRM1_FINDING, ENCRYPTED, finding("asf.protection-type", "XYZ"), finding("asf.signature-type", "7")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Management version 1"))
+        [DRM1_FINDING, ENCRYPTED, finding("asf.protection-type", "XYZ"), finding("asf.signature-type", "7")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
 fixture("protection-object-ids", "An Advanced Content Encryption Object with an Encrypted Object Record of the ID type 2, which section 4.13 does not define, and one of type 1 whose ID is 4 bytes long, not 2: neither names a stream, so the record covers none, and the Encrypted Content Flag alone protects the stream.",
         protected([wma(1, encrypted=True)], extension=advanced([(DRM_SYSTEM, 1, [(2, b"abcd"), (1, b"\x01\x00\x00\x00")], b"")])),
         [ADVANCED_FINDING, ENCRYPTED, finding("asf.encrypted-object-id-type", "0x0002"), finding("asf.encrypted-object-id-length", "4 bytes")], ENCRYPTED_FFPROBE,
-        scheme("encrypted content flag"))
+        scheme("Encrypted Content Flag (scheme not stated)"))
 fixture("protection-truncated", "A Content Encryption Object whose secret data length is 5000 bytes, in an object of 40.", 
         protected([wma(1, encrypted=True), m.obj(m.CONTENT_ENCRYPTION, struct.pack("<I", 5000) + b"secret" + struct.pack("<I", 4) + b"DRM\0")]),
-        [DRM1_FINDING, ENCRYPTED, finding("asf.object-truncated", "Content Encryption Object")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Management version 1"))
+        [DRM1_FINDING, ENCRYPTED, finding("asf.object-truncated", "Content Encryption Object")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
+fixture("protected-mpeg-audio", "MPEG audio layer III, which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
+        protected([m.stream_properties(1, m.wave_format(0x0055, 2, 44100, 16000, 1, 0)), m.content_encryption()]), [DRM1_FINDING],
+        {"ffprobe": False, "reason": "the MPEG audio payloads are not MPEG audio frames."},
+        scheme("Microsoft Digital Rights Manager version 1"))
+fixture("protected-video-only", "A video stream whose Encrypted Content Flag is set, with a Content Encryption Object, and no audio: the stream is reported as protected and encrypted.",
+        protected([m.stream_properties(1, b"\x01\x02\x03", stream_type=m.VIDEO_MEDIA, encrypted=True), m.content_encryption()]),
+        [DRM1_FINDING, finding("asf.stream-not-analyzed", "video")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
+fixture("protected-advanced-no-records", "An Advanced Content Encryption Object with no content encryption record: it protects no stream, and a PCM stream stays clear.",
+        protected([pcm(1)], extension=advanced([])), [finding("asf.content-encrypted", "no content encryption record")], None, [])
+
+
+def advanced_many():
+    objects = [(1, stream_number(2))] * 1001
+    return m.asf_file([pcm(1), wma(2)], objects_in([1, 2], 6, 100, 512), 512, file_id=FILE_ID, play=1_000_000, extension=advanced([(DRM_SYSTEM, 1, objects, b"")]))
+
+
+fixture("protected-advanced-many-records", "An Advanced Content Encryption Object with one record of 1001 encrypted object records, all for stream 2: the first 1000 are read, so the stream is protected "
+        "by the part of the record that was read, and the rest of the object is not.", advanced_many,
+        [ADVANCED_FINDING, ENCRYPTED, finding("asf.too-many-entries", "encrypted object records")], ENCRYPTED_FFPROBE,
+        [{"scheme": "Windows Media Advanced Content Encryption", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
 
 # ---- damaged files ----
 

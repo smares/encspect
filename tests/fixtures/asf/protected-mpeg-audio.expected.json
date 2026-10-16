@@ -1,0 +1,236 @@
+{
+ "description": "MPEG audio layer III, which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
+ "format": "ASF",
+ "length": 1435,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   361
+  ],
+  [
+   "Data Object",
+   361,
+   1074
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   96
+  ],
+  [
+   "Content Encryption Object",
+   230,
+   85
+  ],
+  [
+   "Header Extension Object",
+   315,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 85,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 1,
+   "bits": 0,
+   "codec_data": ""
+  }
+ ],
+ "packets": [
+  [
+   411,
+   512,
+   4
+  ],
+  [
+   923,
+   512,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   3,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   4,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   5,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   6,
+   0,
+   8,
+   100,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     442,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   100,
+   25,
+   [
+    [
+     559,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   100,
+   50,
+   [
+    [
+     676,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   100,
+   75,
+   [
+    [
+     793,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   100,
+   100,
+   [
+    [
+     954,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   100,
+   125,
+   [
+    [
+     1071,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1435,
+  "packets": 2,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 512,
+  "max_packet": 512,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "MPEG audio layer III"
+  },
+  {
+   "code": "asf.content-encrypted",
+   "contains": "Digital Rights Manager"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "the MPEG audio payloads are not MPEG audio frames."
+ },
+ "protection": [
+  {
+   "scheme": "Microsoft Digital Rights Manager version 1",
+   "is_encrypted": true,
+   "systems": []
+  }
+ ]
+}

@@ -401,12 +401,13 @@ class Track:
     """An audio track whose samples are laid out in chunks of chunk samples."""
 
     def __init__(self, track_id, samples, rate, channels, sample_entry, timescale=None, chunk=10, extra=(), edits=None, mdhd_duration=None, stts_entries=None,
-                 stsz_box=None, stsc_box=None, durations=None):
+                 stsz_box=None, stsc_box=None, durations=None, more_entries=()):
         self.track_id = track_id
         self.samples = samples
         self.rate = rate
         self.channels = channels
         self.sample_entry = sample_entry
+        self.more_entries = list(more_entries)
         self.timescale = timescale or rate
         self.chunk = chunk
         self.extra = list(extra)
@@ -444,7 +445,7 @@ class Track:
         if self.edits:
             children.append(elst(self.edits))
         table = [
-            stsd(self.sample_entry),
+            stsd(self.sample_entry, *self.more_entries),
             stts(entries),
             self.stsc_box or stsc(runs),
             self.stsz_box or stsz([len(s) for s in self.samples]),
@@ -487,7 +488,7 @@ def movie(tracks, before=(), after=(), movie_timescale=1000, moov_first=True, wi
     return data + trailer, boxes, [[mdat_start + o for o in offs] for offs in relative]
 
 
-# --- Protection: sinf, Common Encryption, FairPlay and Audible ----------------------------------------
+# --- Protection: sinf, Common Encryption, iTunes Store protection and Audible ----------------------------------------
 
 
 def frma(original):

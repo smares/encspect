@@ -62,10 +62,18 @@ public sealed partial class Mp4Parser
         uint id = f.U32(node, "Track ID", Explain.TfhdTrackId);
         node.Value = $"Track Fragment Header, track {id}";
         ulong? baseOffset = (flags & 0x1) != 0 ? f.Field(node, "Base Data Offset", 8, Explain.BaseDataOffset, v => NodeValue.Hex(v, 8)) : null;
+        uint description = state.TrackDefaults.TryGetValue(id, out TrackDefaults? defaults) ? defaults.Description : 1;
         if ((flags & 0x2) != 0)
         {
-            f.U32(node, "Sample Description Index", Explain.TfhdDescriptionIndex);
+            description = f.U32(node, "Sample Description Index", Explain.TfhdDescriptionIndex);
         }
+
+        if (!state.FragmentDescriptions.TryGetValue(id, out HashSet<uint>? used))
+        {
+            state.FragmentDescriptions[id] = used = [];
+        }
+
+        used.Add(description);
 
         if ((flags & 0x8) != 0)
         {

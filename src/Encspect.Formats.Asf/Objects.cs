@@ -1086,7 +1086,7 @@ public sealed partial class AsfParser
                 state.Findings.AddNow(Severity.Warning, "asf.protection-type", $"The Content Encryption Object's protection type is \"{protection}\"; section 3.14 sets it to \"DRM\".", protectionNode);
             }
         });
-        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by Microsoft Digital Rights Management version 1; its streams are encrypted and are reported as the file holds them.", node);
+        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by Microsoft Digital Rights Manager version 1; its streams are encrypted and are reported as the file holds them.", node);
     }
 
     private static void ParseExtendedContentEncryption(State state, Node parent, ObjectHeader header, long end)
@@ -1122,12 +1122,24 @@ public sealed partial class AsfParser
     private static void ParseAdvancedContentEncryption(State state, Node parent, ObjectHeader header, long end)
     {
         (Node node, Fields f) = Begin(state, parent, header, end, "Advanced Content Encryption Object", Explain.AdvancedContentEncryption, Topics.AsfContentProtection);
+        int recordsBefore = state.Protections.Count;
         Body(state, node, f, 26, () =>
         {
             ushort count = f.Word("Content Encryption Records Count", Explain.ContentEncryptionRecordsCount);
             node.Value = NodeValue.Integer(count, "records", "record");
             int recordNodes = 0;
             bool stopped = false;
+            void EmitPending(List<(ushort Type, ushort Length, Node Node)> unplaced)
+            {
+                foreach ((ushort type, ushort length, Node idTypeNode) in unplaced)
+                {
+                    state.Findings.AddNow(type == 1 ? Severity.Warning : Severity.Info, type == 1 ? "asf.encrypted-object-id-length" : "asf.encrypted-object-id-type",
+                        type == 1
+                            ? $"An Encrypted Object Record gives a stream number in {length} bytes; section 4.13 sets the length to 2 for type 1."
+                            : $"An Encrypted Object Record has the ID type 0x{type:X4}; section 4.13 defines only 1, a stream number, so which object it covers is not known.", idTypeNode);
+                }
+            }
+
             for (int i = 0; i < count && !stopped; i++)
             {
                 if (i == MaxListEntries)
@@ -1157,6 +1169,8 @@ public sealed partial class AsfParser
                         }
 
                         node.Add(partial);
+                        EmitPending(pending);
+                        state.Protections.Add(new ProtectionObject(ProtectionSchemes.AdvancedEncryption, partial, [AsfGuids.EncryptionSystemName(system) ?? AsfGuids.Text(system)], streams));
                         stopped = true;
                         break;
                     }
@@ -1204,18 +1218,14 @@ public sealed partial class AsfParser
                 }
 
                 node.Add(shown);
-                foreach ((ushort type, ushort length, Node idTypeNode) in pending)
-                {
-                    state.Findings.AddNow(type == 1 ? Severity.Warning : Severity.Info, type == 1 ? "asf.encrypted-object-id-length" : "asf.encrypted-object-id-type",
-                        type == 1
-                            ? $"An Encrypted Object Record gives a stream number in {length} bytes; section 4.13 sets the length to 2 for type 1."
-                            : $"An Encrypted Object Record has the ID type 0x{type:X4}; section 4.13 defines only 1, a stream number, so which object it covers is not known.", idTypeNode);
-                }
-
+                EmitPending(pending);
                 state.Protections.Add(new ProtectionObject(ProtectionSchemes.AdvancedEncryption, shown, [AsfGuids.EncryptionSystemName(system) ?? AsfGuids.Text(system)], streams));
             }
         });
-        state.Findings.AddNow(Severity.Info, "asf.content-encrypted", "The file is protected by Windows Media DRM for network devices; its streams are encrypted and are reported as the file holds them.", node);
+        state.Findings.AddNow(Severity.Info, "asf.content-encrypted",
+            state.Protections.Count > recordsBefore
+                ? "The file is protected by Windows Media DRM for network devices; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them."
+                : "The Advanced Content Encryption Object holds no content encryption record, so it protects no stream.", node);
     }
 
     // ---- Stream Bitrate Properties Object (3.12) ----

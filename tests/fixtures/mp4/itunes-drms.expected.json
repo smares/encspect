@@ -1,6 +1,6 @@
 {
- "description": "A drms sample entry in an M4P file, as iTunes Store purchases of the FairPlay era carry it: esds, and a sinf box with the original format mp4a, a schm box and a schi box that holds the DRM atoms user, key, iviv and priv. The iTunes metadata of the purchase (apID, purd, ownr, cnID) is metadata, not protection.",
- "length": 11544,
+ "description": "A drms sample entry in an M4P file, as iTunes Store purchases carry it: esds, and a sinf box with the original format mp4a and a schi box that holds the DRM atoms user, key, iviv and priv. The iTunes metadata of the purchase (apID, purd, ownr, cnID) is metadata, not protection.",
+ "length": 11524,
  "format": "MP4",
  "boxes": [
   [
@@ -11,7 +11,7 @@
   [
    "moov",
    28,
-   1173
+   1153
   ],
   [
    "moov/mvhd",
@@ -21,7 +21,7 @@
   [
    "moov/trak",
    144,
-   767
+   747
   ],
   [
    "moov/trak/tkhd",
@@ -31,7 +31,7 @@
   [
    "moov/trak/mdia",
    244,
-   667
+   647
   ],
   [
    "moov/trak/mdia/mdhd",
@@ -46,7 +46,7 @@
   [
    "moov/trak/mdia/minf",
    329,
-   582
+   562
   ],
   [
    "moov/trak/mdia/minf/smhd",
@@ -71,17 +71,17 @@
   [
    "moov/trak/mdia/minf/stbl",
    389,
-   522
+   502
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd",
    397,
-   294
+   274
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/drms",
    413,
-   278
+   258
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/drms/esds",
@@ -91,7 +91,7 @@
   [
    "moov/trak/mdia/minf/stbl/stsd/drms/sinf",
    503,
-   188
+   168
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/drms/sinf/frma",
@@ -99,138 +99,133 @@
    12
   ],
   [
-   "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schm",
-   523,
-   20
-  ],
-  [
    "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi",
-   543,
+   523,
    148
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/user",
-   551,
+   531,
    24
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/key ",
-   575,
+   555,
    24
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/iviv",
-   599,
+   579,
    24
   ],
   [
    "moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/priv",
-   623,
+   603,
    68
   ],
   [
    "moov/trak/mdia/minf/stbl/stts",
-   691,
+   671,
    24
   ],
   [
    "moov/trak/mdia/minf/stbl/stsc",
-   715,
+   695,
    28
   ],
   [
    "moov/trak/mdia/minf/stbl/stsz",
-   743,
+   723,
    140
   ],
   [
    "moov/trak/mdia/minf/stbl/stco",
-   883,
+   863,
    28
   ],
   [
    "moov/udta",
-   911,
+   891,
    290
   ],
   [
    "moov/udta/meta",
-   919,
+   899,
    282
   ],
   [
    "moov/udta/meta/hdlr",
-   931,
+   911,
    33
   ],
   [
    "moov/udta/meta/ilst",
-   964,
+   944,
    237
   ],
   [
    "moov/udta/meta/ilst/©nam",
-   972,
+   952,
    39
   ],
   [
    "moov/udta/meta/ilst/©nam/data",
-   980,
+   960,
    31
   ],
   [
    "moov/udta/meta/ilst/©ART",
-   1011,
+   991,
    40
   ],
   [
    "moov/udta/meta/ilst/©ART/data",
-   1019,
+   999,
    32
   ],
   [
    "moov/udta/meta/ilst/apID",
-   1051,
+   1031,
    45
   ],
   [
    "moov/udta/meta/ilst/apID/data",
-   1059,
+   1039,
    37
   ],
   [
    "moov/udta/meta/ilst/purd",
-   1096,
+   1076,
    43
   ],
   [
    "moov/udta/meta/ilst/purd/data",
-   1104,
+   1084,
    35
   ],
   [
    "moov/udta/meta/ilst/ownr",
-   1139,
+   1119,
    34
   ],
   [
    "moov/udta/meta/ilst/ownr/data",
-   1147,
+   1127,
    26
   ],
   [
    "moov/udta/meta/ilst/cnID",
-   1173,
+   1153,
    28
   ],
   [
    "moov/udta/meta/ilst/cnID/data",
-   1181,
+   1161,
    20
   ],
   [
    "mdat",
-   1201,
+   1181,
    10343
   ]
  ],
@@ -247,7 +242,7 @@
    "samples": 30720,
    "is_vbr": true,
    "protection": {
-    "scheme": "FairPlay (iTunes, drms)",
+    "scheme": "iTunes protection (drms)",
     "is_encrypted": true,
     "systems": []
    }
@@ -256,129 +251,128 @@
  "units": [],
  "samples": [
   [
-   1209,
+   1189,
    300
   ],
   [
-   1509,
+   1489,
    337
   ],
   [
-   1846,
+   1826,
    374
   ],
   [
-   2220,
+   2200,
    321
   ],
   [
-   2541,
+   2521,
    358
   ],
   [
-   2899,
+   2879,
    305
   ],
   [
-   3204,
+   3184,
    342
   ],
   [
-   3546,
+   3526,
    379
   ],
   [
-   3925,
+   3905,
    326
   ],
   [
-   4251,
+   4231,
    363
   ],
   [
-   4614,
+   4594,
    310
   ],
   [
-   4924,
+   4904,
    347
   ],
   [
-   5271,
+   5251,
    384
   ],
   [
-   5655,
+   5635,
    331
   ],
   [
-   5986,
+   5966,
    368
   ],
   [
-   6354,
+   6334,
    315
   ],
   [
-   6669,
+   6649,
    352
   ],
   [
-   7021,
+   7001,
    389
   ],
   [
-   7410,
+   7390,
    336
   ],
   [
-   7746,
+   7726,
    373
   ],
   [
-   8119,
+   8099,
    320
   ],
   [
-   8439,
+   8419,
    357
   ],
   [
-   8796,
+   8776,
    304
   ],
   [
-   9100,
+   9080,
    341
   ],
   [
-   9441,
+   9421,
    378
   ],
   [
-   9819,
+   9799,
    325
   ],
   [
-   10144,
+   10124,
    362
   ],
   [
-   10506,
+   10486,
    309
   ],
   [
-   10815,
+   10795,
    346
   ],
   [
-   11161,
+   11141,
    383
   ]
  ],
  "fields": {
-  "MP4/moov/trak/mdia/minf/stbl/stsd/drms": "drms (FairPlay protected audio)",
-  "MP4/moov/trak/mdia/minf/stbl/stsd/drms/sinf/schm/Scheme Type": "itun",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/drms": "drms (iTunes protected audio)",
   "MP4/ftyp": "M4P (Apple protected audio)",
   "MP4/moov/udta/meta/iTunes Metadata/Account/data/Value": "buyer@example.invalid",
   "MP4/moov/udta/meta/iTunes Metadata/Owner/data/Value": "Test Owner"

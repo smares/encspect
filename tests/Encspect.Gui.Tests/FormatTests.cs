@@ -46,7 +46,7 @@ public class FormatTests
         Assert.DoesNotContain("encrypted", new StreamItem(stream).Text, StringComparison.Ordinal);
 
         var encrypted = stream with { Protection = new StreamProtection { Scheme = "Common Encryption, AES-CTR (cenc)", IsEncrypted = true, Systems = ["Widevine Content Protection", "Microsoft PlayReady"] } };
-        Assert.EndsWith("encrypted: Common Encryption, AES-CTR (cenc), Widevine Content Protection, Microsoft PlayReady", new StreamItem(encrypted).Text, StringComparison.Ordinal);
+        Assert.EndsWith("encrypted: Common Encryption, AES-CTR (cenc); DRM systems: Widevine Content Protection, Microsoft PlayReady", new StreamItem(encrypted).Text, StringComparison.Ordinal);
 
         var clear = stream with { Protection = new StreamProtection { Scheme = "Common Encryption, AES-CTR (cenc)" } };
         Assert.EndsWith("protected, not encrypted: Common Encryption, AES-CTR (cenc)", new StreamItem(clear).Text, StringComparison.Ordinal);

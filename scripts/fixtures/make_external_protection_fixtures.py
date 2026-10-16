@@ -3,7 +3,7 @@
 E-AC-3, MPEG audio, ALAC, FLAC and Opus, whole and fragmented, and GPAC's MP4Box 2.2 (-crypt) for the four schemes cenc, cens, cbc1 and cbcs, with pssh boxes.
 
 The keys protect nothing: every file is encrypted with the test key 000102030405060708090a0b0c0d0e0f under the key ID 101112131415161718191a1b1c1d1e1f, from 1.5 seconds
-of a 440 Hz tone (and 660 Hz in the second channel). They are written to the file's own tenc and pssh boxes, so the files can be read without any secret.
+of a 440 Hz tone (and 660 Hz in the second channel). Only the key ID is written to the file (the tenc box and the pssh boxes), so the files can be read without any secret.
 
 Each <name>.expected.json manifest has the command, the tools' versions and what the analyzer must report, mostly from independent tools at the time of encoding:
 

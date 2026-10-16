@@ -72,8 +72,9 @@ public sealed class StreamItem(StreamInfo stream)
         }
     }
 
-    // "encrypted: Common Encryption, AES-CTR (cenc), Widevine, Microsoft PlayReady": the scheme, then the
+    // "encrypted: Common Encryption, AES-CTR (cenc); DRM systems: Widevine Content Protection, Microsoft PlayReady": the scheme, then the
     // DRM systems the file names; "protected" where the scheme covers samples that are in the clear.
     internal static string ProtectionText(StreamProtection protection) =>
-        string.Join(", ", new[] { protection.IsEncrypted ? "encrypted: " + protection.Scheme : "protected, not encrypted: " + protection.Scheme }.Concat(protection.Systems));
+        (protection.IsEncrypted ? "encrypted: " : "protected, not encrypted: ") + protection.Scheme
+        + (protection.Systems.Count > 0 ? "; DRM systems: " + string.Join(", ", protection.Systems) : string.Empty);
 }

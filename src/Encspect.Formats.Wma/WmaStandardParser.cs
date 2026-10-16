@@ -190,14 +190,14 @@ public sealed class WmaStandardParser : ICodecParser
 
     // A stream that is not read: what the container states of it. With the container's configuration, a stream whose samples are encrypted:
     // it takes the container's duration and the nominal bitrate of the format.
-    internal static void AddBasicStream(CodecContext context, Node parent, string codec, AudioFormat format, int version, CodecConfiguration? configuration = null)
+    internal static void AddBasicStream(CodecContext context, Node parent, string codec, AudioFormat format, int version, CodecConfiguration? configuration = null, string? description = null, string? topic = null)
     {
         bool encrypted = configuration is { AreSamplesEncrypted: true };
         var node = parent.Add(new Node(codec, parent.Offset, parent.Length, NodeValue.Text(encrypted ? "frames not read: encrypted" : "not analyzed"))
         {
             Kind = NodeKind.Stream,
-            Description = Explain.Stream,
-            Topic = Topics.WmaStandard,
+            Description = description ?? Explain.Stream,
+            Topic = topic ?? Topics.WmaStandard,
         });
         double duration = encrypted ? configuration!.Duration ?? 0 : 0;
         context.AddStream(new StreamInfo

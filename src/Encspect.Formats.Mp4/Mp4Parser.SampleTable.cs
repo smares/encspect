@@ -140,8 +140,8 @@ public sealed partial class Mp4Parser
         "sawb" => "AMR-WB",
         "enca" => "encrypted audio",
         "encv" => "encrypted video",
-        "drms" => "FairPlay protected audio",
-        "drmi" => "FairPlay protected video",
+        "drms" => "iTunes protected audio",
+        "drmi" => "iTunes protected video",
         "aavd" => "Audible protected audio",
         "mha1" or "mhm1" => "MPEG-H 3D Audio",
         _ => "other",
@@ -601,9 +601,16 @@ public sealed partial class Mp4Parser
         }
 
         MoreEntries(node, count, start + (MaxListedEntries * 8L), Math.Min(f.End, start + (count * 8L)));
-        if (grouping == "seig" && state.Track is { } track)
+        if (grouping == "seig")
         {
-            CountEncryptionGroups(state, track, new BoxFields(f.Reader, start, f.End), count);
+            if (state.Track is { } track)
+            {
+                track.EncryptionRuns.Add((new BoxFields(f.Reader, start, f.End), count));
+            }
+            else if (state.Fragment is not null)
+            {
+                FragmentEncryptionGroups(state, new BoxFields(f.Reader, start, f.End), count);
+            }
         }
     }
 }

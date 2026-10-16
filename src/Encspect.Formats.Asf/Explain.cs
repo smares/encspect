@@ -45,6 +45,8 @@ internal static partial class Explain
     public const string StreamFlags = "The stream number and whether the stream is encrypted (section 3.3).";
     public const string StreamNumber = "The number of this stream, from 1 to 127; 0 is invalid (section 3.3).";
     public const string StreamFlagsReserved = "Reserved bits, which should be 0 (section 3.3).";
+    public const string EncryptedStream = "A stream whose data is encrypted and which no codec parser describes, shown as the header states it; its media objects are not read.";
+
     public const string EncryptedContentFlag = "Set if the data of the stream is encrypted and unreadable without a way to decrypt it (section 3.3).";
     public const string StreamReserved = "A reserved field, which should be 0 (section 3.3).";
     public const string TypeSpecificData = "Format data whose layout the stream type decides (sections 3.3 and 9).";

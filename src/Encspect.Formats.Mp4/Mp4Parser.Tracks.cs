@@ -58,7 +58,7 @@ public sealed partial class Mp4Parser
             return;
         }
 
-        SampleEntry entry = track.Entries[0];
+        SampleEntry entry = EntryOf(state, track);
         string? codec = CodecOf(entry);
         StreamProtection? protection = IsProtectedEntry(entry.Format) ? ProtectionOf(state, track, entry) : null;
         List<ByteRange> ranges = SampleRanges(state, track);
@@ -69,14 +69,10 @@ public sealed partial class Mp4Parser
                 : entry.ObjectType is { } type ? $"MPEG-4 audio of object type 0x{type:X2}" : "MPEG-4 audio without an esds box";
             state.Findings.AddNow(Severity.Info, "mp4.codec-not-analyzed", $"The audio {label} holds {(protection is null ? string.Empty : "protected ")}{what}, whose samples are not analyzed yet.", entry.Node);
 
-            // An encrypted track is still a stream, described by its sample entry; any other track whose coding has no parser is shown as boxes only.
-            if (protection is not { IsEncrypted: true })
+            // A protected track is still a stream, described by its sample entry, so that its protection is reported; any other track
+            // whose coding has no parser is shown as boxes only.
+            if (protection is null)
             {
-                if (protection is not null)
-                {
-                    ProtectionNotice(state, track, label, entry, protection, isDescribed: false);
-                }
-
                 return;
             }
         }
@@ -104,9 +100,9 @@ public sealed partial class Mp4Parser
             ProtectionNotice(state, track, label, entry, protection);
         }
 
-        if (protection is { IsEncrypted: true })
+        if (protection is { IsEncrypted: true } || (protection is not null && codec is null))
         {
-            RouteEncrypted(state, track, entry, codec, samples, ranges, first);
+            RouteEncrypted(state, track, entry, codec, samples, ranges, first, protection.IsEncrypted);
         }
         else if (codec == "mpeg-audio" && ranges.Count == 1)
         {
@@ -138,32 +134,30 @@ public sealed partial class Mp4Parser
     }
 
     // A protected track tells the reader so: its ciphertext is not read, or the scheme covers samples that are in the clear.
-    private static void ProtectionNotice(State state, Track track, string label, SampleEntry entry, StreamProtection protection, bool isDescribed = true)
+    private static void ProtectionNotice(State state, Track track, string label, SampleEntry entry, StreamProtection protection)
     {
         if (protection.IsEncrypted)
         {
             string clear = track.HasEncryptionRuns && track.GroupedClear > 0 ? $"; {track.GroupedClear} of its {SampleCount(track)} samples are in the clear by their sample group, but none is read" : string.Empty;
             state.Findings.AddNow(Severity.Info, "mp4.samples-encrypted",
-                isDescribed
-                    ? $"The samples of the audio {label} are encrypted ({protection.Scheme}){clear}, so their frames are not read; the stream is described by its sample entry and sample tables."
-                    : $"The samples of the audio {label} are encrypted ({protection.Scheme}){clear}.", entry.Node);
+                $"The samples of the audio {label} are encrypted ({protection.Scheme}){clear}, so their frames are not read; the stream is described by its sample entry and sample tables.", entry.Node);
         }
         else
         {
             state.Findings.AddNow(Severity.Info, "mp4.protected-samples-clear",
-                $"The audio {label} is covered by {protection.Scheme}, but none of its samples is encrypted: the tenc box sets the default to not protected and no sample group protects samples, or the sample groups leave every sample in the clear; its samples are read as they are.", entry.Protection?.Encryption?.Node ?? entry.Node);
+                $"The audio {label} is covered by {protection.Scheme}, but none of its samples is encrypted: the tenc box sets the default to not protected and no sample group protects samples, or the sample groups leave every sample in the clear.", entry.Protection?.Encryption?.Node ?? entry.Node);
         }
     }
 
     // The stream of a track whose samples are encrypted, from the sample entry alone: the codec parser reads the configuration
     // (AAC's AudioSpecificConfig, AC-3's dac3 box) but is handed no packets; a codec without a configuration, or whose parser
     // reports no stream, gets a stream built here from the entry. The container's timing fills what the frames would have given.
-    private static void RouteEncrypted(State state, Track track, SampleEntry entry, string? codec, Node samples, List<ByteRange> ranges, bool first)
+    private static void RouteEncrypted(State state, Track track, SampleEntry entry, string? codec, Node samples, List<ByteRange> ranges, bool first, bool isEncrypted)
     {
         double seconds = track.MediaDuration is { } units && track.Timescale > 0 && units != uint.MaxValue && units != ulong.MaxValue ? units / (double)track.Timescale : 0;
         int before = state.Context.Streams.Count;
         int nodes = samples.Children.Count;
-        if (codec is not null && entry.DecoderSpecificInfo is { } data && entry.DecoderSpecificInfoNode is { } node)
+        if (isEncrypted && codec is not null && entry.DecoderSpecificInfo is { } data && entry.DecoderSpecificInfoNode is { } node)
         {
             state.Context.ParsePackets(codec, samples, [], new CodecConfiguration(data, node)
             {
@@ -177,11 +171,11 @@ public sealed partial class Mp4Parser
         {
             string name = entry.EffectiveFormat == "mp4a" && entry.ObjectType is { } type ? ObjectTypeName(type) : FormatName(entry.EffectiveFormat) is "other" ? entry.EffectiveFormat : FormatName(entry.EffectiveFormat);
             // The codec parser's node for the stream it read the configuration of, else one of our own.
-            Node stream = samples.Children.Skip(nodes).FirstOrDefault(c => c.Kind == NodeKind.Stream) ?? samples.Add(new Node(name, samples.Offset, samples.Length, NodeValue.Text("frames not read: encrypted"))
+            Node stream = samples.Children.Skip(nodes).FirstOrDefault(c => c.Kind == NodeKind.Stream) ?? samples.Add(new Node(name, samples.Offset, samples.Length, NodeValue.Text(isEncrypted ? "frames not read: encrypted" : "frames not read: coding not analyzed"))
             {
                 Kind = NodeKind.Stream,
                 Ranges = samples.Ranges,
-                Description = Explain.EncryptedStream,
+                Description = isEncrypted ? Explain.EncryptedStream : Explain.UnanalyzedStream,
                 Topic = Topics.CommonEncryption,
             });
             state.Context.AddStream(new StreamInfo
