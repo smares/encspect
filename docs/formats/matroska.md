@@ -14,14 +14,14 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 ## What is routed
 
 - **Audio frames** go to the codec parsers by codec ID, through the host's route `ParsePackets`, one packet per frame as mapped bytes:
-  - `A_AAC` to AAC (CodecPrivate is the AudioSpecificConfig); the legacy `A_AAC/MPEG2/*` and `A_AAC/MPEG4/*` IDs have no CodecPrivate, so the AudioSpecificConfig is worked out from the ID (object type MAIN 1, LC 2, SSR 3, LTP 4), the SamplingFrequency, the Channels and, for `/SBR`, the OutputSamplingFrequency (explicit SBR signaling), as FFmpeg's `matroskadec.c` does, and shown under the CodecID that gives its values;
+  - `A_AAC` to AAC (CodecPrivate is the AudioSpecificConfig); the legacy `A_AAC/MPEG2/*` and `A_AAC/MPEG4/*` IDs have no CodecPrivate, so the AudioSpecificConfig is worked out from the ID (object type MAIN 1, LC 2, SSR 3, LTP 4), the SamplingFrequency, the Channels and, for `/SBR`, the OutputSamplingFrequency (explicit SBR signaling), following ISO/IEC 14496-3, as FFmpeg's `matroskadec.c` does for the common rates, and shown under the CodecID that gives its values;
   - `A_AC3` and `A_EAC3` to AC-3 and E-AC-3, `A_DTS` and its extensions to DTS;
   - `A_VORBIS` to Vorbis (CodecPrivate is the three headers in Xiph lacing, which are passed as the first packets) and `A_OPUS` to Opus (CodecPrivate is the OpusHead; CodecDelay is compared with the pre-skip, `opus.container-delay-differs`);
   - `A_MPEG/L1`, `A_MPEG/L2` and `A_MPEG/L3` are counted at container level (see below).
 - **The codec's stream is merged** into the file's streams as MP4's is (codec, sample rate, channels, duration, bitrate, encoder), and the Matroska track's own fields are compared with it: `matroska.sample-rate-differs`, `matroska.channels-differ`.
 - **Header stripping and zlib** are undone first, for Opus and Vorbis only. A track of another codec whose frames are zlib-compressed or header-stripped is not routed, because the AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes: `matroska.track-encoding-not-read` says so. Encrypted tracks give `matroska.track-encrypted`. A frame or CodecPrivate that is no zlib data gives `matroska.frame-encoding-invalid` or `matroska.codec-private-invalid`; the frames before it are analyzed.
 - **Codec IDs without a parser** (FLAC, ALAC, TrueHD, TTA, WavPack, PCM, MLP, RealAudio, QuickTime and the rest) give an Info finding, `matroska.codec-not-analyzed`: their frames are counted and shown as blocks, and their parsers are not written yet (phase 3).
-- **Several audio tracks** play together, so their streams share a `PlaybackGroup` (one per Segment): the summary and the CSV count the longest track's duration and samples once instead of adding them up, and two Segments add up. JSON streams carry `"playbackGroup"`. A track whose codec parser reports several streams in a row (chained Ogg streams) is not grouped.
+- **Several audio tracks** play together, so their streams share a `PlaybackGroup` (one per Segment): the summary and the CSV count the longest track's duration and samples once instead of adding them up, and two Segments add up. JSON streams carry `"playbackGroup"`. A track whose codec parser reports several streams is not grouped.
 
 ## What is reported
 
@@ -56,7 +56,7 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 
 - Elements outside Clusters become nodes up to 250,000 in all (`matroska.too-many-elements`); nesting is read to 40 levels (`matroska.too-deep`).
 - A Cluster's blocks and elements are kept up to 6,000,000 records in all; a block of more than 64 MiB is not read (`matroska.block-too-large`).
-- The frames of laced blocks are counted against a budget of 4,000,000 in all (`matroska.too-many-elements`), since a block of seven bytes can state 256 frames of no bytes; fixed-size lacing keeps no sizes.
+- The frames of laced blocks that go to a codec parser (or whose track is not known yet) are counted against a budget of 4,000,000 in all (`matroska.too-many-elements`), since a block of seven bytes can state 256 frames of no bytes; fixed-size lacing keeps no sizes.
 - Memory is bounded by the compact records: `MemoryTests` hold the blocks to about 120 bytes each.
 
 ## Not covered

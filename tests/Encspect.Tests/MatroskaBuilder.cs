@@ -38,7 +38,7 @@ internal static class MatroskaBuilder
         Element(0x1A45DFA3, Unsigned(0x4286, 1), Unsigned(0x42F7, 1), Unsigned(0x42F2, 4), Unsigned(0x42F3, 8), Text(0x4282, docType), Unsigned(0x4287, 4), Unsigned(0x4285, 2));
 
     // One stereo Opus track at 48 kHz with a minimal OpusHead.
-    public static byte[] OpusTracks()
+    public static byte[] OpusTracks(bool isHeaderStripped = false)
     {
         byte[] head = new byte[19];
         Encoding.ASCII.GetBytes("OpusHead").CopyTo(head, 0);
@@ -49,7 +49,11 @@ internal static class MatroskaBuilder
         byte[] rate = new byte[8];
         BinaryPrimitives.WriteDoubleBigEndian(rate, 48000);
         return Element(0x1654AE6B, Element(0xAE, Unsigned(0xD7, 1), Unsigned(0x73C5, 1), Unsigned(0x83, 2), Text(0x86, "A_OPUS"), Element(0x63A2, head),
-            Element(0xE1, Element(0xB5, rate), Unsigned(0x9F, 2))));
+            Element(0xE1, Element(0xB5, rate), Unsigned(0x9F, 2)),
+            isHeaderStripped
+                ? Element(0x6D80, Element(0x6240, Unsigned(0x5031, 0), Unsigned(0x5032, 1), Unsigned(0x5033, 0),
+                    Element(0x5034, Unsigned(0x4254, 3), Element(0x4255, new byte[] { 0xF8 }))))
+                : []));
     }
 
     public static byte[] SimpleBlock(int track, int timestamp, byte[] frame)

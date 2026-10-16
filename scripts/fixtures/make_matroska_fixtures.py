@@ -416,7 +416,7 @@ def _():
 
 @fixture("track-fields", "TrackEntries that lack what RFC 9559 requires: no TrackNumber, a TrackNumber of 0, no CodecID, no TrackUID and no TrackType, an audio track with "
          "no Audio element, a repeated TrackNumber, and an audio track of 0 channels.",
-         findings=[("matroska.track-field", "no TrackNumber"), ("matroska.track-field", "TrackNumber 0"), ("matroska.track-field", "no CodecID"),
+         findings=[("matroska.track-field", "has no CodecDelay"), ("matroska.track-field", "has no CodecDelay"), ("matroska.track-field", "no TrackNumber"), ("matroska.track-field", "TrackNumber 0"), ("matroska.track-field", "no CodecID"),
                    ("matroska.track-field", "no TrackUID"), ("matroska.track-field", "no TrackType"), ("matroska.audio-fields", "without an Audio element"),
                    ("matroska.audio-fields", "without an Audio element"), ("matroska.audio-fields", "0 channels"), ("matroska.track-number-duplicate", "first repeated number is 5"),
                    ("matroska.track-empty", "A track without a number"), ("matroska.track-empty", "Track 0"), ("matroska.track-empty", "Track 3"),
@@ -621,10 +621,10 @@ def adts_frames(name):
 AAC_RATES = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350]
 
 
-def legacy_aac(codec, name, output_rate=None):
+def legacy_aac(codec, name, output_rate=None, rate_override=None):
     """A track with a legacy A_AAC/MPEG2|4/* ID, which has no CodecPrivate (draft-ietf-cellar-codec section 3.4.2 and following)."""
     _, rate_index, channels, frames = adts_frames(name)
-    rate = float(AAC_RATES[rate_index])
+    rate = float(rate_override or AAC_RATES[rate_index])
     extra = (flt(ID["OutputSamplingFrequency"], output_rate),) if output_rate else ()
     track = audio_track(1, codec, channels, rate, audio_extra=extra)
     items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames)]
@@ -658,6 +658,19 @@ def _():
     return legacy_aac("A_AAC/MPEG4/LC/SBR", "sbr-fixvar-resolutions", output_rate=44100.0)[0]
 
 
+@fixture("aac-legacy-explicit-rate", "A track with the legacy ID A_AAC/MPEG4/LC whose SamplingFrequency (44000 Hz) is not one of the thirteen the AudioSpecificConfig has an "
+         "index for: the worked out configuration gives the frequency in full (index 15 and 24 bits), as ISO/IEC 14496-3 section 1.6.3.3 has it.",
+         streams=[("AAC", 44000, 2)], valid=False)
+def _():
+    return legacy_aac("A_AAC/MPEG4/LC", "stereo", rate_override=44000)[0]
+
+
+@fixture("aac-legacy-sbr-core-rate", "A track with the legacy ID A_AAC/MPEG4/LC/SBR and no OutputSamplingFrequency: the SBR extension of the worked out configuration "
+         "gives the core's sampling frequency.", streams=[("AAC", 22050, 2)], valid=False)
+def _():
+    return legacy_aac("A_AAC/MPEG4/LC/SBR", "sbr-fixvar-resolutions")[0]
+
+
 @fixture("crc-cut-by-parent", "A Cues element that holds only the header of a CRC-32 element (BF 84) and no value: the parent ends before the CRC-32 element's 4 bytes.",
          findings=[("matroska.crc-size", "holds 0 bytes"), ("matroska.element-overruns-parent", "CRC-32")], streams=[OPUS], valid=False)
 def _():
@@ -687,6 +700,24 @@ def _():
     # The cut drops the EBML Header and the Segment's header, and the SeekHead too, so the first element is the Info.
     first = data.index(b"\x15\x49\xA9\x66")
     return data[data.index(b"\x15\x49\xA9\x66", first + 4):]
+
+
+@fixture("segment-crc-truncated", "A Segment with a CRC-32 whose size runs past the end of the file: the file is cut short, so the CRC covers data the file lacks and no "
+         "verdict is given.", findings=[("matroska.element-truncated", "The Segment states")], streams=[OPUS], valid=False)
+def _():
+    seg = segment(Crc(), info(), tracks(opus_track()), cluster(0, *blocks(count=3)), size=1000)
+    return build([ebml_header(), seg])
+
+
+@fixture("live-unknown-element", "A live recording with an element the schema does not list (0x4DDD) in the middle of a Cluster of unknown size, whose last frame ends in "
+         "128 bytes shaped like an ID3v1 tag: the unknown element is skipped by its size, as the parse does (RFC 8794 section 6.2), so the recording runs to its end and "
+         "the bytes are part of a frame, not a tag.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("matroska.unknown-element", "0x4DDD"),
+                   ("tag.near-miss", "ID3v1 signature")], streams=[OPUS], valid=False)
+def _():
+    clusters = [cluster(i * 100, *blocks(count=3, first=i * 5), E(0x4DDD, b"odd"), *blocks(count=2, start=60, first=i * 5 + 3), unknown=True) for i in range(2)]
+    clusters[-1].children.append(simple_block(1, 90, opus_packet(99) + ID3V1, key=True))
+    return build(standard(*clusters)[:1] + [segment(info(), tracks(opus_track()), *clusters, unknown=True)])
 
 
 @fixture("empty-elements", "Elements with no data, which take their default values (RFC 8794 section 6.1): an empty TimestampScale (1,000,000), FlagLacing (1: lacing "

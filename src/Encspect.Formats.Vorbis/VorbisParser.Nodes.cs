@@ -9,7 +9,7 @@ public sealed partial class VorbisParser
     {
         PacketRecord packet = records.Packets[index];
         records.Ranges.TryGetValue(index, out ByteRange[]? ranges);
-        long length = ranges is null ? packet.Length : ranges[^1].End - ranges[0].Offset;
+        long length = records.IsOpaque(index) ? records.SpanOf(index) : ranges is null ? packet.Length : ranges[^1].End - ranges[0].Offset;
         return new Node("Packet", records.OffsetOf(index), length, Summary(records, packet), () => PacketFields(records, index))
         {
             Kind = NodeKind.Frame,
@@ -43,7 +43,9 @@ public sealed partial class VorbisParser
         }
 
         records.Ranges.TryGetValue(index, out ByteRange[]? ranges);
-        var at = new BitPlace(records.OffsetOf(index), ranges is null ? null : records.Opaque.Contains(index) ? MappedBytes.Opaque(new byte[packet.Length], ranges[0].Offset, ranges[^1].End) : new MappedBytes(new byte[packet.Length], ranges));
+        var at = new BitPlace(records.OffsetOf(index), records.IsOpaque(index)
+            ? MappedBytes.Opaque(new byte[packet.Length], records.OffsetOf(index), records.OffsetOf(index) + records.SpanOf(index))
+            : ranges is null ? null : new MappedBytes(new byte[packet.Length], ranges));
         bool notAudio = (packet.Flags & PacketFlags.NotAudio) != 0;
         nodes.Add(at.Node("Packet Type", 0, 1, notAudio ? "1 (not audio)" : "0 (audio)", Explain.AudioPacketType));
         long position = 1;

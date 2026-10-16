@@ -18,7 +18,8 @@ internal sealed partial class FileReader(ParseContext context)
     // Block records, Cluster items and BlockGroup children together.
     internal const long MaxRecords = 6_000_000;
 
-    // The frames of laced blocks kept in all; they cost a record in a codec parser each.
+    // The frames of laced blocks that go to a codec parser, or whose track is not known yet, kept in all; each costs a record in the codec
+    // parser. Frames of tracks that are not routed cost nothing, and fixed-size lacing stores no sizes.
     internal const long MaxLacedFrames = 4_000_000;
 
     private const int MaxText = 1 << 16;
@@ -49,7 +50,8 @@ internal sealed partial class FileReader(ParseContext context)
         while (position < _reader.End)
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
-            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, _reader.End, _document.MaxIdLength, _document.MaxSizeLength, out ElementHeader header);
+            // At the root the EBML Header and the Segment have four-octet IDs whatever the document before declared.
+            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, _reader.End, Math.Max(4, _document.MaxIdLength), Math.Max(8, _document.MaxSizeLength), out ElementHeader header);
             if (problem != HeaderProblem.None)
             {
                 AddUnparsed(_file, position, _reader.End, problem, first ? "the start of the file" : null);

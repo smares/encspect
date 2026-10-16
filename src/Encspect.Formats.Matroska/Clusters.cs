@@ -104,13 +104,13 @@ internal sealed partial class FileReader
                 else if (seen != 0)
                 {
                     _findings.Add(Severity.Warning, "matroska.crc-position", new Node("CRC-32", child.Offset, childEnd - child.Offset), count =>
-                        $"{(count == 1 ? "A CRC-32 element is" : $"{count} CRC-32 elements are")} not the first child of {(count == 1 ? "its" : "their")} parent, as RFC 8794 requires (section 11.3.1), so {(count == 1 ? "it is" : "they are")} not checked; the first is in the Cluster at 0x{header.Offset:X}.");
+                        $"{(count == 1 ? "A CRC-32 element is" : $"{count} CRC-32 elements are")} not the first child of {(count == 1 ? "its" : "their")} parent, as RFC 8794 requires (section 11.3.1), so {(count == 1 ? "it is" : "they are")} not checked; the first is the CRC-32 at 0x{child.Offset:X} in the Cluster at 0x{header.Offset:X}.");
                     item.Kind = ItemKind.Element;
                 }
                 else if (child.Size != 4 || childEnd - child.DataOffset < 4)
                 {
                     _findings.Add(Severity.Warning, "matroska.crc-size", new Node("CRC-32", child.Offset, childEnd - child.Offset), count =>
-                        $"{(count == 1 ? "A CRC-32 element holds" : $"{count} CRC-32 elements hold")} other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, in the Cluster at 0x{child.Offset:X}, holds {Bytes(Math.Min((long)Math.Min(child.Size ?? 0, long.MaxValue), childEnd - child.DataOffset))}, so {(count == 1 ? "it is" : "they are")} not checked.");
+                        $"{(count == 1 ? "A CRC-32 element holds" : $"{count} CRC-32 elements hold")} other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, the CRC-32 at 0x{child.Offset:X} in the Cluster at 0x{header.Offset:X}, holds {Bytes(Math.Min((long)Math.Min(child.Size ?? 0, long.MaxValue), childEnd - child.DataOffset))}, so {(count == 1 ? "it is" : "they are")} not checked.");
                     item.Kind = ItemKind.Element;
                 }
                 else
@@ -168,7 +168,7 @@ internal sealed partial class FileReader
             if (computed != (uint)stored.Value)
             {
                 _findings.Add(Severity.Warning, "matroska.crc-mismatch", () => new Node("CRC-32", stored.Offset, stored.HeaderLength + stored.DataLength), count =>
-                    $"{(count == 1 ? "A CRC-32 element does" : $"{count} CRC-32 elements do")} not match the data {(count == 1 ? "it covers" : "they cover")}: the first, in the Cluster at 0x{header.Offset:X}, stores 0x{(uint)stored.Value:X8} but the {Bytes(end - crcEnd)} after it give 0x{computed:X8}, so the Cluster is damaged or was edited without updating it.");
+                    $"{(count == 1 ? "A CRC-32 element does" : $"{count} CRC-32 elements do")} not match the data {(count == 1 ? "it covers" : "they cover")}: the first, the CRC-32 at 0x{stored.Offset:X} in the Cluster at 0x{header.Offset:X}, stores 0x{(uint)stored.Value:X8} but the {Bytes(end - crcEnd)} after it give 0x{computed:X8}, so the Cluster is damaged or was edited without updating it.");
             }
         }
 

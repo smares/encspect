@@ -56,7 +56,9 @@ internal static class Codecs
 
     // The AudioSpecificConfig (ISO/IEC 14496-3, section 1.6.2.1) of a legacy A_AAC/MPEG2|4/* track, from the object type its ID names
     // (MAIN 1, LC 2, SSR 3, LTP 4), the sampling frequency, the channel configuration and, for /SBR, the explicit signaling of
-    // SBR with the output sampling frequency. Null where the ID names no object type or the channels have no channel configuration.
+    // SBR with the output sampling frequency (the core's where the track gives none). It follows ISO/IEC 14496-3 where FFmpeg's matroskadec.c
+    // differs: a frequency outside the table of thirteen is written in full (index 15 and 24 bits), 8 channels are channel configuration 7,
+    // and 7 channels have none. Null where the ID names no object type or the channels have no channel configuration.
     public static byte[]? LegacyAacConfig(string codecId, double? samplingFrequency, double? outputSamplingFrequency, ulong? channels)
     {
         int objectType = codecId.Contains("/MAIN", StringComparison.Ordinal) ? 1

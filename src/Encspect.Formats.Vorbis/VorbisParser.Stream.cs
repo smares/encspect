@@ -43,8 +43,27 @@ public sealed partial class VorbisParser
         // Packets that span pages, by index: their file ranges.
         public Dictionary<int, ByteRange[]> Ranges { get; } = [];
 
-        // Packets a container changed (MappedBytes.IsOpaque): their parts map to the whole range.
-        public HashSet<int> Opaque { get; } = [];
+
+        // For packets a container changed (MappedBytes.IsOpaque), whose parts map to the whole range they come from: the length of that
+        // range plus one, 0 for the others. A list of its own, filled to the last such packet, because a stream with many of them keeps
+        // four bytes for each instead of a dictionary entry.
+        private ChunkedList<int>? _spans;
+
+        public void AddOpaque(int packet, long span)
+        {
+            _spans ??= new ChunkedList<int>();
+            while (_spans.Count < packet)
+            {
+                _spans.Add(0);
+            }
+
+            _spans.Add((int)Math.Min(span + 1, int.MaxValue));
+        }
+
+        public bool IsOpaque(int packet) => _spans is { } spans && packet < spans.Count && spans[packet] != 0;
+
+        // The length of the file range an opaque packet comes from.
+        public long SpanOf(int packet) => _spans![packet] - 1;
 
         public int ModeBits { get; set; }
 
@@ -346,13 +365,13 @@ public sealed partial class VorbisParser
             int index = _records.Packets.Count;
             PacketRecord record = Read(packet);
             _records.Add(packet.FileStart, record);
-            if (packet.IsOpaque || packet.FileEnd - packet.FileStart != packet.Length)
+            if (packet.IsOpaque)
+            {
+                _records.AddOpaque(index, packet.FileEnd - packet.FileStart);
+            }
+            else if (packet.FileEnd - packet.FileStart != packet.Length)
             {
                 _records.Ranges[index] = [.. packet.FileRanges()];
-                if (packet.IsOpaque)
-                {
-                    _records.Opaque.Add(index);
-                }
             }
 
             _packets++;

@@ -1316,7 +1316,7 @@
       {
         "severity": "Warning",
         "code": "matroska.crc-mismatch",
-        "message": "2 CRC-32 elements do not match the data they cover: the first, in the Info at 0x33, stores 0x12345678 but the 15 bytes after it give 0x4956A3E2, so the Info is damaged or was edited without updating it.",
+        "message": "2 CRC-32 elements do not match the data they cover: the first, the CRC-32 at 0x33 in the Info, stores 0x12345678 but the 15 bytes after it give 0x4956A3E2, so the Info is damaged or was edited without updating it.",
         "offset": 51,
         "length": 6,
         "path": [

@@ -866,7 +866,7 @@ class Reader:
                 continue
             node, position, complete = self.element(ch, position, SEGMENT, end, 2)
             children.append(node)
-            if ch[0] == CRC32 and node.offset == start and complete and ch[3] == 4 and node.offset + ch[1] + ch[2] + 4 <= end:
+            if ch[0] == CRC32 and node.offset == start and complete and ch[3] == 4 and node.offset + ch[1] + ch[2] + 4 <= end and not unknown and declared <= len(data):
                 node.children = [Element("Computed", node.offset + ch[1] + ch[2], 4)]
         info["length"] = end - h_off
         info["declared_end"] = declared

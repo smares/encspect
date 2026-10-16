@@ -901,7 +901,7 @@
       {
         "severity": "Warning",
         "code": "matroska.crc-size",
-        "message": "A CRC-32 element holds other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, in the Cues at 0xBB, holds 0 bytes, so it is not checked.",
+        "message": "A CRC-32 element holds other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, the CRC-32 at 0xBB in the Cues, holds 0 bytes, so it is not checked.",
         "offset": 187,
         "length": 2,
         "path": [

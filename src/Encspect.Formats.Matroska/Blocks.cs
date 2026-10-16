@@ -70,7 +70,7 @@ internal sealed partial class FileReader
 
         block.Frames = (ushort)count;
         block.FramesDelta = element.Length + fixedPart + (int)laceBytes;
-        if (count > 1 && !AccountFrames(count, element.Offset, name))
+        if (count > 1 && GoesToCodec(segment, block.Track) && !AccountFrames(count, element.Offset, name))
         {
             block.Status = BlockStatus.FramesLimit;
             return AddBlock(records, block, name, cluster.Timestamp);
@@ -93,6 +93,10 @@ internal sealed partial class FileReader
 
         return AddBlock(records, block, name, cluster.Timestamp);
     }
+
+    // Whether the frames of a track's blocks go to a codec parser, as far as the Tracks element read so far says; true while it is unknown.
+    private static bool GoesToCodec(SegmentState segment, ulong track) =>
+        !segment.TracksByNumber.TryGetValue(track, out TrackInfo? info) || (info.IsAudio && Codecs.RouteOf(info.CodecId ?? string.Empty) is not null);
 
     // Counts the frames of a laced block, and false once the file's blocks hold more than the analysis keeps: a block of seven bytes
     // can state 256 frames of no bytes.

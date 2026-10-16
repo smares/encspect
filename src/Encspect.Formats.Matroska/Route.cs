@@ -23,7 +23,7 @@ internal sealed partial class FileReader
             }
 
             // The audio tracks of a Segment play together, so a summary of the file does not add their durations up. A track whose codec
-            // reported several streams in a row (chained Ogg streams) is not marked: those follow one another.
+            // reported several streams is not marked: those are not known to play together.
             int streamsBefore = _context.Streams.Count;
             RouteAudio(segment, track, label);
             List<StreamInfo> made = [.. _context.Streams.Skip(streamsBefore)];
@@ -99,7 +99,7 @@ internal sealed partial class FileReader
         }
 
         // The legacy AAC IDs carry no CodecPrivate ("Initialization: none", draft-ietf-cellar-codec, section 3.4.2): the AudioSpecificConfig is
-        // worked out from the ID and the Audio element, as FFmpeg's matroskadec.c does, and mapped to the CodecID that gives its values.
+        // worked out from the ID and the Audio element following ISO/IEC 14496-3 (FFmpeg's matroskadec.c does the same for the common rates), and mapped to the CodecID that gives its values.
         Node? configurationNode = track.CodecPrivateNode;
         if (privateData is null && codec == "aac" && track.CodecIdNode is { } idNode
             && Codecs.LegacyAacConfig(codecId, track.SamplingFrequency, track.OutputSamplingFrequency, track.Channels) is { } synthesized)
@@ -152,7 +152,7 @@ internal sealed partial class FileReader
         _file.Add(node);
 
         CodecConfiguration? configuration = privateData is not null && configurationNode is { } privateNode
-            ? new CodecConfiguration(privateData, privateNode) { Delay = track.CodecDelay / 1e9, IsDelayMissing = track.CodecDelayNode is null }
+            ? new CodecConfiguration(privateData, privateNode) { Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9 }
             : null;
         int streamsBefore = _context.Streams.Count;
         bool routed = _context.ParsePackets(codec, node, Packets(segment, track, headers, frames), configuration);

@@ -98,8 +98,25 @@ public sealed class MatroskaParser : IFormatParser
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
-            if (Ebml.TryReadHeader(reader, position, reader.End, 4, 8, out ElementHeader header) != HeaderProblem.None
-                || (Schema.Find(header.Id) is not { IsTopLevel: true } && header.Id != Schema.Void && header.Id != Schema.Crc32))
+            if (Ebml.TryReadHeader(reader, position, reader.End, 4, 8, out ElementHeader header) != HeaderProblem.None)
+            {
+                break;
+            }
+
+            // An element the schema does not list is skipped by its size and the walk goes on, as the parse does (RFC 8794, section 6.2);
+            // one whose size runs past the data ends the walk.
+            if (Schema.Find(header.Id) is null)
+            {
+                if (header.IsUnknownSize || header.End!.Value > reader.End)
+                {
+                    break;
+                }
+
+                position = end = header.End.Value;
+                continue;
+            }
+
+            if (Schema.Find(header.Id) is not { IsTopLevel: true } && header.Id != Schema.Void && header.Id != Schema.Crc32)
             {
                 break;
             }
@@ -119,9 +136,21 @@ public sealed class MatroskaParser : IFormatParser
                         cancellationToken.ThrowIfCancellationRequested();
                     }
 
-                    if (Ebml.TryReadHeader(reader, position, reader.End, 4, 8, out ElementHeader child) != HeaderProblem.None || child.IsUnknownSize
-                        || Schema.Find(child.Id) is not { } definition || !Schema.IsChildOf(definition, clusterDefinition) || definition.IsTopLevel)
+                    if (Ebml.TryReadHeader(reader, position, reader.End, 4, 8, out ElementHeader child) != HeaderProblem.None || child.IsUnknownSize)
                     {
+                        break;
+                    }
+
+                    if (Schema.Find(child.Id) is { } definition)
+                    {
+                        if (!Schema.IsChildOf(definition, clusterDefinition) || definition.IsTopLevel)
+                        {
+                            break;
+                        }
+                    }
+                    else if (child.End!.Value > reader.End)
+                    {
+                        // An element the schema does not list is skipped by its size; one that runs past the data is no element of the Cluster.
                         break;
                     }
 

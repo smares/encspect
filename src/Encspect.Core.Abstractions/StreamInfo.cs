@@ -53,7 +53,7 @@ public sealed record StreamInfo
 
     // Streams of one group play at the same time, such as the tracks of a movie or of a Matroska Segment: a summary of the file counts the
     // longest of them once instead of adding their durations and samples up. Streams in different groups, and streams without a group,
-    // follow one another (chained Ogg streams, the regions of an MPEG file) and add up. The number only tells groups apart.
+    // follow one another (the regions of an MPEG file) and add up. The number only tells groups apart.
     public int? PlaybackGroup { get; init; }
 
     // True where the stream's data carry object-based audio: for E-AC-3, joint object coding (JOC)

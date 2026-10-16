@@ -127,7 +127,7 @@ A JSON report (schema version 1) is an object:
 - **Streams** are the audio streams as the format defines them; an MPEG stream continues across a tag embedded in it and ends where the version, layer or sample rate changes.
   - `nodes` are the paths of the nodes that hold the stream.
   - `duration` is in seconds and `averageBitrate` in kbps.
-  - `playbackGroup` is present on streams that play at the same time (the audio tracks of an MP4 movie or of a Matroska Segment): streams with the same number are one presentation, and a summary counts the longest of them once. Streams without it, and streams of different groups, follow one another and add up.
+  - `playbackGroup` is present on the streams of the tracks of an MP4 movie or of a Matroska Segment, which play at the same time: streams with the same number are one presentation, and a summary counts the longest of them once (a movie with one audio track has a group of one). Streams without it, and streams of different groups, follow one another and add up.
   - `channelLayout` lists the speaker each channel feeds, in the stream's channel order as its format defines it. A channel without a speaker position, such as either program of dual channel, is `"discrete"`.
   - `channelLayoutName` is the layout's common name where it has one: `mono`, `stereo`, `quadraphonic`, `5.1`, `7.1`, `22.2` and others.
   - `hasObjectAudio` is `true` for a stream whose data carry object audio that was parsed (E-AC-3 with joint object coding); DTS:X is reported through the profile and the `HasDtsX` statistics, not through this flag, and `jocObjectCount` is the number of objects its JOC payload reconstructs (joc_num_objects, not the OAMD object_count); both are left out otherwise.

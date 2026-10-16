@@ -480,7 +480,23 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // Xiph lacing stores a size per frame, and each costs at least a byte of the file: 100,000 blocks of 255 one-byte frames.
+    // Frames put together from other bytes (header stripping) reach the codec parser as opaque packets, which keep four bytes each beyond
+    // the plain ones: the same laced file with a track that strips a byte from every frame stays near the plain one.
+    [Fact]
+    public void LacedBlocksOfHeaderStrippedFramesStayBounded()
+    {
+        byte[] cluster = MatroskaBuilder.Cluster(0, [.. Enumerable.Repeat(MatroskaBuilder.EmptyLacedBlock(), 100_000)]);
+        Report report = Analyzer.CreateDefault().Analyze("stripped.mka", new MemoryStream(MatroskaBuilder.File(MatroskaBuilder.OpusTracks(isHeaderStripped: true), cluster)));
+        Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.InRange(report.Streams.Sum(s => s.Samples) / 960, 3_990_000, 4_000_000);
+        long live = GC.GetTotalMemory(forceFullCollection: true);
+        output.WriteLine($"stripped.mka: {live / 1_000_000} MB live");
+        Assert.True(live < 350_000_000, $"The live heap is {live / 1_000_000} MB.");
+        GC.KeepAlive(report);
+    }
+
+    // Xiph lacing stores a size per frame, and each costs at least a byte of the file: 8,000 blocks of 255 one-byte frames.
     [Fact]
     public void XiphLacedBlocksStayBounded()
     {

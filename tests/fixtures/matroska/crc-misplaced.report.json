@@ -758,7 +758,7 @@
       {
         "severity": "Warning",
         "code": "matroska.crc-position",
-        "message": "A CRC-32 element is not the first child of its parent, as RFC 8794 requires (section 11.3.1), so it is not checked; the first is in the Info at 0x3A.",
+        "message": "A CRC-32 element is not the first child of its parent, as RFC 8794 requires (section 11.3.1), so it is not checked; the first is the CRC-32 at 0x3A in the Info.",
         "offset": 58,
         "length": 6,
         "path": [
@@ -772,7 +772,7 @@
       {
         "severity": "Warning",
         "code": "matroska.crc-size",
-        "message": "A CRC-32 element holds other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, in the Cluster at 0x99, holds 2 bytes, so it is not checked.",
+        "message": "A CRC-32 element holds other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, the CRC-32 at 0x99 in the Cluster at 0x94, holds 2 bytes, so it is not checked.",
         "offset": 153,
         "length": 4,
         "path": [

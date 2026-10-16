@@ -111,6 +111,12 @@ internal sealed partial class FileReader
             }
         }
 
+        if (track.CodecId == "A_OPUS" && track.CodecDelayNode is null)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.track-field",
+                $"{which} (A_OPUS) has no CodecDelay, which the codec mapping requires to be the OpusHead's pre-skip in nanoseconds (draft-ietf-cellar-codec, section 3.4.32).", track.CodecIdNode ?? node);
+        }
+
         var orders = new HashSet<ulong>();
         foreach (EncodingInfo encoding in track.Encodings)
         {

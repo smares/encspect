@@ -59,7 +59,8 @@ internal sealed partial class FileReader
             }
 
             Node node = ParseElement(child, definition, end, 2, out long next);
-            if (child.Id == Schema.Crc32 && crcPossible && position == dataStart)
+            // A Segment cut short by the end of the file, or of unknown size (its end is not known until it is read), has no CRC to check.
+            if (child.Id == Schema.Crc32 && crcPossible && position == dataStart && !segment.IsSizeUnknown && declaredEnd <= _reader.End)
             {
                 VerifyCrc(node, child, next, end, "Segment");
             }

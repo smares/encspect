@@ -23,8 +23,27 @@ public sealed partial class OpusParser
         // Packets that span pages, by index: their file ranges.
         public Dictionary<int, ByteRange[]> Ranges { get; } = [];
 
-        // Packets a container changed (MappedBytes.IsOpaque): their parts map to the whole range.
-        public HashSet<int> Opaque { get; } = [];
+
+        // For packets a container changed (MappedBytes.IsOpaque), whose parts map to the whole range they come from: the length of that
+        // range plus one, 0 for the others. A list of its own, filled to the last such packet, because a stream with many of them keeps
+        // four bytes for each instead of a dictionary entry.
+        private ChunkedList<int>? _spans;
+
+        public void AddOpaque(int packet, long span)
+        {
+            _spans ??= new ChunkedList<int>();
+            while (_spans.Count < packet)
+            {
+                _spans.Add(0);
+            }
+
+            _spans.Add((int)Math.Min(span + 1, int.MaxValue));
+        }
+
+        public bool IsOpaque(int packet) => _spans is { } spans && packet < spans.Count && spans[packet] != 0;
+
+        // The length of the file range an opaque packet comes from.
+        public long SpanOf(int packet) => _spans![packet] - 1;
 
         public int Count { get; private set; }
 
@@ -213,9 +232,8 @@ public sealed partial class OpusParser
             // Matroska's CodecDelay is the pre-skip in nanoseconds (the Matroska codec mapping, A_OPUS): 48,000 samples a second.
             if (context.Configuration?.Delay is { } delay && Math.Abs((delay * Rate) - head.PreSkip) >= 0.5)
             {
-                bool isMissing = context.Configuration.IsDelayMissing;
                 _findings.Add(Severity.Warning, "opus.container-delay-differs", Field("Pre-skip"), _ =>
-                    $"The container {(isMissing ? "has no codec delay (Matroska's CodecDelay is missing, so it is 0)" : $"states a codec delay of {delay.ToString("0.#######", CultureInfo.InvariantCulture)} s, {(delay * Rate).ToString("0.#", CultureInfo.InvariantCulture)} samples at 48 kHz")}, but the identification header's pre-skip is {head.PreSkip} samples; the Matroska codec mapping makes the delay the pre-skip (draft-ietf-cellar-codec, section 3.4.32).");
+                    $"The container states a codec delay of {delay.ToString("0.#######", CultureInfo.InvariantCulture)} s, {(delay * Rate).ToString("0.#", CultureInfo.InvariantCulture)} samples at 48 kHz, but the identification header's pre-skip is {head.PreSkip} samples; the Matroska codec mapping makes the delay the pre-skip (draft-ietf-cellar-codec, section 3.4.32).");
             }
 
             if ((head.Version & 0xF0) != 0)
@@ -344,13 +362,13 @@ public sealed partial class OpusParser
         {
             int index = _records.Count;
             _records.AddPacket(packet.FileStart);
-            if (packet.IsOpaque || packet.FileEnd - packet.FileStart != packet.Length)
+            if (packet.IsOpaque)
+            {
+                _records.AddOpaque(index, packet.FileEnd - packet.FileStart);
+            }
+            else if (packet.FileEnd - packet.FileStart != packet.Length)
             {
                 _records.Ranges[index] = [.. packet.FileRanges()];
-                if (packet.IsOpaque)
-                {
-                    _records.Opaque.Add(index);
-                }
             }
 
             _packets++;

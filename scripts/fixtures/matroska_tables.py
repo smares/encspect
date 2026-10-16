@@ -163,12 +163,23 @@ def registry(rfc9559):
     return {int(m.group(1), 16): m.group(2) for m in (re.match(r"^\s*\|\s*(0x[0-9A-Fa-f]+)\|\s*(\S+)", l) for l in lines[start:end]) if m}
 
 
+def registry_text(text):
+    """The registry's markdown definition as plain text: references [@!RFC5646] and [@!RFC9559, Section 12] as "RFC 5646" and "RFC 9559
+    section 12", no emphasis or code marks, no pointers to its own anchors."""
+    # The registry has the typo "`BlockAddIDValue`that" (no space) in TagBlockAddIDValue's definition.
+    text = text.replace("`BlockAddIDValue`that", "`BlockAddIDValue` that")
+    text = re.sub(r"\[@!?RFC(\d+), Section (\d+(?:\.\d+)*)\]", r"RFC \1 section \2", text)
+    text = re.sub(r"\[@!?RFC(\d+)\]", r"RFC \1", text)
+    text = re.sub(r"; see RFC \d+ section [\d.]+ on language codes", "", text)
+    return re.sub(r"\*\*|`|\(#[a-z0-9-]+\)", "", text)
+
+
 def merge_registry(table, xml):
     """Adds the registry's elements the RFC does not list, and every element's registry default."""
     added = []
     for ident, e in xml.items():
         if ident not in table:
-            table[ident] = dict(e, section="the Matroska element registry", text=re.sub(r"\*\*|`|\(#[a-z0-9-]+\)", "", e["text"]), unknown=False)
+            table[ident] = dict(e, section="the Matroska element registry", text=registry_text(e["text"]), unknown=False)
             added.append(ident)
         elif table[ident].get("default") is None:
             table[ident]["default"] = e["default"]

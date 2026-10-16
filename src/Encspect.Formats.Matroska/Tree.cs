@@ -139,7 +139,7 @@ internal sealed partial class FileReader
             }
 
             // The EBML Header's own elements are read with the limits EBML defaults to; EBMLMaxIDLength and EBMLMaxSizeLength limit the Body (RFC 8794, section 11.2.4).
-            bool isHeader = definition.Id == Schema.Ebml;
+            bool isHeader = definition.Path.StartsWith("\\EBML", StringComparison.Ordinal);
             HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, isHeader ? Math.Max(4, _document.MaxIdLength) : _document.MaxIdLength,
                 isHeader ? Math.Max(8, _document.MaxSizeLength) : _document.MaxSizeLength, out ElementHeader header);
             if (problem != HeaderProblem.None)
@@ -162,7 +162,7 @@ internal sealed partial class FileReader
                 else
                 {
                     _findings.Add(Severity.Warning, "matroska.crc-position", child, count =>
-                        $"{(count == 1 ? "A CRC-32 element is" : $"{count} CRC-32 elements are")} not the first child of {(count == 1 ? "its" : "their")} parent, as RFC 8794 requires (section 11.3.1), so {(count == 1 ? "it is" : "they are")} not checked; the first is in the {definition.Name} at 0x{header.Offset:X}.");
+                        $"{(count == 1 ? "A CRC-32 element is" : $"{count} CRC-32 elements are")} not the first child of {(count == 1 ? "its" : "their")} parent, as RFC 8794 requires (section 11.3.1), so {(count == 1 ? "it is" : "they are")} not checked; the first is the CRC-32 at 0x{header.Offset:X} in the {definition.Name}.");
                 }
             }
 
@@ -179,7 +179,7 @@ internal sealed partial class FileReader
         {
             long held = Math.Min((long)Math.Min(crc.Size ?? 0, long.MaxValue), available);
             _findings.Add(Severity.Warning, "matroska.crc-size", node, count =>
-                $"{(count == 1 ? "A CRC-32 element holds" : $"{count} CRC-32 elements hold")} other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, in the {parentName} at 0x{crc.Offset:X}, holds {Bytes(held)}, so {(count == 1 ? "it is" : "they are")} not checked.");
+                $"{(count == 1 ? "A CRC-32 element holds" : $"{count} CRC-32 elements hold")} other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, the CRC-32 at 0x{crc.Offset:X} in the {parentName}, holds {Bytes(held)}, so {(count == 1 ? "it is" : "they are")} not checked.");
             return;
         }
 
@@ -190,7 +190,7 @@ internal sealed partial class FileReader
         if (stored != computed)
         {
             _findings.Add(Severity.Warning, "matroska.crc-mismatch", node, count =>
-                $"{(count == 1 ? "A CRC-32 element does" : $"{count} CRC-32 elements do")} not match the data {(count == 1 ? "it covers" : "they cover")}: the first, in the {parentName} at 0x{crc.Offset:X}, stores 0x{stored:X8} but the {Bytes(parentEnd - dataStart)} after it give 0x{computed:X8}, so the {parentName} is damaged or was edited without updating it.");
+                $"{(count == 1 ? "A CRC-32 element does" : $"{count} CRC-32 elements do")} not match the data {(count == 1 ? "it covers" : "they cover")}: the first, the CRC-32 at 0x{crc.Offset:X} in the {parentName}, stores 0x{stored:X8} but the {Bytes(parentEnd - dataStart)} after it give 0x{computed:X8}, so the {parentName} is damaged or was edited without updating it.");
         }
     }
 
