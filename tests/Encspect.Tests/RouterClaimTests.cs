@@ -39,17 +39,26 @@ public class RouterClaimTests
         Assert.Empty(container.ClaimsAfter);
     }
 
-    // For the containers that route several streams, whatever claims one codec parser's run produced, no later run is handed them.
+    // Files where a codec parser's run produces claims and a later run exists to receive them: whatever one run produced, no later run is handed it.
+    // These fail with the router's old pass-back (Ogg's comment claims reached the next logical stream's codec parser, Vorbis' reached AAC).
     [Theory]
     [InlineData("ogg/multiplexed.ogg")]
     [InlineData("ogg/chained.ogg")]
+    [InlineData("matroska/external-mkvmerge-vorbis-aac.mka")]
+    public void NoCodecParserIsHandedAnotherOnesClaims(string name) => CheckNoLeak(name, expectsClaims: true);
+
+    // Regression guards: no codec in these files makes a claim a later run could receive (MP4 and ASF codec parsers make none; PCM has no codec
+    // parser; the Vorbis comment comes after the one that could have received it, or only Vorbis, which filters by its own comment, follows), so
+    // they cannot catch the leak, but they hold the containers' routes to the same rule if a codec parser starts making claims.
+    [Theory]
     [InlineData("mp4/two-tracks.m4a")]
     [InlineData("asf/two-streams.asf")]
     [InlineData("matroska/external-mkvmerge-vorbis-pcm.mka")]
     [InlineData("matroska/external-mkvmerge-pcm-vorbis.mka")]
-    [InlineData("matroska/external-mkvmerge-vorbis-aac.mka")]
     [InlineData("matroska/external-ffmpeg-two-audio.mka")]
-    public void NoCodecParserIsHandedAnotherOnesClaims(string name)
+    public void NoCodecParserIsHandedAnotherOnesClaimsGuard(string name) => CheckNoLeak(name, expectsClaims: false);
+
+    private static void CheckNoLeak(string name, bool expectsClaims)
     {
         var produced = new List<EncoderClaim>();
         var leaked = new List<string>();
@@ -58,9 +67,8 @@ public class RouterClaimTests
 
         Report report = analyzer.AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, name));
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
-
         Assert.Empty(leaked);
-        if (name.StartsWith("ogg/", StringComparison.Ordinal) || name.Contains("vorbis", StringComparison.Ordinal))
+        if (expectsClaims)
         {
             Assert.NotEmpty(produced);
         }

@@ -74,9 +74,10 @@ public abstract class AnalysisContext
     // context's. Returns false when no codec parser has the ID, and reports nothing then. Damage
     // and parser failures inside the payload become findings on parent, so the container carries
     // on; only cancellation passes through. configuration is what the container stores about the
-    // coding elsewhere, such as AAC's AudioSpecificConfig, or null. claims are what the container says about the encoder or the writer of
-    // this one stream (as CodecConfiguration.Claims, for a stream that has no configuration): the codec parser weighs them after the file's,
-    // and they, like every claim the codec parser makes, stay with the stream.
+    // coding elsewhere, such as AAC's AudioSpecificConfig, or null. claims are what the container states about the encoder or the writer of
+    // this one stream (a Matroska Segment's apps), whether or not there is a configuration; CodecConfiguration.Claims are what the container read
+    // about the coding itself (MP4's sample-entry layout). The codec parser weighs both after the file's, and they, like every claim the codec
+    // parser makes, stay with the stream.
     public bool ParseStream(string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration = null, IReadOnlyList<EncoderClaim>? claims = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(codecId);

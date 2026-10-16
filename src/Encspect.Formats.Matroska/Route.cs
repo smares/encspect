@@ -35,7 +35,7 @@ internal sealed partial class FileReader
                 // Segment and the file's tags are weighed here.
                 if (stream.Writer is null && stream.Nodes.Count > 0 && Codecs.WriterKind(track.CodecId ?? string.Empty) is { } kind)
                 {
-                    Node? writer = ResolveWriter(segment, kind, Codecs.NameOf(track.CodecId ?? string.Empty) ?? kind);
+                    Node? writer = ResolveWriter(segment, stream.Nodes[0], kind, Codecs.NameOf(track.CodecId ?? string.Empty) ?? kind);
                     (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
                     stream = stream with { Writer = writerName, WriterConfidence = writerConfidence };
                 }
@@ -331,7 +331,7 @@ internal sealed partial class FileReader
         double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
-        Node? writer = ResolveWriter(segment, Codecs.RouteOf(codecId) is { } route ? Codecs.WriterKind(codecId) ?? route : codecId, Codecs.NameOf(codecId) ?? codecId);
+        Node? writer = ResolveWriter(segment, streamNode, Codecs.RouteOf(codecId) is { } route ? Codecs.WriterKind(codecId) ?? route : codecId, Codecs.NameOf(codecId) ?? codecId);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         _context.AddStream(new StreamInfo
         {
@@ -347,27 +347,41 @@ internal sealed partial class FileReader
         });
     }
 
-    // The writer of a stream the codec parser names none for, from the claims of the file (its tags) and of the Segment, the Segment's after
-    // the tags'. Software known to write another kind of stream is a finding, as in the codec parsers. The Writer node is made once for the
-    // Segment, in its Info element, which holds the claims' elements: the evidence points at them.
-    private Node? ResolveWriter(SegmentState segment, string kind, string label)
+    // The writer of a stream the codec parser names none for, from the claims of the file (its tags) and of the Segment, the tags' first as the
+    // router hands them to the codec parsers. Software known to write another kind of stream is a finding, as in the codec parsers. The
+    // Writer node is made once for the Segment, in its Info element, which holds the claims' elements: the evidence points at them; a
+    // Segment without an Info has the node under the stream's. A finding is reported once for the Segment, however many streams it holds.
+    private Node? ResolveWriter(SegmentState segment, Node stream, string kind, string label)
     {
-        if (segment.InfoNode is not { } info)
+        // The Segment's own conflict is reported once, in PrepareWriterClaims; the library MuxingApp joins as evidence.
+        List<EncoderClaim> claims = [.. _context.EncoderClaims, .. segment.OwnClaims.Where(c => segment.StreamClaims.Contains(c) || IsMatroskaLibrary(c.Text))];
+        Node place = segment.InfoNode ?? stream;
+        void Report(string code, string text, Node node)
+        {
+            if (segment.Reported.Add($"{code}|{node.Offset}|{text}"))
+            {
+                _findings.AddNow(Severity.Info, code, text, node);
+            }
+        }
+
+        Node? writer = WriterDetection.Detect(claims,
+            (name, value, description) => new Node(name, place.Offset, place.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            (claim, text, name) => Report("matroska.writer-claim-differs", WriterDetection.Disagreement(claim, text, name), claim.Source),
+            isEvidenceAtSource: claims.All(c => c.Source.Offset >= place.Offset && c.Source.End <= place.End),
+            familyOf: text => FamilyIn(segment, text),
+            format: new WriterDetection.StreamFormat(kind, label, (claim, message, node) => Report("matroska.writer-other-format", message, node)));
+        if (writer is null)
         {
             return null;
         }
 
-        // The Segment's own conflict is reported once, in PrepareWriterClaims; the library MuxingApp joins as evidence.
-        List<EncoderClaim> claims = [.. segment.OwnClaims.Where(c => segment.StreamClaims.Contains(c) || IsMatroskaLibrary(c.Text)), .. _context.EncoderClaims];
-        Node? writer = WriterDetection.Detect(claims,
-            (name, value, description) => new Node(name, info.Offset, info.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
-            (claim, text, name) => _findings.AddNow(Severity.Info, "matroska.writer-claim-differs", WriterDetection.Disagreement(claim, text, name), claim.Source),
-            isEvidenceAtSource: claims.All(c => c.Source.Offset >= info.Offset && c.Source.End <= info.End),
-            familyOf: text => FamilyIn(segment, text),
-            format: new WriterDetection.StreamFormat(kind, label, (claim, message, node) => _findings.AddNow(Severity.Info, "matroska.writer-other-format", message, node)));
-        if (writer is not null && segment.WriterNode is null)
+        if (segment.InfoNode is null)
         {
-            segment.WriterNode = info.Add(writer);
+            stream.Add(writer);
+        }
+        else if (segment.WriterNode is null)
+        {
+            segment.WriterNode = segment.InfoNode.Add(writer);
         }
 
         return writer;

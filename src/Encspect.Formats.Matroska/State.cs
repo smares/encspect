@@ -212,6 +212,9 @@ internal sealed class SegmentState
     // The Writer node of the Segment's streams the container resolved, made once.
     public Node? WriterNode { get; set; }
 
+    // The writer findings already reported for the Segment, so that its streams do not repeat them.
+    public HashSet<string> Reported { get; } = [];
+
     public int InfoCount { get; set; }
 
     public int TracksCount { get; set; }

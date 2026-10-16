@@ -760,15 +760,15 @@ def _():
 ID3V1 = b"TAG" + b"A live recording".ljust(30, b"\0") + b"A speaker".ljust(30, b"\0") + b"A room".ljust(30, b"\0") + b"2024" + b"No comment".ljust(30, b"\0") + b"\x0c"
 
 
-def ape_tag():
-    """An APEv2 tag with a header, two items and a footer (APE tag specification 2.000)."""
+def ape_tag(pairs=((b"Artist", b"A speaker"), (b"Title", b"A live recording"))):
+    """An APEv2 tag with a header, the items and a footer (APE tag specification 2.000)."""
     def item(key, value):
         return struct.pack("<II", len(value), 0) + key + b"\0" + value
 
-    items = item(b"Artist", b"A speaker") + item(b"Title", b"A live recording")
+    items = b"".join(item(k, v) for k, v in pairs)
     size = len(items) + 32
-    header = b"APETAGEX" + struct.pack("<IIII", 2000, size, 2, 0xA0000000) + bytes(8)
-    footer = b"APETAGEX" + struct.pack("<IIII", 2000, size, 2, 0x80000000) + bytes(8)
+    header = b"APETAGEX" + struct.pack("<IIII", 2000, size, len(pairs), 0xA0000000) + bytes(8)
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, size, len(pairs), 0x80000000) + bytes(8)
     return header + items + footer
 
 
@@ -865,6 +865,55 @@ def _():
     return with_apps("Lavf60.16.100", "Lavf60.16.100", [pcm], [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)])
 
 
+# --- Writers: the file's tags and the Segment's apps --------------------------------------------------------------------------
+
+# What the model cannot know: the writer a file's tag names, which outweighs the Segment's apps (the tags' claims come first, as the router hands
+# them to the codec parsers), for the fixtures that append one.
+TAG_WRITERS = {}
+ENCODER_TAG = ape_tag(((b"Encoder", b"bar 2.0"),))
+PCM_BLOCKS = [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)]
+
+
+@fixture("writer-tag-and-apps", "A PCM track (no codec parser) and an AAC track (the AAC parser) in a Segment whose apps name \"foo 1.0\", and an APEv2 tag whose Encoder item names "
+         "\"bar 2.0\": the tag's claim is weighed first for both tracks, so both name \"bar 2.0\", and the conflict is reported once by the container and once by the AAC parser.",
+         findings=[("matroska.writer-claim-differs", "MuxingApp"), ("matroska.writer-claim-differs", "WritingApp"), ("aac.writer-claim-differs", "WritingApp"),
+                   ("matroska.codec-not-analyzed", "PCM")],
+         streams=[("PCM (integer, little-endian)", 48000, 2), ("AAC", 44100, 2)], valid=False)
+def _():
+    _, rate_index, channels, frames = adts_frames("stereo")
+    aac = audio_track(2, "A_AAC/MPEG4/LC", channels, float(AAC_RATES[rate_index]))
+    pcm = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
+    items = PCM_BLOCKS + [simple_block(2, round(i * 1024 * 1000 / AAC_RATES[rate_index]), frame, key=True) for i, frame in enumerate(frames)]
+    return with_apps("foo 1.0", "foo 1.0", [pcm, aac], items), ENCODER_TAG
+
+
+TAG_WRITERS["writer-tag-and-apps"] = "bar 2.0"
+
+
+@fixture("writer-tag-conflicts-two-pcm", "Two PCM tracks in a Segment whose apps name \"foo 1.0\" and an APEv2 Encoder item \"bar 2.0\": the conflict with the tag is one finding for the "
+         "Segment, not one for each track.",
+         findings=[("matroska.writer-claim-differs", "MuxingApp"), ("matroska.writer-claim-differs", "WritingApp"), ("matroska.codec-not-analyzed", "Track 1"),
+                   ("matroska.codec-not-analyzed", "Track 2")],
+         streams=[("PCM (integer, little-endian)", 48000, 2), ("PCM (integer, little-endian)", 48000, 2)], valid=False)
+def _():
+    pcm1, pcm2 = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16), audio_track(2, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
+    items = PCM_BLOCKS + [simple_block(2, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)]
+    return with_apps("foo 1.0", "foo 1.0", [pcm1, pcm2], items), ENCODER_TAG
+
+
+TAG_WRITERS["writer-tag-conflicts-two-pcm"] = "bar 2.0"
+
+
+@fixture("writer-tag-without-info", "A Segment with no Info element, so no apps, and an APEv2 Encoder item \"bar 2.0\": the tag still names the writer of the PCM track.",
+         findings=[("matroska.missing-info", "no Info"), ("matroska.codec-not-analyzed", "PCM")], streams=[("PCM (integer, little-endian)", 48000, 2)], valid=False)
+def _():
+    pcm = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
+    return build([ebml_header(), segment(tracks(pcm), cluster(0, *PCM_BLOCKS))]), ENCODER_TAG
+
+
+TAG_WRITERS["writer-tag-without-info"] = "bar 2.0"
+
+
 # --- Writing the files ---------------------------------------------------------------------------------
 
 
@@ -878,6 +927,8 @@ def write(name, builder, description, findings, streams, valid, extension, check
     path.write_bytes(data + tail)
     manifest = {"description": description}
     manifest.update(m.manifest(data))
+    if name in TAG_WRITERS:
+        manifest["writers"] = [{"name": TAG_WRITERS[name], "confidence": "Low"} for _ in manifest["writers"] or [None]]
     manifest["streams"] = [{"codec": c, "sample_rate": r, "channels": n} for c, r, n in streams] if streams is not None else None
     manifest["findings"] = [{"code": code, "contains": contains} for code, contains in findings]
     manifest["crosscheck"] = checks or {"valid": valid}

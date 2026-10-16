@@ -209,7 +209,9 @@ public class MatroskaFixtureTests
         JsonElement[] writers = [.. manifest.GetProperty("writers").EnumerateArray()];
         foreach (StreamInfo stream in report.Streams)
         {
-            JsonElement expected = writers[(stream.PlaybackGroup ?? 1) - 1];
+            // Every stream of a fixture is the only one its track reported, so it has its Segment's playback group.
+            Assert.NotNull(stream.PlaybackGroup);
+            JsonElement expected = writers[stream.PlaybackGroup.Value - 1];
             string? name = expected.ValueKind == JsonValueKind.Null ? null : expected.GetProperty("name").GetString();
             Assert.Equal(name, stream.Writer);
             Assert.Equal(expected.ValueKind == JsonValueKind.Null ? null : expected.GetProperty("confidence").GetString(), stream.WriterConfidence?.ToString());

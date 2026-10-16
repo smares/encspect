@@ -911,18 +911,23 @@ def writers_of(segments):
     result = []
     for segment in segments:
         info = segment.get("info", {})
-        writing, muxing = (info.get("writing_app") or "").strip(), (info.get("muxing_app") or "").strip()
-        library = muxing.startswith(("libebml", "libmatroska")) and writing
+        writing, muxing = info.get("writing_app") or "", info.get("muxing_app") or ""
+        # The texts as stored: ffmpeg's muxer version may follow white space ("^\s*Lavf" not followed by a letter), its encoder ID may not
+        # ("^Lavc" and a digit or a space).
+        library = muxing.startswith(("libebml", "libmatroska")) and writing.strip()
         candidates = [writing] + ([] if library else [muxing])
-        text = next((t for t in candidates if t and not (t.startswith("Lavc") and len(t) > 4 and (t[4].isdigit() or t[4] == " "))), None)
+        text = next((t for t in candidates if t.strip() and not re.match(r"^Lavc(?:\d| )", t)), None)
         if text is None:
             result.append(None)
-        elif text == "ffmpeg":
-            result.append({"name": "FFmpeg", "confidence": "Low"})
-        elif text.startswith("Lavf"):
-            result.append({"name": f"FFmpeg ({text[:64]})", "confidence": "Low"})
+            continue
+        shown = text.strip()
+        if shown == "ffmpeg":
+            name = "FFmpeg"
+        elif re.match(r"^\s*Lavf(?![A-Za-z])", text):
+            name = f"FFmpeg ({shown[:64]})"
         else:
-            result.append({"name": text[:64], "confidence": "Low"})
+            name = shown[:64]
+        result.append({"name": name, "confidence": "Low"})
     return result
 
 

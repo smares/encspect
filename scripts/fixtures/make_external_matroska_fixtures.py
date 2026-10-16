@@ -190,6 +190,9 @@ def main():
             helper_files(work)
         # Names on the command line write only those fixtures (the encoders' output is not byte for byte the same twice).
         wanted = [a for a in sys.argv[1:] if not a.startswith("--")]
+        unknown = [a for a in wanted if a not in FIXTURES]
+        if unknown:
+            raise SystemExit(f"Unknown fixture names: {', '.join(unknown)}")
         for name, (tool, inputs, arguments, streams, findings, extension) in FIXTURES.items():
             if wanted and name not in wanted:
                 continue
@@ -199,7 +202,7 @@ def main():
             else:
                 encoder = encode(name, tool, inputs, arguments, extension, work)
             path.write_text(json.dumps(manifest(name, encoder, streams, findings, extension), indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
-    print(f"Wrote {len(FIXTURES)} {'manifests' if only_manifests else 'fixtures'} to {OUT}")
+    print(f"Wrote {len(wanted) if wanted else len(FIXTURES)} {'manifests' if only_manifests else 'fixtures'} to {OUT}")
 
 
 if __name__ == "__main__":
