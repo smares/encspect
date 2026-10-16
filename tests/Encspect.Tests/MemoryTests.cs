@@ -625,12 +625,12 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.Contains(report.Findings, f => f.Code == "musepack.key-unknown" && f.Message.StartsWith("4000000 packets", StringComparison.Ordinal));
         double keptPerPacket = (kept - fewerKept) / (double)(packets - fewer);
         double peakPerPacket = (peak - fewerPeak) / (double)(packets - fewer);
-        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes held above the end state: {Hundredths(keptPerPacket)} and {Hundredths(peakPerPacket)} per further packet");
+        output.WriteLine($"{fewerKept} and {kept} bytes kept, {fewerPeak} and {peak} bytes held above the start and end: {Hundredths(keptPerPacket)} and {Hundredths(peakPerPacket)} per further packet");
         output.WriteLine($"Highest readings, 1 million packets: {fewerWhere}");
         output.WriteLine($"Highest readings, 4 million packets: {where}");
         output.WriteLine(RuntimeSettings());
         Assert.True(keptPerPacket < UndetailedPacketBound, $"The report keeps {keptPerPacket:F2} bytes per further packet.");
-        Assert.True(peakPerPacket < UndetailedPacketBound, $"The analysis held {peakPerPacket:F2} more bytes per further packet than it ends with. Highest readings: 1 million packets {fewerWhere}; 4 million packets {where}. {RuntimeSettings()}");
+        Assert.True(peakPerPacket < UndetailedPacketBound, $"The analysis held {peakPerPacket:F2} more bytes per further packet than it starts and ends with. Highest readings: 1 million packets {fewerWhere}; 4 million packets {where}. {RuntimeSettings()}");
         GC.KeepAlive(report);
     }
 
@@ -813,37 +813,42 @@ public class MemoryTests(ITestOutputHelper output)
         return (report, kept, Math.Max(Math.Max(before, sampled), atEnd) - before);
     }
 
-    // What the analysis holds above the heap it ends with (report alive), as the highest of the
+    // What the analysis holds above the heap it starts and ends with (report alive), as the highest of the
     // live heap read at 32 places in the input and by a thread that reads it every 300 ms, all by
     // the compacting collections of Live, so only live objects count and no reading can be too
     // high. The places are fixed fractions of the input, read after the read that reaches them in
     // any pass over it (ProbeStream), so they do not depend on timing; the thread covers the work
     // after the last read and the stretches between places, and its timing only decides whether
     // it catches a transient that exists. docs/development.md, "Memory tests", gives the
-    // measurement, what it can and cannot see, and the failures that led to it. As with kept, two
+    // measurement, what it can and cannot see, and the failures that led to it. The reference is the
+    // higher of the heap before the analysis and the heap at its end, so memory that earlier work
+    // releases during the analysis lowers the reading instead of raising it. As with kept, two
     // analyses are taken and the smaller excess counts.
     private static (Report Report, long Kept, long Excess, string Where) MeasureExcess(string name, byte[] data, byte[]? warmUp = null)
     {
         var analyzer = Analyzer.CreateDefault();
         analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
         Live();
-        (long withReport, long highest, string where) = ProbedAnalysis(analyzer, name, data);
+        (long before, long withReport, long highest, string where) = ProbedAnalysis(analyzer, name, data);
         long withoutReport = Live();
-        (long secondWithReport, long secondHighest, string secondWhere) = ProbedAnalysis(analyzer, name, data);
+        (long secondBefore, long secondWithReport, long secondHighest, string secondWhere) = ProbedAnalysis(analyzer, name, data);
         long secondWithoutReport = Live();
         Report report = analyzer.Analyze(name, new MemoryStream(data));
         GC.KeepAlive(data);
         long kept = Math.Min(withReport - withoutReport, secondWithReport - secondWithoutReport);
-        long atEnd = Math.Min(withReport, secondWithReport);
-        return (report, kept, Math.Min(Math.Max(0, highest - atEnd), Math.Max(0, secondHighest - atEnd)), $"[{where} | {secondWhere}] at end {atEnd}");
+        long excess = Math.Max(0, highest - Math.Max(before, withReport));
+        long secondExcess = Math.Max(0, secondHighest - Math.Max(secondBefore, secondWithReport));
+        return (report, kept, Math.Min(excess, secondExcess),
+            $"[{where}, before {before}, at end {withReport} | {secondWhere}, before {secondBefore}, at end {secondWithReport}]");
     }
 
-    // The live heap with the report alive and the highest live heap read during the analysis; the
-    // report is dropped on return. A measurement whose probes did not fire is a failure, not a pass.
+    // The live heap before the analysis, with its report alive after it, and the highest live heap
+    // read during it; the report is dropped on return. A measurement whose probes did not fire is a failure, not a pass.
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private static (long WithReport, long Highest, string Where) ProbedAnalysis(Analyzer analyzer, string name, byte[] data)
+    private static (long Before, long WithReport, long Highest, string Where) ProbedAnalysis(Analyzer analyzer, string name, byte[] data)
     {
         var stream = new ProbeStream(data);
+        long before = Live();
         bool done = false;
         var sampler = new Thread(() =>
         {
@@ -877,7 +882,7 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(stream.FullPasses >= 1, $"No pass over the input reached all {ProbeStream.Places.Length} places ({stream.Probes} places reached in all).");
         long live = Live();
         GC.KeepAlive(report);
-        return (live, stream.Highest, stream.Where);
+        return (before, live, stream.Highest, stream.Where);
     }
 
     private sealed class ProbeStream(byte[] data) : MemoryStream(data)
