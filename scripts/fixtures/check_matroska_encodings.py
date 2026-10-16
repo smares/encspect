@@ -40,7 +40,7 @@ CLI_DLL = ROOT / "src" / "Encspect.Cli" / "bin" / "Release" / "net10.0" / "encsp
 CODES = {f"matroska.{c}" for c in (
     "encoding-order", "encoding-hidden", "encryption-ignored", "encryption-none", "encryption-missing", "encryption-covers-nothing", "aes-settings-not-aes",
     "track-encrypted", "track-encoding-not-read", "codec-private-encrypted", "codec-private-not-read", "codec-private-invalid", "codec-private-missing",
-    "frame-encoding-invalid", "codec-not-analyzed")}
+    "frame-encoding-invalid", "codec-not-analyzed", "codec-private-unexpected")}
 
 
 def _model(encodings, has_private):
@@ -143,6 +143,10 @@ def expected_codes(encodings, has_private, codec):  # noqa: C901
             return codes
         codes.add("matroska.codec-not-analyzed")
         return codes
+    if has_private and codec not in DEFINES_PRIVATE:
+        # A stray CodecPrivate: not read, so none of its findings.
+        codes.add("matroska.codec-private-unexpected")
+        return codes
     if has_private and not is_read(2):
         codes.add("matroska.codec-private-encrypted" if is_encrypted(2) else "matroska.codec-private-not-read")
         if opaque:
@@ -156,8 +160,10 @@ def expected_codes(encodings, has_private, codec):  # noqa: C901
 # The clear sources of the payloads: a committed fixture each, whose first FRAMES frames and CodecPrivate are used as they are.
 SOURCES = {
     "opus": "external-ffmpeg-opus", "vorbis": "external-ffmpeg-vorbis", "aac": "external-ffmpeg-aac-lc", "ac3": "external-ffmpeg-ac3-51",
-    "dts": "external-ffmpeg-dts-51", "mp3": "external-ffmpeg-mp3", "pcm": "external-ffmpeg-pcm",
+    "dts": "external-ffmpeg-dts-51", "mp3": "external-ffmpeg-mp3", "pcm": "external-ffmpeg-pcm", "aac-legacy": "external-ffmpeg-aac-lc",
 }
+# The codec IDs whose mapping defines a CodecPrivate; a track of another has none, or a stray one that is not read.
+DEFINES_PRIVATE = ("A_OPUS", "A_VORBIS", "A_AAC")
 FRAMES = 4
 _loaded = {}
 
@@ -173,7 +179,9 @@ def source(key):
         frames = [data[b["frames"][0][0]:b["frames"][0][0] + min(b["frames"][0][1], 1024 if key == "pcm" else 1 << 30)] for b in blocks]
         times = [b["cluster_timestamp"] + b["timestamp"] - first for b in blocks]
         private = data[track["private"][0]:track["private"][0] + track["private"][1]] if track["private"] else None
-        _loaded[key] = dict(codec=track["codec"], private=private, channels=track["channels"], rate=track["rate"], delay=track.get("delay") or None, frames=frames, times=times)
+        codec = "A_AAC/MPEG4/LC" if key == "aac-legacy" else track["codec"]
+        private = None if key == "aac-legacy" else private
+        _loaded[key] = dict(codec=codec, private=private, channels=track["channels"], rate=track["rate"], delay=track.get("delay") or None, frames=frames, times=times)
     return _loaded[key]
 
 
@@ -307,7 +315,7 @@ def compare(got, codec, has_private, models, clear=None):
 
     # The CodecPrivate is seen where the analyzer gets as far as it: not after frames it cannot read, a codec parser it cannot map them to, tied encodings, or
     # a codec no parser takes.
-    if "matroska.track-encoding-not-read" not in codes and "matroska.codec-not-analyzed" not in codes:
+    if "matroska.track-encoding-not-read" not in codes and "matroska.codec-not-analyzed" not in codes and not (has_private and codec not in DEFINES_PRIVATE):
         private = has_private and not codes & {"matroska.codec-private-encrypted", "matroska.codec-private-not-read"}
         if private != want["codec_private_read"]:
             differences.append(f"CodecPrivate read {private}, model {want['codec_private_read']}")
@@ -362,14 +370,15 @@ def main():
             tracks = []
             single = rng.random() < 0.6
             for _ in range(1 if single else rng.choice([2, 3])):
-                key = rng.choice(["opus", "opus", "aac", "aac", "vorbis", "ac3", "dts", "mp3", "pcm"])
+                key = rng.choice(["opus", "opus", "aac", "aac", "vorbis", "ac3", "dts", "mp3", "pcm", "aac-legacy"])
                 src = source(key)
-                has_private = src["private"] is not None and rng.random() < 0.85
+                has_private = rng.random() < 0.85 if src["private"] is not None else rng.random() < 0.3
+                stray = rng.randbytes(3) if src["private"] is None else None
                 count = rng.randint(0, 4)
                 # Orders with gaps; one track in five lets two share an order.
                 orders = rng.sample(range(7), count) if rng.random() < 0.8 else [rng.randrange(3) for _ in range(count)]
                 pairs = [random_encoding(rng, order) for order in orders]
-                frames, private = encode(rng, pairs, src["frames"], src["private"] if has_private else None)
+                frames, private = encode(rng, pairs, src["frames"], (src["private"] or stray) if has_private else None)
                 tracks.append((key, pairs, has_private, frames, private))
             name = f"random-{n:05d}.mka"
             write(directory / name, [(key, [a for a, _ in pairs], frames, private) for key, pairs, _, frames, private in tracks])
