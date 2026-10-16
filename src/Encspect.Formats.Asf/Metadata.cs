@@ -194,7 +194,9 @@ public sealed partial class AsfParser
                 text = $"Media Foundation {text}";
             }
 
-            state.Context.AddEncoderClaim(new EncoderClaim(text, valueNode, $"{tag.Name} descriptor {name}", ClaimRole.Writer));
+            // The prefixed version texts are the writer's by what they name; the other attributes take their role from their text.
+            state.Context.AddEncoderClaim(new EncoderClaim(text, valueNode, $"{tag.Name} descriptor {name}",
+                name is "WMFSDKVersion" or "MediaFoundationVersion" ? ClaimRole.Writer : ClaimRoles.Of(ClaimRole.Writer, text)));
         }
 
         _ = stream;

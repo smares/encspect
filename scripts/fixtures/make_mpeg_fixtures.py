@@ -297,9 +297,9 @@ def id3v1(title):
     return b"TAG" + title.encode("latin-1").ljust(30, b"\x00") + b"\x00" * 94 + b"\xff"
 
 
-def ape(title):
+def ape(title, key="Title"):
     value = title.encode("utf-8")
-    item = struct.pack("<II", len(value), 0) + b"Title\x00" + value
+    item = struct.pack("<II", len(value), 0) + key.encode("ascii") + b"\x00" + value
     size = len(item) + 32
     footer = b"APETAGEX" + struct.pack("<IIII", 2000, size, 1, 0) + b"\x00" * 8
     return item + footer
@@ -1011,6 +1011,20 @@ def tsse_names_ffmpeg():
     )
     f.tag("ID3v2", id3v2("Muxed", major=4, extra_frames=tsse_frame("Lavf58.76.100", major=4)))
     f.add_frames(stream(8))
+    return f
+
+
+@fixture
+def ape_encoder_names_libavcodec():
+    f = Fixture(
+        "ape-encoder-lavc",
+        ".mp3",
+        "APEv2 tag whose Encoder item holds ffmpeg's libavcodec encoder ID, which names the encoder in whichever field it stands, "
+        "after frames that show no encoder's habits: the item alone names the encoder, with low confidence.",
+    )
+    f.add_frames(stream(8))
+    f.tag("APE", ape("Lavc60.31.102 libmp3lame", key="Encoder"))
+    f.encoder = {"name": "Lavc60.31.102 libmp3lame", "confidence": "Low"}
     return f
 
 

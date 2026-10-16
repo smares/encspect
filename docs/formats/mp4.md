@@ -57,7 +57,7 @@ The codec's layout counts. The chan and chnl boxes complete a stream whose codec
 
 ## Encoder detection
 
-The container's metadata (©too, QuickTime's ©swr) names the writer as written, with low confidence: QuickTime defines ©swr as the software that generated the movie, and no Apple specification defines ©too, so both go to the writer, and the encoder comes from the stream. Encoding Params and iTunSMPB are shown but name neither. An ID32 box's TSSE frame is the encoder's, as in any ID3v2 tag.
+The container's metadata (©too, QuickTime's ©swr) names the writer as written, with low confidence: QuickTime defines ©swr as the software that generated the movie, and no Apple specification defines ©too, so both go to the writer, and the encoder comes from the stream. Text that is ffmpeg's muxer version (`Lavf…`) is the writer in any case, and a libavcodec encoder ID (`Lavc…`) in either atom is an encoder claim. Encoding Params and iTunSMPB are shown but name neither. An ID32 box's TSSE frame is the encoder's, as in any ID3v2 tag.
 
 Apple's AudioToolbox is named from the layout of its files (see [AAC](aac.md)):
 

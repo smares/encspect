@@ -10,7 +10,7 @@ references: ID3v2.3 section 4.2.1 and ID3v2.4 frames section 4.2.5 (TSSE); Vorbi
 
 - A container layout (medium): the Windows Media Format SDK adds a Codec List and a Compatibility Object where Media Foundation's ASF sink does not ([ASF](asf-container)). Apple's file writer sets an [MP4](iso-base-media-format) stream type byte of 0x14, pads the audio data to 4,096 bytes and sets the original/copy bit in ADTS headers (low).
 - A name the file states (low); a tag survives a rewrite.
-- A muxer's version such as ffmpeg's `Lavf60.16.100`, in any tag, or the vendor string "ffmpeg" of a bit-exact Ogg file. (Its `Lavc…` encoder ID names the encoder.) ffmpeg also lays out an MP3's whole Xing and LAME tag itself, with its own CRC, so that layout names FFmpeg (low).
+- A muxer's version such as ffmpeg's `Lavf60.16.100`, in any tag, or the vendor string "ffmpeg" of a bit-exact Ogg file. ffmpeg also lays out an MP3's whole Xing and LAME tag itself, with its own CRC, so that layout names FFmpeg (low).
 
 **Where each tag goes.** The specification decides; where it leaves the field open, the claim is the writer's.
 
@@ -18,6 +18,7 @@ references: ID3v2.3 section 4.2.1 and ID3v2.4 frames section 4.2.5 (TSSE); Vorbi
 - Vorbis comment vendor string: encoder. ENCODER field: writer; Vorbis I section 5.2.2 lists none, and RFC 7845 section 5.2 has applications "identify themselves" with it.
 - QuickTime ©swr, ASF WM/ToolName, Matroska WritingApp and MuxingApp: writer. MP4 ©too has no Apple specification: writer.
 - APEv2 Encoder item and ASF WMFSDKVersion: unverified, so writer.
+- In any of these fields but ASF WMFSDKVersion and MediaFoundationVersion, a `Lavc…` encoder ID names the encoder and a `Lavf…` muxer version the writer.
 
 **Versions.** The encoder may take the version of a writer claim that is the encoder's own name followed by white space and a version, and the evidence says so. Another name lends nothing.
 

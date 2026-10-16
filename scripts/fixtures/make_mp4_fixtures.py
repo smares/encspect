@@ -35,7 +35,7 @@ import struct
 import sys
 
 from mp4_boxes import (
-    Bits, Box, Track, asc, box, chan, chnl, data_atom, dinf, elst, esds, freeform, fullbox, ftyp, hdlr, ilst_meta, interleave, item, mdhd, meta_hdlr, movie, mp4a,
+    Bits, Box, Track, asc, box, chan, chnl, cpe, data_atom, dinf, elst, esds, freeform, fullbox, ftyp, hdlr, ilst_meta, interleave, item, mdhd, meta_hdlr, movie, mp4a,
     mvhd, pce_5_1, raw_data_block, rate_index, sbgp, sgpd_roll, stco, stsc, stsd, stsz, stts, text_item, tkhd, u8, u16, u32, u64, udta, units, write,
 )
 
@@ -465,6 +465,34 @@ def gapless():
             "findings": [finding] if finding else [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100)},
         }))
     return out
+
+
+def too_lavc():
+    """ffmpeg's AAC encoder signs an access unit (every 256th, unless bit-exact) with its identification in a fill element before the channel
+    pair element. The tool atom is set to an encoder ID and name to exercise the rule that such text names the encoder; ffmpeg's muxer writes
+    its Lavf version there by default."""
+    text = b"Lavc60.31.102"
+    bits = Bits()
+    # aacenc.c put_bitstream_info: the fill element's count (len + 2, with the escape count past 14), the extension type EXT_FILL, padding up to
+    # a byte boundary (3 + 4 + 8 + 4 bits put, so 5), the name, and 12 minus the padding bits of zeros.
+    bits.put(6, 3).put(15, 4).put(len(text) + 2 - 14, 8).put(0, 4).put(0, 5)
+    for byte in text:
+        bits.put(byte, 8)
+    bits.put(0, 7)
+    cpe(bits)
+    bits.put(7, 3)
+    lc = asc(2, 44100, 2, sbr=False, signaling="backward")
+    samples = [bits.align().bytes()] + units("stereo", 29)
+    track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2))
+    data, records, offsets = movie([track], moov_extra=[udta(ilst_meta(text_item(b"\xa9too", text.decode() + " aac")))])
+    return [("aac-too-lavc", data, {
+        "description": "AAC LC with ffmpeg's signature in a fill element of its first access unit, laid out as aacenc.c (n6.1.1, lines 787-802) writes it, and a tool atom set to "
+                       "a libavcodec encoder ID: the atom adds to the encoder's evidence and names no writer.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024, vbr=True, encoder=("FFmpeg (Lavc60.31.102)", "High"))],
+        "units": unit_list(offsets[0], samples, 10), "fields": {},
+        "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100)},
+    })]
 
 
 def metadata():
@@ -1077,7 +1105,7 @@ def write_fixture(directory, name, data, manifest):
 def main():
     import aac_block_fixtures
 
-    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + metadata() + id32() + mp3_in_mp4() + quicktime() + chapters() + fragmented() + corrupt() + trailing_tags()
+    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + quicktime() + chapters() + fragmented() + corrupt() + trailing_tags()
     for name, data, manifest in fixtures:
         write_fixture(MP4, name, data, manifest)
     for name, data, manifest in adts_fixtures():
