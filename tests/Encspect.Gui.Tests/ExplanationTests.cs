@@ -127,6 +127,7 @@ public sealed class ExplanationTests : IDisposable
 
         DataGridColumnHeader[] headers = [.. main.Files.GetVisualDescendants().OfType<DataGridColumnHeader>().Where(h => h.Content is string)];
         Assert.StartsWith("Which program encoded the file", (string?)ToolTip.GetTip(headers.Single(h => (string)h.Content! == "Encoder")));
+        Assert.StartsWith("Which software wrote the file around the audio", (string?)ToolTip.GetTip(headers.Single(h => (string)h.Content! == "Written by")));
         Assert.StartsWith("Problems and notes found", (string?)ToolTip.GetTip(headers.Single(h => (string)h.Content! == "Findings")));
         Assert.All(headers, h => Assert.NotNull(ToolTip.GetTip(h)));
         main.Close();

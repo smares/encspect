@@ -979,7 +979,29 @@
               "value": 22,
               "unit": "frames",
               "offset": 5452,
-              "length": 9210
+              "length": 9210,
+              "children": [
+                {
+                  "name": "Writer",
+                  "value": "mkvmerge v82.0 ('I'm The President') 64-bit",
+                  "offset": 5452,
+                  "length": 9210,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 5452,
+                      "length": 9210
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment WritingApp element at 0x1069 names \"mkvmerge v82.0 ('I'm The President') 64-bit\"",
+                      "offset": 5452,
+                      "length": 9210
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -1001,6 +1023,8 @@
         "averageBitrate": 117.32189305784368,
         "isVbr": false,
         "playbackGroup": 1,
+        "writer": "mkvmerge v82.0 ('I'm The President') 64-bit",
+        "writerConfidence": "Low",
         "series": []
       }
     ],

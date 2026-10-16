@@ -1,6 +1,6 @@
 {
  "description": "An EBML Header with no DocType, which RFC 8794 requires (section 11.2.6).",
- "length": 256,
+ "length": 248,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -11,7 +11,7 @@
    "offset": 13,
    "clusters": [
     {
-     "offset": 155,
+     "offset": 147,
      "length": 101,
      "timestamp": 0,
      "size_unknown": false,
@@ -23,10 +23,10 @@
    "info": {
     "timestamp_scale": 1000000,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 243,
-   "declared_end": 256
+   "length": 235,
+   "declared_end": 248
   }
  ],
  "tree": [
@@ -50,12 +50,12 @@
   [
    "Segment",
    13,
-   243,
+   235,
    [
     [
      "Info",
      19,
-     60,
+     52,
      [
       [
        "TimestampScale",
@@ -70,68 +70,68 @@
       [
        "WritingApp",
        51,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     79,
+     71,
      76,
      [
       [
        "TrackEntry",
-       84,
+       76,
        71,
        [
         [
          "TrackNumber",
-         86,
+         78,
          3
         ],
         [
          "TrackUID",
-         89,
+         81,
          5
         ],
         [
          "TrackType",
-         94,
+         86,
          3
         ],
         [
          "CodecID",
-         97,
+         89,
          8
         ],
         [
          "CodecPrivate",
-         105,
+         97,
          22
         ],
         [
          "CodecDelay",
-         127,
+         119,
          6
         ],
         [
          "SeekPreRoll",
-         133,
+         125,
          7
         ],
         [
          "Audio",
-         140,
+         132,
          15,
          [
           [
            "SamplingFrequency",
-           142,
+           134,
            10
           ],
           [
            "Channels",
-           152,
+           144,
            3
           ]
          ]
@@ -142,22 +142,22 @@
     ],
     [
      "Cluster",
-     155,
+     147,
      101,
      [
       [
        "Timestamp",
-       160,
+       152,
        3
       ],
       [
        "SimpleBlock",
-       163,
+       155,
        46
       ],
       [
        "SimpleBlock",
-       209,
+       201,
        47
       ]
      ]
@@ -168,7 +168,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 163,
+   "offset": 155,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -177,14 +177,14 @@
    "lacing": "none",
    "frames": [
     [
-     169,
+     161,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 209,
+   "offset": 201,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -193,7 +193,7 @@
    "lacing": "none",
    "frames": [
     [
-     215,
+     207,
      41
     ]
    ]
@@ -206,7 +206,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    108,
+    100,
     19
    ],
    "channels": 1,
@@ -217,6 +217,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

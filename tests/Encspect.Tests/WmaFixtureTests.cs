@@ -152,17 +152,20 @@ public class WmaFixtureTests
         using JsonDocument provenance = JsonDocument.Parse(File.ReadAllText(provenancePath));
         string path = provenance.RootElement.GetProperty("encoder").GetProperty("path").GetString()!;
         StreamInfo stream = Fixtures.AnalyzeMpeg(name).Streams[0];
-        Assert.NotNull(stream.Encoder);
+        Assert.NotNull(stream.Writer);
         if (path == "media-foundation")
         {
-            Assert.StartsWith("Media Foundation ", stream.Encoder, StringComparison.Ordinal);
+            Assert.StartsWith("Media Foundation ", stream.Writer, StringComparison.Ordinal);
         }
         else
         {
-            Assert.StartsWith("Windows Media Format SDK ", stream.Encoder, StringComparison.Ordinal);
+            Assert.StartsWith("Windows Media Format SDK ", stream.Writer, StringComparison.Ordinal);
         }
 
-        Assert.Equal(Confidence.Medium, stream.EncoderConfidence);
+        Assert.Equal(Confidence.Medium, stream.WriterConfidence);
+        // the writer is not the encoder: what the stream shows of the encoder is resolved apart
+        Assert.DoesNotContain("Media Foundation", stream.Encoder ?? string.Empty, StringComparison.Ordinal);
+        Assert.DoesNotContain("Format SDK", stream.Encoder ?? string.Empty, StringComparison.Ordinal);
     }
 
     // The same codec at the same constant bitrate, written by the two Windows writers: the headers differ, and the
@@ -174,10 +177,10 @@ public class WmaFixtureTests
     {
         StreamInfo viaFoundation = Fixtures.AnalyzeMpeg(foundation).Streams[0];
         StreamInfo viaSdk = Fixtures.AnalyzeMpeg(sdk).Streams[0];
-        Assert.StartsWith("Media Foundation ", viaFoundation.Encoder, StringComparison.Ordinal);
-        Assert.StartsWith("Windows Media Format SDK ", viaSdk.Encoder, StringComparison.Ordinal);
-        Assert.Equal(Confidence.Medium, viaFoundation.EncoderConfidence);
-        Assert.Equal(Confidence.Medium, viaSdk.EncoderConfidence);
+        Assert.StartsWith("Media Foundation ", viaFoundation.Writer, StringComparison.Ordinal);
+        Assert.StartsWith("Windows Media Format SDK ", viaSdk.Writer, StringComparison.Ordinal);
+        Assert.Equal(Confidence.Medium, viaFoundation.WriterConfidence);
+        Assert.Equal(Confidence.Medium, viaSdk.WriterConfidence);
         Assert.False(viaFoundation.IsVbr);
         Assert.False(viaSdk.IsVbr);
     }

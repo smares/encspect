@@ -1,6 +1,6 @@
 {
  "description": "Two Segments one after the other (RFC 9559 section 23.2), each with its own track and Cluster.",
- "length": 624,
+ "length": 608,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 182,
+     "offset": 174,
      "length": 150,
      "timestamp": 0,
      "size_unknown": false,
@@ -28,16 +28,16 @@
    "info": {
     "timestamp_scale": 1000000,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 292,
-   "declared_end": 332
+   "length": 284,
+   "declared_end": 324
   },
   {
-   "offset": 332,
+   "offset": 324,
    "clusters": [
     {
-     "offset": 474,
+     "offset": 458,
      "length": 150,
      "timestamp": 0,
      "size_unknown": false,
@@ -49,10 +49,10 @@
    "info": {
     "timestamp_scale": 1000000,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 292,
-   "declared_end": 624
+   "length": 284,
+   "declared_end": 608
   }
  ],
  "tree": [
@@ -101,12 +101,12 @@
   [
    "Segment",
    40,
-   292,
+   284,
    [
     [
      "Info",
      46,
-     60,
+     52,
      [
       [
        "TimestampScale",
@@ -121,68 +121,68 @@
       [
        "WritingApp",
        78,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     106,
+     98,
      76,
      [
       [
        "TrackEntry",
-       111,
+       103,
        71,
        [
         [
          "TrackNumber",
-         113,
+         105,
          3
         ],
         [
          "TrackUID",
-         116,
+         108,
          5
         ],
         [
          "TrackType",
-         121,
+         113,
          3
         ],
         [
          "CodecID",
-         124,
+         116,
          8
         ],
         [
          "CodecPrivate",
-         132,
+         124,
          22
         ],
         [
          "CodecDelay",
-         154,
+         146,
          6
         ],
         [
          "SeekPreRoll",
-         160,
+         152,
          7
         ],
         [
          "Audio",
-         167,
+         159,
          15,
          [
           [
            "SamplingFrequency",
-           169,
+           161,
            10
           ],
           [
            "Channels",
-           179,
+           171,
            3
           ]
          ]
@@ -193,27 +193,27 @@
     ],
     [
      "Cluster",
-     182,
+     174,
      150,
      [
       [
        "Timestamp",
-       188,
+       180,
        3
       ],
       [
        "SimpleBlock",
-       191,
+       183,
        46
       ],
       [
        "SimpleBlock",
-       237,
+       229,
        47
       ],
       [
        "SimpleBlock",
-       284,
+       276,
        48
       ]
      ]
@@ -222,89 +222,89 @@
   ],
   [
    "Segment",
-   332,
-   292,
+   324,
+   284,
    [
     [
      "Info",
-     338,
-     60,
+     330,
+     52,
      [
       [
        "TimestampScale",
-       343,
+       335,
        7
       ],
       [
        "MuxingApp",
-       350,
+       342,
        20
       ],
       [
        "WritingApp",
-       370,
-       28
+       362,
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     398,
+     382,
      76,
      [
       [
        "TrackEntry",
-       403,
+       387,
        71,
        [
         [
          "TrackNumber",
-         405,
+         389,
          3
         ],
         [
          "TrackUID",
-         408,
+         392,
          5
         ],
         [
          "TrackType",
-         413,
+         397,
          3
         ],
         [
          "CodecID",
-         416,
+         400,
          8
         ],
         [
          "CodecPrivate",
-         424,
+         408,
          22
         ],
         [
          "CodecDelay",
-         446,
+         430,
          6
         ],
         [
          "SeekPreRoll",
-         452,
+         436,
          7
         ],
         [
          "Audio",
-         459,
+         443,
          15,
          [
           [
            "SamplingFrequency",
-           461,
+           445,
            10
           ],
           [
            "Channels",
-           471,
+           455,
            3
           ]
          ]
@@ -315,27 +315,27 @@
     ],
     [
      "Cluster",
-     474,
+     458,
      150,
      [
       [
        "Timestamp",
-       480,
+       464,
        3
       ],
       [
        "SimpleBlock",
-       483,
+       467,
        46
       ],
       [
        "SimpleBlock",
-       529,
+       513,
        47
       ],
       [
        "SimpleBlock",
-       576,
+       560,
        48
       ]
      ]
@@ -346,7 +346,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 191,
+   "offset": 183,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -355,14 +355,14 @@
    "lacing": "none",
    "frames": [
     [
-     197,
+     189,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 237,
+   "offset": 229,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -371,14 +371,14 @@
    "lacing": "none",
    "frames": [
     [
-     243,
+     235,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 284,
+   "offset": 276,
    "length": 48,
    "track": 1,
    "timestamp": 40,
@@ -387,14 +387,14 @@
    "lacing": "none",
    "frames": [
     [
-     290,
+     282,
      42
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 483,
+   "offset": 467,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -403,14 +403,14 @@
    "lacing": "none",
    "frames": [
     [
-     489,
+     473,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 529,
+   "offset": 513,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -419,14 +419,14 @@
    "lacing": "none",
    "frames": [
     [
-     535,
+     519,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 576,
+   "offset": 560,
    "length": 48,
    "track": 1,
    "timestamp": 40,
@@ -435,7 +435,7 @@
    "lacing": "none",
    "frames": [
     [
-     582,
+     566,
      42
     ]
    ]
@@ -448,7 +448,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    135,
+    127,
     19
    ],
    "channels": 1,
@@ -464,7 +464,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    427,
+    411,
     19
    ],
    "channels": 2,
@@ -475,6 +475,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

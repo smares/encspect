@@ -32,6 +32,7 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
   - **Top level:** `missing-info`, `missing-tracks`, `no-clusters`, `seek-position`, `cue-position`, `crc-mismatch`, `crc-position`, `crc-size`.
   - **Tracks:** `track-field`, `audio-fields`, `track-number-duplicate`, `track-empty`, `track-not-analyzed`, `track-encoding-not-read`, `track-encrypted`, `encoding-order`, `frame-encoding-invalid`, `codec-private-missing`, `codec-private-invalid`, `codec-not-analyzed`, `sample-rate-differs`, `channels-differ`.
   - **Clusters and blocks:** `cluster-timestamp-missing`, `cluster-timestamp-position`, `timestamp-scale`, `timestamps-backwards`, `block-short`, `block-too-large`, `block-track-unknown`, `lacing-invalid`, `lacing-not-allowed`, `lacing-single`, `group-no-block`, `group-multiple-blocks`.
+  - **Writer:** `writer-claim-differs`, `writer-other-format`.
   - **WebM:** `webm-codec`, `webm-timestamp-scale` (WebM allows VP8, VP9, AV1, Vorbis, Opus and WebVTT, and wants a timestamp scale of 1,000,000).
 - A finding points to a node of the tree; those of a block point to its SimpleBlock or Block.
 
@@ -40,10 +41,15 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 - For a routed track the layout is the codec parser's (AAC, AC-3, DTS, Vorbis and Opus each name their speakers in their own order); the Matroska track's `Channels` is compared with it.
 - A track counted at container level has only its `Channels` count and no layout: Matroska's ChannelPositions element is not in RFC 9559, so no speaker is named.
 
-## Encoder detection
+## Encoder and writer
 
-- The audio encoder is decided by the codec parsers, from the frames they read.
-- MuxingApp and WritingApp (for example "Lavf60.16.100", "libebml v1.4.5 + libmatroska v1.7.1" and "mkvmerge v82.0") are shown as Info and Segment values. They name the program that wrote the container, not the audio encoder, so they do not become claims about the stream yet: the place for them is marked in `Route.cs` (`RouteTracks`), to be filled when the encoder and writer roles are split.
+- **The encoder** is decided by the codec parsers, from the frames they read. The Matroska parser names none.
+- **The writer** is the software that put the audio into the file. The Segment's MuxingApp and WritingApp (RFC 9559, sections 5.1.2.13 and 5.1.2.14) are claims of the writer role, added before the tracks are routed, so every codec parser weighs them with the claims of the tags. Each is a low-confidence claim of its element; the evidence points at the element.
+  - ffmpeg's muxer version ("Lavf60.16.100", in both elements) names FFmpeg. A libavcodec encoder ID ("Lavc60.31.102 libopus") in either element takes the encoder role instead, as in the tags.
+  - mkvmerge writes the libraries in the MuxingApp ("libebml v1.4.5 + libmatroska v1.7.1") and the program in the WritingApp ("mkvmerge v82.0 ('I'm The President') 64-bit"). The libraries say no more than the program that uses them and would only contradict it, so a MuxingApp that names them counts only when no WritingApp does.
+  - Two claims that name different software are `matroska.writer-claim-differs` (Info), and software known to write another kind of stream (LAME on a PCM or FLAC track) is `matroska.writer-other-format` (Info). The codec parsers that read a tag of their own (Vorbis and Opus comments, AAC) keep their own findings for it.
+  - A stream no codec parser reads, and a stream whose parser names none (Opus and Vorbis in a Matroska track carry a comment only in their headers), get the Writer from the Matroska parser: a Writer node under the track's frames node (or the TrackEntry), and the stream's Writer. A comment inside the stream that names a writer (a Vorbis vendor string copied from an Ogg file) is the stream's and outranks the container's claims there.
+  - The claims of every Segment join the file's. See the article on writer detection.
 
 ## Detection
 
@@ -71,5 +77,5 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 
 ## Fixtures and cross-checks
 
-- `tests/fixtures/matroska`: 69 hand-built files (`make_matroska_fixtures.py`, worked out by the independent writer and reader `matroska_model.py`) and 40 written by ffmpeg and mkvmerge (`make_external_matroska_fixtures.py`), with a manifest and a golden report each. See [development.md](../development.md).
+- `tests/fixtures/matroska`: 79 hand-built files (`make_matroska_fixtures.py`, worked out by the independent writer and reader `matroska_model.py`) and 40 written by ffmpeg and mkvmerge (`make_external_matroska_fixtures.py`), with a manifest and a golden report each. See [development.md](../development.md).
 - `crosscheck_matroska_fixtures.py` checks the manifests against mkvinfo, ffprobe (streams, packets and presentation times), ffmpeg decoding and MediaInfo.

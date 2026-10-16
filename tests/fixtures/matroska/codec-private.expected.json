@@ -1,6 +1,6 @@
 {
  "description": "Tracks whose CodecPrivate is missing (an Opus track) or invalid (a Vorbis track whose Xiph-laced headers are cut).",
- "length": 363,
+ "length": 355,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 259,
+     "offset": 251,
      "length": 104,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 323,
-   "declared_end": 363
+   "length": 315,
+   "declared_end": 355
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   323,
+   315,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,58 +106,58 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      142,
      [
       [
        "TrackEntry",
-       123,
+       115,
        42,
        [
         [
          "TrackNumber",
+         117,
+         3
+        ],
+        [
+         "TrackUID",
+         120,
+         5
+        ],
+        [
+         "TrackType",
          125,
          3
         ],
         [
-         "TrackUID",
-         128,
-         5
-        ],
-        [
-         "TrackType",
-         133,
-         3
-        ],
-        [
          "CodecID",
-         136,
+         128,
          8
         ],
         [
          "CodecDelay",
-         144,
+         136,
          6
         ],
         [
          "Audio",
-         150,
+         142,
          15,
          [
           [
            "SamplingFrequency",
-           152,
+           144,
            10
           ],
           [
            "Channels",
-           162,
+           154,
            3
           ]
          ]
@@ -166,47 +166,47 @@
       ],
       [
        "TrackEntry",
-       165,
+       157,
        47,
        [
         [
          "TrackNumber",
+         159,
+         3
+        ],
+        [
+         "TrackUID",
+         162,
+         5
+        ],
+        [
+         "TrackType",
          167,
          3
         ],
         [
-         "TrackUID",
-         170,
-         5
-        ],
-        [
-         "TrackType",
-         175,
-         3
-        ],
-        [
          "CodecID",
-         178,
+         170,
          10
         ],
         [
          "CodecPrivate",
-         188,
+         180,
          9
         ],
         [
          "Audio",
-         197,
+         189,
          15,
          [
           [
            "SamplingFrequency",
-           199,
+           191,
            10
           ],
           [
            "Channels",
-           209,
+           201,
            3
           ]
          ]
@@ -215,47 +215,47 @@
       ],
       [
        "TrackEntry",
-       212,
+       204,
        47,
        [
         [
          "TrackNumber",
-         214,
+         206,
          3
         ],
         [
          "TrackUID",
-         217,
+         209,
          5
         ],
         [
          "TrackType",
-         222,
+         214,
          3
         ],
         [
          "CodecID",
-         225,
+         217,
          10
         ],
         [
          "CodecPrivate",
-         235,
+         227,
          9
         ],
         [
          "Audio",
-         244,
+         236,
          15,
          [
           [
            "SamplingFrequency",
-           246,
+           238,
            10
           ],
           [
            "Channels",
-           256,
+           248,
            3
           ]
          ]
@@ -266,42 +266,42 @@
     ],
     [
      "Cluster",
-     259,
+     251,
      104,
      [
       [
        "Timestamp",
-       264,
+       256,
        3
       ],
       [
        "SimpleBlock",
-       267,
+       259,
        16
       ],
       [
        "SimpleBlock",
-       283,
+       275,
        16
       ],
       [
        "SimpleBlock",
-       299,
+       291,
        16
       ],
       [
        "SimpleBlock",
-       315,
+       307,
        16
       ],
       [
        "SimpleBlock",
-       331,
+       323,
        16
       ],
       [
        "SimpleBlock",
-       347,
+       339,
        16
       ]
      ]
@@ -312,7 +312,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 267,
+   "offset": 259,
    "length": 16,
    "track": 1,
    "timestamp": 0,
@@ -321,14 +321,14 @@
    "lacing": "none",
    "frames": [
     [
-     273,
+     265,
      10
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 283,
+   "offset": 275,
    "length": 16,
    "track": 2,
    "timestamp": 0,
@@ -337,14 +337,14 @@
    "lacing": "none",
    "frames": [
     [
-     289,
+     281,
      10
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 299,
+   "offset": 291,
    "length": 16,
    "track": 3,
    "timestamp": 0,
@@ -353,14 +353,14 @@
    "lacing": "none",
    "frames": [
     [
-     305,
+     297,
      10
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 315,
+   "offset": 307,
    "length": 16,
    "track": 1,
    "timestamp": 20,
@@ -369,14 +369,14 @@
    "lacing": "none",
    "frames": [
     [
-     321,
+     313,
      10
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 331,
+   "offset": 323,
    "length": 16,
    "track": 2,
    "timestamp": 20,
@@ -385,14 +385,14 @@
    "lacing": "none",
    "frames": [
     [
-     337,
+     329,
      10
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 347,
+   "offset": 339,
    "length": 16,
    "track": 3,
    "timestamp": 20,
@@ -401,7 +401,7 @@
    "lacing": "none",
    "frames": [
     [
-     353,
+     345,
      10
     ]
    ]
@@ -427,7 +427,7 @@
    "type": 2,
    "codec": "A_VORBIS",
    "private": [
-    191,
+    183,
     6
    ],
    "channels": 2,
@@ -443,7 +443,7 @@
    "type": 2,
    "codec": "A_VORBIS",
    "private": [
-    238,
+    230,
     6
    ],
    "channels": 2,
@@ -454,6 +454,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": null,
  "findings": [
   {

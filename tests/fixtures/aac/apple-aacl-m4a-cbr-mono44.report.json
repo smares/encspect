@@ -2017,6 +2017,26 @@
                           ]
                         },
                         {
+                          "name": "Writer",
+                          "value": "Apple AudioToolbox",
+                          "offset": 4096,
+                          "length": 2026,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 4096,
+                              "length": 2026
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "MP4 layout of Apple's AudioToolbox file writer: a DecoderConfigDescriptor whose stream type byte is 0x14 (reserved bit 0) and a free box that pads the audio data to a 4,096-byte boundary (at 0x192)",
+                              "offset": 4096,
+                              "length": 2026
+                            }
+                          ]
+                        },
+                        {
                           "name": "Statistics",
                           "kind": "Statistics",
                           "offset": 4096,
@@ -2430,6 +2450,8 @@
         "playbackGroup": 1,
         "encoder": "Apple AAC encoder (AudioToolbox)",
         "encoderConfidence": "Medium",
+        "writer": "Apple AudioToolbox",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

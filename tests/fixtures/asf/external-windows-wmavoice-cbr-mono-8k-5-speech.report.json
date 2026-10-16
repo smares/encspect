@@ -8542,7 +8542,7 @@
                   "length": 5500,
                   "children": [
                     {
-                      "name": "Encoder",
+                      "name": "Writer",
                       "value": "Windows Media Format SDK 12.0.26100.33438",
                       "offset": 4943,
                       "length": 5500,
@@ -8555,7 +8555,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "ASF header: WMFSDKVersion 12.0.26100.33438, a Codec List Object and a Compatibility Object in the Header Extension Object, the layout of the Windows Media Format SDK's writer. The writer states codec list \"Windows Media Audio Voice 9\", \"5 kbps, 8 kHz, mono\"; IsVBR false (at 0x1195)",
+                          "value": "ASF header layout of the Windows Media Format SDK's writer: WMFSDKVersion 12.0.26100.33438, a Codec List Object and a Compatibility Object, which the files of Media Foundation's ASF sink lack. The writer states codec list \"Windows Media Audio Voice 9\", \"5 kbps, 8 kHz, mono\"; IsVBR false (at 0x1195)",
                           "offset": 4943,
                           "length": 5500
                         },
@@ -34972,8 +34972,8 @@
         "duration": 6,
         "averageBitrate": 6.233333333333333,
         "isVbr": false,
-        "encoder": "Windows Media Format SDK 12.0.26100.33438",
-        "encoderConfidence": "Medium",
+        "writer": "Windows Media Format SDK 12.0.26100.33438",
+        "writerConfidence": "Medium",
         "series": [
           {
             "name": "Bitrate",

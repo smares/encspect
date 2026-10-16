@@ -35,16 +35,25 @@ import ogg_model as m
 OUT = hand.OUT
 
 LIBVORBIS = {"name": "libvorbis 1.3.7", "confidence": "High"}
-OPUSENC = {"name": "opusenc 0.2 (libopus 1.4)", "confidence": "High"}
-FFMPEG_LIBVORBIS = {"name": "FFmpeg (Lavc60.31.102 libvorbis)", "confidence": "Medium"}
-FFMPEG_VORBIS = {"name": "FFmpeg (Lavc60.31.102 vorbis)", "confidence": "Medium"}
-FFMPEG_LIBOPUS = {"name": "FFmpeg (Lavc60.31.102 libopus)", "confidence": "Medium"}
+# What the analyzer names: the encoder, from the vendor string (libopusenc writes libopus' version into it) or an ENCODER field that is a
+# libavcodec encoder ID (ffmpeg writes "Lavc60.31.102 libvorbis" there when it encodes), and the writer, from the ENCODER field of an
+# application (opusenc) and a vendor string that is a muxer's version. ffmpeg writes "Lavf60.16.100" as the vendor.
+FFMPEG_WRITER = {"name": "FFmpeg (Lavf60.16.100)", "confidence": "Low"}
+OPUSENC = {"name": "libopus 1.4", "confidence": "Medium", "writer": {"name": "opusenc 0.2", "confidence": "Low"}}
+FFMPEG_LIBVORBIS = {"name": "FFmpeg (Lavc60.31.102 libvorbis)", "confidence": "Medium", "writer": FFMPEG_WRITER}
+FFMPEG_VORBIS = {"name": "FFmpeg (Lavc60.31.102 vorbis)", "confidence": "Medium", "writer": FFMPEG_WRITER}
+FFMPEG_LIBOPUS = {"name": "FFmpeg (Lavc60.31.102 libopus)", "confidence": "Medium", "writer": FFMPEG_WRITER}
 AOTUV_B57 = {"name": "aoTuV b5.7 (20090301)", "confidence": "High"}
 AOTUV_B603 = {"name": "aoTuV b6.03 (20110424)", "confidence": "High"}
 AOTUV_2020 = {"name": "aoTuV b6.03 (20110424, 2020 build on libvorbis 1.3.7)", "confidence": "High"}
 AOTUV_RAREWARES = {"name": "aoTuV b6.03 (2020, Rarewares build)", "confidence": "High"}
 LANCER = {"name": "Lancer (SSE2, based on aoTuV 6.03 (2020))", "confidence": "High"}
-FFMPEG_OPUS = {"name": "FFmpeg (Lavc60.31.102 opus)", "confidence": "Medium"}
+# Bit-exact (-fflags +bitexact -flags:a +bitexact): ffmpeg writes "ffmpeg" as the vendor string (oggenc.c:281) and "Lavc libvorbis" as the
+# encoder ID, without a version (ffmpeg_enc.c:157-160).
+BITEXACT_WRITER = {"name": "FFmpeg", "confidence": "Low"}
+FFMPEG_LIBVORBIS_BITEXACT = {"name": "FFmpeg (Lavc libvorbis)", "confidence": "Medium", "writer": BITEXACT_WRITER}
+FFMPEG_LIBOPUS_BITEXACT = {"name": "FFmpeg (Lavc libopus)", "confidence": "Medium", "writer": BITEXACT_WRITER}
+FFMPEG_OPUS = {"name": "FFmpeg (Lavc60.31.102 opus)", "confidence": "Medium", "writer": FFMPEG_WRITER}
 
 # name: (tool, rate, channels, seconds, arguments, detected encoder, expected findings)
 FIXTURES = {
@@ -63,6 +72,10 @@ FIXTURES = {
     "external-oggenc2-lancer-sse2": ("wine:lancer-sse2", 44100, 2, 1.5, ["-q", "5"], LANCER, []),
     "external-ffmpeg-libvorbis": ("ffmpeg", 44100, 2, 1.5, ["-c:a", "libvorbis", "-q:a", "4"], FFMPEG_LIBVORBIS, []),
     "external-ffmpeg-vorbis": ("ffmpeg", 44100, 2, 1.5, ["-strict", "-2", "-c:a", "vorbis"], FFMPEG_VORBIS, []),
+    "external-ffmpeg-libvorbis-bitexact": ("ffmpeg", 44100, 2, 1.5, ["-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libvorbis", "-q:a", "4"],
+                                           FFMPEG_LIBVORBIS_BITEXACT, []),
+    "external-ffmpeg-libopus-bitexact": ("ffmpeg", 48000, 2, 1.5, ["-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libopus", "-b:a", "96k"],
+                                         FFMPEG_LIBOPUS_BITEXACT, []),
     "external-opusenc-96": ("opusenc", 48000, 2, 1.5, ["--bitrate", "96"], OPUSENC, []),
     "external-opusenc-24-mono": ("opusenc", 16000, 1, 1.5, ["--bitrate", "24"], OPUSENC, []),
     "external-opusenc-hard-cbr": ("opusenc", 48000, 2, 1.5, ["--bitrate", "64", "--hard-cbr"], OPUSENC, []),
@@ -145,13 +158,17 @@ def manifest(name, encoder, detected, findings):
         records.append({"name": "Page", "offset": p["offset"], "length": p["length"], "serial": p["serial"], "sequence": p["sequence"],
                         "granule": p["granule"], "flags": p["flags"], "crc_ok": computed == p["crc"]})
     codec = "Vorbis" if data[pages[0]["body"]:pages[0]["body"] + 7] == b"\x01vorbis" else "Opus"
-    spec = {"serial": serial, "link": 1, "codec": codec, "analyzed": True, "lost": set(), "extra_headers": 0, "encoder": detected}
+    named = {k: detected[k] for k in ("name", "confidence")} if "name" in detected else None
+    spec = {"serial": serial, "link": 1, "codec": codec, "analyzed": True, "lost": set(), "extra_headers": 0, "encoder": named, "writer": detected.get("writer")}
     entry, info = hand.expect_stream(data, records, spec)
     model = set(entry.pop("model_findings", [])) - {"vorbis.header-extra-data"}
     unexpected = model - {code for code, _ in findings}
     if unexpected:
         raise SystemExit(f"{name}: the model predicts {sorted(unexpected)}, which the fixture does not list")
-    info["encoder"], info["encoder_confidence"] = detected["name"], detected["confidence"]
+    if named:
+        info["encoder"], info["encoder_confidence"] = named["name"], named["confidence"]
+    if "writer" in detected:
+        info["writer"], info["writer_confidence"] = detected["writer"]["name"], detected["writer"]["confidence"]
     return {
         "length": len(data), "regions": [{"name": "Ogg", "offset": 0, "length": len(data)}], "encoder": encoder,
         "pages": records, "streams": [entry], "stream_infos": [info],

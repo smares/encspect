@@ -1,6 +1,6 @@
 {
  "description": "A track compressed with bzlib, which the analyzer does not undo.",
- "length": 368,
+ "length": 360,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 218,
+     "offset": 210,
      "length": 150,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 328,
-   "declared_end": 368
+   "length": 320,
+   "declared_end": 360
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   328,
+   320,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,88 +106,88 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      101,
      [
       [
        "TrackEntry",
-       122,
+       114,
        96,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "CodecID",
-         135,
+         127,
          8
         ],
         [
          "CodecPrivate",
-         143,
+         135,
          22
         ],
         [
          "CodecDelay",
-         165,
+         157,
          6
         ],
         [
          "SeekPreRoll",
-         171,
+         163,
          7
         ],
         [
          "ContentEncodings",
-         178,
+         170,
          25,
          [
           [
            "ContentEncoding",
-           181,
+           173,
            22,
            [
             [
              "ContentEncodingOrder",
-             184,
+             176,
              4
             ],
             [
              "ContentEncodingScope",
-             188,
+             180,
              4
             ],
             [
              "ContentEncodingType",
-             192,
+             184,
              4
             ],
             [
              "ContentCompression",
-             196,
+             188,
              7,
              [
               [
                "ContentCompAlgo",
-               199,
+               191,
                4
               ]
              ]
@@ -198,17 +198,17 @@
         ],
         [
          "Audio",
-         203,
+         195,
          15,
          [
           [
            "SamplingFrequency",
-           205,
+           197,
            10
           ],
           [
            "Channels",
-           215,
+           207,
            3
           ]
          ]
@@ -219,27 +219,27 @@
     ],
     [
      "Cluster",
-     218,
+     210,
      150,
      [
       [
        "Timestamp",
-       224,
+       216,
        3
       ],
       [
        "SimpleBlock",
-       227,
+       219,
        46
       ],
       [
        "SimpleBlock",
-       273,
+       265,
        47
       ],
       [
        "SimpleBlock",
-       320,
+       312,
        48
       ]
      ]
@@ -250,7 +250,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 227,
+   "offset": 219,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -259,14 +259,14 @@
    "lacing": "none",
    "frames": [
     [
-     233,
+     225,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 273,
+   "offset": 265,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -275,14 +275,14 @@
    "lacing": "none",
    "frames": [
     [
-     279,
+     271,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 320,
+   "offset": 312,
    "length": 48,
    "track": 1,
    "timestamp": 40,
@@ -291,7 +291,7 @@
    "lacing": "none",
    "frames": [
     [
-     326,
+     318,
      42
     ]
    ]
@@ -304,7 +304,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    146,
+    138,
     19
    ],
    "channels": 1,
@@ -324,6 +324,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

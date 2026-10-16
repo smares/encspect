@@ -27,7 +27,7 @@ namespace Encspect.Gui.Cache;
 // SHA-256 of all that.
 public sealed class SummaryCache : IDisposable
 {
-    public const int FormatVersion = 3;
+    public const int FormatVersion = 4;
 
     public const int DefaultMaxEntries = 50_000;
 
@@ -407,6 +407,8 @@ public sealed class SummaryCache : IDisposable
             reader.ReadBoolean() ? ReadLayout(reader) : null,
             ReadText(reader),
             reader.ReadBoolean() ? ReadConfidence(reader) : null,
+            ReadText(reader),
+            reader.ReadBoolean() ? ReadConfidence(reader) : null,
             [.. Enumerable.Range(0, Bounded(reader.ReadInt32(), 1 << 10)).Select(_ => reader.ReadString())],
             reader.ReadInt32(),
             reader.ReadInt32(),
@@ -544,6 +546,8 @@ public sealed class SummaryCache : IDisposable
 
         WriteText(writer, summary.Encoder);
         WriteOptional(writer, (int?)summary.EncoderConfidence, writer.Write);
+        WriteText(writer, summary.Writer);
+        WriteOptional(writer, (int?)summary.WriterConfidence, writer.Write);
         writer.Write(summary.Tags.Count);
         foreach (string tag in summary.Tags)
         {

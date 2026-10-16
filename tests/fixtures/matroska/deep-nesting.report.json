@@ -10,13 +10,13 @@
       "name": "File",
       "value": "Matroska",
       "offset": 0,
-      "length": 697,
+      "length": 689,
       "children": [
         {
           "name": "Matroska",
           "value": "1 audio track",
           "offset": 0,
-          "length": 697,
+          "length": 689,
           "children": [
             {
               "name": "EBML",
@@ -73,12 +73,12 @@
               "name": "Segment",
               "value": "1 track, 1 cluster",
               "offset": 40,
-              "length": 657,
+              "length": 649,
               "children": [
                 {
                   "name": "Info",
                   "offset": 46,
-                  "length": 60,
+                  "length": 52,
                   "children": [
                     {
                       "name": "TimestampScale",
@@ -95,84 +95,84 @@
                     },
                     {
                       "name": "WritingApp",
-                      "value": "make_matroska_fixtures.py",
+                      "value": "encspect fixtures",
                       "offset": 78,
-                      "length": 28
+                      "length": 20
                     }
                   ]
                 },
                 {
                   "name": "Tracks",
-                  "offset": 106,
+                  "offset": 98,
                   "length": 76,
                   "children": [
                     {
                       "name": "TrackEntry",
                       "value": "audio, A_OPUS, 1 channel, 48000 Hz",
-                      "offset": 111,
+                      "offset": 103,
                       "length": 71,
                       "children": [
                         {
                           "name": "TrackNumber",
                           "value": 1,
-                          "offset": 113,
+                          "offset": 105,
                           "length": 3
                         },
                         {
                           "name": "TrackUID",
                           "value": 4097,
-                          "offset": 116,
+                          "offset": 108,
                           "length": 5
                         },
                         {
                           "name": "TrackType",
                           "value": "2 (audio)",
-                          "offset": 121,
+                          "offset": 113,
                           "length": 3
                         },
                         {
                           "name": "CodecID",
                           "value": "A_OPUS",
-                          "offset": 124,
+                          "offset": 116,
                           "length": 8
                         },
                         {
                           "name": "CodecPrivate",
                           "value": 19,
                           "unit": "bytes",
-                          "offset": 132,
+                          "offset": 124,
                           "length": 22
                         },
                         {
                           "name": "CodecDelay",
                           "value": 6500000,
                           "unit": "ns",
-                          "offset": 154,
+                          "offset": 146,
                           "length": 6
                         },
                         {
                           "name": "SeekPreRoll",
                           "value": 80000000,
                           "unit": "ns",
-                          "offset": 160,
+                          "offset": 152,
                           "length": 7
                         },
                         {
                           "name": "Audio",
-                          "offset": 167,
+                          "offset": 159,
                           "length": 15,
                           "children": [
                             {
                               "name": "SamplingFrequency",
                               "value": 48000,
                               "unit": "Hz",
-                              "offset": 169,
+                              "offset": 161,
                               "length": 10
                             },
                             {
                               "name": "Channels",
                               "value": 1,
-                              "offset": 179,
+                              "offset": 171,
                               "length": 3
                             }
                           ]
@@ -183,413 +183,413 @@
                 },
                 {
                   "name": "Chapters",
-                  "offset": 182,
+                  "offset": 174,
                   "length": 414,
                   "children": [
                     {
                       "name": "EditionEntry",
-                      "offset": 188,
+                      "offset": 180,
                       "length": 408,
                       "children": [
                         {
                           "name": "ChapterAtom",
-                          "offset": 192,
+                          "offset": 184,
                           "length": 404,
                           "children": [
                             {
                               "name": "ChapterUID",
                               "value": 1,
-                              "offset": 195,
+                              "offset": 187,
                               "length": 4
                             },
                             {
                               "name": "ChapterAtom",
-                              "offset": 199,
+                              "offset": 191,
                               "length": 397,
                               "children": [
                                 {
                                   "name": "ChapterUID",
                                   "value": 1,
-                                  "offset": 202,
+                                  "offset": 194,
                                   "length": 4
                                 },
                                 {
                                   "name": "ChapterAtom",
-                                  "offset": 206,
+                                  "offset": 198,
                                   "length": 390,
                                   "children": [
                                     {
                                       "name": "ChapterUID",
                                       "value": 1,
-                                      "offset": 209,
+                                      "offset": 201,
                                       "length": 4
                                     },
                                     {
                                       "name": "ChapterAtom",
-                                      "offset": 213,
+                                      "offset": 205,
                                       "length": 383,
                                       "children": [
                                         {
                                           "name": "ChapterUID",
                                           "value": 1,
-                                          "offset": 216,
+                                          "offset": 208,
                                           "length": 4
                                         },
                                         {
                                           "name": "ChapterAtom",
-                                          "offset": 220,
+                                          "offset": 212,
                                           "length": 376,
                                           "children": [
                                             {
                                               "name": "ChapterUID",
                                               "value": 1,
-                                              "offset": 223,
+                                              "offset": 215,
                                               "length": 4
                                             },
                                             {
                                               "name": "ChapterAtom",
-                                              "offset": 227,
+                                              "offset": 219,
                                               "length": 369,
                                               "children": [
                                                 {
                                                   "name": "ChapterUID",
                                                   "value": 1,
-                                                  "offset": 230,
+                                                  "offset": 222,
                                                   "length": 4
                                                 },
                                                 {
                                                   "name": "ChapterAtom",
-                                                  "offset": 234,
+                                                  "offset": 226,
                                                   "length": 362,
                                                   "children": [
                                                     {
                                                       "name": "ChapterUID",
                                                       "value": 1,
-                                                      "offset": 237,
+                                                      "offset": 229,
                                                       "length": 4
                                                     },
                                                     {
                                                       "name": "ChapterAtom",
-                                                      "offset": 241,
+                                                      "offset": 233,
                                                       "length": 355,
                                                       "children": [
                                                         {
                                                           "name": "ChapterUID",
                                                           "value": 1,
-                                                          "offset": 244,
+                                                          "offset": 236,
                                                           "length": 4
                                                         },
                                                         {
                                                           "name": "ChapterAtom",
-                                                          "offset": 248,
+                                                          "offset": 240,
                                                           "length": 348,
                                                           "children": [
                                                             {
                                                               "name": "ChapterUID",
                                                               "value": 1,
-                                                              "offset": 251,
+                                                              "offset": 243,
                                                               "length": 4
                                                             },
                                                             {
                                                               "name": "ChapterAtom",
-                                                              "offset": 255,
+                                                              "offset": 247,
                                                               "length": 341,
                                                               "children": [
                                                                 {
                                                                   "name": "ChapterUID",
                                                                   "value": 1,
-                                                                  "offset": 258,
+                                                                  "offset": 250,
                                                                   "length": 4
                                                                 },
                                                                 {
                                                                   "name": "ChapterAtom",
-                                                                  "offset": 262,
+                                                                  "offset": 254,
                                                                   "length": 334,
                                                                   "children": [
                                                                     {
                                                                       "name": "ChapterUID",
                                                                       "value": 1,
-                                                                      "offset": 265,
+                                                                      "offset": 257,
                                                                       "length": 4
                                                                     },
                                                                     {
                                                                       "name": "ChapterAtom",
-                                                                      "offset": 269,
+                                                                      "offset": 261,
                                                                       "length": 327,
                                                                       "children": [
                                                                         {
                                                                           "name": "ChapterUID",
                                                                           "value": 1,
-                                                                          "offset": 272,
+                                                                          "offset": 264,
                                                                           "length": 4
                                                                         },
                                                                         {
                                                                           "name": "ChapterAtom",
-                                                                          "offset": 276,
+                                                                          "offset": 268,
                                                                           "length": 320,
                                                                           "children": [
                                                                             {
                                                                               "name": "ChapterUID",
                                                                               "value": 1,
-                                                                              "offset": 279,
+                                                                              "offset": 271,
                                                                               "length": 4
                                                                             },
                                                                             {
                                                                               "name": "ChapterAtom",
-                                                                              "offset": 283,
+                                                                              "offset": 275,
                                                                               "length": 313,
                                                                               "children": [
                                                                                 {
                                                                                   "name": "ChapterUID",
                                                                                   "value": 1,
-                                                                                  "offset": 286,
+                                                                                  "offset": 278,
                                                                                   "length": 4
                                                                                 },
                                                                                 {
                                                                                   "name": "ChapterAtom",
-                                                                                  "offset": 290,
+                                                                                  "offset": 282,
                                                                                   "length": 306,
                                                                                   "children": [
                                                                                     {
                                                                                       "name": "ChapterUID",
                                                                                       "value": 1,
-                                                                                      "offset": 293,
+                                                                                      "offset": 285,
                                                                                       "length": 4
                                                                                     },
                                                                                     {
                                                                                       "name": "ChapterAtom",
-                                                                                      "offset": 297,
+                                                                                      "offset": 289,
                                                                                       "length": 299,
                                                                                       "children": [
                                                                                         {
                                                                                           "name": "ChapterUID",
                                                                                           "value": 1,
-                                                                                          "offset": 300,
+                                                                                          "offset": 292,
                                                                                           "length": 4
                                                                                         },
                                                                                         {
                                                                                           "name": "ChapterAtom",
-                                                                                          "offset": 304,
+                                                                                          "offset": 296,
                                                                                           "length": 292,
                                                                                           "children": [
                                                                                             {
                                                                                               "name": "ChapterUID",
                                                                                               "value": 1,
-                                                                                              "offset": 307,
+                                                                                              "offset": 299,
                                                                                               "length": 4
                                                                                             },
                                                                                             {
                                                                                               "name": "ChapterAtom",
-                                                                                              "offset": 311,
+                                                                                              "offset": 303,
                                                                                               "length": 285,
                                                                                               "children": [
                                                                                                 {
                                                                                                   "name": "ChapterUID",
                                                                                                   "value": 1,
-                                                                                                  "offset": 314,
+                                                                                                  "offset": 306,
                                                                                                   "length": 4
                                                                                                 },
                                                                                                 {
                                                                                                   "name": "ChapterAtom",
-                                                                                                  "offset": 318,
+                                                                                                  "offset": 310,
                                                                                                   "length": 278,
                                                                                                   "children": [
                                                                                                     {
                                                                                                       "name": "ChapterUID",
                                                                                                       "value": 1,
-                                                                                                      "offset": 321,
+                                                                                                      "offset": 313,
                                                                                                       "length": 4
                                                                                                     },
                                                                                                     {
                                                                                                       "name": "ChapterAtom",
-                                                                                                      "offset": 325,
+                                                                                                      "offset": 317,
                                                                                                       "length": 271,
                                                                                                       "children": [
                                                                                                         {
                                                                                                           "name": "ChapterUID",
                                                                                                           "value": 1,
-                                                                                                          "offset": 328,
+                                                                                                          "offset": 320,
                                                                                                           "length": 4
                                                                                                         },
                                                                                                         {
                                                                                                           "name": "ChapterAtom",
-                                                                                                          "offset": 332,
+                                                                                                          "offset": 324,
                                                                                                           "length": 264,
                                                                                                           "children": [
                                                                                                             {
                                                                                                               "name": "ChapterUID",
                                                                                                               "value": 1,
-                                                                                                              "offset": 335,
+                                                                                                              "offset": 327,
                                                                                                               "length": 4
                                                                                                             },
                                                                                                             {
                                                                                                               "name": "ChapterAtom",
-                                                                                                              "offset": 339,
+                                                                                                              "offset": 331,
                                                                                                               "length": 257,
                                                                                                               "children": [
                                                                                                                 {
                                                                                                                   "name": "ChapterUID",
                                                                                                                   "value": 1,
-                                                                                                                  "offset": 342,
+                                                                                                                  "offset": 334,
                                                                                                                   "length": 4
                                                                                                                 },
                                                                                                                 {
                                                                                                                   "name": "ChapterAtom",
-                                                                                                                  "offset": 346,
+                                                                                                                  "offset": 338,
                                                                                                                   "length": 250,
                                                                                                                   "children": [
                                                                                                                     {
                                                                                                                       "name": "ChapterUID",
                                                                                                                       "value": 1,
-                                                                                                                      "offset": 349,
+                                                                                                                      "offset": 341,
                                                                                                                       "length": 4
                                                                                                                     },
                                                                                                                     {
                                                                                                                       "name": "ChapterAtom",
-                                                                                                                      "offset": 353,
+                                                                                                                      "offset": 345,
                                                                                                                       "length": 243,
                                                                                                                       "children": [
                                                                                                                         {
                                                                                                                           "name": "ChapterUID",
                                                                                                                           "value": 1,
-                                                                                                                          "offset": 356,
+                                                                                                                          "offset": 348,
                                                                                                                           "length": 4
                                                                                                                         },
                                                                                                                         {
                                                                                                                           "name": "ChapterAtom",
-                                                                                                                          "offset": 360,
+                                                                                                                          "offset": 352,
                                                                                                                           "length": 236,
                                                                                                                           "children": [
                                                                                                                             {
                                                                                                                               "name": "ChapterUID",
                                                                                                                               "value": 1,
-                                                                                                                              "offset": 363,
+                                                                                                                              "offset": 355,
                                                                                                                               "length": 4
                                                                                                                             },
                                                                                                                             {
                                                                                                                               "name": "ChapterAtom",
-                                                                                                                              "offset": 367,
+                                                                                                                              "offset": 359,
                                                                                                                               "length": 229,
                                                                                                                               "children": [
                                                                                                                                 {
                                                                                                                                   "name": "ChapterUID",
                                                                                                                                   "value": 1,
-                                                                                                                                  "offset": 370,
+                                                                                                                                  "offset": 362,
                                                                                                                                   "length": 4
                                                                                                                                 },
                                                                                                                                 {
                                                                                                                                   "name": "ChapterAtom",
-                                                                                                                                  "offset": 374,
+                                                                                                                                  "offset": 366,
                                                                                                                                   "length": 222,
                                                                                                                                   "children": [
                                                                                                                                     {
                                                                                                                                       "name": "ChapterUID",
                                                                                                                                       "value": 1,
-                                                                                                                                      "offset": 377,
+                                                                                                                                      "offset": 369,
                                                                                                                                       "length": 4
                                                                                                                                     },
                                                                                                                                     {
                                                                                                                                       "name": "ChapterAtom",
-                                                                                                                                      "offset": 381,
+                                                                                                                                      "offset": 373,
                                                                                                                                       "length": 215,
                                                                                                                                       "children": [
                                                                                                                                         {
                                                                                                                                           "name": "ChapterUID",
                                                                                                                                           "value": 1,
-                                                                                                                                          "offset": 384,
+                                                                                                                                          "offset": 376,
                                                                                                                                           "length": 4
                                                                                                                                         },
                                                                                                                                         {
                                                                                                                                           "name": "ChapterAtom",
-                                                                                                                                          "offset": 388,
+                                                                                                                                          "offset": 380,
                                                                                                                                           "length": 208,
                                                                                                                                           "children": [
                                                                                                                                             {
                                                                                                                                               "name": "ChapterUID",
                                                                                                                                               "value": 1,
-                                                                                                                                              "offset": 391,
+                                                                                                                                              "offset": 383,
                                                                                                                                               "length": 4
                                                                                                                                             },
                                                                                                                                             {
                                                                                                                                               "name": "ChapterAtom",
-                                                                                                                                              "offset": 395,
+                                                                                                                                              "offset": 387,
                                                                                                                                               "length": 201,
                                                                                                                                               "children": [
                                                                                                                                                 {
                                                                                                                                                   "name": "ChapterUID",
                                                                                                                                                   "value": 1,
-                                                                                                                                                  "offset": 398,
+                                                                                                                                                  "offset": 390,
                                                                                                                                                   "length": 4
                                                                                                                                                 },
                                                                                                                                                 {
                                                                                                                                                   "name": "ChapterAtom",
-                                                                                                                                                  "offset": 402,
+                                                                                                                                                  "offset": 394,
                                                                                                                                                   "length": 194,
                                                                                                                                                   "children": [
                                                                                                                                                     {
                                                                                                                                                       "name": "ChapterUID",
                                                                                                                                                       "value": 1,
-                                                                                                                                                      "offset": 405,
+                                                                                                                                                      "offset": 397,
                                                                                                                                                       "length": 4
                                                                                                                                                     },
                                                                                                                                                     {
                                                                                                                                                       "name": "ChapterAtom",
-                                                                                                                                                      "offset": 409,
+                                                                                                                                                      "offset": 401,
                                                                                                                                                       "length": 187,
                                                                                                                                                       "children": [
                                                                                                                                                         {
                                                                                                                                                           "name": "ChapterUID",
                                                                                                                                                           "value": 1,
-                                                                                                                                                          "offset": 412,
+                                                                                                                                                          "offset": 404,
                                                                                                                                                           "length": 4
                                                                                                                                                         },
                                                                                                                                                         {
                                                                                                                                                           "name": "ChapterAtom",
-                                                                                                                                                          "offset": 416,
+                                                                                                                                                          "offset": 408,
                                                                                                                                                           "length": 180,
                                                                                                                                                           "children": [
                                                                                                                                                             {
                                                                                                                                                               "name": "ChapterUID",
                                                                                                                                                               "value": 1,
-                                                                                                                                                              "offset": 419,
+                                                                                                                                                              "offset": 411,
                                                                                                                                                               "length": 4
                                                                                                                                                             },
                                                                                                                                                             {
                                                                                                                                                               "name": "ChapterAtom",
-                                                                                                                                                              "offset": 423,
+                                                                                                                                                              "offset": 415,
                                                                                                                                                               "length": 173,
                                                                                                                                                               "children": [
                                                                                                                                                                 {
                                                                                                                                                                   "name": "ChapterUID",
                                                                                                                                                                   "value": 1,
-                                                                                                                                                                  "offset": 426,
+                                                                                                                                                                  "offset": 418,
                                                                                                                                                                   "length": 4
                                                                                                                                                                 },
                                                                                                                                                                 {
                                                                                                                                                                   "name": "ChapterAtom",
-                                                                                                                                                                  "offset": 430,
+                                                                                                                                                                  "offset": 422,
                                                                                                                                                                   "length": 166,
                                                                                                                                                                   "children": [
                                                                                                                                                                     {
                                                                                                                                                                       "name": "ChapterUID",
                                                                                                                                                                       "value": 1,
-                                                                                                                                                                      "offset": 433,
+                                                                                                                                                                      "offset": 425,
                                                                                                                                                                       "length": 4
                                                                                                                                                                     },
                                                                                                                                                                     {
                                                                                                                                                                       "name": "ChapterAtom",
-                                                                                                                                                                      "offset": 437,
+                                                                                                                                                                      "offset": 429,
                                                                                                                                                                       "length": 159,
                                                                                                                                                                       "children": [
                                                                                                                                                                         {
                                                                                                                                                                           "name": "ChapterUID",
                                                                                                                                                                           "value": 1,
-                                                                                                                                                                          "offset": 440,
+                                                                                                                                                                          "offset": 432,
                                                                                                                                                                           "length": 4
                                                                                                                                                                         },
                                                                                                                                                                         {
                                                                                                                                                                           "name": "ChapterAtom",
-                                                                                                                                                                          "offset": 444,
+                                                                                                                                                                          "offset": 436,
                                                                                                                                                                           "length": 152
                                                                                                                                                                         }
                                                                                                                                                                       ]
@@ -673,14 +673,14 @@
                   "kind": "Stream",
                   "value": 2,
                   "unit": "blocks",
-                  "offset": 596,
+                  "offset": 588,
                   "length": 101,
                   "children": [
                     {
                       "name": "Timestamp",
                       "value": 0,
                       "unit": "ticks",
-                      "offset": 601,
+                      "offset": 593,
                       "length": 3
                     },
                     {
@@ -688,32 +688,32 @@
                       "kind": "Frame",
                       "value": 1,
                       "unit": "frames",
-                      "offset": 604,
+                      "offset": 596,
                       "length": 46,
                       "children": [
                         {
                           "name": "Track Number",
                           "value": 1,
-                          "offset": 606,
+                          "offset": 598,
                           "length": 1
                         },
                         {
                           "name": "Timestamp",
                           "value": 0,
                           "unit": "ticks",
-                          "offset": 607,
+                          "offset": 599,
                           "length": 2
                         },
                         {
                           "name": "Flags",
                           "value": 128,
-                          "offset": 609,
+                          "offset": 601,
                           "length": 1,
                           "children": [
                             {
                               "name": "Keyframe",
                               "value": true,
-                              "offset": 609,
+                              "offset": 601,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 1
@@ -721,7 +721,7 @@
                             {
                               "name": "Reserved",
                               "value": 0,
-                              "offset": 609,
+                              "offset": 601,
                               "length": 1,
                               "bitOffset": 1,
                               "bitLength": 3
@@ -729,7 +729,7 @@
                             {
                               "name": "Invisible",
                               "value": false,
-                              "offset": 609,
+                              "offset": 601,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
@@ -737,7 +737,7 @@
                             {
                               "name": "Lacing",
                               "value": "0 (none)",
-                              "offset": 609,
+                              "offset": 601,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 2
@@ -745,7 +745,7 @@
                             {
                               "name": "Discardable",
                               "value": false,
-                              "offset": 609,
+                              "offset": 601,
                               "length": 1,
                               "bitOffset": 7,
                               "bitLength": 1
@@ -756,7 +756,7 @@
                           "name": "Frame",
                           "value": 40,
                           "unit": "bytes",
-                          "offset": 610,
+                          "offset": 602,
                           "length": 40
                         }
                       ]
@@ -766,32 +766,32 @@
                       "kind": "Frame",
                       "value": 1,
                       "unit": "frames",
-                      "offset": 650,
+                      "offset": 642,
                       "length": 47,
                       "children": [
                         {
                           "name": "Track Number",
                           "value": 1,
-                          "offset": 652,
+                          "offset": 644,
                           "length": 1
                         },
                         {
                           "name": "Timestamp",
                           "value": 20,
                           "unit": "ticks",
-                          "offset": 653,
+                          "offset": 645,
                           "length": 2
                         },
                         {
                           "name": "Flags",
                           "value": 128,
-                          "offset": 655,
+                          "offset": 647,
                           "length": 1,
                           "children": [
                             {
                               "name": "Keyframe",
                               "value": true,
-                              "offset": 655,
+                              "offset": 647,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 1
@@ -799,7 +799,7 @@
                             {
                               "name": "Reserved",
                               "value": 0,
-                              "offset": 655,
+                              "offset": 647,
                               "length": 1,
                               "bitOffset": 1,
                               "bitLength": 3
@@ -807,7 +807,7 @@
                             {
                               "name": "Invisible",
                               "value": false,
-                              "offset": 655,
+                              "offset": 647,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
@@ -815,7 +815,7 @@
                             {
                               "name": "Lacing",
                               "value": "0 (none)",
-                              "offset": 655,
+                              "offset": 647,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 2
@@ -823,7 +823,7 @@
                             {
                               "name": "Discardable",
                               "value": false,
-                              "offset": 655,
+                              "offset": 647,
                               "length": 1,
                               "bitOffset": 7,
                               "bitLength": 1
@@ -834,7 +834,7 @@
                           "name": "Frame",
                           "value": 41,
                           "unit": "bytes",
-                          "offset": 656,
+                          "offset": 648,
                           "length": 41
                         }
                       ]
@@ -847,64 +847,64 @@
               "name": "Track 1 Frames",
               "value": 2,
               "unit": "frames",
-              "offset": 135,
+              "offset": 127,
               "length": 562,
               "children": [
                 {
                   "name": "Opus Head",
                   "value": "1 channel, pre-skip 312",
-                  "offset": 135,
+                  "offset": 127,
                   "length": 19,
                   "children": [
                     {
                       "name": "Magic Signature",
                       "value": "OpusHead",
-                      "offset": 135,
+                      "offset": 127,
                       "length": 8
                     },
                     {
                       "name": "Version",
                       "value": 1,
-                      "offset": 143,
+                      "offset": 135,
                       "length": 1
                     },
                     {
                       "name": "Channels",
                       "value": 1,
-                      "offset": 144,
+                      "offset": 136,
                       "length": 1
                     },
                     {
                       "name": "Channel Layout",
                       "value": "Mono: mono",
-                      "offset": 144,
+                      "offset": 136,
                       "length": 1
                     },
                     {
                       "name": "Pre-skip",
                       "value": 312,
                       "unit": "samples",
-                      "offset": 145,
+                      "offset": 137,
                       "length": 2
                     },
                     {
                       "name": "Input Sample Rate",
                       "value": 48000,
                       "unit": "Hz",
-                      "offset": 147,
+                      "offset": 139,
                       "length": 4
                     },
                     {
                       "name": "Output Gain",
                       "value": 0,
                       "unit": "dB",
-                      "offset": 151,
+                      "offset": 143,
                       "length": 2
                     },
                     {
                       "name": "Mapping Family",
                       "value": "0 (mono or stereo)",
-                      "offset": 153,
+                      "offset": 145,
                       "length": 1
                     }
                   ]
@@ -913,92 +913,92 @@
                   "name": "Statistics",
                   "kind": "Statistics",
                   "value": "2 packets, 0.034 s",
-                  "offset": 610,
+                  "offset": 602,
                   "length": 87,
                   "children": [
                     {
                       "name": "Packets",
                       "value": 2,
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Frames",
                       "value": 2,
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Decoded Samples",
                       "value": 1920,
                       "unit": "samples",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Pre-skip",
                       "value": 312,
                       "unit": "samples",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Samples",
                       "value": 1608,
                       "unit": "samples",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Duration",
                       "value": 0.0335,
                       "unit": "s",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "IsVbr",
                       "value": true,
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Average Bitrate",
                       "value": 16.2,
                       "unit": "kbps",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Minimum Bitrate",
                       "value": 16,
                       "unit": "kbps",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Maximum Bitrate",
                       "value": 16.4,
                       "unit": "kbps",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Packet Sizes",
                       "value": "40 to 41 bytes, 40.5 on average",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87
                     },
                     {
                       "name": "Modes",
                       "value": "1 mode",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87,
                       "children": [
                         {
                           "name": "CELT-only",
                           "value": "2 frames (100.0%)",
-                          "offset": 610,
+                          "offset": 602,
                           "length": 87
                         }
                       ]
@@ -1006,13 +1006,13 @@
                     {
                       "name": "Bandwidths",
                       "value": "1 bandwidth",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87,
                       "children": [
                         {
                           "name": "Fullband (20 kHz)",
                           "value": "2 frames (100.0%)",
-                          "offset": 610,
+                          "offset": 602,
                           "length": 87
                         }
                       ]
@@ -1020,13 +1020,13 @@
                     {
                       "name": "Frame Sizes",
                       "value": "1 size",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87,
                       "children": [
                         {
                           "name": "20 ms",
                           "value": "2 frames (100.0%)",
-                          "offset": 610,
+                          "offset": 602,
                           "length": 87
                         }
                       ]
@@ -1034,19 +1034,19 @@
                     {
                       "name": "Stereo Coding",
                       "value": "0 stereo packets",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87,
                       "children": [
                         {
                           "name": "Stereo",
                           "value": "0 packets (0.0%)",
-                          "offset": 610,
+                          "offset": 602,
                           "length": 87
                         },
                         {
                           "name": "Mono",
                           "value": "2 packets (100.0%)",
-                          "offset": 610,
+                          "offset": 602,
                           "length": 87
                         }
                       ]
@@ -1054,13 +1054,13 @@
                     {
                       "name": "Frame Packing",
                       "value": "1 code",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 87,
                       "children": [
                         {
                           "name": "Code 0 (one frame)",
                           "value": "2 packets (100.0%)",
-                          "offset": 610,
+                          "offset": 602,
                           "length": 87
                         }
                       ]
@@ -1072,26 +1072,26 @@
                   "kind": "Stream",
                   "value": 2,
                   "unit": "packets",
-                  "offset": 610,
+                  "offset": 602,
                   "length": 87,
                   "children": [
                     {
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "40 bytes, CELT-only, fullband, 20 ms, mono, 1 frame",
-                      "offset": 610,
+                      "offset": 602,
                       "length": 40,
                       "children": [
                         {
                           "name": "TOC",
                           "value": "CELT-only, fullband, 20 ms, mono, code 0",
-                          "offset": 610,
+                          "offset": 602,
                           "length": 1,
                           "children": [
                             {
                               "name": "Config",
                               "value": "31: CELT-only, fullband, 20 ms",
-                              "offset": 610,
+                              "offset": 602,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 5
@@ -1099,7 +1099,7 @@
                             {
                               "name": "IsStereo",
                               "value": false,
-                              "offset": 610,
+                              "offset": 602,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 1
@@ -1107,7 +1107,7 @@
                             {
                               "name": "Frame Count Code",
                               "value": "0 (one frame)",
-                              "offset": 610,
+                              "offset": 602,
                               "length": 1,
                               "bitOffset": 6,
                               "bitLength": 2
@@ -1118,7 +1118,7 @@
                           "name": "Frame",
                           "value": 39,
                           "unit": "bytes",
-                          "offset": 611,
+                          "offset": 603,
                           "length": 39
                         }
                       ]
@@ -1127,19 +1127,19 @@
                       "name": "Packet",
                       "kind": "Frame",
                       "value": "41 bytes, CELT-only, fullband, 20 ms, mono, 1 frame",
-                      "offset": 656,
+                      "offset": 648,
                       "length": 41,
                       "children": [
                         {
                           "name": "TOC",
                           "value": "CELT-only, fullband, 20 ms, mono, code 0",
-                          "offset": 656,
+                          "offset": 648,
                           "length": 1,
                           "children": [
                             {
                               "name": "Config",
                               "value": "31: CELT-only, fullband, 20 ms",
-                              "offset": 656,
+                              "offset": 648,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 5
@@ -1147,7 +1147,7 @@
                             {
                               "name": "IsStereo",
                               "value": false,
-                              "offset": 656,
+                              "offset": 648,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 1
@@ -1155,7 +1155,7 @@
                             {
                               "name": "Frame Count Code",
                               "value": "0 (one frame)",
-                              "offset": 656,
+                              "offset": 648,
                               "length": 1,
                               "bitOffset": 6,
                               "bitLength": 2
@@ -1166,10 +1166,36 @@
                           "name": "Frame",
                           "value": 40,
                           "unit": "bytes",
-                          "offset": 657,
+                          "offset": 649,
                           "length": 40
                         }
                       ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "encspect fixtures",
+                  "offset": 127,
+                  "length": 562,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 127,
+                      "length": 562
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment MuxingApp element at 0x3A names \"encspect fixtures\"",
+                      "offset": 127,
+                      "length": 562
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment WritingApp element at 0x4E names \"encspect fixtures\"",
+                      "offset": 127,
+                      "length": 562
                     }
                   ]
                 }
@@ -1200,14 +1226,16 @@
         "averageBitrate": 16.2,
         "isVbr": true,
         "playbackGroup": 1,
+        "writer": "encspect fixtures",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
             "x": [
-              610,
-              656
+              602,
+              648
             ],
             "values": [
               16,
@@ -1232,8 +1260,8 @@
       {
         "severity": "Warning",
         "code": "matroska.too-deep",
-        "message": "An element nests more than 40 levels deep, which no Matroska file does; the first is the ChapterAtom at 0x1BC, whose contents are not read.",
-        "offset": 444,
+        "message": "An element nests more than 40 levels deep, which no Matroska file does; the first is the ChapterAtom at 0x1B4, whose contents are not read.",
+        "offset": 436,
         "length": 152,
         "path": [
           0,

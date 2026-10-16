@@ -10,13 +10,13 @@
       "name": "File",
       "value": "WebM",
       "offset": 0,
-      "length": 454,
+      "length": 446,
       "children": [
         {
           "name": "WebM",
           "value": "1 audio track",
           "offset": 0,
-          "length": 454,
+          "length": 446,
           "children": [
             {
               "name": "EBML",
@@ -73,12 +73,12 @@
               "name": "Segment",
               "value": "1 track, 1 cluster",
               "offset": 36,
-              "length": 418,
+              "length": 410,
               "children": [
                 {
                   "name": "Info",
                   "offset": 42,
-                  "length": 71,
+                  "length": 63,
                   "children": [
                     {
                       "name": "TimestampScale",
@@ -102,71 +102,97 @@
                     },
                     {
                       "name": "WritingApp",
-                      "value": "make_matroska_fixtures.py",
+                      "value": "encspect fixtures",
                       "offset": 85,
-                      "length": 28
+                      "length": 20
                     }
                   ]
                 },
                 {
                   "name": "Tracks",
-                  "offset": 113,
+                  "offset": 105,
                   "length": 52,
                   "children": [
                     {
                       "name": "TrackEntry",
                       "value": "audio, A_PCM/INT/LIT, 2 channels, 48000 Hz",
-                      "offset": 118,
+                      "offset": 110,
                       "length": 47,
                       "children": [
                         {
                           "name": "TrackNumber",
                           "value": 1,
-                          "offset": 120,
+                          "offset": 112,
                           "length": 3
                         },
                         {
                           "name": "TrackUID",
                           "value": 4097,
-                          "offset": 123,
+                          "offset": 115,
                           "length": 5
                         },
                         {
                           "name": "TrackType",
                           "value": "2 (audio)",
-                          "offset": 128,
+                          "offset": 120,
                           "length": 3
                         },
                         {
                           "name": "CodecID",
                           "value": "A_PCM/INT/LIT",
-                          "offset": 131,
+                          "offset": 123,
                           "length": 15
                         },
                         {
                           "name": "Audio",
-                          "offset": 146,
+                          "offset": 138,
                           "length": 19,
                           "children": [
                             {
                               "name": "SamplingFrequency",
                               "value": 48000,
                               "unit": "Hz",
-                              "offset": 148,
+                              "offset": 140,
                               "length": 10
                             },
                             {
                               "name": "Channels",
                               "value": 2,
-                              "offset": 158,
+                              "offset": 150,
                               "length": 3
                             },
                             {
                               "name": "BitDepth",
                               "value": 16,
                               "unit": "bits",
-                              "offset": 161,
+                              "offset": 153,
                               "length": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "encspect fixtures",
+                          "offset": 110,
+                          "length": 47,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 110,
+                              "length": 47
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "Segment MuxingApp element at 0x41 names \"encspect fixtures\"",
+                              "offset": 110,
+                              "length": 47
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "Segment WritingApp element at 0x55 names \"encspect fixtures\"",
+                              "offset": 110,
+                              "length": 47
                             }
                           ]
                         }
@@ -179,14 +205,14 @@
                   "kind": "Stream",
                   "value": 4,
                   "unit": "blocks",
-                  "offset": 165,
+                  "offset": 157,
                   "length": 289,
                   "children": [
                     {
                       "name": "Timestamp",
                       "value": 0,
                       "unit": "ticks",
-                      "offset": 171,
+                      "offset": 163,
                       "length": 3
                     },
                     {
@@ -194,32 +220,32 @@
                       "kind": "Frame",
                       "value": 1,
                       "unit": "frames",
-                      "offset": 174,
+                      "offset": 166,
                       "length": 70,
                       "children": [
                         {
                           "name": "Track Number",
                           "value": 1,
-                          "offset": 176,
+                          "offset": 168,
                           "length": 1
                         },
                         {
                           "name": "Timestamp",
                           "value": 0,
                           "unit": "ticks",
-                          "offset": 177,
+                          "offset": 169,
                           "length": 2
                         },
                         {
                           "name": "Flags",
                           "value": 128,
-                          "offset": 179,
+                          "offset": 171,
                           "length": 1,
                           "children": [
                             {
                               "name": "Keyframe",
                               "value": true,
-                              "offset": 179,
+                              "offset": 171,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 1
@@ -227,7 +253,7 @@
                             {
                               "name": "Reserved",
                               "value": 0,
-                              "offset": 179,
+                              "offset": 171,
                               "length": 1,
                               "bitOffset": 1,
                               "bitLength": 3
@@ -235,7 +261,7 @@
                             {
                               "name": "Invisible",
                               "value": false,
-                              "offset": 179,
+                              "offset": 171,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
@@ -243,7 +269,7 @@
                             {
                               "name": "Lacing",
                               "value": "0 (none)",
-                              "offset": 179,
+                              "offset": 171,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 2
@@ -251,7 +277,7 @@
                             {
                               "name": "Discardable",
                               "value": false,
-                              "offset": 179,
+                              "offset": 171,
                               "length": 1,
                               "bitOffset": 7,
                               "bitLength": 1
@@ -262,7 +288,7 @@
                           "name": "Frame",
                           "value": 64,
                           "unit": "bytes",
-                          "offset": 180,
+                          "offset": 172,
                           "length": 64
                         }
                       ]
@@ -272,32 +298,32 @@
                       "kind": "Frame",
                       "value": 1,
                       "unit": "frames",
-                      "offset": 244,
+                      "offset": 236,
                       "length": 70,
                       "children": [
                         {
                           "name": "Track Number",
                           "value": 1,
-                          "offset": 246,
+                          "offset": 238,
                           "length": 1
                         },
                         {
                           "name": "Timestamp",
                           "value": 10,
                           "unit": "ticks",
-                          "offset": 247,
+                          "offset": 239,
                           "length": 2
                         },
                         {
                           "name": "Flags",
                           "value": 128,
-                          "offset": 249,
+                          "offset": 241,
                           "length": 1,
                           "children": [
                             {
                               "name": "Keyframe",
                               "value": true,
-                              "offset": 249,
+                              "offset": 241,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 1
@@ -305,7 +331,7 @@
                             {
                               "name": "Reserved",
                               "value": 0,
-                              "offset": 249,
+                              "offset": 241,
                               "length": 1,
                               "bitOffset": 1,
                               "bitLength": 3
@@ -313,7 +339,7 @@
                             {
                               "name": "Invisible",
                               "value": false,
-                              "offset": 249,
+                              "offset": 241,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
@@ -321,7 +347,7 @@
                             {
                               "name": "Lacing",
                               "value": "0 (none)",
-                              "offset": 249,
+                              "offset": 241,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 2
@@ -329,7 +355,7 @@
                             {
                               "name": "Discardable",
                               "value": false,
-                              "offset": 249,
+                              "offset": 241,
                               "length": 1,
                               "bitOffset": 7,
                               "bitLength": 1
@@ -340,7 +366,7 @@
                           "name": "Frame",
                           "value": 64,
                           "unit": "bytes",
-                          "offset": 250,
+                          "offset": 242,
                           "length": 64
                         }
                       ]
@@ -350,32 +376,32 @@
                       "kind": "Frame",
                       "value": 1,
                       "unit": "frames",
-                      "offset": 314,
+                      "offset": 306,
                       "length": 70,
                       "children": [
                         {
                           "name": "Track Number",
                           "value": 1,
-                          "offset": 316,
+                          "offset": 308,
                           "length": 1
                         },
                         {
                           "name": "Timestamp",
                           "value": 20,
                           "unit": "ticks",
-                          "offset": 317,
+                          "offset": 309,
                           "length": 2
                         },
                         {
                           "name": "Flags",
                           "value": 128,
-                          "offset": 319,
+                          "offset": 311,
                           "length": 1,
                           "children": [
                             {
                               "name": "Keyframe",
                               "value": true,
-                              "offset": 319,
+                              "offset": 311,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 1
@@ -383,7 +409,7 @@
                             {
                               "name": "Reserved",
                               "value": 0,
-                              "offset": 319,
+                              "offset": 311,
                               "length": 1,
                               "bitOffset": 1,
                               "bitLength": 3
@@ -391,7 +417,7 @@
                             {
                               "name": "Invisible",
                               "value": false,
-                              "offset": 319,
+                              "offset": 311,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
@@ -399,7 +425,7 @@
                             {
                               "name": "Lacing",
                               "value": "0 (none)",
-                              "offset": 319,
+                              "offset": 311,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 2
@@ -407,7 +433,7 @@
                             {
                               "name": "Discardable",
                               "value": false,
-                              "offset": 319,
+                              "offset": 311,
                               "length": 1,
                               "bitOffset": 7,
                               "bitLength": 1
@@ -418,7 +444,7 @@
                           "name": "Frame",
                           "value": 64,
                           "unit": "bytes",
-                          "offset": 320,
+                          "offset": 312,
                           "length": 64
                         }
                       ]
@@ -428,32 +454,32 @@
                       "kind": "Frame",
                       "value": 1,
                       "unit": "frames",
-                      "offset": 384,
+                      "offset": 376,
                       "length": 70,
                       "children": [
                         {
                           "name": "Track Number",
                           "value": 1,
-                          "offset": 386,
+                          "offset": 378,
                           "length": 1
                         },
                         {
                           "name": "Timestamp",
                           "value": 30,
                           "unit": "ticks",
-                          "offset": 387,
+                          "offset": 379,
                           "length": 2
                         },
                         {
                           "name": "Flags",
                           "value": 128,
-                          "offset": 389,
+                          "offset": 381,
                           "length": 1,
                           "children": [
                             {
                               "name": "Keyframe",
                               "value": true,
-                              "offset": 389,
+                              "offset": 381,
                               "length": 1,
                               "bitOffset": 0,
                               "bitLength": 1
@@ -461,7 +487,7 @@
                             {
                               "name": "Reserved",
                               "value": 0,
-                              "offset": 389,
+                              "offset": 381,
                               "length": 1,
                               "bitOffset": 1,
                               "bitLength": 3
@@ -469,7 +495,7 @@
                             {
                               "name": "Invisible",
                               "value": false,
-                              "offset": 389,
+                              "offset": 381,
                               "length": 1,
                               "bitOffset": 4,
                               "bitLength": 1
@@ -477,7 +503,7 @@
                             {
                               "name": "Lacing",
                               "value": "0 (none)",
-                              "offset": 389,
+                              "offset": 381,
                               "length": 1,
                               "bitOffset": 5,
                               "bitLength": 2
@@ -485,7 +511,7 @@
                             {
                               "name": "Discardable",
                               "value": false,
-                              "offset": 389,
+                              "offset": 381,
                               "length": 1,
                               "bitOffset": 7,
                               "bitLength": 1
@@ -496,7 +522,7 @@
                           "name": "Frame",
                           "value": 64,
                           "unit": "bytes",
-                          "offset": 390,
+                          "offset": 382,
                           "length": 64
                         }
                       ]
@@ -528,6 +554,8 @@
         "averageBitrate": 102.4,
         "isVbr": false,
         "playbackGroup": 1,
+        "writer": "encspect fixtures",
+        "writerConfidence": "Low",
         "series": []
       }
     ],
@@ -537,7 +565,7 @@
         "code": "matroska.webm-timestamp-scale",
         "message": "The TimestampScale is 500000 ns, where the WebM Container Guidelines set 1,000,000 (a tick of a millisecond).",
         "offset": 36,
-        "length": 418,
+        "length": 410,
         "path": [
           0,
           1
@@ -548,7 +576,7 @@
         "severity": "Info",
         "code": "matroska.codec-not-analyzed",
         "message": "Track 1 is coded as PCM (integer, little-endian) (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
-        "offset": 131,
+        "offset": 123,
         "length": 15,
         "path": [
           0,
@@ -563,7 +591,7 @@
         "severity": "Info",
         "code": "matroska.webm-codec",
         "message": "A track's codec is none WebM allows (VP8, VP9 or AV1 video, Vorbis or Opus audio, WebVTT; the WebM Container Guidelines); the first is A_PCM/INT/LIT in track 1.",
-        "offset": 131,
+        "offset": 123,
         "length": 15,
         "path": [
           0,

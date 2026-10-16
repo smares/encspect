@@ -1,6 +1,6 @@
 {
  "description": "TrackEntries that lack what RFC 9559 requires: no TrackNumber, a TrackNumber of 0, no CodecID, no TrackUID and no TrackType, an audio track with no Audio element, a repeated TrackNumber, and an audio track of 0 channels.",
- "length": 334,
+ "length": 326,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 298,
+     "offset": 290,
      "length": 36,
      "timestamp": 0,
      "size_unknown": false,
@@ -28,10 +28,10 @@
    "info": {
     "timestamp_scale": 1000000,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 294,
-   "declared_end": 334
+   "length": 286,
+   "declared_end": 326
   }
  ],
  "tree": [
@@ -80,12 +80,12 @@
   [
    "Segment",
    40,
-   294,
+   286,
    [
     [
      "Info",
      46,
-     60,
+     52,
      [
       [
        "TimestampScale",
@@ -100,70 +100,70 @@
       [
        "WritingApp",
        78,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     106,
+     98,
      192,
      [
       [
        "TrackEntry",
-       112,
+       104,
        17,
        [
         [
          "TrackUID",
-         114,
+         106,
          4
         ],
         [
          "TrackType",
-         118,
+         110,
          3
         ],
         [
          "CodecID",
-         121,
+         113,
          8
         ]
        ]
       ],
       [
        "TrackEntry",
-       129,
+       121,
        25,
        [
         [
          "TrackNumber",
-         131,
+         123,
          3
         ],
         [
          "TrackUID",
-         134,
+         126,
          4
         ],
         [
          "TrackType",
-         138,
+         130,
          3
         ],
         [
          "CodecID",
-         141,
+         133,
          8
         ],
         [
          "Audio",
-         149,
+         141,
          5,
          [
           [
            "Channels",
-           151,
+           143,
            3
           ]
          ]
@@ -172,59 +172,59 @@
       ],
       [
        "TrackEntry",
-       154,
+       146,
        12,
        [
         [
          "TrackNumber",
-         156,
+         148,
          3
         ],
         [
          "TrackUID",
-         159,
+         151,
          4
+        ],
+        [
+         "TrackType",
+         155,
+         3
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       158,
+       31,
+       [
+        [
+         "TrackNumber",
+         160,
+         3
         ],
         [
          "TrackType",
          163,
          3
-        ]
-       ]
-      ],
-      [
-       "TrackEntry",
-       166,
-       31,
-       [
-        [
-         "TrackNumber",
-         168,
-         3
-        ],
-        [
-         "TrackType",
-         171,
-         3
         ],
         [
          "CodecID",
-         174,
+         166,
          8
         ],
         [
          "Audio",
-         182,
+         174,
          15,
          [
           [
            "SamplingFrequency",
-           184,
+           176,
            10
           ],
           [
            "Channels",
-           194,
+           186,
            3
           ]
          ]
@@ -233,42 +233,42 @@
       ],
       [
        "TrackEntry",
-       197,
+       189,
        42,
        [
         [
          "TrackNumber",
-         199,
+         191,
          3
         ],
         [
          "TrackUID",
-         202,
+         194,
          4
         ],
         [
          "TrackType",
-         206,
+         198,
          3
         ],
         [
          "CodecID",
-         209,
+         201,
          15
         ],
         [
          "Audio",
-         224,
+         216,
          15,
          [
           [
            "SamplingFrequency",
-           226,
+           218,
            10
           ],
           [
            "Channels",
-           236,
+           228,
            3
           ]
          ]
@@ -277,42 +277,42 @@
       ],
       [
        "TrackEntry",
-       239,
+       231,
        42,
        [
         [
          "TrackNumber",
-         241,
+         233,
          3
         ],
         [
          "TrackUID",
-         244,
+         236,
          4
         ],
         [
          "TrackType",
-         248,
+         240,
          3
         ],
         [
          "CodecID",
-         251,
+         243,
          15
         ],
         [
          "Audio",
-         266,
+         258,
          15,
          [
           [
            "SamplingFrequency",
-           268,
+           260,
            10
           ],
           [
            "Channels",
-           278,
+           270,
            3
           ]
          ]
@@ -321,22 +321,22 @@
       ],
       [
        "TrackEntry",
-       281,
+       273,
        17,
        [
         [
          "TrackNumber",
-         283,
+         275,
          3
         ],
         [
          "TrackUID",
-         286,
+         278,
          4
         ],
         [
          "CodecID",
-         290,
+         282,
          8
         ]
        ]
@@ -345,22 +345,22 @@
     ],
     [
      "Cluster",
-     298,
+     290,
      36,
      [
       [
        "Timestamp",
-       303,
+       295,
        3
       ],
       [
        "SimpleBlock",
-       306,
+       298,
        14
       ],
       [
        "SimpleBlock",
-       320,
+       312,
        14
       ]
      ]
@@ -371,7 +371,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 306,
+   "offset": 298,
    "length": 14,
    "track": 5,
    "timestamp": 0,
@@ -380,14 +380,14 @@
    "lacing": "none",
    "frames": [
     [
-     312,
+     304,
      8
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 320,
+   "offset": 312,
    "length": 14,
    "track": 5,
    "timestamp": 10,
@@ -396,7 +396,7 @@
    "lacing": "none",
    "frames": [
     [
-     326,
+     318,
      8
     ]
    ]
@@ -495,6 +495,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": null,
  "findings": [
   {

@@ -95,7 +95,7 @@
                     },
                     {
                       "name": "WritingApp",
-                      "value": "w",
+                      "value": "x",
                       "offset": 62,
                       "length": 4
                     }
@@ -3348,6 +3348,32 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "x",
+                  "offset": 95,
+                  "length": 1144,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 95,
+                      "length": 1144
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment MuxingApp element at 0x3A names \"x\"",
+                      "offset": 95,
+                      "length": 1144
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment WritingApp element at 0x3E names \"x\"",
+                      "offset": 95,
+                      "length": 1144
+                    }
+                  ]
                 }
               ]
             }
@@ -3376,6 +3402,8 @@
         "averageBitrate": 16.347826086956523,
         "isVbr": true,
         "playbackGroup": 1,
+        "writer": "x",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

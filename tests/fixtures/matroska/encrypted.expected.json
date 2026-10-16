@@ -1,6 +1,6 @@
 {
  "description": "A track whose frames are encrypted (ContentEncodingType 1, AES-CTR): the analyzer reports it and does not read the frames.",
- "length": 429,
+ "length": 421,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 232,
+     "offset": 224,
      "length": 197,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 389,
-   "declared_end": 429
+   "length": 381,
+   "declared_end": 421
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   389,
+   381,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,103 +106,103 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      115,
      [
       [
        "TrackEntry",
-       122,
+       114,
        110,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "CodecID",
-         135,
+         127,
          8
         ],
         [
          "CodecPrivate",
-         143,
+         135,
          22
         ],
         [
          "CodecDelay",
-         165,
+         157,
          6
         ],
         [
          "SeekPreRoll",
-         171,
+         163,
          7
         ],
         [
          "ContentEncodings",
-         178,
+         170,
          39,
          [
           [
            "ContentEncoding",
-           181,
+           173,
            36,
            [
             [
              "ContentEncodingOrder",
-             184,
+             176,
              4
             ],
             [
              "ContentEncodingScope",
-             188,
+             180,
              4
             ],
             [
              "ContentEncodingType",
-             192,
+             184,
              4
             ],
             [
              "ContentEncryption",
-             196,
+             188,
              21,
              [
               [
                "ContentEncAlgo",
-               199,
+               191,
                4
               ],
               [
                "ContentEncKeyID",
-               203,
+               195,
                7
               ],
               [
                "ContentEncAESSettings",
-               210,
+               202,
                7,
                [
                 [
                  "AESSettingsCipherMode",
-                 213,
+                 205,
                  4
                 ]
                ]
@@ -215,17 +215,17 @@
         ],
         [
          "Audio",
-         217,
+         209,
          15,
          [
           [
            "SamplingFrequency",
-           219,
+           211,
            10
           ],
           [
            "Channels",
-           229,
+           221,
            3
           ]
          ]
@@ -236,32 +236,32 @@
     ],
     [
      "Cluster",
-     232,
+     224,
      197,
      [
       [
        "Timestamp",
-       238,
+       230,
        3
       ],
       [
        "SimpleBlock",
-       241,
+       233,
        47
       ],
       [
        "SimpleBlock",
-       288,
+       280,
        47
       ],
       [
        "SimpleBlock",
-       335,
+       327,
        47
       ],
       [
        "SimpleBlock",
-       382,
+       374,
        47
       ]
      ]
@@ -272,7 +272,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 241,
+   "offset": 233,
    "length": 47,
    "track": 1,
    "timestamp": 0,
@@ -281,14 +281,14 @@
    "lacing": "none",
    "frames": [
     [
-     247,
+     239,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 288,
+   "offset": 280,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -297,14 +297,14 @@
    "lacing": "none",
    "frames": [
     [
-     294,
+     286,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 335,
+   "offset": 327,
    "length": 47,
    "track": 1,
    "timestamp": 40,
@@ -313,14 +313,14 @@
    "lacing": "none",
    "frames": [
     [
-     341,
+     333,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 382,
+   "offset": 374,
    "length": 47,
    "track": 1,
    "timestamp": 60,
@@ -329,7 +329,7 @@
    "lacing": "none",
    "frames": [
     [
-     388,
+     380,
      41
     ]
    ]
@@ -342,7 +342,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    146,
+    138,
     19
    ],
    "channels": 1,
@@ -362,6 +362,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

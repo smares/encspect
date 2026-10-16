@@ -321,6 +321,25 @@ internal static class TestFiles
         return [.. "ID3"u8, 3, 0, 0, .. syncsafe, .. body];
     }
 
+    // An APEv2 tag with header and footer holding one text item.
+    public static byte[] ApeText(string key, string value)
+    {
+        byte[] data = Encoding.UTF8.GetBytes(value);
+        byte[] body = [.. BitConverter.GetBytes((uint)data.Length), .. BitConverter.GetBytes(0u), .. Encoding.ASCII.GetBytes(key), 0, .. data];
+        byte[] Block(uint flags)
+        {
+            byte[] block = new byte[32];
+            "APETAGEX"u8.CopyTo(block);
+            BinaryPrimitives.WriteUInt32LittleEndian(block.AsSpan(8), 2000);
+            BinaryPrimitives.WriteUInt32LittleEndian(block.AsSpan(12), (uint)(body.Length + 32));
+            BinaryPrimitives.WriteUInt32LittleEndian(block.AsSpan(16), 1);
+            BinaryPrimitives.WriteUInt32LittleEndian(block.AsSpan(20), flags);
+            return block;
+        }
+
+        return [.. Block(0xA0000000), .. body, .. Block(0x80000000)];
+    }
+
     // The FORM/AIFF file of the Gate 1 contract review (gate1/work-host/aiff-id3-chunk.aiff): COMM,
     // an SSND chunk of silence and, last, an "ID3 " chunk holding an ID3v2.4 tag with a footer, so
     // the tag also ends the file. formSize replaces the size FORM states.

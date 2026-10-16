@@ -288,7 +288,7 @@ internal static class Explain
     public const string BitrateSeries = "The bitrate of each program frame, from its bytes over its samples.";
     public const string BitrateOverTimeSeries = "The bitrate of each second, from the frames that start in it.";
 
-    public const string Encoder = "The encoder the file's tags or container name; the AC-3 bit stream carries no encoder name.";
+    public const string Encoder = "The encoder a tag of the file names; the AC-3 bit stream carries no encoder name.";
     public const string Confidence = "How sure the encoder detection is: high, medium or low.";
     public const string Evidence = "What names the encoder, and where it was found.";
 

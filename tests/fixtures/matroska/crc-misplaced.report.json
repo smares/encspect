@@ -89,7 +89,7 @@
                     },
                     {
                       "name": "CRC-32",
-                      "value": 1864449706,
+                      "value": 405147196,
                       "offset": 58,
                       "length": 6
                     },
@@ -101,7 +101,7 @@
                     },
                     {
                       "name": "WritingApp",
-                      "value": "y",
+                      "value": "x",
                       "offset": 68,
                       "length": 4
                     }
@@ -698,6 +698,32 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "x",
+                  "offset": 101,
+                  "length": 152,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 101,
+                      "length": 152
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment MuxingApp element at 0x40 names \"x\"",
+                      "offset": 101,
+                      "length": 152
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment WritingApp element at 0x44 names \"x\"",
+                      "offset": 101,
+                      "length": 152
+                    }
+                  ]
                 }
               ]
             }
@@ -726,6 +752,8 @@
         "averageBitrate": 16.2,
         "isVbr": true,
         "playbackGroup": 1,
+        "writer": "x",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

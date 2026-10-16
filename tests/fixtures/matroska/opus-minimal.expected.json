@@ -1,6 +1,6 @@
 {
  "description": "One Opus track in a Matroska file: the EBML Header, a Segment with Info, Tracks and one Cluster of five SimpleBlocks.",
- "length": 436,
+ "length": 428,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 193,
+     "offset": 185,
      "length": 243,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 396,
-   "declared_end": 436
+   "length": 388,
+   "declared_end": 428
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   396,
+   388,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,68 +106,68 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      76,
      [
       [
        "TrackEntry",
-       122,
+       114,
        71,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "CodecID",
-         135,
+         127,
          8
         ],
         [
          "CodecPrivate",
-         143,
+         135,
          22
         ],
         [
          "CodecDelay",
-         165,
+         157,
          6
         ],
         [
          "SeekPreRoll",
-         171,
+         163,
          7
         ],
         [
          "Audio",
-         178,
+         170,
          15,
          [
           [
            "SamplingFrequency",
-           180,
+           172,
            10
           ],
           [
            "Channels",
-           190,
+           182,
            3
           ]
          ]
@@ -178,37 +178,37 @@
     ],
     [
      "Cluster",
-     193,
+     185,
      243,
      [
       [
        "Timestamp",
-       199,
+       191,
        3
       ],
       [
        "SimpleBlock",
-       202,
+       194,
        46
       ],
       [
        "SimpleBlock",
-       248,
+       240,
        47
       ],
       [
        "SimpleBlock",
-       295,
+       287,
        48
       ],
       [
        "SimpleBlock",
-       343,
+       335,
        46
       ],
       [
        "SimpleBlock",
-       389,
+       381,
        47
       ]
      ]
@@ -219,7 +219,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 202,
+   "offset": 194,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -228,14 +228,14 @@
    "lacing": "none",
    "frames": [
     [
-     208,
+     200,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 248,
+   "offset": 240,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -244,14 +244,14 @@
    "lacing": "none",
    "frames": [
     [
-     254,
+     246,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 295,
+   "offset": 287,
    "length": 48,
    "track": 1,
    "timestamp": 40,
@@ -260,14 +260,14 @@
    "lacing": "none",
    "frames": [
     [
-     301,
+     293,
      42
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 343,
+   "offset": 335,
    "length": 46,
    "track": 1,
    "timestamp": 60,
@@ -276,14 +276,14 @@
    "lacing": "none",
    "frames": [
     [
-     349,
+     341,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 389,
+   "offset": 381,
    "length": 47,
    "track": 1,
    "timestamp": 80,
@@ -292,7 +292,7 @@
    "lacing": "none",
    "frames": [
     [
-     395,
+     387,
      41
     ]
    ]
@@ -305,7 +305,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    146,
+    138,
     19
    ],
    "channels": 1,
@@ -316,6 +316,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

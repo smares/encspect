@@ -1,6 +1,6 @@
 {
  "description": "A WebM file with a PCM track and a TimestampScale of 500,000 ns, which the WebM Container Guidelines do not allow.",
- "length": 454,
+ "length": 446,
  "format": "WebM",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 36,
    "clusters": [
     {
-     "offset": 165,
+     "offset": 157,
      "length": 289,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 500000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 418,
-   "declared_end": 454
+   "length": 410,
+   "declared_end": 446
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    36,
-   418,
+   410,
    [
     [
      "Info",
      42,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,58 +106,58 @@
       [
        "WritingApp",
        85,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     113,
+     105,
      52,
      [
       [
        "TrackEntry",
-       118,
+       110,
        47,
        [
         [
          "TrackNumber",
-         120,
+         112,
          3
         ],
         [
          "TrackUID",
-         123,
+         115,
          5
         ],
         [
          "TrackType",
-         128,
+         120,
          3
         ],
         [
          "CodecID",
-         131,
+         123,
          15
         ],
         [
          "Audio",
-         146,
+         138,
          19,
          [
           [
            "SamplingFrequency",
-           148,
+           140,
            10
           ],
           [
            "Channels",
-           158,
+           150,
            3
           ],
           [
            "BitDepth",
-           161,
+           153,
            4
           ]
          ]
@@ -168,32 +168,32 @@
     ],
     [
      "Cluster",
-     165,
+     157,
      289,
      [
       [
        "Timestamp",
-       171,
+       163,
        3
       ],
       [
        "SimpleBlock",
-       174,
+       166,
        70
       ],
       [
        "SimpleBlock",
-       244,
+       236,
        70
       ],
       [
        "SimpleBlock",
-       314,
+       306,
        70
       ],
       [
        "SimpleBlock",
-       384,
+       376,
        70
       ]
      ]
@@ -204,7 +204,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 174,
+   "offset": 166,
    "length": 70,
    "track": 1,
    "timestamp": 0,
@@ -213,14 +213,14 @@
    "lacing": "none",
    "frames": [
     [
-     180,
+     172,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 244,
+   "offset": 236,
    "length": 70,
    "track": 1,
    "timestamp": 10,
@@ -229,14 +229,14 @@
    "lacing": "none",
    "frames": [
     [
-     250,
+     242,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 314,
+   "offset": 306,
    "length": 70,
    "track": 1,
    "timestamp": 20,
@@ -245,14 +245,14 @@
    "lacing": "none",
    "frames": [
     [
-     320,
+     312,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 384,
+   "offset": 376,
    "length": 70,
    "track": 1,
    "timestamp": 30,
@@ -261,7 +261,7 @@
    "lacing": "none",
    "frames": [
     [
-     390,
+     382,
      64
     ]
    ]
@@ -282,6 +282,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "PCM (integer, little-endian)",

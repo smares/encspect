@@ -81,9 +81,9 @@ class Fixture:
         self.regions_after = []
         self.ogg_start = 0
 
-    def stream(self, serial, pages, link=1, codec="Speex", analyzed=True, lost=(), extra_headers=0, encoder=None):
+    def stream(self, serial, pages, link=1, codec="Speex", analyzed=True, lost=(), extra_headers=0, encoder=None, writer=None):
         self.streams.append({"serial": serial, "pages": pages, "link": link, "codec": codec, "analyzed": analyzed, "lost": set(lost),
-                             "extra_headers": extra_headers, "encoder": encoder})
+                             "extra_headers": extra_headers, "encoder": encoder, "writer": writer})
 
     def finding(self, code, contains):
         self.findings.append({"code": code, "contains": contains})
@@ -323,6 +323,44 @@ def comment_edge_cases():
     for p in pages:
         f.w.write(p)
     f.stream(0x00C0FFEE, pages)
+    f.write()
+
+
+def writer_claims_differ():
+    # Three ENCODER fields that name different software, the last LAME, which writes MPEG audio: the writer is the first, and the second is a finding of its own role.
+    f = Fixture("writer-claims-differ")
+    packets, granules = speex_packets(0, cbr(10, 3), comments=[b"ENCODER=Foo Muxer 1.0", b"ENCODER=Bar Tool 2.0", b"ENCODER=LAME 3.100"])
+    pages = m.pages_for(0x00C0FFEF, packets, granules, default_cuts(10))
+    for p in pages:
+        f.w.write(p)
+    f.stream(0x00C0FFEF, pages)
+    f.finding("speex.writer-claim-differs", "ENCODER field names \"Bar Tool 2.0\"")
+    f.finding("speex.writer-other-format", "which writes MPEG audio, not Speex")
+    f.write()
+
+
+def encoder_other_format():
+    # A libavcodec encoder ID of another codec in the ENCODER field never becomes the encoder: speexenc's vendor string names it (speexenc 1.2.1,
+    # high confidence), the ID stays as evidence under it, and a finding says it is not Speex's.
+    f = Fixture("encoder-other-format")
+    packets, granules = speex_packets(0, cbr(10, 3), comments=[b"ENCODER=Lavc60.31.102 libopus"])
+    pages = m.pages_for(0x00C0FFF0, packets, granules, default_cuts(10))
+    for p in pages:
+        f.w.write(p)
+    f.stream(0x00C0FFF0, pages)
+    f.finding("speex.encoder-other-format", "ENCODER field names \"Lavc60.31.102 libopus\"")
+    f.write()
+
+
+def encoder_other_format_no_vendor():
+    # The same ID with a vendor string that names no encoder: only the header's version names one (libspeex 1.2.1, low confidence), and the ID stays evidence under it.
+    f = Fixture("encoder-other-format-no-vendor")
+    packets, granules = speex_packets(0, cbr(10, 3), comments=[b"ENCODER=Lavc60.31.102 libopus"], vendor=b"Foo Tool")
+    pages = m.pages_for(0x00C0FFF1, packets, granules, default_cuts(10))
+    for p in pages:
+        f.w.write(p)
+    f.stream(0x00C0FFF1, pages)
+    f.finding("speex.encoder-other-format", "ENCODER field names \"Lavc60.31.102 libopus\"")
     f.write()
 
 
@@ -757,7 +795,7 @@ def eos_inside_packet():
 
 FIXTURES = [
     narrowband, wideband, ultra_wideband, frames_and_stereo, multiplexed, chained, packet_spanning_pages, lacing_255,
-    comment_edge_cases, comment_empty, unknown_codec, tags_around, tag_signature_in_last_page,
+    comment_edge_cases, writer_claims_differ, encoder_other_format, encoder_other_format_no_vendor, comment_empty, unknown_codec, tags_around, tag_signature_in_last_page,
     bad_crc, sequence_gap, truncated_page, missing_eos, garbage_between_pages, oggs_in_mp3, huge_lacing, continuation_errors,
     granule_errors, bos_missing, comment_invalid, header_invalid, header_bad_mode, header_short, frames_corrupt, deep_nesting,
     eos_inside_packet,

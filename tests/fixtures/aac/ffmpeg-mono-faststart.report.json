@@ -2263,10 +2263,24 @@
                               "value": "A fill element of access unit 1 at 0x447 holds \"Lavc60.31.102\", which ffmpeg's AAC encoder writes",
                               "offset": 1095,
                               "length": 12372
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "FFmpeg (Lavf60.16.100)",
+                          "offset": 1095,
+                          "length": 12372,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 1095,
+                              "length": 12372
                             },
                             {
                               "name": "Evidence",
-                              "value": "MP4 ©too atom (encoding tool) at 0x412 names \"Lavf60.16.100\"",
+                              "value": "MP4 ©too atom at 0x412 names \"Lavf60.16.100\"",
                               "offset": 1095,
                               "length": 12372
                             }
@@ -22434,6 +22448,8 @@
         "playbackGroup": 1,
         "encoder": "FFmpeg (Lavc60.31.102)",
         "encoderConfidence": "High",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

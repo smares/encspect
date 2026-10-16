@@ -1,0 +1,315 @@
+{
+ "description": "A MuxingApp and a WritingApp that name different software: the Matroska parser weighs the Opus stream's claims and says so.",
+ "length": 366,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 170,
+     "length": 196,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "muxer 1.0",
+    "writing_app": "writer 2.0"
+   },
+   "length": 326,
+   "declared_end": 366
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   326,
+   [
+    [
+     "Info",
+     46,
+     48,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       12
+      ],
+      [
+       "WritingApp",
+       81,
+       13
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     94,
+     76,
+     [
+      [
+       "TrackEntry",
+       99,
+       71,
+       [
+        [
+         "TrackNumber",
+         101,
+         3
+        ],
+        [
+         "TrackUID",
+         104,
+         5
+        ],
+        [
+         "TrackType",
+         109,
+         3
+        ],
+        [
+         "CodecID",
+         112,
+         8
+        ],
+        [
+         "CodecPrivate",
+         120,
+         22
+        ],
+        [
+         "CodecDelay",
+         142,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         148,
+         7
+        ],
+        [
+         "Audio",
+         155,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           157,
+           10
+          ],
+          [
+           "Channels",
+           167,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     170,
+     196,
+     [
+      [
+       "Timestamp",
+       176,
+       3
+      ],
+      [
+       "SimpleBlock",
+       179,
+       46
+      ],
+      [
+       "SimpleBlock",
+       225,
+       47
+      ],
+      [
+       "SimpleBlock",
+       272,
+       48
+      ],
+      [
+       "SimpleBlock",
+       320,
+       46
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 179,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     185,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 225,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     231,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 272,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     278,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 320,
+   "length": 46,
+   "track": 1,
+   "timestamp": 60,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     326,
+     40
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    123,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writer": "muxer 1.0",
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.writer-claim-differs",
+   "contains": "WritingApp"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

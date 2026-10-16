@@ -1,6 +1,6 @@
 {
  "description": "A file cut at the start of its Segment's data whose SeekHead and Cues, written for the whole file, give positions the cut file does not have: they cannot be resolved, so no finding says they point nowhere.",
- "length": 468,
+ "length": 460,
  "format": "Matroska",
  "ebml": {},
  "segments": [
@@ -8,14 +8,14 @@
    "offset": 0,
    "clusters": [
     {
-     "offset": 136,
+     "offset": 128,
      "length": 150,
      "timestamp": 0,
      "size_unknown": false,
      "blocks": 3
     },
     {
-     "offset": 286,
+     "offset": 278,
      "length": 150,
      "timestamp": 60,
      "size_unknown": false,
@@ -27,22 +27,22 @@
    "info": {
     "timestamp_scale": 1000000,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 468,
-   "declared_end": 468
+   "length": 460,
+   "declared_end": 460
   }
  ],
  "tree": [
   [
    "Segment",
    0,
-   468,
+   460,
    [
     [
      "Info",
      0,
-     60,
+     52,
      [
       [
        "TimestampScale",
@@ -57,68 +57,68 @@
       [
        "WritingApp",
        32,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     60,
+     52,
      76,
      [
       [
        "TrackEntry",
-       65,
+       57,
        71,
        [
         [
          "TrackNumber",
-         67,
+         59,
          3
         ],
         [
          "TrackUID",
-         70,
+         62,
          5
         ],
         [
          "TrackType",
-         75,
+         67,
          3
         ],
         [
          "CodecID",
-         78,
+         70,
          8
         ],
         [
          "CodecPrivate",
-         86,
+         78,
          22
         ],
         [
          "CodecDelay",
-         108,
+         100,
          6
         ],
         [
          "SeekPreRoll",
-         114,
+         106,
          7
         ],
         [
          "Audio",
-         121,
+         113,
          15,
          [
           [
            "SamplingFrequency",
-           123,
+           115,
            10
           ],
           [
            "Channels",
-           133,
+           125,
            3
           ]
          ]
@@ -129,86 +129,86 @@
     ],
     [
      "Cluster",
-     136,
+     128,
      150,
      [
       [
        "Timestamp",
-       142,
+       134,
        3
       ],
       [
        "SimpleBlock",
-       145,
+       137,
        46
       ],
       [
        "SimpleBlock",
-       191,
+       183,
        47
       ],
       [
        "SimpleBlock",
-       238,
+       230,
        48
       ]
      ]
     ],
     [
      "Cluster",
-     286,
+     278,
      150,
      [
       [
        "Timestamp",
-       292,
+       284,
        3
       ],
       [
        "SimpleBlock",
-       295,
+       287,
        46
       ],
       [
        "SimpleBlock",
-       341,
+       333,
        47
       ],
       [
        "SimpleBlock",
-       388,
+       380,
        48
       ]
      ]
     ],
     [
      "Cues",
-     436,
+     428,
      32,
      [
       [
        "CuePoint",
-       441,
+       433,
        13,
        [
         [
          "CueTime",
-         443,
+         435,
          3
         ],
         [
          "CueTrackPositions",
-         446,
+         438,
          8,
          [
           [
            "CueTrack",
-           448,
+           440,
            3
           ],
           [
            "CueClusterPosition",
-           451,
+           443,
            3
           ]
          ]
@@ -217,27 +217,27 @@
       ],
       [
        "CuePoint",
-       454,
+       446,
        14,
        [
         [
          "CueTime",
-         456,
+         448,
          3
         ],
         [
          "CueTrackPositions",
-         459,
+         451,
          9,
          [
           [
            "CueTrack",
-           461,
+           453,
            3
           ],
           [
            "CueClusterPosition",
-           464,
+           456,
            4
           ]
          ]
@@ -252,7 +252,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 145,
+   "offset": 137,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -261,14 +261,14 @@
    "lacing": "none",
    "frames": [
     [
-     151,
+     143,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 191,
+   "offset": 183,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -277,14 +277,14 @@
    "lacing": "none",
    "frames": [
     [
-     197,
+     189,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 238,
+   "offset": 230,
    "length": 48,
    "track": 1,
    "timestamp": 40,
@@ -293,14 +293,14 @@
    "lacing": "none",
    "frames": [
     [
-     244,
+     236,
      42
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 295,
+   "offset": 287,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -309,14 +309,14 @@
    "lacing": "none",
    "frames": [
     [
-     301,
+     293,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 341,
+   "offset": 333,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -325,14 +325,14 @@
    "lacing": "none",
    "frames": [
     [
-     347,
+     339,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 388,
+   "offset": 380,
    "length": 48,
    "track": 1,
    "timestamp": 40,
@@ -341,7 +341,7 @@
    "lacing": "none",
    "frames": [
     [
-     394,
+     386,
      42
     ]
    ]
@@ -354,7 +354,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    89,
+    81,
     19
    ],
    "channels": 1,
@@ -365,6 +365,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

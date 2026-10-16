@@ -433,8 +433,12 @@
      "Frame Packing/Code 0 (one frame)": "26 packets (100.0%)"
     },
     "encoder": {
-     "name": "opusenc 0.2 (libopus 1.4)",
-     "confidence": "High"
+     "name": "libopus 1.4",
+     "confidence": "Medium"
+    },
+    "writer": {
+     "name": "opusenc 0.2",
+     "confidence": "Low"
     }
    }
   }
@@ -452,8 +456,10 @@
    "channel_layout": [
     "front center"
    ],
-   "encoder": "opusenc 0.2 (libopus 1.4)",
-   "encoder_confidence": "High"
+   "encoder": "libopus 1.4",
+   "encoder_confidence": "Medium",
+   "writer": "opusenc 0.2",
+   "writer_confidence": "Low"
   }
  ],
  "findings": [],

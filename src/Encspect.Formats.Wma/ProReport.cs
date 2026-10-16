@@ -27,7 +27,7 @@ internal static class ProReport
             Topic = Topics.WmaPro,
         });
 
-        (string? encoder, Confidence? confidence) = WmaEncoder.Apply(context, streamNode, findings, []);
+        WmaEncoder.Detected detected = WmaEncoder.Apply(context, streamNode, findings, []);
         Node? statistics = frameCount > 0 ? AddStatistics(streamNode, stream, samples, duration) : null;
         streamNode.Add(new Node("Packets", parent.Offset, parent.Length, ProNodes.Count(packetCount, "packet", "packets"),
             () => new BlockedChildren([], packetCount, nodes.PacketNode))
@@ -67,8 +67,10 @@ internal static class ProReport
             Duration = duration,
             AverageBitrate = duration > 0 ? totals.UsedBytes * 8.0 / duration / 1000 : null,
             IsVbr = context.Configuration?.IsVbr ?? false,
-            Encoder = encoder,
-            EncoderConfidence = confidence,
+            Encoder = detected.Encoder,
+            EncoderConfidence = detected.EncoderConfidence,
+            Writer = detected.Writer,
+            WriterConfidence = detected.WriterConfidence,
             Series = series,
         });
     }

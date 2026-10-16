@@ -1,6 +1,6 @@
 {
  "description": "A track that states a different sampling frequency and channel count than its Opus headers (a mono OpusHead for a stereo track), and an Opus CodecDelay that is not the pre-skip.",
- "length": 343,
+ "length": 335,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 193,
+     "offset": 185,
      "length": 150,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 303,
-   "declared_end": 343
+   "length": 295,
+   "declared_end": 335
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   303,
+   295,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,68 +106,68 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      76,
      [
       [
        "TrackEntry",
-       122,
+       114,
        71,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "CodecID",
-         135,
+         127,
          8
         ],
         [
          "CodecPrivate",
-         143,
+         135,
          22
         ],
         [
          "CodecDelay",
-         165,
+         157,
          6
         ],
         [
          "SeekPreRoll",
-         171,
+         163,
          7
         ],
         [
          "Audio",
-         178,
+         170,
          15,
          [
           [
            "SamplingFrequency",
-           180,
+           172,
            10
           ],
           [
            "Channels",
-           190,
+           182,
            3
           ]
          ]
@@ -178,27 +178,27 @@
     ],
     [
      "Cluster",
-     193,
+     185,
      150,
      [
       [
        "Timestamp",
-       199,
+       191,
        3
       ],
       [
        "SimpleBlock",
-       202,
+       194,
        46
       ],
       [
        "SimpleBlock",
-       248,
+       240,
        47
       ],
       [
        "SimpleBlock",
-       295,
+       287,
        48
       ]
      ]
@@ -209,7 +209,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 202,
+   "offset": 194,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -218,14 +218,14 @@
    "lacing": "none",
    "frames": [
     [
-     208,
+     200,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 248,
+   "offset": 240,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -234,14 +234,14 @@
    "lacing": "none",
    "frames": [
     [
-     254,
+     246,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 295,
+   "offset": 287,
    "length": 48,
    "track": 1,
    "timestamp": 40,
@@ -250,7 +250,7 @@
    "lacing": "none",
    "frames": [
     [
-     301,
+     293,
      42
     ]
    ]
@@ -263,7 +263,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    146,
+    138,
     19
    ],
    "channels": 2,
@@ -274,6 +274,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

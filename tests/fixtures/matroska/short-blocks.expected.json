@@ -1,6 +1,6 @@
 {
  "description": "Blocks too short for their header: a SimpleBlock of two bytes, an empty Block and a track number that is no variable-size integer.",
- "length": 309,
+ "length": 301,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 193,
+     "offset": 185,
      "length": 116,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 269,
-   "declared_end": 309
+   "length": 261,
+   "declared_end": 301
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   269,
+   261,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,68 +106,68 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      76,
      [
       [
        "TrackEntry",
-       122,
+       114,
        71,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "CodecID",
-         135,
+         127,
          8
         ],
         [
          "CodecPrivate",
-         143,
+         135,
          22
         ],
         [
          "CodecDelay",
-         165,
+         157,
          6
         ],
         [
          "SeekPreRoll",
-         171,
+         163,
          7
         ],
         [
          "Audio",
-         178,
+         170,
          15,
          [
           [
            "SamplingFrequency",
-           180,
+           172,
            10
           ],
           [
            "Channels",
-           190,
+           182,
            3
           ]
          ]
@@ -178,42 +178,42 @@
     ],
     [
      "Cluster",
-     193,
+     185,
      116,
      [
       [
        "Timestamp",
-       198,
+       190,
        3
       ],
       [
        "SimpleBlock",
-       201,
+       193,
        46
       ],
       [
        "SimpleBlock",
-       247,
+       239,
        4
       ],
       [
        "SimpleBlock",
-       251,
+       243,
        2
       ],
       [
        "SimpleBlock",
-       253,
+       245,
        8
       ],
       [
        "BlockGroup",
-       261,
+       253,
        48,
        [
         [
          "Block",
-         263,
+         255,
          46
         ]
        ]
@@ -226,7 +226,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 201,
+   "offset": 193,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -235,14 +235,14 @@
    "lacing": "none",
    "frames": [
     [
-     207,
+     199,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 247,
+   "offset": 239,
    "length": 4,
    "track": 1,
    "timestamp": null,
@@ -254,7 +254,7 @@
   },
   {
    "name": "SimpleBlock",
-   "offset": 251,
+   "offset": 243,
    "length": 2,
    "track": 0,
    "timestamp": null,
@@ -266,7 +266,7 @@
   },
   {
    "name": "SimpleBlock",
-   "offset": 253,
+   "offset": 245,
    "length": 8,
    "track": 0,
    "timestamp": null,
@@ -278,7 +278,7 @@
   },
   {
    "name": "Block",
-   "offset": 263,
+   "offset": 255,
    "length": 46,
    "track": 1,
    "timestamp": 20,
@@ -287,7 +287,7 @@
    "lacing": "none",
    "frames": [
     [
-     269,
+     261,
      40
     ]
    ],
@@ -301,7 +301,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    146,
+    138,
     19
    ],
    "channels": 1,
@@ -312,6 +312,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

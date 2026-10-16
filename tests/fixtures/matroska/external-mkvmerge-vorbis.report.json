@@ -7814,6 +7814,26 @@
                   ]
                 },
                 {
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 4375,
+                  "length": 21,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 4375,
+                      "length": 21
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Vorbis comment vendor string at 0x111B names \"Lavf60.16.100\"",
+                      "offset": 4379,
+                      "length": 13
+                    }
+                  ]
+                },
+                {
                   "name": "Statistics",
                   "kind": "Statistics",
                   "value": "95 packets, 1.522 s",
@@ -12597,6 +12617,8 @@
         "averageBitrate": 41.69846282173499,
         "isVbr": true,
         "playbackGroup": 1,
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

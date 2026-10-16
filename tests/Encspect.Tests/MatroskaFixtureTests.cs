@@ -44,6 +44,7 @@ public class MatroskaFixtureTests
         CompareBlocks(manifest.GetProperty("blocks"), file);
         CompareTracks(manifest.GetProperty("tracks"), file);
         CompareStreams(manifest, report);
+        CompareWriter(manifest, report);
         CheckFindings(manifest.GetProperty("findings"), report.Findings);
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("parse.", StringComparison.Ordinal));
         TestFiles.CheckInsideParents(report.Root);
@@ -83,8 +84,10 @@ public class MatroskaFixtureTests
         return document.RootElement.Clone();
     }
 
-    private static void CompareTree(JsonElement expected, IReadOnlyList<Node> actual, string where)
+    private static void CompareTree(JsonElement expected, IReadOnlyList<Node> shown, string where)
     {
+        // The Writer node of a stream the container reports itself is the analysis's, not an element.
+        IReadOnlyList<Node> actual = [.. shown.Where(n => n.Name != "Writer")];
         JsonElement[] entries = [.. expected.EnumerateArray()];
         Assert.True(entries.Length == actual.Count, $"{where}: {entries.Length} nodes expected, {actual.Count} found ({string.Join(", ", actual.Select(n => n.Name))}).");
         for (int i = 0; i < entries.Length; i++)
@@ -198,6 +201,13 @@ public class MatroskaFixtureTests
         JsonElement[] expected = [.. manifest.GetProperty("streams").EnumerateArray()];
         Assert.Equal(expected.Select(s => $"{s.GetProperty("codec").GetString()}, {s.GetProperty("sample_rate").GetInt32()} Hz, {s.GetProperty("channels").GetInt32()} channels"),
             report.Streams.Select(s => $"{(s.Codec.StartsWith("HE-AAC", StringComparison.Ordinal) || s.Codec.StartsWith("AAC", StringComparison.Ordinal) ? "AAC" : s.Codec)}, {s.SampleRate} Hz, {s.Channels} channels"));
+    }
+
+    // The writer the MuxingApp and WritingApp name, which every stream the analysis reports shares.
+    private static void CompareWriter(JsonElement manifest, Report report)
+    {
+        string? expected = manifest.GetProperty("writer").GetString();
+        Assert.All(report.Streams, s => Assert.Equal(expected, s.Writer));
     }
 
     private static void CheckFindings(JsonElement expected, IReadOnlyList<Finding> findings)

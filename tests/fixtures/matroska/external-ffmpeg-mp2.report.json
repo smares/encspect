@@ -7084,7 +7084,35 @@
               "value": 84,
               "unit": "frames",
               "offset": 507,
-              "length": 48965
+              "length": 48965,
+              "children": [
+                {
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 507,
+                  "length": 48965,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 507,
+                      "length": 48965
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment MuxingApp element at 0xE7 names \"Lavf60.16.100\"",
+                      "offset": 507,
+                      "length": 48965
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment WritingApp element at 0xF7 names \"Lavf60.16.100\"",
+                      "offset": 507,
+                      "length": 48965
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -7106,6 +7134,8 @@
         "averageBitrate": 192,
         "isVbr": false,
         "playbackGroup": 1,
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": []
       }
     ],

@@ -1,0 +1,302 @@
+{
+ "description": "A PCM track written by ffmpeg: the container names FFmpeg as the writer of a stream no codec parser reads.",
+ "length": 442,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 153,
+     "length": 289,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "Lavf60.16.100",
+    "writing_app": "Lavf60.16.100"
+   },
+   "length": 402,
+   "declared_end": 442
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   402,
+   [
+    [
+     "Info",
+     46,
+     55,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       16
+      ],
+      [
+       "WritingApp",
+       85,
+       16
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     101,
+     52,
+     [
+      [
+       "TrackEntry",
+       106,
+       47,
+       [
+        [
+         "TrackNumber",
+         108,
+         3
+        ],
+        [
+         "TrackUID",
+         111,
+         5
+        ],
+        [
+         "TrackType",
+         116,
+         3
+        ],
+        [
+         "CodecID",
+         119,
+         15
+        ],
+        [
+         "Audio",
+         134,
+         19,
+         [
+          [
+           "SamplingFrequency",
+           136,
+           10
+          ],
+          [
+           "Channels",
+           146,
+           3
+          ],
+          [
+           "BitDepth",
+           149,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     153,
+     289,
+     [
+      [
+       "Timestamp",
+       159,
+       3
+      ],
+      [
+       "SimpleBlock",
+       162,
+       70
+      ],
+      [
+       "SimpleBlock",
+       232,
+       70
+      ],
+      [
+       "SimpleBlock",
+       302,
+       70
+      ],
+      [
+       "SimpleBlock",
+       372,
+       70
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 162,
+   "length": 70,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     168,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 232,
+   "length": 70,
+   "track": 1,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     238,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 302,
+   "length": 70,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     308,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 372,
+   "length": 70,
+   "track": 1,
+   "timestamp": 30,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     378,
+     64
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": 16,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writer": "FFmpeg (Lavf60.16.100)",
+ "streams": [
+  {
+   "codec": "PCM (integer, little-endian)",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.codec-not-analyzed",
+   "contains": "PCM"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

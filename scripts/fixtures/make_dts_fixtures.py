@@ -84,9 +84,9 @@ def id3v1():
     return b"TAG" + b"Hand-built title".ljust(30, b"\0") + b"Hand-built artist".ljust(30, b"\0") + b"Album".ljust(30, b"\0") + b"2026" + b"Comment".ljust(28, b"\0") + b"\0\x01\x11"
 
 
-def id3v2(encoder=None):
+def id3v2(*encoders):
     frame = b"TIT2" + (6).to_bytes(4, "big") + b"\0\0" + b"\0Title"
-    if encoder:
+    for encoder in encoders:
         frame += b"TSSE" + (len(encoder) + 1).to_bytes(4, "big") + b"\0\0" + b"\0" + encoder.encode("latin-1")
     size = len(frame)
     return b"ID3\x03\0\0" + bytes([size >> 21 & 0x7F, size >> 14 & 0x7F, size >> 7 & 0x7F, size & 0x7F]) + frame
@@ -305,12 +305,26 @@ def build_damage():
     tag2 = id3v2("dtsenc 1.0")
     ape = ape_tag(("Title", "Hand-built"), ("Encoder", "Hand-built"))
     data = tag2 + body + ape + id3v1()
-    fixture("tags", ".dts", "An ID3v2 tag, five stereo core frames, an APEv2 tag and an ID3v1 tag.", data, rows(parts, len(tag2)),
-            [stream("DTS", 48000, STEREO, "2/0", 5 * 512)], [("dts.encoder-claim", "APE Encoder item")],
-            fields={"DTS/Encoder": "dtsenc 1.0"},
+    fixture("tags", ".dts", "An ID3v2 tag whose TSSE frame names the encoder, five stereo core frames, an APEv2 tag whose Encoder item names the writer and an ID3v1 tag.", data, rows(parts, len(tag2)),
+            [stream("DTS", 48000, STEREO, "2/0", 5 * 512)], [],
+            fields={"DTS/Encoder": "dtsenc 1.0", "DTS/Writer": "Hand-built"},
             regions=[["ID3v2", 0, len(tag2)], ["DTS", len(tag2), len(body)], ["APE", len(tag2) + len(body), len(ape)], ["ID3v1", len(data) - 128, 128]],
             crosscheck=cc(libdca=False, ffprobe_packets=[[47 + 512 * i, 512] for i in range(4)] + [[47 + 4 * 512, 754]],
                           ffprobe_packets_reason="ffmpeg's last packet takes the APEv2 and ID3v1 tags that end the file into it",
+                          skip={"libdca": "libdca's tool does not skip tags."}))
+
+    # Claims of one role that name different software are a finding; a TSSE frame that is ffmpeg's muxer version names the writer.
+    tag3 = id3v2("dtsenc 1.0", "other 2.0", "Lavf60.16.100")
+    ape3 = ape_tag(("Title", "Hand-built"), ("Encoder", "LAME 3.100"))
+    data = tag3 + body + ape3
+    ape = ape3
+    fixture("tags-claims-differ", ".dts", "An ID3v2 tag with three TSSE frames, five stereo core frames and an APEv2 tag. Two TSSE frames name different encoders, "
+            "the third is ffmpeg's muxer version and names the writer, and the APEv2 Encoder item names LAME, which writes MPEG audio and not DTS, as the writer.", data, rows(parts, len(tag3)),
+            [stream("DTS", 48000, STEREO, "2/0", 5 * 512)], [("id3v2.frame-duplicate", "3 TSSE frames"), ("dts.encoder-claim", "other 2.0"), ("dts.writer-claim-differs", "APE Encoder item"), ("dts.writer-other-format", "which writes MPEG audio, not DTS")],
+            fields={"DTS/Encoder": "dtsenc 1.0", "DTS/Writer": "FFmpeg (Lavf60.16.100)"},
+            regions=[["ID3v2", 0, len(tag3)], ["DTS", len(tag3), len(body)], ["APE", len(tag3) + len(body), len(ape)]],
+            crosscheck=cc(libdca=False, ffprobe_packets=[[len(tag3) + 512 * i, 512] for i in range(4)] + [[len(tag3) + 4 * 512, 512 + len(ape)]],
+                          ffprobe_packets_reason="ffmpeg's last packet takes the APEv2 tag that ends the file into it",
                           skip={"libdca": "libdca's tool does not skip tags."}))
     return build_invalid_fields()
 

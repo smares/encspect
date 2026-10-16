@@ -34,7 +34,10 @@ SPEEXENC = "speexenc"
 FFMPEG = "ffmpeg"
 
 SPEEXENC_NAME = {"name": "speexenc 1.2.1", "confidence": "High"}
-FFMPEG_NAME = {"name": "FFmpeg (Lavc60.31.102 libspeex)", "confidence": "Medium"}
+# ffmpeg writes "Lavf60.16.100" as the vendor, which names the writer, and "Lavc60.31.102 libspeex" as the ENCODER field when it encodes,
+# which is a libavcodec encoder ID and names the encoder; the header's version names libspeex, whatever program encodes.
+FFMPEG_WRITER = {"name": "FFmpeg (Lavf60.16.100)", "confidence": "Low"}
+FFMPEG_NAME = {"name": "FFmpeg (Lavc60.31.102 libspeex)", "confidence": "Medium", "writer": FFMPEG_WRITER}
 
 # name: (tool, rate, channels, arguments, detected encoder, expected findings)
 FIXTURES = {
@@ -59,8 +62,11 @@ FIXTURES = {
     "external-ffmpeg-libspeex-uwb-abr": ("ffmpeg", 32000, 1, ["-c:a", "libspeex", "-abr", "1", "-b:a", "24k"], FFMPEG_NAME, []),
     "external-ffmpeg-libspeex-frames": ("ffmpeg", 16000, 1, ["-c:a", "libspeex", "-frames_per_packet", "3", "-metadata", "title=ffmpeg title"],
                                         FFMPEG_NAME, []),
+    # Bit-exact: the vendor string is "ffmpeg" and the encoder ID "Lavc libspeex" has no version.
+    "external-ffmpeg-libspeex-bitexact": ("ffmpeg", 16000, 1, ["-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libspeex"],
+                                          {"name": "FFmpeg (Lavc libspeex)", "confidence": "Medium", "writer": {"name": "FFmpeg", "confidence": "Low"}}, []),
     # ffmpeg rewrites the granule positions of a stream it copies without the encoder's lookahead.
-    "external-ffmpeg-remux": ("remux", 16000, 1, ["-c", "copy"], {"name": "libspeex 1.2.1", "confidence": "Low"},
+    "external-ffmpeg-remux": ("remux", 16000, 1, ["-c", "copy"], {"name": "libspeex 1.2.1", "confidence": "Low", "writer": FFMPEG_WRITER},
                               [("speex.delay-unusual", "an encoder delay of 0 samples")]),
     # Two files joined end to end: speexenc's narrowband stream, then ffmpeg's wideband one.
     "external-chained": ("join", 0, 0, [], [SPEEXENC_NAME, FFMPEG_NAME], []),
@@ -140,10 +146,14 @@ def manifest(name, encoder, detected, findings):
         entry, info = hand.expect_stream(data, own, spec)
         name = (named.pop(0) if named else detected) if "speex" in entry else None
         if name:
-            entry["speex"]["encoder"] = name
+            entry["speex"]["encoder"] = {k: name[k] for k in ("name", "confidence")}
+            if "writer" in name:
+                entry["speex"]["writer"] = name["writer"]
         streams.append(entry)
         if info:
             info["encoder"], info["encoder_confidence"] = name["name"], name["confidence"]
+            if "writer" in name:
+                info["writer"], info["writer_confidence"] = name["writer"]["name"], name["writer"]["confidence"]
             infos.append(info)
     return {
         "length": len(data), "regions": [{"name": "Ogg", "offset": 0, "length": len(data)}], "encoder": encoder,

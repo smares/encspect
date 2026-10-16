@@ -1,6 +1,6 @@
 {
  "description": "Two ContentEncodings with the same ContentEncodingOrder (RFC 9559 section 5.1.4.1.31.2), and a header-stripped track.",
- "length": 391,
+ "length": 383,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 247,
+     "offset": 239,
      "length": 144,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 351,
-   "declared_end": 391
+   "length": 343,
+   "declared_end": 383
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   351,
+   343,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,93 +106,93 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      130,
      [
       [
        "TrackEntry",
-       122,
+       114,
        125,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "CodecID",
-         135,
+         127,
          8
         ],
         [
          "CodecPrivate",
-         143,
+         135,
          22
         ],
         [
          "CodecDelay",
-         165,
+         157,
          6
         ],
         [
          "SeekPreRoll",
-         171,
+         163,
          7
         ],
         [
          "ContentEncodings",
-         178,
+         170,
          54,
          [
           [
            "ContentEncoding",
-           181,
+           173,
            26,
            [
             [
              "ContentEncodingOrder",
-             184,
+             176,
              4
             ],
             [
              "ContentEncodingScope",
-             188,
+             180,
              4
             ],
             [
              "ContentEncodingType",
-             192,
+             184,
              4
             ],
             [
              "ContentCompression",
-             196,
+             188,
              11,
              [
               [
                "ContentCompAlgo",
-               199,
+               191,
                4
               ],
               [
                "ContentCompSettings",
-               203,
+               195,
                4
               ]
              ]
@@ -201,37 +201,37 @@
           ],
           [
            "ContentEncoding",
-           207,
+           199,
            25,
            [
             [
              "ContentEncodingOrder",
-             210,
+             202,
              4
             ],
             [
              "ContentEncodingScope",
-             214,
+             206,
              4
             ],
             [
              "ContentEncodingType",
-             218,
+             210,
              4
             ],
             [
              "ContentCompression",
-             222,
+             214,
              10,
              [
               [
                "ContentCompAlgo",
-               225,
+               217,
                4
               ],
               [
                "ContentCompSettings",
-               229,
+               221,
                3
               ]
              ]
@@ -242,17 +242,17 @@
         ],
         [
          "Audio",
-         232,
+         224,
          15,
          [
           [
            "SamplingFrequency",
-           234,
+           226,
            10
           ],
           [
            "Channels",
-           244,
+           236,
            3
           ]
          ]
@@ -263,27 +263,27 @@
     ],
     [
      "Cluster",
-     247,
+     239,
      144,
      [
       [
        "Timestamp",
-       253,
+       245,
        3
       ],
       [
        "SimpleBlock",
-       256,
+       248,
        45
       ],
       [
        "SimpleBlock",
-       301,
+       293,
        45
       ],
       [
        "SimpleBlock",
-       346,
+       338,
        45
       ]
      ]
@@ -294,7 +294,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 256,
+   "offset": 248,
    "length": 45,
    "track": 1,
    "timestamp": 0,
@@ -303,14 +303,14 @@
    "lacing": "none",
    "frames": [
     [
-     262,
+     254,
      39
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 301,
+   "offset": 293,
    "length": 45,
    "track": 1,
    "timestamp": 20,
@@ -319,14 +319,14 @@
    "lacing": "none",
    "frames": [
     [
-     307,
+     299,
      39
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 346,
+   "offset": 338,
    "length": 45,
    "track": 1,
    "timestamp": 40,
@@ -335,7 +335,7 @@
    "lacing": "none",
    "frames": [
     [
-     352,
+     344,
      39
     ]
    ]
@@ -348,7 +348,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    146,
+    138,
     19
    ],
    "channels": 1,
@@ -362,7 +362,7 @@
      "type": 0,
      "compression": 3,
      "settings": [
-      206,
+      198,
       1
      ],
      "encryption": null
@@ -373,7 +373,7 @@
      "type": 0,
      "compression": 3,
      "settings": [
-      232,
+      224,
       0
      ],
      "encryption": null
@@ -382,6 +382,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

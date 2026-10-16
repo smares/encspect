@@ -1,6 +1,6 @@
 {
  "description": "Tags with a SimpleTag, nested Chapters, and an attached file, all of which the analyzer lists without reading the attached data.",
- "length": 532,
+ "length": 524,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 382,
+     "offset": 374,
      "length": 150,
      "timestamp": 0,
      "size_unknown": false,
@@ -28,10 +28,10 @@
    "info": {
     "timestamp_scale": 1000000,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 492,
-   "declared_end": 532
+   "length": 484,
+   "declared_end": 524
   }
  ],
  "tree": [
@@ -80,12 +80,12 @@
   [
    "Segment",
    40,
-   492,
+   484,
    [
     [
      "Info",
      46,
-     60,
+     52,
      [
       [
        "TimestampScale",
@@ -100,68 +100,68 @@
       [
        "WritingApp",
        78,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     106,
+     98,
      76,
      [
       [
        "TrackEntry",
-       111,
+       103,
        71,
        [
         [
          "TrackNumber",
-         113,
+         105,
          3
         ],
         [
          "TrackUID",
-         116,
+         108,
          5
         ],
         [
          "TrackType",
-         121,
+         113,
          3
         ],
         [
          "CodecID",
-         124,
+         116,
          8
         ],
         [
          "CodecPrivate",
-         132,
+         124,
          22
         ],
         [
          "CodecDelay",
-         154,
+         146,
          6
         ],
         [
          "SeekPreRoll",
-         160,
+         152,
          7
         ],
         [
          "Audio",
-         167,
+         159,
          15,
          [
           [
            "SamplingFrequency",
-           169,
+           161,
            10
           ],
           [
            "Channels",
-           179,
+           171,
            3
           ]
          ]
@@ -172,54 +172,54 @@
     ],
     [
      "Chapters",
-     182,
+     174,
      36,
      [
       [
        "EditionEntry",
-       187,
+       179,
        31,
        [
         [
          "ChapterAtom",
-         190,
+         182,
          28,
          [
           [
            "ChapterUID",
-           192,
+           184,
            4
           ],
           [
            "ChapterTimeStart",
-           196,
+           188,
            3
           ],
           [
            "ChapterDisplay",
-           199,
+           191,
            7,
            [
             [
              "ChapString",
-             201,
+             193,
              5
             ]
            ]
           ],
           [
            "ChapterAtom",
-           206,
+           198,
            12,
            [
             [
              "ChapterUID",
-             208,
+             200,
              4
             ],
             [
              "ChapterTimeStart",
-             212,
+             204,
              6
             ]
            ]
@@ -232,32 +232,32 @@
     ],
     [
      "Attachments",
-     218,
+     210,
      104,
      [
       [
        "AttachedFile",
-       223,
+       215,
        99,
        [
         [
          "FileName",
-         226,
+         218,
          12
         ],
         [
          "FileMediaType",
-         238,
+         230,
          13
         ],
         [
          "FileData",
-         251,
+         243,
          67
         ],
         [
          "FileUID",
-         318,
+         310,
          4
         ]
        ]
@@ -266,56 +266,56 @@
     ],
     [
      "Tags",
-     322,
+     314,
      60,
      [
       [
        "Tag",
-       327,
+       319,
        55,
        [
         [
          "Targets",
-         330,
+         322,
          7,
          [
           [
            "TargetTypeValue",
-           333,
+           325,
            4
           ]
          ]
         ],
         [
          "SimpleTag",
-         337,
+         329,
          21,
          [
           [
            "TagName",
-           340,
+           332,
            8
           ],
           [
            "TagString",
-           348,
+           340,
            10
           ]
          ]
         ],
         [
          "SimpleTag",
-         358,
+         350,
          24,
          [
           [
            "TagName",
-           361,
+           353,
            9
           ],
           [
            "TagString",
-           370,
+           362,
            12
           ]
          ]
@@ -326,27 +326,27 @@
     ],
     [
      "Cluster",
-     382,
+     374,
      150,
      [
       [
        "Timestamp",
-       388,
+       380,
        3
       ],
       [
        "SimpleBlock",
-       391,
+       383,
        46
       ],
       [
        "SimpleBlock",
-       437,
+       429,
        47
       ],
       [
        "SimpleBlock",
-       484,
+       476,
        48
       ]
      ]
@@ -357,7 +357,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 391,
+   "offset": 383,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -366,14 +366,14 @@
    "lacing": "none",
    "frames": [
     [
-     397,
+     389,
      40
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 437,
+   "offset": 429,
    "length": 47,
    "track": 1,
    "timestamp": 20,
@@ -382,14 +382,14 @@
    "lacing": "none",
    "frames": [
     [
-     443,
+     435,
      41
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 484,
+   "offset": 476,
    "length": 48,
    "track": 1,
    "timestamp": 40,
@@ -398,7 +398,7 @@
    "lacing": "none",
    "frames": [
     [
-     490,
+     482,
      42
     ]
    ]
@@ -411,7 +411,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    135,
+    127,
     19
    ],
    "channels": 1,
@@ -422,6 +422,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

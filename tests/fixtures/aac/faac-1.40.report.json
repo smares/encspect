@@ -154,10 +154,24 @@
                               "value": "A fill element of access unit 1 at 0x30 holds \"libfaac 1.40.0\", which libfaac writes",
                               "offset": 48,
                               "length": 20748
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "FAAC 1.40.0",
+                          "offset": 48,
+                          "length": 20748,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 48,
+                              "length": 20748
                             },
                             {
                               "name": "Evidence",
-                              "value": "MP4 ©too atom (encoding tool) at 0x54A9 names \"FAAC 1.40.0\"",
+                              "value": "MP4 ©too atom at 0x54A9 names \"FAAC 1.40.0\"",
                               "offset": 48,
                               "length": 20748
                             }
@@ -46269,6 +46283,8 @@
         "playbackGroup": 1,
         "encoder": "FAAC 1.40.0",
         "encoderConfidence": "High",
+        "writer": "FAAC 1.40.0",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

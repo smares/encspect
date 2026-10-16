@@ -130,7 +130,27 @@
                             },
                             {
                               "name": "Evidence",
-                              "value": "MP4 ©too atom (encoding tool) at 0x14C3 names \"FAAC 2.0.0\"",
+                              "value": "The version comes from the MP4 ©too atom at 0x14C3, which names \"FAAC 2.0.0\" as the writer: software of the same name",
+                              "offset": 36,
+                              "length": 4527
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "FAAC 2.0.0",
+                          "offset": 36,
+                          "length": 4527,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 36,
+                              "length": 4527
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "MP4 ©too atom at 0x14C3 names \"FAAC 2.0.0\"",
                               "offset": 36,
                               "length": 4527
                             }
@@ -20594,6 +20614,8 @@
         "playbackGroup": 1,
         "encoder": "FAAC 2.0.0",
         "encoderConfidence": "Medium",
+        "writer": "FAAC 2.0.0",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

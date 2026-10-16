@@ -1,0 +1,246 @@
+{
+ "length": 485,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 485
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 47,
+   "serial": 252642577,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 47,
+   "length": 141,
+   "serial": 252642577,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 188,
+   "length": 297,
+   "serial": 252642577,
+   "sequence": 2,
+   "granule": 1200,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x0F0F0511",
+   "codec": "Opus",
+   "link": 1,
+   "pages": 3,
+   "packets": 12,
+   "has_eos": true,
+   "opus": {
+    "header": {
+     "Magic Signature": "OpusHead",
+     "Version": "1",
+     "Channels": "2",
+     "Channel Layout": "Stereo: left, right",
+     "Pre-skip": "312 samples",
+     "Input Sample Rate": "48000 Hz",
+     "Output Gain": "+0.00 dB",
+     "Mapping Family": "0 (mono or stereo)"
+    },
+    "comment": {
+     "vendor": "libopus 1.4, libopusenc 0.2.1",
+     "comments": [
+      "ENCODER=Lavc60.31.102 libvorbis",
+      "ENCODER=Lavc60.31.102 libopus"
+     ]
+    },
+    "packets": [
+     [
+      225,
+      26
+     ],
+     [
+      251,
+      26
+     ],
+     [
+      277,
+      26
+     ],
+     [
+      303,
+      26
+     ],
+     [
+      329,
+      26
+     ],
+     [
+      355,
+      26
+     ],
+     [
+      381,
+      26
+     ],
+     [
+      407,
+      26
+     ],
+     [
+      433,
+      26
+     ],
+     [
+      459,
+      26
+     ]
+    ],
+    "tocs": [
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ],
+     [
+      [
+       28,
+       1,
+       0,
+       1
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "10",
+     "Frames": "10",
+     "Decoded Samples": "1200 samples",
+     "Pre-skip": "312 samples",
+     "Start Offset": "0 samples",
+     "End Trimming": "0 samples",
+     "Samples": "888 samples",
+     "Duration": "0.018 s",
+     "IsVbr": "false",
+     "Average Bitrate": "83.2 kbps",
+     "Minimum Bitrate": "83.2 kbps",
+     "Maximum Bitrate": "83.2 kbps",
+     "Packet Sizes": "all 26 bytes, as CBR encoding writes them",
+     "Modes": "1 mode",
+     "Modes/CELT-only": "10 frames (100.0%)",
+     "Bandwidths": "1 bandwidth",
+     "Bandwidths/Fullband (20 kHz)": "10 frames (100.0%)",
+     "Frame Sizes": "1 size",
+     "Frame Sizes/2.5 ms": "10 frames (100.0%)",
+     "Stereo Coding": "10 stereo packets",
+     "Stereo Coding/Stereo": "10 packets (100.0%)",
+     "Stereo Coding/Mono": "0 packets (0.0%)",
+     "Frame Packing": "1 code",
+     "Frame Packing/Code 0 (one frame)": "10 packets (100.0%)"
+    }
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 2,
+   "samples": 888,
+   "duration": 0.0185,
+   "average_bitrate": 83.2,
+   "is_vbr": false,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "code": "opus.encoder-other-format",
+   "contains": "ENCODER field names \"Lavc60.31.102 libvorbis\""
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

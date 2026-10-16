@@ -257,7 +257,7 @@ def ebml_header(doctype="matroska", doctype_version=4, read_version=2, max_id=4,
                   uint(ID["DocTypeReadVersion"], read_version), *extra)
 
 
-def info(scale=1_000_000, duration=None, muxing="encspect fixtures", writing="make_matroska_fixtures.py", title=None, uuid=None, extra=()):
+def info(scale=1_000_000, duration=None, muxing="encspect fixtures", writing="encspect fixtures", title=None, uuid=None, extra=()):
     children = []
     if uuid is not None:
         children.append(raw(ID["SegmentUUID"], uuid))
@@ -899,6 +899,28 @@ def read(data):
     return Reader(bytes(data)).run()
 
 
+def writer_of(segments):
+    """The writer the analyzer names: the MuxingApp and WritingApp of each Segment are writer claims in file order, except a "Lavc" encoder ID
+    (the encoder's) and a MuxingApp that names the Matroska libraries when the Segment has a WritingApp; the first claim wins (all are
+    low confidence), named as ClaimRoles.WriterName shows it."""
+    for info in (s.get("info", {}) for s in segments):
+        mux, writing = (info.get("muxing_app") or "").strip(), (info.get("writing_app") or "").strip()
+        claims = []
+        if mux and not ((mux.startswith("libebml") or mux.startswith("libmatroska")) and writing):
+            claims.append(mux)
+        if writing:
+            claims.append(writing)
+        for text in claims:
+            if re.match(r"^Lavc(?:\d| )", text):
+                continue
+            if text == "ffmpeg":
+                return "FFmpeg"
+            if re.match(r"^\s*Lavf(?![A-Za-z])", text):
+                return f"FFmpeg ({text[:64]})"
+            return text[:64]
+    return None
+
+
 def manifest(data):
     """What the analyzer must show of a file, worked out from its bytes."""
     r = read(data)
@@ -914,4 +936,5 @@ def manifest(data):
         "tree": [e.list() for e in r.top],
         "blocks": [b.dict() for b in r.blocks],
         "tracks": r.tracks,
+        "writer": writer_of(r.facts["segments"]),
     }

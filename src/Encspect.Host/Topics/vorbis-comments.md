@@ -1,7 +1,7 @@
 ---
 id: vorbis-comments
 title: Vorbis comments
-related: encoder-detection, tag-placement, replaygain, ogg-pages
+related: encoder-detection, writer-detection, tag-placement, replaygain, ogg-pages
 references: Vorbis I specification, section 5; Speex manual, section 7.3
 ---
 
@@ -11,4 +11,4 @@ references: Vorbis I specification, section 5; Speex manual, section 7.3
 
 **No fixed list.** The specification proposes a minimal set of field names, such as TITLE, ARTIST, ALBUM, TRACKNUMBER, DATE and GENRE, and makes none of them mandatory. Any other name may be used, and a name may appear more than once, as ARTIST does for a piece by several artists. Names such as ALBUMARTIST, ENCODER and REPLAYGAIN_TRACK_GAIN have grown up beside the list, so what such a field means is a matter of practice, not of the format. The comment is meant for short text notes; the specification puts larger metadata into a stream of its own.
 
-**What you see.** The Vorbis Comment tag with its vendor string and each comment, named after its field, with its length, field name and value. The vendor string and an ENCODER field are evidence for the encoder.
+**What you see.** The Vorbis Comment tag with its vendor string and each comment, named after its field, with its length, field name and value. The vendor string is evidence for the [encoder](encoder-detection), and an ENCODER field, which the specification does not list, for the [writer](writer-detection).

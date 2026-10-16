@@ -458,6 +458,10 @@
     "encoder": {
      "name": "FFmpeg (Lavc60.31.102 vorbis)",
      "confidence": "Medium"
+    },
+    "writer": {
+     "name": "FFmpeg (Lavf60.16.100)",
+     "confidence": "Low"
     }
    }
   }
@@ -477,7 +481,9 @@
    "is_vbr": true,
    "channel_mode": "Stereo",
    "encoder": "FFmpeg (Lavc60.31.102 vorbis)",
-   "encoder_confidence": "Medium"
+   "encoder_confidence": "Medium",
+   "writer": "FFmpeg (Lavf60.16.100)",
+   "writer_confidence": "Low"
   }
  ],
  "findings": [],

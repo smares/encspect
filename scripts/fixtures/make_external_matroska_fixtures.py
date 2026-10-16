@@ -159,11 +159,18 @@ def encode(name, tool, inputs, arguments, extension, work):
     return {"tool": f"mkvmerge {version('mkvmerge')}", "arguments": arguments, "inputs": inputs}
 
 
+# Streams whose codec parser names a writer from the stream's own Vorbis comment, which the Segment's claims do not outweigh: mkvmerge copied the
+# Vorbis headers of an ffmpeg-made Ogg file, whose vendor string is ffmpeg's muxer version.
+STREAM_WRITERS = {"external-mkvmerge-vorbis": "FFmpeg (Lavf60.16.100)"}
+
+
 def manifest(name, encoder, streams, findings, extension):
     data = (OUT / f"{name}.{extension}").read_bytes()
     result = {"description": f"{encoder['tool']} {' '.join(encoder['arguments'])}".strip()}
     result.update(m.manifest(data))
     result["encoder"] = encoder
+    if name in STREAM_WRITERS:
+        result["writer"] = STREAM_WRITERS[name]
     result["streams"] = [{"codec": c, "sample_rate": r, "channels": n} for c, r, n in streams]
     result["findings"] = [{"code": code, "contains": contains} for code, contains in findings]
     result["crosscheck"] = {"valid": True}

@@ -1,6 +1,6 @@
 {
  "description": "BlockGroups (RFC 9559 section 5.1.3.5) with a Block, BlockDuration, ReferenceBlock, DiscardPadding and BlockAdditions, a laced Block and SimpleBlocks among them.",
- "length": 548,
+ "length": 540,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 193,
+     "offset": 185,
      "length": 355,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 508,
-   "declared_end": 548
+   "length": 500,
+   "declared_end": 540
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   508,
+   500,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,68 +106,68 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      76,
      [
       [
        "TrackEntry",
-       122,
+       114,
        71,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "CodecID",
-         135,
+         127,
          8
         ],
         [
          "CodecPrivate",
-         143,
+         135,
          22
         ],
         [
          "CodecDelay",
-         165,
+         157,
          6
         ],
         [
          "SeekPreRoll",
-         171,
+         163,
          7
         ],
         [
          "Audio",
-         178,
+         170,
          15,
          [
           [
            "SamplingFrequency",
-           180,
+           172,
            10
           ],
           [
            "Channels",
-           190,
+           182,
            3
           ]
          ]
@@ -178,91 +178,91 @@
     ],
     [
      "Cluster",
-     193,
+     185,
      355,
      [
       [
        "Timestamp",
-       199,
+       191,
        3
       ],
       [
        "SimpleBlock",
-       202,
+       194,
        46
       ],
       [
        "BlockGroup",
-       248,
+       240,
        60,
        [
         [
          "Block",
-         250,
+         242,
          46
         ],
         [
          "BlockDuration",
-         296,
+         288,
          3
         ],
         [
          "ReferenceBlock",
-         299,
+         291,
          3
         ],
         [
          "DiscardPadding",
-         302,
+         294,
          6
         ]
        ]
       ],
       [
        "BlockGroup",
-       308,
+       300,
        141,
        [
         [
          "Block",
-         311,
+         303,
          108
         ],
         [
          "BlockAdditions",
-         419,
+         411,
          21,
          [
           [
            "BlockMore",
-           422,
+           414,
            10,
            [
             [
              "BlockAddID",
-             424,
+             416,
              3
             ],
             [
              "BlockAdditional",
-             427,
+             419,
              5
             ]
            ]
           ],
           [
            "BlockMore",
-           432,
+           424,
            8,
            [
             [
              "BlockAddID",
-             434,
+             426,
              3
             ],
             [
              "BlockAdditional",
-             437,
+             429,
              3
             ]
            ]
@@ -271,39 +271,39 @@
         ],
         [
          "BlockDuration",
-         440,
+         432,
          3
         ],
         [
          "ReferenceBlock",
-         443,
+         435,
          3
         ],
         [
          "ReferenceBlock",
-         446,
+         438,
          3
         ]
        ]
       ],
       [
        "SimpleBlock",
-       449,
+       441,
        46
       ],
       [
        "BlockGroup",
-       495,
+       487,
        53,
        [
         [
          "Block",
-         497,
+         489,
          46
         ],
         [
          "Void",
-         543,
+         535,
          5
         ]
        ]
@@ -316,7 +316,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 202,
+   "offset": 194,
    "length": 46,
    "track": 1,
    "timestamp": 0,
@@ -325,14 +325,14 @@
    "lacing": "none",
    "frames": [
     [
-     208,
+     200,
      40
     ]
    ]
   },
   {
    "name": "Block",
-   "offset": 250,
+   "offset": 242,
    "length": 46,
    "track": 1,
    "timestamp": 20,
@@ -341,7 +341,7 @@
    "lacing": "none",
    "frames": [
     [
-     256,
+     248,
      40
     ]
    ],
@@ -349,7 +349,7 @@
   },
   {
    "name": "Block",
-   "offset": 311,
+   "offset": 303,
    "length": 108,
    "track": 1,
    "timestamp": 40,
@@ -358,11 +358,11 @@
    "lacing": "xiph",
    "frames": [
     [
-     319,
+     311,
      40
     ],
     [
-     359,
+     351,
      60
     ]
    ],
@@ -370,7 +370,7 @@
   },
   {
    "name": "SimpleBlock",
-   "offset": 449,
+   "offset": 441,
    "length": 46,
    "track": 1,
    "timestamp": 80,
@@ -379,14 +379,14 @@
    "lacing": "none",
    "frames": [
     [
-     455,
+     447,
      40
     ]
    ]
   },
   {
    "name": "Block",
-   "offset": 497,
+   "offset": 489,
    "length": 46,
    "track": 1,
    "timestamp": 100,
@@ -395,7 +395,7 @@
    "lacing": "none",
    "frames": [
     [
-     503,
+     495,
      40
     ]
    ],
@@ -409,7 +409,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    146,
+    138,
     19
    ],
    "channels": 1,
@@ -420,6 +420,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

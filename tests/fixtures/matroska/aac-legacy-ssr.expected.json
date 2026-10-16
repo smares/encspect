@@ -1,6 +1,6 @@
 {
  "description": "A track with the legacy ID A_AAC/MPEG4/SSR, whose frames carry gain control.",
- "length": 298,
+ "length": 290,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 167,
+     "offset": 159,
      "length": 131,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 258,
-   "declared_end": 298
+   "length": 250,
+   "declared_end": 290
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   258,
+   250,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,53 +106,53 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      50,
      [
       [
        "TrackEntry",
-       122,
+       114,
        45,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "CodecID",
-         135,
+         127,
          17
         ],
         [
          "Audio",
-         152,
+         144,
          15,
          [
           [
            "SamplingFrequency",
-           154,
+           146,
            10
           ],
           [
            "Channels",
-           164,
+           156,
            3
           ]
          ]
@@ -163,32 +163,32 @@
     ],
     [
      "Cluster",
-     167,
+     159,
      131,
      [
       [
        "Timestamp",
-       172,
+       164,
        3
       ],
       [
        "SimpleBlock",
-       175,
+       167,
        20
       ],
       [
        "SimpleBlock",
-       195,
+       187,
        22
       ],
       [
        "SimpleBlock",
-       217,
+       209,
        59
       ],
       [
        "SimpleBlock",
-       276,
+       268,
        22
       ]
      ]
@@ -199,7 +199,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 175,
+   "offset": 167,
    "length": 20,
    "track": 1,
    "timestamp": 0,
@@ -208,14 +208,14 @@
    "lacing": "none",
    "frames": [
     [
-     181,
+     173,
      14
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 195,
+   "offset": 187,
    "length": 22,
    "track": 1,
    "timestamp": 23,
@@ -224,14 +224,14 @@
    "lacing": "none",
    "frames": [
     [
-     201,
+     193,
      16
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 217,
+   "offset": 209,
    "length": 59,
    "track": 1,
    "timestamp": 46,
@@ -240,14 +240,14 @@
    "lacing": "none",
    "frames": [
     [
-     223,
+     215,
      53
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 276,
+   "offset": 268,
    "length": 22,
    "track": 1,
    "timestamp": 70,
@@ -256,7 +256,7 @@
    "lacing": "none",
    "frames": [
     [
-     282,
+     274,
      16
     ]
    ]
@@ -277,6 +277,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "AAC",

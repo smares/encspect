@@ -5841,6 +5841,32 @@
                       ]
                     },
                     {
+                      "name": "Writer",
+                      "value": "FFmpeg (Lavf60.16.100)",
+                      "offset": 613,
+                      "length": 22361,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 613,
+                          "length": 22361
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment MuxingApp element at 0xE7 names \"Lavf60.16.100\"",
+                          "offset": 613,
+                          "length": 22361
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0xF7 names \"Lavf60.16.100\"",
+                          "offset": 613,
+                          "length": 22361
+                        }
+                      ]
+                    },
+                    {
                       "name": "Statistics",
                       "kind": "Statistics",
                       "offset": 613,
@@ -51324,6 +51350,8 @@
         "playbackGroup": 1,
         "encoder": "FAAC 1.50.0",
         "encoderConfidence": "High",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

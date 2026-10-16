@@ -1,6 +1,6 @@
 {
  "description": "A track with FlagLacing 0 whose blocks use lacing (RFC 9559 section 5.1.4.1.12).",
- "length": 292,
+ "length": 284,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 196,
+     "offset": 188,
      "length": 96,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 252,
-   "declared_end": 292
+   "length": 244,
+   "declared_end": 284
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   252,
+   244,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,73 +106,73 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      79,
      [
       [
        "TrackEntry",
-       122,
+       114,
        74,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "FlagLacing",
-         135,
+         127,
          3
         ],
         [
          "CodecID",
-         138,
+         130,
          8
         ],
         [
          "CodecPrivate",
-         146,
+         138,
          22
         ],
         [
          "CodecDelay",
-         168,
+         160,
          6
         ],
         [
          "SeekPreRoll",
-         174,
+         166,
          7
         ],
         [
          "Audio",
-         181,
+         173,
          15,
          [
           [
            "SamplingFrequency",
-           183,
+           175,
            10
           ],
           [
            "Channels",
-           193,
+           185,
            3
           ]
          ]
@@ -183,17 +183,17 @@
     ],
     [
      "Cluster",
-     196,
+     188,
      96,
      [
       [
        "Timestamp",
-       201,
+       193,
        3
       ],
       [
        "SimpleBlock",
-       204,
+       196,
        88
       ]
      ]
@@ -204,7 +204,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 204,
+   "offset": 196,
    "length": 88,
    "track": 1,
    "timestamp": 0,
@@ -213,11 +213,11 @@
    "lacing": "xiph",
    "frames": [
     [
-     212,
+     204,
      40
     ],
     [
-     252,
+     244,
      40
     ]
    ]
@@ -230,7 +230,7 @@
    "type": 2,
    "codec": "A_OPUS",
    "private": [
-    149,
+    141,
     19
    ],
    "channels": 1,
@@ -241,6 +241,7 @@
    "lacing": false
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "Opus",

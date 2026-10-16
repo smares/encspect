@@ -1,0 +1,310 @@
+{
+ "description": "A PCM track, which no codec parser reads, in a Segment whose MuxingApp names one program and whose WritingApp LAME, which writes MPEG audio: the container reports the writer itself, and both findings.",
+ "length": 433,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 144,
+     "length": 289,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "foo 1.0",
+    "writing_app": "LAME 3.100"
+   },
+   "length": 393,
+   "declared_end": 433
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   393,
+   [
+    [
+     "Info",
+     46,
+     46,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       10
+      ],
+      [
+       "WritingApp",
+       79,
+       13
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     92,
+     52,
+     [
+      [
+       "TrackEntry",
+       97,
+       47,
+       [
+        [
+         "TrackNumber",
+         99,
+         3
+        ],
+        [
+         "TrackUID",
+         102,
+         5
+        ],
+        [
+         "TrackType",
+         107,
+         3
+        ],
+        [
+         "CodecID",
+         110,
+         15
+        ],
+        [
+         "Audio",
+         125,
+         19,
+         [
+          [
+           "SamplingFrequency",
+           127,
+           10
+          ],
+          [
+           "Channels",
+           137,
+           3
+          ],
+          [
+           "BitDepth",
+           140,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     144,
+     289,
+     [
+      [
+       "Timestamp",
+       150,
+       3
+      ],
+      [
+       "SimpleBlock",
+       153,
+       70
+      ],
+      [
+       "SimpleBlock",
+       223,
+       70
+      ],
+      [
+       "SimpleBlock",
+       293,
+       70
+      ],
+      [
+       "SimpleBlock",
+       363,
+       70
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 153,
+   "length": 70,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     159,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 223,
+   "length": 70,
+   "track": 1,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     229,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 293,
+   "length": 70,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     299,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 363,
+   "length": 70,
+   "track": 1,
+   "timestamp": 30,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     369,
+     64
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": 16,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writer": "foo 1.0",
+ "streams": [
+  {
+   "codec": "PCM (integer, little-endian)",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.writer-claim-differs",
+   "contains": "WritingApp"
+  },
+  {
+   "code": "matroska.writer-other-format",
+   "contains": "LAME"
+  },
+  {
+   "code": "matroska.codec-not-analyzed",
+   "contains": "PCM"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

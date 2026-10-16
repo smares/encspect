@@ -20,7 +20,7 @@ public sealed class FileRow : ObservableObject
         nameof(Format), nameof(FormatText), nameof(Codec), nameof(Duration), nameof(DurationText), nameof(Bitrate), nameof(IsVbr),
         nameof(BitrateText), nameof(SampleRate), nameof(SampleRateText), nameof(ChannelMode), nameof(ChannelLayout),
         nameof(ChannelLayoutTip), nameof(Encoder), nameof(EncoderConfidence),
-        nameof(EncoderText), nameof(Tags), nameof(Errors), nameof(Warnings), nameof(Infos), nameof(ErrorsText), nameof(WarningsText),
+        nameof(EncoderText), nameof(Writer), nameof(WriterConfidence), nameof(WriterText), nameof(Tags), nameof(Errors), nameof(Warnings), nameof(Infos), nameof(ErrorsText), nameof(WarningsText),
         nameof(InfosText), nameof(FindingsRank), nameof(Problem),
     ];
 
@@ -97,6 +97,12 @@ public sealed class FileRow : ObservableObject
     public Confidence? EncoderConfidence => _summary?.Summary.EncoderConfidence;
 
     public string? EncoderText => Encoder is { } encoder ? ViewModels.Format.Encoder(encoder, EncoderConfidence) : null;
+
+    public string? Writer => _summary?.Summary.Writer;
+
+    public Confidence? WriterConfidence => _summary?.Summary.WriterConfidence;
+
+    public string? WriterText => Writer is { } writer ? ViewModels.Format.Encoder(writer, WriterConfidence) : null;
 
     public string? Tags => _summary is { Summary.Tags.Count: > 0 } summary ? string.Join(", ", summary.Summary.Tags) : null;
 

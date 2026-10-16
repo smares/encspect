@@ -102,7 +102,7 @@
                     },
                     {
                       "name": "WritingApp",
-                      "value": "y",
+                      "value": "x",
                       "offset": 70,
                       "length": 4
                     }
@@ -778,6 +778,32 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "x",
+                  "offset": 111,
+                  "length": 183,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 111,
+                      "length": 183
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment MuxingApp element at 0x42 names \"x\"",
+                      "offset": 111,
+                      "length": 183
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment WritingApp element at 0x46 names \"x\"",
+                      "offset": 111,
+                      "length": 183
+                    }
+                  ]
                 }
               ]
             }
@@ -806,6 +832,8 @@
         "averageBitrate": 16,
         "isVbr": false,
         "playbackGroup": 1,
+        "writer": "x",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

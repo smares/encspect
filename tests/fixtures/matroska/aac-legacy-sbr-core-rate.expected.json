@@ -1,6 +1,6 @@
 {
  "description": "A track with the legacy ID A_AAC/MPEG4/LC/SBR and no OutputSamplingFrequency: the SBR extension of the worked out configuration gives the core's sampling frequency.",
- "length": 2747,
+ "length": 2739,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 170,
+     "offset": 162,
      "length": 2577,
      "timestamp": 0,
      "size_unknown": false,
@@ -29,10 +29,10 @@
     "timestamp_scale": 1000000,
     "duration": 100.0,
     "muxing_app": "encspect fixtures",
-    "writing_app": "make_matroska_fixtures.py"
+    "writing_app": "encspect fixtures"
    },
-   "length": 2707,
-   "declared_end": 2747
+   "length": 2699,
+   "declared_end": 2739
   }
  ],
  "tree": [
@@ -81,12 +81,12 @@
   [
    "Segment",
    40,
-   2707,
+   2699,
    [
     [
      "Info",
      46,
-     71,
+     63,
      [
       [
        "TimestampScale",
@@ -106,53 +106,53 @@
       [
        "WritingApp",
        89,
-       28
+       20
       ]
      ]
     ],
     [
      "Tracks",
-     117,
+     109,
      53,
      [
       [
        "TrackEntry",
-       122,
+       114,
        48,
        [
         [
          "TrackNumber",
-         124,
+         116,
          3
         ],
         [
          "TrackUID",
-         127,
+         119,
          5
         ],
         [
          "TrackType",
-         132,
+         124,
          3
         ],
         [
          "CodecID",
-         135,
+         127,
          20
         ],
         [
          "Audio",
-         155,
+         147,
          15,
          [
           [
            "SamplingFrequency",
-           157,
+           149,
            10
           ],
           [
            "Channels",
-           167,
+           159,
            3
           ]
          ]
@@ -163,72 +163,72 @@
     ],
     [
      "Cluster",
-     170,
+     162,
      2577,
      [
       [
        "Timestamp",
-       176,
+       168,
        3
       ],
       [
        "SimpleBlock",
-       179,
+       171,
        215
       ],
       [
        "SimpleBlock",
-       394,
+       386,
        214
       ],
       [
        "SimpleBlock",
-       608,
+       600,
        213
       ],
       [
        "SimpleBlock",
-       821,
+       813,
        214
       ],
       [
        "SimpleBlock",
-       1035,
+       1027,
        216
       ],
       [
        "SimpleBlock",
-       1251,
+       1243,
        214
       ],
       [
        "SimpleBlock",
-       1465,
+       1457,
        215
       ],
       [
        "SimpleBlock",
-       1680,
+       1672,
        213
       ],
       [
        "SimpleBlock",
-       1893,
+       1885,
        215
       ],
       [
        "SimpleBlock",
-       2108,
+       2100,
        213
       ],
       [
        "SimpleBlock",
-       2321,
+       2313,
        212
       ],
       [
        "SimpleBlock",
-       2533,
+       2525,
        214
       ]
      ]
@@ -239,7 +239,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 179,
+   "offset": 171,
    "length": 215,
    "track": 1,
    "timestamp": 0,
@@ -248,14 +248,14 @@
    "lacing": "none",
    "frames": [
     [
-     186,
+     178,
      208
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 394,
+   "offset": 386,
    "length": 214,
    "track": 1,
    "timestamp": 46,
@@ -264,14 +264,14 @@
    "lacing": "none",
    "frames": [
     [
-     401,
+     393,
      207
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 608,
+   "offset": 600,
    "length": 213,
    "track": 1,
    "timestamp": 93,
@@ -280,14 +280,14 @@
    "lacing": "none",
    "frames": [
     [
-     615,
+     607,
      206
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 821,
+   "offset": 813,
    "length": 214,
    "track": 1,
    "timestamp": 139,
@@ -296,14 +296,14 @@
    "lacing": "none",
    "frames": [
     [
-     828,
+     820,
      207
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 1035,
+   "offset": 1027,
    "length": 216,
    "track": 1,
    "timestamp": 186,
@@ -312,14 +312,14 @@
    "lacing": "none",
    "frames": [
     [
-     1042,
+     1034,
      209
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 1251,
+   "offset": 1243,
    "length": 214,
    "track": 1,
    "timestamp": 232,
@@ -328,14 +328,14 @@
    "lacing": "none",
    "frames": [
     [
-     1258,
+     1250,
      207
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 1465,
+   "offset": 1457,
    "length": 215,
    "track": 1,
    "timestamp": 279,
@@ -344,14 +344,14 @@
    "lacing": "none",
    "frames": [
     [
-     1472,
+     1464,
      208
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 1680,
+   "offset": 1672,
    "length": 213,
    "track": 1,
    "timestamp": 325,
@@ -360,14 +360,14 @@
    "lacing": "none",
    "frames": [
     [
-     1687,
+     1679,
      206
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 1893,
+   "offset": 1885,
    "length": 215,
    "track": 1,
    "timestamp": 372,
@@ -376,14 +376,14 @@
    "lacing": "none",
    "frames": [
     [
-     1900,
+     1892,
      208
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 2108,
+   "offset": 2100,
    "length": 213,
    "track": 1,
    "timestamp": 418,
@@ -392,14 +392,14 @@
    "lacing": "none",
    "frames": [
     [
-     2115,
+     2107,
      206
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 2321,
+   "offset": 2313,
    "length": 212,
    "track": 1,
    "timestamp": 464,
@@ -408,14 +408,14 @@
    "lacing": "none",
    "frames": [
     [
-     2328,
+     2320,
      205
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 2533,
+   "offset": 2525,
    "length": 214,
    "track": 1,
    "timestamp": 511,
@@ -424,7 +424,7 @@
    "lacing": "none",
    "frames": [
     [
-     2540,
+     2532,
      207
     ]
    ]
@@ -445,6 +445,7 @@
    "lacing": true
   }
  ],
+ "writer": "encspect fixtures",
  "streams": [
   {
    "codec": "AAC",

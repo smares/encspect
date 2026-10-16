@@ -693,6 +693,26 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "x",
+                  "offset": 101,
+                  "length": 148,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 101,
+                      "length": 148
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment MuxingApp element at 0x3A names \"x\"",
+                      "offset": 101,
+                      "length": 148
+                    }
+                  ]
                 }
               ]
             }
@@ -721,6 +741,8 @@
         "averageBitrate": 16.2,
         "isVbr": true,
         "playbackGroup": 1,
+        "writer": "x",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

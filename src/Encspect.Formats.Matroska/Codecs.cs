@@ -1,3 +1,5 @@
+using Encspect.Core;
+
 namespace Encspect.Formats.Matroska;
 
 // The audio codec IDs of the Matroska codec mapping (draft-ietf-cellar-codec, section 3.4) and what the analysis does with them: the
@@ -15,6 +17,18 @@ internal static class Codecs
         "A_DTS" or "A_DTS/EXPRESS" or "A_DTS/LOSSLESS" => "dts",
         "A_VORBIS" => "vorbis",
         "A_OPUS" or "A_OPUS/EXPERIMENTAL" => "opus",
+        _ => null,
+    };
+
+    // The kind of stream KnownWriters knows the codec ID's coding as, or null for a coding no parser reads.
+    public static string? WriterKind(string codecId) => RouteOf(codecId) switch
+    {
+        "aac" => KnownWriters.Aac,
+        "mpeg-audio" => KnownWriters.MpegAudio,
+        "ac-3" or "e-ac-3" => KnownWriters.Ac3,
+        "dts" => KnownWriters.Dts,
+        "vorbis" => KnownWriters.Vorbis,
+        "opus" => KnownWriters.Opus,
         _ => null,
     };
 

@@ -208,14 +208,14 @@ def _():
     good = cluster(0, *blocks(count=3), crc=True)
     bad = cluster(60, *blocks(count=3, first=3), crc=False)
     bad.children.insert(0, Crc(value=0xDEADBEEF))
-    inf = master(m.INFO, Crc(value=0x12345678), uint(ID["TimestampScale"], 1_000_000), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "y"))
+    inf = master(m.INFO, Crc(value=0x12345678), uint(ID["TimestampScale"], 1_000_000), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "x"))
     return build([ebml_header(), segment(inf, tracks(opus_track()), good, bad)])
 
 
 @fixture("crc-misplaced", "CRC-32 elements that RFC 8794 section 11.3.1 does not allow: one that is not the first child, and one of two bytes.",
          findings=[("matroska.crc-position", "not the first child"), ("matroska.crc-size", "other than the 4 bytes")], streams=[OPUS])
 def _():
-    late = master(m.INFO, uint(ID["TimestampScale"], 1_000_000), Crc(), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "y"))
+    late = master(m.INFO, uint(ID["TimestampScale"], 1_000_000), Crc(), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "x"))
     short = master(m.CLUSTER, E(m.CRC32, b"\x01\x02"), uint(m.TIMESTAMP, 0), *blocks(count=2))
     return build([ebml_header(), segment(late, tracks(opus_track()), short)])
 
@@ -225,7 +225,7 @@ def _():
          findings=[("matroska.unknown-element", "none the Matroska schema lists"), ("matroska.element-id-long", "shortest length"),
                    ("matroska.deprecated-element", "no longer used")], streams=[OPUS], valid=False)
 def _():
-    inf = master(m.INFO, void(7), uint(ID["TimestampScale"], 1_000_000), raw(0x7FF0, b"\x01\x02\x03"), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "y"))
+    inf = master(m.INFO, void(7), uint(ID["TimestampScale"], 1_000_000), raw(0x7FF0, b"\x01\x02\x03"), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "x"))
     cl = cluster(0, void(3), *blocks(count=2), master(0x5854, uint(0x58D7, 1)), raw(0x7FF1, b"zz"), void(2), extra_first=())
     return build([ebml_header(), void(9), segment(void(20), inf, tracks(opus_track(), raw(0x1FFFFFF0, b"\xAA" * 5)), E(0xEC, bytes(3), id_raw=bytes([0x40, 0x6C])), cl)])
 
@@ -328,7 +328,7 @@ def _():
 
 
 @fixture("segment-info", "An Info element with a title, a date, a Segment UID and a duration, and a Segment UID of the wrong length.",
-         findings=[("matroska.uid-length", "128 bits")], streams=[OPUS], valid=False)
+         findings=[("matroska.uid-length", "128 bits"), ("matroska.writer-claim-differs", "WritingApp")], streams=[OPUS], valid=False)
 def _():
     inf = master(m.INFO, raw(ID["SegmentUUID"], bytes(range(16))), uint(ID["TimestampScale"], 1_000_000), flt(ID["Duration"], 60.0), raw(ID["DateUTC"], struct.pack(">q", 788_918_400_000_000_000)),
                  text(ID["Title"], "Segment title"), text(ID["MuxingApp"], "muxer 1.0"), text(ID["WritingApp"], "writer 2.0"), raw(0x3CB923, b"\x01\x02\x03"))
@@ -337,7 +337,7 @@ def _():
 
 @fixture("timestamp-scale-zero", "A TimestampScale of 0, which RFC 9559 forbids (section 5.1.2.9).", findings=[("matroska.timestamp-scale", "is 0")], streams=[OPUS], valid=False)
 def _():
-    return build([ebml_header(), segment(master(m.INFO, uint(ID["TimestampScale"], 0), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "y")), tracks(opus_track()),
+    return build([ebml_header(), segment(master(m.INFO, uint(ID["TimestampScale"], 0), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "x")), tracks(opus_track()),
                                        cluster(0, *blocks(count=2)))])
 
 
@@ -470,7 +470,7 @@ def _():
 def _():
     cl = cluster(0, *blocks(count=2))
     cl.children.append(E(m.SIMPLEBLOCK, m.block_payload(1, 40, [opus_packet(2)]), size=500))
-    inf = master(m.INFO, uint(ID["TimestampScale"], 1_000_000), text(ID["MuxingApp"], "x"), E(ID["WritingApp"], b"w", size=100))
+    inf = master(m.INFO, uint(ID["TimestampScale"], 1_000_000), text(ID["MuxingApp"], "x"), E(ID["WritingApp"], b"x", size=100))
     return build([ebml_header(), segment(inf, tracks(opus_track()), cl, cluster(100, *blocks(count=20, start=0, first=10)))])
 
 
@@ -542,7 +542,7 @@ def _():
                                                   ("matroska.track-field", "no TrackUID")], valid=False, streams=[OPUS])
 def _():
     inf = master(m.INFO, uint(ID["TimestampScale"], 1_000_000), E(ID["Title"], b"caf\xE9 \xFF"), E(ID["Duration"], b"\x00\x00\x00"),
-                 E(ID["MuxingApp"], b"app\x01"), text(ID["WritingApp"], "y"))
+                 E(ID["MuxingApp"], b"app\x01"), text(ID["WritingApp"], "app"))
     tr = master(m.TRACKS, master(ID["TrackEntry"], uint(ID["TrackNumber"], 1), E(ID["TrackUID"], bytes(9)), uint(ID["TrackType"], 2), text(ID["CodecID"], "A_OPUS"),
                                  raw(ID["CodecPrivate"], opus_head()), uint(ID["CodecDelay"], 6_500_000), master(ID["Audio"], flt(ID["SamplingFrequency"], 48000.0), uint(ID["Channels"], 1))))
     return build([ebml_header(), segment(inf, tr, cluster(0, *blocks(count=2)))])
@@ -727,7 +727,7 @@ def _():
                    E(ID["Language"], b""), text(ID["CodecID"], "A_OPUS"), raw(ID["CodecPrivate"], opus_head()), uint(ID["CodecDelay"], 6_500_000),
                    master(ID["Audio"], flt(ID["SamplingFrequency"], 48000.0), uint(ID["Channels"], 1)))
     items = [simple_block(1, 0, [opus_packet(0), opus_packet(1)], lacing="xiph", key=True), simple_block(1, 40, opus_packet(2), key=True)]
-    inf = master(m.INFO, E(ID["TimestampScale"], b""), flt(ID["Duration"], 100.0), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "y"))
+    inf = master(m.INFO, E(ID["TimestampScale"], b""), flt(ID["Duration"], 100.0), text(ID["MuxingApp"], "x"), text(ID["WritingApp"], "x"))
     return build([ebml_header(), segment(inf, tracks(track), cluster(0, *items))])
 
 
@@ -800,6 +800,54 @@ def _():
               simple_block(1, 40, zlib.compress(opus_packet(2), 9), key=True)]
     enc = content_encodings(content_encoding(order=0, scope=1, compression=0))
     return build(standard(cluster(0, *packed), track=[opus_track(encodings=enc)]))
+
+
+# --- Writers: the Segment's MuxingApp and WritingApp are claims of the writer role ----------------------------------------------
+
+
+def with_apps(muxing, writing, tracks_=None, items=None):
+    inf = master(m.INFO, uint(ID["TimestampScale"], 1_000_000), flt(ID["Duration"], 100.0), text(ID["MuxingApp"], muxing), text(ID["WritingApp"], writing))
+    return build([ebml_header(), segment(inf, tracks(*(tracks_ or [opus_track()])), cluster(0, *(items or blocks(count=4))))])
+
+
+@fixture("writer-mkvmerge", "A Segment written by mkvmerge: the MuxingApp names the libraries (\"libebml v1.4.5 + libmatroska v1.7.1\") and the WritingApp the program, which "
+         "the Writer node names; the library says no more than the program that uses it, so the two do not conflict.", streams=[OPUS])
+def _():
+    return with_apps("libebml v1.4.5 + libmatroska v1.7.1", "mkvmerge v82.0 ('I'm The President') 64-bit")
+
+
+@fixture("writer-lavf", "A Segment written by ffmpeg: both apps hold the muxer's version \"Lavf60.16.100\", which names FFmpeg as the writer, with two pieces of evidence.",
+         streams=[OPUS])
+def _():
+    return with_apps("Lavf60.16.100", "Lavf60.16.100")
+
+
+@fixture("writer-lavc-id", "A WritingApp that holds a libavcodec encoder ID (\"Lavc60.31.102 libopus\"), which names the encoder, not the writer; the MuxingApp's \"Lavf\" is the writer.",
+         streams=[OPUS])
+def _():
+    return with_apps("Lavf60.16.100", "Lavc60.31.102 libopus")
+
+
+@fixture("writer-apps-differ", "A MuxingApp and a WritingApp that name different software: the Matroska parser weighs the Opus stream's claims and says so.",
+         findings=[("matroska.writer-claim-differs", "WritingApp")], streams=[OPUS], valid=False)
+def _():
+    return with_apps("muxer 1.0", "writer 2.0")
+
+
+@fixture("writer-pcm-lame", "A PCM track, which no codec parser reads, in a Segment whose MuxingApp names one program and whose WritingApp LAME, which writes MPEG audio: the "
+         "container reports the writer itself, and both findings.",
+         findings=[("matroska.writer-claim-differs", "WritingApp"), ("matroska.writer-other-format", "LAME"), ("matroska.codec-not-analyzed", "PCM")],
+         streams=[("PCM (integer, little-endian)", 48000, 2)], valid=False)
+def _():
+    pcm = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
+    return with_apps("foo 1.0", "LAME 3.100", [pcm], [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)])
+
+
+@fixture("writer-pcm-ffmpeg", "A PCM track written by ffmpeg: the container names FFmpeg as the writer of a stream no codec parser reads.",
+         findings=[("matroska.codec-not-analyzed", "PCM")], streams=[("PCM (integer, little-endian)", 48000, 2)], valid=False)
+def _():
+    pcm = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
+    return with_apps("Lavf60.16.100", "Lavf60.16.100", [pcm], [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)])
 
 
 # --- Writing the files ---------------------------------------------------------------------------------

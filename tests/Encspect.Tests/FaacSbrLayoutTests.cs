@@ -57,7 +57,7 @@ public class FaacSbrLayoutTests
     public void ClaimSuppliesTheVersion()
     {
         var source = new Node("©too", 0x40, 8);
-        Node? encoder = Detect(Tally(Faac22), [new EncoderClaim("FAAC 2.2.0 (6acbe23)", source, "MP4 ©too atom (encoding tool)")]);
+        Node? encoder = Detect(Tally(Faac22), [new EncoderClaim("FAAC 2.2.0 (6acbe23)", source, "MP4 ©too atom (encoding tool)", ClaimRole.Encoder)]);
         Assert.NotNull(encoder);
         Assert.Equal("FAAC 2.2.0 (6acbe23)", encoder.Value?.ToString());
         Assert.Equal("Medium", Child(encoder, "Confidence"));
@@ -68,7 +68,7 @@ public class FaacSbrLayoutTests
     public void ClaimOfAnotherEncoderIsADifference()
     {
         var differences = new List<string>();
-        Node? encoder = Detect(Tally(Faac22), [new EncoderClaim("fdkaac 1.0.0", new Node("©too", 0x40, 8), "MP4 ©too atom (encoding tool)")], differences);
+        Node? encoder = Detect(Tally(Faac22), [new EncoderClaim("fdkaac 1.0.0", new Node("©too", 0x40, 8), "MP4 ©too atom (encoding tool)", ClaimRole.Encoder)], differences);
         Assert.Equal("FAAC", encoder?.Value?.ToString());
         Assert.Single(differences);
     }

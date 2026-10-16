@@ -11,6 +11,7 @@ internal sealed partial class FileReader
 
     private void RouteTracks(SegmentState segment)
     {
+        AddWriterClaims(segment);
         foreach (TrackInfo track in segment.Tracks)
         {
             string label = track.Number is { } n ? $"Track {n}" : "A track without a number";
@@ -29,16 +30,39 @@ internal sealed partial class FileReader
             List<StreamInfo> made = [.. _context.Streams.Skip(streamsBefore)];
             if (made.Count == 1)
             {
-                _context.UpdateStream(made[0], made[0] with { PlaybackGroup = segment.Number });
+                StreamInfo stream = made[0];
+                // A codec parser that reads no tag of its own (Opus and Vorbis in a Matroska track have none) names no writer: the claims of the
+                // Segment and the file's tags are weighed here.
+                if (stream.Writer is null && stream.Nodes.Count > 0 && Codecs.WriterKind(track.CodecId ?? string.Empty) is { } kind)
+                {
+                    Node? writer = ResolveWriter(stream.Nodes[0], kind, Codecs.NameOf(track.CodecId ?? string.Empty) ?? kind);
+                    (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
+                    stream = stream with { Writer = writerName, WriterConfidence = writerConfidence };
+                }
+
+                _context.UpdateStream(made[0], stream with { PlaybackGroup = segment.Number });
             }
         }
+    }
 
-        // WRITER CLAIMS (not implemented here): the Segment's MuxingApp and WritingApp (segment.MuxingApp, segment.WritingApp and their
-        // nodes, collected in Collect.cs) name the program that wrote the container and the one that produced it ("Lavf60.16.100",
-        // "libebml v1.4.5 + libmatroska v1.7.1" / "mkvmerge v81.0"). They are claims about the writer, not the encoder of the audio. When the
-        // encoder/writer split lands (branch feature/encoder-writer: ClaimRole.Writer and StreamInfo.Writer), add one writer claim per
-        // element here, after the streams are routed, with the element's node as evidence, and attach it to every audio stream of the Segment.
-        // The audio encoder stays decided by the codec parsers.
+    // The Segment's MuxingApp and WritingApp (RFC 9559, sections 5.1.2.13 and 5.1.2.14) name the library and the application that wrote the
+    // container: claims of the writer role, never the encoder's (a "Lavc" encoder ID in either takes the encoder role, ClaimRoles.Of). They are
+    // added before the tracks are routed, so every codec parser weighs them with the claims of the tags. A MuxingApp that names the Matroska
+    // libraries (mkvtoolnix writes "libebml v1.4.5 + libmatroska v1.7.1") says no more than the WritingApp that uses them, and would only
+    // contradict it, so it counts when no WritingApp does. The claims of every Segment join the file's.
+    private void AddWriterClaims(SegmentState segment)
+    {
+        bool isLibrary = segment.MuxingApp is { } muxing && (muxing.StartsWith("libebml", StringComparison.Ordinal) || muxing.StartsWith("libmatroska", StringComparison.Ordinal));
+        bool hasWritingApp = !string.IsNullOrWhiteSpace(segment.WritingApp);
+        if (segment.MuxingApp is { } muxingApp && segment.MuxingAppNode is { } muxingNode && !string.IsNullOrWhiteSpace(muxingApp) && !(isLibrary && hasWritingApp))
+        {
+            _context.AddEncoderClaim(new EncoderClaim(muxingApp, muxingNode, "Segment MuxingApp element", ClaimRoles.Of(ClaimRole.Writer, muxingApp)));
+        }
+
+        if (segment.WritingApp is { } writingApp && segment.WritingAppNode is { } writingNode && !string.IsNullOrWhiteSpace(writingApp))
+        {
+            _context.AddEncoderClaim(new EncoderClaim(writingApp, writingNode, "Segment WritingApp element", ClaimRoles.Of(ClaimRole.Writer, writingApp)));
+        }
     }
 
     private void RouteAudio(SegmentState segment, TrackInfo track, string label)
@@ -285,16 +309,38 @@ internal sealed partial class FileReader
         double duration = statistics.HasTimes ? span + step : 0;
         double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
+        Node streamNode = frames ?? track.Node;
+        Node? writer = ResolveWriter(streamNode, Codecs.RouteOf(codecId) is { } route ? Codecs.WriterKind(codecId) ?? route : codecId, Codecs.NameOf(codecId) ?? codecId);
+        (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         _context.AddStream(new StreamInfo
         {
-            Nodes = [frames ?? track.Node],
+            Nodes = [streamNode],
             Codec = Codecs.NameOf(codecId) ?? (codecId.Length == 0 ? "unknown" : codecId),
             SampleRate = (int)Math.Min(rate, int.MaxValue),
             Channels = channels,
             BitsPerSample = track.BitDepth is { } depth && codecId.StartsWith("A_PCM", StringComparison.Ordinal) ? (int)depth : null,
             Duration = duration,
             AverageBitrate = duration > 0 ? statistics.Bytes * 8 / duration / 1000 : null,
+            Writer = writerName,
+            WriterConfidence = writerConfidence,
         });
+    }
+
+    // The writer of a stream no codec parser reads, from the claims of the file (the Segment's MuxingApp and WritingApp, the tags'). Software
+    // known to write another kind of stream is a finding, as in the codec parsers.
+    private Node? ResolveWriter(Node stream, string kind, string label)
+    {
+        Node? writer = WriterDetection.Detect(_context.EncoderClaims,
+            (name, value, description) => new Node(name, stream.Offset, stream.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            (claim, text, name) => _findings.AddNow(Severity.Info, "matroska.writer-claim-differs", WriterDetection.Disagreement(claim, text, name), claim.Source),
+            format: new WriterDetection.StreamFormat(kind, label,
+                (claim, message, node) => _findings.AddNow(Severity.Info, "matroska.writer-other-format", message, node)));
+        if (writer is not null)
+        {
+            stream.Add(writer);
+        }
+
+        return writer;
     }
 
     // The codec's stream against the TrackEntry's Audio element: the sample rate and the number of channels must agree where the

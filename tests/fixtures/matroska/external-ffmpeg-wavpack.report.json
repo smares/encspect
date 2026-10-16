@@ -338,6 +338,32 @@
                           "unit": "bytes",
                           "offset": 378,
                           "length": 5
+                        },
+                        {
+                          "name": "Writer",
+                          "value": "FFmpeg (Lavf60.16.100)",
+                          "offset": 304,
+                          "length": 79,
+                          "children": [
+                            {
+                              "name": "Confidence",
+                              "value": "Low",
+                              "offset": 304,
+                              "length": 79
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "Segment MuxingApp element at 0xE7 names \"Lavf60.16.100\"",
+                              "offset": 304,
+                              "length": 79
+                            },
+                            {
+                              "name": "Evidence",
+                              "value": "Segment WritingApp element at 0xF7 names \"Lavf60.16.100\"",
+                              "offset": 304,
+                              "length": 79
+                            }
+                          ]
                         }
                       ]
                     }
@@ -705,6 +731,8 @@
         "averageBitrate": 378.848,
         "isVbr": false,
         "playbackGroup": 1,
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": []
       }
     ],

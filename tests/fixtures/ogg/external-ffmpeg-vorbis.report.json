@@ -3836,24 +3836,38 @@
                 {
                   "name": "Encoder",
                   "value": "FFmpeg (Lavc60.31.102 vorbis)",
-                  "offset": 110,
-                  "length": 49,
+                  "offset": 127,
+                  "length": 32,
                   "children": [
                     {
                       "name": "Confidence",
                       "value": "Medium",
-                      "offset": 110,
-                      "length": 49
+                      "offset": 127,
+                      "length": 32
                     },
                     {
                       "name": "Evidence",
                       "value": "Vorbis comment ENCODER field \"Lavc60.31.102 vorbis\", which ffmpeg writes when it encodes",
                       "offset": 127,
                       "length": 32
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 106,
+                  "length": 53,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 106,
+                      "length": 53
                     },
                     {
                       "name": "Evidence",
-                      "value": "Vorbis comment vendor string \"Lavf60.16.100\"",
+                      "value": "Vorbis comment vendor string at 0x6E names \"Lavf60.16.100\"",
                       "offset": 110,
                       "length": 13
                     }
@@ -9176,6 +9190,8 @@
         "isVbr": true,
         "encoder": "FFmpeg (Lavc60.31.102 vorbis)",
         "encoderConfidence": "Medium",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

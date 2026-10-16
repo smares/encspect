@@ -179,6 +179,10 @@
     "FFmpeg (Lavc60.31.102)",
     "High"
    ],
+   "writer": [
+    "GPAC-2.2.1-rev2.2.1+dfsg1-3.1build2",
+    "Low"
+   ],
    "ffprobe_profile": "LC",
    "samples": 67584
   }
@@ -461,12 +465,7 @@
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Maximum Bitrate": "98392 bit/s",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/Average Bitrate": "94584 bit/s"
  },
- "findings": [
-  [
-   "aac.encoder-claim-differs",
-   "names \"GPAC-2.2.1"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": true,

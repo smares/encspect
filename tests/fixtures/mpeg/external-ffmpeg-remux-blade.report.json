@@ -229,32 +229,46 @@
             {
               "name": "Encoder",
               "value": "BladeEnc",
-              "offset": 201,
-              "length": 32444,
+              "offset": 462,
+              "length": 32183,
               "children": [
                 {
                   "name": "Confidence",
                   "value": "Low",
-                  "offset": 201,
-                  "length": 32444
+                  "offset": 462,
+                  "length": 32183
                 },
                 {
                   "name": "Evidence",
                   "value": "Short blocks without scalefactor scaling, plain stereo or mono at one bitrate, and ancillary data at most in the last frame, as BladeEnc writes them",
                   "offset": 462,
                   "length": 32183
-                },
+                }
+              ]
+            },
+            {
+              "name": "Writer",
+              "value": "FFmpeg (Lavf60.16.100)",
+              "offset": 462,
+              "length": 32183,
+              "children": [
                 {
-                  "name": "Evidence",
-                  "value": "LAME tag written by FFmpeg (Lavf)",
-                  "offset": 201,
-                  "length": 36
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 462,
+                  "length": 32183
                 },
                 {
                   "name": "Evidence",
                   "value": "ID3v2 TSSE frame at 0xA names \"Lavf60.16.100\"",
-                  "offset": 201,
-                  "length": 32444
+                  "offset": 462,
+                  "length": 32183
+                },
+                {
+                  "name": "Evidence",
+                  "value": "LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag), with the encoder string \"Lavf\" (at 0xC9)",
+                  "offset": 462,
+                  "length": 32183
                 }
               ]
             },
@@ -47436,6 +47450,8 @@
         "isVbr": false,
         "encoder": "BladeEnc",
         "encoderConfidence": "Low",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",
