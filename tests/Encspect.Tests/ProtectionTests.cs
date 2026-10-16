@@ -314,6 +314,23 @@ public class ProtectionTests
         Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
     }
 
+    // A CodecPrivate that is coded but whose frames are in the clear does not block the frames of an AAC track, whatever the coding: the AAC parser reads them
+    // without a configuration, and the finding is about the CodecPrivate.
+    [Theory]
+    [InlineData("matroska/aac-private-zlib.mka")]
+    [InlineData("matroska/aac-private-stripped.mka")]
+    [InlineData("matroska/aac-private-bzlib.mka")]
+    public void MatroskaCodedCodecPrivateDoesNotBlockClearAacFrames(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Null(stream.Protection);
+        Assert.True(stream.Duration > 0);
+        Assert.Contains(report.Findings, f => f.Code == "matroska.codec-private-not-read");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "matroska.track-encoding-not-read");
+    }
+
     // An encryption of the CodecPrivate on a track that has none covers nothing: no protection (and, for Opus, the missing CodecPrivate is the finding).
     [Fact]
     public void MatroskaEncryptionOfAMissingCodecPrivateIsNotProtection()

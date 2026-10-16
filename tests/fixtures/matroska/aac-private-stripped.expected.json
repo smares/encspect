@@ -1,0 +1,416 @@
+{
+ "description": "An A_AAC track whose CodecPrivate is header-stripped (scope 2) and whose frames are in the clear: the frames are analyzed, and the AAC parser is given no configuration.",
+ "length": 428,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 182,
+     "length": 246,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 388,
+   "declared_end": 428
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   388,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     73,
+     [
+      [
+       "TrackEntry",
+       114,
+       68,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         7
+        ],
+        [
+         "CodecPrivate",
+         134,
+         4
+        ],
+        [
+         "ContentEncodings",
+         138,
+         29,
+         [
+          [
+           "ContentEncoding",
+           141,
+           26,
+           [
+            [
+             "ContentEncodingOrder",
+             144,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             148,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             152,
+             4
+            ],
+            [
+             "ContentCompression",
+             156,
+             11,
+             [
+              [
+               "ContentCompAlgo",
+               159,
+               4
+              ],
+              [
+               "ContentCompSettings",
+               163,
+               4
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ],
+        [
+         "Audio",
+         167,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           169,
+           10
+          ],
+          [
+           "Channels",
+           179,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     182,
+     246,
+     [
+      [
+       "Timestamp",
+       188,
+       3
+      ],
+      [
+       "SimpleBlock",
+       191,
+       12
+      ],
+      [
+       "SimpleBlock",
+       203,
+       51
+      ],
+      [
+       "SimpleBlock",
+       254,
+       48
+      ],
+      [
+       "SimpleBlock",
+       302,
+       45
+      ],
+      [
+       "SimpleBlock",
+       347,
+       42
+      ],
+      [
+       "SimpleBlock",
+       389,
+       39
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 191,
+   "length": 12,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     197,
+     6
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 203,
+   "length": 51,
+   "track": 1,
+   "timestamp": 23,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     209,
+     45
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 254,
+   "length": 48,
+   "track": 1,
+   "timestamp": 46,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     260,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 302,
+   "length": 45,
+   "track": 1,
+   "timestamp": 70,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     308,
+     39
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 347,
+   "length": 42,
+   "track": 1,
+   "timestamp": 93,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     353,
+     36
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 389,
+   "length": 39,
+   "track": 1,
+   "timestamp": 116,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     395,
+     33
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_AAC",
+   "private": [
+    137,
+    1
+   ],
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [
+    {
+     "order": 0,
+     "scope": 2,
+     "type": 0,
+     "compression": 3,
+     "settings": [
+      166,
+      1
+     ],
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "AAC",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.codec-private-not-read",
+   "contains": "header stripping"
+  },
+  {
+   "code": "aac.no-configuration",
+   "contains": "without an AudioSpecificConfig"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

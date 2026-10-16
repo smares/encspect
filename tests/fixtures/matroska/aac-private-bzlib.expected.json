@@ -1,0 +1,408 @@
+{
+ "description": "An A_AAC track whose CodecPrivate is compressed with bzlib (scope 2), which the analyzer does not undo, and whose frames are in the clear: the frames are analyzed without a configuration.",
+ "length": 425,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 179,
+     "length": 246,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 385,
+   "declared_end": 425
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   385,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     70,
+     [
+      [
+       "TrackEntry",
+       114,
+       65,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         7
+        ],
+        [
+         "CodecPrivate",
+         134,
+         5
+        ],
+        [
+         "ContentEncodings",
+         139,
+         25,
+         [
+          [
+           "ContentEncoding",
+           142,
+           22,
+           [
+            [
+             "ContentEncodingOrder",
+             145,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             149,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             153,
+             4
+            ],
+            [
+             "ContentCompression",
+             157,
+             7,
+             [
+              [
+               "ContentCompAlgo",
+               160,
+               4
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ],
+        [
+         "Audio",
+         164,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           166,
+           10
+          ],
+          [
+           "Channels",
+           176,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     179,
+     246,
+     [
+      [
+       "Timestamp",
+       185,
+       3
+      ],
+      [
+       "SimpleBlock",
+       188,
+       12
+      ],
+      [
+       "SimpleBlock",
+       200,
+       51
+      ],
+      [
+       "SimpleBlock",
+       251,
+       48
+      ],
+      [
+       "SimpleBlock",
+       299,
+       45
+      ],
+      [
+       "SimpleBlock",
+       344,
+       42
+      ],
+      [
+       "SimpleBlock",
+       386,
+       39
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 188,
+   "length": 12,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     194,
+     6
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 200,
+   "length": 51,
+   "track": 1,
+   "timestamp": 23,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     206,
+     45
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 251,
+   "length": 48,
+   "track": 1,
+   "timestamp": 46,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     257,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 299,
+   "length": 45,
+   "track": 1,
+   "timestamp": 70,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     305,
+     39
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 344,
+   "length": 42,
+   "track": 1,
+   "timestamp": 93,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     350,
+     36
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 386,
+   "length": 39,
+   "track": 1,
+   "timestamp": 116,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     392,
+     33
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_AAC",
+   "private": [
+    137,
+    2
+   ],
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [
+    {
+     "order": 0,
+     "scope": 2,
+     "type": 0,
+     "compression": 1,
+     "settings": null,
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "AAC",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.codec-private-not-read",
+   "contains": "compressed with bzlib"
+  },
+  {
+   "code": "aac.no-configuration",
+   "contains": "without an AudioSpecificConfig"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

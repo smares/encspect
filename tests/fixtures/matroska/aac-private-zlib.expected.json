@@ -1,0 +1,408 @@
+{
+ "description": "An A_AAC track whose CodecPrivate is zlib-compressed (scope 2) and whose frames are in the clear: the frames are analyzed, and the AAC parser is given no configuration because it cannot map the inflated bytes back to the file.",
+ "length": 433,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 187,
+     "length": 246,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 393,
+   "declared_end": 433
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   393,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     78,
+     [
+      [
+       "TrackEntry",
+       114,
+       73,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         7
+        ],
+        [
+         "CodecPrivate",
+         134,
+         13
+        ],
+        [
+         "ContentEncodings",
+         147,
+         25,
+         [
+          [
+           "ContentEncoding",
+           150,
+           22,
+           [
+            [
+             "ContentEncodingOrder",
+             153,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             157,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             161,
+             4
+            ],
+            [
+             "ContentCompression",
+             165,
+             7,
+             [
+              [
+               "ContentCompAlgo",
+               168,
+               4
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ],
+        [
+         "Audio",
+         172,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           174,
+           10
+          ],
+          [
+           "Channels",
+           184,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     187,
+     246,
+     [
+      [
+       "Timestamp",
+       193,
+       3
+      ],
+      [
+       "SimpleBlock",
+       196,
+       12
+      ],
+      [
+       "SimpleBlock",
+       208,
+       51
+      ],
+      [
+       "SimpleBlock",
+       259,
+       48
+      ],
+      [
+       "SimpleBlock",
+       307,
+       45
+      ],
+      [
+       "SimpleBlock",
+       352,
+       42
+      ],
+      [
+       "SimpleBlock",
+       394,
+       39
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 196,
+   "length": 12,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     202,
+     6
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 208,
+   "length": 51,
+   "track": 1,
+   "timestamp": 23,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     214,
+     45
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 259,
+   "length": 48,
+   "track": 1,
+   "timestamp": 46,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     265,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 307,
+   "length": 45,
+   "track": 1,
+   "timestamp": 70,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     313,
+     39
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 352,
+   "length": 42,
+   "track": 1,
+   "timestamp": 93,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     358,
+     36
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 394,
+   "length": 39,
+   "track": 1,
+   "timestamp": 116,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     400,
+     33
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_AAC",
+   "private": [
+    137,
+    10
+   ],
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [
+    {
+     "order": 0,
+     "scope": 2,
+     "type": 0,
+     "compression": 0,
+     "settings": null,
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "AAC",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.codec-private-not-read",
+   "contains": "zlib compression"
+  },
+  {
+   "code": "aac.no-configuration",
+   "contains": "without an AudioSpecificConfig"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

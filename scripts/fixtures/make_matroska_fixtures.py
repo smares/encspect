@@ -436,6 +436,36 @@ def aac_with_delay(is_encrypted):
     return build(standard(*clusters, scale=1, track=[audio_track(codec="A_AAC", channels=channels, rate=float(rate), private=config, delay=50_000_000, encodings=enc)]))
 
 
+def aac_private(encodings, transform):
+    """Six frames of an ADTS fixture, in the clear, in an A_AAC track whose CodecPrivate (the AudioSpecificConfig, passed through transform) is coded by the encodings."""
+    object_type, rate_index, channels, frames = adts_frames("cbr")
+    rate = AAC_RATES[rate_index]
+    config = transform(struct.pack(">H", (object_type << 11) | (rate_index << 7) | (channels << 3)))
+    items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames[:6])]
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_AAC", channels=channels, rate=float(rate), private=config, encodings=content_encodings(*encodings))]))
+
+
+@fixture("aac-private-zlib", "An A_AAC track whose CodecPrivate is zlib-compressed (scope 2) and whose frames are in the clear: the frames are analyzed, and the AAC parser is given "
+         "no configuration because it cannot map the inflated bytes back to the file.",
+         findings=[("matroska.codec-private-not-read", "zlib compression"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_private([content_encoding(order=0, scope=2, compression=0)], lambda config: zlib.compress(config, 9))
+
+
+@fixture("aac-private-stripped", "An A_AAC track whose CodecPrivate is header-stripped (scope 2) and whose frames are in the clear: the frames are analyzed, and the AAC parser is "
+         "given no configuration.",
+         findings=[("matroska.codec-private-not-read", "header stripping"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_private([content_encoding(order=0, scope=2, compression=3, settings=b"\x12")], lambda config: config[1:])
+
+
+@fixture("aac-private-bzlib", "An A_AAC track whose CodecPrivate is compressed with bzlib (scope 2), which the analyzer does not undo, and whose frames are in the clear: the frames are "
+         "analyzed without a configuration.",
+         findings=[("matroska.codec-private-not-read", "compressed with bzlib"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_private([content_encoding(order=0, scope=2, compression=1)], lambda config: config)
+
+
 @fixture("aac-delay", "A clear A_AAC track with a CodecDelay of 50 ms, which the AAC parser ignores: six frames.", streams=[("AAC", 44100, 2)], valid=False)
 def _():
     return aac_with_delay(False)

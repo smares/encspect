@@ -115,11 +115,12 @@ internal sealed partial class FileReader
 
         bool areFramesEncrypted = plan.Frames.IsEncrypted;
         string? problem = plan.Frames.Describe();
-        if (problem is null && (plan.Frames.Steps.Count > 0 || plan.Private.Steps.Count > 0) && codec is not null and not ("vorbis" or "opus"))
+        bool isOpaque = codec is "vorbis" or "opus";
+        if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !isOpaque)
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
             // stripped or inflated bytes do not have.
-            problem = $"stores its frames with {(track.Encodings.Any(e => e.Type == 0 && e.CompressionAlgorithm == 0) ? "zlib compression" : "header stripping")}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file";
+            problem = $"stores its frames with {plan.Frames.Kinds}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file";
         }
 
         if (problem is not null)
@@ -148,7 +149,7 @@ internal sealed partial class FileReader
         if (hasPrivate && plan.Private.Describe() is { } privateProblem)
         {
             // The frames of a track whose CodecPrivate is encrypted may be in the clear (scope 1 alone), but the setup of their codec is not.
-            bool needsSetup = codec is "vorbis" or "opus";
+            bool needsSetup = isOpaque;
             bool isConfigurationSynthesized = codec == "aac" && Codecs.LegacyAacConfig(codecId, track.SamplingFrequency, track.OutputSamplingFrequency, track.Channels) is not null;
             string consequence = needsSetup ? "the setup of its codec is unavailable and its frames cannot be analyzed"
                 : isConfigurationSynthesized ? "its configuration is worked out from the codec ID instead"
@@ -162,6 +163,13 @@ internal sealed partial class FileReader
                 AddContainerStream(segment, track, null, plan.Protection);
                 return;
             }
+        }
+        else if (hasPrivate && !isOpaque && plan.Private.Steps.Count > 0)
+        {
+            // The same holds for a configuration put together from other bytes: the codec parser is given none.
+            _findings.AddNow(Severity.Info, "matroska.codec-private-not-read",
+                $"The CodecPrivate of {label} ({codecId}) is stored with {plan.Private.Kinds}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file, so it is given no configuration.",
+                track.CodecPrivateNode ?? anchor);
         }
         else if (hasPrivate && track.CodecPrivateLength <= MaxInflated)
         {
@@ -665,6 +673,9 @@ internal sealed partial class FileReader
         public List<Step> Steps { get; } = [];
 
         public bool IsEncrypted { get; private set; }
+
+        // What the steps undo, for a finding: "zlib compression", "header stripping" or both.
+        public string Kinds => Steps.Any(x => !x.IsStripping) ? (Steps.Any(x => x.IsStripping) ? "zlib compression and header stripping" : "zlib compression") : "header stripping";
 
         public Decoder? Decoder => Steps.Count == 0 || _problems.Count > 0 ? null : new Decoder(Steps);
 
