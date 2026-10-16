@@ -595,6 +595,73 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Track 1 Frames",
+              "value": "frames not read: encrypted",
+              "offset": 138,
+              "length": 225,
+              "children": [
+                {
+                  "name": "Opus Head",
+                  "value": "1 channel, pre-skip 312",
+                  "offset": 138,
+                  "length": 19,
+                  "children": [
+                    {
+                      "name": "Magic Signature",
+                      "value": "OpusHead",
+                      "offset": 138,
+                      "length": 8
+                    },
+                    {
+                      "name": "Version",
+                      "value": 1,
+                      "offset": 146,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "offset": 147,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "Mono: mono",
+                      "offset": 147,
+                      "length": 1
+                    },
+                    {
+                      "name": "Pre-skip",
+                      "value": 312,
+                      "unit": "samples",
+                      "offset": 148,
+                      "length": 2
+                    },
+                    {
+                      "name": "Input Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 150,
+                      "length": 4
+                    },
+                    {
+                      "name": "Output Gain",
+                      "value": 0,
+                      "unit": "dB",
+                      "offset": 154,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mapping Family",
+                      "value": "0 (mono or stereo)",
+                      "offset": 156,
+                      "length": 1
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -605,17 +672,19 @@
         "nodes": [
           [
             0,
-            1,
-            1,
-            0
+            2
           ]
         ],
         "codec": "Opus",
         "sampleRate": 48000,
         "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
         "samples": 0,
-        "duration": 0.08,
-        "averageBitrate": 11.6,
+        "duration": 0,
         "isVbr": false,
         "playbackGroup": 1,
         "isProtected": true,

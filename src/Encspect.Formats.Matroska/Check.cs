@@ -125,6 +125,35 @@ internal sealed partial class FileReader
                 _findings.AddNow(Severity.Warning, "matroska.encoding-order",
                     $"{which} has two ContentEncodings with the ContentEncodingOrder {encoding.Order}, which RFC 9559 requires to be unique (section 5.1.4.1.31.2).", encoding.Node ?? node);
             }
+
+            CheckEncryption(which, encoding, node);
+        }
+    }
+
+    // The ContentEncryption of a ContentEncoding (RFC 9559 sections 5.1.4.1.31.8 to 5.1.4.1.31.12): what the track's reader ignores or reads as clear.
+    private void CheckEncryption(string which, EncodingInfo encoding, Node fallback)
+    {
+        Node node = encoding.Node ?? fallback;
+        if (encoding.Type == 0 && encoding.HasEncryption)
+        {
+            _findings.AddNow(Severity.Info, "matroska.encryption-ignored",
+                $"{which} has a ContentEncoding of type 0 (compression) with a ContentEncryption element, which a reader ignores unless the type is 1 (section 5.1.4.1.31.8).", node);
+        }
+        else if (encoding.Type == 1 && !encoding.HasEncryption)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.encryption-missing",
+                $"{which} has a ContentEncoding of type 1 (encryption) without a ContentEncryption element, which RFC 9559 requires then (section 5.1.4.1.31.8); the algorithm is unknown.", node);
+        }
+        else if (encoding.Type == 1 && encoding.EncryptionAlgorithm == 0)
+        {
+            _findings.AddNow(Severity.Info, "matroska.encryption-none",
+                $"{which} has a ContentEncoding of type 1 (encryption) whose ContentEncAlgo is 0, which states that the data are not encrypted (Table 24); the encoding changes nothing and the track is not reported as protected.", node);
+        }
+
+        if (encoding.Type == 1 && encoding.HasAesSettings && encoding.HasEncryption && encoding.EncryptionAlgorithm != 5)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.aes-settings-not-aes",
+                $"{which} has ContentEncAESSettings although its ContentEncAlgo is {encoding.EncryptionAlgorithm}, not AES (5), which RFC 9559 forbids (Table 25); the cipher mode is not read as part of the scheme.", node);
         }
     }
 

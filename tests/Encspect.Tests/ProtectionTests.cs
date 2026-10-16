@@ -247,23 +247,59 @@ public class ProtectionTests
         Assert.True(stream.Duration > 0);
     }
 
-    // A Matroska track with a ContentEncryption element is a protected, encrypted stream (RFC 9559 section 5.1.4.1.31); its frames are not routed.
+    // A Matroska track with a ContentEncryption element of a ContentEncoding of type 1 (RFC 9559 section 5.1.4.1.31.8) is a protected stream whose scheme names the
+    // algorithm and, for AES, the cipher mode; its samples are encrypted when the scope covers the frames, and its frames are not routed. The stream is made for a
+    // track that no block uses and for one where a compression the analyzer does not undo lies over the encryption.
     [Theory]
-    [InlineData("matroska/encrypted.mka", "Matroska ContentEncryption, AES, AES-CTR")]
-    [InlineData("matroska/encrypted-cbc.mka", "Matroska ContentEncryption, AES, AES-CBC")]
-    [InlineData("matroska/encrypted-3des.mka", "Matroska ContentEncryption, 3DES")]
-    public void MatroskaContentEncryptionIsProtection(string name, string scheme)
+    [InlineData("matroska/encrypted.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-cbc.mka", "Matroska ContentEncryption, AES-CBC", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-3des.mka", "Matroska ContentEncryption, 3DES", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-3des-aes-settings.mka", "Matroska ContentEncryption, 3DES", true, "matroska.aes-settings-not-aes")]
+    [InlineData("matroska/encrypted-under-bzlib.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-encrypted")]
+    [InlineData("matroska/encrypted-empty.mka", "Matroska ContentEncryption, AES-CTR", true, "matroska.track-empty")]
+    [InlineData("matroska/encryption-missing.mka", "Matroska ContentEncryption", true, "matroska.encryption-missing")]
+    [InlineData("matroska/encrypted-private.mka", "Matroska ContentEncryption, AES-CTR", false, "matroska.codec-private-encrypted")]
+    public void MatroskaContentEncryptionIsProtection(string name, string scheme, bool isEncrypted, string code)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
 
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(scheme, stream.Protection!.Scheme);
-        Assert.True(stream.Protection.IsEncrypted);
+        Assert.Equal(isEncrypted, stream.Protection.IsEncrypted);
         Assert.Empty(stream.Protection.Systems);
         Assert.Equal(StreamKind.Audio, stream.Kind);
-        Assert.Contains(report.Findings, f => f.Code == "matroska.track-encrypted");
+        Assert.Contains(report.Findings, f => f.Code == code);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "matroska.track-encoding-not-read");
         Assert.All(report.Findings, f => Assert.StartsWith("matroska.", f.Code, StringComparison.Ordinal));
         Assert.DoesNotContain(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
+    }
+
+    // The finding and the stream's protection come from one reading of the ContentEncodings: both name the encryption that lies under a compression.
+    [Fact]
+    public void MatroskaFindingNamesWhatTheProtectionNames()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/encrypted-under-bzlib.mka");
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code.StartsWith("matroska.track-", StringComparison.Ordinal) && f.Code != "matroska.track-empty");
+        Assert.Equal("matroska.track-encrypted", finding.Code);
+        Assert.Contains("encrypted (AES-CTR) and compressed with bzlib", finding.Message, StringComparison.Ordinal);
+    }
+
+    // ContentEncAlgo 0 states that the data are not encrypted, and a ContentEncryption under a compression is ignored (RFC 9559 sections 5.1.4.1.31.8 and 5.1.4.1.31.9):
+    // the frames are read as they are and the track is not protected.
+    [Theory]
+    [InlineData("matroska/encryption-algorithm-none.mka", "matroska.encryption-none")]
+    [InlineData("matroska/encryption-ignored.mka", "matroska.encryption-ignored")]
+    public void MatroskaEncryptionThatEncryptsNothingIsNotProtection(string name, string code)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Null(stream.Protection);
+        Assert.False(stream.IsProtected);
+        Assert.Contains(report.Findings, f => f.Code == code);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.track-encrypted" or "matroska.track-encoding-not-read");
+        Assert.Contains(stream.Nodes.SelectMany(Descendants), n => n.Kind == NodeKind.Frame);
     }
 
     // A protected stream no codec parser describes is still a stream, so that its protection is reported: MPEG audio, video, a clear track of an unparsed coding.

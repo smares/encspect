@@ -239,14 +239,14 @@ def _():
 
 
 @fixture("encrypted-cbc", "A track whose frames are encrypted with AES-CBC (ContentEncAESSettings, AESSettingsCipherMode 2): the stream is protected and encrypted, and its frames are not read.",
-         findings=[("matroska.track-encrypted", "is encrypted (AES, AES-CBC)")], streams=[("Opus", 48000, 1)], valid=False)
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CBC)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=2, key_id=b"\x05\x06"))
     sealed = [simple_block(1, i * 20, bytes((i * 7 + k) & 0xFF for k in range(33)), key=True) for i in range(4)]
     return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
 
 
-@fixture("encrypted-3des", "A track whose frames are encrypted with Triple DES (ContentEncAlgo 2, no AES settings): the stream is protected and encrypted, and its frames are not read.",
+@fixture("encrypted-3des", "A track whose frames are encrypted with 3DES (ContentEncAlgo 2, no AES settings): the stream is protected and encrypted, and its frames are not read.",
          findings=[("matroska.track-encrypted", "is encrypted (3DES)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=0, scope=1, encryption=2, key_id=b"\x09"))
@@ -269,11 +269,77 @@ def _():
 
 
 @fixture("encrypted", "A track whose frames are encrypted (ContentEncodingType 1, AES-CTR): the analyzer reports it and does not read the frames.",
-         findings=[("matroska.track-encrypted", "is encrypted (AES, AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
     enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01\x02\x03\x04"))
     sealed = [simple_block(1, i * 20, bytes((i * 13 + k) & 0xFF for k in range(41)), key=True) for i in range(4)]
     return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-3des-aes-settings", "A track encrypted with 3DES whose ContentEncryption also holds ContentEncAESSettings, which RFC 9559 forbids unless the algorithm is AES "
+         "(Table 25): the scheme is 3DES without a cipher mode.",
+         findings=[("matroska.aes-settings-not-aes", "not AES"), ("matroska.track-encrypted", "is encrypted (3DES)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=2, cipher=1, key_id=b"\x09"))
+    sealed = [simple_block(1, i * 20, bytes((i * 11 + k) & 0xFF for k in range(31)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encryption-algorithm-none", "A ContentEncoding of type 1 whose ContentEncAlgo is 0, which states that the data are not encrypted (Table 24): the frames are read as they are "
+         "and the track is not protected.",
+         findings=[("matroska.encryption-none", "not encrypted")], streams=[OPUS], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=0, key_id=b"\x01"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encryption-ignored", "A zlib ContentEncoding (type 0) that also holds a ContentEncryption element, which a reader ignores unless the type is 1 "
+         "(section 5.1.4.1.31.8): the compression is undone and the track is not protected.",
+         findings=[("matroska.encryption-ignored", "ignores")], streams=[OPUS], valid=False)
+def _():
+    packed = [simple_block(1, i * 20, zlib.compress(opus_packet(i), 9), key=True) for i in range(4)]
+    enc = content_encodings(content_encoding(order=0, scope=1, compression=0, stray_encryption=5))
+    return build(standard(cluster(0, *packed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encryption-missing", "A ContentEncoding of type 1 without a ContentEncryption element, which RFC 9559 requires then (section 5.1.4.1.31.8): the track is reported "
+         "as encrypted by an unknown algorithm.",
+         findings=[("matroska.encryption-missing", "without a ContentEncryption"), ("matroska.track-encrypted", "is encrypted, so")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, missing_encryption=True))
+    sealed = [simple_block(1, i * 20, bytes((i * 3 + k) & 0xFF for k in range(27)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-under-bzlib", "A track compressed with bzlib (ContentEncodingOrder 1) over AES-CTR encryption (order 0): the finding names both, and the stream is encrypted.",
+         findings=[("matroska.track-encrypted", "is encrypted (AES-CTR) and compressed with bzlib")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=1, scope=1, compression=1), content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x07"))
+    sealed = [simple_block(1, i * 20, bytes((i * 9 + k) & 0xFF for k in range(35)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *sealed), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-private", "A track whose CodecPrivate is encrypted (scope 2, AES-CTR) and whose frames are in the clear: the stream carries the scheme with its samples "
+         "not encrypted, and the codec's setup is not available.",
+         findings=[("matroska.codec-private-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=2, encryption=5, cipher=1, key_id=b"\x02"))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(private=bytes((k * 5 + 1) & 0xFF for k in range(19)), encodings=enc)]))
+
+
+@fixture("compression-private-bzlib", "A track whose CodecPrivate is compressed with bzlib (scope 2), which the analyzer does not undo, and whose frames are in the clear: "
+         "the setup of the codec is unavailable, and nothing is protected.",
+         findings=[("matroska.codec-private-not-read", "is compressed with bzlib")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=2, compression=1))
+    return build(standard(cluster(0, *blocks(count=4)), track=[opus_track(encodings=enc)]))
+
+
+@fixture("encrypted-empty", "An encrypted track that no block uses: its protection is reported all the same.",
+         findings=[("matroska.track-empty", "no block with frames"), ("matroska.no-clusters", "no Cluster")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x04"))
+    return build(standard(track=[opus_track(encodings=enc)]))
 
 
 @fixture("compression-bzlib", "A track compressed with bzlib, which the analyzer does not undo.",

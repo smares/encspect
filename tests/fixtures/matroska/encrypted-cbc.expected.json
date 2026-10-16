@@ -356,7 +356,8 @@
      "type": 1,
      "compression": null,
      "settings": null,
-     "encryption": 5
+     "encryption": 5,
+     "cipher": 2
     }
    ],
    "lacing": true
@@ -378,7 +379,7 @@
  "findings": [
   {
    "code": "matroska.track-encrypted",
-   "contains": "is encrypted (AES, AES-CBC)"
+   "contains": "is encrypted (AES-CBC)"
   }
  ],
  "crosscheck": {

@@ -49,6 +49,8 @@ internal sealed class EncodingInfo
 
     public ulong EncryptionAlgorithm { get; set; }
 
+    public bool HasAesSettings { get; set; }
+
     public ulong? CipherMode { get; set; }
 
     public bool AppliesToFrames => (Scope & 1) != 0;

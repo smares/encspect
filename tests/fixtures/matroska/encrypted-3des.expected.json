@@ -1,5 +1,5 @@
 {
- "description": "A track whose frames are encrypted with Triple DES (ContentEncAlgo 2, no AES settings): the stream is protected and encrypted, and its frames are not read.",
+ "description": "A track whose frames are encrypted with 3DES (ContentEncAlgo 2, no AES settings): the stream is protected and encrypted, and its frames are not read.",
  "length": 363,
  "format": "Matroska",
  "ebml": {
@@ -344,7 +344,8 @@
      "type": 1,
      "compression": null,
      "settings": null,
-     "encryption": 2
+     "encryption": 2,
+     "cipher": null
     }
    ],
    "lacing": true

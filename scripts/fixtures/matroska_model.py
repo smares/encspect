@@ -314,8 +314,12 @@ def video_track(number=1, codec="V_VP8", width=64, height=48, uid=None, private=
     return master(ID["TrackEntry"], *children)
 
 
-def content_encoding(order=0, scope=1, compression=None, settings=None, encryption=None, cipher=None, key_id=None):
-    """A ContentEncoding: compression=0 zlib, 1 bzlib, 2 lzo1x, 3 header stripping; or encryption=the ContentEncAlgo."""
+def content_encoding(order=0, scope=1, compression=None, settings=None, encryption=None, cipher=None, key_id=None, stray_encryption=None, missing_encryption=False):
+    """A ContentEncoding: compression=0 zlib, 1 bzlib, 2 lzo1x, 3 header stripping; or encryption=the ContentEncAlgo (cipher: the AES cipher
+    mode, which RFC 9559 allows for AES only). stray_encryption adds a ContentEncryption with that ContentEncAlgo to a compression, where a
+    reader ignores it; missing_encryption makes an encryption (type 1) without the ContentEncryption element."""
+    if missing_encryption:
+        return master(ID["ContentEncoding"], uint(ID["ContentEncodingOrder"], order), uint(ID["ContentEncodingScope"], scope), uint(ID["ContentEncodingType"], 1))
     if encryption is not None:
         enc = [uint(ID["ContentEncAlgo"], encryption)]
         if key_id is not None:
@@ -330,6 +334,8 @@ def content_encoding(order=0, scope=1, compression=None, settings=None, encrypti
             comp.append(raw(ID["ContentCompSettings"], settings))
         body = [uint(ID["ContentEncodingOrder"], order), uint(ID["ContentEncodingScope"], scope), uint(ID["ContentEncodingType"], 0),
                 master(ID["ContentCompression"], *comp)]
+        if stray_encryption is not None:
+            body.append(master(ID["ContentEncryption"], uint(ID["ContentEncAlgo"], stray_encryption)))
     return master(ID["ContentEncoding"], *body)
 
 
@@ -683,7 +689,7 @@ class Reader:
                           "delay": 0, "encodings": [], "lacing": True, "node": node}
             self.tracks.append(self.track)
         elif ident == 0x6240 and self.track is not None:
-            self.encoding = {"order": 0, "scope": 1, "type": 0, "compression": None, "settings": None, "encryption": None}
+            self.encoding = {"order": 0, "scope": 1, "type": 0, "compression": None, "settings": None, "encryption": None, "cipher": None}
 
     def finish(self, ident, node):
         if ident == 0x6240 and self.encoding is not None and self.track is not None:
@@ -747,6 +753,8 @@ class Reader:
                 e["settings"] = [start, length]
             elif ident == 0x47E1:
                 e["encryption"] = value
+            elif ident == 0x47E8:
+                e["cipher"] = value
 
     # -- clusters and segments
 

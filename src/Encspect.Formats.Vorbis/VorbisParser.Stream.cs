@@ -606,7 +606,8 @@ public sealed partial class VorbisParser
                     "The stream ends before its setup header, which Vorbis requires; decoders refuse it.");
             }
 
-            if (_packets == 0)
+            // A container that knows the samples are encrypted hands over the headers and no packet.
+            if (_packets == 0 && context.Configuration is not { AreSamplesEncrypted: true })
             {
                 _findings.Add(Severity.Info, "vorbis.no-audio", anchor, _ => "The stream holds no audio packets.");
             }
