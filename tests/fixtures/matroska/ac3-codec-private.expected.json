@@ -1,0 +1,310 @@
+{
+ "description": "An A_AC3 track with a CodecPrivate, which the codec mapping does not define for it (\"Initialization: none\"): the AC-3 parser is not handed it as a dac3 configuration, and the frames are analyzed.",
+ "length": 7360,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 155,
+     "length": 7205,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 7320,
+   "declared_end": 7360
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   7320,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     46,
+     [
+      [
+       "TrackEntry",
+       114,
+       41,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         7
+        ],
+        [
+         "CodecPrivate",
+         134,
+         6
+        ],
+        [
+         "Audio",
+         140,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           142,
+           10
+          ],
+          [
+           "Channels",
+           152,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     155,
+     7205,
+     [
+      [
+       "Timestamp",
+       161,
+       3
+      ],
+      [
+       "SimpleBlock",
+       164,
+       1799
+      ],
+      [
+       "SimpleBlock",
+       1963,
+       1799
+      ],
+      [
+       "SimpleBlock",
+       3762,
+       1799
+      ],
+      [
+       "SimpleBlock",
+       5561,
+       1799
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 164,
+   "length": 1799,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     171,
+     1792
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1963,
+   "length": 1799,
+   "track": 1,
+   "timestamp": 32,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1970,
+     1792
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 3762,
+   "length": 1799,
+   "track": 1,
+   "timestamp": 64,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     3769,
+     1792
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5561,
+   "length": 1799,
+   "track": 1,
+   "timestamp": 96,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5568,
+     1792
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_AC3",
+   "private": [
+    137,
+    3
+   ],
+   "channels": 6,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 6
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.codec-private-unexpected",
+   "contains": "does not define"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

@@ -115,8 +115,9 @@ internal sealed partial class FileReader
 
         bool areFramesEncrypted = plan.Frames.IsEncrypted;
         string? problem = plan.Frames.Describe();
-        bool isOpaque = codec is "vorbis" or "opus";
-        if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !isOpaque)
+        // Vorbis and Opus cannot be set up without their CodecPrivate.
+        bool needsCodecPrivate = codec is "vorbis" or "opus";
+        if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !needsCodecPrivate)
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
             // stripped or inflated bytes do not have.
@@ -146,19 +147,29 @@ internal sealed partial class FileReader
 
         MappedBytes? privateData = null;
         bool hasPrivate = track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0;
+
+        // The codec mapping defines a CodecPrivate for AAC, Vorbis and Opus only (draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest), so no
+        // other codec parser is handed one, whatever its coding.
+        if (hasPrivate && codec is not ("aac" or "vorbis" or "opus"))
+        {
+            _findings.AddNow(Severity.Info, "matroska.codec-private-unexpected",
+                $"{label} ({codecId}) has a CodecPrivate, which the codec mapping does not define for it (draft-ietf-cellar-codec, section 3.4), so it is not handed to the codec parser.",
+                track.CodecPrivateNode ?? anchor);
+            hasPrivate = false;
+        }
+
         if (hasPrivate && plan.Private.Describe() is { } privateProblem)
         {
             // The frames of a track whose CodecPrivate is encrypted may be in the clear (scope 1 alone), but the setup of their codec is not.
-            bool needsSetup = isOpaque;
             bool isConfigurationSynthesized = codec == "aac" && Codecs.LegacyAacConfig(codecId, track.SamplingFrequency, track.OutputSamplingFrequency, track.Channels) is not null;
-            string consequence = needsSetup ? "the setup of its codec is unavailable and its frames cannot be analyzed"
+            string consequence = needsCodecPrivate ? "the setup of its codec is unavailable and its frames cannot be analyzed"
                 : isConfigurationSynthesized ? "its configuration is worked out from the codec ID instead"
                 : areFramesEncrypted ? "the configuration of its codec is unavailable and no codec parser reads the track"
                 : "its codec parser is given no configuration";
             _findings.AddNow(Severity.Info, plan.Private.IsEncrypted ? "matroska.codec-private-encrypted" : "matroska.codec-private-not-read",
                 $"The CodecPrivate of {label} ({codecId}) {privateProblem}, so {consequence}.",
                 track.CodecPrivateNode ?? anchor);
-            if (needsSetup)
+            if (needsCodecPrivate)
             {
                 AddContainerStream(segment, track, null, plan.Protection);
                 return;

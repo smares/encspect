@@ -387,6 +387,21 @@ def _():
     return build(standard(cluster(0, *items), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=zlib.compress(data[offset:offset + length], 9), encodings=enc)]))
 
 
+@fixture("vorbis-private-zlib-framing", "The zlib-compressed Vorbis CodecPrivate of vorbis-private-zlib with the framing bit of the identification header cleared: the finding points at the "
+         "identification header's Framing Bit, not at the comment header's, although every field of the inflated bytes covers the same range of the file.",
+         findings=[("vorbis.framing-missing", "identification header"), ("vorbis.writer-claim-differs", "Lavf60.16.100")], streams=[("Vorbis", 44100, 2)], valid=False)
+def _():
+    manifest = json.loads((OUT / "external-ffmpeg-vorbis.expected.json").read_text(encoding="utf-8"))
+    data = (OUT / "external-ffmpeg-vorbis.mka").read_bytes()
+    offset, length = manifest["tracks"][0]["private"]
+    private = bytearray(data[offset:offset + length])
+    private[3 + private[1] - 1] &= 0xFE
+    blocks_of_source = [b for b in manifest["blocks"] if b["frames"]][:30]
+    items = [simple_block(1, i * 23, data[b["frames"][0][0]:b["frames"][0][0] + b["frames"][0][1]], key=True) for i, b in enumerate(blocks_of_source)]
+    enc = content_encodings(content_encoding(order=0, scope=2, compression=0))
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=zlib.compress(bytes(private), 9), encodings=enc)]))
+
+
 @fixture("encrypted-over-algorithm-none", "AES-CTR with scope 4 over an encoding whose ContentEncAlgo is 0: the hidden encoding's claim to be not encrypted cannot be trusted, "
          "so the frames count as encrypted by the AES encryption.",
          findings=[("matroska.encoding-hidden", "hidden by the ContentEncoding of order 1"), ("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
@@ -482,6 +497,17 @@ def _():
          findings=[("matroska.codec-private-not-read", "compressed with bzlib"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 44100, 2)], valid=False)
 def _():
     return aac_private([content_encoding(order=0, scope=2, compression=1)], lambda config: config)
+
+
+@fixture("ac3-codec-private", "An A_AC3 track with a CodecPrivate, which the codec mapping does not define for it (\"Initialization: none\"): the AC-3 parser is not handed it as a dac3 "
+         "configuration, and the frames are analyzed.",
+         findings=[("matroska.codec-private-unexpected", "does not define")], streams=[("AC-3", 48000, 6)], valid=False)
+def _():
+    manifest = json.loads((OUT / "external-ffmpeg-ac3-51.expected.json").read_text(encoding="utf-8"))
+    data = (OUT / "external-ffmpeg-ac3-51.mka").read_bytes()
+    blocks_of_source = [b for b in manifest["blocks"] if b["frames"]][:4]
+    items = [simple_block(1, i * 32, data[b["frames"][0][0]:b["frames"][0][0] + b["frames"][0][1]], key=True) for i, b in enumerate(blocks_of_source)]
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_AC3", channels=6, rate=48000.0, private=b"\x10\x3d\xe0")]))
 
 
 @fixture("aac-delay", "A clear A_AAC track with a CodecDelay of 50 ms, which the AAC parser ignores: six frames.", streams=[("AAC", 44100, 2)], valid=False)

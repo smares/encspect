@@ -9,7 +9,7 @@ public enum Severity
 
 // Node is a node of the report's tree, or one equal to it in Name, Offset and Length: frames are
 // built on demand, so a parser points at a field it has not built. The host finds it after parsing
-// and sets Path.
+// and sets Path. Where several nodes are equal, the node itself is the one the path leads to if the tree holds it.
 public sealed record Finding(Severity Severity, string Code, string Message, Node? Node = null)
 {
     // How many cases the finding stands for: findings of one kind are reported once per stream,

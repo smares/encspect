@@ -3,7 +3,10 @@ using Encspect.Core;
 namespace Encspect.Host;
 
 // Finds where a node sits in a report's tree: the child indexes from the root to the node equal to
-// it in Name, Offset and Length. Only children whose bytes contain the node's are searched, so of
+// it in Name, Offset and Length, which is the contract (a parser may point at a node it built again,
+// as frames are). Several nodes can be equal, as the fields of bytes that are not in the file as
+// they are (an inflated CodecPrivate) all cover the same range, so the very same Node object, where
+// the tree holds it, wins over an equal one that is met earlier. Only children whose bytes contain the node's are searched, so of
 // a stream's frames only the ones on the way have their children built; each list of children is
 // built once and kept while the finder lives.
 internal sealed class TreePaths(Node root)
@@ -18,15 +21,21 @@ internal sealed class TreePaths(Node root)
         }
 
         var path = new List<int>();
-        return Find(root, target, path) ? path : null;
+        if (Find(root, target, path, isIdentity: true))
+        {
+            return path;
+        }
+
+        path.Clear();
+        return Find(root, target, path, isIdentity: false) ? path : null;
     }
 
-    private static bool Matches(Node node, Node target) =>
-        node == target || (node.Offset == target.Offset && node.Length == target.Length && node.Name == target.Name);
+    private static bool Matches(Node node, Node target, bool isIdentity) =>
+        isIdentity ? ReferenceEquals(node, target) : node == target || (node.Offset == target.Offset && node.Length == target.Length && node.Name == target.Name);
 
-    private bool Find(Node node, Node target, List<int> path)
+    private bool Find(Node node, Node target, List<int> path, bool isIdentity)
     {
-        if (Matches(node, target))
+        if (Matches(node, target, isIdentity))
         {
             return true;
         }
@@ -41,7 +50,7 @@ internal sealed class TreePaths(Node root)
         List<int> containing = index.Containing(target);
         foreach (int i in containing)
         {
-            if (Matches(index.Children[i], target))
+            if (Matches(index.Children[i], target, isIdentity))
             {
                 path.Add(i);
                 return true;
@@ -51,7 +60,7 @@ internal sealed class TreePaths(Node root)
         foreach (int i in containing)
         {
             path.Add(i);
-            if (Find(index.Children[i], target, path))
+            if (Find(index.Children[i], target, path, isIdentity))
             {
                 return true;
             }

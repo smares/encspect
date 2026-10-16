@@ -345,6 +345,26 @@ public class ProtectionTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "matroska.track-encoding-not-read");
     }
 
+    // A finding in the fields of an inflated CodecPrivate, which all cover the same file range, points at the field it is about: the identification header's Framing Bit,
+    // not the comment header's, which has the same name and range.
+    [Fact]
+    public void MatroskaFindingInInflatedBytesPointsAtItsOwnField()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/vorbis-private-zlib-framing.mka");
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "vorbis.framing-missing");
+        Node node = report.Root;
+        Node parent = node;
+        foreach (int index in finding.Path!)
+        {
+            parent = node;
+            node = node.Children[index];
+        }
+
+        Assert.Equal("Framing Bit", node.Name);
+        Assert.Equal("Identification Header", parent.Name);
+    }
+
     // An encryption of the CodecPrivate on a track that has none covers nothing: no protection (and, for Opus, the missing CodecPrivate is the finding).
     [Fact]
     public void MatroskaEncryptionOfAMissingCodecPrivateIsNotProtection()
