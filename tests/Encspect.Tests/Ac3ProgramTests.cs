@@ -27,10 +27,10 @@ public class Ac3ProgramTests
     }
 
     // Frames that alternate between two configurations: 2/0 and mono. A program per change gave a stream, a statistics node that
-    // covered every frame and a finding for each of them (4,000 frames took 21 s, 40,000 half an hour); now the programs are
-    // capped, the later frames stay in the last one, and the changes are one counted finding.
+    // covered every frame and a finding for each of them (4,000 frames took 21 s, 40,000 half an hour); now the streams are
+    // capped, the later frames are in no stream (one counted warning), and the changes are one counted finding.
     [Fact]
-    public void FramesThatAlternateBetweenTwoConfigurationsMakeAtMostTheCappedPrograms()
+    public void FramesThatAlternateBetweenTwoConfigurationsMakeAtMostTheCappedStreams()
     {
         byte[] source = Fixture("stream-changes.ac3");
         byte[] stereo = source[..768];
@@ -44,12 +44,12 @@ public class Ac3ProgramTests
 
         Report report = Analyze(data, "alternate.ac3");
 
-        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
-        Assert.Equal(frames * 1536L, report.Streams.Sum(s => s.Samples));
-        Assert.DoesNotContain(report.Findings, f => f.Code == "ac3.programs-limited");
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, report.Streams.Count);
+        Assert.Equal(64 * 1536L, report.Streams.Sum(s => s.Samples));
+        Assert.Equal(frames - 64, Assert.Single(report.Findings, f => f.Code == "ac3.streams-limited").Count);
         Finding changed = Assert.Single(report.Findings, f => f.Code == "ac3.stream-changed");
         Assert.Equal(frames - 1, changed.Count);
-        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, CountNodes(report.Root, NodeKind.Statistics));
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, CountNodes(report.Root, NodeKind.Statistics));
     }
 
     // Independent substreams 0 to 7 in every coding mode and with and without the LFE channel: 128 configurations, each frame
@@ -79,19 +79,19 @@ public class Ac3ProgramTests
 
         Report report = Analyze([.. data], "many-programs.eac3");
 
-        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
-        // The 64 configurations of substreams 0 to 3 come first and come back in the next rounds, which join their programs; the
-        // frames of substreams 4 to 7 have no program and are in no stream.
-        Assert.Equal(3 * 64 * 1536L, report.Streams.Sum(s => s.Samples));
-        Assert.All(report.Streams, s => Assert.Equal(3 * 1536L, s.Samples));
-        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.programs-limited");
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, report.Streams.Count);
+        // The 64 configurations of substreams 0 to 3 come first; they come back in the next rounds, but a returning configuration
+        // starts a new stream, which is past the cap, and so do the frames of substreams 4 to 7: all are in no stream.
+        Assert.Equal(64 * 1536L, report.Streams.Sum(s => s.Samples));
+        Assert.All(report.Streams, s => Assert.Equal(1536L, s.Samples));
+        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.streams-limited");
         Assert.Equal(Severity.Warning, left.Severity);
-        Assert.Equal(3 * 64, left.Count);
+        Assert.Equal(3 * 128 - 64, left.Count);
         Assert.Single(report.Findings, f => f.Code == "ac3.stream-changed");
-        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, CountNodes(report.Root, NodeKind.Statistics));
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, CountNodes(report.Root, NodeKind.Statistics));
     }
 
-    // A sample rate that is new past the cap: the frames are in no program, and the programs keep their own rate and layout.
+    // A sample rate that is new past the cap: the frames are in no stream, and the streams keep their own rate and layout.
     [Fact]
     public void ASampleRateChangePastTheCapIsLeftOut()
     {
@@ -113,15 +113,15 @@ public class Ac3ProgramTests
 
         Report report = Analyze([.. data], "rate-cap.ac3");
 
-        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, report.Streams.Count);
         Assert.All(report.Streams, s => Assert.Equal(48000, s.SampleRate));
-        Assert.Equal(80 * 1536L, report.Streams.Sum(s => s.Samples));
-        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.programs-limited");
+        Assert.Equal(64 * 1536L, report.Streams.Sum(s => s.Samples));
+        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.streams-limited");
         Assert.Equal(Severity.Warning, left.Severity);
-        Assert.Equal(200, left.Count);
+        Assert.Equal(16 + 200, left.Count);
     }
 
-    // A substream ID that is new past the cap: its frames are in no program, never in another substream's.
+    // A substream ID that is new past the cap: its frames are in no stream, never in another substream's.
     [Fact]
     public void ANewSubstreamPastTheCapIsLeftOut()
     {
@@ -149,11 +149,11 @@ public class Ac3ProgramTests
 
         Report report = Analyze([.. data], "late-substream.eac3");
 
-        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
-        Assert.Equal((80 + 100) * 1536L, report.Streams.Sum(s => s.Samples));
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, report.Streams.Count);
+        Assert.Equal(64 * 1536L, report.Streams.Sum(s => s.Samples));
         Assert.All(report.Streams, s => Assert.True(s.Channels is 1 or 2));
-        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.programs-limited");
-        Assert.Equal(100, left.Count);
+        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.streams-limited");
+        Assert.Equal(16 + 200, left.Count);
     }
 
     private static int SyncLength(byte[] data) => Encspect.Formats.Ac3.SyncFrame.Read(data).FrameLength;

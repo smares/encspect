@@ -41,7 +41,7 @@ def stream(codec, rate, layout, mode, samples, vbr=False):
     return {"codec": codec, "sample_rate": rate, "channels": len(layout), "channel_mode": mode, "channel_layout": layout, "samples": samples, "is_vbr": vbr}
 
 
-def fixture(name, extension, description, data, frames, streams, findings, fields=None, gaps=(), crosscheck=None, fmt="DTS", boxes=None, regions=None):
+def fixture(name, extension, description, data, frames, streams, findings, fields=None, gaps=(), crosscheck=None, fmt="DTS", boxes=None, regions=None, golden_hides=None):
     FIXTURES[name + extension] = (data, {
         "description": description,
         "length": len(data),
@@ -54,6 +54,7 @@ def fixture(name, extension, description, data, frames, streams, findings, field
         "crosscheck": crosscheck or {},
         **({"boxes": boxes} if boxes else {}),
         **({"regions": regions} if regions else {}),
+        **({"golden_hides": golden_hides} if golden_hides else {}),
     })
 
 
@@ -298,6 +299,15 @@ def build_damage():
     fixture("stream-changed", ".dts", "Three stereo core frames at 48 kHz, then three 3/2 frames with an LFE channel at 44.1 kHz.", data, rows(first + second),
             [stream("DTS", 48000, STEREO, "2/0", 3 * 512), stream("DTS", 44100, SURROUND_5_1, "3/2", 3 * 512)], [("dts.stream-changed", "The stream changes at 0x600")],
             crosscheck=cc(ffprobe=False, skip={"ffprobe": "ffprobe reports the first stream only and its packets continue across the change."}))
+
+    # A stream that changes at every frame: 64 streams of one frame, and the 2 frames after them in no stream.
+    parts = [core("16be", 512, amode=0) if i % 2 else core("16be", 512) for i in range(66)]
+    data = b"".join(parts)
+    fixture("streams-limited", ".dts", "Sixty-six core frames that alternate between stereo and mono at 48 kHz: 64 streams of one frame, the last 2 frames in no stream.", data, rows(parts),
+            [stream("DTS", 48000, ["front center"] if i % 2 else STEREO, "1/0" if i % 2 else "2/0", 512) for i in range(64)],
+            [("dts.stream-changed", "The stream changes 65 times"), ("dts.streams-limited", "2 units are in no stream")],
+            crosscheck=cc(ffprobe=False, libdca_streams_end=64 * 512, skip={"ffprobe": "ffprobe reports the first stream only and its packets continue across the changes."}),
+            golden_hides=["frames"])
 
     # Tags around the stream.
     parts = run(5)

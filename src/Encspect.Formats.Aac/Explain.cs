@@ -198,6 +198,8 @@ internal static partial class Explain
     public const string Crc = "The CRC-16 the encoder stored over the header and the first bits of each channel element, so decoders can detect damage (ISO/IEC 14496-3 1.A.2.2.2, 1.A.4.3).";
     public const string BlockCrc = "The CRC-16 of the raw data block before it, which a frame of several protected blocks stores after each (ISO/IEC 14496-3 1.A.2.2.2).";
     public const string CrcCheck = "What the analyzer found when it computed the CRC over the same bits. Checking a channel element needs to know where it ends, which takes its spectral data.";
+    public const string RawDataBlockUnread = "A raw data block that the analyzer did not read, since its frame is in no stream: it lies past the limit of 64 streams.";
+    public const string CountedFramesPastStreams = "ADTS frames past the analyzer's limit of 2,097,152 frame records, counted from their headers; they are past the limit of 64 streams, so they are in no stream and are counted only in aac.streams-limited. They have no node of their own and their raw data blocks are not read.";
     public const string RawDataBlock = "One raw data block: the syntax elements of one frame, 1024 samples per channel, ending with an END element (ISO/IEC 14496-3 4.4.2.1).";
 
     public const string Adif = "An ADIF stream: one header at the start of the file, then raw data blocks with no headers or lengths between them (ISO/IEC 14496-3 1.A.2.1; ISO/IEC 13818-7 6.1).";

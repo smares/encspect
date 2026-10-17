@@ -217,6 +217,10 @@ def check_libdca(tool, path, manifest, report, problems):
         streams[0]["samples"] = round(streams[0]["samples"] * core / streams[0]["sample_rate"])
         streams[0]["sample_rate"] = core
     index, used = 0, 0
+    # "libdca_streams_end": the offset where the units in no stream start; libdca reads them like any others, but the manifest's streams hold none of them.
+    streams_end = check.get("libdca_streams_end")
+    if streams_end is not None:
+        found = [f for f in found if int(f[0]) < streams_end]
     for offset, length, flags, rate, bitrate, samples, status in found:
         if used >= streams[index]["samples"] and index + 1 < len(streams):
             index, used = index + 1, 0
@@ -337,6 +341,11 @@ def check_mediainfo(path, tally):
     channels and layout, the bit depth, the bitrate its first frame gives (File_Dts.cpp, BitRate_Get: the frame's bytes in the file over
     its samples), the bitrate mode and the samples per frame."""
     tally.start(path.stem)
+    if mi.golden_hides(path):
+        # The streams-limited fixture: MediaInfo reports the arrangement of its 32nd frame (File_Dts.cpp, Core: Core_Core_AMODE is overwritten by every core
+        # header, and the fields are filled after Frame_Count_Valid = 32 frames), and the comparison needs the frames, which its golden report leaves out.
+        tally.skip("all fields", "the arrangement changes at every frame, and the golden report has no frames (golden_hides)")
+        return []
     report = mi.golden(path)
     info = tally.read(path, full=True)
     audio = info["Audio"][0] if info and info["Audio"] else {}

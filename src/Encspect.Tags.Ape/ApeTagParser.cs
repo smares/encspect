@@ -19,6 +19,17 @@ public sealed class ApeTagParser : ITagParser
     private const int MinItemSize = 11;
     private const int MaxDecodedValueBytes = 1 << 20;
 
+    // The first items become nodes at once; the later ones are listed in blocks from records and the bytes kept for them, up to a
+    // budget (the report outlives the file, which cannot be read again). Items past it are checked and counted, so a tag of millions
+    // of items (11 bytes each) cannot grow the report.
+    internal const int MaxItemNodes = 1024;
+    internal const int MaxKeptBytes = 4 << 20;
+    private const int MaxKeptValueBytes = 4096;
+
+    // The most Encoder items that become claims: a tag repeating the item has nothing more to say.
+    private const int MaxEncoderClaims = 16;
+    private const int MaxCaseNames = 3;
+
     // Tag flags: bit 31 has header, bit 30 has no footer, bit 29 is header, bit 0 read-only;
     // bits 28 to 3 "are undefined and must be zero". Item flags define bits 2 to 0.
     private const uint UndefinedTagFlags = 0x1FFFFFF8;
@@ -173,6 +184,20 @@ public sealed class ApeTagParser : ITagParser
         private readonly List<(Node? Node, string Code, string Message)> _problems = [];
         private readonly List<Finding> _findings = [];
         private readonly List<EncoderClaim> _claims = [];
+
+        // Findings about items are reported once per kind with a count, pointing at the first case.
+        private readonly Dictionary<string, Aggregate> _aggregated = [];
+        private readonly List<string> _order = [];
+
+        // The items after the first MaxItemNodes whose bytes are kept: the record of the item at an offset from the items' start and
+        // what the store holds of it (the fixed part, the key and a text value), listed in blocks when read.
+        private readonly List<Node> _listed = [];
+        private readonly ChunkedList<ItemRecord> _records = new();
+        private readonly ByteStore _store = new();
+        private long _keptBytes;
+        private uint _read;
+        private int _encoderClaims;
+        private Node _itemsRef = null!;
         private Confidence _confidence = Confidence.High;
 
         public List<Evidence> Evidence { get; } = [];
@@ -194,6 +219,47 @@ public sealed class ApeTagParser : ITagParser
             {
                 _confidence = ceiling;
             }
+        }
+
+        // Cases of one code are one finding, pointing at the first case, which is only made then; a variant keeps cases that read
+        // differently apart, and the names of the first few cases are kept for the message.
+        private void Report(Severity severity, string code, Func<Node> node, Func<int, string, string> message, string? name = null, string? variant = null)
+        {
+            string key = variant is null ? code : $"{code}|{variant}";
+            if (_aggregated.TryGetValue(key, out Aggregate? existing))
+            {
+                existing.Count++;
+                if (name is not null && existing.Names.Count < MaxCaseNames && !existing.Names.Contains(name))
+                {
+                    existing.Names.Add(name);
+                }
+
+                return;
+            }
+
+            _aggregated[key] = new Aggregate(code, severity, node(), message) { Names = name is null ? [] : [name] };
+            _order.Add(key);
+        }
+
+        // " Others: "b", "c"." for a finding of several cases, after the first case, which its message names.
+        private static string Examples(int count, List<string> names) =>
+            count > 1 && names.Count > 1 ? $" Others: {string.Join(", ", names.Skip(1).Select(n => $"\"{n}\""))}." : string.Empty;
+
+        private static string Grouped(int number) => number.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+
+        private sealed class Aggregate(string code, Severity severity, Node node, Func<int, string, string> message)
+        {
+            public string Code => code;
+
+            public Severity Severity => severity;
+
+            public Node Node => node;
+
+            public Func<int, string, string> Message => message;
+
+            public int Count { get; set; } = 1;
+
+            public List<string> Names { get; init; } = [];
         }
 
         public void Compare(Block other, string otherName, long otherOffset, bool expectHeader)
@@ -224,8 +290,19 @@ public sealed class ApeTagParser : ITagParser
                 AddBlock(tag, "Header", header.Offset, header.Block);
             }
 
-            Node items = tag.Add("Items", itemsStart, itemsEnd - itemsStart, NodeValue.Integer(anchor.ItemCount, "items"), Explain.Items);
-            string? itemProblem = ParseItems(items, itemsStart, itemsEnd, out long parsedEnd);
+            // What findings about items that are not listed point at: equal in name, offset and length to the Items node added below.
+            _itemsRef = new Node("Items", itemsStart, itemsEnd - itemsStart, NodeValue.Integer(anchor.ItemCount, "items")) { Description = Explain.Items };
+            string? itemProblem = ParseItems(itemsStart, itemsEnd, out long parsedEnd);
+            uint notListed = _read - (uint)(_listed.Count + _records.Count);
+            if (notListed > 0)
+            {
+                Report(Severity.Info, "ape.items-limited", () => _itemsRef, (count, _) => count == 1
+                    ? $"1 item is checked and counted but not listed: the first {Grouped(MaxItemNodes)} items are listed and the others only while their bytes fit in {MaxKeptBytes >> 20} MiB (text values of up to {Grouped(MaxKeptValueBytes)} bytes), and duplicate keys among items that are not listed are not looked for."
+                    : $"{count} items are checked and counted but not listed: the first {Grouped(MaxItemNodes)} items are listed and the others only while their bytes fit in {MaxKeptBytes >> 20} MiB (text values of up to {Grouped(MaxKeptValueBytes)} bytes), and duplicate keys among items that are not listed are not looked for.");
+                _aggregated["ape.items-limited"].Count = (int)Math.Min(int.MaxValue, notListed);
+            }
+
+            tag.Add(ItemsNode(itemsStart));
             if (itemProblem is null)
             {
                 Evidence.Add(new Evidence($"{anchor.ItemCount} items end exactly where the size says", itemsStart, itemsEnd - itemsStart));
@@ -254,6 +331,12 @@ public sealed class ApeTagParser : ITagParser
                 _findings.Add(new Finding(Severity.Info, "ape.at-start", "The APE tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".", tag));
             }
 
+            foreach (string key in _order)
+            {
+                var entry = _aggregated[key];
+                _findings.Add(new Finding(entry.Severity, entry.Code, entry.Message(entry.Count, Examples(entry.Count, entry.Names)), entry.Node) { Count = entry.Count });
+            }
+
             foreach ((Node? node, string code, string message) in _problems)
             {
                 _findings.Add(new Finding(Severity.Warning, code, message, node ?? tag));
@@ -262,18 +345,48 @@ public sealed class ApeTagParser : ITagParser
             return TagProbe.Accept(tag, anchorOffset, _confidence, Evidence, _findings, null, _claims);
         }
 
+        // The Items node: the nodes of the first items, then the kept ones, built in blocks when read.
+        private Node ItemsNode(long itemsStart)
+        {
+            if (_records.Count == 0)
+            {
+                var plain = new Node(_itemsRef.Name, _itemsRef.Offset, _itemsRef.Length, _itemsRef.Value) { Description = Explain.Items };
+                foreach (Node child in _listed)
+                {
+                    plain.Add(child);
+                }
+
+                return plain;
+            }
+
+            Node[] leading = [.. _listed];
+            ChunkedList<ItemRecord> records = _records;
+            ByteStore store = _store;
+            bool isV1 = IsV1;
+            return new Node(_itemsRef.Name, _itemsRef.Offset, _itemsRef.Length, _itemsRef.Value, () => new BlockedChildren(leading, records.Count, i => BuildKept(isV1, itemsStart, store, records[i])))
+            {
+                Description = Explain.Items,
+            };
+        }
+
         // Returns why the items do not end exactly at end, or null; parsedEnd is where the last
-        // complete item ends.
-        private string? ParseItems(Node items, long start, long end, out long parsedEnd)
+        // complete item ends. Every item is checked; the first MaxItemNodes become nodes.
+        private string? ParseItems(long start, long end, out long parsedEnd)
         {
             var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             long pos = start;
             parsedEnd = start;
             long previousSize = 0;
             bool isUnsorted = false;
+            _read = 0;
 
             for (uint index = 1; index <= anchor.ItemCount; index++)
             {
+                if (index % 4096 == 0)
+                {
+                    reader.CancellationToken.ThrowIfCancellationRequested();
+                }
+
                 if (end - pos < MinItemSize)
                 {
                     return $"Item {index} of {anchor.ItemCount} starts {end - pos} bytes before the end of the items, too few for an item.";
@@ -292,7 +405,7 @@ public sealed class ApeTagParser : ITagParser
                 }
 
                 // Keys are 2 to 255 characters from 0x20 to 0x7E.
-                if (keyLength is < 2 or > 255 || keyBytes.Take(keyLength).Any(b => b is < 0x20 or > 0x7E))
+                if (keyLength is < 2 or > 255 || keyBytes.AsSpan(0, keyLength).ContainsAnyExceptInRange((byte)0x20, (byte)0x7E))
                 {
                     return $"Item {index} has an invalid key.";
                 }
@@ -305,137 +418,242 @@ public sealed class ApeTagParser : ITagParser
                 }
 
                 long itemEnd = valueStart + valueSize;
-                Node item = items.Add(key, pos, itemEnd - pos, null, Explain.Item(key), Explain.ItemTopic(key));
-                item.Add("Size", pos, 4, NodeValue.Integer(valueSize), Explain.ItemSize);
-
+                long itemPos = pos;
                 // APEv1 defines no item flags: every value is text.
                 int type = IsV1 ? 0 : (int)((flags >> 1) & 0x03);
-                Node flagsNode = item.Add("Flags", pos + 4, 4, NodeValue.Hex(flags, 8), Explain.ItemFlags);
-                flagsNode.Add("IsReadOnly", pos + 4, 4, NodeValue.Boolean(!IsV1 && (flags & 1) != 0), Explain.ItemReadOnly);
-                flagsNode.Add("Item Type", pos + 4, 4, ItemTypes[type], Explain.ItemType);
-                item.Add("Key", pos + 8, keyLength, key, Explain.Key);
+                bool isText = IsV1 || type is 0 or 2;
+                byte[] value = isText ? reader.ReadBytesAt(valueStart, (int)Math.Min(valueSize, MaxDecodedValueBytes)) : [];
 
-                item.Value = IsV1 ? AddV1Value(item, valueStart, valueSize) : AddValue(item, key, valueStart, valueSize, type);
+                Func<Node> itemNode;
+                Func<Node> flagsOrItem;
+                bool isListedAtOnce = _listed.Count < MaxItemNodes;
+                if (isListedAtOnce)
+                {
+                    Node item = BuildItem(IsV1, itemPos, valueSize, flags, key, keyLength, value);
+                    _listed.Add(item);
+                    itemNode = () => item;
+                    flagsOrItem = () => item.Children.First(c => c.Name == "Flags");
+                }
+                else if (Keep(fixedPart, keyBytes, keyLength, value, valueSize, isText, itemPos - start) is { } kept)
+                {
+                    _records.Add(kept);
+                    itemNode = () => BuildKept(IsV1, start, _store, kept);
+                    flagsOrItem = () => itemNode().Children.First(c => c.Name == "Flags");
+                }
+                else
+                {
+                    itemNode = () => _itemsRef;
+                    flagsOrItem = itemNode;
+                }
+
+                CheckValue(itemNode, key, value, valueSize, type);
 
                 // Keys are compared without regard to case, so the item of a writer that spells it
                 // "encoder" (FFmpeg's) is read as "Encoder" is. No source at hand lists an APEv2 key for the
                 // encoder (the APEv2 key list could not be checked), so it is given to no role: the claim is the writer's, unless its text is a libavcodec encoder ID, which names the encoder.
-                if (type == 0 && key.Equals("Encoder", StringComparison.OrdinalIgnoreCase) && item.Value?.AsText() is { Length: > 0 } encoder && !string.IsNullOrWhiteSpace(encoder))
+                if (type == 0 && key.Equals("Encoder", StringComparison.OrdinalIgnoreCase) && _encoderClaims < MaxEncoderClaims
+                    && string.Join("; ", TextValues(IsV1, value)) is { Length: > 0 } encoder && !string.IsNullOrWhiteSpace(encoder))
                 {
-                    _claims.Add(new EncoderClaim(encoder, item, "APE Encoder item", ClaimRoles.Of(ClaimRole.Writer, encoder)));
+                    _encoderClaims++;
+                    _claims.Add(new EncoderClaim(encoder, itemNode(), "APE Encoder item", ClaimRoles.Of(ClaimRole.Writer, encoder)));
                 }
 
                 if (IsV1 && flags != 0)
                 {
-                    _findings.Add(new Finding(Severity.Warning, "ape.v1-flags", $"Item \"{key}\" sets flags 0x{flags:X8}; APEv1 writers must leave them zero, so readers that apply the APEv2 flags misread the item.", flagsNode));
+                    Report(Severity.Warning, "ape.v1-flags", flagsOrItem, (count, examples) => count == 1
+                        ? $"Item \"{key}\" sets flags 0x{flags:X8}; APEv1 writers must leave them zero, so readers that apply the APEv2 flags misread the item."
+                        : $"{count} items set flags; APEv1 writers must leave them zero, so readers that apply the APEv2 flags misread them. The first is \"{key}\" with 0x{flags:X8}.{examples}", key);
                 }
                 else if (!IsV1 && (flags & UndefinedItemFlags) != 0)
                 {
-                    _findings.Add(new Finding(Severity.Warning, "ape.item-flags-unknown", $"Item \"{key}\" sets undefined flag bits 0x{flags & UndefinedItemFlags:X8}.", flagsNode));
+                    Report(Severity.Warning, "ape.item-flags-unknown", flagsOrItem, (count, examples) => count == 1
+                        ? $"Item \"{key}\" sets undefined flag bits 0x{flags & UndefinedItemFlags:X8}."
+                        : $"{count} items set undefined flag bits. The first is \"{key}\" with 0x{flags & UndefinedItemFlags:X8}.{examples}", key);
                 }
 
-                if (!keys.Add(key))
+                // Duplicates are looked for among the listed items' keys, so the set stays bounded.
+                if (isListedAtOnce ? !keys.Add(key) : keys.Contains(key))
                 {
-                    _findings.Add(new Finding(Severity.Warning, "ape.duplicate-key", $"The key \"{key}\" appears more than once; keys are case-insensitive and must be unique.", item));
+                    Report(Severity.Warning, "ape.duplicate-key", itemNode, (count, examples) => count == 1
+                        ? $"The key \"{key}\" appears more than once; keys are case-insensitive and must be unique."
+                        : $"{count} items repeat a key; keys are case-insensitive and must be unique. The first is \"{key}\".{examples}", key);
                 }
 
                 // "APE Tags Item Key are case sensitive", so "Tag" is allowed and only "TAG" is not.
                 if (ForbiddenKeys.Contains(key, StringComparer.Ordinal))
                 {
-                    _findings.Add(new Finding(Severity.Warning, "ape.key-forbidden", $"The key \"{key}\" is not allowed by the APEv2 specification.", item));
+                    Report(Severity.Warning, "ape.key-forbidden", itemNode, (count, examples) => count == 1
+                        ? $"The key \"{key}\" is not allowed by the APEv2 specification."
+                        : $"{count} items have a key the APEv2 specification does not allow. The first is \"{key}\".{examples}", key);
                 }
 
                 if (type == 3)
                 {
-                    _findings.Add(new Finding(Severity.Warning, "ape.item-type-reserved", $"Item \"{key}\" uses the reserved item type 3.", item));
+                    Report(Severity.Warning, "ape.item-type-reserved", itemNode, (count, examples) => count == 1
+                        ? $"Item \"{key}\" uses the reserved item type 3."
+                        : $"{count} items use the reserved item type 3. The first is \"{key}\".{examples}", key);
                 }
 
                 // "APE tag items should be sorted ascending by size ... This is not a must, but
                 // strongly recommended."
-                if (itemEnd - pos < previousSize && !isUnsorted)
+                if (itemEnd - itemPos < previousSize && !isUnsorted)
                 {
                     isUnsorted = true;
-                    _findings.Add(new Finding(Severity.Info, "ape.items-unsorted", $"Item \"{key}\" is smaller than the item before it; the APEv2 specification recommends sorting items ascending by size.", item));
+                    Report(Severity.Info, "ape.items-unsorted", itemNode, (_, _) => $"Item \"{key}\" is smaller than the item before it; the APEv2 specification recommends sorting items ascending by size.");
                 }
 
-                previousSize = itemEnd - pos;
+                previousSize = itemEnd - itemPos;
                 pos = itemEnd;
                 parsedEnd = pos;
+                _read++;
             }
 
             return pos == end ? null : $"The {anchorName} lists {anchor.ItemCount} item(s), which end at 0x{pos:X}, {end - pos} bytes before the end of the items.";
         }
 
-        // APEv2 text and external values are UTF-8; text may hold several values separated by $00.
-        private NodeValue AddValue(Node item, string key, long start, uint size, int type)
+        // The record of an item past the first MaxItemNodes, with the bytes it is built from in the store: the fixed part, the key and
+        // a text value. Null where the budget is spent or the value is too long to keep.
+        private ItemRecord? Keep(byte[] fixedPart, byte[] keyBytes, int keyLength, byte[] value, uint valueSize, bool isText, long offset)
         {
-            if (type is 1 or 3)
+            int size = 8 + keyLength + 1 + (isText ? value.Length : 0);
+            if (isText && (value.Length != valueSize || valueSize > MaxKeptValueBytes) || _keptBytes + size + 12 > MaxKeptBytes)
             {
-                NodeValue bytes = NodeValue.Integer(size, "bytes");
-                item.Add("Value", start, size, bytes, Explain.BinaryValue);
-                return bytes;
+                return null;
             }
 
-            byte[] data = reader.ReadBytesAt(start, (int)Math.Min(size, MaxDecodedValueBytes));
-            // A value read only in part may end inside a character.
-            if (Utf8.ToUtf16(data, new char[data.Length], out _, out _, replaceInvalidSequences: false, isFinalBlock: data.Length == size) == OperationStatus.InvalidData)
+            var stored = new byte[size];
+            fixedPart.CopyTo(stored, 0);
+            keyBytes.AsSpan(0, keyLength + 1).CopyTo(stored.AsSpan(8));
+            if (isText)
             {
-                _findings.Add(new Finding(Severity.Warning, "ape.text-not-utf8", $"Item \"{key}\" holds text that is not valid UTF-8, which APEv2 requires; the invalid bytes are shown as U+FFFD.", item));
+                value.CopyTo(stored, 8 + keyLength + 1);
+            }
+
+            _keptBytes += size + 12;
+            return new ItemRecord((uint)offset, _store.Add(stored), size);
+        }
+
+        // The node of a kept item, made again from its record.
+        private static Node BuildKept(bool isV1, long itemsStart, ByteStore store, ItemRecord record)
+        {
+            ReadOnlySpan<byte> stored = store.Span(record.Stored, record.StoredLength);
+            uint valueSize = BinaryPrimitives.ReadUInt32LittleEndian(stored);
+            uint flags = BinaryPrimitives.ReadUInt32LittleEndian(stored[4..]);
+            int keyLength = stored[8..].IndexOf((byte)0);
+            string key = Encoding.ASCII.GetString(stored.Slice(8, keyLength));
+            return BuildItem(isV1, itemsStart + record.Offset, valueSize, flags, key, keyLength, stored[(8 + keyLength + 1)..].ToArray());
+        }
+
+        // An item's node with its parts, from what the item holds; text is the value's bytes (up to MaxDecodedValueBytes) of a text or external item.
+        private static Node BuildItem(bool isV1, long pos, uint valueSize, uint flags, string key, int keyLength, byte[] text)
+        {
+            long valueStart = pos + 8 + keyLength + 1;
+            var item = new Node(key, pos, valueStart + valueSize - pos) { Description = Explain.Item(key), Topic = Explain.ItemTopic(key) };
+            item.Add("Size", pos, 4, NodeValue.Integer(valueSize), Explain.ItemSize);
+            int type = isV1 ? 0 : (int)((flags >> 1) & 0x03);
+            Node flagsNode = item.Add("Flags", pos + 4, 4, NodeValue.Hex(flags, 8), Explain.ItemFlags);
+            flagsNode.Add("IsReadOnly", pos + 4, 4, NodeValue.Boolean(!isV1 && (flags & 1) != 0), Explain.ItemReadOnly);
+            flagsNode.Add("Item Type", pos + 4, 4, ItemTypes[type], Explain.ItemType);
+            item.Add("Key", pos + 8, keyLength, key, Explain.Key);
+
+            if (isV1)
+            {
+                item.Value = V1Text(text);
+                item.Add("Value", valueStart, valueSize, V1Text(text), Explain.Value);
+            }
+            else if (type is 1 or 3)
+            {
+                NodeValue bytes = NodeValue.Integer(valueSize, "bytes");
+                item.Add("Value", valueStart, valueSize, bytes, Explain.BinaryValue);
+                item.Value = bytes;
+            }
+            else
+            {
+                var values = new List<string>();
+                int i = 0;
+                while (true)
+                {
+                    int separator = type == 0 ? Array.IndexOf(text, (byte)0, i) : -1;
+                    int valueEnd = separator < 0 ? text.Length : separator;
+                    string value = Encoding.UTF8.GetString(text, i, valueEnd - i);
+                    values.Add(value);
+                    item.Add("Value", valueStart + i, valueEnd - i, value, Explain.Value);
+                    if (separator < 0)
+                    {
+                        break;
+                    }
+
+                    i = separator + 1;
+                }
+
+                item.Value = string.Join("; ", values);
+            }
+
+            return item;
+        }
+
+        // The values of a text item: APEv2 text may hold several, separated by $00; an APEv1 value is one string.
+        private static List<string> TextValues(bool isV1, byte[] text)
+        {
+            if (isV1)
+            {
+                return [V1Text(text)];
             }
 
             var values = new List<string>();
             int i = 0;
             while (true)
             {
-                int separator = type == 0 ? Array.IndexOf(data, (byte)0, i) : -1;
-                int valueEnd = separator < 0 ? data.Length : separator;
-                string value = Encoding.UTF8.GetString(data, i, valueEnd - i);
-                values.Add(value);
-                item.Add("Value", start + i, valueEnd - i, value, Explain.Value);
+                int separator = Array.IndexOf(text, (byte)0, i);
+                int valueEnd = separator < 0 ? text.Length : separator;
+                values.Add(Encoding.UTF8.GetString(text, i, valueEnd - i));
                 if (separator < 0)
                 {
-                    break;
+                    return values;
                 }
 
                 i = separator + 1;
             }
-
-            return string.Join("; ", values);
         }
 
         // APEv1 values are a single ASCII string. Writers that put other bytes there used UTF-8
         // or a Windows code page, so valid UTF-8 is read as UTF-8 and anything else as ISO-8859-1.
-        private string AddV1Value(Node item, long start, uint size)
+        private static string V1Text(byte[] data) =>
+            Ascii.IsValid(data) ? Encoding.ASCII.GetString(data) : Utf8.IsValid(data) ? Encoding.UTF8.GetString(data) : Encoding.Latin1.GetString(data);
+
+        // What a value breaks, for every item whether listed or not.
+        private void CheckValue(Func<Node> itemNode, string key, byte[] data, uint size, int type)
         {
-            byte[] data = reader.ReadBytesAt(start, (int)Math.Min(size, MaxDecodedValueBytes));
-            string value;
-            if (Ascii.IsValid(data))
+            if (IsV1)
             {
-                value = Encoding.ASCII.GetString(data);
-            }
-            else
-            {
-                bool utf8 = Utf8.IsValid(data);
-                value = utf8 ? Encoding.UTF8.GetString(data) : Encoding.Latin1.GetString(data);
-                _findings.Add(new Finding(
-                    Severity.Warning,
-                    "ape.v1-not-ascii",
-                    $"The APEv1 value of item \"{item.Name}\" is not ASCII; it is read as {(utf8 ? "UTF-8" : "ISO-8859-1")}.",
-                    item));
+                if (!Ascii.IsValid(data))
+                {
+                    bool utf8 = Utf8.IsValid(data);
+                    Report(Severity.Warning, "ape.v1-not-ascii", itemNode, (count, examples) => count == 1
+                        ? $"The APEv1 value of item \"{key}\" is not ASCII; it is read as {(utf8 ? "UTF-8" : "ISO-8859-1")}."
+                        : $"{count} APEv1 values are not ASCII; they are read as {(utf8 ? "UTF-8" : "ISO-8859-1")}. The first is item \"{key}\".{examples}", key, utf8 ? "utf8" : "latin1");
+                }
+
+                if (Array.IndexOf(data, (byte)0) >= 0)
+                {
+                    Report(Severity.Warning, "ape.v1-zero-byte", () => ValueOf(itemNode()), (count, examples) => count == 1
+                        ? $"The APEv1 value of item \"{key}\" contains a $00 byte; APEv1 has no value lists, so it is kept as one value."
+                        : $"{count} APEv1 values contain a $00 byte; APEv1 has no value lists, so each is kept as one value. The first is item \"{key}\".{examples}", key);
+                }
+
+                return;
             }
 
-            Node node = item.Add("Value", start, size, value, Explain.Value);
-            if (Array.IndexOf(data, (byte)0) >= 0)
+            // A value read only in part may end inside a character.
+            if (type is 0 or 2 && Utf8.ToUtf16(data, new char[data.Length], out _, out _, replaceInvalidSequences: false, isFinalBlock: data.Length == size) == OperationStatus.InvalidData)
             {
-                _findings.Add(new Finding(
-                    Severity.Warning,
-                    "ape.v1-zero-byte",
-                    $"The APEv1 value of item \"{item.Name}\" contains a $00 byte; APEv1 has no value lists, so it is kept as one value.",
-                    node));
+                Report(Severity.Warning, "ape.text-not-utf8", itemNode, (count, examples) => count == 1
+                    ? $"Item \"{key}\" holds text that is not valid UTF-8, which APEv2 requires; the invalid bytes are shown as U+FFFD."
+                    : $"{count} items hold text that is not valid UTF-8, which APEv2 requires; the invalid bytes are shown as U+FFFD. The first is \"{key}\".{examples}", key);
             }
-
-            return value;
         }
+
+        private static Node ValueOf(Node item) => item.Children.FirstOrDefault(c => c.Name == "Value") ?? item;
 
         private void AddBlock(Node tag, string name, long offset, Block block)
         {
@@ -473,6 +691,8 @@ public sealed class ApeTagParser : ITagParser
 
         private static string Capitalize(string text) => char.ToUpperInvariant(text[0]) + text[1..];
     }
+
+    private readonly record struct ItemRecord(uint Offset, uint Stored, int StoredLength);
 
     private sealed class Block
     {

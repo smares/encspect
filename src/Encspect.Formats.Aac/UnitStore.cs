@@ -144,7 +144,9 @@ internal sealed class UnitStore
         if (_chunks.Count == 0 || _used + size > _chunks[^1].Length)
         {
             // An entry larger than a chunk gets a chunk of its own, which nothing else joins.
-            _chunks.Add(new byte[Math.Max(ChunkSize, size)]);
+            // Chunks double up to their full size, so a stream of a few frames keeps little (a file may change its header thousands of times).
+            int grown = _chunks.Count == 0 ? 1024 : Math.Min(ChunkSize, _chunks[^1].Length * 2);
+            _chunks.Add(new byte[Math.Max(grown, size)]);
             _used = 0;
         }
 
