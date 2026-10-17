@@ -29,7 +29,7 @@ make_external_musepack_fixtures.py):
   no encoder was found, it confirms that the last counted frame is decoded, but not the 11 bits after
   it or the sample count; those rest on libmpcdec 1.2.6's reading alone.
 
-- MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
+- MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
   report: the format and sample rate; for SV7 the channels and the header's frame count, which it
   gives as 1,152 samples a frame; for SV8 the stream header's sample count; and the APE tag's
   title, artist and album. Its own readings are asserted as such: no format for SV4 to SV6 (it takes
@@ -202,7 +202,7 @@ def check_ffprobe(name, manifest, path, problems):
         found, stop = m.packets(data[start:])
         past = [a for a in actual if a[0] >= start + stop]
         if past:
-            # ffmpeg 6.1 stops at the stream end packet, but takes up reading after it and reads the
+            # ffmpeg 8.0 (mpc8.c, mpc8_read_packet, unchanged since 6.1.1) stops at the stream end packet, but takes up reading after it and reads the
             # "AP" of an APE tag's "APETAGEX" as an audio packet where the tag does not end the file.
             skip(name, f"ffprobe's {len(past)} packets after the stream end", "ffmpeg reads the APE tag after the stream end packet as an audio packet")
             actual = [a for a in actual if a[0] < start + stop]
@@ -342,7 +342,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "sv8-tag-inside": dict.fromkeys(["tag title", "tag track", "tag performer", "tag album"], MEDIAINFO_SIGNATURE_TAG),
     "sv7-version-unknown": {"format": "MediaInfo takes \"MP+\" only with stream version 7 (File_Mpc.cpp, FileHeader_Begin); the analyzer reads the SV7 header and reports the version"},
     "sv8-audio-before-header": dict.fromkeys(["sample rate", "samples", "duration and bitrate"], "MediaInfo stops at the first audio packet (File_MpcSv8.cpp, AP: Finish), so it does not read the stream header after it"),
-    "sv8-rate-reserved": {"format": "MediaInfo 24.01 indexes its four-entry Mpc_SampleFreq table with the 3-bit sample rate code (File_MpcSv8.cpp, SH) and divides by what it finds past the end, so it exits with SIGFPE on a reserved code"},
+    "sv8-rate-reserved": {"format": "MediaInfo (24.01 and 26.01: File_MpcSv8.cpp is unchanged) indexes its four-entry Mpc_SampleFreq table with the 3-bit sample rate code (File_MpcSv8.cpp, SH) and divides by what it finds past the end, so it exits with SIGFPE on a reserved code"},
 }
 
 

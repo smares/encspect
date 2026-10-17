@@ -3,7 +3,7 @@
 
 For every manifest in tests/fixtures/asf:
 
-- ffprobe (FFmpeg 6.1, the reference ASF demuxer asfdec_f.c): the streams' codec, channels and rate,
+- ffprobe (FFmpeg 8.0, the reference ASF demuxer asfdec_f.c): the streams' codec, channels and rate,
   and the packets it reads. For a hand-built fixture the packets are the media objects the model
   works out from the payloads: the same count, and for each one the stream, the size and the
   presentation time, which also covers fragmented objects put together and compressed payloads split.
@@ -16,7 +16,7 @@ For every manifest in tests/fixtures/asf:
   (a configuration it rejects, a music superframe, a frame type code or a sample count it refuses) and
   drop the same packets and superframes as the analyzer does; that agreement of the sample counts is
   the independent check of the superframe boundaries, the spillover and the packets' resync.
-- MediaInfo (24.01): the format, the codec ID, the channels, the sampling rate and the duration of
+- MediaInfo (26.01): the format, the codec ID, the channels, the sampling rate and the duration of
   the WMA files against ffprobe's; and against the analyzer's golden report: the bit rate mode (the
   IsVBR attribute), the description of the codec (the Codec List), the format profile, title and
   performer, the encoded date (the File Properties' creation date) and the maximum overall bit rate.
@@ -78,8 +78,8 @@ def ffprobe_json(path, *args):
 
 
 def decode(path, fmt="s16le", level="error"):
-    """Decodes every audio stream, one ffmpeg run each, and joins the PCM: ffmpeg 7.1 and later refuse a raw PCM output with more
-    than one audio stream (FF_OFMT_FLAG_MAX_ONE_OF_EACH in libavformat/pcmenc.c of 8.0.1), where 6.1 interleaved them. The samples
+    """Decodes every audio stream, one ffmpeg run each, and joins the PCM: ffmpeg 7.0 and later refuse a raw PCM output with more
+    than one audio stream (FF_OFMT_FLAG_MAX_ONE_OF_EACH in libavformat/pcmenc.c of 7.0 and 8.0.1), where 6.1 interleaved them. The samples
     of all streams count, as before."""
     probe = run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", str(path)], text=True)
     count = max(1, len(probe.stdout.split()))
