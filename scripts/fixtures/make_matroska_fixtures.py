@@ -1137,19 +1137,23 @@ ID3V1 = b"TAG" + b"A live recording".ljust(30, b"\0") + b"A speaker".ljust(30, b
 
 def ape_tag(pairs=((b"Artist", b"A speaker"), (b"Title", b"A live recording"))):
     """An APEv2 tag with a header, the items and a footer (APE tag specification 2.000)."""
-    def item(key, value):
-        return struct.pack("<II", len(value), 0) + key + b"\0" + value
+    def item(key, value, flags=0):
+        return struct.pack("<II", len(value), flags) + key + b"\0" + value
 
-    items = b"".join(item(k, v) for k, v in pairs)
+    items = b"".join(item(*pair) for pair in pairs)
     size = len(items) + 32
     header = b"APETAGEX" + struct.pack("<IIII", 2000, size, len(pairs), 0xA0000000) + bytes(8)
     footer = b"APETAGEX" + struct.pack("<IIII", 2000, size, len(pairs), 0x80000000) + bytes(8)
     return header + items + footer
 
 
-def live_file():
-    clusters = [cluster(i * 100, *blocks(count=5, first=i * 5), unknown=True) for i in range(3)]
+def live_file_of(clusters):
+    """A live recording (Segment of unknown size) of the given Clusters."""
     return build(standard(*clusters)[:1] + [segment(info(), tracks(opus_track()), *clusters, unknown=True)])
+
+
+def live_file():
+    return live_file_of([cluster(i * 100, *blocks(count=5, first=i * 5), unknown=True) for i in range(3)])
 
 
 @fixture("live-id3v1", "A live recording (Segment and Clusters of unknown size) with an ID3v1 tag appended: the tag after the last Cluster is the file's, not an element's.",
@@ -1287,6 +1291,290 @@ def _():
 
 
 TAG_WRITERS["writer-tag-without-info"] = "bar 2.0"
+
+
+# --- Gate 2: TrackTimestampScale, tags after live recordings, truncated seeks, misplaced values, null octets, header limits, sampling frequencies ----------
+
+
+PCM_RATE = 48000.0
+TS_SCALE_TRACK_EXTRA = (flt(0x23314F, 2.0),)
+
+
+@fixture("track-timestamp-scale", "A PCM track with a TrackTimestampScale of 2.0 and three Clusters at 0, 1000 and 2000 ticks, each with blocks at 0 and 10 Track Ticks: a block's time is "
+         "(Cluster Timestamp + block timestamp times TrackTimestampScale) times TimestampScale (RFC 9559 section 11.2), so the Cluster's Timestamp is not scaled.", findings=[("matroska.codec-not-analyzed", "PCM")], streams=[("PCM (integer, little-endian)", 48000, 2)])
+def _():
+    pcm = audio_track(1, "A_PCM/INT/LIT", 2, PCM_RATE, bits=16, extra=TS_SCALE_TRACK_EXTRA)
+    clusters = [cluster(t, *[simple_block(1, ts, bytes(range(16)) * 4, key=True) for ts in (0, 10)]) for t in (0, 1000, 2000)]
+    return build(standard(*clusters, track=[pcm]))
+
+
+@fixture("tracks-after-clusters", "A PCM track with a TrackTimestampScale of 2.0 whose Tracks element comes after the Cluster, which a SeekHead before the Cluster references (RFC 9559 "
+         "section 6.1 allows it): the blocks' times are worked out with the scale once the Tracks are read, so the blocks at 0 and 1000 Track Ticks are 2 s apart.",
+         findings=[("matroska.codec-not-analyzed", "PCM")], streams=[("PCM (integer, little-endian)", 48000, 2)])
+def _():
+    def make(p):
+        head = seek_head((m.INFO, p.get("info", 0)), (m.CLUSTER, p.get("c0", 0)), (m.TRACKS, p.get("tracks", 0)))
+        inf = info()
+        trk = tracks(audio_track(1, "A_PCM/INT/LIT", 2, PCM_RATE, bits=16, extra=TS_SCALE_TRACK_EXTRA))
+        c0 = cluster(0, *[simple_block(1, ts, bytes(range(16)) * 4, key=True) for ts in (0, 1000)])
+        seg = segment(head, inf, c0, trk)
+        return [ebml_header(), seg], {"info": inf, "tracks": trk, "c0": c0}, seg
+
+    return laid_out(make)
+
+
+@fixture("encrypted-track-timestamp-scale", "An encrypted Opus track with a TrackTimestampScale of 2.0 in Clusters at 0 and 1000 ticks: its length comes from the container's timing, "
+         "which scales the blocks' timestamps and not the Clusters'.", findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01\x02"))
+
+    def sealed(first):
+        return [simple_block(1, ts, bytes((first + ts + k) & 0xFF for k in range(40)), key=True) for ts in (0, 10, 20)]
+
+    return build(standard(cluster(0, *sealed(0)), cluster(1000, *sealed(50)), track=[opus_track(encodings=enc, extra=TS_SCALE_TRACK_EXTRA)]))
+
+
+@fixture("live-ape-large", "A live recording with an APEv2 tag of 2,000 bytes of value after it: the tag's header reads as an element ID (0x4150) and a size of 1,364 bytes, which the "
+         "tag outgrows, so the walk over the unknown element would swallow it. An unknown element counts as part of the recording only if a known one follows it.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
+def _():
+    return live_file(), ape_tag(((b"Title", b"A live recording " * 118),))
+
+
+@fixture("live-ape-binary", "A live recording with an APEv2 tag whose binary cover item has the bytes of a Void element where the walk over the tag lands after the header's "
+         "unknown element (1,368 bytes in) and those of a Cluster child that runs past the data after it: neither vouches for the unknown element before it, so the tag is "
+         "not swallowed. Only a Top-Level Element that follows an unknown element makes it part of the recording.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
+def _():
+    key = b"Cover Art (Front)"
+    value = bytearray((i * 167 + (i >> 3) * 31 + 5) & 0xFF for i in range(4000))
+    title = (b"Title", b"A live recording")
+    first = 1368 - (32 + 8 + len(title[0]) + 1 + len(title[1]) + 8 + len(key) + 1)
+    value[first:first + 6] = b"\xec\x84\x00\x00\x00\x00"
+    value[first + 6:first + 9] = b"\xa3\x5f\xff"
+    return live_file(), ape_tag((title, (key, bytes(value), 2)))
+
+
+@fixture("live-ape-footer-only", "A live recording with an APEv2 tag that has no header (as APEv1 tags never do): its first item's length bytes (0xA3 0x01 0x00 0x00) read as a "
+         "SimpleBlock whose size is a number far past the data. A known element that runs past the data owns the rest of it, unless an APEv2 footer at the end of the data "
+         "places its tag at that element's start (the elements do not vouch for the bytes), so the tag is not swallowed.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
+def _():
+    key = b"Cover"
+    value = bytes((i * 29 + 7) & 0xFF for i in range(0x1A3))
+    item = struct.pack("<II", len(value), 2) + key + b"\0" + value
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, len(item) + 32, 1, 0) + bytes(8)
+    return live_file(), item + footer
+
+
+@fixture("live-truncated-unknown-element", "A live recording cut short in the middle of its last SimpleBlock, with an element the schema does not list (0x4ABC) in its last Cluster, "
+         "whose last 128 bytes are shaped like an ID3v1 tag: a known element that runs past the data owns the rest of the data, so the bytes are part of the block, not a tag.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("matroska.unknown-element", "0x4ABC"),
+                   ("matroska.element-truncated", "cut short"), ("tag.near-miss", "ID3v1 signature")], streams=[OPUS], valid=False)
+def _():
+    last = simple_block(1, 100, opus_packet(9) + bytes(40) + ID3V1 + bytes(60), key=True).render()
+    recording = [cluster(0, *blocks(count=3), E(0x4ABC, b"\x11" * 20), *blocks(count=2, start=60, first=3), unknown=True)]
+    return live_file_of(recording) + last[:len(last) - 60]
+
+
+@fixture("live-unknown-tag-signature", "A live recording with an element the schema does not list whose bytes begin like an ID3v1 tag (\"TAG\", ID 0x5441) in the middle of its first "
+         "Cluster, a second Cluster after it, and a header-less APEv2 tag whose size is 300 bytes too large, so that it reaches back into the first Cluster: the Cluster after the "
+         "unknown element vouches for the recording before it, so both Clusters are read and the damaged tag is not accepted.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("matroska.unknown-element", "0x5441"),
+                   ("matroska.element-header-invalid", "No element can be read"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
+def _():
+    recording = live_file_of([cluster(0, *blocks(count=3), E(0x5441, bytes(0x700)), *blocks(count=2, start=60, first=3), unknown=True), cluster(1000, *blocks(count=5, first=5), unknown=True)])
+    start = recording.index(b"\x54\x41\x47\x00")
+    item = struct.pack("<II", 5, 0) + b"Title\0" + b"Hello"
+    extra = (len(recording) - start) - 10
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, len(item) + 32 + extra, 1, 0) + bytes(8)
+    return recording + item + footer
+
+
+def false_footer(target):
+    """A live recording whose last block's payload ends in an APEv2 footer (one item's worth of size, flags 0) whose tag size reaches back to the
+    start of the last block or of the Segment's first child (Info): the items it would hold are the recording's elements."""
+    last = simple_block(1, 100, opus_packet(9) + bytes(40) + bytes(32), key=True)
+    clusters = [cluster(0, *blocks(count=3), last, unknown=True)]
+    seg = segment(info(), tracks(opus_track()), *clusters, unknown=True)
+    data = bytearray(build([ebml_header(), seg]))
+    start = last.offset if target == "block" else seg.children[0].offset
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, len(data) - 32 - start + 32, 1, 0) + bytes(8)
+    data[-32:] = footer
+    return bytes(data)
+
+
+@fixture("live-false-ape-footer-block", "A live recording whose last block's payload ends in bytes that read as an APEv2 footer whose tag size reaches back to the start of that "
+         "block: the tag would be the block, but the elements from there run through known elements to the end of the data and the \"items\" are no items, so the "
+         "recording keeps its bytes and the candidate is a near miss.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
+def _():
+    return false_footer("block")
+
+
+@fixture("live-false-ape-footer-info", "As live-false-ape-footer-block with a tag size that reaches back to the Segment's first child (Info): a Top-Level Element starts there, "
+         "and the elements from there run through to the end of the data, so the Segment keeps its Info, Tracks and Cluster.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
+def _():
+    return false_footer("info")
+
+
+def false_items(variant):
+    """A live recording of PCM blocks whose bytes from the first Cluster's Timestamp (written in two octets, E7 82 00 00: the value size 33,511 of a
+    first item) read as APEv2 items that parse: the next SimpleBlock's ID, size and track are the item's flags, the block's timecode 0x4141 its key "AA"
+    ended by the block's flags 0x00, and the rest its value up to a footer in the last 32 bytes of the file, whose tag size reaches back to the
+    Timestamp. The elements run to the end of the data all the same: through a second Cluster of unknown size ("two-clusters"), in one Cluster
+    ("one-cluster"), or to an unknown element that runs to the end ("unknown-tail")."""
+    pcm = audio_track(1, "A_PCM/INT/LIT", 1, 8000.0, bits=16)
+
+    def layout(n):
+        first = [uint(m.TIMESTAMP, 0, 2), simple_block(1, 0x4141, [bytes(200)])] + [simple_block(1, 0x4141 + 20 * i, [bytes(200)], key=True) for i in range(1, 5)]
+        last = simple_block(1, 2000, [bytes(n)], key=True)
+        if variant == "two-clusters":
+            clusters = [master(m.CLUSTER, *first, size="unknown"), cluster(1000, *[simple_block(1, 20 * i, [bytes(200)], key=True) for i in range(5)], last, unknown=True)]
+        elif variant == "one-cluster":
+            clusters = [master(m.CLUSTER, *first, *[simple_block(1, 0x4141 + 100 + 20 * i, [bytes(200)], key=True) for i in range(5)], last, size="unknown")]
+        else:
+            clusters = [master(m.CLUSTER, *first, size="unknown"), E(0x4321, bytes(n))]
+        seg = segment(info(), tracks(pcm), *clusters, unknown=True)
+        return build([ebml_header(), seg]), first[0].offset
+
+    n = 0
+    for _ in range(4):
+        data, start = layout(n)
+        wanted = start + 11 + 33511 + 32
+        if len(data) == wanted:
+            break
+        n += wanted - len(data)
+    data = bytearray(data)
+    data[-32:] = b"APETAGEX" + struct.pack("<IIII", 2000, len(data) - start, 1, 0) + bytes(8)
+    return bytes(data)
+
+
+FALSE_ITEMS = [("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("matroska.codec-not-analyzed", "PCM"), ("tag.near-miss", "APE signature")]
+FALSE_ITEMS_BLOCKS = FALSE_ITEMS + [("matroska.timestamps-backwards", "go back in time")]
+PCM_STREAM = [("PCM (integer, little-endian)", 8000, 1)]
+
+
+@fixture("live-false-ape-items-two-clusters", "A live recording of two Clusters of unknown size whose first Cluster's bytes from its Timestamp read as APEv2 items that parse, up to a footer "
+         "in the last block that places a tag there: the elements run through both Clusters to the end of the data, so the recording keeps its bytes and the footer is a near miss.",
+         findings=FALSE_ITEMS_BLOCKS, streams=PCM_STREAM, valid=False)
+def _():
+    return false_items("two-clusters")
+
+
+@fixture("live-false-ape-items-one-cluster", "As live-false-ape-items-two-clusters with the blocks after the first in one Cluster of unknown size.",
+         findings=FALSE_ITEMS_BLOCKS, streams=PCM_STREAM, valid=False)
+def _():
+    return false_items("one-cluster")
+
+
+@fixture("live-false-ape-items-unknown-tail", "As live-false-ape-items-two-clusters with an element the schema does not list (0x4321) after the first Cluster, which runs to the end of the "
+         "data and holds the footer: the unknown element ends exactly at the end of the data, so it is the recording's.",
+         findings=FALSE_ITEMS + [("matroska.unknown-element", "0x4321")], streams=PCM_STREAM, valid=False)
+def _():
+    return false_items("unknown-tail")
+
+
+@fixture("live-ape-footer-damaged-key", "The headerless APEv2 tag of live-ape-footer-only with the first byte of its key changed to 0x01: the elements do not vouch for the bytes "
+         "(the first item's length reads as an element that runs past the data), so the tag wins, and the APE parser reports its damage instead of the tag being dropped.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("ape.items-invalid", "invalid key")], streams=[OPUS], valid=False)
+def _():
+    key = b"\x01over"
+    value = bytes((i * 29 + 7) & 0xFF for i in range(0x1A3))
+    item = struct.pack("<II", len(value), 2) + key + b"\0" + value
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, len(item) + 32, 1, 0) + bytes(8)
+    return live_file(), item + footer
+
+
+@fixture("truncated-seek-cues", "A file cut at the end, right after the last Cluster, whose SeekHead names the Cues past the cut: the position lies inside the Segment's declared "
+         "size, so the truncation is the finding and the Seek entry is not.", findings=[("matroska.element-truncated", "The Segment states")], streams=[OPUS], valid=False)
+def _():
+    def make(p):
+        head = seek_head((m.INFO, p.get("info", 0)), (m.TRACKS, p.get("tracks", 0)), (m.CLUSTER, p.get("c0", 0)), (m.CUES, p.get("cues", 0)))
+        inf, trk = info(), tracks(opus_track())
+        c0, c1 = cluster(0, *blocks(count=3)), cluster(60, *blocks(count=3, first=3))
+        cu = cues((0, 1, p.get("c0", 0)), (60, 1, p.get("c1", 0)))
+        seg = segment(head, inf, trk, c0, c1, cu)
+        return [ebml_header(), seg], {"info": inf, "tracks": trk, "c0": c0, "c1": c1, "cues": cu}, seg
+
+    elements = []
+
+    def capture(p):
+        result = make(p)
+        elements[:] = result[0]
+        return result
+
+    data = laid_out(capture)
+    cues_element = elements[1].children[-1]
+    return data[:cues_element.offset]
+
+
+@fixture("misplaced-values", "A TimestampScale of 5,000,000 inside Tracks and a WritingApp of \"LAME 3.100\" inside a Tag, both where the schema does not place them, in a file whose Info "
+         "states 1,000,000 and the mkvmerge apps: the misplaced values are shown and reported but not used, so the PCM track's four blocks, 40 ms apart, last 0.16 s at the Info's scale and its writer is mkvmerge.",
+         findings=[("matroska.misplaced-element", "2 elements are placed where the schema does not allow"), ("matroska.codec-not-analyzed", "PCM")],
+         streams=[("PCM (integer, little-endian)", 48000, 2)], valid=False)
+def _():
+    pcm = audio_track(1, "A_PCM/INT/LIT", 2, PCM_RATE, bits=16)
+    stray_scale = uint(ID["TimestampScale"], 5_000_000)
+    stray_tag = master(ID["Tag"], master(ID["Targets"], uint(ID["TargetTypeValue"], 50)), text(ID["WritingApp"], "LAME 3.100"))
+    inf = master(m.INFO, uint(ID["TimestampScale"], 1_000_000), flt(ID["Duration"], 100.0), text(ID["MuxingApp"], "libebml v1.4.5 + libmatroska v1.7.1"),
+                 text(ID["WritingApp"], "mkvmerge v82.0 ('I'm The President') 64-bit"))
+    return build([ebml_header(), segment(inf, tracks(pcm, stray_scale), cluster(0, *[simple_block(1, i * 40, bytes(range(16)) * 4, key=True) for i in range(4)]),
+                                         master(m.TAGS, stray_tag))])
+
+
+@fixture("string-null", "Strings with a null octet and data after it (RFC 8794 section 13): a CodecID of \"A_OPUS\\0\\0xy\", a DocType of \"matroska\\0xy\" and a Title of \"ab\\0cd\" end at the "
+         "first null octet, so the track is routed as Opus, the file is Matroska and none is invalid text.", streams=[OPUS])
+def _():
+    trk = opus_track()
+    codec = next(c for c in trk.children if c.id == ID["CodecID"])
+    codec.data = b"A_OPUS\x00\x00xy"
+    elements = standard(cluster(0, *blocks(count=4)), track=[trk], info_extra=(E(ID["Title"], b"ab\x00cd"),))
+    return build([ebml_header("matroska\x00xy"), elements[1]])
+
+
+@fixture("header-max-id-length-2", "An EBML Header with an EBMLMaxIDLength of 2: the Segment and the Top-Level Elements have IDs of four octets whatever it says (RFC 9559 section 4.4), "
+         "so the file is read in full and only the header's value is reported.", findings=[("matroska.header-limits", "EBMLMaxIDLength of 2")], streams=[OPUS], valid=False)
+def _():
+    return build([ebml_header(max_id=2), standard(cluster(0, *blocks(count=4)))[1]])
+
+
+@fixture("header-limits-large", "An EBML Header with an EBMLMaxIDLength of 200 and an EBMLMaxSizeLength of 16, which RFC 9559 forbids (section 4.3): the finding states the values as "
+         "the header gives them.", findings=[("matroska.header-limits", "EBMLMaxIDLength of 200 and an EBMLMaxSizeLength of 16")], streams=[OPUS], valid=False)
+def _():
+    return build([ebml_header(max_id=200, max_size=16), standard(cluster(0, *blocks(count=4)))[1]])
+
+
+@fixture("sampling-frequency-invalid", "Four PCM tracks whose SamplingFrequency or OutputSamplingFrequency is not above 0 (RFC 9559 sections 5.1.4.1.29.1 and 5.1.4.1.29.2): NaN, "
+         "-48000 and infinity for the first three, and a NaN output sampling frequency beside a valid sampling frequency for the fourth. Each is a finding. The streams of "
+         "the first three have no sampling rate, and the fourth uses its sampling frequency.",
+         findings=[("matroska.audio-fields", "NaN Hz, which"), ("matroska.audio-fields", "-48000 Hz"), ("matroska.audio-fields", "Infinity Hz"), ("matroska.audio-fields", "output sampling frequency of NaN Hz"),
+                   ("matroska.codec-not-analyzed", "Track 1"), ("matroska.codec-not-analyzed", "Track 2"), ("matroska.codec-not-analyzed", "Track 3"), ("matroska.codec-not-analyzed", "Track 4")],
+         streams=[("PCM (integer, little-endian)", 0, 2)] * 3 + [("PCM (integer, little-endian)", 48000, 2)], valid=False)
+def _():
+    rates = [float("nan"), -48000.0, float("inf"), 48000.0]
+    entries = [audio_track(i + 1, "A_PCM/INT/LIT", 2, rate, bits=16, audio_extra=(flt(ID["OutputSamplingFrequency"], float("nan")),) if i == 3 else ()) for i, rate in enumerate(rates)]
+    items = [simple_block(i + 1, t * 10, bytes(range(16)) * 4, key=True) for i in range(4) for t in range(3)]
+    return build(standard(cluster(0, *items), track=entries))
+
+
+@fixture("aac-legacy-sbr-invalid-output", "A track with the legacy ID A_AAC/MPEG4/LC/SBR whose OutputSamplingFrequency is NaN: it is not used, so no AudioSpecificConfig is worked out "
+         "from the ID and the AAC parser gets no configuration.",
+         findings=[("matroska.audio-fields", "output sampling frequency of NaN Hz"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 22050, 2)], valid=False)
+def _():
+    _, rate_index, channels, frames = adts_frames("sbr-fixvar-resolutions")
+    rate = float(AAC_RATES[rate_index])
+    track = audio_track(1, "A_AAC/MPEG4/LC/SBR", channels, rate, audio_extra=(flt(ID["OutputSamplingFrequency"], float("nan")),))
+    items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames)]
+    return build(standard(cluster(0, *items), track=[track]))
+
+
+@fixture("writer-lavf-under-application", "A Segment whose MuxingApp is ffmpeg's muxer version (\"Lavf60.16.100\") and whose WritingApp names another application, as libavformat writes "
+         "the encoding_tool metadata (matroskaenc.c): the muxer is the library under the application, as libebml and libmatroska are under mkvmerge, so the two do not conflict.",
+         streams=[OPUS])
+def _():
+    return with_apps("Lavf60.16.100", "HandBrake 1.7.2 2024011600")
 
 
 # --- Writing the files ---------------------------------------------------------------------------------

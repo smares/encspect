@@ -7,6 +7,8 @@ internal readonly record struct Leaf(ulong U, long S, double D, string? Text, by
 
 internal sealed partial class FileReader
 {
+    // How many elements the schema does not place where they stand enclose the one being read.
+    private int _displaced;
     private TrackInfo? _track;
     private EncodingInfo? _encoding;
     private ulong? _seekId;
@@ -86,10 +88,10 @@ internal sealed partial class FileReader
                 document.ReadVersion = leaf.U;
                 break;
             case 0x42F2:
-                document.MaxIdLength = (int)Math.Min(leaf.U, 8);
+                document.MaxIdLength = (int)Math.Min(leaf.U, int.MaxValue);
                 break;
             case 0x42F3:
-                document.MaxSizeLength = (int)Math.Min(leaf.U, 8);
+                document.MaxSizeLength = (int)Math.Min(leaf.U, int.MaxValue);
                 break;
             case 0x4282:
                 document.DocType = leaf.Text;
@@ -142,7 +144,7 @@ internal sealed partial class FileReader
             case 0x3EB923 when leaf.Length != 16:
             case 0x4444 when leaf.Length != 16:
                 _findings.Add(Severity.Warning, "matroska.uid-length", node, count =>
-                    $"{(count == 1 ? "A segment UID holds" : $"{count} segment UIDs hold")} other than the 128 bits RFC 9559 gives it (sections 5.1.2.1 to 5.1.2.7); the first, the {definition.Name} at 0x{header.Offset:X}, holds {Bytes(leaf.Length)}.");
+                    $"{(count == 1 ? "A UUID element of the Info holds" : $"{count} UUID elements of the Info hold")} other than the 128 bits RFC 9559 gives it (sections 5.1.2.1 to 5.1.2.7); the first, the {definition.Name} at 0x{header.Offset:X}, holds {Bytes(leaf.Length)}.");
                 break;
             case 0x53AB:
                 _seekId = leaf.Bytes is { Length: >= 1 and <= 4 } id ? Ebml.Unsigned(id) : null;
@@ -217,6 +219,7 @@ internal sealed partial class FileReader
                 break;
             case 0x78B5:
                 track.OutputSamplingFrequency = leaf.D;
+                track.OutputSamplingFrequencyNode = node;
                 break;
             case 0x9F:
                 track.Channels = leaf.U;
@@ -267,6 +270,11 @@ internal sealed partial class FileReader
     private void FinishTrack(SegmentState segment, TrackInfo track)
     {
         track.Node.Value = TrackText(track);
+        if (track.IsAudio)
+        {
+            _nodes += TrackNodeCost;
+        }
+
         if (track.Number is { } number)
         {
             if (!segment.TracksByNumber.TryAdd(number, track))
@@ -294,7 +302,7 @@ internal sealed partial class FileReader
 
             if (track.SamplingFrequency is { } rate)
             {
-                parts.Add($"{rate:0.###} Hz");
+                parts.Add($"{rate.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)} Hz");
             }
         }
         else if (track.PixelWidth is { } width && track.PixelHeight is { } height)

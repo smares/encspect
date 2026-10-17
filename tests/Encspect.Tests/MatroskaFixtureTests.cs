@@ -40,7 +40,7 @@ public class MatroskaFixtureTests
         Assert.Equal(manifest.GetProperty("length").GetInt64(), file.Length);
 
         Node[] shown = [.. file.Children.Where(c => !c.Name.EndsWith(" Frames", StringComparison.Ordinal))];
-        CompareTree(manifest.GetProperty("tree"), shown, "file");
+        CompareTree(manifest.GetProperty("tree"), shown, "file", !manifest.GetProperty("findings").EnumerateArray().Any(f => f.GetProperty("code").GetString() == "aac.no-configuration"));
         CompareBlocks(manifest.GetProperty("blocks"), file);
         CompareTracks(manifest.GetProperty("tracks"), file);
         CompareStreams(manifest, report);
@@ -84,7 +84,7 @@ public class MatroskaFixtureTests
         return document.RootElement.Clone();
     }
 
-    private static void CompareTree(JsonElement expected, IReadOnlyList<Node> shown, string where)
+    private static void CompareTree(JsonElement expected, IReadOnlyList<Node> shown, string where, bool hasLegacyConfiguration)
     {
         // The Writer node of a stream the container reports itself is the analysis's, not an element.
         IReadOnlyList<Node> actual = [.. shown.Where(n => n.Name != "Writer")];
@@ -100,12 +100,12 @@ public class MatroskaFixtureTests
             // The codec parser adds the configuration it reads, such as the AudioSpecificConfig, to the CodecPrivate node.
             if (entries[i].GetArrayLength() > 3)
             {
-                CompareTree(entries[i][3], node.Children, $"{where}/{name}");
+                CompareTree(entries[i][3], node.Children, $"{where}/{name}", hasLegacyConfiguration);
             }
             else if (node.Name == "CodecID" && node.Value?.ToString()?.StartsWith("A_AAC/MPEG", StringComparison.Ordinal) == true)
             {
-                // The AAC parser puts the AudioSpecificConfig worked out from a legacy ID under the CodecID that gives it.
-                Assert.Equal(["AudioSpecificConfig"], node.Children.Select(c => c.Name));
+                // The AAC parser puts the AudioSpecificConfig worked out from a legacy ID under the CodecID that gives it, unless none is worked out.
+                Assert.Equal(hasLegacyConfiguration ? ["AudioSpecificConfig"] : [], node.Children.Select(c => c.Name));
             }
             else if (!isBlock && node.Name != "CodecPrivate")
             {
