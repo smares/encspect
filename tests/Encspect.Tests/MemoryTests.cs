@@ -282,7 +282,7 @@ public class MemoryTests(ITestOutputHelper output)
         Bounded("objects.asf", AsfBuilder.WithUnknownObjects("minimal", 900_000), 150_000_000, "asf.too-many-objects");
     }
 
-    private void Bounded(string name, byte[] data, long bound, string code, bool expectFinding = true)
+    private Report Bounded(string name, byte[] data, long bound, string code, bool expectFinding = true)
     {
         (Report report, long kept, long peak) = Measure(name, data, data[..Math.Min(data.Length, 4096)]);
         output.WriteLine($"{name}: {kept / 1_000_000} MB kept and {peak / 1_000_000} MB peak for {data.Length / 1_000_000} MB");
@@ -294,6 +294,7 @@ public class MemoryTests(ITestOutputHelper output)
 
         Assert.True(peak < bound, $"{name}: the live heap grew by {peak / 1_000_000} MB.");
         GC.KeepAlive(report);
+        return report;
     }
 
     // More packets than are described one by one: the rest are counted, and the heap stays near the cap's.
@@ -1143,21 +1144,23 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] config = [0x17, 0x80, 0x00, 0x00, 0x90];
         byte[] data = Mp4Samples(200_000, config, padding: 0);
 
-        Bounded("rate-1-hz.m4a", data, 60_000_000, "aac.implausible-sample-rate");
+        Bounded("rate-1-hz.m4a", data, 45_000_000, "aac.implausible-sample-rate");
     }
 
     // ADIF stores a record for each raw data block, and a block can be one byte (an END element and its alignment): past the cap the
-    // bytes are not read, with a finding, and the heap stays near the cap's.
+    // blocks are only measured and counted in the stream's figures, with a finding, and the heap stays near the cap's.
     [Fact]
     public void AdifBlocksPastTheCapStayBounded()
     {
         byte[] header = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "adif.aac"))[..17];
         byte[] data = [.. header, .. Enumerable.Repeat((byte)0xE0, Adif.MaxBlocks + 1_000)];
 
-        Bounded("end-blocks.aac", data, 450_000_000, "aac.blocks-limit");
+        Report report = Bounded("end-blocks.aac", data, 320_000_000, "aac.blocks-limit");
+
+        Assert.Equal((Adif.MaxBlocks + 1_000) * 1024L, Assert.Single(report.Streams).Samples);
     }
 
-    // The same for ADTS: frames of 8 bytes, a header and an END element.
+    // The same for ADTS: frames of 8 bytes, a header and an END element; the frames past the cap are counted from their headers.
     [Fact]
     public void AdtsFramesPastTheCapStayBounded()
     {
@@ -1170,7 +1173,9 @@ public class MemoryTests(ITestOutputHelper output)
             frame.CopyTo(data, i * 8);
         }
 
-        Bounded("end-frames.aac", data, 600_000_000, "aac.frames-limit");
+        Report report = Bounded("end-frames.aac", data, 360_000_000, "aac.frames-limit");
+
+        Assert.Equal(count * 1024L, Assert.Single(report.Streams).Samples);
     }
 
     // MPEG-1 Layer III stereo frames at 32 kbps and 44100 Hz, 104 bytes each, whose side

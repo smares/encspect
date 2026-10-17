@@ -82,8 +82,9 @@ internal sealed class BlockLog
     }
 
     // Counts a block as evidence for implicit SBR and PS (CodingTally.IsSbrEvident): one read to its end
-    // whose frame is intact, whose payload counts only if a decoder could read it. index is the block's
-    // number in the log. The callers leave out the blocks of frames they flag as damaged.
+    // whose frame is intact; its SBR payload counts where it follows a channel element, readable or not
+    // (BlockReader.TallySbr). index is the block's number in the log. The callers leave out the blocks of
+    // frames they flag as damaged.
     public void AddEvidence(BlockResult result, int index)
     {
         if (!result.Ok)
@@ -146,10 +147,14 @@ internal sealed class BlockLog
     public void ReportSignaling(AacConfig config, Node node, string where)
     {
         CodingTally tally = Tally;
-        if (config.Ps == true && config.Channels is > 1)
+        if (config.Ps != false && config.Channels is > 1 && (config.Ps == true || tally.PsEvidenceBlocks > 0))
         {
+            string signaled = config.Ps == true ? $"{where} signals PS" : string.Empty;
+            string found = tally.PsEvidenceBlocks > 0
+                ? $"{(signaled.Length > 0 ? ", and " : string.Empty)}{tally.PsEvidenceBlocks} of {tally.EvidenceBlocks} raw data blocks carry the parametric stereo extension's ID"
+                : string.Empty;
             findings.AddNow(Severity.Warning, "aac.ps-without-mono-core",
-                $"{where} signals PS, but its core has {config.Channels} channels; decoders apply parametric stereo only to a core of one channel (fdk-aac, ffmpeg), so the report shows the stream without it.", node);
+                $"{signaled}{found}, but the core has {config.Channels} channels; decoders apply parametric stereo only to a core of one channel (fdk-aac, ffmpeg), so the report shows the stream without it.", node);
         }
 
         if (tally.SbrBlocks == 0)
@@ -192,7 +197,7 @@ internal sealed class BlockLog
         else if (config.Sbr is null && tally.SbrEvidenceBlocks > 0)
         {
             findings.AddNow(Severity.Info, "aac.sbr-data-sparse",
-                $"{where} signals no SBR, and only {units} hold SBR data that a decoder could read: too few for the stream to count as HE-AAC, which takes SBR data in at least two blocks and in half of the blocks that are read to their end and not in a damaged frame. The report shows the {AacTables.ObjectTypeName(config.ObjectType)} core alone.", node);
+                $"{where} signals no SBR, and only {units} hold SBR data after a channel element: too few for the stream to count as HE-AAC, which takes SBR data in at least two blocks and in half of the blocks that are read to their end and not in a damaged frame. The report shows the {AacTables.ObjectTypeName(config.ObjectType)} core alone.", node);
         }
     }
 }

@@ -6524,7 +6524,7 @@
       {
         "severity": "Warning",
         "code": "aac.ps-without-mono-core",
-        "message": "The AudioSpecificConfig signals PS, but its core has 2 channels; decoders apply parametric stereo only to a core of one channel (fdk-aac, ffmpeg), so the report shows the stream without it.",
+        "message": "The AudioSpecificConfig signals PS, but the core has 2 channels; decoders apply parametric stereo only to a core of one channel (fdk-aac, ffmpeg), so the report shows the stream without it.",
         "offset": 492,
         "length": 4,
         "path": [

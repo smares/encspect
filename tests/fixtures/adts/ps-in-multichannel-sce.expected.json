@@ -71,7 +71,8 @@
  ],
  "fields": {
   "ADTS/Statistics/SBR": "12 access units (100.0%)",
-  "ADTS/Statistics/SBR/Parametric Stereo": "0 access units (0.0%)"
+  "ADTS/Statistics/SBR/Parametric Stereo": "12 access units (100.0%)",
+  "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"
  },
  "findings": [
   [
@@ -80,7 +81,7 @@
   ],
   [
    "aac.ps-without-mono-core",
-   "12 raw data blocks hold the parametric stereo extension's ID in the SBR data of a stream of channel configuration 3"
+   "12 of 12 raw data blocks carry the parametric stereo extension's ID, but the core has 3 channels"
   ]
  ],
  "crosscheck": {
@@ -88,8 +89,7 @@
   "decode": true,
   "faad": null,
   "skip": {
-   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
-   "faad_trace": "faad2 traces the parametric stereo extension in the single channel element's SBR data, which the analyzer reports and does not count in a stream of three channels."
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."
   }
  }
 }

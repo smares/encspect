@@ -4791,7 +4791,7 @@
       {
         "severity": "Info",
         "code": "aac.sbr-data-sparse",
-        "message": "ADTS signals no SBR, and only 1 of 10 raw data blocks hold SBR data that a decoder could read: too few for the stream to count as HE-AAC, which takes SBR data in at least two blocks and in half of the blocks that are read to their end and not in a damaged frame. The report shows the AAC LC core alone.",
+        "message": "ADTS signals no SBR, and only 1 of 10 raw data blocks hold SBR data after a channel element: too few for the stream to count as HE-AAC, which takes SBR data in at least two blocks and in half of the blocks that are read to their end and not in a damaged frame. The report shows the AAC LC core alone.",
         "offset": 0,
         "length": 46,
         "path": [

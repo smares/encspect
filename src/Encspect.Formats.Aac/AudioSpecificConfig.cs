@@ -221,7 +221,7 @@ internal static class AudioSpecificConfig
         else if (rate < ImplausibleRate)
         {
             report(Severity.Warning, "aac.implausible-sample-rate",
-                $"The explicit sampling frequency is {rate} Hz, far below the lowest rate AAC defines (7,350 Hz), so every access unit would last many seconds.", field);
+                $"The explicit sampling frequency is {rate} Hz, far below the lowest rate AAC defines (7,350 Hz).", field);
         }
     }
 
@@ -297,15 +297,15 @@ internal static class AudioSpecificConfig
         {
             bool dualRate = f.Read(node, "Low Delay SBR Sampling Rate", 1, Explain.LowDelaySbrRate, v => v == 0 ? "downsampled SBR (core rate)" : "dual-rate SBR") != 0;
             f.Flag(node, "HasLowDelaySbrCrc", Explain.HasLowDelaySbrCrc);
-            // One sbr_header() per single channel and channel pair element of the configuration; the
-            // low frequency elements carry none (fdk-aac's channel_configuration_array and sbrdecoder).
+            // One sbr_header() per single channel and channel pair element of the configuration; the low
+            // frequency elements carry none. fdk-aac's EldSpecificConfig_Parse (tpdec_asc.cpp) gives these
+            // counts and none for any other configuration, 13 included (MediaInfo's ld_sbr_header reads none for it either).
             int headers = configuration switch
             {
                 1 or 2 => 1,
                 3 => 2,
                 4 or 5 or 6 => 3,
                 7 or 11 or 12 or 14 => 4,
-                13 => 14,
                 _ => 0,
             };
             for (int i = 0; i < headers; i++)
@@ -349,7 +349,7 @@ internal static class AudioSpecificConfig
             }
 
             f.Skip(length * 8);
-            node.Add(f.Span("ELD Extension", start, NodeValue.Integer(length, "bytes"), Explain.EldExtension, extension));
+            node.Add(f.Span("ELD Extension", start, NodeValue.Integer(length, "bytes", "byte"), Explain.EldExtension, extension));
         }
     }
 

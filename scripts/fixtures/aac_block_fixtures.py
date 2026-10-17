@@ -716,6 +716,10 @@ ELD_CONFIGURATIONS = [
     (5, 3, "5.0", ["front center", "front left", "front right", "back left", "back right"]),
     (6, 3, "5.1", ["front center", "front left", "front right", "back left", "back right", "LFE"]),
     (7, 4, "7.1", ["front center", "front left of center", "front right of center", "front left", "front right", "back left", "back right", "LFE"]),
+    # Configuration 13 (22.2): fdk-aac's EldSpecificConfig_Parse counts no header for it (tpdec_asc.cpp), and neither does MediaInfo.
+    (13, 0, "22.2", ["front center", "front left of center", "front right of center", "front left", "front right", "side left", "side right", "back left",
+                     "back right", "back center", "LFE", "LFE 2", "top front center", "top front left", "top front right", "top side left", "top side right",
+                     "top center", "top back left", "top back right", "top back center", "bottom front center", "bottom front left", "bottom front right"]),
 ]
 
 
@@ -737,13 +741,14 @@ def eld_ld_sbr():
         samples = [bytes([(i * 7) % 30 + 40]) for i in range(20)]
         asc = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig"
         fields = {asc + "/Channel Configuration": f"{configuration} ({ELD_NAMES[configuration]})", asc + "/HasLowDelaySbr": "true",
-                  asc + "/ELD Extension": "1 bytes", asc + "/ELD Extension Terminator": "", asc + "/Error Protection Config": "0"}
+                  asc + "/ELD Extension": "1 byte", asc + "/ELD Extension Terminator": "", asc + "/Error Protection Config": "0"}
         fields = {k: v for k, v in fields.items() if v != ""}
         entry = stream("ER AAC ELD with SBR", 48000, len(layout), mode, 20 * 512, vbr=True, layout=layout)
         out.append(('mp4',) + mp4_only(
             f"eld-ld-sbr-{configuration}",
-            f"AAC ELD, channel configuration {configuration}, with low-delay SBR: {headers} sbr_header{'' if headers == 1 else 's'} (one for each single channel and "
-            "channel pair element), then an ELD extension of one byte, the terminator and epConfig 0.",
+            f"AAC ELD, channel configuration {configuration}, with low-delay SBR: "
+            + (f"{headers} sbr_header{'' if headers == 1 else 's'} (one for each single channel and channel pair element)" if headers else "no sbr_header (fdk-aac and MediaInfo read none for this configuration)")
+            + ", then an ELD extension of one byte, the terminator and epConfig 0.",
             config, 48000, len(layout), samples, [512] * 20, [entry], fields, [],
             {"ffprobe": False, "mp4box": True, "faad": None,
              "skip": {"ffprobe": "ffmpeg cannot open its decoder for ELD with low-delay SBR (\"Not yet implemented in FFmpeg\"), so it lists no stream.",
@@ -751,7 +756,7 @@ def eld_ld_sbr():
     return out
 
 
-ELD_NAMES = {1: "mono", 2: "stereo", 3: "3.0: center, left/right", 4: "4.0: center, left/right, rear center", 5: "5.0: center, left/right, left/right surround",
+ELD_NAMES = {13: "22.2", 1: "mono", 2: "stereo", 3: "3.0: center, left/right", 4: "4.0: center, left/right, rear center", 5: "5.0: center, left/right, left/right surround",
              6: "5.1: center, left/right, left/right surround, LFE", 7: "7.1: center, left/right, left/right outside front, left/right surround, LFE"}
 
 
@@ -776,12 +781,11 @@ def parametric_stereo_cores():
         "data, and the single channel element's carrying the parametric stereo extension's ID: decoders apply parametric stereo to a core of one "
         "channel only, so the stream is HE-AAC with three channels and the ID is reported.", data, rows,
         [stream("HE-AAC", 44100, 3, "3.0", 12 * 2048, ffprobe_profile="LC", layout=["front center", "front left", "front right"])],
-        {stats: share(12, 12, "access unit"), stats + "/Parametric Stereo": share(0, 12, "access unit")},
+        {stats: share(12, 12, "access unit"), stats + "/Parametric Stereo": share(12, 12, "access unit"),
+         "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
         [["aac.implicit-sbr", "ADTS cannot signal SBR or PS explicitly, but 12 of 12 raw data blocks hold SBR data: the stream is HE-AAC,"],
-         ["aac.ps-without-mono-core", "12 raw data blocks hold the parametric stereo extension's ID in the SBR data of a stream of channel configuration 3"]],
-        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
-              "faad_trace": "faad2 traces the parametric stereo extension in the single channel element's SBR data, which the analyzer reports and does not count in a stream of three channels."},
-        rate=core))]
+         ["aac.ps-without-mono-core", "12 of 12 raw data blocks carry the parametric stereo extension's ID, but the core has 3 channels"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."}, rate=core))]
     units = []
     counts = M.sbr_bands(SBR_HEADER, 2 * core)
     for i in range(12):
@@ -790,6 +794,35 @@ def parametric_stereo_cores():
         block, _ = pair_block(0, rate=core, extra=[fill], first=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], seed=i, rate=core),
                               second=channel(M.ONLY_LONG, 1, [[(9, 4), (1, 16)]], seed=i + 1, rate=core))
         units.append(block[0] if isinstance(block, tuple) else block)
+    # The same layout from a program config element (channel configuration 0): a front single channel element and a front channel pair element.
+    def pce(w):
+        w.put(0, 4).put(1, 2).put(rate_index(core), 4)
+        w.put(2, 4).put(0, 4).put(0, 4).put(0, 2).put(0, 3).put(0, 4)
+        w.put(0, 1).put(0, 1).put(0, 1)
+        w.put(0, 1).put(0, 4)  # front single channel element 0
+        w.put(1, 1).put(0, 4)  # front channel pair element 0
+        w.align()
+        w.put(0, 8)
+
+    blocks = []
+    for i in range(12):
+        header = SBR_HEADER if i % 4 == 0 else None
+        sce = M.Element(M.SCE, ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], seed=i, rate=core))
+        first = channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], seed=i, rate=core)
+        second = channel(M.ONLY_LONG, 1, [[(9, 4), (1, 16)]], seed=i + 1, rate=core)
+        blocks.append(M.raw_data_block([M.Element(M.PCE, write=pce), sce, M.Element(M.FIL, payload=M.sbr_payload(counts, header, pair=False, ps=True)),
+                                        M.Element(M.CPE, ics=(first, second), common=False),
+                                        M.Element(M.FIL, payload=M.sbr_payload(counts, header, pair=True))], rate_index=rate_index(core)))
+    data, rows = concat(adts_frames(blocks, rate=core, channels=0))
+    out.append(("adts", "ps-in-pce-multichannel.aac", data, manifest(
+        "ADTS at a core rate of 22050 Hz with channel configuration 0 and a program config element in every block (a front single channel element "
+        "and a front channel pair element, three channels), the single channel element followed by SBR data with the parametric stereo extension's "
+        "ID: as with channel configuration 3, parametric stereo is not applied to a core of three channels, and the ID is reported.", data, rows,
+        [stream("HE-AAC", 44100, 3, "3 channels", 12 * 2048, ffprobe_profile="LC", layout=["front center", "front left", "front right"])],
+        {stats: share(12, 12, "access unit"), stats + "/Parametric Stereo": share(12, 12, "access unit")},
+        [["aac.implicit-sbr", "ADTS cannot signal SBR or PS explicitly, but 12 of 12 raw data blocks hold SBR data: the stream is HE-AAC,"],
+         ["aac.ps-without-mono-core", "12 of 12 raw data blocks carry the parametric stereo extension's ID, but the core has 3 channels"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."}, rate=core)))
     asc_path = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig"
     out.append(("mp4",) + mp4_only(
         "ps-signaled-over-stereo-core",
@@ -798,7 +831,7 @@ def parametric_stereo_cores():
         "warning says so.", asc(2, core, 2, sbr=True, ps=True, signaling="hierarchical", extension_rate=44100), core, 2, units, [1024] * 12,
         [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, vbr=True, ffprobe_profile="HE-AAC")],
         {asc_path + "/Audio Object Type": "29 (PS)"},
-        [["aac.ps-without-mono-core", "signals PS, but its core has 2 channels"]],
+        [["aac.ps-without-mono-core", "signals PS, but the core has 2 channels"]],
         {"ffprobe": True, "mp4box": True, "decode": True, "faad": {"label": "LC AAC", "channels": 2, "rate": 44100}}))
     return out
 
@@ -843,7 +876,7 @@ def sbr_evidence():
         "ADTS at 22050 Hz of ten channel pairs, the fifth followed by a readable SBR payload with an SBR header and no other holding any: "
         "too few for the stream to be HE-AAC, so it stays AAC LC at 22050 Hz.", data, rows,
         [stream("AAC LC", core, 2, "Stereo", 10 * 1024)], {"ADTS/Statistics/SBR": share(1, 10, "access unit")},
-        [["aac.sbr-data-sparse", "only 1 of 10 raw data blocks hold SBR data that a decoder could read"]],
+        [["aac.sbr-data-sparse", "only 1 of 10 raw data blocks hold SBR data after a channel element"]],
         skip={**skip, "decode": "ffmpeg prints \"No quantized data read for sbr_dequant\" for the SBR payload in the middle of the stream."}, rate=core)))
     # Every block has its SBR payload before the channel element, where no decoder reads it.
     blocks = []
@@ -873,6 +906,18 @@ def sbr_evidence():
         [["aac.frame-truncated", "has"]],
         skip={**skip, "ffprobe": "ffmpeg drops the cut frame.", "decode": "ffmpeg drops the cut frame.",
               "faad_trace": "faad2 reads one raw data block per ADTS frame and does not read the cut frame of two blocks."}, rate=core)))
+    # A stream cut before its first SBR header (FAAC sends one every 30 access units): the payloads before it cannot be read, but decoders
+    # take the stream for HE-AAC from the first.
+    cut = [pair(i, M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i == 5 else None, pair=True))) for i in range(12)]
+    data, rows = concat(adts_frames(cut, rate=core, channels=2))
+    out.append(("adts", "sbr-cut-before-header.aac", data, manifest(
+        "ADTS at 22050 Hz of twelve channel pairs followed by SBR data, the SBR header only in the sixth, as in a stream cut before its first header: "
+        "the five payloads before it cannot be read, but decoders take the stream for HE-AAC from the first, so it is HE-AAC at 44100 Hz.",
+        data, rows, [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, ffprobe_profile="LC")],
+        {"ADTS/Statistics/SBR": share(12, 12, "access unit"), "ADTS/Statistics/SBR/SBR Headers": "1 header"},
+        [["aac.implicit-sbr", "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"], ["aac.sbr-before-header", "5 raw data blocks hold SBR data before the first SBR header"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+              "faad_trace": "faad2 reads the block's SBR data only with a header."}, rate=core)))
     # Every frame fails its CRC.
     blocks = [pair(i, M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i % 4 == 0 else None, pair=True))) for i in range(12)]
     data, rows = concat(adts_frames(blocks, rate=core, channels=2, protect=True, damage=range(12)))

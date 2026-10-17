@@ -111,8 +111,8 @@ internal sealed class CodingTally
     public int FirstSbrEvidenceBlock { get; set; } = -1;
 
     // The rule for inferring SBR (and PS) from the blocks: in at least two of them, or in the only one
-    // there is, and in at least half. A payload that a decoder rejects, a damaged frame's blocks and a
-    // lone occurrence in an otherwise plain stream therefore do not turn it into HE-AAC.
+    // there is, and in at least half. A damaged frame's blocks, a payload before any channel element and
+    // a lone occurrence in an otherwise plain stream therefore do not turn it into HE-AAC.
     public bool IsSbrEvident => IsEvident(SbrEvidenceBlocks);
 
     public bool IsPsEvident => IsEvident(PsEvidenceBlocks);

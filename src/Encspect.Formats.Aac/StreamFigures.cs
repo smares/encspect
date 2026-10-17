@@ -19,7 +19,10 @@ internal sealed class StreamFigures(int sampleRate)
 
     public int SampleRate => sampleRate;
 
-    public int Count => _points.Count;
+    // The units counted without a record of their own (AddRun).
+    public long Unrecorded { get; private set; }
+
+    public long Count => _points.Count + Unrecorded;
 
     public long Bytes { get; private set; }
 
@@ -86,18 +89,32 @@ internal sealed class StreamFigures(int sampleRate)
         _spanSeconds *= 2;
     }
 
+    // Units of a stream's end that are only counted: past the limit on records, the bytes, samples and bitrate extremes of a run of count
+    // units join the figures, but the graphs do not cover them. Call it after the last Add.
+    public void AddRun(long count, long bytes, long samples, int smallest, int largest, double minimumBitrate, double maximumBitrate)
+    {
+        Unrecorded += count;
+        Bytes += bytes;
+        Samples += samples;
+        Smallest = Math.Min(Smallest, smallest);
+        Largest = Math.Max(Largest, largest);
+        MinimumBitrate = Math.Min(MinimumBitrate, minimumBitrate);
+        MaximumBitrate = Math.Max(MaximumBitrate, maximumBitrate);
+    }
+
     // Per unit, its bitrate at its offset; per second of audio, the bits of the units that start in
     // it over their duration, rounded half to even. Only these arrays grow with the number of units.
     public List<Series> Series(Node? anchor, CancellationToken cancellation)
     {
-        if (Count == 0)
+        int recorded = _points.Count;
+        if (recorded == 0)
         {
             return [];
         }
 
-        var offsets = new double[Count];
-        var bitrates = new double[Count];
-        for (int i = 0; i < Count; i++)
+        var offsets = new double[recorded];
+        var bitrates = new double[recorded];
+        for (int i = 0; i < recorded; i++)
         {
             if (i % 4096 == 0)
             {

@@ -776,11 +776,14 @@ internal sealed partial class BlockReader
             _sbr[key] = header;
         }
 
+        // A payload after a channel element (single channel, channel pair, coupling or LFE) makes the stream HE-AAC for ffmpeg
+        // (aacdec_template.c, decode_extension_payload: m4ac.sbr = 1 before the data is read), faad2 (syntax.c, fill_element:
+        // sbr_present_flag = 1 before sbr_extension_data) and fdk-aac (aacdecoder.cpp: SBR is enabled on a parse error too), whether
+        // or not the data can be read: before its header, with tables that cannot be built, past its fill element, or after an LFE
+        // element, where FAAC 2.0 and 2.1 write theirs in 5.1. So all count toward the stream's SBR.
+        _hasSbrEvidence |= _lastChannelElement >= 0;
         if (_lastChannelElement is not (0 or 1 or 2))
         {
-            // After an LFE element no decoder can read the data, but ffmpeg's decoder takes the stream for HE-AAC from
-            // it (FAAC 2.0 and 2.1 write theirs there in 5.1), so it counts toward the stream's SBR.
-            _hasSbrEvidence |= _lastChannelElement == 3;
             Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel or channel pair element", dataStart, end, "SBR Data");
             tally.SbrUnread++;
             return -1;
@@ -813,14 +816,6 @@ internal sealed partial class BlockReader
 
             tally.SbrPayloads++;
             tally.SbrPlainPayloads += plain ? 1 : 0;
-            _hasSbrEvidence = true;
-            if (ps >= 0 && !_setup.CanHavePs)
-            {
-                Soft("aac.ps-without-mono-core", $"the parametric stereo extension's ID in the SBR data of a stream of channel configuration {_setup.ChannelConfiguration}, where decoders apply parametric stereo only to a core of one channel",
-                    dataStart, end, "SBR Data");
-                return -1;
-            }
-
             if (ps == Sbr.PsInPair)
             {
                 Soft("aac.ps-in-channel-pair", "the parametric stereo extension's ID in a channel pair's SBR data, where only a single channel element can carry it, so decoders do not apply it",

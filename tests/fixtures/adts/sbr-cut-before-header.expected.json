@@ -1,0 +1,94 @@
+{
+ "description": "ADTS at 22050 Hz of twelve channel pairs followed by SBR data, the SBR header only in the sixth, as in a stream cut before its first header: the five payloads before it cannot be read, but decoders take the stream for HE-AAC from the first, so it is HE-AAC at 44100 Hz.",
+ "length": 772,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 24576,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   64
+  ],
+  [
+   64,
+   64
+  ],
+  [
+   128,
+   64
+  ],
+  [
+   192,
+   65
+  ],
+  [
+   257,
+   65
+  ],
+  [
+   322,
+   67
+  ],
+  [
+   389,
+   65
+  ],
+  [
+   454,
+   64
+  ],
+  [
+   518,
+   64
+  ],
+  [
+   582,
+   63
+  ],
+  [
+   645,
+   63
+  ],
+  [
+   708,
+   64
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "12 access units (100.0%)",
+  "ADTS/Statistics/SBR/SBR Headers": "1 header"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"
+  ],
+  [
+   "aac.sbr-before-header",
+   "5 raw data blocks hold SBR data before the first SBR header"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "faad_trace": "faad2 reads the block's SBR data only with a header."
+  }
+ }
+}

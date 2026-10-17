@@ -1099,8 +1099,8 @@ internal readonly record struct ElementSpan(int Id, int Start, int End, int Seco
 // What reading a block came to: whether it was read to its end without error, the bit after its
 // END and alignment (or where reading stopped), its elements packed (count in bits 24 to 27, up to
 // eight 3-bit IDs below), whether it holds SBR data and the PS extension, and the error.
-// HasSbr: the block holds an SBR payload; HasSbrEvidence: one that was read in full, or that follows an LFE element, the one case where
-// decoders take the stream for HE-AAC without being able to read the payload.
+// HasSbr: the block holds an SBR payload; HasSbrEvidence: one that follows a channel element, which decoders take for SBR whether or not
+// they can read it (BlockReader.TallySbr).
 internal readonly record struct BlockResult(bool Ok, int End, int Elements, bool HasSbr, bool HasPs, BlockError? Error, bool HasSbrEvidence = false);
 
 // Something a block breaks that stops its reading, with the node it happened in where nodes were

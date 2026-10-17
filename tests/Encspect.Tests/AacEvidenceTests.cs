@@ -4,7 +4,7 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// What turns an AAC LC stream into HE-AAC (SBR data that a decoder could read, in most blocks of intact frames), and the bound on
+// What turns an AAC LC stream into HE-AAC (SBR data after a channel element in at least half of the blocks of intact frames), and the bound on
 // the graph of bitrate over time.
 public class AacEvidenceTests
 {
@@ -50,7 +50,27 @@ public class AacEvidenceTests
         Assert.Equal(count * 1024L, info.Samples);
     }
 
-    // SBR data that a decoder could read in one block of thirty does not make the stream HE-AAC.
+    // FAAC and fdkaac streams cut before their first SBR header stay HE-AAC, as ffmpeg, faad2 and fdk-aac decode them, and the finding does not
+    // claim that ffmpeg plays the core alone: it takes SBR from the first payload, readable or not.
+    [Theory]
+    [InlineData("faac-2.2-he-adts.aac", 44100)]
+    [InlineData("faac-2.2-he-mono-adts.aac", 48000)]
+    [InlineData("fdkaac-he-adts.aac", 44100)]
+    public void StreamsCutBeforeTheirFirstSbrHeaderStayHeAac(string name, int rate)
+    {
+        List<byte[]> frames = Frames(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", name)));
+        byte[] cut = [.. frames.Skip(1).SelectMany(f => f)];
+
+        Report report = Analyzer.CreateDefault().Analyze("cut.aac", new MemoryStream(cut));
+
+        StreamInfo info = Assert.Single(report.Streams);
+        Assert.StartsWith("HE-AAC", info.Codec);
+        Assert.Equal(rate, info.SampleRate);
+        Finding implicitSbr = Assert.Single(report.Findings, f => f.Code == "aac.implicit-sbr");
+        Assert.DoesNotContain("plays the core alone", implicitSbr.Message, StringComparison.Ordinal);
+    }
+
+    // SBR data in one block of ten does not make the stream HE-AAC.
     [Fact]
     public void SbrDataInAFewBlocksOnlyIsReported()
     {
