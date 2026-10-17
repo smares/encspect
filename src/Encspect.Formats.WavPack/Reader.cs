@@ -670,7 +670,7 @@ internal static class Reader
 
         int flagChannels = s.ConfigHeader.IsMono ? 1 : 2;
         ChannelInfoValue kept = first?.Value ?? new ChannelInfoValue(flagChannels, Decode.OldMaxStreams, flagChannels == 1 ? 4u : 3u, 0);
-        string source = first is null ? "the flags of the first audio block gave" : "an earlier one gave";
+        string source = first is null ? "the flags of the first audio block that verifies gave" : "an earlier one gave";
         if (Decode.ChannelInfoFields(data) is not { } later)
         {
             s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>

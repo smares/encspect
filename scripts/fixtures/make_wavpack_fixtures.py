@@ -335,7 +335,7 @@ def build():
     surround = blocks(base("lossless-51-16"))
     # The other sets' channel infos, which say 6 channels, are ignored once the first one gives channels (libwavpack keeps the first).
     for label, count, mask, text, found in (("zero", 0, 0x3F, "Channel info with no channels.",
-                                             [("wavpack.channel-info-invalid", "refuses"), ("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but the flags of the first audio block gave 2 channels")]),
+                                             [("wavpack.channel-info-invalid", "refuses"), ("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but the flags of the first audio block that verifies gave 2 channels")]),
                                             ("four", 4, 0x33, "Channel info for four channels in a file of six.",
                                              [("wavpack.channel-count-mismatch", "says 4 channels"), ("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but an earlier one gave 4 channels")])):
         parts, ids = subs(surround[0])
@@ -427,7 +427,7 @@ def build():
                                  [("wavpack.channel-info-ignored", "gives 2 channels and a mask of 0xFF")], True)
     b["channel-info-after-first-block"] = ("Channel infos in the second and third block of a stereo file whose first block has none (6 channels with a 5.1 mask, then 2 channels with 8 speakers): libwavpack settled on the flags' stereo by then and takes neither.",
                                            aa([a[0], insert_before_checksum(a[1], sub(0x0D, bytes([6, 0x3F]))), insert_before_checksum(a[2], sub(0x0D, bytes([2, 0xFF, 0x00])))]),
-                                           [("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but the flags of the first audio block gave 2 channels and a mask of 0x3")], False)
+                                           [("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but the flags of the first audio block that verifies gave 2 channels and a mask of 0x3")], False)
     first_bad = bytearray(a[0])
     first_bad[200] ^= 0x10
     b["channel-info-after-bad-block"] = ("The first block's audio changed so its checksum fails, and a channel info of 6 channels in the second: libwavpack skips the first block, so the second is the first audio block that verifies and its channel info settles the channels.",
