@@ -1,0 +1,244 @@
+{
+ "description": "An edit list of 1,001 entries, the first 1,000 empty edits and the last one playing a second of a media that lasts 0.46 s: the last edit is not listed, so the finding points to the box that counts the entries past 1,000.",
+ "length": 13306,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   12687
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   12571
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/edts",
+   244,
+   12036
+  ],
+  [
+   "moov/trak/edts/elst",
+   252,
+   12028
+  ],
+  [
+   "moov/trak/mdia",
+   12280,
+   435
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   12288,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   12320,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   12365,
+   350
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   12373,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   12389,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   12397,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   12413,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   12425,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   12433,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   12449,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   12485,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   12539,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   12563,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   12591,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   12691,
+   24
+  ],
+  [
+   "mdat",
+   12715,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   12723,
+   6
+  ],
+  [
+   12729,
+   45
+  ],
+  [
+   12774,
+   42
+  ],
+  [
+   12816,
+   39
+  ],
+  [
+   12855,
+   36
+  ],
+  [
+   12891,
+   33
+  ],
+  [
+   12924,
+   30
+  ],
+  [
+   12954,
+   27
+  ],
+  [
+   12981,
+   24
+  ],
+  [
+   13005,
+   20
+  ],
+  [
+   13025,
+   17
+  ],
+  [
+   13042,
+   14
+  ],
+  [
+   13056,
+   11
+  ],
+  [
+   13067,
+   8
+  ],
+  [
+   13075,
+   46
+  ],
+  [
+   13121,
+   43
+  ],
+  [
+   13164,
+   40
+  ],
+  [
+   13204,
+   37
+  ],
+  [
+   13241,
+   34
+  ],
+  [
+   13275,
+   31
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/edts/elst/More Entries": "1 entry"
+ },
+ "findings": [
+  [
+   "mp4.edit-list-empty-edit",
+   "empty edit"
+  ],
+  [
+   "mp4.edit-beyond-media",
+   "past the media's 20480"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "skip": {
+   "all": "a damaged or oddly built file, which tools read in their own ways"
+  }
+ }
+}

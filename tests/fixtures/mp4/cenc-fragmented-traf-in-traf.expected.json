@@ -1,0 +1,332 @@
+{
+ "description": "A fragmented MP4 of ciphertext in which something says samples are protected although the tenc box does not: a traf box holds a senc box, a traf box of its own and a run after it: the inner one is reported as misplaced and the outer one's evidence and run still count. The samples are pseudo-random bytes and must never be read as AAC.",
+ "length": 7969,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   727
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   507
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   407
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   322
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   262
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   599,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   615,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   635,
+   16
+  ],
+  [
+   "moov/mvex",
+   651,
+   104
+  ],
+  [
+   "moov/mvex/trex",
+   659,
+   32
+  ],
+  [
+   "moov/mvex/trex",
+   691,
+   32
+  ],
+  [
+   "moov/mvex/trex",
+   723,
+   32
+  ],
+  [
+   "moof",
+   755,
+   296
+  ],
+  [
+   "moof/mfhd",
+   763,
+   16
+  ],
+  [
+   "moof/traf",
+   779,
+   272
+  ],
+  [
+   "moof/traf/tfhd",
+   787,
+   24
+  ],
+  [
+   "moof/traf/senc",
+   811,
+   96
+  ],
+  [
+   "moof/traf/traf",
+   907,
+   88
+  ],
+  [
+   "moof/traf/traf/tfhd",
+   915,
+   24
+  ],
+  [
+   "moof/traf/traf/trun",
+   939,
+   56
+  ],
+  [
+   "moof/traf/trun",
+   995,
+   56
+  ],
+  [
+   "mdat",
+   1051,
+   6918
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 0,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   1059,
+   300
+  ],
+  [
+   1359,
+   337
+  ],
+  [
+   1696,
+   374
+  ],
+  [
+   2070,
+   321
+  ],
+  [
+   2391,
+   358
+  ],
+  [
+   2749,
+   305
+  ],
+  [
+   3054,
+   342
+  ],
+  [
+   3396,
+   379
+  ],
+  [
+   3775,
+   326
+  ],
+  [
+   4101,
+   363
+  ],
+  [
+   4464,
+   310
+  ],
+  [
+   4774,
+   347
+  ],
+  [
+   5121,
+   384
+  ],
+  [
+   5505,
+   331
+  ],
+  [
+   5836,
+   368
+  ],
+  [
+   6204,
+   315
+  ],
+  [
+   6519,
+   352
+  ],
+  [
+   6871,
+   389
+  ],
+  [
+   7260,
+   336
+  ],
+  [
+   7596,
+   373
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ],
+  [
+   "mp4.box-misplaced",
+   "lies in another traf box"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "all": "a file whose boxes lie where they do not belong, which the tools read in their own ways"
+  }
+ }
+}

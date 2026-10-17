@@ -203,7 +203,7 @@ public sealed partial class Mp4Parser
             }
         }
 
-        if (!state.Systems.Contains(name))
+        if (state.SystemSet.Add(name))
         {
             state.Systems.Add(name);
         }
@@ -213,9 +213,10 @@ public sealed partial class Mp4Parser
     // the track's per-sample IV size, which a track fragment's sample entry gives, so only the count is read.
     private static void SampleEncryption(State state, Node node, BoxFields f)
     {
+        // A sample encryption box that is too short for its fields still says that samples are encrypted.
+        MarkProtecting(state);
         uint flags = FullBox(node, f).Flags;
         node.Add(Node.FromBits("UsesSubsampleEncryption", node.Children[^1].Offset + 2, 6, 7, NodeValue.Boolean((flags & 2) != 0), description: Explain.UsesSubsampleEncryption));
-        MarkProtecting(state);
         uint count = f.U32(node, "Sample Count", Explain.SencSampleCount);
         node.Value = NodeValue.Integer(count, "samples", "sample");
         if (f.Remaining > 0)
@@ -231,20 +232,47 @@ public sealed partial class Mp4Parser
         string? type = null;
         if ((flags & 1) != 0)
         {
-            type = f.FourCc(node, "Auxiliary Information Type", Explain.AuxInfoType);
-            f.U32(node, "Auxiliary Information Type Parameter", Explain.AuxInfoTypeParameter);
+            try
+            {
+                type = f.FourCc(node, "Auxiliary Information Type", Explain.AuxInfoType);
+            }
+            catch (EndOfStreamException)
+            {
+                // A type that cannot be read may be an encryption type.
+                MarkProtecting(state);
+                throw;
+            }
         }
 
         if (type is null || ProtectsByCommonEncryption(type))
         {
             MarkProtecting(state);
         }
+
+        if ((flags & 1) != 0)
+        {
+            f.U32(node, "Auxiliary Information Type Parameter", Explain.AuxInfoTypeParameter);
+        }
+    }
+
+    // A saiz or saio box whose version and flags cannot be read has no type to say its information is not encryption data.
+    private static (int Version, uint Flags) FullBoxOrMarkProtecting(State state, Node node, BoxFields f)
+    {
+        try
+        {
+            return FullBox(node, f);
+        }
+        catch (EndOfStreamException)
+        {
+            MarkProtecting(state);
+            throw;
+        }
     }
 
     // ISO/IEC 14496-12 8.7.8: the size of each sample's auxiliary information, here the encryption data of senc's layout.
     private static void SampleAuxiliaryInformationSizes(State state, Node node, BoxFields f)
     {
-        uint flags = FullBox(node, f).Flags;
+        uint flags = FullBoxOrMarkProtecting(state, node, f).Flags;
         MarkIfEncryptionInformation(state, node, f, flags);
 
         int fixedSize = f.U8(node, "Default Sample Info Size", Explain.DefaultSampleInfoSize, unit: "bytes");
@@ -267,7 +295,7 @@ public sealed partial class Mp4Parser
     // 8.7.9: where each chunk's or run's auxiliary information lies in the file.
     private static void SampleAuxiliaryInformationOffsets(State state, Node node, BoxFields f)
     {
-        (int version, uint flags) = FullBox(node, f);
+        (int version, uint flags) = FullBoxOrMarkProtecting(state, node, f);
         MarkIfEncryptionInformation(state, node, f, flags);
 
         uint count = f.U32(node, "Entries", Explain.SaioEntries);
@@ -534,7 +562,7 @@ public sealed partial class Mp4Parser
         }
 
         // Evidence belongs to a track only where the fragment names exactly one existing track.
-        if (fragment.HeaderCount == 1 && !fragment.IsInTrack && state.Tracks.Count(t => t.Id == fragment.TrackId) == 1)
+        if (fragment.HeaderCount == 1 && !fragment.IsInTrack && !fragment.IsMisplaced && state.TrackIdCounts.GetValueOrDefault(fragment.TrackId) == 1)
         {
             state.ProtectedTracks.Add(fragment.TrackId);
         }
