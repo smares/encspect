@@ -95,7 +95,7 @@
                 },
                 {
                   "name": "Channel Layout",
-                  "value": "5.1 (front left, front right, front center, LFE, back left, back right)",
+                  "value": "discrete, discrete, discrete, discrete, discrete, discrete",
                   "offset": 0,
                   "length": 148172
                 },
@@ -8844,14 +8844,13 @@
         "channels": 6,
         "channelMode": "Multichannel",
         "channelLayout": [
-          "front left",
-          "front right",
-          "front center",
-          "LFE",
-          "back left",
-          "back right"
+          "discrete",
+          "discrete",
+          "discrete",
+          "discrete",
+          "discrete",
+          "discrete"
         ],
-        "channelLayoutName": "5.1",
         "bitsPerSample": 16,
         "samples": 24000,
         "duration": 0.5,
@@ -8898,6 +8897,19 @@
           0,
           2,
           7
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "wavpack.channel-info-ignored",
+        "message": "The channel info at 0xBD1E gives 6 channels and a mask of 0x3F, but the flags of the first audio block gave 2 channels and a mask of 0x3; libwavpack settles the channels at the first audio block and ignores this one.",
+        "offset": 48414,
+        "length": 4,
+        "path": [
+          0,
+          6,
+          5
         ],
         "count": 1
       }

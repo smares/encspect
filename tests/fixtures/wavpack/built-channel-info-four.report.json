@@ -8902,7 +8902,7 @@
       {
         "severity": "Info",
         "code": "wavpack.channel-info-ignored",
-        "message": "The channel info at 0xBD1E gives 6 channels and a mask of 0x3F, but an earlier one gave 4 channels and a mask of 0x33; libwavpack keeps the first one that gives channels and ignores the rest.",
+        "message": "The channel info at 0xBD1E gives 6 channels and a mask of 0x3F, but an earlier one gave 4 channels and a mask of 0x33; libwavpack settles the channels at the first audio block and ignores this one.",
         "offset": 48414,
         "length": 4,
         "path": [

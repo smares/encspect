@@ -133,6 +133,7 @@ internal static class Reader
         Declare(s, entry, header);
         HeaderChecks(s, entry, offset, header, status, block.Length);
         BlockStatus found = Walk(s, entry, offset, header, block, detail, status, out int count, out int wrapper);
+        s.IsConfigured |= header.HasAudio;
         status |= found;
         if (header.HasAudio)
         {
@@ -280,11 +281,15 @@ internal static class Reader
             }
 
             ReadOnlySpan<byte> data = block.Slice(position + headerLength, Math.Max(0, dataLength));
-            if (detail is not null && detail.SubBlocks.Count < State.MaxListedSubBlocks && s.ListedSubBlocks < State.MaxListedSubBlocksInAll)
+            int wanted = SubBlockIds.IsBitstream(function) ? Math.Min(data.Length, function is SubBlockIds.WvxBitstream or SubBlockIds.DsdBlock ? 8 : 0)
+                : Math.Min(data.Length, State.MaxStoredPerSubBlock);
+
+            // A sub-block whose data does not fit the bytes left in the block or in all is counted, not listed with no
+            // data; so is every sub-block after one that was counted.
+            if (detail is not null && detail.Further == 0 && detail.SubBlocks.Count < State.MaxListedSubBlocks && s.ListedSubBlocks < State.MaxListedSubBlocksInAll
+                && wanted <= Math.Min(State.MaxStoredInAll - s.StoredBytes, State.MaxStoredPerBlock - stored!.Count))
             {
-                int keep = SubBlockIds.IsBitstream(function) ? Math.Min(data.Length, function is SubBlockIds.WvxBitstream or SubBlockIds.DsdBlock ? 8 : 0)
-                    : Math.Min(data.Length, State.MaxStoredPerSubBlock);
-                keep = (int)Math.Min(keep, Math.Min(State.MaxStoredPerBlock - stored!.Count, State.MaxStoredInAll - s.StoredBytes));
+                int keep = wanted;
                 if (function == SubBlockIds.DecorrTerms && detail.TermsIndex < 0)
                 {
                     detail.TermsIndex = detail.SubBlocks.Count;
@@ -643,14 +648,15 @@ internal static class Reader
         return length == need || length == need + (2 * channels);
     }
 
-    // The channel info libwavpack reads is the first one that gives channels; it checks that one fully
-    // and a later one for its length only (read_channel_info), so a later one that fails the rest is
-    // not one it refuses.
+    // libwavpack settles the channels when it reaches the first audio block: from the first channel info that
+    // gives channels in the blocks up to it, else from that block's flags (mask 0x5 less the count). It checks
+    // that channel info fully; any later one only for its length (read_channel_info), so a later one that
+    // fails the rest is not one it refuses, and it never changes the channels.
     private static void ChannelInfoSubBlock(State s, int entry, int index, long at, ReadOnlySpan<byte> data, BlockFacts found)
     {
         int length = data.Length;
         Located<ChannelInfoValue>? first = s.ChannelInfo ?? found.ChannelInfo;
-        if (first is null)
+        if (!s.IsConfigured && first is null)
         {
             ChannelInfoValue? channelInfo = Decode.ChannelInfo(data);
             found.ChannelInfo = channelInfo is { Channels: > 0 } info ? new Located<ChannelInfoValue>(info, entry, index) : null;
@@ -663,7 +669,9 @@ internal static class Reader
             return;
         }
 
-        ChannelInfoValue kept = first.Value.Value;
+        int flagChannels = s.FirstAudioHeader.IsMono ? 1 : 2;
+        ChannelInfoValue kept = first?.Value ?? new ChannelInfoValue(flagChannels, Decode.OldMaxStreams, flagChannels == 1 ? 4u : 3u, 0);
+        string source = first is null ? "the flags of the first audio block gave" : "an earlier one gave";
         if (Decode.ChannelInfoFields(data) is not { } later)
         {
             s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
@@ -672,7 +680,7 @@ internal static class Reader
         else if (later.Channels != kept.Channels || later.Streams != kept.Streams || later.Mask != kept.Mask)
         {
             s.Findings.Add(Severity.Info, "wavpack.channel-info-ignored", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                $"The channel info at 0x{at:X} gives {Channels(later.Channels)} and a mask of 0x{later.Mask:X}, but an earlier one gave {Channels(kept.Channels)} and a mask of 0x{kept.Mask:X}; libwavpack keeps the first one that gives channels and ignores the rest{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
+                $"The channel info at 0x{at:X} gives {Channels(later.Channels)} and a mask of 0x{later.Mask:X}, but {source} {Channels(kept.Channels)} and a mask of 0x{kept.Mask:X}; libwavpack settles the channels at the first audio block and ignores this one{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
         }
     }
 
@@ -800,7 +808,7 @@ internal static class Reader
             else
             {
                 s.Findings.Add(Severity.Warning, "wavpack.audio-without-bitstream", () => Nodes.Block(s.Records, entry), count =>
-                    $"The block at 0x{offset:X} counts {blockSamples} samples, but holds no bitstream; it cannot be decoded{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
+                    $"The block at 0x{offset:X} counts {blockSamples} samples, but holds no bitstream; it cannot be decoded{(count > 1 ? $" ({count} blocks)" : string.Empty)}.", "none");
             }
         }
 

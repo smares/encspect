@@ -193,6 +193,7 @@ DECODES = {
     "channel-info-ignored": (24000, 0),
     "channel-info-no-count": (24000, 0),
     "channel-info-zero": None,
+    "channel-info-after-first-block": (24000, 0),
     "channels-change": (24000, 2),
     "checksum-missing": (24000, 1),
     "decorr-terms-invalid": None,
@@ -332,7 +333,8 @@ def build():
                         [("wavpack.dsd-invalid", "mode is 2")], False)
     surround = blocks(base("lossless-51-16"))
     # The other sets' channel infos, which say 6 channels, are ignored once the first one gives channels (libwavpack keeps the first).
-    for label, count, mask, text, found in (("zero", 0, 0x3F, "Channel info with no channels.", [("wavpack.channel-info-invalid", "refuses")]),
+    for label, count, mask, text, found in (("zero", 0, 0x3F, "Channel info with no channels.",
+                                             [("wavpack.channel-info-invalid", "refuses"), ("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but the flags of the first audio block gave 2 channels")]),
                                             ("four", 4, 0x33, "Channel info for four channels in a file of six.",
                                              [("wavpack.channel-count-mismatch", "says 4 channels"), ("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but an earlier one gave 4 channels")])):
         parts, ids = subs(surround[0])
@@ -350,7 +352,7 @@ def build():
                                   [("wavpack.dsd-invalid", "ends right after the history bits")], False)
     digest = bytes(range(16))
     meta = join(patch(a[0], samples=0, index=0, flags=0x34BC1E59), [sub(0x26, digest), sub(0x2F, bytes(4))])
-    b["no-audio"] = ("A single block with no samples, which holds an MD5 digest.", meta, [("wavpack.no-audio", "None of the 1 blocks counts a sample")], None)
+    b["no-audio"] = ("A single block with no samples, which holds an MD5 digest.", meta, [("wavpack.no-audio", "None of the 1 block counts a sample")], None)
     rate = blocks(base("rate-12345"))
     b["sample-rate-missing"] = ("The sample rate sub-block left out of a file of 12,345 Hz.", aa([without(rate[0], 0x27)]),
                                 [("wavpack.sample-rate-missing", "44100 Hz")], True)
@@ -422,6 +424,9 @@ def build():
     b["channel-info-ignored"] = ("A channel info of 2 channels and a mask of 8 speakers in the initial block of the second set, after the first block's: libwavpack keeps the first.",
                                  aa([*surround[:later], insert_before_checksum(surround[later], sub(0x0D, bytes([2, 0xFF, 0x00]))), *surround[later + 1:]]),
                                  [("wavpack.channel-info-ignored", "gives 2 channels and a mask of 0xFF")], True)
+    b["channel-info-after-first-block"] = ("Channel infos in the second and third block of a stereo file whose first block has none (6 channels with a 5.1 mask, then 2 channels with 8 speakers): libwavpack settled on the flags' stereo by then and takes neither.",
+                                           aa([a[0], insert_before_checksum(a[1], sub(0x0D, bytes([6, 0x3F]))), insert_before_checksum(a[2], sub(0x0D, bytes([2, 0xFF, 0x00])))]),
+                                           [("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but the flags of the first audio block gave 2 channels and a mask of 0x3")], False)
     eight = blocks(base("lossless-8-stereo"))
     b["shift-too-large"] = ("A left shift of 31 bits in every block of a file of 8-bit samples.", aa([patch(x, flags=(flags(x) & ~(0x1F << 13)) | (31 << 13)) for x in eight]),
                             [("wavpack.flags-invalid", "left shift of the block at 0x0 is 31 bits, not less than the 8 bits")], False)

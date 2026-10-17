@@ -72,7 +72,7 @@ internal static partial class Summary
 
         if (s.AudioBlocks == 0)
         {
-            s.Findings.Add(Severity.Warning, "wavpack.no-audio", stream, _ => $"None of the {s.Blocks} blocks counts a sample, so the file holds no audio.");
+            s.Findings.Add(Severity.Warning, "wavpack.no-audio", stream, _ => $"None of the {(s.Blocks == 1 ? "1 block counts" : $"{s.Blocks} blocks count")} a sample, so the file holds no audio.");
             return;
         }
 
@@ -82,7 +82,7 @@ internal static partial class Summary
             int firstExtra = s.ExtraOnlyFirst;
             long at = s.Entries[firstExtra].Offset;
             s.Findings.Add(Severity.Warning, "wavpack.audio-without-bitstream", () => Nodes.Block(s.Records, firstExtra), _ =>
-                $"The block at 0x{at:X} counts samples, but holds only extra bits and no bitstream{(s.ExtraOnly > 1 ? $" ({s.ExtraOnly} blocks)" : string.Empty)}; it cannot be decoded.");
+                $"The block at 0x{at:X} counts samples, but holds only extra bits and no bitstream{(s.ExtraOnly > 1 ? $" ({s.ExtraOnly} blocks)" : string.Empty)}; it cannot be decoded.", "extra-only");
         }
 
         if (isCorrection)

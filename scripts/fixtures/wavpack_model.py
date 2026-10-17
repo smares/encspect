@@ -257,9 +257,16 @@ def stream_info(data, entries):
     power = dsd_power(first, data) if is_dsd else None
     # The rate of DSD is held to what 31 bits hold (Reader.MaxNativeRate).
     native = min(rate * (1 << power) * 8, 2**31 - 1) if is_dsd and power is not None and power <= 31 else rate
-    max_streams = 8
+    # libwavpack settles the channels at the first audio block: only a channel info in the blocks up to it counts.
+    upto = []
     for e in entries:
-        if e["kind"] == "block" and has(e, 0x0D) and (found := channel_info(e, data)):
+        if e["kind"] == "block":
+            upto.append(e)
+            if e["header"]["samples"]:
+                break
+    max_streams = 8
+    for e in upto:
+        if has(e, 0x0D) and (found := channel_info(e, data)):
             max_streams = found[2]
             break
     grouped = sets(entries, max_streams)
@@ -267,8 +274,8 @@ def stream_info(data, entries):
     samples = counted * (8 if is_dsd else 1)
     channels = None
     info = None
-    for e in entries:
-        if e["kind"] == "block" and has(e, 0x0D) and (info := channel_info(e, data)):
+    for e in upto:
+        if has(e, 0x0D) and (info := channel_info(e, data)):
             break
     set_channels = sum(1 if b["header"]["flags"] & MONO else 2 for b in grouped[0]["entries"])
     count = info[0] if info else set_channels

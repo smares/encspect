@@ -775,6 +775,51 @@ public class WavPackTests
         Assert.DoesNotContain(all, n => n.Name == "Other Flags");
     }
 
+    // libwavpack settles the channels at the first audio block (from its flags when no channel info came before), so a channel info
+    // in a later block is checked for its length only and never becomes the stream's.
+    [Fact]
+    public void AChannelInfoAfterTheFirstAudioBlockSettlesNothing()
+    {
+        Report report = AnalyzeFixture("built-channel-info-after-first-block.wv");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "wavpack.channel-info-invalid" or "wavpack.channel-count-mismatch");
+        Finding ignored = Assert.Single(report.Findings, f => f.Code == "wavpack.channel-info-ignored");
+        Assert.Equal(2, ignored.Count);
+        Assert.Equal(2, report.Streams.Single().Channels);
+        Assert.Equal("stereo", report.Streams.Single().ChannelLayoutName);
+    }
+
+    // A block without a bitstream and a block with only the extra bitstream are two problems with a message each.
+    [Fact]
+    public void BlocksWithoutABitstreamAndWithOnlyExtraBitsAreReportedApart()
+    {
+        List<byte[]> blocks = WavPackBuilder.Blocks("external-lossless-32-stereo.wv");
+        blocks[0] = WavPackBuilder.Replace(blocks[0], 0x0A, null);
+        blocks[1] = WavPackBuilder.Replace(WavPackBuilder.Replace(blocks[1], 0x0A, null), 0x0C, null);
+        Report report = Analyze(WavPackBuilder.Concat(blocks));
+        List<Finding> found = [.. report.Findings.Where(f => f.Code == "wavpack.audio-without-bitstream")];
+        Assert.Equal(2, found.Count);
+        Assert.Contains(found, f => f.Message.Contains("holds only extra bits", StringComparison.Ordinal));
+        Assert.Contains(found, f => f.Message.Contains("holds no bitstream", StringComparison.Ordinal));
+    }
+
+    // Once the 16 MiB of kept bytes are spent, later detailed blocks count their sub-blocks as further ones, not list them with no data.
+    [Fact]
+    public void SubBlocksPastTheByteBudgetAreCountedNotListedEmpty()
+    {
+        List<byte[]> real = WavPackBuilder.Blocks("external-lossless-16-stereo.wv");
+        byte[] big = WavPackBuilder.Sub(0x3E, new byte[State.MaxStoredPerSubBlock]);
+        byte[] padded = WavPackBuilder.Join(real[0], Enumerable.Repeat(big, 16).Concat(WavPackBuilder.Parts(real[0])));
+        Report report = Analyze(WavPackBuilder.Concat(Enumerable.Repeat(padded, 260).Concat(real)));
+
+        // 256 of the blocks keep 64 KiB each, which is the 16 MiB in all; the sub-blocks after the 16 big ones do not fit the block.
+        List<Node> blocks = [.. Stream(report).Children.Where(c => c.Name == "Block")];
+        Assert.Equal(16, blocks[0].Children.Count(c => c.Name == "Unknown Sub-block"));
+        Assert.Equal(WavPackBuilder.Parts(real[0]).Count, blocks[0].Children.Single(c => c.Name == "Further Sub-blocks").Value?.AsInteger());
+        Node last = blocks[^1];
+        Assert.Equal(WavPackBuilder.Parts(real[^1]).Count, last.Children.Single(c => c.Name == "Further Sub-blocks").Value?.AsInteger());
+        Assert.Equal(2, last.Children.Count);
+    }
+
     // Each problem a code stands for gets its own finding, so the message of the first never stands for another's.
     [Fact]
     public void ProblemsOfOneCodeAreReportedApart()

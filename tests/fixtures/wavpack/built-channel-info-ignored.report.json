@@ -8986,7 +8986,7 @@
       {
         "severity": "Info",
         "code": "wavpack.channel-info-ignored",
-        "message": "The channel info at 0x13C28 gives 2 channels and a mask of 0xFF, but an earlier one gave 6 channels and a mask of 0x3F; libwavpack keeps the first one that gives channels and ignores the rest.",
+        "message": "The channel info at 0x13C28 gives 2 channels and a mask of 0xFF, but an earlier one gave 6 channels and a mask of 0x3F; libwavpack settles the channels at the first audio block and ignores this one.",
         "offset": 80936,
         "length": 6,
         "path": [
