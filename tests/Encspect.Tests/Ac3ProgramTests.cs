@@ -46,9 +46,9 @@ public class Ac3ProgramTests
 
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
         Assert.Equal(frames * 1536L, report.Streams.Sum(s => s.Samples));
+        Assert.DoesNotContain(report.Findings, f => f.Code == "ac3.programs-limited");
         Finding changed = Assert.Single(report.Findings, f => f.Code == "ac3.stream-changed");
         Assert.Equal(frames - 1, changed.Count);
-        Assert.Contains("at most 64 programs", changed.Message, StringComparison.Ordinal);
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, CountNodes(report.Root, NodeKind.Statistics));
     }
 
@@ -80,10 +80,83 @@ public class Ac3ProgramTests
         Report report = Analyze([.. data], "many-programs.eac3");
 
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
-        Assert.Equal(data.Count / 400 * 1536L, report.Streams.Sum(s => s.Samples));
+        // The 64 configurations of substreams 0 to 3 come first and come back in the next rounds, which join their programs; the
+        // frames of substreams 4 to 7 have no program and are in no stream.
+        Assert.Equal(3 * 64 * 1536L, report.Streams.Sum(s => s.Samples));
+        Assert.All(report.Streams, s => Assert.Equal(3 * 1536L, s.Samples));
+        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.programs-limited");
+        Assert.Equal(Severity.Warning, left.Severity);
+        Assert.Equal(3 * 64, left.Count);
         Assert.Single(report.Findings, f => f.Code == "ac3.stream-changed");
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, CountNodes(report.Root, NodeKind.Statistics));
     }
+
+    // A sample rate that is new past the cap: the frames are in no program, and the programs keep their own rate and layout.
+    [Fact]
+    public void ASampleRateChangePastTheCapIsLeftOut()
+    {
+        byte[] stereo = Fixture("stream-changes.ac3")[..768];
+        byte[] mono = Fixture("stream-changes.ac3")[1536..2304];
+        byte[] rate32 = Fixture("external-ffmpeg-stereo-32k-320k.ac3");
+        rate32 = rate32[..SyncLength(rate32)];
+        var data = new List<byte>();
+        for (int i = 0; i < 40; i++)
+        {
+            data.AddRange(stereo);
+            data.AddRange(mono);
+        }
+
+        for (int i = 0; i < 200; i++)
+        {
+            data.AddRange(rate32);
+        }
+
+        Report report = Analyze([.. data], "rate-cap.ac3");
+
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
+        Assert.All(report.Streams, s => Assert.Equal(48000, s.SampleRate));
+        Assert.Equal(80 * 1536L, report.Streams.Sum(s => s.Samples));
+        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.programs-limited");
+        Assert.Equal(Severity.Warning, left.Severity);
+        Assert.Equal(200, left.Count);
+    }
+
+    // A substream ID that is new past the cap: its frames are in no program, never in another substream's.
+    [Fact]
+    public void ANewSubstreamPastTheCapIsLeftOut()
+    {
+        byte[] template = Fixture("dependent-repeated.eac3")[..400];
+        byte[] Frame(int id, int acmod)
+        {
+            byte[] frame = [.. template];
+            frame[2] = (byte)((frame[2] & 0xC7) | (id << 3));
+            frame[4] = (byte)((frame[4] & 0xF0) | (acmod << 1));
+            return frame;
+        }
+
+        var data = new List<byte>();
+        for (int i = 0; i < 40; i++)
+        {
+            data.AddRange(Frame(0, 2));
+            data.AddRange(Frame(0, 1));
+        }
+
+        for (int i = 0; i < 100; i++)
+        {
+            data.AddRange(Frame(0, 2));
+            data.AddRange(Frame(1, 7));
+        }
+
+        Report report = Analyze([.. data], "late-substream.eac3");
+
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
+        Assert.Equal((80 + 100) * 1536L, report.Streams.Sum(s => s.Samples));
+        Assert.All(report.Streams, s => Assert.True(s.Channels is 1 or 2));
+        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.programs-limited");
+        Assert.Equal(100, left.Count);
+    }
+
+    private static int SyncLength(byte[] data) => Encspect.Formats.Ac3.SyncFrame.Read(data).FrameLength;
 
     // The statistics of a program cover its own frames, not the whole stream.
     [Fact]

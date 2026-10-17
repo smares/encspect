@@ -266,7 +266,7 @@ internal static class Explain
     public const string Largest = "The largest program frame, in bytes.";
     public const string MinimumBitrate = "The lowest bitrate of a program frame.";
     public const string MaximumBitrate = "The highest bitrate of a program frame.";
-    public const string StatDependentFrames = "Frames of dependent substreams, which add channels to the program (A/52 Annex E 2.3.1.1).";
+    public const string StatDependentFrames = "Frames of dependent substreams, which add channels to the program (A/52 Annex E 2.3.1.1). The count leaves out the dependent frames after a repeated dependent substream ID in a program frame (Annex E 2.3.1.2).";
     public const string StatNominalBitrate = "The bitrates frmsizecod names (A/52 Table 5.18); AC-3 holds one bitrate in every frame unless the stream switches it.";
     public const string StatDialnorm = "The dialogue normalization values the frames carry (A/52 5.4.2.8).";
     public const string StatBsmod = "The services the frames name (A/52 Table 5.7).";

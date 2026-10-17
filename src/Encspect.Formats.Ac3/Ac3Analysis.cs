@@ -21,12 +21,13 @@ internal sealed class Ac3Analysis
     private readonly byte[] _buffer = new byte[MaxFrame];
     // A program is a run of one independent substream (id 0 for AC-3) with one configuration; a change
     // ends it and starts another. The number of programs is capped so that a stream which changes all
-    // the time cannot grow the report: past the cap, frames stay in the active program of their ID, or
-    // in the last one made.
-    private readonly Dictionary<int, Program> _active = [];
+    // the time cannot grow the report: past the cap, a frame joins a program only when its substream ID and
+    // configuration are the program's, and is otherwise left out (ac3.programs-limited).
+    private readonly Dictionary<int, Program?> _active = [];
+    private readonly Dictionary<ProgramKey, Program> _byKey = [];
     private readonly Dictionary<int, ProgramKey> _lastKeys = [];
     private readonly List<Program> _programs = [];
-    private bool _isLimited;
+    private bool _isIgnoring;
     private readonly AnalysisContext _context;
     private Program? _current;
     private int _currentType;
@@ -389,6 +390,12 @@ internal sealed class Ac3Analysis
         {
             if (_current is null)
             {
+                if (_isIgnoring)
+                {
+                    Findings.CountIfKnown("ac3.programs-limited");
+                    return null;
+                }
+
                 Findings.Add(Severity.Warning, "ac3.dependent-without-independent", () => FrameAt(),
                     count => $"{Count(count)} of a dependent substream come before any independent substream they could belong to (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
                 return null;
@@ -422,27 +429,29 @@ internal sealed class Ac3Analysis
         Program? program;
         if (!_lastKeys.TryGetValue(id, out ProgramKey lastKey) || lastKey != key)
         {
-            bool changed = _active.TryGetValue(id, out Program? previous);
+            bool changed = _active.ContainsKey(id);
             _lastKeys[id] = key;
-            if (_programs.Count >= MaxPrograms)
-            {
-                _isLimited = true;
-                program = previous ?? _programs[^1];
-            }
-            else
+            // Past the cap a frame only joins a program of its own substream ID and configuration; otherwise it is left out.
+            if (_programs.Count < MaxPrograms)
             {
                 program = new Program(key, index);
                 _programs.Add(program);
+                _byKey[key] = program;
+            }
+            else
+            {
+                _byKey.TryGetValue(key, out program);
             }
 
             _active[id] = program;
+
             if (changed && !Findings.CountIfKnown("ac3.stream-changed"))
             {
                 string substream = header.IsEac3 ? $" of independent substream {id}" : string.Empty;
                 string from = lastKey.Describe();
                 string to = key.Describe();
                 Findings.Add(Severity.Info, "ac3.stream-changed", FrameAt,
-                    count => $"The stream{substream} changes at 0x{frameOffset:X} from {from} to {to}{(count > 1 ? $"; the streams change {count} times in the file" : string.Empty)}{(_isLimited ? $"; the analyzer keeps at most {MaxPrograms} programs, so frames after them stay in the last program of their substream" : string.Empty)}.");
+                    count => $"The stream{substream} changes at 0x{frameOffset:X} from {from} to {to}{(count > 1 ? $"; the streams change {count} times in the file" : string.Empty)}.");
             }
         }
         else
@@ -450,6 +459,20 @@ internal sealed class Ac3Analysis
             program = _active[id];
         }
 
+        if (program is null)
+        {
+            if (!Findings.CountIfKnown("ac3.programs-limited"))
+            {
+                Findings.Add(Severity.Warning, "ac3.programs-limited", FrameAt,
+                    count => $"{Count(count)} (with the dependent frames after them) are in no stream: the analyzer keeps at most {MaxPrograms} programs, one per run of an independent substream with one configuration, and these frames start another; the first is at 0x{frameOffset:X}.");
+            }
+
+            _current = null;
+            _isIgnoring = true;
+            return null;
+        }
+
+        _isIgnoring = false;
         program.Regions.Add(region);
         _current = program;
         return program;
@@ -479,6 +502,7 @@ internal sealed class Ac3Analysis
         // streams' series now.
         _programs.Clear();
         _active.Clear();
+        _byKey.Clear();
         _lastKeys.Clear();
         _current = null;
         Findings.Flush(_context);
