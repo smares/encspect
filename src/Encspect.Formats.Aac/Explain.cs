@@ -33,13 +33,13 @@ internal static partial class Explain
     public const string ObjectType = "The audio object type, the set of coding tools the stream uses: 2 is AAC LC, 5 SBR, 29 PS, 42 USAC. 31 escapes to six more bits for types from 32 on (ISO/IEC 14496-3 1.6.2.1, 1.5.1.1).";
     public const string CoreObjectType = "The object type of the core codec under SBR or PS, usually 2 for AAC LC (ISO/IEC 14496-3 1.6.2.1).";
     public const string SampleRate = "The sample rate of the core codec, from a 4-bit index or, after index 15, 24 bits stating it. With SBR the output rate can be twice this (ISO/IEC 14496-3 1.6.2.1, 1.6.3.4).";
-    public const string ChannelConfiguration = "The channel layout by number: 1 mono, 2 stereo, up to 7 for 7.1; 0 leaves the layout to a program config element (ISO/IEC 14496-3 1.6.3.5).";
+    public const string ChannelConfiguration = "The channel layout by number: 1 mono, 2 stereo, up to 7 for 7.1, and 11 to 14 for further layouts of 6.1, 7.1 and 22.2; 0 leaves the layout to a program config element (ISO/IEC 14496-3 1.6.3.5).";
     public const string ExtensionSampleRate = "The output sample rate of SBR, usually twice the core's (ISO/IEC 14496-3 1.6.2.1).";
     public const string ExtensionChannelConfiguration = "The channel configuration of the BSAC extension layers (ISO/IEC 14496-3 1.6.2.1).";
     public const string SyncExtension = "The backward-compatible signaling of SBR and PS: a sync word after the core's configuration, which decoders that know nothing of SBR ignore (ISO/IEC 14496-3 1.6.2.1).";
     public const string SyncExtensionType = "The sync word of the extension: 0x2B7 before the SBR signaling, 0x548 before the PS signaling (ISO/IEC 14496-3 1.6.2.1).";
     public const string ExtensionObjectType = "The object type the extension signals: 5 for SBR, 22 for BSAC (ISO/IEC 14496-3 1.6.2.1).";
-    public const string HasSbr = "Whether the stream uses spectral band replication: sbrPresentFlag. When it is set, the decoder outputs twice the core's sample rate (ISO/IEC 14496-3 1.6.2.1).";
+    public const string HasSbr = "Whether the stream uses spectral band replication: sbrPresentFlag. When it is set, the decoder outputs the extension sample rate, usually twice the core's (ISO/IEC 14496-3 1.6.2.1).";
     public const string HasPs = "Whether the stream uses parametric stereo: psPresentFlag. When it is set, a mono core decodes to stereo (ISO/IEC 14496-3 1.6.2.1).";
     public const string UnreadBits = "Bits after the configuration's last field that the analyzer does not read.";
 
@@ -169,6 +169,14 @@ internal static partial class Explain
     public const string ElementText = "Readable text in the element's payload, such as an encoder's name and version.";
 
     public const string Adts = "A run of ADTS frames: raw AAC with a header before every frame, so a decoder can start anywhere and needs no container (ISO/IEC 14496-3 1.A.2.2; ISO/IEC 13818-7 6.2).";
+    public const string UnreadFrames = "The bytes after the frames the analyzer counted past its limit of 2,097,152 frame records, where the stream's frames do not continue, another stream starts, or the 4,096 sync losses it follows are used up; they are not analyzed.";
+
+    public const string CountedFrames = "ADTS frames past the analyzer's limit of 2,097,152 frame records, counted from their headers in the stream's frames, samples, duration and bitrates; they have no node of their own and their raw data blocks are not read.";
+
+    public const string UnreadBlocks = "The bytes after the raw data blocks the analyzer counted past its limit of 2,097,152 block records, which cannot be read to the end of a block and are not analyzed.";
+
+    public const string CountedBlocks = "Raw data blocks past the analyzer's limit of 2,097,152 block records, read only for their length and counted in the stream's blocks, samples, duration and bitrates; they have no node of their own.";
+
     public const string Gap = "Bytes between ADTS frames that are not a frame: data before the first frame, where sync was lost, or after the last frame.";
     public const string AdtsFrame = "One ADTS frame: a 7-byte header, a CRC where it is protected, then one to four raw data blocks of 1024 samples per channel each (ISO/IEC 14496-3 1.A.2.2).";
     public const string SyncWord = "syncword: 12 set bits that start every ADTS header (ISO/IEC 14496-3 1.A.2.2.1).";
@@ -186,7 +194,7 @@ internal static partial class Explain
     public const string AdtsFrameLength = "aac_frame_length: the frame's length in bytes, header included, which gives where the next frame starts (ISO/IEC 14496-3 1.A.3.2.1).";
     public const string BufferFullness = "adts_buffer_fullness: how full the decoder's input buffer is after this frame, in 32-bit words per channel, so a decoder can start mid-stream. 0x7FF marks a variable bitrate (ISO/IEC 14496-3 1.A.3.2.1).";
     public const string RawDataBlockCount = "number_of_raw_data_blocks_in_frame plus one: how many raw data blocks of 1024 samples the frame holds (ISO/IEC 14496-3 1.A.3.2.1).";
-    public const string RawDataBlockPosition = "raw_data_block_position: where a raw data block after the first starts, counted from the frame's start (ISO/IEC 14496-3 1.A.2.2.2).";
+    public const string RawDataBlockPosition = "raw_data_block_position: where a raw data block after the first starts, in bytes from the start of the first raw data block, which follows the header, the positions and the header CRC (ISO/IEC 14496-3 1.A.3.2.2).";
     public const string Crc = "The CRC-16 the encoder stored over the header and the first bits of each channel element, so decoders can detect damage (ISO/IEC 14496-3 1.A.2.2.2, 1.A.4.3).";
     public const string BlockCrc = "The CRC-16 of the raw data block before it, which a frame of several protected blocks stores after each (ISO/IEC 14496-3 1.A.2.2.2).";
     public const string CrcCheck = "What the analyzer found when it computed the CRC over the same bits. Checking a channel element needs to know where it ends, which takes its spectral data.";
@@ -224,7 +232,7 @@ internal static partial class Explain
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
 
     public const string BitrateSeries = "The bitrate of each access unit or frame: its bits over its playing time.";
-    public const string BitrateOverTimeSeries = "The bitrate of each second of audio: the bits of the access units that start in it over their playing time.";
+    public const string BitrateOverTimeSeries = "The bitrate of each second of audio: the bits of the access units that start in it over their playing time. A stream of more than about 36 hours, or one stated at a very low sample rate, is graphed in spans of 2, 4 or more seconds.";
 
     // The value of an encoder node, by its name.
     public static string EncoderNode(string name) => name switch

@@ -1,0 +1,80 @@
+{
+ "description": "ADTS at 22050 Hz of ten channel pairs, the second, fifth and eighth followed by an SBR payload (the first with an SBR header): three blocks of ten, which is fewer than half of them, so the stream stays AAC LC at 22050 Hz.",
+ "length": 520,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 10240,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   46
+  ],
+  [
+   46,
+   66
+  ],
+  [
+   112,
+   46
+  ],
+  [
+   158,
+   47
+  ],
+  [
+   205,
+   65
+  ],
+  [
+   270,
+   47
+  ],
+  [
+   317,
+   47
+  ],
+  [
+   364,
+   64
+  ],
+  [
+   428,
+   46
+  ],
+  [
+   474,
+   46
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "3 access units (30.0%)"
+ },
+ "findings": [
+  [
+   "aac.sbr-data-sparse",
+   "only 3 of 10 raw data blocks hold SBR data after a channel element"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "decode": "ffmpeg prints \"No quantized data read for sbr_dequant\" for the SBR payloads in the middle of the stream."
+  }
+ }
+}
