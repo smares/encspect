@@ -70,6 +70,11 @@ class ProgramTests(unittest.TestCase):
             self.assertEqual(tool_versions.problems("a52"), ["liba52-0.7.4-dev (dpkg) 0.7.4 is needed, found 0.7.3-1"])
         with printing("", code=1):
             self.assertIn("no version was found", tool_versions.problems("dca")[0])
+        for name, found in (("madplay", "0.15.2b-10.2"), ("speex", "1.2.1-3build1"), ("opus-tools", "0.2-1build5")):
+            with printing(found):
+                self.assertEqual(tool_versions.problems(name), [], name)
+        with printing("0.2.1-1"):
+            self.assertEqual(len(tool_versions.problems("opus-tools")), 1)
 
     def test_an_unknown_tool_is_a_mistake_of_the_script(self):
         with self.assertRaises(KeyError):

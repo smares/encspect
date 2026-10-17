@@ -5,7 +5,8 @@ built by gpac_tool.py), the runner image of the cross-check jobs.
     tool_versions.require("ffmpeg", "ffprobe", "MP4Box")
 
 A program is checked by what it prints (PROGRAMS), a package whose programs or libraries print no version (musepack-tools,
-liba52, libdca) by the version dpkg holds for it (PACKAGES). A version matches when it starts with the expected one and the next character does not continue the number, so
+liba52, libdca, madplay, speex, opus-tools) by the version dpkg holds for it (PACKAGES): madplay prints the version of its library, and the
+speex and opus programs print versions that differ from their packages'. A version matches when it starts with the expected one and the next character does not continue the number, so
 "8.0.1-3ubuntu2" is 8.0.1 and "8.0.10" is not. MediaInfo is checked by mediainfo_tool.require().
 """
 
@@ -32,6 +33,9 @@ PACKAGES = {
     "musepack": ("musepack-tools", "0.1~r495"),
     "a52": ("liba52-0.7.4-dev", "0.7.4"),
     "dca": ("libdca-dev", "0.0.7"),
+    "madplay": ("madplay", "0.15.2b"),
+    "speex": ("speex", "1.2.1"),
+    "opus-tools": ("opus-tools", "0.2"),
 }
 
 
