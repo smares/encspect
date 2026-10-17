@@ -1,0 +1,56 @@
+{
+ "description": "Four units whose lossless asset states one speaker remapping set but no speaker activity mask, so the layout masks of the set have no width.",
+ "length": 2816,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   704
+  ],
+  [
+   704,
+   704
+  ],
+  [
+   1408,
+   704
+  ],
+  [
+   2112,
+   704
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.reserved-value",
+   "1 speaker remapping set but no speaker activity mask"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "decode_error": "Speaker mask disabled yet there are remapping sets",
+  "skip": {
+   "ffprobe_profile": "ffmpeg refuses the asset descriptor, so no extension is decoded and ffprobe names the core's profile",
+   "decode": "ffmpeg refuses the asset descriptor (dca_exss.c: 'Speaker mask disabled yet there are remapping sets')"
+  }
+ }
+}

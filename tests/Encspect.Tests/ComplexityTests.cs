@@ -302,6 +302,83 @@ public class ComplexityTests
         TimedDts(data);
     }
 
+    // Short chains of core frames, each followed by 4 KiB of the extension substream headers above: each break in the chain starts a search
+    // for the next one, and every search once had a CRC allowance of its own (1 MiB each, 190 times the size of the data in all). One
+    // allowance for the whole data keeps the cost per byte as that of the headers alone: the same amount of data of each pattern is
+    // timed in turn, and the chains must cost no more than a small multiple of the headers (about 10 times before, 1.5 now).
+    [Fact]
+    public void ShortChainsFollowedByExtensionSubstreamHeadersThatFailTheirCrc()
+    {
+        byte[] header = (((new System.Numerics.BigInteger(0x64582025) << 43) | (System.Numerics.BigInteger.One << 32) | (4095L << 20) | 0xFFFFF) << 5).ToByteArray(isUnsigned: true, isBigEndian: true);
+        byte[] template = new byte[16];
+        header.CopyTo(template, 0);
+        byte[] frame = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "core-16be.dts"))[..512];
+        const int size = 16 << 20;
+        const int group = (3 * 512) + 4096;
+        var flood = new byte[size];
+        var groups = new byte[size];
+        for (int at = 0; at + 16 <= size; at += 16)
+        {
+            template.CopyTo(flood, at);
+        }
+
+        for (int at = 0; at + group <= size; at += group)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                frame.CopyTo(groups, at + (i * 512));
+            }
+
+            for (int junk = at + (3 * 512); junk < at + group; junk += 16)
+            {
+                template.CopyTo(groups, junk);
+            }
+        }
+
+        TimeSpan floodTime = TimedDtsAnalysis(flood);
+        TimeSpan groupsTime = TimedDtsAnalysis(groups);
+        Assert.True(groupsTime < (3 * floodTime) + TimeSpan.FromSeconds(1), $"The chains took {groupsTime.TotalSeconds:F1} s, the headers alone {floodTime.TotalSeconds:F1} s");
+    }
+
+    private static TimeSpan TimedDtsAnalysis(byte[] data)
+    {
+        var watch = Stopwatch.StartNew();
+        Report report = new Analyzer([new ForcedDts()]).Analyze("flood.dts", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        return watch.Elapsed;
+    }
+
+    // Core frames whose arrangement and LFE flag change at every frame still chain (they share their form and sampling frequency), and each
+    // change once made a stream, a finding and the nodes of both: 24 s for 2 MiB, 548 s for 8 MiB. The streams are limited, the changes
+    // counted in one finding, and the time is linear.
+    [Fact]
+    public void ACoreConfigurationThatChangesAtEveryFrame()
+    {
+        byte[] frame = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "core-16be.dts"))[..512];
+        var data = new byte[8 << 20];
+        for (int i = 0; i * 512 < data.Length; i++)
+        {
+            frame.CopyTo(data, i * 512);
+            byte[] header = frame[..12];
+            SetBits(header, 60, 6, i % 64);
+            SetBits(header, 85, 2, (i / 64) % 2);
+            header.CopyTo(data, i * 512);
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = new Analyzer([new ForcedDts()]).Analyze("changes.dts", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.InRange(report.Streams.Count, 2, 64);
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
+        Assert.Equal((data.Length / 512) - 1, changed.Count);
+        Assert.Contains("limited to 64", changed.Message, StringComparison.Ordinal);
+        Assert.Equal(Severity.Warning, changed.Severity);
+    }
+
     private static void SetBits(byte[] data, int start, int width, int value)
     {
         for (int i = 0; i < width; i++)

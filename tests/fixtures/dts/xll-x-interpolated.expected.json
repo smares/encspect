@@ -1,0 +1,59 @@
+{
+ "description": "Four units whose lossless channel set states an interpolation factor of 2 at 96 kHz, and the DTS:X word after the band data, which is not looked for.",
+ "length": 2944,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   736
+  ],
+  [
+   736,
+   736
+  ],
+  [
+   1472,
+   736
+  ],
+  [
+   2208,
+   736
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 96000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/HasDtsX": "false"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "ffprobe_profile": false,
+  "decode_error": "XLL sampling frequency modifier is not implemented",
+  "decode_log": "warning",
+  "ffprobe_rate": 48000,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame (dca_xll.c), which it does not here, so ffprobe names the core's",
+   "decode": "ffmpeg's decoder does not implement the sampling frequency modifier, and stops before the DTS:X word (dca_xll.c: 'XLL sampling frequency modifier')",
+   "ffprobe_rate": "ffmpeg takes the rate from the core until its decoder has decoded the lossless extension, which it refuses here"
+  }
+ }
+}

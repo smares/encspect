@@ -1,0 +1,54 @@
+{
+ "description": "Four units of a stereo core frame and an extension substream with a lossless asset, of which only the first states the static fields.",
+ "length": 2792,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   704
+  ],
+  [
+   704,
+   696
+  ],
+  [
+   1400,
+   696
+  ],
+  [
+   2096,
+   696
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Lossless Channel Sets": "1 channel set",
+  "DTS/Statistics/Lossless Channels": "2 channels",
+  "DTS/Frame[1]/Extension Substream/Header Size": "24 bytes",
+  "DTS/Frame[3]/Extension Substream/Asset 1 Data/XLL/Channel Set 1/IsPrimaryChannelSet": "true"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
+  }
+ }
+}

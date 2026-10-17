@@ -215,6 +215,30 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // Units whose extension substream header omits the static fields keep a copy of the ones in force (7.5.2) in their record.
+    [Fact]
+    public void ManyDtsSubstreamsWithoutStaticFieldsStayCompact()
+    {
+        const int units = 30_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "exss-static-first-only.dts"));
+        const int first = 704;
+        const int later = 696;
+        byte[] data = new byte[first + (later * (units - 1))];
+        source.AsSpan(0, first).CopyTo(data);
+        for (int at = first; at < data.Length; at += later)
+        {
+            source.AsSpan(first, later).CopyTo(data.AsSpan(at));
+        }
+
+        (Report report, long kept, long peak) = Measure("units.dts", data, source);
+
+        Assert.Equal(units * 512L, Assert.Single(report.Streams).Samples);
+        output.WriteLine($"{kept / units} bytes kept and {peak / units} bytes peak per unit");
+        Assert.True(kept < units * DtsSubstreamKeptBound, $"The report keeps {kept / units} bytes per unit.");
+        Assert.True(peak < units * DtsSubstreamPeakBound, $"The live heap grew by {peak / units} bytes per unit.");
+        GC.KeepAlive(report);
+    }
+
     private const long DtsKeptBound = 160;
     private const long DtsPeakBound = 200;
     private const long DtsSubstreamKeptBound = 450;

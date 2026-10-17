@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Dts;
 
 // What the common header of the lossless extension (8.3.1) says that the rest of the frame needs.
-internal readonly record struct XllCommon(int Sets, int FrameSize, int SegmentsLog, int SegmentBits, bool IsScalable, int MaskBits, int FrameSizeStart, int FrameSizeEnd);
+internal readonly record struct XllCommon(int Sets, int FrameSize, int SegmentsLog, int SegmentBits, bool IsScalable, int MaskBits, int FrameSizeStart, int FrameSizeEnd, bool IsRefused = false);
 
 internal sealed partial class UnitSyntax
 {
@@ -15,6 +15,18 @@ internal sealed partial class UnitSyntax
     // dca_xll.c refuses a navigation index of more than this many entries.
     private const int NaviMaxEntries = 1024;
 
+    // dca_xll.c (DCA_XLL_CHSETS_MAX, DCA_XLL_CHANNELS_MAX, parse_common_header and chs_parse_header): more channel sets or channels than
+    // these, and the other cases that set _isXllRefused, end its parse before it looks for the DTS:X word.
+    private const int XllMaxSets = 3;
+    private const int XllMaxChannels = 8;
+
+    // DCA_XLL_PBR_BUFFER_MAX: 240 KiB.
+    private const int XllMaxFrameSize = 240 << 10;
+
+    // Whether FFmpeg's decoder gives up on the lossless frame in a field the analyzer has read; set by the reading of the common header and
+    // of the channel set sub-headers, and read when the word after the band data is looked for.
+    private bool _isXllRefused;
+
     // ff_dca_dmix_primary_nch: the channels each downmix type of Table 8-8 mixes the primary channel sets to.
     private static readonly int[] DownmixChannels = [1, 2, 2, 3, 3, 4, 4, 0];
 
@@ -25,6 +37,7 @@ internal sealed partial class UnitSyntax
     {
         int setAt = at + headerSize;
         var sets = new List<XllSetFacts>();
+        _isXllRefused = common.Sets > XllMaxSets || common.IsRefused;
         int hierChannels = 0;
         bool complete = true;
         bool allFacts = true;
@@ -42,6 +55,13 @@ internal sealed partial class UnitSyntax
             {
                 complete = false;
                 break;
+            }
+
+            // dca_xll.c: "Different XLL audio characteristics".
+            if (set is not null && sets.Count > 0 && (set.FrequencyBands != sets[0].FrequencyBands || set.SampleRate != sets[0].SampleRate
+                || set.Resolution != sets[0].Resolution || set.StorageWidth != sets[0].StorageWidth))
+            {
+                _isXllRefused = true;
             }
 
             bandsOf.Add(bands);
@@ -74,7 +94,7 @@ internal sealed partial class UnitSyntax
 
         asset.XllSets.AddRange(sets);
         asset.IsXllComplete = allFacts;
-        ReadXllNavigation(at, endBit, asset, setAt, common, bandsOf, allFacts);
+        ReadXllNavigation(at, endBit, asset, setAt, common, bandsOf, allFacts && !_isXllRefused);
     }
 
     // 8.3.2, Table 8-4: one channel set sub-header, up to the frequency band parameters, whose bytes are shown as such, and its CRC16.
@@ -105,7 +125,7 @@ internal sealed partial class UnitSyntax
             _limit = Math.Min(outerLimit, Math.Max(crcBit, _pos));
             try
             {
-                facts = ReadXllSetFields(common, asset, hierChannels, crcBit, out bands, out hierAdd);
+                facts = ReadXllSetFields(common, asset, index, hierChannels, crcBit, out bands, out hierAdd);
             }
             catch (EndOfStreamException)
             {
@@ -158,10 +178,11 @@ internal sealed partial class UnitSyntax
         return facts;
     }
 
-    private XllSetFacts? ReadXllSetFields(XllCommon common, AssetFacts asset, int hierChannels, int crcBit, out int bands, out int hierAdd)
+    private XllSetFacts? ReadXllSetFields(XllCommon common, AssetFacts asset, int index, int hierChannels, int crcBit, out int bands, out int hierAdd)
     {
         int channels = Num("Channels", 4, Explain.XllSetChannels, Topics.Lossless, "channels", 1) + 1;
         hierAdd = channels;
+        _isXllRefused |= channels > XllMaxChannels;
         int start = _pos;
         uint residual = Read(channels);
         _tree?.Field("Residual Channel Encoding", start, _pos, NodeValue.Hex(residual, (channels + 3) / 4), Explain.XllResidual, Topics.Lossless);
@@ -169,14 +190,17 @@ internal sealed partial class UnitSyntax
         int resolution = Num("Source PCM Resolution", 5, Explain.XllResolution, Topics.Lossless, "bits", 1) + 1;
         int resolutionEnd = _pos;
         int width = Num("Storage Bit Width", 5, Explain.XllStorageWidth, Topics.Lossless, "bits", 1) + 1;
+        _isXllRefused |= width is not (16 or 20 or 24);
         if (resolution > width)
         {
             Report(Issue.LosslessInconsistent, "Source PCM Resolution", start, resolutionEnd, $"a channel set's source resolution of {resolution} bits is more than its storage width of {width} bits (8.3.2: the samples are stored in the width)");
         }
 
         int rate = Tables.ExtensionSampleRate(Num("Sampling Frequency", 4, Explain.XllRate, v => NodeValue.Integer(Tables.ExtensionSampleRate(v), "Hz"), Topics.Lossless));
-        Num("Sampling Frequency Interpolation", 2, Explain.XllInterpolation, v => NodeValue.Integer(1 << v), Topics.Lossless);
+        _isXllRefused |= rate > 192000;
+        _isXllRefused |= Num("Sampling Frequency Interpolation", 2, Explain.XllInterpolation, v => NodeValue.Integer(1 << v), Topics.Lossless) != 0;
         int replacement = Num("Replacement Set", 2, Explain.XllReplacement, v => v == 0 ? "0 (not a member of a replacement set)" : $"{v} (member of replacement set {v})", Topics.Lossless);
+        _isXllRefused |= replacement != 0;
         if (replacement > 0)
         {
             Flag("IsActiveReplacementSet", Explain.XllActiveReplacement, Topics.Lossless);
@@ -189,6 +213,7 @@ internal sealed partial class UnitSyntax
         if (asset.IsOneToOne)
         {
             primary = Flag("IsPrimaryChannelSet", Explain.XllPrimary, Topics.Lossless);
+            _isXllRefused |= primary != (index == 0);
             bool hasCoefficients = Flag("HasDownmixCoefficients", Explain.XllHasDownmix, Topics.Lossless);
             if (hasCoefficients)
             {
@@ -213,10 +238,12 @@ internal sealed partial class UnitSyntax
                 if (type == 7)
                 {
                     Report(Issue.ReservedValue, "Downmix Type", start, _pos, "nLLDownmixType 7 is unused (Table 8-8)");
+                    _isXllRefused = true;
                 }
             }
 
             hierAdd = Flag("IsHierarchicalChannelSet", Explain.XllHierarchical, Topics.Lossless) ? channels : 0;
+            _isXllRefused |= hierAdd == 0 && common.Sets != 1;
             if (hasCoefficients)
             {
                 // FFmpeg's parse_dmix_coeffs: a primary set mixes to the channels its downmix type names; any other set has a row for each
@@ -226,6 +253,7 @@ internal sealed partial class UnitSyntax
             }
 
             hasMask = Flag("HasChannelMask", Explain.XllHasMask, Topics.Lossless);
+            _isXllRefused |= !hasMask;
             if (hasMask)
             {
                 start = _pos;
@@ -246,9 +274,11 @@ internal sealed partial class UnitSyntax
                 Skip("Speaker Positions", 25 * channels, Explain.XllSpeakerPositions, NodeValue.Integer(channels, "speakers", "speaker"));
             }
         }
-        else if (Flag("HasMappingCoefficients", Explain.XllHasMapping, Topics.Lossless))
+        else
         {
-            read = false;
+            bool hasMapping = Flag("HasMappingCoefficients", Explain.XllHasMapping, Topics.Lossless);
+            _isXllRefused |= channels != 2 || common.Sets != 1 || hasMapping;
+            read = !hasMapping;
         }
 
         bands = 1;
@@ -256,6 +286,7 @@ internal sealed partial class UnitSyntax
         {
             start = _pos;
             bool extra = Flag("HasExtraFrequencyBands", Explain.XllExtraBands, Topics.Lossless);
+            _isXllRefused |= extra;
             bands = extra ? 4 : 2;
             _tree?.Field("Frequency Bands", start, _pos, NodeValue.Integer(bands, "bands", "band"), Explain.XllBands, Topics.Lossless);
         }
@@ -370,19 +401,19 @@ internal sealed partial class UnitSyntax
             _tree?.Field("Band Data", dataAt * 8, dataLimit * 8, NodeValue.Integer(dataLimit - dataAt, "bytes"), Explain.XllBandData, Topics.Lossless);
         }
 
-        // FFmpeg stops before it looks for the word at a navigation index whose CRC16 fails, and, earlier, in parse_sub_headers, at a channel
-        // set it refuses (a failing CRC16, a source resolution beyond the storage width, a channel mask of another number of speakers than
-        // channels); so does the analyzer. MediaInfo 24.01 still reads the word after such a set. A band data size of the frame's size or
-        // more puts the end of the band data past the frame, where there is no room for the word.
-        if (verdict == 1 && areSetsAccepted)
+        // FFmpeg stops before it looks for the word at a navigation index whose CRC16 fails, and, earlier, at the common header or a channel
+        // set sub-header it refuses (see _isXllRefused for the cases); so does the analyzer, which shows the bytes there as such after a
+        // refused header and not at all after a failing navigation index. MediaInfo 24.01 still reads the word after such a set. A band data
+        // size of the frame's size or more puts the end of the band data past the frame, where there is no room for the word.
+        if (verdict == 1)
         {
-            ReadXllExtensionData(at, endBit, asset, dataEnd, common);
+            ReadXllExtensionData(at, endBit, asset, dataEnd, common, areSetsAccepted);
         }
     }
 
     // dca_xll.c: when the frame is larger than its band data aligned to 32 bits (counted from the sync word), the word there is DTS:X's
     // (0x02000850) or DTS:X IMAX's (0xF14000D0 or 0xF14000D1). A word needs its 4 bytes here; FFmpeg reads it with 1 to 3 left too.
-    private void ReadXllExtensionData(int at, int endBit, AssetFacts asset, long dataEnd, XllCommon common)
+    private void ReadXllExtensionData(int at, int endBit, AssetFacts asset, long dataEnd, XllCommon common, bool isWordRead)
     {
         long aligned = at + ((dataEnd - at + 3) & ~3L);
         long frameEnd = at + (long)common.FrameSize;
@@ -395,6 +426,13 @@ internal sealed partial class UnitSyntax
         int start = (int)aligned;
         EnsureBytes(start, available - start);
         _pos = start * 8;
+        if (!isWordRead)
+        {
+            _limit = Math.Min(_limit, available * 8);
+            _tree?.Field("Data After Band Data", start * 8, _limit, NodeValue.Integer(available - start, "bytes"), Explain.XllTrailing, Topics.Lossless);
+            return;
+        }
+
         uint word = Read(32);
         XllExtension kind = word == XSync ? XllExtension.X : (word >> 1) == (XImaxSync >> 1) ? XllExtension.XImax : XllExtension.None;
         asset.XllExtension = kind;
