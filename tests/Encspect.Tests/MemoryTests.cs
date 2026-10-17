@@ -1,5 +1,6 @@
 using System.Runtime;
 using Encspect.Core;
+using Encspect.Formats.WavPack;
 using Encspect.Host;
 using Xunit.Abstractions;
 
@@ -281,7 +282,7 @@ public class MemoryTests(ITestOutputHelper output)
         Bounded("objects.asf", AsfBuilder.WithUnknownObjects("minimal", 900_000), 150_000_000, "asf.too-many-objects");
     }
 
-    private void Bounded(string name, byte[] data, long bound, string code, bool expectFinding = true)
+    private Report Bounded(string name, byte[] data, long bound, string code, bool expectFinding = true)
     {
         (Report report, long kept, long peak) = Measure(name, data, data[..Math.Min(data.Length, 4096)]);
         output.WriteLine($"{name}: {kept / 1_000_000} MB kept and {peak / 1_000_000} MB peak for {data.Length / 1_000_000} MB");
@@ -292,7 +293,7 @@ public class MemoryTests(ITestOutputHelper output)
         }
 
         Assert.True(peak < bound, $"{name}: the live heap grew by {peak / 1_000_000} MB.");
-        GC.KeepAlive(report);
+        return report;
     }
 
     // More packets than are described one by one: the rest are counted, and the heap stays near the cap's.
@@ -666,6 +667,41 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] block = WavPackTinyBlocks(1);
         byte[] data = WavPackBuilder.Join(block, WavPackBuilder.Parts(block).Take(1).Concat(Enumerable.Repeat(WavPackBuilder.Sub(0, []), 500_000)).Concat(WavPackBuilder.Parts(block).Skip(1)));
         Bounded("subblocks.wv", data, 60_000_000, "wavpack.version-unsupported", expectFinding: false);
+    }
+
+    // The caps on what a detailed block lists and keeps are shared by all the detailed blocks, so 4,096 blocks of 1,024 sub-blocks
+    // list 64 K of them in all (3 MB measured on linux-x64); per block alone the caps allowed 4 million of them, about 170 MB of records.
+    [Fact]
+    public void ManySubBlocksInManyDetailedWavPackBlocksShareOneBudget()
+    {
+        byte[] block = WavPackTinyBlocks(1);
+        List<byte[]> parts = WavPackBuilder.Parts(block);
+        byte[] full = WavPackBuilder.Join(block, parts.Take(1).Concat(Enumerable.Repeat(WavPackBuilder.Sub(0, []), 1023)).Concat(parts.Skip(1)));
+        byte[] data = [.. Enumerable.Repeat(full, 4096).SelectMany(b => b)];
+
+        Report report = Bounded("budget.wv", data, 15_000_000, "wavpack.block-index-overlap");
+
+        List<Node> blocks = [.. report.Root.Children.Single(n => n.Kind == NodeKind.Stream).Children.Where(c => c.Name == "Block")];
+        Assert.Equal(4096, blocks.Count);
+        Assert.Equal(State.MaxListedSubBlocksInAll, blocks.Sum(c => c.Children.Count(k => k.Children.Any(i => i.Name == "ID"))));
+    }
+
+    // Bytes kept of the optional sub-blocks of all the detailed blocks together are capped too: 700 blocks of 64 KiB of them keep 16 MiB
+    // (18 MB measured on linux-x64 with the report alive); per block alone the caps allowed 64 KiB of each.
+    [Fact]
+    public void StoredBytesOfManyDetailedWavPackBlocksShareOneBudget()
+    {
+        byte[] block = WavPackTinyBlocks(1);
+        List<byte[]> parts = WavPackBuilder.Parts(block);
+        byte[] big = WavPackBuilder.Sub(0x3E, new byte[State.MaxStoredPerSubBlock]);
+        byte[] full = WavPackBuilder.Join(block, parts.Take(1).Concat(Enumerable.Repeat(big, 16)).Concat(parts.Skip(1)));
+        byte[] data = [.. Enumerable.Repeat(full, 700).SelectMany(b => b)];
+
+        Report report = Bounded("stored.wv", data, 30_000_000, "wavpack.optional-subblock-unknown");
+
+        List<Node> blocks = [.. report.Root.Children.Single(n => n.Kind == NodeKind.Stream).Children.Where(c => c.Name == "Block")];
+        Assert.Equal(700, blocks.Count);
+        Assert.Contains(blocks[0].Children, c => c.Name == "Unknown Sub-block");
     }
 
     // Blocks of 32 bytes that hold nothing, in a file of 64 MB.

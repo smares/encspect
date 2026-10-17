@@ -131,7 +131,7 @@ internal sealed class StreamFigures(long sampleRate)
             return;
         }
 
-        statistics.Add(cover("Bitrate Mode", Units > 1 && MaximumBitrate > MinimumBitrate ? "variable" : Units > 1 ? "constant" : "variable", Explain.BitrateMode));
+        statistics.Add(cover("Bitrate Mode", Units == 1 ? "unknown" : MaximumBitrate > MinimumBitrate ? "variable" : "constant", Explain.BitrateMode));
         statistics.Add(cover($"Smallest {unitName}", inBytes ? NodeValue.Integer(SmallestBits / 8, "bytes") : NodeValue.Integer(SmallestBits, "bits"), Explain.Smallest));
         statistics.Add(cover($"Largest {unitName}", inBytes ? NodeValue.Integer(LargestBits / 8, "bytes") : NodeValue.Integer(LargestBits, "bits"), Explain.Largest));
         statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), Explain.MinimumBitrate));

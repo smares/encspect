@@ -5,8 +5,9 @@ package of Ubuntu 24.04 that writes the fixtures, pinned by SHA-256.
   (deb.debian.org) and the Wayback Machine's copy of the site's are the same file, so either serves as a
   fallback. The source is not redistributed; its BSD license allows it.
 - wavpack_blocks, a small program (wavpack_blocks.c) linked with libwavpack's own sources, which prints
-  what the library reads from a file: its figures, and every block read_next_header finds with the verdict
-  of WavpackVerifySingleBlock. The reference for the format is in the same tree: doc/WavPack5FileFormat.pdf.
+  what the library reads from a file: its figures, every block read_next_header finds with the verdict
+  of WavpackVerifySingleBlock, and the outcome of a decoder's whole pass (the file opened as wvunpack opens it
+  and every sample unpacked, with the errors counted). The reference for the format is in the same tree: doc/WavPack5FileFormat.pdf.
 """
 
 import pathlib

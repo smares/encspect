@@ -24,6 +24,7 @@ reading of every block.
 import json
 import pathlib
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -69,6 +70,8 @@ FIXTURES = {
     "hybrid-51-b3-correction": (("wav", 48000, 6, 16, SHORT, 0x3F), ["-b3", "-c"], ["wv", "wvc"]),
     "hybrid-b4-maximum": (("wav", 44100, 2, 16, SHORT), ["-b4", "-cc"], ["wv", "wvc"]),
     "hybrid-b2": (("wav", 44100, 2, 16, SHORT), ["-b2"], ["wv"]),
+    "hybrid-false-stereo-b2": (("wav-identical", 44100, 16, SHORT), ["-b2"], ["wv"]),
+    "hybrid-false-stereo-b4": (("wav-identical", 44100, 16, SHORT), ["-b4"], ["wv"]),
     "hybrid-b22": (("wav", 44100, 2, 16, SHORT), ["-b2.2"], ["wv"]),
     "hybrid-b4-flat-noise": (("wav", 44100, 2, 16, SHORT), ["-b4", "-s0"], ["wv"]),
     "hybrid-b4-left-right": (("wav", 44100, 2, 16, SHORT), ["-b4", "-j0", "-c"], ["wv", "wvc"]),
@@ -108,6 +111,14 @@ def make_input(spec, work):
         mask = rest[0] if rest else None
         before, after = (rest[1], rest[2]) if len(rest) > 2 else (b"", b"")
         data = sig.wav(rate, channels, count, bits, mask, False, before, after)
+        name = "in.wav"
+    elif kind == "wav-identical":
+        # Stereo with the same samples in both channels, which the encoder codes once as a false stereo block.
+        rate, bits, count = p
+        body = sig.pcm_identical(rate, count, bits)
+        fmt = struct.pack("<HHIIHH", 1, 2, rate, rate * 2 * bits // 8, 2 * bits // 8, bits)
+        chunks = b"fmt " + struct.pack("<I", len(fmt)) + fmt + b"data" + struct.pack("<I", len(body)) + body
+        data = b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
         name = "in.wav"
     elif kind == "float":
         rate, channels, count = p
@@ -167,7 +178,7 @@ def encode_ffmpeg(name, spec, work):
 
 def describe(spec):
     kind, *p = spec
-    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
+    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "wav-identical": ["rate", "bits", "samples"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
              "caf": ["rate", "channels", "samples", "bits", "layout_tag"], "dsf": ["rate", "channels", "bytes_per_channel"]}[kind]
     result = {"kind": kind}
     for key, value in zip(names, p):
@@ -184,11 +195,22 @@ def regions(data, path, apev2):
     return len(data), [{"name": "WavPack", "offset": 0, "length": len(data)}]
 
 
+def decode_expectation(path, result):
+    """What libwavpack's decoder does with the file (crosscheck_wavpack_fixtures.py runs it): a correction file is refused alone, any other
+    opens and unpacks every sample of its sets, counted as the decoder counts them (DSD as bytes, 8 to the bit samples the report counts),
+    without an error."""
+    if path.suffix == ".wvc":
+        return {"opens": False}
+    info = result["stream_infos"][0]
+    is_dsd = int(result["blocks"][0]["flags"], 16) & 0x80000000 != 0
+    return {"opens": True, "samples": info["samples"] // (8 if is_dsd else 1), "errors": 0}
+
+
 def build_manifest(path, encoder, findings=()):
     data = path.read_bytes()
     end, top = regions(data, path, "apev2" in path.name)
-    result = m.manifest(data, 0, end, {"regions": top, "encoder": encoder, "findings": [{"code": c, "contains": t} for c, t in findings],
-                                       "crosscheck": {"valid": True}})
+    result = m.manifest(data, 0, end, {"regions": top, "encoder": encoder, "findings": [{"code": c, "contains": t} for c, t in findings]})
+    result["crosscheck"] = {"valid": True, "decode": decode_expectation(path, result)}
     return result
 
 

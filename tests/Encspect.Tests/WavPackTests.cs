@@ -619,6 +619,173 @@ public class WavPackTests
         Assert.Null(report.Streams.Single().Writer);
     }
 
+    // The message of a set that changes the channel count names the set it is about, not the last one in the file, and counts
+    // its channels in the singular where it should.
+    [Fact]
+    public void AChannelCountChangeNamesItsOwnSet()
+    {
+        Report report = AnalyzeFixture("built-channels-change.wv");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wavpack.format-changes");
+        List<Node> blocks = Stream(report).Children.Where(c => c.Name == "Block").ToList();
+        Assert.True(blocks.Count > 3);
+        Assert.Contains($"The set of blocks at 0x{blocks[2].Offset:X} holds 1 channel, but the first holds 2 channels", finding.Message, StringComparison.Ordinal);
+        Assert.Equal(blocks[2].Offset, report.Root.Children.Single(c => c.Kind == NodeKind.Stream).Children[(int)finding.Path![1]].Offset);
+    }
+
+    // The identities are those of the channels after the ones the channel mask names, so they are labeled from there (common_utils.c
+    // WavpackGetChannelIdentities); the fixture's mask names two.
+    [Fact]
+    public void ChannelIdentitiesAreLabeledAfterTheChannelsTheMaskNames()
+    {
+        Report report = AnalyzeFixture("built-channel-identities.wv");
+        Node identities = Descendants(FirstBlock(report)).First(n => n.Name == "Channel Identities");
+        Node data = identities.Children.Single(c => c.Name == "Data");
+        Assert.Equal(["Channel 3", "Channel 4"], data.Children.Select(c => c.Name));
+        Assert.All(data.Children, c => Assert.Equal("unassigned", c.Value?.ToString()));
+        Assert.Equal(4, report.Streams.Single().Channels);
+    }
+
+    // A single set shows no variation, so the bitrate mode is unknown and IsVbr false; with more sets the mode and IsVbr agree.
+    [Theory]
+    [MemberData(nameof(WavPackFixtureTests.Names), MemberType = typeof(WavPackFixtureTests))]
+    public void TheBitrateModeAgreesWithIsVbr(string name)
+    {
+        Report report = Analyze(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name)), name);
+        if (report.Streams.Count == 0 || Statistics(report).Children.All(c => c.Name != "Bitrate Mode"))
+        {
+            return;
+        }
+
+        string? mode = Statistic(report, "Bitrate Mode");
+        bool isVbr = report.Streams.Single().IsVbr;
+        Assert.Equal(isVbr, mode == "variable");
+        if (Statistic(report, "Block Sets") == "1 set")
+        {
+            Assert.Equal("unknown", mode);
+        }
+        else
+        {
+            Assert.Contains(mode, new[] { "variable", "constant" });
+        }
+    }
+
+    // The sub-block function is the low six bits of the ID, the optional bit among them (format document, section 3.0).
+    [Fact]
+    public void TheFunctionOfASubBlockIsSixBits()
+    {
+        Report report = AnalyzeFixture("external-lossless-51-16.wv");
+        Node extension = Descendants(FirstBlock(report)).First(n => n.Name == "Alternate Extension");
+        Node id = extension.Children.Single(c => c.Name == "ID");
+        Node function = id.Children.Single(c => c.Name == "Function");
+        Assert.Equal(0x28, function.Value?.AsInteger());
+        Assert.Equal(6, function.BitLength);
+        Assert.True(id.Children.Single(c => c.Name == "IsOptional").Value?.AsBoolean());
+    }
+
+    // A left shift that takes all the bits of the samples leaves no bit depth: the finding says so and the report gives none.
+    [Fact]
+    public void ALeftShiftPastTheSampleSizeLeavesNoBitDepth()
+    {
+        Report report = AnalyzeFixture("built-shift-too-large.wv");
+        Assert.Contains(report.Findings, f => f.Code == "wavpack.flags-invalid" && f.Message.Contains("-23", StringComparison.Ordinal));
+        Assert.Null(report.Streams.Single().BitsPerSample);
+        Assert.Null(Statistic(report, "Bits Per Sample"));
+    }
+
+    // libwavpack keeps the first channel info that gives channels and checks a later one for its length only (read_channel_info),
+    // so a later one it would refuse as the first is no refusal; one that differs is told apart.
+    [Fact]
+    public void ALaterChannelInfoIsNotOneLibwavpackRefuses()
+    {
+        Report report = AnalyzeFixture("built-channel-info-ignored.wv");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "wavpack.channel-info-invalid");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wavpack.channel-info-ignored");
+        Assert.Equal(Severity.Info, finding.Severity);
+        Assert.Equal(6, report.Streams.Single().Channels);
+
+        // A channel info of more than 7 bytes is refused whenever it comes.
+        byte[] file = Fixture("external-lossless-51-16.wv");
+        List<byte[]> blocks = WavPackBuilder.Split(file);
+        int later = blocks.FindIndex(1, b => (BinaryPrimitives.ReadUInt32LittleEndian(b.AsSpan(24)) & 0x800) != 0);
+        List<byte[]> parts = WavPackBuilder.Parts(blocks[later]);
+        parts.Insert(parts.Count - 1, WavPackBuilder.Sub(0x0D, new byte[8]));
+        blocks[later] = WavPackBuilder.Join(blocks[later], parts);
+        Report refused = Analyze(WavPackBuilder.Concat(blocks));
+        Assert.Contains(refused.Findings, f => f.Code == "wavpack.channel-info-invalid" && f.Message.Contains("1 to 7 bytes", StringComparison.Ordinal));
+    }
+
+    // Weights and samples need the terms before them: a block starts with no passes (unpack_init), so any weights are too many.
+    [Fact]
+    public void WeightsAndSamplesWithoutTermsAreTooMany()
+    {
+        Report report = AnalyzeFixture("built-weights-without-terms.wv");
+        Assert.Contains(report.Findings, f => f.Code == "wavpack.subblock-size" && f.Message.Contains("decorrelation weights", StringComparison.Ordinal) && f.Message.Contains("no decorrelation terms", StringComparison.Ordinal));
+        Assert.Contains(report.Findings, f => f.Code == "wavpack.subblock-size" && f.Message.Contains("decorrelation samples", StringComparison.Ordinal));
+
+        // The 2 or 4 error values a version 0x402 hybrid block starts its samples with are the only data libwavpack takes without terms.
+        List<byte[]> blocks = WavPackBuilder.Blocks("external-hybrid-lossy-b4.wv");
+        byte[] block = blocks[0];
+        BinaryPrimitives.WriteUInt16LittleEndian(block.AsSpan(8), 0x402);
+        List<byte[]> parts = WavPackBuilder.Parts(block).Where(p => WavPackBuilder.Function(p) is not 0x02 and not 0x03 and not 0x04).ToList();
+        parts.Insert(0, WavPackBuilder.Sub(0x04, new byte[4]));
+        blocks[0] = WavPackBuilder.Join(block, parts);
+        Report errorsOnly = Analyze(WavPackBuilder.Concat(blocks));
+        Assert.DoesNotContain(errorsOnly.Findings, f => f.Code == "wavpack.subblock-size" && f.Message.Contains("decorrelation samples", StringComparison.Ordinal));
+    }
+
+    // A reordering longer than the layout's channels fails read_new_config_info; one as long as they are does not.
+    [Fact]
+    public void AReorderingLongerThanTheLayoutIsRefused()
+    {
+        Assert.Contains(AnalyzeFixture("built-reorder-too-long.wv").Findings, f => f.Code == "wavpack.subblock-size" && f.Message.Contains("2 channels to reorder", StringComparison.Ordinal));
+
+        List<byte[]> blocks = WavPackBuilder.Blocks("external-lossless-16-stereo.wv");
+        blocks[0] = WavPackBuilder.Replace(blocks[0], 0x2A, WavPackBuilder.Sub(0x2A, [0, 0, 0x93, 2, 1, 0]));
+        Assert.DoesNotContain(Analyze(WavPackBuilder.Concat(blocks)).Findings, f => f.Message.Contains("reorder", StringComparison.Ordinal));
+    }
+
+    // A false stereo block codes its data once, so its accumulator and the lowest target it can state differ from a mono block's.
+    [Fact]
+    public void AFalseStereoHybridTargetHasItsOwnLimit()
+    {
+        Report limited = AnalyzeFixture("external-hybrid-false-stereo-b2.wv");
+        Assert.Equal("2.11 bits/sample or less", Statistic(limited, "Hybrid Target Bitrate"));
+        Node target = Descendants(FirstBlock(limited)).First(n => n.Name == "Target Bitrate");
+        Assert.Contains("540/256", target.Description, StringComparison.Ordinal);
+        Node accumulator = Descendants(FirstBlock(limited)).First(n => n.Name.EndsWith("Bitrate Accumulator", StringComparison.Ordinal));
+        Assert.Contains("the data is coded once", accumulator.Description, StringComparison.Ordinal);
+
+        Assert.Equal("4.00 bits/sample", Statistic(AnalyzeFixture("external-hybrid-false-stereo-b4.wv"), "Hybrid Target Bitrate"));
+        Assert.Contains("568/256", Descendants(FirstBlock(AnalyzeFixture("external-hybrid-b2.wv"))).First(n => n.Name == "Target Bitrate").Description, StringComparison.Ordinal);
+    }
+
+    // CONFIG_COMPATIBLE_WRITE (0x400000) is a flag libwavpack defines, which the legacy WavpackSetConfiguration sets.
+    [Fact]
+    public void TheCompatibleWriteFlagIsKnown()
+    {
+        List<byte[]> blocks = WavPackBuilder.Blocks("external-lossless-16-stereo.wv");
+        byte[] config = WavPackBuilder.Parts(blocks[0]).Single(p => WavPackBuilder.Function(p) == 0x25);
+        byte[] changed = [.. config];
+        changed[2 + 1] |= 0x40;
+        blocks[0] = WavPackBuilder.Replace(blocks[0], 0x25, changed);
+        Report report = Analyze(WavPackBuilder.Concat(blocks));
+
+        List<Node> all = [.. Descendants(FirstBlock(report))];
+        Assert.True(all.Single(n => n.Name == "WritesCompatibleStream").Value?.AsBoolean());
+        Assert.DoesNotContain(all, n => n.Name == "Other Flags");
+    }
+
+    // Each problem a code stands for gets its own finding, so the message of the first never stands for another's.
+    [Fact]
+    public void ProblemsOfOneCodeAreReportedApart()
+    {
+        Report report = AnalyzeFixture("built-subblock-sizes-mixed.wv");
+        List<Finding> sizes = [.. report.Findings.Where(f => f.Code == "wavpack.subblock-size")];
+        Assert.Equal(2, sizes.Count);
+        Assert.Contains(sizes, f => f.Message.Contains("entropy variables", StringComparison.Ordinal) && f.Count == 1);
+        Assert.Contains(sizes, f => f.Message.Contains("MD5", StringComparison.Ordinal) && f.Count == 2);
+    }
+
     private static byte[] Syncsafe(int value) => [(byte)((value >> 21) & 0x7F), (byte)((value >> 14) & 0x7F), (byte)((value >> 7) & 0x7F), (byte)(value & 0x7F)];
 
     private static byte[] Frame(string id, byte[] data) => [.. System.Text.Encoding.ASCII.GetBytes(id), .. Syncsafe(data.Length), 0, 0, .. data];

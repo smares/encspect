@@ -182,7 +182,7 @@
                 },
                 {
                   "name": "Bitrate Mode",
-                  "value": "variable",
+                  "value": "unknown",
                   "offset": 0,
                   "length": 12562
                 },
@@ -507,11 +507,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 8,
+                          "value": 40,
                           "offset": 32,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -589,11 +589,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 3,
+                          "value": 35,
                           "offset": 38,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -671,11 +671,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 5,
+                          "value": 37,
                           "offset": 132,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -827,6 +827,15 @@
                               "bitOrder": "leastSignificantFirst"
                             },
                             {
+                              "name": "WritesCompatibleStream",
+                              "value": false,
+                              "offset": 135,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
                               "name": "CalculatesNoise",
                               "value": false,
                               "offset": 135,
@@ -917,11 +926,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 10,
+                          "value": 42,
                           "offset": 138,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -1067,7 +1076,7 @@
                           "offset": 142,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -1165,11 +1174,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 15,
+                          "value": 47,
                           "offset": 12556,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {

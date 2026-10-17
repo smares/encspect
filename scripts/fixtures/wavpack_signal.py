@@ -42,6 +42,14 @@ def pcm(rate, channels, count, bits, big_endian=False):
     return bytes(out)
 
 
+def pcm_identical(rate, count, bits):
+    """Stereo PCM whose two channels are the same, the first channel of the signal twice."""
+    out = bytearray()
+    for (value,) in samples(rate, 1, count, 1 << (bits - 1)):
+        out += (value + 128 if bits == 8 else value).to_bytes(1 if bits == 8 else bits // 8, "little", signed=bits != 8) * 2
+    return bytes(out)
+
+
 def floats(rate, channels, count):
     out = bytearray()
     for frame in samples(rate, channels, count, 1 << 24):

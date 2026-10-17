@@ -273,7 +273,9 @@ def stream_info(data, entries):
     set_channels = sum(1 if b["header"]["flags"] & MONO else 2 for b in grouped[0]["entries"])
     count = info[0] if info else set_channels
     mask = info[1] if info else {1: 4, 2: 3}.get(count, 0)
-    bits = 1 if is_dsd else 32 if h["flags"] & 0x80 else (h["flags"] & 3) * 8 + 8 - (h["flags"] >> 13 & 31)
+    # A shift that leaves no bits gives no bit depth (wavpack.flags-invalid).
+    shifted = (h["flags"] & 3) * 8 + 8 - (h["flags"] >> 13 & 31)
+    bits = 1 if is_dsd else 32 if h["flags"] & 0x80 else shifted if shifted > 0 else None
     set_bits = sum((e["length"] - wrapper_bytes(e)) * 8 for g in grouped for e in g["entries"])
     seconds = samples / native if native else 0
     hybrid = bool(h["flags"] & HYBRID) or any(e["header"]["flags"] & HYBRID for e in audio)
