@@ -47,7 +47,7 @@ Dolby Atmos in Dolby Digital Plus adds object audio to an ordinary E-AC-3 stream
   - emdf_container_length counting the bytes after the length field (389 in a 393-byte skip field);
   - the payload list ending with a bare 5-bit ID 0;
   - codecdatae 0, protection lengths 2 and 1, JOC with the downmix configuration 3, the complexity index 16, and a program of dynamic objects with an LFE channel.
-  - `joc-atmos` is laid out like them. The other placements (after the last block, in the auxiliary data field) follow H.1 and are hand-built; MediaInfo 24.01 parses a container before the auxiliary data field only.
+  - `joc-atmos` is laid out like them. The other placements (after the last block, in the auxiliary data field) follow H.1 and are hand-built; MediaInfo 24.01 and 26.01 parse a container before the auxiliary data field only.
 - **Interpretations:**
   - The syntax tables end the payloads at an ID of 0 without a configuration or size, although H.2.2.2.4 says an ID of 0 comes with zero fields; Dolby's file follows the tables.
   - TS 103 420 Table 56 lists codecdatae as 1; H.2.2.3.7, MediaInfo and Dolby's file take 0. Both are read.
