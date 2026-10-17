@@ -42,6 +42,7 @@ public sealed record EncoderClaim(string Text, Node Source, string Description, 
 
     // Whether the claim is the last item of the tag or object that holds it, where a writer that adds its own stamp after the items
     // it copies puts it (ffmpeg's ASF muxer: the WM/EncodingSettings attribute is the last of the Extended Content Description Object).
+    // Only ASF's Extended Content Description Object sets it; it is false for every other claim.
     public bool IsLastItem { get; init; }
 }
 

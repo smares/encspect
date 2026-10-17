@@ -265,6 +265,16 @@ public class AsfFindingTests
     }
 
     // Padding is limited to the bytes the file has: a packet cut inside its payload counts none of the missing bytes.
+    // A packet cut inside its header fields shows the fields that fit with their value and leaves out the others.
+    [Fact]
+    public void PacketCutInsideItsHeaderFieldsShowsOnlyTheFieldsItHas()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/length-field-short-cut-fields.asf");
+        Node packet = FindNode(report.Root, "Data Packets")!.Children[2];
+        Assert.Equal(200L, packet.Children.First(n => n.Name == "Packet Length").Value!.AsInteger());
+        Assert.DoesNotContain(packet.Children, n => n.Name == "Padding Length");
+    }
+
     [Fact]
     public void TruncatedPacketCountsNoMissingPadding()
     {

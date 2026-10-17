@@ -211,6 +211,21 @@ internal static class PacketParser
         {
             packet.Issues |= PacketIssues.Truncated;
             packet.HeaderLength = bytes.Length;
+
+            // The fields that lie wholly inside the file are read; the others stay 0 and the tree leaves them out.
+            if (position + lengthWidth <= bytes.Length)
+            {
+                packet.PacketLengthField = ReadValue(bytes, ref position, lengthWidth);
+                if (position + sequenceWidth <= bytes.Length)
+                {
+                    packet.Sequence = ReadValue(bytes, ref position, sequenceWidth);
+                    if (position + paddingWidth <= bytes.Length)
+                    {
+                        packet.PaddingLength = ReadValue(bytes, ref position, paddingWidth);
+                    }
+                }
+            }
+
             return;
         }
 

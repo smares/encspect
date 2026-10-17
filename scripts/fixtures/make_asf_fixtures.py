@@ -338,6 +338,11 @@ fixture("length-field-short-cut", "The file length-field-short cut 5 bytes into 
         {"ffprobe": False, "reason": "the file is cut inside a packet on purpose."})
 
 
+fixture("length-field-short-cut-fields", "The same file cut 8 bytes into its third packet, inside the packet header's fields: the Packet Length field that fits is read, the fields that do not are left out.",
+        lambda: short_length_field_file()[:-256 + 8],
+        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 846")],
+        {"ffprobe": False, "reason": "the file is cut inside a packet on purpose."})
+
 def zero_length_field_file():
     layout = m.Layout(packet_length=2, multiple=False)
     packets = [m.packet([m.Payload(1, i + 1, b"\x10" * 100, 0, 100, i * 25)], 256, layout, declared_length=0) for i in range(3)]

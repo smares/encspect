@@ -56,8 +56,10 @@ internal static partial class WmaEncoder
         // stands as ffmpeg's ASF muxer leaves it: ffmpeg copies every attribute of the file it reads (asfdec_f.c, asfenc.c) and writes its
         // WM/EncodingSettings as the last of them (mux.c replaces "encoder" by removing it and appending it), so a remux of a Windows Media
         // file carries the earlier writer's WMFSDKVersion or MediaFoundationVersion before the stamp of the program that wrote this file.
-        // A stamp with attributes after it was copied by software that wrote those, and keeps its place. The copy stays as a claim that
-        // differs; a layout (medium) still outranks the stamp.
+        // The stamp is last after a plain remux. ffmpeg removes a creation_time given as metadata (asfenc.c) and any encoder-* key (mux.c), and
+        // each removal moves the stamp into the removed entry's place, so an explicit creation_time or encoder-* key can leave attributes after it.
+        // No rule in a source tells those files from ones other software wrote, so a stamp with attributes after it keeps its place and the
+        // copied claim stays first. The copy stays as a claim that differs; a layout (medium) still outranks the stamp.
         IEnumerable<EncoderClaim> ordered = context.EncoderClaims.OrderBy(c => c.Role == ClaimRole.Writer && c.IsLastItem && ClaimRoles.IsMuxerVersion(c.Text) ? 0 : 1);
 
         // The writer's evidence lies in the container's header, not in the stream's bytes that every node here covers.
