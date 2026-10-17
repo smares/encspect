@@ -11,6 +11,7 @@ Box by box:
 - sample descriptions, with their esds box and QuickTime's sound descriptions;
 - the sample tables, edit lists, roll groups and movie fragments;
 - iTunes metadata with every data type, iTunSMPB, Encoding Params, an ID32 box's ID3v2 tag and Nero's chapters;
+- QuickTime's user data text atoms (the © atoms of `udta`), as tags: see "QuickTime user data text";
 - QuickTime's chan atom (Core Audio's layout tags, channel bitmap and channel labels) and the ISO chnl box;
 - protection: the sinf box of a protected sample entry (frma, schm, schi with tenc), pssh, senc, saiz and saio boxes, the `seig` sample group, and the entries and boxes of iTunes protection and Audible (see "Protected tracks").
 
@@ -39,6 +40,20 @@ The work and the memory the analysis takes are bounded by the file, not by what 
 - moov after mdat;
 - an edit list and iTunSMPB that disagree on the encoder delay or padding, or an iTunSMPB whose total is not the track's duration (Apple Lossless's duration leaves out the padding, which is accepted);
 - a chan or chnl layout that disagrees with the codec's.
+- a text item of a user data atom that states more bytes than the atom holds (`mp4.text-size-invalid`), and bytes at the end of such an atom that are too few for an item's size and language (`mp4.text-item-truncated`).
+
+## QuickTime user data text
+
+The © atoms of `udta` in `moov` and `trak` are international text (QuickTime File Format, "User data atoms"). They are tags: the same nodes as the boxes, of kind Tag, so the summary, `--hide tags` and the CSV Tags column see them.
+
+- **Which atoms:** the ones the File Format lists (`©arg`, `©ark`, `©cok`, `©com`, `©cpy`, `©day`, `©dir`, `©ed1` to `©ed9`, `©fmt`, `©inf`, `©isr`, `©lab`, `©lal`, `©mak`, `©mal`, `©nak`, `©nam`, `©pdk`, `©phg`, `©prd`, `©prf`, `©prk`, `©prl`, `©req`, `©snk`, `©snm`, `©src`, `©swf`, `©swk`, `©swr`, `©wrt`), `©ART`, `©alb`, `©cmt` and `©des` (the fields its MP3 importer maps to), and `©too` (ffmpeg's muxer). Each is named "QuickTime" and its field, such as "QuickTime Title".
+- **Other © atoms** are shown as text items, without being tags, where their items fill the atom exactly; otherwise they are unread boxes. Structural children of `udta` (`WLOC`, `LOOP`, `meta`, `hnti` and the like) are never read as text.
+- **Items:** each atom holds one or more text items of a 16-bit size, a 16-bit language code and the text. The size is the length of the text alone, as ffmpeg and MediaInfo read it. The atom's value is its first non-empty text.
+- **Language and encoding:** a code below 0x400 is a Macintosh language code (0x7FFF: unspecified), and its text is decoded as Macintosh Roman, as ffmpeg decodes it. Else it is three packed ISO 639-2/T letters, and the text is UTF-16 after a byte order mark and UTF-8 otherwise; text that is not valid UTF-8 is read as Latin-1.
+- **Damage:** an item whose size is beyond the atom is shown with the bytes that exist and ends the atom (`mp4.text-size-invalid`); fewer than 4 bytes at the end, or bytes left after the items, are shown as unused bytes (`mp4.text-item-truncated`). At most 1,000 items of an atom are shown as nodes.
+- **Writer:** the first text of `©swr` and `©too` is a claim about the writer, as in an iTunes item list (see "Encoder detection").
+- **MediaInfo** reads a movie's `©nam` as a version, flags and one UTF-8 text to the end of the atom, so it matches the analyzer only for an atom of one item; its other fields in `udta` are compared (title, artist, album, encoding application).
+- **Not covered:** the atoms of `udta` that are not international text (`name`, `tnam`, `tagc`, `LOOP`, `WLOC` and the like) are shown as boxes and not read.
 
 ## Protected tracks
 
@@ -72,7 +87,7 @@ The codec's layout counts. The chan and chnl boxes complete a stream whose codec
 
 ## Encoder detection
 
-The container's metadata (©too, QuickTime's ©swr) names the writer as written (a ©too item counts only if its data atom is of a text type: UTF-8, UTF-16, S/JIS or their sort variants), with low confidence: QuickTime defines ©swr as the software that generated the movie, and no Apple specification defines ©too, so both go to the writer, and the encoder comes from the stream. Text that is ffmpeg's muxer version (`Lavf…`) is the writer in any case, and a libavcodec encoder ID (`Lavc…`) in either atom is an encoder claim. Encoding Params and iTunSMPB are shown but name neither. An ID32 box's TSSE frame is the encoder's, as in any ID3v2 tag.
+The container's metadata (©too, QuickTime's ©swr, in an item list or in `udta`) names the writer as written (a ©too item counts only if its data atom is of a text type: UTF-8, UTF-16, S/JIS or their sort variants; the first text of a `udta` atom counts), with low confidence: QuickTime defines ©swr as the software that generated the movie, and no Apple specification defines ©too, so both go to the writer, and the encoder comes from the stream. Text that is ffmpeg's muxer version (`Lavf…`) is the writer in any case, and a libavcodec encoder ID (`Lavc…`) in either atom is an encoder claim. Encoding Params and iTunSMPB are shown but name neither. An ID32 box's TSSE frame is the encoder's, as in any ID3v2 tag.
 
 Apple's AudioToolbox is named from the layout of its files (see [AAC](aac.md)):
 

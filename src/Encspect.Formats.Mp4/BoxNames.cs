@@ -138,4 +138,66 @@ internal static class BoxNames
         "©des" => "Description",
         _ => null,
     };
+
+    // QuickTime's user data text atoms (QuickTime File Format, "User data atoms"), by their type: the ones its table lists, ©ART, ©alb, ©cmt
+    // and ©des, which its MP3 importer maps ID3v1 fields to, and ©too, which ffmpeg's muxer writes. Null for any other type.
+    public static string? UserDataText(string type) => type switch
+    {
+        "©ART" => "QuickTime Artist",
+        "©alb" => "QuickTime Album",
+        "©arg" => "QuickTime Arranger",
+        "©ark" => "QuickTime Arranger Keywords",
+        "©cmt" => "QuickTime Comment",
+        "©cok" => "QuickTime Composer Keywords",
+        "©com" => "QuickTime Composer",
+        "©cpy" => "QuickTime Copyright",
+        "©day" => "QuickTime Creation Date",
+        "©des" => "QuickTime Description",
+        "©dir" => "QuickTime Director",
+        "©ed1" or "©ed2" or "©ed3" or "©ed4" or "©ed5" or "©ed6" or "©ed7" or "©ed8" or "©ed9" => $"QuickTime Edit Date {type[3]}",
+        "©fmt" => "QuickTime Format",
+        "©inf" => "QuickTime Information",
+        "©isr" => "QuickTime ISRC",
+        "©lab" => "QuickTime Record Label",
+        "©lal" => "QuickTime Record Label URL",
+        "©mak" => "QuickTime Maker",
+        "©mal" => "QuickTime Maker URL",
+        "©nak" => "QuickTime Title Keywords",
+        "©nam" => "QuickTime Title",
+        "©pdk" => "QuickTime Producer Keywords",
+        "©phg" => "QuickTime Recording Copyright",
+        "©prd" => "QuickTime Producer",
+        "©prf" => "QuickTime Performers",
+        "©prk" => "QuickTime Performer Keywords",
+        "©prl" => "QuickTime Performer URL",
+        "©req" => "QuickTime Requirements",
+        "©snk" => "QuickTime Subtitle Keywords",
+        "©snm" => "QuickTime Subtitle",
+        "©src" => "QuickTime Source Credits",
+        "©swf" => "QuickTime Songwriter",
+        "©swk" => "QuickTime Songwriter Keywords",
+        "©swr" => "QuickTime Software",
+        "©too" => "QuickTime Encoding Tool",
+        "©wrt" => "QuickTime Writer",
+        _ => null,
+    };
+
+    // Macintosh language codes of QuickTime's table (QuickTime File Format, "Language code values").
+    public static string? MacintoshLanguage(uint code) => code switch
+    {
+        0 => "English",
+        1 => "French",
+        2 => "German",
+        3 => "Italian",
+        4 => "Dutch",
+        5 => "Swedish",
+        6 => "Spanish",
+        7 => "Danish",
+        8 => "Portuguese",
+        9 => "Norwegian",
+        10 => "Hebrew",
+        11 => "Japanese",
+        12 => "Arabic",
+        _ => null,
+    };
 }

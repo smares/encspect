@@ -1,0 +1,318 @@
+{
+ "description": "A QuickTime movie whose user data holds text atoms: a title in two languages and encodings (Macintosh Roman, UTF-8), an artist, an album of the unspecified Macintosh language, a UTF-16 description, a software atom (the writer), an unlisted atom that follows the text layout and one that does not, a comment whose second item states more bytes than the atom holds, a copyright with two bytes left over, and a window location. The track's user data holds a title.",
+ "length": 1612,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   20
+  ],
+  [
+   "moov",
+   20,
+   1001
+  ],
+  [
+   "moov/mvhd",
+   28,
+   108
+  ],
+  [
+   "moov/trak",
+   136,
+   566
+  ],
+  [
+   "moov/trak/tkhd",
+   144,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   236,
+   435
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   244,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   276,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   321,
+   350
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   329,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   345,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   353,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   369,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   381,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   389,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   405,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   441,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   495,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   519,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   547,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   647,
+   24
+  ],
+  [
+   "moov/trak/udta",
+   671,
+   31
+  ],
+  [
+   "moov/trak/udta/©nam",
+   679,
+   23
+  ],
+  [
+   "moov/udta",
+   702,
+   319
+  ],
+  [
+   "moov/udta/©nam",
+   710,
+   59
+  ],
+  [
+   "moov/udta/©ART",
+   769,
+   29
+  ],
+  [
+   "moov/udta/©alb",
+   798,
+   29
+  ],
+  [
+   "moov/udta/©day",
+   827,
+   16
+  ],
+  [
+   "moov/udta/©swr",
+   843,
+   26
+  ],
+  [
+   "moov/udta/©des",
+   869,
+   36
+  ],
+  [
+   "moov/udta/©xyz",
+   905,
+   30
+  ],
+  [
+   "moov/udta/©qqq",
+   935,
+   16
+  ],
+  [
+   "moov/udta/©cmt",
+   951,
+   24
+  ],
+  [
+   "moov/udta/©cpy",
+   975,
+   34
+  ],
+  [
+   "moov/udta/WLOC",
+   1009,
+   12
+  ],
+  [
+   "mdat",
+   1021,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true,
+   "writer": [
+    "hand-built 1.0",
+    "Low"
+   ]
+  }
+ ],
+ "units": [
+  [
+   1029,
+   6
+  ],
+  [
+   1035,
+   45
+  ],
+  [
+   1080,
+   42
+  ],
+  [
+   1122,
+   39
+  ],
+  [
+   1161,
+   36
+  ],
+  [
+   1197,
+   33
+  ],
+  [
+   1230,
+   30
+  ],
+  [
+   1260,
+   27
+  ],
+  [
+   1287,
+   24
+  ],
+  [
+   1311,
+   20
+  ],
+  [
+   1331,
+   17
+  ],
+  [
+   1348,
+   14
+  ],
+  [
+   1362,
+   11
+  ],
+  [
+   1373,
+   8
+  ],
+  [
+   1381,
+   46
+  ],
+  [
+   1427,
+   43
+  ],
+  [
+   1470,
+   40
+  ],
+  [
+   1510,
+   37
+  ],
+  [
+   1547,
+   34
+  ],
+  [
+   1581,
+   31
+  ]
+ ],
+ "fields": {
+  "MP4/moov/udta/QuickTime Title": "Café title",
+  "MP4/moov/udta/QuickTime Title/Text Item[0]/Language": "0 (English, Macintosh language code)",
+  "MP4/moov/udta/QuickTime Title/Text Item[1]/Language": "ger",
+  "MP4/moov/udta/QuickTime Title/Text Item[1]/Text": "Handgefertigter Titel über Café",
+  "MP4/moov/udta/QuickTime Artist": "Hand-built artist",
+  "MP4/moov/udta/QuickTime Album/Text Item/Language": "32767 (unspecified Macintosh language)",
+  "MP4/moov/udta/QuickTime Description": "Utf sixteen",
+  "MP4/moov/udta/QuickTime Software": "hand-built 1.0",
+  "MP4/moov/udta/©xyz": "Unlisted text atom",
+  "MP4/moov/trak/udta/QuickTime Title": "Track title"
+ },
+ "findings": [
+  [
+   "mp4.text-size-invalid",
+   "states 40 bytes, but 5 follow"
+  ],
+  [
+   "mp4.text-item-truncated",
+   "fewer than the 4 bytes"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}

@@ -160,6 +160,11 @@ TAG_FIELDS = {
 }
 
 
+# MP4's QuickTime user data text atoms of the movie (not of a track: MediaInfo files those with the stream), by the name the analyzer gives
+# the atom: ©nam, ©ART and ©alb (Multiple/File_Mpeg4.cpp, Metadata_Get, which moov_udta_xxxx uses for the udta atoms as well).
+UDTA_FIELDS = {"QuickTime Title": "Title", "QuickTime Artist": "Performer", "QuickTime Album": "Album"}
+
+
 def tag_values(report):
     """{field: [value of each tag that fills it]} for MediaInfo's Title, Track, Performer and Album.
     Several entries of one tag for a field are joined with " / ", as MediaInfo fills a field that
@@ -185,6 +190,10 @@ def tag_values(report):
                 values[field].append(value)
         for field, texts in values.items():
             found[field].append(" / ".join(texts))
+    for atom in (child(report["root"], "MP4", "moov", "udta") or {}).get("children", []):
+        field = UDTA_FIELDS.get(atom["name"])
+        if field is not None and atom.get("kind") == "Tag" and isinstance(atom.get("value"), str) and atom["value"]:
+            found[field].append(atom["value"])
     return found
 
 

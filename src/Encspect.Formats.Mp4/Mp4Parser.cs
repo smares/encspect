@@ -322,11 +322,14 @@ public sealed partial class Mp4Parser : IFormatParser
         return position;
     }
 
-    // An item list is the file's iTunes or QuickTime metadata, a tag of the container; every other
-    // box is named by its type.
-    private static BoxName Naming(State state, BoxHeader header) => header.Type == "ilst"
-        ? new(state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag, Explain.Box(header.Type), Topics.ItunesMetadata)
-        : new(header.Type, NodeKind.Detail, Explain.Box(header.Type), Explain.BoxTopic(header.Type));
+    // An item list is the file's iTunes or QuickTime metadata, a tag of the container, and so is each of the user data text atoms that
+    // QuickTime lists; every other box is named by its type.
+    private static BoxName Naming(State state, BoxHeader header) =>
+        header.Type == "ilst"
+            ? new(state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag, Explain.Box(header.Type), Topics.ItunesMetadata)
+            : state.ParentType == "udta" && BoxNames.UserDataText(header.Type) is { } text
+                ? new(text, NodeKind.Tag, Explain.UserDataText(header.Type), Topics.QuickTimeUserData)
+                : new(header.Type, NodeKind.Detail, Explain.Box(header.Type), Explain.BoxTopic(header.Type));
 
     // The box's node with its header fields, then its payload by type.
     private static Node ParseBox(State state, Node parent, BoxHeader header, int depth, long declared, PayloadParser? custom, BoxName name)

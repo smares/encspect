@@ -147,7 +147,7 @@ public sealed partial class Mp4Parser
                 FragmentBox(state, node, header, f);
                 return true;
             default:
-                if (header.Type.StartsWith('©') && node.Name == header.Type)
+                if (header.Type.StartsWith('©') && state.ParentType == "udta")
                 {
                     return QuickTimeText(state, node, header, f);
                 }
@@ -371,27 +371,5 @@ public sealed partial class Mp4Parser
             track.Edits = edits;
             track.EditListNode = node;
         }
-    }
-
-    // QuickTime's user data text: a 16-bit length, a language code, then the text.
-    private static bool QuickTimeText(State state, Node node, BoxHeader header, BoxFields f)
-    {
-        if (f.Remaining < 4)
-        {
-            return false;
-        }
-
-        int length = f.U16(node, "Text Length", Explain.TextLength, unit: "bytes");
-        f.U16(node, "Language", Explain.TextLanguage);
-        string text = Latin1OrUtf8(f.Bytes(node, "Text", Math.Min(length, f.Remaining), Explain.Text, b => Latin1OrUtf8(b)));
-        node.Value = text;
-        // ©swr is the "name and version number of the software (or hardware) that generated this movie" (QuickTime File Format, user data
-        // atoms), and no Apple specification defines ©too (ffmpeg writes its muxer version there): both are the writer's, unless the text is a libavcodec encoder ID, which names the encoder.
-        if (header.Type is "©swr" or "©too" && text.Length > 0)
-        {
-            state.Context.AddEncoderClaim(new EncoderClaim(text, state.Findings.Resolve(node), $"QuickTime {header.Type} atom", ClaimRoles.Of(ClaimRole.Writer, text)));
-        }
-
-        return true;
     }
 }
