@@ -1,0 +1,141 @@
+{
+ "description": "A Windows Media Audio stream whose Extended Content Description Object lists WMFSDKVersion and then, as its last attribute, WM/EncodingSettings with an ffmpeg muxer version, as ffmpeg's ASF muxer leaves a remux: the stamp names the writer.",
+ "format": "ASF",
+ "length": 1520,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   446
+  ],
+  [
+   "Data Object",
+   446,
+   1074
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   106
+  ],
+  [
+   "Extended Content Description Object",
+   240,
+   160
+  ],
+  [
+   "Header Extension Object",
+   400,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 28,
+   "tag": 353,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 100,
+   "bits": 16,
+   "codec_data": "008800000f0000000000"
+  }
+ ],
+ "packets": [
+  [
+   496,
+   512,
+   1
+  ],
+  [
+   1008,
+   512,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     527,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   100,
+   25,
+   [
+    [
+     1039,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1520,
+  "packets": 2,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 512,
+  "max_packet": 512,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "wma.frame-invalid",
+   "contains": "coefficients run past the end of the block"
+  },
+  {
+   "code": "wma.writer-claim-differs",
+   "contains": "WMFSDKVersion"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "the media objects are not Windows Media Audio superframes."
+ }
+}

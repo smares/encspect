@@ -52,11 +52,13 @@ internal static partial class WmaEncoder
             stream.Add(encoder);
         }
 
-        // Of claims of one confidence the first names the writer, and the claims are in file order. A muxer's own version goes first: ffmpeg's
-        // ASF muxer copies every attribute of the file it reads (asfdec_f.c, asfenc.c) and adds its WM/EncodingSettings after them, so a remux
-        // of a Windows Media file carries the earlier writer's WMFSDKVersion or MediaFoundationVersion before the stamp of the program that wrote this file.
-        // The copy stays as a claim that differs; a layout (medium) still outranks the stamp.
-        IEnumerable<EncoderClaim> ordered = context.EncoderClaims.OrderBy(c => c.Role == ClaimRole.Writer && ClaimRoles.IsMuxerVersion(c.Text) ? 0 : 1);
+        // Of claims of one confidence the first names the writer, and the claims are in file order. A muxer's own version goes first where it
+        // stands as ffmpeg's ASF muxer leaves it: ffmpeg copies every attribute of the file it reads (asfdec_f.c, asfenc.c) and writes its
+        // WM/EncodingSettings as the last of them (mux.c replaces "encoder" by removing it and appending it), so a remux of a Windows Media
+        // file carries the earlier writer's WMFSDKVersion or MediaFoundationVersion before the stamp of the program that wrote this file.
+        // A stamp with attributes after it was copied by software that wrote those, and keeps its place. The copy stays as a claim that
+        // differs; a layout (medium) still outranks the stamp.
+        IEnumerable<EncoderClaim> ordered = context.EncoderClaims.OrderBy(c => c.Role == ClaimRole.Writer && c.IsLastItem && ClaimRoles.IsMuxerVersion(c.Text) ? 0 : 1);
 
         // The writer's evidence lies in the container's header, not in the stream's bytes that every node here covers.
         Node? writer = WriterDetection.Detect(ordered, (name, value, description) => Cover(name, value, name == "Evidence" ? Explain.WriterEvidence : description),

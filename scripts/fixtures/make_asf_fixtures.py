@@ -332,6 +332,54 @@ fixture("length-field-short", "Packets of 256 bytes, the size every packet has, 
         [finding("asf.packet-length", "3 packets")])
 
 
+fixture("length-field-short-cut", "The file length-field-short cut 5 bytes into its third packet, inside the packet header: the missing packet has no payload and no padding to count, only the two whole packets' 56 bytes each.",
+        lambda: short_length_field_file()[:-256 + 5],
+        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 843")],
+        {"ffprobe": False, "reason": "the file is cut inside a packet on purpose."})
+
+
+def zero_length_field_file():
+    layout = m.Layout(packet_length=2, multiple=False)
+    packets = [m.packet([m.Payload(1, i + 1, b"\x10" * 100, 0, 100, i * 25)], 256, layout, declared_length=0) for i in range(3)]
+    return m.asf_file([pcm()], packets, 256, file_id=FILE_ID, play=1_000_000)
+
+
+fixture("length-field-zero", "Packets of 256 bytes, the size every packet has, that carry a packet length field of 0, which states a packet of no bytes (FFmpeg rejects it): the packets are read at the file's size.",
+        zero_length_field_file,
+        [finding("asf.packet-length", "3 packets")], {"ffprobe": False, "reason": "ffmpeg rejects a packet length of 0 (asfdec_f.c: invalid packet_length)."})
+
+
+def unaligned_offsets_file(variable):
+    packets = objects_in([1], 8, 150, 256)
+    override = (lambda size, n: m.file_properties(FILE_ID, size, 0, n, 2_000_000, 0, 0, 2, 128, 256, 0)) if variable else None
+    return m.asf_file(
+        [pcm()] + [m.index_parameters(1000, [(1, 1)])], packets, 256, file_id=FILE_ID, play=2_000_000, properties_override=override,
+        trailing=m.index_object(1000, [(1, 1)], [([0], [(0,), (100,), (512,)])]) + m.simple_index([(0, 1), (1, 1), (2, 1)]))
+
+
+fixture("index-offset-unaligned", "An Index Object with an entry whose offset (100) is not the start of a packet of the 256 bytes every packet has.",
+        lambda: unaligned_offsets_file(False),
+        [finding("asf.index-offset", "do not point to the start of a packet")])
+fixture("index-offset-variable-packets", "The same index in a file whose minimum packet size is 128 and maximum 256: the size of a packet is not known from the header, so the offset is not checked against packet starts.",
+        lambda: unaligned_offsets_file(True),
+        [finding("asf.packet-size", "minimum (128)")])
+
+
+def stamp_file(attributes):
+    codec = struct.pack("<IHI", 17 * 2048, 0x000F, 0)
+    stream = m.stream_properties(1, m.wave_format(0x0161, 2, 44100, 16000, 100, 16, codec))
+    packets = [m.packet([m.Payload(1, i + 1, b"\x11" * 100, 0, 100, i * 25)], 512, m.Layout(), send_time=i * 25) for i in range(2)]
+    return m.asf_file([stream, m.extended_content_description(attributes)], packets, 512, file_id=FILE_ID, play=1_000_000)
+
+
+WMA_NOISE = [finding("wma.frame-invalid", "coefficients run past the end of the block")]
+fixture("writer-stamp-last", "A Windows Media Audio stream whose Extended Content Description Object lists WMFSDKVersion and then, as its last attribute, WM/EncodingSettings with an ffmpeg muxer version, as ffmpeg's ASF muxer leaves a remux: the stamp names the writer.",
+        lambda: stamp_file([("WMFSDKVersion", 0, "12.0.26100.1"), ("WM/EncodingSettings", 0, "Lavf60.16.100")]),
+        WMA_NOISE + [finding("wma.writer-claim-differs", "WMFSDKVersion")], {"ffprobe": False, "reason": "the media objects are not Windows Media Audio superframes."})
+fixture("writer-stamp-not-last", "The same attributes with another attribute (WM/ToolName) after the ffmpeg muxer version, which other software added: the stamp keeps its place in file order, behind WMFSDKVersion.",
+        lambda: stamp_file([("WMFSDKVersion", 0, "12.0.26100.1"), ("WM/EncodingSettings", 0, "Lavf60.16.100"), ("WM/ToolName", 0, "Tagger 1.0")]),
+        WMA_NOISE + [finding("wma.writer-claim-differs", "Lavf60.16.100")] , {"ffprobe": False, "reason": "the media objects are not Windows Media Audio superframes."})
+
 def fragments_in_two_streams_file():
     codec = struct.pack("<IHI", 17 * 2048, 0x000F, 0)
 
@@ -513,6 +561,12 @@ fixture("protected-audio-and-video", "An encrypted Windows Media Audio stream an
         scheme("Microsoft Digital Rights Manager version 1") * 2)
 fixture("protected-advanced-no-records", "An Advanced Content Encryption Object with no content encryption record: it protects no stream, and a PCM stream stays clear.",
         protected([pcm(1)], extension=advanced([])), [finding("asf.no-content-encryption-record", "no content encryption record")], None, [])
+
+fixture("protected-advanced-no-object-records", "An Advanced Content Encryption Object whose only record lists no encrypted object records: it names no stream, so it protects none and a PCM stream stays clear.",
+        protected([pcm(1)], extension=advanced([(DRM_SYSTEM, 1, [], b"")])), [finding("asf.no-content-encryption-record", "name no stream")])
+fixture("protected-advanced-unknown-stream-only", "An Advanced Content Encryption Object whose only record names stream 5, which the file does not have: it protects no stream of the file.",
+        protected([pcm(1)], extension=advanced([(DRM_SYSTEM, 1, [(1, stream_number(5))], b"")])),
+        [finding("asf.no-content-encryption-record", "streams that the file does not have"), finding("asf.encrypted-object-unknown-stream", "stream 5")])
 
 
 def advanced_raw(body, streams=1):

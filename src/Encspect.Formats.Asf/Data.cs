@@ -303,9 +303,10 @@ public sealed partial class AsfParser
     {
         figures.PacketCount++;
         figures.PacketBytes += length;
-        // With a fixed packet size the bytes between the payloads and the next packet are padding whatever the
-        // length field says (asfdec_f.c adds min_pktsize - packet_length to the padding), as the Padding node shows.
-        int padding = state.PacketSizeIsFixed ? Math.Max(packet.ActualPadding, length - packet.PayloadsEnd) : packet.ActualPadding;
+        // The bytes of the packet after what was parsed are padding, whatever the length field says (asfdec_f.c adds
+        // min_pktsize - packet_length to the padding), as the Padding node shows: only the bytes the file has count, and
+        // a packet cut inside its header has none.
+        int padding = Math.Max(0, length - Math.Max(packet.PayloadsEnd, packet.HeaderLength));
         figures.PaddingBytes += padding;
         figures.Sizes[length] = figures.Sizes.GetValueOrDefault(length) + 1;
         if (packet.IsMultiple)

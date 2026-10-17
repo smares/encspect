@@ -254,6 +254,76 @@ public class AsfFindingTests
         Assert.Contains(report.Findings, f => f.Code == "asf.content-encrypted" && f.Message.Contains("every stream is taken to be encrypted", StringComparison.Ordinal));
     }
 
+    // A file cut inside a packet's header: the two whole packets have 56 bytes of padding each and the cut one none, whatever the file lacks.
+    [Fact]
+    public void PacketCutInsideItsHeaderHasNoPadding()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/length-field-short-cut.asf");
+        Node statistics = FindNode(report.Root, "Statistics")!;
+        Assert.Equal(112L, FindNode(statistics, "Padding Bytes")!.Value!.AsInteger());
+        Assert.Equal(65L, FindNode(statistics, "Packet Overhead")!.Value!.AsInteger());
+    }
+
+    // Padding is limited to the bytes the file has: a packet cut inside its payload counts none of the missing bytes.
+    [Fact]
+    public void TruncatedPacketCountsNoMissingPadding()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/truncated-data.asf");
+        Node statistics = FindNode(report.Root, "Statistics")!;
+        Assert.Equal(0L, FindNode(statistics, "Padding Bytes")!.Value!.AsInteger());
+        Assert.Equal(48L, FindNode(statistics, "Packet Overhead")!.Value!.AsInteger());
+    }
+
+    [Fact]
+    public void NoFixtureHasNegativePaddingOrOverhead()
+    {
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "asf"), "*.asf"))
+        {
+            Report report = Fixtures.AnalyzeMpeg("asf/" + Path.GetFileName(path));
+            Node? statistics = FindNode(report.Root, "Statistics");
+            foreach (string name in new[] { "Padding Bytes", "Packet Overhead" })
+            {
+                if (statistics is not null && FindNode(statistics, name) is { } figure)
+                {
+                    Assert.True(figure.Value!.AsInteger() >= 0, $"{Path.GetFileName(path)}: {name} is {figure.Value}.");
+                }
+            }
+        }
+    }
+
+    // A packet length field that is present and 0 states a packet of no bytes (FFmpeg rejects it): a finding, and the packet is read at the file's size.
+    [Fact]
+    public void PresentPacketLengthOfZeroIsAFinding()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/length-field-zero.asf");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "asf.packet-length");
+        Assert.Equal(3, finding.Count);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "asf.packet-truncated" or "asf.payload-overrun");
+        Assert.Equal(3, FindNode(report.Root, "Data Packets")!.Children.Count);
+    }
+
+    // Offsets of an index are compared with packet starts only when every packet has the same size.
+    [Theory]
+    [InlineData("asf/index-offset-unaligned.asf", true)]
+    [InlineData("asf/index-offset-variable-packets.asf", false)]
+    public void IndexOffsetsAreCheckedAgainstPacketStartsOnlyForAFixedPacketSize(string name, bool flagged)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.Equal(flagged, report.Findings.Any(f => f.Code == "asf.index-offset"));
+    }
+
+    // The summary of an Advanced Content Encryption Object says what its records protect in this file.
+    [Theory]
+    [InlineData("asf/protected-advanced-no-object-records.asf", "name no stream, so it protects none")]
+    [InlineData("asf/protected-advanced-unknown-stream-only.asf", "name only streams that the file does not have, so it protects none")]
+    public void RecordsThatProtectNoStreamDoNotSayTheFileIsProtected(string name, string text)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.All(report.Streams, s => Assert.False(s.IsProtected));
+        Assert.DoesNotContain(report.Findings, f => f.Code == "asf.content-encrypted");
+        Assert.Contains(report.Findings, f => f.Code == "asf.no-content-encryption-record" && f.Message.Contains(text, StringComparison.Ordinal));
+    }
+
     // A broadcast file (Data Object of size 0) runs to the end of the file, so a TAG at its end is not an ID3v1 tag
     // that cuts the last packet.
     [Fact]

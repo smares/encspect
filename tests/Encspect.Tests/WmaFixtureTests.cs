@@ -204,6 +204,20 @@ public class WmaFixtureTests
         Assert.True(copiedAt > 0 && stampAt > copiedAt, "the muxer's stamp follows the attribute it copied");
     }
 
+    // The muxer's stamp goes first only where ffmpeg's ASF muxer leaves it, as the last attribute (mux.c appends "encoder", asfenc.c writes the
+    // dictionary in order). With an attribute after it, which other software added, file order decides and the stamp is a claim that differs.
+    [Theory]
+    [InlineData("asf/writer-stamp-last.asf", "FFmpeg (Lavf60.16.100)")]
+    [InlineData("asf/writer-stamp-not-last.asf", "Windows Media Format SDK 12.0.26100.1")]
+    public void AMuxerStampOutranksCopiedClaimsOnlyAsTheLastAttribute(string name, string writer)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(writer, stream.Writer);
+        Assert.Equal(Confidence.Low, stream.WriterConfidence);
+        Assert.Contains(report.Findings, f => f.Code == "wma.writer-claim-differs");
+    }
+
     // The statements of the wma-bit-reservoir article about the Windows Media Audio 9.2 files: which have bits after a frame that spans
     // superframes up to the next one's bit offset, zero (wma.frame-stuffing) or not (wma.frame-filler). The article names the exceptions.
     [Theory]

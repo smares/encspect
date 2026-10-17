@@ -241,6 +241,9 @@ internal sealed class State(ParseContext context, ByteReader reader)
     // Signature Object protects nothing.
     public List<ProtectionObject> Protections { get; } = [];
 
+    // The Advanced Content Encryption Objects that have records, summarized by SummarizeAdvancedEncryption once the streams are known.
+    public List<AdvancedEncryption> AdvancedEncryptions { get; } = [];
+
     public Node? TagNode { get; set; }
 
     public StreamEntry? Stream(int number) => StreamsByNumber.GetValueOrDefault(number);
@@ -248,6 +251,8 @@ internal sealed class State(ParseContext context, ByteReader reader)
 
 // What an encryption object (or one record of the Advanced Content Encryption Object) says: the scheme, the object's node, the names of the
 // systems it lists and the streams it covers (IsWholeFile for the objects that name none).
+internal sealed record AdvancedEncryption(Node Node, IReadOnlyList<ProtectionObject> Records, bool IsRead);
+
 internal sealed record ProtectionObject(string Scheme, Node Node, IReadOnlyList<string> Systems, IReadOnlyList<(int Number, Node Node)> Streams, bool IsWholeFile = false)
 {
     public bool Covers(int stream) => IsWholeFile || Streams.Any(s => s.Number == 0 || s.Number == stream);

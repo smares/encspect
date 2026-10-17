@@ -1251,15 +1251,43 @@ public sealed partial class AsfParser
         }
 
         var added = state.Protections.Skip(recordsBefore).ToList();
-        string covered = !isRead
-            ? "the object could not be read in full, so every stream is taken to be encrypted and is reported as the file holds it."
-            : added.Any(p => p.IsWholeFile) ? "a record names its objects in a way that is not a stream number, so every stream is taken to be encrypted and is reported as the file holds it."
-            : added.Any(p => p.Streams.Count > 0) ? "the streams that its records name (0 names them all) are encrypted and are reported as the file holds them."
-            : "no record names a stream, so the object protects none.";
-        state.Findings.AddNow(Severity.Info, added.Count > 0 ? "asf.content-encrypted" : "asf.no-content-encryption-record",
-            added.Count > 0
-                ? $"The file is protected by Windows Media DRM for network devices; {covered}"
-                : "The Advanced Content Encryption Object holds no content encryption record, so it protects no stream.", node);
+        if (added.Count == 0)
+        {
+            state.Findings.AddNow(Severity.Info, "asf.no-content-encryption-record", "The Advanced Content Encryption Object holds no content encryption record, so it protects no stream.", node);
+            return;
+        }
+
+        // Which streams the records cover is known once the header is read: the finding is made by SummarizeAdvancedEncryption.
+        state.AdvancedEncryptions.Add(new AdvancedEncryption(node, added, isRead));
+    }
+
+    // The finding for an Advanced Content Encryption Object that has records, worded by what they protect in this file.
+    private static void SummarizeAdvancedEncryption(State state)
+    {
+        foreach ((Node node, IReadOnlyList<ProtectionObject> added, bool isRead) in state.AdvancedEncryptions)
+        {
+            const string System = "Windows Media DRM for network devices";
+            if (!isRead)
+            {
+                state.Findings.AddNow(Severity.Info, "asf.content-encrypted", $"The file is protected by {System}; the object could not be read in full, so every stream is taken to be encrypted and is reported as the file holds it.", node);
+            }
+            else if (added.Any(p => p.IsWholeFile))
+            {
+                state.Findings.AddNow(Severity.Info, "asf.content-encrypted", $"The file is protected by {System}; a record names its objects in a way that is not a stream number, so every stream is taken to be encrypted and is reported as the file holds it.", node);
+            }
+            else if (state.Streams.Any(s => added.Any(p => p.Covers(s.Number))))
+            {
+                state.Findings.AddNow(Severity.Info, "asf.content-encrypted", $"The file is protected by {System}; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them.", node);
+            }
+            else if (added.Any(p => p.Streams.Count > 0))
+            {
+                state.Findings.AddNow(Severity.Info, "asf.no-content-encryption-record", $"The records of the Advanced Content Encryption Object ({System}) name only streams that the file does not have, so it protects none.", node);
+            }
+            else
+            {
+                state.Findings.AddNow(Severity.Info, "asf.no-content-encryption-record", $"The records of the Advanced Content Encryption Object ({System}) name no stream, so it protects none.", node);
+            }
+        }
     }
 
     // ---- Stream Bitrate Properties Object (3.12) ----

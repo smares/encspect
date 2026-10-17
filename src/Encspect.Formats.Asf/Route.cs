@@ -124,6 +124,7 @@ public sealed partial class AsfParser
     private static void Route(State state)
     {
         CheckEncryptedStreams(state);
+        SummarizeAdvancedEncryption(state);
         if (state.DataNode is null || state.Figures is null)
         {
             // Without a Data Object there is nothing to read, but a protected stream is still reported as such.

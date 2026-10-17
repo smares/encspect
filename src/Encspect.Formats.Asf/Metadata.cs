@@ -78,7 +78,7 @@ public sealed partial class AsfParser
                     break;
                 }
 
-                ReadDescriptor(state, f, node, DescriptorKind.Extended);
+                ReadDescriptor(state, f, node, DescriptorKind.Extended, i == count - 1);
             }
         });
     }
@@ -100,7 +100,7 @@ public sealed partial class AsfParser
                     break;
                 }
 
-                ReadDescriptor(state, f, node, library ? DescriptorKind.Library : DescriptorKind.Metadata);
+                ReadDescriptor(state, f, node, library ? DescriptorKind.Library : DescriptorKind.Metadata, false);
             }
         });
     }
@@ -117,7 +117,7 @@ public sealed partial class AsfParser
     // 32-bit boolean; the Metadata and Metadata Library records have a stream number, a 32-bit value
     // length and a 16-bit boolean before the name, and the library a language index and the GUID
     // type).
-    private static void ReadDescriptor(State state, Fields f, Node tag, DescriptorKind kind)
+    private static void ReadDescriptor(State state, Fields f, Node tag, DescriptorKind kind, bool isLast)
     {
         long at = f.Position;
         var item = new Node("Descriptor", at, 0);
@@ -206,7 +206,8 @@ public sealed partial class AsfParser
             {
                 state.ClaimCount++;
                 state.Context.AddEncoderClaim(new EncoderClaim(text, valueNode, $"{tag.Name} descriptor {name}",
-                    name is "WMFSDKVersion" or "MediaFoundationVersion" ? ClaimRole.Writer : ClaimRoles.Of(ClaimRole.Writer, text)));
+                    name is "WMFSDKVersion" or "MediaFoundationVersion" ? ClaimRole.Writer : ClaimRoles.Of(ClaimRole.Writer, text))
+                { IsLastItem = isLast });
             }
         }
 
