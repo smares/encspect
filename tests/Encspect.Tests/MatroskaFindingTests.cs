@@ -118,6 +118,34 @@ public class MatroskaFindingTests
         }
     }
 
+    // Bytes in the last block that read as an APEv2 footer, with a tag size that reaches back to an element's start, are no tag: the evidence is a
+    // signature and a size, and against it stand elements that run through known elements to the end of the data, or a Top-Level Element at that start.
+    [Theory]
+    [InlineData("matroska/live-false-ape-footer-block.mka")]
+    [InlineData("matroska/live-false-ape-footer-info.mka")]
+    public void AFalseApeFooterInTheLastBlockKeepsTheRecording(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        Assert.Equal(["Matroska"], report.Root.Children.Select(c => c.Name));
+        Assert.Single(report.Findings, f => f.Code == "tag.near-miss");
+        Assert.Equal(0.0735, report.Streams.Single().Duration, 4);
+    }
+
+    // The footer announces a header (flag bit 31) that is not there: the tag starts at its items, as the APE parser has it, and the recording is read to there.
+    [Fact]
+    public void AnApeFooterThatAnnouncesAMissingHeaderStartsTheTagAtItsItems()
+    {
+        byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "matroska", "live-ape-footer-only.mka"));
+        byte[] data = (byte[])original.Clone();
+        BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(data.Length - 32 + 20), 0x80000000);
+
+        Report report = Analyzer.CreateDefault().Analyze("live.mka", new MemoryStream(data));
+
+        Assert.Equal(["Matroska", "APE"], report.Root.Children.Select(c => c.Name));
+        Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.element-truncated" or "parse.failed");
+    }
+
     // The Tags element is the file's own tags: the summary lists it and the tags filter hides it, as for MP4's item list.
     [Fact]
     public void TheTagsElementIsATagOfTheFile()

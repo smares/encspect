@@ -1391,6 +1391,34 @@ def _():
     return recording + item + footer
 
 
+def false_footer(target):
+    """A live recording whose last block's payload ends in an APEv2 footer (one item's worth of size, flags 0) whose tag size reaches back to the
+    start of the last block or of the Segment's first child (Info): the items it would hold are the recording's elements."""
+    last = simple_block(1, 100, opus_packet(9) + bytes(40) + bytes(32), key=True)
+    clusters = [cluster(0, *blocks(count=3), last, unknown=True)]
+    seg = segment(info(), tracks(opus_track()), *clusters, unknown=True)
+    data = bytearray(build([ebml_header(), seg]))
+    start = last.offset if target == "block" else seg.children[0].offset
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, len(data) - 32 - start + 32, 1, 0) + bytes(8)
+    data[-32:] = footer
+    return bytes(data)
+
+
+@fixture("live-false-ape-footer-block", "A live recording whose last block's payload ends in bytes that read as an APEv2 footer whose tag size reaches back to the start of that "
+         "block: the tag would be the block, but the elements from there run through known elements to the end of the data and the \"items\" are no items, so the "
+         "recording keeps its bytes and the candidate is a near miss.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
+def _():
+    return false_footer("block")
+
+
+@fixture("live-false-ape-footer-info", "As live-false-ape-footer-block with a tag size that reaches back to the Segment's first child (Info): a Top-Level Element starts there, "
+         "so the Segment keeps its Info, Tracks and Cluster.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
+def _():
+    return false_footer("info")
+
+
 @fixture("truncated-seek-cues", "A file cut at the end, right after the last Cluster, whose SeekHead names the Cues past the cut: the position lies inside the Segment's declared "
          "size, so the truncation is the finding and the Seek entry is not.", findings=[("matroska.element-truncated", "The Segment states")], streams=[OPUS], valid=False)
 def _():
