@@ -24,9 +24,20 @@ public sealed partial class Mp4Parser : IFormatParser
     // with the fields and the codec's nodes under the deepest box.
     private const int MaxBoxDepth = 40;
 
-    // The boxes read in all: each takes a node with its header fields, so a file of millions of tiny boxes would otherwise cost the memory of
-    // its nodes many times over. The boxes from the one that passes the limit on are not read, with a finding.
-    internal const int MaxBoxes = 100_000;
+    // The nodes of the tree in all, the boxes' and their fields' and entries'. A box that starts past the budget is still read for what the
+    // file's tracks, samples, fragments and protection need, into the compact records of the parser, but makes no node of the tree: the rest of the
+    // file is shown as one node with a finding. A valid file is read in full however many fragments it has.
+    internal const int MaxNodes = 250_000;
+
+    private readonly int _maxFragmentSamples;
+
+    public Mp4Parser()
+        : this(MaxFragmentSamples)
+    {
+    }
+
+    // For the tests, which cannot write the millions of samples the cap is set for.
+    internal Mp4Parser(int maxFragmentSamples) => _maxFragmentSamples = maxFragmentSamples;
 
     public string Name => "MP4";
 
@@ -98,7 +109,7 @@ public sealed partial class Mp4Parser : IFormatParser
         ByteReader window = context.Reader;
         List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
         ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
-        ParseBoxes(context, reader);
+        ParseBoxes(context, reader, _maxFragmentSamples);
         long position = reader.End;
         foreach (Node? tag in tags.Append<Node?>(null))
         {
@@ -114,9 +125,9 @@ public sealed partial class Mp4Parser : IFormatParser
         }
     }
 
-    private static void ParseBoxes(ParseContext context, ByteReader reader)
+    private static void ParseBoxes(ParseContext context, ByteReader reader, int maxFragmentSamples)
     {
-        var state = new State(context, reader) { SampleBytesLeft = reader.Length };
+        var state = new State(context, reader) { SampleBytesLeft = reader.Length, MaxFragmentSamples = maxFragmentSamples };
         Node file = context.Root.Add(new Node("MP4", reader.Start, reader.Length) { Description = Explain.File, Topic = Topics.IsoBaseMediaFormat });
         state.File = file;
         long end = ReadChildren(state, file, reader.Start, reader.End, 0, topLevel: true);
@@ -285,20 +296,6 @@ public sealed partial class Mp4Parser : IFormatParser
                 return end;
             }
 
-            if (state.Boxes >= MaxBoxes)
-            {
-                Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
-                if (!state.IsBoxLimitReached)
-                {
-                    state.IsBoxLimitReached = true;
-                    state.Findings.AddNow(Severity.Warning, "mp4.too-many-boxes",
-                        $"The file holds more than {MaxBoxes} boxes; the boxes from the {header.Type} box at 0x{position:X} on are not read.", rest);
-                }
-
-                return end;
-            }
-
-            state.Boxes++;
             BoxName name = naming?.Invoke(header) ?? Naming(state, header);
             Node node = ParseBox(state, parent, header with { Size = boxEnd - position }, depth, header.Size, custom, name);
             if (header.IsToEnd && !topLevel)
@@ -335,7 +332,78 @@ public sealed partial class Mp4Parser : IFormatParser
     private static Node ParseBox(State state, Node parent, BoxHeader header, int depth, long declared, PayloadParser? custom, BoxName name)
     {
         var node = new Node(name.Name, header.Offset, header.Size, BoxNames.Describe(header.Type)) { Kind = name.Kind, Description = name.Description, Topic = name.Topic };
-        parent.Add(node);
+        bool wasDetaching = state.Findings.IsDetaching;
+        bool isDetached = wasDetaching || state.Nodes >= MaxNodes;
+        if (!isDetached)
+        {
+            parent.Add(node);
+        }
+        else if (!wasDetaching)
+        {
+            ShowNotShown(state, parent, header);
+        }
+
+        if (isDetached)
+        {
+            state.DetachedBoxes++;
+            state.Findings.IsDetaching = true;
+        }
+
+        try
+        {
+            ReadBox(state, node, header, depth, declared, custom);
+        }
+        finally
+        {
+            state.Findings.IsDetaching = wasDetaching;
+        }
+
+        if (isDetached)
+        {
+            state.Findings.MarkDetached(node);
+        }
+        else
+        {
+            state.Nodes += CountOwn(node);
+        }
+
+        return node;
+    }
+
+    // The one node that stands for the boxes of a parent that are read and not shown, once for each parent, and the finding once.
+    private static void ShowNotShown(State state, Node parent, BoxHeader header)
+    {
+        if (parent.Children.Count > 0 && parent.Children[^1].Name == "Boxes Not Shown")
+        {
+            return;
+        }
+
+        Node note = parent.Add(new Node("Boxes Not Shown", header.Offset, Math.Max(0, parent.End - header.Offset), "read, not shown") { Description = Explain.BoxesNotShown });
+        if (state.Findings.Anchor is null)
+        {
+            state.Findings.Anchor = note;
+            state.Findings.AddNow(Severity.Warning, "mp4.node-limit",
+                $"The tree holds more than {MaxNodes} nodes; the boxes from the {header.Type} box at 0x{header.Offset:X} on are read for the tracks, samples and protection they describe, but are not shown as nodes, and the checks of their children are not made.", note);
+        }
+    }
+
+    // The nodes a box holds besides the boxes inside it, which count when they are read.
+    private static int CountOwn(Node node)
+    {
+        int count = 1;
+        foreach (Node child in node.Children)
+        {
+            if (!(child.Children.Count >= 2 && child.Children[0].Name == "Size" && child.Children[1].Name == "Type"))
+            {
+                count += CountOwn(child);
+            }
+        }
+
+        return count;
+    }
+
+    private static Node ReadBox(State state, Node node, BoxHeader header, int depth, long declared, PayloadParser? custom)
+    {
         long position = header.Offset;
         node.Add(new Node("Size", position, 4, header.IsToEnd ? "0 (to the end of the file)" : header.IsLarge ? "1 (a 64-bit size follows)" : NodeValue.Integer(declared, "bytes")) { Description = Explain.Size });
         node.Add(new Node("Type", position + 4, 4, header.Type) { Description = Explain.Type });
@@ -433,6 +501,7 @@ public sealed partial class Mp4Parser : IFormatParser
         FragmentTrack? outerFragment = state.Fragment;
         (long Offset, Node Node)? outerMoof = state.Moof;
         bool outerIgnored = state.IsMovieIgnored;
+        int detachedBefore = state.DetachedBoxes;
         FragmentTrack? fragment = null;
         if (header.Type == "trak")
         {
@@ -502,7 +571,11 @@ public sealed partial class Mp4Parser : IFormatParser
 
         ReadChildren(state, node, f.Position, header.End, depth + 1);
         state.InSinf = outerSinf;
-        CheckChildren(state, node, header.Type);
+        if (state.DetachedBoxes == detachedBefore)
+        {
+            CheckChildren(state, node, header.Type);
+        }
+
         if (header.Type is "trak" or "moov")
         {
             state.Track = outerTrack;

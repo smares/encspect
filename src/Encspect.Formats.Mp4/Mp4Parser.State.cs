@@ -33,10 +33,11 @@ public sealed partial class Mp4Parser
         // and not routed.
         public bool IsMovieIgnored { get; set; }
 
-        // The boxes read so far, against MaxBoxes, and whether the limit stopped the reading.
-        public int Boxes { get; set; }
+        // The nodes of the tree so far, against MaxNodes, and how many boxes were read and not made into nodes of it (the boxes inside one are
+        // not either), so that the checks that look at a box's children can tell that some are missing.
+        public int Nodes { get; set; }
 
-        public bool IsBoxLimitReached { get; set; }
+        public int DetachedBoxes { get; set; }
 
         // What the file has left to place samples in, in bytes: samples of a valid file do not overlap, so they cannot add up to more than the
         // file holds. Fragments draw on it as they are read, and a track's sample tables when the track is routed.
@@ -44,6 +45,8 @@ public sealed partial class Mp4Parser
 
         // The samples all track fragments of the file have stored, against MaxFragmentSamples.
         public int FragmentSampleCount { get; set; }
+
+        public int MaxFragmentSamples { get; init; }
 
         // The mdat boxes' ranges sorted by start, once reading ends, for the lookup of the box a sample lies in.
         public (long Start, long End, Node Node)[] MdatIndex { get; set; } = [];
@@ -176,6 +179,13 @@ public sealed partial class Mp4Parser
 
         public ChunkedList<FragmentSample> FragmentSamples { get; } = new();
 
+        // What the fragments of the track hold past the cap on kept samples: counted for the stream's figures, never kept.
+        public long UnkeptSamples { get; set; }
+
+        public long UnkeptBytes { get; set; }
+
+        public ulong UnkeptDuration { get; set; }
+
         // The fragment samples of no bytes, counted and not stored.
         public long EmptyFragmentSamples { get; set; }
 
@@ -267,6 +277,8 @@ public sealed partial class Mp4Parser
 
     private readonly record struct FragmentSample(long Offset, int Size);
 
+    private sealed record FragmentRun(long? DataOffset, uint Count, List<uint>? Sizes, List<uint>? Durations, Node Node);
+
     private sealed record TrackDefaults(uint Description, uint Duration, uint Size, uint Flags);
 
     // A track fragment as its boxes are read, and the moof it belongs to.
@@ -297,8 +309,10 @@ public sealed partial class Mp4Parser
 
         public uint? DefaultSize { get; set; }
 
-        // Each run's data offset, sample count, and the samples' sizes where the run states them.
-        public List<(long? DataOffset, uint Count, List<uint>? Sizes, Node Node)> Runs { get; } = [];
+        public uint? DefaultDuration { get; set; }
+
+        // Each run's data offset, sample count, and the samples' sizes and durations where the run states them.
+        public List<FragmentRun> Runs { get; } = [];
     }
 
     // iTunSMPB: the encoder delay, padding and the samples between them, in the hexadecimal words

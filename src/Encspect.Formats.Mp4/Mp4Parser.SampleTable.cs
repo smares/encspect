@@ -54,10 +54,11 @@ public sealed partial class Mp4Parser
     {
         int version = FullBox(node, f).Version;
         uint count = f.U32(node, "Entries", Explain.SampleEntryCount);
+        int detachedBefore = state.DetachedBoxes;
         ReadChildren(state, node, f.Position, header.End, depth + 1, custom: (s, n, h, fields, d) => SampleEntryBox(s, n, h, fields, d, version),
             naming: h => new BoxName(h.Type, NodeKind.Detail, Explain.SampleEntry(h.Type), Topics.SampleTables));
         int read = node.Children.Count(c => c.Children.Any(k => k.Name == "Data Reference Index"));
-        if (read != count)
+        if (read != count && state.DetachedBoxes == detachedBefore)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-description-count",
                 $"The stsd box at 0x{node.Offset:X} declares {count} sample descriptions and holds {read}.", node);
@@ -529,8 +530,24 @@ public sealed partial class Mp4Parser
     // wherever the box lies, is taken to say that the track's samples are protected.
     private static void SampleGroupDescription(State state, Node node, BoxFields f)
     {
+        // A box that ends before its grouping type, or inside any field of a seig box, has descriptions that cannot be read, which is taken to protect.
+        bool mayBeSeig = true;
+        try
+        {
+            SampleGroupDescriptionFields(state, node, f, grouping => mayBeSeig = grouping == "seig");
+        }
+        catch (EndOfStreamException) when (mayBeSeig)
+        {
+            MarkProtecting(state);
+            throw;
+        }
+    }
+
+    private static void SampleGroupDescriptionFields(State state, Node node, BoxFields f, Action<string> groupingRead)
+    {
         int version = FullBox(node, f).Version;
         string grouping = f.FourCc(node, "Grouping Type", Explain.GroupingType);
+        groupingRead(grouping);
         uint defaultLength = version >= 1 ? f.U32(node, "Default Length", Explain.DefaultLength, unit: "bytes") : 0;
         if (version >= 2)
         {
@@ -550,73 +567,64 @@ public sealed partial class Mp4Parser
 
         long moreStart = long.MaxValue;
         uint read = 0;
-        try
+        for (uint i = 0; i < count && f.Remaining > 0; i++)
         {
-            for (uint i = 0; i < count && f.Remaining > 0; i++)
+            if (i == MaxListedEntries)
             {
-                if (i == MaxListedEntries)
+                moreStart = f.Position;
+            }
+
+            read++;
+            long length = version >= 1 ? (defaultLength != 0 ? defaultLength : (i < MaxListedEntries ? f.U32(node, "Description Length", Explain.DescriptionLength, unit: "bytes") : (long)f.Take(4))) : 0;
+            long at = f.Position;
+            if (i >= MaxListedEntries)
+            {
+                // Past the entries shown, the descriptions are still read for whether they protect.
+                if (i % 4096 == 0)
                 {
-                    moreStart = f.Position;
+                    state.Context.CancellationToken.ThrowIfCancellationRequested();
                 }
 
-                read++;
-                long length = version >= 1 ? (defaultLength != 0 ? defaultLength : (i < MaxListedEntries ? f.U32(node, "Description Length", Explain.DescriptionLength, unit: "bytes") : (long)f.Take(4))) : 0;
-                long at = f.Position;
-                if (i >= MaxListedEntries)
+                if (!isSeig || !ScanEncryptionGroupEntry(state, f, length, version))
                 {
-                    // Past the entries shown, the descriptions are still read for whether they protect.
-                    if (i % 4096 == 0)
-                    {
-                        state.Context.CancellationToken.ThrowIfCancellationRequested();
-                    }
-
-                    if (!isSeig || !ScanEncryptionGroupEntry(state, f, length, version))
-                    {
-                        break;
-                    }
-
-                    continue;
-                }
-
-                if (grouping is "roll" or "prol" && (length == 2 || version == 0))
-                {
-                    int distance = (short)(ushort)f.Take(2);
-                    var entry = new Node("Entry", at, 2, NodeValue.Integer(distance, "samples")) { Description = Explain.RollEntry };
-                    entry.Add(new Node("Roll Distance", at, 2, NodeValue.Integer(distance, "samples")) { Description = Explain.RollDistance });
-                    node.Add(entry);
-                    if (state.ParentType == "stbl")
-                    {
-                        state.Track?.Rolls.Add((grouping, distance, entry));
-                    }
-                }
-                else if (isSeig && (length > 0 || version == 0))
-                {
-                    // Without a length (version 0) a seig entry sizes itself.
-                    long size = length > 0 ? Math.Min(length, f.Remaining) : SeigEntryLength(f);
-                    var entry = new Node("Entry", at, size) { Description = Explain.SampleEncryptionGroupEntry, Topic = Topics.CommonEncryption };
-                    SampleEncryptionGroupEntry(state, entry, f, size);
-                    node.Add(entry);
-                }
-                else if (length > 0)
-                {
-                    f.Bytes(node, "Entry", Math.Min(length, f.Remaining), Explain.GroupDescription);
-                }
-                else
-                {
-                    if (isSeig)
-                    {
-                        MarkProtecting(state);
-                    }
-
                     break;
                 }
+
+                continue;
             }
-        }
-        catch (EndOfStreamException) when (isSeig)
-        {
-            // A description the box ends in cannot be read, which is taken to protect.
-            MarkProtecting(state);
-            throw;
+
+            if (grouping is "roll" or "prol" && (length == 2 || version == 0))
+            {
+                int distance = (short)(ushort)f.Take(2);
+                var entry = new Node("Entry", at, 2, NodeValue.Integer(distance, "samples")) { Description = Explain.RollEntry };
+                entry.Add(new Node("Roll Distance", at, 2, NodeValue.Integer(distance, "samples")) { Description = Explain.RollDistance });
+                node.Add(entry);
+                if (state.ParentType == "stbl")
+                {
+                    state.Track?.Rolls.Add((grouping, distance, entry));
+                }
+            }
+            else if (isSeig && (length > 0 || version == 0))
+            {
+                // Without a length (version 0) a seig entry sizes itself.
+                long size = length > 0 ? Math.Min(length, f.Remaining) : SeigEntryLength(f);
+                var entry = new Node("Entry", at, size) { Description = Explain.SampleEncryptionGroupEntry, Topic = Topics.CommonEncryption };
+                SampleEncryptionGroupEntry(state, entry, f, size);
+                node.Add(entry);
+            }
+            else if (length > 0)
+            {
+                f.Bytes(node, "Entry", Math.Min(length, f.Remaining), Explain.GroupDescription);
+            }
+            else
+            {
+                if (isSeig)
+                {
+                    MarkProtecting(state);
+                }
+
+                break;
+            }
         }
 
         if (isSeig && read < count)

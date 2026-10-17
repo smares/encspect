@@ -88,7 +88,8 @@ public sealed partial class Mp4Parser
         // file's MP4 node, where it may span several mdat boxes.
         long start = ranges[0].Offset;
         long end = ranges[^1].End;
-        Node parent = FindMdat(state, start, end) ?? state.File;
+        Node? holder = FindMdat(state, start, end);
+        Node parent = holder is not null && !state.Findings.IsDetached(holder) ? holder : state.File;
         long count = SampleCount(track);
         var samples = new Node($"Track {track.Id?.ToString(CultureInfo.InvariantCulture) ?? "?"} Samples", start, end - start, NodeValue.Integer(count, "samples", "sample"))
         {
@@ -143,8 +144,34 @@ public sealed partial class Mp4Parser
         List<StreamInfo> made = [.. state.Context.Streams.Skip(streams)];
         if (made.Count == 1)
         {
-            state.Context.UpdateStream(made[0], made[0] with { PlaybackGroup = 1 });
+            state.Context.UpdateStream(made[0], WithUnkept(track, made[0]) with { PlaybackGroup = 1 });
         }
+        else if (made.Count > 1)
+        {
+            foreach (StreamInfo stream in made)
+            {
+                state.Context.UpdateStream(stream, WithUnkept(track, stream));
+            }
+        }
+    }
+
+    // The fragment samples past the cap on kept ones were never handed to the codec: their duration and bytes (from the runs' sizes and durations) are
+    // added to the stream's figures.
+    private static StreamInfo WithUnkept(Track track, StreamInfo stream)
+    {
+        if (track.UnkeptDuration == 0 || track.Timescale == 0)
+        {
+            return stream;
+        }
+
+        double extra = track.UnkeptDuration / (double)track.Timescale;
+        double duration = stream.Duration + extra;
+        return stream with
+        {
+            Duration = duration,
+            Samples = stream.Samples + (long)Math.Round(extra * stream.SampleRate),
+            AverageBitrate = stream.AverageBitrate is { } rate && duration > 0 ? ((rate * 1000 * stream.Duration) + (track.UnkeptBytes * 8.0)) / duration / 1000 : stream.AverageBitrate,
+        };
     }
 
     // A protected track tells the reader so: its ciphertext is not read, or the scheme covers samples that are in the clear.
@@ -275,7 +302,7 @@ public sealed partial class Mp4Parser
     }
 
     private static long SampleCount(Track track) =>
-        ((long?)track.Sizes?.Length ?? (track.SampleSize != 0 ? track.SampleCount : 0L)) + track.FragmentSamples.Count + track.EmptyFragmentSamples;
+        ((long?)track.Sizes?.Length ?? (track.SampleSize != 0 ? track.SampleCount : 0L)) + track.FragmentSamples.Count + track.EmptyFragmentSamples + track.UnkeptSamples;
 
     // The mdat box that holds all of [start, end), by binary search over the boxes sorted by start; mdat boxes do not overlap, so the one that
     // starts last at or before start is the only candidate.

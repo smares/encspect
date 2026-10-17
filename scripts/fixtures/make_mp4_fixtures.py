@@ -770,6 +770,12 @@ def structure():
         "second-moov-with-track", "A second moov box after mdat, with a track over the same samples: players read the first moov box, so the second one's track is shown and not analyzed.",
         data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10), [["mp4.duplicate-box", "second moov box"]]))
 
+    # A moov box that is not the movie, with another timescale, before the real one: it sets none of the movie's figures.
+    data, records, offsets = movie([track], before=[box("mfra", b"", box("moov", b"", mvhd(1, 0)))])
+    out.append(hand_built(
+        "moov-in-mfra-before-moov", "An mfra box before the movie, holding a moov box whose mvhd has a timescale of 1: it is shown and reported, and the movie is read in the real moov box's timescale.",
+        data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10), [["mp4.box-misplaced", "lies in a mfra box"]]))
+
     track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), before_mdia=[udta(ilst_meta(text_item(b"\xa9nam", "Metadata before mdia")))])
     data, records, offsets = movie([track])
     out.append(hand_built(
@@ -784,7 +790,7 @@ def structure():
         "edit-list-beyond-unlisted", "An edit list of 1,001 entries, the first 1,000 empty edits and the last one playing a second of a media that lasts 0.46 s: the last edit is not listed, so the finding points to the box that counts the entries past 1,000.",
         data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10),
         [["mp4.edit-list-empty-edit", "empty edit"], ["mp4.edit-beyond-media", "past the media's 20480"]],
-        fields={"MP4/moov/trak/edts/elst/More Entries": "1 entries"}))
+        fields={"MP4/moov/trak/edts/elst/More Entries": "1 entry"}))
 
     track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), extra=[])
     data, records, offsets = movie([track], moov_extra=[udta(ilst_meta(item(b"\xa9too", data_atom(0, b"fdkaac 1.0.0"))))])

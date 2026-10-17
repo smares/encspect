@@ -28,6 +28,8 @@ internal static class Explain
 
     public const string UserDataTerminator = "The 32-bit zero that QuickTime optionally writes after the last atom of a user data list (QuickTime File Format, \"User data list\").";
 
+    public const string BoxesNotShown = "The rest of the boxes of the parent: the tree is over its node budget, so they are read for the tracks, samples and protection they describe and are not shown as nodes.";
+
     public const string UnusedBytes = "Bytes inside a box that are too few for a box header or that a damaged size left over; they are not read as boxes.";
     public const string Payload = "The box's contents, not read because the box nests deeper than the analyzer follows.";
     public const string UnreadData = "The rest of the box's contents, whose fields the analyzer does not read.";

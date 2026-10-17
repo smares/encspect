@@ -35,11 +35,17 @@ internal static class Mp4Builder
         Box("alac", [new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xAC, 0x44, 0, 0], .. children]);
 
     // An AAC LC stereo entry at 44.1 kHz with its esds box.
-    public static byte[] AacEntry()
+    public static byte[] AacEntry(string format = "mp4a", params byte[][] children)
     {
         byte[] esds = FullBox("esds", [0x03, 25, 0, 1, 0, 0x04, 17, 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x05, 2, 0x12, 0x10, 0x06, 1, 2]);
-        return Box("mp4a", new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xAC, 0x44, 0, 0], esds);
+        return Box(format, [new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xAC, 0x44, 0, 0], esds, .. children]);
     }
+
+    // The sinf box of a Common Encryption entry (cenc) whose tenc box says that no sample is protected by default.
+    public static byte[] ClearSinf() =>
+        Box("sinf", Box("frma", "mp4a"u8.ToArray()), FullBox("schm", "cenc"u8.ToArray(), U32(0x10000)), Box("schi", FullBox("tenc", [0, 0, 0, 0], new byte[16])));
+
+    public static byte[] EmptyTables() => Join(FullBox("stts", U32(0)), FullBox("stsc", U32(0)), FullBox("stsz", new byte[8]), FullBox("stco", U32(0)));
 
     // A silent AAC LC stereo access unit of 100 bytes: a channel pair element with a common window, max_sfb 0 and a global gain of 100 in each channel.
     public static byte[] AacUnit() => [0x21, 0x00, 0x03, 0x20, 0x64, 0x1C, .. new byte[94]];

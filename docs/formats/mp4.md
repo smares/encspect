@@ -26,8 +26,8 @@ Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio]
 The work and the memory the analysis takes are bounded by the file, not by what its boxes state:
 
 - **Samples** of a valid file do not overlap, so the bytes of the samples that the sample tables and the track fragments place add up to at most the file's length. The fragments draw on that budget as they are read and each track's sample tables when the track is routed; where it runs out, the samples after that are not analyzed and a finding says so (`mp4.samples-overlap`). Chunks that share bytes, or runs that point back to the same data, reach it quickly.
-- **Fragment samples** are kept up to 4,194,304 for the whole file, not per track (`mp4.fragment-samples-limit`); samples of no bytes are counted and not kept (`mp4.empty-samples`).
-- **Boxes** are read up to 100,000 in all; the boxes from the one that passes the limit on are not read (`mp4.too-many-boxes`).
+- **Fragment samples** of audio tracks are kept up to 4,194,304 for the whole file, not per track (the cap counts audio samples only; `mp4.fragment-samples-limit`). Past it they are counted and never kept: their number, bytes and durations are added to the stream's samples, duration and average bitrate. Samples of no bytes are counted and not kept (`mp4.empty-samples`).
+- **Nodes** of the tree are limited to 250,000 in all, the boxes' and those of their fields and entries. Boxes that start past the limit are still read, into compact records, for the tracks, samples, fragments, durations and protection evidence they describe, so a valid file is read in full however many fragments it has; they make no nodes, and the rest of their parent is shown as one "Boxes Not Shown" node with a finding (`mp4.node-limit`). The checks of the children of a box that is not shown (required and duplicate boxes) are not made.
 - **Long lists** (edits, channel descriptions, table entries) show their first 1,000 entries as nodes and count the rest ("More Entries").
 
 ## Findings

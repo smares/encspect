@@ -213,7 +213,8 @@ public sealed partial class Mp4Parser
         f.Bytes(node, "Matrix", 36, Explain.Matrix);
         f.Skip(24);
         f.U32(node, "Next Track ID", Explain.NextTrackId);
-        if (state.MovieHeader is null)
+        // A moov box that is not the movie sets nothing of it.
+        if (state.MovieHeader is null && !state.IsMovieIgnored)
         {
             state.MovieTimescale = timescale;
             state.MovieDuration = duration;
@@ -362,7 +363,7 @@ public sealed partial class Mp4Parser
 
         if (count > MaxListedEntries)
         {
-            node.Add(new Node("More Entries", node.Children[^1].End, f.Position - node.Children[^1].End, NodeValue.Integer(count - MaxListedEntries, "entries")) { Description = Explain.MoreEntries });
+            node.Add(new Node("More Entries", node.Children[^1].End, f.Position - node.Children[^1].End, NodeValue.Integer(count - MaxListedEntries, "entries", "entry")) { Description = Explain.MoreEntries });
         }
 
         if (state.Track is { Edits: null } track)

@@ -236,17 +236,19 @@ public class ComplexityTests
         Assert.Contains(report.Findings, f => f.Code == "mp4.codec-not-analyzed");
     }
 
-    // The overlapping chunks of MemoryTests, bound on time: 4,000 chunks of 10,000 samples were 58 s for a quarter of them.
+    // The overlapping chunks of MemoryTests, bound on time: 20,000 chunks of 10,000 samples of 6 bytes from 60 KB of media data were 200 million
+    // access units for the AAC parser (minutes), where the budget of bytes stops the walk at the 25,000 the file has room for.
     [Fact]
     public void OverlappingChunks()
     {
-        byte[] unit = Mp4Builder.AacUnit();
-        byte[] data = Mp4Builder.FileWithMoov(at => Mp4Builder.Trak(1, Mp4Builder.AacEntry(), Mp4Builder.Stts(40_000_000, 1024), Mp4Builder.Stsc(10_000),
-            Mp4Builder.ConstantSizes(unit.Length, 40_000_000), Mp4Builder.ChunkOffsets(Enumerable.Repeat(at, 4_000))), [.. Enumerable.Repeat(unit, 600).SelectMany(u => u)]);
+        byte[] unit = Mp4Builder.AacUnit()[..6];
+        byte[] data = Mp4Builder.FileWithMoov(at => Mp4Builder.Trak(1, Mp4Builder.AacEntry(), Mp4Builder.Stts(200_000_000, 1024), Mp4Builder.Stsc(10_000),
+            Mp4Builder.ConstantSizes(unit.Length, 200_000_000), Mp4Builder.ChunkOffsets(Enumerable.Repeat(at, 20_000))), [.. Enumerable.Repeat(unit, 10_000).SelectMany(u => u)]);
 
         Report report = Timed(data);
 
         Assert.Contains(report.Findings, f => f.Code == "mp4.samples-overlap");
+        Assert.True(Assert.Single(report.Streams).Samples <= 1024L * (data.Length / unit.Length), "More access units than the file has bytes for.");
     }
 
     private static Report Timed(byte[] data)

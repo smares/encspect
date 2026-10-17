@@ -735,6 +735,15 @@ def corrupt():
     no = seig_entry(0, 0, bytes(16))
     variant("cenc-seig-truncated-length", "A clear tenc box and a seig sample group description box of version 1 whose box ends inside the length of its second description, the first of which does not protect: "
             "a description that cannot be read is taken to protect.", clear, cut, extra_stbl=[fullbox("sgpd", 1, 0, b"seig" + u32(0) + u32(2) + u32(len(no)) + no + b"\0\0")])
+    for name, text, box_ in [
+        ("cenc-seig-cut-grouping", "ends inside the grouping type", fullbox("sgpd", 1, 0, b"se")),
+        ("cenc-seig-cut-default-length", "of version 1 ends inside the default length", fullbox("sgpd", 1, 0, b"seig" + b"\0\0")),
+        ("cenc-seig-cut-default-index", "of version 2 ends inside the default description index", fullbox("sgpd", 2, 0, b"seig" + u32(0) + b"\0\0")),
+        ("cenc-seig-cut-count-v0", "of version 0 ends inside the entry count", fullbox("sgpd", 0, 0, b"seig" + b"\0\0")),
+        ("cenc-seig-cut-count-v1", "of version 1 ends inside the entry count", fullbox("sgpd", 1, 0, b"seig" + u32(0) + b"\0\0")),
+    ]:
+        variant(name, f"A clear tenc box and a seig sample group description box that {text}: a description that cannot be read is taken to protect.", clear, cut,
+                extra_stbl=[box_])
     variant("cenc-senc-empty", "A clear tenc box and a senc box with no version, flags or count: a sample encryption box that cannot be read is taken to say that samples are encrypted.",
             clear, cut, extra_stbl=[Box(b"senc", b"")])
     variant("cenc-saiz-empty", "A clear tenc box and a saiz box with no version and flags, so that its type of auxiliary information is not known: it is taken to be encryption information.",
