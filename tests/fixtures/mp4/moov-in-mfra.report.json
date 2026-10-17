@@ -1,0 +1,257 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "moov-in-mfra.m4a",
+    "root": {
+      "name": "File",
+      "value": "MP4",
+      "offset": 0,
+      "length": 224,
+      "children": [
+        {
+          "name": "MP4",
+          "value": "M4A (Apple audio)",
+          "offset": 0,
+          "length": 224,
+          "children": [
+            {
+              "name": "ftyp",
+              "value": "M4A (Apple audio)",
+              "offset": 0,
+              "length": 28,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "ftyp",
+                  "offset": 4,
+                  "length": 4
+                },
+                {
+                  "name": "Major Brand",
+                  "value": "M4A ",
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Minor Version",
+                  "value": 0,
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "M4A ",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "mp42",
+                  "offset": 20,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "isom",
+                  "offset": 24,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "mdat",
+              "value": "Media Data",
+              "offset": 28,
+              "length": 72,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 72,
+                  "unit": "bytes",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "mdat",
+                  "offset": 32,
+                  "length": 4
+                },
+                {
+                  "name": "Data",
+                  "value": 64,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 64
+                }
+              ]
+            },
+            {
+              "name": "mfra",
+              "value": "Movie Fragment Random Access",
+              "offset": 100,
+              "length": 124,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 124,
+                  "unit": "bytes",
+                  "offset": 100,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "mfra",
+                  "offset": 104,
+                  "length": 4
+                },
+                {
+                  "name": "moov",
+                  "value": "Movie",
+                  "offset": 108,
+                  "length": 116,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 116,
+                      "unit": "bytes",
+                      "offset": 108,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "moov",
+                      "offset": 112,
+                      "length": 4
+                    },
+                    {
+                      "name": "mvhd",
+                      "value": "Movie Header",
+                      "offset": 116,
+                      "length": 108,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 108,
+                          "unit": "bytes",
+                          "offset": 116,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "mvhd",
+                          "offset": 120,
+                          "length": 4
+                        },
+                        {
+                          "name": "Version",
+                          "value": 0,
+                          "offset": 124,
+                          "length": 1
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 125,
+                          "length": 3
+                        },
+                        {
+                          "name": "Creation Time",
+                          "value": "0 (not set)",
+                          "offset": 128,
+                          "length": 4
+                        },
+                        {
+                          "name": "Modification Time",
+                          "value": "0 (not set)",
+                          "offset": 132,
+                          "length": 4
+                        },
+                        {
+                          "name": "Timescale",
+                          "value": 1000,
+                          "unit": "units per second",
+                          "offset": 136,
+                          "length": 4
+                        },
+                        {
+                          "name": "Duration",
+                          "value": "0 (0.000 s)",
+                          "offset": 140,
+                          "length": 4
+                        },
+                        {
+                          "name": "Rate",
+                          "value": 1,
+                          "offset": 144,
+                          "length": 4
+                        },
+                        {
+                          "name": "Volume",
+                          "value": 1,
+                          "offset": 148,
+                          "length": 2
+                        },
+                        {
+                          "name": "Matrix",
+                          "value": 36,
+                          "unit": "bytes",
+                          "offset": 160,
+                          "length": 36
+                        },
+                        {
+                          "name": "Next Track ID",
+                          "value": 2,
+                          "offset": 220,
+                          "length": 4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "mp4.moov-missing",
+        "message": "The file has no moov box, so it has no tracks and no sample tables.",
+        "offset": 0,
+        "length": 224,
+        "path": [
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "mp4.box-misplaced",
+        "message": "The moov box at 0x6C lies in a mfra box, where ISO/IEC 14496-12 8.2.1 does not place it; it is shown but is not the movie, and its tracks are not analyzed.",
+        "offset": 108,
+        "length": 116,
+        "path": [
+          0,
+          2,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

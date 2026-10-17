@@ -215,6 +215,40 @@ public class ComplexityTests
         public void Parse(ParseContext context) => _parser.Parse(context);
     }
 
+    // 100,000 empty mdat boxes and then 200,000 samples of one byte in the last one: finding the mdat box that holds a sample was a scan over
+    // all of them for each sample (5.5 s for a quarter of this, 52 s for six times that).
+    [Fact]
+    public void ManyMdatBoxesAndManySamples()
+    {
+        const int boxes = 100_000;
+        const int samples = 200_000;
+        byte[] empty = Mp4Builder.Box("mdat");
+        byte[] head = Mp4Builder.FileWithMoov(_ => Mp4Builder.Trak(1, Mp4Builder.AlacEntry(), Mp4Builder.Stts(samples, 1024), Mp4Builder.Stsc(samples),
+            Mp4Builder.ConstantSizes(1, samples), Mp4Builder.ChunkOffsets([0])), []);
+        long payload = head.Length - 8 + (boxes * empty.Length) + 8;
+        byte[] data = Mp4Builder.FileWithMoov(_ => Mp4Builder.Trak(1, Mp4Builder.AlacEntry(), Mp4Builder.Stts(samples, 1024), Mp4Builder.Stsc(samples),
+            Mp4Builder.ConstantSizes(1, samples), Mp4Builder.ChunkOffsets([payload])), []);
+        data = Mp4Builder.Join(data[..^8], Mp4Builder.Join([.. Enumerable.Repeat(empty, boxes)]), Mp4Builder.Box("mdat", new byte[samples]));
+
+        Report report = Timed(data);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "mp4.sample-outside-mdat" or "mp4.sample-outside-file");
+        Assert.Contains(report.Findings, f => f.Code == "mp4.codec-not-analyzed");
+    }
+
+    // The overlapping chunks of MemoryTests, bound on time: 4,000 chunks of 10,000 samples were 58 s for a quarter of them.
+    [Fact]
+    public void OverlappingChunks()
+    {
+        byte[] unit = Mp4Builder.AacUnit();
+        byte[] data = Mp4Builder.FileWithMoov(at => Mp4Builder.Trak(1, Mp4Builder.AacEntry(), Mp4Builder.Stts(40_000_000, 1024), Mp4Builder.Stsc(10_000),
+            Mp4Builder.ConstantSizes(unit.Length, 40_000_000), Mp4Builder.ChunkOffsets(Enumerable.Repeat(at, 4_000))), [.. Enumerable.Repeat(unit, 600).SelectMany(u => u)]);
+
+        Report report = Timed(data);
+
+        Assert.Contains(report.Findings, f => f.Code == "mp4.samples-overlap");
+    }
+
     private static Report Timed(byte[] data)
     {
         var watch = Stopwatch.StartNew();

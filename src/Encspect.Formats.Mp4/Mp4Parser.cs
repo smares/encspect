@@ -24,6 +24,10 @@ public sealed partial class Mp4Parser : IFormatParser
     // with the fields and the codec's nodes under the deepest box.
     private const int MaxBoxDepth = 40;
 
+    // The boxes read in all: each takes a node with its header fields, so a file of millions of tiny boxes would otherwise cost the memory of
+    // its nodes many times over. The boxes from the one that passes the limit on are not read, with a finding.
+    internal const int MaxBoxes = 100_000;
+
     public string Name => "MP4";
 
     // An ftyp box at the start is certain (class 100); a run of top-level boxes that holds moov, mdat
@@ -112,7 +116,7 @@ public sealed partial class Mp4Parser : IFormatParser
 
     private static void ParseBoxes(ParseContext context, ByteReader reader)
     {
-        var state = new State(context, reader);
+        var state = new State(context, reader) { SampleBytesLeft = reader.Length };
         Node file = context.Root.Add(new Node("MP4", reader.Start, reader.Length) { Description = Explain.File, Topic = Topics.IsoBaseMediaFormat });
         state.File = file;
         long end = ReadChildren(state, file, reader.Start, reader.End, 0, topLevel: true);
@@ -235,6 +239,13 @@ public sealed partial class Mp4Parser : IFormatParser
                     return position;
                 }
 
+                // QuickTime File Format, "User data list": the list of a udta box is optionally ended by a 32-bit zero.
+                if (parent.Name == "udta" && end - position == 4 && state.Reader.ReadBytesAt(position, 4).All(b => b == 0))
+                {
+                    parent.Add(new Node("Terminator", position, 4, NodeValue.Integer(0)) { Description = Explain.UserDataTerminator });
+                    return end;
+                }
+
                 Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
                 state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{end - position} bytes at 0x{position:X} are too few for a box header.", rest);
                 return end;
@@ -274,6 +285,20 @@ public sealed partial class Mp4Parser : IFormatParser
                 return end;
             }
 
+            if (state.Boxes >= MaxBoxes)
+            {
+                Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
+                if (!state.IsBoxLimitReached)
+                {
+                    state.IsBoxLimitReached = true;
+                    state.Findings.AddNow(Severity.Warning, "mp4.too-many-boxes",
+                        $"The file holds more than {MaxBoxes} boxes; the boxes from the {header.Type} box at 0x{position:X} on are not read.", rest);
+                }
+
+                return end;
+            }
+
+            state.Boxes++;
             BoxName name = naming?.Invoke(header) ?? Naming(state, header);
             Node node = ParseBox(state, parent, header with { Size = boxEnd - position }, depth, header.Size, custom, name);
             if (header.IsToEnd && !topLevel)
@@ -369,7 +394,11 @@ public sealed partial class Mp4Parser : IFormatParser
             case "mdat":
                 state.Mdats.Add((header.PayloadStart, header.End, node));
                 state.HasPageAlignedMdat |= state.FreeEnd == header.Offset && header.PayloadStart % 4096 == 0;
-                state.FirstMdat ??= header.Offset;
+                if (depth == 0)
+                {
+                    state.FirstMdat ??= header.Offset;
+                }
+
                 if (header.End > header.PayloadStart)
                 {
                     node.Add(new Node("Data", header.PayloadStart, header.End - header.PayloadStart, NodeValue.Integer(header.End - header.PayloadStart, "bytes")) { Description = Explain.MediaData });
@@ -400,49 +429,98 @@ public sealed partial class Mp4Parser : IFormatParser
 
     private static void Container(State state, Node node, BoxHeader header, BoxFields f, int depth)
     {
-        Track? outer = state.Track;
+        Track? outerTrack = state.Track;
+        FragmentTrack? outerFragment = state.Fragment;
+        (long Offset, Node Node)? outerMoof = state.Moof;
+        bool outerIgnored = state.IsMovieIgnored;
+        FragmentTrack? fragment = null;
         if (header.Type == "trak")
         {
-            state.Track = new Track(node);
-            state.Tracks.Add(state.Track);
+            // The tracks of a moov box that is not the movie are shown, and their boxes count for every track.
+            state.Track = state.IsMovieIgnored ? null : new Track(node);
+            if (state.Track is not null)
+            {
+                state.Tracks.Add(state.Track);
+            }
         }
         else if (header.Type == "moov")
         {
-            state.Moov ??= header.Offset;
-            if (state.MoovCount++ > 0)
+            if (depth > 0)
             {
-                state.Findings.AddNow(Severity.Warning, "mp4.duplicate-box", $"The file holds a second moov box at 0x{header.Offset:X}; players read the first.", node);
+                state.Findings.AddNow(Severity.Warning, "mp4.box-misplaced",
+                    $"The moov box at 0x{header.Offset:X} lies in a {state.ParentType} box, where ISO/IEC 14496-12 8.2.1 does not place it; it is shown but is not the movie, and its tracks are not analyzed.", node);
+                state.IsMovieIgnored = true;
                 state.Track = null;
+            }
+            else
+            {
+                state.Moov ??= header.Offset;
+                state.MoovNode ??= node;
+                if (state.MoovCount++ > 0)
+                {
+                    state.Findings.AddNow(Severity.Warning, "mp4.duplicate-box", $"The file holds a second moov box at 0x{header.Offset:X}; players read the first, so its tracks are not analyzed.", node);
+                    state.IsMovieIgnored = true;
+                    state.Track = null;
+                }
             }
         }
         else if (header.Type == "traf")
         {
-            state.Fragment = new FragmentTrack(node, state.Moof) { IsInTrack = state.Track is not null };
+            fragment = state.Fragment = new FragmentTrack(node, state.Moof) { IsInTrack = state.Track is not null, IsMisplaced = outerFragment is not null };
+            if (outerFragment is not null)
+            {
+                state.Findings.AddNow(Severity.Warning, "mp4.box-misplaced",
+                    $"The traf box at 0x{header.Offset:X} lies in another traf box, where ISO/IEC 14496-12 8.8.6 does not place it; its samples are placed as a fragment of their own, and what it says about protection counts for every track.", node);
+            }
         }
         else if (header.Type == "moof")
         {
+            if (state.OpenMoofs++ > 0)
+            {
+                state.Findings.AddNow(Severity.Warning, "mp4.box-misplaced",
+                    $"The moof box at 0x{header.Offset:X} lies in another moof box, where ISO/IEC 14496-12 8.8.4 does not place it.", node);
+            }
+
             state.Moof = (header.Offset, node);
             state.Fragments++;
         }
 
         bool outerSinf = state.InSinf;
-        if (header.Type == "sinf" && state.CurrentEntry is { } protectedEntry)
+        if (header.Type == "sinf")
         {
-            state.InSinf = true;
-            protectedEntry.Protection ??= new EntryProtection(node);
+            if (state.CurrentEntry is { } protectedEntry)
+            {
+                state.InSinf = true;
+                protectedEntry.Protection ??= new EntryProtection(node);
+            }
+            else
+            {
+                // Outside a sample entry a sinf box is not that entry's protection, but it says that a scheme protects the track or file it lies in.
+                MarkProtectionScheme(state);
+            }
         }
 
         ReadChildren(state, node, f.Position, header.End, depth + 1);
         state.InSinf = outerSinf;
         CheckChildren(state, node, header.Type);
-        if (header.Type == "trak")
+        if (header.Type is "trak" or "moov")
         {
-            state.Track = outer;
+            state.Track = outerTrack;
+            state.IsMovieIgnored = outerIgnored;
         }
-        else if (header.Type == "traf" && state.Fragment is { } fragment)
+        else if (fragment is not null)
         {
             FinishFragment(state, fragment);
-            state.Fragment = null;
+            state.Fragment = outerFragment;
+        }
+        else if (header.Type == "moof")
+        {
+            // The moof box stays the current one after it ends (a track fragment outside any moof box follows the last), unless it lay in another.
+            state.OpenMoofs--;
+            if (state.OpenMoofs > 0)
+            {
+                state.Moof = outerMoof;
+            }
         }
     }
 
@@ -544,9 +622,8 @@ public sealed partial class Mp4Parser : IFormatParser
         }
         else if (state.FirstMdat is { } mdat && mdat < state.Moov && state.Fragments == 0)
         {
-            Node moov = file.Children.First(c => c.Name == "moov");
             state.Findings.AddNow(Severity.Info, "mp4.moov-after-mdat",
-                "The moov box follows the mdat box, so a player must read to the end of the file before it can play it (not optimized for streaming, no fast start).", moov);
+                "The moov box follows the mdat box, so a player must read to the end of the file before it can play it (not optimized for streaming, no fast start).", state.MoovNode!);
         }
     }
 

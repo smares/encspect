@@ -1,0 +1,254 @@
+{
+ "description": "A trak box whose udta box holds a meta box with the metadata handler mdir before mdia: the track's handler is the one in mdia (8.4.3), so the track is read as sound.",
+ "length": 1375,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   756
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   640
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/udta",
+   244,
+   105
+  ],
+  [
+   "moov/trak/udta/meta",
+   252,
+   97
+  ],
+  [
+   "moov/trak/udta/meta/hdlr",
+   264,
+   33
+  ],
+  [
+   "moov/trak/udta/meta/ilst",
+   297,
+   52
+  ],
+  [
+   "moov/trak/udta/meta/ilst/©nam",
+   305,
+   44
+  ],
+  [
+   "moov/trak/udta/meta/ilst/©nam/data",
+   313,
+   36
+  ],
+  [
+   "moov/trak/mdia",
+   349,
+   435
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   357,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   389,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   434,
+   350
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   442,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   458,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   466,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   482,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   494,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   502,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   518,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   554,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   608,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   632,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   660,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   760,
+   24
+  ],
+  [
+   "mdat",
+   784,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   792,
+   6
+  ],
+  [
+   798,
+   45
+  ],
+  [
+   843,
+   42
+  ],
+  [
+   885,
+   39
+  ],
+  [
+   924,
+   36
+  ],
+  [
+   960,
+   33
+  ],
+  [
+   993,
+   30
+  ],
+  [
+   1023,
+   27
+  ],
+  [
+   1050,
+   24
+  ],
+  [
+   1074,
+   20
+  ],
+  [
+   1094,
+   17
+  ],
+  [
+   1111,
+   14
+  ],
+  [
+   1125,
+   11
+  ],
+  [
+   1136,
+   8
+  ],
+  [
+   1144,
+   46
+  ],
+  [
+   1190,
+   43
+  ],
+  [
+   1233,
+   40
+  ],
+  [
+   1273,
+   37
+  ],
+  [
+   1310,
+   34
+  ],
+  [
+   1344,
+   31
+  ]
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}

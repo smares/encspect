@@ -613,6 +613,31 @@ def mp3_in_mp4():
     })]
 
 
+def mp3_gap():
+    """The frames of mp3-in-mp4 in two chunks with 16 bytes between them, which the MPEG audio parser does not read as one stretch."""
+    frames = mpeg_frames(12)
+    entry = mp4a(2, 44100, esds(0x6B, None, 128000, 128000))
+    track = Track(1, frames, 44100, 2, entry, durations=[1152] * 12, chunk=6)
+    data, records, offsets = movie([track])
+    second = offsets[0][1]
+    mdat = next(o for p, o, s in records if p == "mdat")
+    stco_at = next(o for p, o, s in records if p.endswith("stco"))
+    data = data[:second] + bytes(16) + data[second:]
+    data = data[:mdat] + u32(struct.unpack(">I", data[mdat:mdat + 4])[0] + 16) + data[mdat + 4:]
+    data = data[:stco_at + 20] + u32(second + 16) + data[stco_at + 24:]
+    records = [(p, o, s + 16 if p == "mdat" else s) for p, o, s in records]
+    result = hand_built(
+        "mp3-two-chunks-gap", "MPEG-1 Layer III in MP4 (object type 0x6B), 12 frames in two chunks of 6 with 16 bytes between them: the MPEG audio parser reads samples only where they lie in one stretch, "
+        "so the track is a stream described by its sample entry and its frames are not read.",
+        data, records,
+        [{"codec": "MPEG-1 Audio", "sample_rate": 44100, "channels": 2, "channel_mode": None, "channel_layout": [], "samples": 12 * 1152, "is_vbr": False}], [],
+        [["mpeg.packets-not-analyzed", "packets"]], fields={ESDS: "0x6B (MPEG-1 Audio)"},
+        crosscheck={"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}})
+    # The frames are not read, so ffprobe's packets are compared with the samples.
+    result[2]["samples"] = unit_list([offsets[0][0], second + 16], frames, 6)
+    return [result]
+
+
 def quicktime():
     lc = asc(2, 44100, 2, sbr=False, signaling="backward")
     out = []
@@ -714,6 +739,95 @@ def fragmented():
                                        "skip": {"faad": "faad2's MP4 reader reads samples from the sample tables only, which a fragmented file leaves empty.",
                                                 "faad_trace": "faad2's MP4 reader reads samples from the sample tables only, which a fragmented file leaves empty."}},
     })]
+
+
+SKIP_ALL = {"ffprobe": False, "mp4box": False, "faad": None, "skip": {"all": "a damaged or oddly built file, which tools read in their own ways"}}
+
+
+def hand_built(name, description, data, records, streams, units_rows, findings, fields=None, crosscheck=None):
+    return (name, data, {
+        "description": description, "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)), "streams": streams,
+        "units": units_rows, "fields": fields or {}, "findings": [list(f) for f in findings], "crosscheck": crosscheck or SKIP_ALL,
+    })
+
+
+def structure():
+    """Boxes where ISO/IEC 14496-12 does not place them, tables that overlap, and the long lists whose entries are not all shown."""
+    lc = asc(2, 44100, 2, sbr=False, signaling="backward")
+    samples = units("stereo", 20)
+    out = []
+
+    data, records = write([ftyp(), box("mdat", bytes(64)), box("mfra", b"", box("moov", b"", mvhd(1000, 0)))])
+    out.append(hand_built(
+        "moov-in-mfra", "ftyp, mdat and an mfra box that holds a moov box: moov belongs at the top level (8.2.1), so it is shown and reported but is not the movie.",
+        data, records, [], [], [["mp4.box-misplaced", "lies in a mfra box"], ["mp4.moov-missing", "no moov box"]]))
+
+    track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2))
+    offsets = movie([track])[2]
+    second = box("moov", b"", mvhd(1000, 20 * 1024 * 1000 // 44100), track.trak(offsets[0], 1000))
+    data, records, offsets = movie([track], after=[second])
+    out.append(hand_built(
+        "second-moov-with-track", "A second moov box after mdat, with a track over the same samples: players read the first moov box, so the second one's track is shown and not analyzed.",
+        data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10), [["mp4.duplicate-box", "second moov box"]]))
+
+    track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), before_mdia=[udta(ilst_meta(text_item(b"\xa9nam", "Metadata before mdia")))])
+    data, records, offsets = movie([track])
+    out.append(hand_built(
+        "track-meta-before-mdia", "A trak box whose udta box holds a meta box with the metadata handler mdir before mdia: the track's handler is the one in mdia (8.4.3), so the track is read as sound.",
+        data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10), [],
+        crosscheck={"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100)}))
+
+    # 1,000 empty edits and one that plays media past the end of the track's media: the edits past the 1,000 shown have no node.
+    track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), edits=[(1, -1)] * 1000 + [(1000, 0)])
+    data, records, offsets = movie([track])
+    out.append(hand_built(
+        "edit-list-beyond-unlisted", "An edit list of 1,001 entries, the first 1,000 empty edits and the last one playing a second of a media that lasts 0.46 s: the last edit is not listed, so the finding points to the box that counts the entries past 1,000.",
+        data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10),
+        [["mp4.edit-list-empty-edit", "empty edit"], ["mp4.edit-beyond-media", "past the media's 20480"]],
+        fields={"MP4/moov/trak/edts/elst/More Entries": "1 entries"}))
+
+    track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), extra=[])
+    data, records, offsets = movie([track], moov_extra=[udta(ilst_meta(item(b"\xa9too", data_atom(0, b"fdkaac 1.0.0"))))])
+    out.append(hand_built(
+        "too-data-type-0", "A \u00a9too item whose data atom has the implicit type 0 and holds bytes that read as text: only a text data type names software, so no writer is claimed.",
+        data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10), [],
+        fields={"MP4/moov/udta/meta/iTunes Metadata/Encoding Tool/data/Data Type": "0 (implicit)"},
+        crosscheck={"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100)}))
+
+    text = b"hand-built"
+    track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2))
+    data, records, offsets = movie([track], ftyp_box=ftyp(b"qt  ", 0x200, (b"qt  ",)), moov_extra=[box("udta", b"", Box(b"\xa9nam", u16(len(text)) + u16(0) + text), after=u32(0))])
+    out.append(hand_built(
+        "quicktime-udta-terminator", "A QuickTime movie whose user data list ends in the optional 32-bit zero (QuickTime File Format, \"User data list\"): it is shown as a terminator, with no warning.",
+        data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10), [],
+        fields={"MP4/moov/udta/Terminator": "0"},
+        crosscheck={"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100)}))
+
+    # Samples of 6 bytes in 50 chunks that all start at the same 600 bytes: 5,000 samples from a few hundred bytes of mdat.
+    entry = mp4a(2, 44100, format=b"alac")
+    track = Track(1, [bytes(6)] * 100, 44100, 2, entry, chunk=100, stsz_box=fullbox("stsz", 0, 0, u32(6) + u32(5000)), stsc_box=stsc([(1, 100, 1)]),
+                  stts_entries=[(5000, 1024)], mdhd_duration=5000 * 1024)
+    start = movie([track], stco_boxes=[stco([0] * 50)])[2][0][0]
+    data, records, offsets = movie([track], stco_boxes=[stco([start] * 50)])
+    out.append(hand_built(
+        "samples-overlap-chunks", "An alac track of 5,000 samples of 6 bytes in 50 chunks that all start at the same offset: valid samples do not overlap, so the walk over the chunks stops where the samples add up to more bytes than the file holds.",
+        data, records, [], [], [["mp4.samples-overlap", "add up to more bytes than the file has left"], ["mp4.codec-not-analyzed", "Apple Lossless"]]))
+
+    # 30 runs of 20 samples of 30 bytes, each placed at the start of the same 600 bytes of mdat.
+    stbl = box("stbl", b"", stsd(entry), stts([]), stsc([]), stsz([]), stco([]))
+    trak = box("trak", b"", tkhd(1, 0), box("mdia", b"", mdhd(44100, 0), hdlr(b"soun"), box("minf", b"", fullbox("smhd", 0, 0, bytes(4)), dinf(), stbl)))
+    moov = box("moov", b"", mvhd(1000, 0), trak, box("mvex", b"", fullbox("trex", 0, 0, u32(1) + u32(1) + u32(1024) + u32(0) + u32(0))))
+    mdat = box("mdat", bytes(600))
+    runs = [fullbox("trun", 0, 0x201, u32(20) + struct.pack(">i", 0) + b"".join(u32(30) for _ in range(20))) for _ in range(30)]
+
+    def build(base):
+        return [ftyp(b"iso6", 0, (b"iso6", b"dash", b"mp41")), moov, box("moof", b"", fullbox("mfhd", 0, 0, u32(1)), box("traf", b"", fullbox("tfhd", 0, 1, u32(1) + u64(base)), *runs)), mdat]
+    data, records = write(build(0))
+    data, records = write(build(next(o for p, o, s in records if p == "mdat") + 8))
+    out.append(hand_built(
+        "samples-overlap-fragments", "An alac track whose track fragment holds 30 runs of 20 samples of 30 bytes, every run placed at the same 600 bytes of mdat: the samples of the fragments are cut where they add up to more bytes than the file holds.",
+        data, records, [], [], [["mp4.samples-overlap", "track fragments add up to more bytes than the file has left"], ["mp4.codec-not-analyzed", "Apple Lossless"]]))
+    return out
 
 
 def corrupt():
@@ -1094,7 +1208,7 @@ def adts_fixtures():
 
 def write_fixture(directory, name, data, manifest):
     directory.mkdir(parents=True, exist_ok=True)
-    path = directory / (name if "." in name else name + (".mp4" if manifest.get("boxes") and name in ("fragmented", "mp3-in-mp4") else ".m4a"))
+    path = directory / (name if "." in name else name + (".mp4" if manifest.get("boxes") and name in ("fragmented", "mp3-in-mp4", "mp3-two-chunks-gap") else ".m4a"))
     if "." not in name and name.startswith("quicktime"):
         path = directory / (name + ".mov")
     path.write_bytes(data)
@@ -1105,7 +1219,7 @@ def write_fixture(directory, name, data, manifest):
 def main():
     import aac_block_fixtures
 
-    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + quicktime() + chapters() + fragmented() + corrupt() + trailing_tags()
+    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + quicktime() + chapters() + fragmented() + structure() + mp3_gap() + corrupt() + trailing_tags()
     for name, data, manifest in fixtures:
         write_fixture(MP4, name, data, manifest)
     for name, data, manifest in adts_fixtures():

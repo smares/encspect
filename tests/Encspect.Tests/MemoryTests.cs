@@ -57,6 +57,76 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // Chunks that start at the same bytes, with a constant sample size that no table backs: 4,000 chunks of 10,000 samples of 100 bytes
+    // from 60 KB of media data were 40 million access units for the codec (2.97 GB of heap for a quarter of that). Samples of a valid file
+    // do not overlap, so the walk over the chunks stops where the samples add up to more bytes than the file holds.
+    [Fact]
+    public void OverlappingChunksOfConstantSizedSamplesStayBounded()
+    {
+        const int chunks = 4_000;
+        const int perChunk = 10_000;
+        byte[] unit = Mp4Builder.AacUnit();
+        byte[] data = Mp4Builder.FileWithMoov(at => Mp4Builder.Trak(1, Mp4Builder.AacEntry(), Mp4Builder.Stts((long)chunks * perChunk, 1024), Mp4Builder.Stsc(perChunk),
+            Mp4Builder.ConstantSizes(unit.Length, (long)chunks * perChunk), Mp4Builder.ChunkOffsets(Enumerable.Repeat(at, chunks))), [.. Enumerable.Repeat(unit, 600).SelectMany(u => u)]);
+
+        (Report report, long kept, long peak) = Measure("overlap.m4a", data);
+
+        output.WriteLine($"{data.Length / 1000} KB: {kept / 1000} KB kept and {peak / 1000} KB peak");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Contains(report.Findings, f => f.Code == "mp4.samples-overlap");
+        Assert.True(Assert.Single(report.Streams).Samples <= 1024L * (data.Length / unit.Length), "More access units than the file has bytes for.");
+        Assert.True(peak < 20_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
+    }
+
+    // A hundred tracks whose track fragments each declare 4 billion samples in a run that states no sizes: with a default size of 0 the samples
+    // are counted and none is kept (4 million 16-byte records per track, 6.8 GB for the file); with a default size of 1 the bytes they place draw on
+    // one budget for the file, which its length bounds, and the samples they keep on a count for the file.
+    [Theory]
+    [InlineData(0u)]
+    [InlineData(1u)]
+    public void HugeRunsOfManyTracksStayBounded(uint defaultSize)
+    {
+        const int tracks = 100;
+        byte[] Trex(int id) => Mp4Builder.FullBox("trex", Mp4Builder.U32(id), Mp4Builder.U32(1), Mp4Builder.U32(1024), Mp4Builder.U32(defaultSize), Mp4Builder.U32(0));
+        byte[] Traf(int id) => Mp4Builder.Box("traf", Mp4Builder.Box("tfhd", [0, 2, 0, 0], Mp4Builder.U32(id)), Mp4Builder.FullBox("trun", Mp4Builder.U32(0xFFFFFFFF)));
+        byte[] Empty(string type) => Mp4Builder.FullBox(type, Mp4Builder.U32(0));
+        byte[] moov = Mp4Builder.Box("moov", Mp4Builder.Mvhd(),
+            Mp4Builder.Join([.. Enumerable.Range(1, tracks).Select(i => Mp4Builder.Trak(i, Mp4Builder.AlacEntry(), Empty("stts"), Empty("stsc"), Mp4Builder.FullBox("stsz", new byte[8]), Empty("stco")))]),
+            Mp4Builder.Box("mvex", [.. Enumerable.Range(1, tracks).Select(Trex)]));
+        byte[] moof = Mp4Builder.Box("moof", [Mp4Builder.FullBox("mfhd", Mp4Builder.U32(1)), .. Enumerable.Range(1, tracks).Select(Traf)]);
+        byte[] data = Mp4Builder.Join(Mp4Builder.Ftyp(), moov, moof, Mp4Builder.Box("mdat", new byte[2000]));
+
+        (Report report, long kept, long peak) = Measure("runs.mp4", data);
+
+        output.WriteLine($"{data.Length / 1000} KB: {kept / 1000} KB kept and {peak / 1000} KB peak");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Contains(report.Findings, f => f.Code == (defaultSize == 0 ? "mp4.empty-samples" : "mp4.samples-overlap"));
+        Assert.True(peak < 20_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
+    }
+
+    // A million empty boxes (8 MB) cost a node with two fields each: the boxes past the budget are not read. An edit list of two million
+    // empty edits (24 MB) listed 1,000 nodes and kept a node with three fields for every other one (1.87 GB); a chan box of a million
+    // channel descriptions did the same with 20 bytes each.
+    [Fact]
+    public void BoxesEditsAndChannelDescriptionsPastTheirLimitsStayBounded()
+    {
+        byte[] boxes = Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd()), Mp4Builder.Join([.. Enumerable.Repeat(Mp4Builder.Box("free"), 1_000_000)]));
+        Bounded("boxes.m4a", boxes, 120_000_000, "mp4.too-many-boxes");
+
+        byte[] edit = Mp4Builder.Join(Mp4Builder.U32(0), Mp4Builder.U32(0xFFFFFFFF), Mp4Builder.U32(0x10000));
+        byte[] edits = Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd(),
+            Mp4Builder.Box("trak", Mp4Builder.Box("edts", Mp4Builder.FullBox("elst", Mp4Builder.U32(2_000_000), Mp4Builder.Join([.. Enumerable.Repeat(edit, 2_000_000)]))))));
+        Bounded("edits.m4a", edits, 120_000_000, "mp4.none", expectFinding: false);
+
+        byte[] description = Mp4Builder.Join(Mp4Builder.U32(1), Mp4Builder.U32(0), new byte[12]);
+        byte[] chan = Mp4Builder.FullBox("chan", Mp4Builder.U32(0), Mp4Builder.U32(0), Mp4Builder.U32(1_000_000), Mp4Builder.Join([.. Enumerable.Repeat(description, 1_000_000)]));
+        byte[] channels = Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd(),
+            Mp4Builder.Trak(1, Mp4Builder.AlacEntry(chan), Mp4Builder.Stts(0, 0), Mp4Builder.Stsc(1), Mp4Builder.ConstantSizes(0, 0), Mp4Builder.ChunkOffsets([]))));
+        Bounded("channels.m4a", channels, 120_000_000, "mp4.none", expectFinding: false);
+    }
+
     // An ADTS stream keeps a record per frame and, per raw data block, what its nodes are rebuilt
     // from: the side information without the Huffman-coded scalefactors and spectral data
     // (UnitStore). Measured over the frames of ffmpeg's encoder at 96 kbit/s, repeated: 116 bytes

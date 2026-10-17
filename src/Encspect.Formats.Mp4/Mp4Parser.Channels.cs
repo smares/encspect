@@ -158,9 +158,23 @@ public sealed partial class Mp4Parser
         uint bitmap = (uint)f.Field(node, "Channel Bitmap", 4, Explain.ChanBitmap, v => NodeValue.Hex((long)v, 8));
         uint count = f.U32(node, "Channel Descriptions", Explain.ChanDescriptionCount);
         var labels = new List<uint>();
-        for (uint i = 0; i < count && f.Remaining >= 20; i++)
+        long descriptionsStart = f.Position;
+        uint read = 0;
+        for (uint i = 0; i < count && f.Remaining >= 20; i++, read++)
         {
+            if (i % 4096 == 0)
+            {
+                state.Context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
             long start = f.Position;
+            if (i >= MaxListedEntries)
+            {
+                // Past the descriptions shown, only the position moves on: a layout of that many channels is not stated.
+                f.Skip(20);
+                continue;
+            }
+
             var description = new Node("Channel Description", start, 20) { Description = Explain.ChanDescription };
             uint label = (uint)f.Field(description, "Label", 4, Explain.ChanLabel, v => LabelText((uint)v));
             uint flags = (uint)f.Field(description, "Flags", 4, Explain.ChanFlags, v => NodeValue.Hex((long)v, 8));
@@ -172,15 +186,17 @@ public sealed partial class Mp4Parser
             labels.Add(label);
         }
 
-        if (labels.Count < count)
+        MoreEntries(node, read, descriptionsStart + (MaxListedEntries * 20L), f.Position);
+
+        if (read < count)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.chan-descriptions-exceed-box",
-                $"The chan box at 0x{node.Offset:X} declares {count} channel descriptions, but holds room for {labels.Count}.", node);
+                $"The chan box at 0x{node.Offset:X} declares {count} channel descriptions, but holds room for {read}.", node);
         }
 
         IReadOnlyList<Speaker>? layout = tag switch
         {
-            UseChannelDescriptions => labels.Count > 0 ? FromLabels(labels) : null,
+            UseChannelDescriptions => labels.Count > 0 && read <= MaxListedEntries ? FromLabels(labels) : null,
             UseChannelBitmap => FromBitmap(bitmap),
             _ when (tag >> 16) is 147 or 0xFFFF => ChannelLayouts.Discrete((int)(tag & 0xFFFF)),
             _ when LayoutTags.TryGetValue(tag >> 16, out (string Name, string Channels) known) && known.Channels.Split(' ').Length == (tag & 0xFFFF) =>

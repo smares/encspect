@@ -25,7 +25,33 @@ public sealed partial class Mp4Parser
 
         public long? Moov { get; set; }
 
+        public Node? MoovNode { get; set; }
+
         public int MoovCount { get; set; }
+
+        // Whether the boxes being read lie in a moov box that is not the movie (a second one, or one inside another box): its tracks are shown
+        // and not routed.
+        public bool IsMovieIgnored { get; set; }
+
+        // The boxes read so far, against MaxBoxes, and whether the limit stopped the reading.
+        public int Boxes { get; set; }
+
+        public bool IsBoxLimitReached { get; set; }
+
+        // What the file has left to place samples in, in bytes: samples of a valid file do not overlap, so they cannot add up to more than the
+        // file holds. Fragments draw on it as they are read, and a track's sample tables when the track is routed.
+        public long SampleBytesLeft { get; set; }
+
+        // The samples all track fragments of the file have stored, against MaxFragmentSamples.
+        public int FragmentSampleCount { get; set; }
+
+        // The mdat boxes' ranges sorted by start, once reading ends, for the lookup of the box a sample lies in.
+        public (long Start, long End, Node Node)[] MdatIndex { get; set; } = [];
+
+        // The first track of each ID and how many tracks have it, for the track fragments' lookups.
+        public Dictionary<uint, Track> TracksById { get; } = [];
+
+        public Dictionary<uint, int> TrackIdCounts { get; } = [];
 
         public long? FirstMdat { get; set; }
 
@@ -51,6 +77,9 @@ public sealed partial class Mp4Parser
         public (long Offset, Node Node)? Moof { get; set; }
 
         public int Fragments { get; set; }
+
+        // How many moof boxes are open around the box being read.
+        public int OpenMoofs { get; set; }
 
         public FragmentTrack? Fragment { get; set; }
 
@@ -83,6 +112,8 @@ public sealed partial class Mp4Parser
         // The DRM systems the file's pssh boxes name, in file order; the tracks whose track fragments hold something that says their samples are protected;
         // whether a box outside any track and track fragment does (it is taken to apply to every track); and whether a track fragment has no tfhd box.
         public List<string> Systems { get; } = [];
+
+        public HashSet<string> SystemSet { get; } = [];
 
         public HashSet<uint> ProtectedTracks { get; } = [];
 
@@ -144,6 +175,12 @@ public sealed partial class Mp4Parser
         public List<(string Type, int Distance, Node Node)> Rolls { get; } = [];
 
         public ChunkedList<FragmentSample> FragmentSamples { get; } = new();
+
+        // The fragment samples of no bytes, counted and not stored.
+        public long EmptyFragmentSamples { get; set; }
+
+        // What the budget of sample bytes allowed this track's sample tables, fixed when its ranges are collected so that its packets stop at the same sample.
+        public long SampleBudget { get; set; }
 
         public Node? FirstFragment { get; set; }
 
@@ -226,7 +263,7 @@ public sealed partial class Mp4Parser
 
     private sealed record TrackEncryptionInfo(int IsProtected, Node Node);
 
-    private sealed record Edit(ulong SegmentDuration, long MediaTime, double Rate, Node Node);
+    private readonly record struct Edit(ulong SegmentDuration, long MediaTime, double Rate);
 
     private readonly record struct FragmentSample(long Offset, int Size);
 
@@ -248,6 +285,9 @@ public sealed partial class Mp4Parser
         public int HeaderCount { get; set; }
 
         public bool IsInTrack { get; set; }
+
+        // Whether the fragment lies in another track fragment, where ISO/IEC 14496-12 8.8.6 does not place it.
+        public bool IsMisplaced { get; set; }
 
         public bool HasProtectingEvidence { get; set; }
 

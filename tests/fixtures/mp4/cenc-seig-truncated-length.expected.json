@@ -1,0 +1,312 @@
+{
+ "description": "A clear tenc box and a seig sample group description box of version 1 whose box ends inside the length of its second description, the first of which does not protect: a description that cannot be read is taken to protect.",
+ "length": 11196,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   825
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   709
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   609
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   524
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   464
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   186
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca",
+   413,
+   170
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/esds",
+   449,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf",
+   503,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/frma",
+   511,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schm",
+   523,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi",
+   543,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/enca/sinf/schi/tenc",
+   551,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   583,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   607,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   635,
+   140
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   775,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/sgpd",
+   803,
+   50
+  ],
+  [
+   "mdat",
+   853,
+   10343
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 30720,
+   "is_vbr": true,
+   "protection": {
+    "scheme": "Common Encryption, AES-CTR (cenc)",
+    "is_encrypted": true,
+    "systems": []
+   }
+  }
+ ],
+ "units": [],
+ "samples": [
+  [
+   861,
+   300
+  ],
+  [
+   1161,
+   337
+  ],
+  [
+   1498,
+   374
+  ],
+  [
+   1872,
+   321
+  ],
+  [
+   2193,
+   358
+  ],
+  [
+   2551,
+   305
+  ],
+  [
+   2856,
+   342
+  ],
+  [
+   3198,
+   379
+  ],
+  [
+   3577,
+   326
+  ],
+  [
+   3903,
+   363
+  ],
+  [
+   4266,
+   310
+  ],
+  [
+   4576,
+   347
+  ],
+  [
+   4923,
+   384
+  ],
+  [
+   5307,
+   331
+  ],
+  [
+   5638,
+   368
+  ],
+  [
+   6006,
+   315
+  ],
+  [
+   6321,
+   352
+  ],
+  [
+   6673,
+   389
+  ],
+  [
+   7062,
+   336
+  ],
+  [
+   7398,
+   373
+  ],
+  [
+   7771,
+   320
+  ],
+  [
+   8091,
+   357
+  ],
+  [
+   8448,
+   304
+  ],
+  [
+   8752,
+   341
+  ],
+  [
+   9093,
+   378
+  ],
+  [
+   9471,
+   325
+  ],
+  [
+   9796,
+   362
+  ],
+  [
+   10158,
+   309
+  ],
+  [
+   10467,
+   346
+  ],
+  [
+   10813,
+   383
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.box-fields-truncated",
+   "ends inside a field"
+  ],
+  [
+   "mp4.samples-encrypted",
+   "are encrypted"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "encryption": {
+   "ffprobe": null,
+   "mediainfo": "Encrypted"
+  },
+  "skip": {
+   "all": "a damaged file, which tools read in their own ways"
+  }
+ }
+}

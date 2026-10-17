@@ -243,6 +243,8 @@ public sealed partial class Mp4Parser
         if (state.Track is { TrackHeader: null } track)
         {
             track.Id = id;
+            state.TracksById.TryAdd(id, track);
+            state.TrackIdCounts[id] = state.TrackIdCounts.GetValueOrDefault(id) + 1;
             track.TrackDuration = duration;
             track.TrackHeader = node;
             node.Value = $"Track Header, track {id}";
@@ -295,7 +297,8 @@ public sealed partial class Mp4Parser
         }
 
         node.Value = $"{handler} ({HandlerName(handler)})";
-        if (node.Children.Count > 0 && state.Track is { Handler: null } track && component != "dhlr")
+        // The track's handler is the media's (8.4.3): that of the hdlr box in mdia, not the metadata handler of a meta box in the trak box.
+        if (node.Children.Count > 0 && state.ParentType == "mdia" && state.Track is { Handler: null } track && component != "dhlr")
         {
             track.Handler = handler;
         }
@@ -327,7 +330,21 @@ public sealed partial class Mp4Parser
         var edits = new List<Edit>();
         for (uint i = 0; i < count; i++)
         {
+            if (i % 4096 == 0)
+            {
+                state.Context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
             long start = f.Position;
+            if (i >= MaxListedEntries)
+            {
+                // Past the entries shown, the edits are read for the checks and the duration without nodes.
+                ulong pastDuration = f.Take(size);
+                long pastTime = size == 8 ? (long)f.Take(8) : (int)(uint)f.Take(4);
+                edits.Add(new Edit(pastDuration, pastTime, (int)(uint)f.Take(4) / 65536.0));
+                continue;
+            }
+
             var edit = new Node("Edit", start, (2 * size) + 4) { Description = Explain.Edit };
             ulong duration = f.Duration(edit, "Segment Duration", size, state.MovieTimescale, Explain.SegmentDuration);
             long mediaTime = size == 8 ? (long)f.Take(8) : (int)(uint)f.Take(4);
@@ -339,12 +356,8 @@ public sealed partial class Mp4Parser
             };
             edit.Add(new Node("Media Time", start + size, size, shown) { Description = Explain.MediaTime });
             double rate = f.Fixed(edit, "Media Rate", 4, 16, Explain.MediaRate);
-            if (i < MaxListedEntries)
-            {
-                node.Add(edit);
-            }
-
-            edits.Add(new Edit(duration, mediaTime, rate, edit));
+            node.Add(edit);
+            edits.Add(new Edit(duration, mediaTime, rate));
         }
 
         if (count > MaxListedEntries)
