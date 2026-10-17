@@ -106,6 +106,39 @@ public class DtsTests
         Assert.Equal(["dts.trailing-data"], report.Findings.Select(f => f.Code));
     }
 
+    // A configuration that returns goes on with its stream: frames that alternate between two arrangements make two streams, not one for each
+    // change, and the changes are one finding with their number.
+    [Fact]
+    public void AConfigurationThatReturnsKeepsItsStream()
+    {
+        byte[] frame = Fixture("core-16be.dts")[..512];
+        var data = new List<byte>();
+        for (int i = 0; i < 12; i++)
+        {
+            byte[] copy = [.. frame];
+            SetBits(copy, 60, 6, i % 2 == 0 ? 2 : 0);
+            data.AddRange(copy);
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("alternating.dts", new MemoryStream([.. data]));
+        Assert.Equal(2, report.Streams.Count);
+        Assert.Equal(["2/0", "1/0"], report.Streams.Select(s => s.ChannelMode));
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
+        Assert.Equal(11, changed.Count);
+        Assert.DoesNotContain("limited", changed.Message, StringComparison.Ordinal);
+        Assert.Equal(6 * 512, report.Streams[0].Samples);
+    }
+
+    private static void SetBits(byte[] data, int start, int width, int value)
+    {
+        for (int i = 0; i < width; i++)
+        {
+            int bit = start + i;
+            int on = (value >> (width - 1 - i)) & 1;
+            data[bit >> 3] = (byte)((data[bit >> 3] & ~(0x80 >> (bit & 7))) | (on << (7 - (bit & 7))));
+        }
+    }
+
     // ADTS at the start takes 91 and DTS further in 50, whichever comes first in the list of parsers.
     [Fact]
     public void AdtsFollowedByDtsIsAdtsInEitherOrderOfTheParsers()

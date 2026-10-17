@@ -195,8 +195,9 @@ internal static class Framing
 }
 
 // The CRC work a search for a chain may spend on extension substream candidates: a header of up to 4 KiB is read and checked for each
-// sync word, and a file of sync words 16 bytes apart would otherwise cost 256 times its size. A search earns some bytes of work for
-// every byte it scans, after a start allowance that covers the headers of a real stream.
+// sync word, and a file of sync words 16 bytes apart would otherwise cost 256 times its size. The searches of one segment of data (or
+// of a sniff) share one budget, which earns some bytes of work for every byte the searches advance, after a start allowance that
+// covers the headers of a real stream.
 internal sealed class CrcBudget
 {
     private const long StartAllowance = 1 << 20;
@@ -213,7 +214,7 @@ internal sealed class CrcBudget
         }
 
         _allowance += Math.Max(0, position - _scanned) * PerScannedByte;
-        _scanned = position;
+        _scanned = Math.Max(_scanned, position);
     }
 
     public bool TryCharge(int bytes)

@@ -12,11 +12,22 @@ namespace Encspect.Formats.Dts;
 internal sealed class DtsAnalysis
 {
     private readonly AnalysisContext _context;
-    private readonly List<DtsStream> _finished = [];
+    // The most streams a file gets: a file whose configuration changes at every unit would otherwise make a stream, a statistics node and
+    // a series for each.
+    internal const int MaxStreams = 64;
+
+    private readonly List<DtsStream> _streams = [];
+    private readonly Dictionary<StreamKey, DtsStream> _byKey = [];
     private DtsStream? _current;
+    private StreamKey? _previousKey;
+    private Findings.Counted? _changes;
+    private int _merged;
     private long _unitOffset;
     private Locator _locator;
     private int _unitIndex;
+
+    // The static fields in force for each extension substream index (7.5.2): the last header that carried them.
+    private readonly StaticState?[] _staticStates = new StaticState?[4];
 
     public DtsAnalysis(AnalysisContext context)
     {
@@ -58,7 +69,7 @@ internal sealed class DtsAnalysis
         _unitIndex = index;
         _unitOffset = layout.Offset;
         _locator = new Locator(layout.Form, layout.Offset, layout.Length);
-        var syntax = new UnitSyntax(view, layout, source, OnIssue);
+        var syntax = new UnitSyntax(view, layout, source, OnIssue, _staticStates);
         syntax.Run();
         UnitFacts facts = syntax.Facts;
         LastFacts = facts;
@@ -222,41 +233,69 @@ internal sealed class DtsAnalysis
         }
     }
 
-    // Units in one configuration make a stream; a change of the configuration ends it and starts another.
+    // Units in one configuration make a stream; a change of the configuration ends it, and starts another unless the file has been in that
+    // configuration before, when its stream goes on, or has MaxStreams already, when the unit stays in the stream it follows.
     private void Assign(Region region, int index, UnitFacts facts, UnitLayout layout)
     {
         StreamKey key = StreamKey.Of(facts);
-        if (_current is null || _current.Key != key)
+        bool changed = _previousKey is { } previous && previous != key;
+        if (changed)
         {
-            if (_current is not null)
-            {
-                _finished.Add(_current);
-                long offset = layout.Offset;
-                string from = _current.Key.Describe();
-                string to = key.Describe();
-                if (from == to)
-                {
-                    // Neither the form nor the extension substream's figures are in the description, so say which one differs.
-                    StreamKey previous = _current.Key;
-                    if (previous.Form != key.Form)
-                    {
-                        from += $" ({previous.Form.Describe()})";
-                        to += $" ({key.Form.Describe()})";
-                    }
-                    else
-                    {
-                        to += " (the figures of its extension substream's assets differ)";
-                    }
-                }
-
-                Findings.AddNow(Severity.Info, "dts.stream-changed", $"The stream changes at 0x{offset:X} from {from} to {to}.", new Node("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame });
-            }
-
-            _current = new DtsStream(key, index);
+            RecordChange(_previousKey!.Value, key, layout);
         }
 
-        _current.Regions.Add(region);
+        _previousKey = key;
+        if (_current is null || changed)
+        {
+            if (_byKey.TryGetValue(key, out DtsStream? known))
+            {
+                _current = known;
+            }
+            else if (_current is null || _streams.Count < MaxStreams)
+            {
+                _current = new DtsStream(key, index);
+                _streams.Add(_current);
+                _byKey[key] = _current;
+            }
+            else
+            {
+                _merged++;
+            }
+        }
+
+        _current!.Regions.Add(region);
         _current.Add(layout.Offset, layout.Length, Samples(facts), facts, layout);
+    }
+
+    // The stream-changed finding, counted once: the first change gives its place and wording, a count follows.
+    private void RecordChange(StreamKey previous, StreamKey key, UnitLayout layout)
+    {
+        if (_changes is { } counted)
+        {
+            counted.Count++;
+            return;
+        }
+
+        long offset = layout.Offset;
+        string from = previous.Describe();
+        string to = key.Describe();
+        if (from == to)
+        {
+            // Neither the form nor the extension substream's figures are in the description, so say which one differs.
+            if (previous.Form != key.Form)
+            {
+                from += $" ({previous.Form.Describe()})";
+                to += $" ({key.Form.Describe()})";
+            }
+            else
+            {
+                to += " (the figures of its extension substream's assets differ)";
+            }
+        }
+
+        _changes = Findings.AddNowCounted(Severity.Info, "dts.stream-changed", new Node("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame }, count =>
+            (count == 1 ? $"The stream changes at 0x{offset:X} from {from} to {to}." : $"The stream changes {count} times, first at 0x{offset:X} from {from} to {to}.")
+            + (_merged > 0 ? $" Streams are limited to {MaxStreams}: after that, the units of a configuration without a stream stay in the stream before them ({_merged} changes)." : string.Empty));
     }
 
     // The samples a unit holds at the stream's sampling frequency: the core's blocks of 32, or an extension substream's duration.
@@ -267,7 +306,7 @@ internal sealed class DtsAnalysis
             return facts.Core.Samples;
         }
 
-        SubstreamFacts? substream = facts.Substreams.FirstOrDefault(s => s.HasStaticFields && s.Duration > 0);
+        SubstreamFacts? substream = facts.Substreams.FirstOrDefault(s => s.Duration > 0);
         AssetFacts? asset = substream?.Assets.FirstOrDefault();
         int rate = StreamKey.RateOf(asset);
         return substream is null || rate <= 0 ? 0 : (int)Math.Round(substream.Duration * rate);
@@ -276,20 +315,16 @@ internal sealed class DtsAnalysis
     // The streams, in the order their first units appear, with each one's statistics in the first region it spans.
     public void Finish(IReadOnlyList<EncoderClaim> claims)
     {
-        if (_current is not null)
-        {
-            _finished.Add(_current);
-            _current = null;
-        }
-
-        bool several = _finished.Count > 1;
-        foreach (DtsStream stream in _finished)
+        _current = null;
+        bool several = _streams.Count > 1;
+        foreach (DtsStream stream in _streams)
         {
             Cancellation.ThrowIfCancellationRequested();
             AddStream(stream, claims, several);
         }
 
-        _finished.Clear();
+        _streams.Clear();
+        _byKey.Clear();
         Findings.Flush(_context);
     }
 
@@ -407,6 +442,19 @@ internal static class UnitRecord
             buffer.Add(verdict);
         }
 
+        buffer.Add((byte)verdicts.Carries.Count);
+        foreach (StaticState? carry in verdicts.Carries)
+        {
+            var bytes = new byte[1 + StaticState.Bytes];
+            if (carry is not null)
+            {
+                bytes[0] = 1;
+                carry.WriteTo(bytes.AsSpan(1));
+            }
+
+            buffer.AddRange(bytes);
+        }
+
         List<(int Start, int End)> touched = view.Touched();
         int total = buffer.Count + 2;
         var pieces = new List<(int Start, int End)>();
@@ -473,6 +521,15 @@ internal static class UnitRecord
         int verdictCount = data[at++];
         var verdicts = new Verdicts(data.Slice(at, verdictCount));
         at += verdictCount;
+        int carryCount = data[at++];
+        var carries = new List<StaticState?>(carryCount);
+        for (int i = 0; i < carryCount; i++)
+        {
+            carries.Add(data[at] != 0 ? StaticState.ReadFrom(data.Slice(at + 1, StaticState.Bytes)) : null);
+            at += 1 + StaticState.Bytes;
+        }
+
+        verdicts = new Verdicts(verdicts.Values, carries);
         var view = new UnitView { IsBuildingNodes = true };
         int pieces = BinaryPrimitives.ReadUInt16BigEndian(data[at..]);
         at += 2;
@@ -506,7 +563,7 @@ internal static class UnitRecord
 
         // A node pass consumes its verdicts in order, and a frame's children are built again whenever the builder
         // runs (they are held weakly, and readers on several threads may each build them): each pass gets its own cursor.
-        public Verdicts NewVerdicts() => new(verdicts.Values);
+        public Verdicts NewVerdicts() => new(verdicts.Values, verdicts.Carries);
 
         public UnitView View => view;
 

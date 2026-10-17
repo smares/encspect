@@ -9,9 +9,9 @@ references: ETSI TS 102 114 V1.6.1 (2019-08), clause 8; FFmpeg 6.1.1 libavcodec/
 
 **How it works.** One XLL frame starts with the sync word 0x41A29547 and a common header with a CRC16. Behind it come:
 
-- a sub-header for each channel set (CRC16 each): its channels, the source resolution and the storage width of its samples, its sampling frequency, whether it is a primary set, the downmix coefficients that fold it into the sets before it, and a channel mask of one bit for each speaker;
+- a sub-header for each channel set (CRC16 each): its channels, the source resolution and the storage width of its samples, its sampling frequency, whether it is a primary set, the downmix coefficients that fold it into the sets before it, a channel mask of one bit for each speaker and, for each frequency band, the parameters of the decoder: pairwise channel decorrelation, predictor orders, reflection coefficients and the sizes of the least significant parts;
 - the navigation index (NAVI, CRC16): the byte size of the band data for each frequency band, segment and channel set;
-- the band data: predictor orders, entropy-coded residuals and, above 96 kHz, extra frequency bands.
+- the band data: the entropy-coded residuals of each segment, with the frequency bands that sampling frequencies above 96 kHz add.
 
 Channel sets form a hierarchy. The 7.1 stream of the FFmpeg sample archive ("Master Audio 7.1.dts") is a primary 5.1 set plus a set of the two rear channels; the layout is the union of the masks. The residual bits of a set say whether it carries the original audio or its difference from the core.
 

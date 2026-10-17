@@ -28,11 +28,13 @@ internal sealed partial class UnitSyntax
     private readonly Verdicts _verdicts;
     private readonly ISource? _source;
     private readonly bool _isBuilding;
+    private readonly StaticState?[]? _staticStates;
     private int _pos;
 
     // The analysis, which also needs the file's bytes where the syntax follows sizes to other parts of a unit.
-    public UnitSyntax(UnitView view, UnitLayout layout, ISource source, IssueSink issues)
+    public UnitSyntax(UnitView view, UnitLayout layout, ISource source, IssueSink issues, StaticState?[] staticStates)
     {
+        _staticStates = staticStates;
         _view = view;
         _layout = layout;
         _source = source;

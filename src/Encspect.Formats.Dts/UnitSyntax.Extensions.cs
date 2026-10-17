@@ -290,7 +290,16 @@ internal sealed partial class UnitSyntax
 
         int headerSize = HeaderSize(6, Explain.XxchHeaderSize, Topics.CoreExtensions);
         bool setCrc = Flag("HasChannelSetCrc", Explain.XxchSetCrc, Topics.Crc);
+        int maskStart = _pos;
         int maskBits = Num("Speaker Mask Bits", 5, Explain.XxchMaskBits, Topics.CoreExtensions, "bits", 1) + 1;
+        if (maskBits <= 6)
+        {
+            // Table 6-23 reads each channel set's mask with nuBits4SpkrMaskXXCh - 6 bits, and FFmpeg refuses a width up to 6 (dca_core.c).
+            Report(Issue.ReservedValue, "Speaker Mask Bits", maskStart, _pos, $"the mask has {maskBits} bits, but the channel set masks are read with 6 bits fewer (Table 6-23), so it needs more than 6; the channel sets are not read");
+            _pos = endBit;
+            return;
+        }
+
         int sets = Num("Channel Sets", 2, Explain.XxchSets, Topics.CoreExtensions, "channel sets", 1) + 1;
         var sizes = new int[sets];
         _tree?.Open("Channel Set Sizes", _pos, Explain.XxchSetSizes, Topics.CoreExtensions);

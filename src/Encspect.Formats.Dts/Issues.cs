@@ -38,16 +38,29 @@ internal delegate void IssueSink(Issue issue, string field, int startBit, int en
 internal sealed class Verdicts
 {
     private readonly List<byte> _values = [];
+    private readonly List<StaticState?> _carries = [];
     private int _next;
+    private int _nextCarry;
 
     public Verdicts()
     {
     }
 
-    public Verdicts(ReadOnlySpan<byte> values)
+    public Verdicts(ReadOnlySpan<byte> values, IEnumerable<StaticState?>? carries = null)
     {
         _values.AddRange(values.ToArray());
+        if (carries is not null)
+        {
+            _carries.AddRange(carries);
+        }
     }
+
+    // The static fields in force for each extension substream header that omitted them, in the order the syntax reached them.
+    public IReadOnlyList<StaticState?> Carries => _carries;
+
+    public void AddCarry(StaticState? state) => _carries.Add(state);
+
+    public StaticState? NextCarry() => _nextCarry < _carries.Count ? _carries[_nextCarry++] : null;
 
     public int Count => _values.Count;
 

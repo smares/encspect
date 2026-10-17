@@ -15,6 +15,6 @@ references: ISO/IEC 11172-3 2.4.3.1; ISO/IEC 14496-3 1.A.2.2.2; ATSC A/52:2018 7
 
 **In AC-3.** An [AC-3 frame](ac3-frames-and-bsi) has crc1 over its first 5/8 and crc2 over all of it; E-AC-3, one.
 
-**In DTS.** The headers of an [extension substream](dts-extension-substream), of XXCH and of XBR end in a CRC-16 that is verified. A [core frame](dts-core-frames) with CPF set has CRC words that the specification says not to test, so they are reported as not verified.
+**In DTS.** The headers of an [extension substream](dts-extension-substream), of XXCH, X96, XBR and the lossless extension (its sub-headers and navigation index too) end in a CRC16 that is verified. A [core frame](dts-core-frames) with CPF set has CRC words that the specification says not to test, so they are reported as not verified.
 
 **What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs serve other purposes: the LAME tag has a CRC of its own and one over the music, the multichannel extension its own, every [Ogg page](ogg-pages) a CRC-32 over the page, Musepack SV8's stream header a CRC-32 ([SV8 packets](musepack-sv8-packets)), and each WavPack block a checksum ([sub-blocks](wavpack-sub-blocks)).

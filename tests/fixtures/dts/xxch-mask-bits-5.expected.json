@@ -1,0 +1,56 @@
+{
+ "description": "Four stereo core frames with an XXCH extension whose speaker mask has 5 bits, fewer than the 6 that Table 6-23 subtracts.",
+ "length": 4096,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1024
+  ],
+  [
+   1024,
+   1024
+  ],
+  [
+   2048,
+   1024
+  ],
+  [
+   3072,
+   1024
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-ES",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.reserved-value",
+   "the mask has 5 bits"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": true,
+  "ffprobe_profile": false,
+  "decode_error": "Invalid number of bits for XXCH speaker mask",
+  "skip": {
+   "ffprobe_profile": "ffmpeg's decoder names the profile DTS-ES only when it has decoded the extension (dca_core.c), which it refuses here ('Invalid number of bits for XXCH speaker mask')",
+   "decode": "ffmpeg's decoder refuses the XXCH header (dca_core.c: 'Invalid number of bits for XXCH speaker mask')"
+  }
+ }
+}
