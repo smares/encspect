@@ -1,0 +1,87 @@
+{
+ "description": "Three 5.1 frames of joc-atmos and a fourth cut in the middle of block 2's skip field.",
+ "length": 6408,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   2048
+  ],
+  [
+   2048,
+   2048
+  ],
+  [
+   4096,
+   2048
+  ],
+  [
+   6144,
+   264
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "3/2 (left, center, right, left surround, right surround)",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 6144,
+   "is_vbr": true,
+   "has_object_audio": true,
+   "joc_object_count": 15
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.frame-truncated",
+   "of its 2048 bytes"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "skip_insertion": false,
+  "skip": {
+   "ffprobe": "ffmpeg drops the truncated frame.",
+   "decode": "ffmpeg drops the truncated frame.",
+   "skip_insertion": "The frames already hold skip fields, which the rewrite does not combine with its own."
+  }
+ },
+ "block_ends": {
+  "0": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ],
+  "2048": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ],
+  "4096": [
+   497,
+   501,
+   3658,
+   3662,
+   3666,
+   3670
+  ]
+ }
+}

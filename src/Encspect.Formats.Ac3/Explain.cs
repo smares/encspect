@@ -253,7 +253,7 @@ internal static class Explain
     public const string ConfigDataRate = "data_rate: the data rate of all substreams together in kbps, the highest where it varies (ETSI TS 102 366 F.6.2.2).";
     public const string ConfigNumIndSub = "num_ind_sub: the substream ID of the last independent substream, one less than their number (ETSI TS 102 366 F.6.2.3).";
     public const string ConfigAsvc = "asvc: whether the substream is an associated service meant to be mixed with a main one (ETSI TS 102 366 F.6.2.7).";
-    public const string ConfigNumDepSub = "num_dep_sub: how many dependent substreams belong to this independent substream (ETSI TS 102 366 F.6.2.12).";
+    public const string ConfigNumDepSub = "num_dep_sub: how many dependent substreams belong to this independent substream, read as a count the way the box's syntax uses it (a chan_loc field follows when it is above 0); F.6.2.12 words it as the substreamid of the last dependent substream (ETSI TS 102 366 F.6.2.12).";
     public const string ConfigChanLoc = "chan_loc: the channel locations beyond 5.1 that the dependent substreams carry (ETSI TS 102 366 F.6.2.13, Table F.6.1).";
     public const string ConfigTrailing = "Reserved bytes after the fields, which decoders ignore (ETSI TS 102 366 F.6.2.14).";
 
@@ -266,7 +266,7 @@ internal static class Explain
     public const string Largest = "The largest program frame, in bytes.";
     public const string MinimumBitrate = "The lowest bitrate of a program frame.";
     public const string MaximumBitrate = "The highest bitrate of a program frame.";
-    public const string StatDependentFrames = "Frames of dependent substreams, which add channels to the program (A/52 Annex E 2.3.1.1).";
+    public const string StatDependentFrames = "Frames of dependent substreams, which add channels to the program (A/52 Annex E 2.3.1.1). The count leaves out the dependent frames after a repeated dependent substream ID in a program frame (Annex E 2.3.1.2).";
     public const string StatNominalBitrate = "The bitrates frmsizecod names (A/52 Table 5.18); AC-3 holds one bitrate in every frame unless the stream switches it.";
     public const string StatDialnorm = "The dialogue normalization values the frames carry (A/52 5.4.2.8).";
     public const string StatBsmod = "The services the frames name (A/52 Table 5.7).";

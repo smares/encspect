@@ -115,3 +115,13 @@ public class CorruptMatroskaFileTests
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
+
+// The fixtures in tests/fixtures/musepack.
+public class CorruptMusepackFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("musepack/", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
