@@ -153,6 +153,9 @@ internal sealed class State(Source source, CancellationToken cancellation)
     // info in the blocks up to it or from that block's flags.
     public bool IsConfigured { get; set; }
 
+    // The header of the block that settled them.
+    public BlockHeader ConfigHeader { get; set; }
+
     // The first block's float and integer details, for the lossless verdict.
     public bool HasFloatInfo { get; set; }
 

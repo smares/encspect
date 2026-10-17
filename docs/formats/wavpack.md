@@ -22,7 +22,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
   - a block whose stated size does not end at a header or at the end of the data is taken to end at the next chained header inside it (`wavpack.block-size-mismatch`);
   - there is no limit of 1 MiB of skipped bytes, after which libwavpack gives up.
 - Once 4,096 blocks are detailed, runs of further blocks that add nothing become one node each.
-- What the detailed blocks list and keep is capped per block (1,024 sub-blocks, 64 KiB of data) and across all of them: 65,536 listed sub-blocks and 16 MiB of kept data in all. The sub-blocks past a cap are counted as "Further Sub-blocks", never listed without their data: once a block's data does not fit the bytes left, the rest of that block, and the later blocks' sub-blocks, are counted, so such a block shows its header and the count only. A crafted file therefore costs a bounded amount of memory, whatever the number of its blocks and sub-blocks.
+- What the detailed blocks list and keep is capped per block (1,024 sub-blocks, 64 KiB of data) and across all of them: 65,536 listed sub-blocks and 16 MiB of kept data in all. The sub-blocks past a cap are counted as "Further Sub-blocks", never listed without their data: a sub-block that does not fit what is left in its block or in all is counted with the rest of that block, and once the 16 MiB are spent, later blocks show only their header and the count. A crafted file therefore costs a bounded amount of memory, whatever the number of its blocks and sub-blocks.
 
 ## Reported
 
@@ -44,7 +44,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 - From the channel mask of the channel info sub-block (WAVEFORMATEXTENSIBLE speaker bits).
 - Without a mask: mono and stereo from the flags, and discrete channels otherwise. A channel info of a count of 0 and no mask is accepted by libwavpack and counts as none.
-- libwavpack settles the channels when it reaches the first audio block: from the channel info of that block (or of a metadata block before it) that gives channels, else from the block's flags (mono or stereo, mask 4 or 3). It checks that channel info fully (the count against the streams, the speakers of the mask against the count).
+- libwavpack settles the channels when it reaches the first audio block that passes its block check (its open loop skips a block whose checksum fails, for instance): from the channel info of that block (or of a metadata block before it that passes) that gives channels, else from the block's flags (mono or stereo, mask 4 or 3). It checks that channel info fully (the count against the streams, the speakers of the mask against the count).
 - A channel info after that point only has to be 1 to 7 bytes long and never changes the channels. One that fails the other checks is therefore not reported as refused; one that gives other channels or another mask than the settled ones is `wavpack.channel-info-ignored`.
 - The channel identities name the channels after the ones the mask names, as libwavpack lists them (`WavpackGetChannelIdentities`): with a mask of two speakers, the first identity is channel 3.
 - A set of blocks has at most as many blocks as libwavpack reads into one: the streams the long form of the channel info states (up to 4,096), else 8. A set that has more without a final block is ended there (`wavpack.block-set-broken`).

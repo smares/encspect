@@ -257,10 +257,11 @@ def stream_info(data, entries):
     power = dsd_power(first, data) if is_dsd else None
     # The rate of DSD is held to what 31 bits hold (Reader.MaxNativeRate).
     native = min(rate * (1 << power) * 8, 2**31 - 1) if is_dsd and power is not None and power <= 31 else rate
-    # libwavpack settles the channels at the first audio block: only a channel info in the blocks up to it counts.
+    # libwavpack settles the channels at the first audio block that verifies (its open loop skips a block that fails
+    # WavpackVerifySingleBlock): only a channel info in the blocks that verify up to it counts.
     upto = []
     for e in entries:
-        if e["kind"] == "block":
+        if e["kind"] == "block" and verifies(e):
             upto.append(e)
             if e["header"]["samples"]:
                 break

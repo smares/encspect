@@ -194,6 +194,7 @@ DECODES = {
     "channel-info-no-count": (24000, 0),
     "channel-info-zero": None,
     "channel-info-after-first-block": (24000, 0),
+    "channel-info-after-bad-block": (12975, 1),
     "channels-change": (24000, 2),
     "checksum-missing": (24000, 1),
     "decorr-terms-invalid": None,
@@ -427,6 +428,11 @@ def build():
     b["channel-info-after-first-block"] = ("Channel infos in the second and third block of a stereo file whose first block has none (6 channels with a 5.1 mask, then 2 channels with 8 speakers): libwavpack settled on the flags' stereo by then and takes neither.",
                                            aa([a[0], insert_before_checksum(a[1], sub(0x0D, bytes([6, 0x3F]))), insert_before_checksum(a[2], sub(0x0D, bytes([2, 0xFF, 0x00])))]),
                                            [("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but the flags of the first audio block gave 2 channels and a mask of 0x3")], False)
+    first_bad = bytearray(a[0])
+    first_bad[200] ^= 0x10
+    b["channel-info-after-bad-block"] = ("The first block's audio changed so its checksum fails, and a channel info of 6 channels in the second: libwavpack skips the first block, so the second is the first audio block that verifies and its channel info settles the channels.",
+                                         aa([bytes(first_bad), insert_before_checksum(a[1], sub(0x0D, bytes([6, 0x3F]))), a[2]]),
+                                         [("wavpack.block-checksum-mismatch", "not the one worked out"), ("wavpack.channel-count-mismatch", "says 6 channels")], False)
     eight = blocks(base("lossless-8-stereo"))
     b["shift-too-large"] = ("A left shift of 31 bits in every block of a file of 8-bit samples.", aa([patch(x, flags=(flags(x) & ~(0x1F << 13)) | (31 << 13)) for x in eight]),
                             [("wavpack.flags-invalid", "left shift of the block at 0x0 is 31 bits, not less than the 8 bits")], False)

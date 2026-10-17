@@ -133,7 +133,6 @@ internal static class Reader
         Declare(s, entry, header);
         HeaderChecks(s, entry, offset, header, status, block.Length);
         BlockStatus found = Walk(s, entry, offset, header, block, detail, status, out int count, out int wrapper);
-        s.IsConfigured |= header.HasAudio;
         status |= found;
         if (header.HasAudio)
         {
@@ -378,7 +377,7 @@ internal static class Reader
                 $"{Bytes(left)} at 0x{trailingAt:X} after the last sub-block of the block at 0x{offset:X} {(left == 1 ? "holds" : "hold")} no sub-block; libwavpack refuses a block that does not end with one.");
         }
 
-        result |= Checks(s, entry, offset, header, block, detail, found, status);
+        result |= Checks(s, entry, offset, header, block, detail, found, status | result);
         return result | found.Status;
     }
 
@@ -669,7 +668,7 @@ internal static class Reader
             return;
         }
 
-        int flagChannels = s.FirstAudioHeader.IsMono ? 1 : 2;
+        int flagChannels = s.ConfigHeader.IsMono ? 1 : 2;
         ChannelInfoValue kept = first?.Value ?? new ChannelInfoValue(flagChannels, Decode.OldMaxStreams, flagChannels == 1 ? 4u : 3u, 0);
         string source = first is null ? "the flags of the first audio block gave" : "an earlier one gave";
         if (Decode.ChannelInfoFields(data) is not { } later)
@@ -876,9 +875,18 @@ internal static class Reader
             }
         }
 
-        if (found.ChannelInfo is { } channelInfo && s.ChannelInfo is null)
+        // libwavpack's open loop skips a block that fails WavpackVerifySingleBlock, so only a block that verifies gives its
+        // channel info, and the first audio block that verifies settles the channels.
+        bool verifies = ((status | result) & (BlockStatus.Malformed | BlockStatus.ChecksumInvalid | BlockStatus.ChecksumMissing | BlockStatus.Truncated)) == 0;
+        if (verifies && found.ChannelInfo is { } channelInfo && s.ChannelInfo is null)
         {
             s.ChannelInfo = channelInfo;
+        }
+
+        if (verifies && header.HasAudio && !s.IsConfigured)
+        {
+            s.IsConfigured = true;
+            s.ConfigHeader = header;
         }
 
         return result;
