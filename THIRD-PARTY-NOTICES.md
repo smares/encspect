@@ -4,7 +4,7 @@ Encspect is released under the [MIT License](LICENSE). The published builds, the
 
 Each text below is copied from a file, never written by hand; `scripts/release/make_notices.py` regenerates this file and the release workflow fails when it differs:
 
-- **Licensors' own license files:** for the packages that carry only a license expression (`MIT`), the license file of the licensor's repository at the commit the package's nuspec names: Avalonia and Avalonia.Controls.DataGrid (`licence.md`), NWayland (`licence.md`), Tmds.DBus (`COPYING`) and MicroCom (`LICENSE`). The copyright line of the package's nuspec is given as well where it differs.
+- **Licensors' own license files:** for the packages that carry only a license expression (`MIT`), the license file of the licensor's repository at the commit the package's nuspec names: Avalonia and Avalonia.Controls.DataGrid (`licence.md`), NWayland (`licence.md`), Tmds.DBus (`COPYING`) and MicroCom (`LICENSE`). The copyright line of the package's nuspec is given as well where the package has one.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
 - **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version 10.0.13.
 
@@ -61,6 +61,8 @@ SOFTWARE.
 ```
 
 ## MIT License: Avalonia.Controls.DataGrid
+
+Package copyright line: Copyright 2013-2026 © The AvaloniaUI Project
 
 The license file of AvaloniaUI/Avalonia.Controls.DataGrid:
 
@@ -119,6 +121,8 @@ SOFTWARE.
 
 ## MIT License: MicroCom.Runtime
 
+Package copyright line: Copyright 2021 © Nikita Tsukanov
+
 The license file of kekekeks/MicroCom:
 
 ```
@@ -146,6 +150,8 @@ SOFTWARE.
 ```
 
 ## MIT License: Tmds.DBus.Protocol
+
+Package copyright line: Tom Deseyn
 
 The `COPYING` of tmds/Tmds.DBus:
 

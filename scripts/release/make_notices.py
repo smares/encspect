@@ -69,6 +69,46 @@ def versions(assets_path):
     return found
 
 
+# The packages the notices cover, and the build-time ones that ship in no build. A restored package in neither list
+# fails the run, so a new dependency cannot ship without its notice.
+COVERED = {
+    "Avalonia", "Avalonia.Desktop", "Avalonia.Themes.Fluent", "Avalonia.Skia", "Avalonia.HarfBuzz", "Avalonia.Win32",
+    "Avalonia.X11", "Avalonia.FreeDesktop", "Avalonia.FreeDesktop.AtSpi", "Avalonia.Remote.Protocol", "Avalonia.Wayland",
+    "Avalonia.Native", "Avalonia.Controls.DataGrid", "Avalonia.Angle.Windows.Natives", "NWayland", "MicroCom.Runtime",
+    "Tmds.DBus.Protocol", "SkiaSharp", "HarfBuzzSharp",
+}
+COVERED_PREFIXES = ("SkiaSharp.NativeAssets.", "HarfBuzzSharp.NativeAssets.")
+BUILD_ONLY = {"Avalonia.BuildServices", "Microsoft.NET.ILLink.Tasks"}
+
+
+def uncovered(assets):
+    """The packages of the restore graph (every target) that the notices neither cover nor exclude as build-time."""
+    found = set()
+    for target in assets["targets"].values():
+        for key, entry in target.items():
+            if entry.get("type") == "package":
+                found.add(key.split("/")[0])
+    return sorted(p for p in found if p not in COVERED and not p.startswith(COVERED_PREFIXES) and p not in BUILD_ONLY)
+
+
+def self_test():
+    graph = {"targets": {"net10.0": {"Avalonia/1.0": {"type": "package"}, "SkiaSharp.NativeAssets.Linux/1.0": {"type": "package"},
+                                     "Avalonia.BuildServices/1.0": {"type": "package"}, "Encspect.Host/1.0": {"type": "project"}}}}
+    assert uncovered(graph) == [], uncovered(graph)
+    graph["targets"]["net10.0/linux-x64"] = {"Some.NewLibrary/2.0": {"type": "package"}, "Avalonia.Skia/1.0": {"type": "package"}}
+    assert uncovered(graph) == ["Some.NewLibrary"], uncovered(graph)
+    print("make_notices self-test passed.")
+
+
+def coverage_problems(assets_paths):
+    problems = []
+    for path in assets_paths:
+        if pathlib.Path(path).exists():
+            assets = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+            problems += [f"{pathlib.Path(path).parent.parent.name}: {name}" for name in uncovered(assets)]
+    return problems
+
+
 def fetch(packages, version_of):
     LICENSES.mkdir(parents=True, exist_ok=True)
     for name, package, source in FETCHED:
@@ -93,7 +133,9 @@ def build(packages, version_of, runtime_deps):
     skia_notices = read(packages / "skiasharp.nativeassets.linux" / v["SkiaSharp.NativeAssets.Linux"] / "THIRD-PARTY-NOTICES.txt")
     angle = read(packages / "avalonia.angle.windows.natives" / v["Avalonia.Angle.Windows.Natives"] / "LICENSE")
     licenses = {name: read(LICENSES / f"{name}.txt") for name, _, _ in FETCHED}
-    avalonia_copyright = nuspec_field(nuspec(packages, "Avalonia", v["Avalonia"]), "copyright")
+    def copyright_line(package):
+        line = nuspec_field(nuspec(packages, package, v[package]), "copyright")
+        return f"Package copyright line: {line}\n\n" if line else ""
 
     avalonia_ids = ["Avalonia", "Avalonia.Desktop", "Avalonia.Themes.Fluent", "Avalonia.Skia", "Avalonia.HarfBuzz", "Avalonia.Win32",
                     "Avalonia.X11", "Avalonia.FreeDesktop", "Avalonia.FreeDesktop.AtSpi", "Avalonia.Remote.Protocol"]
@@ -105,7 +147,7 @@ Encspect is released under the [MIT License](LICENSE). The published builds, the
 
 Each text below is copied from a file, never written by hand; `scripts/release/make_notices.py` regenerates this file and the release workflow fails when it differs:
 
-- **Licensors' own license files:** for the packages that carry only a license expression (`MIT`), the license file of the licensor's repository at the commit the package's nuspec names: Avalonia and Avalonia.Controls.DataGrid (`licence.md`), NWayland (`licence.md`), Tmds.DBus (`COPYING`) and MicroCom (`LICENSE`). The copyright line of the package's nuspec is given as well where it differs.
+- **Licensors' own license files:** for the packages that carry only a license expression (`MIT`), the license file of the licensor's repository at the commit the package's nuspec names: Avalonia and Avalonia.Controls.DataGrid (`licence.md`), NWayland (`licence.md`), Tmds.DBus (`COPYING`) and MicroCom (`LICENSE`). The copyright line of the package's nuspec is given as well where the package has one.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
 - **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version {runtime_version}.
 
@@ -132,37 +174,35 @@ The sources in `third_party/` (minimp3, getID3, EncSpot, mp3guessenc) are test t
 
 ## MIT License: Avalonia, Avalonia.Native, Avalonia.Wayland and the other Avalonia packages
 
-Package copyright line: {avalonia_copyright}
-
-The license file of AvaloniaUI/Avalonia:
+{copyright_line("Avalonia")}The license file of AvaloniaUI/Avalonia:
 
 ```
 {licenses["avalonia"]}```
 
 ## MIT License: Avalonia.Controls.DataGrid
 
-The license file of AvaloniaUI/Avalonia.Controls.DataGrid:
+{copyright_line("Avalonia.Controls.DataGrid")}The license file of AvaloniaUI/Avalonia.Controls.DataGrid:
 
 ```
 {licenses["avalonia-datagrid"]}```
 
 ## MIT License: NWayland
 
-The license file of kekekeks/NWayland:
+{copyright_line("NWayland")}The license file of kekekeks/NWayland:
 
 ```
 {licenses["nwayland"]}```
 
 ## MIT License: MicroCom.Runtime
 
-The license file of kekekeks/MicroCom:
+{copyright_line("MicroCom.Runtime")}The license file of kekekeks/MicroCom:
 
 ```
 {licenses["microcom"]}```
 
 ## MIT License: Tmds.DBus.Protocol
 
-The `COPYING` of tmds/Tmds.DBus:
+{copyright_line("Tmds.DBus.Protocol")}The `COPYING` of tmds/Tmds.DBus:
 
 ```
 {licenses["tmds-dbus"]}```
@@ -202,16 +242,29 @@ Its `THIRD-PARTY-NOTICES.TXT`, copied here unchanged:
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        # The diff holds non-ASCII characters from the license files; a Windows console would fail to print them.
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--packages", default=os.environ.get("NUGET_PACKAGES") or os.path.expanduser("~/.nuget/packages"))
     parser.add_argument("--assets", default=str(ROOT / "src" / "Encspect.Gui" / "obj" / "project.assets.json"))
     parser.add_argument("--runtime-deps", help="encspect.deps.json of the self-contained CLI build")
     parser.add_argument("--check", action="store_true", help="fail when THIRD-PARTY-NOTICES.md differs")
+    parser.add_argument("--self-test", action="store_true", help="test the check for packages the notices do not cover")
     parser.add_argument("--fetch", action="store_true", help="download the licensors' license files into scripts/release/licenses")
     args = parser.parse_args()
 
+    if args.self_test:
+        self_test()
+        return 0
+
     packages = pathlib.Path(args.packages)
     version_of = versions(args.assets)
+    missing = coverage_problems([args.assets, ROOT / "src" / "Encspect.Cli" / "obj" / "project.assets.json"])
+    if missing:
+        print("The restored packages include some THIRD-PARTY-NOTICES.md does not cover; add their license to make_notices.py (or list them as build-time only):")
+        print("\n".join("  " + m for m in missing))
+        return 1
     if args.fetch:
         fetch(packages, version_of)
         return 0

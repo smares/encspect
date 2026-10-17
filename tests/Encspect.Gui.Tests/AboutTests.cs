@@ -18,11 +18,7 @@ public sealed class AboutTests
     [AvaloniaFact]
     public void The_help_menu_opens_the_about_window_with_the_version_of_the_command_line()
     {
-        if (OperatingSystem.IsMacOS())
-        {
-            // The About item is in the application menu there (App.axaml); the window is the same.
-            return;
-        }
+        Assert.SkipWhen(OperatingSystem.IsMacOS(), "The Help menu is for Windows and Linux; macOS has About in the application menu (tested below).");
 
         MainWindow main = OpenMain();
         NativeMenuItem about = NativeMenu.GetMenu(main)!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "Help")

@@ -97,12 +97,33 @@ public sealed class ReleaseWorkflowTests
     [Fact]
     public void TheVerifiedCommitIsBuiltAndAManualRunNeedsMain()
     {
-        Assert.Contains("    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'", Job("check-tag"));
+        string[] check = Job("check-tag");
+        Assert.DoesNotContain(check, l => l.StartsWith("    if:", StringComparison.Ordinal));
+        int guard = Array.IndexOf(check, "      - name: Require a manual run to start from main");
+        Assert.True(guard >= 0 && guard < Array.FindIndex(check, l => l.Contains("actions/checkout@", StringComparison.Ordinal)), "the guard is the first step");
+        Assert.Equal("        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'", check[guard + 1]);
+        Assert.Contains(check, l => l.Contains("must be started from main", StringComparison.Ordinal));
+        Assert.Contains(check, l => l.Trim() == "exit 1");
         Assert.Contains("      sha: ${{ steps.check.outputs.sha }}", Job("check-tag"));
         Assert.Contains("needs.check-tag.outputs.sha", string.Join('\n', Job("build")), StringComparison.Ordinal);
         Assert.Contains("          ref: ${{ needs.check-tag.outputs.sha }}", Job("release"));
         Assert.DoesNotContain("ref: refs/tags/", Workflow(), StringComparison.Ordinal);
         Assert.Contains("--draft=false", string.Join('\n', Job("release")), StringComparison.Ordinal);
+    }
+
+    // A stale notice must not hide the packaging steps: it is checked after the archive run, before the upload.
+    [Fact]
+    public void TheNoticesAreCheckedAfterPackagingAndBeforeTheUpload()
+    {
+        string[] build = Job("build");
+        int archive = Array.IndexOf(build, "      - name: Run the CLI and the GUI from the archive");
+        int notices = Array.IndexOf(build, "      - name: Check that THIRD-PARTY-NOTICES.md matches this build");
+        int upload = Array.FindIndex(build, l => l.Contains("uses: actions/upload-artifact@", StringComparison.Ordinal));
+        Assert.True(archive >= 0 && notices > archive && upload > notices, "order: archive run, notices check, upload");
+        string step = string.Join('\n', build[notices..upload]);
+        Assert.Contains("make_notices.py --self-test", step, StringComparison.Ordinal);
+        Assert.Contains("make_notices.py --check --runtime-deps", step, StringComparison.Ordinal);
+        Assert.Contains("PYTHONUTF8: 1", step, StringComparison.Ordinal);
     }
 
     // The builds are made and checked the way CI makes and checks them.

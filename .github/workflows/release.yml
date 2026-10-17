@@ -46,16 +46,24 @@ env:
 jobs:
   # Fails unless the tag names the version the sources carry and the tagged commit is on main, so a release is never
   # built from a branch or under another number. On a pull request there is no tag: only the version and the notes are
-  # checked. A manual run is accepted only from main, so that the workflow file of another branch cannot publish.
+  # checked. A manual run is accepted only from main, so that the workflow file of another branch cannot publish; started
+  # from anything else it fails, with the reason, in the first step.
   check-tag:
     name: check the tag
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
       version: ${{ steps.check.outputs.version }}
       sha: ${{ steps.check.outputs.sha }}
     steps:
+      - name: Require a manual run to start from main
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          echo "::error::A manual release run must be started from main (this one is on $REF), so that only the workflow file of main can publish."
+          exit 1
+
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SOURCE_REF }}
@@ -151,12 +159,6 @@ jobs:
       # single file and analyzes a fixture through the host, without showing a window.
       - name: Publish the self-contained GUI
         run: dotnet publish src/Encspect.Gui --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/gui-${{ matrix.rid }}
-
-      # The notices name the runtime pack the publish bundled; a newer .NET servicing release than the one the file was
-      # made from fails here. scripts/release/make_notices.py regenerates the file (see "Releases" in docs/development.md).
-      - name: Check that THIRD-PARTY-NOTICES.md matches this build
-        shell: bash
-        run: bash scripts/ci/python.sh scripts/release/make_notices.py --check --runtime-deps "src/Encspect.Cli/bin/Release/net10.0/${{ matrix.rid }}/encspect.deps.json"
 
       - name: Run the published GUI's self-check
         shell: bash
@@ -278,6 +280,17 @@ jobs:
           grep -q 'Skia and HarfBuzz loaded' "$RUNNER_TEMP/packed-gui.txt"
           test -f "$unpacked/THIRD-PARTY-NOTICES.md"
           test -f "$unpacked/LICENSE"
+
+      # After packaging, so a stale notice does not hide the packaging steps. The notices name the runtime pack the publish
+      # bundled and cover every package the GUI restored; scripts/release/make_notices.py regenerates the file (see
+      # "Releases" in docs/development.md).
+      - name: Check that THIRD-PARTY-NOTICES.md matches this build
+        shell: bash
+        env:
+          PYTHONUTF8: 1
+        run: |
+          bash scripts/ci/python.sh scripts/release/make_notices.py --self-test
+          bash scripts/ci/python.sh scripts/release/make_notices.py --check --runtime-deps "src/Encspect.Cli/bin/Release/net10.0/${{ matrix.rid }}/encspect.deps.json"
 
       # Not on a pull request: any retention makes the builds downloadable.
       - uses: actions/upload-artifact@v7
