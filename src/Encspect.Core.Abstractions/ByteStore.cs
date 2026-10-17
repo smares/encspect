@@ -1,10 +1,10 @@
 namespace Encspect.Core;
 
-// The records frame nodes are built from once the stream is closed (a report outlives the stream it
-// was read from), packed one after another into shared blocks: no array per frame. A position
+// The bytes that records are built from once the stream is closed (a report outlives the stream it
+// was read from), packed one after another into shared blocks: no array per record. A position
 // holds the block in its high 16 bits and the offset in it in the low ones, so blocks are at most
-// 64 KiB and the store holds 4 GiB; an item never spans two blocks. Written only while parsing,
-// so builders on several threads read it safely.
+// 64 KiB and the store holds 4 GiB; an item never spans two blocks. Written only while parsing, so
+// builders on several threads read it safely.
 public sealed class ByteStore
 {
     private const int BlockSize = 1 << 16;
@@ -28,7 +28,7 @@ public sealed class ByteStore
         {
             if (_blocks.Count == 1 << 16)
             {
-                throw new InvalidDataException("The frames' records exceed 4 GiB.");
+                throw new InvalidDataException("The records kept in the store exceed 4 GiB.");
             }
 
             // Blocks double up to their full size, so a short file allocates little.

@@ -91,9 +91,9 @@ public class MemoryTests(ITestOutputHelper output)
     }
 
     // An Ogg stream of a codec no parser reads keeps a record and a segment table per page, and the
-    // scan never holds the pages' nodes or data (64 bytes kept per page and a few more for its
-    // segment table and place in its stream, 72 in all on linux-x64, where macOS on arm64
-    // measured 120 before the measurement compacted the heap, and a peak of 70 to 85; the bounds
+    // scan never holds the pages' nodes or data (56 bytes kept per page and a few more for its
+    // segment table and place in its stream, 62 in all on linux-x64, where macOS on arm64
+    // measured 120 before the measurement compacted the heap, and a peak of 65 to 85; the bounds
     // leave room for both and stay below what keeping a page's node or bytes would cost).
     [Fact]
     public void ManyPagesStayCompact()

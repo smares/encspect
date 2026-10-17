@@ -28,19 +28,19 @@ internal enum PageStatus : byte
     Untracked = 64,
 }
 
-// One page or gap, 64 bytes: a long file has one per few kilobytes, and nothing else per page is
+// One page or gap, 56 bytes (the fields run from the widest to the narrowest, so no padding): a long file has one per few kilobytes, and nothing else per page is
 // kept but its segment table.
 internal struct PageRecord
 {
     public long Offset;
     public long Granule;
 
-    // Where the segment table is kept in Region.Lacing.
-    public uint Lacing;
-
     // The bytes the page covers in the file: header, segment table and body, or as many as there
     // are; a gap may be longer than any page.
     public long Length;
+
+    // Where the segment table is kept in Region.Lacing.
+    public uint Lacing;
 
     // The logical stream, or -1.
     public int Stream;
