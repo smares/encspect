@@ -34,6 +34,7 @@ internal static class Explain
     public const string SegmentTable = "The lacing values: the size of each segment of the page's body, in order (RFC 3533, section 5).";
     public const string LacingFull = "255: a full segment, after which the packet goes on in the next segment, on this page or the next (RFC 3533, section 5).";
     public const string LacingLast = "A segment shorter than 255 bytes, which ends its packet; 0 ends a packet whose length is a multiple of 255 (RFC 3533, section 5).";
+    public const string UntrackedBody = "The page's body, not read as packets because its logical stream is past the number of streams the analyzer follows for this much data.";
     public const string LostBody = "The page's body, not read as packets because the page fails its CRC check or the file cuts it short.";
     public const string PacketData = "Bytes of one packet on this page: the segments the lacing values join, which may continue on the stream's next page (RFC 3533, section 5).";
     public const string OrphanData = "The rest of a packet whose start was on a page that is lost or missing; readers drop it.";

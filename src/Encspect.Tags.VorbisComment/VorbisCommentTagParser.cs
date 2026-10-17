@@ -302,7 +302,7 @@ public sealed class VorbisCommentTagParser : ITagParser
             if (!Utf8.IsValid(bytes[position..end]))
             {
                 Problem(() => node, "vorbis-comment.not-utf8",
-                    count => $"{(count == 1 ? $"The text of {what} is" : $"The text of {what} and {count - 1} comments are")} not valid UTF-8, which the Vorbis comment requires; the invalid bytes are shown as U+FFFD.", Confidence.Medium);
+                    count => $"{(count == 1 ? $"The text of {what} is" : $"The text of {what} and {Count(count - 1, "comment", "comments")} are")} not valid UTF-8, which the Vorbis comment requires; the invalid bytes are shown as U+FFFD.", Confidence.Medium);
             }
 
             bool fits = end - position == length;

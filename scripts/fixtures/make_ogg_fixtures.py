@@ -850,6 +850,26 @@ def ignored_bits():
     f.write()
 
 
+def comment_many():
+    # More than 1,024 comments, so the analyzer builds the comment nodes in blocks when they are read: valid ones, and some with no
+    # '=', an invalid field name and bytes that are not UTF-8, which are findings counted once.
+    f = Fixture("comment-many")
+    comments = []
+    for i in range(1100):
+        comments.append(b"NOSEPARATOR" if i % 100 == 50 else b"bad\x01name=x" if i % 250 == 7 else b"TITLE=\xff" if i == 900 else f"TITLE=Song {i}".encode())
+    packets, granules = speex_packets(0, cbr(10, 3), comments=comments)
+    pages = m.pages_for(0x00C0FFEA, packets, granules, default_cuts(10))
+    for p in pages:
+        f.w.write(p)
+    f.stream(0x00C0FFEA, pages)
+    f.finding("vorbis-comment.no-separator", "11 comments have no '=' between a field name and a value")
+    f.finding("vorbis-comment.invalid-field-name", "5 field names are empty or not made of ASCII 0x20 to 0x7D")
+    f.finding("vorbis-comment.not-utf8", "A comment is not valid UTF-8")
+    f.crosscheck = {"valid": False, "oggz_validate": "ok", "packets": True, "speexdec": True, "not_compared": {
+        "ogginfo and ffprobe": "ogginfo stops listing the comments at the first with an invalid field name, and ffprobe starts the stream at -200 samples where the pages give -40 (observed with ffprobe 8.0.1; not explained)"}}
+    f.write()
+
+
 def wideband_layer_skip():
     # A narrowband stream with wideband layers before its frames, as a wideband stream relabeled narrowband has: a layer of
     # submode 2 is skipped, and one of submode 0 makes libspeex 1.2.1 (nb_decode, wb_skip_table) read it again until
@@ -875,10 +895,10 @@ def wideband_layer_skip():
         f.w.write(p)
     f.stream(0x00BEEF02, pages)
     f.finding("speex.frame-invalid", "a skipped wideband layer has submode 0, which libspeex 1.2.1 cannot skip")
-    f.finding("speex.wideband-layer-in-narrowband", "2 audio packets of this narrowband stream carry wideband layers")
+    f.finding("speex.wideband-layer-in-narrowband", "1 audio packet of this narrowband stream carries wideband layers")
     f.crosscheck = {"valid": False, "oggz_validate": "ok", "packets": True,
                     "speexdec_error": "More than two wideband layers found. The stream is corrupted.",
-                    "not_compared": {"speexdec's samples and bitrates": "speexdec stops decoding at the corrupt packet, as the finding says",
+                    "not_compared": {"speexdec's samples and bitrates": "speexdec drops the rest of the corrupt packet and goes on, which the model of its output does not follow",
                                      "ogginfo and ffprobe": "they do not read frames"}}
     f.write()
 
@@ -888,7 +908,7 @@ FIXTURES = [
     comment_edge_cases, writer_claims_differ, encoder_other_format, encoder_other_format_no_vendor, comment_empty, unknown_codec, tags_around, tag_signature_in_last_page,
     bad_crc, sequence_gap, truncated_page, missing_eos, garbage_between_pages, oggs_in_mp3, huge_lacing, continuation_errors,
     granule_errors, bos_missing, comment_invalid, header_invalid, header_bad_mode, header_short, frames_corrupt, deep_nesting,
-    eos_inside_packet, chained_same_serial, ignored_bits, wideband_layer_skip,
+    eos_inside_packet, chained_same_serial, ignored_bits, comment_many, wideband_layer_skip,
 ]
 
 

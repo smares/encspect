@@ -93,11 +93,13 @@ internal static class SpeexFrames
                 if (bits.Read(1) == 1)
                 {
                     // nb_decode skips up to two wideband layers "for compatibility".
-                    stray += count < countedFrames ? 1 : 0;
                     if (SkipLayer(ref bits, WidebandBits) is { } error)
                     {
                         return Fail(count, frameStart, at, error, inBand, stereo, stray);
                     }
+
+                    // Only a layer libspeex skips counts as one a narrowband decoder skips.
+                    stray += count < countedFrames ? 1 : 0;
 
                     if (total - bits.Position < 5)
                     {

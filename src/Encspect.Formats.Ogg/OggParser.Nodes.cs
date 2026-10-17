@@ -124,7 +124,7 @@ public sealed partial class OggParser
         {
             string why = (page.Status & PageStatus.Untracked) != 0 ? "the stream is beyond the limit of followed streams"
                 : (page.Status & PageStatus.Truncated) != 0 ? "the page is cut short" : "the page fails its CRC check";
-            fields.Add(new Node("Body", bodyOffset, bodyPresent, $"{Bytes(bodyPresent)}, not read as packets: {why}") { Description = Explain.LostBody });
+            fields.Add(new Node("Body", bodyOffset, bodyPresent, $"{Bytes(bodyPresent)}, not read as packets: {why}") { Description = (page.Status & PageStatus.Untracked) != 0 ? Explain.UntrackedBody : Explain.LostBody });
             return fields;
         }
 

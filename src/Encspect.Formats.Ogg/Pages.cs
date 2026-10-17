@@ -3,61 +3,58 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Ogg;
 
-// Random access to a ByteReader through one cached window that holds the largest page, so pages are
-// read and checked with one stream read per window and large files are never loaded whole. A small read
-// that misses the window, such as the header of a page far ahead that a candidate claims follows it, goes
-// to a small buffer of its own and leaves the window where it is: otherwise a search that probes a page
-// ahead of every capture pattern would read the whole window again for each.
+// Random access to a ByteReader through two cached windows that each hold the largest page, so pages are
+// read and checked with one stream read per window and large files are never loaded whole. A search
+// that probes the page a candidate claims follows it works in one place of the data and probes in another,
+// so with one window every probe would read the window again; the window used least recently is the one
+// replaced, so a scan that moves forward reads each stretch once.
 internal sealed class PageWindow(ByteReader reader)
 {
     private const int WindowSize = 1 << 18;
-    private const int MaxSmallRead = 512;
-    private const int SmallSize = 2048;
 
-    private byte[] _window = [];
-    private long _start = -1;
-    private byte[] _small = [];
-    private long _smallStart = -1;
+    private readonly long[] _starts = [-1, -1];
+    private readonly byte[][] _windows = [[], []];
+    private int _recent;
 
     public ByteReader Reader => reader;
 
     // The bytes [offset, offset + count), which must lie inside the reader; count is at most a page.
     public ReadOnlySpan<byte> Get(long offset, int count)
     {
-        if (offset >= _start && offset + count <= _start + _window.Length)
+        for (int i = 0; i < 2; i++)
         {
-            return _window.AsSpan((int)(offset - _start), count);
-        }
-
-        if (count <= MaxSmallRead && _start >= 0)
-        {
-            if (offset < _smallStart || offset + count > _smallStart + _small.Length)
+            if (offset >= _starts[i] && offset + count <= _starts[i] + _windows[i].Length)
             {
-                _smallStart = offset;
-                _small = reader.ReadBytesAt(offset, (int)Math.Min(SmallSize, reader.End - offset));
+                _recent = i;
+                return _windows[i].AsSpan((int)(offset - _starts[i]), count);
             }
-
-            return _small.AsSpan((int)(offset - _smallStart), count);
         }
 
-        _start = offset;
-        _window = reader.ReadBytesAt(offset, (int)Math.Min(WindowSize, reader.End - offset));
-        return _window.AsSpan(0, count);
+        int slot = 1 - _recent;
+        _starts[slot] = offset;
+        _windows[slot] = reader.ReadBytesAt(offset, (int)Math.Min(WindowSize, reader.End - offset));
+        _recent = slot;
+        return _windows[slot].AsSpan(0, count);
     }
 
-    // The first "OggS" in [from, limit), or -1. Searches what the window holds before reading another.
+    // The first "OggS" in [from, limit), or -1. Searches what a window holds before reading another.
     public long Find(long from, long limit)
     {
         long position = from;
         while (position <= limit - 4)
         {
             long available = limit - position;
-            ReadOnlySpan<byte> span;
-            if (position >= _start && position + 4 <= _start + _window.Length)
+            ReadOnlySpan<byte> span = default;
+            for (int i = 0; i < 2 && span.IsEmpty; i++)
             {
-                span = _window.AsSpan((int)(position - _start), (int)Math.Min(available, _start + _window.Length - position));
+                if (position >= _starts[i] && position + 4 <= _starts[i] + _windows[i].Length)
+                {
+                    _recent = i;
+                    span = _windows[i].AsSpan((int)(position - _starts[i]), (int)Math.Min(available, _starts[i] + _windows[i].Length - position));
+                }
             }
-            else
+
+            if (span.IsEmpty)
             {
                 span = Get(position, (int)Math.Min(WindowSize, available));
             }

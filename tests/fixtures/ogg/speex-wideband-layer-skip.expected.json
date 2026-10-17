@@ -183,7 +183,7 @@
   },
   {
    "code": "speex.wideband-layer-in-narrowband",
-   "contains": "2 audio packets of this narrowband stream carry wideband layers"
+   "contains": "1 audio packet of this narrowband stream carries wideband layers"
   }
  ],
  "crosscheck": {
@@ -192,7 +192,7 @@
   "packets": true,
   "speexdec_error": "More than two wideband layers found. The stream is corrupted.",
   "not_compared": {
-   "speexdec's samples and bitrates": "speexdec stops decoding at the corrupt packet, as the finding says",
+   "speexdec's samples and bitrates": "speexdec drops the rest of the corrupt packet and goes on, which the model of its output does not follow",
    "ogginfo and ffprobe": "they do not read frames"
   }
  }

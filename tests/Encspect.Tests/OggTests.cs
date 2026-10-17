@@ -241,6 +241,79 @@ public class OggTests
         }
     }
 
+    // Pages of streams past the analyzer's limit are recorded, with their segment tables, and their nodes say why their packets are not read.
+    [Fact]
+    public void PagesOfStreamsPastTheLimitKeepTheirSegmentTables()
+    {
+        var builder = new OggBuilder();
+        for (uint serial = 1; serial <= 4_300; serial++)
+        {
+            builder.Page(serial, 0, 2, [0xAB], [1, 2, 3]);
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("many.ogg", new MemoryStream(builder.Bytes));
+
+        Finding finding = report.Findings.Single(f => f.Code == "ogg.too-many-streams");
+        Assert.Equal(Severity.Info, finding.Severity);
+        Assert.Contains("analyzer's limit", finding.Message, StringComparison.Ordinal);
+        Node pages = report.Root.Children.Single().Children.Single(c => c.Name == "Pages");
+        Node last = pages.Children[^1];
+        Assert.EndsWith("stream not followed", last.Value?.ToString(), StringComparison.Ordinal);
+        Node table = last.Children.Single(c => c.Name == "Segment Table");
+        Assert.Equal(["1 byte", "3 bytes"], table.Children.Select(c => c.Value?.ToString()));
+        Node body = last.Children.Single(c => c.Name == "Body");
+        Assert.Contains("past the number of streams", body.Description, StringComparison.Ordinal);
+        Assert.Equal(1, report.Findings.Count(f => f.Code == "ogg.too-many-streams"));
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+
+        // One page past the limit reads in the singular.
+        var one = new OggBuilder();
+        for (uint serial = 1; serial <= 4_111; serial++)
+        {
+            one.Page(serial, 0, 2, [0xAB]);
+        }
+
+        string message = Analyzer.CreateDefault().Analyze("one.ogg", new MemoryStream(one.Bytes)).Findings.Single(f => f.Code == "ogg.too-many-streams").Message;
+        Assert.StartsWith("1 page of logical streams past", message, StringComparison.Ordinal);
+        Assert.Contains(" is not followed", message, StringComparison.Ordinal);
+    }
+
+    // Scans of files of small pages read each stretch once: a read per page, as a side buffer for small reads once made, would be 16,000 or more.
+    [Fact]
+    public void ReadsOfSmallPagesFollowTheWindow()
+    {
+        var builder = new OggBuilder();
+        byte[] packet = new byte[223];
+        for (int i = 0; i < 16_000; i++)
+        {
+            builder.Page(1, i, (byte)(i == 0 ? 2 : i == 15_999 ? 4 : 0), packet);
+        }
+
+        var stream = new CountingStream(builder.Bytes);
+        Report report = new Analyzer(DefaultParsers.Tags, [new OggParser()], DefaultParsers.Codecs).Analyze("small.ogg", stream);
+
+        Assert.DoesNotContain(report.Findings, f => f.Severity >= Severity.Warning && f.Code.StartsWith("ogg.", StringComparison.Ordinal) && f.Code != "ogg.granule-without-packet");
+        // About 4 MB is 16 windows of 256 KiB, read a few times over (sniffing, the declared end, the scan, the packets): 84 reads.
+        Assert.True(stream.Reads < 150, $"{stream.Reads} reads for {builder.Length} bytes");
+    }
+
+    private sealed class CountingStream(byte[] data) : MemoryStream(data)
+    {
+        public int Reads { get; private set; }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            Reads++;
+            return base.Read(buffer, offset, count);
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            Reads++;
+            return base.Read(buffer);
+        }
+    }
+
     [Fact]
     public void CancelingMidFileStopsTheAnalysis()
     {

@@ -9,8 +9,8 @@ The Ogg container (RFC 3533). Its codecs have their own pages: [Speex](speex.md)
 - **Codecs:** each stream's packets go to the codec parser its first packet names.
 - **Playback groups:** the streams of one link play at the same time, so they share a playback group and the summary counts the longest once; the links of a chain follow one another and add up.
 - **Limits:**
-  - a stretch of data follows its first 4,096 logical streams; the pages of later ones are recorded and counted in `ogg.too-many-streams`, not followed;
-  - the search for the next page after damage spends a budget of checksum work in proportion to the data (four times its size and 1 MiB); `ogg.resync-limit` says it was spent, and what no page was found for is read as a gap.
+  - a stretch of data follows 4,096 logical streams plus one per 8 KiB of data; the pages of later streams are recorded and counted in `ogg.too-many-streams` (an info naming the limit), not followed;
+  - the searches for the next page after damage share one budget of checksum work in proportion to the data (four times its size and 1 MiB); `ogg.resync-limit` says it was spent, and what no page was found for is read as a gap.
 
 ## Findings
 

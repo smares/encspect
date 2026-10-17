@@ -87,6 +87,10 @@ internal sealed class Region(long start, long end)
     // The playback groups of earlier regions: a stream's group is this and its link.
     public int GroupBase { get; init; }
 
+    // The most logical streams followed: every stream has a node of its own and findings, about 10 KB, so a file of tiny streams costs
+    // more than its size by far. Real files hold a few, or a chain of links of some kilobytes each at least; the limit grows with the data.
+    public int MaxStreams { get; } = (int)Math.Min(int.MaxValue, 4096 + ((end - start) / 8192));
+
     public ResyncBudget Resync { get; } = ResyncBudget.For(end - start);
 
     public int PageCount { get; set; }

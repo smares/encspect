@@ -91,6 +91,27 @@ public class ComplexityTests
         Assert.Contains(report.Findings, f => f.Code == "ogg.too-many-streams");
     }
 
+    // The search for the first stream of the next link, once per stream that never ends, was quadratic (40,000 streams took 7.8 s).
+    // The stream limit keeps a whole file far below the counts that show it, so the closing pass is run on a region of 400,000
+    // streams (the old search made 8 * 10^10 comparisons).
+    [Fact]
+    public void ClosingHundredsOfThousandsOfOpenStreamsIsLinear()
+    {
+        const int streams = 400_000;
+        var region = new Encspect.Formats.Ogg.Region(0, streams * 28L);
+        for (int i = 0; i < streams; i++)
+        {
+            region.Pages.Add(new Encspect.Formats.Ogg.PageRecord { Offset = i * 28L, Length = 28, Serial = (uint)i, Flags = 2, Stream = i });
+            region.Streams.Add(new Encspect.Formats.Ogg.LogicalStream(i, (uint)i, 1 + (i / 3), hasBos: true) { Start = i * 28L, End = (i + 1) * 28L, FirstPage = i, LastPage = i });
+        }
+
+        var watch = Stopwatch.StartNew();
+        Encspect.Formats.Ogg.OggParser.CloseStreams(region);
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5), $"Took {watch.Elapsed.TotalSeconds:F1} s");
+    }
+
     private static Report TimedOgg(byte[] data)
     {
         var watch = Stopwatch.StartNew();

@@ -19,9 +19,6 @@ public sealed partial class OggParser : IFormatParser
     // still recognized; another format with a stronger signature wins over it.
     private const int SniffLimit = 1 << 16;
 
-    // The most logical streams followed in one stretch of data; every stream has a node of its own and findings. Real files
-    // hold a few, or a chain of some hundreds of links.
-    private const int MaxStreams = 4096;
 
     public string Name => "Ogg";
 
@@ -250,7 +247,7 @@ public sealed partial class OggParser : IFormatParser
         int index = region.Pages.Count;
         if (Assign(region, header, index) is not { } stream)
         {
-            AddUntracked(region, header, computed, length, status);
+            AddUntracked(region, window, header, computed, length, status);
             return;
         }
 
@@ -311,10 +308,11 @@ public sealed partial class OggParser : IFormatParser
         region.PageCount++;
     }
 
-    // A page of a stream beyond the first MaxStreams: kept as a record of the page, never followed, so a file of beginning-of-stream pages
-    // costs the records of its pages and no more than MaxStreams streams cost.
-    private static void AddUntracked(Region region, in PageHeader header, uint computed, int length, PageStatus status)
+    // A page of a stream beyond the region's limit: kept as a record of the page and its segment table, never followed, so a file of
+    // beginning-of-stream pages costs the records of its pages and no more than the limit's streams cost.
+    private static void AddUntracked(Region region, PageWindow window, in PageHeader header, uint computed, int length, PageStatus status)
     {
+        int present = Math.Min(header.Segments, length - PageHeader.FixedLength);
         region.Pages.Add(new PageRecord
         {
             Offset = header.Offset,
@@ -326,25 +324,28 @@ public sealed partial class OggParser : IFormatParser
             ComputedCrc = computed,
             Flags = header.Flags,
             Segments = (byte)header.Segments,
+            Lacing = region.Lacing.Add(window.Get(header.Offset + PageHeader.FixedLength, present)),
             Stream = -1,
             Status = status | PageStatus.Untracked,
         });
         region.PageCount++;
         long offset = header.Offset;
-        region.Findings.Add(-1, Severity.Warning, "ogg.too-many-streams", HeaderTypeField(offset), count =>
-            $"{CountPages(count)} of logical streams beyond the first {MaxStreams} of this stretch of data are not followed; the first at 0x{offset:X}.");
+        int limit = region.MaxStreams;
+        long size = region.End - region.Start;
+        region.Findings.Add(-1, Severity.Info, "ogg.too-many-streams", HeaderTypeField(offset), count =>
+            $"{CountPages(count)} of logical streams past the analyzer's limit of {limit} streams for {Bytes(size)} of data {(count == 1 ? "is" : "are")} not followed, the first at 0x{offset:X}; the limit bounds what a file of many tiny streams can cost and grows with the data.");
     }
 
     // Which logical stream a page belongs to. Beginning-of-stream pages start streams; one that
     // comes after other pages, or after every stream of the link has ended, starts the next link of
     // a chain (RFC 3533, section 4: "grouping" puts all beginning-of-stream pages first, "chaining"
     // starts a new group after the last one ends).
-    // Null for a page of a stream beyond the first MaxStreams of the region, which is not followed.
+    // Null for a page of a stream beyond the region's limit (Region.MaxStreams), which is not followed.
     private static LogicalStream? Assign(Region region, PageHeader header, int index)
     {
         if (header.IsBeginning)
         {
-            if (region.Streams.Count >= MaxStreams)
+            if (region.Streams.Count >= region.MaxStreams)
             {
                 return null;
             }
@@ -389,7 +390,7 @@ public sealed partial class OggParser : IFormatParser
             return stream;
         }
 
-        if (region.Streams.Count >= MaxStreams)
+        if (region.Streams.Count >= region.MaxStreams)
         {
             return null;
         }
@@ -547,7 +548,7 @@ public sealed partial class OggParser : IFormatParser
 
     // A stream without an end-of-stream page was cut short, or the next link of a chain began
     // before it ended.
-    private static void CloseStreams(Region region)
+    internal static void CloseStreams(Region region)
     {
         // The first beginning-of-stream stream of a later link, per stream; links only grow with the streams' order, so one pass
         // from the end finds them all.
