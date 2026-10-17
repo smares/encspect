@@ -1,0 +1,33 @@
+{
+ "description": "ffmpeg's -c copy remux of external-windows-wma92-cbr-stereo-22k-32.wma, without the bit-exact flags: ffmpeg's ASF muxer copies the attributes of the file, WMFSDKVersion or MediaFoundationVersion among them, and adds its own WM/EncodingSettings after them.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "external-windows-wma92-cbr-stereo-22k-32.wma",
+  "-c",
+  "copy",
+  "external-remux-ffmpeg-wma92-cbr-stereo-22k-32.wma"
+ ],
+ "input": {
+  "file": "external-windows-wma92-cbr-stereo-22k-32.wma",
+  "sha256": "13363cf16219533be278680505dbeb32b40a86df771235ca1625998a1d1426b9"
+ },
+ "sha256": "14e463db3b17deed15b482437aa35c19ef04736eb2060756462f7e225f93c2d0",
+ "reproducible": false,
+ "ffprobe": {
+  "codec": "wmav2",
+  "channels": 2,
+  "rate": 22050,
+  "block_align": null,
+  "bit_rate": 32024,
+  "extradata_size": 10,
+  "packets": 10,
+  "packet_sizes": [
+   1487
+  ],
+  "decoded_samples": 66560,
+  "file_bytes": 16751
+ }
+}

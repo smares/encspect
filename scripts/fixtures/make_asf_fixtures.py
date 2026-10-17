@@ -276,6 +276,85 @@ fixture("spread-audio", "Windows Media Audio whose error correction spreads the 
         spread_file, [finding("asf.audio-spread", "2 packets")], {"ffprobe": False, "reason": "ffmpeg descrambles the media objects and decodes them as Windows Media Audio, which these are not."})
 
 
+def mismatched_indexes_file():
+    parameters = (m.index_parameters(2, [(1, 2)], m.MEDIA_OBJECT_INDEX_PARAMETERS) + m.index_parameters(0, [(1, 1)], m.TIMECODE_INDEX_PARAMETERS))
+    return m.asf_file(
+        [pcm()], objects_in([1], 8, 150, 256), 256, file_id=FILE_ID, play=2_000_000, extension=parameters,
+        trailing=m.index_object(2, [(1, 3)], [([0], [(0,), (512,)])], m.MEDIA_OBJECT_INDEX)
+        + m.obj(m.TIMECODE_INDEX, struct.pack("<IHI", 1, 1, 1) + struct.pack("<HH", 1, 2) + struct.pack("<IHQ", 2, 0, 0) + struct.pack("<II", 0x01020304, 0) + struct.pack("<II", 0x01020305, 256))
+        + m.simple_index([(0, 2), (2, 1)]))
+
+
+fixture("index-specifiers-differ", "A Media Object Index Object whose index specifier (stream 1, nearest past cleanpoint) differs from that of its Media Object Index Parameters Object (nearest past media object), and a Timecode Index Object that differs from its Timecode Index Parameters Object, which lists index type 1, a value section 4.11 says is not valid.",
+        mismatched_indexes_file,
+        [finding("asf.index-specifiers", "Media Object Index Object's index specifiers differ"), finding("asf.index-specifiers", "Timecode Index Object's index specifiers differ"),
+         finding("asf.index-specifiers", "index type 1")])
+
+
+def missing_parameters_file():
+    return m.asf_file(
+        [pcm()], objects_in([1], 8, 150, 256), 256, file_id=FILE_ID, play=2_000_000,
+        trailing=m.index_object(2, [(1, 2)], [([0], [(0,), (512,)])], m.MEDIA_OBJECT_INDEX)
+        + m.obj(m.TIMECODE_INDEX, struct.pack("<IHI", 1, 1, 1) + struct.pack("<HH", 1, 2) + struct.pack("<IHQ", 2, 0, 0) + struct.pack("<II", 0x01020304, 0) + struct.pack("<II", 0x01020305, 256))
+        + m.simple_index([(0, 2), (2, 1)]))
+
+
+fixture("index-parameters-missing-kinds", "A Media Object Index Object and a Timecode Index Object with no parameter object in the header, which sections 4.10 and 4.11 require.",
+        missing_parameters_file,
+        [finding("asf.index-parameters-missing", "Media Object Index Object but no Media Object Index Parameters Object"), finding("asf.index-parameters-missing", "Timecode Index Object but no Timecode Index Parameters Object")])
+
+
+def content_description_file():
+    # A title of 5 bytes, which is no whole UTF-16 character, and an author of 200 bytes where the object holds fewer; a descriptor count of 3 for 1.
+    description = m.obj(m.CONTENT_DESCRIPTION, struct.pack("<5H", 5, 200, 0, 0, 0) + "Tit".encode("utf-16-le")[:5])
+    one = m.extended_content_description([("WM/AlbumTitle", 0, "A")])
+    counted = one[:24] + struct.pack("<H", 3) + one[26:]
+    return m.asf_file([pcm(), description, counted], objects_in([1], 3, 60, 256), 256, file_id=FILE_ID, play=500_000)
+
+
+fixture("content-description-findings", "A Content Description Object whose title length is odd and whose author length is more than the object holds, and an Extended Content Description Object that counts three descriptors for one.",
+        content_description_file,
+        [finding("asf.string-odd-length", "title"), finding("asf.object-truncated", "author"), finding("asf.descriptor-count", "counts 3 descriptors, but its data holds 1")])
+
+
+def short_length_field_file():
+    # Packets of 256 bytes whose length field says 200, with a padding length of 0: the 56 bytes between are padding, as FFmpeg reads them.
+    layout = m.Layout(packet_length=2, multiple=False)
+    packets = []
+    for i in range(3):
+        data_length = 200 - (1 + 2 + 2 + 2 + 6) - (1 + 1 + 4 + 1 + 8)
+        packets.append(m.packet([m.Payload(1, i + 1, b"\x10" * data_length, 0, data_length, i * 25)], 256, layout, declared_length=200, padding_field=0))
+    return m.asf_file([pcm()], packets, 256, file_id=FILE_ID, play=1_000_000)
+
+
+fixture("length-field-short", "Packets of 256 bytes, the size every packet has, whose packet length field says 200 and whose padding length is 0: the bytes between the payload and the next packet are padding, in the packet and in the statistics.",
+        short_length_field_file,
+        [finding("asf.packet-length", "3 packets")])
+
+
+def fragments_in_two_streams_file():
+    codec = struct.pack("<IHI", 17 * 2048, 0x000F, 0)
+
+    def stream(number):
+        return m.stream_properties(number, m.wave_format(0x0161, 2, 44100, 16000, 100, 16, codec))
+
+    layout = m.Layout()
+    packets = [
+        m.packet([m.Payload(1, 1, b"\x11" * 100, 0, 100, 0), m.Payload(2, 1, b"\x22" * 100, 0, 100, 0)], 512, layout),
+        # Stream 1: a fragment at offset 50 of object 7, which never began. Stream 2: two fragments of object 9, which never began.
+        m.packet([m.Payload(1, 7, b"\x11" * 50, 50, 100, 10), m.Payload(2, 9, b"\x22" * 40, 30, 100, 10)], 512, layout),
+        m.packet([m.Payload(2, 9, b"\x22" * 40, 60, 100, 20), m.Payload(1, 2, b"\x11" * 100, 0, 100, 30)], 512, layout),
+    ]
+    return m.asf_file([stream(1), stream(2)], packets, 512, file_id=FILE_ID, play=10_000_000)
+
+
+fixture("fragments-in-two-streams", "Two Windows Media Audio streams, each with fragments of a media object that never began (one in stream 1, two in stream 2): the findings count them per stream and name their own stream.",
+        fragments_in_two_streams_file,
+        [finding("asf.fragment-order", "A fragment of a media object of stream 1 does not"), finding("asf.fragment-order", "2 fragments of media objects of stream 2"),
+         finding("wma.frame-invalid", "coefficients run past the end of the block"), finding("wma.bit-offset", "bit offset past its end")],
+        {"ffprobe": False, "reason": "the media objects are not Windows Media Audio superframes."})
+
+
 DERIVED_FROM = "external-ffmpeg-wmav2-mono-44k-48k.wma"
 
 
@@ -414,10 +493,10 @@ fixture("signature-only", "A Digital Signature Object and no encryption object: 
 fixture("protection-wrong-fields", "A Content Encryption Object whose protection type is XYZ and a Digital Signature Object of signature type 7, where sections 3.14 and 3.16 give DRM and 2.",
         protected([wma(1), m.content_encryption(protection=b"XYZ\0"), m.obj(m.DIGITAL_SIGNATURE, struct.pack("<II", 7, 4) + b"sign")]),
         [DRM1_FINDING, ENCRYPTED, finding("asf.protection-type", "XYZ"), finding("asf.signature-type", "7")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
-fixture("protection-object-ids", "An Advanced Content Encryption Object with an Encrypted Object Record of the ID type 2, which section 4.13 does not define, and one of type 1 whose ID is 4 bytes long, not 2: neither names a stream, so the record covers none, and the Encrypted Content Flag alone protects the stream.",
-        protected([wma(1, encrypted=True)], extension=advanced([(DRM_SYSTEM, 1, [(2, b"abcd"), (1, b"\x01\x00\x00\x00")], b"")])),
+fixture("protection-object-ids", "An Advanced Content Encryption Object with an Encrypted Object Record of the ID type 2, which section 4.13 does not define, and one of type 1 whose ID is 4 bytes long, not 2 (the section says it should be 2): neither can be read as a stream number, so the record is taken to cover every stream, and the stream, whose Encrypted Content Flag is clear, is protected.",
+        protected([wma(1)], extension=advanced([(DRM_SYSTEM, 1, [(2, b"abcd"), (1, b"\x01\x00\x00\x00")], b"")])),
         [ADVANCED_FINDING, ENCRYPTED, finding("asf.encrypted-object-id-type", "0x0002"), finding("asf.encrypted-object-id-length", "4 bytes")], ENCRYPTED_FFPROBE,
-        scheme("Encrypted Content Flag (scheme not stated)"))
+        [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": [NETWORK_DEVICES]}])
 fixture("protection-truncated", "A Content Encryption Object whose secret data length is 5000 bytes, in an object of 40.", 
         protected([wma(1, encrypted=True), m.obj(m.CONTENT_ENCRYPTION, struct.pack("<I", 5000) + b"secret" + struct.pack("<I", 4) + b"DRM\0")]),
         [DRM1_FINDING, ENCRYPTED, finding("asf.object-truncated", "Content Encryption Object")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))

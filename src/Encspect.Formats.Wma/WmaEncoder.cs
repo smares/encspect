@@ -52,7 +52,14 @@ internal static partial class WmaEncoder
             stream.Add(encoder);
         }
 
-        Node? writer = WriterDetection.Detect(context.EncoderClaims, Cover,
+        // Of claims of one confidence the first names the writer, and the claims are in file order. A muxer's own version goes first: ffmpeg's
+        // ASF muxer copies every attribute of the file it reads (asfdec_f.c, asfenc.c) and adds its WM/EncodingSettings after them, so a remux
+        // of a Windows Media file carries the earlier writer's WMFSDKVersion or MediaFoundationVersion before the stamp of the program that wrote this file.
+        // The copy stays as a claim that differs; a layout (medium) still outranks the stamp.
+        IEnumerable<EncoderClaim> ordered = context.EncoderClaims.OrderBy(c => c.Role == ClaimRole.Writer && ClaimRoles.IsMuxerVersion(c.Text) ? 0 : 1);
+
+        // The writer's evidence lies in the container's header, not in the stream's bytes that every node here covers.
+        Node? writer = WriterDetection.Detect(ordered, (name, value, description) => Cover(name, value, name == "Evidence" ? Explain.WriterEvidence : description),
             (claim, text, name) => findings.Add(Severity.Info, "wma.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
             familyOf: FamilyOf,
             format: new WriterDetection.StreamFormat(KnownWriters.WindowsMedia, "Windows Media Audio",

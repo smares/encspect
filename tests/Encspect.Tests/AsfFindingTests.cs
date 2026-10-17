@@ -199,6 +199,61 @@ public class AsfFindingTests
         }
     }
 
+    // The findings of the Content Description and Extended Content Description Objects point at the length and count fields they are about,
+    // not at the Object ID and Object Size that come first in each object.
+    [Theory]
+    [InlineData("asf.string-odd-length", "Title Length")]
+    [InlineData("asf.object-truncated", "Author Length")]
+    [InlineData("asf.descriptor-count", "Content Descriptors Count")]
+    public void MetadataLengthFindingsPointAtTheirFields(string code, string field)
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/content-description-findings.asf");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == code);
+        Assert.NotNull(finding.Path);
+        Node node = report.Root;
+        foreach (int index in finding.Path)
+        {
+            node = node.Children[index];
+        }
+
+        Assert.Equal(field, node.Name);
+    }
+
+    // The fixed packet size makes the bytes after a payload padding whatever the packet length field says: the statistics count what the
+    // Padding nodes show (3 packets of 256 bytes, payloads and headers 510 and 90 bytes, the rest padding).
+    [Fact]
+    public void PaddingStatisticsCountTheDifferenceToAShorterLengthField()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/length-field-short.asf");
+        Node statistics = FindNode(report.Root, "Statistics")!;
+        Assert.Equal(168L, FindNode(statistics, "Padding Bytes")!.Value!.AsInteger());
+        Assert.Equal(90L, FindNode(statistics, "Packet Overhead")!.Value!.AsInteger());
+        Node list = FindNode(report.Root, "Data Packets")!;
+        Assert.All(list.Children, packet => Assert.Equal(56L, packet.Children.Single(c => c.Name == "Padding").Value!.AsInteger()));
+    }
+
+    // The findings of media objects are kept per stream: each stream's damage is counted under its own number.
+    [Fact]
+    public void MediaObjectFindingsAreCountedPerStream()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/fragments-in-two-streams.asf");
+        var order = report.Findings.Where(f => f.Code == "asf.fragment-order").ToList();
+        Assert.Equal(2, order.Count);
+        Assert.Single(order, f => f.Count == 1 && f.Message.Contains("of stream 1 ", StringComparison.Ordinal));
+        Assert.Single(order, f => f.Count == 2 && f.Message.Contains("of stream 2 ", StringComparison.Ordinal));
+    }
+
+    // An Encrypted Object Record that cannot be read as a stream number covers every stream, whatever the Encrypted Content Flag says.
+    [Fact]
+    public void ObjectRecordWithNoStreamNumberCoversEveryStream()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/protection-object-ids.asf");
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.True(stream.IsProtected);
+        Assert.Equal("Windows Media DRM for network devices", stream.Protection!.Scheme);
+        Assert.Contains(report.Findings, f => f.Code == "asf.content-encrypted" && f.Message.Contains("every stream is taken to be encrypted", StringComparison.Ordinal));
+    }
+
     // A broadcast file (Data Object of size 0) runs to the end of the file, so a TAG at its end is not an ID3v1 tag
     // that cuts the last packet.
     [Fact]

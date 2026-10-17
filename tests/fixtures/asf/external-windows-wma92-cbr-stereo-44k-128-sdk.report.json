@@ -1065,7 +1065,7 @@
                               "length": 2,
                               "children": [
                                 {
-                                  "name": "Exponent VLC",
+                                  "name": "Uses Exponent VLC",
                                   "value": true,
                                   "offset": 4885,
                                   "length": 1,
@@ -1074,7 +1074,7 @@
                                   "bitOrder": "leastSignificantFirst"
                                 },
                                 {
-                                  "name": "Bit Reservoir",
+                                  "name": "Uses Bit Reservoir",
                                   "value": true,
                                   "offset": 4885,
                                   "length": 1,
@@ -1083,7 +1083,7 @@
                                   "bitOrder": "leastSignificantFirst"
                                 },
                                 {
-                                  "name": "Variable Block Length",
+                                  "name": "Uses Variable Block Length",
                                   "value": true,
                                   "offset": 4885,
                                   "length": 1,
@@ -24038,14 +24038,14 @@
         "severity": "Info",
         "code": "wma.frame-stuffing",
         "message": "A frame that began in the superframe before is followed by zero bits up to the bit offset the superframe states, which a decoder skips; the first has 744 (in the superframe at 0x5998).",
-        "offset": 52818,
-        "length": 401,
+        "offset": 22507,
+        "length": 305,
         "path": [
           0,
           1,
           7,
           4,
-          65
+          24
         ],
         "count": 1
       },
@@ -24053,14 +24053,14 @@
         "severity": "Info",
         "code": "wma.frame-filler",
         "message": "2 frames that began in the superframe before are followed by bits that are not zero up to the bit offset the superframe states, which a decoder skips; the first has 3708 (in the superframe at 0xB6F8).",
-        "offset": 52818,
-        "length": 401,
+        "offset": 46093,
+        "length": 253,
         "path": [
           0,
           1,
           7,
           4,
-          65
+          56
         ],
         "count": 2
       }

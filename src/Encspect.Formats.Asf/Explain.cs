@@ -370,8 +370,4 @@ internal static partial class Explain
     public const string StatLargestObject = "The size of the largest media object.";
     public const string StatFirstPresentationTime = "The presentation time of the first media object in milliseconds, with the preroll.";
     public const string StatLastPresentationTime = "The presentation time of the last media object in milliseconds, with the preroll.";
-
-    public const string Encoder = "Which program wrote the file, as the analyzer concludes from the evidence below.";
-    public const string Confidence = "How sure the naming is: high when the file carries the encoder's own trait, medium for a pattern of the encoder's, low when only a claim in the metadata names it.";
-    public const string Evidence = "What points to the encoder, at the bytes it was found in.";
 }

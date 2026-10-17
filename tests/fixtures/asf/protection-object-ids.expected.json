@@ -1,5 +1,5 @@
 {
- "description": "An Advanced Content Encryption Object with an Encrypted Object Record of the ID type 2, which section 4.13 does not define, and one of type 1 whose ID is 4 bytes long, not 2: neither names a stream, so the record covers none, and the Encrypted Content Flag alone protects the stream.",
+ "description": "An Advanced Content Encryption Object with an Encrypted Object Record of the ID type 2, which section 4.13 does not define, and one of type 1 whose ID is 4 bytes long, not 2 (the section says it should be 2): neither can be read as a stream number, so the record is taken to cover every stream, and the stream, whose Encrypted Content Flag is clear, is protected.",
  "format": "ASF",
  "length": 1428,
  "objects": [
@@ -43,7 +43,7 @@
    "number": 1,
    "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
    "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
-   "encrypted": true,
+   "encrypted": false,
    "type_length": 28,
    "tag": 353,
    "channels": 2,
@@ -236,9 +236,11 @@
  },
  "protection": [
   {
-   "scheme": "Encrypted Content Flag (scheme not stated)",
+   "scheme": "Windows Media DRM for network devices",
    "is_encrypted": true,
-   "systems": []
+   "systems": [
+    "Windows Media DRM for network devices"
+   ]
   }
  ]
 }

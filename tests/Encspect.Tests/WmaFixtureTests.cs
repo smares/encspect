@@ -185,6 +185,62 @@ public class WmaFixtureTests
         Assert.False(viaSdk.IsVbr);
     }
 
+    // ffmpeg's ASF muxer copies the attributes of the file it reads, WMFSDKVersion and MediaFoundationVersion among them, and adds its own
+    // WM/EncodingSettings after them (make_external_asf_fixtures.py --remuxes-only): the program that wrote this file is FFmpeg, and the
+    // copied version is a claim that differs. The files' layouts are not the SDK's or Media Foundation's (no Compatibility Object).
+    [Theory]
+    [InlineData("asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.wma", "WMFSDKVersion")]
+    [InlineData("asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.wma", "MediaFoundationVersion")]
+    public void AnFFmpegRemuxIsWrittenByFFmpegNotByTheWriterOfTheSource(string name, string copied)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("FFmpeg (Lavf60.16.100)", stream.Writer);
+        Assert.Equal(Confidence.Low, stream.WriterConfidence);
+        Assert.Contains(report.Findings, f => f.Code == "wma.writer-claim-differs" && f.Message.Contains(copied, StringComparison.Ordinal));
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
+        int copiedAt = file.AsSpan().IndexOf(System.Text.Encoding.Unicode.GetBytes(copied));
+        int stampAt = file.AsSpan().IndexOf(System.Text.Encoding.Unicode.GetBytes("Lavf"));
+        Assert.True(copiedAt > 0 && stampAt > copiedAt, "the muxer's stamp follows the attribute it copied");
+    }
+
+    // The statements of the wma-bit-reservoir article about the Windows Media Audio 9.2 files: which have bits after a frame that spans
+    // superframes up to the next one's bit offset, zero (wma.frame-stuffing) or not (wma.frame-filler). The article names the exceptions.
+    [Theory]
+    [InlineData("external-windows-wma92-cbr-mono-44k-48", true, false)]
+    [InlineData("external-windows-wma92-cbr-stereo-22k-20-sdk", false, false)]
+    [InlineData("external-windows-wma92-cbr-stereo-22k-32", false, false)]
+    [InlineData("external-windows-wma92-cbr-stereo-44k-128-sdk", true, true)]
+    [InlineData("external-windows-wma92-cbr-stereo-44k-128", true, true)]
+    [InlineData("external-windows-wma92-cbr-stereo-44k-192", true, true)]
+    [InlineData("external-windows-wma92-cbr-stereo-44k-32-sdk", false, false)]
+    [InlineData("external-windows-wma92-cbr-stereo-44k-48-sdk", false, false)]
+    [InlineData("external-windows-wma92-cbr-stereo-44k-64", true, true)]
+    [InlineData("external-windows-wma92-cbr-stereo-48k-128", true, true)]
+    [InlineData("external-windows-wma92-vbr-stereo-44k-q10", false, false)]
+    [InlineData("external-windows-wma92-vbr-stereo-44k-q25", true, false)]
+    [InlineData("external-windows-wma92-vbr-stereo-44k-q75-tagged", false, false)]
+    [InlineData("external-windows-wma92-vbr-stereo-44k-q75", false, false)]
+    [InlineData("external-windows-wma92-vbr-stereo-44k-q90", false, false)]
+    public void FillerAfterStraddlingFramesIsInTheFilesTheArticleNames(string name, bool stuffing, bool filler)
+    {
+        Report report = Fixtures.AnalyzeMpeg($"asf/{name}.wma");
+        Assert.Equal(stuffing, report.Findings.Any(f => f.Code == "wma.frame-stuffing"));
+        Assert.Equal(filler, report.Findings.Any(f => f.Code == "wma.frame-filler"));
+    }
+
+    // The Evidence nodes of a stream lie in the container's header or in the codec data; the nodes cover the stream, and the text says where.
+    [Fact]
+    public void WriterEvidenceDescriptionDoesNotClaimTheNodesBytes()
+    {
+        Node writer = Find(Fixtures.AnalyzeMpeg("asf/external-windows-wma92-cbr-stereo-44k-128-sdk.wma").Streams[0].Nodes[0], "Writer")!;
+        Node evidence = writer.Children.First(c => c.Name == "Evidence");
+        Assert.NotEqual(WriterDetection.EvidenceDescription, evidence.Description);
+        Assert.Contains("at 0x", evidence.Value!.ToString(), StringComparison.Ordinal);
+    }
+
+    private static Node? Find(Node node, string name) => node.Name == name ? node : node.Children.Select(c => Find(c, name)).FirstOrDefault(n => n is not null);
+
     // Low rates make the SDK's encoder code noise bands, whose gains use the high-band gain codebook's negative
     // symbols (the review found them misread): most blocks have such bands, and every frame is still read to its end.
     [Theory]

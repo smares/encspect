@@ -384,17 +384,4 @@ public sealed partial class AsfParser
             },
         };
     }
-
-    // The play duration the File Properties Object gives, less the preroll, in seconds, or null where
-    // there is none or it is invalid (a broadcast).
-    private static double? DeclaredDuration(State state)
-    {
-        if (state.FilePropertiesNode is null || state.IsBroadcast || state.PlayDuration == 0)
-        {
-            return null;
-        }
-
-        double seconds = (state.PlayDuration / 10_000_000.0) - (state.Preroll / 1000.0);
-        return seconds > 0 ? seconds : null;
-    }
 }
