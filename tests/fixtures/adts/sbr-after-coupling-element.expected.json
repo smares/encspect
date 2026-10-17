@@ -1,0 +1,95 @@
+{
+ "description": "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel configuration 2: fdk-aac and faad2 read no SBR after a coupling element, so the stream stays AAC LC at 22050 Hz.",
+ "length": 1175,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   99
+  ],
+  [
+   99,
+   98
+  ],
+  [
+   197,
+   99
+  ],
+  [
+   296,
+   98
+  ],
+  [
+   394,
+   101
+  ],
+  [
+   495,
+   97
+  ],
+  [
+   592,
+   97
+  ],
+  [
+   689,
+   97
+  ],
+  [
+   786,
+   98
+  ],
+  [
+   884,
+   97
+  ],
+  [
+   981,
+   97
+  ],
+  [
+   1078,
+   97
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "12 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.sbr-without-channel-element",
+   "12 raw data blocks hold SBR data that follows no single channel or channel pair element"
+  ],
+  [
+   "aac.coupling-without-program",
+   "12 raw data blocks hold a coupling channel element"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "ffprobe_streams": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "ffprobe_streams": "ffmpeg cannot decode the frames (\"channel element 2.0 is not allocated\"), so it reports no sample rate.",
+   "decode": "ffmpeg finds no channel for the coupling element in a stream of channel configuration 2.",
+   "faad_trace": "faad2 is built without coupling and stops at the element."
+  }
+ }
+}

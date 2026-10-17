@@ -11,7 +11,7 @@ internal static partial class Explain
     public const string EncodeOptions = "wEncodeOptions of the type-specific data of Windows Media Audio (ASF specification, section 11.1.1): the coding options of the stream. FFmpeg's decoder reads bit 0 (exponent VLC), bit 1 (bit reservoir), bit 2 (variable block length) and bits 3 and 4 (how many block sizes).";
     public const string SuperBlockAlign = "dwSuperBlockAlign of the type-specific data of Windows Media Audio (ASF specification, section 11.1.1). FFmpeg's decoder does not read it.";
     public const string Version1Unused = "The first two bytes of the codec-specific data of version 1, which FFmpeg's decoder does not read; it takes the encode options from the two after them.";
-    public const string OptionExponentVlc = "Set if the exponents of each block are coded with the scale factor codebook (as differences from the one before), clear if they are coded as line spectral pairs, as Vorbis' floors are (wmadec.c: use_exp_vlc).";
+    public const string OptionExponentVlc = "Set if the exponents of each block are coded with the scale factor codebook (as differences from the one before), clear if they are coded as line spectral pairs (wmadec.c: use_exp_vlc, decode_exp_lsp).";
     public const string OptionBitReservoir = "Set if frames can be longer than a superframe leaves room for, so that a frame goes on in the next superframe, whose header then says how many bits of it there are (wmadec.c: use_bit_reservoir).";
     public const string OptionVariableBlockLength = "Set if a frame can be divided into blocks of different lengths, as AAC divides its frames into short windows (wmadec.c: use_variable_block_len).";
     public const string OptionBlockSizeCount = "With variable block lengths, one less than the number of block sizes below the frame length that the stream uses, before it is raised by 2 for a bitrate of 32 kbps per channel or more (wmadec.c: nb_block_sizes).";
@@ -50,7 +50,7 @@ internal static partial class Explain
     public const string StatFrames = "How many frames were read.";
     public const string StatInvalidFrames = "How many frames a decoder would reject.";
     public const string StatFrameLength = "The samples of each channel that a frame holds, from the sample rate (wma_common.c: ff_wma_get_frame_len_bits).";
-    public const string StatSamples = "The samples of each channel a decoder outputs: the frames that were read less the first, which only fills the overlap of the transform.";
+    public const string StatSamples = "The samples of each channel a decoder outputs: the frames that were read without error less the first, which only fills the overlap of the transform.";
     public const string StatDuration = "The samples over the sample rate, in seconds.";
     public const string StatBlockAlignment = "The size of a superframe in bytes, from the WAVEFORMATEX.";
     public const string StatAverageBitrate = "The superframes' bytes over the duration of the frames.";
@@ -83,7 +83,9 @@ internal static partial class Explain
 
     public const string Encoder = "Which program encoded the stream, as the analyzer concludes from the evidence below.";
     public const string Confidence = "How sure the naming is: high when the file carries the encoder's own trait, medium for a pattern of the encoder's, low when only a claim in the metadata names it.";
-    public const string Evidence = "What points to the encoder, at the bytes it was found in.";
+    public const string Evidence = "What points to the encoder: a trait of the stream, or an attribute of the file that names it, with its offset in the file where it has one.";
+
+    public const string WriterEvidence = "What points to the writer: the attribute that names it or the header layout that is its habit, with its offset in the file.";
 }
 
 internal static class SeriesText

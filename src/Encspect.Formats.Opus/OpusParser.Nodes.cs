@@ -90,7 +90,7 @@ public sealed partial class OpusParser
         if (part.HasCountByte)
         {
             byte count = part.CountByte;
-            Node countNode = at.Bytes("Frame Count Byte", position, position + 1, $"{count & 0x3F} frames, {(part.IsVbr ? "VBR" : "CBR")}{(part.HasPadding ? ", padded" : string.Empty)}",
+            Node countNode = at.Bytes("Frame Count Byte", position, position + 1, $"{Count(count & 0x3F, "frame", "frames")}, {(part.IsVbr ? "VBR" : "CBR")}{(part.HasPadding ? ", padded" : string.Empty)}",
                 Explain.FrameCountByte);
             long b = position * 8L;
             countNode.Add(at.Bits("IsVbr", b, b + 1, NodeValue.Boolean(part.IsVbr), Explain.CountIsVbr));
@@ -102,7 +102,7 @@ public sealed partial class OpusParser
 
         if (part.PaddingLengthBytes > 0)
         {
-            nodes.Add(at.Bytes("Padding Length", position, position + part.PaddingLengthBytes, NodeValue.Integer(part.PaddingLengthBytes, "bytes", "byte"), Explain.PaddingLength));
+            nodes.Add(at.Bytes("Padding Length", position, position + part.PaddingLengthBytes, NodeValue.Integer(part.Padding, "bytes", "byte"), Explain.PaddingLength));
             position += part.PaddingLengthBytes;
         }
 

@@ -168,6 +168,12 @@ Every format has three kinds of fixture:
 
 All scripts are in `scripts/fixtures`.
 
+- **Ogg-specific checks:**
+  - A fixture of a corrupt Speex packet names the message speexdec must print (`speexdec_error` in its manifest, read by `crosscheck_ogg_fixtures.py`); `speex-wideband-layer-skip` has libspeex 1.2.1's "More than two wideband layers found".
+  - `vorbis-end-trimming-large` is compared with oggdec's samples, which libvorbis cuts at the last packet's; `speex-ignored-bits` with speexdec's samples and bitrates, which show it never reads the bits after the header's frames.
+  - Every stream's manifest entry holds its playback group (the chain link), which `OggFixtureTests` compares.
+  - `MemoryTests` bounds a multistream Opus file whose framing breaks, half a million empty Vorbis comments and 100,000 logical streams; `ComplexityTests` times junk dense in capture patterns, candidates that each follow the next, and 300,000 logical streams.
+
 ### MediaInfo
 
 Every cross-check script also compares each fixture's golden report with MediaInfo 26.01 (MediaInfoLib 26.01, Ubuntu 26.04's `mediainfo` package), through `mediainfo_tool.py`. MediaInfo reads container and stream headers without decoding, so it is one more independent reader of the formats' header fields, frame and sample counts, encoder strings and tags.
@@ -248,6 +254,14 @@ The first run of the cross-checks on Ubuntu 26.04 failed in eight jobs (DTS pass
   - libdca (`dca_frames`) loses a 14-bit frame that starts at an offset that is not a multiple of 4; the derived 14-bit fixtures with such offsets skip it. AMODE 10 to 15 are rejected by ffmpeg (DCA_AMODE_COUNT is 10) and libdca, so `amode-10` to `amode-15` have no tool to confirm them.
   - MediaInfo 24.01, measured: it finds the extensions of a core and the substream behind it in the 16-bit big endian form only, counts a 14-bit frame as FSIZE + 1 times 8 over 7 bytes, and lays out AMODE 10 to 15 differently; each is listed with its fixtures in the script.
   - libdca reads core frames only: XCh and XXCH channels are not counted, and it reads a frame by its size, so it does not resync inside a cut one.
+
+### ASF remux fixtures
+
+`make_external_asf_fixtures.py` also writes `external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.wma` and `external-remux-ffmpeg-wma92-cbr-stereo-22k-32.wma`: `ffmpeg -i <committed Windows file> -c copy` of a Windows Media Format SDK file and a Media Foundation file, without `-fflags +bitexact`.
+
+- ffmpeg's ASF muxer copies every attribute of the input and adds its own `WM/EncodingSettings` ("Lavf60.16.100") after them, so the files carry WMFSDKVersion or MediaFoundationVersion of the earlier writer and the stamp of the muxer; every other ffmpeg ASF fixture is bit-exact and has no stamp.
+- Their manifests hold the source file and its SHA-256 and what ffprobe says of the remux. `--remuxes-only` writes only these two files (the same bytes with the same ffmpeg); the fixtures job runs `--manifests-only`, which keeps the files.
+- `WmaFixtureTests.AnFFmpegRemuxIsWrittenByFFmpegNotByTheWriterOfTheSource` holds the writer the analyzer names. `crosscheck_asf_fixtures.py` checks them like the other ffmpeg fixtures; MediaInfo states no bit rate mode for them, since ffmpeg writes IsVBR as text.
 
 ### Derived ASF fixture
 

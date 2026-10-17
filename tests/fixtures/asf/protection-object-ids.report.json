@@ -233,7 +233,7 @@
                     },
                     {
                       "name": "Flags",
-                      "value": 32769,
+                      "value": 1,
                       "offset": 206,
                       "length": 2,
                       "children": [
@@ -257,7 +257,7 @@
                         },
                         {
                           "name": "Encrypted Content Flag",
-                          "value": true,
+                          "value": false,
                           "offset": 207,
                           "length": 1,
                           "bitOffset": 7,
@@ -347,7 +347,7 @@
                               "length": 2,
                               "children": [
                                 {
-                                  "name": "Exponent VLC",
+                                  "name": "Uses Exponent VLC",
                                   "value": false,
                                   "offset": 234,
                                   "length": 1,
@@ -356,7 +356,7 @@
                                   "bitOrder": "leastSignificantFirst"
                                 },
                                 {
-                                  "name": "Bit Reservoir",
+                                  "name": "Uses Bit Reservoir",
                                   "value": false,
                                   "offset": 234,
                                   "length": 1,
@@ -365,7 +365,7 @@
                                   "bitOrder": "leastSignificantFirst"
                                 },
                                 {
-                                  "name": "Variable Block Length",
+                                  "name": "Uses Variable Block Length",
                                   "value": false,
                                   "offset": 234,
                                   "length": 1,
@@ -1805,9 +1805,11 @@
         "isVbr": false,
         "isProtected": true,
         "protection": {
-          "scheme": "Encrypted Content Flag (scheme not stated)",
+          "scheme": "Windows Media DRM for network devices",
           "isEncrypted": true,
-          "systems": []
+          "systems": [
+            "Windows Media DRM for network devices"
+          ]
         },
         "series": []
       }
@@ -1829,7 +1831,7 @@
       {
         "severity": "Info",
         "code": "asf.content-encrypted",
-        "message": "The file is protected by Windows Media DRM for network devices; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them.",
+        "message": "The file is protected by Windows Media DRM for network devices; a record names its objects in a way that is not a stream number, so every stream is taken to be encrypted and is reported as the file holds it.",
         "offset": 286,
         "length": 68,
         "path": [
@@ -1843,7 +1845,7 @@
       {
         "severity": "Info",
         "code": "asf.encrypted-object-id-type",
-        "message": "An Encrypted Object Record has the ID type 0x0002; section 4.13 defines only 1, a stream number, so which object it covers is not known.",
+        "message": "An Encrypted Object Record has the ID type 0x0002; section 4.13 defines only 1, a stream number, so which object it covers is not known. The record is taken to cover every stream.",
         "offset": 334,
         "length": 2,
         "path": [
@@ -1860,7 +1862,7 @@
       {
         "severity": "Warning",
         "code": "asf.encrypted-object-id-length",
-        "message": "An Encrypted Object Record gives a stream number in 4 bytes; section 4.13 sets the length to 2 for type 1.",
+        "message": "An Encrypted Object Record gives a stream number in 4 bytes; section 4.13 recommends 2 for type 1, a WORD. Which stream it names is not known, so the record is taken to cover every stream.",
         "offset": 342,
         "length": 2,
         "path": [

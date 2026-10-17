@@ -13,6 +13,10 @@ internal static class Adif
     // longer, up to 16 elements of 255 bytes each.
     private const int MaxHeader = 1 << 13;
 
+    // Blocks kept as records, as MP4 caps the samples of a fragmented track; the bytes past the cap are not read. A block can be one
+    // byte, so the cap bounds the memory (about 80 bytes a block) whatever the input's size.
+    internal const int MaxBlocks = 1 << 21;
+
     public static bool Plausible(ByteReader reader)
     {
         try
@@ -75,21 +79,49 @@ internal static class Adif
         kept.Store = log.Store;
         kept.Setup = log.Setup;
         (string Text, int Index, long Offset)? signature = null;
-        long position = ReadBlocks(reader, dataStart, log, blocks, findings, context.CancellationToken, ref signature);
+        var run = new CountedRun();
+        long position = ReadBlocks(reader, dataStart, log, blocks, findings, context.CancellationToken, ref signature, run);
+        Node? counted = null;
+        if (run.Blocks > 0)
+        {
+            counted = new Node("Counted Blocks", position - run.Bytes, run.Bytes, NodeValue.Integer(run.Blocks, "blocks", "block")) { Description = Explain.CountedBlocks };
+            leading.Add(counted);
+        }
+
         if (position < reader.End)
         {
             long rest = reader.End - position;
-            var unread = new Node("Unread Bytes", position, rest, NodeValue.Integer(rest, "bytes")) { Description = Explain.AdifUnread };
+            var unread = new Node("Unread Bytes", position, rest, NodeValue.Integer(rest, "bytes", "byte")) { Description = run.Blocks > 0 ? Explain.UnreadBlocks : Explain.AdifUnread };
             leading.Add(unread);
-            findings.AddNow(Severity.Warning, "aac.adif-blocks-unread",
-                $"The {rest} bytes from 0x{position:X} are not read: ADIF marks no raw data block's start, so none can be found after one that cannot be read to its end.", unread);
+            if (run.Blocks > 0)
+            {
+                findings.AddNow(Severity.Warning, "aac.blocks-limit",
+                    $"The stream has more than {MaxBlocks} raw data blocks; the {Plural(run.Blocks, "block")} from 0x{position - run.Bytes:X} on are counted in its figures (blocks, samples, duration, bitrates) but have no node, and the graphs and statistics cover the blocks before them; "
+                    + $"the {Plural(rest, "byte")} after them cannot be read to the end of a block and are not analyzed.", counted!);
+            }
+            else
+            {
+                findings.AddNow(Severity.Warning, "aac.adif-blocks-unread",
+                    $"The {Plural(rest, "byte")} from 0x{position:X} are not read: ADIF marks no raw data block's start, so none can be found after one that cannot be read to its end.", unread);
+            }
+        }
+        else if (run.Blocks > 0)
+        {
+            findings.AddNow(Severity.Warning, "aac.blocks-limit",
+                $"The stream has more than {MaxBlocks} raw data blocks; the {Plural(run.Blocks, "block")} from 0x{position - run.Bytes:X} on are counted in its figures (blocks, samples, duration, bitrates) but have no node, and the graphs and statistics cover the blocks before them.", counted!);
         }
 
-        config = config with { SbrFound = log.Tally.SbrBlocks > 0, PsFound = log.Tally.PsBlocks > 0 };
+        config = config with { SbrFound = log.Tally.IsSbrEvident, PsFound = log.Tally.IsPsEvident };
         var figures = new StreamFigures(config.OutputSampleRate);
         for (int i = 0; i < blocks.Count && blocks[i].IsRead; i++)
         {
             figures.Add(blocks[i].Offset, blocks[i].Length, config.OutputFrameLength);
+        }
+
+        if (run.Blocks > 0)
+        {
+            double rate = 8.0 * figures.SampleRate / config.OutputFrameLength / 1000;
+            figures.AddRun(run.Blocks, run.Bytes, run.Blocks * config.OutputFrameLength, run.Smallest, run.Largest, run.Smallest * rate, run.Largest * rate);
         }
 
         Node FirstBlock() => blocks.Count > 0 ? BlockNode(blocks, 0, null, null) : region;
@@ -149,8 +181,10 @@ internal static class Adif
     // Reads raw data blocks one after another from start; returns where the reading ended. The data
     // is read through a window twice the longest block, moved on once the next block could run past it.
     private static long ReadBlocks(ByteReader reader, long start, BlockLog log, ChunkedList<Block> blocks, FindingCollector findings, CancellationToken cancellation,
-        ref (string Text, int Index, long Offset)? signature)
+        ref (string Text, int Index, long Offset)? signature, CountedRun run)
     {
+        BlockReader? scanner = null;
+        long scanned = 0;
         var cache = new BlockCache(reader);
         var window = new byte[2 * BlockLog.MaxBlockBytes];
         long windowStart = start;
@@ -158,7 +192,7 @@ internal static class Adif
         long position = start;
         while (position < reader.End)
         {
-            if (blocks.Count % 4096 == 0)
+            if ((blocks.Count + scanned) % 4096 == 0)
             {
                 cancellation.ThrowIfCancellationRequested();
             }
@@ -172,11 +206,29 @@ internal static class Adif
             int at = (int)(position - windowStart);
             ReadOnlySpan<byte> data = window.AsSpan(at, Math.Min(windowLength - at, BlockLog.MaxBlockBytes));
             var where = new UnitBytes(position, data.Length, null);
+            if (blocks.Count >= MaxBlocks)
+            {
+                // Past the limit on records a block is read only for its length, by a reader that keeps and counts nothing.
+                scanner ??= new BlockReader(log.Setup, null);
+                BlockResult scan = scanner.Read(data, 0, data.Length * 8, (int)Math.Min(scanned, int.MaxValue), where);
+                if (!scan.Ok)
+                {
+                    return position;
+                }
+
+                int scannedLength = (scan.End + 7) / 8;
+                run.Add(scannedLength);
+                scanned++;
+                position += scannedLength;
+                continue;
+            }
+
             int index = blocks.Count;
             long blockStart = position;
             int available = data.Length;
             (long skeleton, BlockResult read) = log.Read(data, 0, available * 8, where,
                 () => new Node("Raw Data Block", blockStart, available) { Kind = NodeKind.Frame, Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks });
+            log.AddEvidence(read, log.Count - 1);
             if (!read.Ok)
             {
                 // The block that breaks reaches as far as a block can, where its finding places it.
@@ -195,6 +247,28 @@ internal static class Adif
         }
 
         return position;
+    }
+
+    private static string Plural(long count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
+
+    // The blocks past MaxBlocks, which are only measured.
+    private sealed class CountedRun
+    {
+        public long Blocks { get; private set; }
+
+        public long Bytes { get; private set; }
+
+        public int Smallest { get; private set; } = int.MaxValue;
+
+        public int Largest { get; private set; }
+
+        public void Add(int length)
+        {
+            Blocks++;
+            Bytes += length;
+            Smallest = Math.Min(Smallest, length);
+            Largest = Math.Max(Largest, length);
+        }
     }
 
     // Built in a method of its own so that the node's factory captures these arguments and not the
