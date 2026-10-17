@@ -12,6 +12,8 @@ internal sealed partial class UnitSyntax
     private int _sizeBits;
     private int _mixConfigurations;
     private readonly int[] _mixChannels = new int[4];
+    private int _clockRate;
+    private StaticState? _carry;
     private SubstreamFacts? _substream;
     private int _assetSizesStart;
     private int _assetSizesEnd;
@@ -77,12 +79,18 @@ internal sealed partial class UnitSyntax
         _mixEnabled = false;
         _mixConfigurations = 0;
         _frameDurationCycles = 0;
+        _clockRate = 0;
+        _carry = null;
         int presentations = 1;
         int assets = 1;
         facts.HasStaticFields = _hasStaticFields;
         if (_hasStaticFields)
         {
             presentations = ReadStaticFields(facts, index, out assets);
+        }
+        else
+        {
+            UseCarriedFields(facts, index);
         }
 
         var assetSizes = new int[assets];
@@ -103,6 +111,8 @@ internal sealed partial class UnitSyntax
             descriptors[i] = ReadAssetDescriptor(i, wide);
             facts.Assets.Add(descriptors[i]);
         }
+
+        StaticState? stated = _hasStaticFields ? CarriedFields(descriptors[0]) : null;
 
         // Table 7-2: whether each audio presentation has a backward compatible core in an extension substream, and where.
         _tree?.Open("Backward Compatible Cores", _pos, Explain.BcCores, Topics.ExtensionSubstream);
@@ -136,6 +146,11 @@ internal sealed partial class UnitSyntax
         // 7.5.2: the CRC16 covers the header from nExtSSIndex (byte 5) to the end of the byte alignment.
         int verdict = CrcVerdict(baseByte + 5, headerSize - 5);
         facts.IsCrcValid = verdict == 1;
+        if (stated is not null && verdict != 0 && _staticStates is not null)
+        {
+            // FFmpeg checks the CRC16 before it reads the fields, and keeps the earlier ones where it fails.
+            _staticStates[index] = stated;
+        }
         int crcStart = _pos;
         Crc("Header CRC", Explain.ExtSsCrc, verdict, "not checked");
         if (verdict == 0)
@@ -145,6 +160,50 @@ internal sealed partial class UnitSyntax
 
         headerEnd = _pos;
         ReadAssetData(substream, descriptors, assetSizes, headerSize);
+    }
+
+    // 7.5.2: a header without static fields leaves them as the last header of this extension substream index had them.
+    private void UseCarriedFields(SubstreamFacts facts, int index)
+    {
+        StaticState? carry = _isBuilding ? _verdicts.NextCarry() : _staticStates?[index];
+        if (!_isBuilding)
+        {
+            _verdicts.AddCarry(carry);
+        }
+
+        _carry = carry;
+        if (carry is null)
+        {
+            return;
+        }
+
+        _mixEnabled = carry.IsMixEnabled;
+        _mixConfigurations = carry.MixConfigurations;
+        carry.MixChannels.CopyTo(_mixChannels, 0);
+        _frameDurationCycles = carry.FrameDurationCycles;
+        _clockRate = carry.ClockRate;
+        facts.Duration = carry.Duration;
+    }
+
+    private StaticState CarriedFields(AssetFacts asset)
+    {
+        var state = new StaticState
+        {
+            IsMixEnabled = _mixEnabled,
+            MixConfigurations = _mixConfigurations,
+            FrameDurationCycles = _frameDurationCycles,
+            ClockRate = _clockRate,
+            BitResolution = asset.BitResolution,
+            MaxSampleRate = asset.MaxSampleRate,
+            Channels = asset.Channels,
+            IsOneToOne = asset.IsOneToOne,
+            HasEmbeddedStereo = asset.HasEmbeddedStereo,
+            HasEmbeddedSixChannel = asset.HasEmbeddedSixChannel,
+            HasSpeakerMask = asset.HasSpeakerMask,
+            SpeakerMask = asset.SpeakerMask,
+        };
+        _mixChannels.CopyTo(state.MixChannels, 0);
+        return state;
     }
 
     // The static fields, 7.5.2 Table 7-2: the reference clock, the frame duration, a time stamp, the audio presentations and the mixing metadata.
@@ -167,6 +226,7 @@ internal sealed partial class UnitSyntax
         _frameDurationCycles = 512 * (duration + 1);
         _tree?.Field("Frame Duration", _pos - 3, _pos, NodeValue.Integer(_frameDurationCycles, "reference clock cycles", "reference clock cycle"), Explain.FrameDuration, Topics.ExtensionSubstream);
         int rate = clock switch { 0 => 32000, 1 => 44100, 2 => 48000, _ => 0 };
+        _clockRate = rate;
         facts.Duration = rate > 0 ? _frameDurationCycles / (double)rate : 0;
         if (Flag("HasTimeStamp", Explain.TimeStampFlag, Topics.ExtensionSubstream))
         {
@@ -257,6 +317,21 @@ internal sealed partial class UnitSyntax
         {
             ReadStaticAssetFields(asset, out channels, out oneToOne, out embeddedStereo, out embeddedSix);
         }
+        else if (ordinal == 0 && _carry is { } carry)
+        {
+            asset.BitResolution = carry.BitResolution;
+            asset.MaxSampleRate = carry.MaxSampleRate;
+            asset.Channels = channels = carry.Channels;
+            asset.IsOneToOne = oneToOne = carry.IsOneToOne;
+            asset.HasSpeakerMask = carry.HasSpeakerMask;
+            asset.SpeakerMask = carry.SpeakerMask;
+            embeddedStereo = carry.HasEmbeddedStereo;
+            embeddedSix = carry.HasEmbeddedSixChannel;
+        }
+
+        asset.AreFiguresKnown = _hasStaticFields || (ordinal == 0 && _carry is not null);
+        asset.HasEmbeddedStereo = embeddedStereo;
+        asset.HasEmbeddedSixChannel = embeddedSix;
 
         ReadDynamicAssetFields(channels, embeddedStereo, embeddedSix, out bool mixPresent);
         ReadNavigation(asset, oneToOne, mixPresent);
@@ -344,7 +419,14 @@ internal sealed partial class UnitSyntax
             asset.HasSpeakerMask = true;
         }
 
+        int setsStart = _pos;
         int sets = Num("Speaker Remapping Sets", 3, Explain.RemapSets, Topics.ExtensionSubstream);
+        if (sets > 0 && maskBits == 0)
+        {
+            // The standard layout masks of the sets are nuBits4SpkrMask bits wide (Table 7-5), and FFmpeg refuses sets without a mask (dca_exss.c).
+            Report(Issue.ReservedValue, "Speaker Remapping Sets", setsStart, _pos, $"the asset has {sets} speaker remapping set{(sets == 1 ? string.Empty : "s")} but no speaker activity mask, whose width the layout masks of the sets need (Table 7-5)");
+        }
+
         var layouts = new int[sets];
         for (int i = 0; i < sets; i++)
         {

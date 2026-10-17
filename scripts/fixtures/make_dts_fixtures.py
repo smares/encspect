@@ -604,8 +604,65 @@ def build_review():
     return None
 
 
+def build_gate2():
+    """Static fields carried over between extension substreams (7.5.2), an XXCH speaker mask too narrow for its channel sets, and encoder claims that agree."""
+    name = "DTS-HD Master Audio"
+
+    def unit(asset, static, **options):
+        return m.core_frame(size=512) + m.exss([dict(asset)], static=static, **options)
+
+    # 7.5.2: where bStaticFieldsPresent is 0 the header omits the static fields, and they keep the values of the last header that had them.
+    # FFmpeg's dca_exss.c keeps them between frames, so its decoder plays every unit as the lossless stream the first one describes.
+    asset = dict(components=["core", "xll"], sizes={"core": 96, "xll": 64}, channels=2, mask=0x02)
+    parts = [unit(asset, static=i == 0) for i in range(4)]
+    fixture("exss-static-first-only", ".dts", "Four units of a stereo core frame and an extension substream with a lossless asset, of which only the first states the static fields.",
+            b"".join(parts), rows(parts), [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [],
+            fields={"DTS/Statistics/Lossless Channel Sets": "1 channel set", "DTS/Statistics/Lossless Channels": "2 channels",
+                    "DTS/Frame[1]/Extension Substream/Header Size": "24 bytes",
+                    "DTS/Frame[3]/Extension Substream/Asset 1 Data/XLL/Channel Set 1/IsPrimaryChannelSet": "true"},
+            crosscheck=cc_lossless())
+    six = dict(components=["core", "xll"], sizes={"core": 96, "xll": 96}, channels=6, mask=0x0F, embedded_stereo=True, drc=40, drc_stereo=60)
+    parts = [unit(six, static=i == 0) for i in range(4)]
+    fixture("exss-static-embedded-stereo", ".dts", "Four units of a stereo core frame and an extension substream with a lossless 5.1 asset that has a dynamic range code and an embedded stereo downmix, of which only the first states the static fields.",
+            b"".join(parts), rows(parts), [stream(name, 48000, SURROUND_5_1, "2/0", 4 * 512, vbr=True)], [],
+            crosscheck=cc_lossless(libdca_channels=2, decode_whole=True,
+                                   skip={"decode_alone": "ffmpeg keeps the static fields between frames (dca_exss.c), so a unit whose header omits them decodes only after the first: each packet decoded alone is rejected "
+                                                         "('Read past end of EXSS asset descriptor'), the whole file decodes without an error"}))
+    lbr = dict(mode=2, channels=2, mask=0x02)
+    parts = [m.exss([dict(lbr)], static=i == 0) for i in range(4)]
+    fixture("exss-only-static-first-only", ".dts", "Four extension substreams alone, each with an LBR asset, of which only the first states the static fields: no core frame.",
+            b"".join(parts), rows(parts), [stream("DTS Express", 48000, STEREO, None, 4 * 512, vbr=True)], [],
+            crosscheck=cc(ffprobe=False, decode=False, decode_error="No valid DCA sub-stream found", libdca=False, skip={"ffprobe": "ffmpeg's parser reads the sampling frequency and the profile (DTS Express) from the LBR header, but its decoder rejects the substream ('No valid DCA sub-stream found', dcadec.c), so ffprobe gets no channels", "decode": "ffmpeg rejects the LBR stub, whose component is a header followed by filler", "libdca": "libdca reads core frames only."}))
+
+    # A second claim that names the same encoder (as written or in other case) adds nothing; the repeated frame is the tag parser's finding.
+    parts = run(5)
+    body = b"".join(parts)
+    tag = id3v2("dtsenc 1.0", "DTSENC 1.0")
+    fixture("tags-claims-same", ".dts", "An ID3v2 tag with two TSSE frames that name the same encoder, one in capitals, and five stereo core frames.", tag + body, rows(parts, len(tag)),
+            [stream("DTS", 48000, STEREO, "2/0", 5 * 512)], [("id3v2.frame-duplicate", "2 TSSE frames")], fields={"DTS/Encoder": "dtsenc 1.0"},
+            regions=[["ID3v2", 0, len(tag)], ["DTS", len(tag), len(body)]],
+            crosscheck=cc(libdca=False, skip={"libdca": "libdca's tool does not skip tags."}))
+
+    # 7.5.3.2 Table 7-5: speaker remapping sets whose layout masks have the width of the speaker activity mask, which the asset does not have.
+    remap = dict(components=["core", "xll"], sizes={"core": 96, "xll": 64}, channels=2, mask=None, remap_sets=1)
+    parts = [unit(remap, static=True) for _ in range(4)]
+    fixture("exss-remapping-without-mask", ".dts", "Four units whose lossless asset states one speaker remapping set but no speaker activity mask, so the layout masks of the set have no width.",
+            b"".join(parts), rows(parts), [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.reserved-value", "1 speaker remapping set but no speaker activity mask")],
+            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Speaker mask disabled yet there are remapping sets",
+                          skip={"ffprobe_profile": "ffmpeg refuses the asset descriptor, so no extension is decoded and ffprobe names the core's profile", "decode": "ffmpeg refuses the asset descriptor (dca_exss.c: 'Speaker mask disabled yet there are remapping sets')"}))
+
+    # 6.5.2 Table 6-23 reads each channel set's mask with nuBits4SpkrMaskXXCh - 6 bits, so a width of 5 or less has no reading.
+    ext = m.xxch(chsets=((1, 0),), core_mask=0x1F, mask_bits=5)
+    parts = [m.core_frame(size=1024, extensions=[ext], ext=1, ext_id=6) for _ in range(4)]
+    fixture("xxch-mask-bits-5", ".dts", "Four stereo core frames with an XXCH extension whose speaker mask has 5 bits, fewer than the 6 that Table 6-23 subtracts.", b"".join(parts), rows(parts),
+            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.reserved-value", "the mask has 5 bits")],
+            crosscheck=cc(decode=False, decode_error="Invalid number of bits for XXCH speaker mask",
+                          skip={"decode": "ffmpeg's decoder refuses the XXCH header (dca_core.c: 'Invalid number of bits for XXCH speaker mask')"}))
+
+
 def main():
     build()
+    build_gate2()
     import dts_lossless_fixtures
     api = dict(fixture=fixture, rows=rows, cc=cc, stream=stream)
     dts_lossless_fixtures.build(api)

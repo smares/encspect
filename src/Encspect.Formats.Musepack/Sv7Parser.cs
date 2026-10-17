@@ -18,9 +18,10 @@ internal static class Sv7Parser
     public const int FrameSamples = 1152;
     public const int SynthesisDelay = 481;
 
-    // A frame needs bits for its subband resolutions, so no encoder writes a length of 0; after this
-    // many in a row the frames are not followed further, since each would cost a record per 20 bits.
-    public const int MaxEmptyRun = 4096;
+    // A frame needs bits for its subband resolutions, so no encoder writes a frame whose resolutions
+    // run past its length (a length of 0 among them); after this many in a row the frames are not
+    // followed further, since each would cost a record per 20 bits or more of the file.
+    public const int MaxDamagedRun = 4096;
 
     private static readonly string[] ProfileNames =
     [
@@ -155,7 +156,7 @@ internal static class Sv7Parser
         Walk(reader, words, state);
 
         long streamEnd = layout.WordEnd(state.EndBit);
-        if (state.Truncated || state.EmptyFrom is not null)
+        if (state.Truncated || state.DamagedFrom is not null)
         {
             streamEnd = end;
         }
@@ -186,7 +187,8 @@ internal static class Sv7Parser
         long bit = DataBit;
         long length = words.BitLength;
         int maxBand = Math.Min(h.MaxBand, 31);
-        int empty = 0;
+        int damaged = 0;
+        long damagedFrom = 0;
         for (long i = 0; i <= h.Frames; i++)
         {
             if (i % 4096 == 0)
@@ -241,10 +243,18 @@ internal static class Sv7Parser
                 break;
             }
 
-            empty = frameLength == 0 ? empty + 1 : 0;
-            if (empty == MaxEmptyRun)
+            if (bands.Overrun)
             {
-                state.EmptyFrom = bit - ((MaxEmptyRun - 1) * 20L);
+                damagedFrom = damaged++ == 0 ? bit : damagedFrom;
+            }
+            else
+            {
+                damaged = 0;
+            }
+
+            if (damaged == MaxDamagedRun)
+            {
+                state.DamagedFrom = damagedFrom;
                 state.Count(frame, bands);
                 state.EndBit = frameEnd;
                 break;
@@ -357,7 +367,7 @@ internal static class Sv7Parser
         if (h.IntensityStereo)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.intensity-stereo-flag",
-                "The header's former intensity stereo flag is set; mppenc 1.16 writes 0, as SV7 no longer supports intensity stereo, and libmpcdec ignores it.", Field("Intensity Stereo"));
+                "The header's former intensity stereo flag is set; mppenc 1.16 writes 0, as SV7 no longer supports intensity stereo, and libmpcdec ignores it.", Field("UsesIntensityStereo"));
         }
 
         if (h.LastSamples > FrameSamples)
@@ -380,8 +390,8 @@ internal static class Sv7Parser
         header.Add(w.Field("Stream Version", 4, 8, NodeValue.Integer(h.Version), Explain.StreamVersion));
         header.Add(w.Field("PNS", 0, 4, NodeValue.Integer(h.PnsNibble), Explain.PnsFlag, Topics.NoiseSubstitution));
         header.Add(w.Field("Frame Count", 32, 64, NodeValue.Integer(h.Frames, "frames", "frame"), Explain.FrameCount));
-        header.Add(w.Field("Intensity Stereo", 64, 65, NodeValue.Boolean(h.IntensityStereo), Explain.IntensityStereoFlag, Topics.IntensityStereo));
-        header.Add(w.Field("Mid/Side Stereo", 65, 66, NodeValue.Boolean(h.MidSide), Explain.MidSideFlag, Topics.MidSideStereo));
+        header.Add(w.Field("UsesIntensityStereo", 64, 65, NodeValue.Boolean(h.IntensityStereo), Explain.IntensityStereoFlag, Topics.IntensityStereo));
+        header.Add(w.Field("UsesMidSideStereo", 65, 66, NodeValue.Boolean(h.MidSide), Explain.MidSideFlag, Topics.MidSideStereo));
         header.Add(w.Field("Max Band", 66, 72, NodeValue.Integer(h.MaxBand), Explain.MaxBand, Topics.SubbandCoding));
         Node profile = header.Add(w.Field("Profile", 72, 76, NodeValue.Integer(h.Profile), Explain.Profile, Topics.SubbandCoding));
         profile.Add(w.Field("Name", 72, 76, ProfileName(h.Profile), Explain.ProfileName));
@@ -393,12 +403,12 @@ internal static class Sv7Parser
         header.Add(w.Field("Title Peak", 112, 128, NodeValue.Integer(h.TitlePeak), Explain.Sv7TitlePeak, Topics.ReplayGain));
         header.Add(w.Field("Album Gain", 128, 144, NodeValue.Decimal(h.AlbumGain / 100.0, 2, "dB", showsSign: true), Explain.Sv7AlbumGain, Topics.ReplayGain));
         header.Add(w.Field("Album Peak", 144, 160, NodeValue.Integer(h.AlbumPeak), Explain.Sv7AlbumPeak, Topics.ReplayGain));
-        header.Add(w.Field("True Gapless", 160, 161, NodeValue.Boolean(h.Gapless), Explain.TrueGapless, Topics.GaplessPlayback));
+        header.Add(w.Field("IsTrueGapless", 160, 161, NodeValue.Boolean(h.Gapless), Explain.TrueGapless, Topics.GaplessPlayback));
         header.Add(w.Field("Last Frame Samples", 161, 172, NodeValue.Integer(h.LastSamples, "samples", "sample"), Explain.LastFrameSamples, Topics.GaplessPlayback));
-        header.Add(w.Field("Fast Seeking", 172, 173, NodeValue.Boolean(h.FastSeek), Explain.FastSeek));
+        header.Add(w.Field("IsFastSeekable", 172, 173, NodeValue.Boolean(h.FastSeek), Explain.FastSeek));
         header.Add(w.Field("Unused", 173, 192, NodeValue.Hex(h.Unused, 5), Explain.Unused));
         Node encoder = header.Add(w.Field("Encoder Version", 192, 200, NodeValue.Integer(h.Encoder), Explain.EncoderVersion, Topics.EncoderDetection));
-        encoder.Add(w.Field("Name", 192, 200, MusepackEncoder.LibmpcdecName(h.Encoder), Explain.VersionName));
+        encoder.Add(w.Field("Name", 192, 200, MusepackEncoder.Sv7Name(h.Encoder), Explain.VersionName));
         return header;
     }
 
@@ -580,10 +590,10 @@ internal static class Sv7Parser
         }
 
         Node header = state.Leading[0];
-        if (state.EmptyFrom is { } emptyFrom)
+        if (state.DamagedFrom is { } damagedFrom)
         {
-            state.Findings.AddNow(Severity.Warning, "musepack.frames-empty",
-                $"{MaxEmptyRun} frames in a row from 0x{state.Layout.WordStart(emptyFrom):X} have a length of 0 bits, which no encoder writes: the data is damaged, and the frames after them are not read.",
+            state.Findings.AddNow(Severity.Warning, "musepack.frames-damaged",
+                $"{MaxDamagedRun} frames in a row from 0x{state.Layout.WordStart(damagedFrom):X} have subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
                 header.Children.First(c => c.Name == "Frame Count"));
         }
         else if (counted < h.Frames)
@@ -743,7 +753,7 @@ internal static class Sv7Parser
 
         public int? FinalSamples { get; set; }
 
-        public long? EmptyFrom { get; set; }
+        public long? DamagedFrom { get; set; }
 
         public long FramesWithMidSide { get; private set; }
 

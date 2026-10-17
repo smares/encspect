@@ -1,0 +1,197 @@
+{
+ "description": "MPEG-1 Layer III in MP4 (object type 0x6B), 12 frames in two chunks of 6 with 16 bytes between them: the MPEG audio parser reads samples only where they lie in one stretch, so the track is a stream described by its sample entry and its frames are not read.",
+ "length": 5665,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   609
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   493
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   393
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   308
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   248
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   96
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   80
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   44
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   493,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   517,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   545,
+   68
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   613,
+   24
+  ],
+  [
+   "mdat",
+   637,
+   5028
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "MPEG-1 Audio",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": null,
+   "channel_layout": [],
+   "samples": 13824,
+   "is_vbr": false,
+   "ffprobe_channels": 2
+  }
+ ],
+ "units": [],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor": "0x6B (MPEG-1 Audio)"
+ },
+ "findings": [
+  [
+   "mpeg.packets-not-analyzed",
+   "packets"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads AAC only."
+  }
+ },
+ "samples": [
+  [
+   645,
+   417
+  ],
+  [
+   1062,
+   417
+  ],
+  [
+   1479,
+   417
+  ],
+  [
+   1896,
+   417
+  ],
+  [
+   2313,
+   417
+  ],
+  [
+   2730,
+   417
+  ],
+  [
+   3163,
+   417
+  ],
+  [
+   3580,
+   417
+  ],
+  [
+   3997,
+   417
+  ],
+  [
+   4414,
+   417
+  ],
+  [
+   4831,
+   417
+  ],
+  [
+   5248,
+   417
+  ]
+ ]
+}

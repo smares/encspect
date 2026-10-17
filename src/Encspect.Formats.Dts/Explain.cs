@@ -114,6 +114,8 @@ internal static class Explain
     public const string XxchSetChannels = "nuChInChSetXXCH: the number of channels in the channel set (6.5.3).";
     public const string XxchSetMask = "nuXXCHSpkrLayoutMask: the positions of the channel set's channels, in addition to the core's, by the bits of Table 6-22 (6.5.3).";
     public const string XxchSetCrcField = "nCRC16HeaderChSet: the CRC16 of the channel set header (6.5.3, Annex B).";
+    public const string XxchRefusedData = "The channel sets of an extension whose speaker mask width leaves their masks no reading (6.5.3). Not read.";
+
     public const string XxchSetData = "The channel set header's remaining fields and its audio data. Not read (6.5.3, 6.5.4).";
 
     public const string Substream = "An extension substream: a header that describes up to eight audio assets and the data of each asset, which may hold extensions of the core or standalone audio (7.2, 7.5).";
@@ -322,8 +324,8 @@ internal static class Explain
 
     public const string Statistics = "Figures computed over every frame of the stream.";
     public const string StatUnits = "How many frames the stream has, a core frame and its extension substreams counting as one.";
-    public const string StatSamples = "The samples per channel the frames hold at the core's sampling frequency, 32 for each block (5.4.2, NBLKS).";
-    public const string StatDuration = "The stream's length in seconds: its samples divided by the core's sampling frequency.";
+    public const string StatSamples = "The samples per channel the frames hold, counted at the sampling frequency the stream delivers (the core's, or the higher one an extension gives), 32 for each block of a core frame (5.4.2, NBLKS).";
+    public const string StatDuration = "The stream's length in seconds: the samples divided by the sampling frequency they are counted at.";
     public const string AverageBitrate = "The bytes of every frame, extension substreams included, over the duration.";
     public const string Smallest = "The size of the smallest frame in bytes.";
     public const string Largest = "The size of the largest frame in bytes.";

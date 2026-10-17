@@ -34,11 +34,12 @@ internal sealed class StreamFigures(int sampleRate)
 
     public void Add(long offset, int length, int samples)
     {
+        // The caller keeps a program frame to 9 syncframes (Program.Add), 36 KiB at most, and a frame's samples are blocks of 256; the
+        // clamps keep a point valid whatever is passed.
+        offset = Math.Clamp(offset, 0, (1L << 44) - 1);
+        length = Math.Clamp(length, 0, (1 << 17) - 1);
+        samples = Math.Clamp(samples / 256, 0, 7) * 256;
         double bitrate = Bitrate(length, samples);
-        if (offset >= 1L << 44 || length >= 1 << 17 || samples % 256 != 0 || samples > 7 * 256)
-        {
-            throw new InvalidDataException("A frame lies beyond 16 TiB or is too long for its point.");
-        }
 
         _points.Add(((ulong)offset << 20) | ((ulong)(uint)length << 3) | (uint)(samples / 256));
         if (sampleRate > 0)

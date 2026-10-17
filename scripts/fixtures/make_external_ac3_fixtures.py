@@ -19,8 +19,8 @@ tools give. Needs ffmpeg 6.1, aften, liba52-0.7.4-dev and a C compiler otherwise
 
 The derived-* fixtures rewrite encoder-made frames where the analyzer's report puts their fields
 (--analyzer path/to/encspect), for what the encoders do not write but needs real mantissas to be
-checked: delta bit allocation in the coupling channel and both channels of ffmpeg's 2/0 AC-3
-(liba52 confirms every block's end), and spectral extension with delta bit allocation in ffmpeg's
+checked: delta bit allocation in the coupling channel and both channels of ffmpeg's 2/0 AC-3, in block 5 and
+in block 0, whose five later blocks reuse it (liba52 confirms every block's end), and spectral extension with delta bit allocation in ffmpeg's
 mono E-AC-3 (the skip field insertion check confirms every block's start). Where a block's bit
 allocation changes, its mantissas are cut or filled with zero bits to the length the analyzer
 gives; the cross-checks then test that length against liba52 and ffmpeg.
@@ -73,6 +73,8 @@ FIXTURES = [
 DERIVED = [
     ("derived-ffmpeg-stereo-192k-delta", "external-ffmpeg-stereo-192k.ac3", "ac3-delta",
      "ffmpeg's 2/0 AC-3 with delta bit allocation in block 5: two segments for the coupling channel, three for each channel."),
+    ("derived-ffmpeg-stereo-192k-delta-block0", "external-ffmpeg-stereo-192k.ac3", "ac3-delta-block0",
+     "ffmpeg's 2/0 AC-3 with delta bit allocation in block 0, which the five blocks after it reuse: two segments for the coupling channel, three for each channel."),
     ("derived-ffmpeg-eac3-mono-48k-spx-delta", "external-ffmpeg-eac3-mono-48k.eac3", "eac3-spx-delta",
      "ffmpeg's mono E-AC-3 with spectral extension from sub-band 4 to 9 and delta bit allocation in block 4."),
 ]
@@ -81,6 +83,8 @@ DERIVED = [
 DERIVED_FIELDS = {
     "ac3-delta": {"AC-3/Frame/Audio Block[5]/Delta Bit Allocation/Delta Bit Allocation Segments (coupling)/Offset": "31 bands",
                   "AC-3/Frame/Audio Block[5]/Delta Bit Allocation/Delta Bit Allocation Segments (left)/Offset": "3 bands"},
+    "ac3-delta-block0": {"AC-3/Frame/Audio Block[0]/Delta Bit Allocation/Delta Bit Allocation Segments (coupling)/Offset": "31 bands",
+                         "AC-3/Frame/Audio Block[0]/Delta Bit Allocation/Delta Bit Allocation Segments (left)/Offset": "3 bands"},
     "eac3-spx-delta": {"AC-3/Frame/Audio Block/Spectral Extension Begin Code": "2 (sub-band 4)",
                        "AC-3/Frame/Audio Block[4]/Delta Bit Allocation/Delta Bit Allocation Segments (center)/Offset": "5 bands"},
 }
@@ -113,20 +117,25 @@ def first(node, name):
     return next(cc.find(node, name))
 
 
-def rewrite_ac3(data, frames, lengths):
-    """Block 5 of every frame gets delta bit allocation; lengths, once known, are its mantissa bits."""
+def rewrite_ac3(data, frames, lengths, number=5):
+    """Block `number` of every frame gets delta bit allocation, which stays in force for the blocks after it (A/52 5.4.3.47:
+    a block that sends none reuses the last, A/52 5.4.3.47 to 5.4.3.57). lengths, once known, give per frame the mantissa bits of
+    each block from `number` on, or None for the unchanged length; the blocks before `number` stay as they are."""
     out = bytearray()
     for index, frame in enumerate(frames):
         base, size = frame["offset"], frame["length"]
         bits = cc.bits_of(data[base:base + size])
-        block = blocks_of(frame)[5]
-        flag = start_bit(first(block, "HasDeltaBitAllocation"), base)
-        mantissas = first(block, "Mantissas")
-        start, length = start_bit(mantissas, base), mantissas["value"]
+        blocks = blocks_of(frame)
+        flag = start_bit(first(blocks[number], "HasDeltaBitAllocation"), base)
         delta = "1" + "01" * 3 + CPL_SEGMENTS + channel_segments(0) + channel_segments(1)
-        body = bits[:flag] + delta + bits[flag + 1:start]
-        keep = lengths[index] if lengths else length
-        body += (bits[start:start + min(keep, length)] + "0" * max(0, keep - length))
+        body = bits[:flag] + delta
+        position = flag + 1
+        for at in range(number, len(blocks)):
+            mantissas = first(blocks[at], "Mantissas")
+            start, length = start_bit(mantissas, base), mantissas["value"]
+            keep = lengths[index].get(at, length) if lengths else length
+            body += bits[position:start] + bits[start:start + min(keep, length)] + "0" * max(0, keep - length)
+            position = start + length
         # The next nominal bitrate (192 to 224 kbps) leaves room for the new fields.
         code = int(bits[34:40], 2) + 2
         body = body[:34] + f"{code:06b}" + body[40:]
@@ -190,15 +199,27 @@ def rewrite_eac3(data, frames, lengths):
 
 
 def derive(analyzer, kind, source, target):
-    """Rewrites source into target in two passes: the first gives the analyzer the new fields, whose
-    bit allocation then gives the changed block's mantissa length for the second."""
+    """Rewrites source into target in passes: the first gives the analyzer the new fields, whose bit allocation then gives the
+    changed block's mantissa length for the next. Where delta bit allocation stays in force for later blocks (ac3-delta-block0),
+    each pass fixes one more block, since a block's start follows from the length of the one before; it ends when no length changes."""
     data = source.read_bytes()
     frames = cc.report_frames(analyzer, source)
-    rewrite = rewrite_ac3 if kind == "ac3-delta" else rewrite_eac3
-    changed = 5 if kind == "ac3-delta" else 4
-    target.write_bytes(rewrite(data, frames, None))
-    lengths = [first(blocks_of(f)[changed], "Mantissas")["value"] for f in cc.report_frames(analyzer, target)]
-    target.write_bytes(rewrite(data, frames, lengths))
+    if kind == "eac3-spx-delta":
+        target.write_bytes(rewrite_eac3(data, frames, None))
+        lengths = [first(blocks_of(f)[4], "Mantissas")["value"] for f in cc.report_frames(analyzer, target)]
+        target.write_bytes(rewrite_eac3(data, frames, lengths))
+        return
+    number = 5 if kind == "ac3-delta" else 0
+    target.write_bytes(rewrite_ac3(data, frames, None, number))
+    lengths = None
+    for _ in range(8):
+        report = cc.report_frames(analyzer, target)
+        found = [{b: m_["value"] for b, block in enumerate(blocks_of(f)) if b >= number for m_ in list(cc.find(block, "Mantissas"))[:1]} for f in report]
+        if found == lengths:
+            return
+        lengths = found
+        target.write_bytes(rewrite_ac3(data, frames, lengths, number))
+    raise SystemExit("The block lengths did not settle.")
 
 
 def signal(rate, channels, kind, path):
@@ -350,7 +371,7 @@ def main():
                 "findings": [],
                 "crosscheck": {"ffprobe": True, "decode": True, **({"liba52": True} if extension == ".ac3" else {"skip_insertion": True})},
             }
-            if kind == "ac3-delta":
+            if kind in ("ac3-delta", "ac3-delta-block0"):
                 result["crosscheck"]["decode"] = False
                 result["crosscheck"]["skip"] = {"decode": "ffmpeg 6.1 counts the coupling channel's delta bit allocation bands from the coupling's first band "
                                                 "(ac3.c, ff_ac3_bit_alloc_calc_mask), not from band 0 as A/52 7.2.2.6 and liba52 do, so it rejects "

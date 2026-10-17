@@ -2172,7 +2172,7 @@
                             },
                             {
                               "name": "Segments",
-                              "value": 1,
+                              "value": 2,
                               "unit": "segments",
                               "offset": 648,
                               "length": 2,
@@ -2181,7 +2181,7 @@
                             },
                             {
                               "name": "Samples per Segment",
-                              "value": 512,
+                              "value": 256,
                               "unit": "samples",
                               "offset": 649,
                               "length": 1,
@@ -2233,7 +2233,7 @@
                             },
                             {
                               "name": "Header CRC",
-                              "value": 29268,
+                              "value": 57519,
                               "offset": 652,
                               "length": 2,
                               "children": [
@@ -2398,28 +2398,28 @@
                             },
                             {
                               "name": "Navigation Index",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 664,
-                              "length": 3,
+                              "length": 4,
                               "children": [
                                 {
                                   "name": "Band Data Sizes",
-                                  "value": 1,
+                                  "value": 2,
                                   "unit": "sizes",
                                   "offset": 664,
-                                  "length": 1
+                                  "length": 2
                                 },
                                 {
                                   "name": "CRC",
-                                  "value": 61905,
-                                  "offset": 665,
+                                  "value": 11838,
+                                  "offset": 666,
                                   "length": 2,
                                   "children": [
                                     {
                                       "name": "Check",
                                       "value": "verified",
-                                      "offset": 665,
+                                      "offset": 666,
                                       "length": 2
                                     }
                                   ]
@@ -2428,10 +2428,17 @@
                             },
                             {
                               "name": "Band Data",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
-                              "offset": 667,
-                              "length": 2
+                              "offset": 668,
+                              "length": 3
+                            },
+                            {
+                              "name": "Data After Band Data",
+                              "value": 64,
+                              "unit": "bytes",
+                              "offset": 672,
+                              "length": 64
                             }
                           ]
                         }
@@ -4363,7 +4370,7 @@
                             },
                             {
                               "name": "Segments",
-                              "value": 1,
+                              "value": 2,
                               "unit": "segments",
                               "offset": 1384,
                               "length": 2,
@@ -4372,7 +4379,7 @@
                             },
                             {
                               "name": "Samples per Segment",
-                              "value": 512,
+                              "value": 256,
                               "unit": "samples",
                               "offset": 1385,
                               "length": 1,
@@ -4424,7 +4431,7 @@
                             },
                             {
                               "name": "Header CRC",
-                              "value": 29268,
+                              "value": 57519,
                               "offset": 1388,
                               "length": 2,
                               "children": [
@@ -4589,28 +4596,28 @@
                             },
                             {
                               "name": "Navigation Index",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 1400,
-                              "length": 3,
+                              "length": 4,
                               "children": [
                                 {
                                   "name": "Band Data Sizes",
-                                  "value": 1,
+                                  "value": 2,
                                   "unit": "sizes",
                                   "offset": 1400,
-                                  "length": 1
+                                  "length": 2
                                 },
                                 {
                                   "name": "CRC",
-                                  "value": 61905,
-                                  "offset": 1401,
+                                  "value": 11838,
+                                  "offset": 1402,
                                   "length": 2,
                                   "children": [
                                     {
                                       "name": "Check",
                                       "value": "verified",
-                                      "offset": 1401,
+                                      "offset": 1402,
                                       "length": 2
                                     }
                                   ]
@@ -4619,10 +4626,17 @@
                             },
                             {
                               "name": "Band Data",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
-                              "offset": 1403,
-                              "length": 2
+                              "offset": 1404,
+                              "length": 3
+                            },
+                            {
+                              "name": "Data After Band Data",
+                              "value": 64,
+                              "unit": "bytes",
+                              "offset": 1408,
+                              "length": 64
                             }
                           ]
                         }
@@ -6554,7 +6568,7 @@
                             },
                             {
                               "name": "Segments",
-                              "value": 1,
+                              "value": 2,
                               "unit": "segments",
                               "offset": 2120,
                               "length": 2,
@@ -6563,7 +6577,7 @@
                             },
                             {
                               "name": "Samples per Segment",
-                              "value": 512,
+                              "value": 256,
                               "unit": "samples",
                               "offset": 2121,
                               "length": 1,
@@ -6615,7 +6629,7 @@
                             },
                             {
                               "name": "Header CRC",
-                              "value": 29268,
+                              "value": 57519,
                               "offset": 2124,
                               "length": 2,
                               "children": [
@@ -6780,28 +6794,28 @@
                             },
                             {
                               "name": "Navigation Index",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 2136,
-                              "length": 3,
+                              "length": 4,
                               "children": [
                                 {
                                   "name": "Band Data Sizes",
-                                  "value": 1,
+                                  "value": 2,
                                   "unit": "sizes",
                                   "offset": 2136,
-                                  "length": 1
+                                  "length": 2
                                 },
                                 {
                                   "name": "CRC",
-                                  "value": 61905,
-                                  "offset": 2137,
+                                  "value": 11838,
+                                  "offset": 2138,
                                   "length": 2,
                                   "children": [
                                     {
                                       "name": "Check",
                                       "value": "verified",
-                                      "offset": 2137,
+                                      "offset": 2138,
                                       "length": 2
                                     }
                                   ]
@@ -6810,10 +6824,17 @@
                             },
                             {
                               "name": "Band Data",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
-                              "offset": 2139,
-                              "length": 2
+                              "offset": 2140,
+                              "length": 3
+                            },
+                            {
+                              "name": "Data After Band Data",
+                              "value": 64,
+                              "unit": "bytes",
+                              "offset": 2144,
+                              "length": 64
                             }
                           ]
                         }
@@ -8745,7 +8766,7 @@
                             },
                             {
                               "name": "Segments",
-                              "value": 1,
+                              "value": 2,
                               "unit": "segments",
                               "offset": 2856,
                               "length": 2,
@@ -8754,7 +8775,7 @@
                             },
                             {
                               "name": "Samples per Segment",
-                              "value": 512,
+                              "value": 256,
                               "unit": "samples",
                               "offset": 2857,
                               "length": 1,
@@ -8806,7 +8827,7 @@
                             },
                             {
                               "name": "Header CRC",
-                              "value": 29268,
+                              "value": 57519,
                               "offset": 2860,
                               "length": 2,
                               "children": [
@@ -8971,28 +8992,28 @@
                             },
                             {
                               "name": "Navigation Index",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 2872,
-                              "length": 3,
+                              "length": 4,
                               "children": [
                                 {
                                   "name": "Band Data Sizes",
-                                  "value": 1,
+                                  "value": 2,
                                   "unit": "sizes",
                                   "offset": 2872,
-                                  "length": 1
+                                  "length": 2
                                 },
                                 {
                                   "name": "CRC",
-                                  "value": 61905,
-                                  "offset": 2873,
+                                  "value": 11838,
+                                  "offset": 2874,
                                   "length": 2,
                                   "children": [
                                     {
                                       "name": "Check",
                                       "value": "verified",
-                                      "offset": 2873,
+                                      "offset": 2874,
                                       "length": 2
                                     }
                                   ]
@@ -9001,10 +9022,17 @@
                             },
                             {
                               "name": "Band Data",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
-                              "offset": 2875,
-                              "length": 2
+                              "offset": 2876,
+                              "length": 3
+                            },
+                            {
+                              "name": "Data After Band Data",
+                              "value": 64,
+                              "unit": "bytes",
+                              "offset": 2880,
+                              "length": 64
                             }
                           ]
                         }

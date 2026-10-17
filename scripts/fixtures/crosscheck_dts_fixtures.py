@@ -21,6 +21,7 @@ For every fixture, its manifest's "crosscheck" says what to confirm:
   nominal bitrate the manifest and the golden report give, and decode each without an error (dca_frame
   and dca_block), except the frames the manifest lists as damaged. libdca reads core frames only and
   skips extension substreams, junk and tags a byte at a time.
+- "decode_whole": decode the file as one instead of packet by packet (units that depend on the static fields of the one before).
 - "skip": the checks that are not run on the fixture, each with its reason; every one is printed.
 
 Every fixture is also compared with MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), against its
@@ -154,8 +155,10 @@ def check_decode(path, manifest, problems, work):
     check = manifest["crosscheck"]
     if check.get("decode_note"):
         print(f"{path.name}: ffmpeg decodes the damaged frames: {check['decode_note']}")
-    if path.suffix != ".dts":
-        result = subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", "-i", str(path), "-f", "null", "-"], capture_output=True, text=True)
+    if path.suffix != ".dts" or check.get("decode_whole"):
+        # "decode_whole": the packets depend on one another (static fields carried over), so the file is decoded as one.
+        source = ["-f", "dts"] if path.suffix == ".dts" else []
+        result = subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", *source, "-i", str(path), "-f", "null", "-"], capture_output=True, text=True)
         if result.stderr.strip():
             problems.append(f"ffmpeg reports errors: {result.stderr.strip().splitlines()[0]}")
         return
@@ -299,7 +302,22 @@ MEDIAINFO_READS_OTHERWISE["xll-x-imax-d1"] = dict.fromkeys(
                                          "0xF14000D1 as DTS:X (File_Dts.cpp: case 0x02000850 and 0xF14000D1 set presence_Extended_X alone)")
 MEDIAINFO_READS_OTHERWISE["xll-x-rejected-set"] = dict.fromkeys(
     ["commercial name", "objects in the channel layout", "DTS:X feature"], "FFmpeg's dca_xll.c refuses the channel set (a source resolution beyond its storage width) in parse_sub_headers before it looks for the "
-    "DTS:X word, and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the sets hold (measured with MediaInfo 26.01) and reports DTS:X")
+    "DTS:X word, and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the sets hold (File_Dts.cpp 26.01, XLL() then Extensions2(); the sets are not checked) and reports DTS:X")
+for fixture_name, refusal in (
+    ("xll-x-downmix-type-7", "downmix type 7"),
+    ("xll-x-storage-width-18", "a storage width of 18 bits, which it does not implement"),
+    ("xll-x-no-mask", "a disabled channel mask, which it does not implement"),
+    ("xll-x-segment-samples", "segments of more than 512 samples (parse_common_header; 8.3.1 allows 256 at 48 kHz, and the analyzer reports dts.reserved-value)"),
+    ("xll-x-no-segment-samples", "a segment of no samples (parse_common_header)"),
+):
+    MEDIAINFO_READS_OTHERWISE[fixture_name] = dict.fromkeys(
+        ["commercial name", "objects in the channel layout", "DTS:X feature"], f"FFmpeg's dca_xll.c refuses {refusal} in the common header or the sub-headers before it looks for the DTS:X word, "
+        "and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the header holds (File_Dts.cpp 26.01, XLL() then Extensions2(); SmplInSeg is read with Info_S1 and not checked) and reports DTS:X")
+MEDIAINFO_READS_OTHERWISE["exss-remapping-without-mask"] = {"channel layout": "FFmpeg refuses an asset with speaker remapping sets and no speaker activity mask (dca_exss.c), and the analyzer reports it and gives the "
+    "core's 2/0; MediaInfo takes the channel layout of a stream with an extension substream only from the asset's speaker activity mask (File_Dts.cpp 26.01, Streams_Fill: HD_SpeakerActivityMask != -1, "
+    "set where SpkrMaskEnabled is), which this asset has not, and does not fall back to the core's arrangement (measured with MediaInfo 24.01: no layout)"}
+MEDIAINFO_READS_OTHERWISE["exss-only-static-first-only"] = {"bitrate": "MediaInfo's BitRate_Get(true) adds the substream size HD_size of the last extension substream header it parsed, here a unit without static fields "
+    "of 52 bytes, to the frame duration code it kept from the first (39000 bit/s), where the manifest's first unit has 60 bytes (45000 bit/s) (measured with MediaInfo 24.01)"}
 MEDIAINFO_READS_OTHERWISE["rate-lossless"] = {"bitrate": MEDIAINFO_READS_OTHERWISE["rate-code"]["bitrate"]}
 for amode in range(10, 16):
     MEDIAINFO_READS_OTHERWISE[f"amode-{amode}"] = {"channel layout": "MediaInfo's speaker positions for the arrangements above 9 differ from Table 5-4's (" + MEASURED + "); the analyzer's rest on the table"}

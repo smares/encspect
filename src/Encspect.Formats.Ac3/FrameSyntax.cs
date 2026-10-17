@@ -240,7 +240,8 @@ internal sealed partial class FrameSyntax
         {
             if (_r.Stop == StopReason.None)
             {
-                _r.Stop = _b.Position + 32 > _b.FrameBitCount && _b.FrameBitCount < _frameWords * 16 ? StopReason.DataEnds : StopReason.Overrun;
+                // The file's end cuts a field that fits its frame; one that does not is an overrun whatever the file holds.
+                _r.Stop = _b.FrameBitCount < _frameWords * 16 && _b.RequestedEnd <= (_frameWords * 16) - 18 ? StopReason.DataEnds : StopReason.Overrun;
                 _r.StopBit = _b.Position;
                 if (_r.Stop == StopReason.Overrun && !Counted(part == "an audio block" ? Issue.Overrun : Issue.HeaderOverrun))
                 {

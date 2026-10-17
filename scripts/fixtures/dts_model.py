@@ -313,7 +313,7 @@ def xxch(chsets=((1, 0x40),), core_mask=0x3F, mask_bits=16, crc_chset=False, bad
         bits = Bits()
         bits.put(0, 7)  # header size, filled in below
         bits.put(channels - 1, 3)
-        bits.put(mask >> 6, mask_bits - 6)
+        bits.put(mask >> 6, max(0, mask_bits - 6))
         bits.put(0, 1)  # no embedded downmix coefficients
         for _ in range(channels):
             bits.put(30, 5)
@@ -420,7 +420,10 @@ def asset_descriptor(a, wide, static, mix_enabled=False):
                 mask_bits = max(4, -(-mask.bit_length() // 4) * 4)
                 bits.put(mask_bits // 4 - 1, 2)
                 bits.put(mask, mask_bits)
-            bits.put(0, 3)  # no speaker remapping sets
+            remap = a.get("remap_sets", 0)
+            bits.put(remap, 3)  # speaker remapping sets, which need the mask's width for their layouts
+            for _ in range(remap):
+                bits.put(0, 5)
         else:
             bits.put(a.get("representation", 0), 3)
     # Dynamic metadata (Table 7-6).
@@ -430,7 +433,8 @@ def asset_descriptor(a, wide, static, mix_enabled=False):
     bits.put(1 if "dialnorm" in a else 0, 1)
     if "dialnorm" in a:
         bits.put(a["dialnorm"], 5)
-    if "drc" in a and a.get("embedded_stereo") and static and a.get("one_to_one", True):
+    # The embedded stereo flag is a static field, which a header without static fields leaves as the last one that had it.
+    if "drc" in a and a.get("embedded_stereo") and a.get("one_to_one", True):
         bits.put(a.get("drc_stereo", 0), 8)
     if mix_enabled:
         bits.put(0, 1)  # bMixMetadataPresent
@@ -480,7 +484,7 @@ def asset_descriptor(a, wide, static, mix_enabled=False):
         bits.put(sizes.get("aux", 0) - 1, 14)
         bits.put(0, 8)
         bits.put(0, 1)
-    if a.get("one_to_one", True) and static and mix_enabled:
+    if a.get("one_to_one", True) and mix_enabled:
         bits.put(0, 1)  # bOnetoOneMixingFlag
     bits.put(0, 1)  # bDecodeAssetInSecondaryDecoder
     bits.put(0, 1)  # bDRCMetadataRev2Present
@@ -621,7 +625,8 @@ def xll_frame(size, sets=None, core_rate=48000, core_samples=512, segments_log=N
     first = sets[0]
     total_samples = core_samples * first["rate"] // core_rate // _bands_of(first)
     if samples_log is None:
-        samples_log = min(9, max(1, total_samples.bit_length() - 1))
+        # 8.3.1: at most 256 samples in a segment at 48 kHz or below, 512 above.
+        samples_log = min(8 if first["rate"] <= 48000 else 9, max(1, total_samples.bit_length() - 1))
     if segments_log is None:
         segments_log = max(0, (total_samples >> samples_log).bit_length() - 1)
     head = Bits()

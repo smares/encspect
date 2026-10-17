@@ -1,0 +1,71 @@
+{
+ "description": "An ID3v2 tag with two TSSE frames that name the same encoder, one in capitals, and five stereo core frames.",
+ "length": 2628,
+ "format": "DTS",
+ "frames": [
+  [
+   68,
+   512
+  ],
+  [
+   580,
+   512
+  ],
+  [
+   1092,
+   512
+  ],
+  [
+   1604,
+   512
+  ],
+  [
+   2116,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2560,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Encoder": "dtsenc 1.0"
+ },
+ "findings": [
+  [
+   "id3v2.frame-duplicate",
+   "2 TSSE frames"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "skip": {
+   "libdca": "libdca's tool does not skip tags."
+  }
+ },
+ "regions": [
+  [
+   "ID3v2",
+   0,
+   68
+  ],
+  [
+   "DTS",
+   68,
+   2560
+  ]
+ ]
+}

@@ -15,6 +15,7 @@ internal static class DtsEncoder
     public static Node? Detect(IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string> other)
     {
         Node? encoder = null;
+        string? first = null;
         foreach (EncoderClaim claim in ClaimRoles.Encoders(claims))
         {
             string text = claim.Text.Trim();
@@ -25,11 +26,12 @@ internal static class DtsEncoder
 
             if (encoder is null)
             {
+                first = text;
                 encoder = cover("Encoder", text.Length > MaxClaimedName ? text[..MaxClaimedName] : text, Explain.Encoder);
                 encoder.Add(cover("Confidence", "Low", Explain.Confidence));
                 encoder.Add(cover("Evidence", $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{text}\"", Explain.EvidenceText));
             }
-            else
+            else if (!string.Equals(text, first, StringComparison.OrdinalIgnoreCase))
             {
                 other(claim, text);
             }

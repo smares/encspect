@@ -13,6 +13,7 @@ public sealed partial class Mp4Parser
     private static void RouteTracks(State state)
     {
         bool first = true;
+        state.MdatIndex = [.. state.Mdats.OrderBy(m => m.Start)];
         foreach (Track track in state.Tracks)
         {
             if (track.Handler != "soun")
@@ -87,7 +88,8 @@ public sealed partial class Mp4Parser
         // file's MP4 node, where it may span several mdat boxes.
         long start = ranges[0].Offset;
         long end = ranges[^1].End;
-        Node parent = state.Mdats.FirstOrDefault(m => m.Start <= start && end <= m.End).Node ?? state.File;
+        Node? holder = FindMdat(state, start, end);
+        Node parent = holder is not null && !state.Findings.IsDetached(holder) ? holder : state.File;
         long count = SampleCount(track);
         var samples = new Node($"Track {track.Id?.ToString(CultureInfo.InvariantCulture) ?? "?"} Samples", start, end - start, NodeValue.Integer(count, "samples", "sample"))
         {
@@ -103,7 +105,7 @@ public sealed partial class Mp4Parser
 
         if (protection is { IsEncrypted: true } || (protection is not null && codec is null))
         {
-            RouteEncrypted(state, track, entry, codec, samples, ranges, first, protection.IsEncrypted);
+            RouteEncrypted(state, track, entry, codec, samples, ranges, first, protection.IsEncrypted, isScattered: false);
         }
         else if (codec == "mpeg-audio" && ranges.Count == 1)
         {
@@ -117,10 +119,15 @@ public sealed partial class Mp4Parser
             {
                 // The layout claim is about this track: the codec parser sees it, no other track does.
                 IReadOnlyList<EncoderClaim> layout = codec == "aac" ? AppleEvidence(state, entry) : [];
-                configuration = new CodecConfiguration(data, node) { IsVbr = IsVbr(state, entry, first), Claims = layout };
+                configuration = new CodecConfiguration(data, state.Findings.Resolve(node)) { IsVbr = IsVbr(state, entry, first), Claims = layout };
             }
 
             state.Context.ParsePackets(codec, samples, Packets(state, track), configuration);
+            if (codec == "mpeg-audio" && state.Context.Streams.Count == streams)
+            {
+                // MPEG audio is read only where its samples lie in one stretch; the track is still a stream, described by its sample entry.
+                RouteEncrypted(state, track, entry, codec, samples, ranges, first, isEncrypted: false, isScattered: true);
+            }
         }
 
         if (protection is not null)
@@ -137,8 +144,34 @@ public sealed partial class Mp4Parser
         List<StreamInfo> made = [.. state.Context.Streams.Skip(streams)];
         if (made.Count == 1)
         {
-            state.Context.UpdateStream(made[0], made[0] with { PlaybackGroup = 1 });
+            state.Context.UpdateStream(made[0], WithUnkept(track, made[0]) with { PlaybackGroup = 1 });
         }
+        else if (made.Count > 1)
+        {
+            foreach (StreamInfo stream in made)
+            {
+                state.Context.UpdateStream(stream, WithUnkept(track, stream));
+            }
+        }
+    }
+
+    // The fragment samples past the cap on kept ones were never handed to the codec: their duration and bytes (from the runs' sizes and durations) are
+    // added to the stream's figures.
+    private static StreamInfo WithUnkept(Track track, StreamInfo stream)
+    {
+        if (track.UnkeptDuration == 0 || track.Timescale == 0)
+        {
+            return stream;
+        }
+
+        double extra = track.UnkeptDuration / (double)track.Timescale;
+        double duration = stream.Duration + extra;
+        return stream with
+        {
+            Duration = duration,
+            Samples = stream.Samples + (long)Math.Round(extra * stream.SampleRate),
+            AverageBitrate = stream.AverageBitrate is { } rate && duration > 0 ? ((rate * 1000 * stream.Duration) + (track.UnkeptBytes * 8.0)) / duration / 1000 : stream.AverageBitrate,
+        };
     }
 
     // A protected track tells the reader so: its ciphertext is not read, or the scheme covers samples that are in the clear.
@@ -159,14 +192,14 @@ public sealed partial class Mp4Parser
     // The stream of a track whose samples are encrypted, from the sample entry alone: the codec parser reads the configuration
     // (AAC's AudioSpecificConfig, AC-3's dac3 box) but is handed no packets; a codec without a configuration, or whose parser
     // reports no stream, gets a stream built here from the entry. The container's timing fills what the frames would have given.
-    private static void RouteEncrypted(State state, Track track, SampleEntry entry, string? codec, Node samples, List<ByteRange> ranges, bool first, bool isEncrypted)
+    private static void RouteEncrypted(State state, Track track, SampleEntry entry, string? codec, Node samples, List<ByteRange> ranges, bool first, bool isEncrypted, bool isScattered)
     {
         double seconds = track.MediaDuration is { } units && track.Timescale > 0 && units != uint.MaxValue && units != ulong.MaxValue ? units / (double)track.Timescale : 0;
         int before = state.Context.Streams.Count;
         int nodes = samples.Children.Count;
         if (isEncrypted && codec is not null && entry.DecoderSpecificInfo is { } data && entry.DecoderSpecificInfoNode is { } node)
         {
-            state.Context.ParsePackets(codec, samples, [], new CodecConfiguration(data, node)
+            state.Context.ParsePackets(codec, samples, [], new CodecConfiguration(data, state.Findings.Resolve(node))
             {
                 AreSamplesEncrypted = true,
                 IsVbr = IsVbr(state, entry, first),
@@ -178,12 +211,12 @@ public sealed partial class Mp4Parser
         {
             string name = entry.EffectiveFormat == "mp4a" && entry.ObjectType is { } type ? ObjectTypeName(type) : FormatName(entry.EffectiveFormat) is "other" ? entry.EffectiveFormat : FormatName(entry.EffectiveFormat);
             // The codec parser's node for the stream it read the configuration of, else one of our own.
-            Node stream = samples.Children.Skip(nodes).FirstOrDefault(c => c.Kind == NodeKind.Stream) ?? samples.Add(new Node(name, samples.Offset, samples.Length, NodeValue.Text(isEncrypted ? "frames not read: encrypted" : "frames not read: coding not analyzed"))
+            Node stream = samples.Children.Skip(nodes).FirstOrDefault(c => c.Kind == NodeKind.Stream) ?? samples.Add(new Node(name, samples.Offset, samples.Length, NodeValue.Text(isEncrypted ? "frames not read: encrypted" : isScattered ? "frames not read: samples not in one stretch" : "frames not read: coding not analyzed"))
             {
                 Kind = NodeKind.Stream,
                 Ranges = samples.Ranges,
-                Description = isEncrypted ? Explain.EncryptedStream : Explain.UnanalyzedStream,
-                Topic = Topics.CommonEncryption,
+                Description = isEncrypted ? Explain.EncryptedStream : isScattered ? Explain.ScatteredStream : Explain.UnanalyzedStream,
+                Topic = isScattered ? null : Topics.CommonEncryption,
             });
             state.Context.AddStream(new StreamInfo
             {
@@ -236,7 +269,7 @@ public sealed partial class Mp4Parser
         var claims = new List<EncoderClaim>();
         if (entry.SourceBitDepthNode is not null)
         {
-            claims.Add(new EncoderClaim("Apple AAC encoder (AudioToolbox)", entry.SourceBitDepthNode,
+            claims.Add(new EncoderClaim("Apple AAC encoder (AudioToolbox)", state.Findings.Resolve(entry.SourceBitDepthNode),
                 $"MP4 layout of Apple's AudioToolbox encoder: {stream} and an sbtd box in the sample entry, which records the PCM source of an encode", ClaimRole.Encoder)
             {
                 Confidence = Confidence.Medium,
@@ -246,7 +279,7 @@ public sealed partial class Mp4Parser
 
         if (state.HasPageAlignedMdat)
         {
-            claims.Add(new EncoderClaim("Apple AudioToolbox", entry.Node,
+            claims.Add(new EncoderClaim("Apple AudioToolbox", state.Findings.Resolve(entry.Node),
                 $"MP4 layout of Apple's AudioToolbox file writer: {stream} and a free box that pads the audio data to a 4,096-byte boundary", ClaimRole.Writer)
             {
                 IsLayout = true,
@@ -268,14 +301,52 @@ public sealed partial class Mp4Parser
         return entry.AverageBitrate is { } average ? average == 0 : null;
     }
 
-    private static long SampleCount(Track track) => ((long?)track.Sizes?.Length ?? (track.SampleSize != 0 ? track.SampleCount : 0L)) + track.FragmentSamples.Count;
+    private static long SampleCount(Track track) =>
+        ((long?)track.Sizes?.Length ?? (track.SampleSize != 0 ? track.SampleCount : 0L)) + track.FragmentSamples.Count + track.EmptyFragmentSamples + track.UnkeptSamples;
+
+    // The mdat box that holds all of [start, end), by binary search over the boxes sorted by start; mdat boxes do not overlap, so the one that
+    // starts last at or before start is the only candidate.
+    private static Node? FindMdat(State state, long start, long end)
+    {
+        (long Start, long End, Node Node)[] index = state.MdatIndex;
+        int low = 0;
+        int high = index.Length - 1;
+        int found = -1;
+        while (low <= high)
+        {
+            int middle = low + ((high - low) / 2);
+            if (index[middle].Start <= start)
+            {
+                found = middle;
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle - 1;
+            }
+        }
+
+        return found >= 0 && end <= index[found].End ? index[found].Node : null;
+    }
+
+    // How a walk over a track's sample tables is cut: the bytes of samples placed so far against the budget.
+    private sealed class SampleWalk(long budget)
+    {
+        public long Budget => budget;
+
+        public long Placed { get; set; }
+
+        public bool IsCut { get; set; }
+    }
 
     // Every sample of the track in order, as offset, size and how many samples the entry stands
     // for: the chunks' samples, as far as stsz gives sizes and stsc and stco place them, then the
     // fragments'. With one size for every sample, stsz states a count that no table backs, up to
-    // 2^32 in a few bytes; a chunk's samples past the end of the file are then one entry, so the
-    // work stays bounded by the file's size.
-    private static IEnumerable<(long Offset, long Size, long Count)> Samples(Track track, long fileEnd)
+    // 2^32 in a few bytes; a chunk's samples past the end of the file are then one entry, and the samples
+    // that lie in the file are cut by the walk's budget of bytes, so the work stays bounded by the file's size.
+    // The samples that lie in the file add up to at most the walk's budget of bytes: the walk ends at the first sample that would pass it, since
+    // samples of a valid file do not overlap and chunks that share bytes could otherwise yield billions of samples from a few bytes of tables.
+    private static IEnumerable<(long Offset, long Size, long Count)> Samples(Track track, long fileEnd, SampleWalk walk)
     {
         long sizes = (long?)track.Sizes?.Length ?? (track.SampleSize != 0 ? track.SampleCount : 0L);
         if (track.ChunkOffsets is { } offsets && track.SampleToChunk is { Count: > 0 } runs && sizes > 0)
@@ -294,11 +365,23 @@ public sealed partial class Mp4Parser
                 for (long i = 0; i < inChunk; i++)
                 {
                     long size = track.Sizes is { } table ? table[index] : track.SampleSize;
-                    if (track.Sizes is null && (position < 0 || position > fileEnd - size))
+                    bool isInFile = position >= 0 && position <= fileEnd - size;
+                    if (track.Sizes is null && !isInFile)
                     {
                         yield return (position, size, inChunk - i);
                         index += inChunk - i;
                         break;
+                    }
+
+                    if (isInFile)
+                    {
+                        if (walk.Placed + size > walk.Budget)
+                        {
+                            walk.IsCut = true;
+                            yield break;
+                        }
+
+                        walk.Placed += size;
                     }
 
                     yield return (position, size, 1);
@@ -329,12 +412,17 @@ public sealed partial class Mp4Parser
         (long Offset, long Size)? firstOutside = null;
         (long Offset, long Size)? firstOutsideMdat = null;
         long index = 0;
-        foreach ((long Offset, long Size, long Count) entry in Samples(track, state.Reader.End))
+        long accepted = 0;
+        track.SampleBudget = state.SampleBytesLeft;
+        var walk = new SampleWalk(track.SampleBudget);
+        foreach ((long Offset, long Size, long Count) entry in Samples(track, state.Reader.End, walk))
         {
             if (index++ % 4096 == 0)
             {
                 state.Context.CancellationToken.ThrowIfCancellationRequested();
             }
+
+            accepted += entry.Count;
 
             (long Offset, long Size) sample = (entry.Offset, entry.Size);
             if (!InFile(state, sample))
@@ -350,7 +438,7 @@ public sealed partial class Mp4Parser
                 continue;
             }
 
-            if (!state.Mdats.Any(m => m.Start <= sample.Offset && sample.Offset + sample.Size <= m.End))
+            if (FindMdat(state, sample.Offset, sample.Offset + sample.Size) is null)
             {
                 outsideMdat++;
                 firstOutsideMdat ??= sample;
@@ -366,7 +454,15 @@ public sealed partial class Mp4Parser
             }
         }
 
+        state.SampleBytesLeft -= walk.Placed;
+        empty += track.EmptyFragmentSamples;
         Node table = track.ChunkOffsetNode ?? track.Box;
+        if (walk.IsCut)
+        {
+            state.Findings.AddNow(Severity.Warning, "mp4.samples-overlap",
+                $"The samples of track {track.Id} add up to more bytes than the file has left for them, so some lie over others (the chunks share bytes); the {Samples(accepted)} before the first one past that are analyzed, the rest are not.", table);
+        }
+
         if (firstOutside is { } cut)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-outside-file",
@@ -406,7 +502,7 @@ public sealed partial class Mp4Parser
     private static IEnumerable<MappedBytes> Packets(State state, Track track)
     {
         long index = 0;
-        foreach ((long Offset, long Size, long _) entry in Samples(track, state.Reader.End))
+        foreach ((long Offset, long Size, long _) entry in Samples(track, state.Reader.End, new SampleWalk(track.SampleBudget)))
         {
             (long Offset, long Size) sample = (entry.Offset, entry.Size);
             if (index++ % 4096 == 0)
@@ -619,10 +715,13 @@ public sealed partial class Mp4Parser
         }
 
         if (track.MediaDuration is { } duration && track.Timescale > 0 && state.MovieTimescale > 0
-            && edits.FirstOrDefault(e => e.MediaTime >= 0 && e.MediaTime + (e.SegmentDuration * (double)track.Timescale / state.MovieTimescale) > duration + 1) is { } beyond)
+            && edits.FindIndex(e => e.MediaTime >= 0 && e.MediaTime + (e.SegmentDuration * (double)track.Timescale / state.MovieTimescale) > duration + 1) is var at and >= 0)
         {
+            Edit beyond = edits[at];
+            // The edit's node where it is listed, else the node that counts the rest.
+            Node shown = at < MaxListedEntries ? elst.Children.Where(c => c.Name == "Edit").ElementAt(at) : elst.Children.FirstOrDefault(c => c.Name == "More Entries") ?? elst;
             state.Findings.AddNow(Severity.Warning, "mp4.edit-beyond-media",
-                $"An edit of {label} plays media up to {(beyond.MediaTime + (beyond.SegmentDuration * (double)track.Timescale / state.MovieTimescale)).ToString("F0", CultureInfo.InvariantCulture)} units, past the media's {duration}.", beyond.Node);
+                $"An edit of {label} plays media up to {(beyond.MediaTime + (beyond.SegmentDuration * (double)track.Timescale / state.MovieTimescale)).ToString("F0", CultureInfo.InvariantCulture)} units, past the media's {duration}.", shown);
         }
     }
 }

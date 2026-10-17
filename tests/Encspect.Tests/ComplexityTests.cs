@@ -302,6 +302,83 @@ public class ComplexityTests
         TimedDts(data);
     }
 
+    // Short chains of core frames, each followed by 4 KiB of the extension substream headers above: each break in the chain starts a search
+    // for the next one, and every search once had a CRC allowance of its own (1 MiB each, 190 times the size of the data in all). One
+    // allowance for the whole data keeps the cost per byte as that of the headers alone: the same amount of data of each pattern is
+    // timed in turn, and the chains must cost no more than a small multiple of the headers (about 10 times before, 1.5 now).
+    [Fact]
+    public void ShortChainsFollowedByExtensionSubstreamHeadersThatFailTheirCrc()
+    {
+        byte[] header = (((new System.Numerics.BigInteger(0x64582025) << 43) | (System.Numerics.BigInteger.One << 32) | (4095L << 20) | 0xFFFFF) << 5).ToByteArray(isUnsigned: true, isBigEndian: true);
+        byte[] template = new byte[16];
+        header.CopyTo(template, 0);
+        byte[] frame = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "core-16be.dts"))[..512];
+        const int size = 16 << 20;
+        const int group = (3 * 512) + 4096;
+        var flood = new byte[size];
+        var groups = new byte[size];
+        for (int at = 0; at + 16 <= size; at += 16)
+        {
+            template.CopyTo(flood, at);
+        }
+
+        for (int at = 0; at + group <= size; at += group)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                frame.CopyTo(groups, at + (i * 512));
+            }
+
+            for (int junk = at + (3 * 512); junk < at + group; junk += 16)
+            {
+                template.CopyTo(groups, junk);
+            }
+        }
+
+        TimeSpan floodTime = TimedDtsAnalysis(flood);
+        TimeSpan groupsTime = TimedDtsAnalysis(groups);
+        Assert.True(groupsTime < (3 * floodTime) + TimeSpan.FromSeconds(1), $"The chains took {groupsTime.TotalSeconds:F1} s, the headers alone {floodTime.TotalSeconds:F1} s");
+    }
+
+    private static TimeSpan TimedDtsAnalysis(byte[] data)
+    {
+        var watch = Stopwatch.StartNew();
+        Report report = new Analyzer([new ForcedDts()]).Analyze("flood.dts", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        return watch.Elapsed;
+    }
+
+    // Core frames whose arrangement and LFE flag change at every frame still chain (they share their form and sampling frequency), and each
+    // change once made a stream, a finding and the nodes of both: 24 s for 2 MiB, 548 s for 8 MiB. The streams are limited, the changes
+    // counted in one finding, and the time is linear.
+    [Fact]
+    public void ACoreConfigurationThatChangesAtEveryFrame()
+    {
+        byte[] frame = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "core-16be.dts"))[..512];
+        var data = new byte[8 << 20];
+        for (int i = 0; i * 512 < data.Length; i++)
+        {
+            frame.CopyTo(data, i * 512);
+            byte[] header = frame[..12];
+            SetBits(header, 60, 6, i % 64);
+            SetBits(header, 85, 2, (i / 64) % 2);
+            header.CopyTo(data, i * 512);
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = new Analyzer([new ForcedDts()]).Analyze("changes.dts", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.InRange(report.Streams.Count, 2, 64);
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
+        Assert.Equal((data.Length / 512) - 1, changed.Count);
+        Assert.Contains("limited to 64", changed.Message, StringComparison.Ordinal);
+        Assert.Equal(Severity.Warning, changed.Severity);
+    }
+
     private static void SetBits(byte[] data, int start, int width, int value)
     {
         for (int i = 0; i < width; i++)
@@ -342,6 +419,42 @@ public class ComplexityTests
         public SniffResult Sniff(SniffContext context) => new(100);
 
         public void Parse(ParseContext context) => _parser.Parse(context);
+    }
+
+    // 90,000 empty mdat boxes (within the box budget) and then 400,000 samples of one byte in the last one: finding the mdat box that holds a sample was a scan over
+    // all of them for each sample (5.5 s for 50,000 boxes and 100,000 samples, so about 40 s here, and more on a slower machine).
+    [Fact]
+    public void ManyMdatBoxesAndManySamples()
+    {
+        const int boxes = 90_000;
+        const int samples = 400_000;
+        byte[] empty = Mp4Builder.Box("mdat");
+        byte[] head = Mp4Builder.FileWithMoov(_ => Mp4Builder.Trak(1, Mp4Builder.AlacEntry(), Mp4Builder.Stts(samples, 1024), Mp4Builder.Stsc(samples),
+            Mp4Builder.ConstantSizes(1, samples), Mp4Builder.ChunkOffsets([0])), []);
+        long payload = head.Length - 8 + (boxes * empty.Length) + 8;
+        byte[] data = Mp4Builder.FileWithMoov(_ => Mp4Builder.Trak(1, Mp4Builder.AlacEntry(), Mp4Builder.Stts(samples, 1024), Mp4Builder.Stsc(samples),
+            Mp4Builder.ConstantSizes(1, samples), Mp4Builder.ChunkOffsets([payload])), []);
+        data = Mp4Builder.Join(data[..^8], Mp4Builder.Join([.. Enumerable.Repeat(empty, boxes)]), Mp4Builder.Box("mdat", new byte[samples]));
+
+        Report report = Timed(data);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "mp4.sample-outside-mdat" or "mp4.sample-outside-file");
+        Assert.Contains(report.Findings, f => f.Code == "mp4.codec-not-analyzed");
+    }
+
+    // The overlapping chunks of MemoryTests, bound on time: 20,000 chunks of 10,000 samples of 6 bytes from 60 KB of media data were 200 million
+    // access units for the AAC parser (minutes), where the budget of bytes stops the walk at the 25,000 the file has room for.
+    [Fact]
+    public void OverlappingChunks()
+    {
+        byte[] unit = Mp4Builder.AacUnit()[..6];
+        byte[] data = Mp4Builder.FileWithMoov(at => Mp4Builder.Trak(1, Mp4Builder.AacEntry(), Mp4Builder.Stts(200_000_000, 1024), Mp4Builder.Stsc(10_000),
+            Mp4Builder.ConstantSizes(unit.Length, 200_000_000), Mp4Builder.ChunkOffsets(Enumerable.Repeat(at, 20_000))), [.. Enumerable.Repeat(unit, 10_000).SelectMany(u => u)]);
+
+        Report report = Timed(data);
+
+        Assert.Contains(report.Findings, f => f.Code == "mp4.samples-overlap");
+        Assert.True(Assert.Single(report.Streams).Samples <= 1024L * (data.Length / unit.Length), "More access units than the file has bytes for.");
     }
 
     private static Report Timed(byte[] data)

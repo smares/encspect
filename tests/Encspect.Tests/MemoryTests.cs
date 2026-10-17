@@ -1,4 +1,5 @@
 using System.Runtime;
+using System.Text;
 using Encspect.Core;
 using Encspect.Formats.Aac;
 using Encspect.Formats.WavPack;
@@ -57,6 +58,131 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(kept < samples * 110L, $"The report keeps {kept / samples} bytes per sample.");
         Assert.True(peak < samples * 180L, $"The live heap grew by {peak / samples} bytes per sample.");
         GC.KeepAlive(report);
+    }
+
+    // Chunks that start at the same bytes, with a constant sample size that no table backs: 4,000 chunks of 10,000 samples of 100 bytes
+    // from 60 KB of media data were 40 million access units for the codec (2.97 GB of heap for a quarter of that). Samples of a valid file
+    // do not overlap, so the walk over the chunks stops where the samples add up to more bytes than the file holds.
+    [Fact]
+    public void OverlappingChunksOfConstantSizedSamplesStayBounded()
+    {
+        const int chunks = 4_000;
+        const int perChunk = 10_000;
+        byte[] unit = Mp4Builder.AacUnit();
+        byte[] data = Mp4Builder.FileWithMoov(at => Mp4Builder.Trak(1, Mp4Builder.AacEntry(), Mp4Builder.Stts((long)chunks * perChunk, 1024), Mp4Builder.Stsc(perChunk),
+            Mp4Builder.ConstantSizes(unit.Length, (long)chunks * perChunk), Mp4Builder.ChunkOffsets(Enumerable.Repeat(at, chunks))), [.. Enumerable.Repeat(unit, 600).SelectMany(u => u)]);
+
+        (Report report, long kept, long peak) = Measure("overlap.m4a", data);
+
+        output.WriteLine($"{data.Length / 1000} KB: {kept / 1000} KB kept and {peak / 1000} KB peak");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Contains(report.Findings, f => f.Code == "mp4.samples-overlap");
+        Assert.True(Assert.Single(report.Streams).Samples <= 1024L * (data.Length / unit.Length), "More access units than the file has bytes for.");
+        Assert.True(peak < 20_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
+    }
+
+    // A hundred tracks whose track fragments each declare 4 billion samples in a run that states no sizes, over a media data box of 1 MB: with a
+    // default size of 0 the samples are counted and none is kept (4 million 16-byte records per track, 6.8 GB for the file); with a default size of 1
+    // the bytes they place draw on one budget for the file, which its length bounds, so the records are no more than the file has bytes for
+    // (16 MB), where each track kept a million of them (1.6 GB).
+    [Theory]
+    [InlineData(0u)]
+    [InlineData(1u)]
+    public void HugeRunsOfManyTracksStayBounded(uint defaultSize)
+    {
+        const int tracks = 100;
+        byte[] Trex(int id) => Mp4Builder.FullBox("trex", Mp4Builder.U32(id), Mp4Builder.U32(1), Mp4Builder.U32(1024), Mp4Builder.U32(defaultSize), Mp4Builder.U32(0));
+        byte[] Traf(int id, long baseOffset) => Mp4Builder.Box("traf", Mp4Builder.Box("tfhd", [0, 0, 0, 1], Mp4Builder.U32(id), Mp4Builder.U32(0), Mp4Builder.U32(baseOffset)),
+            Mp4Builder.FullBox("trun", Mp4Builder.U32(0xFFFFFFFF)));
+        byte[] Empty(string type) => Mp4Builder.FullBox(type, Mp4Builder.U32(0));
+        byte[] moov = Mp4Builder.Box("moov", Mp4Builder.Mvhd(),
+            Mp4Builder.Join([.. Enumerable.Range(1, tracks).Select(i => Mp4Builder.Trak(i, Mp4Builder.AlacEntry(), Empty("stts"), Empty("stsc"), Mp4Builder.FullBox("stsz", new byte[8]), Empty("stco")))]),
+            Mp4Builder.Box("mvex", [.. Enumerable.Range(1, tracks).Select(Trex)]));
+        byte[] Moof(long baseOffset) => Mp4Builder.Box("moof", [Mp4Builder.FullBox("mfhd", Mp4Builder.U32(1)), .. Enumerable.Range(1, tracks).Select(i => Traf(i, baseOffset))]);
+        long payload = Mp4Builder.Ftyp().Length + moov.Length + Moof(0).Length + 8;
+        byte[] data = Mp4Builder.Join(Mp4Builder.Ftyp(), moov, Moof(payload), Mp4Builder.Box("mdat", new byte[1_000_000]));
+
+        (Report report, long kept, long peak) = Measure("runs.mp4", data);
+
+        output.WriteLine($"{data.Length / 1000} KB: {kept / 1000} KB kept and {peak / 1000} KB peak");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Contains(report.Findings, f => f.Code == (defaultSize == 0 ? "mp4.empty-samples" : "mp4.samples-overlap"));
+        Assert.True(peak < 40_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
+    }
+
+    // The nodes of a tree are bounded: a million empty boxes (8 MB) cost a node with two fields each, an edit list of two million empty edits (24 MB)
+    // a node with three fields for every one it did not list (1.87 GB), a chan box of a million channel descriptions the same with 20 bytes each, and
+    // a movie fragment of 5,000 track fragments with a run of 1,000 samples each (20 MB) a node with fields for each of 1,000 samples in every run
+    // (2.36 GB). Past the budget the boxes are read into compact records and make no nodes.
+    [Fact]
+    public void BoxesEditsAndChannelDescriptionsPastTheirLimitsStayBounded()
+    {
+        byte[] boxes = Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd()), Mp4Builder.Join([.. Enumerable.Repeat(Mp4Builder.Box("free"), 1_000_000)]));
+        Bounded("boxes.m4a", boxes, 120_000_000, "mp4.node-limit");
+
+        byte[] edit = Mp4Builder.Join(Mp4Builder.U32(0), Mp4Builder.U32(0xFFFFFFFF), Mp4Builder.U32(0x10000));
+        byte[] edits = Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd(),
+            Mp4Builder.Box("trak", Mp4Builder.Box("edts", Mp4Builder.FullBox("elst", Mp4Builder.U32(2_000_000), Mp4Builder.Join([.. Enumerable.Repeat(edit, 2_000_000)]))))));
+        Bounded("edits.m4a", edits, 150_000_000, "mp4.none", expectFinding: false);
+
+        byte[] description = Mp4Builder.Join(Mp4Builder.U32(1), Mp4Builder.U32(0), new byte[12]);
+        byte[] chan = Mp4Builder.FullBox("chan", Mp4Builder.U32(0), Mp4Builder.U32(0), Mp4Builder.U32(1_000_000), Mp4Builder.Join([.. Enumerable.Repeat(description, 1_000_000)]));
+        byte[] channels = Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd(),
+            Mp4Builder.Trak(1, Mp4Builder.AlacEntry(chan), Mp4Builder.Stts(0, 0), Mp4Builder.Stsc(1), Mp4Builder.ConstantSizes(0, 0), Mp4Builder.ChunkOffsets([]))));
+        Bounded("channels.m4a", channels, 20_000_000, "mp4.none", expectFinding: false);
+
+        byte[] sizes = Mp4Builder.Join([.. Enumerable.Range(0, 1000).Select(_ => Mp4Builder.U32(10))]);
+        byte[] Traf(int id) => Mp4Builder.Box("traf", Mp4Builder.Box("tfhd", [0, 2, 0, 0], Mp4Builder.U32(id)), Mp4Builder.Box("trun", [0, 0, 2, 0], Mp4Builder.U32(1000), sizes));
+        byte[] runs = Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd()), Mp4Builder.Box("moof", [Mp4Builder.FullBox("mfhd", Mp4Builder.U32(1)), .. Enumerable.Range(1, 5000).Select(Traf)]));
+        Bounded("runs.mp4", runs, 120_000_000, "mp4.node-limit");
+    }
+
+    // A valid fragmented file with more fragments than the node budget holds (20,000 of one AAC access unit each, as ffmpeg's frag_every_frame
+    // writes them, 5 MB) is read in full: the boxes past the budget are read into records and make no nodes, so the stream has all its samples and the
+    // checks of their boxes do not report boxes missing that the tree does not hold.
+    [Fact]
+    public void ValidFragmentsPastTheNodeBudgetAreReadInFull()
+    {
+        const int fragments = 20_000;
+        byte[] unit = Mp4Builder.AacUnit();
+        byte[] moov = Mp4Builder.Box("moov", Mp4Builder.Mvhd(), Mp4Builder.Trak(1, Mp4Builder.AacEntry(), Mp4Builder.EmptyTables()),
+            Mp4Builder.Box("mvex", Mp4Builder.FullBox("trex", Mp4Builder.U32(1), Mp4Builder.U32(1), Mp4Builder.U32(1024), Mp4Builder.U32(unit.Length), Mp4Builder.U32(0))));
+        byte[] Moof(int sequence, long dataOffset) => Mp4Builder.Box("moof", Mp4Builder.FullBox("mfhd", Mp4Builder.U32(sequence)),
+            Mp4Builder.Box("traf", Mp4Builder.Box("tfhd", [0, 2, 0, 0], Mp4Builder.U32(1)), Mp4Builder.FullBox("tfdt", Mp4Builder.U32(sequence * 1024L)),
+                Mp4Builder.Box("trun", [0, 0, 2, 1], Mp4Builder.U32(1), Mp4Builder.U32(dataOffset), Mp4Builder.U32(unit.Length))));
+        long moofLength = Moof(0, 0).Length;
+        byte[] data = Mp4Builder.Join(Mp4Builder.Ftyp(), moov, Mp4Builder.Join([.. Enumerable.Range(0, fragments).Select(i => Mp4Builder.Join(Moof(i + 1, moofLength + 8), Mp4Builder.Box("mdat", unit)))]));
+
+        Report report = Analyzer.CreateDefault().Analyze("fragments.mp4", new MemoryStream(data));
+
+        Assert.Contains(report.Findings, f => f.Code == "mp4.node-limit");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "mp4.sample-outside-mdat" or "mp4.sample-outside-file" || f.Code.StartsWith("mp4.missing-", StringComparison.Ordinal));
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(fragments * 1024L, stream.Samples);
+        Assert.Equal(fragments * 1024 / 44100.0, stream.Duration, 3);
+    }
+
+    // The evidence that samples are encrypted past the node budget counts: a track whose tenc box says that nothing is protected, 110,000 free boxes (more than the 100,000 boxes an earlier limit allowed)
+    // (more nodes than the budget holds) and then a movie fragment with a senc box. Left unread, the box left the ciphertext to the AAC parser.
+    [Fact]
+    public void ProtectionEvidencePastTheNodeBudgetCounts()
+    {
+        byte[] moov = Mp4Builder.Box("moov", Mp4Builder.Mvhd(), Mp4Builder.Trak(1, Mp4Builder.AacEntry("enca", Mp4Builder.ClearSinf()), Mp4Builder.EmptyTables()),
+            Mp4Builder.Box("mvex", Mp4Builder.FullBox("trex", Mp4Builder.U32(1), Mp4Builder.U32(1), Mp4Builder.U32(1024), Mp4Builder.U32(100), Mp4Builder.U32(0))));
+        byte[] Moof(long dataOffset) => Mp4Builder.Box("moof", Mp4Builder.FullBox("mfhd", Mp4Builder.U32(1)),
+            Mp4Builder.Box("traf", Mp4Builder.Box("tfhd", [0, 2, 0, 0], Mp4Builder.U32(1)), Mp4Builder.FullBox("senc", Mp4Builder.U32(1), new byte[8]),
+                Mp4Builder.Box("trun", [0, 0, 2, 1], Mp4Builder.U32(1), Mp4Builder.U32(dataOffset), Mp4Builder.U32(100))));
+        byte[] data = Mp4Builder.Join(Mp4Builder.Ftyp(), moov, Mp4Builder.Join([.. Enumerable.Repeat(Mp4Builder.Box("free"), 110_000)]), Moof(Moof(0).Length + 8), Mp4Builder.Box("mdat", new byte[100]));
+
+        Report report = Analyzer.CreateDefault().Analyze("evidence.m4a", new MemoryStream(data));
+
+        Assert.Contains(report.Findings, f => f.Code == "mp4.node-limit");
+        Assert.Contains(report.Findings, f => f.Code == "mp4.samples-encrypted");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "mp4.protected-samples-clear");
+        Assert.True(Assert.Single(report.Streams).Protection is { IsEncrypted: true });
     }
 
     // An ADTS stream keeps a record per frame and, per raw data block, what its nodes are rebuilt
@@ -203,6 +329,30 @@ public class MemoryTests(ITestOutputHelper output)
         for (int at = 0; at < data.Length; at += unit)
         {
             source.AsSpan(0, unit).CopyTo(data.AsSpan(at));
+        }
+
+        (Report report, long kept, long peak) = Measure("units.dts", data, source);
+
+        Assert.Equal(units * 512L, Assert.Single(report.Streams).Samples);
+        output.WriteLine($"{kept / units} bytes kept and {peak / units} bytes peak per unit");
+        Assert.True(kept < units * DtsSubstreamKeptBound, $"The report keeps {kept / units} bytes per unit.");
+        Assert.True(peak < units * DtsSubstreamPeakBound, $"The live heap grew by {peak / units} bytes per unit.");
+        GC.KeepAlive(report);
+    }
+
+    // Units whose extension substream header omits the static fields keep a copy of the ones in force (7.5.2) in their record.
+    [Fact]
+    public void ManyDtsSubstreamsWithoutStaticFieldsStayCompact()
+    {
+        const int units = 30_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "exss-static-first-only.dts"));
+        const int first = 704;
+        const int later = 696;
+        byte[] data = new byte[first + (later * (units - 1))];
+        source.AsSpan(0, first).CopyTo(data);
+        for (int at = first; at < data.Length; at += later)
+        {
+            source.AsSpan(first, later).CopyTo(data.AsSpan(at));
         }
 
         (Report report, long kept, long peak) = Measure("units.dts", data, source);
@@ -590,9 +740,9 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // An SV8 audio packet of 4^7 frames in 4 bytes declares about 428 s: the per-second figures are
-    // kept only for seconds a packet starts in, so 200,000 such packets cost per packet, not per
-    // second they declare.
+    // An SV8 audio packet of 4^4 frames in 35 bytes (a bit for each frame at least, which libmpcdec
+    // reads) declares about 6.7 s: the per-second figures are kept only for seconds a packet starts
+    // in, so 200,000 such packets cost per packet, not per second they declare.
     [Fact]
     public void LongEmptySv8PacketsStayCompact()
     {
@@ -604,6 +754,38 @@ public class MemoryTests(ITestOutputHelper output)
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * MusepackKeptBound, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * MusepackPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // Every kind of packet past the detailed ones joins a run, whatever its key: the stream header,
+    // ReplayGain, encoder info, seek table offset and seek table packets repeated cost about nothing
+    // each too, and the findings they would add are counted once. The bound is the growth from 0.5 to 1.5
+    // million packets, as in UnknownSv8PacketsStayCompact.
+    [Theory]
+    [InlineData("RG", "01000000000000000000")]
+    [InlineData("RG", "")]
+    [InlineData("RG", "02")]
+    [InlineData("EI", "50010000")]
+    [InlineData("SO", "00")]
+    [InlineData("ST", "010000")]
+    [InlineData("SH", "")]
+    public void RepeatedSv8StreamPacketsStayCompact(string key, string payloadHex)
+    {
+        const int fewer = 500_000;
+        const int packets = 1_500_000;
+        byte[] payload = Convert.FromHexString(payloadHex);
+        byte[] warmUp = Sv8RepeatedPackets(5000, Encoding.ASCII.GetBytes(key), payload);
+
+        (_, long fewerKept, long fewerPeak, string fewerWhere) = MeasureExcess("repeated.mpc", Sv8RepeatedPackets(fewer, Encoding.ASCII.GetBytes(key), payload), warmUp);
+        (Report report, long kept, long peak, string where) = MeasureExcess("repeated.mpc", Sv8RepeatedPackets(packets, Encoding.ASCII.GetBytes(key), payload), warmUp);
+
+        Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
+        Assert.True(report.Findings.Count < 40, $"{report.Findings.Count} findings.");
+        double keptPerPacket = (kept - fewerKept) / (double)(packets - fewer);
+        double peakPerPacket = (peak - fewerPeak) / (double)(packets - fewer);
+        output.WriteLine($"{key} {payloadHex}: {Hundredths(keptPerPacket)} kept and {Hundredths(peakPerPacket)} held per further packet; {fewerWhere} {where}");
+        Assert.True(keptPerPacket < UndetailedPacketBound, $"The report keeps {keptPerPacket:F2} bytes per further {key} packet.");
+        Assert.True(peakPerPacket < UndetailedPacketBound, $"The analysis held {peakPerPacket:F2} more bytes per further {key} packet than it starts and ends with. {RuntimeSettings()}");
         GC.KeepAlive(report);
     }
 
@@ -1345,9 +1527,14 @@ public class MemoryTests(ITestOutputHelper output)
     // An SV8 stream (SV8 specification): a stream header with a sample count of 0, 44.1 kHz, 32
     // bands, stereo and 4^7 frames per audio packet and a valid CRC, ReplayGain version 1, then
     // packets of the key, audio packets with one byte, others empty, and the stream end.
-    private static byte[] Sv8EmptyPackets(int packets, ReadOnlySpan<byte> key)
+    private static byte[] Sv8EmptyPackets(int packets, ReadOnlySpan<byte> key) =>
+        Sv8RepeatedPackets(packets, key, key[0] == 'A' ? new byte[32] : []);
+
+    // The same stream with packets of the key and the payload, which the size field counts with itself
+    // and the key (the specification's sizes up to 127 here).
+    private static byte[] Sv8RepeatedPackets(int packets, ReadOnlySpan<byte> key, byte[] payload)
     {
-        byte[] body = [8, 0, 0, 0x1F, 0x1F];
+        byte[] body = [8, 0, 0, 0x1F, 0x1C];
         uint crc = 0xFFFFFFFF;
         foreach (byte b in body)
         {
@@ -1364,7 +1551,7 @@ public class MemoryTests(ITestOutputHelper output)
         // Filled in place: a list that doubles up to 16 MB and is copied out leaves tens of MB of
         // dead large arrays in the heap for the analysis that follows.
         byte[] tail = "SE\x03"u8.ToArray();
-        int packetLength = key[0] == 'A' ? 4 : 3;
+        int packetLength = 3 + payload.Length;
         byte[] data = new byte[4 + sh.Length + rg.Length + (packets * packetLength) + tail.Length];
         "MPCK"u8.CopyTo(data);
         sh.CopyTo(data, 4);
@@ -1374,7 +1561,8 @@ public class MemoryTests(ITestOutputHelper output)
         {
             data[at] = key[0];
             data[at + 1] = key[1];
-            data[at + 2] = key[0] == 'A' ? (byte)4 : (byte)3;
+            data[at + 2] = (byte)packetLength;
+            payload.CopyTo(data, at + 3);
         }
 
         tail.CopyTo(data, at);

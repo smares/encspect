@@ -193,6 +193,32 @@ def build(api):
                  fields={"DTS/Statistics/HasDtsX": "true" if word == 0x02000850 else "false", "DTS/Statistics/HasDtsXImax": "true" if word in (0xF14000D0, 0xF14000D1) else "false"},
                  crosscheck=cc_lossless(cc))
 
+    # FFmpeg's dca_xll.c gives up on a frame in the sub-headers before it looks for the word, for what it does not implement as for what is invalid;
+    # the analyzer reads no word after the same fields, so the stream keeps the profile of the lossless extension alone.
+    x = dict(x_sync=0x02000850)
+    nox = {"DTS/Statistics/HasDtsX": "false"}
+    lossless("xll-x-interpolated", "Four units whose lossless channel set states an interpolation factor of 2 at 96 kHz, and the DTS:X word after the band data, which is not looked for.",
+             dict(channels=2, mask=0x02, max_rate=96000), (STEREO, 96000, 4 * 1024), sets=[m.xll_set(2, rate=96000, interp=1)], xll=x, size=96, fields=nox,
+             crosscheck=undecodable(cc, "XLL sampling frequency modifier is not implemented", "ffmpeg's decoder does not implement the sampling frequency modifier, and stops before the DTS:X word (dca_xll.c: 'XLL sampling frequency modifier')",
+                                  ffprobe_rate=48000, skip={"ffprobe_rate": "ffmpeg takes the rate from the core until its decoder has decoded the lossless extension, which it refuses here"}))
+    lossless("xll-x-downmix-type-7", "Four units whose primary lossless channel set states downmix type 7, which Table 8-8 does not use, and the DTS:X word after the band data, which is not looked for.",
+             dict(channels=2, mask=0x02), (STEREO, 48000), sets=[m.xll_set(2, dmix=dict(type=7, embedded=False))], xll=x, fields=nox, findings=[("dts.reserved-value", "nLLDownmixType 7 is unused")],
+             crosscheck=undecodable(cc, "Invalid XLL primary channel set downmix type", "ffmpeg's decoder refuses downmix type 7 before it looks for the DTS:X word (dca_xll.c: 'Invalid XLL primary channel set downmix type')"))
+    lossless("xll-x-storage-width-18", "Four units whose lossless channel set stores its samples in 18 bits, and the DTS:X word after the band data, which is not looked for.",
+             dict(channels=2, mask=0x02, bit_resolution=18), (STEREO, 48000), sets=[m.xll_set(2, bit_res=18, storage=18)], xll=x, fields={**nox, **stats(2, 1, 48000, 18, 18)},
+             crosscheck=undecodable(cc, "18-bit XLL storage resolution is not implemented", "ffmpeg's decoder implements storage widths of 16, 20 and 24 bits only, and stops before the DTS:X word (dca_xll.c: '18-bit XLL storage resolution')"))
+    lossless("xll-x-no-mask", "Four units whose lossless channel set gives the position of each channel in polar coordinates, not a channel mask, and the DTS:X word after the band data, which is not looked for.",
+             dict(channels=2, mask=0x02), (STEREO, 48000), sets=[m.xll_set(2, polar=True)], xll=x, fields=nox,
+             crosscheck=undecodable(cc, "Disabled XLL channel mask is not implemented", "ffmpeg's decoder does not implement polar speaker positions, and stops before the DTS:X word (dca_xll.c: 'Disabled XLL channel mask')"))
+
+    # parse_common_header refuses a segment of more than 512 samples and one of none, before it reads a channel set.
+    lossless("xll-x-segment-samples", "Four units whose lossless common header states segments of 1,024 samples, and the DTS:X word after the band data, which is not looked for.",
+             dict(channels=2, mask=0x02), (STEREO, 48000), xll=dict(x_sync=0x02000850, segments_log=0, samples_log=10), fields=nox, findings=[("dts.reserved-value", "a segment of 1024 samples is more than the 256 that 8.3.1 allows")],
+             crosscheck=undecodable(cc, "Too many samples per XLL segment", "ffmpeg's decoder refuses segments of more than 512 samples before the DTS:X word (dca_xll.c: 'Too many samples per XLL segment')"))
+    lossless("xll-x-no-segment-samples", "Four units whose lossless common header states segments of 1 sample (log2 0), and the DTS:X word after the band data, which is not looked for.",
+             dict(channels=2, mask=0x02), (STEREO, 48000), xll=dict(x_sync=0x02000850, segments_log=2, samples_log=0), fields=nox,
+             crosscheck=undecodable(cc, "Too few samples per XLL segment", "ffmpeg's decoder refuses a segment of no samples before the DTS:X word (dca_xll.c: 'Too few samples per XLL segment')"))
+
 
 def cc_hd(cc, **extra):
     """The crosscheck of a .dtshd file with a lossless stream: no bit rate in ffprobe, and libdca reads raw DTS only."""

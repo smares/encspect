@@ -1,0 +1,57 @@
+{
+ "length": 14269,
+ "version": 8,
+ "packets": [
+  [
+   4,
+   12,
+   "SH"
+  ],
+  [
+   16,
+   12,
+   "RG"
+  ],
+  [
+   28,
+   14238,
+   "AP"
+  ],
+  [
+   14266,
+   3,
+   "SE"
+  ]
+ ],
+ "header": {
+  "Sample Count": "66150 samples",
+  "Beginning Silence": "0 samples"
+ },
+ "frames": 64,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV8",
+   "sample_rate": 0,
+   "channels": 0,
+   "samples": 0,
+   "average_bitrate": null,
+   "duration": 0
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV8",
+   "offset": 0,
+   "length": 14269
+  }
+ ],
+ "findings": [
+  {
+   "code": "musepack.packet-fields-truncated",
+   "contains": "SH packet"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

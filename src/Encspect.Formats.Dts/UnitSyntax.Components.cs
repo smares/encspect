@@ -393,6 +393,12 @@ internal sealed partial class UnitSyntax
         _tree?.Field("Segments", _pos - 4, _pos, NodeValue.Integer(1 << segmentsLog, "segments", "segment"), Explain.XllSegments, Topics.Lossless);
         int samplesLog = (int)Read(4);
         _tree?.Field("Samples per Segment", _pos - 4, _pos, NodeValue.Integer(1 << samplesLog, "samples", "sample"), Explain.XllSamplesInSegment, Topics.Lossless);
+        int segmentLimit = asset.MaxSampleRate > 48000 ? 512 : 256;
+        if (asset.MaxSampleRate > 0 && (1 << samplesLog) > segmentLimit)
+        {
+            Report(Issue.ReservedValue, "Samples per Segment", _pos - 4, _pos, $"a segment of {1 << samplesLog} samples is more than the {segmentLimit} that 8.3.1 allows at {(asset.MaxSampleRate > 48000 ? "sampling frequencies above 48 kHz" : "48 kHz or below")}");
+        }
+
         int segmentBits = Num("Segment Size Bits", 5, Explain.XllSegmentBits, Topics.Lossless, "bits", 1) + 1;
         Num("Band Data CRC", 2, Explain.XllBandCrc, v => v switch
         {
@@ -419,6 +425,9 @@ internal sealed partial class UnitSyntax
             return;
         }
 
-        ReadXllFrame(at, endBit, asset, headerSize, new XllCommon(sets, frameSize, segmentsLog, segmentBits, scalable, maskBits, frameSizeStart, frameSizeEnd));
+        // dca_xll.c's parse_common_header refuses a frame of more than 240 KiB, more than 1,024 segments, no samples in a segment or more than 512,
+        // and more than 65,536 samples in a frame, before it reads a channel set.
+        bool refused = (uint)(frameSize - 1) >= XllMaxFrameSize || segmentsLog > 10 || samplesLog == 0 || samplesLog > 9 || segmentsLog + samplesLog > 16;
+        ReadXllFrame(at, endBit, asset, headerSize, new XllCommon(sets, frameSize, segmentsLog, segmentBits, scalable, maskBits, frameSizeStart, frameSizeEnd, refused));
     }
 }

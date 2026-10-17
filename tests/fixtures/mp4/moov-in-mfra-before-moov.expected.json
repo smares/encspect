@@ -1,0 +1,243 @@
+{
+ "description": "An mfra box before the movie, holding a moov box whose mvhd has a timescale of 1: it is shown and reported, and the movie is read in the real moov box's timescale.",
+ "length": 1394,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "mfra",
+   28,
+   124
+  ],
+  [
+   "mfra/moov",
+   36,
+   116
+  ],
+  [
+   "mfra/moov/mvhd",
+   44,
+   108
+  ],
+  [
+   "moov",
+   152,
+   651
+  ],
+  [
+   "moov/mvhd",
+   160,
+   108
+  ],
+  [
+   "moov/trak",
+   268,
+   535
+  ],
+  [
+   "moov/trak/tkhd",
+   276,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   368,
+   435
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   376,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   408,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   453,
+   350
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   461,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   477,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   485,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   501,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   513,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   521,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   537,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   573,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   627,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   651,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   679,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   779,
+   24
+  ],
+  [
+   "mdat",
+   803,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   811,
+   6
+  ],
+  [
+   817,
+   45
+  ],
+  [
+   862,
+   42
+  ],
+  [
+   904,
+   39
+  ],
+  [
+   943,
+   36
+  ],
+  [
+   979,
+   33
+  ],
+  [
+   1012,
+   30
+  ],
+  [
+   1042,
+   27
+  ],
+  [
+   1069,
+   24
+  ],
+  [
+   1093,
+   20
+  ],
+  [
+   1113,
+   17
+  ],
+  [
+   1130,
+   14
+  ],
+  [
+   1144,
+   11
+  ],
+  [
+   1155,
+   8
+  ],
+  [
+   1163,
+   46
+  ],
+  [
+   1209,
+   43
+  ],
+  [
+   1252,
+   40
+  ],
+  [
+   1292,
+   37
+  ],
+  [
+   1329,
+   34
+  ],
+  [
+   1363,
+   31
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.box-misplaced",
+   "lies in a mfra box"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "skip": {
+   "all": "a damaged or oddly built file, which tools read in their own ways"
+  }
+ }
+}
