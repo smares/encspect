@@ -141,8 +141,8 @@ internal static class Explain
     public const string ChapterItem = "An item of the chapter's tag: its value's size and flags, a key ending in a zero byte, and the value (APEv2).";
     public const string StreamEnd = "The stream end packet (SE): mandatory, the last packet of the stream, 3 bytes long; tags may follow it (SV8 specification, Stream End Packet).";
 
-    public const string Encoder = "The encoder that wrote the stream, from its encoder version field, with the evidence and the confidence in it.";
-    public const string Confidence = "How sure the analyzer is of the encoder: high where the encoder's own version field names a release that encodes confirmed, medium where it follows libmpcdec's reading of the field, low for a tag's claim alone.";
+    public const string Encoder = "The encoder that wrote the stream, from its encoder version field or, where that names none, from a tag's claim, with the evidence and the confidence in it.";
+    public const string Confidence = "How sure the analyzer is of the encoder: high where the encoder version field and the fields beside it match what encodes of the builds a row names wrote, medium where it follows libmpcdec's reading of the field or the fields fit the encodes of two sets of builds, low where only a tag's claim names the encoder or the SV7 version byte is above 116, which no known encoder writes.";
     public const string Evidence = "Something in the file that points to the encoder, and where it is.";
 
     public const string Statistics = "Figures computed over the stream's frames or audio packets.";
@@ -160,7 +160,7 @@ internal static class Explain
     public const string BitrateMode = "Each frame is as long as its data, so the bitrate follows the audio (variable); only the headers of SV4 to SV6 have a bitrate field, which is set for a constant bitrate.";
     public const string Distribution = "How many frames or packets fall in each bitrate range of 32 kbps.";
     public const string DistributionBin = "The frames or packets whose bitrate falls in this range, and their share.";
-    public const string MidSideUse = "The coded subbands of all frames, by how they are coded: mid and side, or left and right; subbands left out or filled with noise in both channels are not counted.";
+    public const string MidSideUse = "The coded subbands of all frames, by how they are coded: mid and side, or left and right; subbands left out in both channels are not counted, those filled with noise are, since libmpcdec reads a mid/side flag for them.";
     public const string MidSideCount = "Coded subbands with the mid/side flag set, and their share of the coded subbands.";
     public const string LeftRightCount = "Coded subbands without the mid/side flag, and their share of the coded subbands.";
     public const string FramesWithMidSide = "Frames that code at least one subband as mid and side.";

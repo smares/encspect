@@ -32,7 +32,7 @@ public sealed class DtsParser : IFormatParser
         ByteReader reader = context.Reader;
         var cache = new BlockCache(reader);
         long start = ZeroRunEnd(cache, reader.Start, reader.End);
-        long found = FindChain(cache, start, Math.Min(reader.End, start + SniffLimit), reader.End);
+        long found = FindChain(cache, start, Math.Min(reader.End, start + SniffLimit), reader.End, new CrcBudget());
         if (found < 0)
         {
             return SniffResult.None;
@@ -96,6 +96,9 @@ public sealed class DtsParser : IFormatParser
         long position = start;
         UnitInfo? stream = null;
         int frames = 0;
+        // One allowance of CRC work for the whole segment, not one per search, so that chains broken by extension substream headers that
+        // fail their CRC16 cost a fixed amount of work per byte of the file.
+        var budget = new CrcBudget();
         while (position < end)
         {
             if (frames % 4096 == 0)
@@ -109,7 +112,7 @@ public sealed class DtsParser : IFormatParser
                 long cutAt = unitEnd;
                 if (unitEnd < end && (Framing.UnitAt(cache, unitEnd, end, true) is not { } next || !next.First.Continues(unit.First)))
                 {
-                    long restart = FindChain(cache, position + 1, Math.Min(unitEnd, end), end);
+                    long restart = FindChain(cache, position + 1, Math.Min(unitEnd, end), end, budget);
                     if (restart > position)
                     {
                         cutAt = restart;
@@ -124,7 +127,7 @@ public sealed class DtsParser : IFormatParser
                 continue;
             }
 
-            long found = FindChain(cache, position, end, end);
+            long found = FindChain(cache, position, end, end, budget);
             long gapEnd = found < 0 ? end : found;
             if (gapEnd > position)
             {
@@ -193,9 +196,8 @@ public sealed class DtsParser : IFormatParser
     }
 
     // The offset of the first sync word in [from, limit) that a chain of frames follows, or -1.
-    internal static long FindChain(BlockCache cache, long from, long limit, long end)
+    internal static long FindChain(BlockCache cache, long from, long limit, long end, CrcBudget budget)
     {
-        var budget = new CrcBudget();
         for (long position = cache.IndexOfAny(SyncStarts, from, limit); position >= 0; position = cache.IndexOfAny(SyncStarts, position + 1, limit))
         {
             budget.Scanned(position);

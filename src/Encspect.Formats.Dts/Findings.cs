@@ -8,7 +8,7 @@ internal sealed class Findings
 {
     private readonly Dictionary<string, Entry> _aggregated = [];
     private readonly List<string> _order = [];
-    private readonly List<Finding> _immediate = [];
+    private readonly List<(Finding Finding, Counted? Counted)> _immediate = [];
 
     public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message)
     {
@@ -35,12 +35,27 @@ internal sealed class Findings
         return false;
     }
 
-    public void AddNow(Severity severity, string code, string message, Node node) => _immediate.Add(new Finding(severity, code, message, node));
+    public void AddNow(Severity severity, string code, string message, Node node) => _immediate.Add((new Finding(severity, code, message, node), null));
+
+    // A finding that keeps its place among the immediate ones and is counted: the caller raises Count for each further case, and the
+    // message is made when the findings are flushed.
+    public Counted AddNowCounted(Severity severity, string code, Node node, Func<int, string> message)
+    {
+        var counted = new Counted(severity, code, node, message);
+        _immediate.Add((new Finding(severity, code, string.Empty, node), counted));
+        return counted;
+    }
 
     public void Flush(AnalysisContext context)
     {
-        foreach (Finding finding in _immediate)
+        foreach ((Finding finding, Counted? counted) in _immediate)
         {
+            if (counted is not null)
+            {
+                context.AddFinding(counted.Severity, counted.Code, counted.Message(counted.Count), counted.Node, counted.Count);
+                continue;
+            }
+
             context.AddFinding(finding.Severity, finding.Code, finding.Message, finding.Node);
         }
 
@@ -53,6 +68,19 @@ internal sealed class Findings
         _immediate.Clear();
         _aggregated.Clear();
         _order.Clear();
+    }
+
+    internal sealed class Counted(Severity severity, string code, Node node, Func<int, string> message)
+    {
+        public Severity Severity { get; set; } = severity;
+
+        public string Code => code;
+
+        public Node Node => node;
+
+        public Func<int, string> Message => message;
+
+        public int Count { get; set; } = 1;
     }
 
     private sealed class Entry(Severity severity, Node node, Func<int, string> message)

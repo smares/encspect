@@ -5,9 +5,24 @@ namespace Encspect.Formats.Dts;
 
 // What makes frames one stream: the same sampling frequency, channel arrangement, LFE flag and
 // extension, in the same form (ETSI TS 102 114 Annex E.4 lists the parameters that stay constant
-// in a stream for seamless playback), and the same extension substream assets. A change starts a new stream.
-internal readonly record struct StreamKey(bool HasCore, int SampleRate, int Amode, bool HasLfe, CoreExtension Extension, StreamForm Form, int Substreams)
+// in a stream for seamless playback), and the same extension substream assets. A change starts a new stream. The structure of the assets
+// (their components and coding modes) is always compared; their figures (channels, rate, speaker mask) are those their header states or,
+// where it omits them, those of the last header that did (7.5.2). A unit before any such header has none and is partial: it matches a
+// configuration of the same core and structure whatever the figures, which the stream then takes.
+internal readonly record struct StreamKey(bool HasCore, int SampleRate, int Amode, bool HasLfe, CoreExtension Extension, StreamForm Form, int Substreams, int Figures = 0, bool IsPartial = false)
 {
+    public bool Matches(StreamKey other)
+    {
+        if (this == other)
+        {
+            return true;
+        }
+
+        bool sameCore = HasCore == other.HasCore
+            && (!HasCore || (SampleRate == other.SampleRate && Amode == other.Amode && HasLfe == other.HasLfe && Extension == other.Extension && Form == other.Form));
+        return sameCore && Substreams == other.Substreams && (IsPartial || other.IsPartial || (SampleRate == other.SampleRate && Figures == other.Figures));
+    }
+
     public string Describe()
     {
         string channels = HasCore ? $"{Tables.ArrangementShort(Amode)}{(HasLfe ? " + LFE" : string.Empty)}" : "extension substream only";
@@ -16,22 +31,31 @@ internal readonly record struct StreamKey(bool HasCore, int SampleRate, int Amod
 
     public static StreamKey Of(UnitFacts facts)
     {
-        int substreams = 0;
+        int structure = 0;
+        int figures = 0;
+        bool isPartial = false;
         foreach (SubstreamFacts substream in facts.Substreams)
         {
             foreach (AssetFacts asset in substream.Assets)
             {
-                substreams = HashCode.Combine(substreams, asset.Components, asset.Channels, asset.MaxSampleRate, asset.SpeakerMask, asset.CodingMode);
+                isPartial |= !asset.AreFiguresKnown;
+                structure = HashCode.Combine(structure, asset.Components, asset.CodingMode);
+                figures = asset.AreFiguresKnown ? HashCode.Combine(figures, asset.Channels, asset.MaxSampleRate, asset.SpeakerMask) : figures;
             }
+        }
+
+        if (isPartial)
+        {
+            figures = 0;
         }
 
         if (facts.HasCore)
         {
-            return new StreamKey(true, facts.Core.SampleRate, facts.Core.Amode, facts.Core.Lff is 1 or 2, facts.Extension, facts.Form, substreams);
+            return new StreamKey(true, facts.Core.SampleRate, facts.Core.Amode, facts.Core.Lff is 1 or 2, facts.Extension, facts.Form, structure, figures, isPartial);
         }
 
         AssetFacts? first = facts.Substreams.SelectMany(s => s.Assets).FirstOrDefault();
-        return new StreamKey(false, RateOf(first), -1, false, CoreExtension.None, StreamForm.BigEndian16, substreams);
+        return new StreamKey(false, RateOf(first), -1, false, CoreExtension.None, StreamForm.BigEndian16, structure, figures, isPartial);
     }
 
     // The sampling frequency of an asset: LBR's own, else the highest its descriptor names.
@@ -62,7 +86,18 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
     public HashSet<DtsAnalysis.Region> Regions { get; } = [];
 
-    public StreamFigures Figures { get; } = new(key.SampleRate);
+    public StreamFigures Figures { get; private set; } = new(key.SampleRate);
+
+    // The configuration of a stream that began with units whose figures were not known: the first unit that gives them completes it.
+    public void Complete(StreamKey completed)
+    {
+        if (completed.SampleRate != key.SampleRate)
+        {
+            Figures = Figures.WithSampleRate(completed.SampleRate);
+        }
+
+        key = completed;
+    }
 
     private int CoreFrames { get; set; }
 
@@ -168,7 +203,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
             }
 
             AssetFacts? asset0 = facts.Substreams[0].Assets.FirstOrDefault();
-            if (asset0 is not null && _firstAsset is null)
+            if (asset0 is { AreFiguresKnown: true } && _firstAsset is null)
             {
                 _firstAsset = asset0;
                 _assets = facts.Substreams[0].Assets.Count;
@@ -185,7 +220,10 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         }
 
         CrcErrors += facts.HasCrcMismatch ? 1 : 0;
-        _layout ??= LayoutOf(facts);
+        if (facts.Substreams.All(s => s.Assets.All(a => a.AreFiguresKnown)))
+        {
+            _layout ??= LayoutOf(facts);
+        }
     }
 
     // The speakers of the first unit's channels: the core's arrangement and its extension channels, or the first asset's speaker

@@ -106,6 +106,154 @@ public class DtsTests
         Assert.Equal(["dts.trailing-data"], report.Findings.Select(f => f.Code));
     }
 
+    // A change of the configuration ends the stream and starts another, as for the other formats, also where the configuration returns; the
+    // changes are one finding with their number.
+    [Fact]
+    public void AConfigurationThatReturnsStartsAStream()
+    {
+        byte[] frame = Fixture("core-16be.dts")[..512];
+        var data = new List<byte>();
+        for (int i = 0; i < 12; i++)
+        {
+            byte[] copy = [.. frame];
+            SetBits(copy, 60, 6, i % 2 == 0 ? 2 : 0);
+            data.AddRange(copy);
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("alternating.dts", new MemoryStream([.. data]));
+        Assert.Equal(12, report.Streams.Count);
+        Assert.Equal(["2/0", "1/0"], report.Streams.Take(2).Select(s => s.ChannelMode));
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
+        Assert.Equal(11, changed.Count);
+        Assert.DoesNotContain("limited", changed.Message, StringComparison.Ordinal);
+        Assert.Equal(512L, report.Streams[0].Samples);
+    }
+
+    // Extension substream headers that omit the static fields before any header that states them have no figures of their own: they
+    // belong to the stream the first header with the fields starts (a stream of its own would hold no samples), and the stream does not change.
+    [Fact]
+    public void UnitsBeforeTheFirstStaticFieldsJoinTheStreamAfterThem()
+    {
+        byte[] source = Fixture("exss-only-static-first-only.dts");
+        byte[] with = source[..60];
+        byte[] without = source[60..112];
+        byte[] data = [.. without, .. without, .. with, .. without];
+        Report report = Analyzer.CreateDefault().Analyze("late.dts", new MemoryStream(data));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(48000, stream.SampleRate);
+        Assert.Equal(2, stream.Channels);
+        Assert.Equal(2 * 512L, stream.Samples);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "dts.stream-changed");
+    }
+
+    // A unit without asset figures matches the configuration of its core and structure only: core frames followed by units that add a lossless
+    // extension (never stating the static fields) are two streams, and the units that then state the fields continue the second.
+    [Fact]
+    public void UnitsWithoutFiguresDoNotJoinAStreamOfAnotherStructure()
+    {
+        byte[] source = Fixture("exss-static-first-only.dts");
+        byte[] with = source[..704];
+        byte[] without = source[704..1400];
+        byte[] core = Fixture("core-16be.dts")[..512];
+        byte[] data = [.. core, .. core, .. core, .. without, .. without, .. without];
+        Report report = Analyzer.CreateDefault().Analyze("core-then-partial.dts", new MemoryStream(data));
+        Assert.Equal(["DTS", "DTS-HD Master Audio"], report.Streams.Select(s => s.Codec));
+        Assert.Equal(3 * 512L, report.Streams[0].Samples);
+        Assert.Equal(1, Assert.Single(report.Findings, f => f.Code == "dts.stream-changed").Count);
+
+        data = [.. data, .. with, .. without];
+        report = Analyzer.CreateDefault().Analyze("core-partial-static.dts", new MemoryStream(data));
+        Assert.Equal(["DTS", "DTS-HD Master Audio"], report.Streams.Select(s => s.Codec));
+        Assert.Equal(3 * 512L, report.Streams[0].Samples);
+        Assert.Equal(5 * 512L, report.Streams[1].Samples);
+        Assert.Equal(1, Assert.Single(report.Findings, f => f.Code == "dts.stream-changed").Count);
+    }
+
+    // Past 64 streams a unit joins the last stream only when its configuration equals the stream's; the others are in no stream, so the last
+    // stream's figures are those of its own units, and the finding is a warning that counts them.
+    [Fact]
+    public void PastTheStreamLimitOnlyUnitsOfTheLastConfigurationCount()
+    {
+        byte[] frame = Fixture("core-16be.dts")[..512];
+        var data = new List<byte>();
+        for (int i = 0; i < 70; i++)
+        {
+            byte[] copy = [.. frame];
+            SetBits(copy, 60, 6, i % 2 == 0 ? 2 : 0);
+            data.AddRange(copy);
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("limit.dts", new MemoryStream([.. data]));
+        Assert.Equal(64, report.Streams.Count);
+        StreamInfo last = report.Streams[^1];
+        Assert.Equal("1/0", last.ChannelMode);
+        Assert.Equal(1, last.Channels);
+        Assert.Equal(4 * 512L, last.Samples);
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
+        Assert.Equal(Severity.Warning, changed.Severity);
+        Assert.Contains("3 units have a configuration", changed.Message, StringComparison.Ordinal);
+    }
+
+    // A last stream that has no asset figures yet is completed by a unit of its own structure only: here by none, so the unit of an LBR
+    // asset is in no stream and the stream stays the lossless one.
+    [Fact]
+    public void ALastStreamWithoutFiguresIsNotCompletedByAnotherStructure()
+    {
+        byte[] core = Fixture("core-16be.dts")[..512];
+        byte[] partial = Fixture("exss-static-first-only.dts")[704..1400];
+        var data = new List<byte>();
+        for (int i = 0; i < 63; i++)
+        {
+            byte[] copy = [.. core];
+            SetBits(copy, 60, 6, i % 2 == 0 ? 2 : 0);
+            data.AddRange(copy);
+        }
+
+        data.AddRange(partial);
+        data.AddRange(partial);
+        data.AddRange(Fixture("exss-only-static-first-only.dts")[..60]);
+        Report report = Analyzer.CreateDefault().Analyze("limit-partial.dts", new MemoryStream([.. data]));
+        Assert.Equal(64, report.Streams.Count);
+        Assert.Equal("DTS-HD Master Audio", report.Streams[^1].Codec);
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
+        Assert.Equal(Severity.Warning, changed.Severity);
+        Assert.Contains("1 unit has", changed.Message, StringComparison.Ordinal);
+    }
+
+    // Units of an extension substream index that has not stated its static fields yet still give the rate of their LBR header: no stream
+    // has a sampling frequency of 0 Hz.
+    [Fact]
+    public void NoStreamHasAZeroSampleRate()
+    {
+        byte[] data = Convert.FromBase64String("ZFggJQADYAd4AICAB8EAXwBwgQA/AAAAAADiTQqAGSECDAMAAAEbAAD6APoAAAAAAAAAAAAAAAAAAAAAZFggJQADYAd4AICAB8EAXwBwgQA/AAAAAADiTQqAGSECDAMAAAEbAAD6APoAAAAAAAAAAAAAAAAAAAAAZFggJQADYAd4AICAB8EAXwBwgQA/AAAAAADiTQqAGSECDAMAAAEbAAD6APoAAAAAAAAAAAAAAAAAAAAAZFggJQBCYAZgAfAgIAfgAAAA73cKgBkhAgwDAAABGwAA+gD6AAAAAAAAAAAAAAAAAAAAAGRYICUAQmAGYAHwICAH4AAAAO93CoAZIQIMAwAAARsAAPoA+gAAAAAAAAAAAAAAAAAAAABkWCAlAEJgBmAB8CAgB+AAAADvdwqAGSECDAMAAAEbAAD6APoAAAAAAAAAAAAAAAAAAAAA");
+        Report report = Analyzer.CreateDefault().Analyze("index1.dts", new MemoryStream(data));
+        Assert.NotEmpty(report.Streams);
+        Assert.All(report.Streams, s => Assert.Equal(48000, s.SampleRate));
+    }
+
+    // Units without samples have no bitrate: they stay out of the minimum, the average and the series of the stream they join.
+    [Fact]
+    public void UnitsWithoutSamplesHaveNoBitrate()
+    {
+        byte[] source = Fixture("exss-only-static-first-only.dts");
+        byte[] data = [.. source[60..112], .. source[60..112], .. source[..60], .. source[60..112]];
+        Report report = Analyzer.CreateDefault().Analyze("late.dts", new MemoryStream(data));
+        StreamInfo stream = Assert.Single(report.Streams);
+        double[] values = stream.Series.First(x => x.Name == "Bitrate").Values.ToArray();
+        Assert.Equal(2, values.Length);
+        Assert.All(values, v => Assert.True(v > 0));
+    }
+
+    private static void SetBits(byte[] data, int start, int width, int value)
+    {
+        for (int i = 0; i < width; i++)
+        {
+            int bit = start + i;
+            int on = (value >> (width - 1 - i)) & 1;
+            data[bit >> 3] = (byte)((data[bit >> 3] & ~(0x80 >> (bit & 7))) | (on << (7 - (bit & 7))));
+        }
+    }
+
     // ADTS at the start takes 91 and DTS further in 50, whichever comes first in the list of parsers.
     [Fact]
     public void AdtsFollowedByDtsIsAdtsInEitherOrderOfTheParsers()

@@ -316,7 +316,8 @@ internal sealed class StandardStream
                     bool zero = joined.IsZero(end, expected);
                     Totals.FillerFrames++;
                     Totals.FillerBits += expected - end;
-                    Findings.Add(Severity.Info, zero ? "wma.frame-stuffing" : "wma.frame-filler", () => FrameNode(Frames.Count - 1), count =>
+                    int frameIndex = Frames.Count - 1;
+                    Findings.Add(Severity.Info, zero ? "wma.frame-stuffing" : "wma.frame-filler", () => FrameNode(frameIndex), count =>
                         $"{(count == 1 ? "A frame that began in the superframe before is" : $"{count} frames that began in the superframe before are")} followed by {(zero ? "zero bits" : "bits that are not zero")} up to the bit offset the superframe states, which a decoder skips; the first has {expected - end} (in the superframe at 0x{offset:X}).");
                 }
             }

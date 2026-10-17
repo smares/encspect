@@ -183,7 +183,7 @@ internal static partial class Nodes
         long o = sb.Offset;
         var children = new List<Node>();
         var id = new Node("ID", o, 1, NodeValue.Hex(sb.Id, 2)) { Description = Explain.SubBlockId, Topic = Topics.SubBlocks };
-        id.Add(Node.FromBits("Function", o, 0, 5, NodeValue.Hex(sb.Id & 0x1F, 2), NodeKind.Detail, Explain.SubBlockFunction, Topics.SubBlocks, BitOrder.LeastSignificantFirst));
+        id.Add(Node.FromBits("Function", o, 0, 6, NodeValue.Hex(sb.Id & 0x3F, 2), NodeKind.Detail, Explain.SubBlockFunction, Topics.SubBlocks, BitOrder.LeastSignificantFirst));
         id.Add(Node.FromBits("IsOptional", o, 5, 6, NodeValue.Boolean((sb.Id & SubBlockIds.OptionalBit) != 0), NodeKind.Detail, Explain.IsOptional, Topics.SubBlocks, BitOrder.LeastSignificantFirst));
         id.Add(Node.FromBits("HasOddSize", o, 6, 7, NodeValue.Boolean(sb.IsOdd), NodeKind.Detail, Explain.HasOddSize, Topics.SubBlocks, BitOrder.LeastSignificantFirst));
         id.Add(Node.FromBits("IsLarge", o, 7, 8, NodeValue.Boolean(sb.IsLarge), NodeKind.Detail, Explain.IsLarge, Topics.SubBlocks, BitOrder.LeastSignificantFirst));

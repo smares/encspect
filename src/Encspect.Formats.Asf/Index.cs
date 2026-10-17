@@ -138,14 +138,19 @@ public sealed partial class AsfParser
                 specifier.Add("Index Type", at + 2, 2, NodeValue.Text($"{type} ({IndexTypeName(type)})"), Explain.IndexType);
             }
 
-            if (!media && !timecode && state.IndexParametersNode is not null && !specifiers.SequenceEqual(state.IndexSpecifiers))
+            (Node? parametersNode, List<(ushort Stream, ushort Type)> parameterSpecifiers, string parametersName, string section) = timecode
+                ? (state.TimecodeIndexParametersNode, state.TimecodeIndexSpecifiers, "Timecode Index Parameters Object", "4.11")
+                : media
+                    ? (state.MediaIndexParametersNode, state.MediaIndexSpecifiers, "Media Object Index Parameters Object", "4.10")
+                    : (state.IndexParametersNode, state.IndexSpecifiers, "Index Parameters Object", "4.9");
+            if (parametersNode is not null && !specifiers.SequenceEqual(parameterSpecifiers))
             {
                 state.Findings.AddNow(Severity.Warning, "asf.index-specifiers",
-                    "The Index Object's index specifiers differ from those of the Index Parameters Object in the header, which they must match exactly (section 4.9).", node);
+                    $"The {name}'s index specifiers differ from those of the {parametersName} in the header, which they must match exactly (section {section}).", node);
             }
-            else if (!media && !timecode && state.IndexParametersNode is null)
+            else if (parametersNode is null)
             {
-                state.Findings.AddNow(Severity.Warning, "asf.index-parameters-missing", "The file holds an Index Object but no Index Parameters Object in its header, which the specification requires (section 4.9).", node);
+                state.Findings.AddNow(Severity.Warning, "asf.index-parameters-missing", $"The file holds a {name} but no {parametersName} in its header, which the specification requires (section {section}).", node);
             }
 
             int entryNodes = 0;
@@ -179,7 +184,7 @@ public sealed partial class AsfParser
                     {
                         outsideOffsets++;
                     }
-                    else if (state.PacketSize > 0 && absolute % (ulong)state.PacketSize != 0)
+                    else if (state.PacketSizeIsFixed && state.PacketSize > 0 && absolute % (ulong)state.PacketSize != 0)
                     {
                         unalignedOffsets++;
                     }

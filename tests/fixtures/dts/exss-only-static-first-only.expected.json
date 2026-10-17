@@ -1,0 +1,51 @@
+{
+ "description": "Four extension substreams alone, each with an LBR asset, of which only the first states the static fields: no core frame.",
+ "length": 216,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   60
+  ],
+  [
+   60,
+   52
+  ],
+  [
+   112,
+   52
+  ],
+  [
+   164,
+   52
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS Express",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": null,
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "decode_error": "No valid DCA sub-stream found",
+  "skip": {
+   "ffprobe": "ffmpeg's parser reads the sampling frequency and the profile (DTS Express) from the LBR header, but its decoder rejects the substream ('No valid DCA sub-stream found', dcadec.c), so ffprobe gets no channels",
+   "decode": "ffmpeg rejects the LBR stub, whose component is a header followed by filler",
+   "libdca": "libdca reads core frames only."
+  }
+ }
+}

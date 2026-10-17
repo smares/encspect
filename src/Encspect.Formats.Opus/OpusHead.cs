@@ -63,9 +63,9 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
         header.Add(Node.FromMapped("Magic Signature", packet, 0, 8, "OpusHead", description: Explain.MagicHead));
         header.Add(Node.FromMapped("Version", packet, 8, 9, NodeValue.Integer(Version), description: Explain.Version));
         header.Add(Node.FromMapped("Channels", packet, 9, 10, NodeValue.Integer(Channels), description: Explain.Channels, topic: Topics.OpusChannelMapping));
-        if (Layout is { } layout)
+        if (Speakers is { } layout)
         {
-            header.Add(Node.FromMapped("Channel Layout", packet, 9, 10, $"{layout.Name}: {string.Join(", ", layout.Speakers)}", description: Explain.ChannelLayout,
+            header.Add(Node.FromMapped("Channel Layout", packet, 9, 10, $"{ChannelLayouts.ModeName(layout) ?? $"{Channels} channels"}: {ChannelLayouts.Speakers(layout)}", description: Explain.ChannelLayout,
                 topic: Topics.OpusChannelMapping));
         }
         header.Add(Node.FromMapped("Pre-skip", packet, 10, 12, NodeValue.Integer(PreSkip, "samples", "sample"), description: Explain.PreSkip, topic: Topics.OpusPreSkip));
@@ -108,48 +108,14 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
         _ => $"{Family} (reserved)",
     };
 
-    // The speakers of families 0 and 1 in channel order (RFC 7845, sections 5.1.1.1 and 5.1.1.2),
-    // the Vorbis channel order; null for other families and counts.
-    public (string Name, string[] Speakers)? Layout => Family switch
-    {
-        0 when Channels is 1 or 2 => Layouts[Channels - 1],
-        1 when Channels is >= 1 and <= 8 => Layouts[Channels - 1],
-        _ => null,
-    };
-
-    // The layout as speaker positions, in the same order: the rear pair of four to six channels is
-    // the lone surround pair, the back pair; with seven and eight it is the side pair. Ambisonics
-    // and family 255 name no speakers.
+    // The speakers of families 0 and 1 in channel order (RFC 7845, sections 5.1.1.1 and 5.1.1.2), the
+    // Vorbis channel order, as speaker positions; ambisonics and family 255 name no speakers.
     public IReadOnlyList<Speaker>? Speakers => Family switch
     {
-        0 when Channels is 1 or 2 => SpeakerLayouts[Channels - 1],
-        1 when Channels is >= 1 and <= 8 => SpeakerLayouts[Channels - 1],
+        0 when Channels is 1 or 2 => ChannelLayouts.VorbisOrder(Channels),
+        1 when Channels is >= 1 and <= 8 => ChannelLayouts.VorbisOrder(Channels),
         _ => null,
     };
-
-    private static readonly Speaker[][] SpeakerLayouts =
-    [
-        [Speaker.FrontCenter],
-        [Speaker.FrontLeft, Speaker.FrontRight],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight],
-        [Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackCenter, Speaker.LowFrequency],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
-    ];
-
-    private static readonly (string Name, string[] Speakers)[] Layouts =
-    [
-        ("Mono", ["mono"]),
-        ("Stereo", ["left", "right"]),
-        ("Linear surround", ["left", "center", "right"]),
-        ("Quadraphonic", ["front left", "front right", "rear left", "rear right"]),
-        ("5.0", ["front left", "front center", "front right", "rear left", "rear right"]),
-        ("5.1", ["front left", "front center", "front right", "rear left", "rear right", "LFE"]),
-        ("6.1", ["front left", "front center", "front right", "side left", "side right", "rear center", "LFE"]),
-        ("7.1", ["front left", "front center", "front right", "side left", "side right", "rear left", "rear right", "LFE"]),
-    ];
 
     // Families 2 and 3 allow (1 + n)^2 + 2j channels for an ambisonic order n of 0 to 14 and j of
     // 0 or 1, j being a non-diegetic stereo pair (RFC 8486, section 3.3). Null for another count.
@@ -173,7 +139,7 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
     public bool IsAmbisonic => Family is 2 or 3;
 
     // What the summary calls the channels.
-    public string ChannelMode => Layout is { } layout ? layout.Name
+    public string ChannelMode => Speakers is { } layout ? ChannelLayouts.ModeName(layout) ?? $"{Channels} channels"
         : IsAmbisonic && Ambisonics is { } ambisonics ? $"Ambisonics, order {ambisonics.Order}{(ambisonics.HasStereo ? ", with non-diegetic stereo" : string.Empty)}"
         : $"{Channels} channels";
 
@@ -201,9 +167,9 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
     // after them (RFC 8486, section 3.1).
     private string? Place(int channel)
     {
-        if (Family == 1 && Layout is { } layout)
+        if (Family == 1 && Speakers is { } layout)
         {
-            return layout.Speakers[channel];
+            return ChannelLayouts.Name(layout[channel]);
         }
 
         if (Family != 2 || Ambisonics is not { } ambisonics)

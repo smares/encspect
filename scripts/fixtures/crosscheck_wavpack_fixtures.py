@@ -11,7 +11,12 @@ make_wavpack_fixtures.py):
   run fails if one of them agrees after all. The figures the library derives from a file that
   opens, against the analyzer's golden report: the version, channels, channel mask,
   sample rate, bits, samples, mode flags (hybrid, lossless, float, fast, high, very high, extra level),
-  the MD5 digest, the source format and extension, and the wrapper's size.
+  the MD5 digest, the source format and extension, and the wrapper's size. Then the decoder's whole pass,
+  for every fixture and against the manifest's explicit "decode" (crosscheck.decode): the file opened as
+  WavpackOpenFileInput opens it for wvunpack (block checksums verified), every sample unpacked with
+  WavpackUnpackSamples, and the errors it counts (a block it skips, a checksum or CRC that fails). A file the
+  library refuses to open says so, which covers what its init and metadata checks refuse (open_utils.c
+  process_metadata, decorr_utils.c, unpack_dsd.c) and the block reader does not.
 - wvunpack -ss (wavpack 5.9.0 of Ubuntu 26.04), on the main file alone: channels, source, duration,
   modalities, encoder version, digest, source format and the wrapper.
 - wvunpack -v: the file decodes and its block CRCs hold, with its correction file where it has one
@@ -77,6 +82,11 @@ REJECTED = {
     "built-decorr-terms-invalid": "libwavpack refuses a decorrelation term of 0",
     "built-audio-without-bitstream": "a block without a bitstream cannot be unpacked",
     "built-unknown-subblocks": "a sub-block that is not optional and not known is refused",
+    "built-dsd-high-short": "init_dsd_block_high refuses a high mode block of fewer than 20 bytes after the mode in a stereo block",
+    "built-dsd-high-rate-step": "init_dsd_block_high refuses a rate step other than RATE_S (20)",
+    "built-weights-without-terms": "read_decorr_weights refuses more weights than there are passes (none, without terms)",
+    "built-reorder-too-long": "read_new_config_info refuses more reordering bytes than the layout has channels",
+    "built-subblock-sizes-mixed": "read_entropy_vars refuses an entropy variables sub-block of 8 bytes in a stereo block",
 }
 # Fixtures libwavpack opens but whose figures it gives differently from the analyzer's on purpose, with the evidence.
 FIGURES_DIFFER = {
@@ -157,6 +167,24 @@ def statistic(report, name):
     stream = next(c for c in report["root"]["children"] if c.get("kind") == "Stream")
     node = next((c for c in stream["children"] if c.get("kind") == "Statistics"), None)
     return None if node is None else next((c.get("value") for c in node["children"] if c["name"] == name), None)
+
+
+def check_decode(name, manifest, facts, problems):
+    """The decoder's pass against the manifest's explicit expectation: refused, or this many samples with this many errors."""
+    expected = manifest["crosscheck"].get("decode")
+    if expected is None:
+        problems.append("the manifest has no crosscheck.decode")
+        return
+    if not expected["opens"]:
+        if "decode_open_error" not in facts:
+            problems.append(f"libwavpack opens the file and unpacks {facts.get('decode_samples')} samples, which the manifest says it refuses")
+        return
+    if "decode_open_error" in facts:
+        problems.append(f"libwavpack refuses to open the file ({facts['decode_open_error']}), which the manifest says it unpacks")
+        return
+    got = {"samples": int(facts["decode_samples"]), "errors": int(facts["decode_errors"])}
+    if got != {"samples": expected["samples"], "errors": expected["errors"]}:
+        problems.append(f"libwavpack unpacks {got['samples']} samples with {got['errors']} errors, the manifest {expected['samples']} with {expected['errors']}")
 
 
 def check_libwavpack(name, manifest, path, report, tool, problems):
@@ -480,7 +508,8 @@ def main():
         problems = []
         is_wvc = path.suffix == ".wvc"
         with tempfile.TemporaryDirectory() as work:
-            check_libwavpack(name, manifest, path, report, tool, problems)
+            facts = check_libwavpack(name, manifest, path, report, tool, problems)
+            check_decode(name, manifest, facts, problems)
             if not valid:
                 skip(name, "ffprobe and MediaInfo", manifest.get("description", "the fixture is damaged on purpose") + ": the tools read it in ways of their own")
             if is_wvc:

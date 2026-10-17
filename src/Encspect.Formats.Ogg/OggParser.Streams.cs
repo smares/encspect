@@ -23,6 +23,9 @@ internal enum PageStatus : byte
 
     // A packet was unfinished when the page began.
     PendingBefore = 32,
+
+    // A page of a stream beyond the region's limit: recorded, not followed.
+    Untracked = 64,
 }
 
 // One page or gap, 64 bytes: a long file has one per few kilobytes, and nothing else per page is
@@ -80,6 +83,15 @@ internal sealed class Region(long start, long end)
     public Dictionary<uint, LogicalStream> BySerial { get; } = [];
 
     public FindingCollector Findings { get; } = new();
+
+    // The playback groups of earlier regions: a stream's group is this and its link.
+    public int GroupBase { get; init; }
+
+    // The most logical streams followed: every stream has a node of its own and findings, about 10 KB, so a file of tiny streams costs
+    // more than its size by far. Real files hold a few, or a chain of links of some kilobytes each at least; the limit grows with the data.
+    public int MaxStreams { get; } = (int)Math.Min(int.MaxValue, 4096 + ((end - start) / 8192));
+
+    public ResyncBudget Resync { get; } = ResyncBudget.For(end - start);
 
     public int PageCount { get; set; }
 
@@ -209,7 +221,17 @@ public sealed partial class OggParser
             return;
         }
 
-        if (!context.ParsePackets(codec.Id, node, Packets(region, stream, window, context.CancellationToken)))
+        int streamsBefore = context.Streams.Count;
+        if (context.ParsePackets(codec.Id, node, Packets(region, stream, window, context.CancellationToken)))
+        {
+            // A codec that reports several streams is not known to play them together, as Matroska does not mark them.
+            List<StreamInfo> made = [.. context.Streams.Skip(streamsBefore)];
+            if (made.Count == 1)
+            {
+                context.UpdateStream(made[0], made[0] with { PlaybackGroup = region.GroupBase + stream.Link });
+            }
+        }
+        else
         {
             region.Findings.Add(stream.Index, Severity.Info, "ogg.codec-not-analyzed", node, _ =>
                 $"The logical stream 0x{stream.Serial:X8} holds {codec.Name}, which is recognized but not analyzed yet; only its pages are.");

@@ -2,28 +2,31 @@ using Encspect.Core;
 
 namespace Encspect.Formats.WavPack;
 
-// Findings of one kind are reported once per stream with a count, pointing at the first case.
+// Findings of one code and one case (the same problem, as the optional case argument tells) are
+// reported once per stream with a count, pointing at the first case. A code that stands for several
+// problems gets a case for each, so the message of the first never names another's.
 internal sealed class FindingCollector
 {
-    private readonly Dictionary<string, (Severity Severity, Func<Node> Node, int Count, Func<int, string> Message)> _aggregated = [];
-    private readonly List<string> _order = [];
+    private readonly Dictionary<(string Code, string Case), (Severity Severity, Func<Node> Node, int Count, Func<int, string> Message)> _aggregated = [];
+    private readonly List<(string Code, string Case)> _order = [];
     private readonly List<Finding> _immediate = [];
 
-    public void Add(Severity severity, string code, Node node, Func<int, string> message) => Add(severity, code, () => node, message);
+    public void Add(Severity severity, string code, Node node, Func<int, string> message, string problem = "") => Add(severity, code, () => node, message, problem);
 
     // node is built only for the first case, and only when the findings are reported, so a finding
     // repeated over many units builds one node, and a node that grows while the units are read (a run
     // of packets) is built as it ends.
-    public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message)
+    public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message, string problem = "")
     {
-        if (_aggregated.TryGetValue(code, out var existing))
+        (string, string) key = (code, problem);
+        if (_aggregated.TryGetValue(key, out var existing))
         {
-            _aggregated[code] = existing with { Count = existing.Count + 1 };
+            _aggregated[key] = existing with { Count = existing.Count + 1 };
             return;
         }
 
-        _aggregated[code] = (severity, node, 1, message);
-        _order.Add(code);
+        _aggregated[key] = (severity, node, 1, message);
+        _order.Add(key);
     }
 
     public void AddNow(Severity severity, string code, string message, Node node) => _immediate.Add(new Finding(severity, code, message, node));
@@ -35,9 +38,9 @@ internal sealed class FindingCollector
             context.AddFinding(finding.Severity, finding.Code, finding.Message, finding.Node);
         }
 
-        foreach (string code in _order)
+        foreach ((string code, string problem) in _order)
         {
-            var entry = _aggregated[code];
+            var entry = _aggregated[(code, problem)];
             context.AddFinding(entry.Severity, code, entry.Message(entry.Count), entry.Node(), entry.Count);
         }
 

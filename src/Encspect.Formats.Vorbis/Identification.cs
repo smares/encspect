@@ -77,9 +77,9 @@ internal sealed record Identification(uint Version, int Channels, uint Rate, int
         header.Add(Node.FromMapped("Vorbis String", packet, 1, 7, "vorbis", description: Explain.VorbisString));
         header.Add(Node.FromMapped("Vorbis Version", packet, 7, 11, NodeValue.Integer(Version), description: Explain.Version));
         header.Add(Node.FromMapped("Channels", packet, 11, 12, NodeValue.Integer(Channels), description: Explain.Channels));
-        if (VorbisParser.Layout(Channels) is { } layout)
+        if (VorbisParser.Speakers(Channels) is { } layout)
         {
-            header.Add(Node.FromMapped("Channel Layout", packet, 11, 12, $"{layout.Name}: {string.Join(", ", layout.Speakers)}", description: Explain.ChannelLayout));
+            header.Add(Node.FromMapped("Channel Layout", packet, 11, 12, $"{VorbisParser.ChannelMode(Channels)}: {ChannelLayouts.Speakers(layout)}", description: Explain.ChannelLayout));
         }
 
         header.Add(Node.FromMapped("Sample Rate", packet, 12, 16, NodeValue.Integer(Rate, "Hz"), description: Explain.SampleRate));

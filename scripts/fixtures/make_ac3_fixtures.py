@@ -244,6 +244,15 @@ def build():
                                  "liba52": "liba52's tool reads frames by their sizes, so it does not resync after the cut frame."},
                         "damaged": [1536]})
 
+    # The configuration changes twice: 2/0, mono, 2/0. Each run is a stream.
+    data = silent(2) + silent(2, acmod=1) + silent(2)
+    fixture("stream-changes", ".ac3", "Two 2/0 frames, two mono frames, two 2/0 frames: the configuration changes twice and each run is its own stream.", data, frames_of(data),
+            [stream("AC-3", 48000, 2, 0, 2 * 1536), stream("AC-3", 48000, 1, 0, 2 * 1536), stream("AC-3", 48000, 2, 0, 2 * 1536)],
+            [("ac3.stream-changed", "from AC-3, 48000 Hz, 2/0 to AC-3, 48000 Hz, 1/0; the streams change 2 times")],
+            crosscheck={"ffprobe": False, "decode": False, "liba52": True,
+                        "skip": {"ffprobe": "ffprobe reports the first stream's parameters only.",
+                                 "decode": "ffmpeg's decoder takes the first frame's channel layout and drops the frames that differ."}})
+
     # bsid 9 and 10: AC-3 syntax at half and a quarter of the sample rate, which A/52 does not define.
     data = silent(4, bsid=9, frmsizecod=10)
     fixture("bsid-9", ".ac3", "Four frames with bsid 9, which ffmpeg and liba52 decode at half the rate.", data, frames_of(data),
@@ -321,6 +330,17 @@ def build():
             crosscheck={"ffprobe": True, "ffprobe_bitrate": False, "decode": True, "damaged": [0],
                         "skip": {"ffprobe_bitrate": "ffmpeg gives the bitrate of the first frame it decodes, not of the dependent frame before it."}})
 
+    # Three dependent frames of substream 0 after each independent frame: a program frame holds each dependent substream once, so the
+    # second and third are left out of the figures (Annex E 2.3.1.2).
+    unit = eac3(acmod=2, words=200) + eac3(strmtyp=1, acmod=2, chanmap=LRS_RRS, words=160) * 3
+    data = unit * 3
+    fixture("dependent-repeated", ".eac3", "Three access units of an independent 2/0 frame and three dependent frames, all of dependent substream 0, with the rear surround pair.",
+            data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 3 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])],
+            [("ac3.dependent-excess", "6 dependent frames are left out of the figures and statistics after a dependent substream ID repeats")],
+            crosscheck={"ffprobe": False, "decode": False,
+                        "skip": {"ffprobe": "The stream breaks Annex E 2.3.1.2, so what ffmpeg's parser makes of the repeated substream IDs says nothing about the figures.",
+                                 "decode": "ffmpeg decodes the repeated dependent substreams as it likes; the check says nothing about the figures."}})
+
     # E-AC-3 with two blocks per frame and frame exponent strategies, mono; and the same rate with
     # six blocks and expstre 0.
     data = eac3(acmod=1, numblkscod=1, words=64, bsmod=0) * 6
@@ -375,6 +395,17 @@ def build():
              ("ac3.config-reserved", "Reserved bits")],
             fmt="MP4", boxes=[[p, o, s] for p, o, s in boxes],
             crosscheck={"ffprobe": True, "decode": True})
+    # A sample that ends inside its frame.
+    frames = [ac3()[:700]] + [ac3() for _ in range(5)]
+    entry = mp4.mp4a(2, 48000, mp4.box("dac3", m.silent_dac3(0, 8, 0, 2, 0, 10)), format=b"ac-3")
+    track = mp4.Track(1, frames, 48000, 2, entry, durations=[1536] * 6)
+    data, boxes, chunks = mp4.movie([track])
+    fixture("sample-short", ".mp4", "Six 2/0 frames in MP4 with a matching dac3 box, the first sample 68 bytes short of its frame.", data,
+            sample_rows(track, chunks), [stream("AC-3", 48000, 2, 0, 6 * 1536)],
+            [("ac3.frame-truncated", "A sample ends inside its frame")], fmt="MP4", boxes=[[p, o, s] for p, o, s in boxes], read=False,
+            crosscheck={"ffprobe": False, "decode": False,
+                        "skip": {"ffprobe": "ffmpeg's AC-3 parser drops the sample that ends inside its frame, so ffprobe lists five packets where the file has six samples.",
+                                 "decode": "ffmpeg drops the short sample's frame."}})
     unit = eac3(acmod=7, lfeon=1, words=400, bsmod=0) + eac3(strmtyp=1, acmod=2, chanmap=LRS_RRS, words=160)
     samples = [unit] * 4
     rate = (len(unit) * 8 * 48000 // 1536) // 1000
@@ -426,6 +457,14 @@ def build_object_audio():
                     "AC-3/Statistics/JOC Object Count": "15 objects"},
             crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False,
                         "skip": {"skip_insertion": "The frames already hold skip fields, which the rewrite does not combine with its own."}})
+
+    # The file ends inside block 2's skip field, which fits its frame: the frame is truncated, not overrun.
+    cut = 3 * len(atmos_frame()) + 264
+    fixture("truncated-in-skip", ".eac3", "Three 5.1 frames of joc-atmos and a fourth cut in the middle of block 2's skip field.", data[:cut], frames_of(data[:cut]),
+            [stream("E-AC-3", 48000, 7, 1, 4 * 1536, vbr=True, objects=15)], [("ac3.frame-truncated", "of its 2048 bytes")],
+            crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
+                        "skip": {"ffprobe": "ffmpeg drops the truncated frame.", "decode": "ffmpeg drops the truncated frame.",
+                                 "skip_insertion": "The frames already hold skip fields, which the rewrite does not combine with its own."}})
 
     # The same frames in MP4, with dec3 carrying the extension (TS 103 420 C.3.1).
     unit = atmos_frame()
@@ -585,7 +624,7 @@ def sample_rows(track, chunks, split=False):
         for sample in chunk:
             inner = 0
             while inner < len(sample):
-                length = m.header(sample, inner)["length"]
+                length = min(m.header(sample, inner)["length"], len(sample) - inner)
                 rows.append([at + inner, length])
                 inner += length
             at += len(sample)

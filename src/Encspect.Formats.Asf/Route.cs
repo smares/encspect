@@ -124,6 +124,7 @@ public sealed partial class AsfParser
     private static void Route(State state)
     {
         CheckEncryptedStreams(state);
+        SummarizeAdvancedEncryption(state);
         if (state.DataNode is null || state.Figures is null)
         {
             // Without a Data Object there is nothing to read, but a protected stream is still reported as such.
@@ -383,18 +384,5 @@ public sealed partial class AsfParser
                 StreamNumber = stream.Number,
             },
         };
-    }
-
-    // The play duration the File Properties Object gives, less the preroll, in seconds, or null where
-    // there is none or it is invalid (a broadcast).
-    private static double? DeclaredDuration(State state)
-    {
-        if (state.FilePropertiesNode is null || state.IsBroadcast || state.PlayDuration == 0)
-        {
-            return null;
-        }
-
-        double seconds = (state.PlayDuration / 10_000_000.0) - (state.Preroll / 1000.0);
-        return seconds > 0 ? seconds : null;
     }
 }

@@ -96,7 +96,8 @@ internal sealed class SubstreamFacts
 
     public bool HasStaticFields { get; set; }
 
-    // The frame's duration in seconds from the reference clock (7.5.2, nuExSSFrameDurationCode), or 0 without static fields.
+    // The frame's duration in seconds from the reference clock (7.5.2, nuExSSFrameDurationCode), or 0 where none is known; a header
+    // without static fields has the one of the last header that carried them.
     public double Duration { get; set; }
 
     public bool IsCrcValid { get; set; }
@@ -115,6 +116,9 @@ internal sealed class AssetFacts
 
     public bool HasStaticFields { get; set; }
 
+    // The figures below are the header's own or those of the last header that stated them; false before any.
+    public bool AreFiguresKnown { get; set; }
+
     public int Channels { get; set; }
 
     public int BitResolution { get; set; }
@@ -128,6 +132,10 @@ internal sealed class AssetFacts
     public int SpeakerMask { get; set; }
 
     public bool HasSpeakerMask { get; set; }
+
+    public bool HasEmbeddedStereo { get; set; }
+
+    public bool HasEmbeddedSixChannel { get; set; }
 
     // The core component of the asset's core frame, read like a core frame: its header, if the core is in the substream.
     public CoreHeader? Core { get; set; }

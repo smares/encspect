@@ -23,6 +23,8 @@ internal sealed class Records
     public List<Detail> Details { get; } = [];
 
     public int? ChannelCount { get; set; }
+
+    public uint? ChannelMask { get; set; }
 }
 
 // The state of one analysis: the entries (blocks and runs of bytes between them) in file order, the
@@ -35,6 +37,11 @@ internal sealed class State(Source source, CancellationToken cancellation)
     public const int MaxListedSubBlocks = 1024;
     public const int MaxStoredPerSubBlock = 4096;
     public const int MaxStoredPerBlock = 1 << 16;
+
+    // What all the detailed blocks together may list and keep, so the caps per block cannot multiply
+    // with the number of blocks: about 2.5 MB of sub-block records and 16 MiB of bytes at most.
+    public const int MaxListedSubBlocksInAll = 1 << 16;
+    public const int MaxStoredInAll = 1 << 24;
     public const int MaxSetBlocks = 4096;
 
     public Source Source { get; } = source;
@@ -86,6 +93,11 @@ internal sealed class State(Source source, CancellationToken cancellation)
 
     public long BlockBytes { get; set; }
 
+    // Sub-blocks listed and bytes of them kept across the detailed blocks, against the caps above.
+    public int ListedSubBlocks { get; set; }
+
+    public long StoredBytes { get; set; }
+
     public bool HasLossyBlocks { get; set; }
 
     public int TermsBlocks { get; set; }
@@ -114,6 +126,7 @@ internal sealed class State(Source source, CancellationToken cancellation)
         {
             field = value;
             Records.ChannelCount = value?.Value.Channels;
+            Records.ChannelMask = value?.Value.Mask;
         }
     }
 
@@ -135,6 +148,13 @@ internal sealed class State(Source source, CancellationToken cancellation)
     public int DeclaredEntry { get; set; } = -1;
 
     public bool IsDeclaredUnknown { get; set; }
+
+    // Whether the first audio block is walked: libwavpack has settled the channels by then, from a channel
+    // info in the blocks up to it or from that block's flags.
+    public bool IsConfigured { get; set; }
+
+    // The header of the block that settled them.
+    public BlockHeader ConfigHeader { get; set; }
 
     // The first block's float and integer details, for the lossless verdict.
     public bool HasFloatInfo { get; set; }

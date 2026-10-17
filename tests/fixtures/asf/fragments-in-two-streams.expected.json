@@ -1,0 +1,220 @@
+{
+ "description": "Two Windows Media Audio streams, each with fragments of a media object that never began (one in stream 1, two in stream 2): the findings count them per stream and name their own stream.",
+ "format": "ASF",
+ "length": 1978,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   392
+  ],
+  [
+   "Data Object",
+   392,
+   1586
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   106
+  ],
+  [
+   "Stream Properties Object",
+   240,
+   106
+  ],
+  [
+   "Header Extension Object",
+   346,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 28,
+   "tag": 353,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 100,
+   "bits": 16,
+   "codec_data": "008800000f0000000000"
+  },
+  {
+   "number": 2,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 28,
+   "tag": 353,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 100,
+   "bits": 16,
+   "codec_data": "008800000f0000000000"
+  }
+ ],
+ "packets": [
+  [
+   442,
+   512,
+   2
+  ],
+  [
+   954,
+   512,
+   2
+  ],
+  [
+   1466,
+   512,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   0,
+   2,
+   1,
+   0,
+   8,
+   100,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   7,
+   50,
+   8,
+   50,
+   false,
+   true
+  ],
+  [
+   1,
+   2,
+   9,
+   30,
+   8,
+   40,
+   false,
+   true
+  ],
+  [
+   2,
+   2,
+   9,
+   60,
+   8,
+   40,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   2,
+   0,
+   8,
+   100,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   100,
+   0,
+   [
+    [
+     473,
+     100
+    ]
+   ]
+  ],
+  [
+   2,
+   1,
+   100,
+   0,
+   [
+    [
+     590,
+     100
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   100,
+   30,
+   [
+    [
+     1554,
+     100
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1978,
+  "packets": 3,
+  "play_duration": 10000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 512,
+  "max_packet": 512,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.fragment-order",
+   "contains": "A fragment of a media object of stream 1 does not"
+  },
+  {
+   "code": "asf.fragment-order",
+   "contains": "2 fragments of media objects of stream 2"
+  },
+  {
+   "code": "wma.frame-invalid",
+   "contains": "coefficients run past the end of the block"
+  },
+  {
+   "code": "wma.bit-offset",
+   "contains": "bit offset past its end"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "the media objects are not Windows Media Audio superframes."
+ }
+}

@@ -127,7 +127,7 @@ A JSON report (schema version 1) is an object:
 - **Streams** are the audio streams as the format defines them; an MPEG stream continues across a tag embedded in it and ends where the version, layer or sample rate changes.
   - `nodes` are the paths of the nodes that hold the stream.
   - `duration` is in seconds and `averageBitrate` in kbps.
-  - `playbackGroup` is present on the streams of the tracks of an MP4 movie or of a Matroska Segment, which play at the same time: streams with the same number are one presentation, and a summary counts the longest of them once (a movie with one audio track has a group of one). Streams without it, and streams of different groups, follow one another and add up.
+  - `playbackGroup` is present on streams that play at the same time (the tracks of an MP4 movie or of a Matroska Segment, the streams of one link of an Ogg chain, the independent substreams of a raw E-AC-3 file); streams with the same number are one presentation, and a summary counts the longest of them once (a movie with one audio track has a group of one). Streams without it, and streams of different groups, follow one another and add up.
   - `encoder` and `encoderConfidence` name the software that turned the audio into the stream; `writer` and `writerConfidence` the software that put it into the file (the muxer, the container writer, a tagger). They are resolved apart, each from its own evidence, and either is left out where nothing names one. A writer that differs from the encoder is not a conflict. `encoder` holds what the stream and the tags that name an encoder show (a TSSE frame, a BUILDVER chunk, ffmpeg's `Lavc…` ID); `writer` holds what the container's layout and the tags that name a writer show (ASF attributes, MP4's ©too and ©swr, an APEv2 Encoder item, ffmpeg's `Lavf…` text).
   - `channelLayout` lists the speaker each channel feeds, in the stream's channel order as its format defines it. A channel without a speaker position, such as either program of dual channel, is `"discrete"`.
   - `channelLayoutName` is the layout's common name where it has one: `mono`, `stereo`, `quadraphonic`, `5.1`, `7.1`, `22.2` and others.
@@ -151,7 +151,7 @@ The CSV row of a file has:
 
 - its format and the number of streams;
 - the first audio stream's codec;
-- the duration and samples of the audio streams together, where streams that play at the same time (a playback group: the tracks of a movie or a Matroska Segment) count the longest once;
+- the duration and samples of the audio streams together, where streams that play at the same time (a playback group: the tracks of a movie or a Matroska Segment, the streams of one Ogg chain link, the independent substreams of a raw E-AC-3 file) count the longest once;
 - their average bitrate, weighted by duration;
 - the first audio stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);
 - the first encoder named by an audio stream and its confidence (`Encoder`, `Encoder Confidence`), and the first writer named by any stream and its confidence (a fact about the file) (`Writer`, `Writer Confidence`, the two columns after the encoder's);

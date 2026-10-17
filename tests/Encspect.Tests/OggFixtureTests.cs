@@ -406,6 +406,15 @@ public class OggFixtureTests
             }
 
             Assert.Equal(info.GetProperty("is_vbr").GetBoolean(), stream.IsVbr);
+            if (info.TryGetProperty("playback_group", out JsonElement group))
+            {
+                Assert.Equal(group.GetInt32(), stream.PlaybackGroup);
+            }
+            else
+            {
+                Assert.Null(stream.PlaybackGroup);
+            }
+
             if (info.TryGetProperty("channel_mode", out JsonElement mode))
             {
                 Assert.Equal(mode.GetString(), stream.ChannelMode);

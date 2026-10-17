@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Text.RegularExpressions;
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
@@ -185,6 +186,23 @@ public class WmaFindingTests
         Node inside = Find(parent, "Superframes Inside a Frame")!;
         Assert.Equal(1L, inside.Value?.AsInteger());
         Assert.Contains(context.Findings, f => f.Code is "wma.frame-stuffing" or "wma.frame-filler");
+    }
+
+    // The finding is built when the findings are flushed, after the whole stream: its node must still be the frame it describes.
+    [Theory]
+    [InlineData("asf/external-windows-wma92-cbr-stereo-44k-128.wma", "wma.frame-stuffing")]
+    [InlineData("asf/external-windows-wma92-cbr-stereo-44k-128-sdk.wma", "wma.frame-filler")]
+    public void AFillerFindingPointsAtTheFrameInTheSuperframeItNames(string fixture, string code)
+    {
+        Stream s = Load(fixture, 0x0161);
+        Finding finding = Run(new WmaStandardParser(), s.Objects, s).First(f => f.Code == code);
+        Match match = Regex.Match(finding.Message, @"in the superframe at 0x([0-9A-F]+)");
+        Assert.True(match.Success, finding.Message);
+        long superframe = Convert.ToInt64(match.Groups[1].Value, 16);
+        // The frame began in the superframe before the one the message names (the test places superframes 10,000 bytes apart) and ends there;
+        // the last frame of the stream, where the finding used to point, is far from both.
+        Node node = finding.Node!;
+        Assert.True(node.Offset >= superframe - 10_000 && node.End <= superframe + s.Format.BlockAlign, $"{node.Offset}+{node.Length} is not at the superframe at {superframe}");
     }
 
     private static int ByteOffsetBits(AudioFormat format)

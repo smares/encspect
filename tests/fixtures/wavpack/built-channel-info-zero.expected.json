@@ -402,12 +402,12 @@
   {
    "codec": "WavPack lossless",
    "layout": [
-    "front left",
-    "front right",
-    "front center",
-    "LFE",
-    "back left",
-    "back right"
+    "discrete",
+    "discrete",
+    "discrete",
+    "discrete",
+    "discrete",
+    "discrete"
    ],
    "sample_rate": 48000,
    "channels": 6,
@@ -434,9 +434,16 @@
   {
    "code": "wavpack.channel-info-invalid",
    "contains": "refuses"
+  },
+  {
+   "code": "wavpack.channel-info-ignored",
+   "contains": "gives 6 channels and a mask of 0x3F, but the flags of the first audio block that verifies gave 2 channels"
   }
  ],
  "crosscheck": {
-  "valid": false
+  "valid": false,
+  "decode": {
+   "opens": false
+  }
  }
 }

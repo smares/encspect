@@ -762,7 +762,8 @@ public sealed class Analyzer
         }
 
         detection = shownDetection;
-        return new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => [.. tag.Children, shownDetection])
+        // The tag's children are not copied: a tag may hold a million items, built in blocks as they are read.
+        return new Node(tag.Name, tag.Offset, tag.Length, tag.Value, () => new ChildrenAndLast(tag.Children, shownDetection))
         {
             Kind = NodeKind.Tag,
             Description = tag.Description,

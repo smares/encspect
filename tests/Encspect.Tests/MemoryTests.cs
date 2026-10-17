@@ -1,5 +1,8 @@
 using System.Runtime;
+using System.Text;
 using Encspect.Core;
+using Encspect.Formats.Aac;
+using Encspect.Formats.WavPack;
 using Encspect.Host;
 using Xunit.Abstractions;
 
@@ -212,6 +215,30 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // Units whose extension substream header omits the static fields keep a copy of the ones in force (7.5.2) in their record.
+    [Fact]
+    public void ManyDtsSubstreamsWithoutStaticFieldsStayCompact()
+    {
+        const int units = 30_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "exss-static-first-only.dts"));
+        const int first = 704;
+        const int later = 696;
+        byte[] data = new byte[first + (later * (units - 1))];
+        source.AsSpan(0, first).CopyTo(data);
+        for (int at = first; at < data.Length; at += later)
+        {
+            source.AsSpan(first, later).CopyTo(data.AsSpan(at));
+        }
+
+        (Report report, long kept, long peak) = Measure("units.dts", data, source);
+
+        Assert.Equal(units * 512L, Assert.Single(report.Streams).Samples);
+        output.WriteLine($"{kept / units} bytes kept and {peak / units} bytes peak per unit");
+        Assert.True(kept < units * DtsSubstreamKeptBound, $"The report keeps {kept / units} bytes per unit.");
+        Assert.True(peak < units * DtsSubstreamPeakBound, $"The live heap grew by {peak / units} bytes per unit.");
+        GC.KeepAlive(report);
+    }
+
     private const long DtsKeptBound = 160;
     private const long DtsPeakBound = 200;
     private const long DtsSubstreamKeptBound = 450;
@@ -281,7 +308,7 @@ public class MemoryTests(ITestOutputHelper output)
         Bounded("objects.asf", AsfBuilder.WithUnknownObjects("minimal", 900_000), 150_000_000, "asf.too-many-objects");
     }
 
-    private void Bounded(string name, byte[] data, long bound, string code, bool expectFinding = true)
+    private Report Bounded(string name, byte[] data, long bound, string code, bool expectFinding = true)
     {
         (Report report, long kept, long peak) = Measure(name, data, data[..Math.Min(data.Length, 4096)]);
         output.WriteLine($"{name}: {kept / 1_000_000} MB kept and {peak / 1_000_000} MB peak for {data.Length / 1_000_000} MB");
@@ -293,6 +320,7 @@ public class MemoryTests(ITestOutputHelper output)
 
         Assert.True(peak < bound, $"{name}: the live heap grew by {peak / 1_000_000} MB.");
         GC.KeepAlive(report);
+        return report;
     }
 
     // More packets than are described one by one: the rest are counted, and the heap stays near the cap's.
@@ -636,9 +664,9 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // An SV8 audio packet of 4^7 frames in 4 bytes declares about 428 s: the per-second figures are
-    // kept only for seconds a packet starts in, so 200,000 such packets cost per packet, not per
-    // second they declare.
+    // An SV8 audio packet of 4^4 frames in 35 bytes (a bit for each frame at least, which libmpcdec
+    // reads) declares about 6.7 s: the per-second figures are kept only for seconds a packet starts
+    // in, so 200,000 such packets cost per packet, not per second they declare.
     [Fact]
     public void LongEmptySv8PacketsStayCompact()
     {
@@ -650,6 +678,38 @@ public class MemoryTests(ITestOutputHelper output)
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * MusepackKeptBound, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * MusepackPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // Every kind of packet past the detailed ones joins a run, whatever its key: the stream header,
+    // ReplayGain, encoder info, seek table offset and seek table packets repeated cost about nothing
+    // each too, and the findings they would add are counted once. The bound is the growth from 0.5 to 1.5
+    // million packets, as in UnknownSv8PacketsStayCompact.
+    [Theory]
+    [InlineData("RG", "01000000000000000000")]
+    [InlineData("RG", "")]
+    [InlineData("RG", "02")]
+    [InlineData("EI", "50010000")]
+    [InlineData("SO", "00")]
+    [InlineData("ST", "010000")]
+    [InlineData("SH", "")]
+    public void RepeatedSv8StreamPacketsStayCompact(string key, string payloadHex)
+    {
+        const int fewer = 500_000;
+        const int packets = 1_500_000;
+        byte[] payload = Convert.FromHexString(payloadHex);
+        byte[] warmUp = Sv8RepeatedPackets(5000, Encoding.ASCII.GetBytes(key), payload);
+
+        (_, long fewerKept, long fewerPeak, string fewerWhere) = MeasureExcess("repeated.mpc", Sv8RepeatedPackets(fewer, Encoding.ASCII.GetBytes(key), payload), warmUp);
+        (Report report, long kept, long peak, string where) = MeasureExcess("repeated.mpc", Sv8RepeatedPackets(packets, Encoding.ASCII.GetBytes(key), payload), warmUp);
+
+        Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
+        Assert.True(report.Findings.Count < 40, $"{report.Findings.Count} findings.");
+        double keptPerPacket = (kept - fewerKept) / (double)(packets - fewer);
+        double peakPerPacket = (peak - fewerPeak) / (double)(packets - fewer);
+        output.WriteLine($"{key} {payloadHex}: {Hundredths(keptPerPacket)} kept and {Hundredths(peakPerPacket)} held per further packet; {fewerWhere} {where}");
+        Assert.True(keptPerPacket < UndetailedPacketBound, $"The report keeps {keptPerPacket:F2} bytes per further {key} packet.");
+        Assert.True(peakPerPacket < UndetailedPacketBound, $"The analysis held {peakPerPacket:F2} more bytes per further {key} packet than it starts and ends with. {RuntimeSettings()}");
         GC.KeepAlive(report);
     }
 
@@ -715,6 +775,41 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] block = WavPackTinyBlocks(1);
         byte[] data = WavPackBuilder.Join(block, WavPackBuilder.Parts(block).Take(1).Concat(Enumerable.Repeat(WavPackBuilder.Sub(0, []), 500_000)).Concat(WavPackBuilder.Parts(block).Skip(1)));
         Bounded("subblocks.wv", data, 60_000_000, "wavpack.version-unsupported", expectFinding: false);
+    }
+
+    // The caps on what a detailed block lists and keeps are shared by all the detailed blocks, so 4,096 blocks of 1,024 sub-blocks
+    // list 64 K of them in all (3 MB measured on linux-x64); per block alone the caps allowed 4 million of them, about 170 MB of records.
+    [Fact]
+    public void ManySubBlocksInManyDetailedWavPackBlocksShareOneBudget()
+    {
+        byte[] block = WavPackTinyBlocks(1);
+        List<byte[]> parts = WavPackBuilder.Parts(block);
+        byte[] full = WavPackBuilder.Join(block, parts.Take(1).Concat(Enumerable.Repeat(WavPackBuilder.Sub(0, []), 1023)).Concat(parts.Skip(1)));
+        byte[] data = [.. Enumerable.Repeat(full, 4096).SelectMany(b => b)];
+
+        Report report = Bounded("budget.wv", data, 15_000_000, "wavpack.block-index-overlap");
+
+        List<Node> blocks = [.. report.Root.Children.Single(n => n.Kind == NodeKind.Stream).Children.Where(c => c.Name == "Block")];
+        Assert.Equal(4096, blocks.Count);
+        Assert.Equal(State.MaxListedSubBlocksInAll, blocks.Sum(c => c.Children.Count(k => k.Children.Any(i => i.Name == "ID"))));
+    }
+
+    // Bytes kept of the optional sub-blocks of all the detailed blocks together are capped too: 700 blocks of 64 KiB of them keep 16 MiB
+    // (18 MB measured on linux-x64 with the report alive); per block alone the caps allowed 64 KiB of each.
+    [Fact]
+    public void StoredBytesOfManyDetailedWavPackBlocksShareOneBudget()
+    {
+        byte[] block = WavPackTinyBlocks(1);
+        List<byte[]> parts = WavPackBuilder.Parts(block);
+        byte[] big = WavPackBuilder.Sub(0x3E, new byte[State.MaxStoredPerSubBlock]);
+        byte[] full = WavPackBuilder.Join(block, parts.Take(1).Concat(Enumerable.Repeat(big, 16)).Concat(parts.Skip(1)));
+        byte[] data = [.. Enumerable.Repeat(full, 700).SelectMany(b => b)];
+
+        Report report = Bounded("stored.wv", data, 30_000_000, "wavpack.optional-subblock-unknown");
+
+        List<Node> blocks = [.. report.Root.Children.Single(n => n.Kind == NodeKind.Stream).Children.Where(c => c.Name == "Block")];
+        Assert.Equal(700, blocks.Count);
+        Assert.Contains(blocks[0].Children, c => c.Name == "Unknown Sub-block");
     }
 
     // Blocks of 32 bytes that hold nothing, in a file of 64 MB.
@@ -787,7 +882,7 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // An Opus stream keeps a 20-byte record per stream of each packet, 2 bytes per frame and its
+    // An Opus stream keeps a 24-byte record per stream of each packet, 2 bytes per frame and its
     // per-packet series (16 bytes), plus its share of the page records: 40 bytes in all on
     // linux-x64, and a peak of 41. The bounds leave about twice that, and for the peak room for
     // macOS on arm64, as the Vorbis one does.
@@ -811,6 +906,81 @@ public class MemoryTests(ITestOutputHelper output)
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * 90L, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * 120L, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // Mapping family 255 with 255 streams (RFC 7845, section 5.1.1.3) and packets of one byte, whose
+    // first stream's self-delimited framing breaks: the streams after it are implied as missing, where
+    // each once kept a 20-byte record (about 5 KB per packet of 2 bytes in the file).
+    [Fact]
+    public void ManyBrokenMultistreamOpusPacketsStayCompact()
+    {
+        const int packets = 20_000;
+        byte[] head = [.. "OpusHead"u8, 1, 255, 0x38, 0x01, 0x80, 0xBB, 0, 0, 0, 0, 255, 255, 0, .. Enumerable.Range(0, 255).Select(i => (byte)i)];
+        var builder = new OggBuilder()
+            .Page(6, 0, 2, head)
+            .Page(6, 0, 0, [.. "OpusTags"u8, .. OggBuilder.VorbisComment("Encspect")]);
+        byte[] packet = [0xFC];
+        for (int done = 0; done < packets; done += 250)
+        {
+            builder.Page(6, (done + 250) * 960L, done + 250 == packets ? (byte)4 : (byte)0, [.. Enumerable.Repeat(packet, 250)]);
+        }
+
+        (Report report, long kept, long peak) = Measure("opus-multistream.opus", builder.Bytes);
+
+        Assert.Contains(report.Findings, f => f.Code == "opus.self-delimiting");
+        output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
+        Assert.True(kept < packets * 150L, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(peak < packets * 250L, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // An OpusTags packet of half a million comments of four bytes each (a length of 0): each once became three nodes and its own
+    // finding, 919 MB for a 2 MB packet. The comments are records of 12 bytes whose nodes are built in blocks when read, and
+    // the finding is one with a count.
+    [Fact]
+    public void ManyEmptyVorbisCommentsStayBounded()
+    {
+        const int comments = 500_000;
+        byte[] tags = new byte[8 + 4 + 4 + (comments * 4)];
+        "OpusTags"u8.CopyTo(tags);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(tags.AsSpan(12), comments);
+        byte[] head = [.. "OpusHead"u8, 1, 1, 0x38, 0x01, 0x80, 0xBB, 0, 0, 0, 0, 0];
+        var builder = new OggBuilder().Page(6, 0, 2, head).SpanningPacket(6, tags, 0).Page(6, 960, 4, [0xF8, 0, 0, 0]);
+
+        (Report report, long kept, long peak) = Measure("comments.opus", builder.Bytes, builder.Bytes[..4096]);
+
+        Finding finding = report.Findings.SingleOrDefault(f => f.Code == "vorbis-comment.no-separator")
+            ?? throw new Xunit.Sdk.XunitException(string.Join("; ", report.Findings.Select(f => $"{f.Code}: {f.Message}")));
+        Assert.Equal(comments, finding.Count);
+        Assert.Equal(1, report.Findings.Count(f => f.Code.StartsWith("vorbis-comment.", StringComparison.Ordinal)));
+        output.WriteLine($"{kept / 1_000_000} MB kept and {peak / 1_000_000} MB peak for {builder.Length / 1_000_000} MB");
+        Assert.True(peak < 80_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
+    }
+
+    // Beginning-of-stream pages of 29 bytes, each of a stream of its own that never ends: each stream cost a node of seven
+    // children and findings, 10 KB for 29 bytes, so past a count the streams are not followed and one finding counts their pages.
+    [Fact]
+    public void ManyLogicalStreamsStayBounded()
+    {
+        const int streams = 100_000;
+        var builder = new OggBuilder();
+        for (uint serial = 1; serial <= streams; serial++)
+        {
+            builder.Page(serial, 0, 2, [0xAB]);
+        }
+
+        (Report report, long kept, long peak) = Measure("streams.ogg", builder.Bytes, builder.Bytes[..4096]);
+
+        Node ogg = report.Root.Children.Single();
+        Assert.True(ogg.Children.Count(c => c.Name == "Logical Stream") < 5_000);
+        Finding finding = report.Findings.Single(f => f.Code == "ogg.too-many-streams");
+        Assert.True(finding.Count > streams - 5_000);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        output.WriteLine($"{kept / 1_000_000} MB kept and {peak / 1_000_000} MB peak for {builder.Length / 1_000_000} MB");
+        Assert.True(peak < 150_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
         GC.KeepAlive(report);
     }
 
@@ -1142,8 +1312,9 @@ public class MemoryTests(ITestOutputHelper output)
     // a common window, max_sfb 0 and a global gain of 100 in each channel, and an END element, then
     // zero bytes no decoder reads, so that keeping a sample's bytes would show), in one chunk after
     // moov (ISO/IEC 14496-12 8.5 to 8.7).
-    private static byte[] Mp4Samples(int count)
+    private static byte[] Mp4Samples(int count, byte[]? config = null, int padding = 94)
     {
+        config ??= [0x12, 0x10];
         static byte[] Box(string type, params byte[][] parts)
         {
             byte[] payload = parts.SelectMany(p => p).ToArray();
@@ -1152,10 +1323,11 @@ public class MemoryTests(ITestOutputHelper output)
 
         static byte[] BigEndian(int value) => [(byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value];
 
-        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x64, 0x1C, .. new byte[94]];
+        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x64, 0x1C, .. new byte[padding]];
         byte[] Moov(int mdatPayload)
         {
-            byte[] esds = Box("esds", [0, 0, 0, 0, 0x03, 25, 0, 1, 0, 0x04, 17, 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x05, 2, 0x12, 0x10, 0x06, 1, 2]);
+            byte[] esds = Box("esds", [0, 0, 0, 0, 0x03, (byte)(20 + config.Length), 0, 1, 0, 0x04, (byte)(15 + config.Length), 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0x05, (byte)config.Length, .. config, 0x06, 1, 2]);
             byte[] mp4a = Box("mp4a", new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xAC, 0x44, 0, 0], esds);
             byte[] stsz = Box("stsz", [0, 0, 0, 0], BigEndian(0), BigEndian(count), Enumerable.Range(0, count).SelectMany(_ => BigEndian(unit.Length)).ToArray());
             byte[] stbl = Box("stbl",
@@ -1178,6 +1350,52 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] moov = Moov(ftyp.Length + moovLength + 8);
         byte[] mdat = [.. BigEndian(8 + (count * unit.Length)), .. "mdat"u8, .. Enumerable.Repeat(unit, count).SelectMany(u => u)];
         return [.. ftyp, .. moov, .. mdat];
+    }
+
+    // Access units of 1 Hz: 1024 seconds each, so the graph of bitrate over time would take a thousand entries per access unit
+    // (the reviewer's file of 200,000 units, 1 MB, took 9 GB). It keeps at most StreamFigures.MaxSeconds entries, and a finding says the
+    // rate is implausible.
+    [Fact]
+    public void AnExplicitSampleRateOfOneHertzKeepsTheGraphBounded()
+    {
+        byte[] config = [0x17, 0x80, 0x00, 0x00, 0x90];
+        byte[] data = Mp4Samples(200_000, config, padding: 0);
+
+        Bounded("rate-1-hz.m4a", data, 45_000_000, "aac.implausible-sample-rate");
+    }
+
+    // ADIF stores a record for each raw data block, and a block can be one byte (an END element and its alignment): past the cap the
+    // blocks are only measured and counted in the stream's figures, with a finding, and the heap stays near the cap's.
+    [Fact]
+    public void AdifBlocksPastTheCapStayBounded()
+    {
+        byte[] header = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "adif.aac"))[..17];
+        byte[] data = [.. header, .. Enumerable.Repeat((byte)0xE0, Adif.MaxBlocks + 1_000)];
+
+        Report report = Bounded("end-blocks.aac", data, 320_000_000, "aac.blocks-limit");
+
+        Assert.Equal((Adif.MaxBlocks + 1_000) * 1024L, Assert.Single(report.Streams).Samples);
+    }
+
+    // The same for ADTS: frames of 8 bytes, a header and an END element; the frames past the cap are counted from their headers.
+    [Fact]
+    public void AdtsFramesPastTheCapStayBounded()
+    {
+        byte[] first = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "ffmpeg-adts.aac"))[..7];
+        byte[] frame = [first[0], first[1], first[2], (byte)((first[3] & 0xFC) | 0), 1, (byte)(((8 & 7) << 5) | (first[5] & 0x1F)), first[6], 0xE0];
+        int count = RawAacParser.MaxFrames + 1_000;
+        byte[] data = new byte[count * 8];
+        for (int i = 0; i < count; i++)
+        {
+            frame.CopyTo(data, i * 8);
+        }
+
+        // One frame past the cap is overwritten with zeros: the counting resyncs after the gap and goes on.
+        Array.Clear(data, (RawAacParser.MaxFrames + 500) * 8, 8);
+
+        Report report = Bounded("end-frames.aac", data, 360_000_000, "aac.frames-limit");
+
+        Assert.Equal((count - 1) * 1024L, Assert.Single(report.Streams).Samples);
     }
 
     // MPEG-1 Layer III stereo frames at 32 kbps and 44100 Hz, 104 bytes each, whose side
@@ -1233,9 +1451,14 @@ public class MemoryTests(ITestOutputHelper output)
     // An SV8 stream (SV8 specification): a stream header with a sample count of 0, 44.1 kHz, 32
     // bands, stereo and 4^7 frames per audio packet and a valid CRC, ReplayGain version 1, then
     // packets of the key, audio packets with one byte, others empty, and the stream end.
-    private static byte[] Sv8EmptyPackets(int packets, ReadOnlySpan<byte> key)
+    private static byte[] Sv8EmptyPackets(int packets, ReadOnlySpan<byte> key) =>
+        Sv8RepeatedPackets(packets, key, key[0] == 'A' ? new byte[32] : []);
+
+    // The same stream with packets of the key and the payload, which the size field counts with itself
+    // and the key (the specification's sizes up to 127 here).
+    private static byte[] Sv8RepeatedPackets(int packets, ReadOnlySpan<byte> key, byte[] payload)
     {
-        byte[] body = [8, 0, 0, 0x1F, 0x1F];
+        byte[] body = [8, 0, 0, 0x1F, 0x1C];
         uint crc = 0xFFFFFFFF;
         foreach (byte b in body)
         {
@@ -1252,7 +1475,7 @@ public class MemoryTests(ITestOutputHelper output)
         // Filled in place: a list that doubles up to 16 MB and is copied out leaves tens of MB of
         // dead large arrays in the heap for the analysis that follows.
         byte[] tail = "SE\x03"u8.ToArray();
-        int packetLength = key[0] == 'A' ? 4 : 3;
+        int packetLength = 3 + payload.Length;
         byte[] data = new byte[4 + sh.Length + rg.Length + (packets * packetLength) + tail.Length];
         "MPCK"u8.CopyTo(data);
         sh.CopyTo(data, 4);
@@ -1262,7 +1485,8 @@ public class MemoryTests(ITestOutputHelper output)
         {
             data[at] = key[0];
             data[at + 1] = key[1];
-            data[at + 2] = key[0] == 'A' ? (byte)4 : (byte)3;
+            data[at + 2] = (byte)packetLength;
+            payload.CopyTo(data, at + 3);
         }
 
         tail.CopyTo(data, at);

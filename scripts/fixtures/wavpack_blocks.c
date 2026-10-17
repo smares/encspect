@@ -1,7 +1,9 @@
 /* Prints what libwavpack 5.6.0 reads from a WavPack file, for crosscheck_wavpack_fixtures.py: the
  * file's figures as WavpackOpenFileInput gives them (the version, channels, channel mask, rates, bits,
  * samples, mode flags, MD5 digest, source format and wrapper size), then every block read_next_header
- * finds, with its header and whether WavpackVerifySingleBlock accepts it. The program is built against
+ * finds, with its header and whether WavpackVerifySingleBlock accepts it, and last the full pass of a
+ * decoder: the file opened again as WavpackOpenFileInput does for wvunpack (block checksums verified),
+ * every sample unpacked with WavpackUnpackSamples, and the errors it counted. The program is built against
  * the pinned source tree (wavpack_tool.py): it includes src/wavpack_local.h and links the library's own
  * sources, so nothing here reads a block but libwavpack's own code.
  *
@@ -31,6 +33,36 @@ static int64_t get_length(void *id)
 static int can_seek(void *id) { return 1; }
 
 static WavpackStreamReader64 reader = { read_bytes, NULL, get_pos, set_pos_abs, set_pos_rel, push_back_byte, get_length, can_seek, NULL, NULL };
+
+/* The pass of a decoder: open the main file alone, unpack every sample, count what libwavpack counts as an error
+ * (a block it skips, a CRC that fails). Prints decode_open_error when the file does not open. */
+static void decode(const char *path)
+{
+    char error[100] = "";
+    FILE *file = fopen(path, "rb");
+    WavpackContext *wpc = file ? WavpackOpenFileInputEx64(&reader, file, NULL, error, OPEN_ALT_TYPES | OPEN_WRAPPER | OPEN_DSD_NATIVE, 0) : NULL;
+
+    if (!wpc) {
+        printf("decode_open_error %s\n", error);
+        if (file) fclose(file);
+        return;
+    }
+
+    int channels = WavpackGetNumChannels(wpc);
+    int32_t *buffer = malloc(4096 * (channels > 0 ? channels : 1) * sizeof(int32_t));
+    long long samples = 0;
+    uint32_t count;
+
+    while ((count = WavpackUnpackSamples(wpc, buffer, 4096)) > 0)
+        samples += count;
+
+    printf("decode_samples %lld\n", samples);
+    printf("decode_errors %d\n", WavpackGetNumErrors(wpc));
+    printf("decode_lossy %d\n", WavpackLossyBlocks(wpc));
+    free(buffer);
+    WavpackCloseFile(wpc);
+    fclose(file);
+}
 
 int main(int argc, char **argv)
 {
@@ -111,5 +143,6 @@ int main(int argc, char **argv)
     }
 
     fclose(wv);
+    decode(argv[1]);
     return 0;
 }

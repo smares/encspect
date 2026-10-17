@@ -83,7 +83,7 @@
      "Vorbis String": "vorbis",
      "Vorbis Version": "1",
      "Channels": "1",
-     "Channel Layout": "Mono: mono",
+     "Channel Layout": "Mono: front center",
      "Sample Rate": "44100 Hz",
      "Bitrate Maximum": "0 (not set)",
      "Bitrate Nominal": "0 (not set)",
@@ -263,7 +263,8 @@
    "duration": 0,
    "average_bitrate": null,
    "is_vbr": false,
-   "channel_mode": "Mono"
+   "channel_mode": "Mono",
+   "playback_group": 1
   },
   {
    "codec": "Vorbis",
@@ -273,7 +274,8 @@
    "samples": 0,
    "duration": 0,
    "average_bitrate": null,
-   "is_vbr": false
+   "is_vbr": false,
+   "playback_group": 2
   }
  ],
  "findings": [
