@@ -331,10 +331,11 @@ MEDIAINFO_SV7_ENCODER = "MediaInfo reads the SV7 encoder version from byte 24 (F
 MEDIAINFO_SIGNATURE_TAG = ("MediaInfo takes \"TAG\" 128 bytes before the end for an ID3v1 tag on the signature alone (Tag/File__Tags.cpp, "
                            "DetectBeginOfEndTags_Test), here inside the Musepack data that by its own size runs to the end of the file, "
                            "which the analyzer reports as a near miss")
-# An SV4 stream has no signature, and in this one MediaInfo finds a chain of MPEG audio frame headers
-# from 0x1B2F (its trace: "frame - Frame 0" there), which it reports as MPEG audio.
+# An SV4 stream has no signature, and in this one MediaInfo finds an MPEG audio frame header at 0x1B2F (its trace, --Details=1: "frame" there, 1153 bytes,
+# MPEG 2.5 Layer II at 12000 Hz, 96 kbps), which it reports as MPEG audio. MediaInfo 24.01 counted 7 frames; 26.01 counts the one frame it parses, since it
+# reports the loss of synchronization after it (File_Mpega.cpp, Synchronize and Synched_Test: LastSync_Offset, SynchLost, new in 26.01).
 MEDIAINFO_MISREAD_AS_MPEG = {
-    "external-mppsv4-superframes": {"Format": "MPEG Audio", "Format_Version": "2.5", "Format_Profile": "Layer 2", "SamplingRate": "12000", "FrameCount": "7"},
+    "external-mppsv4-superframes": {"Format": "MPEG Audio", "Format_Version": "2.5", "Format_Profile": "Layer 2", "SamplingRate": "12000", "FrameCount": "1"},
 }
 MEDIAINFO_READS_OTHERWISE = {
     "sv7-tag-inside": dict.fromkeys(["tag title", "tag track", "tag performer", "tag album"], MEDIAINFO_SIGNATURE_TAG),
