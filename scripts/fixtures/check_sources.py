@@ -29,6 +29,7 @@ import faac_tool
 import ffmpeg_sources
 import fhg_tool
 import gogo_tool
+import gpac_tool
 import helix_tool
 import lame_win_tool
 import libdca_source
@@ -86,6 +87,7 @@ def sources():
         yield name, digest, addresses
     yield dts_specs.NAME, dts_specs.SHA256, dts_specs.ADDRESSES
     yield libdca_source.ARCHIVE, libdca_source.SHA256, libdca_source.ADDRESSES
+    yield from gpac_tool.sources()
     yield ffmpeg_sources.ARCHIVE, ffmpeg_sources.SHA256, ffmpeg_sources.ADDRESSES
     yield dashif_systems.NAME, dashif_systems.SHA256, dashif_systems.ADDRESSES
 

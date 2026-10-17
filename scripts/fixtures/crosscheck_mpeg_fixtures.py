@@ -71,7 +71,7 @@ mp3guessenc must still report what the manifest recorded.
 - getID3: for LAME 3.90 to 3.92, whose tag has no preset field, getID3 must read the same version
   and name the same preset where it names one (getid3_tool.py).
 
-- MediaInfo 24.01 (mediainfo_tool.py), compared with the golden report, on these fixtures and on
+- MediaInfo 26.01 (mediainfo_tool.py), compared with the golden report, on these fixtures and on
   the tag fixtures (tests/fixtures/tags): the version, layer, sample rate, channels, mode, mode
   extension and emphasis of the last frame it reads, and the stream's mode; the frame and sample
   count, bitrate, bitrate mode and stream size that the first frame's Xing, Info or VBRI header
@@ -104,6 +104,7 @@ import mctoolamed_tool
 import mediainfo_tool as mi
 import minimp3_tool
 import stream_stats
+import tool_versions
 import vbr_tags
 from conformance_mpeg_audio import guessenc as guessenc_multichannel
 
@@ -201,6 +202,13 @@ def guessenc_summary(path):
     return summary
 
 
+# Ubuntu 26.04's madplay was linked against a libmad whose mad_build, the string of its build options, has another size than the libmad0 it
+# loads, and glibc's loader warns about that copy relocation on stderr (sysdeps/x86_64/dl-machine.h, R_X86_64_COPY). madplay only
+# prints mad_build for -V, so decoding does not depend on it; this one line, printed once for the process, is not an error of the stream (count=1: a second
+# would be reported).
+MADPLAY_LOADER_WARNING = re.compile(rb"^madplay: Symbol `mad_build' has different size in shared object, consider re-linking\r?\n?", re.MULTILINE)
+
+
 def decodes_to_silence(path, manifest):
     problems = []
     commands = {
@@ -218,8 +226,9 @@ def decodes_to_silence(path, manifest):
             del commands["mpg123"]
     for name, command in commands.items():
         result = subprocess.run(command, capture_output=True)
-        if not result.stdout or any(result.stdout) or result.stderr.strip():
-            problems.append(f"{name} does not decode to silence without errors: {result.stderr.decode()[:200].strip()}")
+        errors = MADPLAY_LOADER_WARNING.sub(b"", result.stderr, count=1) if name == "madplay" else result.stderr
+        if not result.stdout or any(result.stdout) or errors.strip():
+            problems.append(f"{name} does not decode to silence without errors: {errors.decode()[:200].strip()}")
     return problems
 
 
@@ -469,7 +478,10 @@ def check_vbr_header(path, manifest):
         size = len(data) - tag["frame_offset"] - 4
         concatenated = tag["bytes"] and size > tag["bytes"] and size - tag["bytes"] > tag["bytes"] >> 4
         if tag["frames"] and not concatenated:
-            duration = f"{tag['frames'] * (1152 if mpeg1 else 576) / rate:.6f}"
+            # FFmpeg 8.0 leaves the encoder delay and padding out of the duration (mp3dec.c, mp3_parse_vbr_tags: the duration is frames * samples per frame
+            # less start_pad and end_pad, which mp3_parse_info_tag reads from the raw bytes after any LAME, Lavf or Lavc string); 6.1.1 gave the frames' duration.
+            trimmed = sum(ffmpeg_pads(tag) or (0, 0))
+            duration = f"{(tag['frames'] * (1152 if mpeg1 else 576) - trimmed) / rate:.6f}"
             if stream.get("duration") != duration:
                 problems.append(f"ffprobe duration {stream.get('duration')}, the header's frame count implies {duration}")
         lame = tag.get("lame")
@@ -488,10 +500,19 @@ def check_vbr_header(path, manifest):
     return problems
 
 
-def ffmpeg_delay(tag):
-    """The encoder delay ffmpeg reads: after any string starting LAME, Lavf or Lavc, a full tag or not."""
+def ffmpeg_pads(tag):
+    """The encoder delay and padding ffmpeg reads (mp3dec.c, mp3_parse_info_tag: the 24 bits at byte 21 after the Xing fields, 12 bits each), after any string
+    starting LAME, Lavf or Lavc, a full tag or not; None without one."""
     after = bytes.fromhex(tag.get("after_fields", "")) if tag else b""
-    return (after[21] << 4 | after[22] >> 4) if len(after) >= 24 and after[:4] in (b"LAME", b"Lavf", b"Lavc") else None
+    if len(after) < 24 or after[:4] not in (b"LAME", b"Lavf", b"Lavc"):
+        return None
+    return after[21] << 4 | after[22] >> 4, (after[22] & 15) << 8 | after[23]
+
+
+def ffmpeg_delay(tag):
+    """The encoder delay ffmpeg reads, see ffmpeg_pads."""
+    pads = ffmpeg_pads(tag)
+    return None if pads is None else pads[0]
 
 
 def rate_is_mpeg1(rate):
@@ -1142,10 +1163,16 @@ def check(path, manifest, tools):
         if speakers and speakers != {channels}:
             problems.append(f"mctoolamed writes {channels} channels, the manifest expects {sorted(speakers)}")
     if manifest.get("crosscheck") is True and manifest.get("streams") and "channel_layout" in manifest["streams"][0]:
-        # A multichannel stream's base frames are stereo.
+        # A multichannel stream's base frames are stereo. Where the channel mode changes, ffprobe 8.0.1 reports the last mode and 6.1.1 reported the first. The
+        # 8.0.1 side is in the source: the parser sets the layout from every header it takes (mpegaudio_parser.c:86-88, av_channel_layout_default), and
+        # avformat_find_stream_info copies the codec context to the stream's parameters (demux.c, avcodec_parameters_from_context). That 6.1.1 reported the
+        # first mode was observed, not traced in its source. Seen on channel-mode-change.mp3, built from source.
         base = min(len(manifest["streams"][0]["channel_layout"]), 2)
+        last_mode = manifest["frames"][-1]["fields"].get("Header/Channel Mode") if manifest.get("frames") else None
+        if last_mode is not None:
+            base = 1 if last_mode == "Mono" else 2
         if int(ffprobe_stream(path)["channels"]) != base:
-            problems.append(f"ffprobe finds {ffprobe_stream(path)['channels']} channels, the manifest's first stream {base}")
+            problems.append(f"ffprobe finds {ffprobe_stream(path)['channels']} channels, the manifest's last frame implies {base}")
     if "mp3guessenc_multichannel" in manifest and guessenc_multichannel(path) != manifest["mp3guessenc_multichannel"]:
         problems.append(f"mp3guessenc reports {guessenc_multichannel(path)}, the manifest {manifest['mp3guessenc_multichannel']}")
     if manifest.get("frames") and "side_info" in manifest["frames"][0]:
@@ -1288,9 +1315,8 @@ MEDIAINFO_READS_OTHERWISE = {
     "mpeg/lone-frame-overflow": {"format": MEDIAINFO_LONE},
     "mpeg/lone-frames-forbidden-allocation": {"format": MEDIAINFO_LONE},
     "layer3/lone-frame-invalid-side-info": {"format": MEDIAINFO_LONE},
-    "mpeg/concatenated-files": {"stream size": "observed: MediaInfo's byte count is the file size less every tag it reads, the first file's ID3v1 and the second file's ID3v2 between the streams too, and less the ID3v1 at the end twice: 4487 - 26 - 128 - 27 - 2 x 128 = 4050 bytes (see MEDIAINFO_END_TAGS)"},
     "mpeg/tagged-stream": {"stream size": "MediaInfo sizes the 52-byte APE tag, which has no header, as 84 bytes (Tag/File__Tags.cpp, DetectBeginOfEndTags_Test: ApeTag_Size+=32 for version 2000, whatever the header flag; its trace: \"ApeTag (84 bytes)\"), and its byte count falls those 84 bytes short of the frames' 3343"},
-    "vbr/lame-before-joined-frames": dict.fromkeys(["bitrate mode", "frames", "samples", "bitrate"], "MediaInfo reports the two streams as one (File_Mpega.cpp): their frames' two bitrates without a VBR header in the first frames make it VBR (Streams_Fill, BitRate_Count), so it gives no bitrate or sample count, and it counts the frames of both"),
+    "vbr/lame-before-joined-frames": dict.fromkeys(["bitrate mode", "samples", "bitrate"], "MediaInfo reports the two streams as one (File_Mpega.cpp): their frames' two bitrates without a VBR header in the first frames make it VBR (Streams_Fill, BitRate_Count), so it gives no bitrate or sample count, and it counts the frames of both"),
     "mpeg/channel-mode-change": {"stream's mode": "the channel mode changes within the stream (mpeg.channel-mode-changed): MediaInfo gives the last frame's, mono, and the analyzer the stream's first audio frame's, joint stereo"},
     "vbr/xing-in-layer2": {"bitrate mode": "MediaInfo reads \"Xing\" as a VBR header in any layer (File_Mpega.cpp, Header_Xing), where Layer II frames carry none and the bytes are ancillary data"},
     "vbr/xing-truncated": dict.fromkeys(["frames", "samples", "bitrate", "stream size"], "MediaInfo drops a Xing header whose announced fields do not fit its frame (File_Mpega.cpp, Header_Xing: \"Error tag size\"), the counts before the TOC too, and counts its frame as audio"),
@@ -1358,7 +1384,7 @@ def check_mediainfo(path, tally):
     and album."""
     problems = tally.start(f"{path.parent.name}/{path.stem}")
     report = mi.golden(path)
-    info = mi.read(path)
+    info = tally.read(path)
     general, audio = (info["General"], info["Audio"]) if info else ({}, [])
     frames = mpeg_frames(report)
     codes = {f["code"] for f in report["findings"]}
@@ -1441,6 +1467,12 @@ def check_mediainfo(path, tally):
         mode = "CBR" if constant else "VBR"
         frames_count = math.floor((stream_bytes or reported_bytes) / unpadded_length(last) + 0.5) if constant else None
         bitrate = last["Bitrate"] * 1000 if constant else None
+    if frames_count is not None and (not header or (xing and mi.value(first, "Xing") == "Info")):
+        # MediaInfo 26.01 counts the frames it synchronizes on: FrameInfo.PTS runs from 0 at the first, whatever it holds, and the frame count and duration
+        # come from that run (File_Mpega.cpp, Synchronize: "Frame_Count == 0 && !IsSub", and Streams_Finish), so a frame cut short counts and so does an Info
+        # header's frame, and neither the header's frame count (24.01 took it, less its own frame) nor the stream's bytes (24.01 divided them by the frame
+        # length) decides.
+        frames_count = len(fixed)
     tally.compare("bitrate mode", track.get("BitRate_Mode"), mode)
     if frames_count is None:
         # Without a VBR header, File_Mpega.cpp gives a variable bitrate no frame count, sample count
@@ -1450,7 +1482,11 @@ def check_mediainfo(path, tally):
         # File_Mpega.cpp, Data_Parse).
         parsed = sum(1 for n, h in read if n["length"] == nominal_length(h))
         tally.compare("frames parsed of a variable bitrate without a VBR header", track.get("FrameCount"), str(parsed))
-        tally.compare("samples and bitrate of a variable bitrate without a VBR header", (track.get("SamplingCount"), track.get("BitRate")), (None, None))
+        # 26.01 fills them from the duration its PTS run gives (File_Mpega.cpp, Streams_Finish: Audio_Duration from FrameInfo.PTS, to the millisecond), the
+        # samples at the sample rate and the bitrate over the stream's bytes; 24.01 gave none.
+        milliseconds = round(sum(samples_per_frame(h) * 1000 / h["Sample Rate"] for n, h in read if n["length"] == nominal_length(h)))
+        tally.compare("samples and bitrate of a variable bitrate without a VBR header", (track.get("SamplingCount"), track.get("BitRate")),
+                      (str(round(milliseconds * last["Sample Rate"] / 1000)), str(round((stream_bytes if stream_bytes is not None else reported_bytes) * 8000 / milliseconds))))
     else:
         tally.compare("frames", track.get("FrameCount"), str(frames_count))
         if last["Layer"] == "I" and last["Version"] != "MPEG-1":
@@ -1502,6 +1538,7 @@ def main():
     failed = 0
     checked = 0
     mi.require()
+    tool_versions.require("ffmpeg", "ffprobe", "mpg123", "madplay", "php")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     tools = (minimp3_tool.build(), mctoolamed_tool.build())
     for manifest_path in sorted(p for directory in DIRECTORIES for p in directory.glob("*.expected.json")):

@@ -47,6 +47,8 @@ from crosscheck_mp4_fixtures import ffprobe_packets, mp4box_boxes, mp4box_fields
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 OUT = ROOT / "aac"
+# Provenance: the tool versions (Ubuntu 24.04) that wrote the committed files this script produced. The cross-check jobs run Ubuntu 26.04 and
+# assert its versions (tool_versions.py); the committed files and goldens stay as written, so these strings stay as they are.
 FFMPEG_VERSION = "ffmpeg version 6.1.1-3ubuntu5"
 FAAC_VERSION = "FAAC 1.30"
 # The 2.0 and 2.1 front ends' tool atoms carry no commit, the 2.2 front end's tool atom: its version and, from `git describe`, the abbreviated commit (faac_tool.py).
@@ -72,6 +74,10 @@ STATS = "ADTS/Statistics"
 SPEAKERS = {1: ["front center"], 2: ["front left", "front right"], 6: ["front center", "front left", "front right", "back left", "back right", "LFE"]}
 
 
+# ffprobe's profile of a raw ADTS stream is the profile of the ADTS header, whatever SBR the frames hold: FFmpeg 8.0's parser sets it for every
+# frame header (libavcodec/aac_ac3_parser.c, ff_aac_ac3_parse), after the decoder named the stream HE-AAC or HE-AACv2 from the SBR data it found (6.1's
+# parser left the profile alone). The ADTS rows below pin "LC" for the checking tool; the MP4 rows name the profile the decoder finds from the
+# configuration or the frames.
 def stream(codec, rate, channels, mode, frame, vbr, encoder, profile=None, writer=None, **extra):
     entry = {"codec": codec, "sample_rate": rate, "channels": channels, "channel_mode": mode, "channel_layout": SPEAKERS[channels], "frame": frame,
              "is_vbr": vbr}
@@ -127,10 +133,10 @@ FIXTURES = [
      [stream("AAC LC", 44100, 1, "Mono", 1024, False, None, "LC")], {"ADTS/Frame[1]/CRC/Check": "verified", "ADTS/Frame[40]/CRC/Check": "verified"},
      [], {"faad": "adts"}),
     ("fdkaac-he-adts", ".aac", ["{fdkaac}", "-S", "-p", "5", "-b", "48000", "-f", "2", "-o", "{out}", "{in}"],
-     [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, None, "HE-AAC")], {STATS + "/SBR": "35 access units (100.0%)"},
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, None, "LC")], {STATS + "/SBR": "35 access units (100.0%)"},
      [IMPLICIT_SBR], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("fdkaac-he-v2-adts", ".aac", ["{fdkaac}", "-S", "-p", "29", "-b", "32000", "-f", "2", "-o", "{out}", "{in}"],
-     [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 2048, False, None, "HE-AACv2")], {STATS + "/SBR/Parametric Stereo": "36 access units (100.0%)"},
+     [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 2048, False, None, "LC")], {STATS + "/SBR/Parametric Stereo": "36 access units (100.0%)"},
      [IMPLICIT_PS], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("fdkaac-he-implicit", ".m4a", ["FDKAAC_SBR_SIGNALING=0", "{fdkaac}", "-S", "-p", "5", "-b", "48000", "-o", "{out}", "{in}"],
      [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, None, "HE-AAC", writer=(FDKAAC, "Low"))], {ASC + "/Audio Object Type": "2 (AAC LC)"}, [MOOV_AFTER, IMPLICIT_SBR],
@@ -170,23 +176,23 @@ FIXTURES = [
      [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, (FAAC_2_2, "Medium"), "HE-AAC", writer=(FAAC_2_2, "Low"))], {ASC + "/Sync Extension": "SBR present"},
      [MOOV_AFTER, ["mp4.duration-mismatch", "tkhd box of track 1"]], {"faad": {"label": "HE AAC", "channels": 2, "rate": 44100}}),
     ("faac-2.2-he-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "48", "-o", "{out}", "{in}"],
-     [stream("HE-AAC", 44100, 2, "Stereo", 2048, True, ("FAAC", "Medium"), "HE-AAC")], {STATS + "/SBR": "35 access units (100.0%)"},
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, True, ("FAAC", "Medium"), "LC")], {STATS + "/SBR": "35 access units (100.0%)"},
      [IMPLICIT_SBR], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("faac-2.2-he-24k", ".m4a", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "24", "-o", "{out}", "{in}"],
      [stream("HE-AAC", 44100, 2, "Stereo", 2048, False, (FAAC_2_2, "Medium"), "HE-AAC", writer=(FAAC_2_2, "Low"))], {ASC + "/Sync Extension": "SBR present"},
      [MOOV_AFTER, ["mp4.duration-mismatch", "tkhd box of track 1"]], {"faad": {"label": "HE AAC", "channels": 2, "rate": 44100}}),
     ("faac-2.2-he-24k-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "24", "-o", "{out}", "{in}"],
-     [stream("HE-AAC", 44100, 2, "Stereo", 2048, True, ("FAAC", "Medium"), "HE-AAC")], {STATS + "/SBR": "35 access units (100.0%)"},
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, True, ("FAAC", "Medium"), "LC")], {STATS + "/SBR": "35 access units (100.0%)"},
      [IMPLICIT_SBR], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("faac-2.2-he-mono", ".m4a", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "32", "-o", "{out}", "{mono48}"],
      [stream("HE-AAC", 48000, 1, "Mono", 2048, False, (FAAC_2_2, "Medium"), "HE-AAC", writer=(FAAC_2_2, "Low"))], {ASC + "/Sync Extension": "SBR present"},
      [MOOV_AFTER, ["mp4.duration-mismatch", "tkhd box of track 1"]], {"faad": {"label": "HE AAC", "channels": 2, "rate": 48000}}),
     ("faac-2.2-he-mono-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "32", "-o", "{out}", "{mono48}"],
-     [stream("HE-AAC", 48000, 1, "Mono", 2048, True, ("FAAC", "Medium"), "HE-AACv2", ffprobe_channels=2)], {STATS + "/SBR": "38 access units (100.0%)"},
+     [stream("HE-AAC", 48000, 1, "Mono", 2048, True, ("FAAC", "Medium"), "LC", ffprobe_channels=2)], {STATS + "/SBR": "38 access units (100.0%)"},
      [["aac.implicit-sbr", "38 of 38 raw data blocks hold SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
     # 2.0 and 2.1 count their SBR headers like 2.2 but send them again in their last access units, which are flush frames (FaacSbr).
     ("faac-2.1-he-24k-adts", ".aac", ["{faac 2.1}", "--object-type", "he-aac-v1", "-b", "24", "-o", "{out}", "{in}"],
-     [stream("HE-AAC", 44100, 2, "Stereo", 2048, True, ("FAAC", "Medium"), "HE-AAC")], {STATS + "/SBR": "34 access units (100.0%)",
+     [stream("HE-AAC", 44100, 2, "Stereo", 2048, True, ("FAAC", "Medium"), "LC")], {STATS + "/SBR": "34 access units (100.0%)",
       STATS + "/SBR/SBR Headers": "5 headers"},
      [["aac.implicit-sbr", "34 of 34 raw data blocks hold SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("faac-2.0-he-24k", ".m4a", ["{faac 2.0}", "--object-type", "he-aac-v1", "-b", "24", "-o", "{out}", "{in}"],
@@ -195,10 +201,10 @@ FIXTURES = [
     # 2.2 writes the SBR data of each channel element after it, so a 5.1 stream is named; 2.0 and 2.1 write one payload after the whole
     # frame, typed as a channel pair element, which a 5.1 stream does not have (aac.sbr-without-channel-element), and so do not.
     ("faac-2.2-he-51-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "16", "-o", "{out}", "{six}"],
-     [stream("HE-AAC", 44100, 6, "5.1", 2048, True, ("FAAC", "Medium"), "HE-AAC")], {STATS + "/SBR": "35 access units (100.0%)"},
+     [stream("HE-AAC", 44100, 6, "5.1", 2048, True, ("FAAC", "Medium"), "LC")], {STATS + "/SBR": "35 access units (100.0%)"},
      [["aac.implicit-sbr", "35 of 35 raw data blocks hold SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("faac-2.1-he-51-adts", ".aac", ["{faac 2.1}", "--object-type", "he-aac-v1", "-b", "16", "-o", "{out}", "{six}"],
-     [stream("HE-AAC", 44100, 6, "5.1", 2048, True, None, "HE-AAC")], {STATS + "/SBR": "34 access units (100.0%)"},
+     [stream("HE-AAC", 44100, 6, "5.1", 2048, True, None, "LC")], {STATS + "/SBR": "34 access units (100.0%)"},
      [["aac.implicit-sbr", "34 of 34 raw data blocks hold SBR data"], ["aac.sbr-without-channel-element", "SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE, "faad_trace": "faad2 does not read the stream: its SBR payload follows no channel element (aac.sbr-without-channel-element), and its trace holds one raw data block."}}),
     ("ffmpeg-fast", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "64k", "-aac_coder", "fast", "{out}"],
      [stream("AAC LC", 44100, 2, "Stereo", 1024, True, (LAVC, "High"), "LC")], {}, [], {"faad": "adts"}),
@@ -244,7 +250,7 @@ FIXTURES = [
      {STREAM_TYPE: "5 (audio), reserved bit 0", GAPLESS + "Encoder Delay (iTunSMPB)": "2112 samples", GAPLESS + "Samples (iTunSMPB)": "22050 samples", GAPLESS + "Padding (iTunSMPB)": "1438 samples", ASC + "/Sync Extension": "SBR present"},
      [], {"faad": {"label": "HE AAC", "channels": 2, "rate": 44100}}),
     ("apple-hev2-adts-cbr-st44", ".aac", ["afconvert", "-f", "adts", "-d", "aacp", "-s", "0", "-b", "32000", "pcm/st44h.wav", "{out}"],
-     [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 2048, False, None, "HE-AACv2", writer=(APPLE, "Low"))],
+     [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 2048, False, None, "LC", writer=(APPLE, "Low"))],
      {},
      [["aac.implicit-sbr", "25 of 25 raw data blocks hold SBR data, and 25 carry the parametric stereo extension"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("apple-hev2-m4a-cbr-st44", ".m4a", ["afconvert", "-f", "m4af", "-d", "aacp", "-s", "0", "-b", "32000", "pcm/st44h.wav", "{out}"],

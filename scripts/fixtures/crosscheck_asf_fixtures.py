@@ -3,7 +3,7 @@
 
 For every manifest in tests/fixtures/asf:
 
-- ffprobe (FFmpeg 6.1, the reference ASF demuxer asfdec_f.c): the streams' codec, channels and rate,
+- ffprobe (FFmpeg 8.0, the reference ASF demuxer asfdec_f.c): the streams' codec, channels and rate,
   and the packets it reads. For a hand-built fixture the packets are the media objects the model
   works out from the payloads: the same count, and for each one the stream, the size and the
   presentation time, which also covers fragmented objects put together and compressed payloads split.
@@ -16,7 +16,7 @@ For every manifest in tests/fixtures/asf:
   (a configuration it rejects, a music superframe, a frame type code or a sample count it refuses) and
   drop the same packets and superframes as the analyzer does; that agreement of the sample counts is
   the independent check of the superframe boundaries, the spillover and the packets' resync.
-- MediaInfo (24.01): the format, the codec ID, the channels, the sampling rate and the duration of
+- MediaInfo (26.01): the format, the codec ID, the channels, the sampling rate and the duration of
   the WMA files against ffprobe's; and against the analyzer's golden report: the bit rate mode (the
   IsVBR attribute), the description of the codec (the Codec List), the format profile, title and
   performer, the encoded date (the File Properties' creation date) and the maximum overall bit rate.
@@ -50,6 +50,8 @@ import subprocess
 import sys
 import tempfile
 
+import mediainfo_tool
+import tool_versions
 import wma_signals
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -76,10 +78,19 @@ def ffprobe_json(path, *args):
 
 
 def decode(path, fmt="s16le", level="error"):
-    result = run(["ffmpeg", "-v", level, "-i", str(path), "-map", "0:a", "-f", fmt, "-"])
-    # The raw PCM muxer warns about timestamps of the decoder's packets for some Lossless files; the samples are what is checked.
-    errors = "\n".join(l for l in result.stderr.decode("utf-8", "replace").splitlines() if "non monotonically increasing dts" not in l).strip()
-    return result.returncode, result.stdout, errors
+    """Decodes every audio stream, one ffmpeg run each, and joins the PCM: ffmpeg 7.0 and later refuse a raw PCM output with more
+    than one audio stream (FF_OFMT_FLAG_MAX_ONE_OF_EACH in libavformat/pcmenc.c of 7.0 and 8.0.1), where 6.1 interleaved them. The samples
+    of all streams count, as before."""
+    probe = run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", str(path)], text=True)
+    count = max(1, len(probe.stdout.split()))
+    code, pcm, lines = 0, b"", []
+    for index in range(count):
+        result = run(["ffmpeg", "-v", level, "-i", str(path), "-map", f"0:a:{index}", "-f", fmt, "-"])
+        code = code or result.returncode
+        pcm += result.stdout
+        # The raw PCM muxer warns about timestamps of the decoder's packets for some Lossless files; the samples are what is checked.
+        lines += [l for l in result.stderr.decode("utf-8", "replace").splitlines() if "non monotonically increasing dts" not in l]
+    return code, pcm, "\n".join(lines).strip()
 
 
 def analyzer_samples(path):
@@ -186,12 +197,10 @@ def check_protection(name, manifest, path, problems):
             if exported.get(tag) != wanted:
                 problems.append(f"ffprobe's {tag} is {exported.get(tag)!r}, the analyzer's {field} {wanted!r}")
     if tool("mediainfo"):
-        try:
-            tracks = json.loads(run(["mediainfo", "--Output=JSON", str(path)], text=True).stdout)["media"]["track"]
-        except (json.JSONDecodeError, KeyError):
-            skip(name, "MediaInfo's Encryption field", "MediaInfo's output for the damaged file is not JSON")
+        tracks = mediainfo_tool.read_or_problem(path, problems)
+        if tracks is None:
             return
-        audio = [t for t in tracks if t["@type"] == "Audio"]
+        audio = tracks["Audio"]
         flagged = [s["encrypted"] for s in manifest["streams"] if "tag" in s]
         if len(audio) == len(flagged):
             for track, flag in zip(audio, flagged):
@@ -323,10 +332,11 @@ def check_mediainfo(name, path, stream, problems, report=None, count_samples=Tru
     if not tool("mediainfo"):
         skip(name, "MediaInfo", "mediainfo is not installed")
         return
-    result = run(["mediainfo", "-f", "--Output=JSON", str(path)], text=True)
-    tracks = json.loads(result.stdout)["media"]["track"]
-    general = next(t for t in tracks if t["@type"] == "General")
-    audio = next(t for t in tracks if t["@type"] == "Audio")
+    tracks = mediainfo_tool.read_or_problem(path, problems, full=True)
+    if tracks is None:
+        return
+    general = tracks["General"]
+    audio = tracks["Audio"][0]
     if general.get("Format") != "Windows Media":
         problems.append(f"MediaInfo's container is {general.get('Format')}")
     if int(audio["Channels"]) != int(stream["channels"]) or int(audio["SamplingRate"]) != int(stream["sample_rate"]):
@@ -405,6 +415,9 @@ def main():
     if not tool("ffprobe") or not tool("ffmpeg"):
         print("ffmpeg and ffprobe are needed.")
         return 1
+    tool_versions.require("ffmpeg", "ffprobe")
+    if tool("mediainfo"):
+        mediainfo_tool.require()
     wanted = set(sys.argv[1:])
     failures = 0
     checked = 0

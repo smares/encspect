@@ -27,6 +27,8 @@ import tempfile
 import wave
 
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "dts"
+# Provenance: the tool versions (Ubuntu 24.04) that wrote the committed files this script produced. The cross-check jobs run Ubuntu 26.04 and
+# assert its versions (tool_versions.py); the committed files and goldens stay as written, so these strings stay as they are.
 FFMPEG_VERSION = "ffmpeg version 6.1.1-3ubuntu5"
 
 FC, FL, FR, BL, BR, LFE = "front center", "front left", "front right", "back left", "back right", "LFE"

@@ -31,6 +31,7 @@ import sys
 import crosscheck_ac3_fixtures as cc
 import downloads
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "tests" / "conformance" / "eac3-samples.json"
@@ -60,8 +61,10 @@ def tool_problems(path, sample):
         problems.append(f"ffprobe finds the codec {probe['codec_name']}")
     if sample.get("frames") and int(probe["nb_read_packets"]) != sample["frames"]:
         problems.append(f"ffprobe finds {probe['nb_read_packets']} packets, the manifest {sample['frames']}")
-    info = mi.read(path, full=True)
-    audio = info["Audio"][0] if info and info["Audio"] else {}
+    info = mi.read_or_problem(path, problems, full=True)
+    if info is None:
+        return problems
+    audio = info["Audio"][0] if info["Audio"] else {}
     features = (audio.get("Format_AdditionalFeatures") or "").split()
     if ("JOC" in features) != sample["object_audio"]:
         problems.append(f"MediaInfo's features are {features}")
@@ -127,6 +130,8 @@ def main():
     cache = pathlib.Path(arguments[0] if arguments else ROOT / ".cache" / "eac3")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     mi.require()
+    if analyzer is None:
+        tool_versions.require("ffprobe")
     fetch(manifest, cache)
     problems = 0
     for sample in manifest["samples"]:

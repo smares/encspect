@@ -143,6 +143,7 @@ def encode(name, spec, arguments, files, work):
     shutil.copy(work / "out.wv", OUT / f"external-{name}.wv")
     if "wvc" in files:
         shutil.copy(work / "out.wvc", OUT / f"external-{name}-wvc.wvc")
+    # "Ubuntu 24.04" is the provenance of the committed files these tools wrote; the cross-check jobs run Ubuntu 26.04 (tool_versions.py).
     return {"tool": f"{encoder_version()} (wavpack package of Ubuntu 24.04)", "arguments": arguments, "input": describe(spec)}
 
 
@@ -160,6 +161,7 @@ def encode_ffmpeg(name, spec, work):
     if result.returncode != 0 or not target.exists():
         raise SystemExit(f"ffmpeg failed for {name}: {result.stderr}")
     shutil.copy(target, OUT / f"external-{name}.wv")
+    # "Ubuntu 24.04" is the provenance of the committed files these tools wrote; the cross-check jobs run Ubuntu 26.04 (tool_versions.py).
     return {"tool": f"{ffmpeg_version()} (ffmpeg package of Ubuntu 24.04)", "arguments": ["-c:a", "wavpack"], "input": describe(spec)}
 
 

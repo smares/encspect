@@ -91,7 +91,7 @@ FIXTURES = {
 
 # Checks a tool cannot make on a fixture, with the reason.
 SKIPS = {
-    "external-ffmpeg-libopus-ambisonics": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 2 (\"Failed to open\")"},
+    "external-ffmpeg-libopus-ambisonics": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 2 (\"Failed to open\": info.c, opus_head_parse accepts families 0 and 1 only (OP_EIMPL for 255, OP_EBADHEADER otherwise); checked with 0.12 and opus-tools 0.2 of Ubuntu 26.04)"},
 }
 
 

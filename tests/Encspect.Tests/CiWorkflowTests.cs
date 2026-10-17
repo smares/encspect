@@ -100,11 +100,11 @@ public sealed class CiWorkflowTests
         Assert.Contains("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", text, StringComparison.Ordinal);
     }
 
-    // No job rides the moving ubuntu-latest label. The jobs whose results do not depend on Ubuntu's packaged tools run on
-    // ubuntu-26.04; the cross-check jobs stay on ubuntu-24.04 until the golden reports and encoder strings that
-    // their tool versions wrote are regenerated on 26.04.
+    // No job rides the moving ubuntu-latest label: every Linux job runs on ubuntu-26.04, the cross-check jobs included,
+    // whose tools are that image's packages (the committed golden reports and encoder strings name the older versions that
+    // wrote them) and whose versions the scripts assert (scripts/fixtures/tool_versions.py).
     [Fact]
-    public void NoWorkflowUsesTheMovingUbuntuLabelAndTheCrossChecksStayOnTheirPinnedImage()
+    public void NoWorkflowUsesTheMovingUbuntuLabelAndEveryLinuxJobRunsOnTheCurrentImage()
     {
         string root = FindRepositoryRoot();
         foreach (string workflow in Directory.EnumerateFiles(Path.Combine(root, ".github", "workflows"), "*.yml"))
@@ -120,11 +120,7 @@ public sealed class CiWorkflowTests
                 }
 
                 string label = Regex.Replace(line.Groups[1].Value, @"\s+#.*$", "").Trim().Trim('[', ']', ' ').Trim('"', '\'');
-                Assert.True(label is "ubuntu-24.04" or "ubuntu-26.04", $"{name}: runs-on: {label} is not ubuntu-24.04 or ubuntu-26.04");
-                if (name == "sources.yml")
-                {
-                    Assert.True(label == "ubuntu-26.04", $"{name}: runs-on: {label}, not ubuntu-26.04");
-                }
+                Assert.True(label == "ubuntu-26.04", $"{name}: runs-on: {label}, not ubuntu-26.04");
             }
         }
 
@@ -139,10 +135,22 @@ public sealed class CiWorkflowTests
             string[] runsOn = [.. lines.Where(l => l.StartsWith("    runs-on: ", StringComparison.Ordinal))];
             Assert.True(runsOn.Length == 1, $"{id} has {runsOn.Length} runs-on lines");
             string label = runsOn[0]["    runs-on: ".Length..].Trim();
-            string expected = id is "build-test" or "unit-tests" ? "${{ matrix.os }}"
-                : id.EndsWith("-crosscheck", StringComparison.Ordinal) ? "ubuntu-24.04" : "ubuntu-26.04";
+            string expected = id is "build-test" or "unit-tests" ? "${{ matrix.os }}" : "ubuntu-26.04";
             Assert.True(label == expected, $"{id} runs on {label}, not {expected}");
         }
+    }
+
+    // Ubuntu 26.04 does not package GPAC: the MP4 cross-check builds MP4Box from the pinned source release
+    // (scripts/fixtures/gpac_tool.py), caches the build under a key that holds that script, and puts it on the PATH.
+    [Fact]
+    public void Mp4CrosscheckBuildsMp4BoxFromTheSourceInsteadOfInstallingGpac()
+    {
+        string[] job = ReadJobs()["mp4-crosscheck"];
+        string text = string.Join('\n', job);
+        Assert.DoesNotMatch(@"apt-get install[^\n]*\bgpac\b", text);
+        Assert.Contains("python3 scripts/fixtures/gpac_tool.py", text, StringComparison.Ordinal);
+        Assert.Contains("hashFiles('scripts/fixtures/gpac_tool.py')", text, StringComparison.Ordinal);
+        Assert.Contains("GITHUB_PATH", text, StringComparison.Ordinal);
     }
 
     // A step that may fail without failing the job would be a check nobody reads.

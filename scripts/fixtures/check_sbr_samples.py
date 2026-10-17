@@ -10,7 +10,10 @@ SHA-256 rather than committed.
 
 The manifest is ours. Per file it records who wrote it, what ffprobe reads from its first audio stream
 (profile, sample rate, channels), the codec the analyzer reports, the encoder it must report (none: none
-of these files may be named FAAC) and its warnings and errors ("findings").
+of these files may be named FAAC) and its warnings and errors ("findings"). For the two raw ADTS streams
+(File1.aac, File1_fixed.aac) ffprobe names the profile of the ADTS header, LC, since FFmpeg 8.0's parser sets
+it for every frame header (libavcodec/aac_ac3_parser.c, ff_aac_ac3_parse) after the decoder has named the
+stream from its SBR data; in an MP4 or 3GP file the configuration names it.
 
 Without --analyzer, ffprobe's reading of every file is compared with the manifest. With --analyzer, the
 analyzer's report on every file (encspect --ndjson) must show the same codec, no encoder and the same
@@ -29,6 +32,7 @@ import sys
 import urllib.parse
 
 import downloads
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "tests" / "conformance" / "sbr-samples.json"
@@ -80,6 +84,8 @@ def main():
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     if not manifest["samples"]:
         raise SystemExit(f"{MANIFEST} lists no samples")
+    if analyzer is None:
+        tool_versions.require("ffprobe")
     fetch(manifest, cache)
     problems = 0
     for sample in manifest["samples"]:

@@ -47,8 +47,14 @@ def build():
     if NAMING not in text:
         raise SystemExit("mctoolamed's audio_write.c is not the expected version")
     output.write_text(text.replace(NAMING, GENERIC), encoding="latin-1")
-    subprocess.run(["make", "-s", "ARCH=", "CFLAGS=-O2 -DNDEBUG -DINLINE=inline -w -fcommon"], cwd=source, check=True,
-                   capture_output=True)
+    # The 2001 sources call gets() without declaring it and use old-style declarations: GCC 14 and later make an implicit function declaration, an
+    # implicit int and mismatched pointer types errors, and GCC 15 reads () as (void) by default (C23). -std=gnu99 keeps the C of the time, and the
+    # permerrors are warnings again (-w hides them). The Makefile compiles with CC_SWITCHES, not CFLAGS, so the flags replace those.
+    flags = ("-O3 -DNDEBUG -DINLINE=inline -w -fcommon -std=gnu99 -Wno-error=implicit-function-declaration -Wno-error=implicit-int "
+             "-Wno-error=int-conversion -Wno-error=incompatible-pointer-types")
+    result = subprocess.run(["make", "-s", f"CC_SWITCHES={flags}"], cwd=source, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise SystemExit(f"mctoolamed does not build:\n{(result.stdout + result.stderr)[-3000:]}")
     return source / "mctoolamed"
 
 

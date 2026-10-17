@@ -29,7 +29,7 @@ make_external_musepack_fixtures.py):
   no encoder was found, it confirms that the last counted frame is decoded, but not the 11 bits after
   it or the sample count; those rest on libmpcdec 1.2.6's reading alone.
 
-- MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
+- MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
   report: the format and sample rate; for SV7 the channels and the header's frame count, which it
   gives as 1,152 samples a frame; for SV8 the stream header's sample count; and the APE tag's
   title, artist and album. Its own readings are asserted as such: no format for SV4 to SV6 (it takes
@@ -54,6 +54,7 @@ import downloads
 import mediainfo_tool as mi
 import musepack_model as m
 import musepack_tool
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIRECTORY = ROOT / "tests" / "fixtures" / "musepack"
@@ -201,7 +202,7 @@ def check_ffprobe(name, manifest, path, problems):
         found, stop = m.packets(data[start:])
         past = [a for a in actual if a[0] >= start + stop]
         if past:
-            # ffmpeg 6.1 stops at the stream end packet, but takes up reading after it and reads the
+            # ffmpeg 8.0 (mpc8.c, mpc8_read_packet, unchanged since 6.1.1) stops at the stream end packet, but takes up reading after it and reads the
             # "AP" of an APE tag's "APETAGEX" as an audio packet where the tag does not end the file.
             skip(name, f"ffprobe's {len(past)} packets after the stream end", "ffmpeg reads the APE tag after the stream end packet as an audio packet")
             actual = [a for a in actual if a[0] < start + stop]
@@ -330,18 +331,24 @@ MEDIAINFO_SV7_ENCODER = "MediaInfo reads the SV7 encoder version from byte 24 (F
 MEDIAINFO_SIGNATURE_TAG = ("MediaInfo takes \"TAG\" 128 bytes before the end for an ID3v1 tag on the signature alone (Tag/File__Tags.cpp, "
                            "DetectBeginOfEndTags_Test), here inside the Musepack data that by its own size runs to the end of the file, "
                            "which the analyzer reports as a near miss")
-# An SV4 stream has no signature, and in this one MediaInfo finds a chain of MPEG audio frame headers
-# from 0x1B2F (its trace: "frame - Frame 0" there), which it reports as MPEG audio.
+# An SV4 stream has no signature, and in this one MediaInfo finds an MPEG audio frame header at 0x1B2F (its trace, --Details=1: "frame" there, 1153 bytes,
+# MPEG 2.5 Layer II at 12000 Hz, 96 kbps), which it reports as MPEG audio. MediaInfo 24.01 counted 7 frames; 26.01 counts the one frame it parses, since it
+# reports the loss of synchronization after it (File_Mpega.cpp, Synchronize and Synched_Test: LastSync_Offset, SynchLost, new in 26.01).
 MEDIAINFO_MISREAD_AS_MPEG = {
-    "external-mppsv4-superframes": {"Format": "MPEG Audio", "Format_Version": "2.5", "Format_Profile": "Layer 2", "SamplingRate": "12000", "FrameCount": "7"},
+    "external-mppsv4-superframes": {"Format": "MPEG Audio", "Format_Version": "2.5", "Format_Profile": "Layer 2", "SamplingRate": "12000", "FrameCount": "1"},
 }
 MEDIAINFO_READS_OTHERWISE = {
     "sv7-tag-inside": dict.fromkeys(["tag title", "tag track", "tag performer", "tag album"], MEDIAINFO_SIGNATURE_TAG),
     "sv8-tag-inside": dict.fromkeys(["tag title", "tag track", "tag performer", "tag album"], MEDIAINFO_SIGNATURE_TAG),
     "sv7-version-unknown": {"format": "MediaInfo takes \"MP+\" only with stream version 7 (File_Mpc.cpp, FileHeader_Begin); the analyzer reads the SV7 header and reports the version"},
     "sv8-audio-before-header": dict.fromkeys(["sample rate", "samples", "duration and bitrate"], "MediaInfo stops at the first audio packet (File_MpcSv8.cpp, AP: Finish), so it does not read the stream header after it"),
-    "sv8-rate-reserved": {"format": "MediaInfo 24.01 indexes its four-entry Mpc_SampleFreq table with the 3-bit sample rate code (File_MpcSv8.cpp, SH) and divides by what it finds past the end, so it exits with SIGFPE on a reserved code"},
 }
+
+# File_MpcSv8.cpp (v26.01), SH: Mpc_SampleFreq[SampleFrequency] has the four entries of File_Mpc.cpp and the code has 3 bits, so a reserved code reads past the
+# table. Line 229 divides SampleCount*1000 by that value (line 230 multiplies by it). The local build of v26.01 ends with SIGFPE (-8) where the value is 0. What
+# lies behind the table is up to the build, and an integer division by zero does not trap on every platform, so the exit is optional: without it, MediaInfo has
+# filled the format in FileHeader_Parse (File_MpcSv8.cpp:108) and everything derived from the rate is undefined (check_mediainfo).
+MEDIAINFO_CRASHES = {"sv8-rate-reserved": (-8, "reads past the four-entry Mpc_SampleFreq table and ends with SIGFPE where it divides by what it finds (File_MpcSv8.cpp:229, SH)", True)}
 
 
 def sv7_encoder_text(version):
@@ -357,7 +364,7 @@ def check_mediainfo(name, path, tally):
     Where it reads otherwise by its source, the value it gives is checked."""
     problems = tally.start(name)
     report = mi.golden(path)
-    info = mi.read(path)
+    info = tally.read(path)
     audio = info["Audio"][0] if info and info["Audio"] else {}
     if name in MEDIAINFO_MISREAD_AS_MPEG:
         tally.compare("misreading as MPEG audio", {k: audio.get(k) for k in MEDIAINFO_MISREAD_AS_MPEG[name]}, MEDIAINFO_MISREAD_AS_MPEG[name])
@@ -366,6 +373,12 @@ def check_mediainfo(name, path, tally):
         tally.compare("format where the analyzer finds no stream", audio.get("Format"), None)
         return problems
     stream = report["streams"][0]
+    if name in MEDIAINFO_CRASHES:
+        # Ended as stated (tally.read counted it), or went on with whatever lies behind the table: the format is filled before SH reads the rate.
+        if info is not None:
+            tally.compare("format", audio.get("Format"), stream["codec"])
+            tally.skip("sample rate, samples, duration and bitrate", "they come from a value read past the table (" + MEDIAINFO_CRASHES[name][1] + ")")
+        return problems
     if stream["codec"] not in ("Musepack SV7", "Musepack SV8"):
         tally.compare("format of SV4 to SV6 (" + MEDIAINFO_OLD + ")", audio.get("Format"), None)
         return problems
@@ -384,6 +397,9 @@ def check_mediainfo(name, path, tally):
         return problems
     tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
     rate = stream["sampleRate"]
+    if not rate:
+        problems.append("the analyzer's sample rate is 0; the rate-derived fields cannot be compared")
+        return problems
     if stream["codec"] == "Musepack SV7":
         frames = mi.leading_number(mi.value(node, "Header", "Frame Count"))
         tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
@@ -411,7 +427,8 @@ def check_mediainfo(name, path, tally):
 
 def main():
     mi.require()
-    tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
+    tool_versions.require("ffprobe", "musepack")
+    tally = mi.Tally(MEDIAINFO_READS_OTHERWISE, MEDIAINFO_CRASHES)
     tools = os.environ.get("MUSEPACK_TOOLS_DIR") and pathlib.Path(os.environ["MUSEPACK_TOOLS_DIR"])
     frames_tool = musepack_tool.build_frames(tools and tools / "frames")
     frames126 = musepack_tool.build_frames_126(tools and tools / "frames126")

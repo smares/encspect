@@ -27,6 +27,7 @@ import sys
 import channel_layouts
 import downloads
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "tests" / "conformance" / "dts-hd-samples.json"
@@ -67,8 +68,10 @@ def tool_problems(path, sample):
         problems.append(f"ffprobe's channel layout {probe.get('channel_layout')} does not feed the manifest's speakers {sample['layout']}")
     if int(probe.get("bits_per_raw_sample", 0)) != sample["storage_width"]:
         problems.append(f"ffprobe's bits per raw sample {probe.get('bits_per_raw_sample')} is not the storage width {sample['storage_width']}")
-    info = mi.read(path, full=True)
-    audio = info["Audio"][0] if info and info["Audio"] else {}
+    info = mi.read_or_problem(path, problems, full=True)
+    if info is None:
+        return problems
+    audio = info["Audio"][0] if info["Audio"] else {}
     for key, value in sample["mediainfo"].items():
         if audio.get(key) != value:
             problems.append(f"MediaInfo's {key} is {audio.get(key)!r}, expected {value!r}")
@@ -115,6 +118,8 @@ def main():
     cache = pathlib.Path(arguments[0] if arguments else ROOT / ".cache" / "dts-hd")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     mi.require()
+    if analyzer is None:
+        tool_versions.require("ffprobe")
     fetch(manifest, cache)
     problems = 0
     for sample in manifest["samples"]:

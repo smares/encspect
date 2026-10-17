@@ -391,7 +391,7 @@ def unknown_codec():
     f.finding("ogg.codec-unknown", "0x0BADC0DE starts with bytes no Ogg mapping is known for (58595A636F646563)")
     f.finding("ogg.codec-not-analyzed", "0x00F0F0F0 holds Theora")
     f.crosscheck = {"valid": False, "oggz_validate": "ok", "not_compared": {
-        "oggz info and dump": "oggz 1.1.1 miscounts every stream of a file that holds a stream whose codec it does not know (it lists 2 of the Speex stream's 12 packets here)",
+        "oggz info and dump": "oggz 1.1.3 miscounts every stream of a file that holds a stream whose codec it does not know (it lists 2 of the Speex stream's 12 packets here)",
         "ogginfo, ffprobe and speexdec": "they read only the Speex stream, whose figures the valid fixtures compare, and say nothing about the others"}}
     f.write()
 
@@ -772,7 +772,7 @@ def deep_nesting():
         f.stream(serial, [p], link=2 + link, codec="Unknown")
         f.finding("ogg.codec-unknown", f"0x{serial:08X} starts with bytes")
     f.crosscheck = {"valid": False, "oggz_validate": "ok", "not_compared": {
-        "oggz info and dump": "oggz 1.1.1 miscounts every stream of a file that holds a stream whose codec it does not know (it lists 3 of this file's packets)",
+        "oggz info and dump": "oggz 1.1.3 miscounts every stream of a file that holds a stream whose codec it does not know (it lists 1 of this file's packets)",
         "ogginfo, ffprobe and speexdec": "the links hold no codec they decode, and the Speex stream's figures are what the valid fixtures compare"}}
     f.write()
 

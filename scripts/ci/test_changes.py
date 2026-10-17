@@ -61,6 +61,10 @@ class ChangesTests(unittest.TestCase):
         self.assertIn("asf-crosscheck", got)
         self.assertNotIn("ogg-crosscheck", got)
 
+    def test_the_mp4box_build_runs_the_mp4_job_and_the_version_module_every_cross_check(self):
+        self.assertEqual(run("scripts/fixtures/gpac_tool.py"), {"mp4-crosscheck", "fixtures"})
+        self.assertEqual(run("scripts/fixtures/tool_versions.py"), set(changes.AREAS) | {"fixtures"})
+
     def test_shared_modules_run_everything(self):
         for path in ("src/Encspect.Host/Analyzer.cs", "src/Encspect.Core.Abstractions/Node.cs", "src/Encspect.Cli/Program.cs",
                      "scripts/fixtures/downloads.py", "scripts/fixtures/mediainfo_tool.py", ".github/workflows/ci.yml", "scripts/ci/changes.py"):

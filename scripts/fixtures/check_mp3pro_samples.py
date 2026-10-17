@@ -35,6 +35,7 @@ import urllib.parse
 import downloads
 import guessenc_tool
 import make_external_mpeg_fixtures
+import tool_versions
 from conformance_mpeg_audio import child, walk
 from crosscheck_mpeg_fixtures import guessenc_guess
 
@@ -122,6 +123,8 @@ def main():
         analyzer, arguments = arguments[1], arguments[2:]
     cache = pathlib.Path(arguments[0] if arguments else ROOT / ".cache" / "mp3pro")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    if analyzer is None:
+        tool_versions.require("ffprobe")
     fetch(manifest, cache)
     problems = 0
     for sample in manifest["samples"]:

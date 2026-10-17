@@ -3,18 +3,19 @@
 
 For every fixture, its manifest's "crosscheck" says what to confirm:
 
-- "ffprobe": ffprobe (ffmpeg 6.1) must report the first stream's codec, sample rate and channels
+- "ffprobe": ffprobe (ffmpeg 8.0) must report the first stream's codec, sample rate and channels
   ("ffprobe_channels" where ffmpeg takes them from elsewhere, such as an MP4 box or the dependent
   substreams it mixes in), a channel layout that feeds the manifest's speakers (channel_layouts.py;
   ffmpeg places AC-3's only surround pair at the sides, the analyzer at the back as the WAVE channel
   mask does, so a lone pair counts as one position), and exactly the packets the manifest's frames
   make: ffmpeg's parser starts a packet at each AC-3 frame and each independent E-AC-3 frame, and
-  joins dependent frames to the one before. For raw files, ffprobe's bitrate must be the first
+  joins dependent frames to the one before ("ffprobe_packets": "substream 0" where it starts one only at an independent
+  frame of substream 0, and "ffprobe_fields": false where it then reads no sample rate or channels, "channels" where it reads only no channels). For raw files, ffprobe's bitrate must be the first
   packet's, unless "ffprobe_bitrate" is false (ffmpeg gives none for frames it cannot decode).
 - "decode": ffmpeg with CRC checking must decode each packet alone without an error, unless the
   packet holds a frame the manifest lists as one decoders reject ("damaged": cut or failing a CRC,
   or a dependent frame without its independent one), which it must reject, as it rejects the frames
-  of independent substreams other than 0, which ffmpeg 6.1 does not decode. MP4 files are decoded
+  of independent substreams other than 0, which ffmpeg 8.0 does not decode (ac3dec.c and eac3dec.c refuse a substream ID but 0). MP4 files are decoded
   whole, without an error.
 - "liba52": liba52 (a52_blocks.c, built here) must end each audio block of every frame in
   "block_ends" at the manifest's bit, and must not reject those frames.
@@ -47,13 +48,11 @@ copying them:
   MediaInfo takes a container wherever Ac3_EMDF_Test finds one before the frame's auxiliary data field; the
   fixtures that put it in that field, or break the test, name their evidence.
 
-Every fixture is also compared with MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), against
+Every fixture is also compared with MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), against
 its golden report: the format, dependent substreams, sample rate, channels and layout, bsid,
 acmod, lfeon, bsmod (ServiceKind), dialnorm and its range, compr, dynrng, dsurmod and the Dolby
 Surround modes, the nominal bitrate and mode, and the frames, samples, duration and stream size
-(in MP4, the sample table's frame count). MediaInfo's own readings are asserted as such: it reads
-the AC-3 mixlevel as 8 bits instead of A/52's 5, so every later field of a frame with production
-information comes out 3 bits late, which mediainfo_bsi reproduces; it names the service "CM" where
+(in MP4, the sample table's frame count). MediaInfo's own readings are asserted as such: it names the service "CM" where
 bsmod is absent and gives dsurmod 0 where it is not coded. Fixtures on which it reads otherwise
 name their evidence.
 
@@ -74,10 +73,11 @@ import tempfile
 import ac3_model as m
 import channel_layouts
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parent
 FIXTURES = ROOT.parents[1] / "tests" / "fixtures" / "ac3"
-CHECKS = ("ffprobe", "ffprobe_bitrate", "decode", "liba52", "skip_insertion", "skip_control")
+CHECKS = ("ffprobe", "ffprobe_fields", "ffprobe_bitrate", "decode", "liba52", "skip_insertion", "skip_control")
 
 
 def ffprobe(path):
@@ -125,7 +125,7 @@ def objects_of(node):
 
 
 def mediainfo_complexity(report):
-    """What MediaInfo 24.01 reports as ComplexityIndex (File_Ac3.cpp, Streams_Fill): the dec3 box's
+    """What MediaInfo 26.01 reports as ComplexityIndex (File_Ac3.cpp, Streams_Fill): the dec3 box's
     value or "Not present", and the frames' where it differs. The frames' value is set by a frame's
     additional bit stream information once a JOC payload has been parsed, and cleared by every
     container."""
@@ -160,7 +160,7 @@ def mediainfo_complexity(report):
 
 
 def mediainfo_dynamic_objects(data, report):
-    """What MediaInfo 24.01 reports as NumberOfDynamicObjects: the object count of the last OAMD
+    """What MediaInfo 26.01 reports as NumberOfDynamicObjects: the object count of the last OAMD
     payload, read as File_Ac3.cpp does (object_audio_metadata_payload, program_assignment): a
     program of dynamic objects only has that many less one for an LFE channel; otherwise the count
     program_assignment gives, 0 without one. data holds the file; the report's node offsets are in it."""
@@ -215,11 +215,20 @@ def check_ffprobe(path, data, manifest, problems):
     actual, expected = streams[0], manifest["streams"][0]
     codec = "eac3" if expected["codec"] == "E-AC-3" else "ac3"
     channels = manifest["crosscheck"].get("ffprobe_channels", expected["channels"])
-    if actual.get("codec_name") != codec or int(actual.get("sample_rate", 0)) != expected["sample_rate"] or int(actual.get("channels", 0)) != channels:
-        problems.append(f"ffprobe: {actual.get('codec_name')}, {actual.get('sample_rate')} Hz, {actual.get('channels')} channels; expected {codec}, "
-                        f"{expected['sample_rate']} Hz, {channels}")
+    fields = manifest["crosscheck"].get("ffprobe_fields", True)
+    rate_only = fields == "channels"
+    if actual.get("codec_name") != codec:
+        problems.append(f"ffprobe: {actual.get('codec_name')}, expected {codec}")
+    if rate_only:
+        if int(actual.get("sample_rate", 0)) != expected["sample_rate"]:
+            problems.append(f"ffprobe: {actual.get('sample_rate')} Hz, expected {expected['sample_rate']} Hz")
+        # The manifest's reason is that the decoder leaves the stream without channels: it expires when ffmpeg reports them.
+        if int(actual.get("channels", 0)) != 0 or actual.get("channel_layout") not in (None, "unknown"):
+            problems.append(f"ffprobe now reports {actual.get('channels')} channels ({actual.get('channel_layout')}); drop the channels skip")
+    elif fields and (int(actual.get("sample_rate", 0)) != expected["sample_rate"] or int(actual.get("channels", 0)) != channels):
+        problems.append(f"ffprobe: {actual.get('sample_rate')} Hz, {actual.get('channels')} channels; expected {expected['sample_rate']} Hz, {channels}")
     known = channel_layouts.FFMPEG.get(actual.get("channel_layout"))
-    if "ffprobe_channels" not in manifest["crosscheck"] and (known is None or normalized(known) != normalized(expected["channel_layout"])):
+    if fields is True and "ffprobe_channels" not in manifest["crosscheck"] and (known is None or normalized(known) != normalized(expected["channel_layout"])):
         problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, expected {expected['channel_layout']}")
     flagged = extension_complexities(mi.golden(path))
     expected_profile = "Dolby Digital Plus + Dolby Atmos" if any(c is not None for c in flagged) else None
@@ -227,6 +236,10 @@ def check_ffprobe(path, data, manifest, problems):
         problems.append(f"ffprobe's profile {actual.get('profile')!r}, expected {expected_profile!r} (flag_ec3_extension_type_a set in {sum(c is not None for c in flagged)} frames)")
     packets = [[int(p["pos"]), int(p["size"])] for p in probe.get("packets", [])]
     expected_packets = packets_of(data, manifest["frames"]) if manifest["format"] == "AC-3" else packets_of_samples(data, manifest["frames"])
+    if manifest["crosscheck"].get("ffprobe_packets") == "substream 0":
+        # FFmpeg 8.0.1's parser starts a packet only at a frame of substream 0 (ac3_parser.c, eac3_parse_header refuses any other substream ID), so the
+        # frames of the other substreams join the packet before.
+        expected_packets = packets_of_substream_0(data, manifest["frames"])
     if packets != expected_packets:
         problems.append(f"ffprobe lists {len(packets)} packets, the manifest's frames make {len(expected_packets)}")
     if manifest["format"] == "AC-3" and expected_packets and manifest["crosscheck"].get("ffprobe_bitrate", True):
@@ -236,6 +249,17 @@ def check_ffprobe(path, data, manifest, problems):
                                                                                  576, 640][h["bitrate_code"]] * 1000 >> max(0, h["bsid"] - 8)
         if int(actual.get("bit_rate", 0)) != rate:
             problems.append(f"ffprobe's bitrate {actual.get('bit_rate')}, the first packet's {rate}")
+
+
+def packets_of_substream_0(data, frames):
+    out = []
+    for offset, length in frames:
+        h = m.header(data, offset)
+        if out and h and h["eac3"] and (h["dependent"] or h["substream"] != 0):
+            out[-1][1] += length
+        else:
+            out.append([offset, length])
+    return out
 
 
 def packets_of_samples(data, frames):
@@ -256,7 +280,7 @@ def check_decode(path, data, manifest, problems, work):
         piece.write_bytes(data[offset:offset + length])
         result = subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", "-f", kind, "-i", str(piece), "-f", "null", "-"],
                                 capture_output=True, text=True)
-        # ffmpeg 6.1 decodes independent substream 0 only (eac3dec.c), so it rejects the others.
+        # ffmpeg 8.0.1 decodes independent substream 0 only (eac3dec.c:307 skips any other substream ID), so it rejects the others.
         bad = any(f[0] in damaged for f in manifest["frames"] if offset <= f[0] < offset + length) or m.header(data, offset)["substream"] != 0
         failed = bool(result.stderr.strip())
         if failed != bad:
@@ -357,61 +381,6 @@ def check_skip_insertion(analyzer, path, problems, work, control):
 # MediaInfo's names for the bit stream modes (File_Ac3.cpp, AC3_Mode).
 MEDIAINFO_SERVICES = ["CM", "ME", "VI", "HI", "D", "C", "E", "VO"]
 
-# A/52 5.4.2.14 gives mixlevel 5 bits; MediaInfo reads 8 in an AC-3 frame (File_Ac3.cpp, "mixlevel -
-# Mixing Level", Skip_S1(8, ...)), 5 in E-AC-3, so in a frame with audprodie it reads every later
-# field 3 bits late: time codes, addbsi, Annex D's xbsi2 (dsurexmod, dheadphonmod) and dynrng.
-MIXLEVEL = "MediaInfo reads the AC-3 mixlevel as 8 bits where A/52 5.4.2.14 gives 5 (File_Ac3.cpp, Skip_S1(8, \"mixlevel\")), so it reads the later fields of a frame with production information 3 bits late; compared with that reading (mediainfo_bsi)"
-# File_Ac3.cpp, AC3_Channels and AC3_dynrng.
-MEDIAINFO_CHANNELS = [2, 1, 2, 3, 3, 4, 4, 5]
-MEDIAINFO_DYNRNG = [6.02, 12.04, 18.06, 24.08, -18.06, -12.04, -6.02, 0.00]
-
-
-def mediainfo_bsi(data, offset):
-    """An AC-3 frame's xbsi2 modes and first dynrng as MediaInfo reads them (File_Ac3.cpp, the
-    bsid<=0x09 branch of Core_Frame), its 8-bit mixlevel and all."""
-    bits = "".join(f"{b:08b}" for b in data[offset:offset + 64])
-    position = 40
-    def read(count):
-        nonlocal position
-        position += count
-        return int(bits[position - count:position], 2)
-    bsid, _, acmod = read(5), read(3), read(3)
-    if acmod & 1 and acmod != 1:
-        read(2)
-    if acmod & 4:
-        read(2)
-    if acmod == 2:
-        read(2)
-    read(1 + 5)
-    for _ in range(2 if acmod == 0 else 1):
-        if read(1):
-            read(8)
-        if read(1):
-            read(8)
-        if read(1):
-            read(8 + 2)
-        if acmod == 0 and _ == 0:
-            read(5)
-    read(2)
-    modes = {}
-    if bsid == 6:
-        if read(1):
-            read(2 + 3 + 3 + 3 + 3)
-        if read(1):
-            modes = {"dsurexmod": read(2), "dheadphonmod": read(2)}
-            read(1 + 8 + 1)
-    else:
-        for _ in range(2):
-            if read(1):
-                read(14)
-    if read(1):
-        read(8 * (read(6) + 1))
-    read(2 * MEDIAINFO_CHANNELS[acmod])
-    dynrng = read(8) if read(1) else None
-    if dynrng is not None:
-        modes["dynrng"] = 0.0 if dynrng == 0 else MEDIAINFO_DYNRNG[dynrng >> 5] + 20 * math.log10((0x20 + (dynrng & 0x1F)) / 64)
-    return modes
-
 # MediaInfo takes an E-AC-3 stream's bitrate from the first frame of each substream
 # (File_Ac3.cpp, frmsizplus1_Max, set once) and calls it CBR (Streams_Fill, "CBR" by default);
 # without a frame count of its own, it derives the duration from the file size and that bitrate, and
@@ -472,7 +441,7 @@ def check_mediainfo(path, tally):
     tally.start(path.stem)
     report = mi.golden(path)
     # dialnorm_Minimum and dialnorm_Maximum are only in the full output.
-    info = mi.read(path, full=True)
+    info = tally.read(path, full=True)
     audio = info["Audio"][0] if info and info["Audio"] else {}
     stream = report["streams"][0]
     tally.compare("format", audio.get("Format"), stream["codec"])
@@ -510,8 +479,6 @@ def check_mediainfo(path, tally):
     tally.compare("dialnorm minimum and maximum", (extra.get("dialnorm_Minimum"), extra.get("dialnorm_Maximum")), (str(min(dialnorms)), str(max(dialnorms))))
     compr = mi.value(bsi, "Compression Gain")
     tally.compare("compr", None if extra.get("compr") is None else round(float(extra["compr"]), 1), compr)
-    # MediaInfo reads frames of bsid 0 to 9 with the AC-3 syntax (File_Ac3.cpp, bsid<=0x09).
-    production = mi.value(bsi, "HasProductionInfo") and field(first, "Bit Stream ID") <= 9
     surround = mi.leading_number(mi.value(bsi, "Dolby Surround Mode"))
     if field(first, "Audio Coding Mode") != 2:
         pass
@@ -524,26 +491,18 @@ def check_mediainfo(path, tally):
     expected_mode = None
     if surround == 2:
         expected_mode = "Dolby Surround"
-    if production:
-        tally.skip("dynrng and surround mode against the frames", MIXLEVEL)
-        read = mediainfo_bsi(path.read_bytes(), first["offset"])
-        tally.compare("dynrng as MediaInfo misreads it", extra.get("dynrng"), None if read.get("dynrng") is None else f"{read['dynrng']:.2f}")
-        misread = {2: "Dolby Surround EX", 3: "Dolby Pro Logic IIz"}.get(read.get("dsurexmod"), expected_mode)
-        misread = "Dolby Headphone" if read.get("dheadphonmod") == 2 else misread
-        tally.compare("surround mode as MediaInfo misreads it", audio.get("Format_Settings_Mode"), misread)
+    block = next((c for c in first.get("children", []) if c.get("kind") == "SideInfo"), None)
+    dynrng = mi.value(block, "Dynamic Range Gain") if block is not None and mi.value(block, "HasDynamicRange") else None
+    if stream["codec"] == "E-AC-3":
+        # MediaInfo does not read E-AC-3 audio blocks (File_Ac3.cpp, "Not finished, for reference only").
+        tally.compare("E-AC-3 dynrng", extra.get("dynrng"), None)
     else:
-        block = next((c for c in first.get("children", []) if c.get("kind") == "SideInfo"), None)
-        dynrng = mi.value(block, "Dynamic Range Gain") if block is not None and mi.value(block, "HasDynamicRange") else None
-        if stream["codec"] == "E-AC-3":
-            # MediaInfo does not read E-AC-3 audio blocks (File_Ac3.cpp, "Not finished, for reference only").
-            tally.compare("E-AC-3 dynrng", extra.get("dynrng"), None)
-        else:
-            tally.compare("dynrng", None if extra.get("dynrng") is None else round(float(extra["dynrng"]), 2), dynrng)
-        ex = mi.leading_number(mi.value(bsi, "Extended Information 2", "Dolby Surround EX Mode"))
-        headphone = mi.leading_number(mi.value(bsi, "Extended Information 2", "Dolby Headphone Mode"))
-        expected_mode = {2: "Dolby Surround EX", 3: "Dolby Pro Logic IIz"}.get(ex, expected_mode)
-        expected_mode = "Dolby Headphone" if headphone == 2 else expected_mode
-        tally.compare("surround mode", audio.get("Format_Settings_Mode"), expected_mode)
+        tally.compare("dynrng", None if extra.get("dynrng") is None else round(float(extra["dynrng"]), 2), dynrng)
+    ex = mi.leading_number(mi.value(bsi, "Extended Information 2", "Dolby Surround EX Mode"))
+    headphone = mi.leading_number(mi.value(bsi, "Extended Information 2", "Dolby Headphone Mode"))
+    expected_mode = {2: "Dolby Surround EX", 3: "Dolby Pro Logic IIz"}.get(ex, expected_mode)
+    expected_mode = "Dolby Headphone" if headphone == 2 else expected_mode
+    tally.compare("surround mode", audio.get("Format_Settings_Mode"), expected_mode)
     statistics = next(n for n in mi.walk(report["root"]) if n.get("kind") == "Statistics")
     nominal = mi.leading_number(mi.value(statistics, "Nominal Bitrate"))
     tally.compare("bitrate", audio.get("BitRate"), str(math.floor((nominal or stream["averageBitrate"]) * 1000 + 0.5)))
@@ -564,6 +523,7 @@ def main():
     analyzer = sys.argv[sys.argv.index("--analyzer") + 1] if "--analyzer" in sys.argv else None
     failures = checked = 0
     mi.require()
+    tool_versions.require("ffmpeg", "ffprobe", "a52")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     with tempfile.TemporaryDirectory() as directory:
         work = pathlib.Path(directory)
@@ -577,7 +537,7 @@ def main():
             check = manifest["crosscheck"]
             problems = []
             for name in CHECKS:
-                if check.get(name) is False and name not in check.get("skip", {}):
+                if check.get(name) not in (None, True) and name not in check.get("skip", {}):
                     problems.append(f"the {name} check is off without a reason")
             if check.get("ffprobe"):
                 check_ffprobe(path, data, manifest, problems)

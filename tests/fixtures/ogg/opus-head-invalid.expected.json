@@ -2472,12 +2472,10 @@
  ],
  "crosscheck": {
   "valid": false,
-  "oggz_validate": [
-   "File contains no Ogg packets"
-  ],
+  "oggz_validate": "ok",
   "not_compared": {
    "opusinfo, opusdec and ffprobe": "they refuse most of these headers, as the findings say, and read a chain's later links as one stream",
-   "oggz validate's other checks": "oggz 1.1.1 does not know Opus, and gives up on the file at the link whose identification header is cut short"
+   "oggz validate's other checks": "oggz 1.1.3 passes the file: it checks the generic Ogg rules (oggz-validate.c), which a cut identification header does not break"
   }
  }
 }

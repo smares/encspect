@@ -3,7 +3,7 @@
 
 For every fixture, its manifest's "crosscheck" says what to confirm:
 
-- "ffprobe": ffprobe (ffmpeg 6.1) must report the first stream's codec, sampling frequency (the
+- "ffprobe": ffprobe (ffmpeg 8.0) must report the first stream's codec, sampling frequency (the
   extension's where the stream has one, such as 96 kHz with X96; "ffprobe_rate" where ffmpeg reads another), channels, profile (DTS, DTS-ES,
   DTS 96/24, DTS-HD Master Audio, DTS-HD High Resolution Audio, DTS Express, which ffmpeg writes "DTS-HD MA" and "DTS-HD HRA"; "ffprobe_profile": false where ffmpeg reads the
   fixture otherwise), a channel layout that feeds the manifest's speakers (channel_layouts.py;
@@ -23,11 +23,11 @@ For every fixture, its manifest's "crosscheck" says what to confirm:
   skips extension substreams, junk and tags a byte at a time.
 - "skip": the checks that are not run on the fixture, each with its reason; every one is printed.
 
-Every fixture is also compared with MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), against its
+Every fixture is also compared with MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), against its
 golden report: the format and commercial name, the form of the stream (word size and byte order), the
 sampling frequency, channels and layout, bit depth, the nominal bitrate and its mode, the samples per
 frame, and the frames, samples and duration. MediaInfo's own readings are asserted as such, with the
-source line that explains them (File_Dts.cpp of MediaInfoLib v24.01); fixtures on which it reads
+source line that explains them (File_Dts.cpp of MediaInfoLib v26.01, which differs from v24.01 only in a buffer size, declarations and one DTS-HD identifier); fixtures on which it reads
 otherwise name their evidence, and an explained difference that no longer occurs fails the run.
 
 The analyzer's agreement with the manifests is checked by the tests (DtsFixtureTests). Needs ffmpeg,
@@ -46,6 +46,7 @@ import tempfile
 
 import channel_layouts
 import mediainfo_tool as mi
+import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parent
 FIXTURES = ROOT.parents[1] / "tests" / "fixtures" / "dts"
@@ -232,7 +233,7 @@ def check_libdca(tool, path, manifest, report, problems):
         problems.append(f"libdca's frames hold {total} samples, the manifest's streams {sum(s['samples'] for s in streams)}")
 
 
-# MediaInfo 24.01 reads these fixtures differently from the analyzer; the evidence is in MediaInfoLib v24.01,
+# MediaInfo 26.01 reads these fixtures differently from the analyzer; the evidence is in MediaInfoLib v26.01,
 # Source/MediaInfo/Audio/File_Dts.cpp. Each entry must still differ, or the run fails.
 CORE_ONLY = ("MediaInfo takes a stream as DTS-HD only where it finds the component's sync word in the substream (File_Dts.cpp, Extensions: XLL() sets "
              "presence_Extended_XLL); {why}, so it reports the core: the format of the core, its bitrate, constant")
@@ -261,8 +262,8 @@ MEDIAINFO_READS_OTHERWISE = {
                                                        "(File_Dts.cpp, Streams_Fill: presence_Core_XXCH fills the core), where the analyzer adds the extension's channels"),
 }
 
-# Fixtures added after the first reading of MediaInfo's source, where MediaInfo 24.01's reading was measured: the reason says so.
-MEASURED = "measured with MediaInfo 24.01"
+# Fixtures added after the first reading of MediaInfo's source, where MediaInfo 26.01's reading was measured: the reason says so.
+MEASURED = "measured with MediaInfo 26.01"
 BYTES_14 = ("MediaInfo counts the bytes of a 14-bit frame as FSIZE + 1 times 8 over 7, rounded down, and of a 16-bit frame as FSIZE + 1, where a frame that ends inside a word "
             "takes the whole word in the file (" + MEASURED + ": 585 bytes for the frame of 586), so its bitrate is a little under the one the frames' lengths give")
 LITTLE_ENDIAN_EXSS = ("MediaInfo finds an extension substream behind a core frame in the big endian 16-bit form only (" + MEASURED + ": it reports the core of these little endian files alone)")
@@ -279,7 +280,7 @@ for form in ("14be", "14le"):
 MEDIAINFO_READS_OTHERWISE["16le-xxch"] = MEDIAINFO_READS_OTHERWISE["xxch"]
 MEDIAINFO_READS_OTHERWISE["xxch-bad-crc"] = MEDIAINFO_READS_OTHERWISE["xxch"]
 for fixture_name in ("xxch-header-overrun", "16le-xxch-header-overrun"):
-    MEDIAINFO_READS_OTHERWISE[fixture_name] = {"format": "MediaInfo 24.01 does not recognize the file as DTS (" + MEASURED + "): the XXCH extension of 12 bytes ends the core frame inside its header"}
+    MEDIAINFO_READS_OTHERWISE[fixture_name] = {"format": "MediaInfo 26.01 does not recognize the file as DTS (" + MEASURED + "): the XXCH extension of 12 bytes ends the core frame inside its header"}
 for fixture_name in ("exss-lossless", "exss-bad-crc", "exss-bad-component-sync", "exss-descriptor-overrun", "exss-sizes-overrun", "exss-two-assets", "exss-assets-overrun", "exss-component-header-overrun", "exss-high-resolution"):
     MEDIAINFO_READS_OTHERWISE.setdefault("le16-" + fixture_name, {}).update(dict.fromkeys(MIXED, LITTLE_ENDIAN_EXSS))
 MEDIAINFO_READS_OTHERWISE["exss-component-header-overrun"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="the lossless component is a sync word and four bytes, which MediaInfo does not take for the component (" + MEASURED + "), where the analyzer reports dts.header-overrun and names the stream from the descriptor"))
@@ -292,13 +293,13 @@ MEDIAINFO_READS_OTHERWISE["xll-future-version"] = dict.fromkeys(
     MIXED, "MediaInfo's XLL() returns at once for a lossless extension whose version is not 0 (File_Dts.cpp: Version=Begin>>12, if (Version) return), so it finds no lossless "
            "extension and reports the core: the format of the core, its bitrate, constant")
 MEDIAINFO_READS_OTHERWISE["xll-lt-rt"] = {"channel layout": "MediaInfo reads the channel mask of a lossless channel set only where each channel feeds a loudspeaker (File_Dts.cpp, XLL(): "
-                                                          "One2OneMapChannels2Speakers), so it gives an Lt/Rt asset no channel layout (measured with MediaInfo 24.01)"}
+                                                          "One2OneMapChannels2Speakers), so it gives an Lt/Rt asset no channel layout (measured with MediaInfo 26.01)"}
 MEDIAINFO_READS_OTHERWISE["xll-x-imax-d1"] = dict.fromkeys(
     ["commercial name", "IMAX feature"], "FFmpeg's dca_xll.c takes 0xF14000D0 and 0xF14000D1 for DTS:X IMAX (it ignores the lowest bit), MediaInfo's Extensions2 only 0xF14000D0, and reads "
                                          "0xF14000D1 as DTS:X (File_Dts.cpp: case 0x02000850 and 0xF14000D1 set presence_Extended_X alone)")
 MEDIAINFO_READS_OTHERWISE["xll-x-rejected-set"] = dict.fromkeys(
     ["commercial name", "objects in the channel layout", "DTS:X feature"], "FFmpeg's dca_xll.c refuses the channel set (a source resolution beyond its storage width) in parse_sub_headers before it looks for the "
-    "DTS:X word, and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the sets hold (measured with MediaInfo 24.01) and reports DTS:X")
+    "DTS:X word, and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the sets hold (measured with MediaInfo 26.01) and reports DTS:X")
 MEDIAINFO_READS_OTHERWISE["rate-lossless"] = {"bitrate": MEDIAINFO_READS_OTHERWISE["rate-code"]["bitrate"]}
 for amode in range(10, 16):
     MEDIAINFO_READS_OTHERWISE[f"amode-{amode}"] = {"channel layout": "MediaInfo's speaker positions for the arrangements above 9 differ from Table 5-4's (" + MEASURED + "); the analyzer's rest on the table"}
@@ -319,7 +320,7 @@ def check_mediainfo(path, tally):
     its samples), the bitrate mode and the samples per frame."""
     tally.start(path.stem)
     report = mi.golden(path)
-    info = mi.read(path, full=True)
+    info = tally.read(path, full=True)
     audio = info["Audio"][0] if info and info["Audio"] else {}
     if not report["streams"]:
         tally.skip("everything", "the file holds no audio stream")
@@ -367,7 +368,7 @@ def check_mediainfo(path, tally):
         expected = 0 if stream["codec"] == "DTS Express" or core is None else core["length"] * 8 * rate / samples
         expected += exss["length"] * 8 * stream["sampleRate"] / samples if extended and exss is not None else 0
     if path.suffix == ".dtshd":
-        tally.skip("bitrate", "MediaInfo gives a .dtshd file's bit rate from the stream chunk's size over the duration (measured with MediaInfo 24.01: 2,944 bytes in 43 ms are 547,721 bit/s); "
+        tally.skip("bitrate", "MediaInfo gives a .dtshd file's bit rate from the stream chunk's size over the duration (measured with MediaInfo 26.01: 2,944 bytes in 43 ms are 547,721 bit/s); "
                               "its nominal and maximum bit rates are compared with the chunks")
     else:
         tally.compare("bitrate", audio.get("BitRate"), None if expected is None else str(round(expected)))
@@ -394,7 +395,7 @@ def check_dtshd(path, manifest, report, problems, tally):
     if info is not None and probe and fileinfo != mi.value(info, "Text"):
         problems.append(f"ffprobe's fileinfo tag is {fileinfo!r}, FILEINFO's text {mi.value(info, 'Text')!r}")
     presentation = chunk(report, "AUPR-HDR")
-    audio_info = mi.read(path, full=True)
+    audio_info = tally.read(path, full=True)
     audio = audio_info["Audio"][0] if audio_info and audio_info["Audio"] else {}
     if presentation is None or not audio:
         return
@@ -429,6 +430,7 @@ def check_dtshd(path, manifest, report, problems, tally):
 def main():
     failures = checked = 0
     mi.require()
+    tool_versions.require("ffmpeg", "ffprobe", "dca")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     with tempfile.TemporaryDirectory() as directory:
         work = pathlib.Path(directory)
