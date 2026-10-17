@@ -202,6 +202,12 @@ def guessenc_summary(path):
     return summary
 
 
+# Ubuntu 26.04's madplay was linked against a libmad whose mad_build, the string of its build options, has another size than the libmad0 it
+# loads, and glibc's loader warns about that copy relocation on stderr (sysdeps/x86_64/dl-machine.h, R_X86_64_COPY). madplay only
+# prints mad_build for -V, so decoding does not depend on it; this one line is not an error of the stream.
+MADPLAY_LOADER_WARNING = re.compile(rb"^madplay: Symbol `mad_build' has different size in shared object, consider re-linking\r?\n?", re.MULTILINE)
+
+
 def decodes_to_silence(path, manifest):
     problems = []
     commands = {
@@ -219,8 +225,9 @@ def decodes_to_silence(path, manifest):
             del commands["mpg123"]
     for name, command in commands.items():
         result = subprocess.run(command, capture_output=True)
-        if not result.stdout or any(result.stdout) or result.stderr.strip():
-            problems.append(f"{name} does not decode to silence without errors: {result.stderr.decode()[:200].strip()}")
+        errors = MADPLAY_LOADER_WARNING.sub(b"", result.stderr) if name == "madplay" else result.stderr
+        if not result.stdout or any(result.stdout) or errors.strip():
+            problems.append(f"{name} does not decode to silence without errors: {errors.decode()[:200].strip()}")
     return problems
 
 
