@@ -12,19 +12,20 @@ make_wavpack_fixtures.py):
   opens, against the analyzer's golden report: the version, channels, channel mask,
   sample rate, bits, samples, mode flags (hybrid, lossless, float, fast, high, very high, extra level),
   the MD5 digest, the source format and extension, and the wrapper's size.
-- wvunpack -ss (wavpack 5.6.0 of Ubuntu 24.04), on the main file alone: channels, source, duration,
+- wvunpack -ss (wavpack 5.9.0 of Ubuntu 26.04), on the main file alone: channels, source, duration,
   modalities, encoder version, digest, source format and the wrapper.
 - wvunpack -v: the file decodes and its block CRCs hold, with its correction file where it has one
   (lossless then), and with -m its digest equals the one stored. Damaged fixtures are decoded too, and
   those listed in REJECTED must fail.
-- ffprobe (FFmpeg 6.1, libavformat's wv demuxer): the codec, rate, channels and layout, the bit depth,
+- ffprobe (FFmpeg 8.0, libavformat's wv demuxer): the codec, rate, channels and layout, the bit depth,
   the length from the first block, and the packets, one for each set of blocks at the first block's
   offset and the sets' size. What it refuses is listed in FFPROBE_REFUSES.
-- MediaInfo 24.01 (mediainfo_tool.py), against the golden report: the format, the profile (the stream
-  version), the settings (hybrid or lossless), the channels and layout, the sample rate, the bit depth,
-  the duration its first two blocks give, the stream size and the settings it spells from the config
-  block. MediaInfo reads only the first two blocks and does not know DSD or a custom sample rate; the
-  fixtures on which it reads otherwise name their evidence.
+- MediaInfo 26.01 (mediainfo_tool.py), against the golden report: the format, the profile (the stream
+  version), the compression mode (lossy only for a hybrid file without the sub-block that a correction file needs),
+  the DSD setting, the channels and layout, the sample rate, the bit depth, the duration from the first to the
+  last block with samples, the stream size and the settings it spells from the config block. MediaInfo accepts
+  a stream after two blocks with audio and reads a file under 1 MiB to its end; the fixtures on which it reads
+  otherwise name their evidence.
 
 Fixtures that are damaged say why the others do not apply; every skipped check prints its reason.
 Disagreements fail the run (exit status 1).
@@ -43,6 +44,7 @@ import tempfile
 
 import mediainfo_tool as mi
 import tool_versions
+import wavpack_model
 import wavpack_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -98,11 +100,9 @@ FFPROBE_NO_RATE = {
 # speakers than the channel count ("Channel mask does not match the channel count"), which leaves no bits per raw sample.
 FFPROBE_COUNTS_THE_MASK = {"external-lossless-4ch-two-unassigned", "built-channel-identities"}
 # ffprobe's packets end at the first bytes that are no block header (wv_read_block_header: ff_wv_parse_header fails).
-MEDIAINFO_DSD = ("MediaInfo does not know DSD: it takes the sample rate from the header's index (88200 Hz here, the byte rate over 4) and the bit depth from the "
-                 "bytes per sample (8) (File_Wvpk.cpp, Data_Parse and Data_Parse_Fill)")
+MEDIAINFO_DSD = ("MediaInfo 26.01 reads DSD: the sample rate is the header's index rate shifted by the frame rate multiplier of sub-block 0x0E and by 3 for the DSD flag, "
+                 "and it fills no bit depth for a DSD file (File_Wvpk.cpp, Data_Parse_Fill, id_0E)")
 MEDIAINFO_ONE_BLOCK = ("MediaInfo accepts a stream after two blocks with audio (Frame_Count_Valid=2, File_Wvpk.cpp) and fills nothing from a file that has one")
-MEDIAINFO_CUSTOM_RATE = ("MediaInfo takes the sample rate from the header's index only (SamplingRate<15, File_Wvpk.cpp, Data_Parse_Fill); a sub-block with a custom rate "
-                         "is not read, since it switches on the ID without its optional bit")
 MEDIAINFO_ID3V2 = ("observed: MediaInfo 24.01 counts the leading ID3v2 tag in the General stream size (26 bytes) and fills none of its fields for a WavPack file")
 MEDIAINFO_READS_OTHERWISE = {
     "built-leading-id3v2": {"tag title": MEDIAINFO_ID3V2, "tag track": MEDIAINFO_ID3V2},
@@ -400,7 +400,12 @@ def check_mediainfo(name, manifest, path, report, tally):
     version = int(first["version"], 16)
     tally.compare("profile", audio.get("Format_Profile"), f"{version >> 8}.{version & 0xFF:02d}")
     hybrid = statistic(report, "IsHybrid")
-    tally.compare("settings", audio.get("Format_Settings"), "Hybrid lossy" if hybrid else "Lossless")
+    # File_Wvpk.cpp, Data_Parse_Fill: "Lossy" for a hybrid file unless sub-block 0x07 ("info needed for hybrid lossless (wvc) mode", id_07) was met in the
+    # blocks parsed so far, which are the first two; Format_Settings holds "DSD" for a DSD file and nothing else.
+    data = path.read_bytes()
+    correction = any(i & 0x3F == 0x07 for b in chained[:2] for i, *_ in wavpack_model.sub_blocks(data[b["offset"]:b["offset"] + b["length"]])[0])
+    tally.compare("compression mode", audio.get("Compression_Mode"), "Lossy" if hybrid and not correction else "Lossless")
+    tally.compare("settings", audio.get("Format_Settings"), "DSD" if statistic(report, "IsDsd") else None)
     channels = stream["channels"]
     if path.suffix == ".wvc":
         # A correction file has no channel info: MediaInfo takes the mono flag of the second block.
@@ -410,16 +415,20 @@ def check_mediainfo(name, manifest, path, report, tally):
         tally.compare("channel layout", mi.speakers(audio.get("ChannelLayout")), mi.normalized(stream["channelLayout"]))
     is_dsd = statistic(report, "IsDsd")
     if is_dsd:
-        tally.compare("sample rate of DSD (" + MEDIAINFO_DSD + ")", audio.get("SamplingRate"), str(stream["sampleRate"] // 32))
-        tally.compare("bit depth of DSD (" + MEDIAINFO_DSD + ")", audio.get("BitDepth"), "8")
+        tally.compare("sample rate of DSD (" + MEDIAINFO_DSD + ")", audio.get("SamplingRate"), str(stream["sampleRate"]))
+        tally.compare("bit depth of DSD (" + MEDIAINFO_DSD + ")", audio.get("BitDepth"), None)
     else:
         tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
         tally.compare("bit depth", audio.get("BitDepth"), str(8 * (1 + (int(first["flags"], 16) & 3))))
-    # File_Wvpk.cpp, Streams_Finish: the first block's index to the end of the second block with audio.
-    rate = {True: stream["sampleRate"] // 8}.get(bool(is_dsd), stream["sampleRate"])
-    rate = int(audio.get("SamplingRate") or rate) if is_dsd else rate
-    duration = (second["index"] + second["samples"] - first["index"]) * 1000 // rate
-    tally.compare("duration of the first two blocks", audio.get("Duration"), f"{duration / 1000:.3f}")
+    # File_Wvpk.cpp, Streams_Finish: the first block's index to the end of the last block with samples. The parser jumps to the last 512 KiB only where
+    # at least 1 MiB is left (GoToFromEnd in Data_Parse_Fill), so a smaller file is read to its end.
+    if path.stat().st_size >= 2 * 512 * 1024:
+        tally.skip("duration", "MediaInfo jumps to the last 512 KiB of a file over 1 MiB (File_Wvpk.cpp, Data_Parse_Fill), where it finds the last block by its synchronization")
+    else:
+        rate = stream["sampleRate"] // 8 if is_dsd else stream["sampleRate"]
+        last = blocks[-1]
+        duration = (last["index"] + last["samples"] - first["index"]) * 1000 // rate
+        tally.compare("duration from the first to the last block with samples", audio.get("Duration"), f"{duration / 1000:.3f}")
     size = path.stat().st_size
     tally.compare("stream size", audio.get("StreamSize"), str(size - sum(c["length"] for c in report["root"]["children"] if c.get("kind") == "Tag")))
     flags = config_flags(report)
