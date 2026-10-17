@@ -140,6 +140,8 @@ public sealed partial class VorbisParser
         // that count, and the last page's may be smaller, where the decoder trims the end.
         private int _previousIndex = -1;
         private long _decoded;
+        private long _lastReturned;
+        private long _lastPositionReturned;
         private long _firstReturned;
         private long _secondReturned;
         private int _blocks;
@@ -223,7 +225,7 @@ public sealed partial class VorbisParser
                 Node node = _parent.Add(Node.FromMapped("Identification Header", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"),
                     description: Explain.IdentificationShort, topic: Topics.VorbisBlocks));
                 _findings.Add(Severity.Warning, "vorbis.header-short", node, _ =>
-                    $"The identification header holds {packet.Length} bytes, fewer than its {Identification.Length}; decoders refuse the stream, and its audio packets are only counted.");
+                    $"The identification header holds {Count(packet.Length, "byte", "bytes")}, fewer than its {Identification.Length}; decoders refuse the stream, and its audio packets are only counted.");
                 return;
             }
 
@@ -243,7 +245,7 @@ public sealed partial class VorbisParser
                 Node extra = _parent.Add(Node.FromMapped("Identification Extra Data", packet, Identification.Length, packet.Length,
                     NodeValue.Integer(packet.Length - Identification.Length, "bytes", "byte"), description: Explain.IdentificationExtraData));
                 _findings.Add(Severity.Info, "vorbis.header-extra-data", extra, _ =>
-                    $"The identification header holds {packet.Length - Identification.Length} bytes after its framing bit, which decoders ignore.");
+                    $"The identification header holds {Count(packet.Length - Identification.Length, "byte", "bytes")} after its framing bit, which decoders ignore.");
             }
 
             CheckIdentification(id);
@@ -297,7 +299,7 @@ public sealed partial class VorbisParser
             if (end < packet.Length)
             {
                 bool framing = (packet.Span[end] & 1) != 0;
-                Node node = _parent.Add(Node.FromBits("Framing Bit", packet, end * 8L, (end * 8L) + 1, NodeValue.Boolean(framing), description: Explain.FramingBit,
+                Node node = _parent.Add(Node.FromBits("Framing Bit", packet, end * 8L, (end * 8L) + 1, NodeValue.Boolean(framing), description: Explain.CommentFramingBit,
                     order: BitOrder.LeastSignificantFirst));
                 if (!framing)
                 {
@@ -309,7 +311,7 @@ public sealed partial class VorbisParser
                     Node trailing = _parent.Add(Node.FromMapped("Comment Trailing Data", packet, end + 1, packet.Length, NodeValue.Integer(packet.Length - end - 1, "bytes", "byte"),
                         description: Explain.CommentTrailingData));
                     _findings.Add(Severity.Info, "vorbis.comment-trailing-data", trailing, _ =>
-                        $"The comment header holds {packet.Length - end - 1} bytes after its framing bit, which readers ignore.");
+                        $"The comment header holds {Count(packet.Length - end - 1, "byte", "bytes")} after its framing bit, which readers ignore.");
                 }
             }
             else
@@ -514,6 +516,7 @@ public sealed partial class VorbisParser
             }
 
             _firstReturned = _blocks == 1 ? returned : _firstReturned;
+            _lastReturned = returned;
             _decoded += returned;
             _previousIndex = index;
         }
@@ -581,6 +584,7 @@ public sealed partial class VorbisParser
             _afterGap = false;
             _lastPosition = position;
             _lastPositionDecoded = _decoded;
+            _lastPositionReturned = _lastReturned;
             _lastIsEnd = packet.IsEndOfStream;
             _lastPositionField = packet.EndPositionField;
         }
@@ -670,7 +674,7 @@ public sealed partial class VorbisParser
             if (offset > 0)
             {
                 _findings.Add(Severity.Info, "vorbis.start-offset", field, _ =>
-                    $"The first granule position, {offset} samples beyond what the packets before it return, starts the stream at a later time, as in a stream cut from a longer one (section A.2).");
+                    $"The first granule position, {Count(offset, "sample", "samples")} beyond what the packets before it return, starts the stream at a later time, as in a stream cut from a longer one (section A.2).");
                 return 0;
             }
 
@@ -679,7 +683,7 @@ public sealed partial class VorbisParser
             if (-offset > limit)
             {
                 _findings.Add(Severity.Warning, "vorbis.start-trimming-large", field, _ =>
-                    $"The first granule position discards {-offset} samples at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); libvorbisfile discards {limit}.");
+                    $"The first granule position discards {Count(-offset, "sample", "samples")} at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); libvorbisfile discards {limit}.");
             }
 
             return Math.Min(Math.Min(-offset, limit), _decoded);
@@ -698,8 +702,19 @@ public sealed partial class VorbisParser
             if (trim < 0)
             {
                 _findings.Add(Severity.Warning, "vorbis.granule-beyond-packets", field, _ =>
-                    $"The last granule position, {position} at 0x{field.Offset:X}, is {-trim} samples beyond what the packets before it return; decoders end the stream earlier than it says.");
+                    $"The last granule position, {position} at 0x{field.Offset:X}, is {Count(-trim, "sample", "samples")} beyond what the packets before it return; decoders end the stream earlier than it says.");
                 return 0;
+            }
+
+            // Section A.2 lets the granule position indicate "less audio data than the final packet would normally return", so at
+            // most the samples of the last packet; libvorbis strips no more than it has buffered for it (vorbis_synthesis_blockin),
+            // which oggdec's output confirms.
+            if (trim > _lastPositionReturned)
+            {
+                long limit = _lastPositionReturned;
+                _findings.Add(Severity.Warning, "vorbis.end-trimming-large", field, _ =>
+                    $"The last granule position, {position} at 0x{field.Offset:X}, trims {Count(trim, "sample", "samples")} from the end, more than the {limit} the last audio packet returns, which the Vorbis I specification allows at most (section A.2); libvorbis trims {limit}.");
+                return limit;
             }
 
             return trim;

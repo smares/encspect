@@ -51,7 +51,13 @@ public abstract class AnalysisContext
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(updated);
 
-        int index = _streams.FindIndex(s => ReferenceEquals(s, stream));
+        // A stream is usually updated right after it was added.
+        int index = _streams.Count - 1;
+        while (index >= 0 && !ReferenceEquals(_streams[index], stream))
+        {
+            index--;
+        }
+
         if (index < 0)
         {
             throw new ArgumentException("The stream is not one of this context's.", nameof(stream));

@@ -168,6 +168,12 @@ Every format has three kinds of fixture:
 
 All scripts are in `scripts/fixtures`.
 
+- **Ogg-specific checks:**
+  - A fixture of a corrupt Speex packet names the message speexdec must print (`speexdec_error` in its manifest, read by `crosscheck_ogg_fixtures.py`); `speex-wideband-layer-skip` has libspeex 1.2.1's "More than two wideband layers found".
+  - `vorbis-end-trimming-large` is compared with oggdec's samples, which libvorbis cuts at the last packet's; `speex-ignored-bits` with speexdec's samples and bitrates, which show it never reads the bits after the header's frames.
+  - Every stream's manifest entry holds its playback group (the chain link), which `OggFixtureTests` compares.
+  - `MemoryTests` bounds a multistream Opus file whose framing breaks, half a million empty Vorbis comments and 100,000 logical streams; `ComplexityTests` times junk dense in capture patterns, candidates that each follow the next, and 300,000 logical streams.
+
 ### MediaInfo
 
 Every cross-check script also compares each fixture's golden report with MediaInfo 26.01 (MediaInfoLib 26.01, Ubuntu 26.04's `mediainfo` package), through `mediainfo_tool.py`. MediaInfo reads container and stream headers without decoding, so it is one more independent reader of the formats' header fields, frame and sample counts, encoder strings and tags.

@@ -51,7 +51,7 @@ public sealed record StreamInfo
 
     public bool IsVbr { get; init; }
 
-    // Streams of one group play at the same time, such as the tracks of a movie or of a Matroska Segment: a summary of the file counts the
+    // Streams of one group play at the same time, such as the tracks of a movie, of a Matroska Segment or the logical streams of one Ogg link: a summary of the file counts the
     // longest of them once instead of adding their durations and samples up. Streams in different groups, and streams without a group,
     // follow one another (the regions of an MPEG file) and add up. The number only tells groups apart.
     public int? PlaybackGroup { get; init; }

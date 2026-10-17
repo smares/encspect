@@ -95,7 +95,7 @@
                     },
                     {
                       "name": "Channel Layout",
-                      "value": "5.1: front left, front center, front right, rear left, rear right, LFE",
+                      "value": "5.1: front left, front center, front right, back left, back right, LFE",
                       "offset": 37,
                       "length": 1
                     },
@@ -164,13 +164,13 @@
                         },
                         {
                           "name": "Channel 3",
-                          "value": "rear left: coupled stream 1, left (2)",
+                          "value": "back left: coupled stream 1, left (2)",
                           "offset": 52,
                           "length": 1
                         },
                         {
                           "name": "Channel 4",
-                          "value": "rear right: coupled stream 1, right (3)",
+                          "value": "back right: coupled stream 1, right (3)",
                           "offset": 53,
                           "length": 1
                         },
@@ -252,7 +252,7 @@
                       "children": [
                         {
                           "name": "Evidence",
-                          "value": "The vendor string and 1 comments fit the data",
+                          "value": "The vendor string and 1 comment fit the data",
                           "offset": 91,
                           "length": 46
                         }
@@ -1466,7 +1466,7 @@
                             },
                             {
                               "name": "Padding Length",
-                              "value": 1,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 974,
                               "length": 1
@@ -2709,7 +2709,7 @@
                             },
                             {
                               "name": "Padding Length",
-                              "value": 1,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 1863,
                               "length": 1
@@ -3952,7 +3952,7 @@
                             },
                             {
                               "name": "Padding Length",
-                              "value": 1,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 2791,
                               "length": 1
@@ -5195,7 +5195,7 @@
                             },
                             {
                               "name": "Padding Length",
-                              "value": 1,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 3680,
                               "length": 1
@@ -6438,7 +6438,7 @@
                             },
                             {
                               "name": "Padding Length",
-                              "value": 1,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 4602,
                               "length": 1
@@ -7681,7 +7681,7 @@
                             },
                             {
                               "name": "Padding Length",
-                              "value": 1,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 5491,
                               "length": 1
@@ -8888,6 +8888,7 @@
         "duration": 0.5914166666666667,
         "averageBitrate": 71.12,
         "isVbr": true,
+        "playbackGroup": 1,
         "series": [
           {
             "name": "Bitrate",
