@@ -288,30 +288,82 @@ public class MusepackFixtureTests
         Assert.InRange(stream8.Children.Count(c => c.Kind == NodeKind.Frame), 4096, 4200);
     }
 
-    // Seek table offset and seek table packets by the tens of thousands cost time in the number of
-    // packets, not in its square: every offset used to be compared with every table, which took
-    // 25 s for 80,000 of each. The offsets point at tables that start in the part not read, which
-    // are not reported.
+    // Seek table offset and seek table packets by the tens of thousands: past the 4,096 detailed
+    // packets they join runs, which bounds the work on its own (the offsets point into the part not
+    // read, which is not reported), and the check on the detailed ones uses a hash set, not a scan of
+    // every table per offset. 1,500 pairs fit among the detailed packets: the offsets of the odd ones
+    // miss their table by a byte, and those, no more and no fewer, are reported as one finding.
     [Fact]
-    public void ManySeekPacketsAreCheckedInLinearTime()
+    public void ManySeekPacketsAreCheckedAndCounted()
     {
         byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/external-mpcenc-no-ei-no-st.mpc"));
         int at = stream.Length - 3;
-        var pairs = new List<byte>();
-        for (int i = 0; i < 80_000; i++)
+        foreach ((int pairs, bool exact) in new[] { (1_500, true), (80_000, false) })
         {
-            pairs.AddRange("SO\x04\x03"u8.ToArray());
-            pairs.AddRange("ST\x05\x01\x00"u8.ToArray());
+            var packets = new List<byte>();
+            for (int i = 0; i < pairs; i++)
+            {
+                packets.AddRange(new byte[] { (byte)'S', (byte)'O', 4, (byte)(i % 2 == 0 ? 4 : 5) });
+                packets.AddRange("ST\x05\x01\x00"u8.ToArray());
+            }
+
+            byte[] data = [.. stream[..at], .. packets, .. stream[at..]];
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("seek.mpc", new MemoryStream(data));
+            watch.Stop();
+            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), $"The analysis took {watch.Elapsed.TotalSeconds:F1} s.");
+            Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+            Assert.True(report.Findings.Count < 40, $"{report.Findings.Count} findings.");
+            Finding[] invalid = [.. report.Findings.Where(f => f.Code == "musepack.seek-offset-invalid")];
+            if (exact)
+            {
+                Assert.Equal(750, Assert.Single(invalid).Count);
+            }
+            else
+            {
+                Assert.True(invalid.Length <= 1);
+            }
+        }
+    }
+
+    // Audio packets that are too short for their frames stop the walk after 4,096 of them even where
+    // a good one comes now and then, and so do more than 4,096 separate runs of packets between audio
+    // packets: neither costs a record per packet for good.
+    [Fact]
+    public void InterleavedDamageStopsTheWalk()
+    {
+        byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/external-mpcenc-no-ei-no-st.mpc"));
+        int at = stream.Length - 3;
+        var tiny = new List<byte>();
+        var runs = new List<byte>();
+        byte[] ap = [(byte)'A', (byte)'P', 11, 0, 0, 0, 0, 0, 0, 0, 0];
+        for (int i = 0; i < 9000; i++)
+        {
+            tiny.AddRange("AP\x03"u8.ToArray());
+            if (i % 1000 == 999)
+            {
+                tiny.AddRange(ap);
+            }
+
+            runs.AddRange(ap);
+            runs.AddRange("XX\x03"u8.ToArray());
         }
 
-        byte[] data = [.. stream[..at], .. pairs, .. stream[at..]];
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("seek.mpc", new MemoryStream(data));
-        watch.Stop();
-        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), $"The analysis took {watch.Elapsed.TotalSeconds:F1} s.");
-        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
-        Assert.All(report.Findings.Where(f => f.Code.StartsWith("musepack.seek", StringComparison.Ordinal)), f => Assert.True(f.Count >= 1));
-        Assert.True(report.Findings.Count < 40, $"{report.Findings.Count} findings.");
+        Report damaged = Encspect.Host.Analyzer.CreateDefault().Analyze("tiny.mpc", new MemoryStream([.. stream[..at], .. tiny, .. stream[at..]]));
+        Assert.Contains(damaged.Findings, f => f.Code == "musepack.packets-damaged");
+        Report interleaved = Encspect.Host.Analyzer.CreateDefault().Analyze("runs.mpc", new MemoryStream([.. stream[..at], .. runs, .. stream[at..]]));
+        Assert.Contains(interleaved.Findings, f => f.Code == "musepack.packets-interleaved");
+    }
+
+    // A chapter tag cut inside its 24-byte header or inside its items is reported, as the packet cut
+    // before its gain and peak is.
+    [Theory]
+    [InlineData("musepack/sv8-chapter-tag-cut.mpc")]
+    [InlineData("musepack/sv8-chapter-items-cut.mpc")]
+    public void CutChapterTagIsReported(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.Single(report.Findings, f => f.Code == "musepack.packet-fields-truncated");
     }
 
     // A stream header cut before its two coding bytes reports no sample rate and no channels, which
@@ -331,16 +383,38 @@ public class MusepackFixtureTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "musepack.header-missing");
     }
 
-    // A sample count near 2^63 needs more frames than fit in the sum the frame count is worked out
-    // from: the findings and the stream keep the true figures.
+    // A sample count near 2^63 needs more frames than fit in the sum the frame count was once worked out
+    // from: the findings and the stream keep the true figures. In the top 481 values libmpcdec's own
+    // count, with the decoder delay added, wraps negative and it outputs nothing (mpcdec: 0 samples),
+    // which the analyzer says; below them it decodes (mpcdec: the frames there).
     [Fact]
-    public void HugeSampleCountDoesNotOverflow()
+    public void LargeSampleCountsDoNotOverflow()
     {
-        Report report = Fixtures.AnalyzeMpeg("musepack/sv8-sample-count-huge.mpc");
-        Finding missing = Assert.Single(report.Findings, f => f.Code == "musepack.audio-packets-missing");
+        Report large = Fixtures.AnalyzeMpeg("musepack/sv8-sample-count-large.mpc");
+        Finding missing = Assert.Single(large.Findings, f => f.Code == "musepack.audio-packets-missing");
         Assert.DoesNotContain("-", missing.Message, StringComparison.Ordinal);
-        Assert.DoesNotContain(report.Findings, f => f.Code == "musepack.audio-packets-extra");
-        Assert.True(report.Streams.Single().Samples > 0);
+        Assert.DoesNotContain(large.Findings, f => f.Code == "musepack.sample-count-overflows");
+        Assert.True(large.Streams.Single().Samples > 0);
+
+        Report huge = Fixtures.AnalyzeMpeg("musepack/sv8-sample-count-huge.mpc");
+        Assert.Single(huge.Findings, f => f.Code == "musepack.sample-count-overflows");
+        Assert.DoesNotContain(huge.Findings, f => f.Code == "musepack.audio-packets-missing");
+        Assert.Equal(0, huge.Streams.Single().Samples);
+    }
+
+    // Seek table and seek table offset packets are still read past the 4,096 detailed packets, a few
+    // at a time as the stream header's are: a wrong table after thousands of other packets is reported.
+    [Fact]
+    public void SeekTableAfterManyPacketsIsStillChecked()
+    {
+        byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/sv8-seek-mismatch.mpc"));
+        byte[] chapters = [.. Enumerable.Repeat("XX\x03"u8.ToArray(), 5000).SelectMany(p => p)];
+        int at = 4;
+        foreach (byte[] data in new[] { [.. stream[..at], .. chapters, .. stream[at..]], stream })
+        {
+            Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("late.mpc", new MemoryStream(data));
+            Assert.Contains(report.Findings, f => f.Code == "musepack.seek-table-mismatch");
+        }
     }
 
     // The name libmpcdec gives an SV7 version byte above 116 is its SV8 reading with the byte shifted

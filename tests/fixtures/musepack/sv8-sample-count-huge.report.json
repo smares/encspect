@@ -60,14 +60,14 @@
                 },
                 {
                   "name": "Samples",
-                  "value": 73247,
+                  "value": 0,
                   "unit": "samples",
                   "offset": 0,
                   "length": 14277
                 },
                 {
                   "name": "Duration",
-                  "value": 1.6609297052154195,
+                  "value": 0,
                   "unit": "s",
                   "offset": 0,
                   "length": 14277
@@ -350,8 +350,8 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 73247,
-        "duration": 1.6609297052154195,
+        "samples": 0,
+        "duration": 0,
         "averageBitrate": 68.1310546875,
         "isVbr": true,
         "series": [
@@ -383,13 +383,14 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "musepack.audio-packets-missing",
-        "message": "The stream header's 9223372036854775807 samples need 8006399337547549 frames in 125099989649181 audio packets; the stream holds 1, so decoders end early.",
-        "offset": 0,
-        "length": 4,
+        "code": "musepack.sample-count-overflows",
+        "message": "The stream header's 9223372036854775807 samples leave no room for the decoder delay in the 64-bit count libmpcdec works with, which wraps negative: libmpcdec stops before the first frame and outputs no samples.",
+        "offset": 12,
+        "length": 9,
         "path": [
           0,
-          0
+          2,
+          4
         ],
         "count": 1
       }

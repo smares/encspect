@@ -175,8 +175,8 @@ PROFILE_SETTINGS = ["--radio", "--insane"]
 
 
 def profiles(build, encode_with):
-    """The profile each setting makes the build write; the builds that take other switches (the 0.90
-    builds and Buschmann's MP+) write nothing for these and are left out."""
+    """The profile each setting makes the build write; the builds for which the call, with the switch
+    before the file names, writes nothing (mppenc 0.90f to 0.90o and Buschmann's MP+) are left out."""
     found = {}
     for setting in PROFILE_SETTINGS:
         try:

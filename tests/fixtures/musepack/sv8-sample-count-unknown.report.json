@@ -384,7 +384,7 @@
       {
         "severity": "Info",
         "code": "musepack.sample-count-unknown",
-        "message": "The stream header's sample count is 0, which the SV8 specification uses for a length it does not know; libmpcdec then decodes no samples, though the audio packets hold 64 frames.",
+        "message": "The stream header's sample count is 0, which the SV8 specification uses for a length it does not know; libmpcdec then outputs no samples, though the audio packets hold 64 frames.",
         "offset": 12,
         "length": 1,
         "path": [

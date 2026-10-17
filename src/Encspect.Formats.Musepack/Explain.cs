@@ -142,7 +142,7 @@ internal static class Explain
     public const string StreamEnd = "The stream end packet (SE): mandatory, the last packet of the stream, 3 bytes long; tags may follow it (SV8 specification, Stream End Packet).";
 
     public const string Encoder = "The encoder that wrote the stream, from its encoder version field or, where that names none, from a tag's claim, with the evidence and the confidence in it.";
-    public const string Confidence = "How sure the analyzer is of the encoder: high where the encoder version field and the fields beside it match what encodes of one build wrote, medium where it follows libmpcdec's reading of the field or the fields fit the encodes of two sets of builds, low where only a tag's claim names the encoder or the SV7 version byte is above 116, which no known encoder writes.";
+    public const string Confidence = "How sure the analyzer is of the encoder: high where the encoder version field and the fields beside it match what encodes of the builds a row names wrote, medium where it follows libmpcdec's reading of the field or the fields fit the encodes of two sets of builds, low where only a tag's claim names the encoder or the SV7 version byte is above 116, which no known encoder writes.";
     public const string Evidence = "Something in the file that points to the encoder, and where it is.";
 
     public const string Statistics = "Figures computed over the stream's frames or audio packets.";

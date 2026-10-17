@@ -267,7 +267,9 @@ def sv8(data):
                 count = min(count, max(0, expected - frames))
             frames += count
             audio_bytes += length if count else 0
-    samples = max(0, min(sh["samples"], frames * FRAME - DELAY) - sh["silence"]) if complete else 0
+    # libmpcdec r495 adds the delay to the sample count in a signed 64-bit integer, which wraps for the top 481 values: it outputs nothing.
+    wraps = complete and sh["samples"] > 2 ** 63 - 1 - DELAY
+    samples = max(0, min(sh["samples"], frames * FRAME - DELAY) - sh["silence"]) if complete and not wraps else 0
     return {"packets": found, "stop": stop, "sh": sh, "complete": complete, "frames": frames, "samples": samples,
             "rate": RATES[sh["rate"]] if complete and sh["rate"] < 4 else 0, "audio_bytes": audio_bytes}
 
@@ -307,8 +309,8 @@ def manifest(data, start, end, extra=None):
         result["version"] = 8
         # Once 4,096 packets that are no audio are detailed, runs of packets that do not carry audio are
         # one node each, with their count, except the stream end packet and the first 8 each of the
-        # stream header, ReplayGain and encoder info packets read after them.
-        detailed, listed, runs, late = 0, [], [], {"SH": 0, "RG": 0, "EI": 0}
+        # stream header, ReplayGain, encoder info, seek table offset and seek table packets read after them.
+        detailed, listed, runs, late = 0, [], [], {"SH": 0, "RG": 0, "EI": 0, "SO": 0, "ST": 0}
         for o, l, k, d, h in s["packets"]:
             folded = k not in ("AP", "SE") and d == l and detailed >= 4096
             if folded and k in late and late[k] < 8:

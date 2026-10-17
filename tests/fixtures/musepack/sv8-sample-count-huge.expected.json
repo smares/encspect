@@ -37,9 +37,9 @@
    "codec": "Musepack SV8",
    "sample_rate": 44100,
    "channels": 2,
-   "samples": 73247,
+   "samples": 0,
    "average_bitrate": 68.1310546875,
-   "duration": 1.6609297052154195
+   "duration": 0.0
   }
  ],
  "regions": [
@@ -51,8 +51,8 @@
  ],
  "findings": [
   {
-   "code": "musepack.audio-packets-missing",
-   "contains": "9223372036854775807 samples need 8006399337547549 frames"
+   "code": "musepack.sample-count-overflows",
+   "contains": "9223372036854775807 samples leave no room"
   }
  ],
  "crosscheck": {

@@ -11,12 +11,15 @@ Musepack SV8, SV7, and SV4 to SV6.
   - chapters, with their APEv2 tags;
   - the stream end.
   - Once 4,096 packets that are no audio are detailed, further packets that are no audio become runs, one node each with their count, whatever their key. A packet in a run is not read, so its fields are not checked; what needs no fields still counts: a key outside A to Z or one the specification does not reserve, a ReplayGain or seek table offset packet after the first audio packet, a repeated stream header, and that a ReplayGain packet exists.
-  - Three kinds are read past the 4,096 all the same: the stream end, and the first 8 each of the stream header, ReplayGain and encoder info packets that come after them, since the stream info needs them.
+  - Some are read past the 4,096 all the same: the stream end, and the first 8 each of the stream header, ReplayGain, encoder info, seek table offset and seek table packets that come after them, since the stream info and the seek checks need them.
   - The findings of the packets that are read are counted once per kind, with the first case named, as with unknown keys.
   - A seek table offset that points into a run is not reported, since the table it names may be there. The entries of all seek tables together are kept up to 4,194,304 for the check against the audio packets; later tables are counted and not compared.
-  - After 4,096 audio packets in a row too short for one bit per frame (empty ones among them), which no encoder writes, the packets are not followed further. libmpcdec reads at least one bit for each frame (its used bands, in `mpc_decoder_read_bitstream_sv8`), and the stream header gives the frames in a packet.
+  - After more than 4,096 separate runs of such packets (between audio packets, say) the packets are not followed further (`musepack.packets-interleaved`); no encoder writes packets of that kind among the audio.
+  - After 4,096 audio packets too short for one bit per frame (empty ones among them), in a row or not, which no encoder writes, the packets are not followed further. libmpcdec reads at least one bit for each frame (its used bands, in `mpc_decoder_read_bitstream_sv8`), and the stream header gives the frames in a packet.
   - A sample count of 0, which the specification uses for an unknown length, is a finding; libmpcdec then outputs no samples, though it decodes every frame.
+  - A sample count in the top 481 values of a signed 64-bit integer is a finding too (`musepack.sample-count-overflows`): libmpcdec adds its decoder delay to the count in an `mpc_int64_t`, which wraps negative, so it stops before the first frame and outputs no samples (mpcdec: 0 samples decoded), and the analyzer reports 0 samples. Below those values it decodes.
   - Packets past the header's sample count add no frames, since decoders stop there.
+  - A chapter packet cut inside its gain and peak, its tag header or its items is a finding (`musepack.packet-fields-truncated`).
   - A stream header that ends before its two bytes with the sample rate and the channels reports sample rate 0 and no channels (libmpcdec refuses it), and counts no samples.
 - **SV7**, frame by frame: the 20-bit frame lengths are followed through the 32-bit words. For each frame, the parser reads the used subbands, the mid/side subbands and the noise-filled ones.
   - With true gapless, the last frame's samples come from the 11 bits after it, as libmpcdec takes them, not from the header.
@@ -28,8 +31,8 @@ Musepack SV8, SV7, and SV4 to SV6.
 ## Memory and time
 
 - Every frame or audio packet that is followed costs one record (24 bytes for SV4 to SV7, 32 for SV8) and a point in the bitrate series, for at least 20 bits of the file (a frame's length field) or 3 bytes (a packet's key and size). The memory tests hold SV5 and SV7 to 90 bytes kept and 120 at the peak per frame, and the same per audio packet.
-- Units too short to hold what they must (the runs above) stop the walk after 4,096. Interleaving one plausible unit in 4,096 does not escape the bound above: the others still cost one record each, for their 20 bits or 3 bytes.
-- Packets that are no audio cost nothing each past the detailed ones: the memory tests hold unknown, ReplayGain, encoder info, seek table offset, seek table and stream header packets to about 1 byte per packet.
+- Units too short to hold what they must (the runs above) stop the walk after 4,096. Damaged audio packets count in all, not in a row, so good ones between them do not escape the stop. SV7 frames and one-frame audio packets (block power 0, where one byte can hold the frame) that interleave damaged ones still cost one record each, for their 20 bits or 3 bytes; that is the bound above.
+- Packets that are no audio cost nothing each past the detailed ones where they follow each other: the memory tests hold unknown, ReplayGain, encoder info, seek table offset, seek table and stream header packets in a row to about 1 byte per packet. Between audio packets each run of them is one 32-byte record, and more than 4,096 runs stop the walk.
 - The check of the seek table offsets against the tables is linear in their number (a hash set of the tables' offsets); the loops that read no input check for cancellation every 4,096 iterations.
 
 ## Reported
@@ -86,7 +89,7 @@ The encoder comes from the stream's version fields (below) and an ID3v2 TSSE fra
 | 0 | no true gapless, Max Level 0, ReplayGain 0 | mppenc 0.90f to 1.0 (Klemm) |
 | 0 | no true gapless, ReplayGain set | both of the above, medium confidence |
 
-- The builds that write profile 1 are the ones in the rows that name it, and they wrote 1 at every setting tried: the default, `--radio` and `--insane`, where the other builds that take these switches wrote 10, 9 and 12 (mppenc 0.90f to 0.90o and Buschmann's MP+ take others, and were encoded at the default only). `sv7-encoders.json` records every encode, and a test holds the table to them. Other settings were not tried, so a profile 1 build that wrote another profile at one of them would be named as the row for the other profile.
+- The builds that write profile 1 are the ones in the rows that name it, and they wrote 1 at every setting tried: the default, `--radio` and `--insane`, where the other builds that took these switches wrote 10, 9 and 12. For mppenc 0.90f to 0.90o and Buschmann's MP+ the generator's call, with the switch before the file names, wrote nothing, so only their default encode is recorded (under Wine their messages point at the argument order). `sv7-encoders.json` records every encode, and a test holds the table to them. Other settings were not tried, so a profile 1 build that wrote another profile at one of them would be named as the row for the other profile.
 - ReplayGain tools also fill Max Level, so it separates Buschmann's builds from Klemm's only where the ReplayGain fields are 0.
 - A range admits the untested builds between its ends. Builds outside the tested ones that share the fields, such as Buschmann's 1.7.0 to 1.7.7, would be named as the tested ones.
 - An SV7 version byte above 116 is named as libmpcdec names it, "stable 0.0.0" (its branch for the later versions, with the bits above the byte, all 0); no encoder writes such a byte, so the encoder is reported with low confidence.

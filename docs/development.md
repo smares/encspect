@@ -266,11 +266,11 @@ No SV6 encoder was found, so `make_musepack_fixtures.py` derives the SV6 fixture
 
 ### Musepack SV7 encoder table evidence
 
-`tests/fixtures/musepack/sv7-encoders.json` holds, for mppenc 1.16 and every Rarewares Win32 SV7 build, the header fields of an encode at the default settings, and the profile each build wrote at `--radio` and `--insane` where it takes the switch (mppenc 0.90f to 0.90o and Buschmann's MP+ take others).
+`tests/fixtures/musepack/sv7-encoders.json` holds, for mppenc 1.16 and every Rarewares Win32 SV7 build, the header fields of an encode at the default settings, and the profile each build wrote at `--radio` and `--insane` where the generator's call, with the switch before the file names, wrote anything (it wrote nothing for mppenc 0.90f to 0.90o and Buschmann's MP+, so only their default is recorded).
 
 - `make_external_musepack_fixtures.py --sv7-encoders-only` writes the file alone, with gcc and Wine (it rebuilds mppenc 1.16 and fetches the archives); the full run writes it with the fixtures.
 - `Sv7EncoderTableMatchesEncodes` holds the table to every row and every profile in it.
-- Result: the nine builds the table names by profile 1 (1.05z1, 1.05z2, 1.06 alpha, 1.11a, 1.13a, 1.13g, 1.15f, 1.15i and 1.15r) wrote 1 at all three settings; the others wrote 10, 9 and 12.
+- Result: the nine builds the table names by profile 1 (1.05z1, 1.05z2, 1.06 alpha, 1.11a, 1.13a, 1.13g, 1.15f, 1.15i and 1.15r) wrote 1 at all three settings; the other builds with all three recorded wrote 10, 9 and 12.
 - Nothing was encoded at the other profiles (`--thumb`, `--braindead`, `--quality N`).
 
 ### WMA fixtures from Microsoft's encoders

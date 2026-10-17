@@ -18,7 +18,7 @@ APEv2 tag after them, whose last frame's samples differ or are invalid, without 
 version, with an invalid resolution, whose ID3v2 tag names another encoder, broken by a tag a SEEK
 frame finds; and an SV5 stream followed by such a tag. Further ones: an SV8 stream header cut after
 its CRC and one cut before its two coding bytes, which report no sample rate or channels; a sample
-count near 2^63; a chapter packet cut inside its fields; an SV7 encoder version byte above 116; and a
+count near 2^63, one that overflows libmpcdec's count and one that does not; chapter packets cut inside their fields, their tag header or their items; an SV7 encoder version byte above 116; and a
 tag claiming the encoder an mppenc 1.16, a Buschmann and a Klemm stream point to.
 
 No SV6 encoder was found, so the SV6 fixtures are derived: the SV5 encoder's variable bitrate streams,
@@ -537,6 +537,29 @@ def sv8_header_cut_before_coding():
 
 
 HUGE_SAMPLES = 2 ** 63 - 1
+# Still large enough to overflow the sum the frame count was once worked out from, but not libmpcdec's
+# own count: 481 below the largest it decodes from, so mpcdec decodes the stream.
+LARGE_SAMPLES = 2 ** 63 - 1000
+
+
+def ct_payload(tag):
+    """A chapter packet's payload: the sample offset 5, a gain and a peak of 0, and the tag."""
+    return b"\x05\x00\x00\x00\x00" + tag
+
+
+def ape_header(items, size):
+    return struct.pack("<IIII", 2000, size, items, 0) + bytes(8)
+
+
+def sv8_chapter_tag_cut():
+    """A chapter packet whose tag ends after 6 bytes, where its header needs 24."""
+    return before_end(plain(), packet(b"CT", ct_payload(ape_header(3, 100)[:6])))
+
+
+def sv8_chapter_items_cut():
+    """A chapter packet whose tag counts 3 items, of which one whole item and 4 bytes of the second are there."""
+    item = struct.pack("<II", 4, 0) + b"Title\x00abcd"
+    return before_end(plain(), packet(b"CT", ct_payload(ape_header(3, 100) + item + b"\x04\x00\x00\x00")))
 
 
 def sv8_chapter_truncated():
@@ -601,8 +624,11 @@ FIXTURES = {
     "sv8-max-band-32": (sv8_header_changed(bands=32), None, [("musepack.max-band-invalid", "32 used bands")]),
     "sv8-header-cut-after-crc": (sv8_header_cut_after_crc, None, [("musepack.packet-fields-truncated", "SH packet"), ("musepack.header-crc-mismatch", "damaged")]),
     "sv8-header-cut-before-coding": (sv8_header_cut_before_coding, None, [("musepack.packet-fields-truncated", "SH packet")]),
-    "sv8-sample-count-huge": (sv8_header_changed(samples=HUGE_SAMPLES), None,
-                              [("musepack.audio-packets-missing", f"{HUGE_SAMPLES} samples need {(HUGE_SAMPLES + 481 + 1151) // 1152} frames")]),
+    "sv8-sample-count-huge": (sv8_header_changed(samples=HUGE_SAMPLES), None, [("musepack.sample-count-overflows", f"{HUGE_SAMPLES} samples leave no room")]),
+    "sv8-sample-count-large": (sv8_header_changed(samples=LARGE_SAMPLES), None,
+                               [("musepack.audio-packets-missing", f"{LARGE_SAMPLES} samples need {(LARGE_SAMPLES + 481 + 1151) // 1152} frames")]),
+    "sv8-chapter-tag-cut": (sv8_chapter_tag_cut, None, [("musepack.packet-fields-truncated", "CT packet")]),
+    "sv8-chapter-items-cut": (sv8_chapter_items_cut, None, [("musepack.packet-fields-truncated", "CT packet")]),
     "sv8-chapter-truncated": (sv8_chapter_truncated, None, [("musepack.packet-fields-truncated", "CT packet")]),
     "sv8-sample-count-unknown": (sv8_header_changed(samples=0), None, [("musepack.sample-count-unknown", "64 frames")]),
     "sv8-header-crc-zero": (sv8_header_crc_zero, None, [("musepack.header-crc-zero", "CRC is 0"), ("musepack.padding-not-zero", "SH packet")]),

@@ -23,6 +23,8 @@ internal static class Sv8Parser
     // read past the detailed ones, which the stream info needs, are limited to a few each.
     private const int MaxSeekEntriesKept = 1 << 22;
     private const int MaxLatePackets = 8;
+    private const int MaxRunRecords = 4096;
+    private static readonly ushort[] LateKeys = [Key("SH"), Key("RG"), Key("EI"), Key("SO"), Key("ST")];
 
     public static bool Sniff(ByteReader reader)
     {
@@ -114,6 +116,12 @@ internal static class Sv8Parser
                     index--;
                     state.Packets.SetLast(run.Joined(packet));
                 }
+                else if (++state.RunRecords > MaxRunRecords)
+                {
+                    state.Unreadable = (position, "musepack.packets-interleaved",
+                        $"More than {MaxRunRecords} separate runs of packets that carry no audio lie before 0x{position:X}, which no encoder writes: the data is damaged, and the rest of it is not read.");
+                    break;
+                }
                 else
                 {
                     state.Packets.Add(packet.AsRun());
@@ -128,22 +136,19 @@ internal static class Sv8Parser
             position += length;
 
             // An audio packet holds frames and libmpcdec reads at least one bit of each (the number of
-            // used bands), so no encoder writes one with fewer bits than frames; after a run of them,
-            // as after a run of SV7 frames whose subband resolutions run past their length, the
-            // packets are not followed further.
+            // used bands), so no encoder writes one with fewer bits than frames; after this many of
+            // them, in a row or not, the packets are not followed further. A good packet between
+            // them does not start the count again, since each good one costs the file its frames' bits
+            // and the bad ones cost a record each.
             if (header.Key == Key("AP") && (packet.Length - packet.HeaderLength) * 8 < (state.Header?.FramesPerPacket ?? 64))
             {
                 damaged++;
-            }
-            else if (header.Key == Key("AP"))
-            {
-                damaged = 0;
             }
 
             if (damaged == Sv7Parser.MaxDamagedRun && position < end)
             {
                 state.Unreadable = (position, "musepack.packets-damaged",
-                    $"{Sv7Parser.MaxDamagedRun} audio packets in a row up to 0x{position:X} are too short to hold one bit for each of their frames, which no encoder writes: the data is damaged, and the rest of it is not read.");
+                    $"{Sv7Parser.MaxDamagedRun} audio packets up to 0x{position:X} are too short to hold one bit for each of their frames, which no encoder writes: the data is damaged, and the rest of it is not read.");
                 break;
             }
 
@@ -350,7 +355,7 @@ internal static class Sv8Parser
             return false;
         }
 
-        int slot = packet.Key == Key("SH") ? 0 : packet.Key == Key("RG") ? 1 : packet.Key == Key("EI") ? 2 : -1;
+        int slot = Array.IndexOf(LateKeys, packet.Key);
         if (slot >= 0 && state.LatePackets[slot] < MaxLatePackets)
         {
             state.LatePackets[slot]++;
@@ -909,6 +914,7 @@ internal static class Sv8Parser
         Node tag = f.Bytes("Chapter Tag", position, f.Data.Length - position, null, Explain.ChapterTag, Topics.ApeTag);
         if (f.Data.Length - position < 24)
         {
+            Truncated(state, f, "CT");
             return;
         }
 
@@ -921,13 +927,20 @@ internal static class Sv8Parser
         tag.Add(new Node("Flags", at + 12, 4, NodeValue.Hex(BinaryPrimitives.ReadUInt32LittleEndian(h[12..]), 8)) { Description = Explain.ChapterTagField });
         tag.Add(new Node("Reserved", at + 16, 8, NodeValue.Integer(8, "bytes")) { Description = Explain.ChapterTagField });
         int item = position + 24;
-        for (uint i = 0; i < items && item + 8 < f.Data.Length; i++)
+        for (uint i = 0; i < items; i++)
         {
+            if (item + 8 >= f.Data.Length)
+            {
+                Truncated(state, f, "CT");
+                break;
+            }
+
             uint size = BinaryPrimitives.ReadUInt32LittleEndian(f.Data.AsSpan(item));
             uint flags = BinaryPrimitives.ReadUInt32LittleEndian(f.Data.AsSpan(item + 4));
             int keyEnd = Array.IndexOf(f.Data, (byte)0, item + 8);
             if (keyEnd < 0 || keyEnd + 1 + (long)size > f.Data.Length)
             {
+                Truncated(state, f, "CT");
                 break;
             }
 
@@ -1038,7 +1051,13 @@ internal static class Sv8Parser
             }
         }
 
-        if (state.Header is { Samples: > 0 } header && state.AudioPackets.Count > 0 && state.Unreadable is null)
+        if (state.Header is { Samples: > 0 } wrapping && wrapping.OverflowsDecoder)
+        {
+            state.Findings.AddNow(Severity.Warning, "musepack.sample-count-overflows",
+                $"The stream header's {wrapping.Samples} samples leave no room for the decoder delay in the 64-bit count libmpcdec works with, which wraps negative: libmpcdec stops before the first frame and outputs no samples.",
+                state.SampleCountField ?? state.Leading[0]);
+        }
+        else if (state.Header is { Samples: > 0 } header && state.AudioPackets.Count > 0 && state.Unreadable is null)
         {
             long frames = header.ExpectedFrames;
             long packets = (frames + header.FramesPerPacket - 1) / header.FramesPerPacket;
@@ -1122,12 +1141,12 @@ internal static class Sv8Parser
         if (header is { Samples: 0 } && frames > 0 && state.SampleCountField is { } sampleCount)
         {
             state.Findings.AddNow(Severity.Info, "musepack.sample-count-unknown",
-                $"The stream header's sample count is 0, which the SV8 specification uses for a length it does not know; libmpcdec then decodes no samples, though the audio packets hold {frames} frames.",
+                $"The stream header's sample count is 0, which the SV8 specification uses for a length it does not know; libmpcdec then outputs no samples, though the audio packets hold {frames} frames.",
                 sampleCount);
         }
 
         long silence = header?.Silence ?? 0;
-        long samples = header is null ? 0 : Math.Max(0, Math.Min(header.Samples, (frames * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay) - silence);
+        long samples = header is null || header.OverflowsDecoder ? 0 : Math.Max(0, Math.Min(header.Samples, (frames * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay) - silence);
         double duration = rate > 0 ? samples / (double)rate : 0;
 
         Node Cover(string name, NodeValue? value, string description) => new(name, node.Offset, node.Length, value) { Description = description };
@@ -1252,6 +1271,10 @@ internal static class Sv8Parser
 
         public long FramesPerPacket => 1L << (2 * BlockPower);
 
+        // libmpcdec r495 mpc_decoder_decode_frame adds the synthesis delay to the sample count in an
+        // mpc_int64_t, which wraps negative for the top 481 values and stops the decoder at once.
+        public bool OverflowsDecoder => Samples > long.MaxValue - Sv7Parser.SynthesisDelay;
+
         // The frames decoders decode: until the samples and the synthesis filter's delay are out
         // (libmpcdec r495 mpc_decoder_decode_frame; mpcenc r495 writes as many).
         // Worked out from the quotient and the remainder, since a sample count near 2^63 overflows the sum.
@@ -1337,8 +1360,10 @@ internal static class Sv8Parser
 
         public int SeekEntriesKept { get; set; }
 
-        // Stream header, ReplayGain and encoder info packets read past the detailed ones.
-        public int[] LatePackets { get; } = new int[3];
+        public int RunRecords { get; set; }
+
+        // Packets of the keys in LateKeys read past the detailed ones.
+        public int[] LatePackets { get; } = new int[5];
 
         public (long Offset, string Code, string Message)? Unreadable { get; set; }
 

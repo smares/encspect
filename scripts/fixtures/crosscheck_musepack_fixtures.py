@@ -64,7 +64,7 @@ SKIPS = []
 # should make mpcdec do.
 READABLE = {"sv8-tags", "sv7-tags", "sv8-unknown-key", "sv8-no-replaygain", "sv8-data-after-end", "sv8-end-size", "sv7-trailing-data",
             "sv8-seek-mismatch", "sv8-many-unknown-first", "sv7-encoder-claim", "sv7-claim-mppenc", "sv7-claim-buschmann", "sv7-claim-klemm",
-            "sv7-encoder-above-116", "sv8-chapter-truncated",
+            "sv7-encoder-above-116", "sv8-chapter-truncated", "sv8-chapter-tag-cut", "sv8-chapter-items-cut",
             "sv8-replaygain-version", "sv6-last-frame-samples-invalid"}
 # Hand-built fixtures that mpcdec's decoded samples and libmpcdec's frames confirm, and why the other checks do not apply.
 DECODE_ONLY = {"sv7-gapless-frame-missing-ape": "mpcdec -i gives the header's length, which counts the missing frame, and ffmpeg shows the APE tag's cover as a second stream",
@@ -91,7 +91,8 @@ DAMAGED = {
     "sv8-seek-table-truncated": "a seek table that counts more entries than it holds",
     "sv8-seek-table-short": "a seek table with fewer entries than the packets need",
     "sv8-invalid-key-in-run": "libmpcdec stops decoding at a key outside A to Z",
-    "sv8-sample-count-huge": "a sample count near 2^63, which mpcdec shows as 4294967295 samples and decodes none of, and ffprobe as a duration of 2e14 s",
+    "sv8-sample-count-large": "a sample count far past the packets, whose last packet holds frames the stream header's count does not delimit: mpcdec decodes 66,335 samples (the 58 frames there), the analyzer assumes a full packet of 64",
+    "sv8-sample-count-huge": "a sample count in the top 481 values, where libmpcdec's count with the decoder delay wraps negative: mpcdec shows 4294967295 samples and decodes none",
 }
 REFUSED = {"sv8-bad-crc": "libmpcdec refuses a stream header whose CRC fails", "sv8-rate-reserved": "libmpcdec refuses a reserved sample rate",
            "sv8-header-cut-after-crc": "libmpcdec refuses a stream header that ends after its CRC",
@@ -362,7 +363,9 @@ MEDIAINFO_CRASHES = {"sv8-rate-reserved": (-8, "reads past the four-entry Mpc_Sa
 
 # The sample count of this fixture is 2^63 - 1, so MediaInfo's arithmetic on it (File_MpcSv8.cpp, SH: SampleCount * 1000 over the rate, and the file size
 # * 8 * rate over it) overflows 64 bits; what it prints then is not compared.
-MEDIAINFO_OVERFLOWS = {"sv8-sample-count-huge": "the sample count is 2^63 - 1, which MediaInfo's 64-bit arithmetic on it (File_MpcSv8.cpp, SH) overflows"}
+MEDIAINFO_OVERFLOWS = dict.fromkeys(["sv8-sample-count-huge", "sv8-sample-count-large"], "the sample count is within 1,000 of 2^63, which MediaInfo's 64-bit arithmetic on it (File_MpcSv8.cpp, SH) overflows")
+# The stream header of these ends before the sample rate, which the analyzer leaves at 0 (musepack.packet-fields-truncated), so there is no figure to compare.
+MEDIAINFO_CUT_HEADERS = {"sv8-header-cut-after-crc", "sv8-header-cut-before-coding"}
 
 
 def sv7_encoder_text(version):
@@ -413,7 +416,7 @@ def check_mediainfo(name, path, tally):
         tally.skip("sample rate, samples, duration and bitrate", MEDIAINFO_OVERFLOWS[name])
         return problems
     rate = stream["sampleRate"]
-    if not rate and stream["codec"] == "Musepack SV8":
+    if not rate and name in MEDIAINFO_CUT_HEADERS:
         # A stream header cut before the sample rate: the analyzer reports none (musepack.packet-fields-truncated), and libmpcdec refuses the stream.
         tally.skip("sample rate, samples, duration and bitrate", "the stream header ends before the sample rate, which the analyzer leaves at 0; what MediaInfo makes of a cut header is not compared")
         return problems
