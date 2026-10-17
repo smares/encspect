@@ -285,7 +285,7 @@ internal sealed partial class FrameSyntax
                 _spxEndBand = endCode < 3 ? endCode + 5 : (endCode * 2) + 3;
                 if (_spxBeginBand >= _spxEndBand || (copyStart * 12) + 25 >= (_spxBeginBand * 12) + 25)
                 {
-                    Invalid("the spectral extension range is empty or starts above its copy region");
+                    Invalid("the spectral extension range is empty, or its copy region does not start below it, so there is nothing to copy up (Annex E 3.6.4.1)");
                     return false;
                 }
 
@@ -848,7 +848,7 @@ internal sealed partial class FrameSyntax
         {
             DeltaChecks(delta, active);
         }
-        else if (blk == 0)
+        else if (blk == 0 && !delta)
         {
             Array.Fill(_deltbae, 2);
             foreach (int[] bands in _deltas)

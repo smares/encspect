@@ -47,6 +47,10 @@ internal sealed class FrameBits
     // The bits fields may be read up to: the frame's, or less while LimitTo applies.
     public int Limit => _limit;
 
+    // Where the last read or skip would have ended: past the data for the one that failed, so a field the file's end cuts
+    // can be told from one that does not fit its frame.
+    public int RequestedEnd { get; private set; }
+
     public int KeptBits => _keptBits;
 
     public int KeptBytes => (_keptBits + 7) >> 3;
@@ -59,6 +63,7 @@ internal sealed class FrameBits
         _source = bytes;
         _available = _limit = length * 8;
         Position = 0;
+        RequestedEnd = 0;
         _keptBits = 0;
     }
 
@@ -77,6 +82,7 @@ internal sealed class FrameBits
     {
         if (IsBuildingNodes)
         {
+            RequestedEnd = Position + width;
             if (Position + width > _limit)
             {
                 throw new EndOfStreamException();
@@ -88,6 +94,7 @@ internal sealed class FrameBits
             return kept;
         }
 
+        RequestedEnd = Position + width;
         int value = Take(_source, Position, width, _limit);
         Position += width;
         Keep(width, value);
@@ -104,6 +111,7 @@ internal sealed class FrameBits
             return 0;
         }
 
+        RequestedEnd = Position + width;
         int value = Take(_source, Position, width, _limit);
         Position += width;
         return value;
@@ -112,6 +120,7 @@ internal sealed class FrameBits
     // Bits the analysis neither reads nor keeps: skip fields, mantissas.
     public void Skip(long width)
     {
+        RequestedEnd = (int)Math.Min(Position + width, int.MaxValue);
         if (width < 0 || Position + width > _limit)
         {
             throw new EndOfStreamException();
