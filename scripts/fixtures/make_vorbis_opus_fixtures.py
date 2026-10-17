@@ -670,10 +670,14 @@ def opus_ambisonics3():
     packets, granules = opus_stream(head, audio)
     f = single("opus-ambisonics-family-3", packets, granules, opus_cuts(len(audio)), serial=0x0F0F0006, extension=".opus", codec="Opus")
     f.crosscheck = {"valid": False, "oggz_validate": "ok", "packets": True, "not_compared": {
-        "opusinfo, opusdec and ffprobe": "Ubuntu's libopus 1.4 is built without the projection decoder family 3 needs, so they refuse the stream; the packets oggz lists are compared"}}
+        "opusinfo, opusdec and ffprobe": "libopus 1.4 of Ubuntu 24.04 was built without the projection decoder family 3 needs, so they refused the stream (not re-checked with 26.04's libopus 1.6.1); the packets oggz lists are compared"}}
     f.write()
 
 
+# oggz validate counts a stream's header pages by its header count (oggz-validate.c, "Terminal header page ..."). oggz 1.1.1 did not know Opus and used the
+# default 3 (oggz.c, oggz_add_stream), which the pages of opus-granule-edges and opus-tags-variants break and which made it give up on opus-head-invalid; oggz 1.1.3
+# sets 2 for a stream with a complete identification header (oggz_auto.c, auto_opus: oggz_stream_set_numheaders) and passes all three: their damage is in
+# Opus's own rules (RFC 7845 section 3), which oggz does not check.
 def opus_head_invalid():
     # One link per identification header that breaks RFC 7845 or RFC 8486.
     heads = [
@@ -703,9 +707,9 @@ def opus_head_invalid():
         f.stream(serial, pages, link=link, codec="Opus")
         for code, text in findings:
             f.finding(code, text)
-    f.crosscheck = {"valid": False, "oggz_validate": ["File contains no Ogg packets"], "not_compared": {
+    f.crosscheck = {"valid": False, "oggz_validate": "ok", "not_compared": {
         "opusinfo, opusdec and ffprobe": "they refuse most of these headers, as the findings say, and read a chain's later links as one stream",
-        "oggz validate's other checks": "oggz 1.1.1 does not know Opus, and gives up on the file at the link whose identification header is cut short"}}
+        "oggz validate's other checks": "oggz 1.1.3 passes the file: it checks the generic Ogg rules (oggz-validate.c), which a cut identification header does not break"}}
     f.write()
 
 
@@ -748,7 +752,7 @@ def opus_granules():
     link(8, packets, granules, [2, 1, 10, 10], [("opus.page-layout", "The identification header does not end its page")])
     packets, granules = opus_stream(head, audio)
     link(9, packets, granules, [1, 2, 10, 10], [("opus.page-layout", "The comment header does not end its page")])
-    f.crosscheck = {"valid": False, "oggz_validate": ["Terminal header page has non-zero granulepos"], "not_compared": {
+    f.crosscheck = {"valid": False, "oggz_validate": "ok", "not_compared": {
         "opusinfo, opusdec and ffprobe": "they read a chain's later links as one stream or stop at the first, and the granule position cases are what the findings report"}}
     f.write()
 
@@ -892,7 +896,7 @@ def opus_tags_variants():
         f.w.write(p)
     f.stream(serial, pages, link=3, codec="Opus")
     f.finding("opus.tags-missing", "second packet is not the comment header")
-    f.crosscheck = {"valid": False, "oggz_validate": ["Terminal header page contains non-header packet"], "not_compared": {
+    f.crosscheck = {"valid": False, "oggz_validate": "ok", "not_compared": {
         "opusinfo, opusdec and ffprobe": "they read a chain's later links as one stream, and refuse the links without a comment, as the findings say"}}
     f.write()
 

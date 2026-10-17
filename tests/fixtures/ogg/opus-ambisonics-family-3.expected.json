@@ -387,7 +387,7 @@
   "oggz_validate": "ok",
   "packets": true,
   "not_compared": {
-   "opusinfo, opusdec and ffprobe": "Ubuntu's libopus 1.4 is built without the projection decoder family 3 needs, so they refuse the stream; the packets oggz lists are compared"
+   "opusinfo, opusdec and ffprobe": "libopus 1.4 of Ubuntu 24.04 was built without the projection decoder family 3 needs, so they refused the stream (not re-checked with 26.04's libopus 1.6.1); the packets oggz lists are compared"
   }
  }
 }

@@ -91,9 +91,9 @@ def oggz_streams(path):
     for serial, packets, pages in re.findall(r"serialno (\d+)\n\t(\d+) packets in (\d+) pages", info):
         counts[int(serial) % (1 << 32)] = (int(packets), int(pages))
     sizes = {}
-    # oggz prints sizes of 1024 bytes and more in kB, to three decimals.
+    # oggz prints sizes of 1024 bytes and more in kB, to three decimals, so such a size is known to within 0.512 bytes.
     for serial, size, unit in re.findall(r"serialno (\d+), .*?: ([\d.]+) (bytes?|kB)$", run(["oggz", "dump", str(path)]).stdout.decode(), re.M):
-        sizes.setdefault(int(serial) % (1 << 32), []).append(round(float(size) * 1024) if unit == "kB" else int(size))
+        sizes.setdefault(int(serial) % (1 << 32), []).append(float(size) * 1024 if unit == "kB" else int(size))
     return counts, sizes
 
 
@@ -151,9 +151,6 @@ def check_packets(name, manifest, problems, pages=True):
     counts, sizes = oggz_streams(DIRECTORY / name)
     for stream in manifest["streams"]:
         serial = int(stream["serial"], 16)
-        if "opus" in stream:
-            skip(name, f"oggz info and dump of {stream['serial']}", "oggz 1.1.1 does not know Opus and lists only a stream's first two packets; ffprobe's packets are compared where it reads the stream")
-            continue
         if counts.get(serial) is None:
             problems.append(f"oggz info lists no stream {stream['serial']}")
             continue
@@ -163,7 +160,8 @@ def check_packets(name, manifest, problems, pages=True):
         for codec in ("speex", "vorbis", "opus"):
             if codec in stream:
                 audio = [p[1] for p in stream[codec]["packets"]]
-                if audio and sizes.get(serial, [])[-len(audio):] != audio:
+                actual = sizes.get(serial, [])[-len(audio):] if audio else []
+                if audio and (len(actual) != len(audio) or any(abs(a - b) > 0.512 for a, b in zip(actual, audio))):
                     problems.append(f"oggz dump: the audio packet sizes of {stream['serial']} differ from the manifest's")
 
 
@@ -567,7 +565,7 @@ def check_mediainfo(name, path, tally):
 
 def main():
     mi.require()
-    tool_versions.require("ffprobe", "oggz", "ogginfo")
+    tool_versions.require("ffprobe", "oggz", "ogginfo", "speex", "opus-tools")
     tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
     for tool in ("oggz", "ogginfo", "vorbiscomment", "oggdec", "ffprobe", "speexdec", "opusinfo", "opusdec"):
         if subprocess.run(["which", tool], capture_output=True).returncode:
