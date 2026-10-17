@@ -6,13 +6,13 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 
 - **Licensors' own license files:** for the packages that carry only a license expression (`MIT`), the license file of the licensor's repository at the commit the package's nuspec names: Avalonia and Avalonia.Controls.DataGrid (`licence.md`), NWayland (`licence.md`), Tmds.DBus (`COPYING`) and MicroCom (`LICENSE`). The copyright line of the package's nuspec is given as well where it differs.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
-- **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version 10.0.12.
+- **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version 10.0.13.
 
 ## Components
 
 | Component | Version | License | In |
 |---|---|---|---|
-| .NET runtime and base class libraries | 10.0.12 | MIT, with the notices of its own third-party code | both builds, all platforms |
+| .NET runtime and base class libraries | 10.0.13 | MIT, with the notices of its own third-party code | both builds, all platforms |
 | Avalonia (Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent, Avalonia.Skia, Avalonia.HarfBuzz, Avalonia.Win32, Avalonia.X11, Avalonia.FreeDesktop, Avalonia.FreeDesktop.AtSpi, Avalonia.Remote.Protocol) | 12.1.4 | MIT | GUI |
 | Avalonia.Wayland | 12.1.4 | MIT | GUI |
 | Avalonia.Native: the managed `Avalonia.Native.dll` | 12.1.4 | MIT | GUI, all platforms |

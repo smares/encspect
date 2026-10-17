@@ -143,6 +143,28 @@ public sealed class ReleaseWorkflowTests
     }
 
     // The version is set once; a release needs its notes, the license files its archives carry and the notices the GUI embeds.
+    // The release ships the runtime of the SDK it builds with, and the notices name that runtime. The pairing is in
+    // scripts/release/dotnet-pin.txt; a .NET servicing release changes all three together.
+    [Fact]
+    public void TheSdkIsPinnedToTheRuntimeTheNoticesName()
+    {
+        Dictionary<string, string> pin = File.ReadAllLines(Path.Combine(Root, "scripts", "release", "dotnet-pin.txt"))
+            .Where(l => l.Contains('=', StringComparison.Ordinal)).Select(l => l.Split('=', 2)).ToDictionary(p => p[0], p => p[1].Trim());
+
+        string[] setup = [.. Job("build").Where(l => l.TrimStart().StartsWith("dotnet-version:", StringComparison.Ordinal))];
+        Assert.Single(setup);
+        string sdk = setup[0].Split(':', 2)[1].Trim();
+        Assert.Matches(@"^\d+\.\d+\.\d+$", sdk);
+        Assert.Equal(pin["sdk"], sdk);
+
+        string notices = File.ReadAllText(Path.Combine(Root, "THIRD-PARTY-NOTICES.md"));
+        Assert.Contains($"package, version {pin["runtime"]}.", notices, StringComparison.Ordinal);
+        Assert.Contains($"| .NET runtime and base class libraries | {pin["runtime"]} |", notices, StringComparison.Ordinal);
+
+        // CI stays on the newest 10.0 SDK.
+        Assert.Contains("dotnet-version: 10.0.x", File.ReadAllText(Path.Combine(Root, ".github", "workflows", "ci.yml")), StringComparison.Ordinal);
+    }
+
     [Fact]
     public void TheVersionHasNotesAndTheArchiveFilesExist()
     {

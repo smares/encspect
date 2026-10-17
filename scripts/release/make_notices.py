@@ -39,7 +39,9 @@ FETCHED = [
 
 def read(path):
     """Text with LF line endings and without a byte order mark, ending in one newline."""
-    text = pathlib.Path(path).read_text(encoding="utf-8-sig", newline="")
+    # open(), not Path.read_text(newline=...), which needs Python 3.13.
+    with open(path, encoding="utf-8-sig", newline="") as stream:
+        text = stream.read()
     return text.replace("\r\n", "\n").rstrip() + "\n"
 
 
@@ -71,7 +73,9 @@ def fetch(packages, version_of):
     LICENSES.mkdir(parents=True, exist_ok=True)
     for name, package, source in FETCHED:
         url, commit = nuspec_commit(nuspec(packages, package, version_of[package]))
-        raw = url.rstrip("/").removesuffix(".git").replace("https://github.com/", "https://raw.githubusercontent.com/")
+        base = url.rstrip("/")
+        base = base[:-4] if base.endswith(".git") else base
+        raw = base.replace("https://github.com/", "https://raw.githubusercontent.com/")
         target = f"{raw}/{commit}/{source}"
         with urllib.request.urlopen(target, timeout=60) as response:
             (LICENSES / f"{name}.txt").write_bytes(response.read())
@@ -81,7 +85,7 @@ def fetch(packages, version_of):
 def build(packages, version_of, runtime_deps):
     deps = json.loads(pathlib.Path(runtime_deps).read_text(encoding="utf-8"))
     runtime = next(k for k in deps["libraries"] if k.startswith("runtimepack.Microsoft.NETCore.App.Runtime."))
-    pack_name, runtime_version = runtime.removeprefix("runtimepack.").split("/")
+    pack_name, runtime_version = runtime[len("runtimepack."):].split("/")
     pack = packages / pack_name.lower() / runtime_version
 
     v = version_of
@@ -216,7 +220,8 @@ def main():
 
     text = build(packages, version_of, args.runtime_deps)
     if args.check:
-        current = OUTPUT.read_text(encoding="utf-8").replace("\r\n", "\n")
+        with open(OUTPUT, encoding="utf-8", newline="") as stream:
+            current = stream.read().replace("\r\n", "\n")
         if current != text:
             import difflib
             diff = list(difflib.unified_diff(current.splitlines(), text.splitlines(), "committed", "generated", lineterm="", n=1))
@@ -225,7 +230,8 @@ def main():
             return 1
         print("THIRD-PARTY-NOTICES.md is up to date.")
         return 0
-    OUTPUT.write_text(text, encoding="utf-8", newline="\n")
+    with open(OUTPUT, "w", encoding="utf-8", newline="\n") as stream:
+        stream.write(text)
     print(f"Wrote {OUTPUT.relative_to(ROOT)} ({len(text)} characters)")
     return 0
 
