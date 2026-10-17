@@ -90,27 +90,32 @@ public sealed record ReportSummary(
     }
 
     // Only plain details are searched below, as a container's chunks are, never streams, frames or
-    // other sections that parsers build by the thousand, nor a tag's own items.
+    // other sections that parsers build by the thousand. Inside a tag, only what is held in memory is searched (for a tag
+    // nested in it); children that are built on demand never are.
     private static List<string> TagNames(Node root)
     {
         var names = new List<string>();
-        var pending = new Stack<(Node Node, int Depth)>();
-        pending.Push((root, 0));
+        var pending = new Stack<(Node Node, int Depth, bool InTag)>();
+        pending.Push((root, 0, false));
         while (pending.Count > 0)
         {
-            (Node node, int depth) = pending.Pop();
-            if (node.Kind == NodeKind.Tag)
+            (Node node, int depth, bool inTag) = pending.Pop();
+            bool isTag = node.Kind == NodeKind.Tag;
+            if (isTag)
             {
                 names.Add(node.Name);
-                continue;
             }
 
-            if ((node == root || node.Kind == NodeKind.Detail) && depth < Node.MaxDepth && node.HasChildren)
+            // A tag may hold another (QuickTime's user data holds an item list or an ID3v2 tag): in and below a tag, the tags and plain
+            // details whose children are held in memory are looked into, and the nodes whose children are built on demand never are.
+            bool within = inTag || isTag;
+            bool isSearched = within ? (node.Kind is NodeKind.Tag or NodeKind.Detail) && !node.AreChildrenBuiltOnDemand : node == root || node.Kind == NodeKind.Detail;
+            if (isSearched && depth < Node.MaxDepth && node.HasChildren)
             {
                 IReadOnlyList<Node> children = node.Children;
                 for (int i = children.Count - 1; i >= 0; i--)
                 {
-                    pending.Push((children[i], depth + 1));
+                    pending.Push((children[i], depth + 1, within));
                 }
             }
         }

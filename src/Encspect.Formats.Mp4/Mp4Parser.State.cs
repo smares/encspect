@@ -37,6 +37,9 @@ public sealed partial class Mp4Parser
         // not either), so that the checks that look at a box's children can tell that some are missing.
         public int Nodes { get; set; }
 
+        // The text items of user data atoms listed as nodes so far, against one budget for the file.
+        public int TextItemsListed { get; set; }
+
         public int DetachedBoxes { get; set; }
 
         // What the file has left to place samples in, in bytes: samples of a valid file do not overlap, so they cannot add up to more than the
