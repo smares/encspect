@@ -26,11 +26,11 @@ public class Ac3ProgramTests
         return report;
     }
 
-    // Frames that alternate between two configurations: 2/0 and mono. A program per change gave a stream, a
-    // statistics node that covered every frame and a finding for each of them (4,000 frames took 21 s, 40,000 half an
-    // hour); a configuration that comes back takes its program up again.
+    // Frames that alternate between two configurations: 2/0 and mono. A program per change gave a stream, a statistics node that
+    // covered every frame and a finding for each of them (4,000 frames took 21 s, 40,000 half an hour); now the programs are
+    // capped, the later frames stay in the last one, and the changes are one counted finding.
     [Fact]
-    public void FramesThatAlternateBetweenTwoConfigurationsMakeTwoStreams()
+    public void FramesThatAlternateBetweenTwoConfigurationsMakeAtMostTheCappedPrograms()
     {
         byte[] source = Fixture("stream-changes.ac3");
         byte[] stereo = source[..768];
@@ -44,15 +44,16 @@ public class Ac3ProgramTests
 
         Report report = Analyze(data, "alternate.ac3");
 
-        Assert.Equal(2, report.Streams.Count);
-        Assert.Equal([frames / 2 * 1536L, frames / 2 * 1536L], report.Streams.Select(s => s.Samples));
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
+        Assert.Equal(frames * 1536L, report.Streams.Sum(s => s.Samples));
         Finding changed = Assert.Single(report.Findings, f => f.Code == "ac3.stream-changed");
         Assert.Equal(frames - 1, changed.Count);
-        Assert.Equal(2, CountNodes(report.Root, NodeKind.Statistics));
+        Assert.Contains("at most 64 programs", changed.Message, StringComparison.Ordinal);
+        Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, CountNodes(report.Root, NodeKind.Statistics));
     }
 
-    // A file with more programs than the analyzer keeps: independent substreams 0 to 7 in every coding mode and
-    // with and without the LFE channel, one frame each, make 128 configurations.
+    // Independent substreams 0 to 7 in every coding mode and with and without the LFE channel: 128 configurations, each frame
+    // a change for its substream.
     [Fact]
     public void ProgramsAreCapped()
     {
@@ -79,20 +80,20 @@ public class Ac3ProgramTests
         Report report = Analyze([.. data], "many-programs.eac3");
 
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, report.Streams.Count);
-        Finding capped = Assert.Single(report.Findings, f => f.Code == "ac3.too-many-programs");
-        Assert.Equal((128 - Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms) * 3, capped.Count);
+        Assert.Equal(data.Count / 400 * 1536L, report.Streams.Sum(s => s.Samples));
+        Assert.Single(report.Findings, f => f.Code == "ac3.stream-changed");
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxPrograms, CountNodes(report.Root, NodeKind.Statistics));
     }
 
-    // The statistics of a program cover its own frames, from its first to its last, not the whole stream.
+    // The statistics of a program cover its own frames, not the whole stream.
     [Fact]
     public void StatisticsCoverTheirProgramsFrames()
     {
         Report report = Fixtures.AnalyzeMpeg("ac3/stream-changes.ac3");
 
         List<Node> statistics = [.. Descendants(report.Root).Where(n => n.Kind == NodeKind.Statistics)];
-        Assert.Equal(2, statistics.Count);
-        Assert.Equal([(0L, 6 * 768L), (1536L, 2 * 768L)], statistics.Select(s => (s.Offset, s.Length)).Order());
+        Assert.Equal(3, statistics.Count);
+        Assert.Equal([(0L, 2 * 768L), (1536L, 2 * 768L), (3072L, 2 * 768L)], statistics.Select(s => (s.Offset, s.Length)).Order());
     }
 
     // 40 dependent frames of 4,096 bytes after one independent frame (160 KiB), which once overflowed a frame's length in
@@ -114,6 +115,8 @@ public class Ac3ProgramTests
         Assert.Equal(4 * 1536, report.Streams[0].Samples);
         Finding excess = Assert.Single(report.Findings, f => f.Code == "ac3.dependent-excess");
         Assert.Equal(39, excess.Count);
+        Node statistics = Descendants(report.Root).Single(n => n.Kind == NodeKind.Statistics);
+        Assert.Equal(NodeValue.Integer(1, "frames", "frame"), statistics.Children.Single(c => c.Name == "Dependent Frames").Value);
     }
 
     // The independent substreams of one E-AC-3 stream play at the same time: the summary counts the longest once.
@@ -127,6 +130,38 @@ public class Ac3ProgramTests
         ReportSummary summary = ReportSummary.From(report);
         Assert.Equal(0.128, summary.Duration!.Value, 6);
         Assert.Equal(4 * 1536, summary.Samples);
+    }
+
+    // Substream 0 changes its configuration while substream 1 does not: the summary's groups cannot say that substream 0's
+    // runs follow one another and run beside substream 1 (a group counts only its longest stream), so no group is given
+    // and the summary adds every stream up.
+    [Fact]
+    public void SubstreamsWithAChangingSubstreamAreNotGrouped()
+    {
+        byte[] template = Fixture("dependent-repeated.eac3")[..400];
+        byte[] Frame(int id, int acmod)
+        {
+            byte[] frame = [.. template];
+            frame[2] = (byte)((frame[2] & 0xC7) | (id << 3));
+            frame[4] = (byte)((frame[4] & 0xF0) | (acmod << 1));
+            return frame;
+        }
+
+        var data = new List<byte>();
+        foreach (int acmod in new[] { 2, 1, 2 })
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                data.AddRange(Frame(0, acmod));
+                data.AddRange(Frame(1, 2));
+            }
+        }
+
+        Report report = Analyze([.. data], "mixed.eac3");
+
+        Assert.Equal(4, report.Streams.Count);
+        Assert.All(report.Streams, s => Assert.Null(s.PlaybackGroup));
+        Assert.Equal(report.Streams.Sum(s => s.Samples), ReportSummary.From(report).Samples);
     }
 
     // A stream that changes its configuration is a sequence, not substreams: its programs follow one another and add up.

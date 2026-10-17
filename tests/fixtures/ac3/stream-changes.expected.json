@@ -1,5 +1,5 @@
 {
- "description": "Two 2/0 frames, two mono frames, two 2/0 frames: the configuration changes twice, and the 2/0 stream continues.",
+ "description": "Two 2/0 frames, two mono frames, two 2/0 frames: the configuration changes twice and each run is its own stream.",
  "length": 4608,
  "format": "AC-3",
  "frames": [
@@ -39,7 +39,7 @@
     "front left",
     "front right"
    ],
-   "samples": 6144,
+   "samples": 3072,
    "is_vbr": false
   },
   {
@@ -49,6 +49,18 @@
    "channel_mode": "1/0 (center)",
    "channel_layout": [
     "front center"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  },
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
    ],
    "samples": 3072,
    "is_vbr": false

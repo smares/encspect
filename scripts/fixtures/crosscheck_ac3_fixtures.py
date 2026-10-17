@@ -404,7 +404,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "derived-ffmpeg-eac3-mono-48k-spx-delta": dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], FIRST_FRAME_RATE),
     "substreams": dict.fromkeys(["samples", "duration", "stream size"], FIRST_FRAME_RATE),
     "dependent-repeated": dict.fromkeys(["frames", "samples", "duration", "stream size"], FIRST_FRAME_RATE + "; it does not leave out the repeated dependent substreams that the analyzer leaves out of its program frames"),
-    "stream-changes": dict.fromkeys(["samples", "duration"], "MediaInfo describes the whole file as one stream and counts all six frames (9216 samples), where the analyzer's first stream is the four 2/0 frames and the two mono frames are its second"),
+    "stream-changes": dict.fromkeys(["samples", "duration"], "MediaInfo describes the whole file as one stream and counts all six frames (9216 samples), where the analyzer's first stream is the first two 2/0 frames"),
     "truncated-in-skip": {**dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
                           **dict.fromkeys(["bitrate", "bitrate mode"], "MediaInfo takes the bitrate of the first frame (512 kbps, constant), where the analyzer's average over its four frames includes the cut one and varies")},
     "joc-auxiliary-data": {"joint object coding": AUXILIARY_FIELD},

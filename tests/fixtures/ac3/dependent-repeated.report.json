@@ -84,7 +84,7 @@
                 },
                 {
                   "name": "Dependent Frames",
-                  "value": 9,
+                  "value": 3,
                   "unit": "frames",
                   "offset": 0,
                   "length": 4080
@@ -112,14 +112,14 @@
                 },
                 {
                   "name": "Audio Blocks",
-                  "value": 72,
+                  "value": 36,
                   "unit": "blocks",
                   "offset": 0,
                   "length": 4080
                 },
                 {
                   "name": "Audio Blocks Read",
-                  "value": 72,
+                  "value": 36,
                   "unit": "blocks",
                   "offset": 0,
                   "length": 4080
@@ -154,7 +154,7 @@
                 },
                 {
                   "name": "Bands Coded as Sum/Difference",
-                  "value": "0 of 288",
+                  "value": "0 of 144",
                   "offset": 0,
                   "length": 4080
                 },
@@ -174,7 +174,7 @@
                 },
                 {
                   "name": "Exponent Strategies",
-                  "value": 144,
+                  "value": 72,
                   "unit": "exponent sets",
                   "offset": 0,
                   "length": 4080,
@@ -195,14 +195,14 @@
                     },
                     {
                       "name": "D45",
-                      "value": 24,
+                      "value": 12,
                       "unit": "exponent sets",
                       "offset": 0,
                       "length": 4080
                     },
                     {
                       "name": "Reuse",
-                      "value": 120,
+                      "value": 60,
                       "unit": "exponent sets",
                       "offset": 0,
                       "length": 4080
@@ -218,7 +218,7 @@
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 29391,
+                  "value": 15657,
                   "unit": "bits",
                   "offset": 0,
                   "length": 4080
@@ -10227,7 +10227,7 @@
       {
         "severity": "Warning",
         "code": "ac3.dependent-excess",
-        "message": "6 frames of a dependent substream repeat the substream ID of an earlier dependent frame after the same independent frame, which A/52 Annex E 2.3.1.2 allows once each (at most 8); the first is substream 0 at 0x2D0. Such a frame is left out of its program's frames.",
+        "message": "6 dependent frames are left out of the figures and statistics after a dependent substream ID repeats within a program frame (A/52 Annex E 2.3.1.2 allows each ID once, at most 8, after an independent frame); the first is of substream 0 at 0x2D0.",
         "offset": 720,
         "length": 320,
         "path": [

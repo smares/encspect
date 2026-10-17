@@ -117,23 +117,21 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     // left out of the program frames, so a program frame never grows beyond 9 frames.
     public bool Add(int index, long offset, int length, SyncFrame header, FrameResult result, bool crcError)
     {
-        bool excess = false;
         if (header.IsDependent)
         {
-            DependentFrames++;
             HasEac3 = true;
             int bit = 1 << header.SubstreamId;
             if (_pendingOffset < 0 || (_pendingDependentIds & bit) != 0)
             {
-                excess = true;
+                // Left out of the figures and the statistics alike.
                 Complete();
+                return true;
             }
-            else
-            {
-                _pendingDependentIds |= bit;
-                _pendingBytes += length;
-                _pendingDependents.AddRange(DependentTokens(header, result));
-            }
+
+            DependentFrames++;
+            _pendingDependentIds |= bit;
+            _pendingBytes += length;
+            _pendingDependents.AddRange(DependentTokens(header, result));
         }
         else
         {
@@ -192,7 +190,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             _strategies[i] += result.ExponentStrategies[i];
         }
 
-        return excess;
+        return false;
     }
 
     public void Close()

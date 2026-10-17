@@ -244,10 +244,10 @@ def build():
                                  "liba52": "liba52's tool reads frames by their sizes, so it does not resync after the cut frame."},
                         "damaged": [1536]})
 
-    # The configuration changes twice: 2/0, mono, 2/0. The stream that comes back is the first one again.
+    # The configuration changes twice: 2/0, mono, 2/0. Each run is a stream.
     data = silent(2) + silent(2, acmod=1) + silent(2)
-    fixture("stream-changes", ".ac3", "Two 2/0 frames, two mono frames, two 2/0 frames: the configuration changes twice, and the 2/0 stream continues.", data, frames_of(data),
-            [stream("AC-3", 48000, 2, 0, 4 * 1536), stream("AC-3", 48000, 1, 0, 2 * 1536)],
+    fixture("stream-changes", ".ac3", "Two 2/0 frames, two mono frames, two 2/0 frames: the configuration changes twice and each run is its own stream.", data, frames_of(data),
+            [stream("AC-3", 48000, 2, 0, 2 * 1536), stream("AC-3", 48000, 1, 0, 2 * 1536), stream("AC-3", 48000, 2, 0, 2 * 1536)],
             [("ac3.stream-changed", "from AC-3, 48000 Hz, 2/0 to AC-3, 48000 Hz, 1/0; the streams change 2 times")],
             crosscheck={"ffprobe": False, "decode": False, "liba52": True,
                         "skip": {"ffprobe": "ffprobe reports the first stream's parameters only.",
@@ -336,7 +336,7 @@ def build():
     data = unit * 3
     fixture("dependent-repeated", ".eac3", "Three access units of an independent 2/0 frame and three dependent frames, all of dependent substream 0, with the rear surround pair.",
             data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 3 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])],
-            [("ac3.dependent-excess", "6 frames of a dependent substream repeat the substream ID")],
+            [("ac3.dependent-excess", "6 dependent frames are left out of the figures and statistics after a dependent substream ID repeats")],
             crosscheck={"ffprobe": False, "decode": False,
                         "skip": {"ffprobe": "The stream breaks Annex E 2.3.1.2, so what ffmpeg's parser makes of the repeated substream IDs says nothing about the figures.",
                                  "decode": "ffmpeg decodes the repeated dependent substreams as it likes; the check says nothing about the figures."}})
