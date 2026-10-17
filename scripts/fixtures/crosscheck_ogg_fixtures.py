@@ -13,7 +13,7 @@ For every manifest in tests/fixtures/ogg (make_ogg_fixtures.py, make_external_og
 - ogginfo (vorbis-tools): each Speex stream's version, mode, channels, rate, vendor string and
   comments.
 - ffprobe: each Speex stream's sample rate and channels, its channel layout's speakers where ffmpeg
-  names a layout (channel_layouts.py; ffmpeg 6.1 leaves Speex's unspecified), the size of every
+  names a layout (channel_layouts.py; ffprobe 8.0.1 prints Speex's as unknown, observed), the size of every
   audio packet, and the duration in samples, which ffmpeg counts from the start the first granule position implies to
   the last granule position: the manifest's samples plus the encoder delay.
 - speexdec -V (speex): the header line ("Decoding 16000 Hz audio using wideband mode (mono)"), the
@@ -34,7 +34,7 @@ For Vorbis and Opus streams (make_vorbis_opus_fixtures.py, make_external_vorbis_
 - oggdec and opusdec: the samples they write, after their start and end trimming, which must be
   the manifest's samples.
 
-MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo) is compared with every fixture's golden report:
+MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo) is compared with every fixture's golden report:
 each logical stream of the first chain link's codec, channels, sample rate (Opus: the input rate),
 the duration of its last granule position, the encoder (Speex: the header's version, Vorbis and
 Opus: the vendor string), Speex's header bitrate and mode, Vorbis's nominal bitrate, mode and floor
@@ -91,10 +91,21 @@ def oggz_streams(path):
     for serial, packets, pages in re.findall(r"serialno (\d+)\n\t(\d+) packets in (\d+) pages", info):
         counts[int(serial) % (1 << 32)] = (int(packets), int(pages))
     sizes = {}
-    # oggz prints sizes of 1024 bytes and more in kB, to three decimals, so such a size is known to within 0.512 bytes.
-    for serial, size, unit in re.findall(r"serialno (\d+), .*?: ([\d.]+) (bytes?|kB)$", run(["oggz", "dump", str(path)]).stdout.decode(), re.M):
-        sizes.setdefault(int(serial) % (1 << 32), []).append(float(size) * 1024 if unit == "kB" else int(size))
+    # The sizes as oggz prints them (oggz_tools.c, ot_fprint_bytes): in kB with three decimals above 1024 bytes, in MB above 1 MiB, "1 byte" for one.
+    for serial, size in re.findall(r"serialno (\d+), .*?: ([\d.]+ (?:bytes?|kB|MB|GB))$", run(["oggz", "dump", str(path)]).stdout.decode(), re.M):
+        sizes.setdefault(int(serial) % (1 << 32), []).append(size)
     return counts, sizes
+
+
+def printed_size(n):
+    """A size as oggz prints it (oggz_tools.c, ot_fprint_bytes)."""
+    if n > 1 << 30:
+        return f"{n / (1 << 30):.3f} GB"
+    if n > 1 << 20:
+        return f"{n / (1 << 20):.3f} MB"
+    if n > 1 << 10:
+        return f"{n / 1024:.3f} kB"
+    return "1 byte" if n == 1 else f"{n} bytes"
 
 
 def ogginfo(path):
@@ -160,8 +171,7 @@ def check_packets(name, manifest, problems, pages=True):
         for codec in ("speex", "vorbis", "opus"):
             if codec in stream:
                 audio = [p[1] for p in stream[codec]["packets"]]
-                actual = sizes.get(serial, [])[-len(audio):] if audio else []
-                if audio and (len(actual) != len(audio) or any(abs(a - b) > 0.512 for a, b in zip(actual, audio))):
+                if audio and sizes.get(serial, [])[-len(audio):] != [printed_size(n) for n in audio]:
                     problems.append(f"oggz dump: the audio packet sizes of {stream['serial']} differ from the manifest's")
 
 
