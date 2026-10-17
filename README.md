@@ -9,7 +9,7 @@ Think EncSpot, but modern and with many more formats.
 
 ## Status
 
-In development; there are no releases yet. The plan is in [docs/PLAN.md](docs/PLAN.md).
+Version 0.1.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/PLAN.md](docs/PLAN.md).
 
 Formats read so far ([details](docs/formats/README.md)):
 
@@ -38,6 +38,7 @@ Phase 2, the lossy formats, is done. Next: the lossless formats, among them the 
 - [Formats](docs/formats/README.md) and [tags](docs/tags/README.md)
 - [Development](docs/development.md): building, tests, fixtures and cross-checks
 - [Plan](docs/PLAN.md): goals, architecture and rollout
+- [Release notes](docs/releases/0.1.0.md)
 
 ## Quick start
 

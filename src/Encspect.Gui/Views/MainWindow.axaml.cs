@@ -237,7 +237,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            menu.Add(Shortcuts.Submenu("Help", Shortcuts.Item(this, "About Encspect", null, () => _ = new AboutWindow().ShowDialog(this))));
+            menu.Add(Shortcuts.Submenu("Help", Shortcuts.Item(this, "About Encspect", null, () => AboutWindow.ShowFor(this))));
         }
 
         return menu;

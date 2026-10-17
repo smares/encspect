@@ -181,7 +181,8 @@ jobs:
           test "$(wc -l < "$RUNNER_TEMP/out.ndjson")" -eq 2
 
       # Built on the runner of its own platform, so the smoke run below executes the real binary. Not
-      # uploaded: the repository is public, and no build is published before development ends.
+      # uploaded: CI publishes no build. Releases are built by release.yml, from a version tag, with these
+      # commands and checks.
       - name: Publish the self-contained CLI
         run: dotnet publish src/Encspect.Cli --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/${{ matrix.rid }}
 
@@ -191,7 +192,7 @@ jobs:
           publish/${{ matrix.rid }}/encspect --csv tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/out.csv"
           grep -q 'LAME 3.100' "$RUNNER_TEMP/out.csv"
 
-      # Not uploaded either. A runner has no display to open a window on, so the published GUI runs
+      # Not uploaded either; release.yml repeats these steps. A runner has no display to open a window on, so the published GUI runs
       # its self-check: it loads Skia's and HarfBuzz's native libraries and the platform backend's
       # (ANGLE on Windows, Avalonia.Native on macOS) from the single file and analyzes a fixture
       # through the host, without showing a window.

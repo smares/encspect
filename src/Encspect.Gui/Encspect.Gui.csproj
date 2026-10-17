@@ -15,6 +15,10 @@
     <PackageReference Include="Avalonia.Wayland" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Shown by the About window; the file itself also ships beside the executables. -->
+    <EmbeddedResource Include="..\..\THIRD-PARTY-NOTICES.md" LogicalName="THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Encspect.Host\Encspect.Host.csproj" />
   </ItemGroup>
   <ItemGroup>
