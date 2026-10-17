@@ -737,10 +737,11 @@ jobs:
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
       # mpcdec and mpc2sv8 0.1~r495, ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts
-      # assert (the manifests were checked with ffmpeg 6.1.1 and MediaInfo 24.01); libmpcdec's per-frame reading is built from Debian's pinned r495 source, and
-      # for SV4 to SV6 from the pinned libmpcdec 1.2.6 and, with the runner's g++, the pinned Portable
-      # Musepack decoder it was ported from. Without Wine, mppdec's check reads what it printed when
-      # the fixtures were written and says so.
+      # assert (the manifests were checked with ffmpeg 6.1.1 and MediaInfo 24.01); libmpcdec's per-frame
+      # reading is built from Debian's pinned r495 source, and for SV4 to SV6 from the pinned
+      # libmpcdec 1.2.6 and, with the runner's g++, the pinned Portable Musepack decoder it was
+      # ported from. Without Wine, mppdec's check reads what it printed when the fixtures were
+      # written and says so.
       - name: Install musepack-tools and ffmpeg
         run: |
           sudo apt-get update
@@ -888,8 +889,9 @@ jobs:
       - name: Drop downloads nobody has used for a month
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
-      # mkvtoolnix 97.0, ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts assert (the manifests were checked with 82.0, 6.1.1 and 24.01).
-      - name: Install mkvtoolnix, ffmpeg and mediainfo
+      # MKVToolNix 97.0, ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts
+      # assert (the manifests were checked with 82.0, 6.1.1 and 24.01).
+      - name: Install MKVToolNix, ffmpeg and mediainfo
         run: |
           sudo apt-get update
           sudo apt-get install -y mkvtoolnix ffmpeg mediainfo
