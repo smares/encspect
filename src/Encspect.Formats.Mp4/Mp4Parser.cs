@@ -633,8 +633,8 @@ public sealed partial class Mp4Parser : IFormatParser
         node.Value = $"{major.Trim()} ({BrandName(major)})";
     }
 
-    // Whether some of the box's own children were read and not shown: the last node it holds stands for them.
-    private static bool HasHiddenChild(Node node) => node.Children.Count > 0 && node.Children[^1].Name == "Boxes Not Shown";
+    // Whether some of the box's own children were read and not shown: a node it holds stands for them (bytes too few for a box header may follow it).
+    private static bool HasHiddenChild(Node node) => node.Children.Any(c => c.Name == "Boxes Not Shown");
 
     // Boxes a parent requires once (ISO/IEC 14496-12, the "Quantity: Exactly one" of each box).
     private static void CheckChildren(State state, Node node, string type)

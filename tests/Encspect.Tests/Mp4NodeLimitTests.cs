@@ -22,12 +22,87 @@ public class Mp4NodeLimitTests
         }
 
         int ftyp = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-        byte[] padded = Mp4Builder.Join(data[..ftyp], Mp4Builder.Join([.. Enumerable.Repeat(Mp4Builder.Box("free"), 90_000)]), data[ftyp..]);
+        byte[] free = Mp4Builder.Join([.. Enumerable.Repeat(Mp4Builder.Box("free"), 90_000)]);
+        byte[] padded = Mp4Builder.Join(data[..ftyp], free, data[ftyp..]);
+        ShiftChunkOffsets(padded, ftyp + free.Length, free.Length);
 
         Report report = Analyzer.CreateDefault().Analyze(fileName, new MemoryStream(padded));
 
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         Assert.All(report.Findings, f => Assert.True(f.Path is not null, $"{f.Code}: {f.Message}"));
+
+        // With the offsets moved by the padding, the samples are the same ones, so the streams are too.
+        Report plain = Analyzer.CreateDefault().Analyze(fileName, new MemoryStream(data));
+        Assert.Equal(plain.Streams.Select(Describe), report.Streams.Select(Describe));
+    }
+
+    // Without the writer: Apple's is named from a media data box that starts on a 4,096-byte boundary, which the padding moves.
+    private static string Describe(StreamInfo stream) =>
+        $"{stream.Codec} {stream.SampleRate} {stream.Channels} {stream.ChannelMode} {stream.Samples} {stream.Duration:F6} {stream.IsVbr} {stream.Encoder} {stream.Protection?.Scheme} {stream.Protection?.IsEncrypted}";
+
+    // Adds shift to every offset of the stco and co64 boxes of the movie boxes that start at or after from.
+    private static void ShiftChunkOffsets(byte[] data, int from, int shift)
+    {
+        static uint U32(byte[] d, int at) => (uint)((d[at] << 24) | (d[at + 1] << 16) | (d[at + 2] << 8) | d[at + 3]);
+        static void Put(byte[] d, int at, ulong value, int width)
+        {
+            for (int i = width - 1; i >= 0; i--, value >>= 8)
+            {
+                d[at + i] = (byte)value;
+            }
+        }
+
+        void Walk(int start, int end)
+        {
+            for (int at = start; at + 8 <= end;)
+            {
+                long size = U32(data, at);
+                string type = System.Text.Encoding.Latin1.GetString(data, at + 4, 4);
+                if (size < 8 || at + size > end)
+                {
+                    return;
+                }
+
+                if (type is "moov" or "trak" or "mdia" or "minf" or "stbl")
+                {
+                    Walk(at + 8, at + (int)size);
+                }
+                else if (type is "stco" or "co64")
+                {
+                    int width = type == "stco" ? 4 : 8;
+                    uint count = U32(data, at + 12);
+                    for (long i = 0; i < count && at + 16 + ((i + 1) * width) <= at + size; i++)
+                    {
+                        int entry = at + 16 + (int)(i * width);
+                        ulong value = width == 4 ? U32(data, entry) : ((ulong)U32(data, entry) << 32) | U32(data, entry + 4);
+                        Put(data, entry, value + (ulong)shift, width);
+                    }
+                }
+
+                at += (int)size;
+            }
+        }
+
+        Walk(from, data.Length);
+    }
+
+    // Bytes too few for a box header after the note do not make the required-box check run again, for a box or for the stsd sample entries.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void BytesAfterTheNoteDoNotHideTheHiddenChild(bool isSampleDescription)
+    {
+        byte[] frees = Mp4Builder.Join([.. Enumerable.Repeat(Mp4Builder.Box("free"), 90_000)]);
+        byte[] tail = [0, 0, 0, 0];
+        byte[] inner = isSampleDescription
+            ? Mp4Builder.Box("moov", Mp4Builder.Mvhd(), Mp4Builder.Trak(1, Mp4Builder.Join(frees, tail), Mp4Builder.EmptyTables()))
+            : Mp4Builder.Box("moov", frees, tail);
+
+        Report report = Analyzer.CreateDefault().Analyze("tail.m4a", new MemoryStream(Mp4Builder.Join(Mp4Builder.Ftyp(), inner)));
+
+        Assert.Contains(report.Findings, f => f.Code == "mp4.node-limit");
+        Assert.Contains(report.Findings, f => f.Code == "mp4.box-header-truncated");
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("mp4.missing-", StringComparison.Ordinal) || f.Code == "mp4.sample-description-count");
     }
 
     // A moov box whose last trak holds the boxes past the budget: its own children are all shown, so a missing or a repeated mvhd box is still found.
