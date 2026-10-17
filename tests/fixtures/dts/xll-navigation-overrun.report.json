@@ -2207,7 +2207,7 @@
                             },
                             {
                               "name": "Segments",
-                              "value": 1,
+                              "value": 2,
                               "unit": "segments",
                               "offset": 648,
                               "length": 2,
@@ -2216,7 +2216,7 @@
                             },
                             {
                               "name": "Samples per Segment",
-                              "value": 512,
+                              "value": 256,
                               "unit": "samples",
                               "offset": 649,
                               "length": 1,
@@ -2268,7 +2268,7 @@
                             },
                             {
                               "name": "Header CRC",
-                              "value": 29268,
+                              "value": 57519,
                               "offset": 652,
                               "length": 2,
                               "children": [
@@ -2433,17 +2433,17 @@
                             },
                             {
                               "name": "Navigation Index",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 664,
-                              "length": 1,
+                              "length": 2,
                               "children": [
                                 {
                                   "name": "Band Data Sizes",
-                                  "value": 1,
+                                  "value": 2,
                                   "unit": "sizes",
                                   "offset": 664,
-                                  "length": 1
+                                  "length": 2
                                 }
                               ]
                             }
@@ -4377,7 +4377,7 @@
                             },
                             {
                               "name": "Segments",
-                              "value": 1,
+                              "value": 2,
                               "unit": "segments",
                               "offset": 1314,
                               "length": 2,
@@ -4386,7 +4386,7 @@
                             },
                             {
                               "name": "Samples per Segment",
-                              "value": 512,
+                              "value": 256,
                               "unit": "samples",
                               "offset": 1315,
                               "length": 1,
@@ -4438,7 +4438,7 @@
                             },
                             {
                               "name": "Header CRC",
-                              "value": 29268,
+                              "value": 57519,
                               "offset": 1318,
                               "length": 2,
                               "children": [
@@ -4603,17 +4603,17 @@
                             },
                             {
                               "name": "Navigation Index",
-                              "value": 2,
+                              "value": 3,
                               "unit": "bytes",
                               "offset": 1330,
-                              "length": 1,
+                              "length": 2,
                               "children": [
                                 {
                                   "name": "Band Data Sizes",
-                                  "value": 1,
+                                  "value": 2,
                                   "unit": "sizes",
                                   "offset": 1330,
-                                  "length": 1
+                                  "length": 2
                                 }
                               ]
                             }
@@ -4684,7 +4684,7 @@
         "code": "dts.header-overrun",
         "message": "A header runs past the end of its data: the data ends inside the navigation index. First in the frame at 0x0 (2 times).",
         "offset": 664,
-        "length": 1,
+        "length": 2,
         "path": [
           0,
           1,

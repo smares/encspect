@@ -114,7 +114,7 @@ internal static class Explain
     public const string XxchSetChannels = "nuChInChSetXXCH: the number of channels in the channel set (6.5.3).";
     public const string XxchSetMask = "nuXXCHSpkrLayoutMask: the positions of the channel set's channels, in addition to the core's, by the bits of Table 6-22 (6.5.3).";
     public const string XxchSetCrcField = "nCRC16HeaderChSet: the CRC16 of the channel set header (6.5.3, Annex B).";
-    public const string XxchRefusedData = "The channel sets of an extension whose header the analyzer does not read (6.5.3). Not read.";
+    public const string XxchRefusedData = "The channel sets of an extension whose speaker mask width leaves their masks no reading (6.5.3). Not read.";
 
     public const string XxchSetData = "The channel set header's remaining fields and its audio data. Not read (6.5.3, 6.5.4).";
 

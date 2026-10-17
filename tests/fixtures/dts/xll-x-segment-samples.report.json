@@ -9134,6 +9134,23 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "dts.reserved-value",
+        "message": "Samples per Segment holds a value ETSI TS 102 114 reserves or calls invalid: a segment of 1024 samples is more than the 256 that 8.3.1 allows at 48 kHz or below. First in the frame at 0x0 (4 times).",
+        "offset": 649,
+        "length": 1,
+        "path": [
+          0,
+          1,
+          1,
+          20,
+          1,
+          7
+        ],
+        "count": 4
+      }
+    ]
   }
 ]

@@ -32,7 +32,7 @@ public class DtsLosslessTests
         Assert.Equal("front center, front left, front right, back left, back right, LFE", Field(report, $"{set}/Channel Mask/Speakers"));
         Assert.Equal("verified", Field(report, $"{set}/Header CRC/Check"));
         Assert.Equal("verified", Field(report, $"{Xll}/Navigation Index/CRC/Check"));
-        Assert.Equal("1 size", Field(report, $"{Xll}/Navigation Index/Band Data Sizes"));
+        Assert.Equal("2 sizes", Field(report, $"{Xll}/Navigation Index/Band Data Sizes"));
     }
 
     // The primary set mixes to the channels its downmix type names; a set after it has a row for each channel before it, with a scale (9 bits
@@ -178,7 +178,7 @@ public class DtsLosslessTests
     {
         Report report = Open("xll-5-1-24bit-48k");
         Assert.Equal("(missing)", Field(report, $"{Xll}/Extension Data"));
-        Assert.Equal("80 bytes", Field(report, $"{Xll}/Data After Band Data"));
+        Assert.Equal("76 bytes", Field(report, $"{Xll}/Data After Band Data"));
         Assert.Equal("false", Field(report, "DTS/Statistics/HasDtsX"));
         Assert.Equal("DTS-HD Master Audio", Assert.Single(report.Streams).Codec);
     }

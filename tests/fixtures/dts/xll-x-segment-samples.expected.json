@@ -38,7 +38,12 @@
  "fields": {
   "DTS/Statistics/HasDtsX": "false"
  },
- "findings": [],
+ "findings": [
+  [
+   "dts.reserved-value",
+   "a segment of 1024 samples is more than the 256 that 8.3.1 allows"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "decode": false,

@@ -213,7 +213,7 @@ def build(api):
 
     # parse_common_header refuses a segment of more than 512 samples and one of none, before it reads a channel set.
     lossless("xll-x-segment-samples", "Four units whose lossless common header states segments of 1,024 samples, and the DTS:X word after the band data, which is not looked for.",
-             dict(channels=2, mask=0x02), (STEREO, 48000), xll=dict(x_sync=0x02000850, segments_log=0, samples_log=10), fields=nox,
+             dict(channels=2, mask=0x02), (STEREO, 48000), xll=dict(x_sync=0x02000850, segments_log=0, samples_log=10), fields=nox, findings=[("dts.reserved-value", "a segment of 1024 samples is more than the 256 that 8.3.1 allows")],
              crosscheck=undecodable(cc, "Too many samples per XLL segment", "ffmpeg's decoder refuses segments of more than 512 samples before the DTS:X word (dca_xll.c: 'Too many samples per XLL segment')"))
     lossless("xll-x-no-segment-samples", "Four units whose lossless common header states segments of 1 sample (log2 0), and the DTS:X word after the band data, which is not looked for.",
              dict(channels=2, mask=0x02), (STEREO, 48000), xll=dict(x_sync=0x02000850, segments_log=2, samples_log=0), fields=nox,

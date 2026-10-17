@@ -984,13 +984,48 @@
                           "bitLength": 5
                         },
                         {
-                          "name": "Reserved",
-                          "value": 28,
-                          "unit": "bits",
+                          "name": "Channel Sets",
+                          "value": 1,
+                          "unit": "channel sets",
                           "offset": 945,
-                          "length": 4,
+                          "length": 1,
                           "bitOffset": 4,
-                          "bitLength": 28
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Channel Set Sizes",
+                          "offset": 945,
+                          "length": 3,
+                          "bitOffset": 6,
+                          "bitLength": 14,
+                          "children": [
+                            {
+                              "name": "Channel Set 1",
+                              "value": 71,
+                              "unit": "bytes",
+                              "offset": 945,
+                              "length": 3,
+                              "bitOffset": 6,
+                              "bitLength": 14
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Core Speaker Activity Mask",
+                          "value": 31,
+                          "offset": 947,
+                          "length": 2,
+                          "bitOffset": 4,
+                          "bitLength": 5
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 7,
+                          "unit": "bits",
+                          "offset": 948,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 7
                         },
                         {
                           "name": "Header CRC",
@@ -1772,13 +1807,48 @@
                           "bitLength": 5
                         },
                         {
-                          "name": "Reserved",
-                          "value": 28,
-                          "unit": "bits",
+                          "name": "Channel Sets",
+                          "value": 1,
+                          "unit": "channel sets",
                           "offset": 1969,
-                          "length": 4,
+                          "length": 1,
                           "bitOffset": 4,
-                          "bitLength": 28
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Channel Set Sizes",
+                          "offset": 1969,
+                          "length": 3,
+                          "bitOffset": 6,
+                          "bitLength": 14,
+                          "children": [
+                            {
+                              "name": "Channel Set 1",
+                              "value": 71,
+                              "unit": "bytes",
+                              "offset": 1969,
+                              "length": 3,
+                              "bitOffset": 6,
+                              "bitLength": 14
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Core Speaker Activity Mask",
+                          "value": 31,
+                          "offset": 1971,
+                          "length": 2,
+                          "bitOffset": 4,
+                          "bitLength": 5
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 7,
+                          "unit": "bits",
+                          "offset": 1972,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 7
                         },
                         {
                           "name": "Header CRC",
@@ -2560,13 +2630,48 @@
                           "bitLength": 5
                         },
                         {
-                          "name": "Reserved",
-                          "value": 28,
-                          "unit": "bits",
+                          "name": "Channel Sets",
+                          "value": 1,
+                          "unit": "channel sets",
                           "offset": 2993,
-                          "length": 4,
+                          "length": 1,
                           "bitOffset": 4,
-                          "bitLength": 28
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Channel Set Sizes",
+                          "offset": 2993,
+                          "length": 3,
+                          "bitOffset": 6,
+                          "bitLength": 14,
+                          "children": [
+                            {
+                              "name": "Channel Set 1",
+                              "value": 71,
+                              "unit": "bytes",
+                              "offset": 2993,
+                              "length": 3,
+                              "bitOffset": 6,
+                              "bitLength": 14
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Core Speaker Activity Mask",
+                          "value": 31,
+                          "offset": 2995,
+                          "length": 2,
+                          "bitOffset": 4,
+                          "bitLength": 5
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 7,
+                          "unit": "bits",
+                          "offset": 2996,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 7
                         },
                         {
                           "name": "Header CRC",
@@ -3348,13 +3453,48 @@
                           "bitLength": 5
                         },
                         {
-                          "name": "Reserved",
-                          "value": 28,
-                          "unit": "bits",
+                          "name": "Channel Sets",
+                          "value": 1,
+                          "unit": "channel sets",
                           "offset": 4017,
-                          "length": 4,
+                          "length": 1,
                           "bitOffset": 4,
-                          "bitLength": 28
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Channel Set Sizes",
+                          "offset": 4017,
+                          "length": 3,
+                          "bitOffset": 6,
+                          "bitLength": 14,
+                          "children": [
+                            {
+                              "name": "Channel Set 1",
+                              "value": 71,
+                              "unit": "bytes",
+                              "offset": 4017,
+                              "length": 3,
+                              "bitOffset": 6,
+                              "bitLength": 14
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Core Speaker Activity Mask",
+                          "value": 31,
+                          "offset": 4019,
+                          "length": 2,
+                          "bitOffset": 4,
+                          "bitLength": 5
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 7,
+                          "unit": "bits",
+                          "offset": 4020,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 7
                         },
                         {
                           "name": "Header CRC",

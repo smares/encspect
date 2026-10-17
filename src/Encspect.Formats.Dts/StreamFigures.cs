@@ -12,7 +12,10 @@ internal sealed class StreamFigures(int sampleRate)
 
     public int SampleRate => sampleRate;
 
-    public int Count => _points.Count;
+    // Units with no samples (an extension substream before any header with the duration) are counted and sized, but have no bitrate.
+    private int _unmeasured;
+
+    public int Count => _points.Count + _unmeasured;
 
     public long Bytes { get; private set; }
 
@@ -40,8 +43,13 @@ internal sealed class StreamFigures(int sampleRate)
     // The same units counted at another sampling frequency, for a stream whose first units did not know theirs (they hold no samples).
     public StreamFigures WithSampleRate(int rate)
     {
-        var figures = new StreamFigures(rate);
-        for (int i = 0; i < Count; i++)
+        var figures = new StreamFigures(rate)
+        {
+            _unmeasured = _unmeasured,
+            Smallest = Smallest,
+            Largest = Largest,
+        };
+        for (int i = 0; i < _points.Count; i++)
         {
             Point point = _points[i];
             figures.Add(point.Offset, point.Length, point.Samples);
@@ -52,6 +60,14 @@ internal sealed class StreamFigures(int sampleRate)
 
     public void Add(long offset, int length, int samples)
     {
+        if (samples == 0)
+        {
+            _unmeasured++;
+            Smallest = Math.Min(Smallest, length);
+            Largest = Math.Max(Largest, length);
+            return;
+        }
+
         double bitrate = Bitrate(length, samples);
         _points.Add(new Point(offset, length, samples));
         if (sampleRate > 0)
@@ -79,14 +95,14 @@ internal sealed class StreamFigures(int sampleRate)
     // it over their duration, rounded half to even. Only these arrays grow with the number of units.
     public List<Series> Series(Node? anchor, CancellationToken cancellation)
     {
-        if (Count == 0)
+        if (_points.Count == 0)
         {
             return [];
         }
 
-        var offsets = new double[Count];
-        var bitrates = new double[Count];
-        for (int i = 0; i < Count; i++)
+        var offsets = new double[_points.Count];
+        var bitrates = new double[_points.Count];
+        for (int i = 0; i < _points.Count; i++)
         {
             if (i % 4096 == 0)
             {
@@ -122,6 +138,10 @@ internal sealed class StreamFigures(int sampleRate)
         {
             statistics.Add(cover($"Smallest {unitName}", NodeValue.Integer(Smallest, "bytes"), NodeKind.Detail, Explain.Smallest));
             statistics.Add(cover($"Largest {unitName}", NodeValue.Integer(Largest, "bytes"), NodeKind.Detail, Explain.Largest));
+        }
+
+        if (_points.Count > 0)
+        {
             statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MinimumBitrate));
             statistics.Add(cover("Maximum Bitrate", NodeValue.Decimal(MaximumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MaximumBitrate));
         }

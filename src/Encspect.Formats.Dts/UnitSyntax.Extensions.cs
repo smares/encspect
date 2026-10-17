@@ -292,20 +292,11 @@ internal sealed partial class UnitSyntax
         bool setCrc = Flag("HasChannelSetCrc", Explain.XxchSetCrc, Topics.Crc);
         int maskStart = _pos;
         int maskBits = Num("Speaker Mask Bits", 5, Explain.XxchMaskBits, Topics.CoreExtensions, "bits", 1) + 1;
-        if (maskBits <= 6)
+        bool isMaskTooNarrow = maskBits <= 6;
+        if (isMaskTooNarrow)
         {
             // Table 6-23 reads each channel set's mask with nuBits4SpkrMaskXXCh - 6 bits, and FFmpeg refuses a width up to 6 (dca_core.c).
             Report(Issue.ReservedValue, "Speaker Mask Bits", maskStart, _pos, $"the mask has {maskBits} bits, but the channel set masks are read with 6 bits fewer (Table 6-23), so it needs more than 6; the channel sets are not read");
-            // dca_core.c checks the header's CRC16 before it looks at the width, and ignores an extension it refuses: the frame is not an extension frame.
-            ReadHeaderCrc(syncByte, headerSize, "XXCH", Explain.XxchCrc, "The XXCH frame header's CRC16 (6.5.2) fails");
-            AddCoreData(Math.Max(_pos, (syncByte + headerSize) * 8), endBit, "Extension Audio Data", Explain.XxchRefusedData);
-            if (readSync)
-            {
-                Facts.Extension = CoreExtension.None;
-            }
-
-            _pos = endBit;
-            return;
         }
 
         int sets = Num("Channel Sets", 2, Explain.XxchSets, Topics.CoreExtensions, "channel sets", 1) + 1;
@@ -322,6 +313,18 @@ internal sealed partial class UnitSyntax
         uint coreMask = Hex("Core Speaker Activity Mask", maskBits, Explain.XxchCoreMask, Topics.DtsChannelArrangements);
         Facts.XxchCoreMask = (int)coreMask;
         ReadHeaderCrc(syncByte, headerSize, "XXCH", Explain.XxchCrc, "The XXCH frame header's CRC16 (6.5.2) fails");
+        if (isMaskTooNarrow)
+        {
+            // dca_core.c has checked the header's CRC16 before it looks at the width, and refuses the extension: the frame is not an extension frame.
+            AddCoreData(Math.Max(_pos, (syncByte + headerSize) * 8), endBit, "Extension Audio Data", Explain.XxchRefusedData);
+            if (readSync)
+            {
+                Facts.Extension = CoreExtension.None;
+            }
+
+            _pos = endBit;
+            return;
+        }
 
         int setStart = Math.Max(syncByte + headerSize, Aligned(_pos) / 8);
         uint mask = 0;

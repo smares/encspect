@@ -20,7 +20,7 @@ internal sealed class DtsAnalysis
     private DtsStream? _current;
     private StreamKey? _previousKey;
     private Findings.Counted? _changes;
-    private int _merged;
+    private int _excluded;
     private long _unitOffset;
     private Locator _locator;
     private int _unitIndex;
@@ -233,8 +233,9 @@ internal sealed class DtsAnalysis
     }
 
     // Units in one configuration make a stream; a change of the configuration ends it and starts another, as for the other formats, and
-    // after MaxStreams streams the units of a further configuration stay in the last stream. A unit whose assets have no figures yet
-    // (before any header with static fields) matches the configuration after it, which the stream then takes.
+    // after MaxStreams streams the units of a further configuration are in no stream. A unit whose assets have no figures yet
+    // (before any header with static fields) matches a configuration of the same core and structure, which the stream then takes: it joins the
+    // stream after it, or one before it that has the same structure, and any other structure is a change.
     private void Assign(Region region, int index, UnitFacts facts, UnitLayout layout)
     {
         StreamKey key = StreamKey.Of(facts);
@@ -249,18 +250,22 @@ internal sealed class DtsAnalysis
             _current = new DtsStream(key, index);
             _streams.Add(_current);
         }
-        else if (changed)
-        {
-            _merged++;
-        }
         else if (_current.Key.IsPartial && !key.IsPartial)
         {
             _current.Complete(key);
         }
 
-        if (!key.IsPartial || _previousKey is not { IsPartial: false })
+        if (changed || !key.IsPartial || _previousKey is not { IsPartial: false })
         {
             _previousKey = key;
+        }
+
+        if (!_current.Key.Matches(key))
+        {
+            // Past the limit a unit of another configuration is in no stream: the last stream's figures are those of its own units.
+            _excluded++;
+            _changes!.Severity = Severity.Warning;
+            return;
         }
 
         _current.Regions.Add(region);
@@ -295,7 +300,7 @@ internal sealed class DtsAnalysis
 
         _changes = Findings.AddNowCounted(Severity.Info, "dts.stream-changed", new Node("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame }, count =>
             (count == 1 ? $"The stream changes at 0x{offset:X} from {from} to {to}." : $"The stream changes {count} times, first at 0x{offset:X} from {from} to {to}.")
-            + (_merged > 0 ? $" Streams are limited to {MaxStreams}: after that, the units of a further configuration stay in the last stream ({_merged} changes)." : string.Empty));
+            + (_excluded > 0 ? $" Streams are limited to {MaxStreams}: {_excluded} units after that have a configuration other than the last stream's, are in no stream, and are left out of its figures." : string.Empty));
     }
 
     // The samples a unit holds at the stream's sampling frequency: the core's blocks of 32, or an extension substream's duration.

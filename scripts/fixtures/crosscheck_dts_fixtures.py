@@ -299,19 +299,20 @@ MEDIAINFO_READS_OTHERWISE["xll-x-imax-d1"] = dict.fromkeys(
                                          "0xF14000D1 as DTS:X (File_Dts.cpp: case 0x02000850 and 0xF14000D1 set presence_Extended_X alone)")
 MEDIAINFO_READS_OTHERWISE["xll-x-rejected-set"] = dict.fromkeys(
     ["commercial name", "objects in the channel layout", "DTS:X feature"], "FFmpeg's dca_xll.c refuses the channel set (a source resolution beyond its storage width) in parse_sub_headers before it looks for the "
-    "DTS:X word, and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the sets hold (measured with MediaInfo 26.01) and reports DTS:X")
+    "DTS:X word, and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the sets hold (File_Dts.cpp 26.01, XLL() then Extensions2(); the sets are not checked) and reports DTS:X")
 for fixture_name, refusal in (
     ("xll-x-downmix-type-7", "downmix type 7"),
     ("xll-x-storage-width-18", "a storage width of 18 bits, which it does not implement"),
     ("xll-x-no-mask", "a disabled channel mask, which it does not implement"),
-    ("xll-x-segment-samples", "segments of more than 512 samples (parse_common_header)"),
+    ("xll-x-segment-samples", "segments of more than 512 samples (parse_common_header; 8.3.1 allows 256 at 48 kHz, and the analyzer reports dts.reserved-value)"),
     ("xll-x-no-segment-samples", "a segment of no samples (parse_common_header)"),
 ):
     MEDIAINFO_READS_OTHERWISE[fixture_name] = dict.fromkeys(
         ["commercial name", "objects in the channel layout", "DTS:X feature"], f"FFmpeg's dca_xll.c refuses {refusal} in the common header or the sub-headers before it looks for the DTS:X word, "
-        "and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the header holds (measured with MediaInfo 26.01) and reports DTS:X")
-MEDIAINFO_READS_OTHERWISE["exss-remapping-without-mask"] = {"channel layout": "FFmpeg refuses an asset with speaker remapping sets and no speaker activity mask (dca_exss.c), and the analyzer reports it; MediaInfo's "
-    "extension substream parser stops reading the asset descriptor at the first remapping set (File_Dts.cpp: 'break; //Not finnished!') and gives the asset no speaker mask, so no channel layout (measured with MediaInfo 24.01)"}
+        "and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the header holds (File_Dts.cpp 26.01, XLL() then Extensions2(); SmplInSeg is read with Info_S1 and not checked) and reports DTS:X")
+MEDIAINFO_READS_OTHERWISE["exss-remapping-without-mask"] = {"channel layout": "FFmpeg refuses an asset with speaker remapping sets and no speaker activity mask (dca_exss.c), and the analyzer reports it and gives the "
+    "core's 2/0; MediaInfo takes the channel layout of a stream with an extension substream only from the asset's speaker activity mask (File_Dts.cpp 26.01, Streams_Fill: HD_SpeakerActivityMask != -1, "
+    "set where SpkrMaskEnabled is), which this asset has not, and does not fall back to the core's arrangement (measured with MediaInfo 24.01: no layout)"}
 MEDIAINFO_READS_OTHERWISE["exss-only-static-first-only"] = {"bitrate": "MediaInfo's BitRate_Get(true) adds the substream size HD_size of the last extension substream header it parsed, here a unit without static fields "
     "of 52 bytes, to the frame duration code it kept from the first (39000 bit/s), where the manifest's first unit has 60 bytes (45000 bit/s) (measured with MediaInfo 24.01)"}
 MEDIAINFO_READS_OTHERWISE["rate-lossless"] = {"bitrate": MEDIAINFO_READS_OTHERWISE["rate-code"]["bitrate"]}

@@ -625,7 +625,8 @@ def xll_frame(size, sets=None, core_rate=48000, core_samples=512, segments_log=N
     first = sets[0]
     total_samples = core_samples * first["rate"] // core_rate // _bands_of(first)
     if samples_log is None:
-        samples_log = min(9, max(1, total_samples.bit_length() - 1))
+        # 8.3.1: at most 256 samples in a segment at 48 kHz or below, 512 above.
+        samples_log = min(8 if first["rate"] <= 48000 else 9, max(1, total_samples.bit_length() - 1))
     if segments_log is None:
         segments_log = max(0, (total_samples >> samples_log).bit_length() - 1)
     head = Bits()

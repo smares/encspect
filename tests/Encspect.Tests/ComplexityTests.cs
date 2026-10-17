@@ -247,6 +247,7 @@ public class ComplexityTests
         Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
         Assert.Equal((data.Length / 512) - 1, changed.Count);
         Assert.Contains("limited to 64", changed.Message, StringComparison.Ordinal);
+        Assert.Equal(Severity.Warning, changed.Severity);
     }
 
     private static void SetBits(byte[] data, int start, int width, int value)

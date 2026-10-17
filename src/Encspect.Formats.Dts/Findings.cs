@@ -72,7 +72,7 @@ internal sealed class Findings
 
     internal sealed class Counted(Severity severity, string code, Node node, Func<int, string> message)
     {
-        public Severity Severity => severity;
+        public Severity Severity { get; set; } = severity;
 
         public string Code => code;
 
