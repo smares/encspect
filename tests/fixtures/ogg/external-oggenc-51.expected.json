@@ -93,7 +93,7 @@
      "Vorbis String": "vorbis",
      "Vorbis Version": "0",
      "Channels": "6",
-     "Channel Layout": "5.1: front left, center, front right, rear left, rear right, LFE",
+     "Channel Layout": "5.1: front left, front center, front right, back left, back right, LFE",
      "Sample Rate": "48000 Hz",
      "Bitrate Maximum": "0 (not set)",
      "Bitrate Nominal": "324000 bps",
@@ -494,7 +494,8 @@
    "is_vbr": true,
    "channel_mode": "5.1",
    "encoder": "libvorbis 1.3.7",
-   "encoder_confidence": "High"
+   "encoder_confidence": "High",
+   "playback_group": 1
   }
  ],
  "findings": [],

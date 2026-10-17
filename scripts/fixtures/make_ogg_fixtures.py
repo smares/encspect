@@ -15,7 +15,7 @@ lacing, granule positions and frame modes are fully under control. Each fixture 
   the comment, every audio packet's offset and length (with its file ranges where it spans pages),
   every frame's submodes, the statistics and the encoder (ogg_model.speex_expectations), and the
   samples speexdec outputs (ogg_model.speexdec_samples).
-- "stream_infos": the figures each Speex stream reports to the summary and the CSV.
+- "stream_infos": the figures each stream reports to the summary and the CSV, with its playback group (the chain link).
 - "findings": the findings the analyzer must produce, as a code plus a string the message has to
   contain; no others may appear.
 - "crosscheck": what crosscheck_ogg_fixtures.py checks with other tools: "valid" fixtures must pass
@@ -81,9 +81,10 @@ class Fixture:
         self.regions_after = []
         self.ogg_start = 0
 
-    def stream(self, serial, pages, link=1, codec="Speex", analyzed=True, lost=(), extra_headers=0, encoder=None, writer=None):
+    def stream(self, serial, pages, link=1, codec="Speex", analyzed=True, lost=(), extra_headers=0, encoder=None, writer=None, window=None):
+        # window: the file offsets (from, to) the stream's pages lie in, where a serial number is reused in another link.
         self.streams.append({"serial": serial, "pages": pages, "link": link, "codec": codec, "analyzed": analyzed, "lost": set(lost),
-                             "extra_headers": extra_headers, "encoder": encoder, "writer": writer})
+                             "extra_headers": extra_headers, "encoder": encoder, "writer": writer, "window": window})
 
     def finding(self, code, contains):
         self.findings.append({"code": code, "contains": contains})
@@ -118,7 +119,8 @@ def expect_stream(data, records, s):
     pages in s["lost"] (by sequence number) are dropped with the packet they cut, as are pages
     after a sequence gap."""
     serial = s["serial"]
-    pages = [r for r in records if r.get("name") == "Page" and r["serial"] == serial and not r.get("foreign")]
+    low, high = s.get("window") or (0, float("inf"))
+    pages = [r for r in records if r.get("name") == "Page" and r["serial"] == serial and not r.get("foreign") and low <= r["offset"] < high]
     packets, page_ends, pending, last_sequence, gap = [], [], None, None, False
     for r in pages:
         offset = r["offset"]
@@ -172,6 +174,14 @@ def expect_stream(data, records, s):
         "serial": f"0x{serial:08X}", "codec": s["codec"], "link": s["link"], "pages": len(pages), "packets": len(packets),
         "has_eos": any(r["flags"] & m.EOS and r["crc_ok"] and not r.get("truncated") for r in pages),
     }
+    entry, info = expect_codec(entry, data, packets, page_ends, s)
+    # The streams of one link play at the same time and form a playback group, which the summary counts once.
+    if info:
+        info["playback_group"] = s["link"]
+    return entry, info
+
+
+def expect_codec(entry, data, packets, page_ends, s):
     if s["codec"] in CODECS and s["analyzed"] and packets:
         return CODECS[s["codec"]](entry, data, packets, page_ends, s)
     if s["codec"] != "Speex" or not s["analyzed"] or not packets:
@@ -742,7 +752,7 @@ def frames_corrupt():
     f.finding("speex.extra-frames", "more frames than the 2 per packet")
     f.finding("speex.missing-frames", "fewer frames than the 2 per packet")
     f.finding("speex.empty-packet", "1 audio packet is empty")
-    f.finding("speex.wideband-layer-in-narrowband", "carry wideband layers")
+    f.finding("speex.wideband-layer-in-narrowband", "carries wideband layers")
     f.crosscheck = {"valid": False, "oggz_validate": "ok", "packets": True, "speexdec": True, "not_compared": {
         "ogginfo and ffprobe": "they do not read frames; speexdec's frame bitrates and samples are compared"}}
     f.write()
@@ -793,12 +803,92 @@ def eos_inside_packet():
     f.write()
 
 
+def chained_same_serial():
+    # Two files joined end to end that both use the serial number 0x33333333: RFC 3533, section 4 asks for a serial number that is
+    # unique within the scope of the physical bitstream, also across the links of a chain.
+    f = Fixture("chained-same-serial", ".ogg")
+    a_packets, a_granules = speex_packets(0, cbr(20, 4))
+    b_packets, b_granules = speex_packets(0, cbr(20, 5))
+    first = m.pages_for(0x33333333, a_packets, a_granules, default_cuts(20))
+    for p in first:
+        f.w.write(p)
+    boundary = len(f.w.data)
+    second = m.pages_for(0x33333333, b_packets, b_granules, default_cuts(20))
+    for p in second:
+        f.w.write(p)
+    f.stream(0x33333333, first, link=1, window=(0, boundary))
+    f.stream(0x33333333, second, link=2, window=(boundary, len(f.w.data)))
+    f.finding("ogg.serial-reused", "starts a logical stream in a later link with the serial number 0x33333333 of an earlier one")
+    f.crosscheck = {"valid": False, "oggz_validate": "ok", "not_compared": {
+        "oggz info and dump": "oggz counts the pages and packets of both links under the one serial number (44 packets in 6 pages here)",
+        "ogginfo, ffprobe and speexdec": "they read the second link's pages under the serial number of the first, or stop at the end of the first link"}}
+    f.write()
+
+
+def ignored_bits():
+    # Bits after the frames the header gives per packet, which decoders never read (speexdec decodes exactly the header's frames
+    # per packet): an undefined narrowband submode, a frame that runs past the packet and a wideband layer of submode 0 that
+    # libspeex 1.2.1 cannot skip. None of them is a finding.
+    f = Fixture("speex-ignored-bits")
+    head = m.speex_header(8000, 0)
+    good = m.speex_packet([(3,)])
+
+    def after(frame_nb, tail, size=None):
+        w = m.BitWriter()
+        m.speex_frame(w, frame_nb)
+        for bit in tail:
+            w.put(int(bit), 1)
+        return w.bytes()
+
+    audio = [good, after(1, "01001"), good, after(3, "00101"), good, after(3, "1000"), after(1, "01111"), good, good]
+    packets = [head, m.vorbis_comment(VENDOR, [])] + audio
+    granules = [0, 0] + [(i + 1) * 160 - 40 for i in range(len(audio))]
+    pages = m.pages_for(0x00BEEF01, packets, granules, default_cuts(len(audio)))
+    for p in pages:
+        f.w.write(p)
+    f.stream(0x00BEEF01, pages)
+    f.write()
+
+
+def wideband_layer_skip():
+    # A narrowband stream with wideband layers before its frames, as a wideband stream relabeled narrowband has: a layer of
+    # submode 2 is skipped, and one of submode 0 makes libspeex 1.2.1 (nb_decode, wb_skip_table) read it again until
+    # "More than two wideband layers found. The stream is corrupted."
+    f = Fixture("speex-wideband-layer-skip")
+    head = m.speex_header(8000, 0)
+
+    def layered(submode):
+        w = m.BitWriter()
+        w.put(1, 1)
+        w.put(submode, 3)
+        w.put(0, m.WB_BITS[submode] - 4)
+        m.speex_frame(w, 3)
+        w.terminate()
+        return w.bytes()
+
+    good = m.speex_packet([(3,)])
+    audio = [good, layered(2), good, good, layered(0), good]
+    packets = [head, m.vorbis_comment(VENDOR, [])] + audio
+    granules = [0, 0] + [(i + 1) * 160 - 40 for i in range(len(audio))]
+    pages = m.pages_for(0x00BEEF02, packets, granules, default_cuts(len(audio)))
+    for p in pages:
+        f.w.write(p)
+    f.stream(0x00BEEF02, pages)
+    f.finding("speex.frame-invalid", "a skipped wideband layer has submode 0, which libspeex 1.2.1 cannot skip")
+    f.finding("speex.wideband-layer-in-narrowband", "2 audio packets of this narrowband stream carry wideband layers")
+    f.crosscheck = {"valid": False, "oggz_validate": "ok", "packets": True,
+                    "speexdec_error": "More than two wideband layers found. The stream is corrupted.",
+                    "not_compared": {"speexdec's samples and bitrates": "speexdec stops decoding at the corrupt packet, as the finding says",
+                                     "ogginfo and ffprobe": "they do not read frames"}}
+    f.write()
+
+
 FIXTURES = [
     narrowband, wideband, ultra_wideband, frames_and_stereo, multiplexed, chained, packet_spanning_pages, lacing_255,
     comment_edge_cases, writer_claims_differ, encoder_other_format, encoder_other_format_no_vendor, comment_empty, unknown_codec, tags_around, tag_signature_in_last_page,
     bad_crc, sequence_gap, truncated_page, missing_eos, garbage_between_pages, oggs_in_mp3, huge_lacing, continuation_errors,
     granule_errors, bos_missing, comment_invalid, header_invalid, header_bad_mode, header_short, frames_corrupt, deep_nesting,
-    eos_inside_packet,
+    eos_inside_packet, chained_same_serial, ignored_bits, wideband_layer_skip,
 ]
 
 

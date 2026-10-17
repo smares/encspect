@@ -1165,6 +1165,7 @@
         "duration": 0.095,
         "averageBitrate": 8,
         "isVbr": false,
+        "playbackGroup": 1,
         "encoder": "speexenc 1.2.1",
         "encoderConfidence": "High",
         "series": [
@@ -1203,9 +1204,9 @@
     ],
     "findings": [
       {
-        "severity": "Info",
+        "severity": "Warning",
         "code": "speex.version-id",
-        "message": "The header's version ID is 2; Speex 1.0 to 1.2 write 1.",
+        "message": "The header's version ID is 2; Speex 1.0 to 1.2 write 1, and speexdec refuses a stream whose version ID is above 1 (speexdec.c, process_header).",
         "offset": 56,
         "length": 4,
         "path": [

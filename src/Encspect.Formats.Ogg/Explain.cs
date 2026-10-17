@@ -47,7 +47,7 @@ internal static class Explain
     public const string PageCount = "How many pages of the stream the file holds.";
     public const string PacketCount = "How many complete packets the stream's pages hold.";
     public const string LastGranulePosition = "The granule position of the stream's last page that has one, which gives the stream's length in the codec's units.";
-    public const string HasEndOfStream = "Whether the stream's last page is marked as its end, as RFC 3533 asks of every logical stream (section 4).";
+    public const string HasEndOfStream = "Whether a page of the stream carries the end-of-stream flag, as RFC 3533 asks of the last page of every logical stream (section 4).";
 
     public static string Lacing(int value) => value == 255 ? LacingFull : LacingLast;
 }

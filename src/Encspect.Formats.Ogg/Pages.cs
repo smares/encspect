@@ -4,43 +4,71 @@ using Encspect.Core;
 namespace Encspect.Formats.Ogg;
 
 // Random access to a ByteReader through one cached window that holds the largest page, so pages are
-// read and checked with one stream read per window and large files are never loaded whole.
+// read and checked with one stream read per window and large files are never loaded whole. A small read
+// that misses the window, such as the header of a page far ahead that a candidate claims follows it, goes
+// to a small buffer of its own and leaves the window where it is: otherwise a search that probes a page
+// ahead of every capture pattern would read the whole window again for each.
 internal sealed class PageWindow(ByteReader reader)
 {
     private const int WindowSize = 1 << 18;
+    private const int MaxSmallRead = 512;
+    private const int SmallSize = 2048;
 
     private byte[] _window = [];
     private long _start = -1;
+    private byte[] _small = [];
+    private long _smallStart = -1;
 
     public ByteReader Reader => reader;
 
     // The bytes [offset, offset + count), which must lie inside the reader; count is at most a page.
     public ReadOnlySpan<byte> Get(long offset, int count)
     {
-        if (offset < _start || offset + count > _start + _window.Length)
+        if (offset >= _start && offset + count <= _start + _window.Length)
         {
-            _start = offset;
-            _window = reader.ReadBytesAt(offset, (int)Math.Min(WindowSize, reader.End - offset));
+            return _window.AsSpan((int)(offset - _start), count);
         }
 
-        return _window.AsSpan((int)(offset - _start), count);
+        if (count <= MaxSmallRead && _start >= 0)
+        {
+            if (offset < _smallStart || offset + count > _smallStart + _small.Length)
+            {
+                _smallStart = offset;
+                _small = reader.ReadBytesAt(offset, (int)Math.Min(SmallSize, reader.End - offset));
+            }
+
+            return _small.AsSpan((int)(offset - _smallStart), count);
+        }
+
+        _start = offset;
+        _window = reader.ReadBytesAt(offset, (int)Math.Min(WindowSize, reader.End - offset));
+        return _window.AsSpan(0, count);
     }
 
-    // The first "OggS" in [from, limit), or -1.
+    // The first "OggS" in [from, limit), or -1. Searches what the window holds before reading another.
     public long Find(long from, long limit)
     {
         long position = from;
         while (position <= limit - 4)
         {
-            int count = (int)Math.Min(WindowSize - 3, limit - position);
-            ReadOnlySpan<byte> span = Get(position, count);
+            long available = limit - position;
+            ReadOnlySpan<byte> span;
+            if (position >= _start && position + 4 <= _start + _window.Length)
+            {
+                span = _window.AsSpan((int)(position - _start), (int)Math.Min(available, _start + _window.Length - position));
+            }
+            else
+            {
+                span = Get(position, (int)Math.Min(WindowSize, available));
+            }
+
             int index = span.IndexOf(Pages.Capture);
             if (index >= 0)
             {
                 return position + index;
             }
 
-            position += count - 3;
+            position += span.Length - 3;
         }
 
         return -1;
@@ -82,6 +110,30 @@ internal enum PageProbe
 
     // The header and segment table fit; the body may still run past the end.
     Fits,
+}
+
+// How many bytes of CRC a search for the next page may compute over all its candidates in one region of data. A page that is
+// found costs one CRC here and one in the scan, so a budget of a few times the data's size leaves any real file's damage
+// within it, where junk made of candidates that each look like a page of 64 KiB would cost up to 64,000 operations per byte.
+internal sealed class ResyncBudget(long bytes)
+{
+    private long _left = bytes;
+
+    public bool IsExhausted { get; private set; }
+
+    public static ResyncBudget For(long dataLength) => new((4 * dataLength) + (1 << 20));
+
+    public bool TrySpend(int count)
+    {
+        if (count > _left)
+        {
+            IsExhausted = true;
+            return false;
+        }
+
+        _left -= count;
+        return true;
+    }
 }
 
 internal static class Pages
@@ -135,20 +187,31 @@ internal static class Pages
     // Whether a page that passes its CRC starts at offset and is followed by the start of another
     // page or by the end of the data: a chain of consistent pages, as MPEG sync needs a chain of
     // frames, so "OggS" inside other data is not taken for a page.
-    public static bool StartsChain(PageWindow window, long offset, long end)
+    // The follow-on page is checked before the CRC, which costs up to 64 KiB, and a search spends
+    // a ResyncBudget on its CRCs, so junk full of capture patterns costs time in proportion to its size.
+    public static bool StartsChain(PageWindow window, long offset, long end, ResyncBudget? budget = null)
     {
-        if (Probe(window, offset, end, out PageHeader header) != PageProbe.Fits || header.Length > end - offset
-            || ComputeCrc(window, header) != header.Crc)
+        if (Probe(window, offset, end, out PageHeader header) != PageProbe.Fits || header.Length > end - offset)
         {
             return false;
         }
 
         long next = offset + header.Length;
-        return next == end || Probe(window, next, end, out _) == PageProbe.Fits;
+        if (next != end && Probe(window, next, end, out _) != PageProbe.Fits)
+        {
+            return false;
+        }
+
+        if (budget is not null && !budget.TrySpend(header.Length))
+        {
+            return false;
+        }
+
+        return ComputeCrc(window, header) == header.Crc;
     }
 
     // The first offset in [from, limit) where a chain of pages starts, or -1.
-    public static long FindChain(PageWindow window, long from, long limit, long end, CancellationToken cancellationToken)
+    public static long FindChain(PageWindow window, long from, long limit, long end, ResyncBudget budget, CancellationToken cancellationToken)
     {
         long position = from;
         int tries = 0;
@@ -160,7 +223,7 @@ internal static class Pages
                 return -1;
             }
 
-            if (StartsChain(window, found, end))
+            if (StartsChain(window, found, end, budget))
             {
                 return found;
             }

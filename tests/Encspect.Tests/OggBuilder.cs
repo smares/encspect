@@ -47,6 +47,58 @@ internal sealed class OggBuilder
         return this;
     }
 
+    // The packets of one logical stream written as one packet: pages of 255 lacing values of 255 bytes each, a continuation flag on
+    // all but the first, and the end of the packet on the last. Granule position -1 where no packet ends.
+    public OggBuilder SpanningPacket(uint serial, byte[] packet, long granule)
+    {
+        const int PageBody = 255 * 255;
+        for (int at = 0; ; at += PageBody)
+        {
+            int count = Math.Min(PageBody, packet.Length - at);
+            bool last = count < PageBody;
+            var lacing = new List<byte>();
+            for (int left = count; ; left -= 255)
+            {
+                lacing.Add((byte)Math.Min(left, 255));
+                if (left < 255)
+                {
+                    break;
+                }
+            }
+
+            if (!last)
+            {
+                // A full page leaves the packet open: no terminating lacing value below 255.
+                lacing.RemoveAt(lacing.Count - 1);
+            }
+
+            Segments(serial, last ? granule : -1, at > 0 ? (byte)1 : (byte)0, [.. lacing], packet[at..(at + count)]);
+            if (last)
+            {
+                return this;
+            }
+        }
+    }
+
+    // A page of the given lacing values and body, as they are.
+    public OggBuilder Segments(uint serial, long granule, byte flags, byte[] lacing, byte[] body)
+    {
+        uint sequence = _sequences.GetValueOrDefault(serial);
+        _sequences[serial] = sequence + 1;
+        byte[] header = new byte[27 + lacing.Length];
+        "OggS"u8.CopyTo(header);
+        header[5] = flags;
+        BinaryPrimitives.WriteInt64LittleEndian(header.AsSpan(6), granule);
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(14), serial);
+        BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(18), sequence);
+        header[26] = (byte)lacing.Length;
+        lacing.CopyTo(header, 27);
+        byte[] page = [.. header, .. body];
+        BinaryPrimitives.WriteUInt32LittleEndian(page.AsSpan(22), Crc(page));
+        _data.AddRange(page);
+        return this;
+    }
+
     public OggBuilder Raw(params byte[] bytes)
     {
         _data.AddRange(bytes);

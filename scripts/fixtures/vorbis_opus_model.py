@@ -231,13 +231,15 @@ VORBIS_LIBRARIES = {
     "Xiph.Org libVorbis I 20200704 (Reducing Environment)": "1.3.7",
 }
 
+# The channel order of Vorbis I, section 4.3.9, which Opus mapping family 1 uses too (RFC 7845, section 5.1.1.2), with the
+# speakers named as the analyzer names them (ChannelLayouts.Name).
 VORBIS_LAYOUTS = {
-    1: ("Mono", ["mono"]), 2: ("Stereo", ["left", "right"]), 3: ("1D surround", ["left", "center", "right"]),
-    4: ("Quadraphonic", ["front left", "front right", "rear left", "rear right"]),
-    5: ("5.0", ["front left", "center", "front right", "rear left", "rear right"]),
-    6: ("5.1", ["front left", "center", "front right", "rear left", "rear right", "LFE"]),
-    7: ("6.1", ["front left", "center", "front right", "side left", "side right", "rear center", "LFE"]),
-    8: ("7.1", ["front left", "center", "front right", "side left", "side right", "rear left", "rear right", "LFE"]),
+    1: ("Mono", ["front center"]), 2: ("Stereo", ["front left", "front right"]), 3: ("3.0", ["front left", "front center", "front right"]),
+    4: ("Quadraphonic", ["front left", "front right", "back left", "back right"]),
+    5: ("5.0", ["front left", "front center", "front right", "back left", "back right"]),
+    6: ("5.1", ["front left", "front center", "front right", "back left", "back right", "LFE"]),
+    7: ("6.1", ["front left", "front center", "front right", "side left", "side right", "back center", "LFE"]),
+    8: ("7.1", ["front left", "front center", "front right", "side left", "side right", "back left", "back right", "LFE"]),
 }
 
 
@@ -484,7 +486,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
     mode_bits = ilog(len(modes) - 1) if modes else 0
 
     records, findings = [], []
-    decoded, previous, blocks, first_returned, second_returned = 0, None, 0, 0, 0
+    decoded, previous, blocks, first_returned, second_returned, last_returned = 0, None, 0, 0, 0, 0
     sizes, long_bytes, short_bytes, long_sizes, short_sizes = set(), 0, 0, [], []
     mode_counts = {}
     after_gap = False
@@ -535,6 +537,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                 first_returned = returned
             if blocks == 2:
                 second_returned = returned
+            last_returned = returned
             decoded += returned
             previous = (is_long, flags, index)
         for at, granule, is_end in positions:
@@ -549,7 +552,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
             elif o != offset and not is_end:
                 findings.append("vorbis.granule-inconsistent")
             after_gap = False
-            last = (decoded, granule, is_end)
+            last = (decoded, granule, is_end, last_returned)
 
     start_trim = 0
     if first_offset:
@@ -567,6 +570,10 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
         if trim < 0:
             findings.append("vorbis.granule-beyond-packets")
             trim = 0
+        elif trim > last[3]:
+            # Section A.2 allows trimming within the last packet's samples, and libvorbis strips no more than it has buffered for it.
+            findings.append("vorbis.end-trimming-large")
+            trim = last[3]
     samples = min(max(decoded - start_trim - trim, 0), decoded) if has_time else 0
 
     statistics = None
@@ -623,14 +630,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
 OPUS_MODES = ["SILK-only", "Hybrid", "CELT-only"]
 OPUS_BANDWIDTHS = ["Narrowband", "Mediumband", "Wideband", "Super-wideband", "Fullband"]
 OPUS_BANDWIDTH_RANGES = ["4 kHz", "6 kHz", "8 kHz", "12 kHz", "20 kHz"]
-OPUS_LAYOUTS = {
-    1: ("Mono", ["mono"]), 2: ("Stereo", ["left", "right"]), 3: ("Linear surround", ["left", "center", "right"]),
-    4: ("Quadraphonic", ["front left", "front right", "rear left", "rear right"]),
-    5: ("5.0", ["front left", "front center", "front right", "rear left", "rear right"]),
-    6: ("5.1", ["front left", "front center", "front right", "rear left", "rear right", "LFE"]),
-    7: ("6.1", ["front left", "front center", "front right", "side left", "side right", "rear center", "LFE"]),
-    8: ("7.1", ["front left", "front center", "front right", "side left", "side right", "rear left", "rear right", "LFE"]),
-}
+OPUS_LAYOUTS = VORBIS_LAYOUTS
 
 
 def toc_info(toc):
@@ -801,8 +801,11 @@ def read_part(data, self_delimited):
                     return fail("SD")
             else:
                 rest = len(data) - position - padding
-                if rest < 0 or rest % frames or rest // frames > 1275:
+                if rest < 0 or rest % frames:
                     return fail("R6")
+                # The equal frames of a CBR packet are implicit, so one over 1275 bytes breaks R2.
+                if rest // frames > 1275:
+                    return fail("R2")
                 length = rest // frames
             lengths = [length] * frames
     total = position + sum(lengths) + padding

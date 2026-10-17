@@ -39,6 +39,11 @@ public sealed partial class OggParser
             text += ", end of stream";
         }
 
+        if ((page.Status & PageStatus.Untracked) != 0)
+        {
+            text += ", stream not followed";
+        }
+
         return (page.Status & PageStatus.Truncated) != 0 ? text + ", cut short"
             : (page.Status & PageStatus.CrcMismatch) != 0 ? text + ", CRC mismatch"
             : text;
@@ -115,10 +120,11 @@ public sealed partial class OggParser
             return fields;
         }
 
-        if (page.IsLost)
+        if (page.IsLost || (page.Status & PageStatus.Untracked) != 0)
         {
-            string why = (page.Status & PageStatus.Truncated) != 0 ? "the page is cut short" : "the page fails its CRC check";
-            fields.Add(new Node("Body", bodyOffset, bodyPresent, $"{bodyPresent} bytes, not read as packets: {why}") { Description = Explain.LostBody });
+            string why = (page.Status & PageStatus.Untracked) != 0 ? "the stream is beyond the limit of followed streams"
+                : (page.Status & PageStatus.Truncated) != 0 ? "the page is cut short" : "the page fails its CRC check";
+            fields.Add(new Node("Body", bodyOffset, bodyPresent, $"{Bytes(bodyPresent)}, not read as packets: {why}") { Description = Explain.LostBody });
             return fields;
         }
 
@@ -150,7 +156,7 @@ public sealed partial class OggParser
                 RunKind.TooLarge => Explain.TooLargeData,
                 _ => Explain.PacketData,
             };
-            yield return new Node("Packet Data", page.BodyOffset + run.Start, run.Length, $"{run.Length} bytes, {what}") { Description = description };
+            yield return new Node("Packet Data", page.BodyOffset + run.Start, run.Length, $"{Bytes(run.Length)}, {what}") { Description = description };
         }
     }
 }
