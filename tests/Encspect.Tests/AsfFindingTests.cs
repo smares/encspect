@@ -199,6 +199,141 @@ public class AsfFindingTests
         }
     }
 
+    // The findings of the Content Description and Extended Content Description Objects point at the length and count fields they are about,
+    // not at the Object ID and Object Size that come first in each object.
+    [Theory]
+    [InlineData("asf.string-odd-length", "Title Length")]
+    [InlineData("asf.object-truncated", "Author Length")]
+    [InlineData("asf.descriptor-count", "Content Descriptors Count")]
+    public void MetadataLengthFindingsPointAtTheirFields(string code, string field)
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/content-description-findings.asf");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == code);
+        Assert.NotNull(finding.Path);
+        Node node = report.Root;
+        foreach (int index in finding.Path)
+        {
+            node = node.Children[index];
+        }
+
+        Assert.Equal(field, node.Name);
+    }
+
+    // The fixed packet size makes the bytes after a payload padding whatever the packet length field says: the statistics count what the
+    // Padding nodes show (3 packets of 256 bytes, payloads and headers 510 and 90 bytes, the rest padding).
+    [Fact]
+    public void PaddingStatisticsCountTheDifferenceToAShorterLengthField()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/length-field-short.asf");
+        Node statistics = FindNode(report.Root, "Statistics")!;
+        Assert.Equal(168L, FindNode(statistics, "Padding Bytes")!.Value!.AsInteger());
+        Assert.Equal(90L, FindNode(statistics, "Packet Overhead")!.Value!.AsInteger());
+        Node list = FindNode(report.Root, "Data Packets")!;
+        Assert.All(list.Children, packet => Assert.Equal(56L, packet.Children.Single(c => c.Name == "Padding").Value!.AsInteger()));
+    }
+
+    // The findings of media objects are kept per stream: each stream's damage is counted under its own number.
+    [Fact]
+    public void MediaObjectFindingsAreCountedPerStream()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/fragments-in-two-streams.asf");
+        var order = report.Findings.Where(f => f.Code == "asf.fragment-order").ToList();
+        Assert.Equal(2, order.Count);
+        Assert.Single(order, f => f.Count == 1 && f.Message.Contains("of stream 1 ", StringComparison.Ordinal));
+        Assert.Single(order, f => f.Count == 2 && f.Message.Contains("of stream 2 ", StringComparison.Ordinal));
+    }
+
+    // An Encrypted Object Record that cannot be read as a stream number covers every stream, whatever the Encrypted Content Flag says.
+    [Fact]
+    public void ObjectRecordWithNoStreamNumberCoversEveryStream()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/protection-object-ids.asf");
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.True(stream.IsProtected);
+        Assert.Equal("Windows Media DRM for network devices", stream.Protection!.Scheme);
+        Assert.Contains(report.Findings, f => f.Code == "asf.content-encrypted" && f.Message.Contains("every stream is taken to be encrypted", StringComparison.Ordinal));
+    }
+
+    // A file cut inside a packet's header: the two whole packets have 56 bytes of padding each and the cut one none, whatever the file lacks.
+    [Fact]
+    public void PacketCutInsideItsHeaderHasNoPadding()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/length-field-short-cut.asf");
+        Node statistics = FindNode(report.Root, "Statistics")!;
+        Assert.Equal(112L, FindNode(statistics, "Padding Bytes")!.Value!.AsInteger());
+        Assert.Equal(65L, FindNode(statistics, "Packet Overhead")!.Value!.AsInteger());
+    }
+
+    // Padding is limited to the bytes the file has: a packet cut inside its payload counts none of the missing bytes.
+    // A packet cut inside its header fields shows the fields that fit with their value and leaves out the others.
+    [Fact]
+    public void PacketCutInsideItsHeaderFieldsShowsOnlyTheFieldsItHas()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/length-field-short-cut-fields.asf");
+        Node packet = FindNode(report.Root, "Data Packets")!.Children[2];
+        Assert.Equal(200L, packet.Children.First(n => n.Name == "Packet Length").Value!.AsInteger());
+        Assert.DoesNotContain(packet.Children, n => n.Name == "Padding Length");
+    }
+
+    [Fact]
+    public void TruncatedPacketCountsNoMissingPadding()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/truncated-data.asf");
+        Node statistics = FindNode(report.Root, "Statistics")!;
+        Assert.Equal(0L, FindNode(statistics, "Padding Bytes")!.Value!.AsInteger());
+        Assert.Equal(48L, FindNode(statistics, "Packet Overhead")!.Value!.AsInteger());
+    }
+
+    [Fact]
+    public void NoFixtureHasNegativePaddingOrOverhead()
+    {
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "asf"), "*.asf"))
+        {
+            Report report = Fixtures.AnalyzeMpeg("asf/" + Path.GetFileName(path));
+            Node? statistics = FindNode(report.Root, "Statistics");
+            foreach (string name in new[] { "Padding Bytes", "Packet Overhead" })
+            {
+                if (statistics is not null && FindNode(statistics, name) is { } figure)
+                {
+                    Assert.True(figure.Value!.AsInteger() >= 0, $"{Path.GetFileName(path)}: {name} is {figure.Value}.");
+                }
+            }
+        }
+    }
+
+    // A packet length field that is present and 0 states a packet of no bytes (FFmpeg rejects it): a finding, and the packet is read at the file's size.
+    [Fact]
+    public void PresentPacketLengthOfZeroIsAFinding()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/length-field-zero.asf");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "asf.packet-length");
+        Assert.Equal(3, finding.Count);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "asf.packet-truncated" or "asf.payload-overrun");
+        Assert.Equal(3, FindNode(report.Root, "Data Packets")!.Children.Count);
+    }
+
+    // Offsets of an index are compared with packet starts only when every packet has the same size.
+    [Theory]
+    [InlineData("asf/index-offset-unaligned.asf", true)]
+    [InlineData("asf/index-offset-variable-packets.asf", false)]
+    public void IndexOffsetsAreCheckedAgainstPacketStartsOnlyForAFixedPacketSize(string name, bool flagged)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.Equal(flagged, report.Findings.Any(f => f.Code == "asf.index-offset"));
+    }
+
+    // The summary of an Advanced Content Encryption Object says what its records protect in this file.
+    [Theory]
+    [InlineData("asf/protected-advanced-no-object-records.asf", "name no stream, so it protects none")]
+    [InlineData("asf/protected-advanced-unknown-stream-only.asf", "name only streams that the file does not have, so it protects none")]
+    public void RecordsThatProtectNoStreamDoNotSayTheFileIsProtected(string name, string text)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.All(report.Streams, s => Assert.False(s.IsProtected));
+        Assert.DoesNotContain(report.Findings, f => f.Code == "asf.content-encrypted");
+        Assert.Contains(report.Findings, f => f.Code == "asf.no-content-encryption-record" && f.Message.Contains(text, StringComparison.Ordinal));
+    }
+
     // A broadcast file (Data Object of size 0) runs to the end of the file, so a TAG at its end is not an ID3v1 tag
     // that cuts the last packet.
     [Fact]

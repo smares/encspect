@@ -53,9 +53,9 @@ public sealed class WmaLosslessParser : ICodecParser
         Bit(flags, at, 0, 1, NodeValue.Integer(value & 1), "Unread Flag", ProExplain.FlagOthers);
         Bit(flags, at, 1, 2, NodeValue.Integer((value >> 1) & 3), "Frame Length Adjustment", ProExplain.FlagFrameLength);
         Bit(flags, at, 3, 3, NodeValue.Integer((value >> 3) & 7), "Subframe Count Code", ProExplain.FlagSubframes);
-        Bit(flags, at, 6, 1, NodeValue.Boolean((value & 0x40) != 0), "Length Prefix", ProExplain.FlagLengthPrefix);
-        Bit(flags, at, 7, 1, NodeValue.Boolean((value & 0x80) != 0), "Dynamic Range Compression", ProExplain.FlagDynamicRange);
-        Bit(flags, at, 8, 1, NodeValue.Boolean((value & 0x100) != 0), "Version 3 RTM", LosslessExplain.FlagV3Rtm);
+        Bit(flags, at, 6, 1, NodeValue.Boolean((value & 0x40) != 0), "Has Length Prefix", ProExplain.FlagLengthPrefix);
+        Bit(flags, at, 7, 1, NodeValue.Boolean((value & 0x80) != 0), "Uses Dynamic Range Compression", ProExplain.FlagDynamicRange);
+        Bit(flags, at, 8, 1, NodeValue.Boolean((value & 0x100) != 0), "Is Version 3 RTM", LosslessExplain.FlagV3Rtm);
         Bit(flags, at, 9, 7, NodeValue.Hex((uint)(value >> 9), 2), "Other Flags", ProExplain.FlagOthers);
     }
 

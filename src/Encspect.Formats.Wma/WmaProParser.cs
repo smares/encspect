@@ -131,8 +131,8 @@ public sealed class WmaProParser : ICodecParser
         FlagBits(flags, at, 0, 1, NodeValue.Integer(value & 1), "Unread Flag", ProExplain.FlagOthers);
         FlagBits(flags, at, 1, 2, NodeValue.Integer((value >> 1) & 3), "Frame Length Adjustment", ProExplain.FlagFrameLength);
         FlagBits(flags, at, 3, 3, NodeValue.Integer((value >> 3) & 7), "Subframe Count Code", ProExplain.FlagSubframes);
-        FlagBits(flags, at, 6, 1, NodeValue.Boolean((value & 0x40) != 0), "Length Prefix", ProExplain.FlagLengthPrefix);
-        FlagBits(flags, at, 7, 1, NodeValue.Boolean((value & 0x80) != 0), "Dynamic Range Compression", ProExplain.FlagDynamicRange);
+        FlagBits(flags, at, 6, 1, NodeValue.Boolean((value & 0x40) != 0), "Has Length Prefix", ProExplain.FlagLengthPrefix);
+        FlagBits(flags, at, 7, 1, NodeValue.Boolean((value & 0x80) != 0), "Uses Dynamic Range Compression", ProExplain.FlagDynamicRange);
         FlagBits(flags, at, 8, 8, NodeValue.Hex((uint)(value >> 8), 2), "Other Flags", ProExplain.FlagOthers);
     }
 

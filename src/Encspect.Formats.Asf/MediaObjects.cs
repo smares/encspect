@@ -90,14 +90,14 @@ public sealed partial class AsfParser
                 {
                     if (data is not null)
                     {
-                        findings.Add(Severity.Warning, "asf.object-incomplete", anchor, n =>
+                        findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, anchor, n =>
                             $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the next one starts first. They are dropped.");
                         data = null;
                     }
 
                     if (size == 0 || size > MaxMediaObject)
                     {
-                        findings.Add(Severity.Warning, "asf.object-size-invalid", anchor, n =>
+                        findings.Add(Severity.Warning, "asf.object-size-invalid", streamNumber, anchor, n =>
                             $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} state{(n == 1 ? "s" : string.Empty)} a size of 0 or more than {MaxMediaObject} bytes; {(n == 1 ? "it is" : "they are")} not followed.");
                         continue;
                     }
@@ -110,7 +110,7 @@ public sealed partial class AsfParser
                 }
                 else if (data is null || payload.ObjectNumber != number || offset != collected)
                 {
-                    findings.Add(Severity.Warning, "asf.fragment-order", anchor, n =>
+                    findings.Add(Severity.Warning, "asf.fragment-order", streamNumber, anchor, n =>
                         $"{(n == 1 ? "A fragment of a media object of stream" : $"{n} fragments of media objects of stream")} {streamNumber} {(n == 1 ? "does" : "do")} not continue the object before {(n == 1 ? "it" : "them")}; {(n == 1 ? "it is" : "they are")} dropped.");
                     continue;
                 }
@@ -118,7 +118,7 @@ public sealed partial class AsfParser
                 int take = Math.Min(payload.DataLength, total - collected);
                 if (take < payload.DataLength)
                 {
-                    findings.Add(Severity.Warning, "asf.fragment-overrun", anchor, n =>
+                    findings.Add(Severity.Warning, "asf.fragment-overrun", streamNumber, anchor, n =>
                         $"{(n == 1 ? "A fragment" : $"{n} fragments")} of stream {streamNumber} {(n == 1 ? "holds" : "hold")} more bytes than the media object's size leaves; the rest is dropped.");
                 }
 
@@ -147,7 +147,7 @@ public sealed partial class AsfParser
 
         if (data is not null)
         {
-            findings.Add(Severity.Warning, "asf.object-incomplete", anchor, n =>
+            findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, anchor, n =>
                 $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. They are dropped.");
         }
     }
