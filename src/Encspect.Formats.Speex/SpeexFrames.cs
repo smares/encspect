@@ -62,8 +62,9 @@ internal static class SpeexFrames
 
     private const int StereoRequest = 9;
 
-    // mode: 0 narrowband, 1 wideband, 2 ultra-wideband. At most maxFrames frames are read.
-    public static PacketWalk Walk(ReadOnlySpan<byte> data, int mode, int maxFrames, ChunkedList<FrameRecord> frames)
+    // mode: 0 narrowband, 1 wideband, 2 ultra-wideband. At most maxFrames frames are read. Wideband layers are counted as stray
+    // only before the first countedFrames frames are complete: a decoder reads no further.
+    public static PacketWalk Walk(ReadOnlySpan<byte> data, int mode, int maxFrames, ChunkedList<FrameRecord> frames, int countedFrames = int.MaxValue)
     {
         var bits = new Bits(data);
         int total = data.Length * 8;
@@ -92,11 +93,13 @@ internal static class SpeexFrames
                 if (bits.Read(1) == 1)
                 {
                     // nb_decode skips up to two wideband layers "for compatibility".
-                    stray++;
                     if (SkipLayer(ref bits, WidebandBits) is { } error)
                     {
                         return Fail(count, frameStart, at, error, inBand, stereo, stray);
                     }
+
+                    // Only a layer libspeex skips counts as one a narrowband decoder skips.
+                    stray += count < countedFrames ? 1 : 0;
 
                     if (total - bits.Position < 5)
                     {
@@ -189,13 +192,16 @@ internal static class SpeexFrames
         }
     }
 
-    // A wideband layer after the 1 bit that marks it: a 3-bit submode, then the rest of its bits.
+    // A wideband layer after the 1 bit that marks it: a 3-bit submode, then the rest of its bits. nb_decode skips by its own
+    // wb_skip_table {0, 36, 112, 192, 352, 0, 0, 0} and then steps back over the 4 bits it has read, so a submode of 0, 5, 6 or 7
+    // puts it back before the layer's marker bit, which it reads again as a wideband layer, until "More than two wideband layers
+    // found. The stream is corrupted." (nb_celp.c, 1.2.1; the commented-out speex_mode_query would have skipped submode 0).
     private static string? SkipLayer(ref Bits bits, ReadOnlySpan<int> table)
     {
         int submode = bits.Read(3);
-        if (table[submode] < 0)
+        if (submode is 0 or > 4)
         {
-            return $"a skipped wideband layer has the undefined submode {submode}";
+            return $"a skipped wideband layer has submode {submode}, which libspeex 1.2.1 cannot skip: it reads the layer again and reports a corrupted stream";
         }
 
         bits.Advance(table[submode] - 4);

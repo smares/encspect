@@ -49,7 +49,7 @@ internal static class Explain
     public const string CountIsVbr = "Whether each frame has its own length (VBR) or all have the same (CBR) (RFC 6716, section 3.2.5).";
     public const string CountHasPadding = "Whether padding follows the frames, with its length after this byte (RFC 6716, section 3.2.5).";
     public const string CountFrames = "How many frames the packet holds, 1 to 48, at most 120 ms in all (RFC 6716, section 3.2.5).";
-    public const string PaddingLength = "The padding's length: each byte of 255 adds 254 and continues, the last byte adds its value (RFC 6716, section 3.2.5).";
+    public const string PaddingLength = "The length of the padding in bytes, as the bytes at this position code it: each byte of 255 adds 254 and continues, the last byte adds its value (RFC 6716, section 3.2.5).";
     public const string FrameLengths = "The frame lengths the packet states, one or two bytes each (RFC 6716, section 3.2.1); a self-delimited part adds its last frame's.";
     public const string Frame = "A compressed frame, which the analyzer does not decode (RFC 6716, section 3).";
     public const string EmptyFrame = "A frame of no bytes, which tells the decoder there is no data for it, as in discontinuous transmission (RFC 6716, section 3.2.1).";
@@ -86,7 +86,7 @@ internal static class Explain
     public const string PaddingTotal = "The padding bytes of all audio packets, which decoders ignore (RFC 6716, section 3.2.5).";
 
     public const string Encoder = "Which program or library encoded the stream, as the analyzer concludes from the evidence below.";
-    public const string Confidence = "How sure the naming is: high when opusenc's ENCODER field and the libopus vendor string agree, medium for a name in one field other software may write.";
+    public const string Confidence = "How sure the naming is: medium, as it rests on the libopus vendor string or on ffmpeg's ENCODER ID, which other software may write too.";
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
 }
 

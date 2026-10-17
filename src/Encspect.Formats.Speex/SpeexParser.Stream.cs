@@ -139,7 +139,7 @@ public sealed partial class SpeexParser
                 Node node = _parent.Add(Node.FromMapped("Speex Header", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.HeaderShort,
                     topic: Topics.SpeexModes));
                 _findings.Add(Severity.Warning, "speex.header-short", node, _ =>
-                    $"The Speex header packet holds {packet.Length} bytes, fewer than the header's {SpeexHeader.Length}; decoders reject the stream, and its audio packets are only counted.");
+                    $"The Speex header packet holds {Count(packet.Length, "byte", "bytes")}, fewer than the header's {SpeexHeader.Length}; decoders reject the stream, and its audio packets are only counted.");
                 return;
             }
 
@@ -150,7 +150,7 @@ public sealed partial class SpeexParser
                 Node extra = _parent.Add(Node.FromMapped("Header Extra Data", packet, SpeexHeader.Length, packet.Length, NodeValue.Integer(packet.Length - SpeexHeader.Length, "bytes", "byte"),
                     description: Explain.HeaderExtraData));
                 _findings.Add(Severity.Info, "speex.header-extra-data", extra, _ =>
-                    $"The Speex header packet holds {packet.Length - SpeexHeader.Length} bytes after the 80-byte header, which decoders ignore.");
+                    $"The Speex header packet holds {Count(packet.Length - SpeexHeader.Length, "byte", "bytes")} after the 80-byte header, which decoders ignore.");
             }
 
             CheckHeader(header);
@@ -161,7 +161,7 @@ public sealed partial class SpeexParser
             if (header.HeaderSize != SpeexHeader.Length)
             {
                 _findings.Add(Severity.Warning, "speex.header-size", Field("Header Size"), _ =>
-                    $"The header gives its size as {header.HeaderSize} bytes; the Speex header has {SpeexHeader.Length}.");
+                    $"The header gives its size as {Count(header.HeaderSize, "byte", "bytes")}; the Speex header has {SpeexHeader.Length}.");
             }
 
             if (!header.IsModeValid)
@@ -172,7 +172,7 @@ public sealed partial class SpeexParser
             else if (header.FrameSize != 160 << header.Mode)
             {
                 _findings.Add(Severity.Warning, "speex.frame-size", Field("Frame Size"), _ =>
-                    $"The header gives a frame size of {header.FrameSize} samples, but {header.ModeName.ToLowerInvariant()} frames hold {160 << header.Mode}; decoders use the mode's.");
+                    $"The header gives a frame size of {Count(header.FrameSize, "sample", "samples")}, but {header.ModeName.ToLowerInvariant()} frames hold {160 << header.Mode}; decoders use the mode's.");
             }
 
             // speexdec refuses a bit-stream version other than its mode's (4 in Speex 1.2).
@@ -202,8 +202,9 @@ public sealed partial class SpeexParser
 
             if (header.VersionId != 1)
             {
-                _findings.Add(Severity.Info, "speex.version-id", Field("Version ID"), _ =>
-                    $"The header's version ID is {header.VersionId}; Speex 1.0 to 1.2 write 1.");
+                _findings.Add(header.VersionId > 1 ? Severity.Warning : Severity.Info, "speex.version-id", Field("Version ID"), _ => header.VersionId > 1
+                    ? $"The header's version ID is {header.VersionId}; Speex 1.0 to 1.2 write 1, and speexdec refuses a stream whose version ID is above 1 (speexdec.c, process_header)."
+                    : $"The header's version ID is {header.VersionId}; Speex 1.0 to 1.2 write 1.");
             }
 
             if (header.Reserved1 != 0 || header.Reserved2 != 0)
@@ -231,7 +232,7 @@ public sealed partial class SpeexParser
                 Node trailing = _parent.Add(Node.FromMapped("Comment Trailing Data", packet, end, packet.Length, NodeValue.Integer(packet.Length - end, "bytes", "byte"),
                     description: Explain.CommentTrailingData));
                 _findings.Add(Severity.Info, "speex.comment-trailing-data", trailing, _ =>
-                    $"The comment packet holds {packet.Length - end} bytes after the comment, which readers ignore.");
+                    $"The comment packet holds {Count(packet.Length - end, "byte", "bytes")} after the comment, which readers ignore.");
             }
         }
 
@@ -286,7 +287,7 @@ public sealed partial class SpeexParser
         private void WalkFrames(MappedBytes packet, int index, SpeexHeader header)
         {
             int expected = header.FramesPerPacketCounted;
-            PacketWalk walk = SpeexFrames.Walk(packet.Span, Mode, expected + 1, _records.Frames);
+            PacketWalk walk = SpeexFrames.Walk(packet.Span, Mode, expected + 1, _records.Frames, expected);
             int frames = walk.Frames;
             if (frames > expected)
             {
@@ -295,6 +296,11 @@ public sealed partial class SpeexParser
                 _records.Irregular[index] = walk;
                 _findings.Add(Severity.Warning, "speex.extra-frames", PacketNode(_records, index), count =>
                     $"{Count(count, "audio packet holds", "audio packets hold")} more frames than the {expected} per packet the header gives; decoders ignore the rest. The first at 0x{packet.FileStart:X}.");
+            }
+            else if (walk.End is WalkEnd.Invalid or WalkEnd.Overrun && frames == expected)
+            {
+                // A decoder reads exactly the frames the header gives and never the bits after them, so what is wrong there is ignored data.
+                _records.Irregular[index] = walk with { End = WalkEnd.FrameLimit, ErrorBit = 0, Error = null };
             }
             else if (walk.End is WalkEnd.Invalid or WalkEnd.Overrun)
             {
@@ -312,7 +318,7 @@ public sealed partial class SpeexParser
             if (walk.StrayLayers > 0 && Mode == 0)
             {
                 _findings.Add(Severity.Info, "speex.wideband-layer-in-narrowband", PacketNode(_records, index), count =>
-                    $"{Count(count, "audio packet", "audio packets")} of this narrowband stream carry wideband layers, which narrowband decoders skip. The first at 0x{packet.FileStart:X}.");
+                    $"{Count(count, "audio packet", "audio packets")} of this narrowband stream {(count == 1 ? "carries" : "carry")} wideband layers, which narrowband decoders skip. The first at 0x{packet.FileStart:X}.");
             }
 
             _inBand += walk.InBand;
@@ -431,7 +437,7 @@ public sealed partial class SpeexParser
             if (_firstDelay is { } delay && Mode >= 0 && delay != SpeexHeader.Lookahead[Mode])
             {
                 _findings.Add(Severity.Info, "speex.delay-unusual", _firstPositionField ?? anchor, _ =>
-                    $"The first granule position gives an encoder delay of {delay} samples, where libspeex's {SpeexHeader.ModeNames[Mode].ToLowerInvariant()} encoder delays {SpeexHeader.Lookahead[Mode]}; the stream was cut, or written by another encoder.");
+                    $"The first granule position gives an encoder delay of {Count(delay, "sample", "samples")}, where libspeex's {SpeexHeader.ModeNames[Mode].ToLowerInvariant()} encoder delays {SpeexHeader.Lookahead[Mode]}; the stream was cut, or written by another encoder.");
             }
         }
 
@@ -448,14 +454,14 @@ public sealed partial class SpeexParser
             if (trim < 0)
             {
                 _findings.Add(Severity.Warning, "speex.granule-beyond-packets", field, _ =>
-                    $"The last granule position, {position} at 0x{field.Offset:X}, is {-trim} samples beyond what the packets before it hold; decoders end the stream earlier than it says.");
+                    $"The last granule position, {position} at 0x{field.Offset:X}, is {Count(-trim, "sample", "samples")} beyond what the packets before it hold; decoders end the stream earlier than it says.");
                 return 0;
             }
 
             if (trim > SamplesPerPacket)
             {
                 _findings.Add(Severity.Warning, "speex.end-trimming-large", field, _ =>
-                    $"The last granule position, {position} at 0x{field.Offset:X}, cuts {trim} samples from the end, more than the {SamplesPerPacket} of the last packet; speexdec trims only within the last packet.");
+                    $"The last granule position, {position} at 0x{field.Offset:X}, cuts {Count(trim, "sample", "samples")} from the end, more than the {SamplesPerPacket} of the last packet; speexdec trims only within the last packet.");
             }
 
             return trim;

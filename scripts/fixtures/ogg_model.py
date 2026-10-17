@@ -310,7 +310,10 @@ def walk(packet, mode, max_frames):
             if read(1):
                 for layer in range(2):
                     submode = read(3)
-                    if WB_BITS[submode] < 0:
+                    # nb_decode skips by wb_skip_table {0, 36, 112, 192, 352, 0, 0, 0} and steps back over the 4 bits it has
+                    # read, so submode 0 and 5 to 7 make it read the same layer again, until "More than two wideband layers
+                    # found. The stream is corrupted." (nb_celp.c, libspeex 1.2.1).
+                    if submode == 0 or submode > 4:
                         return frames, "invalid", inband, stereo
                     position += WB_BITS[submode] - 4
                     if layer == 0 and total - position < 5:
@@ -467,7 +470,7 @@ def speex_expectations(header, packets, positions, gaps=()):
             text = share(sizes[size], len(packets), "packet", "packets")
             if has_time:
                 text += ", " + fmt_decimal(size * 8.0 * rate / per_packet / 1000, 1) + " kbps"
-            statistics[f"Packet Sizes/{size} bytes"] = text
+            statistics[f"Packet Sizes/{plural(size, 'byte', 'bytes')}"] = text
     if valid_mode and total_frames:
         names = [("Narrowband Submodes", NB_BITS, None), ("Wideband Submodes", WB_BITS, "No wideband layer"),
                  ("Ultra-Wideband Submodes", UWB_BITS, "No ultra-wideband layer")]

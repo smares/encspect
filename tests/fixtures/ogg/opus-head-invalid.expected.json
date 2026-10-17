@@ -412,7 +412,7 @@
      "Magic Signature": "OpusHead",
      "Version": "16",
      "Channels": "2",
-     "Channel Layout": "Stereo: left, right",
+     "Channel Layout": "Stereo: front left, front right",
      "Pre-skip": "312 samples",
      "Input Sample Rate": "48000 Hz",
      "Output Gain": "+0.00 dB",
@@ -528,7 +528,7 @@
      "Magic Signature": "OpusHead",
      "Version": "2",
      "Channels": "2",
-     "Channel Layout": "Stereo: left, right",
+     "Channel Layout": "Stereo: front left, front right",
      "Pre-skip": "312 samples",
      "Input Sample Rate": "48000 Hz",
      "Output Gain": "+0.00 dB",
@@ -1231,7 +1231,7 @@
      "Magic Signature": "OpusHead",
      "Version": "1",
      "Channels": "2",
-     "Channel Layout": "Stereo: left, right",
+     "Channel Layout": "Stereo: front left, front right",
      "Pre-skip": "312 samples",
      "Input Sample Rate": "48000 Hz",
      "Output Gain": "+0.00 dB",
@@ -1466,7 +1466,7 @@
      "Magic Signature": "OpusHead",
      "Version": "1",
      "Channels": "2",
-     "Channel Layout": "Stereo: left, right",
+     "Channel Layout": "Stereo: front left, front right",
      "Pre-skip": "312 samples",
      "Input Sample Rate": "48000 Hz",
      "Output Gain": "+0.00 dB",
@@ -1938,7 +1938,7 @@
      "Magic Signature": "OpusHead",
      "Version": "1",
      "Channels": "2",
-     "Channel Layout": "Stereo: left, right",
+     "Channel Layout": "Stereo: front left, front right",
      "Pre-skip": "312 samples",
      "Input Sample Rate": "48000 Hz",
      "Output Gain": "+0.00 dB",
@@ -2160,7 +2160,7 @@
      "Magic Signature": "OpusHead",
      "Version": "1",
      "Channels": "1",
-     "Channel Layout": "Mono: mono",
+     "Channel Layout": "Mono: front center",
      "Pre-skip": "312 samples",
      "Input Sample Rate": "48000 Hz",
      "Output Gain": "+0.00 dB",
@@ -2278,7 +2278,8 @@
    "channel_layout": [
     "front left",
     "front right"
-   ]
+   ],
+   "playback_group": 1
   },
   {
    "codec": "Opus",
@@ -2292,7 +2293,8 @@
    "channel_layout": [
     "front left",
     "front right"
-   ]
+   ],
+   "playback_group": 2
   },
   {
    "codec": "Opus",
@@ -2303,7 +2305,8 @@
    "average_bitrate": 67.2,
    "is_vbr": false,
    "channel_mode": null,
-   "channel_layout": []
+   "channel_layout": [],
+   "playback_group": 3
   },
   {
    "codec": "Opus",
@@ -2314,7 +2317,8 @@
    "average_bitrate": 67.2,
    "is_vbr": false,
    "channel_mode": "3 channels",
-   "channel_layout": []
+   "channel_layout": [],
+   "playback_group": 4
   },
   {
    "codec": "Opus",
@@ -2325,7 +2329,8 @@
    "average_bitrate": 630.4,
    "is_vbr": false,
    "channel_mode": "9 channels",
-   "channel_layout": []
+   "channel_layout": [],
+   "playback_group": 5
   },
   {
    "codec": "Opus",
@@ -2339,7 +2344,8 @@
    "channel_layout": [
     "front left",
     "front right"
-   ]
+   ],
+   "playback_group": 6
   },
   {
    "codec": "Opus",
@@ -2350,7 +2356,8 @@
    "average_bitrate": 67.2,
    "is_vbr": false,
    "channel_mode": "1 channels",
-   "channel_layout": []
+   "channel_layout": [],
+   "playback_group": 7
   },
   {
    "codec": "Opus",
@@ -2364,7 +2371,8 @@
    "channel_layout": [
     "front left",
     "front right"
-   ]
+   ],
+   "playback_group": 8
   },
   {
    "codec": "Opus",
@@ -2375,7 +2383,8 @@
    "average_bitrate": 348.8,
    "is_vbr": false,
    "channel_mode": "5 channels",
-   "channel_layout": []
+   "channel_layout": [],
+   "playback_group": 9
   },
   {
    "codec": "Opus",
@@ -2386,7 +2395,8 @@
    "average_bitrate": 67.2,
    "is_vbr": false,
    "channel_mode": "2 channels",
-   "channel_layout": []
+   "channel_layout": [],
+   "playback_group": 10
   },
   {
    "codec": "Opus",
@@ -2400,7 +2410,8 @@
    "channel_layout": [
     "front left",
     "front right"
-   ]
+   ],
+   "playback_group": 11
   },
   {
    "codec": "Opus",
@@ -2413,7 +2424,8 @@
    "channel_mode": "Mono",
    "channel_layout": [
     "front center"
-   ]
+   ],
+   "playback_group": 13
   }
  ],
  "findings": [

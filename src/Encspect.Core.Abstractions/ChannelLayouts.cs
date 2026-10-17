@@ -89,6 +89,26 @@ public static class ChannelLayouts
 
     public static IReadOnlyList<Speaker> Stereo { get; } = [Speaker.FrontLeft, Speaker.FrontRight];
 
+    // The speakers of one to eight channels in the order of the Vorbis I specification, section 4.3.9, which Opus mapping family 1 uses
+    // too (RFC 7845, section 5.1.1.2); null for another count. The pair behind the listener is the back pair up to six channels and
+    // the side pair with seven and eight, where the back pair follows it.
+    public static IReadOnlyList<Speaker>? VorbisOrder(int channels) => channels is >= 1 and <= 8 ? VorbisOrders[channels - 1] : null;
+
+    private static readonly Speaker[][] VorbisOrders =
+    [
+        [Speaker.FrontCenter],
+        [Speaker.FrontLeft, Speaker.FrontRight],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight],
+        [Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackCenter, Speaker.LowFrequency],
+        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
+    ];
+
+    // The common name with a capital, as formats report a channel mode: "Stereo", "5.1"; null where the layout has none.
+    public static string? ModeName(IReadOnlyList<Speaker> layout) => CommonName(layout) is { Length: > 0 } name ? char.ToUpperInvariant(name[0]) + name[1..] : null;
+
     // Channels without speaker positions, such as the two programs of MPEG dual channel.
     public static IReadOnlyList<Speaker> Discrete(int count) => [.. Enumerable.Repeat(Speaker.Discrete, count)];
 

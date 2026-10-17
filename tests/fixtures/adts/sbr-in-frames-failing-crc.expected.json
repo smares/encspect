@@ -1,0 +1,89 @@
+{
+ "description": "Protected ADTS frames at 22050 Hz of twelve channel pairs followed by SBR data, every frame with a wrong CRC: their SBR data counts for nothing and the stream stays AAC LC.",
+ "length": 800,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   68
+  ],
+  [
+   68,
+   66
+  ],
+  [
+   134,
+   66
+  ],
+  [
+   200,
+   67
+  ],
+  [
+   267,
+   69
+  ],
+  [
+   336,
+   67
+  ],
+  [
+   403,
+   67
+  ],
+  [
+   470,
+   66
+  ],
+  [
+   536,
+   68
+  ],
+  [
+   604,
+   65
+  ],
+  [
+   669,
+   65
+  ],
+  [
+   734,
+   66
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/CRC/Check": "mismatch"
+ },
+ "findings": [
+  [
+   "aac.crc-mismatch",
+   "12 ADTS frames fail the CRC check"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "ffprobe": "ffmpeg does not check ADTS CRCs, and takes the SBR data of the first frame.",
+   "decode": "ffmpeg does not check ADTS CRCs."
+  }
+ }
+}

@@ -12,8 +12,6 @@ internal sealed class StreamEntry
 
     public Guid ErrorCorrectionType { get; set; }
 
-    public ulong TimeOffset { get; set; }
-
     public ushort Flags { get; set; }
 
     public bool IsEncrypted => (Flags & 0x8000) != 0;
@@ -47,12 +45,6 @@ internal sealed class StreamEntry
     public bool IsAudio => Type == AsfGuids.AudioMedia;
 
     public string TypeName => AsfGuids.StreamTypeName(Type) ?? "Unknown";
-
-    // The payload extension systems of the Extended Stream Properties Object, in the order their data
-    // follows the media object's size and time in the replicated data (section 7.3.1).
-    public List<(Guid Id, ushort Size, uint InfoLength)> Extensions { get; } = [];
-
-    public string? CodecListName { get; set; }
 }
 
 internal sealed record WaveFormat(
@@ -117,6 +109,9 @@ internal sealed class State(ParseContext context, ByteReader reader)
     public Node? MediaFoundationVersionNode { get; set; }
 
     public List<string> ExtendedContentNames { get; } = [];
+
+    // How many claims the header's attributes have made.
+    public int ClaimCount { get; set; }
 
     // Objects no specification defines, by where they lie: the first of each place gets the finding, with the count
     // (a file of thousands of them gets one finding, not thousands).
@@ -208,6 +203,15 @@ internal sealed class State(ParseContext context, ByteReader reader)
 
     public List<(ushort Stream, ushort Type)> IndexSpecifiers { get; } = [];
 
+    // The parameter objects of the Media Object Index Object (4.10) and the Timecode Index Object (4.11), each with its specifiers.
+    public Node? MediaIndexParametersNode { get; set; }
+
+    public List<(ushort Stream, ushort Type)> MediaIndexSpecifiers { get; } = [];
+
+    public Node? TimecodeIndexParametersNode { get; set; }
+
+    public List<(ushort Stream, ushort Type)> TimecodeIndexSpecifiers { get; } = [];
+
     public int IndexObjects { get; set; }
 
     public int SimpleIndexObjects { get; set; }
@@ -237,6 +241,9 @@ internal sealed class State(ParseContext context, ByteReader reader)
     // Signature Object protects nothing.
     public List<ProtectionObject> Protections { get; } = [];
 
+    // The Advanced Content Encryption Objects that have records, summarized by SummarizeAdvancedEncryption once the streams are known.
+    public List<AdvancedEncryption> AdvancedEncryptions { get; } = [];
+
     public Node? TagNode { get; set; }
 
     public StreamEntry? Stream(int number) => StreamsByNumber.GetValueOrDefault(number);
@@ -244,6 +251,8 @@ internal sealed class State(ParseContext context, ByteReader reader)
 
 // What an encryption object (or one record of the Advanced Content Encryption Object) says: the scheme, the object's node, the names of the
 // systems it lists and the streams it covers (IsWholeFile for the objects that name none).
+internal sealed record AdvancedEncryption(Node Node, IReadOnlyList<ProtectionObject> Records, bool IsRead);
+
 internal sealed record ProtectionObject(string Scheme, Node Node, IReadOnlyList<string> Systems, IReadOnlyList<(int Number, Node Node)> Streams, bool IsWholeFile = false)
 {
     public bool Covers(int stream) => IsWholeFile || Streams.Any(s => s.Number == 0 || s.Number == stream);

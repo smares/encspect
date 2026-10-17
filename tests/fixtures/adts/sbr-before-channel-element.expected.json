@@ -1,0 +1,90 @@
+{
+ "description": "ADTS at 22050 Hz of single channel elements, each preceded by a fill element of SBR data: the payloads follow no channel element, so decoders read none and the stream stays AAC LC at 22050 Hz.",
+ "length": 461,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 22050,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 12288,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   40
+  ],
+  [
+   40,
+   38
+  ],
+  [
+   78,
+   38
+  ],
+  [
+   116,
+   39
+  ],
+  [
+   155,
+   41
+  ],
+  [
+   196,
+   38
+  ],
+  [
+   234,
+   38
+  ],
+  [
+   272,
+   38
+  ],
+  [
+   310,
+   39
+  ],
+  [
+   349,
+   37
+  ],
+  [
+   386,
+   37
+  ],
+  [
+   423,
+   38
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "12 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.sbr-without-channel-element",
+   "12 raw data blocks hold SBR data that follows no single channel or channel pair element"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "ffprobe_streams": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "ffprobe_streams": "ffmpeg cannot decode the frames (\"SBR was found before the first channel element\"), so it reports no sample rate.",
+   "decode": "ffmpeg reports that SBR was found before the first channel element, the condition the fixture tests.",
+   "faad_trace": "faad2 does not read the stream: its SBR payload follows no channel element, and its trace holds one raw data block."
+  }
+ }
+}
