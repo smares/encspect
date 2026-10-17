@@ -81,6 +81,32 @@ internal sealed class BlockLog
         return (position, result);
     }
 
+    // Counts a block as evidence for implicit SBR and PS (CodingTally.IsSbrEvident): one read to its end
+    // whose frame is intact, whose payload counts only if a decoder could read it. index is the block's
+    // number in the log. The callers leave out the blocks of frames they flag as damaged.
+    public void AddEvidence(BlockResult result, int index)
+    {
+        if (!result.Ok)
+        {
+            return;
+        }
+
+        Tally.EvidenceBlocks++;
+        if (result.HasSbrEvidence)
+        {
+            Tally.SbrEvidenceBlocks++;
+            if (Tally.FirstSbrEvidenceBlock < 0)
+            {
+                Tally.FirstSbrEvidenceBlock = index;
+            }
+        }
+
+        if (result.HasPs)
+        {
+            Tally.PsEvidenceBlocks++;
+        }
+    }
+
     private static Severity SeverityOf(string code) => code switch
     {
         "aac.sbr-before-header" => Severity.Info,
@@ -115,23 +141,26 @@ internal sealed class BlockLog
 
     // The findings of what the stream's blocks hold as a whole: SBR and PS that the configuration
     // does not signal, or signals absent. node is the configuration's node, or the stream's; where
-    // names the configuration ("The AudioSpecificConfig", "ADTS").
+    // names the configuration ("The AudioSpecificConfig", "ADTS"). Implicit SBR and PS rest on the
+    // evidence of AddEvidence, the signaled-absent findings on every block that holds a payload.
     public void ReportSignaling(AacConfig config, Node node, string where)
     {
         CodingTally tally = Tally;
+        if (config.Ps == true && config.Channels is > 1)
+        {
+            findings.AddNow(Severity.Warning, "aac.ps-without-mono-core",
+                $"{where} signals PS, but its core has {config.Channels} channels; decoders apply parametric stereo only to a core of one channel (fdk-aac, ffmpeg), so the report shows the stream without it.", node);
+        }
+
         if (tally.SbrBlocks == 0)
         {
             return;
         }
 
-        string first = tally.FirstSbrBlock > 0
-            ? $" The first is in raw data block {tally.FirstSbrBlock + 1}, not the first, so ffmpeg's decoder, which takes implicit SBR only where it starts with the stream, plays the core alone."
-            : string.Empty;
-        string units = $"{tally.SbrBlocks} of {tally.Blocks} raw data blocks";
         if (config.Sbr == false)
         {
             findings.AddNow(Severity.Warning, "aac.sbr-signaled-absent",
-                $"{where} signals SBR absent, but {units} hold SBR data; ffmpeg's decoder ignores it, other decoders may apply it.", node);
+                $"{where} signals SBR absent, but {tally.SbrBlocks} of {tally.Blocks} raw data blocks hold SBR data; ffmpeg's decoder ignores it, other decoders may apply it.", node);
             return;
         }
 
@@ -141,20 +170,29 @@ internal sealed class BlockLog
                 $"{where} signals PS absent, but {tally.PsBlocks} of {tally.Blocks} raw data blocks carry the parametric stereo extension; ffmpeg's decoder warns and ignores it, as the report does.", node);
         }
 
+        string units = $"{tally.SbrEvidenceBlocks} of {tally.EvidenceBlocks} raw data blocks";
         if (config.IsSbrImplicit)
         {
+            string first = tally.FirstSbrEvidenceBlock > 0
+                ? $" The first is in raw data block {tally.FirstSbrEvidenceBlock + 1}, not the first, so ffmpeg's decoder, which takes implicit SBR only where it starts with the stream, plays the core alone."
+                : string.Empty;
             string codec = config.HasPs ? "HE-AAC v2" : "HE-AAC";
-            string ps = config.HasPs ? $", and {tally.PsBlocks} carry the parametric stereo extension" : string.Empty;
+            string ps = config.HasPs ? $", and {tally.PsEvidenceBlocks} carry the parametric stereo extension" : string.Empty;
             findings.AddNow(Severity.Info, "aac.implicit-sbr",
                 $"{(where == "ADTS" ? "ADTS cannot signal SBR or PS explicitly" : $"{where} signals no SBR")}, but {units} hold SBR data{ps}: the stream is {codec}, signaled only implicitly, with an output rate of {config.OutputSampleRate} Hz. "
                 + (config.CoreSampleRate > 24000 ? $"faad2 doubles only a core rate of up to 24 kHz, so it plays this one at {config.CoreSampleRate} Hz. " : string.Empty)
-                + $"Decoders without SBR play the AAC LC core at {config.CoreSampleRate} Hz.{first}", node);
+                + $"Decoders without SBR play the {AacTables.ObjectTypeName(config.ObjectType)} core at {config.CoreSampleRate} Hz.{first}", node);
         }
         else if (config.IsPsImplicit)
         {
             findings.AddNow(Severity.Info, "aac.implicit-ps",
-                $"{where} signals SBR but nothing about PS, and {tally.PsBlocks} of {tally.Blocks} raw data blocks carry the parametric stereo extension: the stream is HE-AAC v2, "
+                $"{where} signals SBR but nothing about PS, and {tally.PsEvidenceBlocks} of {tally.EvidenceBlocks} raw data blocks carry the parametric stereo extension: the stream is HE-AAC v2, "
                 + "with PS signaled only implicitly. Decoders without PS play the mono downmix.", node);
+        }
+        else if (config.Sbr is null && tally.SbrEvidenceBlocks > 0)
+        {
+            findings.AddNow(Severity.Info, "aac.sbr-data-sparse",
+                $"{where} signals no SBR, and only {units} hold SBR data that a decoder could read: too few for the stream to count as HE-AAC, which takes SBR data in at least two blocks and in half of the blocks that are read to their end and not in a damaged frame. The report shows the {AacTables.ObjectTypeName(config.ObjectType)} core alone.", node);
         }
     }
 }

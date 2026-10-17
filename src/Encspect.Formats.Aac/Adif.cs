@@ -13,6 +13,10 @@ internal static class Adif
     // longer, up to 16 elements of 255 bytes each.
     private const int MaxHeader = 1 << 13;
 
+    // Blocks kept as records, as MP4 caps the samples of a fragmented track; the bytes past the cap are not read. A block can be one
+    // byte, so the cap bounds the memory (about 80 bytes a block) whatever the input's size.
+    internal const int MaxBlocks = 1 << 21;
+
     public static bool Plausible(ByteReader reader)
     {
         try
@@ -75,17 +79,25 @@ internal static class Adif
         kept.Store = log.Store;
         kept.Setup = log.Setup;
         (string Text, int Index, long Offset)? signature = null;
-        long position = ReadBlocks(reader, dataStart, log, blocks, findings, context.CancellationToken, ref signature);
+        long position = ReadBlocks(reader, dataStart, log, blocks, findings, context.CancellationToken, ref signature, out bool atLimit);
         if (position < reader.End)
         {
             long rest = reader.End - position;
-            var unread = new Node("Unread Bytes", position, rest, NodeValue.Integer(rest, "bytes")) { Description = Explain.AdifUnread };
+            var unread = new Node("Unread Bytes", position, rest, NodeValue.Integer(rest, "bytes")) { Description = atLimit ? Explain.UnreadBlocks : Explain.AdifUnread };
             leading.Add(unread);
-            findings.AddNow(Severity.Warning, "aac.adif-blocks-unread",
-                $"The {rest} bytes from 0x{position:X} are not read: ADIF marks no raw data block's start, so none can be found after one that cannot be read to its end.", unread);
+            if (atLimit)
+            {
+                findings.AddNow(Severity.Warning, "aac.blocks-limit",
+                    $"The stream has more than {MaxBlocks} raw data blocks; the {rest} bytes from 0x{position:X} on are not analyzed, and the statistics cover the blocks before them.", unread);
+            }
+            else
+            {
+                findings.AddNow(Severity.Warning, "aac.adif-blocks-unread",
+                    $"The {rest} bytes from 0x{position:X} are not read: ADIF marks no raw data block's start, so none can be found after one that cannot be read to its end.", unread);
+            }
         }
 
-        config = config with { SbrFound = log.Tally.SbrBlocks > 0, PsFound = log.Tally.PsBlocks > 0 };
+        config = config with { SbrFound = log.Tally.IsSbrEvident, PsFound = log.Tally.IsPsEvident };
         var figures = new StreamFigures(config.OutputSampleRate);
         for (int i = 0; i < blocks.Count && blocks[i].IsRead; i++)
         {
@@ -149,8 +161,9 @@ internal static class Adif
     // Reads raw data blocks one after another from start; returns where the reading ended. The data
     // is read through a window twice the longest block, moved on once the next block could run past it.
     private static long ReadBlocks(ByteReader reader, long start, BlockLog log, ChunkedList<Block> blocks, FindingCollector findings, CancellationToken cancellation,
-        ref (string Text, int Index, long Offset)? signature)
+        ref (string Text, int Index, long Offset)? signature, out bool atLimit)
     {
+        atLimit = false;
         var cache = new BlockCache(reader);
         var window = new byte[2 * BlockLog.MaxBlockBytes];
         long windowStart = start;
@@ -161,6 +174,12 @@ internal static class Adif
             if (blocks.Count % 4096 == 0)
             {
                 cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (blocks.Count >= MaxBlocks)
+            {
+                atLimit = true;
+                return position;
             }
 
             if (position + BlockLog.MaxBlockBytes > windowStart + windowLength && windowStart + windowLength < reader.End)
@@ -177,6 +196,7 @@ internal static class Adif
             int available = data.Length;
             (long skeleton, BlockResult read) = log.Read(data, 0, available * 8, where,
                 () => new Node("Raw Data Block", blockStart, available) { Kind = NodeKind.Frame, Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks });
+            log.AddEvidence(read, log.Count - 1);
             if (!read.Ok)
             {
                 // The block that breaks reaches as far as a block can, where its finding places it.

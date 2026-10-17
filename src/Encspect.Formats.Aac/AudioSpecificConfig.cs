@@ -192,7 +192,8 @@ internal static class AudioSpecificConfig
         if (index == 15)
         {
             int rate = (int)f.Take(24);
-            node.Add(f.Span(name, start, NodeValue.Integer(rate, "Hz"), description, topic: topic));
+            Node explicitField = node.Add(f.Span(name, start, NodeValue.Integer(rate, "Hz"), description, topic: topic));
+            ReportImplausibleRate(rate, explicitField, report);
             return rate;
         }
 
@@ -205,6 +206,23 @@ internal static class AudioSpecificConfig
         }
 
         return value;
+    }
+
+    // An explicit sampling frequency far below any rate AAC defines (the lowest is 7,350 Hz) makes
+    // every access unit last many seconds; it is shown as stated and reported.
+    private const int ImplausibleRate = 1000;
+
+    private static void ReportImplausibleRate(int rate, Node field, Action<Severity, string, string, Node> report)
+    {
+        if (rate == 0)
+        {
+            report(Severity.Warning, "aac.reserved-sample-rate", "The explicit sampling frequency is 0 Hz.", field);
+        }
+        else if (rate < ImplausibleRate)
+        {
+            report(Severity.Warning, "aac.implausible-sample-rate",
+                $"The explicit sampling frequency is {rate} Hz, far below the lowest rate AAC defines (7,350 Hz), so every access unit would last many seconds.", field);
+        }
     }
 
     // 4.4.1, Table 4.1.
@@ -279,13 +297,15 @@ internal static class AudioSpecificConfig
         {
             bool dualRate = f.Read(node, "Low Delay SBR Sampling Rate", 1, Explain.LowDelaySbrRate, v => v == 0 ? "downsampled SBR (core rate)" : "dual-rate SBR") != 0;
             f.Flag(node, "HasLowDelaySbrCrc", Explain.HasLowDelaySbrCrc);
+            // One sbr_header() per single channel and channel pair element of the configuration; the
+            // low frequency elements carry none (fdk-aac's channel_configuration_array and sbrdecoder).
             int headers = configuration switch
             {
                 1 or 2 => 1,
                 3 => 2,
-                4 => 3,
-                5 or 6 => 4,
-                7 => 5,
+                4 or 5 or 6 => 3,
+                7 or 11 or 12 or 14 => 4,
+                13 => 14,
                 _ => 0,
             };
             for (int i = 0; i < headers; i++)
@@ -371,15 +391,16 @@ internal static class AudioSpecificConfig
             int start = f.Position;
             int index = (int)f.Take(5);
             int rate;
+            Node rateNode;
             if (index == 31)
             {
                 rate = (int)f.Take(24);
-                usac.Add(f.Span("Sample Rate", start, NodeValue.Integer(rate, "Hz"), Explain.UsacSampleRate));
+                rateNode = usac.Add(f.Span("Sample Rate", start, NodeValue.Integer(rate, "Hz"), Explain.UsacSampleRate));
             }
             else
             {
                 rate = AacTables.UsacSampleRate(index) ?? 0;
-                usac.Add(f.Span("Sample Rate", start, rate > 0 ? NodeValue.Integer(rate, "Hz") : $"{index} (reserved)", Explain.UsacSampleRate));
+                rateNode = usac.Add(f.Span("Sample Rate", start, rate > 0 ? NodeValue.Integer(rate, "Hz") : $"{index} (reserved)", Explain.UsacSampleRate));
             }
 
             state.UsacSampleRate = rate;
@@ -543,6 +564,14 @@ internal static class AudioSpecificConfig
 
             Node config = node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
             state.UsacLayout = new UsacLayout(config, (int)frameIndex, layouts, extensionLayouts);
+            if (index == 31)
+            {
+                ReportImplausibleRate(rate, rateNode, report);
+            }
+            else if (rate <= 0)
+            {
+                report(Severity.Warning, "aac.reserved-sample-rate", $"The usacSamplingFrequencyIndex {index} is reserved.", rateNode);
+            }
         }
         catch (EndOfStreamException)
         {

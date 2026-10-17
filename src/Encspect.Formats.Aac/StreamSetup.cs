@@ -19,6 +19,8 @@ internal sealed class StreamSetup
         LongLines = is960 ? 960 : 1024;
         PredictionBands = BandTables.PredictionMax[index];
         ChannelConfiguration = config.ChannelConfiguration;
+        // Channel configuration 0 with a program config element is judged by the stream, which has the element.
+        CanHavePs = config.Channels is { } channels ? channels == 1 : config.ChannelConfiguration == 0;
         // SBR's frequency tables are derived at twice the core rate whatever extension rate the
         // configuration states, as fdk-aac (env_extr.cpp), ffmpeg and faad2 derive them; the stated
         // rate only sets the output rate.
@@ -60,6 +62,9 @@ internal sealed class StreamSetup
     public int ChannelConfiguration { get; }
 
     public int SbrSampleRate { get; }
+
+    // Whether the parametric stereo extension can apply: only to a core of one channel.
+    public bool CanHavePs { get; }
 
     // The single channel, channel pair and LFE elements the channel configuration defines, or -1
     // where it leaves them to a program config element (ISO/IEC 14496-3 1.6.3.5, Table 1.19).

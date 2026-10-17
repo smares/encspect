@@ -778,6 +778,9 @@ internal sealed partial class BlockReader
 
         if (_lastChannelElement is not (0 or 1 or 2))
         {
+            // After an LFE element no decoder can read the data, but ffmpeg's decoder takes the stream for HE-AAC from
+            // it (FAAC 2.0 and 2.1 write theirs there in 5.1), so it counts toward the stream's SBR.
+            _hasSbrEvidence |= _lastChannelElement == 3;
             Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel or channel pair element", dataStart, end, "SBR Data");
             tally.SbrUnread++;
             return -1;
@@ -810,6 +813,14 @@ internal sealed partial class BlockReader
 
             tally.SbrPayloads++;
             tally.SbrPlainPayloads += plain ? 1 : 0;
+            _hasSbrEvidence = true;
+            if (ps >= 0 && !_setup.CanHavePs)
+            {
+                Soft("aac.ps-without-mono-core", $"the parametric stereo extension's ID in the SBR data of a stream of channel configuration {_setup.ChannelConfiguration}, where decoders apply parametric stereo only to a core of one channel",
+                    dataStart, end, "SBR Data");
+                return -1;
+            }
+
             if (ps == Sbr.PsInPair)
             {
                 Soft("aac.ps-in-channel-pair", "the parametric stereo extension's ID in a channel pair's SBR data, where only a single channel element can carry it, so decoders do not apply it",
@@ -1028,13 +1039,13 @@ internal sealed partial class BlockReader
         return parts.Count == 0 ? "none" : string.Join("; ", parts);
     }
 
-    private static string FlagList(uint flags, int count)
+    private static string FlagList(ulong flags, int count)
     {
         var ranges = new List<string>();
         int run = -1;
-        for (int i = 0; i <= Math.Min(count, 32); i++)
+        for (int i = 0; i <= Math.Min(count, 64); i++)
         {
-            bool on = i < Math.Min(count, 32) && ((flags >> i) & 1) != 0;
+            bool on = i < Math.Min(count, 64) && ((flags >> i) & 1) != 0;
             if (on && run < 0)
             {
                 run = i;

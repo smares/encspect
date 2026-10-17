@@ -62,7 +62,7 @@ public sealed class AacCodecParser : ICodecParser
 
         if (config is not null && log.Blocks is { } blocks)
         {
-            config = config with { SbrFound = blocks.Tally.SbrBlocks > 0, PsFound = blocks.Tally.PsBlocks > 0 };
+            config = config with { SbrFound = blocks.Tally.IsSbrEvident, PsFound = blocks.Tally.IsPsEvident };
             blocks.ReportSignaling(config, configNode ?? parent, "The AudioSpecificConfig");
             if (configNode is not null)
             {
@@ -305,7 +305,7 @@ public sealed class AacCodecParser : ICodecParser
         public Dictionary<int, string> Texts { get; } = [];
     }
 
-    // What the access units of a stream come to while they are read: a 32-byte record each, the
+    // What the access units of a stream come to while they are read: a 24-byte record each, the
     // coding statistics and what their nodes are rebuilt from (BlockLog); split units, and for the
     // types whose first element alone is read their fill and data stream elements and texts, which
     // are rare, are kept on the side.
@@ -388,6 +388,7 @@ public sealed class AacCodecParser : ICodecParser
                 var where = new UnitBytes(packet.FileStart, packet.Length, ranges.Count > 1 ? ranges : null);
                 (skeleton, BlockResult result) = Blocks.Read(packet.Span, 0, packet.Length * 8, where, () => UnitNodeAt(packet, ranges));
                 elements = result.Elements;
+                Blocks.AddEvidence(result, Blocks.Count - 1);
                 int first = BlockLog.FirstElement(elements);
                 ElementCounts[(elements >> 24) == 0 && !result.Ok ? 8 : first]++;
                 HasElements = true;

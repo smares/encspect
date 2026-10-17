@@ -13,7 +13,14 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF.
 - **ADTS:** sync on a chain of frames, resync after damage, every header field, and the CRC over the elements it covers.
 - **ADTS detection:** a chain at the start of the data (after zero bytes) of three frames is class 91. A chain further in is class 50 only with eight consistent frames or frames to the end of the data, since other formats' bytes (E-AC-3's frame headers) can chain three.
 - **ADIF:** the header, and its raw data blocks, which the parser delimits.
-- **Implicit signaling:** SBR and PS found only inside the blocks make the stream HE-AAC or HE-AAC v2, with a finding that says so.
+- **Implicit signaling:** SBR and PS found only inside the blocks make the stream HE-AAC or HE-AAC v2, with a finding that says so. The rule for what counts:
+  - an SBR payload counts only where a decoder could read it: after a single channel or channel pair element, with an SBR header whose frequency tables can be built, read in full; the one exception is a payload after an LFE element, which no decoder can read but which ffmpeg's decoder takes the stream for HE-AAC from (FAAC 2.0 and 2.1 write theirs there in 5.1; ffprobe 6.1.1 reports `faac-2.1-he-51-adts` as HE-AAC at 44,100 Hz, with "cannot apply SBR to element type 3");
+  - blocks of frames the analyzer flags as damaged (cut, truncated or failing their CRC) and blocks that cannot be read to their end are no evidence;
+  - the stream becomes HE-AAC (and doubles its output rate and samples) only if such a payload is in at least two blocks, or in the only block there is, and in at least half of the blocks read to their end; with fewer, `aac.sbr-data-sparse` says so and the stream stays the core;
+  - the same rule applies to the parametric stereo extension, which also needs a core of one channel: decoders apply parametric stereo to nothing else (fdk-aac, ffmpeg), so the PS ID in a stream of more channels, or object type 29 over a channel configuration above 1, is reported (`aac.ps-without-mono-core`) and not applied;
+  - every committed HE-AAC fixture with implicit signaling has SBR in all of its blocks.
+- **Limits:** an ADTS stream keeps at most 2,097,152 frames and an ADIF stream 2,097,152 raw data blocks (about 13 hours of AAC LC at 44.1 kHz), since a frame or block can be a few bytes and each costs a record; the bytes after them are not read (`aac.frames-limit`, `aac.blocks-limit`). The graph of bitrate over time keeps at most 131,072 entries, merging neighbors where a stream is longer or its sample rate lower. An explicit sample rate below 1,000 Hz is reported (`aac.implausible-sample-rate`; 0 is `aac.reserved-sample-rate`).
+- **ADTS frames of several blocks:** an unprotected frame that holds fewer raw data blocks than its header declares is reported (`aac.blocks-missing`) and counted by the blocks it holds; bytes after its last declared block are reported like those of a single block.
 
 ## Statistics
 
@@ -113,4 +120,4 @@ From `afconvert` on macOS 15.7.9 (AudioToolbox framework bundle version 1.14, Au
 
 ## Not yet covered
 
-- USAC, ER AAC and the SBR envelope data (planned: entropy pass).
+- USAC, ER AAC and the values of the SBR envelope and noise floor data. The data itself is read: every codeword is decoded to reach the PS ID and to check FAAC's layout, but only the header, the grid and the PS ID are shown (planned: entropy pass).

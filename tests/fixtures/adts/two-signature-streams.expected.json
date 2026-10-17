@@ -1,0 +1,106 @@
+{
+ "description": "Six mono frames at 44100 Hz whose first holds the text \"libfaac 1.40.0\" in a fill element, then six at 48000 Hz whose first holds \"Lavc60.31.102\": two streams, each named by its own signature.",
+ "length": 1148,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 6144,
+   "is_vbr": true,
+   "encoder": [
+    "FAAC 1.40.0",
+    "High"
+   ]
+  },
+  {
+   "codec": "AAC LC",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 6144,
+   "is_vbr": true,
+   "encoder": [
+    "FFmpeg (Lavc60.31.102)",
+    "High"
+   ]
+  }
+ ],
+ "units": [
+  [
+   0,
+   110
+  ],
+  [
+   110,
+   93
+  ],
+  [
+   203,
+   93
+  ],
+  [
+   296,
+   93
+  ],
+  [
+   389,
+   93
+  ],
+  [
+   482,
+   93
+  ],
+  [
+   575,
+   108
+  ],
+  [
+   683,
+   93
+  ],
+  [
+   776,
+   93
+  ],
+  [
+   869,
+   93
+  ],
+  [
+   962,
+   93
+  ],
+  [
+   1055,
+   93
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.stream-changed",
+   "from AAC LC, 44100 Hz, channel configuration 1 to AAC LC, 48000 Hz"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg keeps one stream across the change of sample rate.",
+   "faad": "faad2 stops at the change of sample rate.",
+   "faad_trace": "faad2 reads ADTS only from the first byte.",
+   "decode": "ffmpeg keeps one stream across the change of sample rate."
+  }
+ }
+}

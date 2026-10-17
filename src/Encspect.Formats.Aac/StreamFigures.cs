@@ -10,6 +10,13 @@ internal sealed class StreamFigures(int sampleRate)
     private readonly ChunkedList<Point> _points = new();
     private readonly List<(long Bits, long Samples)> _seconds = [];
 
+    // The graph of bitrate over time keeps at most this many entries, whatever the sample rate and the
+    // length: when a stream outgrows it, neighboring entries merge and each covers twice the time. A
+    // stated rate of 1 Hz would otherwise add a thousand entries for every access unit.
+    public const int MaxSeconds = 1 << 17;
+
+    private long _spanSeconds = 1;
+
     public int SampleRate => sampleRate;
 
     public int Count => _points.Count;
@@ -37,15 +44,20 @@ internal sealed class StreamFigures(int sampleRate)
         _points.Add(new Point(offset, bitrate));
         if (sampleRate > 0)
         {
-            // A unit is shorter than a second, so every second has one that starts in it.
-            int second = (int)(Samples / sampleRate);
+            long second = Samples / (sampleRate * _spanSeconds);
+            while (second >= MaxSeconds)
+            {
+                Merge();
+                second = Samples / (sampleRate * _spanSeconds);
+            }
+
             while (_seconds.Count <= second)
             {
                 _seconds.Add(default);
             }
 
-            (long bits, long counted) = _seconds[second];
-            _seconds[second] = (bits + (length * 8L), counted + samples);
+            (long bits, long counted) = _seconds[(int)second];
+            _seconds[(int)second] = (bits + (length * 8L), counted + samples);
         }
 
         Bytes += length;
@@ -54,6 +66,24 @@ internal sealed class StreamFigures(int sampleRate)
         Largest = Math.Max(Largest, length);
         MinimumBitrate = Math.Min(MinimumBitrate, bitrate);
         MaximumBitrate = Math.Max(MaximumBitrate, bitrate);
+    }
+
+    private void Merge()
+    {
+        for (int i = 0; i * 2 < _seconds.Count; i++)
+        {
+            (long bits, long samples) = _seconds[i * 2];
+            if (i * 2 + 1 < _seconds.Count)
+            {
+                bits += _seconds[i * 2 + 1].Bits;
+                samples += _seconds[i * 2 + 1].Samples;
+            }
+
+            _seconds[i] = (bits, samples);
+        }
+
+        _seconds.RemoveRange((_seconds.Count + 1) / 2, _seconds.Count - ((_seconds.Count + 1) / 2));
+        _spanSeconds *= 2;
     }
 
     // Per unit, its bitrate at its offset; per second of audio, the bits of the units that start in
@@ -81,7 +111,7 @@ internal sealed class StreamFigures(int sampleRate)
         var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries } };
         if (_seconds.Count > 0)
         {
-            double[] starts = Enumerable.Range(0, _seconds.Count).Select(s => (double)s).ToArray();
+            double[] starts = Enumerable.Range(0, _seconds.Count).Select(s => (double)s * _spanSeconds).ToArray();
             double[] values = _seconds.Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)sampleRate / s.Samples / 1000, MidpointRounding.ToEven) : 0).ToArray();
             series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
         }

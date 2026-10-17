@@ -400,7 +400,8 @@ def check_trace(path, report, problems, skipped=()):
 
 # MediaInfo's format and its AAC profile (Format_AdditionalFeatures) for each of the analyzer's codecs.
 MEDIAINFO_FORMATS = {"AAC LC": ("AAC", "LC"), "HE-AAC": ("AAC", "LC SBR"), "HE-AAC v2": ("AAC", "LC SBR PS"), "AAC Main": ("AAC", "Main"),
-                     "AAC LTP": ("AAC", "LTP"), "AAC SSR": ("AAC", "SSR"), "xHE-AAC (USAC)": ("USAC", None), "ER AAC ELD": ("ER AAC ELD", None)}
+                     "AAC LTP": ("AAC", "LTP"), "AAC SSR": ("AAC", "SSR"), "xHE-AAC (USAC)": ("USAC", None), "ER AAC ELD": ("ER AAC ELD", None),
+                     "ER AAC ELD with SBR": ("ER AAC ELD", None)}
 # MediaInfo's format of the streams whose frames the analyzer does not read; the analyzer's name for the others is MediaInfo's.
 ENCRYPTED_FORMATS = {"MPEG-1 Audio": "MPEG Audio", "HE-AAC": "AAC", "HE-AAC v2": "AAC", "AAC Main": "AAC", "Apple Lossless": "ALAC"}
 # MediaInfo counts the samples that stts gives a duration (File_Mpeg4.cpp lines 774, 799 and 852
@@ -413,6 +414,7 @@ UNPLACED_UNITS = STTS_COUNT + ", whether or not the chunks place them in the fil
 UNPLACED_SIZE = "MediaInfo sums the sizes stsz lists (File_Mpeg4_Elements.cpp, stsz: stsz_StreamSize, filled in File_Mpeg4.cpp lines 801 and 855), whether or not the chunks place the samples in the file; the analyzer leaves out the samples that have no place, with a finding"
 ADTS_ERRORS = "MediaInfo counts only the ADTS frames whose raw data blocks it parses without an error; its trace (--Details=1) lists every frame"
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
+SBR_ANYWHERE = "MediaInfo 24.01 names a stream HE-AAC from SBR data anywhere in it; the analyzer counts only SBR that a decoder could read, in intact frames, in at least two blocks and half of them (aac.sbr-data-sparse and docs/formats/aac.md)"
 NO_CHANNELS = "MediaInfo 26.01 gives this track no channel count; it takes the channels of a coding from its frames (File_Ac3, File_Dts, File_Mpega), which are encrypted"
 NO_FORMAT = "MediaInfo names the coding from the esds box of the sample entry (File_Mpeg4_Elements.cpp, the sample entry's codec); the analyzer, with no frma box to name the original format, reports the sample entry's own kind"
 MOOV_TRACKS = "MediaInfo lists the audio tracks of moov; the analyzer reports a stream only for samples its tables or fragments place, and these fragments place them for one track or none"
@@ -443,6 +445,17 @@ MEDIAINFO_READS_OTHERWISE = {
     "adts/corrupt-syntax": {"access units": ADTS_ERRORS + " (21 frames, 16 counted)"},
     "adts/damaged-length": {"access units": ADTS_ERRORS + " (30 frames, 28 counted)"},
     "adts/raw-blocks": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), which adts_header_error_check holds only when protection_absent is 0 (ISO/IEC 14496-3 1.A.2.2), so it misreads those blocks and counts none of the frames"},
+    "adts/sbr-in-one-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
+    "adts/sbr-before-channel-element": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
+    "adts/sbr-in-frames-failing-crc": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
+    "adts/sbr-in-truncated-frame": {"streams": "MediaInfo 24.01 finds no audio stream in this file of two frames and a third that is cut short"},
+    "adts/ps-in-multichannel-sce": dict.fromkeys(["format", "channels", "PS signaling"], "MediaInfo 24.01 names the stream HE-AAC v2 with two channels from the parametric stereo extension in the single channel element's SBR data; the analyzer, like the decoders, applies it to a core of one channel only (fdk-aac's sbrdecoder.cpp, ffmpeg's aacdec_template.c)"),
+    "mp4/ps-signaled-over-stereo-core": {"format": "MediaInfo 24.01 names the stream HE-AAC v2 from object type 29; the analyzer, like the decoders, applies parametric stereo to a core of one channel only (fdk-aac's sbrdecoder.cpp, ffmpeg's aacdec_template.c)"},
+    "adts/blocks-missing": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), so it misreads these frames and counts none"},
+    "adts/blocks-trailing-bytes": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), so it misreads these frames and counts none"},
+    "adts/two-signature-streams": dict.fromkeys(["streams", "access units"], "MediaInfo reports an ADTS file as one stream (File_Aac.cpp), where the analyzer starts a second one where the sample rate changes"),
+    "mp4/usac-reserved-rate": {"sample rate": "MediaInfo 24.01 gives the sampling frequency of the AudioSpecificConfig (48000 Hz), where the UsacConfig's own index is reserved and the analyzer shows the rate as unknown"},
+    "mp4/eld-ld-sbr-7": {"channel layout": "MediaInfo 24.01 names the outside front pair of channel configuration 7 wide (Lw, Rw); the analyzer takes it as left and right of center, as ffmpeg's decoder maps it"},
     "adts/stream-change": dict.fromkeys(["streams", "access units"], "MediaInfo reports an ADTS file as one stream (File_Aac.cpp), where the analyzer starts a second one where the sample rate changes"),
     "mp4/id32": dict.fromkeys(["tag title", "tag track"], "MediaInfo skips the ID3v2 tag in an ID32 box (File_Mpeg4_Elements.cpp, moov_udta_ID32: Skip_XX \"ID3v2data\")"),
     "mp4/ilst-all-types": {"tag performer": "MediaInfo writes \"UTF-16 encoding not yet supported\" for an iTunes data atom of type 2 (File_Mpeg4_Elements.cpp, moov_meta_ilst_xxxx_data)"},

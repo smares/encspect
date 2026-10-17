@@ -1,0 +1,100 @@
+using Encspect.Core;
+using Encspect.Formats.Aac;
+using Encspect.Host;
+
+namespace Encspect.Tests;
+
+// What turns an AAC LC stream into HE-AAC (SBR data that a decoder could read, in most blocks of intact frames), and the bound on
+// the graph of bitrate over time.
+public class AacEvidenceTests
+{
+    public static TheoryData<int> Seeds => new(Enumerable.Range(0, 300));
+
+    // ffmpeg's AAC LC stream with forty frames of random bytes under the stream's own header after its twentieth: about one random block
+    // in fifty reads to its END element with an SBR payload in a fill element, which SBR data that decoders reject must not count for.
+    [Theory]
+    [MemberData(nameof(Seeds))]
+    public void RandomFramesInsideAnLcStreamLeaveItLc(int seed)
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "ffmpeg-adts.aac"));
+        List<byte[]> frames = Frames(source);
+        var random = new Random(seed);
+        var stream = new MemoryStream();
+        int count = 0;
+        for (int i = 0; i < frames.Count; i++)
+        {
+            if (i == 20)
+            {
+                for (int j = 0; j < 40; j++)
+                {
+                    byte[] frame = new byte[random.Next(60, 400)];
+                    random.NextBytes(frame.AsSpan(7));
+                    frames[0].AsSpan(0, 7).CopyTo(frame);
+                    frame[3] = (byte)((frame[3] & 0xFC) | (frame.Length >> 11));
+                    frame[4] = (byte)(frame.Length >> 3);
+                    frame[5] = (byte)(((frame.Length & 7) << 5) | (frame[5] & 0x1F));
+                    stream.Write(frame);
+                    count++;
+                }
+            }
+
+            stream.Write(frames[i]);
+            count++;
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("garbage.aac", new MemoryStream(stream.ToArray()));
+
+        StreamInfo info = Assert.Single(report.Streams);
+        Assert.Equal("AAC LC", info.Codec);
+        Assert.Equal(44100, info.SampleRate);
+        Assert.Equal(count * 1024L, info.Samples);
+    }
+
+    // SBR data that a decoder could read in one block of thirty does not make the stream HE-AAC.
+    [Fact]
+    public void SbrDataInAFewBlocksOnlyIsReported()
+    {
+        Report report = Fixtures.AnalyzeMpeg("adts/sbr-in-one-block.aac");
+
+        Assert.Equal("AAC LC", Assert.Single(report.Streams).Codec);
+        Assert.Contains(report.Findings, f => f.Code == "aac.sbr-data-sparse");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "aac.implicit-sbr");
+    }
+
+    // The graph of bitrate over time keeps at most MaxSeconds entries whatever the sample rate; neighbors merge, and what they hold is
+    // kept: the bits and the samples of the whole stream.
+    [Theory]
+    [InlineData(1, 100_000)]
+    [InlineData(8000, 1_200_000)]
+    public void BitrateGraphIsBoundedWhateverTheSampleRate(int sampleRate, int units)
+    {
+        var figures = new StreamFigures(sampleRate);
+        for (int i = 0; i < units; i++)
+        {
+            figures.Add(i * 100L, 100, 1024);
+        }
+
+        List<Series> series = figures.Series(null, CancellationToken.None);
+        Series overTime = series.Single(s => s.Name == "Bitrate Over Time");
+
+        Assert.True(overTime.X.Length <= StreamFigures.MaxSeconds, $"{overTime.X.Length} entries");
+        // Every unit has 100 bytes over 1024 samples: each entry that holds a unit has the stream's bitrate.
+        double expected = Math.Round(100 * 8.0 * sampleRate / 1024 / 1000, MidpointRounding.ToEven);
+        Assert.All(overTime.Values.ToArray().Where(v => v > 0), v => Assert.Equal(expected, v));
+        double[] starts = overTime.X.ToArray();
+        Assert.Equal(starts.Order(), starts);
+    }
+
+    private static List<byte[]> Frames(byte[] data)
+    {
+        var frames = new List<byte[]>();
+        for (int at = 0; at + 7 <= data.Length;)
+        {
+            int length = ((data[at + 3] & 3) << 11) | (data[at + 4] << 3) | (data[at + 5] >> 5);
+            frames.Add(data[at..(at + length)]);
+            at += length;
+        }
+
+        return frames;
+    }
+}

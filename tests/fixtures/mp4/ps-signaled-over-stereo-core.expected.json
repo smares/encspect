@@ -1,0 +1,201 @@
+{
+ "description": "HE-AAC v2 signaled hierarchically (audio object type 29) over a core of channel configuration 2: decoders apply parametric stereo to a core of one channel only (ffmpeg's decoder drops the flag, fdk-aac allows one single channel element), so the stream is HE-AAC with two channels and a warning says so.",
+ "length": 2466,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   630
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   514
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   414
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   329
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   269
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   105
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   89
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   53
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   502,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   526,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   566,
+   68
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   634,
+   24
+  ],
+  [
+   "mdat",
+   658,
+   1808
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 24576,
+   "is_vbr": true,
+   "ffprobe_profile": "HE-AAC"
+  }
+ ],
+ "units": [
+  [
+   666,
+   151
+  ],
+  [
+   817,
+   150
+  ],
+  [
+   967,
+   149
+  ],
+  [
+   1116,
+   150
+  ],
+  [
+   1266,
+   152
+  ],
+  [
+   1418,
+   150
+  ],
+  [
+   1568,
+   151
+  ],
+  [
+   1719,
+   149
+  ],
+  [
+   1868,
+   151
+  ],
+  [
+   2019,
+   149
+  ],
+  [
+   2168,
+   148
+  ],
+  [
+   2316,
+   150
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Audio Object Type": "29 (PS)"
+ },
+ "findings": [
+  [
+   "aac.ps-without-mono-core",
+   "signals PS, but its core has 2 channels"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "decode": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}

@@ -99,6 +99,26 @@ internal sealed class CodingTally
 
     public long PsBlocks { get; set; }
 
+    // What SBR and PS are inferred from where the configuration does not signal them (see
+    // BlockLog.AddEvidence): the blocks read to their end that are not in a damaged frame, those among
+    // them with an SBR payload that was read in full, and with the parametric stereo extension.
+    public long EvidenceBlocks { get; set; }
+
+    public long SbrEvidenceBlocks { get; set; }
+
+    public long PsEvidenceBlocks { get; set; }
+
+    public int FirstSbrEvidenceBlock { get; set; } = -1;
+
+    // The rule for inferring SBR (and PS) from the blocks: in at least two of them, or in the only one
+    // there is, and in at least half. A payload that a decoder rejects, a damaged frame's blocks and a
+    // lone occurrence in an otherwise plain stream therefore do not turn it into HE-AAC.
+    public bool IsSbrEvident => IsEvident(SbrEvidenceBlocks);
+
+    public bool IsPsEvident => IsEvident(PsEvidenceBlocks);
+
+    private bool IsEvident(long count) => count > 0 && count >= Math.Min(2, EvidenceBlocks) && count * 2 >= EvidenceBlocks;
+
     public int FirstSbrBlock { get; set; } = -1;
 
     public int FirstPsBlock { get; set; } = -1;
