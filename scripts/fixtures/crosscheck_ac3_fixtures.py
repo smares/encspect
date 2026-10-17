@@ -10,7 +10,7 @@ For every fixture, its manifest's "crosscheck" says what to confirm:
   mask does, so a lone pair counts as one position), and exactly the packets the manifest's frames
   make: ffmpeg's parser starts a packet at each AC-3 frame and each independent E-AC-3 frame, and
   joins dependent frames to the one before ("ffprobe_packets": "substream 0" where it starts one only at an independent
-  frame of substream 0, and "ffprobe_fields": false where it then reads no sample rate or channels). For raw files, ffprobe's bitrate must be the first
+  frame of substream 0, and "ffprobe_fields": false where it then reads no sample rate or channels, "channels" where it reads only no channels). For raw files, ffprobe's bitrate must be the first
   packet's, unless "ffprobe_bitrate" is false (ffmpeg gives none for frames it cannot decode).
 - "decode": ffmpeg with CRC checking must decode each packet alone without an error, unless the
   packet holds a frame the manifest lists as one decoders reject ("damaged": cut or failing a CRC,
@@ -216,12 +216,16 @@ def check_ffprobe(path, data, manifest, problems):
     codec = "eac3" if expected["codec"] == "E-AC-3" else "ac3"
     channels = manifest["crosscheck"].get("ffprobe_channels", expected["channels"])
     fields = manifest["crosscheck"].get("ffprobe_fields", True)
+    rate_only = fields == "channels"
     if actual.get("codec_name") != codec:
         problems.append(f"ffprobe: {actual.get('codec_name')}, expected {codec}")
-    if fields and (int(actual.get("sample_rate", 0)) != expected["sample_rate"] or int(actual.get("channels", 0)) != channels):
+    if rate_only:
+        if int(actual.get("sample_rate", 0)) != expected["sample_rate"]:
+            problems.append(f"ffprobe: {actual.get('sample_rate')} Hz, expected {expected['sample_rate']} Hz")
+    elif fields and (int(actual.get("sample_rate", 0)) != expected["sample_rate"] or int(actual.get("channels", 0)) != channels):
         problems.append(f"ffprobe: {actual.get('sample_rate')} Hz, {actual.get('channels')} channels; expected {expected['sample_rate']} Hz, {channels}")
     known = channel_layouts.FFMPEG.get(actual.get("channel_layout"))
-    if fields and "ffprobe_channels" not in manifest["crosscheck"] and (known is None or normalized(known) != normalized(expected["channel_layout"])):
+    if fields is True and "ffprobe_channels" not in manifest["crosscheck"] and (known is None or normalized(known) != normalized(expected["channel_layout"])):
         problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, expected {expected['channel_layout']}")
     flagged = extension_complexities(mi.golden(path))
     expected_profile = "Dolby Digital Plus + Dolby Atmos" if any(c is not None for c in flagged) else None
@@ -434,7 +438,7 @@ def check_mediainfo(path, tally):
     tally.start(path.stem)
     report = mi.golden(path)
     # dialnorm_Minimum and dialnorm_Maximum are only in the full output.
-    info = mi.read(path, full=True)
+    info = tally.read(path, full=True)
     audio = info["Audio"][0] if info and info["Audio"] else {}
     stream = report["streams"][0]
     tally.compare("format", audio.get("Format"), stream["codec"])
@@ -530,7 +534,7 @@ def main():
             check = manifest["crosscheck"]
             problems = []
             for name in CHECKS:
-                if check.get(name) is False and name not in check.get("skip", {}):
+                if check.get(name) not in (None, True) and name not in check.get("skip", {}):
                     problems.append(f"the {name} check is off without a reason")
             if check.get("ffprobe"):
                 check_ffprobe(path, data, manifest, problems)

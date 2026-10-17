@@ -357,8 +357,12 @@ def build():
     data = eac3(acmod=2, fscod=3, fscod2=0, words=128) * 3
     fixture("reduced-rate", ".eac3", "Three 2/0 frames at 24 kHz (fscod2 0).", data, frames_of(data), [stream("E-AC-3", 24000, 2, 0, 3 * 1536)],
             [("ac3.reduced-rate-not-read", "reduced sample rate")],
-            crosscheck={"ffprobe": False, "decode": False,
-                        "skip": {"ffprobe": "ffmpeg 6.1 rejects reduced sample rates.", "decode": "ffmpeg 6.1 rejects reduced sample rates."}})
+            crosscheck={"ffprobe": True, "ffprobe_fields": "channels", "ffprobe_bitrate": False, "decode": False,
+                        "skip": {"ffprobe_fields": "FFmpeg 8.0.1's AC-3 parser takes the sample rate from the header (24000 Hz, ac3_parser.c, eac3_parse_header) and the packets from the frame "
+                                                   "sizes, but leaves the channels of an E-AC-3 stream to the E-AC-3 decoder (aac_ac3_parser.c:132), which refuses a reduced sample rate "
+                                                   "(eac3dec.c:316-322, AVERROR_PATCHWELCOME): ffprobe gives 0 channels and no channel layout.",
+                                 "ffprobe_bitrate": "ffprobe gives no bitrate (N/A): the bit rate comes from the decoder that refuses the stream (aac_ac3_parser.c:163-167, eac3dec.c:316-322).",
+                                 "decode": "FFmpeg 8.0.1's E-AC-3 decoder refuses a reduced sample rate (eac3dec.c:316-322, AVERROR_PATCHWELCOME)."}})
 
     # MP4: a dac3 box that disagrees with the frames, and a dec3 box with a dependent substream.
     frames = [ac3() for _ in range(6)]
