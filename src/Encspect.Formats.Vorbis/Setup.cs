@@ -140,7 +140,7 @@ internal sealed class SetupDecoder
         if (ILog(dimensions) + ILog(entries) > 24)
         {
             Add(Severity.Warning, "vorbis.codebook-too-large", dimensionsNode,
-                $"Codebook {index} has {dimensions} dimensions and {entries} entries, more than libvorbis 1.3.7 accepts (ilog of both above 24 together); it refuses the setup header.");
+                $"Codebook {index} has {Counts.Of(dimensions, "dimension", "dimensions")} and {Counts.Of(entries, "entry", "entries")}, more than libvorbis 1.3.7 accepts (ilog of both above 24 together); it refuses the setup header.");
         }
 
         Field("IsOrdered", 1, v => NodeValue.Boolean(v == 1), Explain.IsOrdered, out int ordered);
@@ -479,7 +479,7 @@ internal sealed class SetupDecoder
                 if (info.Dimensions < 1 || combinations > info.Entries)
                 {
                     Add(Severity.Warning, Invalid, classbookNode,
-                        $"Residue {i}'s classbook {classbook} has too few entries for {classifications + 1} classifications in {info.Dimensions} dimensions; libvorbis 1.3.7 refuses the setup header (res0.c).");
+                        $"Residue {i}'s classbook {classbook} has too few entries for {classifications + 1} classifications in {Counts.Of(info.Dimensions, "dimension", "dimensions")}; libvorbis 1.3.7 refuses the setup header (res0.c).");
                 }
             }
 
@@ -566,7 +566,7 @@ internal sealed class SetupDecoder
                     if (magnitude == angle || magnitude >= _channels || angle >= _channels)
                     {
                         Add(Severity.Warning, Invalid, step,
-                            $"Mapping {i} couples channel {magnitude} with channel {angle}, which the specification forbids for a stream of {_channels} channels (section 4.2.4); decoders refuse the setup header.");
+                            $"Mapping {i} couples channel {magnitude} with channel {angle}, which the specification forbids for a stream of {Counts.Of(_channels, "channel", "channels")} (section 4.2.4); decoders refuse the setup header.");
                     }
 
                 }

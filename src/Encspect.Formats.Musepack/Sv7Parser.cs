@@ -141,7 +141,7 @@ internal static class Sv7Parser
             var cut = new Node("Musepack SV7", start, end - start) { Kind = NodeKind.Stream, Description = Explain.Sv7Stream, Topic = Topics.Sv7Stream };
             Node header = cut.Add(new Node("Header", start, end - start) { Description = Explain.Header, Topic = Topics.Sv7Stream });
             parent.Add(cut);
-            context.AddFinding(Severity.Warning, "musepack.header-truncated", $"The SV7 header needs {HeaderBytes} bytes; the data holds {end - start}.", header);
+            context.AddFinding(Severity.Warning, "musepack.header-truncated", $"The SV7 header needs {Counts.Of(HeaderBytes, "byte", "bytes")}; the data holds {end - start}.", header);
             return;
         }
 
@@ -166,7 +166,7 @@ internal static class Sv7Parser
             state.TrailingStart = streamEnd;
             var gap = GapNode(streamEnd, end);
             state.Findings.AddNow(Severity.Warning, "musepack.trailing-data",
-                $"{end - streamEnd} bytes after the stream's last frame, from 0x{streamEnd:X}, are not part of it.", gap);
+                $"{Counts.Of(end - streamEnd, "byte", "bytes")} after the stream's last frame, from 0x{streamEnd:X}, {Counts.Agree(end - streamEnd, "is", "are")} not part of it.", gap);
         }
 
         int count = state.Frames.Count + (state.TrailingStart is null ? 0 : 1);
@@ -373,7 +373,7 @@ internal static class Sv7Parser
         if (h.LastSamples > FrameSamples)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.last-frame-samples-invalid",
-                $"The header gives {h.LastSamples} samples for the last frame, more than a frame's {FrameSamples}; libmpcdec refuses the stream.", Field("Last Frame Samples"));
+                $"The header gives {Counts.Of(h.LastSamples, "sample", "samples")} for the last frame, more than a frame's {FrameSamples}; libmpcdec refuses the stream.", Field("Last Frame Samples"));
         }
 
         if (h.Unused != 0)
@@ -444,7 +444,7 @@ internal static class Sv7Parser
     private static string Summary(Frame frame)
     {
         var text = new StringBuilder();
-        text.Append(frame.Length).Append(" bits, ").Append(frame.UsedBands).Append(frame.UsedBands == 1 ? " subband" : " subbands");
+        text.Append(Counts.Bits(frame.Length)).Append(", ").Append(frame.UsedBands).Append(frame.UsedBands == 1 ? " subband" : " subbands");
         int midSide = System.Numerics.BitOperations.PopCount(frame.MidSide);
         if (midSide > 0)
         {
@@ -578,9 +578,9 @@ internal static class Sv7Parser
         if (state.Truncated && last is { } cut)
         {
             long have = (state.Layout.End - state.Layout.Start) * 8 - cut.Bit;
-            string what = cut.Length < 0 ? "its 20-bit length" : $"{cut.End - cut.Bit} bits";
+            string what = cut.Length < 0 ? "its 20-bit length" : $"{Counts.Of(cut.End - cut.Bit, "bit", "bits")}";
             state.Findings.AddNow(Severity.Warning, "musepack.frame-truncated",
-                $"The frame at 0x{FrameAt(cut).Offset:X} has {Math.Max(0, have)} bits of {what}: the stream is cut short.", FrameAt(cut));
+                $"The frame at 0x{FrameAt(cut).Offset:X} has {Counts.Of(Math.Max(0, have), "bit", "bits")} of {what}: the stream is cut short.", FrameAt(cut));
         }
 
         long counted = 0;
@@ -593,26 +593,26 @@ internal static class Sv7Parser
         if (state.DamagedFrom is { } damagedFrom)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.frames-damaged",
-                $"{MaxDamagedRun} frames in a row from 0x{state.Layout.WordStart(damagedFrom):X} have subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
+                $"{Counts.Of(MaxDamagedRun, "frame", "frames")} in a row from 0x{state.Layout.WordStart(damagedFrom):X} {Counts.Agree(MaxDamagedRun, "has", "have")} subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
                 header.Children.First(c => c.Name == "Frame Count"));
         }
         else if (counted < h.Frames)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.frames-missing",
-                $"The header counts {h.Frames} frames, but the data holds {counted} whole ones.", header.Children.First(c => c.Name == "Frame Count"));
+                $"The header counts {Counts.Of(h.Frames, "frame", "frames")}, but the data holds {counted} whole ones.", header.Children.First(c => c.Name == "Frame Count"));
         }
 
         if (state.ExtraMissing)
         {
             state.Findings.AddNow(Severity.Info, "musepack.gapless-frame-missing",
-                $"The stream ends after the frames the header counts, without the frame libmpcdec decodes after them where the last frame holds more than 671 samples, so its output ends {LastFrameSamples(h, state.FinalSamples) - 671} samples early.",
+                $"The stream ends after the frames the header counts, without the frame libmpcdec decodes after them where the last frame holds more than 671 samples, so its output ends {Counts.Of(LastFrameSamples(h, state.FinalSamples) - 671, "sample", "samples")} early.",
                 header.Children.First(c => c.Name == "Last Frame Samples"));
         }
 
         if (h.Gapless && state.FinalSamples is { } final && final != h.LastSamples)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.last-frame-samples-differ",
-                $"The 11 bits after the last frame give {final} samples, the header {h.LastSamples}; with true gapless, libmpcdec takes the bits after the frame, and so does the analyzer.",
+                $"The 11 bits after the last frame give {Counts.Of(final, "sample", "samples")}, the header {h.LastSamples}; with true gapless, libmpcdec takes the bits after the frame, and so does the analyzer.",
                 header.Children.First(c => c.Name == "Last Frame Samples"));
         }
 

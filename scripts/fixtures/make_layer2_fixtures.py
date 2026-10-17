@@ -26,6 +26,7 @@ The script uses only the standard library and is deterministic, so CI reruns it 
 the committed files differ.
 """
 
+from units import bytes_text
 import pathlib
 import struct
 import sys
@@ -467,16 +468,16 @@ class Layer2Frame(Frame):
             # Unverifiable, so reported as a possible extension, not as multichannel nodes.
             for key in [k for k in fields if k.startswith("Multichannel")]:
                 del fields[key]
-            fields["Ancillary Data"] = f"{self.length() - 4 - ancillary_start} bytes"
+            fields["Ancillary Data"] = bytes_text(self.length() - 4 - ancillary_start)
         elif self.mc is not None:
             mc_end = self.length() - 4 - (self.mc.n_ad_bytes or 0)
-            fields["Multichannel/Data"] = f"{mc_end - (mc_range[1] + 7) // 8} bytes"
+            fields["Multichannel/Data"] = bytes_text(mc_end - (mc_range[1] + 7) // 8)
             if self.mc.n_ad_bytes:
-                fields["Ancillary Data"] = f"{self.mc.n_ad_bytes} bytes"
+                fields["Ancillary Data"] = bytes_text(self.mc.n_ad_bytes)
         else:
             length = self.length() - 4 - ancillary_start
             if length:
-                fields["Ancillary Data"] = f"{length} bytes"
+                fields["Ancillary Data"] = bytes_text(length)
         return fields
 
 
@@ -645,7 +646,7 @@ def scalefactor_overflow():
     for frame, entry in zip(frames, f.frames):
         del entry["scale_info"]
         entry["fields"] = mpeg.Frame.fields(frame)
-        entry["fields"]["Data"] = f"{frame.length() - 6} bytes"
+        entry["fields"]["Data"] = bytes_text(frame.length() - 6)
     f.finding("mpeg.crc-mismatch", "1 frame fails")
     return f.finding("mpeg.audio-data-overflow", "6 frames need more bits for their Layer II audio data")
 
@@ -778,7 +779,7 @@ def mc_ancillary_overflow():
     fields["Multichannel/Header/Ancillary Bytes"] = "255"
     mc_start = frame.offsets[4][0]
     crc_end = mc_start + 24 + 16
-    fields["Ancillary Data"] = f"{frame.length() - 4 - (crc_end + 7) // 8} bytes"
+    fields["Ancillary Data"] = bytes_text(frame.length() - 4 - (crc_end + 7) // 8)
     return f.finding("mpeg.multichannel-ancillary-overflow", "1 frame declares more MPEG-1 ancillary bytes")
 
 
@@ -821,7 +822,7 @@ def mc_chance_crc():
         fields = entry["fields"]
         for key in [k for k in fields if k.startswith("Multichannel")]:
             del fields[key]
-        fields["Ancillary Data"] = f"{frame.length() - 4 - (frame.offsets[3] + 7) // 8} bytes"
+        fields["Ancillary Data"] = bytes_text(frame.length() - 4 - (frame.offsets[3] + 7) // 8)
     return f
 
 

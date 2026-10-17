@@ -97,12 +97,17 @@ public sealed partial class MpegAudioParser
     }
 
     // LAME's front end writes "LAME 64bits version 3.100 (http://lame.sf.net)", named here as the
-    // LAME tag names it; anything else is kept as written.
+    // LAME tag names it; a libavcodec ID as every parser names it ("FFmpeg (Lavc60.31.102 libmp3lame)"); anything else is kept as written.
     private static string ClaimedName(string text, HashSet<string> families)
     {
         if (families.Contains("LAME") && LameVersion().Match(text) is { Success: true } match)
         {
             return $"LAME {match.Groups[1].Value}";
+        }
+
+        if (ClaimRoles.IsEncoderId(text))
+        {
+            return ClaimRoles.WriterName(text, MaxClaimedName);
         }
 
         return text.Length > MaxClaimedName ? text[..MaxClaimedName] : text;

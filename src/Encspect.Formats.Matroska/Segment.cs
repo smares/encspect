@@ -135,7 +135,7 @@ internal sealed partial class FileReader
         else if (declaredEnd > _reader.End)
         {
             _findings.AddNow(Severity.Warning, "matroska.element-truncated",
-                $"The Segment states a size of {header.Size} bytes, but the file ends {Bytes(declaredEnd - _reader.End)} sooner: the file is cut short.", segment.Node);
+                $"The Segment states a size of {Counts.Of(header.Size.GetValueOrDefault(), "byte", "bytes")}, but the file ends {Bytes(declaredEnd - _reader.End)} sooner: the file is cut short.", segment.Node);
         }
 
         return end;
@@ -167,6 +167,6 @@ internal sealed partial class FileReader
 
         _budgetReported = true;
         _findings.Add(Severity.Warning, "matroska.too-many-elements", anchor, _ =>
-            $"The file holds more than {MaxNodes} elements besides the blocks of its Clusters; the elements from 0x{position:X} on are not read, but for the Clusters of a Segment.");
+            $"The file holds more than {Counts.Of(MaxNodes, "element", "elements")} besides the blocks of its Clusters; the elements from 0x{position:X} on are not read, but for the Clusters of a Segment.");
     }
 }

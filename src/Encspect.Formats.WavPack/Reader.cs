@@ -99,7 +99,7 @@ internal static class Reader
         if (isCut)
         {
             s.Findings.Add(Severity.Warning, "wavpack.block-truncated", () => Nodes.Skipped(s.Records, index), _ =>
-                $"The data ends inside the header of a block at 0x{start:X}: {to - start} of its {BlockHeader.Length} bytes are there.", "header");
+                $"The data ends inside the header of a block at 0x{start:X}: {to - start} of its {Counts.Of(BlockHeader.Length, "byte", "bytes")} {Counts.Agree(to - start, "is", "are")} there.", "header");
         }
         else
         {
@@ -199,7 +199,7 @@ internal static class Reader
         if (version is < BlockHeader.MinVersion or > BlockHeader.MaxVersion)
         {
             s.Findings.Add(Severity.Warning, "wavpack.version-unsupported", () => Nodes.HeaderField(s.Records, entry, "Stream Version"), count =>
-                $"The block at 0x{offset:X} has stream version 0x{version:X3}; libwavpack decodes 0x{BlockHeader.MinVersion:X3} to 0x{BlockHeader.MaxVersion:X3} and takes a header of any other for no block{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
+                $"The block at 0x{offset:X} has stream version 0x{version:X3}; libwavpack decodes 0x{BlockHeader.MinVersion:X3} to 0x{BlockHeader.MaxVersion:X3} and takes a header of any other for no block{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.");
         }
 
         if ((header.Flags & BlockHeader.ReservedFlag) != 0)
@@ -222,7 +222,7 @@ internal static class Reader
             int shift = header.LeftShift;
             int sampleBits = header.BytesPerSample * 8;
             s.Findings.Add(Severity.Warning, "wavpack.flags-invalid", () => Nodes.HeaderField(s.Records, entry, "Flags"), count =>
-                $"The left shift of the block at 0x{offset:X} is {shift} bits, not less than the {sampleBits} bits of its samples, so the bit depth libwavpack works out as the sample size less the shift, {sampleBits - shift}, is not positive{(count > 1 ? $" ({count} blocks)" : string.Empty)}.", "left-shift");
+                $"The left shift of the block at 0x{offset:X} is {Counts.Of(shift, "bit", "bits")}, not less than the {Counts.Of(sampleBits, "bit", "bits")} of its samples, so the bit depth libwavpack works out as the sample size less the shift, {sampleBits - shift}, is not positive{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "left-shift");
         }
 
         if ((status & BlockStatus.Truncated) != 0)
@@ -235,7 +235,7 @@ internal static class Reader
         {
             long stated = header.BlockSize;
             s.Findings.Add(Severity.Warning, "wavpack.block-size-mismatch", () => Nodes.HeaderField(s.Records, entry, "Block Size"), count =>
-                $"The block at 0x{offset:X} states {stated} bytes, but another block begins {length} bytes in{(count > 1 ? $" ({count} such blocks)" : string.Empty)}; the block is taken to end there.");
+                $"The block at 0x{offset:X} states {Counts.Of(stated, "byte", "bytes")}, but another block begins {Counts.Of(length, "byte", "bytes")} in{(count > 1 ? $" ({count} such blocks)" : string.Empty)}; the block is taken to end there.");
         }
     }
 
@@ -330,7 +330,7 @@ internal static class Reader
                 {
                     long sizeField = size;
                     s.Findings.Add(Severity.Warning, "wavpack.subblock-overrun", () => Nodes.SubBlock(s.Records, entry, index), count2 =>
-                        $"The sub-block at 0x{atOffset:X} states {Bytes(sizeField)}, but {available} are left in the block{(count2 > 1 ? $" ({count2} blocks)" : string.Empty)}.");
+                        $"The sub-block at 0x{atOffset:X} states {Bytes(sizeField)}, but {available} are left in the block{(count2 > 1 ? $" ({Counts.Of(count2, "block", "blocks")})" : string.Empty)}.");
                 }
 
                 if (IsWrapper(function))
@@ -447,7 +447,7 @@ internal static class Reader
                 {
                     int length = data.Length;
                     s.Findings.Add(Severity.Warning, "wavpack.decorr-terms-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                        $"The decorrelation terms at 0x{at:X} are {(length > Decode.MaxTerms ? $"{length} passes, more than the {Decode.MaxTerms} libwavpack takes" : "not all valid (1 to 8, 17, 18 and, for stereo, -1 to -3)")}{(count > 1 ? $" ({count} blocks)" : string.Empty)}; libwavpack refuses the block.");
+                        $"The decorrelation terms at 0x{at:X} are {(length > Decode.MaxTerms ? $"{length} passes, more than the {Decode.MaxTerms} libwavpack takes" : "not all valid (1 to 8, 17, 18 and, for stereo, -1 to -3)")}{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}; libwavpack refuses the block.");
                 }
                 else
                 {
@@ -550,7 +550,7 @@ internal static class Reader
                 if (data.Length == 0 || data.Contains((byte)0))
                 {
                     s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                        $"The channel identities at 0x{at:X} are empty or hold a 0, which libwavpack refuses{(count > 1 ? $" ({count} blocks)" : string.Empty)}.", "identities");
+                        $"The channel identities at 0x{at:X} are empty or hold a 0, which libwavpack refuses{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "identities");
                 }
 
                 break;
@@ -576,7 +576,7 @@ internal static class Reader
                     if (rate == 0)
                     {
                         s.Findings.Add(Severity.Warning, "wavpack.sample-rate-zero", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                            $"The sample rate sub-block at 0x{at:X} gives 0 Hz, which libwavpack ignores in favor of the rate in the flags{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
+                            $"The sample rate sub-block at 0x{at:X} gives 0 Hz, which libwavpack ignores in favor of the rate in the flags{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.");
                     }
                     else
                     {
@@ -662,7 +662,7 @@ internal static class Reader
             if (channelInfo is null)
             {
                 s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                    $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes, no more channels than twice the streams, no more speakers in the mask than channels and, in its long form, at least as many channels as streams{(count > 1 ? $" ({count} blocks)" : string.Empty)}.", "info");
+                    $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes, no more channels than twice the streams, no more speakers in the mask than channels and, in its long form, at least as many channels as streams{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "info");
             }
 
             return;
@@ -674,12 +674,12 @@ internal static class Reader
         if (Decode.ChannelInfoFields(data) is not { } later)
         {
             s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes{(count > 1 ? $" ({count} blocks)" : string.Empty)}.", "length");
+                $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "length");
         }
         else if (later.Channels != kept.Channels || later.Streams != kept.Streams || later.Mask != kept.Mask)
         {
             s.Findings.Add(Severity.Info, "wavpack.channel-info-ignored", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                $"The channel info at 0x{at:X} gives {Channels(later.Channels)} and a mask of 0x{later.Mask:X}, but {source} {Channels(kept.Channels)} and a mask of 0x{kept.Mask:X}; libwavpack settles the channels at the first audio block and ignores this one{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
+                $"The channel info at 0x{at:X} gives {Channels(later.Channels)} and a mask of 0x{later.Mask:X}, but {source} {Channels(kept.Channels)} and a mask of 0x{kept.Mask:X}; libwavpack settles the channels at the first audio block and ignores this one{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.");
         }
     }
 
@@ -708,7 +708,7 @@ internal static class Reader
             else if (data[1] == 0 && data.Length - 2 != (long)header.Samples * (header.IsMonoData ? 1 : 2))
             {
                 long expected = (long)header.Samples * (header.IsMonoData ? 1 : 2);
-                (kind, problem) = ("stored", $"its stored mode holds {Bytes(data.Length - 2)} of audio, but the block counts {header.Samples} samples of {Channels(header.IsMonoData ? 1 : 2)}, which take exactly {Bytes(expected)}");
+                (kind, problem) = ("stored", $"its stored mode holds {Bytes(data.Length - 2)} of audio, but the block counts {Counts.Of(header.Samples, "sample", "samples")} of {Channels(header.IsMonoData ? 1 : 2)}, which take exactly {Bytes(expected)}");
             }
             else if (data[1] == 1 && (data.Length < 3 || data[2] > 5))
             {
@@ -720,7 +720,7 @@ internal static class Reader
             }
             else if (data[1] == 3 && data.Length - 2 < (header.IsMonoData ? 13 : 20))
             {
-                (kind, problem) = ("high-size", $"its high mode needs at least {(header.IsMonoData ? 13 : 20)} bytes after the mode in a {(header.IsMonoData ? "mono" : "stereo")} block, but {Bytes(data.Length - 2)} follow");
+                (kind, problem) = ("high-size", $"its high mode needs at least {(header.IsMonoData ? 13 : 20)} bytes after the mode in a {(header.IsMonoData ? "mono" : "stereo")} block, but {Bytes(data.Length - 2)} {Counts.Agree(data.Length - 2, "follows", "follow")}");
             }
             else if (data[1] == 3 && data[3] != HighModeRateS)
             {
@@ -731,7 +731,7 @@ internal static class Reader
         if (problem is not null)
         {
             s.Findings.Add(Severity.Warning, "wavpack.dsd-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                $"The DSD block at 0x{at:X} is one libwavpack refuses: {problem}{(count > 1 ? $" ({count} blocks)" : string.Empty)}.", kind);
+                $"The DSD block at 0x{at:X} is one libwavpack refuses: {problem}{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", kind);
         }
     }
 
@@ -744,7 +744,7 @@ internal static class Reader
             long at = offset + position;
             int length = data.Length;
             s.Findings.Add(Severity.Warning, "wavpack.subblock-size", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                $"The block checksum at 0x{at:X} holds {Bytes(length)}, but libwavpack takes 2 or 4 and refuses the block{(count > 1 ? $" ({count} blocks)" : string.Empty)}.", "block checksum");
+                $"The block checksum at 0x{at:X} holds {Bytes(length)}, but libwavpack takes 2 or 4 and refuses the block{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "block checksum");
             return;
         }
 
@@ -772,7 +772,7 @@ internal static class Reader
                 result |= BlockStatus.ChecksumInvalid;
                 s.ChecksumInvalid++;
                 s.Findings.Add(Severity.Warning, "wavpack.block-checksum-mismatch", () => ChecksumNode(s, entry), count =>
-                    $"The checksum stored in the block at 0x{offset:X} is not the one worked out over its bytes{(count > 1 ? $"; {count} blocks differ" : string.Empty)}; libwavpack skips such a block.");
+                    $"The checksum stored in the block at 0x{offset:X} is not the one worked out over its bytes{(count > 1 ? $"; {Counts.Of(count, "block", "blocks")} {Counts.Agree(count, "differs", "differ")}" : string.Empty)}; libwavpack skips such a block.");
             }
             else
             {
@@ -785,7 +785,7 @@ internal static class Reader
             result |= BlockStatus.ChecksumMissing;
             s.ChecksumMissing++;
             s.Findings.Add(Severity.Warning, "wavpack.block-checksum-missing", () => Nodes.HeaderField(s.Records, entry, "Flags"), count =>
-                $"The block at 0x{offset:X} says it ends with a checksum, but holds none{(count > 1 ? $" ({count} blocks)" : string.Empty)}; libwavpack refuses it.");
+                $"The block at 0x{offset:X} says it ends with a checksum, but holds none{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}; libwavpack refuses it.");
         }
 
         if (detail is not null && found.ChecksumAt >= 0)
@@ -807,14 +807,14 @@ internal static class Reader
             else
             {
                 s.Findings.Add(Severity.Warning, "wavpack.audio-without-bitstream", () => Nodes.Block(s.Records, entry), count =>
-                    $"The block at 0x{offset:X} counts {blockSamples} samples, but holds no bitstream; it cannot be decoded{(count > 1 ? $" ({count} blocks)" : string.Empty)}.", "none");
+                    $"The block at 0x{offset:X} counts {Counts.Of(blockSamples, "sample", "samples")}, but holds no bitstream; it cannot be decoded{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "none");
             }
         }
 
         if (header.IsDsd && header.HasAudio && (found.Status & BlockStatus.HasDsd) == 0 || !header.IsDsd && (found.Status & BlockStatus.HasDsd) != 0)
         {
             s.Findings.Add(Severity.Warning, "wavpack.dsd-flag-mismatch", () => Nodes.HeaderField(s.Records, entry, "Flags"), count =>
-                $"The block at 0x{offset:X} {(isDsd ? "has the DSD flag but holds no DSD block" : "holds a DSD block but not the DSD flag")}{(count > 1 ? $" ({count} blocks)" : string.Empty)}.");
+                $"The block at 0x{offset:X} {(isDsd ? "has the DSD flag but holds no DSD block" : "holds a DSD block but not the DSD flag")}{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.");
         }
 
         if (header.HasAudio)
@@ -966,7 +966,7 @@ internal static class Reader
             else if (s.SetFormat != s.FormatFlags)
             {
                 s.Findings.Add(Severity.Warning, "wavpack.format-changes", () => Nodes.HeaderField(s.Records, entry, "Flags"), count =>
-                    $"The block at 0x{offset:X} differs from the first audio block in sample size, sample type, sample rate or DSD, which the first block fixes for the whole file{(count > 1 ? $" ({count} sets)" : string.Empty)}.", "format");
+                    $"The block at 0x{offset:X} differs from the first audio block in sample size, sample type, sample rate or DSD, which the first block fixes for the whole file{(count > 1 ? $" ({Counts.Of(count, "set", "sets")})" : string.Empty)}.", "format");
             }
 
             if (s.NextIndex >= 0 && index != s.NextIndex)
@@ -975,12 +975,12 @@ internal static class Reader
                 if (index > expected)
                 {
                     s.Findings.Add(Severity.Warning, "wavpack.block-index-gap", () => Nodes.HeaderField(s.Records, entry, "Block Index"), count =>
-                        $"The block at 0x{offset:X} begins at sample {index}, but the block before it ends at sample {expected}: {index - expected} samples are missing{(count > 1 ? $" ({count} such gaps)" : string.Empty)}.");
+                        $"The block at 0x{offset:X} begins at sample {index}, but the block before it ends at sample {expected}: {Counts.Of(index - expected, "sample", "samples")} {Counts.Agree(index - expected, "is", "are")} missing{(count > 1 ? $" ({count} such gaps)" : string.Empty)}.");
                 }
                 else
                 {
                     s.Findings.Add(Severity.Warning, "wavpack.block-index-overlap", () => Nodes.HeaderField(s.Records, entry, "Block Index"), count =>
-                        $"The block at 0x{offset:X} begins at sample {index}, but the block before it ends at sample {expected}: {expected - index} samples overlap{(count > 1 ? $" ({count} such overlaps)" : string.Empty)}.");
+                        $"The block at 0x{offset:X} begins at sample {index}, but the block before it ends at sample {expected}: {Counts.Of(expected - index, "sample", "samples")} overlap{(count > 1 ? $" ({count} such overlaps)" : string.Empty)}.");
                 }
             }
         }
@@ -990,7 +990,7 @@ internal static class Reader
             uint setSamples = s.SetSamples;
             uint blockSamples = header.Samples;
             s.Findings.Add(Severity.Warning, "wavpack.block-set-broken", () => Nodes.HeaderField(s.Records, entry, "Block Index"), count =>
-                $"The block at 0x{offset:X} is in a set that begins at sample {setIndex} with {setSamples} samples, but it begins at sample {index} with {blockSamples}{(count > 1 ? $" ({count} such cases of broken block sets)" : string.Empty)}.", "member");
+                $"The block at 0x{offset:X} is in a set that begins at sample {setIndex} with {Counts.Of(setSamples, "sample", "samples")}, but it begins at sample {index} with {blockSamples}{(count > 1 ? $" ({count} such cases of broken block sets)" : string.Empty)}.", "member");
         }
 
         s.SetBits += length * 8;
@@ -1031,7 +1031,7 @@ internal static class Reader
             int blocks = s.SetBlocks;
             bool isCapped = s.SetCapped;
             s.Findings.Add(Severity.Warning, "wavpack.block-set-broken", () => Nodes.Block(s.Records, first), count =>
-                $"The set of blocks that begins at 0x{offset:X} {(isCapped ? $"holds {blocks} blocks without a final block, as many as libwavpack reads into one set (its stream limit), and is taken to end there" : "ends without a final block")}{(count > 1 ? $" ({count} such cases of broken block sets)" : string.Empty)}.", "final");
+                $"The set of blocks that begins at 0x{offset:X} {(isCapped ? $"holds {Counts.Of(blocks, "block", "blocks")} without a final block, as many as libwavpack reads into one set (its stream limit), and is taken to end there" : "ends without a final block")}{(count > 1 ? $" ({count} such cases of broken block sets)" : string.Empty)}.", "final");
         }
 
         long samples = s.SetSamples;
@@ -1046,7 +1046,7 @@ internal static class Reader
             int actual = s.SetChannels;
             long setOffset = s.SetOffset;
             s.Findings.Add(Severity.Warning, "wavpack.format-changes", () => Nodes.Block(s.Records, first), count =>
-                $"The set of blocks at 0x{setOffset:X} holds {Channels(actual)}, but the first holds {Channels(expected)}{(count > 1 ? $" ({count} sets)" : string.Empty)}.", "channels");
+                $"The set of blocks at 0x{setOffset:X} holds {Channels(actual)}, but the first holds {Channels(expected)}{(count > 1 ? $" ({Counts.Of(count, "set", "sets")})" : string.Empty)}.", "channels");
         }
 
         s.Sets++;

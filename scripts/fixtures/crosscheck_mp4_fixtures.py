@@ -404,7 +404,7 @@ MEDIAINFO_FORMATS = {"AAC LC": ("AAC", "LC"), "HE-AAC": ("AAC", "LC SBR"), "HE-A
                      "AAC LTP": ("AAC", "LTP"), "AAC SSR": ("AAC", "SSR"), "xHE-AAC (USAC)": ("USAC", None), "ER AAC ELD": ("ER AAC ELD", None),
                      "ER AAC ELD with SBR": ("ER AAC ELD", None)}
 # MediaInfo's format of the streams whose frames the analyzer does not read; the analyzer's name for the others is MediaInfo's.
-ENCRYPTED_FORMATS = {"MPEG-1 Audio": "MPEG Audio", "HE-AAC": "AAC", "HE-AAC v2": "AAC", "AAC Main": "AAC", "Apple Lossless": "ALAC"}
+ENCRYPTED_FORMATS = {"MPEG-1 audio": "MPEG Audio", "HE-AAC": "AAC", "HE-AAC v2": "AAC", "AAC Main": "AAC", "Apple Lossless": "ALAC"}
 # MediaInfo counts the samples that stts gives a duration (File_Mpeg4.cpp lines 774, 799 and 852
 # fill FrameCount and Source_FrameCount from stts_FrameCount, which File_Mpeg4_Elements.cpp line 8755
 # sums) and takes the stream size from the sizes stsz lists (stsz_StreamSize, File_Mpeg4.cpp lines

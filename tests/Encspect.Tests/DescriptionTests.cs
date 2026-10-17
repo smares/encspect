@@ -22,14 +22,22 @@ public partial class DescriptionTests
     public static TheoryData<string> AllFixtures()
     {
         var data = new TheoryData<string>();
+        foreach (string name in FixtureNames())
+        {
+            data.Add(name);
+        }
+
+        return data;
+    }
+
+    public static IEnumerable<string> FixtureNames()
+    {
         string[] extensions = [".mp1", ".mp2", ".mp3", ".m4a", ".mp4", ".mov", ".aac", ".ogg", ".spx", ".opus", ".mpc", ".ac3", ".eac3", ".wma", ".asf", ".wv", ".wvc", ".dts", ".dtshd", ".mka", ".mkv", ".webm", ".bin"];
         foreach (string path in Directory.EnumerateFiles(Fixtures.FixtureDirectory, "*", SearchOption.AllDirectories)
             .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
         {
-            data.Add(Path.GetRelativePath(Fixtures.FixtureDirectory, path).Replace('\\', '/'));
+            yield return Path.GetRelativePath(Fixtures.FixtureDirectory, path).Replace('\\', '/');
         }
-
-        return data;
     }
 
     [Theory]

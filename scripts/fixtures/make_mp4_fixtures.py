@@ -260,7 +260,7 @@ def xhe():
         "streams": [stream("xHE-AAC (USAC)", 44100, 2, "Stereo", 30 * 2048, vbr=True)],
         "units": unit_list(offsets[0], samples, 10),
         "fields": {ASC + "/Audio Object Type": "42 (USAC)", ASC + "/UsacConfig/Core SBR Frame Length Index": "3 (1024 core samples, 2:1 SBR, 2048 output samples)",
-                   ASC + "/UsacConfig/UsacDecoderConfig": "1 elements", ASC + "/UsacConfig/UsacDecoderConfig/Element": "CPE"},
+                   ASC + "/UsacConfig/UsacDecoderConfig": "1 element", ASC + "/UsacConfig/UsacDecoderConfig/Element": "CPE"},
         "findings": [["aac.usac-frames-not-analyzed", "usacIndependencyFlag"]],
         "crosscheck": {"ffprobe": False, "mp4box": True, "mp4box_samples": True, "faad": None,
                        "skip": {"ffprobe": "ffmpeg 6.1 does not implement audio object type 42 and lists no stream; MP4Box lists the samples instead.",
@@ -608,7 +608,7 @@ def mp3_in_mp4():
         "streams": [{"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "channel_mode": "Stereo", "channel_layout": SPEAKERS[2],
                      "samples": 12 * 1152, "is_vbr": False}],
         "units": unit_list(offsets[0], frames, 12),
-        "fields": {ESDS: "0x6B (MPEG-1 Audio)"},
+        "fields": {ESDS: "0x6B (MPEG-1 audio)"},
         "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}},
     })]
 
@@ -630,10 +630,10 @@ def mp3_gap():
         "mp3-two-chunks-gap", "MPEG-1 Layer III in MP4 (object type 0x6B), 12 frames in two chunks of 6 with 16 bytes between them: the MPEG audio parser reads samples only where they lie in one stretch, "
         "so the track is a stream described by its sample entry and its frames are not read.",
         data, records,
-        [{"codec": "MPEG-1 Audio", "sample_rate": 44100, "channels": 2, "channel_mode": None, "channel_layout": [], "samples": 12 * 1152, "is_vbr": False,
+        [{"codec": "MPEG-1 audio", "sample_rate": 44100, "channels": 2, "channel_mode": None, "channel_layout": [], "samples": 12 * 1152, "is_vbr": False,
                      # The stream is described by its sample entry, which states no layout; ffprobe reads the frames and gives stereo.
                      "ffprobe_channels": 2}], [],
-        [["mpeg.packets-not-analyzed", "packets"]], fields={ESDS: "0x6B (MPEG-1 Audio)"},
+        [["mpeg.packets-not-analyzed", "packets"]], fields={ESDS: "0x6B (MPEG-1 audio)"},
         crosscheck={"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}})
     # The frames are not read, so ffprobe's packets are compared with the samples.
     result[2]["samples"] = unit_list([offsets[0][0], second + 16], frames, 6)

@@ -712,7 +712,7 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "1 items end exactly where the size says",
+                  "value": "1 item ends exactly where the size says",
                   "offset": 419,
                   "length": 23
                 }
@@ -732,7 +732,7 @@
             0
           ]
         ],
-        "codec": "PCM (integer, little-endian)",
+        "codec": "PCM",
         "sampleRate": 48000,
         "channels": 2,
         "bitsPerSample": 16,
@@ -762,7 +762,7 @@
       {
         "severity": "Info",
         "code": "matroska.codec-not-analyzed",
-        "message": "Track 1 is coded as PCM (integer, little-endian) (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
+        "message": "Track 1 is coded as PCM (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
         "offset": 64,
         "length": 15,
         "path": [

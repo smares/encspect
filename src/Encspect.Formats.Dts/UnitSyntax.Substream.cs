@@ -134,7 +134,7 @@ internal sealed partial class UnitSyntax
         _tree?.Close(Here);
         if (headerSize < ExssHeader.MinimumHeaderSize || _pos > crcBit)
         {
-            Report(Issue.SubstreamOverrun, "Header Size", _headerSizeStart, _headerSizeEnd, $"the header's fields end at byte {((_pos + 7) / 8) - baseByte}, past the {headerSize} bytes its size field gives");
+            Report(Issue.SubstreamOverrun, "Header Size", _headerSizeStart, _headerSizeEnd, $"the header's fields end at byte {((_pos + 7) / 8) - baseByte}, past the {Counts.Bytes(headerSize)} its size field gives");
             return;
         }
 
@@ -143,19 +143,19 @@ internal sealed partial class UnitSyntax
             Skip("Reserved", crcBit - _pos, Explain.Reserved);
         }
 
-        // 7.5.2: the CRC16 covers the header from nExtSSIndex (byte 5) to the end of the byte alignment.
+        // 7.5.2: the CRC-16 covers the header from nExtSSIndex (byte 5) to the end of the byte alignment.
         int verdict = CrcVerdict(baseByte + 5, headerSize - 5);
         facts.IsCrcValid = verdict == 1;
         if (stated is not null && verdict != 0 && _staticStates is not null)
         {
-            // FFmpeg checks the CRC16 before it reads the fields, and keeps the earlier ones where it fails.
+            // FFmpeg checks the CRC-16 before it reads the fields, and keeps the earlier ones where it fails.
             _staticStates[index] = stated;
         }
         int crcStart = _pos;
         Crc("Header CRC", Explain.ExtSsCrc, verdict, "not checked");
         if (verdict == 0)
         {
-            Report(Issue.CrcMismatch, "Header CRC", crcStart, _pos, "The extension substream header's CRC16 (7.5.2) fails");
+            Report(Issue.CrcMismatch, "Header CRC", crcStart, _pos, "The extension substream header's CRC-16 (7.5.2) fails");
         }
 
         headerEnd = _pos;
@@ -297,7 +297,7 @@ internal sealed partial class UnitSyntax
     private static NodeValue TimeStamp(long stamp, int rate)
     {
         long seconds = stamp / rate;
-        return $"{seconds / 3600:D2}:{seconds / 60 % 60:D2}:{seconds % 60:D2} and {stamp % rate} samples";
+        return $"{seconds / 3600:D2}:{seconds / 60 % 60:D2}:{seconds % 60:D2} and {Counts.Of(stamp % rate, "sample", "samples")}";
     }
 
     // 7.5.3, Tables 7-5 to 7-7: an audio asset descriptor, from its size to the navigation data and the fields that follow it.
@@ -337,7 +337,7 @@ internal sealed partial class UnitSyntax
         ReadNavigation(asset, oneToOne, mixPresent);
         if (_pos > end)
         {
-            ReportGroup(Issue.AssetDescriptorOverrun, $"Asset Descriptor {ordinal + 1}", groupStart, _pos, $"asset {ordinal + 1}'s fields end {(_pos - end + 7) / 8} bytes past the {size} bytes of its descriptor");
+            ReportGroup(Issue.AssetDescriptorOverrun, $"Asset Descriptor {ordinal + 1}", groupStart, _pos, $"asset {ordinal + 1}'s fields end {Counts.Of((_pos - end + 7) / 8, "byte", "bytes")} past the {Counts.Of(size, "byte", "bytes")} of its descriptor");
         }
 
         // Reserved bits and the byte alignment complete the descriptor (nuAssetDescriptFsize).

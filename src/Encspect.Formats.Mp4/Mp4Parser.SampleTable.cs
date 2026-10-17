@@ -126,8 +126,8 @@ public sealed partial class Mp4Parser
     private static string FormatName(string format) => format switch
     {
         "mp4a" => "MPEG-4 audio",
-        ".mp3" => "MPEG-1 Layer III",
-        "alac" => "Apple Lossless",
+        ".mp3" => CodecNames.MpegAudioLayerIII,
+        "alac" => CodecNames.AppleLossless,
         "fLaC" => "FLAC",
         "Opus" => "Opus",
         "ac-3" => "AC-3",
@@ -145,6 +145,32 @@ public sealed partial class Mp4Parser
         "aavd" => "Audible protected audio",
         "mha1" or "mhm1" => "MPEG-H 3D Audio",
         _ => "other",
+    };
+
+    // The codec a stream reports for an entry no codec parser read, in the names every container uses for the coding (CodecNames): the codec
+    // parsers' forms, with what the entry states.
+    private static string StreamCodecName(SampleEntry entry) => StreamCodecName(entry.EffectiveFormat, entry.ObjectType);
+
+    internal static string StreamCodecName(string format, int? objectType) => format switch
+    {
+        "mp4a" when objectType is { } type => type switch
+        {
+            0x40 => CodecNames.Mpeg4Audio,
+            0x66 => "AAC Main",
+            0x67 => "AAC LC",
+            0x68 => "AAC SSR",
+            0x69 => CodecNames.Mpeg2Audio,
+            0x6B => CodecNames.Mpeg1Audio,
+            _ => ObjectTypeName(type) is "other" ? "Other" : ObjectTypeName(type),
+        },
+        ".mp3" => CodecNames.MpegAudioLayerIII,
+        "dtsl" => CodecNames.DtsHdMasterAudio,
+        "dtse" => "DTS Express",
+        "lpcm" or "twos" or "sowt" or "in24" or "in32" or "raw " => CodecNames.Pcm,
+        "fl32" or "fl64" => CodecNames.PcmFloat,
+        "enca" => CodecNames.EncryptedAudio,
+        "encv" => CodecNames.EncryptedVideo,
+        _ => FormatName(format) is "other" ? format : FormatName(format),
     };
 
     // ISO/IEC 14496-14 5.6 (esds) with ISO/IEC 14496-1 7.2.6.5 (ES_Descriptor), 7.2.6.6
@@ -190,7 +216,7 @@ public sealed partial class Mp4Parser
         if (bodyEnd > f.End)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.descriptor-overruns",
-                $"The {name} at 0x{start:X} declares {size} bytes, {bodyEnd - f.End} more than its box holds.", parent);
+                $"The {name} at 0x{start:X} declares {Counts.Of(size, "byte", "bytes")}, {bodyEnd - f.End} more than its box holds.", parent);
             bodyEnd = f.End;
         }
 
@@ -309,12 +335,12 @@ public sealed partial class Mp4Parser
     // ISO/IEC 14496-1 Table 5 (objectTypeIndication), the audio values.
     private static string ObjectTypeName(int type) => type switch
     {
-        0x40 => "MPEG-4 Audio",
+        0x40 => CodecNames.Mpeg4Audio,
         0x66 => "MPEG-2 AAC Main",
         0x67 => "MPEG-2 AAC LC",
         0x68 => "MPEG-2 AAC SSR",
-        0x69 => "MPEG-2 Audio",
-        0x6B => "MPEG-1 Audio",
+        0x69 => CodecNames.Mpeg2Audio,
+        0x6B => CodecNames.Mpeg1Audio,
         0xA5 => "AC-3",
         0xA6 => "E-AC-3",
         0xA9 => "DTS",
@@ -349,7 +375,7 @@ public sealed partial class Mp4Parser
             }
         });
         MoreEntries(node, count, start + (MaxListedEntries * 8L), f.Position);
-        node.Value = $"{samples} samples, {BoxFields.DurationText(duration, state.Track?.Timescale ?? 0)}";
+        node.Value = $"{Counts.Of(samples, "sample", "samples")}, {BoxFields.DurationText(duration, state.Track?.Timescale ?? 0)}";
         if (state.Track is { TimeToSample: null } track)
         {
             track.TimeToSample = entries;
@@ -392,7 +418,7 @@ public sealed partial class Mp4Parser
             entries.Add((first, samples, description));
             if (i < MaxListedEntries)
             {
-                var entry = new Node("Entry", at, 12, $"from chunk {first}: {samples} samples, description {description}") { Description = Explain.ChunkEntry };
+                var entry = new Node("Entry", at, 12, $"from chunk {first}: {samples} {(samples == 1 ? "sample" : "samples")}, description {description}") { Description = Explain.ChunkEntry };
                 entry.Add(new Node("First Chunk", at, 4, NodeValue.Integer(first)) { Description = Explain.FirstChunk });
                 entry.Add(new Node("Samples Per Chunk", at + 4, 4, NodeValue.Integer(samples)) { Description = Explain.SamplesPerChunk });
                 entry.Add(new Node("Sample Description Index", at + 8, 4, NodeValue.Integer(description)) { Description = Explain.SampleDescriptionIndex });
@@ -413,7 +439,7 @@ public sealed partial class Mp4Parser
         FullBox(node, f);
         uint size = f.U32(node, "Sample Size", Explain.ConstantSampleSize, unit: "bytes");
         uint count = f.U32(node, "Sample Count", Explain.SampleCount);
-        node.Value = size != 0 ? $"{count} samples of {size} bytes" : NodeValue.Integer(count, "samples", "sample");
+        node.Value = size != 0 ? $"{Counts.Of(count, "sample", "samples")} of {Counts.Of(size, "byte", "bytes")}" : NodeValue.Integer(count, "samples", "sample");
         int[]? sizes = null;
         if (size == 0)
         {
@@ -450,7 +476,7 @@ public sealed partial class Mp4Parser
         node.Value = NodeValue.Integer(count, "samples", "sample");
         if (field is not (4 or 8 or 16))
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.stz2-field-size", $"The stz2 box at 0x{node.Offset:X} has a field size of {field} bits; ISO/IEC 14496-12 allows 4, 8 and 16.", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.stz2-field-size", $"The stz2 box at 0x{node.Offset:X} has a field size of {Counts.Of(field, "bit", "bits")}; ISO/IEC 14496-12 allows 4, 8 and 16.", node);
             return;
         }
 
@@ -695,7 +721,7 @@ public sealed partial class Mp4Parser
             long at = f.Position;
             uint samples = (uint)f.Take(4);
             uint index = (uint)f.Take(4);
-            var entry = new Node("Entry", at, 8, $"{samples} samples in group {index}") { Description = Explain.SampleToGroupEntry };
+            var entry = new Node("Entry", at, 8, $"{Counts.Of(samples, "sample", "samples")} in group {index}") { Description = Explain.SampleToGroupEntry };
             entry.Add(new Node("Sample Count", at, 4, NodeValue.Integer(samples)) { Description = Explain.GroupSampleCount });
             entry.Add(new Node("Group Description Index", at + 4, 4, NodeValue.Integer(index)) { Description = Explain.GroupDescriptionIndex });
             node.Add(entry);

@@ -378,7 +378,7 @@ def file_wide_evidence():
     out = []
     for name, text, entry, options, findings in cases:
         out.append(encrypted(name, f"AAC LC: {text}. The 30 samples are pseudo-random bytes and are not read as AAC.", entry, extra_stbl=options.get("extra_stbl", ()), findings=findings,
-                             scheme_name={"piff-scheme": "protection scheme piff", "cenc-sinf-in-trak": "protection scheme not stated"}.get(name, SCHEMES[b"cenc"]),
+                             scheme_name={"piff-scheme": "Protection scheme piff", "cenc-sinf-in-trak": "Protection scheme not stated"}.get(name, SCHEMES[b"cenc"]),
                              track_options={k: options[k] for k in ("before_mdia", "after_mdia") if k in options}, movie_options=options.get("movie_options"),
                              crosscheck={"ffprobe": False, "mp4box": False, "faad": None, "encryption": {"ffprobe": None, "mediainfo": None if name in ("cenc-sinf-in-mp4a-entry", "cenc-sinf-in-trak") else "Encrypted"},
                                          "skip": {"all": "a file whose boxes lie where they do not belong, which the tools read in their own ways"}}))
@@ -543,7 +543,7 @@ def other_codecs():
     entry = mp4a(2, 44100, esds(0x6B, None, 128000, 128000), sinf(frma(b"mp4a"), *cenc_sinf()), format=b"enca")
     out.append(encrypted(
         "cenc-mpeg-audio", "MPEG-1 audio (object type 0x6B) in an enca entry: no configuration exists, so the stream is described from the sample entry alone.",
-        entry, samples=mp3, durations=[1152] * 12, codec="MPEG-1 Audio", scheme_name=SCHEMES[b"cenc"], mode=None, layout=False, crosscheck=ciphertext_crosscheck("MPEG audio")))
+        entry, samples=mp3, durations=[1152] * 12, codec="MPEG-1 audio", scheme_name=SCHEMES[b"cenc"], mode=None, layout=False, crosscheck=ciphertext_crosscheck("MPEG audio")))
     return out
 
 
@@ -676,13 +676,13 @@ def corrupt():
 
     variant("enca-no-sinf", "An enca sample entry without a sinf box: the scheme and the original format are not stated, so the track's coding is unknown; it is a stream of the sample entry's kind, and its samples are not analyzed.",
             mp4a(2, 44100, esds(0x40, LC, 0, 0), format=b"enca"), [["mp4.protected-entry-no-sinf", "has no sinf box"], ["mp4.codec-not-analyzed", "protected enca"], SAMPLES_ENCRYPTED],
-            codec="encrypted audio", scheme="protection scheme not stated")
+            codec="Encrypted audio", scheme="Protection scheme not stated")
     variant("sinf-no-frma", "A sinf box with a scheme and tenc but no frma box: the original format is unknown, so the track's coding is unknown and its samples are not analyzed.",
             mp4a(2, 44100, esds(0x40, LC, 0, 0), sinf(*cenc_sinf()), format=b"enca"), [["mp4.protected-entry-no-frma", "has no frma box"], ["mp4.codec-not-analyzed", "protected enca"], SAMPLES_ENCRYPTED],
-            codec="encrypted audio")
+            codec="Encrypted audio")
     variant("sinf-no-schm", "A sinf box with frma and a schi box holding tenc, but no schm box: the scheme is not stated; the samples are taken as encrypted.",
             mp4a(2, 44100, esds(0x40, LC, 0, 0), sinf(frma(b"mp4a"), schi(tenc())), format=b"enca"), [["mp4.protected-entry-no-schm", "has no schm box"], SAMPLES_ENCRYPTED],
-            scheme="protection scheme not stated")
+            scheme="Protection scheme not stated")
     variant("cenc-no-tenc", "A cenc sinf box without tenc: the track's default encryption is not stated, so its samples are taken as encrypted.",
             base(schm(b"cenc")), [["mp4.protected-entry-no-tenc", "has no tenc box"], SAMPLES_ENCRYPTED])
     variant("tenc-iv-size", "A tenc box with a per-sample IV size of 3 bytes, where 0, 8 and 16 are valid.", base(schm(b"cenc"), schi(tenc(iv_size=3))),
@@ -696,7 +696,7 @@ def corrupt():
             base(schm(b"cenc"), schi(truncated_tenc)), [["mp4.box-fields-truncated", "ends inside a field"], ["mp4.protected-entry-no-tenc", "has no tenc box"], SAMPLES_ENCRYPTED])
     variant("schm-truncated", "A schm box that ends inside the scheme version: the box is reported cut short; the scheme is not stated.",
             base(Box(b"schm", b"\0\0\0\0cen"), schi(tenc())), [["mp4.box-fields-truncated", "ends inside a field"], ["mp4.protected-entry-no-schm", "has no schm box"], SAMPLES_ENCRYPTED],
-            scheme="protection scheme not stated")
+            scheme="Protection scheme not stated")
     variant("pssh-data-overrun", "A pssh box that declares 4,000 bytes of data and holds 6.", base(*cenc_sinf()),
             [["mp4.pssh-data-exceeds-box", "declares 4000 bytes of data"], SAMPLES_ENCRYPTED],
             extra_moov=[fullbox("pssh", 0, 0, bytes.fromhex(WIDEVINE.replace("-", "")) + u32(4000) + b"abcdef")], systems=[WIDEVINE])

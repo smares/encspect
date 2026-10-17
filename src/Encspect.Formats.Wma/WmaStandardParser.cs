@@ -110,7 +110,7 @@ public sealed class WmaStandardParser : ICodecParser
             && BinaryPrimitives.ReadUInt32LittleEndian(data) == 17u * (uint)p.FrameLength)
         {
             traits.Add(new WmaEncoder.Trait("Microsoft's Windows Media Audio encoder", "Microsoft", Confidence.Medium,
-                $"The codec data states {17 * p.FrameLength} samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them"));
+                $"The codec data states {Counts.Of(17 * p.FrameLength, "sample", "samples")} per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them"));
         }
 
         return traits;
@@ -127,7 +127,7 @@ public sealed class WmaStandardParser : ICodecParser
         if (bytes.Length != expected)
         {
             findings.AddNow(bytes.Length < (version == 1 ? 4 : 6) ? Severity.Warning : Severity.Info, "wma.codec-data-size",
-                $"The codec-specific data of Windows Media Audio {version} is {bytes.Length} bytes; {(version == 1 ? "FFmpeg's encoder writes 4 (wmaenc.c), the specification defines no version 1 layout" : "the ASF specification, section 11.1.1, has 10")}, and FFmpeg's decoder reads the options from {(version == 1 ? "4" : "6")} bytes on{(bytes.Length < (version == 1 ? 4 : 6) ? ", so it takes none here" : string.Empty)}.", holder);
+                $"The codec-specific data of Windows Media Audio {version} is {Counts.Of(bytes.Length, "byte", "bytes")}; {(version == 1 ? "FFmpeg's encoder writes 4 (wmaenc.c), the specification defines no version 1 layout" : "the ASF specification, section 11.1.1, has 10")}, and FFmpeg's decoder reads the options from {(version == 1 ? "4" : "6")} bytes on{(bytes.Length < (version == 1 ? 4 : 6) ? ", so it takes none here" : string.Empty)}.", holder);
         }
 
         Node? optionsNode = null;

@@ -191,7 +191,7 @@ internal sealed partial class UnitSyntax
         int blocks = Num("Sample Blocks", 7, Explain.Nblks, Topics.CoreFrames, "blocks", 1) + 1;
         if (ftype == 1 && blocks is not (8 or 16 or 32 or 64 or 128))
         {
-            Report(Issue.BlockCount, "Sample Blocks", start, _pos, $"{blocks} blocks of 32 samples");
+            Report(Issue.BlockCount, "Sample Blocks", start, _pos, $"{Counts.Of(blocks, "block", "blocks")} of 32 samples");
         }
 
         start = _pos;
@@ -336,7 +336,7 @@ internal sealed partial class UnitSyntax
         double allowed = target * 100.0 / 8 * samples / rate;
         if (bytes > allowed + 4)
         {
-            Report(Issue.RateExceeded, "Bit Rate", start, _pos, $"{bytes} bytes where {allowed:F0} fit the targeted {target / 10.0:0.#} kbit/s");
+            Report(Issue.RateExceeded, "Bit Rate", start, _pos, $"{Counts.Of(bytes, "byte", "bytes")} where {allowed:F0} fit the targeted {target / 10.0:0.#} kbit/s");
         }
     }
 }

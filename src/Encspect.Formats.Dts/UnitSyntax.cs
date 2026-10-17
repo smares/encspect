@@ -87,7 +87,7 @@ internal sealed partial class UnitSyntax
         int startBit = substream.Start * 8;
         int endBit = startBit + (Math.Min(substream.Length, substream.Available) * 8);
         _tree?.Add(Locator.Group("Misaligned Extension Substream", startBit, endBit, NodeValue.Integer(substream.Length, "bytes"), Explain.MisalignedSubstream, Topics.ExtensionSubstream));
-        ReportGroup(Issue.SubstreamMisaligned, "Misaligned Extension Substream", startBit, endBit, $"{(4 - (substream.Start & 3)) & 3} bytes before the boundary");
+        ReportGroup(Issue.SubstreamMisaligned, "Misaligned Extension Substream", startBit, endBit, $"{Counts.Of((4 - (substream.Start & 3)) & 3, "byte", "bytes")} before the boundary");
     }
 
     private Locator Locator => new(_layout.Form, _layout.Offset, _layout.Length);
@@ -237,7 +237,7 @@ internal sealed partial class UnitSyntax
         _ => notChecked,
     };
 
-    // The CRC16 of Annex B over bytes [start, start + length) of the unit comes to zero.
+    // The CRC-16 of Annex B over bytes [start, start + length) of the unit comes to zero.
     private int CrcVerdict(int start, int length) => Verdict(() => Crc16.Compute(_view.Peek(start, length)) == 0);
 
     // A 16-bit CRC field, with the node of its verdict under it.

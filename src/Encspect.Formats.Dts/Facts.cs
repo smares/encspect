@@ -143,7 +143,7 @@ internal sealed class AssetFacts
     // XLL's common header: samples per frame of the first frequency band, or 0.
     public int XllSamples { get; set; }
 
-    // The channel sets of the lossless component whose sub-header CRC16 holds and whose fields fit it (8.3.2), in order.
+    // The channel sets of the lossless component whose sub-header CRC-16 holds and whose fields fit it (8.3.2), in order.
     public List<XllSetFacts> XllSets { get; } = [];
 
     // Every channel set sub-header of the component was read and passed its checks, so the figures of XllSets describe the whole

@@ -45,7 +45,7 @@ internal static class ProReport
         if (totals.TailBitsAtEnd > 0 && goodFrames > 0)
         {
             findings.AddNow(Severity.Info, "wma.frame-unfinished",
-                $"The last packet ends with {totals.TailBitsAtEnd} bits after a frame whose trailer bit says another frame follows, and no packet follows to finish one; a decoder drops them.", streamNode.Children.Last());
+                $"The last packet ends with {Counts.Of(totals.TailBitsAtEnd, "bit", "bits")} after a frame whose trailer bit says another frame follows, and no packet follows to finish one; a decoder drops them.", streamNode.Children.Last());
         }
 
         var series = new List<Series>();
@@ -149,7 +149,7 @@ internal static class ProReport
         {
             if (t.SubframesBySize[i] > 0)
             {
-                sizes.Add($"{p.SamplesPerFrame >> i} samples", start, length, Share(t.SubframesBySize[i], t.Subframes, "subframe", "subframes"), ProExplain.StatSubframeShare);
+                sizes.Add($"{Counts.Of(p.SamplesPerFrame >> i, "sample", "samples")}", start, length, Share(t.SubframesBySize[i], t.Subframes, "subframe", "subframes"), ProExplain.StatSubframeShare);
             }
         }
 

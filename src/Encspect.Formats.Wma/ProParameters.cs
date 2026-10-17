@@ -68,7 +68,7 @@ internal sealed class ProParameters
 
         if (data.Length < ExtraDataSize)
         {
-            return Failed($"the codec-specific data is {data.Length} bytes, and FFmpeg's decoder reads 18 or more");
+            return Failed($"the codec-specific data is {Counts.Of(data.Length, "byte", "bytes")}, and FFmpeg's decoder reads 18 or more");
         }
 
         int bits = BinaryPrimitives.ReadUInt16LittleEndian(data);
@@ -77,7 +77,7 @@ internal sealed class ProParameters
         int channels = mask != 0 ? BitOperations.PopCount(mask) : format.Channels;
         if (bits is > 32 or < 1)
         {
-            return Failed($"the sample size is {bits} bits");
+            return Failed($"the sample size is {Counts.Of(bits, "bit", "bits")}");
         }
 
         int log2FrameSize = Log2(format.BlockAlign) + 4;
@@ -97,13 +97,13 @@ internal sealed class ProParameters
         int maxSubframes = 1 << log2Max;
         if (maxSubframes > MaxSubframes)
         {
-            return Failed($"{maxSubframes} subframes per frame");
+            return Failed($"{Counts.Of(maxSubframes, "subframe", "subframes")} per frame");
         }
 
         int minSamples = samplesPerFrame / maxSubframes;
         if (minSamples < (1 << BlockMinBits))
         {
-            return Failed($"subframes of {minSamples} samples");
+            return Failed($"subframes of {Counts.Of(minSamples, "sample", "samples")}");
         }
 
         if (format.SampleRate <= 0)
@@ -118,7 +118,7 @@ internal sealed class ProParameters
 
         if (channels > MaxChannels || channels > format.Channels)
         {
-            return Failed(channels > MaxChannels ? $"{channels} channels" : $"{channels} channels in the channel mask against {format.Channels} in the format");
+            return Failed(channels > MaxChannels ? $"{Counts.Of(channels, "channel", "channels")}" : $"{Counts.Of(channels, "channel", "channels")} in the channel mask against {format.Channels} in the format");
         }
 
         int lfe = -1;

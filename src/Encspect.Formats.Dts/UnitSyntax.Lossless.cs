@@ -97,7 +97,7 @@ internal sealed partial class UnitSyntax
         ReadXllNavigation(at, endBit, asset, setAt, common, bandsOf, allFacts && !_isXllRefused);
     }
 
-    // 8.3.2, Table 8-4: one channel set sub-header, up to the frequency band parameters, whose bytes are shown as such, and its CRC16.
+    // 8.3.2, Table 8-4: one channel set sub-header, up to the frequency band parameters, whose bytes are shown as such, and its CRC-16.
     private XllSetFacts? ReadXllSet(int index, int setAt, AssetFacts asset, XllCommon common, int hierChannels, out int size, out int bands, out int hierAdd, out bool isStructural)
     {
         isStructural = false;
@@ -132,7 +132,7 @@ internal sealed partial class UnitSyntax
                 facts = null;
                 if (crcBit <= outerLimit)
                 {
-                    ReportGroup(Issue.SubstreamOverrun, $"Channel Set {index + 1}", groupStart, GroupEnd(), $"the channel set {index + 1} sub-header's fields end past the {size} bytes its size field gives");
+                    ReportGroup(Issue.SubstreamOverrun, $"Channel Set {index + 1}", groupStart, GroupEnd(), $"the channel set {index + 1} sub-header's fields end past the {Counts.Bytes(size)} its size field gives");
                     fits = false;
                 }
                 else if (!IsIncomplete)
@@ -153,7 +153,7 @@ internal sealed partial class UnitSyntax
                 Crc("Header CRC", Explain.XllSetCrc, verdict, "not checked");
                 if (verdict == 0)
                 {
-                    Report(Issue.CrcMismatch, "Header CRC", crcStart, _pos, $"The lossless extension's channel set {index + 1} sub-header CRC16 (8.3.2) fails");
+                    Report(Issue.CrcMismatch, "Header CRC", crcStart, _pos, $"The lossless extension's channel set {index + 1} sub-header CRC-16 (8.3.2) fails");
                 }
             }
 
@@ -193,7 +193,7 @@ internal sealed partial class UnitSyntax
         _isXllRefused |= width is not (16 or 20 or 24);
         if (resolution > width)
         {
-            Report(Issue.LosslessInconsistent, "Source PCM Resolution", start, resolutionEnd, $"a channel set's source resolution of {resolution} bits is more than its storage width of {width} bits (8.3.2: the samples are stored in the width)");
+            Report(Issue.LosslessInconsistent, "Source PCM Resolution", start, resolutionEnd, $"a channel set's source resolution of {Counts.Of(resolution, "bit", "bits")} is more than its storage width of {Counts.Of(width, "bit", "bits")} (8.3.2: the samples are stored in the width)");
         }
 
         int rate = Tables.ExtensionSampleRate(Num("Sampling Frequency", 4, Explain.XllRate, v => NodeValue.Integer(Tables.ExtensionSampleRate(v), "Hz"), Topics.Lossless));
@@ -266,7 +266,7 @@ internal sealed partial class UnitSyntax
                 int named = System.Numerics.BitOperations.PopCount(mask);
                 if (named != channels)
                 {
-                    Report(Issue.LosslessInconsistent, "Channel Mask", start, _pos, $"a channel set of {channels} channels has a channel mask of {named} speakers");
+                    Report(Issue.LosslessInconsistent, "Channel Mask", start, _pos, $"a channel set of {Counts.Of(channels, "channel", "channels")} has a channel mask of {Counts.Of(named, "speaker", "speakers")}");
                 }
             }
             else
@@ -312,7 +312,7 @@ internal sealed partial class UnitSyntax
         return new XllSetFacts(channels, resolution, width, rate, bands, mask, hasMask, primary);
     }
 
-    // 8.4.2: the sizes of the band data of every frequency band, segment and channel set, its CRC16, and the band data they add up to;
+    // 8.4.2: the sizes of the band data of every frequency band, segment and channel set, its CRC-16, and the band data they add up to;
     // then the extension data after it that FFmpeg's dca_xll.c reads as DTS:X (it aligns to 32 bits and compares one word).
     private void ReadXllNavigation(int at, int endBit, AssetFacts asset, int naviAt, XllCommon common, List<int> bandsOf, bool areSetsAccepted)
     {
@@ -330,7 +330,7 @@ internal sealed partial class UnitSyntax
         if (counted > NaviMaxEntries)
         {
             _tree?.Field("Navigation Index", _pos, Math.Min(_limit, endBit), NodeValue.Integer(counted, "entries", "entry"), Explain.XllNavigation, Topics.Lossless);
-            Report(Issue.LosslessInconsistent, "Navigation Index", _pos, Math.Min(_limit, endBit), $"the navigation index would have {counted} entries (the most bands, times the segments, times the channel sets), more than the {NaviMaxEntries} that FFmpeg reads");
+            Report(Issue.LosslessInconsistent, "Navigation Index", _pos, Math.Min(_limit, endBit), $"the navigation index would have {Counts.Of(counted, "entry", "entries")} (the most bands, times the segments, times the channel sets), more than the {NaviMaxEntries} that FFmpeg reads");
             return;
         }
 
@@ -368,7 +368,7 @@ internal sealed partial class UnitSyntax
             Crc("CRC", Explain.XllNaviCrc, verdict, "not checked");
             if (verdict == 0)
             {
-                Report(Issue.CrcMismatch, "CRC", crcStart, _pos, "The lossless extension's navigation index CRC16 (8.4.2) fails");
+                Report(Issue.CrcMismatch, "CRC", crcStart, _pos, "The lossless extension's navigation index CRC-16 (8.4.2) fails");
             }
         }
         catch (EndOfStreamException)
@@ -391,7 +391,7 @@ internal sealed partial class UnitSyntax
         long frameEnd = at + (long)common.FrameSize;
         if (dataEnd > frameEnd)
         {
-            Report(Issue.LosslessInconsistent, "Frame Size", common.FrameSizeStart, common.FrameSizeEnd, $"the band data sizes of the navigation index end {dataEnd - frameEnd} bytes past the {common.FrameSize} bytes of the frame");
+            Report(Issue.LosslessInconsistent, "Frame Size", common.FrameSizeStart, common.FrameSizeEnd, $"the band data sizes of the navigation index end {Counts.Of(dataEnd - frameEnd, "byte", "bytes")} past the {Counts.Of(common.FrameSize, "byte", "bytes")} of the frame");
         }
 
         int available = _limit / 8;
@@ -401,7 +401,7 @@ internal sealed partial class UnitSyntax
             _tree?.Field("Band Data", dataAt * 8, dataLimit * 8, NodeValue.Integer(dataLimit - dataAt, "bytes"), Explain.XllBandData, Topics.Lossless);
         }
 
-        // FFmpeg stops before it looks for the word at a navigation index whose CRC16 fails, and, earlier, at the common header or a channel
+        // FFmpeg stops before it looks for the word at a navigation index whose CRC-16 fails, and, earlier, at the common header or a channel
         // set sub-header it refuses (see _isXllRefused for the cases); so does the analyzer, which shows the bytes there as such after a
         // refused header and not at all after a failing navigation index. MediaInfo 24.01 still reads the word after such a set. A band data
         // size of the frame's size or more puts the end of the band data past the frame, where there is no room for the word.

@@ -148,7 +148,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
     {
         if (_depth >= MaxDepth)
         {
-            caller.AddFinding(Severity.Error, "parse.too-deep", $"Parsers hand data on more than {MaxDepth} levels deep at 0x{parent.Offset:X}, so {what} was not parsed.", parent);
+            caller.AddFinding(Severity.Error, "parse.too-deep", $"Parsers hand data on more than {Counts.Of(MaxDepth, "level", "levels")} deep at 0x{parent.Offset:X}, so {what} was not parsed.", parent);
             return false;
         }
 

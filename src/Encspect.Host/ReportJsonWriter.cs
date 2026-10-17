@@ -99,7 +99,7 @@ public static class ReportJsonWriter
         writer.WriteStartArray("streams");
         foreach (StreamInfo stream in report.Streams)
         {
-            WriteStream(writer, stream, explain);
+            WriteStream(writer, stream, report.Root, filter, explain);
         }
 
         writer.WriteEndArray();
@@ -122,9 +122,9 @@ public static class ReportJsonWriter
                 writer.WriteNumber("length", finding.Node.Length);
             }
 
-            if (finding.Path is { } path)
+            if (finding.Path is { } path && FilteredPath(report.Root, filter, path) is { } shownPath)
             {
-                WritePath(writer, "path", path);
+                WritePath(writer, "path", shownPath);
             }
 
             writer.WriteNumber("count", finding.Count);
@@ -174,12 +174,49 @@ public static class ReportJsonWriter
         writer.WriteEndObject();
     }
 
-    private static void WriteStream(Utf8JsonWriter writer, StreamInfo stream, bool explain)
+    // The paths the host finds index the whole tree; the JSON holds only the nodes the filter keeps, so
+    // each index is counted among the kept siblings. A path whose target or one of whose ancestors is
+    // hidden names no node of the JSON and becomes null.
+    private static IReadOnlyList<int>? FilteredPath(Node root, ReportFilter filter, IReadOnlyList<int> path)
+    {
+        if (filter.Hidden == ReportSections.None)
+        {
+            return path;
+        }
+
+        var shown = new List<int>(path.Count);
+        Node node = root;
+        foreach (int index in path)
+        {
+            IReadOnlyList<Node> children = node.Children;
+            if (index < 0 || index >= children.Count || !filter.Includes(children[index]))
+            {
+                return null;
+            }
+
+            int before = 0;
+            for (int i = 0; i < index; i++)
+            {
+                if (filter.Includes(children[i]))
+                {
+                    before++;
+                }
+            }
+
+            shown.Add(before);
+            node = children[index];
+        }
+
+        return shown;
+    }
+
+    private static void WriteStream(Utf8JsonWriter writer, StreamInfo stream, Node root, ReportFilter filter, bool explain)
     {
         writer.WriteStartObject();
         writer.WriteStartArray("nodes");
-        foreach (IReadOnlyList<int>? path in stream.NodePaths)
+        foreach (IReadOnlyList<int>? fullPath in stream.NodePaths)
         {
+            IReadOnlyList<int>? path = fullPath is null ? null : FilteredPath(root, filter, fullPath);
             if (path is null)
             {
                 writer.WriteNullValue();

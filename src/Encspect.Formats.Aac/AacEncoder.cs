@@ -118,7 +118,7 @@ internal static partial class AacEncoder
             string sbr = usac.CoreSbrFrameLengthIndex == 3 ? ", SBR defaults of start frequency 15 without harmonic SBR or PVC" : string.Empty;
             string extension = usac.ConfigExtensions.Count == 0
                 ? "no configuration extension"
-                : $"one loudness info extension of {usac.ConfigExtensions[0].Length} bytes with one measurement";
+                : $"one loudness info extension of {Counts.Of(usac.ConfigExtensions[0].Length, "byte", "bytes")} with one measurement";
             encoder.Add(cover("Evidence",
                 $"The UsacConfig at 0x{usac.Config.Offset:X} has the layout exhale writes: an audio pre-roll element first, then only channel elements without time-warped MDCT and no fill element{sbr}, and {extension}",
                 Explain.Evidence));

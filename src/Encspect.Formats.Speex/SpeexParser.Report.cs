@@ -208,7 +208,7 @@ public sealed partial class SpeexParser
             {
                 if (counts[submode] > 0)
                 {
-                    node.Add($"Submode {submode} ({bits[submode]} bits)", statistics.Offset, statistics.Length, Share(counts[submode], _frames, "frame", "frames"), Explain.SubmodeShare);
+                    node.Add($"Submode {submode} ({Counts.Of(bits[submode], "bit", "bits")})", statistics.Offset, statistics.Length, Share(counts[submode], _frames, "frame", "frames"), Explain.SubmodeShare);
                 }
             }
 

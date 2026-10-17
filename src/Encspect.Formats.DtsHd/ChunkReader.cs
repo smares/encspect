@@ -175,11 +175,11 @@ internal static class ChunkReader
         int clock = clockCode switch { 0 => 32000, 1 => 44100, 2 => 48000, _ => 0 };
         if (clock == 0)
         {
-            return $"{stamp} samples";
+            return $"{Counts.Of(stamp, "sample", "samples")}";
         }
 
         long seconds = stamp / clock;
-        return $"{seconds / 3600:D2}:{seconds / 60 % 60:D2}:{seconds % 60:D2} and {stamp % clock} samples";
+        return $"{seconds / 3600:D2}:{seconds / 60 % 60:D2}:{seconds % 60:D2} and {Counts.Of(stamp % clock, "sample", "samples")}";
     }
 
     private static void CoreMetadata(Cursor c)
@@ -311,7 +311,7 @@ internal static class ChunkReader
 
         if (available < need)
         {
-            c.State.Note("dtshd.table-size", c.Id, $"The table of the {c.Id} chunk has {entries} entries of {size} bytes, more than the chunk holds.", c.Chunk);
+            c.State.Note("dtshd.table-size", c.Id, $"The table of the {c.Id} chunk has {Counts.Of(entries, "entry", "entries")} of {Counts.Of(size, "byte", "bytes")}, more than the chunk holds.", c.Chunk);
         }
     }
 
@@ -328,7 +328,7 @@ internal static class ChunkReader
 
         if (available < need)
         {
-            c.State.Note("dtshd.table-size", "BITSHVTB", $"The table of the BITSHVTB chunk has {entries} entries of 5 bytes, more than the chunk holds.", c.Chunk);
+            c.State.Note("dtshd.table-size", "BITSHVTB", $"The table of the BITSHVTB chunk has {Counts.Of(entries, "entry", "entries")} of 5 bytes, more than the chunk holds.", c.Chunk);
         }
     }
 
@@ -405,7 +405,7 @@ internal static class ChunkReader
                     return false;
                 }
 
-                State.Note("dtshd.chunk-size", "fields:" + Id, $"The {Id} chunk's size of {_end - _start} bytes is too small for its fields; they end at 0x{_start + _at:X}.", Chunk);
+                State.Note("dtshd.chunk-size", "fields:" + Id, $"The {Id} chunk's size of {Counts.Of(_end - _start, "byte", "bytes")} is too small for its fields; they end at 0x{_start + _at:X}.", Chunk);
             }
 
             return false;

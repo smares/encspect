@@ -40,7 +40,7 @@ internal sealed partial class FileReader
                 {
                     TrackStatistics shown = statistics;
                     _findings.Add(Severity.Warning, "matroska.timestamps-backwards", shown.FirstBackwards!, count =>
-                        $"{(count == 1 ? "A track's" : $"{count} tracks'")} blocks go back in time: track {trackNumber}'s timestamp falls {shown.Backwards} times below the one before it in file order, the first at 0x{shown.FirstBackwards!.Offset:X}. Frames of {(track.IsAudio ? "audio" : "WebM")} tracks are stored in time order (RFC 9559, section 10; the WebM Container Guidelines).");
+                        $"{(count == 1 ? "A track's" : $"{count} tracks'")} blocks go back in time: track {trackNumber}'s timestamp falls {Counts.Of(shown.Backwards, "time", "times")} below the one before it in file order, the first at 0x{shown.FirstBackwards!.Offset:X}. Frames of {(track.IsAudio ? "audio" : "WebM")} tracks are stored in time order (RFC 9559, section 10; the WebM Container Guidelines).");
                 }
 
                 if (statistics.Laced && !track.AllowsLacing)

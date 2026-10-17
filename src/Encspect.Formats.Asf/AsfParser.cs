@@ -93,7 +93,7 @@ public sealed partial class AsfParser : IFormatParser
             {
                 Node data = context.Root.Add(new Node("Data", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.AfterEmbeddedTag });
                 context.AddFinding(Severity.Warning, "asf.data-after-tag",
-                    $"{end - position} bytes at 0x{position:X} follow an ID3v2 tag inside the ASF data, which breaks its objects; they are not read.", data);
+                    $"{Counts.Of(end - position, "byte", "bytes")} at 0x{position:X} {Counts.Agree(end - position, "follows", "follow")} an ID3v2 tag inside the ASF data, which breaks its objects; they are not read.", data);
             }
 
             position = Math.Max(position, tag?.End ?? position);

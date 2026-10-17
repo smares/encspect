@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
@@ -56,7 +57,61 @@ public sealed class NodeValue : IEquatable<NodeValue>, ISpanFormattable
         return new NodeValue(NodeValueKind.Text, text, 0, 0, 0, null, null, false);
     }
 
-    public static NodeValue Integer(long value, string? unit = null) => new(NodeValueKind.Integer, null, value, 0, 0, unit, null, false);
+    // A unit that counts things in the plural reads in the singular for one ("1 byte", "2 bytes"): the plural nouns the reports count in, so that a
+    // call needs the three-argument form only for a unit not listed here. The unit itself, which JSON writes, stays as given.
+    public static NodeValue Integer(long value, string? unit = null) =>
+        new(NodeValueKind.Integer, null, value, 0, 0, unit, unit is not null && Singulars.TryGetValue(unit, out string? singular) ? singular : null, false);
+
+    // The plural units that read in the singular for one, and their singulars.
+    public static IReadOnlyDictionary<string, string> SingularUnits => Singulars;
+
+    private static readonly FrozenDictionary<string, string> Singulars = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["bytes"] = "byte",
+        ["bits"] = "bit",
+        ["samples"] = "sample",
+        ["frames"] = "frame",
+        ["blocks"] = "block",
+        ["channels"] = "channel",
+        ["packets"] = "packet",
+        ["items"] = "item",
+        ["entries"] = "entry",
+        ["levels"] = "level",
+        ["degrees"] = "degree",
+        ["ticks"] = "tick",
+        ["bands"] = "band",
+        ["subbands"] = "subband",
+        ["times"] = "time",
+        ["extensions"] = "extension",
+        ["offsets"] = "offset",
+        ["escapes"] = "escape",
+        ["units"] = "unit",
+        ["units per second"] = "unit per second",
+        ["audio packets"] = "audio packet",
+        ["pages"] = "page",
+        ["streams"] = "stream",
+        ["records"] = "record",
+        ["elements"] = "element",
+        ["segments"] = "segment",
+        ["objects"] = "object",
+        ["values"] = "value",
+        ["sets"] = "set",
+        ["words"] = "word",
+        ["sections"] = "section",
+        ["tracks"] = "track",
+        ["chunks"] = "chunk",
+        ["payloads"] = "payload",
+        ["fields"] = "field",
+        ["steps"] = "step",
+        ["coefficients"] = "coefficient",
+        ["granules"] = "granule",
+        ["groups"] = "group",
+        ["ranges"] = "range",
+        ["pieces"] = "piece",
+        ["parts"] = "part",
+        ["headers"] = "header",
+        ["sizes"] = "size",
+    }.ToFrozenDictionary();
 
     // A count whose unit reads in the singular for one ("1 frame", "3 frames").
     public static NodeValue Integer(long value, string unit, string singularUnit)

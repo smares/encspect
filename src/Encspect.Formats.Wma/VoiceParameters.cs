@@ -102,7 +102,7 @@ internal sealed class VoiceParameters
 
         if (data.Length != ExtraDataSize)
         {
-            return empty.With(issues, "wma.codec-data-size", $"The codec-specific data of Windows Media Audio Voice is {data.Length} bytes; FFmpeg's decoder needs exactly 46 and refuses any other size (wmavoice.c)");
+            return empty.With(issues, "wma.codec-data-size", $"The codec-specific data of Windows Media Audio Voice is {Counts.Of(data.Length, "byte", "bytes")}; FFmpeg's decoder needs exactly 46 and refuses any other size (wmavoice.c)");
         }
 
         if (format.BlockAlign <= 0 || format.BlockAlign > 1 << 22)
@@ -148,7 +148,7 @@ internal sealed class VoiceParameters
         int range = max - min;
         if (range <= 0)
         {
-            return empty.With(issues, "wma.voice-sample-rate", $"The sample rate of {format.SampleRate} Hz gives a pitch range of {range} samples; FFmpeg's decoder rejects it (wmavoice.c: Invalid pitch range)");
+            return empty.With(issues, "wma.voice-sample-rate", $"The sample rate of {format.SampleRate} Hz gives a pitch range of {Counts.Of(range, "sample", "samples")}; FFmpeg's decoder rejects it (wmavoice.c: Invalid pitch range)");
         }
 
         if (min < 1 || max + 8 > MaxSignalHistory)

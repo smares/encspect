@@ -281,7 +281,7 @@
                       "children": [
                         {
                           "name": "Format Tag",
-                          "value": "0x0055 (MPEG audio layer III)",
+                          "value": "0x0055 (MPEG Layer III)",
                           "offset": 212,
                           "length": 2
                         },
@@ -1667,12 +1667,13 @@
             7
           ]
         ],
-        "codec": "MPEG audio layer III",
+        "codec": "MPEG Layer III",
         "sampleRate": 44100,
         "channels": 2,
         "samples": 0,
         "duration": 0.1,
         "isVbr": false,
+        "playbackGroup": 1,
         "isProtected": true,
         "protection": {
           "scheme": "Microsoft Digital Rights Manager version 1",
@@ -1686,7 +1687,7 @@
       {
         "severity": "Info",
         "code": "asf.codec-not-analyzed",
-        "message": "Stream 1 is coded as MPEG audio layer III (format tag 0x0055), which has no parser here; its media objects are not analyzed.",
+        "message": "Stream 1 is coded as MPEG Layer III (format tag 0x0055), which has no parser here; its media objects are not analyzed.",
         "offset": 134,
         "length": 96,
         "path": [

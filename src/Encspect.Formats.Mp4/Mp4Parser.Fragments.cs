@@ -122,7 +122,7 @@ public sealed partial class Mp4Parser
         if (entrySize > 0 && (long)count * entrySize > f.Remaining)
         {
             listed = (uint)(f.Remaining / entrySize);
-            state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The trun box at 0x{node.Offset:X} declares {count} samples, but holds room for {listed}.", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The trun box at 0x{node.Offset:X} declares {Counts.Of(count, "sample", "samples")}, but holds room for {listed}.", node);
         }
 
         long start = f.Position;
@@ -268,7 +268,7 @@ public sealed partial class Mp4Parser
                 if (!isKept)
                 {
                     state.Findings.Add(Severity.Warning, "mp4.fragment-samples-limit", run, _ =>
-                        $"The fragments of the file hold more than {state.MaxFragmentSamples} samples of audio tracks; the samples from the run at 0x{run.Offset:X} on are counted for the stream's figures and are not analyzed.");
+                        $"The fragments of the file hold more than {Counts.Of(state.MaxFragmentSamples, "sample", "samples")} of audio tracks; the samples from the run at 0x{run.Offset:X} on are counted for the stream's figures and are not analyzed.");
                 }
 
                 // Past the cap the samples are counted and never kept; a run without sizes or durations of its own is counted at once.
@@ -318,7 +318,7 @@ public sealed partial class Mp4Parser
             uint first = (uint)f.Take(4);
             uint duration = (uint)f.Take(4);
             uint sap = (uint)f.Take(4);
-            var reference = new Node("Reference", at, 12, $"{first & 0x7FFFFFFF} bytes, {BoxFields.DurationText(duration, timescale)}") { Description = Explain.Reference };
+            var reference = new Node("Reference", at, 12, $"{Counts.Of(first & 0x7FFFFFFF, "byte", "bytes")}, {BoxFields.DurationText(duration, timescale)}") { Description = Explain.Reference };
             reference.Add(Node.FromBits("Reference Type", at, 0, 1, (first >> 31) == 0 ? "0 (media)" : "1 (segment index)", description: Explain.ReferenceType));
             reference.Add(Node.FromBits("Referenced Size", at, 1, 32, NodeValue.Integer(first & 0x7FFFFFFF, "bytes"), description: Explain.ReferencedSize));
             reference.Add(new Node("Subsegment Duration", at + 4, 4, BoxFields.DurationText(duration, timescale)) { Description = Explain.SubsegmentDuration });

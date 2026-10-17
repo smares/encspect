@@ -11,7 +11,7 @@ internal static class Framing
     // The first bytes an item needs: a core header in a 14-bit form takes 14 bytes.
     private const int HeaderBytes = 16;
 
-    // The item that starts at position, or null. An extension substream counts only with the right CRC16 where strict, which
+    // The item that starts at position, or null. An extension substream counts only with the right CRC-16 where strict, which
     // chains start with, since its sync word has nothing else to check it against; budget limits the CRC work that a
     // search spends on candidates (see CrcBudget).
     public static Item? ItemAt(ISource source, long position, long end, bool strict, CrcBudget? budget = null)
@@ -57,7 +57,7 @@ internal static class Framing
         return new Item(ItemKind.Exss, found, exss.TotalSize, default, exss);
     }
 
-    // 7.5.2: the CRC16 over the header from byte 5 to its end, the CRC included, comes to zero.
+    // 7.5.2: the CRC-16 over the header from byte 5 to its end, the CRC included, comes to zero.
     public static bool HasValidCrc(ISource source, long position, long end, StreamForm form, ExssHeader header, CrcBudget? budget = null)
     {
         int size = header.HeaderSize;
@@ -84,7 +84,7 @@ internal static class Framing
     // than the one before, at the end of the core frame or of the previous substream, or at the next 32-bit boundary after it (7.5.1
     // adds one to three null bytes to align them). A substream right after the end, off the boundary, is kept in the unit but flagged
     // (ExssRef.IsMisaligned): FFmpeg looks for it at the boundary only (dcadec.c, FFALIGN(frame_size, 4)) and so does not read it.
-    // A substream after a core frame needs the right CRC16, or to be whole and followed by a unit that passes the same test or the end of the data, so a
+    // A substream after a core frame needs the right CRC-16, or to be whole and followed by a unit that passes the same test or the end of the data, so a
     // damaged header is still reported and a sync word in junk is not taken for one. Null bytes that align the next unit's sync word
     // belong to the unit.
     public static UnitInfo? UnitAt(ISource source, long position, long end, bool strict, CrcBudget? budget = null)

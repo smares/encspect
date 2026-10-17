@@ -85,7 +85,7 @@ def fixture(name, description, builder, findings=(), crosscheck=None, protection
 
 def unparsed(streams):
     """The info finding for each audio stream whose coding has no parser: PCM and MPEG audio."""
-    names = {0x0001: "PCM", 0x0055: "MPEG audio layer III"}
+    names = {0x0001: "PCM", 0x0055: "MPEG Layer III"}
     return [finding("asf.codec-not-analyzed", names[s["tag"]]) for s in streams if s.get("tag") in names and not s["encrypted"]]
 
 
@@ -364,7 +364,7 @@ def unaligned_offsets_file(variable):
 
 fixture("index-offset-unaligned", "An Index Object with an entry whose offset (100) is not the start of a packet of the 256 bytes every packet has.",
         lambda: unaligned_offsets_file(False),
-        [finding("asf.index-offset", "do not point to the start of a packet")])
+        [finding("asf.index-offset", "not point to the start of a packet")])
 fixture("index-offset-variable-packets", "The same index in a file whose minimum packet size is 128 and maximum 256: the size of a packet is not known from the header, so the offset is not checked against packet starts.",
         lambda: unaligned_offsets_file(True),
         [finding("asf.packet-size", "minimum (128)")])
@@ -523,7 +523,7 @@ fixture("protected-extended", "Windows Media Audio with an Extended Content Encr
         "so the stream is protected.",
         protected([wma(1), m.obj(m.EXTENDED_CONTENT_ENCRYPTION, struct.pack("<I", 5) + b"12345")]), [EXTENDED_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE, scheme("Windows Media Rights Manager 7"))
 fixture("protected-flag-only", "Windows Media Audio whose Stream Properties Object sets the Encrypted Content Flag and a file with no encryption object: the stream is encrypted, with no scheme named.",
-        protected([wma(1, encrypted=True)]), [ENCRYPTED], ENCRYPTED_FFPROBE, scheme("Encrypted Content Flag (scheme not stated)"))
+        protected([wma(1, encrypted=True)]), [ENCRYPTED], ENCRYPTED_FFPROBE, scheme("Protection scheme not stated (Encrypted Content Flag)"))
 def advanced_partial():
     records = [(DRM_SYSTEM, 1, [(1, stream_number(2))], b"abc"), (UNKNOWN_SYSTEM, 3, [(1, stream_number(7))], b"")]
     return m.asf_file([pcm(1), wma(2)], objects_in([1, 2], 6, 100, 512), 512, file_id=FILE_ID, play=1_000_000, extension=advanced(records))
@@ -536,7 +536,7 @@ fixture("protected-advanced", "An Advanced Content Encryption Object in the Head
 fixture("protected-advanced-whole-file", "An Advanced Content Encryption Object whose record names stream 0, the whole file, with a system ID the specification does not list: every stream is protected, "
         "and the system is named by its ID.",
         protected([wma(1)], extension=advanced([(UNKNOWN_SYSTEM, 2, [(1, stream_number(0))], b"data")])), [ADVANCED_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
-        [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": [UNKNOWN_SYSTEM]}])
+        [{"scheme": "Windows Media DRM for network devices", "is_encrypted": True, "systems": [UNKNOWN_SYSTEM.lower()]}])
 fixture("protected-all-objects", "Windows Media Audio covered by all three encryption objects and a Digital Signature Object: the first object in file order names the scheme, and the systems are those of the Advanced Content Encryption Object.",
         protected([wma(1, encrypted=True), m.content_encryption(), m.obj(m.EXTENDED_CONTENT_ENCRYPTION, struct.pack("<I", 2) + b"ab"), m.obj(m.DIGITAL_SIGNATURE, struct.pack("<II", 2, 4) + b"sign")],
                   extension=advanced([(DRM_SYSTEM, 1, [(1, stream_number(1))], b"")])), [DRM1_FINDING, EXTENDED_FINDING, ADVANCED_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
@@ -553,7 +553,7 @@ fixture("protection-object-ids", "An Advanced Content Encryption Object with an 
 fixture("protection-truncated", "A Content Encryption Object whose secret data length is 5000 bytes, in an object of 40.", 
         protected([wma(1, encrypted=True), m.obj(m.CONTENT_ENCRYPTION, struct.pack("<I", 5000) + b"secret" + struct.pack("<I", 4) + b"DRM\0")]),
         [DRM1_FINDING, ENCRYPTED, finding("asf.object-truncated", "Content Encryption Object")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
-fixture("protected-mpeg-audio", "MPEG audio layer III, which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
+fixture("protected-mpeg-audio", "MPEG Layer III, which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
         protected([m.stream_properties(1, m.wave_format(0x0055, 2, 44100, 16000, 1, 0)), m.content_encryption()]), [DRM1_FINDING],
         {"ffprobe": False, "reason": "the MPEG audio payloads are not MPEG audio frames."},
         scheme("Microsoft Digital Rights Manager version 1"))

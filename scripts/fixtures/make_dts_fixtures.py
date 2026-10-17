@@ -375,7 +375,7 @@ def build_substream_damage():
     data = b"".join(parts)
     fixture("exss-bad-crc", ".dts", "Four units whose extension substream header CRC is wrong.", data, rows(parts),
             [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.crc-mismatch", "CRC")],
-            crosscheck=cc_lossless(decode=False, decode_error="Invalid EXSS header checksum", skip={"decode": "ffmpeg checks the extension substream header's CRC16 and rejects it (dca_exss.c: 'Invalid EXSS header checksum'); its parser names the profile from the asset descriptor without that check (dca_parser.c)"}))
+            crosscheck=cc_lossless(decode=False, decode_error="Invalid EXSS header checksum", skip={"decode": "ffmpeg checks the extension substream header's CRC-16 and rejects it (dca_exss.c: 'Invalid EXSS header checksum'); its parser names the profile from the asset descriptor without that check (dca_parser.c)"}))
     broken = dict(asset, bad_sync=["xll"])
     parts = [unit([broken]) for _ in range(4)]
     data = b"".join(parts)
@@ -524,15 +524,15 @@ def build_review():
             [stream("DTS", 48000, STEREO, "2/0", 3 * 512)], [("dts.substream-misaligned", "3 bytes before the boundary")],
             crosscheck=cc())
 
-    # An extension substream's sync word after the last frame, with a header that states 4,096 bytes and a CRC16 that fails.
+    # An extension substream's sync word after the last frame, with a header that states 4,096 bytes and a CRC-16 that fails.
     header = ((0x64582025 << 43) | (1 << 32) | (4095 << 20) | 0xFFFFF) << 5
     flood = header.to_bytes(10, "big") + bytes(6)
     frames = [m.core_frame(size=512) for _ in range(3)]
     data = b"".join(frames) + flood * 2
-    fixture("trailing-substream-sync", ".dts", "Three stereo core frames, then two extension substream sync words with headers that state 4,096 bytes and fail their CRC16.", data, rows(frames),
+    fixture("trailing-substream-sync", ".dts", "Three stereo core frames, then two extension substream sync words with headers that state 4,096 bytes and fail their CRC-16.", data, rows(frames),
             [stream("DTS", 48000, STEREO, "2/0", 3 * 512)], [("dts.trailing-data", "32 bytes after the last frame")], gaps=[(1536, 32)],
             crosscheck=cc(ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's parser takes the bytes after the last frame into its last packet",
-                                                              "decode": "ffmpeg's last packet holds the bytes after the last frame, which its decoder reads as an extension substream and rejects for its header CRC16 (dca_exss.c: 'Invalid EXSS header checksum')"}))
+                                                              "decode": "ffmpeg's last packet holds the bytes after the last frame, which its decoder reads as an extension substream and rejects for its header CRC-16 (dca_exss.c: 'Invalid EXSS header checksum')"}))
 
     # Findings on groups of fields, whose nodes differ between the forms.
     parts = [unit([dict(five, asset_size=60)]) for _ in range(2)]
@@ -546,24 +546,24 @@ def build_review():
             crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XLL common header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": XLL_STUB}))
     parts = [m.core_frame(size=1024, amode=9, nch=5, ext_id=6, ext=1, extensions=[m.xxch_overrun()], subs=[30] * 5, vqsub=[31] * 5, joinx=[0] * 5, thuff=[0] * 5,
                           shuff=[6] * 5, bhuff=[5] * 5, sel=[[1, 3, 3, 3, 3, 7, 7, 7, 7, 7] for _ in range(5)]) for _ in range(2)]
-    fixture("xxch-header-overrun", ".dts", "Two 3/2 core frames with an XXCH extension of 12 bytes, whose header CRC16 holds and whose fields need more bits than it has.", b"".join(parts), rows(parts),
+    fixture("xxch-header-overrun", ".dts", "Two 3/2 core frames with an XXCH extension of 12 bytes, whose header CRC-16 holds and whose fields need more bits than it has.", b"".join(parts), rows(parts),
             [stream("DTS-ES", 48000, SURROUND_5_1[:5], "3/2", 2 * 512)], [("dts.header-overrun", "ends inside the XXCH extension's header")],
             crosscheck=cc(ffprobe_profile=False, libdca_channels=5, skip={"ffprobe_profile": "ffmpeg's decoder names the profile DTS-ES only when it has decoded the extension (dca_core.c), which is cut short here"}))
 
-    # A bad CRC16 in the header of XXCH in the core, of XBR in a substream.
+    # A bad CRC-16 in the header of XXCH in the core, of XBR in a substream.
     ext_options = dict(amode=9, lff=2, ext=1, ext_id=6)
     p = m.defaults(amode=9, lff=2)
     parts = [m.core_frame(size=1024, extensions=[m.xxch(chsets=((2, 0x180),), core_mask=0x3F, bad_crc=(i == 1), crc_chset=True, p=p)], **ext_options) for i in range(3)]
-    fixture("xxch-bad-crc", ".dts", "Three 3/2 core frames with an LFE channel and an XXCH extension whose frame header CRC16 fails in the second.", b"".join(parts), rows(parts),
+    fixture("xxch-bad-crc", ".dts", "Three 3/2 core frames with an LFE channel and an XXCH extension whose frame header CRC-16 fails in the second.", b"".join(parts), rows(parts),
             [stream("DTS-ES", 48000, SURROUND_5_1_WITH_REAR, "3/2", 3 * 512)],
-            [("dts.crc-mismatch", "XXCH frame header's CRC16")], fields={"DTS/Statistics/Frames Failing a CRC": "1 frame"},
+            [("dts.crc-mismatch", "XXCH frame header's CRC-16")], fields={"DTS/Statistics/Frames Failing a CRC": "1 frame"},
             crosscheck=cc(ffprobe=False, decode=False, decode_errors={"0": "DSYNC check failed", "1024": "XXCH sync word not found", "2048": "DSYNC check failed"}, libdca_channels=6,
                           skip={"ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler (dca_core.c: 'DSYNC check failed')",
-                                "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check; the frame whose header CRC16 fails is not an XXCH frame to it at all ('XXCH sync word not found'), where the analyzer keeps the extension and reports dts.crc-mismatch"}))
+                                "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check; the frame whose header CRC-16 fails is not an XXCH frame to it at all ('XXCH sync word not found'), where the analyzer keeps the extension and reports dts.crc-mismatch"}))
     parts = [m.core_frame(size=512) + m.exss([dict(components=["xbr"], channels=2, mask=0x02, component_options={"xbr": {"bad_crc": True}})]) for _ in range(3)]
-    fixture("xbr-bad-crc", ".dts", "Three units whose extension substream has an XBR component with a frame header CRC16 that fails.", b"".join(parts), rows(parts),
-            [stream("DTS-HD High Resolution Audio", 48000, STEREO, "2/0", 3 * 512)], [("dts.crc-mismatch", "XBR frame header's CRC16")], fields={"DTS/Statistics/Frames Failing a CRC": "3 frames"},
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XBR frame header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the XBR frame header whose CRC16 fails (dca_core.c: 'Invalid XBR frame header checksum')"}))
+    fixture("xbr-bad-crc", ".dts", "Three units whose extension substream has an XBR component with a frame header CRC-16 that fails.", b"".join(parts), rows(parts),
+            [stream("DTS-HD High Resolution Audio", 48000, STEREO, "2/0", 3 * 512)], [("dts.crc-mismatch", "XBR frame header's CRC-16")], fields={"DTS/Statistics/Frames Failing a CRC": "3 frames"},
+            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XBR frame header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the XBR frame header whose CRC-16 fails (dca_core.c: 'Invalid XBR frame header checksum')"}))
 
     # Profile precedence and the delivered sampling frequency.
     parts = [unit([dict(components=["lbr", "xll"], channels=2, mask=0x02)]) for _ in range(3)]

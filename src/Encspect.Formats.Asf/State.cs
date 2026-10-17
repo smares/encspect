@@ -131,7 +131,7 @@ internal sealed class State(ParseContext context, ByteReader reader)
             string text = AsfGuids.Text(entry.First.Id);
             string message = entry.Count == 1
                 ? $"The {(key == "top-level" ? "top-level object" : "object")} {text} at 0x{entry.First.Offset:X} in {entry.Place} is none of the objects the specification defines; readers ignore it ({entry.Section})."
-                : $"{entry.Count} objects in {entry.Place} are none of the objects the specification defines, the first {text} at 0x{entry.First.Offset:X}; readers ignore them ({entry.Section}).";
+                : $"{Counts.Of(entry.Count, "object", "objects")} in {entry.Place} {Counts.Agree(entry.Count, "is", "are")} none of the objects the specification defines, the first {text} at 0x{entry.First.Offset:X}; readers ignore them ({entry.Section}).";
             Findings.AddNow(Severity.Info, "asf.unknown-object", message, entry.Node, entry.Count);
         }
 
@@ -264,5 +264,5 @@ internal static class ProtectionSchemes
     public const string DrmVersion1 = "Microsoft Digital Rights Manager version 1";
     public const string RightsManager7 = "Windows Media Rights Manager 7";
     public const string AdvancedEncryption = "Windows Media DRM for network devices";
-    public const string StreamFlag = "Encrypted Content Flag (scheme not stated)";
+    public const string StreamFlag = "Protection scheme not stated (Encrypted Content Flag)";
 }

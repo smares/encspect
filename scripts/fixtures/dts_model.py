@@ -360,7 +360,7 @@ def xxch(chsets=((1, 0x40),), core_mask=0x3F, mask_bits=16, crc_chset=False, bad
 
 
 def xxch_overrun(size=12, sets=4, mask_bits=32):
-    """An XXCH extension (6.5.2) of size bytes whose header CRC16 holds but whose fields (the number of channel sets and the speaker
+    """An XXCH extension (6.5.2) of size bytes whose header CRC-16 holds but whose fields (the number of channel sets and the speaker
     mask) need more bits than the extension has, so the frame ends inside its header."""
     bits = Bits()
     bits.put(SYNC_XXCH, 32)
@@ -499,7 +499,7 @@ def asset_descriptor(a, wide, static, mix_enabled=False):
 
 
 def finish_header(bits, crc_start):
-    """Pads the header bits to a byte, appends the CRC16 over the bytes from crc_start (the bytes after the sync word) to the end, and returns the bytes."""
+    """Pads the header bits to a byte, appends the CRC-16 over the bytes from crc_start (the bytes after the sync word) to the end, and returns the bytes."""
     bits.align()
     raw = bytearray(bits.bytes() + b"\0\0")
     raw[-2:] = crc16(bytes(raw[crc_start:-2])).to_bytes(2, "big")
@@ -541,7 +541,7 @@ def _bands_of(s):
 
 
 def _set_header(s, hier_ofs, mask_bits, size_bits, scalable):
-    """A channel set sub-header as bytes, with its size and CRC16 (Table 8-4); fields are written as FFmpeg's chs_parse_header reads them."""
+    """A channel set sub-header as bytes, with its size and CRC-16 (Table 8-4); fields are written as FFmpeg's chs_parse_header reads them."""
     b = Bits()
     b.put(0, 10)  # nChSetHeaderSize - 1, filled in below
     n = s["channels"]
@@ -855,7 +855,7 @@ def exss(assets, index=0, wide=False, static=True, ref_clock=2, duration_code=0,
         for _ in range(presentations):
             head.put(0, 2)
             head.put(0, 3)
-    # 7.5.1: the components' sync words are DWORD aligned in the substream, so the header, with its CRC16, ends on a 32-bit boundary.
+    # 7.5.1: the components' sync words are DWORD aligned in the substream, so the header, with its CRC-16, ends on a 32-bit boundary.
     if header_pad is None:
         header_pad = (-((head.count + 7) // 8 + 2)) % 4
     head.put(0, header_pad * 8)

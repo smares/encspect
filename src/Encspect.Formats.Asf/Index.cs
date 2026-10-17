@@ -28,7 +28,7 @@ public sealed partial class AsfParser
             long fit = f.Remaining / 6;
             if (count > fit)
             {
-                state.Findings.AddNow(Severity.Warning, "asf.index-size", $"The Simple Index Object counts {count} entries, but its size leaves room for {fit}.", countNode);
+                state.Findings.AddNow(Severity.Warning, "asf.index-size", $"The Simple Index Object counts {Counts.Of(count, "entry", "entries")}, but its size leaves room for {fit}.", countNode);
             }
 
             long listed = Math.Min(count, fit);
@@ -82,7 +82,7 @@ public sealed partial class AsfParser
 
             if (beyond > 0)
             {
-                state.Findings.AddNow(Severity.Warning, "asf.index-packet-number", $"{beyond} entries of the Simple Index Object name a packet past the last one ({packets} packets).", countNode, (int)Math.Min(beyond, int.MaxValue));
+                state.Findings.AddNow(Severity.Warning, "asf.index-packet-number", $"{Counts.Of(beyond, "entry", "entries")} of the Simple Index Object {Counts.Agree(beyond, "names", "name")} a packet past the last one ({Counts.Of(packets, "packet", "packets")}).", countNode, (int)Math.Min(beyond, int.MaxValue));
             }
 
             if (interval == 0 && count > 0)
@@ -350,13 +350,13 @@ public sealed partial class AsfParser
 
             if (outsideOffsets > 0)
             {
-                state.Findings.AddNow(Severity.Warning, "asf.index-offset", $"{outsideOffsets} offsets of the {name} point past the data packets.", node, (int)Math.Min(outsideOffsets, int.MaxValue));
+                state.Findings.AddNow(Severity.Warning, "asf.index-offset", $"{Counts.Of(outsideOffsets, "offset", "offsets")} of the {name} point past the data packets.", node, (int)Math.Min(outsideOffsets, int.MaxValue));
             }
 
             if (unalignedOffsets > 0)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.index-offset",
-                    $"{unalignedOffsets} offsets of the {name} do not point to the start of a packet of {state.PacketSize} bytes (section 6.2).", node, (int)Math.Min(unalignedOffsets, int.MaxValue));
+                    $"{Counts.Of(unalignedOffsets, "offset", "offsets")} of the {name} {Counts.Agree(unalignedOffsets, "does", "do")} not point to the start of a packet of {Counts.Of(state.PacketSize, "byte", "bytes")} (section 6.2).", node, (int)Math.Min(unalignedOffsets, int.MaxValue));
             }
 
             _ = invalidOffsets;

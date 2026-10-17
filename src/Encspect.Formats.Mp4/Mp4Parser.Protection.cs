@@ -24,6 +24,11 @@ public sealed partial class Mp4Parser
     // vector per sample of 0 (a constant one in tenc), 8 or 16 bytes.
     private static bool IsInitializationVectorSize(int size) => size is 0 or 8 or 16;
 
+    // What a scheme the registry list does not name is called; it reads as a sentence's own words when it stands inside one (InSentence).
+    private const string UnnamedScheme = "Protection scheme";
+
+    private static string InSentence(string scheme) => scheme.StartsWith(UnnamedScheme, StringComparison.Ordinal) ? char.ToLowerInvariant(scheme[0]) + scheme[1..] : scheme;
+
     private static bool ProtectsByCommonEncryption(string? scheme) => scheme is "cenc" or "cens" or "cbc1" or "cbcs";
 
     // The registry's description of a protection scheme (the MP4 registration authority's schemes list, type
@@ -40,7 +45,7 @@ public sealed partial class Mp4Parser
         "sve1" => "AES-CTR content sensitive encryption (sve1)",
         "odkm" => "OMA DRM KMS (odkm)",
         "cpcm" => "CPCM protected content (cpcm)",
-        _ => $"protection scheme {scheme}",
+        _ => $"{UnnamedScheme} {scheme}",
     };
 
     private static bool IsProtectedEntry(string format) => format is "enca" or "encv" or "encs" or "enct" or "encm" or "encf" or "encu" or "encp" or "enc3" or "drms" or "drmi" or "aavd";
@@ -67,7 +72,8 @@ public sealed partial class Mp4Parser
             f.CString(node, "Scheme URI", Explain.SchemeUri);
         }
 
-        node.Value = $"{type} ({(ProtectsByCommonEncryption(type) ? "Common Encryption" : SchemeName(type))})";
+        string named = ProtectsByCommonEncryption(type) ? "Common Encryption" : SchemeName(type);
+        node.Value = named.StartsWith(UnnamedScheme, StringComparison.Ordinal) ? type : $"{type} ({named})";
         if (!state.InSinf || state.CurrentEntry is not { Protection: not null })
         {
             MarkProtectionScheme(state);
@@ -123,19 +129,19 @@ public sealed partial class Mp4Parser
 
         if (constant is not null && constantSize is { } declared && constant.Length < declared)
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.tenc-constant-iv", $"The tenc box at 0x{node.Offset:X} declares a constant initialization vector of {declared} bytes, but holds {constant.Length}.", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.tenc-constant-iv", $"The tenc box at 0x{node.Offset:X} declares a constant initialization vector of {Counts.Of(declared, "byte", "bytes")}, but holds {constant.Length}.", node);
         }
 
         if (!IsInitializationVectorSize(ivSize))
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.tenc-iv-size", $"The tenc box at 0x{node.Offset:X} gives a per-sample initialization vector size of {ivSize} bytes; 0, 8 and 16 are valid (ISO/IEC 23001-7).", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.tenc-iv-size", $"The tenc box at 0x{node.Offset:X} gives a per-sample initialization vector size of {Counts.Of(ivSize, "byte", "bytes")}; 0, 8 and 16 are valid (ISO/IEC 23001-7).", node);
         }
         else if (isProtected != 0 && ivSize == 0 && constantSize is not (8 or 16))
         {
             state.Findings.AddNow(Severity.Warning, "mp4.tenc-constant-iv",
                 constantSize is null
                     ? $"The tenc box at 0x{node.Offset:X} gives no initialization vector per sample and holds no constant one, which a protected track needs (ISO/IEC 23001-7)."
-                    : $"The tenc box at 0x{node.Offset:X} gives a constant initialization vector of {constantSize} bytes; 8 and 16 are valid (ISO/IEC 23001-7).", node);
+                    : $"The tenc box at 0x{node.Offset:X} gives a constant initialization vector of {Counts.Of(constantSize.GetValueOrDefault(), "byte", "bytes")}; 8 and 16 are valid (ISO/IEC 23001-7).", node);
         }
 
         if (state.InSinf && state.CurrentEntry is { Protection: { } protection })
@@ -188,7 +194,7 @@ public sealed partial class Mp4Parser
             uint size = f.U32(node, "Data Size", Explain.PsshDataSize, unit: "bytes");
             if (size > f.Remaining)
             {
-                state.Findings.AddNow(Severity.Warning, "mp4.pssh-data-exceeds-box", $"The pssh box at 0x{node.Offset:X} declares {size} bytes of data, but holds {f.Remaining}.", node);
+                state.Findings.AddNow(Severity.Warning, "mp4.pssh-data-exceeds-box", $"The pssh box at 0x{node.Offset:X} declares {Counts.Of(size, "byte", "bytes")} of data, but holds {f.Remaining}.", node);
             }
 
             long data = Math.Min(size, f.Remaining);
@@ -282,7 +288,7 @@ public sealed partial class Mp4Parser
         {
             if (count > f.Remaining)
             {
-                state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The saiz box at 0x{node.Offset:X} declares {count} samples, but holds room for {f.Remaining} sizes.", node);
+                state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The saiz box at 0x{node.Offset:X} declares {Counts.Of(count, "sample", "samples")}, but holds room for {Counts.Of(f.Remaining, "size", "sizes")}.", node);
             }
 
             if (f.Remaining > 0)
@@ -304,7 +310,7 @@ public sealed partial class Mp4Parser
         long room = f.Remaining / width;
         if (count > room)
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The saio box at 0x{node.Offset:X} declares {count} offsets, but holds room for {room}.", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The saio box at 0x{node.Offset:X} declares {Counts.Of(count, "offset", "offsets")}, but holds room for {room}.", node);
         }
 
         long start = f.Position;
@@ -398,7 +404,7 @@ public sealed partial class Mp4Parser
     {
         if (f.Remaining < AudibleDrmLength)
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.adrm-short", $"The adrm box at 0x{node.Offset:X} holds {f.Remaining} bytes, fewer than the {AudibleDrmLength} FFmpeg's reader takes from it; its fields are not read.", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.adrm-short", $"The adrm box at 0x{node.Offset:X} holds {Counts.Of(f.Remaining, "byte", "bytes")}, fewer than the {AudibleDrmLength} FFmpeg's reader takes from it; its fields are not read.", node);
             f.Bytes(node, "Data", f.Remaining, Explain.UnreadData);
             return;
         }
@@ -577,6 +583,6 @@ public sealed partial class Mp4Parser
     {
         "drms" or "drmi" => "iTunes protection (" + entry.Format + ")",
         "aavd" => "Audible (aavd)",
-        _ => entry.Protection?.SchemeType is { } type ? SchemeName(type) : "protection scheme not stated",
+        _ => entry.Protection?.SchemeType is { } type ? SchemeName(type) : $"{UnnamedScheme} not stated",
     };
 }

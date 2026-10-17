@@ -150,7 +150,7 @@ public sealed class DtsCodecParser : ICodecParser
                 long expected = (long)observed.SamplesPerUnit * observed.HighestRate / observed.CoreRate;
                 if (expected != 512 << duration)
                 {
-                    Differs("FrameDuration", $"{512 << duration} samples", $"{expected} samples");
+                    Differs("FrameDuration", $"{Counts.Of(512 << duration, "sample", "samples")}", $"{Counts.Of(expected, "sample", "samples")}");
                 }
             }
 
@@ -169,7 +169,7 @@ public sealed class DtsCodecParser : ICodecParser
             int size = Read("Core Size", 14, Explain.DdtsCoreSize, v => NodeValue.Integer(v, "bytes"));
             if (observed.HasCore && size != 0 && observed.CoreBytes > 0 && size != observed.CoreBytes)
             {
-                Differs("CoreSize", $"{size} bytes", $"{observed.CoreBytes} bytes");
+                Differs("CoreSize", $"{Counts.Of(size, "byte", "bytes")}", $"{Counts.Of(observed.CoreBytes, "byte", "bytes")}");
             }
 
             Read("HasStereoDownmix", 1, Explain.DdtsDownmix, v => NodeValue.Boolean(v != 0));

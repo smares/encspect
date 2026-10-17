@@ -125,7 +125,7 @@ internal sealed class ProNodes
         List<FramePart> parts = PartsOf(frame);
         (long offset, long length, IReadOnlyList<ByteRange>? ranges) = _map.Cover(parts, frame.StartBit, frame.EndBit);
         string value = frame.Status == 0
-            ? $"{Count(frame.SubframeCount, "subframe", "subframes")}, {frame.EndBit - frame.StartBit} bits"
+            ? $"{Count(frame.SubframeCount, "subframe", "subframes")}, {Counts.Of(frame.EndBit - frame.StartBit, "bit", "bits")}"
             : $"invalid: {ProStream.StatusText((ProStatus)frame.Status)}";
         return new Node("Frame", offset, length, value, () => FrameChildren(index, parts))
         {
@@ -197,7 +197,7 @@ internal sealed class ProNodes
         int trimStart = frame.PostEnd + (frame.Has(ProFrameRecord.HasDrc) ? 8 : 0);
         if (frame.HeaderEnd > trimStart)
         {
-            nodes.Add(Field(trimStart, frame.HeaderEnd, "Trim", NodeValue.Text(frame.Has(ProFrameRecord.HasTrimInfo) ? $"{frame.TrimStart} samples at the start, {frame.TrimEnd} at the end" : "none"), ProExplain.Trim, Topics.WmaPro));
+            nodes.Add(Field(trimStart, frame.HeaderEnd, "Trim", NodeValue.Text(frame.Has(ProFrameRecord.HasTrimInfo) ? $"{Counts.Of(frame.TrimStart, "sample", "samples")} at the start, {frame.TrimEnd} at the end" : "none"), ProExplain.Trim, Topics.WmaPro));
         }
 
         for (int s = 0; s < frame.SubframeCount; s++)
@@ -298,7 +298,7 @@ internal sealed class ProNodes
 
             if (channel.CoefficientEnd > channel.CoefficientStart)
             {
-                string text = $"{channel.NonZero} non-zero, {channel.Escapes} escapes, codebook {(channel.Has(ProChannelRecord.SecondCodebook) ? 1 : 0)}{(channel.Has(ProChannelRecord.CoefficientError) ? ", damaged" : string.Empty)}";
+                string text = $"{channel.NonZero} non-zero, {Counts.Of(channel.Escapes, "escape", "escapes")}, codebook {(channel.Has(ProChannelRecord.SecondCodebook) ? 1 : 0)}{(channel.Has(ProChannelRecord.CoefficientError) ? ", damaged" : string.Empty)}";
                 node.Add(Field(channel.CoefficientStart, channel.CoefficientEnd, $"Coefficients (channel {channel.Channel + 1})", NodeValue.Text(text), ProExplain.Coefficients, Topics.WmaPro));
             }
         }
@@ -317,7 +317,7 @@ internal sealed class ProNodes
             }
         }
 
-        string value = $"channels {string.Join(" ", members)}, " + (group.Transform != 0 ? $"transform in {group.BandsOn} bands" : "no transform");
+        string value = $"channels {string.Join(" ", members)}, " + (group.Transform != 0 ? $"transform in {Counts.Of(group.BandsOn, "band", "bands")}" : "no transform");
         return _map.Field(parts, group.Start, group.End, "Channel Group", value, ProExplain.ChannelGroup, Topics.MidSideStereo);
     }
 

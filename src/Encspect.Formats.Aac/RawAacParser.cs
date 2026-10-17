@@ -279,15 +279,15 @@ public sealed class RawAacParser : IFormatParser
         if (leading)
         {
             string what = ZeroRunEnd(state.Cache, start, end) == end ? " (all zero bytes)" : string.Empty;
-            state.Findings.AddNow(Severity.Warning, "aac.leading-junk", $"{length} bytes before the first ADTS frame are not audio{what}.", node);
+            state.Findings.AddNow(Severity.Warning, "aac.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first ADTS frame {Counts.Agree(length, "is", "are")} not audio{what}.", node);
         }
         else if (trailing)
         {
-            state.Findings.AddNow(Severity.Warning, "aac.trailing-data", $"{length} bytes after the last ADTS frame at 0x{start:X} are not a frame.", node);
+            state.Findings.AddNow(Severity.Warning, "aac.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last ADTS frame at 0x{start:X} {Counts.Agree(length, "is", "are")} not a frame.", node);
         }
         else
         {
-            state.Findings.AddNow(Severity.Warning, "aac.sync-lost", $"ADTS sync is lost for {length} bytes at 0x{start:X}.", node);
+            state.Findings.AddNow(Severity.Warning, "aac.sync-lost", $"ADTS sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{start:X}.", node);
         }
     }
 
@@ -300,7 +300,7 @@ public sealed class RawAacParser : IFormatParser
         var node = new Node("Frame", position, length, header.Summary(length)) { Kind = NodeKind.Frame, Description = Explain.AdtsFrame };
         if (truncated)
         {
-            state.Findings.AddNow(Severity.Warning, "aac.frame-truncated", $"The last ADTS frame at 0x{position:X} has {length} of its {header.FrameLength} bytes.", node);
+            state.Findings.AddNow(Severity.Warning, "aac.frame-truncated", $"The last ADTS frame at 0x{position:X} has {length} of its {Counts.Of(header.FrameLength, "byte", "bytes")}.", node);
         }
 
         if (cut)
@@ -925,7 +925,7 @@ public sealed class RawAacParser : IFormatParser
         if (frames >= AppleMinimumFrames && appleHeaders == frames)
         {
             claims = [.. claims, new EncoderClaim("Apple AudioToolbox", FirstFrame(),
-                $"ADTS header layout of Apple's AudioToolbox writer: all {frames} frames have the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0", ClaimRole.Writer)
+                $"ADTS header layout of Apple's AudioToolbox writer: all {Counts.Of(frames, "frame", "frames")} {Counts.Agree(frames, "has", "have")} the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0", ClaimRole.Writer)
             {
                 IsLayout = true,
             }];

@@ -313,7 +313,7 @@ public sealed partial class OpusParser
             else if (head.Streams + head.Coupled > 255)
             {
                 _findings.Add(Severity.Warning, "opus.coupled-count-invalid", Field("Coupled Count"), _ =>
-                    $"{head.Streams} streams and {head.Coupled} coupled streams decode to more than 255 channels (RFC 7845, section 5.1.1); decoders refuse the stream.");
+                    $"{Counts.Of(head.Streams, "stream", "streams")} and {Counts.Of(head.Coupled, "coupled stream", "coupled streams")} decode to more than 255 channels (RFC 7845, section 5.1.1); decoders refuse the stream.");
             }
 
             if (head.Family != 3 && _headNode!.Children.FirstOrDefault(c => c.Name == "Channel Mapping") is { } table)
@@ -325,7 +325,7 @@ public sealed partial class OpusParser
                     {
                         int channel = c;
                         _findings.Add(Severity.Warning, "opus.mapping-invalid", table.Children[c], count =>
-                            $"{Count(count, "entry", "entries")} of the channel mapping name a decoded channel the {head.Streams + head.Coupled} the streams give do not include: the first, channel {channel}, names {value} (RFC 7845, section 5.1.1); decoders refuse the stream.");
+                            $"{Count(count, "entry", "entries")} of the channel mapping {Counts.Agree(count, "names", "name")} a decoded channel beyond the {head.Streams + head.Coupled} the streams give: the first, channel {channel}, names {value} (RFC 7845, section 5.1.1); decoders refuse the stream.");
                     }
                 }
             }
@@ -451,7 +451,7 @@ public sealed partial class OpusParser
             if (differs is { } d)
             {
                 _findings.Add(Severity.Warning, "opus.stream-durations-differ", PacketNode(_records, index), count =>
-                    $"{Count(count, "multistream packet holds", "multistream packets hold")} streams of different durations: in the first, at 0x{_records.OffsetOf(index):X}, stream {d.Stream} codes {d.Samples} samples where stream 0 codes {d.First}; every stream of a packet must code the same duration, and decoders treat the others as malformed (RFC 7845, section 3).");
+                    $"{Count(count, "multistream packet holds", "multistream packets hold")} streams of different durations: in the first, at 0x{_records.OffsetOf(index):X}, stream {d.Stream} codes {Counts.Of(d.Samples, "sample", "samples")} where stream 0 codes {d.First}; every stream of a packet must code the same duration, and decoders treat the others as malformed (RFC 7845, section 3).");
             }
         }
 

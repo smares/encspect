@@ -77,6 +77,9 @@ public class MpegFixtureTests
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
+    // A count as the analyzer writes it: the unit in the singular for one.
+    private static string Counted(int count, string singular, string plural) => $"{count} {(count == 1 ? singular : plural)}";
+
     private static void CheckHandBuilt(JsonElement manifest, Report report)
     {
         Assert.Equal(manifest.GetProperty("length").GetInt64(), report.Root.Length);
@@ -362,12 +365,12 @@ public class MpegFixtureTests
             return;
         }
 
-        var actual = new Dictionary<string, string> { ["Side Info/Main Data Begin"] = $"{mainDataBegin} bytes" };
+        var actual = new Dictionary<string, string> { ["Side Info/Main Data Begin"] = Counted(mainDataBegin, "byte", "bytes") };
         if (compareReservoir && expected.TryGetProperty("reservoir", out JsonElement reservoir))
         {
             // minimp3 keeps up to 511 bytes whatever the version; main_data_begin reaches 255 in MPEG-2 and 2.5.
             int reach = Value(frame, "Header/Version") == "MPEG-1" ? 511 : 255;
-            actual["Side Info/Reservoir Fill"] = $"{Math.Min(reservoir.GetInt32(), reach)} bytes";
+            actual["Side Info/Reservoir Fill"] = Counted(Math.Min(reservoir.GetInt32(), reach), "byte", "bytes");
         }
 
         int channels = Value(frame, "Header/Channel Mode") == "Mono" ? 1 : 2;
@@ -376,7 +379,7 @@ public class MpegFixtureTests
         foreach (JsonElement g in expected.GetProperty("granules").EnumerateArray())
         {
             string path = $"Side Info/Granule {i / channels}/Channel {i % channels}/";
-            actual[path + "Part 2 and 3 Length"] = $"{g.GetProperty("part2_3_length").GetInt32()} bits";
+            actual[path + "Part 2 and 3 Length"] = Counted(g.GetProperty("part2_3_length").GetInt32(), "bit", "bits");
             actual[path + "Big Values"] = $"{g.GetProperty("big_values").GetInt32()}";
             actual[path + "Global Gain"] = $"{g.GetProperty("global_gain").GetInt32()}";
             actual[path + "Scalefactor Compress"] = $"{g.GetProperty("scalefac_compress").GetInt32()}";
@@ -607,7 +610,7 @@ public class MpegFixtureTests
 
         long[] ancillary = expected.GetProperty("ancillary").EnumerateArray().Select(a => a.GetInt64()).ToArray();
         Assert.Equal(ancillary, new long[] { Count("Ancillary Data"), Count("Ancillary Data/Smallest Nonzero Amount"), Count("Ancillary Data/Largest Amount") });
-        Assert.Equal($"{expected.GetProperty("max_main_data_begin").GetInt32()} bytes", Value(statistics, "Maximum Main Data Begin"));
+        Assert.Equal(Counted(expected.GetProperty("max_main_data_begin").GetInt32(), "byte", "bytes"), Value(statistics, "Maximum Main Data Begin"));
         Assert.Equal(expected.GetProperty("scalefac_scale_used").GetBoolean() ? "true" : "false", Value(statistics, "UsesScalefactorScaling"));
         Assert.Equal(expected.GetProperty("scfsi_used").GetBoolean() ? "true" : "false", Value(statistics, "UsesScfsi"));
     }

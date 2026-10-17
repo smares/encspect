@@ -158,7 +158,7 @@ public class ProtectionTests
 
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.True(stream.Protection!.IsEncrypted);
-        Assert.Equal("encrypted audio", stream.Codec);
+        Assert.Equal("Encrypted audio", stream.Codec);
     }
 
     // The purchase's account, date and owner are tags of the file whatever protects the track.
@@ -214,7 +214,7 @@ public class ProtectionTests
     [Theory]
     [InlineData("asf/protected-drm1.asf", "Microsoft Digital Rights Manager version 1")]
     [InlineData("asf/protected-extended.asf", "Windows Media Rights Manager 7")]
-    [InlineData("asf/protected-flag-only.asf", "Encrypted Content Flag (scheme not stated)")]
+    [InlineData("asf/protected-flag-only.asf", "Protection scheme not stated (Encrypted Content Flag)")]
     public void EncryptedAsfStreamsAreDescribedFromTheirHeader(string name, string scheme)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -459,7 +459,7 @@ public class ProtectionTests
 
     // A protected stream no codec parser describes is still a stream, so that its protection is reported: MPEG audio, video, a clear track of an unparsed coding.
     [Theory]
-    [InlineData("asf/protected-mpeg-audio.asf", "MPEG audio layer III", true)]
+    [InlineData("asf/protected-mpeg-audio.asf", "MPEG Layer III", true)]
     [InlineData("asf/protected-video-only.asf", "Video", true)]
     [InlineData("mp4/cenc-clear-unparsed.m4a", "Apple Lossless", false)]
     public void ProtectedStreamsOfUnparsedCodingsAreReported(string name, string codec, bool isEncrypted)

@@ -185,7 +185,7 @@ public sealed partial class SpeexParser
             if (header.Channels is not (1 or 2))
             {
                 _findings.Add(Severity.Warning, "speex.channels-invalid", Field("Channels"), _ =>
-                    $"The header gives {header.Channels} channels, where Speex has 1 or 2; decoders read it as {header.DecodedChannels}.");
+                    $"The header gives {Counts.Of(header.Channels, "channel", "channels")}, where Speex has 1 or 2; decoders read it as {header.DecodedChannels}.");
             }
 
             if (header.Rate <= 0)
@@ -197,7 +197,7 @@ public sealed partial class SpeexParser
             if (header.FramesPerPacket is < 1 or > 10)
             {
                 _findings.Add(Severity.Warning, "speex.frames-per-packet", Field("Frames Per Packet"), _ =>
-                    $"The header gives {header.FramesPerPacket} frames per packet; Speex packs 1 to 10.");
+                    $"The header gives {Counts.Of(header.FramesPerPacket, "frame", "frames")} per packet; Speex packs 1 to 10.");
             }
 
             if (header.VersionId != 1)

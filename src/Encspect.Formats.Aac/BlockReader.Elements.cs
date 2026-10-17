@@ -153,7 +153,7 @@ internal sealed partial class BlockReader
 
             if (parent is not null)
             {
-                Close(parent, n!, "DSE", start, bits.Original, $"data stream element, tag {tag}, {count} bytes", Explain.DataStreamElement, Topics.RawDataBlocks);
+                Close(parent, n!, "DSE", start, bits.Original, $"data stream element, tag {tag}, {Counts.Bytes(count)}", Explain.DataStreamElement, Topics.RawDataBlocks);
             }
         }
         catch (Exception e) when (n is not null && e is BlockError or BlockOverrun)
@@ -356,7 +356,7 @@ internal sealed partial class BlockReader
             _elements.Add(new ElementSpan(5, start, bits.Original, -1));
             if (parent is not null)
             {
-                Close(parent, n!, "PCE", start, bits.Original, $"program config element, {channels} channels", Explain.ProgramConfigElement, Topics.RawDataBlocks);
+                Close(parent, n!, "PCE", start, bits.Original, $"program config element, {Counts.Of(channels, "channel", "channels")}", Explain.ProgramConfigElement, Topics.RawDataBlocks);
             }
         }
         catch (Exception e) when (n is not null && e is BlockError or BlockOverrun)
@@ -398,7 +398,7 @@ internal sealed partial class BlockReader
             // A skeleton knows its limit only up to its next cut; the pass that wrote it checked this.
             if (!bits.IsSkeleton && end > bits.OriginalLimit)
             {
-                throw new BlockError("aac.element-past-end", $"declares {count} bytes, more than its access unit holds after it", null);
+                throw new BlockError("aac.element-past-end", $"declares {Counts.Of(count, "byte", "bytes")}, more than its access unit holds after it", null);
             }
 
             var types = new List<int>(1);
@@ -410,7 +410,7 @@ internal sealed partial class BlockReader
                 types.Add(type);
                 if (used > left)
                 {
-                    Soft("aac.fill-payload-overrun", $"an extension payload of {used} bytes in a fill element that has {left} bytes left", payloadStart, payloadStart + 4, "Extension Type");
+                    Soft("aac.fill-payload-overrun", $"an extension payload of {Counts.Of(used, "byte", "bytes")} in a fill element that has {Counts.Of(left, "byte", "bytes")} left", payloadStart, payloadStart + 4, "Extension Type");
                     bits.MoveTo(end);
                     break;
                 }
@@ -427,7 +427,7 @@ internal sealed partial class BlockReader
                 _tally.FillBytes += count;
             }
 
-            summary = count == 0 ? "fill element, no payload" : $"fill element, {string.Join(", ", types.Select(t => AacTables.ExtensionTypeName(t)))}, {count} bytes";
+            summary = count == 0 ? "fill element, no payload" : $"fill element, {string.Join(", ", types.Select(t => AacTables.ExtensionTypeName(t)))}, {Counts.Bytes(count)}";
             _elements.Add(new ElementSpan(6, start, bits.Original, -1));
             if (parent is not null)
             {
@@ -478,7 +478,7 @@ internal sealed partial class BlockReader
             // The payload needs more than its fill element holds: what it holds is shown, and the
             // next element is read where the fill element's count ends.
             Soft(type is 13 or 14 ? "aac.sbr-past-fill" : "aac.fill-payload-overrun",
-                type is 13 or 14 ? "SBR data that runs past its fill element" : $"an extension payload that needs more than the {count} bytes its fill element has left",
+                type is 13 or 14 ? "SBR data that runs past its fill element" : $"an extension payload that needs more than the {Counts.Of(count, "byte", "bytes")} its fill element has left",
                 start, start + 4, "Extension Type");
             bits.Restore(limit);
             bits.MoveTo(end);
@@ -496,7 +496,7 @@ internal sealed partial class BlockReader
 
         if (parent is not null)
         {
-            Close(parent, n!, "Extension Payload", start, bits.Original, $"{AacTables.ExtensionTypeName(type)}, {used} bytes", Explain.ExtensionPayload, topic);
+            Close(parent, n!, "Extension Payload", start, bits.Original, $"{AacTables.ExtensionTypeName(type)}, {Counts.Bytes(used)}", Explain.ExtensionPayload, topic);
         }
 
         return used;

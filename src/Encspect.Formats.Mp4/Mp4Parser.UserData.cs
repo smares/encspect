@@ -117,7 +117,7 @@ public sealed partial class Mp4Parser
     // Kept out of the item loop, where a closure over its variables would be allocated for every item.
     private static void ReportItemSize(State state, Node at, BoxHeader header, long position, int size, long length) =>
         state.Findings.Add(Severity.Warning, "mp4.text-size-invalid", at, times =>
-            $"{(times == 1 ? $"The text item at 0x{position:X} of the {header.Type} atom states {size} bytes, but {length} follow" : $"{times} text items state more bytes than their atom holds, first the item at 0x{position:X} of the {header.Type} atom at 0x{header.Offset:X}")}; the text is cut there.");
+            $"{(times == 1 ? $"The text item at 0x{position:X} of the {header.Type} atom states {Counts.Bytes(size)}, but {length} {Counts.Agree(length, "follows", "follow")}" : $"{times} text items state more bytes than their atom holds, first the item at 0x{position:X} of the {header.Type} atom at 0x{header.Offset:X}")}; the text is cut there.");
 
     private static void ReportItemTail(State state, Node rest, BoxHeader header) =>
         state.Findings.Add(Severity.Warning, "mp4.text-item-truncated", rest, times =>

@@ -72,7 +72,7 @@ internal static partial class Summary
 
         if (s.AudioBlocks == 0)
         {
-            s.Findings.Add(Severity.Warning, "wavpack.no-audio", stream, _ => $"None of the {(s.Blocks == 1 ? "1 block counts" : $"{s.Blocks} blocks count")} a sample, so the file holds no audio.");
+            s.Findings.Add(Severity.Warning, "wavpack.no-audio", stream, _ => $"{(s.Blocks == 1 ? "The only block counts no sample" : $"None of the {s.Blocks} blocks counts a sample")}, so the file holds no audio.");
             return;
         }
 
@@ -82,7 +82,7 @@ internal static partial class Summary
             int firstExtra = s.ExtraOnlyFirst;
             long at = s.Entries[firstExtra].Offset;
             s.Findings.Add(Severity.Warning, "wavpack.audio-without-bitstream", () => Nodes.Block(s.Records, firstExtra), _ =>
-                $"The block at 0x{at:X} counts samples, but holds only extra bits and no bitstream{(s.ExtraOnly > 1 ? $" ({s.ExtraOnly} blocks)" : string.Empty)}; it cannot be decoded.", "extra-only");
+                $"The block at 0x{at:X} counts samples, but holds only extra bits and no bitstream{(s.ExtraOnly > 1 ? $" ({Counts.Of(s.ExtraOnly, "block", "blocks")})" : string.Empty)}; it cannot be decoded.", "extra-only");
         }
 
         if (isCorrection)
@@ -93,7 +93,7 @@ internal static partial class Summary
         else if (s.WvcBlocks > 0 && (s.WvBlocks > 0 || s.DsdBlocks > 0))
         {
             s.Findings.Add(Severity.Warning, "wavpack.mixed-streams", stream, _ =>
-                $"{s.WvcBlocks} blocks hold correction data and {s.WvBlocks + s.DsdBlocks} hold audio of their own; a .wv file and a .wvc file are two files.");
+                $"{Counts.Of(s.WvcBlocks, "block", "blocks")} {Counts.Agree(s.WvcBlocks, "holds", "hold")} correction data and {Counts.Of(s.WvBlocks + s.DsdBlocks, "block", "blocks")} {Counts.Agree(s.WvBlocks + s.DsdBlocks, "holds", "hold")} audio of {Counts.Agree(s.WvBlocks + s.DsdBlocks, "its", "their")} own; a .wv file and a .wvc file are two files.");
         }
 
         long counted = s.CountedSamples;
@@ -109,7 +109,7 @@ internal static partial class Summary
             if (declared != counted)
             {
                 s.Findings.Add(Severity.Warning, "wavpack.total-samples-mismatch", () => Nodes.HeaderField(s.Records, s.DeclaredEntry, "Total Samples"), _ =>
-                    $"The first block says the file holds {declared} samples, but its audio blocks hold {counted}.");
+                    $"The first block says the file holds {Counts.Of(declared, "sample", "samples")}, but its audio blocks hold {counted}.");
             }
         }
         else if (s.FirstIndex <= 0)

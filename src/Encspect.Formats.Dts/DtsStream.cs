@@ -138,7 +138,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
     // The bits per sample the stream states: the source PCM resolution of the core, else the asset's.
     public int? BitsPerSample => Lossless is { } lossless ? lossless.Max(s => s.Resolution) : _resolutions.Count == 1 && _resolutions.First() > 0 ? _resolutions.First() : _firstAsset?.BitResolution is > 0 and var bits ? bits : null;
 
-    // The channel sets of the first asset's lossless extension, when every sub-header was read and its CRC16 holds: the figures of the
+    // The channel sets of the first asset's lossless extension, when every sub-header was read and its CRC-16 holds: the figures of the
     // lossless layer, which is what a decoder delivers.
     private IReadOnlyList<XllSetFacts>? Lossless => _firstAsset is { IsXllComplete: true, XllSets.Count: > 0 } asset ? asset.XllSets : null;
 
@@ -320,7 +320,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
         if (_resolutions.Count > 0)
         {
-            Add("Source PCM Resolution", string.Join(", ", _resolutions.Order().Select(r => r == 0 ? "invalid" : $"{r} bits")), Explain.StatResolution, Topics.CoreFrames);
+            Add("Source PCM Resolution", string.Join(", ", _resolutions.Order().Select(r => r == 0 ? "invalid" : $"{Counts.Of(r, "bit", "bits")}")), Explain.StatResolution, Topics.CoreFrames);
         }
 
         if (key.HasCore)

@@ -53,6 +53,7 @@ The coding statistics, also over the complete audio frames, are read from each f
 - "UsesPadding": whether any frame is padded.
 """
 
+from units import bytes_text
 from fractions import Fraction
 
 CLOCK = 14_112_000
@@ -171,7 +172,7 @@ def region_fields(frames, all_frames):
         fields[f"Statistics/Bitrate Distribution/{name}"] = f"{frames_text(counts[bitrate])} ({tenths // 10}.{tenths % 10}%)"
 
     if all(f.layer == "III" for f in audio):
-        fields["Statistics/Maximum Reservoir Fill"] = f"{max(f.fill for f in audio)} bytes"
+        fields["Statistics/Maximum Reservoir Fill"] = bytes_text(max(f.fill for f in audio))
 
     if all(f.coding is not None for f in frames):
         fields.update(coding_fields(frames, audio, ticks))
@@ -569,12 +570,12 @@ def coding_fields(frames, audio, ticks):
             if amount > 0:
                 pieces.append(amount)
     total = sum(pieces)
-    fields["Statistics/Ancillary Data"] = f"{total} bytes"
+    fields["Statistics/Ancillary Data"] = bytes_text(total)
     fields["Statistics/Ancillary Data/Share"] = tenths_text(Fraction(total * 100, sum(f.length for f in audio)), "%")
     fields["Statistics/Ancillary Data/Data Rate"] = kbps_tenths_text(total * 8, ticks)
     if total:
-        fields["Statistics/Ancillary Data/Smallest Nonzero Amount"] = f"{min(pieces)} bytes"
-        fields["Statistics/Ancillary Data/Largest Amount"] = f"{max(pieces)} bytes"
+        fields["Statistics/Ancillary Data/Smallest Nonzero Amount"] = bytes_text(min(pieces))
+        fields["Statistics/Ancillary Data/Largest Amount"] = bytes_text(max(pieces))
 
     fields["Statistics/UsesPadding"] = "true" if any(f.coding["padding"] for f in audio) else "false"
     if layer3:
@@ -584,5 +585,5 @@ def coding_fields(frames, audio, ticks):
         fields["Statistics/Scalefactor Scaling"] = tenths_text(Fraction(scaled * 100, len(granules)), "%")
         begins = [side["main_data_begin"] for side in layer3]
         fields["Statistics/Average Main Data Begin"] = tenths_text(Fraction(sum(begins), len(begins)), "bytes")
-        fields["Statistics/Maximum Main Data Begin"] = f"{max(begins)} bytes"
+        fields["Statistics/Maximum Main Data Begin"] = bytes_text(max(begins))
     return fields

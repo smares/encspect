@@ -157,7 +157,7 @@ internal static class Framing
 
                     if (length > MaxFrameLength)
                     {
-                        return Fail(data.Length, first, position, toc, 0, PartStatus.R2, $"its frame of {length} bytes is longer than the 1275 bytes a frame may take", out error);
+                        return Fail(data.Length, first, position, toc, 0, PartStatus.R2, $"its frame of {Counts.Of(length, "byte", "bytes")} is longer than the 1275 bytes a frame may take", out error);
                     }
 
                     return Finish(data.Length, frames, first, position, 0, toc, 0, [length], 0, selfDelimited, out error);
@@ -177,7 +177,7 @@ internal static class Framing
                         int rest = data.Length - position;
                         if (rest % 2 != 0)
                         {
-                            return Fail(data.Length, first, position, toc, 0, PartStatus.R3, $"its {Bytes(rest)} after the TOC byte do not split into two frames of equal size", out error);
+                            return Fail(data.Length, first, position, toc, 0, PartStatus.R3, $"its {Bytes(rest)} after the TOC byte {Counts.Agree(rest, "does", "do")} not split into two frames of equal size", out error);
                         }
 
                         length = rest / 2;
@@ -185,7 +185,7 @@ internal static class Framing
 
                     if (length > MaxFrameLength)
                     {
-                        return Fail(data.Length, first, position, toc, 0, PartStatus.R2, $"its two frames of {length} bytes are longer than the 1275 bytes a frame may take", out error);
+                        return Fail(data.Length, first, position, toc, 0, PartStatus.R2, $"its two frames of {Counts.Of(length, "byte", "bytes")} are longer than the 1275 bytes a frame may take", out error);
                     }
 
                     return Finish(data.Length, frames, first, position, 0, toc, 0, [length, length], 0, selfDelimited, out error);
@@ -214,7 +214,7 @@ internal static class Framing
 
                     if (second > MaxFrameLength)
                     {
-                        return Fail(data.Length, first, position, toc, 0, PartStatus.R2, $"its second frame of {second} bytes is longer than the 1275 bytes a frame may take", out error);
+                        return Fail(data.Length, first, position, toc, 0, PartStatus.R2, $"its second frame of {Counts.Of(second, "byte", "bytes")} is longer than the 1275 bytes a frame may take", out error);
                     }
 
                     return Finish(data.Length, frames, first, position, 0, toc, 0, [firstLength, second], 0, selfDelimited, out error);
@@ -244,7 +244,7 @@ internal static class Framing
         if (frameCount * Toc.FrameSamples(toc) > 5760)
         {
             return Fail(data.Length, first, position, toc, count, PartStatus.R5,
-                $"its {frameCount} frames of {Toc.FrameDuration(Toc.FrameSamples(toc))} last more than the 120 ms a packet may hold", out error);
+                $"its {Counts.Of(frameCount, "frame", "frames")} of {Toc.FrameDuration(Toc.FrameSamples(toc))} last more than the 120 ms a packet may hold", out error);
         }
 
         PartStatus sizeRule = vbr ? PartStatus.R7 : PartStatus.R6;
@@ -299,7 +299,7 @@ internal static class Framing
 
                 if (last > MaxFrameLength)
                 {
-                    return Fail(data.Length, first, position, toc, count, PartStatus.R2, $"its last frame of {last} bytes is longer than the 1275 bytes a frame may take", out error, paddingLengthBytes, padding);
+                    return Fail(data.Length, first, position, toc, count, PartStatus.R2, $"its last frame of {Counts.Of(last, "byte", "bytes")} is longer than the 1275 bytes a frame may take", out error, paddingLengthBytes, padding);
                 }
 
                 lengths[^1] = (int)last;
@@ -324,8 +324,8 @@ internal static class Framing
                     bool tooLong = rest >= 0 && rest % frameCount == 0;
                     return Fail(data.Length, first, position, toc, count, tooLong ? PartStatus.R2 : PartStatus.R6,
                         rest < 0 ? "its padding takes more bytes than the packet holds"
-                        : !tooLong ? $"its {Bytes(rest)} of frame data do not split into {frameCount} frames of equal size"
-                        : $"its frames of {rest / frameCount} bytes are longer than the 1275 bytes a frame may take", out error, paddingLengthBytes, padding);
+                        : !tooLong ? $"its {Bytes(rest)} of frame data {Counts.Agree(rest, "does", "do")} not split into {Counts.Of(frameCount, "frame", "frames")} of equal size"
+                        : $"its frames of {Counts.Of(rest / frameCount, "byte", "bytes")} are longer than the 1275 bytes a frame may take", out error, paddingLengthBytes, padding);
                 }
 
                 length = (int)(rest / frameCount);

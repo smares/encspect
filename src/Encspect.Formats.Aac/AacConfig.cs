@@ -119,6 +119,6 @@ internal sealed record AacConfig
     }
 
     public string? ChannelMode => HasPs ? "Parametric stereo"
-        : ChannelConfiguration == 0 ? (Channels is { } count ? $"{count} channels" : null)
+        : ChannelConfiguration == 0 ? (Channels is { } count ? $"{Counts.Of(count, "channel", "channels")}" : null)
         : AacTables.ChannelMode(ChannelConfiguration);
 }

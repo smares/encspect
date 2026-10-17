@@ -206,7 +206,7 @@ public sealed partial class MpegAudioParser
         if (header.HasLameTag && header.EncoderDelay + header.EncoderPadding > samples)
         {
             findings.Add(Severity.Warning, "mpeg.gapless-exceeds-stream", node, count =>
-                $"The LAME tag of {Frames(count)} gives an encoder delay and padding of {Number(header.EncoderDelay + header.EncoderPadding)} samples, more than the {Number(samples)} of the stream after it; the first at 0x{position:X}.");
+                $"The LAME tag of {Frames(count)} gives an encoder delay and padding of {Counts.Of(header.EncoderDelay + header.EncoderPadding, "sample", "samples")}, more than the {Number(samples)} of the stream after it; the first at 0x{position:X}.");
         }
     }
 

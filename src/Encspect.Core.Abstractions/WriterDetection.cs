@@ -12,7 +12,7 @@ public static class WriterDetection
         "Which software wrote the file around the audio (the muxer, the container writer or a tagger), as the analyzer concludes from the evidence below. It need not be the software that encoded the audio.";
 
     public const string ConfidenceDescription =
-        "How sure the naming is: medium when the file's layout is the writer's, low when only text in the file, which other software may have written, names it.";
+        "How sure the naming is: medium for a layout that only this writer is known to produce; low for text in the file, which other software may have written, and for a layout that is only a habit of this writer.";
 
     public const string EvidenceDescription = "What points to the writer, at the bytes that hold it.";
 

@@ -278,6 +278,8 @@ def manifest(name, extension, tool, settings, arguments, findings, fields, data,
         stream = previous["streams"] if previous else None
         if stream is None:
             raise SystemExit("MP4 manifests need the encoder run once.")
+        # The channel mode is the arrangement of the channels the encoder was given; a manifest kept from an earlier run takes the current wording.
+        stream = [dict(s, channel_mode=m.CODING_MODES[{1: 1, 2: 2, 6: 7}[settings[1]]]) for s in stream]
         rows = frames
     else:
         rows_with, stream = streams_of(data)

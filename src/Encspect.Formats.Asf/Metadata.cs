@@ -43,13 +43,13 @@ public sealed partial class AsfParser
 
                 if (lengths[i] > f.Remaining)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"The Content Description Object states {lengths[i]} bytes for the {names[i].ToLowerInvariant()}, but {f.Remaining} remain.", lengthNodes[i]);
+                    state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"The Content Description Object states {Counts.Of(lengths[i], "byte", "bytes")} for the {names[i].ToLowerInvariant()}, but {f.Remaining} remain.", lengthNodes[i]);
                     break;
                 }
 
                 if ((lengths[i] & 1) != 0)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.string-odd-length", $"The {names[i].ToLowerInvariant()} in the Content Description Object is {lengths[i]} bytes, not whole UTF-16 characters.", lengthNodes[i]);
+                    state.Findings.AddNow(Severity.Warning, "asf.string-odd-length", $"The {names[i].ToLowerInvariant()} in the Content Description Object is {Counts.Of(lengths[i], "byte", "bytes")}, not whole UTF-16 characters.", lengthNodes[i]);
                 }
 
                 string text = f.Unicode(names[i], lengths[i], descriptions[i]);
@@ -74,7 +74,7 @@ public sealed partial class AsfParser
             {
                 if (f.Remaining < 6)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The Extended Content Description Object counts {count} descriptors, but its data holds {i}.", countNode);
+                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The Extended Content Description Object counts {Counts.Of(count, "descriptor", "descriptors")}, but its data holds {i}.", countNode);
                     break;
                 }
 
@@ -96,7 +96,7 @@ public sealed partial class AsfParser
             {
                 if (f.Remaining < 12)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The {node.Name} counts {count} records, but its data holds {i}.", countNode);
+                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The {node.Name} counts {Counts.Of(count, "record", "records")}, but its data holds {i}.", countNode);
                     break;
                 }
 
@@ -151,7 +151,7 @@ public sealed partial class AsfParser
 
         if (valueLength > d.Remaining)
         {
-            problems.Add((Severity.Warning, "asf.object-truncated", $"The value of \"{name}\" in the {tag.Name} states {valueLength} bytes, but {d.Remaining} remain.", null));
+            problems.Add((Severity.Warning, "asf.object-truncated", $"The value of \"{name}\" in the {tag.Name} states {Counts.Of(valueLength, "byte", "bytes")}, but {d.Remaining} remain.", null));
             valueLength = (uint)d.Remaining;
         }
 
@@ -223,7 +223,7 @@ public sealed partial class AsfParser
 
         if ((nameLength & 1) != 0)
         {
-            problems.Add((Severity.Warning, "asf.string-odd-length", $"A descriptor name at 0x{d.Position:X} is {nameLength} bytes, not whole UTF-16 characters.", null));
+            problems.Add((Severity.Warning, "asf.string-odd-length", $"A descriptor name at 0x{d.Position:X} is {Counts.Of(nameLength, "byte", "bytes")}, not whole UTF-16 characters.", null));
         }
 
         return d.Unicode("Name", nameLength, Explain.DescriptorName);
@@ -259,7 +259,7 @@ public sealed partial class AsfParser
         if (expected >= 0 && length != expected)
         {
             problems.Add((Severity.Warning, "asf.descriptor-length",
-                $"The value of \"{name}\" is {length} bytes, but a value of type {type} takes {expected}; it is shown as bytes.", null));
+                $"The value of \"{name}\" is {Counts.Of(length, "byte", "bytes")}, but a value of type {type} takes {expected}; it is shown as bytes.", null));
             type = 1;
         }
 
@@ -268,7 +268,7 @@ public sealed partial class AsfParser
             case 0:
                 if ((length & 1) != 0)
                 {
-                    problems.Add((Severity.Warning, "asf.string-odd-length", $"The value of \"{name}\" is {length} bytes, not whole UTF-16 characters.", null));
+                    problems.Add((Severity.Warning, "asf.string-odd-length", $"The value of \"{name}\" is {Counts.Of(length, "byte", "bytes")}, not whole UTF-16 characters.", null));
                 }
 
                 value = d.ReadUnicode(length);
@@ -382,7 +382,7 @@ public sealed partial class AsfParser
         extra.Add(new Node("Picture Data", at + dataAt, dataLength, NodeValue.Integer(dataLength, "bytes", "byte")) { Description = Explain.PictureData });
         if (size != dataLength)
         {
-            problems.Add((Severity.Warning, "asf.picture-size", $"The attached picture states {size} bytes of picture data, but {dataLength} follow its description.", extra[1]));
+            problems.Add((Severity.Warning, "asf.picture-size", $"The attached picture states {Counts.Of(size, "byte", "bytes")} of picture data, but {dataLength} follow its description.", extra[1]));
         }
     }
 

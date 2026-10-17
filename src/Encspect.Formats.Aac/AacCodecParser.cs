@@ -217,15 +217,15 @@ public sealed class AacCodecParser : ICodecParser
         string summary;
         if ((unit.Flags & IsRead) != 0)
         {
-            summary = $"{unit.Length} bytes, {BlockLog.ElementList(unit.Elements)}";
+            summary = $"{Counts.Of(unit.Length, "byte", "bytes")}, {BlockLog.ElementList(unit.Elements)}";
         }
         else if ((unit.Flags & IsUsac) != 0)
         {
-            summary = $"{unit.Length} bytes, {(unit.Tag != 0 ? "independent" : "dependent")}";
+            summary = $"{Counts.Of(unit.Length, "byte", "bytes")}, {(unit.Tag != 0 ? "independent" : "dependent")}";
         }
         else if ((unit.Flags & IsFirstOnly) != 0 && unit.Elements >= 0)
         {
-            summary = $"{unit.Length} bytes, {AacTables.ElementName(unit.Elements)}";
+            summary = $"{Counts.Of(unit.Length, "byte", "bytes")}, {AacTables.ElementName(unit.Elements)}";
         }
         else
         {
@@ -402,7 +402,7 @@ public sealed class AacCodecParser : ICodecParser
                         long offset = unit.Offset;
                         int count = packet.Length - (result.End / 8);
                         _findings.Add(Severity.Warning, "aac.unit-trailing-bytes", trailing, n => n == 1
-                            ? $"The access unit at 0x{offset:X} holds {count} bytes after the END element of its raw data block."
+                            ? $"The access unit at 0x{offset:X} holds {Counts.Of(count, "byte", "bytes")} after the END element of its raw data block."
                             : $"{n} access units hold bytes after the END element of their raw data block, first the one at 0x{offset:X}.");
                     }
                 }

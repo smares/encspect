@@ -70,8 +70,8 @@ public sealed partial class MpegAudioParser
             node.Add("Data Rate", start, length, NodeValue.Decimal(RoundHalfEven((Int128)scan.Bytes * 8 * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"), Explain.EnhancementRate);
             region.Enhancement = node;
             string message = name == "mp3PRO"
-                ? $"The stream is mp3PRO: {Number(scan.Bytes)} bytes of ancillary data carry its spectral band replication data. Decoders without mp3PRO support play only the MP3 core at {header.SampleRate} Hz, without the high frequencies."
-                : $"The stream is MP3 Surround: {Number(scan.Bytes)} bytes of ancillary data carry the spatial data of its 5.1 channels. Decoders without MP3 Surround support play the stereo downmix.";
+                ? $"The stream is mp3PRO: {Counts.Of(scan.Bytes, "byte", "bytes")} of ancillary data carry its spectral band replication data. Decoders without mp3PRO support play only the MP3 core at {header.SampleRate} Hz, without the high frequencies."
+                : $"The stream is MP3 Surround: {Counts.Of(scan.Bytes, "byte", "bytes")} of ancillary data carry the spatial data of its 5.1 channels. Decoders without MP3 Surround support play the stereo downmix.";
             state.Findings.AddNow(Severity.Info, name == "mp3PRO" ? "mpeg.mp3pro" : "mpeg.mp3-surround", message, node);
         }
 
@@ -88,7 +88,7 @@ public sealed partial class MpegAudioParser
             if (ofl.Delay + ofl.Samples > streamSamples)
             {
                 state.Findings.AddNow(Severity.Warning, "mpeg.ofl-exceeds-stream",
-                    $"The Original File Length block at 0x{ofl.Offset:X} gives a delay of {Number(ofl.Delay)} and {Number(ofl.Samples)} samples of audio, {Number(ofl.Delay + ofl.Samples)} samples, more than the {Number(streamSamples)} of the stream.",
+                    $"The Original File Length block at 0x{ofl.Offset:X} gives a delay of {Number(ofl.Delay)} and {Counts.Of(ofl.Samples, "sample", "samples")} of audio, {Number(ofl.Delay + ofl.Samples)} samples, more than the {Number(streamSamples)} of the stream.",
                     node);
             }
         }

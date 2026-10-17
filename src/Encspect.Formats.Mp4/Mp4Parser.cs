@@ -118,7 +118,7 @@ public sealed partial class Mp4Parser : IFormatParser
             {
                 Node data = context.Root.Add(new Node("Data", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.AfterEmbeddedTag });
                 context.AddFinding(Severity.Warning, "mp4.data-after-tag",
-                    $"{end - position} bytes at 0x{position:X} follow an ID3v2 tag inside the MP4 data, which breaks its boxes; they are not read.", data);
+                    $"{Counts.Of(end - position, "byte", "bytes")} at 0x{position:X} {Counts.Agree(end - position, "follows", "follow")} an ID3v2 tag inside the MP4 data, which breaks its boxes; they are not read.", data);
             }
 
             position = Math.Max(position, tag?.End ?? position);
@@ -136,7 +136,7 @@ public sealed partial class Mp4Parser : IFormatParser
             // What the boxes after it say is not known, so it may say that samples are protected.
             state.DoesEveryTrackHaveProtectingEvidence = true;
             Node data = file.Add(new Node("Trailing Data", end, reader.End - end, NodeValue.Integer(reader.End - end, "bytes")) { Description = Explain.TrailingData });
-            state.Findings.AddNow(Severity.Warning, "mp4.trailing-data", $"{reader.End - end} bytes after the last box at 0x{end:X} are not a box.", data);
+            state.Findings.AddNow(Severity.Warning, "mp4.trailing-data", $"{Counts.Of(reader.End - end, "byte", "bytes")} after the last box at 0x{end:X} {Counts.Agree(reader.End - end, "is", "are")} not a box.", data);
         }
 
         Check(state, file);
@@ -258,7 +258,7 @@ public sealed partial class Mp4Parser : IFormatParser
                 }
 
                 Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
-                state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{end - position} bytes at 0x{position:X} are too few for a box header.", rest);
+                state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{Counts.Bytes(end - position)} at 0x{position:X} {Counts.Agree(end - position, "is", "are")} too few for a box header.", rest);
                 return end;
             }
 
@@ -272,7 +272,7 @@ public sealed partial class Mp4Parser : IFormatParser
 
                 Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
                 state.Findings.AddNow(Severity.Warning, "mp4.box-size-invalid",
-                    $"The box at 0x{position:X} states a size smaller than its header, or a 64-bit size beyond any file, so the {end - position} bytes from there are not read as boxes.", rest);
+                    $"The box at 0x{position:X} states a size smaller than its header, or a 64-bit size beyond any file, so the {Counts.Of(end - position, "byte", "bytes")} from there {Counts.Agree(end - position, "is", "are")} not read as boxes.", rest);
                 return end;
             }
 
@@ -292,7 +292,7 @@ public sealed partial class Mp4Parser : IFormatParser
                 }
 
                 Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
-                state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{end - position} bytes at 0x{position:X} are too few for the {header.Type} box's header.", rest);
+                state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{Counts.Of(end - position, "byte", "bytes")} at 0x{position:X} {Counts.Agree(end - position, "is", "are")} too few for the {header.Type} box's header.", rest);
                 return end;
             }
 
@@ -310,11 +310,11 @@ public sealed partial class Mp4Parser : IFormatParser
             {
                 if (topLevel && header.End > reader.End)
                 {
-                    state.Findings.AddNow(Severity.Warning, "mp4.truncated", $"The {header.Type} box at 0x{position:X} declares {header.Size} bytes, but the file ends after {reader.End - position}.", node);
+                    state.Findings.AddNow(Severity.Warning, "mp4.truncated", $"The {header.Type} box at 0x{position:X} declares {Counts.Of(header.Size, "byte", "bytes")}, but the file ends after {reader.End - position}.", node);
                 }
                 else
                 {
-                    state.Findings.AddNow(Severity.Warning, "mp4.box-overruns-parent", $"The {header.Type} box at 0x{position:X} declares {header.Size} bytes, {header.End - end} more than its parent {parent.Name} holds.", node);
+                    state.Findings.AddNow(Severity.Warning, "mp4.box-overruns-parent", $"The {header.Type} box at 0x{position:X} declares {Counts.Of(header.Size, "byte", "bytes")}, {header.End - end} more than its parent {parent.Name} holds.", node);
                 }
             }
 
@@ -484,7 +484,7 @@ public sealed partial class Mp4Parser : IFormatParser
                 node.Add(new Node("Payload", header.PayloadStart, header.End - header.PayloadStart, NodeValue.Integer(header.End - header.PayloadStart, "bytes")) { Description = Explain.Payload });
             }
 
-            state.Findings.AddNow(Severity.Warning, "mp4.nesting-too-deep", $"Boxes nest more than {MaxBoxDepth} levels deep at 0x{header.Offset:X}; the boxes inside are not read.", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.nesting-too-deep", $"Boxes nest more than {Counts.Of(MaxBoxDepth, "level", "levels")} deep at 0x{header.Offset:X}; the boxes inside are not read.", node);
             return node;
         }
 

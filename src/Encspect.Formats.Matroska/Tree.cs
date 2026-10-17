@@ -231,7 +231,7 @@ internal sealed partial class FileReader
             _ => "its Element ID is longer than the document's EBMLMaxIDLength allows or is the reserved value 0xFF (RFC 8794, section 5)",
         };
         _findings.AddNow(Severity.Warning, "matroska.element-header-invalid",
-            $"No element can be read at 0x{start:X}, {where}: {why}. The {Bytes(end - start)} from there are not read.", rest);
+            $"No element can be read at 0x{start:X}, {where}: {why}. The {Bytes(end - start)} from there {Counts.Agree(end - start, "is", "are")} not read.", rest);
         return rest;
     }
 

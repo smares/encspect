@@ -23,7 +23,7 @@ internal static class AudioSpecificConfig
         }
         catch (EndOfStreamException)
         {
-            report(Severity.Warning, "aac.config-truncated", $"The AudioSpecificConfig ends inside a field, after {fields.Position} of its {fields.Length} bits.", node);
+            report(Severity.Warning, "aac.config-truncated", $"The AudioSpecificConfig ends inside a field, after {fields.Position} of its {Counts.Of(fields.Length, "bit", "bits")}.", node);
             state.IsCut = true;
         }
 
@@ -36,7 +36,7 @@ internal static class AudioSpecificConfig
         if (!state.IsCut && !state.StoppedEarly && remaining >= 8)
         {
             node.Add(Node.FromBits("Unread Bits", data, fields.Position, fields.Length, NodeValue.Integer(remaining, "bits"), description: Explain.UnreadBits));
-            report(Severity.Info, "aac.config-trailing-bits", $"The AudioSpecificConfig holds {remaining} bits after its last field.", node);
+            report(Severity.Info, "aac.config-trailing-bits", $"The AudioSpecificConfig holds {Counts.Of(remaining, "bit", "bits")} after its last field.", node);
         }
 
         return new AacConfig
@@ -562,7 +562,7 @@ internal static class AudioSpecificConfig
                 usac.Add(f.Span("UsacConfigExtension", extensionStart, NodeValue.Integer(count, "extensions"), Explain.UsacConfigExtension, extensions));
             }
 
-            Node config = node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {output} samples per frame", Explain.UsacConfig, usac, Topics.Usac));
+            Node config = node.Add(f.Span("UsacConfig", usacStart, $"{rate} Hz, {Counts.Of(output, "sample", "samples")} per frame", Explain.UsacConfig, usac, Topics.Usac));
             state.UsacLayout = new UsacLayout(config, (int)frameIndex, layouts, extensionLayouts);
             if (index == 31)
             {

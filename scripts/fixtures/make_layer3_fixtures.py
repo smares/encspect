@@ -41,6 +41,7 @@ The script uses only the standard library and is deterministic, so CI reruns it 
 the committed files differ.
 """
 
+from units import bits_text, bytes_text
 import json
 import pathlib
 import sys
@@ -255,7 +256,7 @@ class Layer3Frame(Frame):
 
     def fields(self):
         fields = super().fields()
-        fields["Side Info/Main Data Begin"] = f"{self.main_data_begin} bytes"
+        fields["Side Info/Main Data Begin"] = bytes_text(self.main_data_begin)
         fields["Side Info/Private Bits"] = str(self.private_bits)
         if self.mpeg1():
             for ch in range(self.channels()):
@@ -264,7 +265,7 @@ class Layer3Frame(Frame):
             for ch in range(self.channels()):
                 g = self.granules[gr][ch]
                 path = f"Side Info/Granule {gr}/Channel {ch}/"
-                fields[path + "Part 2 and 3 Length"] = f"{self.part2_3_length(gr, ch)} bits"
+                fields[path + "Part 2 and 3 Length"] = bits_text(self.part2_3_length(gr, ch))
                 fields[path + "Big Values"] = str(g.big_values)
                 fields[path + "Global Gain"] = str(g.global_gain)
                 fields[path + "Scalefactor Compress"] = str(g.scalefac_compress)
@@ -418,7 +419,7 @@ class Layer3Fixture(Fixture):
                 if not is_header(frame):
                     entry["reservoir"] = area_start - previous_end
                     reach = 511 if frame.mpeg1() else 255
-                    entry["fields"]["Side Info/Reservoir Fill"] = f"{min(entry['reservoir'], reach)} bytes"
+                    entry["fields"]["Side Info/Reservoir Fill"] = bytes_text(min(entry['reservoir'], reach))
                     entry["side_info"] = frame.raw_side_info()
                     if begin < 0:
                         self.finding("mpeg.main-data-before-stream", f"0x{entry['offset']:X}")
@@ -458,7 +459,7 @@ class Layer3Fixture(Fixture):
                     continue
                 own = sum(1 for p in range(starts[k], starts[k] + frame.area_length()) if owner[p] == k)
                 earlier = sum(1 for p in range(starts[k]) if owner[p] == k)
-                value = f"{frame.main_data_length()} bytes" + (f", {earlier} of them in earlier frames" if earlier else "")
+                value = bytes_text(frame.main_data_length()) + (f", {earlier} of them in earlier frames" if earlier else "")
                 runs = []
                 for p in range(starts[k], starts[k] + frame.area_length()):
                     o = owner[p]
@@ -476,7 +477,7 @@ class Layer3Fixture(Fixture):
                     elif run["name"] == "Bit Reservoir":
                         run["value"] = f"{run['length']} bytes of the main data of the frame at 0x{chain[o][1]['offset']:X}"
                     else:
-                        run["value"] = f"{run['length']} bytes"
+                        run["value"] = bytes_text(run['length'])
                 entry["data"] = runs
                 assert own == next(r for r in runs if r["name"] == "Main Data")["length"]
             for (frame, entry), anc in zip(chain, ancillary_after):
@@ -555,7 +556,7 @@ class Layer3Fixture(Fixture):
             fields = {}
             if enhancement:
                 fields["Enhancement"] = enhancement
-                fields["Enhancement/Ancillary Data"] = f"{total} bytes"
+                fields["Enhancement/Ancillary Data"] = bytes_text(total)
                 fields["Enhancement/Data Rate"] = stream_stats.kbps_tenths_text(total * 8, ticks)
                 code = "mpeg.mp3pro" if enhancement == ancillary_scan.MP3PRO else "mpeg.mp3-surround"
                 self.finding(code, f"{total} bytes")

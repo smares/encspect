@@ -16782,7 +16782,7 @@
         "codec": "Opus",
         "sampleRate": 48000,
         "channels": 1,
-        "channelMode": "1 channels",
+        "channelMode": "1 channel",
         "samples": 288,
         "duration": 0.006,
         "averageBitrate": 67.2,
@@ -17183,7 +17183,7 @@
       {
         "severity": "Warning",
         "code": "opus.mapping-invalid",
-        "message": "1 entry of the channel mapping name a decoded channel the 2 the streams give do not include: the first, channel 1, names 7 (RFC 7845, section 5.1.1); decoders refuse the stream.",
+        "message": "1 entry of the channel mapping names a decoded channel beyond the 2 the streams give: the first, channel 1, names 7 (RFC 7845, section 5.1.1); decoders refuse the stream.",
         "offset": 2810,
         "length": 1,
         "path": [

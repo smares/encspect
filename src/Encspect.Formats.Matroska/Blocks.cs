@@ -112,7 +112,7 @@ internal sealed partial class FileReader
         {
             _lacedFramesReported = true;
             _findings.AddNow(Severity.Warning, "matroska.too-many-elements",
-                $"The laced blocks of the file hold more than {MaxLacedFrames} frames; the frames of the blocks from the {name} at 0x{offset:X} on are not read.", new Node(name, offset, length));
+                $"The laced blocks of the file hold more than {Counts.Of(MaxLacedFrames, "frame", "frames")}; the frames of the blocks from the {name} at 0x{offset:X} on are not read.", new Node(name, offset, length));
         }
 
         return false;
@@ -303,7 +303,7 @@ internal sealed partial class FileReader
             case Lacing.FixedSize:
                 if ((remaining - 1) % count != 0)
                 {
-                    why = $"holds {remaining - 1} bytes for {count} frames of one size";
+                    why = $"holds {Counts.Of(remaining - 1, "byte", "bytes")} for {Counts.Of(count, "frame", "frames")} of one size";
                     return false;
                 }
 
@@ -438,7 +438,7 @@ internal sealed partial class FileReader
             {
                 records.Children.Add(new Child { Offset = position, DataLength = end - position, Depth = (byte)depth, Block = Child.UnparsedBlock });
                 _findings.AddNow(Severity.Warning, "matroska.element-header-invalid",
-                    $"No element can be read at 0x{position:X}, in the {parentName} at 0x{groupOffset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there are not read.",
+                    $"No element can be read at 0x{position:X}, in the {parentName} at 0x{groupOffset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there {Counts.Agree(end - position, "is", "are")} not read.",
                     Unparsed(position, end, "the " + parentName));
                 return blocks;
             }

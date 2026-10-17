@@ -56,7 +56,7 @@ internal sealed partial class UnitSyntax
 
         if (sum > substream.Length)
         {
-            ReportGroup(Issue.SubstreamOverrun, "Asset Sizes", _assetSizesStart, _assetSizesEnd, $"the header and the assets' sizes add up to {sum} bytes, more than the substream's {substream.Length}");
+            ReportGroup(Issue.SubstreamOverrun, "Asset Sizes", _assetSizesStart, _assetSizesEnd, $"the header and the assets' sizes add up to {Counts.Of(sum, "byte", "bytes")}, more than the substream's {substream.Length}");
         }
 
         for (int i = 0; i < assets.Length; i++)
@@ -91,7 +91,7 @@ internal sealed partial class UnitSyntax
 
             if (used > assetSizes[i])
             {
-                ReportGroup(Issue.SubstreamOverrun, $"Asset {i + 1} Data", position * 8, assetLimit * 8, $"asset {i + 1}'s components add up to {used} bytes, more than the {assetSizes[i]} its size gives");
+                ReportGroup(Issue.SubstreamOverrun, $"Asset {i + 1} Data", position * 8, assetLimit * 8, $"asset {i + 1}'s components add up to {Counts.Of(used, "byte", "bytes")}, more than the {assetSizes[i]} its size gives");
             }
 
             _tree?.Close(assetLimit * 8, NodeValue.Integer(assetSizes[i], "bytes"));
@@ -233,14 +233,14 @@ internal sealed partial class UnitSyntax
         _ => Explain.XllSync,
     };
 
-    // The end of a header that states its size: reserved bits and the byte alignment up to the CRC16 in its last two bytes, and
+    // The end of a header that states its size: reserved bits and the byte alignment up to the CRC-16 in its last two bytes, and
     // that CRC with its verdict. Fields that run past the size leave the CRC unread.
     private void ReadHeaderCrc(int at, int headerSize, string name, string description, string mismatch)
     {
         int crcBit = (at + headerSize - 2) * 8;
         if (headerSize < 6 || _pos > crcBit)
         {
-            Report(Issue.SubstreamOverrun, "Header Size", _headerSizeStart, _headerSizeEnd, $"the {name} header's fields end at byte {((_pos + 7) / 8) - at}, past the {headerSize} bytes its size field gives");
+            Report(Issue.SubstreamOverrun, "Header Size", _headerSizeStart, _headerSizeEnd, $"the {name} header's fields end at byte {((_pos + 7) / 8) - at}, past the {Counts.Bytes(headerSize)} its size field gives");
             return;
         }
 
@@ -286,7 +286,7 @@ internal sealed partial class UnitSyntax
             _tree?.Close(Here);
         }
 
-        ReadHeaderCrc(at, headerSize, "XBR", Explain.XbrCrc, "The XBR frame header's CRC16 (6.3.5) fails");
+        ReadHeaderCrc(at, headerSize, "XBR", Explain.XbrCrc, "The XBR frame header's CRC-16 (6.3.5) fails");
 
         AddCoreData(_pos, endBit, "Channel Set Data", Explain.XbrData);
     }
@@ -318,7 +318,7 @@ internal sealed partial class UnitSyntax
         }
 
         _tree?.Close(Here);
-        ReadHeaderCrc(at, headerSize, "X96", Explain.X96Crc, "The X96 frame header's CRC16 (6.2.4.3) fails");
+        ReadHeaderCrc(at, headerSize, "X96", Explain.X96Crc, "The X96 frame header's CRC-16 (6.2.4.3) fails");
 
         AddCoreData(_pos, endBit, "Channel Set Data", Explain.X96Data);
     }
@@ -396,7 +396,7 @@ internal sealed partial class UnitSyntax
         int segmentLimit = asset.MaxSampleRate > 48000 ? 512 : 256;
         if (asset.MaxSampleRate > 0 && (1 << samplesLog) > segmentLimit)
         {
-            Report(Issue.ReservedValue, "Samples per Segment", _pos - 4, _pos, $"a segment of {1 << samplesLog} samples is more than the {segmentLimit} that 8.3.1 allows at {(asset.MaxSampleRate > 48000 ? "sampling frequencies above 48 kHz" : "48 kHz or below")}");
+            Report(Issue.ReservedValue, "Samples per Segment", _pos - 4, _pos, $"a segment of {Counts.Of(1 << samplesLog, "sample", "samples")} is more than the {segmentLimit} that 8.3.1 allows at {(asset.MaxSampleRate > 48000 ? "sampling frequencies above 48 kHz" : "48 kHz or below")}");
         }
 
         int segmentBits = Num("Segment Size Bits", 5, Explain.XllSegmentBits, Topics.Lossless, "bits", 1) + 1;
@@ -414,7 +414,7 @@ internal sealed partial class UnitSyntax
             Num("Fixed LSB Width", 4, Explain.XllLsbWidth, Topics.Lossless, "bits");
         }
 
-        ReadHeaderCrc(at, headerSize, "XLL", Explain.XllCrc, "The lossless extension's header CRC16 (8.3.1) fails");
+        ReadHeaderCrc(at, headerSize, "XLL", Explain.XllCrc, "The lossless extension's header CRC-16 (8.3.1) fails");
 
         int bands = asset.MaxSampleRate > 192000 ? 4 : asset.MaxSampleRate > 96000 ? 2 : 1;
         asset.XllSamples = (1 << segmentsLog) * (1 << samplesLog) * bands;

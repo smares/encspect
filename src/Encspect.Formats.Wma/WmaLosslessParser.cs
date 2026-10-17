@@ -28,7 +28,7 @@ public sealed class WmaLosslessParser : ICodecParser
         if (bytes.Length < ProParameters.ExtraDataSize)
         {
             findings.AddNow(Severity.Warning, "wma.codec-data-size",
-                $"The codec-specific data of Windows Media Audio Lossless is {bytes.Length} bytes; FFmpeg's decoder needs 18 and refuses fewer.", holder);
+                $"The codec-specific data of Windows Media Audio Lossless is {Counts.Of(bytes.Length, "byte", "bytes")}; FFmpeg's decoder needs 18 and refuses fewer.", holder);
             return;
         }
 
@@ -36,7 +36,7 @@ public sealed class WmaLosslessParser : ICodecParser
         holder.Add("Bits Per Sample", offset, 2, NodeValue.Integer(bits, "bits"), LosslessExplain.BitsPerSample, Topics.WmaLossless);
         if (bits is not (16 or 24))
         {
-            findings.AddNow(Severity.Warning, "wma.lossless-bit-depth", $"The sample size is {bits} bits; FFmpeg's decoder handles 16 and 24.", holder.Children[^1]);
+            findings.AddNow(Severity.Warning, "wma.lossless-bit-depth", $"The sample size is {Counts.Of(bits, "bit", "bits")}; FFmpeg's decoder handles 16 and 24.", holder.Children[^1]);
         }
 
         holder.Add("Channel Mask", offset + 2, 4, NodeValue.Hex(BinaryPrimitives.ReadUInt32LittleEndian(bytes[2..]), 8), ProExplain.ChannelMask, Topics.ChannelLayouts);

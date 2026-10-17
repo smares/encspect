@@ -140,18 +140,14 @@ public sealed partial class Mp4Parser
 
         CompareLayouts(state, entry, streams, label);
 
-        // The tracks of one movie play at the same time; a track whose codec reported several streams in a row is not marked.
+        // The tracks of one movie play at the same time, and so do the streams of one track that the codec parser reports as playing together
+        // (the independent substreams of E-AC-3). Streams of one track that follow one another (a configuration change) are not marked: no one
+        // number says that they follow each other and play beside the other tracks.
         List<StreamInfo> made = [.. state.Context.Streams.Skip(streams)];
-        if (made.Count == 1)
+        bool isTogether = made.Count == 1 || (made.Count > 1 && made[0].PlaybackGroup is not null && made.All(s => s.PlaybackGroup == made[0].PlaybackGroup));
+        foreach (StreamInfo stream in made)
         {
-            state.Context.UpdateStream(made[0], WithUnkept(track, made[0]) with { PlaybackGroup = 1 });
-        }
-        else if (made.Count > 1)
-        {
-            foreach (StreamInfo stream in made)
-            {
-                state.Context.UpdateStream(stream, WithUnkept(track, stream));
-            }
+            state.Context.UpdateStream(stream, WithUnkept(track, stream) with { PlaybackGroup = isTogether ? 1 : null });
         }
     }
 
@@ -180,12 +176,12 @@ public sealed partial class Mp4Parser
         if (protection.IsEncrypted)
         {
             state.Findings.AddNow(Severity.Info, "mp4.samples-encrypted",
-                $"The samples of the audio {label} are encrypted ({protection.Scheme}), so their frames are not read; the stream is described by its sample entry and sample tables.", entry.Node);
+                $"The samples of the audio {label} are encrypted ({InSentence(protection.Scheme)}), so their frames are not read; the stream is described by its sample entry and sample tables.", entry.Node);
         }
         else
         {
             state.Findings.AddNow(Severity.Info, "mp4.protected-samples-clear",
-                $"The audio {label} is covered by {protection.Scheme}, but its key information says that no sample is protected: the tenc box sets the default to not protected, and nothing in the file says otherwise (no sample group that protects, no sample encryption box).", entry.Protection?.Encryption?.Node ?? entry.Node);
+                $"The audio {label} is covered by {InSentence(protection.Scheme)}, but its key information says that no sample is protected: the tenc box sets the default to not protected, and nothing in the file says otherwise (no sample group that protects, no sample encryption box).", entry.Protection?.Encryption?.Node ?? entry.Node);
         }
     }
 
@@ -209,7 +205,7 @@ public sealed partial class Mp4Parser
 
         if (state.Context.Streams.Count == before)
         {
-            string name = entry.EffectiveFormat == "mp4a" && entry.ObjectType is { } type ? ObjectTypeName(type) : FormatName(entry.EffectiveFormat) is "other" ? entry.EffectiveFormat : FormatName(entry.EffectiveFormat);
+            string name = StreamCodecName(entry);
             // The codec parser's node for the stream it read the configuration of, else one of our own.
             Node stream = samples.Children.Skip(nodes).FirstOrDefault(c => c.Kind == NodeKind.Stream) ?? samples.Add(new Node(name, samples.Offset, samples.Length, NodeValue.Text(isEncrypted ? "frames not read: encrypted" : isScattered ? "frames not read: samples not in one stretch" : "frames not read: coding not analyzed"))
             {
@@ -466,12 +462,12 @@ public sealed partial class Mp4Parser
         if (firstOutside is { } cut)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-outside-file",
-                $"{Samples(outside)} of track {track.Id} lie outside the file, the first at 0x{cut.Offset:X} with {cut.Size} bytes; they are not analyzed.", table);
+                $"{Samples(outside)} of track {track.Id} lie outside the file, the first at 0x{cut.Offset:X} with {Counts.Of(cut.Size, "byte", "bytes")}; they are not analyzed.", table);
         }
 
         if (empty > 0)
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.empty-samples", $"{Samples(empty)} of track {track.Id} have a size of 0 bytes; they are not analyzed.", track.SampleSizeNode ?? track.Box);
+            state.Findings.AddNow(Severity.Warning, "mp4.empty-samples", $"{Samples(empty)} of track {track.Id} {Counts.Agree(empty, "has", "have")} a size of 0 bytes; {Counts.Agree(empty, "it is", "they are")} not analyzed.", track.SampleSizeNode ?? track.Box);
         }
 
         if (firstOutsideMdat is { } stray)
@@ -529,7 +525,7 @@ public sealed partial class Mp4Parser
             if (timed != sized)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.sample-count-mismatch",
-                    $"The stts box of {label} gives durations to {timed} samples, its {stsz.Name} box sizes {sized}.", track.TimeToSampleNode!);
+                    $"The stts box of {label} gives durations to {Counts.Of(timed, "sample", "samples")}, its {stsz.Name} box sizes {sized}.", track.TimeToSampleNode!);
             }
         }
 
@@ -565,8 +561,8 @@ public sealed partial class Mp4Parser
             if (placed != sized && track.SampleSizeNode is not null)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.chunk-sample-mismatch", placed < sized
-                    ? $"The chunks of {label} hold {placed} samples, but stsz sizes {sized}; the {sized - placed} samples after them have no place in the file."
-                    : $"The chunks of {label} hold {placed} samples, but stsz sizes only {sized}.", stsc);
+                    ? $"The chunks of {label} hold {Counts.Of(placed, "sample", "samples")}, but stsz sizes {sized}; the {Counts.Of(sized - placed, "sample", "samples")} after them {Counts.Agree(sized - placed, "has", "have")} no place in the file."
+                    : $"The chunks of {label} hold {Counts.Of(placed, "sample", "samples")}, but stsz sizes only {sized}.", stsc);
             }
         }
     }
@@ -663,18 +659,18 @@ public sealed partial class Mp4Parser
             if (total > 0 && state.Fragments == 0 && (ulong)sum != total && !(lossless && (ulong)(sum - smpb.Padding) == total))
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.itunsmpb-total",
-                    $"iTunSMPB's encoder delay, samples and padding add up to {sum}, but the samples of track {track.Id} last {total} units of its timescale.", smpb.Node);
+                    $"iTunSMPB's encoder delay, samples and padding add up to {sum}, but the samples of track {track.Id} last {Counts.Of(total, "unit", "units")} of its timescale.", smpb.Node);
             }
 
             if (editDelay is { } delay && delay != smpb.Delay)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.gapless-disagree",
-                    $"The edit list of track {track.Id} skips {delay} samples at the start, but iTunSMPB gives an encoder delay of {smpb.Delay}; players that read one or the other play different samples.", smpb.Node);
+                    $"The edit list of track {track.Id} skips {Counts.Of(delay, "sample", "samples")} at the start, but iTunSMPB gives an encoder delay of {smpb.Delay}; players that read one or the other play different samples.", smpb.Node);
             }
             else if (editPadding is { } padding && padding != smpb.Padding)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.gapless-disagree",
-                    $"The edit list of track {track.Id} leaves {padding} samples at the end, but iTunSMPB gives a padding of {smpb.Padding}; players that read one or the other play different samples.", smpb.Node);
+                    $"The edit list of track {track.Id} leaves {Counts.Of(padding, "sample", "samples")} at the end, but iTunSMPB gives a padding of {smpb.Padding}; players that read one or the other play different samples.", smpb.Node);
             }
         }
 

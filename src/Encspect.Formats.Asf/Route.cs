@@ -77,7 +77,7 @@ public sealed partial class AsfParser
             else if (state.FileSize != (ulong)state.Reader.Length)
             {
                 findings.AddNow(Severity.Warning, "asf.file-size",
-                    $"The File Properties Object gives the file size as {state.FileSize} bytes, but the file holds {state.Reader.Length}.", state.FileSizeNode!);
+                    $"The File Properties Object gives the file size as {Counts.Of(state.FileSize, "byte", "bytes")}, but the file holds {state.Reader.Length}.", state.FileSizeNode!);
             }
 
             if (state.MinPacketSize != state.MaxPacketSize)
@@ -87,7 +87,7 @@ public sealed partial class AsfParser
             }
             else if (state.MaxPacketSize > 65535)
             {
-                findings.AddNow(Severity.Warning, "asf.packet-size", $"The packet size is {state.MaxPacketSize} bytes; the specification asks for less than 64 KB (section 8.2.14).", state.PacketSizeNode!);
+                findings.AddNow(Severity.Warning, "asf.packet-size", $"The packet size is {Counts.Of(state.MaxPacketSize, "byte", "bytes")}; the specification asks for less than 64 KB (section 8.2.14).", state.PacketSizeNode!);
             }
         }
 
@@ -158,7 +158,7 @@ public sealed partial class AsfParser
             if (codec is null)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
-                    $"Stream {stream.Number} is coded as {FormatTagName(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which has no parser here; its media objects are not analyzed.", anchor);
+                    $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which has no parser here; its media objects are not analyzed.", anchor);
                 AddProtectedStream(state, stream);
                 continue;
             }
@@ -172,7 +172,7 @@ public sealed partial class AsfParser
             if (stream.Spread is { Scrambles: true })
             {
                 state.Findings.AddNow(Severity.Info, "asf.audio-spread",
-                    $"Stream {stream.Number} spreads its audio over {stream.Spread.Span} packets (section 9.1.1), which scrambles the media objects; descrambling is not done, so the stream is not analyzed.", anchor);
+                    $"Stream {stream.Number} spreads its audio over {Counts.Of(stream.Spread.Span, "packet", "packets")} (section 9.1.1), which scrambles the media objects; descrambling is not done, so the stream is not analyzed.", anchor);
                 continue;
             }
 
@@ -187,7 +187,7 @@ public sealed partial class AsfParser
             if (!routed)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
-                    $"Stream {stream.Number} is coded as {FormatTagName(format.EffectiveTag)}, but the analyzer has no parser for the {codec} coding.", anchor);
+                    $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)}, but the analyzer has no parser for the {codec} coding.", anchor);
             }
         }
     }
@@ -247,7 +247,7 @@ public sealed partial class AsfParser
         }
 
         Node parent = state.DataNode ?? stream.Properties!;
-        string name = stream.Format is { } format && stream.IsAudio ? FormatTagName(format.EffectiveTag) : stream.TypeName;
+        string name = stream.Format is { } format && stream.IsAudio ? CodecNameOf(format.EffectiveTag) : stream.TypeName;
         Node node = parent.Add(new Node($"Stream {stream.Number}", parent.Offset, parent.Length, NodeValue.Text("frames not read: encrypted"))
         {
             Kind = NodeKind.Stream,

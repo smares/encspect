@@ -120,7 +120,7 @@ internal sealed class Ac3Analysis
         }
         else if (truncated)
         {
-            Findings.AddNow(Severity.Warning, "ac3.frame-truncated", $"The last frame at 0x{offset:X} has {available} of its {header.FrameLength} bytes.", FrameAt());
+            Findings.AddNow(Severity.Warning, "ac3.frame-truncated", $"The last frame at 0x{offset:X} has {available} of its {Counts.Of(header.FrameLength, "byte", "bytes")}.", FrameAt());
         }
 
         if (cut)
@@ -175,15 +175,15 @@ internal sealed class Ac3Analysis
                 zeros = cache.ByteAt(at) == 0;
             }
 
-            Findings.AddNow(Severity.Warning, "ac3.leading-junk", $"{length} bytes before the first frame are not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
+            Findings.AddNow(Severity.Warning, "ac3.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame {Counts.Agree(length, "is", "are")} not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
         }
         else if (trailing)
         {
-            Findings.AddNow(Severity.Warning, "ac3.trailing-data", $"{length} bytes after the last frame at 0x{start:X} are not a frame.", node);
+            Findings.AddNow(Severity.Warning, "ac3.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{start:X} {Counts.Agree(length, "is", "are")} not a frame.", node);
         }
         else
         {
-            Findings.AddNow(Severity.Warning, "ac3.sync-lost", $"Sync is lost for {length} bytes at 0x{start:X}.", node);
+            Findings.AddNow(Severity.Warning, "ac3.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{start:X}.", node);
         }
     }
 
@@ -397,14 +397,14 @@ internal sealed class Ac3Analysis
                 }
 
                 Findings.Add(Severity.Warning, "ac3.dependent-without-independent", () => FrameAt(),
-                    count => $"{Count(count)} of a dependent substream come before any independent substream they could belong to (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "comes", "come")} before any independent substream they could belong to (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
                 return null;
             }
 
             if (_currentType == 2)
             {
                 Findings.Add(Severity.Warning, "ac3.dependent-after-converted", () => FrameAt(),
-                    count => $"{Count(count)} of a dependent substream follow an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "follows", "follow")} an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at 0x{frameOffset:X}.");
             }
 
             _current.Regions.Add(region);
@@ -449,7 +449,7 @@ internal sealed class Ac3Analysis
                 string from = lastKey.Describe();
                 string to = key.Describe();
                 Findings.Add(Severity.Info, "ac3.stream-changed", FrameAt,
-                    count => $"The stream{substream} changes at 0x{frameOffset:X} from {from} to {to}{(count > 1 ? $"; the streams change {count} times in the file" : string.Empty)}.");
+                    count => $"The stream{substream} changes at 0x{frameOffset:X} from {from} to {to}{(count > 1 ? $"; the streams change {Counts.Of(count, "time", "times")} in the file" : string.Empty)}.");
             }
         }
         else
@@ -486,9 +486,9 @@ internal sealed class Ac3Analysis
         bool several = ids > 1 || programs.Any(p => p.Key.IsEac3);
         // The independent substreams of an E-AC-3 stream play at the same time (Annex E 2.3.1.2), so a summary
         // counts the longest once. Where a substream changes its configuration, its programs follow one
-        // another and the others run beside them: no one number says that, so none is given. A container
-        // groups its own tracks.
-        int? group = _context is not CodecContext && programs.Count > 1 && ids == programs.Count ? 1 : null;
+        // another and the others run beside them: no one number says that, so none is given. A container reads
+        // the number as "these play together" and replaces it with the group of its track.
+        int? group = programs.Count > 1 && ids == programs.Count ? 1 : null;
         foreach (Program program in programs)
         {
             Cancellation.ThrowIfCancellationRequested();
@@ -555,7 +555,7 @@ internal sealed class Ac3Analysis
             Codec = program.Codec,
             SampleRate = program.Key.SampleRate,
             Channels = program.Layout.Count,
-            ChannelMode = Ac3Names.CodingMode(program.Key.Acmod),
+            ChannelMode = Ac3Names.CodingModeShort(program.Key.Acmod),
             ChannelLayout = program.Layout,
             Samples = program.Figures.Samples,
             Duration = program.Figures.Duration,
