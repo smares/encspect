@@ -215,13 +215,13 @@ public class ComplexityTests
         public void Parse(ParseContext context) => _parser.Parse(context);
     }
 
-    // 100,000 empty mdat boxes and then 200,000 samples of one byte in the last one: finding the mdat box that holds a sample was a scan over
-    // all of them for each sample (5.5 s for a quarter of this, 52 s for six times that).
+    // 90,000 empty mdat boxes (within the box budget) and then 400,000 samples of one byte in the last one: finding the mdat box that holds a sample was a scan over
+    // all of them for each sample (5.5 s for 50,000 boxes and 100,000 samples, so about 40 s here, and more on a slower machine).
     [Fact]
     public void ManyMdatBoxesAndManySamples()
     {
-        const int boxes = 100_000;
-        const int samples = 200_000;
+        const int boxes = 90_000;
+        const int samples = 400_000;
         byte[] empty = Mp4Builder.Box("mdat");
         byte[] head = Mp4Builder.FileWithMoov(_ => Mp4Builder.Trak(1, Mp4Builder.AlacEntry(), Mp4Builder.Stts(samples, 1024), Mp4Builder.Stsc(samples),
             Mp4Builder.ConstantSizes(1, samples), Mp4Builder.ChunkOffsets([0])), []);
