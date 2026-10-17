@@ -9,9 +9,10 @@ namespace Encspect.Formats.Mp4;
 // previous track fragment's data ended. Their samples follow the track's samples in moov.
 public sealed partial class Mp4Parser
 {
-    // A track's fragment samples are kept as 12-byte records, at most this many (a day of AAC at
+    // The fragment samples of a file are kept as 16-byte records, at most this many in all (a day of AAC at
     // 48 kHz); a run that declares more samples than its box or the file holds is cut there, so a
-    // damaged count never allocates or loops past the file.
+    // damaged count never allocates or loops past the file. Samples of no bytes are counted and not kept,
+    // and the bytes the samples place all draw on the file's budget (State.SampleBytesLeft).
     private const int MaxFragmentSamples = 1 << 22;
 
     private static void FragmentBox(State state, Node node, BoxHeader header, BoxFields f)
@@ -29,7 +30,11 @@ public sealed partial class Mp4Parser
                 uint duration = f.U32(node, "Default Sample Duration", Explain.TrexDuration);
                 uint sampleSize = f.U32(node, "Default Sample Size", Explain.TrexSize, unit: "bytes");
                 uint sampleFlags = (uint)f.Field(node, "Default Sample Flags", 4, Explain.SampleFlags, v => NodeValue.Hex((long)v, 8));
-                state.TrackDefaults.TryAdd(id, new TrackDefaults(description, duration, sampleSize, sampleFlags));
+                if (!state.IsMovieIgnored)
+                {
+                    state.TrackDefaults.TryAdd(id, new TrackDefaults(description, duration, sampleSize, sampleFlags));
+                }
+
                 node.Value = $"Track Extends, track {id}";
                 break;
             case "mfhd":
@@ -75,10 +80,7 @@ public sealed partial class Mp4Parser
 
         used.Add(description);
 
-        if ((flags & 0x8) != 0)
-        {
-            f.U32(node, "Default Sample Duration", Explain.TfhdDuration);
-        }
+        uint? defaultDuration = (flags & 0x8) != 0 ? f.U32(node, "Default Sample Duration", Explain.TfhdDuration) : null;
 
         uint? defaultSize = (flags & 0x10) != 0 ? f.U32(node, "Default Sample Size", Explain.TfhdSize, unit: "bytes") : null;
         if ((flags & 0x20) != 0)
@@ -97,6 +99,7 @@ public sealed partial class Mp4Parser
             fragment.BaseDataOffset = baseOffset;
             fragment.BaseIsMoof = (flags & 0x20000) != 0;
             fragment.DefaultSize = defaultSize;
+            fragment.DefaultDuration = defaultDuration;
         }
     }
 
@@ -114,6 +117,7 @@ public sealed partial class Mp4Parser
         int entrySize = 4 * (int)(((flags >> 8) & 1) + ((flags >> 9) & 1) + ((flags >> 10) & 1) + ((flags >> 11) & 1));
         node.Value = NodeValue.Integer(count, "samples", "sample");
         List<uint>? sizes = (flags & 0x200) != 0 ? [] : null;
+        List<uint>? durations = (flags & 0x100) != 0 ? [] : null;
         uint listed = count;
         if (entrySize > 0 && (long)count * entrySize > f.Remaining)
         {
@@ -130,11 +134,12 @@ public sealed partial class Mp4Parser
             }
 
             long at = f.Position;
-            Node? entry = entrySize > 0 && i < MaxListedEntries ? new Node("Sample", at, entrySize) { Description = Explain.RunSample } : null;
+            Node? entry = entrySize > 0 && i < MaxListedEntries && !state.Findings.IsDetaching ? new Node("Sample", at, entrySize) { Description = Explain.RunSample } : null;
             uint? size = null;
             if ((flags & 0x100) != 0)
             {
                 uint duration = (uint)f.Take(4);
+                durations!.Add(duration);
                 entry?.Add(new Node("Duration", at, 4, NodeValue.Integer(duration)) { Description = Explain.RunSampleDuration });
             }
 
@@ -175,7 +180,7 @@ public sealed partial class Mp4Parser
             MoreEntries(node, listed, start + (MaxListedEntries * (long)entrySize), f.Position);
         }
 
-        state.Fragment?.Runs.Add((dataOffset, listed, sizes, node));
+        state.Fragment?.Runs.Add(new FragmentRun(dataOffset, listed, sizes, durations, node));
     }
 
     // Places the track fragment's samples once its boxes are read.
@@ -189,7 +194,7 @@ public sealed partial class Mp4Parser
             return;
         }
 
-        Track? track = state.Tracks.FirstOrDefault(t => t.Id == fragment.TrackId);
+        Track? track = state.TracksById.GetValueOrDefault(fragment.TrackId);
         if (track is null)
         {
             if (fragment.Runs.Count > 0)
@@ -208,23 +213,25 @@ public sealed partial class Mp4Parser
             : state.LastFragmentEnd ?? moof;
         long position = baseOffset;
         long fileEnd = state.Reader.End;
-        foreach ((long? dataOffset, uint count, List<uint>? sizes, Node run) in fragment.Runs)
+        bool isAudio = track.Handler == "soun";
+        foreach (FragmentRun runInfo in fragment.Runs)
         {
+            (long? dataOffset, uint count, List<uint>? sizes, List<uint>? durations, Node run) = (runInfo.DataOffset, runInfo.Count, runInfo.Sizes, runInfo.Durations, runInfo.Node);
             if (dataOffset is { } offset)
             {
                 position = baseOffset + offset;
             }
 
-            for (int i = 0; i < count; i++)
+            uint defaultDuration = fragment.DefaultDuration ?? defaults?.Duration ?? 0;
+            long placed = 0;
+            while (placed < count)
             {
-                if (track.FragmentSamples.Count >= MaxFragmentSamples)
+                if (placed % 4096 == 0)
                 {
-                    state.Findings.Add(Severity.Warning, "mp4.fragment-samples-limit", run, _ =>
-                        $"Track {track.Id} has more than {MaxFragmentSamples} samples in its fragments; the samples from the run at 0x{run.Offset:X} on are not analyzed.");
-                    break;
+                    state.Context.CancellationToken.ThrowIfCancellationRequested();
                 }
 
-                uint size = sizes?[i] ?? fragment.DefaultSize ?? defaults?.Size ?? 0;
+                uint size = sizes?[(int)placed] ?? fragment.DefaultSize ?? defaults?.Size ?? 0;
                 if (position < 0 || position + size > fileEnd)
                 {
                     state.Findings.Add(Severity.Warning, "mp4.fragment-sample-outside-file", run, count =>
@@ -232,8 +239,62 @@ public sealed partial class Mp4Parser
                     break;
                 }
 
-                track.FragmentSamples.Add(new FragmentSample(position, (int)Math.Min(size, int.MaxValue)));
-                position += size;
+                if (size == 0)
+                {
+                    // Samples of no bytes all lie at one place: without sizes of their own, the rest of the run is counted at once.
+                    long empty = sizes is null ? count - placed : 1;
+                    track.EmptyFragmentSamples += empty;
+                    placed += empty;
+                    continue;
+                }
+
+                if (!isAudio)
+                {
+                    // Only an audio track's samples are kept; the others only move the position on, as far as the sizes are known at once.
+                    long rest = sizes is null ? Math.Min(count - placed, (fileEnd - position) / size) : 1;
+                    position += rest * size;
+                    placed += rest;
+                    if (sizes is null && placed < count)
+                    {
+                        state.Findings.Add(Severity.Warning, "mp4.fragment-sample-outside-file", run, count =>
+                            $"{(count == 1 ? "A track run places samples" : $"{count} track runs place samples")} outside the file, first the run at 0x{run.Offset:X}; they are not analyzed.");
+                        break;
+                    }
+
+                    continue;
+                }
+
+                bool isKept = state.FragmentSampleCount < state.MaxFragmentSamples;
+                if (!isKept)
+                {
+                    state.Findings.Add(Severity.Warning, "mp4.fragment-samples-limit", run, _ =>
+                        $"The fragments of the file hold more than {state.MaxFragmentSamples} samples of audio tracks; the samples from the run at 0x{run.Offset:X} on are counted for the stream's figures and are not analyzed.");
+                }
+
+                // Past the cap the samples are counted and never kept; a run without sizes or durations of its own is counted at once.
+                long samples = !isKept && sizes is null && durations is null ? Math.Min(Math.Min(count - placed, (fileEnd - position) / size), state.SampleBytesLeft / size) : 1;
+                if (samples == 0 || (samples == 1 && size > state.SampleBytesLeft))
+                {
+                    state.Findings.Add(Severity.Warning, "mp4.samples-overlap", run, _ =>
+                        $"The samples of the track fragments add up to more bytes than the file has left for them, so some lie over others; the samples from the run at 0x{run.Offset:X} on are not analyzed.");
+                    break;
+                }
+
+                state.SampleBytesLeft -= samples * size;
+                if (isKept)
+                {
+                    state.FragmentSampleCount++;
+                    track.FragmentSamples.Add(new FragmentSample(position, (int)Math.Min(size, int.MaxValue)));
+                }
+                else
+                {
+                    track.UnkeptSamples += samples;
+                    track.UnkeptBytes += samples * size;
+                    track.UnkeptDuration += (ulong)samples * (durations?[(int)placed] ?? defaultDuration);
+                }
+
+                position += samples * size;
+                placed += samples;
             }
         }
 

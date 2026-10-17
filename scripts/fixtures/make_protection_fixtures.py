@@ -367,6 +367,7 @@ def file_wide_evidence():
         ("cenc-stray-schi-in-trak", "a schi box with a protecting tenc box lies in the trak box, outside the enca sample entry", clear, dict(after_mdia=[schi(tenc())]), one),
         ("cenc-stray-tenc-in-stbl", "a protecting tenc box lies in the stbl box, outside the enca sample entry", clear, dict(extra_stbl=[tenc()]), one),
         ("cenc-stray-sinf-in-trak", "a sinf box with the scheme cenc and a protecting tenc box lies in the trak box of an enca track whose own tenc box does not protect", clear, dict(after_mdia=[protecting_sinf()]), one),
+        ("cenc-stray-sinf-frma-only", "a sinf box with only a frma box lies in the trak box of an enca track whose own tenc box does not protect", clear, dict(after_mdia=[sinf(frma(b"mp4a"))]), one),
         ("cenc-stray-schi-in-entry", "a schi box with a protecting tenc box lies in the enca sample entry outside its sinf box", encrypted_aac_entry(*cenc_sinf(is_protected=0, iv_size=0), extra=[schi(tenc())]), {}, one),
         ("piff-senc-in-stbl", "a PIFF sample encryption box (a uuid box) lies in the stbl box, and tenc does not protect", clear, dict(extra_stbl=[piff_senc]), one),
         ("piff-scheme", "the scheme is piff, which the project does not know, with a PIFF track encryption box", encrypted_aac_entry(schm(b"piff", 0x10001), schi(piff_tenc)), {}, one),
@@ -439,6 +440,12 @@ def fragmented_evidence():
          lambda b: [ft, moov(trak(2, [clear]), trak(1, [clear], after_mdia=[box("traf", b"", tfhd(2, b), senc(20, ivs(20)), trun(sizes))])), mdat]),
         ("cenc-fragmented-moof-in-trak", "a moof box lies inside the trak box of track 1 and holds a traf box for track 2 with a senc box", 20, [SAMPLES_ENCRYPTED],
          lambda b: [ft, moov(trak(2, [clear]), trak(1, [clear], after_mdia=[box("moof", b"", mfhd(), box("traf", b"", tfhd(2, b), senc(20, ivs(20)), trun(sizes)))])), mdat]),
+        ("cenc-fragmented-traf-in-traf", "a traf box holds a senc box, a traf box of its own and a run after it: the inner one is reported as misplaced and the outer one's evidence and run still count", 20,
+         [SAMPLES_ENCRYPTED, ["mp4.box-misplaced", "lies in another traf box"]],
+         lambda b: [ft, moov(trak(1, [clear])), box("moof", b"", mfhd(), box("traf", b"", tfhd(1, b), senc(10, ivs(10)), box("traf", b"", tfhd(1, b), trun(sizes[10:])), trun(sizes[:10]))), mdat]),
+        ("cenc-fragmented-moof-in-moof", "a moof box holds a moof box with a track fragment that has a senc box, and a track fragment of its own after it", 20,
+         [SAMPLES_ENCRYPTED, ["mp4.box-misplaced", "lies in another moof box"]],
+         lambda b: [ft, moov(trak(1, [clear])), box("moof", b"", mfhd(), box("moof", b"", mfhd(), box("traf", b"", tfhd(1, b), senc(10, ivs(10)), trun(sizes[10:]))), box("traf", b"", tfhd(1, b), trun(sizes[:10]))), mdat]),
         ("cenc-fragmented-piff-senc", "a PIFF sample encryption box (a uuid box) lies in the track fragment, and tenc does not protect", 20, [SAMPLES_ENCRYPTED],
          lambda b: [ft, moov(trak(1, [clear])), box("moof", b"", mfhd(), box("traf", b"", tfhd(1, b), box("uuid", u32(0) + u32(20) + ivs(20), uuid=PIFF_SAMPLE_ENCRYPTION), trun(sizes))), mdat]),
         ("cenc-fragmented-two-tfhd", "a track fragment holds two tfhd boxes (tracks 1 and 2) and a senc box, so that whose samples its run places is not known", 0,
@@ -653,9 +660,9 @@ def corrupt():
     skip_all = {"ffprobe": False, "mp4box": False, "faad": None, "encryption": {"ffprobe": None, "mediainfo": "Encrypted"},
                 "skip": {"all": "a damaged file, which tools read in their own ways"}}
 
-    def variant(name, description, entry, findings, fields=None, codec="AAC LC", scheme=SCHEMES[b"cenc"], extra_moov=(), mutate=None, systems=(), mediainfo="Encrypted", no_stream=False):
+    def variant(name, description, entry, findings, fields=None, codec="AAC LC", scheme=SCHEMES[b"cenc"], extra_moov=(), mutate=None, systems=(), mediainfo="Encrypted", no_stream=False, extra_stbl=()):
         samples = ciphertext(30)
-        track = Track(1, samples, 44100, 2, entry)
+        track = Track(1, samples, 44100, 2, entry, extra=list(extra_stbl))
         data, records, offsets = movie([track], moov_extra=list(extra_moov))
         if mutate:
             data = mutate(data, records)
@@ -722,6 +729,27 @@ def corrupt():
             [["mp4.truncated", "The moov box"]] + [["mp4.box-overruns-parent", f"The {kind} box"] for kind in ("trak", "mdia", "minf", "stbl", "stsd", "enca", "sinf", "schi", "tenc")]
             + [["mp4.missing-" + kind, "The stbl box"] for kind in ("stts", "stsc", "stsz", "stco")]
             + [["mp4.box-fields-truncated", "The tenc box"], ["mp4.protected-entry-no-tenc", "has no tenc box"]], mutate=cut_in_tenc, no_stream=True)
+    # Boxes that say samples are protected and end before the fields that say how: they count as protecting although tenc says that no sample is.
+    clear = base(*cenc_sinf(is_protected=0, iv_size=0))
+    cut = [["mp4.box-fields-truncated", "ends inside a field"], SAMPLES_ENCRYPTED]
+    no = seig_entry(0, 0, bytes(16))
+    variant("cenc-seig-truncated-length", "A clear tenc box and a seig sample group description box of version 1 whose box ends inside the length of its second description, the first of which does not protect: "
+            "a description that cannot be read is taken to protect.", clear, cut, extra_stbl=[fullbox("sgpd", 1, 0, b"seig" + u32(0) + u32(2) + u32(len(no)) + no + b"\0\0")])
+    for name, text, box_ in [
+        ("cenc-seig-cut-grouping", "ends inside the grouping type", fullbox("sgpd", 1, 0, b"se")),
+        ("cenc-seig-cut-default-length", "of version 1 ends inside the default length", fullbox("sgpd", 1, 0, b"seig" + b"\0\0")),
+        ("cenc-seig-cut-default-index", "of version 2 ends inside the default description index", fullbox("sgpd", 2, 0, b"seig" + u32(0) + b"\0\0")),
+        ("cenc-seig-cut-count-v0", "of version 0 ends inside the entry count", fullbox("sgpd", 0, 0, b"seig" + b"\0\0")),
+        ("cenc-seig-cut-count-v1", "of version 1 ends inside the entry count", fullbox("sgpd", 1, 0, b"seig" + u32(0) + b"\0\0")),
+    ]:
+        variant(name, f"A clear tenc box and a seig sample group description box that {text}: a description that cannot be read is taken to protect.", clear, cut,
+                extra_stbl=[box_])
+    variant("cenc-senc-empty", "A clear tenc box and a senc box with no version, flags or count: a sample encryption box that cannot be read is taken to say that samples are encrypted.",
+            clear, cut, extra_stbl=[Box(b"senc", b"")])
+    variant("cenc-saiz-empty", "A clear tenc box and a saiz box with no version and flags, so that its type of auxiliary information is not known: it is taken to be encryption information.",
+            clear, cut, extra_stbl=[Box(b"saiz", b"")])
+    variant("cenc-saio-truncated-type", "A clear tenc box and a saio box whose flags say it has an auxiliary information type that the box ends inside.",
+            clear, cut, extra_stbl=[fullbox("saio", 0, 1, b"cen")])
     entry = mp4a(2, 44100, esds(0x40, LC, 0, 0), Box(b"adrm", bytes(40)), format=b"aavd")
     variant("adrm-short", "An adrm box of 40 bytes in an aavd entry, where FFmpeg's reader takes 88: its fields are not read.", entry,
             [["mp4.adrm-short", "fewer than the 88"], SAMPLES_ENCRYPTED], scheme="Audible (aavd)", mediainfo=None)

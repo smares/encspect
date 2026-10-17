@@ -1,0 +1,236 @@
+{
+ "description": "A QuickTime movie whose user data list ends in the optional 32-bit zero (QuickTime File Format, \"User data list\"): it is shown as a terminator, with no warning.",
+ "length": 1296,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   20
+  ],
+  [
+   "moov",
+   20,
+   685
+  ],
+  [
+   "moov/mvhd",
+   28,
+   108
+  ],
+  [
+   "moov/trak",
+   136,
+   535
+  ],
+  [
+   "moov/trak/tkhd",
+   144,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   236,
+   435
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   244,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   276,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   321,
+   350
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   329,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   345,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   353,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   369,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   381,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   389,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   405,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   441,
+   54
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   495,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   519,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   547,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   647,
+   24
+  ],
+  [
+   "moov/udta",
+   671,
+   34
+  ],
+  [
+   "moov/udta/©cmt",
+   679,
+   22
+  ],
+  [
+   "mdat",
+   705,
+   591
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   713,
+   6
+  ],
+  [
+   719,
+   45
+  ],
+  [
+   764,
+   42
+  ],
+  [
+   806,
+   39
+  ],
+  [
+   845,
+   36
+  ],
+  [
+   881,
+   33
+  ],
+  [
+   914,
+   30
+  ],
+  [
+   944,
+   27
+  ],
+  [
+   971,
+   24
+  ],
+  [
+   995,
+   20
+  ],
+  [
+   1015,
+   17
+  ],
+  [
+   1032,
+   14
+  ],
+  [
+   1046,
+   11
+  ],
+  [
+   1057,
+   8
+  ],
+  [
+   1065,
+   46
+  ],
+  [
+   1111,
+   43
+  ],
+  [
+   1154,
+   40
+  ],
+  [
+   1194,
+   37
+  ],
+  [
+   1231,
+   34
+  ],
+  [
+   1265,
+   31
+  ]
+ ],
+ "fields": {
+  "MP4/moov/udta/Terminator": "0"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": {
+   "label": "LC AAC",
+   "channels": 2,
+   "rate": 44100
+  }
+ }
+}

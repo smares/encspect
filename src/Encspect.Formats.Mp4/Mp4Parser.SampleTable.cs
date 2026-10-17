@@ -57,7 +57,7 @@ public sealed partial class Mp4Parser
         ReadChildren(state, node, f.Position, header.End, depth + 1, custom: (s, n, h, fields, d) => SampleEntryBox(s, n, h, fields, d, version),
             naming: h => new BoxName(h.Type, NodeKind.Detail, Explain.SampleEntry(h.Type), Topics.SampleTables));
         int read = node.Children.Count(c => c.Children.Any(k => k.Name == "Data Reference Index"));
-        if (read != count)
+        if (read != count && !HasHiddenChild(node) && !state.Findings.IsDetaching)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-description-count",
                 $"The stsd box at 0x{node.Offset:X} declares {count} sample descriptions and holds {read}.", node);
@@ -529,8 +529,24 @@ public sealed partial class Mp4Parser
     // wherever the box lies, is taken to say that the track's samples are protected.
     private static void SampleGroupDescription(State state, Node node, BoxFields f)
     {
+        // A box that ends before its grouping type, or inside any field of a seig box, has descriptions that cannot be read, which is taken to protect.
+        bool mayBeSeig = true;
+        try
+        {
+            SampleGroupDescriptionFields(state, node, f, grouping => mayBeSeig = grouping == "seig");
+        }
+        catch (EndOfStreamException) when (mayBeSeig)
+        {
+            MarkProtecting(state);
+            throw;
+        }
+    }
+
+    private static void SampleGroupDescriptionFields(State state, Node node, BoxFields f, Action<string> groupingRead)
+    {
         int version = FullBox(node, f).Version;
         string grouping = f.FourCc(node, "Grouping Type", Explain.GroupingType);
+        groupingRead(grouping);
         uint defaultLength = version >= 1 ? f.U32(node, "Default Length", Explain.DefaultLength, unit: "bytes") : 0;
         if (version >= 2)
         {

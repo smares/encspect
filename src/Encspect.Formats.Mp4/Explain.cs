@@ -25,6 +25,11 @@ internal static class Explain
     public const string TrailingData = "Bytes after the last box that do not start another box, such as a tag appended to the file or the rest of a damaged box.";
 
     public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies inside MP4 data without a declared end, which the tag breaks; the analyzer does not read them as boxes.";
+
+    public const string UserDataTerminator = "The 32-bit zero that QuickTime optionally writes after the last atom of a user data list (QuickTime File Format, \"User data list\").";
+
+    public const string BoxesNotShown = "The rest of the boxes of the parent: the tree is over its node budget, so they are read for the tracks, samples and protection they describe and are not shown as nodes. The nodes that a codec or a tag parser makes from them are placed under this one.";
+
     public const string UnusedBytes = "Bytes inside a box that are too few for a box header or that a damaged size left over; they are not read as boxes.";
     public const string Payload = "The box's contents, not read because the box nests deeper than the analyzer follows.";
     public const string UnreadData = "The rest of the box's contents, whose fields the analyzer does not read.";
@@ -158,6 +163,7 @@ internal static class Explain
     public const string UnanalyzedStream = "The stream of a track whose samples are not encrypted but whose coding is not analyzed yet, described by its sample entry and sample tables; its frames are not read.";
 
     public const string EncryptedStream = "The stream of a track whose samples are encrypted, described by its sample entry and sample tables; its frames are not read.";
+    public const string ScatteredStream = "The stream of a track of MPEG audio whose samples do not lie in one stretch of the file, described by its sample entry and sample tables; its frames are not read, since the analyzer reads MPEG audio only where its samples are contiguous.";
     public const string SourceBitDepth = "The bit depth of the source audio as afconvert's files spell it: I for integer samples and the number of bits (I16 in the files seen).";
 
     public const string StreamType = "The kind of stream, 5 for audio, whether it flows upstream, and a reserved bit that ISO/IEC 14496-1 7.2.6.6 sets to 1 (afconvert's files have 0).";
@@ -453,7 +459,7 @@ internal static class Explain
         "disk" => "The disc number and the number of discs, stored as 16-bit numbers in binary data (iTunes metadata disk).",
         "©wrt" => "The composer (iTunes metadata ©wrt).",
         "©cmt" => "A comment (iTunes metadata ©cmt).",
-        "©too" => "The software that encoded the file, as it names itself. Software that only rewrites a file may also set it (iTunes metadata ©too).",
+        "©too" => "Text naming the software that wrote or encoded the file; no Apple specification defines it, and ffmpeg's muxer writes its own version here (iTunes metadata ©too).",
         "©enc" => "Who or what encoded the file (iTunes metadata ©enc).",
         "cprt" => "The copyright notice (iTunes metadata cprt).",
         "©grp" => "The grouping, a label that ties tracks together (iTunes metadata ©grp).",
