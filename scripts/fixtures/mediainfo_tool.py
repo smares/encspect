@@ -35,16 +35,25 @@ def require():
         sys.exit(f"MediaInfo {VERSION} is needed, found: {' '.join(output.split())}")
 
 
+class Failed(Exception):
+    """MediaInfo exited with a non-zero code (negative: ended by that signal) or wrote nothing."""
+
+    def __init__(self, returncode):
+        super().__init__(f"MediaInfo exited with {returncode}" if returncode else "MediaInfo wrote nothing")
+        self.returncode = returncode
+
+
 def read(path, full=False):
     """MediaInfo's tracks of the file as {"General": track, "Audio": [tracks], ...}, every value a
-    string as MediaInfo writes it (custom fields under "extra"); None where MediaInfo fails or ends
-    without output. With full, the fields of --Full as well."""
+    string as MediaInfo writes it (custom fields under "extra"). Raises Failed where MediaInfo exits
+    with an error or a signal or writes nothing: that is a problem of the fixture, not a file
+    without a format (see Tally.read). With full, the fields of --Full as well."""
     # Without a UTF-8 locale, MediaInfo writes every character outside ASCII as "?".
     environment = dict(os.environ, LC_ALL="C.UTF-8")
     command = ["mediainfo", "--Output=JSON", *(["--Full"] if full else []), str(path)]
     result = subprocess.run(command, capture_output=True, text=True, env=environment)
     if result.returncode != 0 or not result.stdout.strip():
-        return None
+        raise Failed(result.returncode)
     document = json.loads(result.stdout)
     media = (document[0] if isinstance(document, list) else document).get("media") or {}
     tracks = {}
@@ -213,8 +222,12 @@ class Tally:
     """Counts each field compared with MediaInfo and each reason one was not, for the summary, and
     collects the problems of one fixture at a time."""
 
-    def __init__(self, explained=None):
+    def __init__(self, explained=None, crashes=None):
         self.counts = collections.Counter()
+        # {fixture: (exit code, reason, optional)}: MediaInfo ends on the fixture with that code (negative: by that signal), with the
+        # evidence. With optional, a build that does not end that way is no problem: the crash is undefined behavior of the library.
+        self.crashes = crashes or {}
+        self.crashed = set()
         # {fixture: {field: reason}}: MediaInfo's own reading of a field on a fixture, with the evidence.
         self.explained = explained or {}
         self.used = set()
@@ -225,6 +238,26 @@ class Tally:
         self.name = name
         self.problems = []
         return self.problems
+
+    def read(self, path, full=False):
+        """MediaInfo's tracks of the fixture (read()), or None for a fixture in `crashes` that ends as stated. Any other
+        failure, and a stated crash that does not happen (unless it is optional), is a problem: an absent format is no
+        agreement with a crash."""
+        expected = self.crashes.get(self.name)
+        try:
+            tracks = read(path, full)
+        except Failed as failure:
+            if expected is not None and failure.returncode == expected[0]:
+                self.crashed.add(self.name)
+                self.counts[("exit code", f"skipped: {expected[1]}")] += 1
+                return None
+            self.problems.append(f"{failure}" + (f", expected {expected[0]}" if expected else ""))
+            return None
+        if expected is not None:
+            self.crashed.add(self.name)
+            if not expected[2]:
+                self.problems.append(f"MediaInfo no longer ends with {expected[0]}; drop it from the expected crashes")
+        return tracks
 
     def compare(self, field, actual, expected):
         """MediaInfo's actual value must equal the expected one, unless the fixture's difference is
@@ -247,7 +280,8 @@ class Tally:
     def unused(self):
         """Explained differences on fixtures or fields that were never compared."""
         return [f"{name}: the explained difference in {field} was not compared" for name, fields in sorted(self.explained.items())
-                for field in fields if (name, field) not in self.used]
+                for field in fields if (name, field) not in self.used] + [f"{name}: the expected crash was not read" for name in sorted(self.crashes)
+                                                                           if name not in self.crashed]
 
     def print(self, out=sys.stderr):
         fields = sorted({field for field, _ in self.counts})

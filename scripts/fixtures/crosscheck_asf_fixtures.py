@@ -197,8 +197,12 @@ def check_protection(name, manifest, path, problems):
             if exported.get(tag) != wanted:
                 problems.append(f"ffprobe's {tag} is {exported.get(tag)!r}, the analyzer's {field} {wanted!r}")
     if tool("mediainfo"):
+        result = run(["mediainfo", "--Output=JSON", str(path)], text=True)
+        if result.returncode != 0:
+            problems.append(f"MediaInfo exited with {result.returncode}")
+            return
         try:
-            tracks = json.loads(run(["mediainfo", "--Output=JSON", str(path)], text=True).stdout)["media"]["track"]
+            tracks = json.loads(result.stdout)["media"]["track"]
         except (json.JSONDecodeError, KeyError):
             skip(name, "MediaInfo's Encryption field", "MediaInfo's output for the damaged file is not JSON")
             return
@@ -335,6 +339,9 @@ def check_mediainfo(name, path, stream, problems, report=None, count_samples=Tru
         skip(name, "MediaInfo", "mediainfo is not installed")
         return
     result = run(["mediainfo", "-f", "--Output=JSON", str(path)], text=True)
+    if result.returncode != 0:
+        problems.append(f"MediaInfo exited with {result.returncode}")
+        return
     tracks = json.loads(result.stdout)["media"]["track"]
     general = next(t for t in tracks if t["@type"] == "General")
     audio = next(t for t in tracks if t["@type"] == "Audio")

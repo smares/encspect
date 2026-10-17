@@ -172,7 +172,7 @@ def check_protection(name, manifest, path, problems, tally, report):
             actual = (protection["scheme"], protection["isEncrypted"]) if protection else None
             if actual != expected:
                 problems.append(f"track {track['number']}: the report's protection is {actual}, the reference model gives {expected}")
-    tracks = mediainfo_tool.read(path)
+    tracks = tally.read(path)
     if tracks is None or len(tracks["Audio"]) != len(audio):
         tally.skip("encryption", "MediaInfo reads no tracks or other audio tracks than the manifest, the file being damaged")
         return
@@ -240,8 +240,7 @@ def check_decode(path, problems, opus_tracks=0):
     flushes = [l for l in lines if OPUS_FLUSH.match(l)]
     if len(flushes) != opus_tracks:
         problems.append(f"ffmpeg prints {len(flushes)} Opus flush messages for {opus_tracks} Opus tracks; FFmpeg 8.0.1 prints one for each (opus/parser.c)")
-    else:
-        lines = [l for l in lines if not OPUS_FLUSH.match(l)]
+    lines = [l for l in lines if not OPUS_FLUSH.match(l)]
     if result.returncode != 0 or lines:
         problems.append(f"ffmpeg decoding: {lines[:1] or result.returncode}")
 
@@ -252,9 +251,8 @@ def golden_report(path):
 
 
 def check_mediainfo(name, manifest, path, tally, report):
-    tracks = mediainfo_tool.read(path)
+    tracks = tally.read(path)
     if tracks is None:
-        tally.compare("format", None, manifest["format"])
         return
     tally.compare("format", tracks["General"].get("Format"), manifest["format"])
     # MediaInfo's "Writing application" is the first Segment's WritingApp and its "Writing library" the MuxingApp.

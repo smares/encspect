@@ -1384,7 +1384,7 @@ def check_mediainfo(path, tally):
     and album."""
     problems = tally.start(f"{path.parent.name}/{path.stem}")
     report = mi.golden(path)
-    info = mi.read(path)
+    info = tally.read(path)
     general, audio = (info["General"], info["Audio"]) if info else ({}, [])
     frames = mpeg_frames(report)
     codes = {f["code"] for f in report["findings"]}

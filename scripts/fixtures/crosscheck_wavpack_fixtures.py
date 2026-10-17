@@ -380,9 +380,22 @@ def config_flags(report):
     return {}
 
 
+def fill_block(chained, size):
+    """The block in whose Data_Parse MediaInfo runs Data_Parse_Fill (File_Wvpk.cpp): the first where Frame_Count (counted for every block, then taken back
+    for a block of stream version 4 without samples) reaches Frame_Count_Valid (2), or where the file ends; None where neither happens."""
+    count = 0
+    for b in chained:
+        count += 1
+        if int(b["version"], 16) >> 8 == 0x4 and not b["samples"]:
+            count -= 1
+        if count >= 2 or b["offset"] + b["length"] == size:
+            return b
+    return None
+
+
 def check_mediainfo(name, manifest, path, report, tally):
     problems = tally.start(name)
-    info = mi.read(path, full=True)
+    info = tally.read(path, full=True)
     audio = info["Audio"][0] if info and info["Audio"] else {}
     stream = report["streams"][0] if report["streams"] else None
     if stream is None:
@@ -420,9 +433,11 @@ def check_mediainfo(name, manifest, path, report, tally):
     else:
         tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
         tally.compare("bit depth", audio.get("BitDepth"), str(8 * (1 + (int(first["flags"], 16) & 3))))
-    # File_Wvpk.cpp, Streams_Finish: the first block's index to the end of the last block with samples. Data_Parse_Fill runs in the second audio block and
-    # jumps to the last 512 KiB only where at least 1 MiB is left from the block's start (File_Size-(File_Offset+Buffer_Offset)), so a smaller file is read to its end.
-    if path.stat().st_size - second["offset"] >= 2 * 512 * 1024:
+    # File_Wvpk.cpp, Streams_Finish: the first block's index to the end of the last block with samples. Data_Parse_Fill runs in the block where the count of
+    # blocks reaches 2 (fill_block) and jumps to the last 512 KiB only where at least 1 MiB is left from that block's start (File_Size-(File_Offset+Buffer_Offset)),
+    # so a smaller file is read to its end.
+    filled = fill_block(chained, path.stat().st_size)
+    if filled is not None and path.stat().st_size - filled["offset"] >= 2 * 512 * 1024:
         tally.skip("duration", "MediaInfo jumps to the last 512 KiB of a file over 1 MiB (File_Wvpk.cpp, Data_Parse_Fill), where it finds the last block by its synchronization")
     else:
         rate = stream["sampleRate"] // 8 if is_dsd else stream["sampleRate"]

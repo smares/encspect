@@ -320,7 +320,7 @@ def check_mediainfo(path, tally):
     its samples), the bitrate mode and the samples per frame."""
     tally.start(path.stem)
     report = mi.golden(path)
-    info = mi.read(path, full=True)
+    info = tally.read(path, full=True)
     audio = info["Audio"][0] if info and info["Audio"] else {}
     if not report["streams"]:
         tally.skip("everything", "the file holds no audio stream")
@@ -395,7 +395,7 @@ def check_dtshd(path, manifest, report, problems, tally):
     if info is not None and probe and fileinfo != mi.value(info, "Text"):
         problems.append(f"ffprobe's fileinfo tag is {fileinfo!r}, FILEINFO's text {mi.value(info, 'Text')!r}")
     presentation = chunk(report, "AUPR-HDR")
-    audio_info = mi.read(path, full=True)
+    audio_info = tally.read(path, full=True)
     audio = audio_info["Audio"][0] if audio_info and audio_info["Audio"] else {}
     if presentation is None or not audio:
         return

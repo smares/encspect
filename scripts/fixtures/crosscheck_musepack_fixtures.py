@@ -342,8 +342,15 @@ MEDIAINFO_READS_OTHERWISE = {
     "sv8-tag-inside": dict.fromkeys(["tag title", "tag track", "tag performer", "tag album"], MEDIAINFO_SIGNATURE_TAG),
     "sv7-version-unknown": {"format": "MediaInfo takes \"MP+\" only with stream version 7 (File_Mpc.cpp, FileHeader_Begin); the analyzer reads the SV7 header and reports the version"},
     "sv8-audio-before-header": dict.fromkeys(["sample rate", "samples", "duration and bitrate"], "MediaInfo stops at the first audio packet (File_MpcSv8.cpp, AP: Finish), so it does not read the stream header after it"),
-    "sv8-rate-reserved": {"format": "MediaInfo (24.01 and 26.01: File_MpcSv8.cpp is unchanged) indexes its four-entry Mpc_SampleFreq table with the 3-bit sample rate code (File_MpcSv8.cpp, SH) and divides by what it finds past the end, so it exits with SIGFPE on a reserved code"},
+    "sv8-rate-reserved": {"format": "MediaInfo indexes its four-entry Mpc_SampleFreq table (File_Mpc.cpp) with the 3-bit sample rate code (File_MpcSv8.cpp, SH), so a reserved code reads past the table; "
+                                    "it either ends (MEDIAINFO_CRASHES) or reads a stream the analyzer does not find (File_MpcSv8.cpp is the same in 24.01 and 26.01)"},
 }
+
+# File_MpcSv8.cpp (v26.01), SH: Mpc_SampleFreq[SampleFrequency] has the four entries of File_Mpc.cpp and the code has 3 bits; the value it reads past the table
+# divides SampleCount*1000 and File_Size*8*... (the lines that fill Audio_Duration and Audio_BitRate). The local build of v26.01 ends with SIGFPE (-8) where
+# that value is 0. What lies behind the table is up to the build, so the exit is optional: Ubuntu's package may read another value and print a stream instead,
+# and the explained "format" difference above holds for both.
+MEDIAINFO_CRASHES = {"sv8-rate-reserved": (-8, "reads past the four-entry Mpc_SampleFreq table and ends with SIGFPE where it divides by what it finds (File_MpcSv8.cpp, SH)", True)}
 
 
 def sv7_encoder_text(version):
@@ -359,7 +366,7 @@ def check_mediainfo(name, path, tally):
     Where it reads otherwise by its source, the value it gives is checked."""
     problems = tally.start(name)
     report = mi.golden(path)
-    info = mi.read(path)
+    info = tally.read(path)
     audio = info["Audio"][0] if info and info["Audio"] else {}
     if name in MEDIAINFO_MISREAD_AS_MPEG:
         tally.compare("misreading as MPEG audio", {k: audio.get(k) for k in MEDIAINFO_MISREAD_AS_MPEG[name]}, MEDIAINFO_MISREAD_AS_MPEG[name])
@@ -414,7 +421,7 @@ def check_mediainfo(name, path, tally):
 def main():
     mi.require()
     tool_versions.require("ffprobe", "musepack")
-    tally = mi.Tally(MEDIAINFO_READS_OTHERWISE)
+    tally = mi.Tally(MEDIAINFO_READS_OTHERWISE, MEDIAINFO_CRASHES)
     tools = os.environ.get("MUSEPACK_TOOLS_DIR") and pathlib.Path(os.environ["MUSEPACK_TOOLS_DIR"])
     frames_tool = musepack_tool.build_frames(tools and tools / "frames")
     frames126 = musepack_tool.build_frames_126(tools and tools / "frames126")

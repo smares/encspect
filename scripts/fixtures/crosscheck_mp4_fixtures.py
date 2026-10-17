@@ -535,7 +535,7 @@ def check_mediainfo(path, tally, check=None):
     for MP4 the duration, the encoding tool and the iTunes metadata's title, artist and album."""
     problems = tally.start(f"{path.parent.name}/{path.stem}")
     report = json.loads((path.parent / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0]
-    info = mi.read(path)
+    info = tally.read(path)
     audio = info["Audio"] if info else []
     tally.compare("streams", len(audio), len(report["streams"]))
     expected_encryption = (check or {}).get("encryption", {}).get("mediainfo")

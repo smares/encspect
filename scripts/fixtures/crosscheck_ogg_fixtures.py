@@ -500,7 +500,7 @@ def check_mediainfo(name, path, tally):
     problems = tally.start(name)
     report = mi.golden(path)
     streams = mediainfo_streams(report)
-    info = mi.read(path)
+    info = tally.read(path)
     audio = info["Audio"] if info else []
     tally.compare("streams", len(audio), len(streams))
     for (stream, node), track in zip(streams, audio):
