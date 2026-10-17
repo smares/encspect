@@ -1,4 +1,5 @@
 using System.Runtime;
+using System.Text;
 using Encspect.Core;
 using Encspect.Formats.Aac;
 using Encspect.Formats.WavPack;
@@ -715,9 +716,9 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // An SV8 audio packet of 4^7 frames in 4 bytes declares about 428 s: the per-second figures are
-    // kept only for seconds a packet starts in, so 200,000 such packets cost per packet, not per
-    // second they declare.
+    // An SV8 audio packet of 4^4 frames in 35 bytes (a bit for each frame at least, which libmpcdec
+    // reads) declares about 6.7 s: the per-second figures are kept only for seconds a packet starts
+    // in, so 200,000 such packets cost per packet, not per second they declare.
     [Fact]
     public void LongEmptySv8PacketsStayCompact()
     {
@@ -729,6 +730,38 @@ public class MemoryTests(ITestOutputHelper output)
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * MusepackKeptBound, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * MusepackPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // Every kind of packet past the detailed ones joins a run, whatever its key: the stream header,
+    // ReplayGain, encoder info, seek table offset and seek table packets repeated cost about nothing
+    // each too, and the findings they would add are counted once. The bound is the growth from 0.5 to 1.5
+    // million packets, as in UnknownSv8PacketsStayCompact.
+    [Theory]
+    [InlineData("RG", "01000000000000000000")]
+    [InlineData("RG", "")]
+    [InlineData("RG", "02")]
+    [InlineData("EI", "50010000")]
+    [InlineData("SO", "00")]
+    [InlineData("ST", "010000")]
+    [InlineData("SH", "")]
+    public void RepeatedSv8StreamPacketsStayCompact(string key, string payloadHex)
+    {
+        const int fewer = 500_000;
+        const int packets = 1_500_000;
+        byte[] payload = Convert.FromHexString(payloadHex);
+        byte[] warmUp = Sv8RepeatedPackets(5000, Encoding.ASCII.GetBytes(key), payload);
+
+        (_, long fewerKept, long fewerPeak, string fewerWhere) = MeasureExcess("repeated.mpc", Sv8RepeatedPackets(fewer, Encoding.ASCII.GetBytes(key), payload), warmUp);
+        (Report report, long kept, long peak, string where) = MeasureExcess("repeated.mpc", Sv8RepeatedPackets(packets, Encoding.ASCII.GetBytes(key), payload), warmUp);
+
+        Assert.Equal("Musepack SV8", report.Streams.Single().Codec);
+        Assert.True(report.Findings.Count < 40, $"{report.Findings.Count} findings.");
+        double keptPerPacket = (kept - fewerKept) / (double)(packets - fewer);
+        double peakPerPacket = (peak - fewerPeak) / (double)(packets - fewer);
+        output.WriteLine($"{key} {payloadHex}: {Hundredths(keptPerPacket)} kept and {Hundredths(peakPerPacket)} held per further packet; {fewerWhere} {where}");
+        Assert.True(keptPerPacket < UndetailedPacketBound, $"The report keeps {keptPerPacket:F2} bytes per further {key} packet.");
+        Assert.True(peakPerPacket < UndetailedPacketBound, $"The analysis held {peakPerPacket:F2} more bytes per further {key} packet than it starts and ends with. {RuntimeSettings()}");
         GC.KeepAlive(report);
     }
 
@@ -1470,9 +1503,14 @@ public class MemoryTests(ITestOutputHelper output)
     // An SV8 stream (SV8 specification): a stream header with a sample count of 0, 44.1 kHz, 32
     // bands, stereo and 4^7 frames per audio packet and a valid CRC, ReplayGain version 1, then
     // packets of the key, audio packets with one byte, others empty, and the stream end.
-    private static byte[] Sv8EmptyPackets(int packets, ReadOnlySpan<byte> key)
+    private static byte[] Sv8EmptyPackets(int packets, ReadOnlySpan<byte> key) =>
+        Sv8RepeatedPackets(packets, key, key[0] == 'A' ? new byte[32] : []);
+
+    // The same stream with packets of the key and the payload, which the size field counts with itself
+    // and the key (the specification's sizes up to 127 here).
+    private static byte[] Sv8RepeatedPackets(int packets, ReadOnlySpan<byte> key, byte[] payload)
     {
-        byte[] body = [8, 0, 0, 0x1F, 0x1F];
+        byte[] body = [8, 0, 0, 0x1F, 0x1C];
         uint crc = 0xFFFFFFFF;
         foreach (byte b in body)
         {
@@ -1489,7 +1527,7 @@ public class MemoryTests(ITestOutputHelper output)
         // Filled in place: a list that doubles up to 16 MB and is copied out leaves tens of MB of
         // dead large arrays in the heap for the analysis that follows.
         byte[] tail = "SE\x03"u8.ToArray();
-        int packetLength = key[0] == 'A' ? 4 : 3;
+        int packetLength = 3 + payload.Length;
         byte[] data = new byte[4 + sh.Length + rg.Length + (packets * packetLength) + tail.Length];
         "MPCK"u8.CopyTo(data);
         sh.CopyTo(data, 4);
@@ -1499,7 +1537,8 @@ public class MemoryTests(ITestOutputHelper output)
         {
             data[at] = key[0];
             data[at + 1] = key[1];
-            data[at + 2] = key[0] == 'A' ? (byte)4 : (byte)3;
+            data[at + 2] = (byte)packetLength;
+            payload.CopyTo(data, at + 3);
         }
 
         tail.CopyTo(data, at);

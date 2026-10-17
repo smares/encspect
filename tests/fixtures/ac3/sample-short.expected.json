@@ -1,0 +1,173 @@
+{
+ "description": "Six 2/0 frames in MP4 with a matching dac3 box, the first sample 68 bytes short of its frame.",
+ "length": 5124,
+ "format": "MP4",
+ "frames": [
+  [
+   584,
+   700
+  ],
+  [
+   1284,
+   768
+  ],
+  [
+   2052,
+   768
+  ],
+  [
+   2820,
+   768
+  ],
+  [
+   3588,
+   768
+  ],
+  [
+   4356,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 9216,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.frame-truncated",
+   "A sample ends inside its frame"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "skip": {
+   "ffprobe": "ffmpeg's AC-3 parser drops the sample that ends inside its frame, so ffprobe lists five packets where the file has six samples.",
+   "decode": "ffmpeg drops the short sample's frame."
+  }
+ },
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   548
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   432
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   332
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   247
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   187
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   63
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ac-3",
+   413,
+   47
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ac-3/dac3",
+   449,
+   11
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   460,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   484,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   512,
+   44
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   556,
+   20
+  ],
+  [
+   "mdat",
+   576,
+   4548
+  ]
+ ]
+}
