@@ -372,7 +372,7 @@ public class ComplexityTests
         watch.Stop();
         Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
-        Assert.InRange(report.Streams.Count, 2, 64);
+        Assert.Equal(64, report.Streams.Count);
         Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
         Assert.Equal((data.Length / 512) - 1, changed.Count);
         Assert.Equal(Severity.Info, changed.Severity);
@@ -449,8 +449,43 @@ public class ComplexityTests
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
     }
 
-    // An APEv2 tag of four million items of 11 bytes each, 44 MB: 58 s and 8.4 GB when each item was seven nodes, a finding and a
-    // set entry. The first 1,024 items are nodes; the time is linear in the items.
+    // 65 runs of three frames that alternate between two headers, then more frames than the record cap of the header of the 65th run: the
+    // frames past the limit of 64 streams are in no stream, those counted past the record cap among them (they have no node, only a run),
+    // and aac.streams-limited counts every one.
+    [Fact]
+    public void AdtsFramesCountedPastTheRecordCapAreInNoStreamPastTheStreamLimit()
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "stream-change.aac"));
+        byte[][] frames = [source[..13], source[503..516]];
+        const int tail = 2_200_000;
+        var data = new MemoryStream();
+        for (int run = 0; run < 65; run++)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                data.Write(frames[run % 2]);
+            }
+        }
+
+        for (int i = 0; i < tail; i++)
+        {
+            data.Write(frames[0]);
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("limited-overflow.aac", new MemoryStream(data.ToArray()));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Contains(report.Findings, f => f.Code == "aac.frames-limit");
+
+        Assert.Equal(Encspect.Formats.Aac.RawAacParser.MaxStreams, report.Streams.Count);
+        Assert.Equal(64 * 3 * 1024L, report.Streams.Sum(s => s.Samples));
+        Assert.Equal(3 + tail, Assert.Single(report.Findings, f => f.Code == "aac.streams-limited").Count);
+    }
+
+    // An APEv2 tag of four million items of 14 bytes each, 56 MB: 58 s and 8.4 GB when each item was seven nodes, a finding and a
+    // set entry. The first 1,024 items are nodes and the next ones are listed from records up to a budget of 4 MiB; the time is linear in the items.
     [Fact]
     public void AnApeTagOfMillionsOfItems()
     {
@@ -459,8 +494,9 @@ public class ComplexityTests
         Report report = Timed(data);
 
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
-        Assert.Equal(4_000_000 - 1024, Assert.Single(report.Findings, f => f.Code == "ape.items-limited").Count);
-        Assert.Equal(1024, report.Root.Children.Single(c => c.Kind == NodeKind.Tag).Children.Single(c => c.Name == "Items").Children.Count);
+        int listed = report.Root.Children.Single(c => c.Kind == NodeKind.Tag).Children.Single(c => c.Name == "Items").Children.Count;
+        Assert.InRange(listed, 1024, 1024 + ((4 << 20) / 14));
+        Assert.Equal(4_000_000 - listed, Assert.Single(report.Findings, f => f.Code == "ape.items-limited").Count);
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
     }
 

@@ -1377,12 +1377,22 @@ def lame_encoder(frame, data):
     return (text.split(b"\0")[0].decode("latin-1"), flags & 0x0F if flags & 0xF0 <= 0x20 else None) if accepted else None
 
 
+# Fixtures whose fields are not compared with MediaInfo, with the reason. MediaInfo reads the first 128 frames and the end of a file and
+# reports the stream of its last frame (File_Mpega.cpp); in a file that changes its sample rate every three frames, 65 times, which frames it
+# reads depends on where each resynchronization lands (measured with MediaInfo 24.01: 44100 Hz and 207 frames for 198), so a comparison
+# would pin one version of its synchronization.
+MEDIAINFO_NOT_COMPARED = {"mpeg/streams-limited": "the sample rate changes every three frames"}
+
+
 def check_mediainfo(path, tally):
     """MediaInfo must report the version, layer, sample rate, channels, mode, mode extension and
     emphasis of the last frame it reads, the frames, samples, bitrate, bitrate mode and stream size
     that a VBR header or the stream's bytes give, the LAME tag's encoder, and the tags' title, artist
     and album."""
     problems = tally.start(f"{path.parent.name}/{path.stem}")
+    if tally.name in MEDIAINFO_NOT_COMPARED:
+        tally.skip("all fields", MEDIAINFO_NOT_COMPARED[tally.name])
+        return problems
     report = mi.golden(path)
     info = tally.read(path)
     general, audio = (info["General"], info["Audio"]) if info else ({}, [])

@@ -1,0 +1,28 @@
+{
+  "description": "APEv2 tag of 1,024 short items and one more whose text value of 5,000 bytes is too long to keep: the first 1,024 become nodes, the last is checked and counted but not listed.",
+  "length": 23936,
+  "regions": [
+    {
+      "name": "Data",
+      "offset": 0,
+      "length": 512
+    },
+    {
+      "name": "APE",
+      "version": "2.0",
+      "confidence": "High",
+      "fields": {
+        "Items/K0000/Value": "v0",
+        "Items/K1023/Value": "v1023"
+      },
+      "offset": 512,
+      "length": 23424
+    }
+  ],
+  "findings": [
+    {
+      "code": "ape.items-limited",
+      "contains": "1 item is checked and counted but not listed"
+    }
+  ]
+}

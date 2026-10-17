@@ -217,6 +217,10 @@ def check_libdca(tool, path, manifest, report, problems):
         streams[0]["samples"] = round(streams[0]["samples"] * core / streams[0]["sample_rate"])
         streams[0]["sample_rate"] = core
     index, used = 0, 0
+    # "libdca_streams_end": the offset where the units in no stream start; libdca reads them like any others, but the manifest's streams hold none of them.
+    streams_end = check.get("libdca_streams_end")
+    if streams_end is not None:
+        found = [f for f in found if int(f[0]) < streams_end]
     for offset, length, flags, rate, bitrate, samples, status in found:
         if used >= streams[index]["samples"] and index + 1 < len(streams):
             index, used = index + 1, 0
@@ -257,6 +261,10 @@ MEDIAINFO_READS_OTHERWISE = {
         ["commercial name", "channels", "channel layout", "bit depth"],
         "MediaInfo splits PCMR into a two-bit resolution and the ES flag (File_Dts.cpp, Core: bits_per_sample, ES) and so takes PCMR 7, which Table 5-17 lists as invalid, "
         "for 24 bits with the ES flag; it counts LFF 3 as an LFE channel and the ES flag as one more, and lays out ES only for arrangement 3/2 (Streams_Fill_Core_ES)"),
+    "streams-limited": dict.fromkeys(
+        ["channels", "channel layout"], "MediaInfo keeps one value of the core's channel arrangement, which every core header overwrites (File_Dts.cpp, Core: Core_Core_AMODE=channel_arrangement), and "
+        "fills its fields once Frame_Count_Valid frames are read (32 here, the same in 24.01 and 26.01), so it reports the arrangement of the 32nd frame, mono, where the analyzer's first stream is "
+        "stereo (measured with MediaInfo 24.01)"),
     "user-defined-arrangement": dict.fromkeys(
         ["channels", "channel layout"], "MediaInfo gives no channels for a user defined arrangement (File_Dts.cpp, Streams_Fill_Core: Core_Core_AMODE<16), where the "
                                        "analyzer reports the two channels the core codes as discrete"),

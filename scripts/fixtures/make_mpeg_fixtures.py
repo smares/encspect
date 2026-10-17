@@ -411,7 +411,8 @@ class Fixture:
             fields = stream_stats.region_fields(inside, infos)
             if fields:
                 region["statistics"] = fields
-        self.streams = stream_stats.streams(infos)
+        # The analyzer keeps at most 64 streams; the frames after the 64th are in no stream (mpeg.streams-limited).
+        self.streams = stream_stats.streams(infos)[:64]
         for info in infos:
             if info.header is not None:
                 for code, contains in stream_stats.header_findings(info, infos):
@@ -943,6 +944,21 @@ def layer_change():
     f.add_frames(stream(5, rate=48000))
     f.add_frames(stream(5, layer=2, bitrate=192, rate=48000, mode="Stereo"))
     return f.finding("mpeg.stream-changed", "Layer II")
+
+
+@fixture
+def streams_limited():
+    f = Fixture(
+        "streams-limited",
+        ".mp3",
+        "Sixty-six runs of three MPEG-1 Layer III frames at 32 kbit/s that alternate between 44100 and 48000 Hz: the first 64 runs are streams, "
+        "the last 6 frames are in no stream.",
+        crosscheck=False,
+    )
+    for run in range(66):
+        f.add_frames(stream(3, bitrate=32, rate=48000 if run % 2 else 44100))
+    f.finding("mpeg.stream-changed", "The stream changes 65 times")
+    return f.finding("mpeg.streams-limited", "6 frames are in no stream")
 
 
 @fixture

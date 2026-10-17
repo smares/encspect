@@ -89,7 +89,20 @@ public class AacBlockTests
     }
 
     public static TheoryData<string> AdtsFixtures => new(
-        Fixtures.Mp4FixtureNames().Where(n => n.EndsWith(".aac", StringComparison.Ordinal) && !n.Contains("corrupt", StringComparison.Ordinal)));
+        Fixtures.Mp4FixtureNames().Where(n => n.EndsWith(".aac", StringComparison.Ordinal) && !n.Contains("corrupt", StringComparison.Ordinal)
+            && n != "adts/streams-limited.aac"));
+
+    // The frames of streams past the limit of 64 are in no stream and their raw data blocks are not read: none has elements, the ones before it all do.
+    [Fact]
+    public void FramesPastTheStreamLimitAreNotRead()
+    {
+        Report report = Fixtures.AnalyzeMpeg("adts/streams-limited.aac");
+
+        Node[] frames = [.. Frames(report.Root)];
+        Assert.Equal(66 * 3, frames.Length);
+        Assert.All(frames.Take(64 * 3), f => Assert.NotEmpty(f.Children.Single(c => c.Name == "Raw Data Block").Children));
+        Assert.All(frames.Skip(64 * 3), f => Assert.Empty(f.Children.Single(c => c.Name == "Raw Data Block").Children));
+    }
 
     // A report keeps each raw data block without its Huffman-coded data and rebuilds its nodes from
     // that; they must equal the nodes read from the block's own bytes, field by field. Where the

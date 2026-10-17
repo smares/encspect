@@ -22,7 +22,8 @@ internal sealed class Ac3Analysis
     // A stream is a run of one independent substream (id 0 for AC-3) with one configuration, its program; a change
     // ends it and starts another, and a returning configuration starts a new one. The number of streams is capped so that
     // a file which changes all the time cannot grow the report: a frame that would start a stream past the cap is in no
-    // stream (ac3.streams-limited), and so is every frame after it in that substream while its configuration is unchanged.
+    // stream (ac3.streams-limited), and so is every later frame of its substream, which never gets a stream. The other
+    // substreams keep theirs, as they play at the same time.
     private readonly Dictionary<int, Program?> _active = [];
     private readonly Dictionary<int, ProgramKey> _lastKeys = [];
     private readonly List<Program> _programs = [];
@@ -461,7 +462,7 @@ internal sealed class Ac3Analysis
             if (!Findings.CountIfKnown("ac3.streams-limited"))
             {
                 Findings.Add(Severity.Warning, "ac3.streams-limited", FrameAt,
-                    count => $"{Count(count)} (with the dependent frames after them) are in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of an independent substream with one configuration, and these frames start another; the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)}, dependent frames included, are in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of an independent substream with one configuration, and these frames start another; the first is at 0x{frameOffset:X}.");
             }
 
             _current = null;

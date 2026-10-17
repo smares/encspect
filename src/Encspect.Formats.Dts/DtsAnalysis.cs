@@ -233,10 +233,10 @@ internal sealed class DtsAnalysis
     }
 
     // Units in one configuration make a stream; a change of the configuration ends it and starts another, as for the other formats, and
-    // the change that would start stream MaxStreams + 1 starts none: that unit and every unit after it are in no stream (dts.streams-limited), while the changes are still counted.
-    // A unit whose assets have no figures yet
-    // (before any header with static fields) matches a configuration of the same core and structure, which the stream then takes: it joins the
-    // stream after it, or one before it that has the same structure, and any other structure is a change.
+    // the change that would start stream MaxStreams + 1 starts none: that unit and every unit after it are in no stream
+    // (dts.streams-limited), while the changes are still counted. A unit whose assets have no figures yet (before any header with
+    // static fields) matches a configuration of the same core and structure, which the stream then takes: it joins the stream after
+    // it, or one before it that has the same structure, and any other structure is a change.
     private void Assign(Region region, int index, UnitFacts facts, UnitLayout layout)
     {
         StreamKey key = StreamKey.Of(facts);

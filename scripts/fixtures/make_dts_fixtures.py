@@ -305,7 +305,7 @@ def build_damage():
     fixture("streams-limited", ".dts", "Sixty-six core frames that alternate between stereo and mono at 48 kHz: 64 streams of one frame, the last 2 frames in no stream.", data, rows(parts),
             [stream("DTS", 48000, ["front center"] if i % 2 else STEREO, "1/0" if i % 2 else "2/0", 512) for i in range(64)],
             [("dts.stream-changed", "The stream changes 65 times"), ("dts.streams-limited", "2 units are in no stream")],
-            crosscheck=cc(ffprobe=False, skip={"ffprobe": "ffprobe reports the first stream only and its packets continue across the changes."}))
+            crosscheck=cc(ffprobe=False, libdca_streams_end=64 * 512, skip={"ffprobe": "ffprobe reports the first stream only and its packets continue across the changes."}))
 
     # Tags around the stream.
     parts = run(5)

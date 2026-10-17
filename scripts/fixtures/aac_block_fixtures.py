@@ -857,6 +857,24 @@ def signature_streams():
               "faad_trace": "faad2 reads ADTS only from the first byte.", "decode": "ffmpeg keeps one stream across the change of sample rate."}))]
 
 
+def streams_limited():
+    """Sixty-six runs of three mono frames that alternate between 44100 and 48000 Hz: 64 streams, and the last 6 frames in no stream."""
+    def run(rate):
+        ics = channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], seed=46, rate=rate)
+        plain = M.raw_data_block([M.Element(M.SCE, ics=ics)], rate_index=rate_index(rate))
+        return adts_frames([plain] * 3, rate=rate, channels=1)
+
+    frames = [frame for index in range(66) for frame in run(48000 if index % 2 else 44100)]
+    data, rows = concat(frames)
+    streams = [stream("AAC LC", 48000 if index % 2 else 44100, 1, "Mono", 3 * 1024) for index in range(64)]
+    return [("adts", "streams-limited.aac", data, manifest(
+        "Sixty-six runs of three mono frames that alternate between 44100 and 48000 Hz: the first 64 runs are streams, the last 6 frames are in no stream.",
+        data, rows, streams, {},
+        [["aac.stream-changed", "65 times"], ["aac.streams-limited", "6 frames are in no stream"]],
+        skip={"ffprobe": "ffmpeg keeps one stream across the changes of sample rate.", "faad": "faad2 stops at the first change of sample rate.",
+              "faad_trace": "faad2 reads ADTS only from the first byte.", "decode": "ffmpeg keeps one stream across the changes of sample rate."}))]
+
+
 def sbr_evidence():
     """Streams that carry SBR data no decoder would apply, or in too few blocks, or in frames the analyzer flags as damaged: they stay AAC LC."""
     from make_mp4_fixtures import adts_header
@@ -1028,5 +1046,5 @@ def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
     out = [("adts",) + f for f in [windows(), stereo(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
-    out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
+    out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out
