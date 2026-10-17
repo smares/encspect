@@ -78,6 +78,10 @@ internal static class MatroskaBuilder
             Unsigned(0x56AA, 6_500_000), Element(0xE1, Element(0xB5, rate), Unsigned(0x9F, 2)), Concat(extra));
     }
 
+    // A document of a live stream of concatenated ones (RFC 9559 section 23.2): its EBML Header, then a Segment of known size with an Info element,
+    // one stereo Opus track and a Cluster of one block.
+    public static byte[] Document() => Concat(Header(), Element(0x18538067, Info(), Element(0x1654AE6B, OpusTrack(1)), Cluster(0, SimpleBlock(1, 0, [0xFC, 0xFF, 0xFE]))));
+
     // A SimpleBlock of any track number: the track is a variable-size integer of one or two octets.
     public static byte[] SimpleBlockOf(uint track, int timestamp, byte[] frame)
     {

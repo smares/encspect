@@ -15,9 +15,13 @@ internal sealed partial class FileReader(ParseContext context)
     // Nodes of elements other than the blocks of Clusters, which are records. A file with more elements than this is not read further.
     internal const int MaxNodes = 250_000;
 
-    // What a Segment counts against the node budget besides its elements, for its records and state: a live stream of concatenated Segments
-    // (RFC 9559 section 23.2) reaches the budget at MaxNodes / SegmentNodeCost Segments.
+    // What a Segment counts against the node budget besides its elements, for its records and state, and what each audio track counts for the
+    // stream, the codec parser's nodes and the series it is routed to (about 30 KB for a Segment of one small Opus track): a live stream of concatenated
+    // Segments (RFC 9559 section 23.2), each after its own EBML Header (RFC 8794 section 11.1), reaches the budget at about 3,600 Segments with one
+    // audio track and a few elements each.
     internal const int SegmentNodeCost = 16;
+
+    internal const int TrackNodeCost = 32;
 
     // Block records, Cluster items and BlockGroup children together.
     internal const long MaxRecords = 6_000_000;
@@ -64,7 +68,7 @@ internal sealed partial class FileReader(ParseContext context)
             }
 
             // The elements at the root of the document (EBML Headers, Segments) are bounded by the node budget like the elements below them, each Segment
-            // counting SegmentNodeCost of it for the state it holds: a file of millions of empty ones is not read on.
+            // counting SegmentNodeCost of it (and each audio track TrackNodeCost) for the state it holds: a file of millions of empty ones is not read on.
             if (_nodes >= MaxNodes)
             {
                 Node rest = _file.Add(Unparsed(position, _reader.End, "the file"));

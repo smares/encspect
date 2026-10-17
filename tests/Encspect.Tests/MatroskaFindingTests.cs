@@ -57,6 +57,7 @@ public class MatroskaFindingTests
     [InlineData("matroska/live-ape-id3v1.mka", new[] { "APE", "ID3v1" })]
     [InlineData("matroska/live-ape-large.mka", new[] { "APE" })]
     [InlineData("matroska/live-ape-binary.mka", new[] { "APE" })]
+    [InlineData("matroska/live-ape-footer-only.mka", new[] { "APE" })]
     public void ATagAfterALiveRecordingIsATag(string name, string[] tags)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -90,6 +91,30 @@ public class MatroskaFindingTests
             Report report = Analyzer.CreateDefault().Analyze("live.mka", new MemoryStream(data));
 
             Assert.True(report.Root.Children.Any(c => c.Name == "APE"), $"case {i}: {string.Join(", ", report.Root.Children.Select(c => c.Name))}");
+        }
+    }
+
+    // The same for a tag without a header: its first item's length bytes (a Cluster child ID, then 0x01) read as an element whose size runs far past the
+    // data, and the APEv2 footer says where the tag starts.
+    [Fact]
+    public void AHeaderlessBinaryApeTagIsNeverSwallowedByTheRecording()
+    {
+        byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "matroska", "live-ape-footer-only.mka"));
+        byte[] recording = original[..^(8 + 6 + 0x1A3 + 32)];
+        var random = new Random(11);
+        foreach (byte id in new byte[] { 0xEC, 0xBF, 0xA3, 0xA0, 0xA7, 0xAB, 0xE7 })
+        {
+            for (int i = 0; i < 40; i++)
+            {
+                byte[] value = new byte[id + 0x100];
+                random.NextBytes(value);
+                byte[] item = [.. BitConverter.GetBytes((uint)value.Length), .. BitConverter.GetBytes(2u), .. "Cover\0"u8, .. value];
+                byte[] footer = [.. "APETAGEX"u8, .. BitConverter.GetBytes(2000u), .. BitConverter.GetBytes((uint)(item.Length + 32)), .. BitConverter.GetBytes(1u), .. new byte[12]];
+
+                Report report = Analyzer.CreateDefault().Analyze("live.mka", new MemoryStream([.. recording, .. item, .. footer]));
+
+                Assert.True(report.Root.Children.Any(c => c.Name == "APE"), $"ID 0x{id:X2}, case {i}: {string.Join(", ", report.Root.Children.Select(c => c.Name))}");
+            }
         }
     }
 
@@ -164,17 +189,18 @@ public class MatroskaFindingTests
         Assert.Equal(FileReader.MaxNodes / FileReader.SegmentNodeCost, Descendants(report.Root).Count(n => n.Name == "Segment"));
     }
 
-    // The Segments of a live stream (RFC 9559 section 23.2): 5,000 of them, each with its Info, are all read.
+    // The documents of a live stream (RFC 9559 section 23.2), each with its EBML Header (RFC 8794 section 11.1), an Info element, an Opus track and a
+    // block: 3,000 of them are all read.
     [Fact]
-    public void FiveThousandSegmentsAreRead()
+    public void ThreeThousandDocumentsOfAStreamAreRead()
     {
-        byte[] segment = MatroskaBuilder.WithSize(0x18538067, MatroskaBuilder.Info().Length, MatroskaBuilder.Info());
-        byte[] file = MatroskaBuilder.Concat([MatroskaBuilder.Header(), .. Enumerable.Repeat(segment, 5_000)]);
+        byte[] file = MatroskaBuilder.Concat([.. Enumerable.Repeat(MatroskaBuilder.Document(), 3_000)]);
 
         Report report = Analyzer.CreateDefault().Analyze("stream.mka", new MemoryStream(file));
 
         Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.too-many-elements" or "parse.failed");
-        Assert.Equal(5_000, Descendants(report.Root).Count(n => n.Name == "Segment"));
+        Assert.Equal(3_000, Descendants(report.Root).Count(n => n.Name == "Segment"));
+        Assert.Equal(3_000, report.Streams.Count);
     }
 
     // The budget runs out inside the Tracks element, whose TrackEntry 1 is skipped: the blocks that name it are not reported as naming no track.

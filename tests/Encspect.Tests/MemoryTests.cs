@@ -493,6 +493,24 @@ public class MemoryTests(ITestOutputHelper output)
         Bounded("inflate.mka", data, 30_000_000, "matroska.frame-encoding-invalid");
     }
 
+    // Concatenated documents (EBML Header, Segment with an Info element and one Opus track): each routed Segment costs its stream, the codec parser's
+    // nodes and the series, about 30 KB, so the node budget charges each audio track for them, and 5,000 of them, past the budget, stay bounded.
+    [Fact]
+    public void ConcatenatedSegmentsStayBounded()
+    {
+        byte[] data = MatroskaBuilder.Concat([.. Enumerable.Repeat(MatroskaBuilder.Document(), 5_000)]);
+
+        (Report report, long kept, long peak) = Measure("stream.mka", data, data[..4096]);
+
+        Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        int segments = report.Streams.Count;
+        output.WriteLine($"{segments} Segments read, {kept / 1_000_000} MB kept and {peak / 1_000_000} MB peak");
+        Assert.InRange(segments, 2_000, 4_500);
+        Assert.True(peak < 250_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
+    }
+
     // A block of seven bytes can state 256 frames of no bytes: the frames of laced blocks are counted against a budget, and fixed-size lacing
     // keeps no sizes, so 100,000 such blocks (700 KB of file, 25.6 million frames) cost a record per block and the frames up to the budget:
     // 120 MB on linux-x64, and the bound about twice that.

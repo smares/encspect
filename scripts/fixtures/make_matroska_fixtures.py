@@ -1147,9 +1147,13 @@ def ape_tag(pairs=((b"Artist", b"A speaker"), (b"Title", b"A live recording"))):
     return header + items + footer
 
 
-def live_file():
-    clusters = [cluster(i * 100, *blocks(count=5, first=i * 5), unknown=True) for i in range(3)]
+def live_file_of(clusters):
+    """A live recording (Segment of unknown size) of the given Clusters."""
     return build(standard(*clusters)[:1] + [segment(info(), tracks(opus_track()), *clusters, unknown=True)])
+
+
+def live_file():
+    return live_file_of([cluster(i * 100, *blocks(count=5, first=i * 5), unknown=True) for i in range(3)])
 
 
 @fixture("live-id3v1", "A live recording (Segment and Clusters of unknown size) with an ID3v1 tag appended: the tag after the last Cluster is the file's, not an element's.",
@@ -1349,6 +1353,42 @@ def _():
     value[first:first + 6] = b"\xec\x84\x00\x00\x00\x00"
     value[first + 6:first + 9] = b"\xa3\x5f\xff"
     return live_file(), ape_tag((title, (key, bytes(value), 2)))
+
+
+@fixture("live-ape-footer-only", "A live recording with an APEv2 tag that has no header (as APEv1 tags never do): its first item's length bytes (0xA3 0x01 0x00 0x00) read as a "
+         "SimpleBlock whose size is a number far past the data. A known element that runs past the data owns the rest of it, unless an APEv2 footer at the end of the data "
+         "places its tag at or before the element, so the tag is not swallowed.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
+def _():
+    key = b"Cover"
+    value = bytes((i * 29 + 7) & 0xFF for i in range(0x1A3))
+    item = struct.pack("<II", len(value), 2) + key + b"\0" + value
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, len(item) + 32, 1, 0) + bytes(8)
+    return live_file(), item + footer
+
+
+@fixture("live-truncated-unknown-element", "A live recording cut short in the middle of its last SimpleBlock, with an element the schema does not list (0x4ABC) in its last Cluster, "
+         "whose last 128 bytes are shaped like an ID3v1 tag: a known element that runs past the data owns the rest of the data, so the bytes are part of the block, not a tag.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("matroska.unknown-element", "0x4ABC"),
+                   ("matroska.element-truncated", "cut short"), ("tag.near-miss", "ID3v1 signature")], streams=[OPUS], valid=False)
+def _():
+    last = simple_block(1, 100, opus_packet(9) + bytes(40) + ID3V1 + bytes(60), key=True).render()
+    recording = [cluster(0, *blocks(count=3), E(0x4ABC, b"\x11" * 20), *blocks(count=2, start=60, first=3), unknown=True)]
+    return live_file_of(recording) + last[:len(last) - 60]
+
+
+@fixture("live-unknown-tag-signature", "A live recording with an element the schema does not list whose bytes begin like an ID3v1 tag (\"TAG\", ID 0x5441) in the middle of its first "
+         "Cluster, a second Cluster after it, and a header-less APEv2 tag whose size is 300 bytes too large, so that it reaches back into the first Cluster: the Cluster after the "
+         "unknown element vouches for the recording before it, so both Clusters are read and the damaged tag is not accepted.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("matroska.unknown-element", "0x5441"),
+                   ("matroska.element-header-invalid", "No element can be read"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
+def _():
+    recording = live_file_of([cluster(0, *blocks(count=3), E(0x5441, bytes(0x700)), *blocks(count=2, start=60, first=3), unknown=True), cluster(1000, *blocks(count=5, first=5), unknown=True)])
+    start = recording.index(b"\x54\x41\x47\x00")
+    item = struct.pack("<II", 5, 0) + b"Title\0" + b"Hello"
+    extra = (len(recording) - start) - 10
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, len(item) + 32 + extra, 1, 0) + bytes(8)
+    return recording + item + footer
 
 
 @fixture("truncated-seek-cues", "A file cut at the end, right after the last Cluster, whose SeekHead names the Cues past the cut: the position lies inside the Segment's declared "

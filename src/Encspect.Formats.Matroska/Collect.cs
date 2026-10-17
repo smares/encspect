@@ -270,6 +270,11 @@ internal sealed partial class FileReader
     private void FinishTrack(SegmentState segment, TrackInfo track)
     {
         track.Node.Value = TrackText(track);
+        if (track.IsAudio)
+        {
+            _nodes += TrackNodeCost;
+        }
+
         if (track.Number is { } number)
         {
             if (!segment.TracksByNumber.TryAdd(number, track))
