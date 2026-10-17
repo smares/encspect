@@ -1,5 +1,5 @@
 {
- "description": "A live recording with an APEv2 tag that has no header (as APEv1 tags never do): its first item's length bytes (0xA3 0x01 0x00 0x00) read as a SimpleBlock whose size is a number far past the data. A known element that runs past the data owns the rest of it, unless an APEv2 footer at the end of the data places its tag at or before the element, so the tag is not swallowed.",
+ "description": "A live recording with an APEv2 tag that has no header (as APEv1 tags never do): its first item's length bytes (0xA3 0x01 0x00 0x00) read as a SimpleBlock whose size is a number far past the data. A known element that runs past the data owns the rest of it, unless an APEv2 footer at the end of the data places its tag at that element's start (the elements do not vouch for the bytes), so the tag is not swallowed.",
  "length": 899,
  "format": "Matroska",
  "ebml": {

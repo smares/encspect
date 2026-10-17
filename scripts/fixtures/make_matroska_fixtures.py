@@ -1357,7 +1357,7 @@ def _():
 
 @fixture("live-ape-footer-only", "A live recording with an APEv2 tag that has no header (as APEv1 tags never do): its first item's length bytes (0xA3 0x01 0x00 0x00) read as a "
          "SimpleBlock whose size is a number far past the data. A known element that runs past the data owns the rest of it, unless an APEv2 footer at the end of the data "
-         "places its tag at or before the element, so the tag is not swallowed.",
+         "places its tag at that element's start (the elements do not vouch for the bytes), so the tag is not swallowed.",
          findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
 def _():
     key = b"Cover"
@@ -1413,10 +1413,78 @@ def _():
 
 
 @fixture("live-false-ape-footer-info", "As live-false-ape-footer-block with a tag size that reaches back to the Segment's first child (Info): a Top-Level Element starts there, "
-         "so the Segment keeps its Info, Tracks and Cluster.",
+         "and the elements from there run through to the end of the data, so the Segment keeps its Info, Tracks and Cluster.",
          findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
 def _():
     return false_footer("info")
+
+
+def false_items(variant):
+    """A live recording of PCM blocks whose bytes from the first Cluster's Timestamp (written in two octets, E7 82 00 00: the value size 33,511 of a
+    first item) read as APEv2 items that parse: the next SimpleBlock's ID, size and track are the item's flags, the block's timecode 0x4141 its key "AA"
+    ended by the block's flags 0x00, and the rest its value up to a footer in the last 32 bytes of the file, whose tag size reaches back to the
+    Timestamp. The elements run to the end of the data all the same: through a second Cluster of unknown size ("two-clusters"), in one Cluster
+    ("one-cluster"), or to an unknown element that runs to the end ("unknown-tail")."""
+    pcm = audio_track(1, "A_PCM/INT/LIT", 1, 8000.0, bits=16)
+
+    def layout(n):
+        first = [uint(m.TIMESTAMP, 0, 2), simple_block(1, 0x4141, [bytes(200)])] + [simple_block(1, 0x4141 + 20 * i, [bytes(200)], key=True) for i in range(1, 5)]
+        last = simple_block(1, 2000, [bytes(n)], key=True)
+        if variant == "two-clusters":
+            clusters = [master(m.CLUSTER, *first, size="unknown"), cluster(1000, *[simple_block(1, 20 * i, [bytes(200)], key=True) for i in range(5)], last, unknown=True)]
+        elif variant == "one-cluster":
+            clusters = [master(m.CLUSTER, *first, *[simple_block(1, 0x4141 + 100 + 20 * i, [bytes(200)], key=True) for i in range(5)], last, size="unknown")]
+        else:
+            clusters = [master(m.CLUSTER, *first, size="unknown"), E(0x4321, bytes(n))]
+        seg = segment(info(), tracks(pcm), *clusters, unknown=True)
+        return build([ebml_header(), seg]), first[0].offset
+
+    n = 0
+    for _ in range(4):
+        data, start = layout(n)
+        wanted = start + 11 + 33511 + 32
+        if len(data) == wanted:
+            break
+        n += wanted - len(data)
+    data = bytearray(data)
+    data[-32:] = b"APETAGEX" + struct.pack("<IIII", 2000, len(data) - start, 1, 0) + bytes(8)
+    return bytes(data)
+
+
+FALSE_ITEMS = [("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("matroska.codec-not-analyzed", "PCM"), ("tag.near-miss", "APE signature")]
+FALSE_ITEMS_BLOCKS = FALSE_ITEMS + [("matroska.timestamps-backwards", "go back in time")]
+PCM_STREAM = [("PCM (integer, little-endian)", 8000, 1)]
+
+
+@fixture("live-false-ape-items-two-clusters", "A live recording of two Clusters of unknown size whose first Cluster's bytes from its Timestamp read as APEv2 items that parse, up to a footer "
+         "in the last block that places a tag there: the elements run through both Clusters to the end of the data, so the recording keeps its bytes and the footer is a near miss.",
+         findings=FALSE_ITEMS_BLOCKS, streams=PCM_STREAM, valid=False)
+def _():
+    return false_items("two-clusters")
+
+
+@fixture("live-false-ape-items-one-cluster", "As live-false-ape-items-two-clusters with the blocks after the first in one Cluster of unknown size.",
+         findings=FALSE_ITEMS_BLOCKS, streams=PCM_STREAM, valid=False)
+def _():
+    return false_items("one-cluster")
+
+
+@fixture("live-false-ape-items-unknown-tail", "As live-false-ape-items-two-clusters with an element the schema does not list (0x4321) after the first Cluster, which runs to the end of the "
+         "data and holds the footer: the unknown element ends exactly at the end of the data, so it is the recording's.",
+         findings=FALSE_ITEMS + [("matroska.unknown-element", "0x4321")], streams=PCM_STREAM, valid=False)
+def _():
+    return false_items("unknown-tail")
+
+
+@fixture("live-ape-footer-damaged-key", "The headerless APEv2 tag of live-ape-footer-only with the first byte of its key changed to 0x01: the elements do not vouch for the bytes "
+         "(the first item's length reads as an element that runs past the data), so the tag wins, and the APE parser reports its damage instead of the tag being dropped.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("ape.items-invalid", "invalid key")], streams=[OPUS], valid=False)
+def _():
+    key = b"\x01over"
+    value = bytes((i * 29 + 7) & 0xFF for i in range(0x1A3))
+    item = struct.pack("<II", len(value), 2) + key + b"\0" + value
+    footer = b"APETAGEX" + struct.pack("<IIII", 2000, len(item) + 32, 1, 0) + bytes(8)
+    return live_file(), item + footer
 
 
 @fixture("truncated-seek-cues", "A file cut at the end, right after the last Cluster, whose SeekHead names the Cues past the cut: the position lies inside the Segment's declared "

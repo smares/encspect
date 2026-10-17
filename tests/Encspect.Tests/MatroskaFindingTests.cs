@@ -132,6 +132,32 @@ public class MatroskaFindingTests
         Assert.Equal(0.0735, report.Streams.Single().Duration, 4);
     }
 
+    // A false footer whose "items" parse as APEv2 items still loses to elements that run to the end of the data: through a second Cluster of unknown
+    // size, in one Cluster, or to an unknown element that ends exactly at the end.
+    [Theory]
+    [InlineData("matroska/live-false-ape-items-two-clusters.mka", 17)]
+    [InlineData("matroska/live-false-ape-items-one-cluster.mka", 16)]
+    [InlineData("matroska/live-false-ape-items-unknown-tail.mka", 0.09)]
+    public void AFalseApeFooterWhoseItemsParseKeepsTheRecording(string name, double minimumDuration)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        Assert.Equal(["Matroska"], report.Root.Children.Select(c => c.Name));
+        Assert.Single(report.Findings, f => f.Code == "tag.near-miss");
+        Assert.True(report.Streams.Single().Duration >= minimumDuration, $"{report.Streams.Single().Duration}");
+    }
+
+    // A tag the elements do not vouch for wins, damaged or not, and the APE parser reports the damage: it is not dropped.
+    [Fact]
+    public void ADamagedHeaderlessApeTagIsReportedNotDropped()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/live-ape-footer-damaged-key.mka");
+
+        Assert.Equal(["Matroska", "APE"], report.Root.Children.Select(c => c.Name));
+        Assert.Contains(report.Findings, f => f.Code == "ape.items-invalid");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.element-truncated" or "tag.near-miss");
+    }
+
     // The footer announces a header (flag bit 31) that is not there: the tag starts at its items, as the APE parser has it, and the recording is read to there.
     [Fact]
     public void AnApeFooterThatAnnouncesAMissingHeaderStartsTheTagAtItsItems()

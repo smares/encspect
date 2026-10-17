@@ -94,18 +94,23 @@ public sealed class MatroskaParser : IFormatParser
     // - an unknown element that starts with the signature of a tag (an APEv2 header reads as the ID 0x4150 and a size of 1,364 bytes, and its
     //   data may look like any element) can only be vouched for by a Top-Level Element after it, not by the end of the data or by an element
     //   that runs past it;
-    // - an APEv2 footer at the end of the data (ApeTagStart: its items parse and fill the tag exactly) that places its tag at an element's start
-    //   ends the recording there, unless the elements say otherwise: a Top-Level Element starts there, or the elements from there run through known
-    //   elements to the end of the data (ElementsSayOtherwise). A tag without a header is told by its footer alone.
+    // - an APEv2 footer at the end of the data (ApeTagStart: the signature, a size inside the data and, where the flags announce a header, the
+    //   header's signature) whose tag starts exactly where the walk is at an element's start ends the recording there, unless the elements vouch
+    //   for their bytes (ElementsVouch): a Top-Level Element starts there, or the elements from there, following Clusters of unknown size into
+    //   their children, run through known elements and unknown ones to the end of the data, an element running past it counting only after a
+    //   whole one. The items are not examined; the APE parser reports a tag's damage.
     // A Top-Level Element that follows an unknown element still vouches for what comes before it.
-    private static long ElementsEnd(ByteReader reader, long position, CancellationToken cancellationToken)
+    // isProbe: the walk that ElementsVouch makes from the claimed start of a tag; it starts in a Cluster if the first element is a child of one,
+    // and looks for no tag.
+    private static long ElementsEnd(ByteReader reader, long position, CancellationToken cancellationToken, bool isProbe = false)
     {
         ElementDefinition? clusterDefinition = Schema.Find(Schema.Cluster);
         long end = position;
-        long apeStart = ApeTagStart(reader);
+        long apeStart = isProbe ? -1 : ApeTagStart(reader);
         bool isPending = false;
         bool isTagLike = false;
-        bool isInCluster = false;
+        bool isInCluster = isProbe && StartsInCluster(reader, position, clusterDefinition);
+        int wholeElements = 0;
         int steps = 0;
         while (position + 2 <= reader.End)
         {
@@ -117,7 +122,7 @@ public sealed class MatroskaParser : IFormatParser
             // The elements run up to where an APEv2 footer says its tag starts: the recording ends there.
             if (position == apeStart)
             {
-                if (!ElementsSayOtherwise(reader, position, clusterDefinition))
+                if (!ElementsVouch(reader, position, cancellationToken))
                 {
                     end = isPending && !isTagLike ? position : end;
                     break;
@@ -140,7 +145,7 @@ public sealed class MatroskaParser : IFormatParser
                     if (header.End!.Value > reader.End)
                     {
                         // An unknown element that runs past the data is no element of the Cluster; a child that does ends the recording.
-                        return definition is null || isTagLike ? end : reader.End;
+                        return definition is null || isTagLike || (isProbe && wholeElements == 0) ? end : reader.End;
                     }
 
                     if (definition is null)
@@ -154,6 +159,7 @@ public sealed class MatroskaParser : IFormatParser
                     }
 
                     position = header.End.Value;
+                    wholeElements++;
                     continue;
                 }
 
@@ -170,6 +176,7 @@ public sealed class MatroskaParser : IFormatParser
                 isTagLike |= StartsLikeTag(reader, position);
                 position = header.End.Value;
                 isPending = true;
+                wholeElements++;
                 continue;
             }
 
@@ -218,6 +225,7 @@ public sealed class MatroskaParser : IFormatParser
             }
 
             position = end = header.End.Value;
+            wholeElements++;
         }
 
         // Unknown elements and Cluster children that run to the very end of the data, with nothing between, are the recording's, unless a tag's
@@ -225,56 +233,32 @@ public sealed class MatroskaParser : IFormatParser
         return isPending && !isTagLike && position == reader.End ? position : end;
     }
 
-    // Whether the elements contradict a tag that starts at position: a Top-Level Element starts there, or the elements from there run through
-    // known elements (Cluster children, Top-Level Elements, Void, CRC-32) exactly to the end of the data (or, after at least one whole element, to an
-    // element that runs past it: a recording cut short). The bytes of a tag, which are items of sizes, flags and keys, do not.
-    private static bool ElementsSayOtherwise(ByteReader reader, long position, ElementDefinition? clusterDefinition)
+    // Whether the elements vouch for their bytes from position, where an APEv2 footer says a tag starts: a Top-Level Element starts there, or the
+    // elements from there run to the end of the data (ElementsEnd, as a probe). The items of a tag, which are sizes, flags and keys, rarely do.
+    private static bool ElementsVouch(ByteReader reader, long position, CancellationToken cancellationToken)
     {
-        int steps = 0;
-        while (position < reader.End)
+        if (Ebml.TryReadHeader(reader, position, reader.End, 4, 8, out ElementHeader header) == HeaderProblem.None
+            && header.IdLength == 4 && Schema.Find(header.Id) is { IsTopLevel: true })
         {
-            if (Ebml.TryReadHeader(reader, position, reader.End, 4, 8, out ElementHeader header) != HeaderProblem.None || header.IsUnknownSize)
-            {
-                return false;
-            }
-
-            ElementDefinition? definition = Schema.Find(header.Id);
-            if (definition is null || (steps++ == 0 && definition.IsTopLevel && header.IdLength == 4))
-            {
-                return definition is not null;
-            }
-
-            if (!definition.IsTopLevel && !Schema.IsChildOf(definition, clusterDefinition))
-            {
-                return false;
-            }
-
-            // The first element running past the data is what the length bytes of a tag's first item may read as; after others it is a cut recording.
-            if (header.End!.Value > reader.End)
-            {
-                return steps > 1;
-            }
-
-            if (header.End.Value == reader.End)
-            {
-                return true;
-            }
-
-            position = header.End.Value;
+            return true;
         }
 
-        return position == reader.End;
+        return ElementsEnd(reader, position, cancellationToken, isProbe: true) == reader.End;
     }
+
+    // Whether the element at position is a child of a Cluster, so that a walk from there starts in one.
+    private static bool StartsInCluster(ByteReader reader, long position, ElementDefinition? clusterDefinition) =>
+        Ebml.TryReadHeader(reader, position, reader.End, 4, 8, out ElementHeader header) == HeaderProblem.None
+        && Schema.Find(header.Id) is { IsTopLevel: false } definition && Schema.IsChildOf(definition, clusterDefinition);
 
     // Where an APEv2 tag that ends the data (or ends 128 bytes before it, ahead of an ID3v1 tag) says it starts, by its footer, or -1: the footer's
     // tag size counts the items and the footer, and a header, which the footer's flags (bit 31) announce, is 32 bytes more, as the APE parser has
-    // it (a header that is not there is that parser's finding, and the tag starts at the items). Only a tag whose items hold up counts: each has a
-    // four-octet value size, four octets of flags and a key of 2 to 255 printable ASCII characters ended by 0x00, the value fits before the footer,
-    // and the items fill the tag up to the footer exactly.
+    // it (a header that is not there is that parser's finding, and the tag starts at the items). The items are not examined.
     private static long ApeTagStart(ByteReader reader)
     {
         Span<byte> footer = stackalloc byte[32];
         Span<byte> id3 = stackalloc byte[3];
+        Span<byte> header = stackalloc byte[8];
         foreach (long back in new long[] { 32, 160 })
         {
             long at = reader.End - back;
@@ -303,14 +287,13 @@ public sealed class MatroskaParser : IFormatParser
             uint size = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(footer[12..]);
             uint flags = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(footer[20..]);
             long items = at + 32 - size;
-            if (size < 32 || items < reader.Start || !ApeItemsFill(reader, items, at))
+            if (size < 32 || items < reader.Start)
             {
                 continue;
             }
 
             if ((flags & 0x80000000) != 0 && items - 32 >= reader.Start)
             {
-                Span<byte> header = stackalloc byte[8];
                 reader.Position = items - 32;
                 reader.Read(header);
                 if (header.SequenceEqual("APETAGEX"u8))
@@ -323,44 +306,6 @@ public sealed class MatroskaParser : IFormatParser
         }
 
         return -1;
-    }
-
-    // Whether the items from start to end (the footer) parse and fill the region exactly.
-    private static bool ApeItemsFill(ByteReader reader, long start, long end)
-    {
-        Span<byte> head = stackalloc byte[8];
-        Span<byte> key = stackalloc byte[256];
-        long position = start;
-        while (position < end)
-        {
-            if (position + 8 > end)
-            {
-                return false;
-            }
-
-            reader.Position = position;
-            reader.Read(head);
-            uint valueSize = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(head);
-            int available = (int)Math.Min(key.Length, end - position - 8);
-            reader.Read(key[..available]);
-            int length = key[..available].IndexOf((byte)0);
-            if (length < 2)
-            {
-                return false;
-            }
-
-            foreach (byte b in key[..length])
-            {
-                if (b is < 0x20 or > 0x7E)
-                {
-                    return false;
-                }
-            }
-
-            position += 8 + length + 1 + valueSize;
-        }
-
-        return position == end;
     }
 
     // Whether the bytes at position begin with the signature of an ID3v2 tag (or its footer), an ID3v1 tag, an APEv2 tag or Lyrics3.
