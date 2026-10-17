@@ -3,7 +3,8 @@ namespace Encspect.Core;
 // Records of a stream's access units, frames or packets, in blocks: a long stream's records are
 // never copied into a larger array and never need one array of their full size. The first block
 // grows as a List does, so a short stream allocates little. Written by the one thread that parses;
-// once parsing is over, any number of threads may read it, as long as nobody adds or replaces.
+// once parsing is over, any number of threads may read it, as long as nobody adds, replaces or
+// removes. SetLast and RemoveLast are for the parser that builds the list, before it is published.
 public sealed class ChunkedList<T>
     where T : struct
 {
@@ -46,5 +47,11 @@ public sealed class ChunkedList<T>
     {
         ArgumentOutOfRangeException.ThrowIfZero(Count);
         _blocks[(Count - 1) >> BlockBits][(Count - 1) & (BlockSize - 1)] = item;
+    }
+
+    public void RemoveLast()
+    {
+        ArgumentOutOfRangeException.ThrowIfZero(Count);
+        Count--;
     }
 }

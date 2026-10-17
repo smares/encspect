@@ -1,3 +1,5 @@
+using Encspect.Core;
+
 namespace Encspect.Formats.Mpeg;
 
 // Bytes of one frame's main data, at a file offset inside some frame's data; Owner is that frame's

@@ -295,7 +295,7 @@ public sealed partial class MpegAudioParser
     }
 
     private static VbrHeader ReadVbrHeader(BuildContext build, in Entry frame) =>
-        VbrHeader.TryRead(build.Store.Read(frame.Data, frame.DataLength), new MpegHeader(frame.Header))!;
+        VbrHeader.TryRead(build.Store.Span(frame.Data, frame.DataLength).ToArray(), new MpegHeader(frame.Header))!;
 
     // The frames a VBR header describes: the records FirstFrame to End, gaps among them not
     // counted; FirstFrame is -1 where there are none.
