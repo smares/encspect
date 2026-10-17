@@ -296,8 +296,10 @@ public sealed partial class Mp4Parser : IFormatParser
                 return end;
             }
 
-            BoxName name = naming?.Invoke(header) ?? Naming(state, header);
-            Node node = ParseBox(state, parent, header with { Size = boxEnd - position }, depth, header.Size, custom, name);
+            // Named from the header as the parent clips it: a udta box is a tag for the text atoms it holds, not for those past its parent's end.
+            BoxHeader clipped = header with { Size = boxEnd - position };
+            BoxName name = naming?.Invoke(clipped) ?? Naming(state, clipped);
+            Node node = ParseBox(state, parent, clipped, depth, header.Size, custom, name);
             if (header.IsToEnd && !topLevel)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.box-to-end",
@@ -755,17 +757,8 @@ public sealed partial class Mp4Parser : IFormatParser
         }
     }
 
-    internal static string Latin1OrUtf8(byte[] bytes)
-    {
-        try
-        {
-            return new UTF8Encoding(false, true).GetString(bytes);
-        }
-        catch (DecoderFallbackException)
-        {
-            return Encoding.Latin1.GetString(bytes);
-        }
-    }
+    internal static string Latin1OrUtf8(byte[] bytes) =>
+        System.Text.Unicode.Utf8.IsValid(bytes) ? Encoding.UTF8.GetString(bytes) : Encoding.Latin1.GetString(bytes);
 }
 
 // size: the bytes the box takes in its parent, IsToEnd for size 0 and IsLarge for a 64-bit size.

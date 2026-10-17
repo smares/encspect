@@ -118,6 +118,17 @@ public class AsfFixtureTests
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
+    // The ID3v2 tag of an ID3 attribute is a tag inside the metadata object's tag, and the summary lists it with the objects.
+    [Fact]
+    public void TheSummaryListsTheId3TagOfAMetadataObject()
+    {
+        List<string> tags = [.. ReportSummary.From(Fixtures.AnalyzeMpeg("asf/metadata.asf")).Tags];
+
+        Assert.Contains("Extended Content Description Object", tags);
+        Assert.Contains("ID3v2", tags);
+        Assert.True(tags.IndexOf("Extended Content Description Object") < tags.IndexOf("ID3v2"));
+    }
+
     [Fact]
     public void RejectedId3AttributePointsAtANodeOfTheTree()
     {

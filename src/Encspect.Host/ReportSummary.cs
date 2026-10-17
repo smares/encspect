@@ -90,7 +90,8 @@ public sealed record ReportSummary(
     }
 
     // Only plain details are searched below, as a container's chunks are, never streams, frames or
-    // other sections that parsers build by the thousand, nor a tag's own items.
+    // other sections that parsers build by the thousand. Inside a tag, only what is held in memory is searched (for a tag
+    // nested in it); children that are built on demand never are.
     private static List<string> TagNames(Node root)
     {
         var names = new List<string>();
@@ -105,8 +106,8 @@ public sealed record ReportSummary(
                 names.Add(node.Name);
             }
 
-            // A tag may hold another (QuickTime's user data holds an item list or an ID3v2 tag), but a tag's items are never searched:
-            // in and below a tag, only the plain details held in memory are looked into, never the lists built on demand.
+            // A tag may hold another (QuickTime's user data holds an item list or an ID3v2 tag): in and below a tag, the tags and plain
+            // details whose children are held in memory are looked into, and the nodes whose children are built on demand never are.
             bool within = inTag || isTag;
             bool isSearched = within ? (node.Kind is NodeKind.Tag or NodeKind.Detail) && !node.AreChildrenBuiltOnDemand : node == root || node.Kind == NodeKind.Detail;
             if (isSearched && depth < Node.MaxDepth && node.HasChildren)

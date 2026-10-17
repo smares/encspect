@@ -156,7 +156,7 @@ internal static class BoxNames
         "©des" => "Description",
         "©dir" => "Director",
         "©ed1" or "©ed2" or "©ed3" or "©ed4" or "©ed5" or "©ed6" or "©ed7" or "©ed8" or "©ed9" => $"Edit Date {type[3]}",
-        "©fmt" => "Format",
+        "©fmt" => "Movie Format",
         "©inf" => "Information",
         "©isr" => "ISRC",
         "©lab" => "Record Label",

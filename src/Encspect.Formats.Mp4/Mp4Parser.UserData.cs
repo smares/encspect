@@ -53,7 +53,11 @@ public sealed partial class Mp4Parser
             bool isListed = isShown && listed < MaxListedEntries && state.TextItemsListed < MaxListedTextItems;
             string? text = null;
             byte[]? bytes = null;
-            if (isListed || first is null)
+            if (length == 0)
+            {
+                text = string.Empty;
+            }
+            else if (isListed || first is null)
             {
                 bytes = f.TakeBytes(length);
                 text = DecodeText(bytes, language);
@@ -81,8 +85,7 @@ public sealed partial class Mp4Parser
 
             if (!fits)
             {
-                state.Findings.Add(Severity.Warning, "mp4.text-size-invalid", shown ?? node, times =>
-                    $"{(times == 1 ? $"The text item at 0x{at:X} of the {header.Type} atom states {size} bytes, but {length} follow" : $"{times} text items state more bytes than their atom holds, first the item at 0x{at:X} of the {header.Type} atom at 0x{header.Offset:X}")}; the text is cut there.");
+                ReportItemSize(state, shown ?? node, header, at, size, length);
                 break;
             }
         }
@@ -95,8 +98,7 @@ public sealed partial class Mp4Parser
         if (tail >= 0)
         {
             Node rest = isShown ? node.Add(new Node("Unused Bytes", tail, f.Remaining, NodeValue.Integer(f.Remaining, "bytes")) { Description = Explain.TextItemTrailing }) : node;
-            state.Findings.Add(Severity.Warning, "mp4.text-item-truncated", rest, times =>
-                $"{(times == 1 ? $"The {header.Type} atom at 0x{header.Offset:X} ends" : $"{times} text atoms end")} with fewer than the 4 bytes of a text item's size and language{(times == 1 ? string.Empty : $", first the {header.Type} atom at 0x{header.Offset:X}")}.");
+            ReportItemTail(state, rest, header);
         }
 
         node.Value = first ?? (count > 0 ? string.Empty : null);
@@ -111,6 +113,15 @@ public sealed partial class Mp4Parser
 
         return true;
     }
+
+    // Kept out of the item loop, where a closure over its variables would be allocated for every item.
+    private static void ReportItemSize(State state, Node at, BoxHeader header, long position, int size, long length) =>
+        state.Findings.Add(Severity.Warning, "mp4.text-size-invalid", at, times =>
+            $"{(times == 1 ? $"The text item at 0x{position:X} of the {header.Type} atom states {size} bytes, but {length} follow" : $"{times} text items state more bytes than their atom holds, first the item at 0x{position:X} of the {header.Type} atom at 0x{header.Offset:X}")}; the text is cut there.");
+
+    private static void ReportItemTail(State state, Node rest, BoxHeader header) =>
+        state.Findings.Add(Severity.Warning, "mp4.text-item-truncated", rest, times =>
+            $"{(times == 1 ? $"The {header.Type} atom at 0x{header.Offset:X} ends" : $"{times} text atoms end")} with fewer than the 4 bytes of a text item's size and language{(times == 1 ? string.Empty : $", first the {header.Type} atom at 0x{header.Offset:X}")}.");
 
     // Whether the payload is a run of text items whose sizes end exactly at its end: every size is read, through a window of the payload.
     private static bool FillsWithTextItems(State state, long start, long end)

@@ -142,7 +142,7 @@ public class QuickTimeUserDataTests
         Assert.Equal(1000, title.Children.Count(c => c.Name == "Text Item"));
         Assert.Equal(NodeValue.Integer(items - 1000, "items", "item"), Child(title, "More Text Items").Value);
         Assert.True(timer.Elapsed < TimeSpan.FromSeconds(30), $"Took {timer.Elapsed}.");
-        Assert.True(allocated < 200_000_000, $"Allocated {allocated / 1_000_000} MB.");
+        Assert.True(allocated < 30_000_000, $"Allocated {allocated / 1_000_000} MB.");
     }
 
     // 3,000 atoms of 1,000 items each (12 MB): the items are listed against one budget for the file, and the atoms past the tree's node
@@ -162,7 +162,7 @@ public class QuickTimeUserDataTests
 
         Assert.InRange(Count(report.Root, "Text Item"), 1, 10_000);
         Assert.True(timer.Elapsed < TimeSpan.FromSeconds(30), $"Took {timer.Elapsed}.");
-        Assert.True(allocated < 300_000_000, $"Allocated {allocated / 1_000_000} MB.");
+        Assert.True(allocated < 50_000_000, $"Allocated {allocated / 1_000_000} MB.");
     }
 
     // 100,000 atoms of 4 items (2.4 MB) take the tree past its node budget: the atoms there build no item nodes, and the items are still walked.
@@ -175,6 +175,72 @@ public class QuickTimeUserDataTests
 
         Assert.Contains(report.Findings, f => f.Code == "mp4.node-limit");
         Assert.InRange(Count(report.Root, "Text Item"), 1, 10_000);
+    }
+
+    // A udta box that its parent cuts short is a tag for the atoms inside the bytes that are left, not for the top-level atom that follows.
+    [Fact]
+    public void AUserDataBoxCutByItsParentIsNamedFromWhatIsLeft()
+    {
+        byte[] udta = Mp4Builder.Box("udta", Mp4Builder.Box("WLOC", [0, 10, 0, 20]));
+        Mp4Builder.U32(udta.Length + 19).CopyTo(udta, 0);
+        byte[] after = TextAtom("nam", [0, 7, 0, 0, .. "outside"u8.ToArray()]);
+        Assert.Equal(19, after.Length);
+        byte[] data = Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd(), udta), after);
+
+        Report report = Analyze(data);
+
+        Assert.NotEqual(NodeKind.Tag, Child(report.Root, "MP4", "moov", "udta").Kind);
+        Assert.Empty(ReportSummary.From(report).Tags);
+        Assert.Contains(report.Findings, f => f.Code == "mp4.box-overruns-parent");
+    }
+
+    // The node budget is spent before the udta box, so its 2,000 atoms of 1,000 items build no nodes and take none of the item budget: it
+    // allocates no more than the same file with atoms of no items (building the nodes the budget allows costs 14 MB more).
+    [Fact]
+    public void AUserDataBoxPastTheNodeBudgetBuildsNothing()
+    {
+        byte[][] free = [.. Enumerable.Range(0, 90_000).Select(_ => Mp4Builder.Box("free", []))];
+        (Report report, long many) = Measure(free, 1000);
+        (_, long none) = Measure(free, 1);
+
+        Assert.Contains(report.Findings, f => f.Code == "mp4.node-limit");
+        Assert.Equal(0, Count(report.Root, "Text Item"));
+        Assert.True(many < none + 5_000_000, $"Allocated {many / 1_000_000} MB, against {none / 1_000_000} MB for atoms of one item.");
+    }
+
+    private static (Report Report, long Allocated) Measure(byte[][] free, int items)
+    {
+        byte[][] atoms = [.. Enumerable.Range(0, 2000).Select(_ => TextAtom("nam", new byte[items * 4]))];
+        byte[] data = Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd(), Mp4Builder.Join(free), Mp4Builder.Box("udta", atoms)));
+        long before = GC.GetTotalAllocatedBytes(precise: true);
+        Report report = Analyze(data);
+        return (report, GC.GetTotalAllocatedBytes(precise: true) - before);
+    }
+
+    // A tag whose children are built on demand is not opened by the summary; a tag held in memory is searched for the tags in it.
+    [Fact]
+    public void TheSummaryLeavesChildrenBuiltOnDemandAlone()
+    {
+        var root = new Node("File", 0, 10);
+        root.Add(new Node("Lazy", 0, 5, null, () => throw new InvalidOperationException("built")) { Kind = NodeKind.Tag });
+        Node held = root.Add(new Node("Held", 5, 5) { Kind = NodeKind.Tag });
+        held.Add(new Node("Container", 5, 5)).Add(new Node("Nested", 5, 5) { Kind = NodeKind.Tag });
+        Node inLazy = root.Add(new Node("Detail", 0, 1));
+        inLazy.Add(new Node("Other", 0, 1, null, () => throw new InvalidOperationException("built")) { Kind = NodeKind.Tag });
+
+        Assert.Equal(["Lazy", "Held", "Nested", "Other"], ReportSummary.From(new Report("x", root, [])).Tags);
+        Assert.True(root.Children[0].AreChildrenBuiltOnDemand);
+        Assert.False(held.AreChildrenBuiltOnDemand);
+    }
+
+    [Fact]
+    public void ABlockedTagAndAHostWrappedTagAreBuiltOnDemand()
+    {
+        Node blocked = Fixtures.AnalyzeMpeg("ogg/packet-spanning-pages.spx").Root.Children.Single().Children.Single(c => c.Name == "Logical Stream").Children.Single(c => c.Kind == NodeKind.Tag);
+        Node wrapped = Fixtures.AnalyzeMpeg("mpeg/external-lame-tagged.mp3").Root.Children.First(c => c.Kind == NodeKind.Tag);
+
+        Assert.True(blocked.AreChildrenBuiltOnDemand);
+        Assert.True(wrapped.AreChildrenBuiltOnDemand);
     }
 
     // An unlisted © atom is text only where every one of its items fits: past the first thousand as well.

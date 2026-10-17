@@ -2,7 +2,7 @@
 id: quicktime-user-data
 title: QuickTime user data text
 related: itunes-metadata, iso-base-media-format, writer-detection
-references: QuickTime File Format, User data atoms, Language code values; ffmpeg libavformat/mov.c (mov_read_udta_string)
+references: QuickTime File Format, User data atoms, Language code values, Digital audio file formats; ffmpeg libavformat/mov.c (mov_read_udta_string); MediaInfoLib File_Mpeg4_Elements.cpp (moov_udta_xxxx)
 ---
 
 **Where it lives.** A `udta` box in `moov` holds data about the whole movie, and one in `trak` data about a track. Its children are atoms whose four-character type says what they hold. QuickTime defines a set of text atoms for it, such as `©nam` for the title, `©cpy` for the copyright, `©day` for the creation date and `©swr` for the software that generated the movie. Every type that begins with the © character (ASCII 169) is international text.
