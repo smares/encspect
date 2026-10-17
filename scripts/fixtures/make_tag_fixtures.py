@@ -1658,19 +1658,6 @@ def ape_v1():
 
 
 @fixture
-def ape_items_not_listed():
-    f = Fixture(
-        "ape-items-not-listed",
-        "APEv2 tag of 1,024 short items and one more whose text value of 5,000 bytes is too long to keep: the first 1,024 become nodes, the last is checked and counted but not listed.",
-    )
-    f.audio()
-    items = [ape_item(f"K{index:04d}", f"v{index}") for index in range(1024)] + [ape_item("Zlong", "x" * 5000)]
-    f.tag("APE", "2.0", ape_tag(items), "High", {"Items/K0000/Value": "v0", "Items/K1023/Value": "v1023"})
-    f.finding("ape.items-limited", "1 item is checked and counted but not listed")
-    return f
-
-
-@fixture
 def ape_v1_flags():
     f = Fixture(
         "ape-v1-flags",

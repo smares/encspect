@@ -19,7 +19,7 @@ internal sealed class Ac3Analysis
     private readonly FrameBits _bits = FrameBits.ForAnalysis();
     private readonly FrameSyntax _syntax;
     private readonly byte[] _buffer = new byte[MaxFrame];
-    // A stream is a run of one independent substream (id 0 for AC-3) with one configuration, its program; a change
+    // A stream is a run of the frames of one independent substream (id 0 for AC-3) with one configuration; a change
     // ends it and starts another, and a returning configuration starts a new one. The number of streams is capped so that
     // a file which changes all the time cannot grow the report: a frame that would start a stream past the cap is in no
     // stream (ac3.streams-limited), and so is every later frame of its substream, which never gets a stream. The other

@@ -115,10 +115,30 @@ internal static class Fixtures
     }
 
     // The tool version names the build, so golden reports hold a placeholder instead.
-    public static string ToJson(Report report)
+    public static string ToJson(Report report) => ToJson(report, ReportFilter.All);
+
+    // The golden report of a fixture: all of the report, less the sections its manifest's "golden_hides" names (as --hide takes them), for the
+    // few fixtures whose frames would make the golden megabytes long (the streams-limited ones, which need 65 runs of three frames). The tests
+    // that read this are the golden tests of the MPEG, DTS and MP4 and ADTS fixtures.
+    public static string ToGoldenJson(string fileName, Report report)
+    {
+        JsonElement manifest = LoadMpegManifest(fileName);
+        ReportSections hidden = ReportSections.None;
+        if (manifest.TryGetProperty("golden_hides", out JsonElement names))
+        {
+            foreach (JsonElement name in names.EnumerateArray())
+            {
+                hidden |= ReportFilter.Names[name.GetString()!];
+            }
+        }
+
+        return ToJson(report, new ReportFilter(hidden));
+    }
+
+    private static string ToJson(Report report, ReportFilter filter)
     {
         using var stream = new MemoryStream();
-        ReportJsonWriter.Write([report], stream);
+        ReportJsonWriter.Write([report], stream, filter);
         return Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings("\n")
             .Replace($"\"version\": \"{ReportJsonWriter.ToolVersion}\"", "\"version\": \"(build)\"", StringComparison.Ordinal) + "\n";
     }

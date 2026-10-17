@@ -130,7 +130,7 @@ def stream(codec, rate, channels, mode, samples, vbr=True, encoder=None, layout=
     return entry
 
 
-def manifest(description, data, rows, streams, fields, findings=(), skip=None, rate=RATE, fmt="AAC", boxes=None, trace_skip=None):
+def manifest(description, data, rows, streams, fields, findings=(), skip=None, rate=RATE, fmt="AAC", boxes=None, trace_skip=None, golden_hides=None):
     skip = dict(skip or {})
     check = {"ffprobe": "ffprobe" not in skip, "decode": "decode" not in skip}
     if "ffprobe_streams" in skip:
@@ -142,7 +142,8 @@ def manifest(description, data, rows, streams, fields, findings=(), skip=None, r
     if skip:
         check["skip"] = skip
     return {"description": description, "length": len(data), "format": fmt, "boxes": boxes or [], "streams": streams,
-            "units": rows, "fields": fields, "findings": [list(f) for f in findings], "crosscheck": check}
+            "units": rows, "fields": fields, "findings": [list(f) for f in findings], "crosscheck": check,
+            **({"golden_hides": golden_hides} if golden_hides else {})}
 
 
 # --- Fixtures ----------------------------------------------------------------------------------
@@ -872,7 +873,8 @@ def streams_limited():
         data, rows, streams, {},
         [["aac.stream-changed", "65 times"], ["aac.streams-limited", "6 frames are in no stream"]],
         skip={"ffprobe": "ffmpeg keeps one stream across the changes of sample rate.", "faad": "faad2 stops at the first change of sample rate.",
-              "faad_trace": "faad2 reads ADTS only from the first byte.", "decode": "ffmpeg keeps one stream across the changes of sample rate."}))]
+              "faad_trace": "faad2 reads ADTS only from the first byte.", "decode": "ffmpeg keeps one stream across the changes of sample rate."},
+        golden_hides=["frames"]))]
 
 
 def sbr_evidence():

@@ -345,6 +345,8 @@ class Fixture:
         self.layout = []
         # The encoder the analyzer must name, when the fixture states one.
         self.encoder = None
+        # The report sections the golden report leaves out ("golden_hides" in the manifest, see docs/development.md).
+        self.golden_hides = []
 
     def tag(self, name, data):
         self.end_audio()
@@ -431,6 +433,7 @@ class Fixture:
             "streams": self.streams,
             "findings": self.findings,
             **({"detected_encoder": self.encoder} if self.encoder else {}),
+            **({"golden_hides": self.golden_hides} if self.golden_hides else {}),
         }
 
     def write(self):
@@ -955,6 +958,7 @@ def streams_limited():
         "the last 6 frames are in no stream.",
         crosscheck=False,
     )
+    f.golden_hides = ["frames"]
     for run in range(66):
         f.add_frames(stream(3, bitrate=32, rate=48000 if run % 2 else 44100))
     f.finding("mpeg.stream-changed", "The stream changes 65 times")

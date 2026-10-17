@@ -14,7 +14,7 @@ internal sealed class FindingCollector
     {
         if (_aggregated.TryGetValue(code, out var existing))
         {
-            _aggregated[code] = existing with { Count = existing.Count + cases };
+            _aggregated[code] = existing with { Count = (int)Math.Min(int.MaxValue, (long)existing.Count + cases) };
             return;
         }
 

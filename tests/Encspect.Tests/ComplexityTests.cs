@@ -382,8 +382,9 @@ public class ComplexityTests
     }
 
     // MPEG-1 Layer III frames of 128 kbit/s that alternate between 44100 and 32000 Hz in runs of three: every run is a stream,
-    // so 4,000 runs once made 4,000 streams with a series each. The streams are limited to 64, the changes counted in one
-    // finding, and the time is linear in the data.
+    // so 4,000 runs once made 4,000 streams with a series each. The streams are limited to 64 and the changes counted in one
+    // finding, which the counts check; the time is linear in the data (the bound only catches a collapse of that, as the
+    // MPEG code was linear before the limit).
     [Fact]
     public void MpegAudioThatChangesItsSampleRateAlternately()
     {

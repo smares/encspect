@@ -113,15 +113,16 @@ public class ApeItemLimitTests
         Assert.Contains("Lavf60.16.100", Assert.Single(report.Streams).Writer, StringComparison.Ordinal);
     }
 
-    // Only the first few Encoder items become claims, and the writer is still named once.
+    // Only the first 16 Encoder items become claims: 40 of them, each naming other software than the ID3v2 tag's, are 16 claims that differ.
     [Fact]
-    public void ManyEncoderItemsStillGiveOneWriter()
+    public void ManyEncoderItemsAreCappedAtSixteenClaims()
     {
-        (string, byte[], uint)[] items = [.. Enumerable.Range(0, 40).Select(i => ($"Encoder", Encoding.ASCII.GetBytes("Lavf60.16." + i), 0u))];
-        Report report = Analyze(File(40, items));
+        (string, byte[], uint)[] items = [.. Enumerable.Range(0, 40).Select(i => ("Encoder", Encoding.ASCII.GetBytes("Shine 3." + i), 0u))];
+        byte[] data = [.. TestFiles.Id3v23(("TSSE", "Lavf60.16.100")), .. File(40, items)];
+        Report report = Analyze(data);
 
-        Assert.Single(report.Streams);
-        Assert.Equal(39, Assert.Single(report.Findings, f => f.Code == "ape.duplicate-key").Count);
+        Assert.Equal("FFmpeg (Lavf60.16.100)", Assert.Single(report.Streams).Writer);
+        Assert.Equal(16, Assert.Single(report.Findings, f => f.Code == "mpeg.writer-claim-differs").Count);
     }
 
     // The merged finding names the first few cases, so the second duplicate key is still shown.
@@ -133,6 +134,6 @@ public class ApeItemLimitTests
 
         Finding duplicates = Assert.Single(report.Findings, f => f.Code == "ape.duplicate-key");
         Assert.Equal(3, duplicates.Count);
-        Assert.Contains("\"ALPHA\", \"Beta\", \"GAMMA\"", duplicates.Message, StringComparison.Ordinal);
+        Assert.Contains("The first is \"ALPHA\". Others: \"Beta\", \"GAMMA\".", duplicates.Message, StringComparison.Ordinal);
     }
 }

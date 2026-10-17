@@ -241,9 +241,11 @@ public sealed class ApeTagParser : ITagParser
             _order.Add(key);
         }
 
-        // " Examples: "a", "b"." for a finding of several cases.
+        // " Others: "b", "c"." for a finding of several cases, after the first case, which its message names.
         private static string Examples(int count, List<string> names) =>
-            count > 1 && names.Count > 0 ? $" Examples: {string.Join(", ", names.Select(n => $"\"{n}\""))}." : string.Empty;
+            count > 1 && names.Count > 1 ? $" Others: {string.Join(", ", names.Skip(1).Select(n => $"\"{n}\""))}." : string.Empty;
+
+        private static string Grouped(int number) => number.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
 
         private sealed class Aggregate(string code, Severity severity, Node node, Func<int, string, string> message)
         {
@@ -295,8 +297,8 @@ public sealed class ApeTagParser : ITagParser
             if (notListed > 0)
             {
                 Report(Severity.Info, "ape.items-limited", () => _itemsRef, (count, _) => count == 1
-                    ? $"1 item is checked and counted but not listed: the first {MaxItemNodes} items are shown and the others only while their bytes fit in {MaxKeptBytes >> 20} MiB (text values of up to {MaxKeptValueBytes} bytes), and duplicate keys among items that are not listed are not looked for."
-                    : $"{count} items are checked and counted but not listed: the first {MaxItemNodes} items are shown and the others only while their bytes fit in {MaxKeptBytes >> 20} MiB (text values of up to {MaxKeptValueBytes} bytes), and duplicate keys among items that are not listed are not looked for.");
+                    ? $"1 item is checked and counted but not listed: the first {Grouped(MaxItemNodes)} items are listed and the others only while their bytes fit in {MaxKeptBytes >> 20} MiB (text values of up to {Grouped(MaxKeptValueBytes)} bytes), and duplicate keys among items that are not listed are not looked for."
+                    : $"{count} items are checked and counted but not listed: the first {Grouped(MaxItemNodes)} items are listed and the others only while their bytes fit in {MaxKeptBytes >> 20} MiB (text values of up to {Grouped(MaxKeptValueBytes)} bytes), and duplicate keys among items that are not listed are not looked for.");
                 _aggregated["ape.items-limited"].Count = (int)Math.Min(int.MaxValue, notListed);
             }
 

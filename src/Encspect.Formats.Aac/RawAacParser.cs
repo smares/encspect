@@ -204,7 +204,7 @@ public sealed class RawAacParser : IFormatParser
             total!.Index = total.Index < 0 ? index : total.Index;
             state.Frames.Add(Frame.Run(run.Offset, run.Length));
             state.Records.Runs[index] = run.Frames;
-            firstNode ??= new Node("Counted Frames", run.Offset, run.Length, NodeValue.Integer(run.Frames, "frames", "frame")) { Description = Explain.CountedFrames };
+            firstNode ??= new Node("Counted Frames", run.Offset, run.Length, NodeValue.Integer(run.Frames, "frames", "frame")) { Description = state.IsLimited ? Explain.CountedFramesPastStreams : Explain.CountedFrames };
         }
 
         int breaks = 0;
@@ -258,11 +258,15 @@ public sealed class RawAacParser : IFormatParser
         long frames = total?.Frames ?? 0;
         long skipped = gapBytes;
         long start = first;
+        // Past the limit of streams the frames are in no stream, so they are counted in aac.streams-limited and not in a stream's figures.
+        bool isLimited = state.IsLimited;
+        string counted = isLimited ? $"are in no stream (past the limit of {MaxStreams} streams) and are counted in aac.streams-limited" : "are counted in its figures (frames, samples, duration, bitrates)";
+        string countedMany = isLimited ? $"are in no stream (past the limit of {MaxStreams} streams) and are counted in aac.streams-limited" : "are counted in the figures of their stream";
         state.Findings.Add(Severity.Warning, "aac.frames-limit", firstNode!, count => count == 1
-            ? $"The file has more than {MaxFrames} ADTS frames and gaps; the {Plural(frames, "frame")} from 0x{start:X} on that follow the stream's header are counted in its figures (frames, samples, duration, bitrates) "
-              + $"but have no node, and the graphs and statistics cover the frames before them (frames of a stream past the limit of {MaxStreams} streams are in no stream and are counted in aac.streams-limited instead){(skipped > 0 ? $"; the {Plural(skipped, "byte")} between them that are no frames are skipped" : string.Empty)}"
+            ? $"The file has more than {MaxFrames} ADTS frames and gaps; the {Plural(frames, "frame")} from 0x{start:X} on that follow the stream's header {counted} "
+              + $"but have no node, and the graphs and statistics cover the frames before them{(skipped > 0 ? $"; the {Plural(skipped, "byte")} between them that are no frames are skipped" : string.Empty)}"
               + $"{(rest > 0 ? $"; the {Plural(rest, "byte")} after them are not analyzed" : string.Empty)}."
-            : $"The file has more than {MaxFrames} ADTS frames and gaps in {count} places; the frames after the limit are counted in the figures of their stream but have no node, and the graphs and statistics cover the frames before them; bytes that are not such frames are skipped or not analyzed.");
+            : $"The file has more than {MaxFrames} ADTS frames and gaps in {count} places; the frames after the limit {countedMany} but have no node, and the graphs and statistics cover the frames before them; bytes that are not such frames are skipped or not analyzed.");
     }
 
     private static string Plural(long count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
@@ -314,7 +318,15 @@ public sealed class RawAacParser : IFormatParser
         if (log is null)
         {
             // Past the stream limit the frame is in no stream, so its raw data blocks are not read (and no log is kept for its header).
-            state.Frames.Add(new Frame(position, length, header.Raw) { IsTruncated = truncated });
+            // Its CRC word is kept, unchecked; the raw data block has no elements (NotRead) and is shown without a value.
+            int crc = header.IsProtected && length >= header.HeaderLength ? (bytes[header.HeaderLength - 2] << 8) | bytes[header.HeaderLength - 1] : -1;
+            state.Frames.Add(new Frame(position, length, header.Raw)
+            {
+                Crc = crc,
+                CrcState = crc >= 0 ? CrcState.OutsideStreams : CrcState.None,
+                Elements = NotRead,
+                IsTruncated = truncated,
+            });
             return;
         }
 
@@ -647,7 +659,10 @@ public sealed class RawAacParser : IFormatParser
         Frame frame = records.Frames[index];
         if (frame.IsRun)
         {
-            return new Node("Counted Frames", frame.Offset, frame.Length, NodeValue.Integer(records.Runs[index], "frames", "frame")) { Description = Explain.CountedFrames };
+            return new Node("Counted Frames", frame.Offset, frame.Length, NodeValue.Integer(records.Runs[index], "frames", "frame"))
+            {
+                Description = records.LimitedFrom >= 0 && index >= records.LimitedFrom ? Explain.CountedFramesPastStreams : Explain.CountedFrames,
+            };
         }
 
         if (frame.IsUnread)
@@ -708,7 +723,9 @@ public sealed class RawAacParser : IFormatParser
 
             long length = block.Length >= 0 ? block.Length : frame.Offset + frame.Length - start;
             var unit = new UnitBytes(start, (int)length, null);
-            Node node = new("Raw Data Block", start, length, BlockLog.ElementList(block.Elements)) { Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks };
+            Node node = block.Elements == NotRead
+                ? new("Raw Data Block", start, length) { Description = Explain.RawDataBlockUnread, Topic = Topics.RawDataBlocks }
+                : new("Raw Data Block", start, length, BlockLog.ElementList(block.Elements)) { Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks };
             if (position >= 0)
             {
                 UnitStore.Entry entry = store.Read(position);
@@ -742,6 +759,7 @@ public sealed class RawAacParser : IFormatParser
         CrcState.Verified => "verified",
         CrcState.Mismatch => "mismatch",
         CrcState.NotVerified => "not verified: the raw data block could not be read to its end",
+        CrcState.OutsideStreams => "not checked: the frame is in no stream",
         _ => "not checked: the frame is cut short",
     };
 
@@ -790,6 +808,7 @@ public sealed class RawAacParser : IFormatParser
                 if (limitedFrom < 0 && streams >= MaxStreams)
                 {
                     limitedFrom = i;
+                    state.Records.LimitedFrom = i;
                 }
             }
 
@@ -821,6 +840,9 @@ public sealed class RawAacParser : IFormatParser
         state.Findings.Add(Severity.Warning, "aac.streams-limited", node, count =>
             $"{(count == 1 ? "One frame is" : $"{count} frames are")} in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of one fixed header, and the frame at 0x{node.Offset:X} is the first to start another.", cases);
     }
+
+    // The elements of a raw data block that was not read, for a frame in no stream.
+    private const int NotRead = int.MinValue;
 
     private const int AppleMinimumFrames = 20;
 
@@ -966,6 +988,7 @@ public sealed class RawAacParser : IFormatParser
         Verified,
         NotVerified,
         Mismatch,
+        OutsideStreams,
     }
 
     // A raw data block of a frame: where it starts in the frame and its length (-1: to the frame's
@@ -1087,6 +1110,9 @@ public sealed class RawAacParser : IFormatParser
         // The frames of each run counted past MaxFrames, by the index of its record.
         public Dictionary<int, long> Runs { get; } = [];
 
+        // The index of the first frame that is in no stream, past the limit of streams, or -1.
+        public int LimitedFrom { get; set; } = -1;
+
         public void AddUnits(int first, StreamSetup setup, UnitStore store) => _units.Add((first, setup, store));
 
         public (StreamSetup Setup, UnitStore Store) UnitsAt(int index)
@@ -1124,6 +1150,8 @@ public sealed class RawAacParser : IFormatParser
 
         // Set once a header would start stream MaxStreams + 1: no further log is made, and the frames after it are not read.
         private bool _isLimited;
+
+        public bool IsLimited => _isLimited;
 
         // The log of the frame's run of one fixed header, or null past the stream limit.
         public BlockLog? LogFor(int index, AdtsHeader header)

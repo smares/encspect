@@ -89,8 +89,7 @@ public class AacBlockTests
     }
 
     public static TheoryData<string> AdtsFixtures => new(
-        Fixtures.Mp4FixtureNames().Where(n => n.EndsWith(".aac", StringComparison.Ordinal) && !n.Contains("corrupt", StringComparison.Ordinal)
-            && n != "adts/streams-limited.aac"));
+        Fixtures.Mp4FixtureNames().Where(n => n.EndsWith(".aac", StringComparison.Ordinal) && !n.Contains("corrupt", StringComparison.Ordinal)));
 
     // The frames of streams past the limit of 64 are in no stream and their raw data blocks are not read: none has elements, the ones before it all do.
     [Fact]
@@ -101,7 +100,42 @@ public class AacBlockTests
         Node[] frames = [.. Frames(report.Root)];
         Assert.Equal(66 * 3, frames.Length);
         Assert.All(frames.Take(64 * 3), f => Assert.NotEmpty(f.Children.Single(c => c.Name == "Raw Data Block").Children));
-        Assert.All(frames.Skip(64 * 3), f => Assert.Empty(f.Children.Single(c => c.Name == "Raw Data Block").Children));
+        Assert.All(frames.Skip(64 * 3), f =>
+        {
+            Node block = f.Children.Single(c => c.Name == "Raw Data Block");
+            Assert.Empty(block.Children);
+            Assert.Null(block.Value);
+            Assert.False(string.IsNullOrEmpty(block.Description));
+        });
+    }
+
+    // A protected frame past the limit keeps its CRC word, with a verdict that says it was not checked, and its raw data block starts after it.
+    [Fact]
+    public void ProtectedFramesPastTheStreamLimitKeepTheirCrc()
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.TagDirectory, "..", "adts", "crc-mono.aac"));
+        byte[] first = source[..58];
+        byte[] second = [.. first];
+        second[2] = (byte)((second[2] & ~0x3C) | (3 << 2));
+        var data = new MemoryStream();
+        for (int run = 0; run < 66; run++)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                data.Write(run % 2 == 0 ? first : second);
+            }
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("crc-runs.aac", new MemoryStream(data.ToArray()));
+
+        Node[] frames = [.. Frames(report.Root)];
+        Assert.Equal(66 * 3, frames.Length);
+        Assert.Equal(6, Assert.Single(report.Findings, f => f.Code == "aac.streams-limited").Count);
+        Node crc = frames[^1].Children.Single(c => c.Name == "CRC");
+        Assert.Equal("not checked: the frame is in no stream", crc.Children.Single(c => c.Name == "Check").Value?.AsText());
+        Node block = frames[^1].Children.Single(c => c.Name == "Raw Data Block");
+        Assert.Equal(frames[^1].Offset + 9, block.Offset);
+        Assert.Equal(crc.Offset + 2, block.Offset);
     }
 
     // A report keeps each raw data block without its Huffman-coded data and rebuilds its nodes from
@@ -116,9 +150,11 @@ public class AacBlockTests
         byte[] file = File.ReadAllBytes(path);
         Report report = Analyzer.CreateDefault().Analyze(path, new MemoryStream(file));
         int compared = 0;
+        // The frames of streams past the limit are not read (see FramesPastTheStreamLimitAreNotRead): the finding names the first.
+        long limit = report.Findings.FirstOrDefault(f => f.Code == "aac.streams-limited")?.Node?.Offset ?? long.MaxValue;
         foreach (Node frame in Frames(report.Root))
         {
-            if (frame.Length < 7)
+            if (frame.Length < 7 || frame.Offset >= limit)
             {
                 continue;
             }

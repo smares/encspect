@@ -308,7 +308,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         void StreamChanged(MpegHeader from, MpegHeader to, Node node) =>
             findings.Add(Severity.Info, "mpeg.stream-changed", node, count =>
-                $"The stream changes {Times(count)}, first from {from.StreamName} to {to.StreamName} at 0x{node.Offset:X}.");
+                count == 1
+                    ? $"The stream changes from {from.StreamName} to {to.StreamName} at 0x{node.Offset:X}."
+                    : $"The stream changes {count} times, first from {from.StreamName} to {to.StreamName} at 0x{node.Offset:X}.");
 
         void FreeFormat(MpegHeader header, int length)
         {
