@@ -56,6 +56,39 @@ internal static class MatroskaBuilder
                 : []));
     }
 
+    // An Info element with the default TimestampScale.
+    public static byte[] Info() => Element(0x1549A966, Unsigned(0x2AD7B1, 1_000_000));
+
+    // A stereo Opus TrackEntry with the given number and the given further children (a ContentEncodings element, a TrackTimestampScale).
+    public static byte[] OpusTrack(uint number, params byte[][] extra) => OpusTrackWithPrivate(number, null, extra);
+
+    // The same with the given bytes as the CodecPrivate (the OpusHead where null).
+    public static byte[] OpusTrackWithPrivate(uint number, byte[]? codecPrivate, params byte[][] extra)
+    {
+        byte[] head = new byte[19];
+        Encoding.ASCII.GetBytes("OpusHead").CopyTo(head, 0);
+        head[8] = 1;
+        head[9] = 2;
+        BinaryPrimitives.WriteUInt16LittleEndian(head.AsSpan(10), 312);
+        BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(12), 48000);
+        head = codecPrivate ?? head;
+        byte[] rate = new byte[8];
+        BinaryPrimitives.WriteDoubleBigEndian(rate, 48000);
+        return Element(0xAE, Unsigned(0xD7, number), Unsigned(0x73C5, number), Unsigned(0x83, 2), Text(0x86, "A_OPUS"), Element(0x63A2, head),
+            Unsigned(0x56AA, 6_500_000), Element(0xE1, Element(0xB5, rate), Unsigned(0x9F, 2)), Concat(extra));
+    }
+
+    // A document of a live stream of concatenated ones (RFC 9559 section 23.2): its EBML Header, then a Segment of known size with an Info element,
+    // one stereo Opus track and a Cluster of one block.
+    public static byte[] Document() => Concat(Header(), Element(0x18538067, Info(), Element(0x1654AE6B, OpusTrack(1)), Cluster(0, SimpleBlock(1, 0, [0xFC, 0xFF, 0xFE]))));
+
+    // A SimpleBlock of any track number: the track is a variable-size integer of one or two octets.
+    public static byte[] SimpleBlockOf(uint track, int timestamp, byte[] frame)
+    {
+        byte[] number = track < 127 ? [(byte)(0x80 | track)] : [(byte)(0x40 | (track >> 8)), (byte)track];
+        return Element(0xA3, Concat([number, [(byte)(timestamp >> 8), (byte)timestamp, 0x80], frame]));
+    }
+
     public static byte[] SimpleBlock(int track, int timestamp, byte[] frame)
     {
         byte[] header = [(byte)(0x80 | track), (byte)(timestamp >> 8), (byte)timestamp, 0x80];

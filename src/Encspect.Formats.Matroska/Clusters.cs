@@ -36,7 +36,7 @@ internal sealed partial class FileReader
         while (position < end)
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
-            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.MaxIdLength, segment.Document.MaxSizeLength, out ElementHeader child);
+            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.ReadIdLength, segment.Document.ReadSizeLength, out ElementHeader child);
             if (problem != HeaderProblem.None)
             {
                 AddUnparsedItem(records, position, end);
@@ -54,9 +54,10 @@ internal sealed partial class FileReader
                 break;
             }
 
-            if (!AccountRecord(records))
+            if (!AccountRecord(position, end))
             {
-                // Past the limit on records: the Cluster is skipped from here on.
+                // Past the limit on records: the Cluster is not read from here on.
+                AddUnparsedItem(records, position, end);
                 position = end;
                 break;
             }
@@ -132,7 +133,7 @@ internal sealed partial class FileReader
                 if (definition is null)
                 {
                     _findings.Add(Severity.Info, "matroska.unknown-element", () => new Node("Unknown Element", child.Offset, childEnd - child.Offset), count =>
-                        $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID {Ebml.IdText(child.Id)} and lies at 0x{child.Offset:X}, in the Cluster.");
+                        $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 7; RFC 8794, section 16); the first has the ID {Ebml.IdText(child.Id)} and lies at 0x{child.Offset:X}, in the Cluster.");
                 }
                 else if (!Schema.IsChildOf(definition, Schema.Find(Schema.Cluster)))
                 {
@@ -221,8 +222,9 @@ internal sealed partial class FileReader
     private static void AddUnparsedItem(Records records, long start, long end) =>
         records.Items.Add(new Item { Kind = ItemKind.Unparsed, Offset = start, DataLength = end - start });
 
-    // Counts a record, and false once the file holds more than the analysis keeps.
-    private bool AccountRecord(Records records)
+    // Counts a record, and false once the file holds more than the analysis keeps. The finding points at the Unparsed Data the caller adds for
+    // [position, end), the part of the parent that is not read.
+    private bool AccountRecord(long position, long end)
     {
         if (++_records <= MaxRecords)
         {
@@ -232,9 +234,9 @@ internal sealed partial class FileReader
         if (!_recordsReported)
         {
             _recordsReported = true;
-            long at = records.Items.Count > 0 ? records.Items[records.Items.Count - 1].Offset : 0;
             _findings.AddNow(Severity.Warning, "matroska.too-many-elements",
-                $"The file holds more than {MaxRecords} blocks and elements inside Clusters; the rest, from 0x{at:X}, is not read.", new Node("Unparsed Data", at, 0));
+                $"The file holds more than {MaxRecords} blocks and elements inside Clusters; the rest, from 0x{position:X}, is not read.",
+                new Node("Unparsed Data", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.UnparsedData });
         }
 
         return false;

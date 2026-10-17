@@ -225,7 +225,7 @@ public sealed partial class Mp4Parser : IFormatParser
         BoxNaming? naming = null)
     {
         string? outerParent = state.ParentType;
-        state.ParentType = topLevel ? null : parent.Name;
+        state.ParentType = topLevel ? null : parent.Name == UserDataName ? "udta" : parent.Name;
         try
         {
             return ReadChildrenOf(state, parent, start, end, depth, topLevel, custom, naming);
@@ -251,7 +251,7 @@ public sealed partial class Mp4Parser : IFormatParser
                 }
 
                 // QuickTime File Format, "User data list": the list of a udta box is optionally ended by a 32-bit zero.
-                if (parent.Name == "udta" && end - position == 4 && state.Reader.ReadBytesAt(position, 4).All(b => b == 0))
+                if (state.ParentType == "udta" && end - position == 4 && state.Reader.ReadBytesAt(position, 4).All(b => b == 0))
                 {
                     parent.Add(new Node("Terminator", position, 4, NodeValue.Integer(0)) { Description = Explain.UserDataTerminator });
                     return end;
@@ -296,8 +296,10 @@ public sealed partial class Mp4Parser : IFormatParser
                 return end;
             }
 
-            BoxName name = naming?.Invoke(header) ?? Naming(state, header);
-            Node node = ParseBox(state, parent, header with { Size = boxEnd - position }, depth, header.Size, custom, name);
+            // Named from the header as the parent clips it: a udta box is a tag for the text atoms it holds, not for those past its parent's end.
+            BoxHeader clipped = header with { Size = boxEnd - position };
+            BoxName name = naming?.Invoke(clipped) ?? Naming(state, clipped);
+            Node node = ParseBox(state, parent, clipped, depth, header.Size, custom, name);
             if (header.IsToEnd && !topLevel)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.box-to-end",
@@ -322,11 +324,57 @@ public sealed partial class Mp4Parser : IFormatParser
         return position;
     }
 
-    // An item list is the file's iTunes or QuickTime metadata, a tag of the container; every other
-    // box is named by its type.
-    private static BoxName Naming(State state, BoxHeader header) => header.Type == "ilst"
-        ? new(state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag, Explain.Box(header.Type), Topics.ItunesMetadata)
-        : new(header.Type, NodeKind.Detail, Explain.Box(header.Type), Explain.BoxTopic(header.Type));
+    // The name of a udta box that holds QuickTime's text atoms, a tag of the container like an item list.
+    private const string UserDataName = "QuickTime User Data";
+
+    // An item list is the file's iTunes or QuickTime metadata, a tag of the container, and so is a user data box that holds text atoms;
+    // every other box is named by its type.
+    private static BoxName Naming(State state, BoxHeader header)
+    {
+        if (header.Type == "ilst")
+        {
+            return new(state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag, Explain.Box(header.Type), Topics.ItunesMetadata);
+        }
+
+        if (header.Type == "udta" && HoldsTextAtom(state, header))
+        {
+            return new(UserDataName, NodeKind.Tag, Explain.UserDataTag, Topics.QuickTimeUserData);
+        }
+
+        if (state.ParentType == "udta" && BoxNames.UserDataText(header.Type) is { } field)
+        {
+            return new(field, NodeKind.Detail, Explain.UserDataText(header.Type), Topics.QuickTimeUserData);
+        }
+
+        return new(header.Type, NodeKind.Detail, Explain.Box(header.Type), Explain.BoxTopic(header.Type));
+    }
+
+    // Whether a text atom the specification lists is among the boxes of the udta box, found by their headers alone.
+    private static bool HoldsTextAtom(State state, BoxHeader header)
+    {
+        long position = header.PayloadStart;
+        for (int i = 0; ReadHeader(state.Reader, position, header.End) is { } child && child.End <= header.End; i++)
+        {
+            if ((i & 0x3FF) == 0)
+            {
+                state.Context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
+            if (BoxNames.UserDataText(child.Type) is not null)
+            {
+                return true;
+            }
+
+            if (child.IsToEnd)
+            {
+                break;
+            }
+
+            position = child.End;
+        }
+
+        return false;
+    }
 
     // The box's node with its header fields, then its payload by type.
     private static Node ParseBox(State state, Node parent, BoxHeader header, int depth, long declared, PayloadParser? custom, BoxName name)
@@ -709,17 +757,8 @@ public sealed partial class Mp4Parser : IFormatParser
         }
     }
 
-    internal static string Latin1OrUtf8(byte[] bytes)
-    {
-        try
-        {
-            return new UTF8Encoding(false, true).GetString(bytes);
-        }
-        catch (DecoderFallbackException)
-        {
-            return Encoding.Latin1.GetString(bytes);
-        }
-    }
+    internal static string Latin1OrUtf8(byte[] bytes) =>
+        System.Text.Unicode.Utf8.IsValid(bytes) ? Encoding.UTF8.GetString(bytes) : Encoding.Latin1.GetString(bytes);
 }
 
 // size: the bytes the box takes in its parent, IsToEnd for size 0 and IsLarge for a 64-bit size.

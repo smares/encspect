@@ -70,7 +70,7 @@ internal sealed partial class FileReader
 
         block.Frames = (ushort)count;
         block.FramesDelta = element.Length + fixedPart + (int)laceBytes;
-        if (count > 1 && GoesToCodec(segment, block.Track) && !AccountFrames(count, element.Offset, name))
+        if (count > 1 && GoesToCodec(segment, block.Track) && !AccountFrames(count, element.Offset, end - element.Offset, name))
         {
             block.Status = BlockStatus.FramesLimit;
             return AddBlock(records, block, name, cluster.Timestamp);
@@ -100,7 +100,7 @@ internal sealed partial class FileReader
 
     // Counts the frames of a laced block, and false once the file's blocks hold more than the analysis keeps: a block of seven bytes
     // can state 256 frames of no bytes.
-    private bool AccountFrames(int count, long offset, string name)
+    private bool AccountFrames(int count, long offset, long length, string name)
     {
         _lacedFrames += count;
         if (_lacedFrames <= MaxLacedFrames)
@@ -112,7 +112,7 @@ internal sealed partial class FileReader
         {
             _lacedFramesReported = true;
             _findings.AddNow(Severity.Warning, "matroska.too-many-elements",
-                $"The laced blocks of the file hold more than {MaxLacedFrames} frames; the frames of the blocks from the {name} at 0x{offset:X} on are not read.", new Node(name, offset, 0));
+                $"The laced blocks of the file hold more than {MaxLacedFrames} frames; the frames of the blocks from the {name} at 0x{offset:X} on are not read.", new Node(name, offset, length));
         }
 
         return false;
@@ -159,7 +159,8 @@ internal sealed partial class FileReader
             ulong key = segment.Statistics.Count >= MaxTrackStatistics ? ulong.MaxValue : block.Track;
             if (!segment.Statistics.TryGetValue(key, out statistics))
             {
-                segment.Statistics[key] = statistics = new TrackStatistics();
+                bool isKnown = segment.TracksByNumber.TryGetValue(key, out TrackInfo? info);
+                segment.Statistics[key] = statistics = new TrackStatistics { Scale = isKnown ? ScaleOf(info!) : 1.0, IsScaleAssumed = !isKnown };
             }
         }
 
@@ -182,7 +183,16 @@ internal sealed partial class FileReader
 
         statistics.Frames += block.Frames;
         statistics.Bytes += block.DataLength - (block.FramesDelta - block.HeaderLength);
-        long timestamp = clusterTimestamp + block.Timestamp;
+        AddTime(statistics, block, name, clusterTimestamp);
+    }
+
+    // A TrackTimestampScale that is not above 0 (RFC 9559, section 5.1.4.1.15) or not a number is read as the default of 1.
+    private static double ScaleOf(TrackInfo track) => double.IsFinite(track.TimestampScale) && track.TimestampScale > 0 ? track.TimestampScale : 1.0;
+
+    // Adds a block's time (RFC 9559, section 11.2) to its track's totals.
+    private static void AddTime(TrackStatistics statistics, in BlockRecord block, string name, long clusterTimestamp)
+    {
+        double timestamp = clusterTimestamp + (block.Timestamp * statistics.Scale);
         if (!statistics.HasTimes)
         {
             statistics.HasTimes = true;
@@ -201,6 +211,72 @@ internal sealed partial class FileReader
         statistics.Smallest = Math.Min(statistics.Smallest, timestamp);
         statistics.Largest = Math.Max(statistics.Largest, timestamp);
         statistics.LastEnd = block.End;
+    }
+
+    // A track whose blocks came before its TrackEntry (Tracks after the Clusters, which RFC 9559 section 6.1 allows behind a SeekHead) had its
+    // blocks' times worked out with a TrackTimestampScale of 1: once the Segment is read, they are worked out again for the tracks that state another.
+    private void ApplyLateScales(SegmentState segment)
+    {
+        Dictionary<ulong, TrackStatistics> late = [];
+        foreach ((ulong number, TrackStatistics statistics) in segment.Statistics.Select(p => (p.Key, p.Value)))
+        {
+            if (statistics.IsScaleAssumed && segment.TracksByNumber.TryGetValue(number, out TrackInfo? track) && ScaleOf(track) != 1.0)
+            {
+                statistics.Scale = ScaleOf(track);
+                statistics.HasTimes = false;
+                statistics.Smallest = double.MaxValue;
+                statistics.Largest = double.MinValue;
+                statistics.Backwards = 0;
+                statistics.FirstBackwards = null;
+                statistics.FirstOffset = -1;
+                statistics.LastEnd = 0;
+                late[number] = statistics;
+            }
+        }
+
+        if (late.Count == 0)
+        {
+            return;
+        }
+
+        Records records = segment.Records;
+        long steps = 0;
+        void Replay(int index, string name, long clusterTimestamp)
+        {
+            BlockRecord block = records.Blocks[index];
+            if (block.Status is (BlockStatus.None or BlockStatus.LaceSingle) && late.TryGetValue(block.Track, out TrackStatistics? statistics))
+            {
+                AddTime(statistics, block, name, clusterTimestamp);
+            }
+        }
+
+        for (int c = 0; c < records.Clusters.Count; c++)
+        {
+            ClusterRecord cluster = records.Clusters[c];
+            for (int i = cluster.FirstItem; i < cluster.FirstItem + cluster.ItemCount; i++)
+            {
+                if (++steps % 4096 == 0)
+                {
+                    _context.CancellationToken.ThrowIfCancellationRequested();
+                }
+
+                Item item = records.Items[i];
+                if (item.Kind == ItemKind.SimpleBlock)
+                {
+                    Replay(item.Index, "SimpleBlock", cluster.Timestamp);
+                }
+                else if (item.Kind == ItemKind.BlockGroup)
+                {
+                    for (int j = item.Index; j < item.Index + item.Value; j++)
+                    {
+                        if (records.Children[j].Block >= 0)
+                        {
+                            Replay(records.Children[j].Block, "Block", cluster.Timestamp);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // The lacing header (RFC 9559 section 10.3) at position: the number of frames, and each frame's size into _laceSizes, the last
@@ -357,7 +433,7 @@ internal sealed partial class FileReader
         while (position < end)
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
-            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.MaxIdLength, segment.Document.MaxSizeLength, out ElementHeader child);
+            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.ReadIdLength, segment.Document.ReadSizeLength, out ElementHeader child);
             if (problem != HeaderProblem.None)
             {
                 records.Children.Add(new Child { Offset = position, DataLength = end - position, Depth = (byte)depth, Block = Child.UnparsedBlock });
@@ -367,8 +443,9 @@ internal sealed partial class FileReader
                 return blocks;
             }
 
-            if (!AccountRecord(records))
+            if (!AccountRecord(position, end))
             {
+                records.Children.Add(new Child { Offset = position, DataLength = end - position, Depth = (byte)depth, Block = Child.UnparsedBlock });
                 return blocks;
             }
 

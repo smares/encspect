@@ -24,6 +24,9 @@ internal sealed partial class FileReader
         {
             Description = definition?.Description ?? Explain.UnknownElement,
             Topic = definition is null ? null : TopicOf(definition),
+
+            // The Segment's Tags element is the file's own tags (RFC 9559, section 5.1.8), a tag of the container as MP4's item list is.
+            Kind = definition?.Id == Schema.Tags && parentDefinition?.Id == Schema.Segment ? NodeKind.Tag : NodeKind.Detail,
         };
         next = end;
 
@@ -66,7 +69,7 @@ internal sealed partial class FileReader
         {
             node.Value = $"ID {Ebml.IdText(header.Id)}, {Bytes(end - header.DataOffset)}";
             _findings.Add(Severity.Info, "matroska.unknown-element", node, count =>
-                $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 4.4); the first has the ID {Ebml.IdText(header.Id)} and lies at 0x{header.Offset:X}, {ParentText(parentDefinition)}.");
+                $"{(count == 1 ? "An element is" : $"{count} elements are")} none the Matroska schema lists, which readers skip by their size (RFC 9559, section 7; RFC 8794, section 16); the first has the ID {Ebml.IdText(header.Id)} and lies at 0x{header.Offset:X}, {ParentText(parentDefinition)}.");
             return node;
         }
 
@@ -81,9 +84,20 @@ internal sealed partial class FileReader
             _findings.Add(Severity.Warning, "matroska.misplaced-element", node, count => MisplacedMessage(count, definition, header.Offset, parentDefinition));
         }
 
+        // The values of an element the schema does not place where it stands, or under one, are shown and reported but not used: a reader that
+        // follows the schema skips them (mkvinfo: "Known element, but invalid at this position"; FFmpeg's syntax tables list the children of each master).
+        bool isPlaced = Schema.IsChildOf(definition, parentDefinition) && _displaced == 0;
         if (definition.Type == ElementType.Master)
         {
-            Begin(definition, node);
+            if (isPlaced)
+            {
+                Begin(definition, node);
+            }
+            else
+            {
+                _displaced++;
+            }
+
             if (depth >= MaxElementDepth)
             {
                 _findings.Add(Severity.Warning, "matroska.too-deep", node, count =>
@@ -94,11 +108,18 @@ internal sealed partial class FileReader
                 ParseChildren(node, header.DataOffset, end, definition, depth + 1, isComplete);
             }
 
-            End(definition, node);
+            if (isPlaced)
+            {
+                End(definition, node);
+            }
+            else
+            {
+                _displaced--;
+            }
         }
         else
         {
-            ReadLeaf(header, definition, end, node);
+            ReadLeaf(header, definition, end, node, isPlaced);
         }
 
         return node;
@@ -134,15 +155,20 @@ internal sealed partial class FileReader
             _context.CancellationToken.ThrowIfCancellationRequested();
             if (_nodes >= MaxNodes)
             {
-                ReportBudget(node);
-                node.Add(Unparsed(position, end, "the element's data"));
+                if (_segment is not null)
+                {
+                    _segment.HasSkippedElements = true;
+                }
+
+                Node rest = node.Add(Unparsed(position, end, "the element's data"));
+                ReportBudget(position, () => rest);
                 return;
             }
 
             // The EBML Header's own elements are read with the limits EBML defaults to; EBMLMaxIDLength and EBMLMaxSizeLength limit the Body (RFC 8794, section 11.2.4).
             bool isHeader = definition.Path.StartsWith("\\EBML", StringComparison.Ordinal);
-            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, isHeader ? Math.Max(4, _document.MaxIdLength) : _document.MaxIdLength,
-                isHeader ? Math.Max(8, _document.MaxSizeLength) : _document.MaxSizeLength, out ElementHeader header);
+            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, isHeader ? Math.Max(4, _document.MaxIdLength) : _document.ReadIdLength,
+                isHeader ? Math.Max(8, _document.MaxSizeLength) : _document.ReadSizeLength, out ElementHeader header);
             if (problem != HeaderProblem.None)
             {
                 node.Add(Unparsed(position, end, problem, $"in the {definition.Name}"));
@@ -213,7 +239,7 @@ internal sealed partial class FileReader
         new("Unparsed Data", start, end - start, NodeValue.Integer(end - start, "bytes", "byte")) { Description = Explain.UnparsedData };
 
     // A leaf: its value, read from its data and shown by its type, and what the analysis keeps of it.
-    private void ReadLeaf(ElementHeader header, ElementDefinition definition, long end, Node node)
+    private void ReadLeaf(ElementHeader header, ElementDefinition definition, long end, Node node, bool isPlaced)
     {
         long length = end - header.DataOffset;
         ulong u = 0;
@@ -241,7 +267,11 @@ internal sealed partial class FileReader
 
             bytes = [];
             node.Value = Values.Of(definition, u, s, d, text, bytes, length);
-            Collect(definition, header, node, new Leaf(u, s, d, text, bytes, length));
+            if (isPlaced)
+            {
+                Collect(definition, header, node, new Leaf(u, s, d, text, bytes, length));
+            }
+
             return;
         }
 
@@ -304,7 +334,7 @@ internal sealed partial class FileReader
         }
 
         node.Value = valid ? Values.Of(definition, u, s, d, text, bytes, length) : null;
-        if (valid)
+        if (valid && isPlaced)
         {
             Collect(definition, header, node, new Leaf(u, s, d, text, bytes, length));
         }
@@ -328,10 +358,11 @@ internal sealed partial class FileReader
     {
         int count = (int)Math.Min(length, MaxText);
         byte[] bytes = ReadAt(header.DataOffset, count);
-        int used = bytes.Length;
-        while (used > 0 && bytes[used - 1] == 0)
+        // The value ends at the first null octet; it and any data after it are ignored (RFC 8794, section 13).
+        int used = Array.IndexOf(bytes, (byte)0);
+        if (used < 0)
         {
-            used--;
+            used = bytes.Length;
         }
 
         bool invalid = false;
@@ -354,18 +385,12 @@ internal sealed partial class FileReader
             }
         }
 
-        if (text.Contains('\0', StringComparison.Ordinal))
-        {
-            invalid = true;
-        }
-
         if (invalid)
         {
             _findings.Add(Severity.Info, "matroska.invalid-text", node, count =>
                 $"{(count == 1 ? "A text element holds" : $"{count} text elements hold")} characters its type does not allow (RFC 8794, sections 7.4 and 7.5); the first is the {definition.Name} at 0x{header.Offset:X}.");
         }
 
-        text = text.Replace("\0", "\\0", StringComparison.Ordinal);
-        return text.Length > MaxShownText || length > count ? text[..Math.Min(text.Length, MaxShownText)] + "…" : text;
+        return text.Length > MaxShownText || (used == bytes.Length && length > count) ? text[..Math.Min(text.Length, MaxShownText)] + "…" : text;
     }
 }

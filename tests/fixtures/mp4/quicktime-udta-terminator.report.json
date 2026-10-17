@@ -1349,7 +1349,8 @@
                   ]
                 },
                 {
-                  "name": "udta",
+                  "name": "QuickTime User Data",
+                  "kind": "Tag",
                   "value": "User Data",
                   "offset": 671,
                   "length": 34,
@@ -1368,7 +1369,7 @@
                       "length": 4
                     },
                     {
-                      "name": "©cmt",
+                      "name": "Title",
                       "value": "hand-built",
                       "offset": 679,
                       "length": 22,
@@ -1382,28 +1383,36 @@
                         },
                         {
                           "name": "Type",
-                          "value": "©cmt",
+                          "value": "©nam",
                           "offset": 683,
                           "length": 4
                         },
                         {
-                          "name": "Text Length",
-                          "value": 10,
-                          "unit": "bytes",
-                          "offset": 687,
-                          "length": 2
-                        },
-                        {
-                          "name": "Language",
-                          "value": 0,
-                          "offset": 689,
-                          "length": 2
-                        },
-                        {
-                          "name": "Text",
+                          "name": "Text Item",
                           "value": "hand-built",
-                          "offset": 691,
-                          "length": 10
+                          "offset": 687,
+                          "length": 14,
+                          "children": [
+                            {
+                              "name": "Text Length",
+                              "value": 10,
+                              "unit": "bytes",
+                              "offset": 687,
+                              "length": 2
+                            },
+                            {
+                              "name": "Language",
+                              "value": "0 (English, Macintosh language code)",
+                              "offset": 689,
+                              "length": 2
+                            },
+                            {
+                              "name": "Text",
+                              "value": "hand-built",
+                              "offset": 691,
+                              "length": 10
+                            }
+                          ]
                         }
                       ]
                     },

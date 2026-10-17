@@ -7,6 +7,7 @@ internal static class Topics
     public const string SampleTables = "mp4-sample-tables";
     public const string EditListsAndPriming = "edit-lists-and-priming";
     public const string ItunesMetadata = "itunes-metadata";
+    public const string QuickTimeUserData = "quicktime-user-data";
     public const string FragmentedMp4 = "fragmented-mp4";
     public const string AudioSpecificConfig = "audio-specific-config";
     public const string GaplessPlayback = "gapless-playback";
@@ -257,9 +258,10 @@ internal static class Explain
     public const string ChapterStart = "Where the chapter starts, stored in units of 100 nanoseconds.";
     public const string ChapterTitleLength = "The length of the chapter's title in bytes.";
     public const string ChapterTitle = "The chapter's title.";
-    public const string TextLength = "The length of the text in bytes (QuickTime File Format, User data text).";
-    public const string TextLanguage = "The text's language, a Macintosh language code or packed ISO 639-2/T letters (QuickTime File Format, Language code values).";
-    public const string Text = "The text of QuickTime user data, such as the name of the encoding software (QuickTime File Format, User data atoms).";
+    public const string TextLength = "The length of the text in bytes, not counting the size and language fields, as ffmpeg and MediaInfo read it (QuickTime File Format, User data atoms, which words it as including them).";
+    public const string TextLanguage = "The text's language: a Macintosh language code (below 0x400, or 0x7FFF for an unspecified language), which says the text is Macintosh-encoded, or from 0x400 on three letters of ISO 639-2/T packed in 5 bits each, which say it is UTF-8 or, after a byte order mark, UTF-16 (QuickTime File Format, User data atoms and Language code values).";
+    public const string Text = "The text of QuickTime user data, such as the name of the encoding software, decoded as its language code says (QuickTime File Format, User data atoms).";
+    public const string MoreTextItems = "The atom's further text items, not listed one by one.";
 
     public const string FragmentDuration = "The length of the whole fragmented presentation, in the movie's timescale (ISO/IEC 14496-12 8.8.2).";
     public const string TrexTrackId = "The track whose fragment defaults these are (ISO/IEC 14496-12 8.8.3).";
@@ -421,6 +423,53 @@ internal static class Explain
         _ when type.StartsWith('©') => "QuickTime user data text, such as a name or the encoding software, with a length and language before the text (QuickTime File Format, User data atoms).",
         _ => UnknownBox,
     };
+
+    public const string UserDataTag = "User data box that holds QuickTime's text atoms: data associated with the movie or track (QuickTime File Format, User data atoms), which the analyzer shows as the container's tag.";
+
+    // A QuickTime user data text atom that BoxNames.UserDataText lists, in the specification's words where it has them.
+    public static string UserDataText(string type) => type switch
+    {
+        "©ART" => "The artist; QuickTime's MP3 importer fills it from an ID3v1 tag (QuickTime File Format, Digital audio file formats).",
+        "©alb" => "The album; QuickTime's MP3 importer fills it from an ID3v1 tag (QuickTime File Format, Digital audio file formats).",
+        "©arg" => "The name of the arranger (QuickTime File Format, User data atoms, ©arg).",
+        "©ark" => "Keywords for the arranger, for sorting (QuickTime File Format, User data atoms, ©ark).",
+        "©cmt" => "A comment; QuickTime's MP3 importer fills it from an ID3v1 tag (QuickTime File Format, Digital audio file formats).",
+        "©cok" => "Keywords for the composer, for sorting (QuickTime File Format, User data atoms, ©cok).",
+        "©com" => "The name of the composer (QuickTime File Format, User data atoms, ©com).",
+        "©cpy" => "The copyright statement (QuickTime File Format, User data atoms, ©cpy).",
+        "©day" => "The date the movie content was created (QuickTime File Format, User data atoms, ©day).",
+        "©des" => "QuickTime's MP3 importer puts the ID3v1 track number here (QuickTime File Format, Digital audio file formats); ffmpeg's muxer writes the comment into it.",
+        "©dir" => "The name of the movie's director (QuickTime File Format, User data atoms, ©dir).",
+        "©fmt" => "The movie's format (computer-generated, digitized, and so on) (QuickTime File Format, User data atoms, ©fmt).",
+        "©inf" => "Information about the movie (QuickTime File Format, User data atoms, ©inf).",
+        "©isr" => "The ISRC code (QuickTime File Format, User data atoms, ©isr).",
+        "©lab" => "The name of the record label (QuickTime File Format, User data atoms, ©lab).",
+        "©lal" => "The URL of the record label (QuickTime File Format, User data atoms, ©lal).",
+        "©mak" => "The name of the file's creator or maker (QuickTime File Format, User data atoms, ©mak).",
+        "©mal" => "The URL of the file's creator or maker (QuickTime File Format, User data atoms, ©mal).",
+        "©nak" => "Title keywords of the content, for sorting (QuickTime File Format, User data atoms, ©nak).",
+        "©nam" => "The title of the content (QuickTime File Format, User data atoms, ©nam).",
+        "©pdk" => "Keywords for the producer, for sorting (QuickTime File Format, User data atoms, ©pdk).",
+        "©phg" => "The recording copyright statement, normally preceded by the symbol ℗ (QuickTime File Format, User data atoms, ©phg).",
+        "©prd" => "The name of the producer (QuickTime File Format, User data atoms, ©prd).",
+        "©prf" => "The names of the performers (QuickTime File Format, User data atoms, ©prf).",
+        "©prk" => "Keywords of the main artist and performer, for sorting (QuickTime File Format, User data atoms, ©prk).",
+        "©prl" => "The URL of the main artist and performer (QuickTime File Format, User data atoms, ©prl).",
+        "©req" => "Special hardware and software requirements (QuickTime File Format, User data atoms, ©req).",
+        "©snk" => "Subtitle keywords of the content, for sorting (QuickTime File Format, User data atoms, ©snk).",
+        "©snm" => "The subtitle of the content (QuickTime File Format, User data atoms, ©snm).",
+        "©src" => "Credits for those who provided the movie's source content (QuickTime File Format, User data atoms, ©src).",
+        "©swf" => "The name of the songwriter (QuickTime File Format, User data atoms, ©swf).",
+        "©swk" => "Keywords for the songwriter, for sorting (QuickTime File Format, User data atoms, ©swk).",
+        "©swr" => "The name and version number of the software or hardware that generated the movie (QuickTime File Format, User data atoms, ©swr).",
+        "©wrt" => "The name of the movie's writer (QuickTime File Format, User data atoms, ©wrt).",
+        "©too" => "Text naming the software that wrote or encoded the file; no Apple specification defines it in user data, and ffmpeg's and MediaInfo's readers take it as the encoding tool.",
+        _ when type.StartsWith("©ed", StringComparison.Ordinal) => "An edit date and description (QuickTime File Format, User data atoms, ©ed1 to ©ed9).",
+        _ => Box(type),
+    };
+
+    public const string TextItem = "One text of an international text atom: a 16-bit size, a 16-bit language code and the text, in the small atom layout of QuickTime's user data (QuickTime File Format, User data atoms).";
+    public const string TextItemTrailing = "Bytes at the end of a text atom that are too few for a text item's size and language, or that a text item's size leaves over; they are not read as text.";
 
     // A sample entry of an stsd box, by its coding.
     public static string SampleEntry(string type) => type switch

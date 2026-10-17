@@ -472,6 +472,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "mp4/track-meta-before-mdia": dict.fromkeys(["tag title", "tag track"], "MediaInfo reads a meta box in a trak box (moov_trak_meta, File_Mpeg4_Elements.cpp line 1450) and has no entry for a udta box there, so it skips the item list in trak/udta/meta that the analyzer shows"),
     "mp4/id32": dict.fromkeys(["tag title", "tag track"], "MediaInfo skips the ID3v2 tag in an ID32 box (File_Mpeg4_Elements.cpp, moov_udta_ID32: Skip_XX \"ID3v2data\")"),
     "mp4/ilst-all-types": {"tag performer": "MediaInfo writes \"UTF-16 encoding not yet supported\" for an iTunes data atom of type 2 (File_Mpeg4_Elements.cpp, moov_meta_ilst_xxxx_data)"},
+    "mp4/quicktime-udta-text": dict.fromkeys(["tag title", "tag track"], "MediaInfo reads a ©nam atom of the movie's user data as a version and flags (the size and language) and one UTF-8 text to the end of the atom (File_Mpeg4_Elements.cpp, moov_udta_xxxx: Method_String3, Get_UTF8), so it gives no title for an atom of two items whose first is Macintosh-encoded, where the analyzer decodes each item by its language code"),
     "mp4/trailing-id3v1": dict.fromkeys(["tag title", "tag track"], "MediaInfo's MP4 parser has no tag helper (File_Mpeg4.h: File_Mpeg4 derives from File__Analyze, not File__Tags_Helper), so it reads no ID3v1 tag after the boxes"),
 }
 
@@ -657,8 +658,21 @@ def check_mediainfo(path, tally, check=None):
         if "Source_Duration" in track and ticks:
             tally.compare("sample table duration", track["Source_Duration"], milliseconds(int(ticks.group(1)) / mi.leading_number(mi.value(media, "Timescale"))))
     general = info["General"] if info else {}
-    tools = [n.get("value") for n in mi.walk(report["root"]) if n["name"] == "Encoding Tool"]
-    tally.compare("encoding tool", general.get("Encoded_Application"), tools[0] if tools else None)
+    # MediaInfo files ©swr and ©too of the movie's user data under the same field as an item list's ©too (File_Mpeg4.cpp, Metadata_Get), and keeps
+    # the first value it meets, so the first tool by offset is compared; a track's user data is filed with the stream.
+    tools = []
+
+    def collect(node, parent=None, in_track=False):
+        in_track = in_track or node["name"] == "trak"
+        in_user_data = parent == "QuickTime User Data"
+        if isinstance(node.get("value"), str) and not (in_track and in_user_data) and (node["name"] == "Encoding Tool" or (in_user_data and node["name"] == "Software")):
+            tools.append((node["offset"], node["value"]))
+        for c in node.get("children", []):
+            collect(c, node["name"], in_track)
+
+    collect(report["root"])
+    tools.sort()
+    tally.compare("encoding tool", general.get("Encoded_Application"), tools[0][1] if tools else None)
     mi.compare_tags(tally, general, report)
     return problems
 

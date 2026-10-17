@@ -543,6 +543,54 @@ public class ComplexityTests
         public void Parse(ParseContext context) => _parser.Parse(context);
     }
 
+    // A track whose every ContentEncoding has ContentEncodingScope bit 4, so that the encodings hiding the next one are the whole run before it: 16,000
+    // of them took 7.8 s and 2 GB, because each copied the run (25 s and 12 GB for 40,000), and raised a finding each, 40,000 of them.
+    [Fact]
+    public void ManyHidingContentEncodings()
+    {
+        byte[] encodings = MatroskaBuilder.Element(0x6D80, [.. Enumerable.Range(0, 40_000).Select(i => MatroskaBuilder.Element(0x6240, MatroskaBuilder.Unsigned(0x5031, (ulong)i), MatroskaBuilder.Unsigned(0x5032, 5)))]);
+        byte[] tracks = MatroskaBuilder.Element(0x1654AE6B, MatroskaBuilder.OpusTrack(1, encodings));
+
+        Report report = Timed(MatroskaBuilder.File(MatroskaBuilder.Info(), tracks, MatroskaBuilder.Cluster(0, MatroskaBuilder.SimpleBlock(1, 0, [0xFC, 0xFF, 0xFE]))));
+
+        // The first hundred are listed, the rest counted in one more.
+        List<Finding> hidden = [.. report.Findings.Where(f => f.Code == "matroska.encoding-hidden")];
+        Assert.Equal(101, hidden.Count);
+        Assert.Equal(39_999, hidden.Sum(f => f.Count));
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    // Thousands of audio tracks routed to a codec parser and millions of blocks of one of them: each track was routed by a pass over all the blocks, so
+    // 4,000 tracks and 3 million blocks took 95 s.
+    [Fact]
+    public void ManyRoutedTracksAndManyBlocks()
+    {
+        const int tracks = 4000;
+        const int blocks = 3_000_000;
+        var stream = new MemoryStream();
+        stream.Write(MatroskaBuilder.Header());
+        stream.Write([0x18, 0x53, 0x80, 0x67, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
+        stream.Write(MatroskaBuilder.Info());
+        stream.Write(MatroskaBuilder.Element(0x1654AE6B, [.. Enumerable.Range(1, tracks).Select(n => MatroskaBuilder.OpusTrack((uint)n))]));
+        byte[] first = MatroskaBuilder.SimpleBlockOf(1, 0, [0xFC, 0xFF, 0xFE]);
+        stream.Write(MatroskaBuilder.WithSize(0x1F43B675, 3 + (((long)blocks + tracks - 1) * first.Length), []));
+        stream.Write(MatroskaBuilder.Unsigned(0xE7, 0));
+        for (uint n = 2; n <= tracks; n++)
+        {
+            stream.Write(MatroskaBuilder.SimpleBlockOf(n, 0, [0xFC, 0xFF, 0xFE]));
+        }
+
+        for (int i = 0; i < blocks; i++)
+        {
+            stream.Write(first);
+        }
+
+        Report report = Timed(stream.ToArray());
+
+        Assert.Equal(tracks, report.Streams.Count);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
     // 90,000 empty mdat boxes (within the box budget) and then 400,000 samples of one byte in the last one: finding the mdat box that holds a sample was a scan over
     // all of them for each sample (5.5 s for 50,000 boxes and 100,000 samples, so about 40 s here, and more on a slower machine).
     [Fact]
