@@ -18,6 +18,11 @@ public sealed class RawAacParser : IFormatParser
     // must be longer to count for the sniff: the ones that FFmpeg's E-AC-3 samples make hold three frames at most.
     private const int FurtherChainLength = 8;
 
+    // Frames (and gaps) kept as records, as MP4 caps the samples of a fragmented track: a stream of
+    // frames that hold one byte of audio each costs a record, a stored block and a figure per 8 bytes
+    // of input. The bytes past the cap are not read.
+    internal const int MaxFrames = 1 << 21;
+
     public string Name => "AAC";
 
     // An ADTS chain at the start of the data, after any zero bytes, is class 91, one above MPEG audio's
@@ -115,6 +120,12 @@ public sealed class RawAacParser : IFormatParser
                 state.Cancellation.ThrowIfCancellationRequested();
             }
 
+            if (state.Frames.Count >= MaxFrames)
+            {
+                AddOverflow(state, stream, position, end);
+                break;
+            }
+
             if (stream is { } current && HeaderAt(cache, position, end) is { } header && header.IsSameStream(current))
             {
                 long frameEnd = position + header.FrameLength;
@@ -165,6 +176,96 @@ public sealed class RawAacParser : IFormatParser
 
         region.End = state.Frames.Count;
     }
+
+    // Sync losses that the counting past MaxFrames follows, each with a record of its own (the gap).
+    private const int MaxOverflowBreaks = 4096;
+
+    // Past MaxFrames records the frames that follow one another with the stream's fixed header are only counted, from their headers: their
+    // frames, bytes, samples and bitrate extremes join the stream's figures in AddStream, but they get no node of their own, no raw data
+    // block is read, and the graphs and coding statistics cover the frames before. After a sync loss the counting resyncs on the next chain
+    // of the same stream, as before the limit, and the bytes between are a gap; it stops at another stream, after MaxOverflowBreaks sync
+    // losses or where no frame follows, and the bytes left are not analyzed.
+    private static void AddOverflow(State state, AdtsHeader? stream, long position, long end)
+    {
+        long first = position;
+        Overflow? total = stream is { } current ? new Overflow(-1, current) : null;
+        var splitter = new RunSplitter(int.MaxValue);
+        Node? firstNode = null;
+        long gapBytes = 0;
+
+        void Emit((long Offset, long Length, long Frames)? record)
+        {
+            if (record is not { } run)
+            {
+                return;
+            }
+
+            int index = state.Frames.Count;
+            total!.Index = total.Index < 0 ? index : total.Index;
+            state.Frames.Add(Frame.Run(run.Offset, run.Length));
+            state.Records.Runs[index] = run.Frames;
+            firstNode ??= new Node("Counted Frames", run.Offset, run.Length, NodeValue.Integer(run.Frames, "frames", "frame")) { Description = Explain.CountedFrames };
+        }
+
+        int breaks = 0;
+        while (total is not null && position < end)
+        {
+            while (position < end && HeaderAt(state.Cache, position, end) is { } header && header.IsSameStream(total.Header) && position + header.FrameLength <= end)
+            {
+                if (total.Frames % 4096 == 0)
+                {
+                    state.Cancellation.ThrowIfCancellationRequested();
+                }
+
+                total.Add(header, IsAppleHeader(header));
+                Emit(splitter.Add(position, header.FrameLength));
+                position += header.FrameLength;
+            }
+
+            Emit(splitter.Flush());
+            if (position >= end || ++breaks > MaxOverflowBreaks)
+            {
+                break;
+            }
+
+            long found = FindChain(state.Cache, position, end, end);
+            if (found <= position || HeaderAt(state.Cache, found, end) is not { } next || !next.IsSameStream(total.Header))
+            {
+                break;
+            }
+
+            foreach ((long offset, int length) in RunSplitter.Pieces(position, found - position))
+            {
+                state.Frames.Add(Frame.Gap(offset, length));
+            }
+
+            gapBytes += found - position;
+            position = found;
+        }
+
+        if (total is { Frames: > 0 })
+        {
+            state.Overflows.Add(total);
+        }
+
+        long rest = end - position;
+        foreach ((long offset, int length) in RunSplitter.Pieces(position, rest))
+        {
+            state.Frames.Add(Frame.Unread(offset, length));
+            firstNode ??= new Node("Unread Bytes", offset, length, NodeValue.Integer(length, "bytes", "byte")) { Description = Explain.UnreadFrames };
+        }
+
+        long frames = total?.Frames ?? 0;
+        long skipped = gapBytes;
+        long start = first;
+        state.Findings.Add(Severity.Warning, "aac.frames-limit", firstNode!, count => count == 1
+            ? $"The file has more than {MaxFrames} ADTS frames and gaps; the {Plural(frames, "frame")} from 0x{start:X} on that follow the stream's header are counted in its figures (frames, samples, duration, bitrates) "
+              + $"but have no node, and the graphs and statistics cover the frames before them{(skipped > 0 ? $"; the {Plural(skipped, "byte")} between them that are no frames are skipped" : string.Empty)}"
+              + $"{(rest > 0 ? $"; the {Plural(rest, "byte")} after them are not analyzed" : string.Empty)}."
+            : $"The file has more than {MaxFrames} ADTS frames and gaps in {count} places; the frames after the limit are counted in the figures of their stream but have no node, and the graphs and statistics cover the frames before them; bytes that are not such frames are skipped or not analyzed.");
+    }
+
+    private static string Plural(long count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
 
     private static void AddGap(State state, long start, long end, bool leading, bool trailing)
     {
@@ -228,12 +329,12 @@ public sealed class RawAacParser : IFormatParser
                 $"The raw data block positions of {(count == 1 ? "1 ADTS frame" : $"{count} ADTS frames")}, first at 0x{position:X}, do not lie in increasing order inside the frame.");
         }
 
-        if (state.Signature is null && log.Tally.FirstText is { } text)
+        if (log.Tally.FirstText is { } text && !state.Signatures.ContainsKey(log))
         {
-            state.Signature = (text, index, position);
+            state.Signatures[log] = (text, index, position);
         }
 
-        if (details.Blocks.Length > 1 || details.Positions.Length > 0)
+        if (details.Blocks.Length > 1 || details.Positions.Length > 0 || details.BlocksHeld >= 0)
         {
             state.Details[index] = details;
         }
@@ -268,7 +369,7 @@ public sealed class RawAacParser : IFormatParser
         int blocks = header.RawDataBlocks;
         if (frame.Length < headerLength)
         {
-            return new FrameDetails([new Block(headerLength, 0, -1, -1, -1, CrcState.None)], [], -1, CrcState.None, false, null);
+            return new FrameDetails([new Block(headerLength, 0, -1, -1, -1, CrcState.None)], [], -1, CrcState.None, false, null, -1);
         }
 
         int[] positions = [];
@@ -303,6 +404,7 @@ public sealed class RawAacParser : IFormatParser
         }
 
         var result = new List<Block>(blocks);
+        var reads = new List<(BlockResult Read, int Index)>(blocks);
         CrcState overall = CrcState.None;
         int next = headerLength;
         bool readable = true;
@@ -339,9 +441,11 @@ public sealed class RawAacParser : IFormatParser
 
             ReadOnlySpan<byte> data = frame[start..end];
             var where = new UnitBytes(offset + start, end - start, null);
+            int logIndex = log.Count;
             (long skeleton, BlockResult read) = log.Read(data, 0, data.Length * 8, where, frameNode, report: !damaged);
+            reads.Add((read, logIndex));
             readable = read.Ok;
-            if (read.Ok && (separate || blocks == 1) && read.End < data.Length * 8 && !damaged)
+            if (read.Ok && (separate || i == blocks - 1) && read.End < data.Length * 8 && !damaged)
             {
                 Node trailing = TrailingNode(where, read.End, data.Length);
                 long at = trailing.Offset;
@@ -357,13 +461,26 @@ public sealed class RawAacParser : IFormatParser
                 state = Verdict(read, data, ref block, blockCrc, log);
             }
 
-            result.Add(new Block(start, separate || blocks > 1 ? (read.Ok && !separate ? read.End / 8 : end - start) : -1, read.Elements, skeleton, blockCrc, state));
+            // The last block of an unprotected frame reaches the frame's end, so bytes after its END element lie inside it.
+            result.Add(new Block(start, separate || blocks > 1 ? (read.Ok && !separate && i < blocks - 1 ? read.End / 8 : end - start) : -1, read.Elements, skeleton, blockCrc, state));
             next = start + (read.End / 8);
         }
 
         if (result.Count == 0)
         {
             result.Add(new Block(headerLength, 0, -1, -1, -1, CrcState.None));
+        }
+
+        // Blocks without positions follow one another, so a frame that ends early holds fewer than its
+        // header declares; they are counted for the samples as read.
+        int held = -1;
+        if (!separate && !damaged && blocks > 1 && readable && result.Count < blocks)
+        {
+            held = result.Count;
+            long frameOffset = offset;
+            findings.Add(Severity.Warning, "aac.blocks-missing", frameNode(), count => count == 1
+                ? $"The ADTS frame at 0x{frameOffset:X} declares {blocks} raw data blocks, but holds {held}; the samples are counted for the blocks it holds."
+                : $"{count} ADTS frames hold fewer raw data blocks than their headers declare, the first at 0x{frameOffset:X}; the samples are counted for the blocks they hold.");
         }
 
         if (header.IsProtected && !damaged)
@@ -394,6 +511,15 @@ public sealed class RawAacParser : IFormatParser
             }
         }
 
+        // A damaged frame, or one that fails its CRC, is no evidence of what the stream holds.
+        if (!damaged && overall != CrcState.Mismatch)
+        {
+            foreach ((BlockResult read, int index) in reads)
+            {
+                log.AddEvidence(read, index);
+            }
+        }
+
         IReadOnlyList<Speaker>? layout = null;
         if (BlockLog.FirstElement(result[0].Elements) == 5 && header.ChannelConfiguration == 0)
         {
@@ -410,7 +536,7 @@ public sealed class RawAacParser : IFormatParser
             }
         }
 
-        return new FrameDetails([.. result], positions, crc, overall, badPositions, layout);
+        return new FrameDetails([.. result], positions, crc, overall, badPositions, layout, held);
     }
 
     private static CrcState Verdict(BlockResult read, ReadOnlySpan<byte> block, ref Crc16 crc, int expected, BlockLog log)
@@ -512,6 +638,16 @@ public sealed class RawAacParser : IFormatParser
     private static Node FrameNode(Records records, int index)
     {
         Frame frame = records.Frames[index];
+        if (frame.IsRun)
+        {
+            return new Node("Counted Frames", frame.Offset, frame.Length, NodeValue.Integer(records.Runs[index], "frames", "frame")) { Description = Explain.CountedFrames };
+        }
+
+        if (frame.IsUnread)
+        {
+            return new Node("Unread Bytes", frame.Offset, frame.Length, NodeValue.Integer(frame.Length, "bytes", "byte")) { Description = Explain.UnreadFrames };
+        }
+
         if (frame.IsGap)
         {
             return new Node("Gap", frame.Offset, frame.Length, NodeValue.Integer(frame.Length, "bytes")) { Description = Explain.Gap };
@@ -666,13 +802,13 @@ public sealed class RawAacParser : IFormatParser
         {
             Channels = header.ChannelConfiguration == 0 ? first.PceChannels : AacTables.Channels(header.ChannelConfiguration),
             Layout = header.ChannelConfiguration == 0 ? first.PceLayout : null,
-            SbrFound = found.Tally.SbrBlocks > 0,
-            PsFound = found.Tally.PsBlocks > 0,
+            SbrFound = found.Tally.IsSbrEvident,
+            PsFound = found.Tally.IsPsEvident,
         };
         var figures = new StreamFigures(config.OutputSampleRate);
-        int vbr = 0;
-        int frames = 0;
-        int appleHeaders = 0;
+        long vbr = 0;
+        long frames = 0;
+        long appleHeaders = 0;
         for (int i = start; i < end; i++)
         {
             if (i % 4096 == 0)
@@ -687,10 +823,20 @@ public sealed class RawAacParser : IFormatParser
             }
 
             var frameHeader = new AdtsHeader(frame.Header);
-            figures.Add(frame.Offset, frame.Length, config.OutputFrameLength * frameHeader.RawDataBlocks);
+            int counted = state.Details.TryGetValue(i, out FrameDetails? held) && held.BlocksHeld >= 0 ? held.BlocksHeld : frameHeader.RawDataBlocks;
+            figures.Add(frame.Offset, frame.Length, config.OutputFrameLength * counted);
             vbr += frameHeader.IsVbr ? 1 : 0;
             appleHeaders += IsAppleHeader(frameHeader) ? 1 : 0;
             frames++;
+        }
+
+        foreach (Overflow run in state.Overflows.Where(o => o.Index > start && o.Index < end && o.Header.IsSameStream(header)))
+        {
+            double rate = 8.0 * figures.SampleRate / config.OutputFrameLength / 1000;
+            figures.AddRun(run.Frames, run.Bytes, (long)config.OutputFrameLength * run.Blocks, run.Smallest, run.Largest, run.MinimumPerBlock * rate, run.MaximumPerBlock * rate);
+            vbr += run.VariableBitrate;
+            appleHeaders += run.Apple;
+            frames += run.Frames;
         }
 
         Node FirstFrame() => WithoutChildren(FrameNode(state.Records, start));
@@ -719,7 +865,7 @@ public sealed class RawAacParser : IFormatParser
         }
 
         Node? encoder = AacEncoder.Detect(
-            state.Signature is { } signature && signature.Index >= start && signature.Index < end
+            state.Signatures.TryGetValue(found, out (string Text, int Index, long Offset) signature) && signature.Index >= start && signature.Index < end
                 ? new AacEncoder.Signature(signature.Text, WithoutChildren(FrameNode(state.Records, signature.Index)), signature.Index - start)
                 : null,
             claims,
@@ -782,7 +928,8 @@ public sealed class RawAacParser : IFormatParser
     private sealed record Block(int Start, int Length, int Elements, long Skeleton, int Crc, CrcState CrcState);
 
     // Layout: the speakers of a program config element that starts the frame's first block.
-    private sealed record FrameDetails(Block[] Blocks, int[] Positions, int Crc, CrcState CrcState, bool HasBadPositions, IReadOnlyList<Speaker>? Layout)
+    // BlocksHeld: the raw data blocks an unprotected frame holds when that is fewer than its header declares, else -1.
+    private sealed record FrameDetails(Block[] Blocks, int[] Positions, int Crc, CrcState CrcState, bool HasBadPositions, IReadOnlyList<Speaker>? Layout, int BlocksHeld)
     {
         public int? Channels => Layout?.Count;
     }
@@ -797,7 +944,12 @@ public sealed class RawAacParser : IFormatParser
 
         public ulong Header => header;
 
-        public bool IsGap => header == 0;
+        // Zero (never a valid header) marks a gap, one the bytes past MaxFrames that are not analyzed, two the frames past it that are counted.
+        public bool IsGap => header <= 2;
+
+        public bool IsUnread => header == 1;
+
+        public bool IsRun => header == 2;
 
         public int Crc { get; init; } = -1;
 
@@ -812,6 +964,51 @@ public sealed class RawAacParser : IFormatParser
         public bool IsTruncated { get; init; }
 
         public static Frame Gap(long offset, long length) => new(offset, (int)Math.Min(length, int.MaxValue), 0);
+
+        public static Frame Unread(long offset, long length) => new(offset, (int)Math.Min(length, int.MaxValue), 1);
+
+        public static Frame Run(long offset, long length) => new(offset, (int)Math.Min(length, int.MaxValue), 2);
+    }
+
+    // The frames past MaxFrames that were only counted (AddOverflow), with the extremes AddStream needs for its figures.
+    private sealed class Overflow(int index, AdtsHeader header)
+    {
+        public int Index { get; set; } = index;
+
+        public AdtsHeader Header => header;
+
+        public long Frames { get; private set; }
+
+        public long Bytes { get; private set; }
+
+        public long Blocks { get; private set; }
+
+        public int Smallest { get; private set; } = int.MaxValue;
+
+        public int Largest { get; private set; }
+
+        // Bytes per raw data block, from which the bitrate follows once the stream's frame length is known.
+        public double MinimumPerBlock { get; private set; } = double.MaxValue;
+
+        public double MaximumPerBlock { get; private set; }
+
+        public long VariableBitrate { get; private set; }
+
+        public long Apple { get; private set; }
+
+        public void Add(AdtsHeader frame, bool isApple)
+        {
+            Frames++;
+            Bytes += frame.FrameLength;
+            Blocks += frame.RawDataBlocks;
+            Smallest = Math.Min(Smallest, frame.FrameLength);
+            Largest = Math.Max(Largest, frame.FrameLength);
+            double perBlock = frame.FrameLength / (double)frame.RawDataBlocks;
+            MinimumPerBlock = Math.Min(MinimumPerBlock, perBlock);
+            MaximumPerBlock = Math.Max(MaximumPerBlock, perBlock);
+            VariableBitrate += frame.IsVbr ? 1 : 0;
+            Apple += isApple ? 1 : 0;
+        }
     }
 
     private sealed class Region(int first)
@@ -842,6 +1039,9 @@ public sealed class RawAacParser : IFormatParser
 
         public Dictionary<int, FrameDetails> Details { get; } = [];
 
+        // The frames of each run counted past MaxFrames, by the index of its record.
+        public Dictionary<int, long> Runs { get; } = [];
+
         public void AddUnits(int first, StreamSetup setup, UnitStore store) => _units.Add((first, setup, store));
 
         public (StreamSetup Setup, UnitStore Store) UnitsAt(int index)
@@ -868,7 +1068,10 @@ public sealed class RawAacParser : IFormatParser
 
         public FindingCollector Findings { get; } = new();
 
-        public (string Text, int Index, long Offset)? Signature { get; set; }
+        public List<Overflow> Overflows { get; } = [];
+
+        // The encoder's signature text of each stream, by the log of its blocks: the first frame that holds one.
+        public Dictionary<BlockLog, (string Text, int Index, long Offset)> Signatures { get; } = [];
 
         // The raw data blocks of each run of frames with the same fixed header, by the run's first
         // frame, in order.

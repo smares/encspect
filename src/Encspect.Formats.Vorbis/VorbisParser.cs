@@ -45,35 +45,7 @@ public sealed partial class VorbisParser : ICodecParser
 
     // The channel order of section 4.3.9, which names the speakers of one to eight channels; more
     // are left to the application.
-    internal static (string Name, string[] Speakers)? Layout(int channels) => channels is >= 1 and <= 8 ? Layouts[channels - 1] : null;
+    internal static string ChannelMode(int channels) => Speakers(channels) is { } speakers ? ChannelLayouts.ModeName(speakers) ?? $"{channels} channels" : $"{channels} channels";
 
-    private static readonly (string Name, string[] Speakers)[] Layouts =
-    [
-        ("Mono", ["mono"]),
-        ("Stereo", ["left", "right"]),
-        ("1D surround", ["left", "center", "right"]),
-        ("Quadraphonic", ["front left", "front right", "rear left", "rear right"]),
-        ("5.0", ["front left", "center", "front right", "rear left", "rear right"]),
-        ("5.1", ["front left", "center", "front right", "rear left", "rear right", "LFE"]),
-        ("6.1", ["front left", "center", "front right", "side left", "side right", "rear center", "LFE"]),
-        ("7.1", ["front left", "center", "front right", "side left", "side right", "rear left", "rear right", "LFE"]),
-    ];
-
-    internal static string ChannelMode(int channels) => Layout(channels)?.Name ?? $"{channels} channels";
-
-    // The same order as speaker positions: the rear pair of four to six channels is the lone
-    // surround pair, the back pair; with seven and eight it is the side pair.
-    internal static IReadOnlyList<Speaker>? Speakers(int channels) => channels is >= 1 and <= 8 ? SpeakerLayouts[channels - 1] : null;
-
-    private static readonly Speaker[][] SpeakerLayouts =
-    [
-        [Speaker.FrontCenter],
-        [Speaker.FrontLeft, Speaker.FrontRight],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight],
-        [Speaker.FrontLeft, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackCenter, Speaker.LowFrequency],
-        [Speaker.FrontLeft, Speaker.FrontCenter, Speaker.FrontRight, Speaker.SideLeft, Speaker.SideRight, Speaker.BackLeft, Speaker.BackRight, Speaker.LowFrequency],
-    ];
+    internal static IReadOnlyList<Speaker>? Speakers(int channels) => ChannelLayouts.VorbisOrder(channels);
 }

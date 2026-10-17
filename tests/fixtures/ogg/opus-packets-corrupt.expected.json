@@ -1,10 +1,10 @@
 {
- "length": 2274,
+ "length": 4861,
  "regions": [
   {
    "name": "Ogg",
    "offset": 0,
-   "length": 2274
+   "length": 4861
   }
  ],
  "pages": [
@@ -31,16 +31,16 @@
   {
    "name": "Page",
    "offset": 129,
-   "length": 1691,
+   "length": 4278,
    "serial": 252642049,
    "sequence": 2,
-   "granule": 22080,
+   "granule": 24960,
    "flags": 4,
    "crc_ok": true
   },
   {
    "name": "Page",
-   "offset": 1820,
+   "offset": 4407,
    "length": 52,
    "serial": 252642050,
    "sequence": 0,
@@ -50,7 +50,7 @@
   },
   {
    "name": "Page",
-   "offset": 1872,
+   "offset": 4459,
    "length": 82,
    "serial": 252642050,
    "sequence": 1,
@@ -60,7 +60,7 @@
   },
   {
    "name": "Page",
-   "offset": 1954,
+   "offset": 4541,
    "length": 320,
    "serial": 252642050,
    "sequence": 2,
@@ -75,14 +75,14 @@
    "codec": "Opus",
    "link": 1,
    "pages": 3,
-   "packets": 21,
+   "packets": 23,
    "has_eos": true,
    "opus": {
     "header": {
      "Magic Signature": "OpusHead",
      "Version": "1",
      "Channels": "1",
-     "Channel Layout": "Mono: mono",
+     "Channel Layout": "Mono: front center",
      "Pre-skip": "312 samples",
      "Input Sample Rate": "48000 Hz",
      "Output Gain": "+0.00 dB",
@@ -96,79 +96,87 @@
     },
     "packets": [
      [
-      180,
+      192,
       21
      ],
      [
-      201,
+      213,
       0
      ],
      [
-      201,
+      213,
       21
      ],
      [
-      222,
+      234,
       1301
      ],
      [
-      1523,
+      1535,
       21
      ],
      [
-      1544,
+      1556,
       22
      ],
      [
-      1566,
+      1578,
       21
      ],
      [
-      1587,
+      1599,
       13
      ],
      [
-      1600,
+      1612,
       21
-     ],
-     [
-      1621,
-      12
      ],
      [
       1633,
-      21
+      12
      ],
      [
-      1654,
-      12
+      1645,
+      21
      ],
      [
       1666,
-      21
-     ],
-     [
-      1687,
       12
      ],
      [
-      1699,
+      1678,
       21
      ],
      [
-      1720,
+      1699,
+      12
+     ],
+     [
+      1711,
+      21
+     ],
+     [
+      1732,
       4
      ],
      [
-      1724,
+      1736,
       21
      ],
      [
-      1745,
+      1757,
+      2554
+     ],
+     [
+      4311,
+      21
+     ],
+     [
+      4332,
       54
      ],
      [
-      1799,
+      4386,
       21
      ]
     ],
@@ -319,36 +327,52 @@
        0,
        1
       ]
+     ],
+     [
+      [
+       31,
+       0,
+       3,
+       0
+      ]
+     ],
+     [
+      [
+       31,
+       0,
+       0,
+       1
+      ]
      ]
     ],
     "statistics": {
-     "Packets": "19",
-     "Frames": "10",
-     "Decoded Samples": "22080 samples",
+     "Packets": "21",
+     "Frames": "11",
+     "Decoded Samples": "24960 samples",
      "Pre-skip": "312 samples",
      "Start Offset": "0 samples",
      "End Trimming": "0 samples",
-     "Samples": "21768 samples",
-     "Duration": "0.454 s",
+     "Samples": "24648 samples",
+     "Duration": "0.513 s",
      "IsVbr": "true",
-     "Average Bitrate": "28.5 kbps",
+     "Average Bitrate": "64.8 kbps",
      "Minimum Bitrate": "0.8 kbps",
      "Maximum Bitrate": "520.4 kbps",
-     "Packet Sizes": "0 to 1301 bytes, 86.3 on average",
+     "Packet Sizes": "0 to 2554 bytes, 200.7 on average",
      "Modes": "1 mode",
-     "Modes/CELT-only": "10 frames (100.0%)",
+     "Modes/CELT-only": "11 frames (100.0%)",
      "Bandwidths": "1 bandwidth",
-     "Bandwidths/Fullband (20 kHz)": "10 frames (100.0%)",
+     "Bandwidths/Fullband (20 kHz)": "11 frames (100.0%)",
      "Frame Sizes": "1 size",
-     "Frame Sizes/20 ms": "10 frames (100.0%)",
+     "Frame Sizes/20 ms": "11 frames (100.0%)",
      "Stereo Coding": "0 stereo packets",
      "Stereo Coding/Stereo": "0 packets (0.0%)",
-     "Stereo Coding/Mono": "18 packets (100.0%)",
+     "Stereo Coding/Mono": "20 packets (100.0%)",
      "Frame Packing": "4 codes",
-     "Frame Packing/Code 0 (one frame)": "11 packets (61.1%)",
-     "Frame Packing/Code 1 (two frames of equal size)": "1 packet (5.6%)",
-     "Frame Packing/Code 2 (two frames of different sizes)": "1 packet (5.6%)",
-     "Frame Packing/Code 3 (any number of frames)": "5 packets (27.8%)"
+     "Frame Packing/Code 0 (one frame)": "12 packets (60.0%)",
+     "Frame Packing/Code 1 (two frames of equal size)": "1 packet (5.0%)",
+     "Frame Packing/Code 2 (two frames of different sizes)": "1 packet (5.0%)",
+     "Frame Packing/Code 3 (any number of frames)": "6 packets (30.0%)"
     }
    }
   },
@@ -364,7 +388,7 @@
      "Magic Signature": "OpusHead",
      "Version": "1",
      "Channels": "3",
-     "Channel Layout": "Linear surround: left, center, right",
+     "Channel Layout": "3.0: front left, front center, front right",
      "Pre-skip": "312 samples",
      "Input Sample Rate": "48000 Hz",
      "Output Gain": "+0.00 dB",
@@ -380,27 +404,27 @@
     },
     "packets": [
      [
-      1987,
+      4574,
       53
      ],
      [
-      2040,
+      4627,
       53
      ],
      [
-      2093,
+      4680,
       22
      ],
      [
-      2115,
+      4702,
       53
      ],
      [
-      2168,
+      4755,
       53
      ],
      [
-      2221,
+      4808,
       53
      ]
     ],
@@ -519,14 +543,15 @@
    "codec": "Opus",
    "sample_rate": 48000,
    "channels": 1,
-   "samples": 21768,
-   "duration": 0.4535,
-   "average_bitrate": 28.521739130434785,
+   "samples": 24648,
+   "duration": 0.5135,
+   "average_bitrate": 64.84615384615384,
    "is_vbr": true,
    "channel_mode": "Mono",
    "channel_layout": [
     "front center"
-   ]
+   ],
+   "playback_group": 1
   },
   {
    "codec": "Opus",
@@ -536,12 +561,13 @@
    "duration": 0.1135,
    "average_bitrate": 19.133333333333333,
    "is_vbr": true,
-   "channel_mode": "Linear surround",
+   "channel_mode": "3.0",
    "channel_layout": [
     "front left",
     "front center",
     "front right"
-   ]
+   ],
+   "playback_group": 2
   }
  ],
  "findings": [
@@ -551,7 +577,7 @@
   },
   {
    "code": "opus.packet-r2",
-   "contains": "its frame of 1300 bytes is longer than the 1275 bytes"
+   "contains": "2 packets break rule R2"
   },
   {
    "code": "opus.packet-r3",

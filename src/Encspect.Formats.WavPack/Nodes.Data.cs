@@ -81,7 +81,7 @@ internal static partial class Nodes
                 NewConfig(kept, sb.DataLength, h, s, at, data);
                 break;
             case SubBlockIds.ChannelIdentities:
-                Identities(kept, sb.DataLength, at, data);
+                Identities(s, h, kept, sb.DataLength, at, data);
                 break;
             case SubBlockIds.BlockChecksum:
                 Checksum(detail, kept, sb, at, data);
@@ -181,7 +181,7 @@ internal static partial class Nodes
 
         for (int c = 0; c < channels && position + 2 <= kept.Length; c++, position += 2)
         {
-            data.Add(Field(at + position, 2, channels == 1 ? "Bitrate Accumulator" : $"{(c == 0 ? first : second)} Bitrate Accumulator", NodeValue.Integer(ReadUInt16(kept, position)), Explain.BitrateAccumulator, Topics.Hybrid));
+            data.Add(Field(at + position, 2, channels == 1 ? "Bitrate Accumulator" : $"{(c == 0 ? first : second)} Bitrate Accumulator", NodeValue.Integer(ReadUInt16(kept, position)), h.IsFalseStereo ? Explain.BitrateAccumulatorFalseStereo : Explain.BitrateAccumulator, Topics.Hybrid));
         }
 
         for (int c = 0; c < channels && position + 2 <= kept.Length; c++, position += 2)
@@ -191,7 +191,8 @@ internal static partial class Nodes
 
         if (Decode.HybridTarget(h, kept) is { } target)
         {
-            data.Add(Field(at, kept.Length, "Target Bitrate", Summary.TargetValue(target.Bits, 2, "bits/sample", target.IsAtMost), target.IsAtMost ? Explain.TargetBitrateAtMost : Explain.TargetBitrate, Topics.Hybrid));
+            data.Add(Field(at, kept.Length, "Target Bitrate", Summary.TargetValue(target.Bits, 2, "bits/sample", target.IsAtMost),
+                target.IsAtMost ? h.IsFalseStereo ? Explain.TargetBitrateAtMostFalseStereo : Explain.TargetBitrateAtMost : Explain.TargetBitrate, Topics.Hybrid));
         }
     }
 
@@ -244,7 +245,7 @@ internal static partial class Nodes
 
     private static void ChannelInfo(ReadOnlySpan<byte> kept, long at, Node data)
     {
-        if (Decode.ChannelInfo(kept) is not { } info)
+        if (Decode.ChannelInfoFields(kept) is not { } info)
         {
             return;
         }
@@ -307,6 +308,7 @@ internal static partial class Nodes
             (Decode.ConfigCreateExe, "IsSelfExtracting", Explain.ConfigExe, null),
             (Decode.ConfigCreateWvc, "CreatesCorrectionFile", Explain.ConfigCreateWvc, Topics.Hybrid),
             (Decode.ConfigOptimizeWvc, "OptimizesCorrectionFile", Explain.ConfigOptimizeWvc, Topics.Hybrid),
+            (Decode.ConfigCompatibleWrite, "WritesCompatibleStream", Explain.ConfigCompatibleWrite, null),
             (Decode.ConfigCalcNoise, "CalculatesNoise", Explain.ConfigCalcNoise, Topics.Hybrid),
             (Decode.ConfigExtraMode, "UsesExtraProcessing", Explain.ConfigExtra, Topics.Decorrelation),
             (Decode.ConfigSkipWvx, "SkipsExtraBitstream", Explain.ConfigSkipWvx, Topics.FloatAndLargeIntegers),
@@ -380,13 +382,17 @@ internal static partial class Nodes
         }
     }
 
-    private static void Identities(ReadOnlySpan<byte> kept, int length, long at, Node data)
+    // The identities are those of the channels the channel mask names none for, which libwavpack lists
+    // after the mask's own (common_utils.c WavpackGetChannelIdentities), so the first is channel
+    // popcount(mask) + 1. Without a channel info the mask is the default of the block's channels.
+    private static void Identities(Records s, BlockHeader h, ReadOnlySpan<byte> kept, int length, long at, Node data)
     {
+        int named = System.Numerics.BitOperations.PopCount(s.ChannelMask ?? (h.IsMono ? 4u : 3u));
         for (int i = 0; i < kept.Length && i < MaxListedItems; i++)
         {
             byte id = kept[i];
             string value = id == 0xFF ? "unassigned" : id is >= 1 and <= (int)Speaker.TopBackRight ? ChannelLayouts.Name((Speaker)id) : id == 0 ? "invalid" : $"position {id}";
-            data.Add(Field(at + i, 1, $"Channel {i + 1}", value, Explain.Identity, Topics.Channels));
+            data.Add(Field(at + i, 1, $"Channel {named + i + 1}", value, Explain.Identity, Topics.Channels));
         }
 
         if (length > MaxListedItems)

@@ -174,7 +174,7 @@ public sealed partial class SpeexParser
             foreach ((int size, long count) in _sizes)
             {
                 string bitrate = HasTime ? $", {PacketBitrate(size).ToString("F1", CultureInfo.InvariantCulture)} kbps" : string.Empty;
-                distribution.Add($"{size} bytes", start, length, $"{Share(count, _packets, "packet", "packets")}{bitrate}", Explain.PacketSize);
+                distribution.Add(Count(size, "byte", "bytes"), start, length, $"{Share(count, _packets, "packet", "packets")}{bitrate}", Explain.PacketSize);
             }
 
             if (Mode >= 0 && _frames > 0)

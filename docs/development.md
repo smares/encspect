@@ -162,11 +162,17 @@ Every format has three kinds of fixture:
 | Musepack | `tests/fixtures/musepack` | `make_musepack_fixtures.py`; `make_external_musepack_fixtures.py` | mpcdec, ffprobe, libmpcdec per frame, libmpcdec 1.2.6 per SV4 to SV6 frame (and the Portable Musepack decoder, its C++ ancestor), mppdec under Wine, MediaInfo (`crosscheck_musepack_fixtures.py`) |
 | AC-3 and E-AC-3 | `tests/fixtures/ac3` | `make_ac3_fixtures.py`; `make_external_ac3_fixtures.py` (the derived-* fixtures need `--analyzer`) | ffprobe (including the Atmos profile), ffmpeg, liba52, ffmpeg decoding with skip fields inserted and a negative control, MediaInfo (`crosscheck_ac3_fixtures.py`, including JOC, the complexity index and the dynamic objects) |
 | DTS and DTS-HD files | `tests/fixtures/dts` | `make_dts_fixtures.py` (with `dts_lossless_fixtures.py`: XLL, DTS:X and `.dtshd`); `make_external_dts_fixtures.py` (ffmpeg's dca encoder); `check_dts_hd_samples.py` (real files, below) | ffprobe (including the DTS:X profiles and its `dtshd` demuxer), ffmpeg (a decode of each frame alone, with the error it must give for the damaged ones), libdca (`dca_frames.c`), MediaInfo (`crosscheck_dts_fixtures.py`) |
-| WavPack | `tests/fixtures/wavpack` | `make_wavpack_fixtures.py` (from the committed encoder files); `make_external_wavpack_fixtures.py` (wavpack 5.6.0) | libwavpack's own block reader and checksum verifier (`wavpack_blocks`), `wvunpack`, ffprobe, MediaInfo (`crosscheck_wavpack_fixtures.py`) |
+| WavPack | `tests/fixtures/wavpack` | `make_wavpack_fixtures.py` (from the committed encoder files); `make_external_wavpack_fixtures.py` (wavpack 5.6.0) | libwavpack's own block reader, checksum verifier and decoder pass (`wavpack_blocks`), `wvunpack`, ffprobe, MediaInfo (`crosscheck_wavpack_fixtures.py`) |
 | ASF and WMA | `tests/fixtures/asf` | `make_asf_fixtures.py`; `make_voice_fixtures.py` (with `voice_model.py`: Windows Media Audio Voice); `make_external_asf_fixtures.py`; `import_windows_wma_fixtures.py` (Microsoft's encoder, below); `check_wmavoice_samples.py` (real Voice files, below) | ffprobe, ffmpeg decoding (bit-exact for Lossless, to the same number of samples for Voice), MediaInfo (`crosscheck_asf_fixtures.py`); `wma_tables.py --check` for the tables generated from FFmpeg's source |
 | Matroska and WebM | `tests/fixtures/matroska` | `make_matroska_fixtures.py` (with `matroska_model.py`: an independent writer and reader); `make_external_matroska_fixtures.py` (ffmpeg, mkvmerge; names on the command line write only those, since the encoders' output differs from run to run); `matroska_tables.py` (the element table, generated from the pinned RFCs) | mkvinfo (every element's position, every block's frames), ffprobe (streams, packet sizes and presentation times), ffmpeg decoding, MediaInfo (`crosscheck_matroska_fixtures.py`) |
 
 All scripts are in `scripts/fixtures`.
+
+- **Ogg-specific checks:**
+  - A fixture of a corrupt Speex packet names the message speexdec must print (`speexdec_error` in its manifest, read by `crosscheck_ogg_fixtures.py`); `speex-wideband-layer-skip` has libspeex 1.2.1's "More than two wideband layers found".
+  - `vorbis-end-trimming-large` is compared with oggdec's samples, which libvorbis cuts at the last packet's; `speex-ignored-bits` with speexdec's samples and bitrates, which show it never reads the bits after the header's frames.
+  - Every stream's manifest entry holds its playback group (the chain link), which `OggFixtureTests` compares.
+  - `MemoryTests` bounds a multistream Opus file whose framing breaks, half a million empty Vorbis comments and 100,000 logical streams; `ComplexityTests` times junk dense in capture patterns, candidates that each follow the next, and 300,000 logical streams.
 
 ### MediaInfo
 
@@ -220,9 +226,10 @@ The first run of the cross-checks on Ubuntu 26.04 failed in eight jobs (DTS pass
 
 ### WavPack
 
-- The 60 encoder-written fixtures come from wavpack 5.6.0 (Ubuntu 24.04's package) and, for one, FFmpeg 6.1.1's native encoder and wv muxer with its APEv2 `encoder` item, over deterministic signals from `wavpack_signal.py` (WAV, float, AIFF, CAF and DSF): lossless at 8 to 32 bits and float, 1 to 8 channels, the speed modes, hybrid with and without correction files, DSD, custom rates, wrappers, an MD5 and an APEv2 tag. The 50 hand-built ones (`built-*`) change those files to produce each finding.
+- The 62 encoder-written fixtures come from wavpack 5.6.0 (Ubuntu 24.04's package) and, for one, FFmpeg 6.1.1's native encoder and wv muxer with its APEv2 `encoder` item, over deterministic signals from `wavpack_signal.py` (WAV, float, AIFF, CAF and DSF): lossless at 8 to 32 bits and float, 1 to 8 channels, the speed modes, hybrid with and without correction files, hybrid of two identical channels (which the encoder codes as false stereo blocks), DSD, custom rates, wrappers, an MD5 and an APEv2 tag. The 58 hand-built ones (`built-*`) change those files to produce each finding.
 - `wavpack_model.py` computes the expected blocks and stream figures independently of the parser.
 - `wavpack_blocks.c` is built with libwavpack's own sources (`wavpack_tool.py`, pinned by SHA-256) and prints what `read_next_header` and `WavpackVerifySingleBlock` say of every block. Its block list is compared with the manifest of every fixture, damaged ones included; the five fixtures on which the analyzer departs from libwavpack's reader on purpose (`READER_DEPARTURES`) are listed with their evidence, and the run fails if libwavpack agrees with the manifest on one of them. Fixtures that libwavpack refuses to open are skipped for its figures, and each skip prints its reason.
+- The same program ends with the decoder's whole pass: `WavpackOpenFileInputEx64` as `wvunpack` opens a file (block checksums verified, no correction file), every sample unpacked with `WavpackUnpackSamples`, and the errors it counts. Each manifest states the outcome explicitly in `crosscheck.decode`: `{"opens": false}`, or `{"opens": true, "samples": n, "errors": n}`. The encoder-written fixtures decode in full without an error (a correction file is refused alone); for the hand-built ones the table `DECODES` in `make_wavpack_fixtures.py` holds what libwavpack does with each, which covers the checks of its init and metadata code that the block reader does not make (`process_metadata`, `read_decorr_weights`, `init_dsd_block_high`, `read_new_config_info`). The run fails when the library and the manifest differ. The decode expectations record libwavpack 5.6.0's behavior on the files, as the tool shows it.
 - ffprobe differences (a channel mask of the wrong size, a missing channel mask, a header not at byte 0) and MediaInfo's readings are listed with their evidence in `crosscheck_wavpack_fixtures.py`.
 
 ### DTS
@@ -248,6 +255,14 @@ The first run of the cross-checks on Ubuntu 26.04 failed in eight jobs (DTS pass
   - libdca (`dca_frames`) loses a 14-bit frame that starts at an offset that is not a multiple of 4; the derived 14-bit fixtures with such offsets skip it. AMODE 10 to 15 are rejected by ffmpeg (DCA_AMODE_COUNT is 10) and libdca, so `amode-10` to `amode-15` have no tool to confirm them.
   - MediaInfo 24.01, measured: it finds the extensions of a core and the substream behind it in the 16-bit big endian form only, counts a 14-bit frame as FSIZE + 1 times 8 over 7 bytes, and lays out AMODE 10 to 15 differently; each is listed with its fixtures in the script.
   - libdca reads core frames only: XCh and XXCH channels are not counted, and it reads a frame by its size, so it does not resync inside a cut one.
+
+### ASF remux fixtures
+
+`make_external_asf_fixtures.py` also writes `external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.wma` and `external-remux-ffmpeg-wma92-cbr-stereo-22k-32.wma`: `ffmpeg -i <committed Windows file> -c copy` of a Windows Media Format SDK file and a Media Foundation file, without `-fflags +bitexact`.
+
+- ffmpeg's ASF muxer copies every attribute of the input and adds its own `WM/EncodingSettings` ("Lavf60.16.100") after them, so the files carry WMFSDKVersion or MediaFoundationVersion of the earlier writer and the stamp of the muxer; every other ffmpeg ASF fixture is bit-exact and has no stamp.
+- Their manifests hold the source file and its SHA-256 and what ffprobe says of the remux. `--remuxes-only` writes only these two files (the same bytes with the same ffmpeg); the fixtures job runs `--manifests-only`, which keeps the files.
+- `WmaFixtureTests.AnFFmpegRemuxIsWrittenByFFmpegNotByTheWriterOfTheSource` holds the writer the analyzer names. `crosscheck_asf_fixtures.py` checks them like the other ffmpeg fixtures; MediaInfo states no bit rate mode for them, since ffmpeg writes IsVBR as text.
 
 ### Derived ASF fixture
 

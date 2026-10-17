@@ -69,7 +69,7 @@ internal sealed class SetupDecoder
             Residues();
             Mappings();
             Modes();
-            Node framing = Field("Framing Bit", 1, v => NodeValue.Boolean(v == 1), Explain.FramingBit, out int bit);
+            Node framing = Field("Framing Bit", 1, v => NodeValue.Boolean(v == 1), Explain.SetupFramingBit, out int bit);
             if (bit != 1)
             {
                 Add(Severity.Warning, "vorbis.framing-missing", framing, "The setup header's framing bit is 0; libvorbis 1.3.7 refuses the header.");
@@ -81,7 +81,7 @@ internal sealed class SetupDecoder
                 Node trailing = Node.FromMapped("Trailing Data", _packet, end, _packet.Length, NodeValue.Integer(_packet.Length - end, "bytes", "byte"),
                     description: Explain.SetupTrailingData);
                 _top.Add(trailing);
-                Add(Severity.Info, "vorbis.header-extra-data", trailing, $"The setup header holds {_packet.Length - end} bytes after its framing bit, which decoders ignore.");
+                Add(Severity.Info, "vorbis.header-extra-data", trailing, $"The setup header holds {Count(_packet.Length - end, "byte", "bytes")} after its framing bit, which decoders ignore.");
             }
 
             summary = $"{Count(_books.Count, "codebook", "codebooks")}, {Count(_floors, "floor", "floors")}, {Count(_residues, "residue", "residues")}, " +
@@ -180,8 +180,8 @@ internal sealed class SetupDecoder
                 current += number;
                 if (current > entries)
                 {
-                    Node node = Close($"{current} entries, {current - entries} more than the codebook has");
-                    throw new SetupStop(Invalid, $"The ordered codeword lengths of codebook {index} cover {current} entries, more than its {entries}; decoders refuse the setup header.", node);
+                    Node node = Close($"{Count(current, "entry", "entries")}, {current - entries} more than the codebook has");
+                    throw new SetupStop(Invalid, $"The ordered codeword lengths of codebook {index} cover {Count(current, "entry", "entries")}, more than its {entries}; decoders refuse the setup header.", node);
                 }
 
                 lengths[Math.Min(length, 33)] += number;
@@ -201,7 +201,7 @@ internal sealed class SetupDecoder
             }
         }
 
-        string range = used == 0 ? "no codewords" : shortest == longest ? $"{Math.Min(shortest, 32)} bits each" : $"{shortest} to {(longest > 32 ? "over 32" : longest)} bits";
+        string range = used == 0 ? "no codewords" : shortest == longest ? $"{Count(Math.Min(shortest, 32), "bit", "bits")} each" : $"{shortest} to {(longest > 32 ? "over 32" : longest)} bits";
         Node lengthsNode = Close($"{used} of {Count(entries, "entry", "entries")} used, {range}");
         CheckTree(index, lengths, used, lengthsNode);
 
@@ -218,7 +218,7 @@ internal sealed class SetupDecoder
                 Add(Severity.Warning, Invalid, dimensionsNode, $"Codebook {index} has a value lookup of type 1 but no dimensions, for which the specification defines no lookup table.");
             }
 
-            Skip("Multiplicands", values * (valueBits + 1), $"{values} values of {valueBits + 1} bits", Explain.Multiplicands, "the multiplicands");
+            Skip("Multiplicands", values * (valueBits + 1), $"{Count(values, "value", "values")} of {Count(valueBits + 1, "bit", "bits")}", Explain.Multiplicands, "the multiplicands");
         }
         else if (lookup != 0)
         {

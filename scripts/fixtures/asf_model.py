@@ -504,9 +504,16 @@ def read_packets(data, start, end, packet_size, result):
         if chunk[0] & 0x80:
             ecc_length = chunk[0] & 0x0F if not chunk[0] & 0x60 else 0
             at = 1 + ecc_length
+        if at + 2 > len(chunk):
+            result["packets"].append([position, len(chunk), 0])
+            break
         length_flags, property_flags = chunk[at], chunk[at + 1]
         at += 2
         w_length, w_sequence, w_padding = width((length_flags >> 5) & 3), width((length_flags >> 1) & 3), width((length_flags >> 3) & 3)
+        if at + w_length + w_sequence + w_padding + 6 > len(chunk):
+            # The data ends inside the packet's header: a packet node with no payloads.
+            result["packets"].append([position, len(chunk), 0])
+            break
         length = read_value(chunk, at, w_length)
         at += w_length + w_sequence
         padding_ = read_value(chunk, at + 0, w_padding)

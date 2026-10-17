@@ -83,7 +83,7 @@
      "Vorbis String": "vorbis",
      "Vorbis Version": "0",
      "Channels": "2",
-     "Channel Layout": "Stereo: left, right",
+     "Channel Layout": "Stereo: front left, front right",
      "Sample Rate": "44100 Hz",
      "Bitrate Maximum": "0 (not set)",
      "Bitrate Nominal": "0 (not set)",
@@ -190,7 +190,7 @@
      "Vorbis String": "vorbis",
      "Vorbis Version": "0",
      "Channels": "2",
-     "Channel Layout": "Stereo: left, right",
+     "Channel Layout": "Stereo: front left, front right",
      "Sample Rate": "44100 Hz",
      "Bitrate Maximum": "0 (not set)",
      "Bitrate Nominal": "0 (not set)",
@@ -300,7 +300,8 @@
    "is_vbr": false,
    "channel_mode": "Stereo",
    "encoder": "aoTuV (b7 [20990101] (based on Xiph.Org's libVorbis))",
-   "encoder_confidence": "Medium"
+   "encoder_confidence": "Medium",
+   "playback_group": 1
   },
   {
    "codec": "Vorbis",
@@ -316,7 +317,8 @@
    "is_vbr": false,
    "channel_mode": "Stereo",
    "encoder": "Lancer (SSE3, based on aoTuV 6.03 (2020))",
-   "encoder_confidence": "Medium"
+   "encoder_confidence": "Medium",
+   "playback_group": 2
   }
  ],
  "findings": [],

@@ -302,6 +302,18 @@ def vorbis_start_trim():
     f.write()
 
 
+def vorbis_end_trim_large():
+    # The last granule position is 3100 samples below what the packets return, where the last packet returns 1024 (section A.2 lets
+    # a position indicate "less audio data than the final packet would normally return"); libvorbis strips only the 1024 it has
+    # buffered for that packet, which oggdec's output confirms.
+    blocks = [1] * 30
+    packets, granules = vorbis_stream(1, 44100, blocks, end_trim=3100)
+    f = single("vorbis-end-trimming-large", packets, granules, [1, 2, 2, 10, 14], serial=0x0B0B000A, codec="Vorbis")
+    f.finding("vorbis.end-trimming-large", "trims 3100 samples from the end, more than the 1024 the last audio packet returns")
+    f.crosscheck = {"valid": True, "skip": {}}
+    f.write()
+
+
 def vorbis_granule_errors():
     # A first audio page that discards more than the first two packets return and does not end
     # after the second packet, a granule position in the middle that does not match the packets,
@@ -775,6 +787,7 @@ def opus_packets_corrupt():
         bytes([(31 << 3) | 3, 7]) + bytes(10),                   # R5: seven frames of 20 ms
         bytes([(31 << 3) | 3, 3]) + bytes(10),                   # R6: CBR, 10 bytes in three frames
         bytes([(31 << 3) | 3, 0x40 | 2, 255, 255]),              # R6: padding length runs past the packet
+        bytes([(31 << 3) | 3, 2]) + bytes(2 * 1276),             # R2: CBR, two implicit frames of 1276 bytes
         bytes([(31 << 3) | 3, 0x80 | 3, 100, 100]) + bytes(50),  # R7: VBR lengths beyond the packet
     ]
     audio = []
@@ -800,7 +813,7 @@ def opus_packets_corrupt():
         f.w.write(p)
     f.stream(serial, pages, link=2, codec="Opus")
     f.finding("opus.packet-r1", "the packet is empty")
-    f.finding("opus.packet-r2", "its frame of 1300 bytes is longer than the 1275 bytes")
+    f.finding("opus.packet-r2", "2 packets break rule R2")
     f.finding("opus.packet-r3", "do not split into two frames of equal size")
     f.finding("opus.packet-r4", "the first frame's length is missing or larger")
     f.finding("opus.packet-r5", "2 packets break rule R5")
@@ -905,7 +918,7 @@ def opus_tags_variants():
 
 
 FIXTURES = [
-    vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_granule_errors, vorbis_packet_errors,
+    vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_end_trim_large, vorbis_granule_errors, vorbis_packet_errors,
     vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich, vorbis_vendors,
     opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_head_invalid, opus_granules,
     opus_packets_corrupt, opus_writer_claims_differ, opus_encoder_other_format, opus_encoder_vendor_wins, opus_encoder_fields, opus_tags_variants,

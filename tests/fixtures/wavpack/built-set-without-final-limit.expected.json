@@ -1266,6 +1266,10 @@
    "contains": "holds 8 blocks without a final block"
   },
   {
+   "code": "wavpack.block-set-broken",
+   "contains": "follows a set that libwavpack ends at its stream limit"
+  },
+  {
    "code": "wavpack.block-index-gap",
    "contains": "samples are missing"
   },
@@ -1275,6 +1279,11 @@
   }
  ],
  "crosscheck": {
-  "valid": false
+  "valid": false,
+  "decode": {
+   "opens": true,
+   "samples": 1000,
+   "errors": 23
+  }
  }
 }

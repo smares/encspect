@@ -1,0 +1,251 @@
+{
+ "description": "AAC ELD, channel configuration 13, with low-delay SBR: no sbr_header (fdk-aac and MediaInfo read none for this configuration), then an ELD extension of one byte, the terminator and epConfig 0.",
+ "length": 708,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   652
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   536
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   436
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   351
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   291
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   107
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a",
+   413,
+   91
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mp4a/esds",
+   449,
+   55
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   504,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   528,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   556,
+   100
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   656,
+   24
+  ],
+  [
+   "mdat",
+   680,
+   28
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "ER AAC ELD with SBR",
+   "sample_rate": 48000,
+   "channels": 24,
+   "channel_mode": "22.2",
+   "channel_layout": [
+    "front center",
+    "front left of center",
+    "front right of center",
+    "front left",
+    "front right",
+    "side left",
+    "side right",
+    "back left",
+    "back right",
+    "back center",
+    "LFE",
+    "LFE 2",
+    "top front center",
+    "top front left",
+    "top front right",
+    "top side left",
+    "top side right",
+    "top center",
+    "top back left",
+    "top back right",
+    "top back center",
+    "bottom front center",
+    "bottom front left",
+    "bottom front right"
+   ],
+   "samples": 10240,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   688,
+   1
+  ],
+  [
+   689,
+   1
+  ],
+  [
+   690,
+   1
+  ],
+  [
+   691,
+   1
+  ],
+  [
+   692,
+   1
+  ],
+  [
+   693,
+   1
+  ],
+  [
+   694,
+   1
+  ],
+  [
+   695,
+   1
+  ],
+  [
+   696,
+   1
+  ],
+  [
+   697,
+   1
+  ],
+  [
+   698,
+   1
+  ],
+  [
+   699,
+   1
+  ],
+  [
+   700,
+   1
+  ],
+  [
+   701,
+   1
+  ],
+  [
+   702,
+   1
+  ],
+  [
+   703,
+   1
+  ],
+  [
+   704,
+   1
+  ],
+  [
+   705,
+   1
+  ],
+  [
+   706,
+   1
+  ],
+  [
+   707,
+   1
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Channel Configuration": "13 (22.2)",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/HasLowDelaySbr": "true",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/ELD Extension": "1 byte",
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Error Protection Config": "0"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg cannot open its decoder for ELD with low-delay SBR (\"Not yet implemented in FFmpeg\"), so it lists no stream.",
+   "faad": "faad2 decodes ER AAC LD but not ELD."
+  }
+ }
+}

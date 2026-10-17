@@ -301,7 +301,9 @@ def check_against_report(audio, general, report, problems):
     figure it states is compared with the parser's node for it."""
     stream = report["streams"][0]
     is_vbr = named(report, "IsVBR")
-    if is_vbr is not None:
+    # ffmpeg's ASF muxer writes the attributes it copies as Unicode strings (asfenc.c), and neither the analyzer nor MediaInfo takes the
+    # bit rate mode from a string: an ffmpeg remux's IsVBR is "0" or "1" as text, and MediaInfo states no mode for it.
+    if is_vbr is not None and not isinstance(is_vbr, str):
         parser = "VBR" if stream["isVbr"] else "CBR"
         for kind, track in (("audio", audio), ("overall", general)):
             mode = track.get("BitRate_Mode" if kind == "audio" else "OverallBitRate_Mode")
@@ -429,7 +431,7 @@ def main():
         path = next(DIRECTORY.glob(name + ".[aw][sm][fa]"), None)
         print(name)
         problems = []
-        if name.startswith("external-ffmpeg-"):
+        if name.startswith(("external-ffmpeg-", "external-remux-ffmpeg-")):
             check_external_ffmpeg(name, manifest, path, problems)
         else:
             check_hand_built(name, manifest, path, problems)

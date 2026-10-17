@@ -59,13 +59,16 @@ internal sealed record AacConfig
     // SBR as decoders apply it: signaled, or found where the configuration says nothing about it.
     public bool HasSbr => Sbr == true || (Sbr is null && SbrFound == true);
 
-    // PS likewise, where SBR is present.
-    public bool HasPs => Ps == true || (HasSbr && Ps is null && PsFound == true);
+    // Decoders apply PS only to a core of one channel (fdk-aac's sbrdecoder.cpp, ffmpeg's aacdec).
+    public bool IsPsPossible => Channels == 1;
+
+    // PS likewise, where SBR is present and the core has one channel.
+    public bool HasPs => IsPsPossible && (Ps == true || (HasSbr && Ps is null && PsFound == true));
 
     // SBR found that the configuration does not signal, and PS likewise.
     public bool IsSbrImplicit => Sbr is null && SbrFound == true;
 
-    public bool IsPsImplicit => HasSbr && Ps is null && PsFound == true;
+    public bool IsPsImplicit => IsPsPossible && HasSbr && Ps is null && PsFound == true;
 
     public bool IsUsac => ObjectType == 42;
 

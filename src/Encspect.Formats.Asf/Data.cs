@@ -297,11 +297,17 @@ public sealed partial class AsfParser
         return length < 1 ? count : length;
     }
 
+    private static readonly PacketIssues[] AllIssues = Enum.GetValues<PacketIssues>();
+
     private static void Record(State state, DataFigures figures, ParsedPacket packet, long position, int length, long remaining)
     {
         figures.PacketCount++;
         figures.PacketBytes += length;
-        figures.PaddingBytes += packet.ActualPadding;
+        // The bytes of the packet after what was parsed are padding, whatever the length field says (asfdec_f.c adds
+        // min_pktsize - packet_length to the padding), as the Padding node shows: only the bytes the file has count, and
+        // a packet cut inside its header has none.
+        int padding = Math.Max(0, length - Math.Max(packet.PayloadsEnd, packet.HeaderLength));
+        figures.PaddingBytes += padding;
         figures.Sizes[length] = figures.Sizes.GetValueOrDefault(length) + 1;
         if (packet.IsMultiple)
         {
@@ -318,7 +324,7 @@ public sealed partial class AsfParser
             packet.Issues |= PacketIssues.Truncated;
         }
 
-        foreach (PacketIssues issue in Enum.GetValues<PacketIssues>())
+        foreach (PacketIssues issue in AllIssues)
         {
             if (issue != PacketIssues.None && (packet.Issues & issue) != 0)
             {
@@ -412,7 +418,7 @@ public sealed partial class AsfParser
                 Sequence = packet.Sequence,
                 PaddingLength = packet.PaddingLength,
                 SendTime = packet.SendTime,
-                ActualPadding = packet.ActualPadding,
+                ActualPadding = padding,
                 Duration = packet.Duration,
                 Issues = (ushort)packet.Issues,
                 PayloadCount = (ushort)packet.Payloads.Count,

@@ -79,9 +79,9 @@ internal enum PartStatus : byte
 
 // One stream's part of a packet: its bytes, where its frame lengths start in the shared list, the
 // bytes before its first frame (TOC, frame count byte, padding length and frame length bytes) and of
-// those the padding length bytes, its TOC and frame count byte, its frame count and what is wrong
-// with it. 20 bytes.
-internal readonly record struct PartRecord(int Length, int FirstFrame, int Header, int PaddingLengthBytes, byte TocByte, byte CountByte, byte Frames, PartStatus Status)
+// those the padding length bytes and the padding they code (clamped), its TOC and frame count byte, its frame count and what is wrong
+// with it. 24 bytes.
+internal readonly record struct PartRecord(int Length, int FirstFrame, int Header, int PaddingLengthBytes, int Padding, byte TocByte, byte CountByte, byte Frames, PartStatus Status)
 {
     public bool HasToc => Length > 0 && Status != PartStatus.Missing;
 
@@ -120,6 +120,8 @@ internal static class Framing
 {
     public const int MaxFrameLength = 1275;
 
+    private static string Bytes(long count) => count == 1 ? "1 byte" : $"{count} bytes";
+
     // Reads the part at the start of data and adds its frame lengths to frames. The part takes
     // its record's Length bytes: all of data unless it is self-delimited.
     public static PartRecord Read(ReadOnlySpan<byte> data, bool selfDelimited, ChunkedList<ushort> frames, out string? error)
@@ -129,7 +131,7 @@ internal static class Framing
         if (data.Length == 0)
         {
             error = "the packet is empty, where every packet holds at least its TOC byte";
-            return new PartRecord(0, first, 0, 0, 0, 0, 0, PartStatus.R1);
+            return new PartRecord(0, first, 0, 0, 0, 0, 0, 0, PartStatus.R1);
         }
 
         byte toc = data[0];
@@ -173,7 +175,7 @@ internal static class Framing
                         int rest = data.Length - position;
                         if (rest % 2 != 0)
                         {
-                            return Fail(data.Length, first, position, toc, 0, PartStatus.R3, $"its {rest} bytes after the TOC byte do not split into two frames of equal size", out error);
+                            return Fail(data.Length, first, position, toc, 0, PartStatus.R3, $"its {Bytes(rest)} after the TOC byte do not split into two frames of equal size", out error);
                         }
 
                         length = rest / 2;
@@ -253,7 +255,7 @@ internal static class Framing
             {
                 if (position >= data.Length)
                 {
-                    return Fail(data.Length, first, position, toc, count, sizeRule, "its padding length runs past the end of the packet", out error, paddingLengthBytes);
+                    return Fail(data.Length, first, position, toc, count, sizeRule, "its padding length runs past the end of the packet", out error, paddingLengthBytes, padding);
                 }
 
                 value = data[position++];
@@ -271,7 +273,7 @@ internal static class Framing
             {
                 if (!ReadLength(data, ref position, out lengths[i]))
                 {
-                    return Fail(data.Length, first, Math.Min(position, data.Length), toc, count, PartStatus.R7, "its frame lengths run past the end of the packet", out error, paddingLengthBytes);
+                    return Fail(data.Length, first, Math.Min(position, data.Length), toc, count, PartStatus.R7, "its frame lengths run past the end of the packet", out error, paddingLengthBytes, padding);
                 }
 
                 sum += lengths[i];
@@ -281,7 +283,7 @@ internal static class Framing
             {
                 if (!ReadLength(data, ref position, out lengths[^1]))
                 {
-                    return Fail(data.Length, first, Math.Min(position, data.Length), toc, count, PartStatus.SelfDelimitedOverrun, "the self-delimiting frame length is missing", out error, paddingLengthBytes);
+                    return Fail(data.Length, first, Math.Min(position, data.Length), toc, count, PartStatus.SelfDelimitedOverrun, "the self-delimiting frame length is missing", out error, paddingLengthBytes, padding);
                 }
             }
             else
@@ -290,12 +292,12 @@ internal static class Framing
                 if (last < 0)
                 {
                     return Fail(data.Length, first, position, toc, count, PartStatus.R7,
-                        "its header, frame lengths and padding take more bytes than the packet holds", out error, paddingLengthBytes);
+                        "its header, frame lengths and padding take more bytes than the packet holds", out error, paddingLengthBytes, padding);
                 }
 
                 if (last > MaxFrameLength)
                 {
-                    return Fail(data.Length, first, position, toc, count, PartStatus.R2, $"its last frame of {last} bytes is longer than the 1275 bytes a frame may take", out error, paddingLengthBytes);
+                    return Fail(data.Length, first, position, toc, count, PartStatus.R2, $"its last frame of {last} bytes is longer than the 1275 bytes a frame may take", out error, paddingLengthBytes, padding);
                 }
 
                 lengths[^1] = (int)last;
@@ -308,7 +310,7 @@ internal static class Framing
             {
                 if (!ReadLength(data, ref position, out length))
                 {
-                    return Fail(data.Length, first, Math.Min(position, data.Length), toc, count, PartStatus.SelfDelimitedOverrun, "the self-delimiting frame length is missing", out error, paddingLengthBytes);
+                    return Fail(data.Length, first, Math.Min(position, data.Length), toc, count, PartStatus.SelfDelimitedOverrun, "the self-delimiting frame length is missing", out error, paddingLengthBytes, padding);
                 }
             }
             else
@@ -316,10 +318,12 @@ internal static class Framing
                 long rest = data.Length - position - padding;
                 if (rest < 0 || rest % frameCount != 0 || rest / frameCount > MaxFrameLength)
                 {
-                    return Fail(data.Length, first, position, toc, count, PartStatus.R6,
+                    // The equal frames of a CBR packet are implicit, so one over 1275 bytes breaks R2.
+                    bool tooLong = rest >= 0 && rest % frameCount == 0;
+                    return Fail(data.Length, first, position, toc, count, tooLong ? PartStatus.R2 : PartStatus.R6,
                         rest < 0 ? "its padding takes more bytes than the packet holds"
-                        : rest % frameCount != 0 ? $"its {rest} bytes of frame data do not split into {frameCount} frames of equal size"
-                        : $"its frames of {rest / frameCount} bytes are longer than the 1275 bytes a frame may take", out error, paddingLengthBytes);
+                        : !tooLong ? $"its {Bytes(rest)} of frame data do not split into {frameCount} frames of equal size"
+                        : $"its frames of {rest / frameCount} bytes are longer than the 1275 bytes a frame may take", out error, paddingLengthBytes, padding);
                 }
 
                 length = (int)(rest / frameCount);
@@ -372,7 +376,7 @@ internal static class Framing
         if (total > available)
         {
             return Fail(available, first, header, toc, count, selfDelimited ? PartStatus.SelfDelimitedOverrun : PartStatus.R7,
-                selfDelimited ? "its self-delimiting frame lengths run past the end of the packet" : "its frames run past the end of the packet", out error, paddingLengthBytes);
+                selfDelimited ? "its self-delimiting frame lengths run past the end of the packet" : "its frames run past the end of the packet", out error, paddingLengthBytes, padding);
         }
 
         foreach (int length in lengths)
@@ -381,13 +385,13 @@ internal static class Framing
         }
 
         int length0 = selfDelimited ? (int)total : available;
-        return new PartRecord(length0, first, header, paddingLengthBytes, toc, count, (byte)lengths.Length, PartStatus.Valid);
+        return new PartRecord(length0, first, header, paddingLengthBytes, (int)Math.Min(padding, int.MaxValue), toc, count, (byte)lengths.Length, PartStatus.Valid);
     }
 
     // A part whose framing breaks a rule takes the rest of the packet, with no frames.
-    private static PartRecord Fail(int available, int first, int header, byte toc, byte count, PartStatus status, string message, out string error, int paddingLengthBytes = 0)
+    private static PartRecord Fail(int available, int first, int header, byte toc, byte count, PartStatus status, string message, out string error, int paddingLengthBytes = 0, long padding = 0)
     {
         error = message;
-        return new PartRecord(available, first, Math.Min(header, available), paddingLengthBytes, toc, count, 0, status);
+        return new PartRecord(available, first, Math.Min(header, available), paddingLengthBytes, (int)Math.Min(padding, int.MaxValue), toc, count, 0, status);
     }
 }

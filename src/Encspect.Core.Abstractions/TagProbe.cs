@@ -39,6 +39,11 @@ public sealed record EncoderClaim(string Text, Node Source, string Description, 
     // which need not be the encoder (a writer can lay a file out around packets it only copied), and its description reads
     // "what the layout is: the traces", the part before the colon being the subject of a finding.
     public bool IsLayout { get; init; }
+
+    // Whether the claim is the last item of the tag or object that holds it, where a writer that adds its own stamp after the items
+    // it copies puts it (ffmpeg's ASF muxer: the WM/EncodingSettings attribute is the last of the Extended Content Description Object).
+    // Only ASF's Extended Content Description Object sets it; it is false for every other claim.
+    public bool IsLastItem { get; init; }
 }
 
 // The outcome of probing one anchor: either a validated tag with its node tree, or a signature
