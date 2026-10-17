@@ -342,15 +342,13 @@ MEDIAINFO_READS_OTHERWISE = {
     "sv8-tag-inside": dict.fromkeys(["tag title", "tag track", "tag performer", "tag album"], MEDIAINFO_SIGNATURE_TAG),
     "sv7-version-unknown": {"format": "MediaInfo takes \"MP+\" only with stream version 7 (File_Mpc.cpp, FileHeader_Begin); the analyzer reads the SV7 header and reports the version"},
     "sv8-audio-before-header": dict.fromkeys(["sample rate", "samples", "duration and bitrate"], "MediaInfo stops at the first audio packet (File_MpcSv8.cpp, AP: Finish), so it does not read the stream header after it"),
-    "sv8-rate-reserved": {"format": "MediaInfo indexes its four-entry Mpc_SampleFreq table (File_Mpc.cpp) with the 3-bit sample rate code (File_MpcSv8.cpp, SH), so a reserved code reads past the table; "
-                                    "it either ends (MEDIAINFO_CRASHES) or reads a stream the analyzer does not find (File_MpcSv8.cpp is the same in 24.01 and 26.01)"},
 }
 
-# File_MpcSv8.cpp (v26.01), SH: Mpc_SampleFreq[SampleFrequency] has the four entries of File_Mpc.cpp and the code has 3 bits; the value it reads past the table
-# divides SampleCount*1000 and File_Size*8*... (the lines that fill Audio_Duration and Audio_BitRate). The local build of v26.01 ends with SIGFPE (-8) where
-# that value is 0. What lies behind the table is up to the build, so the exit is optional: Ubuntu's package may read another value and print a stream instead,
-# and the explained "format" difference above holds for both.
-MEDIAINFO_CRASHES = {"sv8-rate-reserved": (-8, "reads past the four-entry Mpc_SampleFreq table and ends with SIGFPE where it divides by what it finds (File_MpcSv8.cpp, SH)", True)}
+# File_MpcSv8.cpp (v26.01), SH: Mpc_SampleFreq[SampleFrequency] has the four entries of File_Mpc.cpp and the code has 3 bits, so a reserved code reads past the
+# table. Line 229 divides SampleCount*1000 by that value (line 230 multiplies by it). The local build of v26.01 ends with SIGFPE (-8) where the value is 0. What
+# lies behind the table is up to the build, and an integer division by zero does not trap on every platform, so the exit is optional: without it, MediaInfo has
+# filled the format in FileHeader_Parse (File_MpcSv8.cpp:108) and everything derived from the rate is undefined (check_mediainfo).
+MEDIAINFO_CRASHES = {"sv8-rate-reserved": (-8, "reads past the four-entry Mpc_SampleFreq table and ends with SIGFPE where it divides by what it finds (File_MpcSv8.cpp:229, SH)", True)}
 
 
 def sv7_encoder_text(version):
@@ -375,6 +373,12 @@ def check_mediainfo(name, path, tally):
         tally.compare("format where the analyzer finds no stream", audio.get("Format"), None)
         return problems
     stream = report["streams"][0]
+    if name in MEDIAINFO_CRASHES:
+        # Ended as stated (tally.read counted it), or went on with whatever lies behind the table: the format is filled before SH reads the rate.
+        if info is not None:
+            tally.compare("format", audio.get("Format"), stream["codec"])
+            tally.skip("sample rate, samples, duration and bitrate", "they come from a value read past the table (" + MEDIAINFO_CRASHES[name][1] + ")")
+        return problems
     if stream["codec"] not in ("Musepack SV7", "Musepack SV8"):
         tally.compare("format of SV4 to SV6 (" + MEDIAINFO_OLD + ")", audio.get("Format"), None)
         return problems
@@ -393,6 +397,9 @@ def check_mediainfo(name, path, tally):
         return problems
     tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
     rate = stream["sampleRate"]
+    if not rate:
+        problems.append("the analyzer's sample rate is 0; the rate-derived fields cannot be compared")
+        return problems
     if stream["codec"] == "Musepack SV7":
         frames = mi.leading_number(mi.value(node, "Header", "Frame Count"))
         tally.compare("channels", audio.get("Channels"), str(stream["channels"]))

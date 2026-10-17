@@ -68,6 +68,15 @@ def read(path, full=False):
     return tracks
 
 
+def read_or_problem(path, problems, full=False):
+    """read(), with a failure added to the fixture's problems and None returned, for a script without a Tally."""
+    try:
+        return read(path, full)
+    except Failed as failure:
+        problems.append(str(failure))
+        return None
+
+
 def text(value):
     """A MediaInfo string; it writes a value that is not valid UTF-8 as base64, which is decoded
     as ISO-8859-1 here, byte for byte."""

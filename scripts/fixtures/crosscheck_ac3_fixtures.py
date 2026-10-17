@@ -222,6 +222,9 @@ def check_ffprobe(path, data, manifest, problems):
     if rate_only:
         if int(actual.get("sample_rate", 0)) != expected["sample_rate"]:
             problems.append(f"ffprobe: {actual.get('sample_rate')} Hz, expected {expected['sample_rate']} Hz")
+        # The manifest's reason is that the decoder leaves the stream without channels: it expires when ffmpeg reports them.
+        if int(actual.get("channels", 0)) != 0 or actual.get("channel_layout") not in (None, "unknown"):
+            problems.append(f"ffprobe now reports {actual.get('channels')} channels ({actual.get('channel_layout')}); drop the channels skip")
     elif fields and (int(actual.get("sample_rate", 0)) != expected["sample_rate"] or int(actual.get("channels", 0)) != channels):
         problems.append(f"ffprobe: {actual.get('sample_rate')} Hz, {actual.get('channels')} channels; expected {expected['sample_rate']} Hz, {channels}")
     known = channel_layouts.FFMPEG.get(actual.get("channel_layout"))

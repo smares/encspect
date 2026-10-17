@@ -61,8 +61,10 @@ def tool_problems(path, sample):
         problems.append(f"ffprobe finds the codec {probe['codec_name']}")
     if sample.get("frames") and int(probe["nb_read_packets"]) != sample["frames"]:
         problems.append(f"ffprobe finds {probe['nb_read_packets']} packets, the manifest {sample['frames']}")
-    info = mi.read(path, full=True)
-    audio = info["Audio"][0] if info and info["Audio"] else {}
+    info = mi.read_or_problem(path, problems, full=True)
+    if info is None:
+        return problems
+    audio = info["Audio"][0] if info["Audio"] else {}
     features = (audio.get("Format_AdditionalFeatures") or "").split()
     if ("JOC" in features) != sample["object_audio"]:
         problems.append(f"MediaInfo's features are {features}")

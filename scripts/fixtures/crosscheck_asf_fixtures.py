@@ -197,16 +197,10 @@ def check_protection(name, manifest, path, problems):
             if exported.get(tag) != wanted:
                 problems.append(f"ffprobe's {tag} is {exported.get(tag)!r}, the analyzer's {field} {wanted!r}")
     if tool("mediainfo"):
-        result = run(["mediainfo", "--Output=JSON", str(path)], text=True)
-        if result.returncode != 0:
-            problems.append(f"MediaInfo exited with {result.returncode}")
+        tracks = mediainfo_tool.read_or_problem(path, problems)
+        if tracks is None:
             return
-        try:
-            tracks = json.loads(result.stdout)["media"]["track"]
-        except (json.JSONDecodeError, KeyError):
-            skip(name, "MediaInfo's Encryption field", "MediaInfo's output for the damaged file is not JSON")
-            return
-        audio = [t for t in tracks if t["@type"] == "Audio"]
+        audio = tracks["Audio"]
         flagged = [s["encrypted"] for s in manifest["streams"] if "tag" in s]
         if len(audio) == len(flagged):
             for track, flag in zip(audio, flagged):
@@ -338,13 +332,11 @@ def check_mediainfo(name, path, stream, problems, report=None, count_samples=Tru
     if not tool("mediainfo"):
         skip(name, "MediaInfo", "mediainfo is not installed")
         return
-    result = run(["mediainfo", "-f", "--Output=JSON", str(path)], text=True)
-    if result.returncode != 0:
-        problems.append(f"MediaInfo exited with {result.returncode}")
+    tracks = mediainfo_tool.read_or_problem(path, problems, full=True)
+    if tracks is None:
         return
-    tracks = json.loads(result.stdout)["media"]["track"]
-    general = next(t for t in tracks if t["@type"] == "General")
-    audio = next(t for t in tracks if t["@type"] == "Audio")
+    general = tracks["General"]
+    audio = tracks["Audio"][0]
     if general.get("Format") != "Windows Media":
         problems.append(f"MediaInfo's container is {general.get('Format')}")
     if int(audio["Channels"]) != int(stream["channels"]) or int(audio["SamplingRate"]) != int(stream["sample_rate"]):
