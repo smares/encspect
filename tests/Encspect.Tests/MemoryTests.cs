@@ -1173,9 +1173,12 @@ public class MemoryTests(ITestOutputHelper output)
             frame.CopyTo(data, i * 8);
         }
 
+        // One frame past the cap is overwritten with zeros: the counting resyncs after the gap and goes on.
+        Array.Clear(data, (RawAacParser.MaxFrames + 500) * 8, 8);
+
         Report report = Bounded("end-frames.aac", data, 360_000_000, "aac.frames-limit");
 
-        Assert.Equal(count * 1024L, Assert.Single(report.Streams).Samples);
+        Assert.Equal((count - 1) * 1024L, Assert.Single(report.Streams).Samples);
     }
 
     // MPEG-1 Layer III stereo frames at 32 kbps and 44100 Hz, 104 bytes each, whose side

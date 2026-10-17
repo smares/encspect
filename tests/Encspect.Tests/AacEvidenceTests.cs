@@ -11,7 +11,9 @@ public class AacEvidenceTests
     public static TheoryData<int> Seeds => new(Enumerable.Range(0, 300));
 
     // ffmpeg's AAC LC stream with forty frames of random bytes under the stream's own header after its twentieth: about one random block
-    // in fifty reads to its END element with an SBR payload in a fill element, which SBR data that decoders reject must not count for.
+    // in fifty reads to its END element with a fill element of SBR data, and a few of those follow a channel element. A few blocks of the
+    // stream's 106 do not make it HE-AAC: SBR data has to be in at least two blocks and half of them (the fixtures sbr-in-one-block and
+    // sbr-in-three-blocks cover the rule with exact counts).
     [Theory]
     [MemberData(nameof(Seeds))]
     public void RandomFramesInsideAnLcStreamLeaveItLc(int seed)
@@ -68,6 +70,31 @@ public class AacEvidenceTests
         Assert.Equal(rate, info.SampleRate);
         Finding implicitSbr = Assert.Single(report.Findings, f => f.Code == "aac.implicit-sbr");
         Assert.DoesNotContain("plays the core alone", implicitSbr.Message, StringComparison.Ordinal);
+    }
+
+    // The splitting of a long run of counted frames into records that fit a node's length, at frame boundaries.
+    [Fact]
+    public void RunsAreSplitIntoRecordsThatFit()
+    {
+        var splitter = new RunSplitter(100);
+        var records = new List<(long Offset, long Length, long Frames)>();
+        long at = 1000;
+        foreach (int length in new[] { 40, 40, 40, 90, 10, 10, 100, 1 })
+        {
+            if (splitter.Add(at, length) is { } closed)
+            {
+                records.Add(closed);
+            }
+
+            at += length;
+        }
+
+        records.Add(splitter.Flush()!.Value);
+
+        Assert.Equal([(1000L, 80L, 2L), (1080L, 40L, 1L), (1120L, 100L, 2L), (1220L, 10L, 1L), (1230L, 100L, 1L), (1330L, 1L, 1L)], records);
+        Assert.Null(splitter.Flush());
+        Assert.Equal([(5L, 4), (9L, 4), (13L, 2)], RunSplitter.Pieces(5, 10, 4).ToArray());
+        Assert.Empty(RunSplitter.Pieces(5, 0));
     }
 
     // SBR data in one block of ten does not make the stream HE-AAC.

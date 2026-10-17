@@ -177,56 +177,92 @@ public sealed class RawAacParser : IFormatParser
         region.End = state.Frames.Count;
     }
 
+    // Sync losses that the counting past MaxFrames follows, each with a record of its own (the gap).
+    private const int MaxOverflowBreaks = 4096;
+
     // Past MaxFrames records the frames that follow one another with the stream's fixed header are only counted, from their headers: their
-    // frames, bytes, samples and bitrate extremes join the stream's figures in AddStream, but they get no node of their own, no raw data block
-    // is read, and the graphs and coding statistics cover the frames before. Whatever follows them is not analyzed.
+    // frames, bytes, samples and bitrate extremes join the stream's figures in AddStream, but they get no node of their own, no raw data
+    // block is read, and the graphs and coding statistics cover the frames before. After a sync loss the counting resyncs on the next chain
+    // of the same stream, as before the limit, and the bytes between are a gap; it stops at another stream, after MaxOverflowBreaks sync
+    // losses or where no frame follows, and the bytes left are not analyzed.
     private static void AddOverflow(State state, AdtsHeader? stream, long position, long end)
     {
-        long start = position;
-        int index = state.Frames.Count;
-        Overflow? run = null;
-        if (stream is { } current)
+        long first = position;
+        Overflow? total = stream is { } current ? new Overflow(-1, current) : null;
+        var splitter = new RunSplitter(int.MaxValue);
+        Node? firstNode = null;
+        long gapBytes = 0;
+
+        void Emit((long Offset, long Length, long Frames)? record)
         {
-            run = new Overflow(index, current);
-            while (position < end && HeaderAt(state.Cache, position, end) is { } header && header.IsSameStream(current) && position + header.FrameLength <= end)
+            if (record is not { } run)
             {
-                if (run.Frames % 4096 == 0)
+                return;
+            }
+
+            int index = state.Frames.Count;
+            total!.Index = total.Index < 0 ? index : total.Index;
+            state.Frames.Add(Frame.Run(run.Offset, run.Length));
+            state.Records.Runs[index] = run.Frames;
+            firstNode ??= new Node("Counted Frames", run.Offset, run.Length, NodeValue.Integer(run.Frames, "frames", "frame")) { Description = Explain.CountedFrames };
+        }
+
+        int breaks = 0;
+        while (total is not null && position < end)
+        {
+            while (position < end && HeaderAt(state.Cache, position, end) is { } header && header.IsSameStream(total.Header) && position + header.FrameLength <= end)
+            {
+                if (total.Frames % 4096 == 0)
                 {
                     state.Cancellation.ThrowIfCancellationRequested();
                 }
 
-                run.Add(header, IsAppleHeader(header));
+                total.Add(header, IsAppleHeader(header));
+                Emit(splitter.Add(position, header.FrameLength));
                 position += header.FrameLength;
             }
+
+            Emit(splitter.Flush());
+            if (position >= end || ++breaks > MaxOverflowBreaks)
+            {
+                break;
+            }
+
+            long found = FindChain(state.Cache, position, end, end);
+            if (found <= position || HeaderAt(state.Cache, found, end) is not { } next || !next.IsSameStream(total.Header))
+            {
+                break;
+            }
+
+            foreach ((long offset, int length) in RunSplitter.Pieces(position, found - position))
+            {
+                state.Frames.Add(Frame.Gap(offset, length));
+            }
+
+            gapBytes += found - position;
+            position = found;
         }
 
-        Node? counted = null;
-        if (run is { Frames: > 0 })
+        if (total is { Frames: > 0 })
         {
-            state.Frames.Add(Frame.Run(start, position - start));
-            state.Records.Runs[index] = run.Frames;
-            state.Overflows.Add(run);
-            counted = new Node("Counted Frames", start, position - start, NodeValue.Integer(run.Frames, "frames", "frame")) { Description = Explain.CountedFrames };
-        }
-        else
-        {
-            position = start;
+            state.Overflows.Add(total);
         }
 
-        Node? unread = null;
-        if (position < end)
-        {
-            state.Frames.Add(Frame.Unread(position, end - position));
-            unread = new Node("Unread Bytes", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.UnreadFrames };
-        }
-
-        long frames = run?.Frames ?? 0;
         long rest = end - position;
-        long first = start;
-        state.Findings.Add(Severity.Warning, "aac.frames-limit", counted ?? unread!, count => count == 1
-            ? $"The file has more than {MaxFrames} ADTS frames and gaps; the {Plural(frames, "frame")} from 0x{first:X} on that follow one another with the stream's header are counted in its figures (frames, samples, duration, bitrates) "
-              + $"but have no node, and the graphs and statistics cover the frames before them{(rest > 0 ? $"; the {Plural(rest, "byte")} after them are not analyzed" : string.Empty)}."
-            : $"The file has more than {MaxFrames} ADTS frames and gaps in {count} places; the frames after the limit are counted in the figures of their stream but have no node, and the graphs and statistics cover the frames before them; bytes that are not such frames are not analyzed.");
+        foreach ((long offset, int length) in RunSplitter.Pieces(position, rest))
+        {
+            state.Frames.Add(Frame.Unread(offset, length));
+            firstNode ??= new Node("Unread Bytes", offset, length, NodeValue.Integer(length, "bytes", "byte")) { Description = Explain.UnreadFrames };
+        }
+
+        long frames = total?.Frames ?? 0;
+        long skipped = gapBytes;
+        long start = first;
+        state.Findings.Add(Severity.Warning, "aac.frames-limit", firstNode!, count => count == 1
+            ? $"The file has more than {MaxFrames} ADTS frames and gaps; the {Plural(frames, "frame")} from 0x{start:X} on that follow the stream's header are counted in its figures (frames, samples, duration, bitrates) "
+              + $"but have no node, and the graphs and statistics cover the frames before them{(skipped > 0 ? $"; the {Plural(skipped, "byte")} between them that are no frames are skipped" : string.Empty)}"
+              + $"{(rest > 0 ? $"; the {Plural(rest, "byte")} after them are not analyzed" : string.Empty)}."
+            : $"The file has more than {MaxFrames} ADTS frames and gaps in {count} places; the frames after the limit are counted in the figures of their stream but have no node, and the graphs and statistics cover the frames before them; bytes that are not such frames are skipped or not analyzed.");
     }
 
     private static string Plural(long count, string noun) => count == 1 ? $"1 {noun}" : $"{count} {noun}s";
@@ -937,7 +973,7 @@ public sealed class RawAacParser : IFormatParser
     // The frames past MaxFrames that were only counted (AddOverflow), with the extremes AddStream needs for its figures.
     private sealed class Overflow(int index, AdtsHeader header)
     {
-        public int Index => index;
+        public int Index { get; set; } = index;
 
         public AdtsHeader Header => header;
 

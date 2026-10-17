@@ -878,6 +878,33 @@ def sbr_evidence():
         [stream("AAC LC", core, 2, "Stereo", 10 * 1024)], {"ADTS/Statistics/SBR": share(1, 10, "access unit")},
         [["aac.sbr-data-sparse", "only 1 of 10 raw data blocks hold SBR data after a channel element"]],
         skip={**skip, "decode": "ffmpeg prints \"No quantized data read for sbr_dequant\" for the SBR payload in the middle of the stream."}, rate=core)))
+    # Three blocks of ten hold SBR data after a channel element: fewer than half, so the stream stays AAC LC.
+    blocks = [pair(i, M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i == 1 else None, pair=True)) if i in (1, 4, 7) else None) for i in range(10)]
+    data, rows = concat(adts_frames(blocks, rate=core, channels=2))
+    out.append(("adts", "sbr-in-three-blocks.aac", data, manifest(
+        "ADTS at 22050 Hz of ten channel pairs, the second, fifth and eighth followed by an SBR payload (the first with an SBR header): three blocks "
+        "of ten, which is fewer than half of them, so the stream stays AAC LC at 22050 Hz.", data, rows,
+        [stream("AAC LC", core, 2, "Stereo", 10 * 1024)], {"ADTS/Statistics/SBR": share(3, 10, "access unit")},
+        [["aac.sbr-data-sparse", "only 3 of 10 raw data blocks hold SBR data after a channel element"]],
+        skip={**skip, "decode": "ffmpeg prints \"No quantized data read for sbr_dequant\" for the SBR payloads in the middle of the stream."}, rate=core)))
+    # SBR data after a coupling channel element: fdk-aac excludes it from the elements SBR follows, faad2 rejects it, and only ffmpeg keeps the
+    # coupling element as the previous one (where a program config element gives it a channel). It counts for nothing.
+    blocks = []
+    for i in range(12):
+        cpe = M.Element(M.CPE, ics=(channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=i, rate=core), channel(M.ONLY_LONG, 1, [[(9, 4)]], seed=i + 1, rate=core)), mask=0)
+        cce = M.Element(M.CCE, tag=0, independent=i % 2, targets=[(1, 0, 1, 1)], ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 4)]], seed=i + 2, rate=core))
+        fill = M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i % 4 == 0 else None, pair=True))
+        blocks.append(M.raw_data_block([cpe, cce, fill], rate_index=rate_index(core)))
+    data, rows = concat(adts_frames(blocks, rate=core, channels=2))
+    out.append(("adts", "sbr-after-coupling-element.aac", data, manifest(
+        "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel "
+        "configuration 2: fdk-aac and faad2 read no SBR after a coupling element, so the stream stays AAC LC at 22050 Hz.", data, rows,
+        [stream("AAC LC", core, 2, "Stereo", 12 * 1024)], {"ADTS/Statistics/SBR": share(12, 12, "access unit")},
+        [["aac.sbr-without-channel-element", "12 raw data blocks hold SBR data that follows no single channel or channel pair element"],
+         ["aac.coupling-without-program", "12 raw data blocks hold a coupling channel element"]],
+        skip={**skip, "ffprobe_streams": "ffmpeg cannot decode the frames (\"channel element 2.0 is not allocated\"), so it reports no sample rate.",
+              "decode": "ffmpeg finds no channel for the coupling element in a stream of channel configuration 2.",
+              "faad_trace": "faad2 is built without coupling and stops at the element."}, rate=core)))
     # Every block has its SBR payload before the channel element, where no decoder reads it.
     blocks = []
     for i in range(12):
@@ -916,8 +943,7 @@ def sbr_evidence():
         data, rows, [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, ffprobe_profile="LC")],
         {"ADTS/Statistics/SBR": share(12, 12, "access unit"), "ADTS/Statistics/SBR/SBR Headers": "1 header"},
         [["aac.implicit-sbr", "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"], ["aac.sbr-before-header", "5 raw data blocks hold SBR data before the first SBR header"]],
-        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
-              "faad_trace": "faad2 reads the block's SBR data only with a header."}, rate=core)))
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."}, rate=core)))
     # Every frame fails its CRC.
     blocks = [pair(i, M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i % 4 == 0 else None, pair=True))) for i in range(12)]
     data, rows = concat(adts_frames(blocks, rate=core, channels=2, protect=True, damage=range(12)))

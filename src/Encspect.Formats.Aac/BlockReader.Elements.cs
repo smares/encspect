@@ -776,13 +776,16 @@ internal sealed partial class BlockReader
             _sbr[key] = header;
         }
 
-        // A payload after a channel element (single channel, channel pair, coupling or LFE) makes the stream HE-AAC for ffmpeg
-        // (aacdec_template.c, decode_extension_payload: m4ac.sbr = 1 before the data is read), faad2 (syntax.c, fill_element:
-        // sbr_present_flag = 1 before sbr_extension_data) and fdk-aac (aacdecoder.cpp: SBR is enabled on a parse error too), whether
-        // or not the data can be read: before its header, with tables that cannot be built, past its fill element, or after an LFE
-        // element, where FAAC 2.0 and 2.1 write theirs in 5.1. So all count toward the stream's SBR.
-        _hasSbrEvidence |= _lastChannelElement >= 0;
-        if (_lastChannelElement is not (0 or 1 or 2))
+        // A payload after a single channel, channel pair or LFE element makes the stream HE-AAC for ffmpeg (aacdec_template.c,
+        // decode_extension_payload: m4ac.sbr = 1 before the data is read), faad2 (syntax.c, fill_element: sbr_present_flag = 1 before
+        // sbr_extension_data, for a fill element right after such an element) and fdk-aac (aacdecoder.cpp: SBR is parsed after an
+        // element that IS_CHANNEL_ELEMENT names, SCE, CPE and LFE, and enabled on a parse error too), whether or not the data can be
+        // read: before its header, with tables that cannot be built, past its fill element, or after an LFE element, where FAAC 2.0
+        // and 2.1 write theirs in 5.1. A coupling channel element is none of these: fdk-aac excludes it, faad2 rejects it (error 6
+        // without COUPLING_DEC, and error 24 for the fill element after it), and only ffmpeg keeps it as the previous element, where a
+        // program config element has given it a channel; its payload is reported and counts for nothing.
+        _hasSbrEvidence |= _lastChannelElement is 0 or 1 or 3;
+        if (_lastChannelElement is not (0 or 1))
         {
             Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel or channel pair element", dataStart, end, "SBR Data");
             tally.SbrUnread++;

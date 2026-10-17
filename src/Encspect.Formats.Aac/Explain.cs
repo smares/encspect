@@ -169,7 +169,7 @@ internal static partial class Explain
     public const string ElementText = "Readable text in the element's payload, such as an encoder's name and version.";
 
     public const string Adts = "A run of ADTS frames: raw AAC with a header before every frame, so a decoder can start anywhere and needs no container (ISO/IEC 14496-3 1.A.2.2; ISO/IEC 13818-7 6.2).";
-    public const string UnreadFrames = "The bytes after the frames the analyzer counted past its limit of 2,097,152 frame records, which are not frames of the stream and are not analyzed.";
+    public const string UnreadFrames = "The bytes after the frames the analyzer counted past its limit of 2,097,152 frame records, where the stream's frames do not continue, another stream starts, or the 4,096 sync losses it follows are used up; they are not analyzed.";
 
     public const string CountedFrames = "ADTS frames past the analyzer's limit of 2,097,152 frame records, counted from their headers in the stream's frames, samples, duration and bitrates; they have no node of their own and their raw data blocks are not read.";
 

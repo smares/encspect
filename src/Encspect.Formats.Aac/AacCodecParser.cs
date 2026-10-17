@@ -229,7 +229,7 @@ public sealed class AacCodecParser : ICodecParser
         }
         else
         {
-            summary = $"{unit.Length} bytes";
+            summary = unit.Length == 1 ? "1 byte" : $"{unit.Length} bytes";
         }
 
         bool usac = (unit.Flags & IsUsac) != 0;
