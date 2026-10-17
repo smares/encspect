@@ -538,7 +538,7 @@ def sv8_header_cut_before_coding():
 
 HUGE_SAMPLES = 2 ** 63 - 1
 # Still large enough to overflow the sum the frame count was once worked out from, but not libmpcdec's
-# own count: 481 below the largest it decodes from, so mpcdec decodes the stream.
+# own count: it lies in (2^63 - 1633, 2^63 - 482], where mpcdec decodes the stream.
 LARGE_SAMPLES = 2 ** 63 - 1000
 
 

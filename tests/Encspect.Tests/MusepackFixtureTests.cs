@@ -355,6 +355,38 @@ public class MusepackFixtureTests
         Assert.Contains(interleaved.Findings, f => f.Code == "musepack.packets-interleaved");
     }
 
+    // The specification lets a streaming server send a stream header whenever it chooses and puts no
+    // limit on chapter packets between audio packets: a long stream with one before each audio packet
+    // is read to its end, with no stop for damage.
+    [Theory]
+    [InlineData("SH")]
+    [InlineData("CT")]
+    public void StreamHeadersAndChaptersAmongAudioAreReadToTheEnd(string kind)
+    {
+        byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/external-mpcenc-no-ei-no-st.mpc"));
+        Assert.Equal((byte)'S', stream[4]);
+        byte[] header = stream[4..(4 + stream[6])];
+        byte[] extra = kind == "SH" ? header : [(byte)'C', (byte)'T', 8, 0, 0, 0, 0, 0];
+        byte[] audio = [(byte)'A', (byte)'P', 11, 0, 0, 0, 0, 0, 0, 0, 0];
+        const int pairs = 9000;
+        var packets = new List<byte>();
+        for (int i = 0; i < pairs; i++)
+        {
+            packets.AddRange(extra);
+            packets.AddRange(audio);
+        }
+
+        int at = stream.Length - 3;
+        byte[] data = [.. stream[..at], .. packets, .. stream[at..]];
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("among.mpc", new MemoryStream(data));
+        Assert.DoesNotContain(report.Findings, f => f.Code is "musepack.packets-interleaved" or "musepack.packets-damaged" or "parse.failed");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "musepack.end-missing");
+
+        // Every audio packet was followed: the header's sample count is far below what they hold.
+        Finding held = Assert.Single(report.Findings, f => f.Code == "musepack.audio-packets-extra");
+        Assert.True(int.Parse(System.Text.RegularExpressions.Regex.Match(held.Message, @"holds (\d+)").Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) > pairs);
+    }
+
     // A chapter tag cut inside its 24-byte header or inside its items is reported, as the packet cut
     // before its gain and peak is.
     [Theory]
@@ -408,9 +440,9 @@ public class MusepackFixtureTests
     public void SeekTableAfterManyPacketsIsStillChecked()
     {
         byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/sv8-seek-mismatch.mpc"));
-        byte[] chapters = [.. Enumerable.Repeat("XX\x03"u8.ToArray(), 5000).SelectMany(p => p)];
+        byte[] unknown = [.. Enumerable.Repeat("XX\x03"u8.ToArray(), 5000).SelectMany(p => p)];
         int at = 4;
-        foreach (byte[] data in new[] { [.. stream[..at], .. chapters, .. stream[at..]], stream })
+        foreach (byte[] data in new[] { [.. stream[..at], .. unknown, .. stream[at..]], stream })
         {
             Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("late.mpc", new MemoryStream(data));
             Assert.Contains(report.Findings, f => f.Code == "musepack.seek-table-mismatch");

@@ -116,10 +116,10 @@ internal static class Sv8Parser
                     index--;
                     state.Packets.SetLast(run.Joined(packet));
                 }
-                else if (++state.RunRecords > MaxRunRecords)
+                else if (!AllowedAmongAudio(header.Key) && ++state.RunRecords > MaxRunRecords)
                 {
                     state.Unreadable = (position, "musepack.packets-interleaved",
-                        $"More than {MaxRunRecords} separate runs of packets that carry no audio lie before 0x{position:X}, which no encoder writes: the data is damaged, and the rest of it is not read.");
+                        $"More than {MaxRunRecords} separate runs of packets that belong before the audio (ReplayGain, seek table offset, encoder info, unknown keys) lie before 0x{position:X}, which no encoder writes: the data is damaged, and the rest of it is not read.");
                     break;
                 }
                 else
@@ -447,6 +447,11 @@ internal static class Sv8Parser
             count == 1
                 ? $"The {key} packet at 0x{packet.Offset:X} comes after the first audio packet; the SV8 specification requires it before."
                 : $"{count} packets come after the first audio packet, the first the {key} packet at 0x{packet.Offset:X}; the SV8 specification requires them before.");
+
+    // The kinds the specification lets sit between audio packets: a stream header, which a streaming
+    // server may send whenever it chooses, chapters and seek tables. The others (ReplayGain, seek table
+    // offset, encoder info, unknown and invalid keys) belong before the audio.
+    private static bool AllowedAmongAudio(ushort key) => key == Key("SH") || key == Key("CT") || key == Key("ST");
 
     private static bool DescribesStream(ushort key) =>
         key == Key("SH") || key == Key("RG") || key == Key("EI") || key == Key("SO") || key == Key("ST") || key == Key("SE");
