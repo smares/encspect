@@ -55,7 +55,7 @@ internal readonly record struct StreamKey(bool HasCore, int SampleRate, int Amod
         }
 
         AssetFacts? first = facts.Substreams.SelectMany(s => s.Assets).FirstOrDefault();
-        return new StreamKey(false, isPartial ? 0 : RateOf(first), -1, false, CoreExtension.None, StreamForm.BigEndian16, structure, figures, isPartial);
+        return new StreamKey(false, RateOf(first), -1, false, CoreExtension.None, StreamForm.BigEndian16, structure, figures, isPartial);
     }
 
     // The sampling frequency of an asset: LBR's own, else the highest its descriptor names.

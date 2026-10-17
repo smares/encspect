@@ -191,7 +191,44 @@ public class DtsTests
         Assert.Equal(4 * 512L, last.Samples);
         Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
         Assert.Equal(Severity.Warning, changed.Severity);
-        Assert.Contains("3 units after that", changed.Message, StringComparison.Ordinal);
+        Assert.Contains("3 units have a configuration", changed.Message, StringComparison.Ordinal);
+    }
+
+    // A last stream that has no asset figures yet is completed by a unit of its own structure only: here by none, so the unit of an LBR
+    // asset is in no stream and the stream stays the lossless one.
+    [Fact]
+    public void ALastStreamWithoutFiguresIsNotCompletedByAnotherStructure()
+    {
+        byte[] core = Fixture("core-16be.dts")[..512];
+        byte[] partial = Fixture("exss-static-first-only.dts")[704..1400];
+        var data = new List<byte>();
+        for (int i = 0; i < 63; i++)
+        {
+            byte[] copy = [.. core];
+            SetBits(copy, 60, 6, i % 2 == 0 ? 2 : 0);
+            data.AddRange(copy);
+        }
+
+        data.AddRange(partial);
+        data.AddRange(partial);
+        data.AddRange(Fixture("exss-only-static-first-only.dts")[..60]);
+        Report report = Analyzer.CreateDefault().Analyze("limit-partial.dts", new MemoryStream([.. data]));
+        Assert.Equal(64, report.Streams.Count);
+        Assert.Equal("DTS-HD Master Audio", report.Streams[^1].Codec);
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
+        Assert.Equal(Severity.Warning, changed.Severity);
+        Assert.Contains("1 unit has", changed.Message, StringComparison.Ordinal);
+    }
+
+    // Units of an extension substream index that has not stated its static fields yet still give the rate of their LBR header: no stream
+    // has a sampling frequency of 0 Hz.
+    [Fact]
+    public void NoStreamHasAZeroSampleRate()
+    {
+        byte[] data = Convert.FromBase64String("ZFggJQADYAd4AICAB8EAXwBwgQA/AAAAAADiTQqAGSECDAMAAAEbAAD6APoAAAAAAAAAAAAAAAAAAAAAZFggJQADYAd4AICAB8EAXwBwgQA/AAAAAADiTQqAGSECDAMAAAEbAAD6APoAAAAAAAAAAAAAAAAAAAAAZFggJQADYAd4AICAB8EAXwBwgQA/AAAAAADiTQqAGSECDAMAAAEbAAD6APoAAAAAAAAAAAAAAAAAAAAAZFggJQBCYAZgAfAgIAfgAAAA73cKgBkhAgwDAAABGwAA+gD6AAAAAAAAAAAAAAAAAAAAAGRYICUAQmAGYAHwICAH4AAAAO93CoAZIQIMAwAAARsAAPoA+gAAAAAAAAAAAAAAAAAAAABkWCAlAEJgBmAB8CAgB+AAAADvdwqAGSECDAMAAAEbAAD6APoAAAAAAAAAAAAAAAAAAAAA");
+        Report report = Analyzer.CreateDefault().Analyze("index1.dts", new MemoryStream(data));
+        Assert.NotEmpty(report.Streams);
+        Assert.All(report.Streams, s => Assert.Equal(48000, s.SampleRate));
     }
 
     // Units without samples have no bitrate: they stay out of the minimum, the average and the series of the stream they join.

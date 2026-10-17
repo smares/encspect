@@ -21,6 +21,7 @@ For every fixture, its manifest's "crosscheck" says what to confirm:
   nominal bitrate the manifest and the golden report give, and decode each without an error (dca_frame
   and dca_block), except the frames the manifest lists as damaged. libdca reads core frames only and
   skips extension substreams, junk and tags a byte at a time.
+- "decode_whole": decode the file as one instead of packet by packet (units that depend on the static fields of the one before).
 - "skip": the checks that are not run on the fixture, each with its reason; every one is printed.
 
 Every fixture is also compared with MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), against its
@@ -154,8 +155,10 @@ def check_decode(path, manifest, problems, work):
     check = manifest["crosscheck"]
     if check.get("decode_note"):
         print(f"{path.name}: ffmpeg decodes the damaged frames: {check['decode_note']}")
-    if path.suffix != ".dts":
-        result = subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", "-i", str(path), "-f", "null", "-"], capture_output=True, text=True)
+    if path.suffix != ".dts" or check.get("decode_whole"):
+        # "decode_whole": the packets depend on one another (static fields carried over), so the file is decoded as one.
+        source = ["-f", "dts"] if path.suffix == ".dts" else []
+        result = subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", *source, "-i", str(path), "-f", "null", "-"], capture_output=True, text=True)
         if result.stderr.strip():
             problems.append(f"ffmpeg reports errors: {result.stderr.strip().splitlines()[0]}")
         return

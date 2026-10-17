@@ -625,7 +625,9 @@ def build_gate2():
     parts = [unit(six, static=i == 0) for i in range(4)]
     fixture("exss-static-embedded-stereo", ".dts", "Four units of a stereo core frame and an extension substream with a lossless 5.1 asset that has a dynamic range code and an embedded stereo downmix, of which only the first states the static fields.",
             b"".join(parts), rows(parts), [stream(name, 48000, SURROUND_5_1, "2/0", 4 * 512, vbr=True)], [],
-            crosscheck=cc_lossless())
+            crosscheck=cc_lossless(libdca_channels=2, decode_whole=True,
+                                   skip={"decode_alone": "ffmpeg keeps the static fields between frames (dca_exss.c), so a unit whose header omits them decodes only after the first: each packet decoded alone is rejected "
+                                                         "('Read past end of EXSS asset descriptor'), the whole file decodes without an error"}))
     lbr = dict(mode=2, channels=2, mask=0x02)
     parts = [m.exss([dict(lbr)], static=i == 0) for i in range(4)]
     fixture("exss-only-static-first-only", ".dts", "Four extension substreams alone, each with an LBR asset, of which only the first states the static fields: no core frame.",

@@ -250,7 +250,7 @@ internal sealed class DtsAnalysis
             _current = new DtsStream(key, index);
             _streams.Add(_current);
         }
-        else if (_current.Key.IsPartial && !key.IsPartial)
+        else if (_current.Key.IsPartial && !key.IsPartial && _current.Key.Matches(key))
         {
             _current.Complete(key);
         }
@@ -300,7 +300,7 @@ internal sealed class DtsAnalysis
 
         _changes = Findings.AddNowCounted(Severity.Info, "dts.stream-changed", new Node("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame }, count =>
             (count == 1 ? $"The stream changes at 0x{offset:X} from {from} to {to}." : $"The stream changes {count} times, first at 0x{offset:X} from {from} to {to}.")
-            + (_excluded > 0 ? $" Streams are limited to {MaxStreams}: {_excluded} units after that have a configuration other than the last stream's, are in no stream, and are left out of its figures." : string.Empty));
+            + (_excluded > 0 ? $" Streams are limited to {MaxStreams}: {_excluded} unit{(_excluded == 1 ? " has" : "s have")} a configuration other than the last stream's, {(_excluded == 1 ? "is" : "are")} in no stream and {(_excluded == 1 ? "is" : "are")} left out of its figures." : string.Empty));
     }
 
     // The samples a unit holds at the stream's sampling frequency: the core's blocks of 32, or an extension substream's duration.
