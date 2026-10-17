@@ -162,7 +162,7 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.Equal(fragments * 1024 / 44100.0, stream.Duration, 3);
     }
 
-    // The evidence that samples are encrypted past the node budget counts: a track whose tenc box says that nothing is protected, 90,000 free boxes
+    // The evidence that samples are encrypted past the node budget counts: a track whose tenc box says that nothing is protected, 110,000 free boxes (more than the 100,000 boxes an earlier limit allowed)
     // (more nodes than the budget holds) and then a movie fragment with a senc box. Left unread, the box left the ciphertext to the AAC parser.
     [Fact]
     public void ProtectionEvidencePastTheNodeBudgetCounts()
@@ -172,7 +172,7 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] Moof(long dataOffset) => Mp4Builder.Box("moof", Mp4Builder.FullBox("mfhd", Mp4Builder.U32(1)),
             Mp4Builder.Box("traf", Mp4Builder.Box("tfhd", [0, 2, 0, 0], Mp4Builder.U32(1)), Mp4Builder.FullBox("senc", Mp4Builder.U32(1), new byte[8]),
                 Mp4Builder.Box("trun", [0, 0, 2, 1], Mp4Builder.U32(1), Mp4Builder.U32(dataOffset), Mp4Builder.U32(100))));
-        byte[] data = Mp4Builder.Join(Mp4Builder.Ftyp(), moov, Mp4Builder.Join([.. Enumerable.Repeat(Mp4Builder.Box("free"), 90_000)]), Moof(Moof(0).Length + 8), Mp4Builder.Box("mdat", new byte[100]));
+        byte[] data = Mp4Builder.Join(Mp4Builder.Ftyp(), moov, Mp4Builder.Join([.. Enumerable.Repeat(Mp4Builder.Box("free"), 110_000)]), Moof(Moof(0).Length + 8), Mp4Builder.Box("mdat", new byte[100]));
 
         Report report = Analyzer.CreateDefault().Analyze("evidence.m4a", new MemoryStream(data));
 

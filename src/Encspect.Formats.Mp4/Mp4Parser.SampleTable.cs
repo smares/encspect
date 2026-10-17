@@ -54,11 +54,10 @@ public sealed partial class Mp4Parser
     {
         int version = FullBox(node, f).Version;
         uint count = f.U32(node, "Entries", Explain.SampleEntryCount);
-        int detachedBefore = state.DetachedBoxes;
         ReadChildren(state, node, f.Position, header.End, depth + 1, custom: (s, n, h, fields, d) => SampleEntryBox(s, n, h, fields, d, version),
             naming: h => new BoxName(h.Type, NodeKind.Detail, Explain.SampleEntry(h.Type), Topics.SampleTables));
         int read = node.Children.Count(c => c.Children.Any(k => k.Name == "Data Reference Index"));
-        if (read != count && state.DetachedBoxes == detachedBefore)
+        if (read != count && !HasHiddenChild(node) && !state.Findings.IsDetaching)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-description-count",
                 $"The stsd box at 0x{node.Offset:X} declares {count} sample descriptions and holds {read}.", node);

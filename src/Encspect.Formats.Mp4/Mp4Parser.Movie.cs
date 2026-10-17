@@ -389,7 +389,7 @@ public sealed partial class Mp4Parser
         // atoms), and no Apple specification defines ©too (ffmpeg writes its muxer version there): both are the writer's, unless the text is a libavcodec encoder ID, which names the encoder.
         if (header.Type is "©swr" or "©too" && text.Length > 0)
         {
-            state.Context.AddEncoderClaim(new EncoderClaim(text, node, $"QuickTime {header.Type} atom", ClaimRoles.Of(ClaimRole.Writer, text)));
+            state.Context.AddEncoderClaim(new EncoderClaim(text, state.Findings.Resolve(node), $"QuickTime {header.Type} atom", ClaimRoles.Of(ClaimRole.Writer, text)));
         }
 
         return true;

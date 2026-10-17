@@ -119,7 +119,7 @@ public sealed partial class Mp4Parser
             {
                 // The layout claim is about this track: the codec parser sees it, no other track does.
                 IReadOnlyList<EncoderClaim> layout = codec == "aac" ? AppleEvidence(state, entry) : [];
-                configuration = new CodecConfiguration(data, node) { IsVbr = IsVbr(state, entry, first), Claims = layout };
+                configuration = new CodecConfiguration(data, state.Findings.Resolve(node)) { IsVbr = IsVbr(state, entry, first), Claims = layout };
             }
 
             state.Context.ParsePackets(codec, samples, Packets(state, track), configuration);
@@ -199,7 +199,7 @@ public sealed partial class Mp4Parser
         int nodes = samples.Children.Count;
         if (isEncrypted && codec is not null && entry.DecoderSpecificInfo is { } data && entry.DecoderSpecificInfoNode is { } node)
         {
-            state.Context.ParsePackets(codec, samples, [], new CodecConfiguration(data, node)
+            state.Context.ParsePackets(codec, samples, [], new CodecConfiguration(data, state.Findings.Resolve(node))
             {
                 AreSamplesEncrypted = true,
                 IsVbr = IsVbr(state, entry, first),
@@ -269,7 +269,7 @@ public sealed partial class Mp4Parser
         var claims = new List<EncoderClaim>();
         if (entry.SourceBitDepthNode is not null)
         {
-            claims.Add(new EncoderClaim("Apple AAC encoder (AudioToolbox)", entry.SourceBitDepthNode,
+            claims.Add(new EncoderClaim("Apple AAC encoder (AudioToolbox)", state.Findings.Resolve(entry.SourceBitDepthNode),
                 $"MP4 layout of Apple's AudioToolbox encoder: {stream} and an sbtd box in the sample entry, which records the PCM source of an encode", ClaimRole.Encoder)
             {
                 Confidence = Confidence.Medium,
@@ -279,7 +279,7 @@ public sealed partial class Mp4Parser
 
         if (state.HasPageAlignedMdat)
         {
-            claims.Add(new EncoderClaim("Apple AudioToolbox", entry.Node,
+            claims.Add(new EncoderClaim("Apple AudioToolbox", state.Findings.Resolve(entry.Node),
                 $"MP4 layout of Apple's AudioToolbox file writer: {stream} and a free box that pads the audio data to a 4,096-byte boundary", ClaimRole.Writer)
             {
                 IsLayout = true,

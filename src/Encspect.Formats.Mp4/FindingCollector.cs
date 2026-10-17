@@ -10,24 +10,28 @@ internal sealed class FindingCollector
     private readonly List<Finding> _immediate = [];
     private readonly System.Runtime.CompilerServices.ConditionalWeakTable<Node, object> _detached = new();
 
-    // The node that stands for boxes read and not shown (the tree is over its node budget): findings made while such a box is read, and findings
-    // about a node it held, point to it, since those nodes are in no tree.
-    public Node? Anchor { get; set; }
+    // The "Boxes Not Shown" node of the parent where the box being read was hidden (the tree is over its node budget): findings made while such a box
+    // is read, and findings about a node it held, point to it, since those nodes are in no tree.
+    public Node? CurrentNote { get; set; }
 
     public bool IsDetaching { get; set; }
 
-    public void MarkDetached(Node node)
+    public bool IsNodeLimitReported { get; set; }
+
+    public void MarkDetached(Node node, Node note)
     {
-        _detached.AddOrUpdate(node, node);
+        _detached.AddOrUpdate(node, note);
         foreach (Node child in node.Children)
         {
-            MarkDetached(child);
+            MarkDetached(child, note);
         }
     }
 
     public bool IsDetached(Node node) => _detached.TryGetValue(node, out _);
 
-    private Node Resolve(Node node) => Anchor is not null && (IsDetaching || IsDetached(node)) ? Anchor : node;
+    // The node itself, or where it is in no tree the node that stands for the box it lay in.
+    public Node Resolve(Node node) =>
+        IsDetaching && CurrentNote is not null ? CurrentNote : _detached.TryGetValue(node, out object? note) ? (Node)note : node;
 
     public void Add(Severity severity, string code, Node node, Func<int, string> message)
     {

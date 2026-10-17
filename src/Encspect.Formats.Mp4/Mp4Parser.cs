@@ -338,13 +338,15 @@ public sealed partial class Mp4Parser : IFormatParser
         {
             parent.Add(node);
         }
-        else if (!wasDetaching)
-        {
-            ShowNotShown(state, parent, header);
-        }
 
+        Node? outerNote = state.Findings.CurrentNote;
         if (isDetached)
         {
+            if (!wasDetaching)
+            {
+                state.Findings.CurrentNote = ShowNotShown(state, parent, header);
+            }
+
             state.DetachedBoxes++;
             state.Findings.IsDetaching = true;
         }
@@ -360,7 +362,8 @@ public sealed partial class Mp4Parser : IFormatParser
 
         if (isDetached)
         {
-            state.Findings.MarkDetached(node);
+            state.Findings.MarkDetached(node, state.Findings.CurrentNote!);
+            state.Findings.CurrentNote = outerNote;
         }
         else
         {
@@ -371,20 +374,22 @@ public sealed partial class Mp4Parser : IFormatParser
     }
 
     // The one node that stands for the boxes of a parent that are read and not shown, once for each parent, and the finding once.
-    private static void ShowNotShown(State state, Node parent, BoxHeader header)
+    private static Node ShowNotShown(State state, Node parent, BoxHeader header)
     {
         if (parent.Children.Count > 0 && parent.Children[^1].Name == "Boxes Not Shown")
         {
-            return;
+            return parent.Children[^1];
         }
 
         Node note = parent.Add(new Node("Boxes Not Shown", header.Offset, Math.Max(0, parent.End - header.Offset), "read, not shown") { Description = Explain.BoxesNotShown });
-        if (state.Findings.Anchor is null)
+        if (!state.Findings.IsNodeLimitReported)
         {
-            state.Findings.Anchor = note;
+            state.Findings.IsNodeLimitReported = true;
             state.Findings.AddNow(Severity.Warning, "mp4.node-limit",
                 $"The tree holds more than {MaxNodes} nodes; the boxes from the {header.Type} box at 0x{header.Offset:X} on are read for the tracks, samples and protection they describe, but are not shown as nodes, and the checks of their children are not made.", note);
         }
+
+        return note;
     }
 
     // The nodes a box holds besides the boxes inside it, which count when they are read.
@@ -501,7 +506,6 @@ public sealed partial class Mp4Parser : IFormatParser
         FragmentTrack? outerFragment = state.Fragment;
         (long Offset, Node Node)? outerMoof = state.Moof;
         bool outerIgnored = state.IsMovieIgnored;
-        int detachedBefore = state.DetachedBoxes;
         FragmentTrack? fragment = null;
         if (header.Type == "trak")
         {
@@ -571,7 +575,7 @@ public sealed partial class Mp4Parser : IFormatParser
 
         ReadChildren(state, node, f.Position, header.End, depth + 1);
         state.InSinf = outerSinf;
-        if (state.DetachedBoxes == detachedBefore)
+        if (!state.Findings.IsDetaching)
         {
             CheckChildren(state, node, header.Type);
         }
@@ -629,6 +633,9 @@ public sealed partial class Mp4Parser : IFormatParser
         node.Value = $"{major.Trim()} ({BrandName(major)})";
     }
 
+    // Whether some of the box's own children were read and not shown: the last node it holds stands for them.
+    private static bool HasHiddenChild(Node node) => node.Children.Count > 0 && node.Children[^1].Name == "Boxes Not Shown";
+
     // Boxes a parent requires once (ISO/IEC 14496-12, the "Quantity: Exactly one" of each box).
     private static void CheckChildren(State state, Node node, string type)
     {
@@ -642,7 +649,9 @@ public sealed partial class Mp4Parser : IFormatParser
             "moof" => ["mfhd"],
             _ => [],
         };
-        foreach (string child in required)
+        // A box that has a hidden child may have the required box among those; the duplicates among the shown ones are certain.
+        bool hasHiddenChild = HasHiddenChild(node);
+        foreach (string child in hasHiddenChild ? [] : required)
         {
             if (!node.Children.Any(c => c.Name == child))
             {
@@ -651,7 +660,7 @@ public sealed partial class Mp4Parser : IFormatParser
             }
         }
 
-        if (type == "stbl")
+        if (type == "stbl" && !hasHiddenChild)
         {
             if (!node.Children.Any(c => c.Name is "stsz" or "stz2"))
             {
