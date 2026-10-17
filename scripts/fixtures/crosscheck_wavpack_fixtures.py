@@ -83,7 +83,7 @@ FIGURES_DIFFER = {
     "built-dsd-rate-overflow": "WavpackGetNativeSampleRate multiplies the sample rate and the DSD multiplier in 32 bits (common_utils.c), so 2,147,483,647 Hz times 2^31 wraps; "
                                "the analyzer holds the bit rate to 2,147,483,647 Hz and reports wavpack.sample-rate-implausible",
 }
-# What ffprobe cannot read, and why (FFmpeg 6.1.1, libavformat/wvdec.c, pinned by ffmpeg_sources.py).
+# What ffprobe cannot read, and why (FFmpeg 8.0.1, libavformat/wvdec.c, which differs from the 6.1.1 that ffmpeg_sources.py pins by API renames only).
 FFPROBE_REFUSES = {
     "external-lossless-3ch-unassigned": "wv_read_block_header refuses a channel info of one byte, a count with no mask: \"Insufficient channel information\"",
     "external-from-caf": "the same: the CAF's stereo layout tag leaves a channel info of the count alone",
@@ -102,8 +102,8 @@ FFPROBE_COUNTS_THE_MASK = {"external-lossless-4ch-two-unassigned", "built-channe
 # ffprobe's packets end at the first bytes that are no block header (wv_read_block_header: ff_wv_parse_header fails).
 MEDIAINFO_DSD = ("MediaInfo 26.01 reads DSD: the sample rate is the header's index rate shifted by the frame rate multiplier of sub-block 0x0E and by 3 for the DSD flag, "
                  "and it fills no bit depth for a DSD file (File_Wvpk.cpp, Data_Parse_Fill, id_0E)")
-MEDIAINFO_ONE_BLOCK = ("MediaInfo accepts a stream after two blocks with audio (Frame_Count_Valid=2, File_Wvpk.cpp) and fills nothing from a file that has one")
-MEDIAINFO_ID3V2 = ("observed: MediaInfo 24.01 counts the leading ID3v2 tag in the General stream size (26 bytes) and fills none of its fields for a WavPack file")
+MEDIAINFO_ONE_BLOCK = ("MediaInfo 26.01 accepts a stream after two blocks with audio (Frame_Count_Valid=2, File_Wvpk.cpp) and fills nothing from a file that has one (observed)")
+MEDIAINFO_ID3V2 = ("observed: MediaInfo 26.01 counts the leading ID3v2 tag in the General stream size (26 bytes) and fills none of its fields for a WavPack file")
 MEDIAINFO_READS_OTHERWISE = {
     "built-leading-id3v2": {"tag title": MEDIAINFO_ID3V2, "tag track": MEDIAINFO_ID3V2},
 }
@@ -420,9 +420,9 @@ def check_mediainfo(name, manifest, path, report, tally):
     else:
         tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
         tally.compare("bit depth", audio.get("BitDepth"), str(8 * (1 + (int(first["flags"], 16) & 3))))
-    # File_Wvpk.cpp, Streams_Finish: the first block's index to the end of the last block with samples. The parser jumps to the last 512 KiB only where
-    # at least 1 MiB is left (GoToFromEnd in Data_Parse_Fill), so a smaller file is read to its end.
-    if path.stat().st_size >= 2 * 512 * 1024:
+    # File_Wvpk.cpp, Streams_Finish: the first block's index to the end of the last block with samples. Data_Parse_Fill runs in the second audio block and
+    # jumps to the last 512 KiB only where at least 1 MiB is left from the block's start (File_Size-(File_Offset+Buffer_Offset)), so a smaller file is read to its end.
+    if path.stat().st_size - second["offset"] >= 2 * 512 * 1024:
         tally.skip("duration", "MediaInfo jumps to the last 512 KiB of a file over 1 MiB (File_Wvpk.cpp, Data_Parse_Fill), where it finds the last block by its synchronization")
     else:
         rate = stream["sampleRate"] // 8 if is_dsd else stream["sampleRate"]
