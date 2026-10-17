@@ -139,6 +139,11 @@ internal static class OldStreamParser
         else
         {
             var reasons = new List<string>();
+            if (h.Version is < 4 or > 6)
+            {
+                reasons.Add("are not of stream version 4 to 6");
+            }
+
             if (h.Bitrate != 0)
             {
                 reasons.Add($"have a constant bitrate ({h.Bitrate} kbps)");
@@ -195,7 +200,8 @@ internal static class OldStreamParser
         long bit = h.DataBit;
         long length = words.BitLength;
         int maxBand = Math.Min(h.MaxBand, 31);
-        int empty = 0;
+        int damaged = 0;
+        long damagedFrom = 0;
         for (long i = 0; i < h.Frames; i++)
         {
             if (i % 4096 == 0)
@@ -255,10 +261,18 @@ internal static class OldStreamParser
 
             state.Count(frame);
             bit = end;
-            empty = frameLength == 0 ? empty + 1 : 0;
-            if (empty == Sv7Parser.MaxEmptyRun && i + 1 < (h.KeepsLastFrame ? h.Frames : h.Frames - 1))
+            if ((flags & FrameFlags.Overrun) != 0)
             {
-                state.EmptyFrom = bit - (Sv7Parser.MaxEmptyRun * 20L);
+                damagedFrom = damaged++ == 0 ? frame.Bit : damagedFrom;
+            }
+            else
+            {
+                damaged = 0;
+            }
+
+            if (damaged == Sv7Parser.MaxDamagedRun && i + 1 < (h.KeepsLastFrame ? h.Frames : h.Frames - 1))
+            {
+                state.DamagedFrom = damagedFrom;
                 break;
             }
         }
@@ -325,8 +339,8 @@ internal static class OldStreamParser
             Ranges = h.Version == 4 ? [new ByteRange(start, 4), new ByteRange(start + 6, 2)] : null,
         };
         header.Add(w.Field("Bitrate", 0, 9, NodeValue.Integer(h.Bitrate, "kbps"), Explain.Sv4Bitrate, Topics.BitrateModes));
-        header.Add(w.Field("Intensity Stereo", 9, 10, NodeValue.Boolean(h.IntensityStereo), Explain.Sv4IntensityStereo, Topics.IntensityStereo));
-        header.Add(w.Field("Mid/Side Stereo", 10, 11, NodeValue.Boolean(h.MidSide), Explain.Sv4MidSide, Topics.MidSideStereo));
+        header.Add(w.Field("UsesIntensityStereo", 9, 10, NodeValue.Boolean(h.IntensityStereo), Explain.Sv4IntensityStereo, Topics.IntensityStereo));
+        header.Add(w.Field("UsesMidSideStereo", 10, 11, NodeValue.Boolean(h.MidSide), Explain.Sv4MidSide, Topics.MidSideStereo));
         header.Add(w.Field("Stream Version", 11, 21, NodeValue.Integer(h.Version), Explain.Sv4StreamVersion));
         header.Add(w.Field("Max Band", 21, 26, NodeValue.Integer(h.MaxBand), Explain.Sv4MaxBand, Topics.SubbandCoding));
         header.Add(w.Field("Block Size", 26, 32, NodeValue.Integer(h.BlockSize, "frames", "frame"), Explain.Sv4BlockSize));
@@ -493,10 +507,10 @@ internal static class OldStreamParser
         }
 
         Node header = state.Leading[0];
-        if (state.EmptyFrom is { } emptyFrom)
+        if (state.DamagedFrom is { } damagedFrom)
         {
-            state.Findings.AddNow(Severity.Warning, "musepack.frames-empty",
-                $"{Sv7Parser.MaxEmptyRun} frames in a row from 0x{w.WordStart(emptyFrom):X} have a length of 0 bits, which no encoder writes: the data is damaged, and the frames after them are not read.",
+            state.Findings.AddNow(Severity.Warning, "musepack.frames-damaged",
+                $"{Sv7Parser.MaxDamagedRun} frames in a row from 0x{w.WordStart(damagedFrom):X} have subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
                 header.Children.First(c => c.Name == "Frame Count"));
         }
         else if (state.Truncated)
@@ -625,7 +639,7 @@ internal static class OldStreamParser
 
         public int? FinalSamples { get; set; }
 
-        public long? EmptyFrom { get; set; }
+        public long? DamagedFrom { get; set; }
 
         public long? PaddingStart { get; set; }
 
