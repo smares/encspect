@@ -46,7 +46,7 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } owner })
         {
-            _ = new AboutWindow().ShowDialog(owner);
+            AboutWindow.ShowFor(owner);
         }
     }
 }

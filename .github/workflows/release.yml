@@ -1,0 +1,305 @@
+name: Release
+
+# A pushed version tag (vX.Y.Z) builds the self-contained CLI and GUI for the six targets of CI's full matrix, each on
+# a runner of its own platform, runs the same self-checks CI runs on them, packages them and publishes a GitHub release
+# with the notes of docs/releases/<version>.md. The tag must equal v plus the Version in Directory.Build.props and be
+# on main. A manual run with the tag as input repeats a release (an existing release gets its files replaced). CI itself
+# uploads no build. See "Releases" in docs/development.md.
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The tag to release, such as v0.1.0. It must exist already.
+        required: true
+        type: string
+
+# Read-only everywhere but in the job that creates the release.
+permissions:
+  contents: read
+
+# Runs of one tag queue behind each other and none is canceled halfway through publishing.
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  # Avalonia's build tasks send usage data unless told not to.
+  AVALONIA_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  # Fails unless the tag names the version the sources carry and the tagged commit is on main, so a release is never
+  # built from a branch or under another number.
+  check-tag:
+    name: check the tag
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          fetch-depth: 0
+
+      - name: Check the tag against Directory.Build.props and main
+        id: check
+        run: |
+          version=$(sed -n 's|.*<Version>\([^<]*\)</Version>.*|\1|p' Directory.Build.props)
+          if ! grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' <<< "$version"; then
+            echo "::error::Directory.Build.props has no Version of the form X.Y.Z (found '$version')."
+            exit 1
+          fi
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::The tag is $TAG, but Directory.Build.props has Version $version, so the tag must be v$version."
+            exit 1
+          fi
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor HEAD refs/remotes/origin/main; then
+            echo "::error::The commit $(git rev-parse --short HEAD) of $TAG is not on main."
+            exit 1
+          fi
+          if [ ! -f "docs/releases/$version.md" ]; then
+            echo "::error::docs/releases/$version.md, the release notes, is missing."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  # The same targets as CI's full matrix (scripts/ci/changes.py), each built, run and packaged on its own platform.
+  build:
+    name: build (${{ matrix.rid }})
+    needs: check-tag
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      VERSION: ${{ needs.check-tag.outputs.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-26.04
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
+          - os: windows-11-arm
+            rid: win-arm64
+          - os: ubuntu-26.04-arm
+            rid: linux-arm64
+          - os: macos-15-intel
+            rid: osx-x64
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: refs/tags/${{ env.TAG }}
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # Restored only: a release run saves no cache entry, so it cannot change what the runs of main restore.
+      - name: Restore the NuGet packages
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Restore
+        run: dotnet restore
+
+      # The release is built from the tagged sources on the runner of its own platform, so the runs below execute the real binaries.
+      - name: Publish the self-contained CLI
+        run: dotnet publish src/Encspect.Cli --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/${{ matrix.rid }}
+
+      - name: Run the published CLI
+        shell: bash
+        run: |
+          publish/${{ matrix.rid }}/encspect --csv tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/out.csv"
+          grep -q 'LAME 3.100' "$RUNNER_TEMP/out.csv"
+          publish/${{ matrix.rid }}/encspect --version | tee "$RUNNER_TEMP/version.txt"
+          grep -qE "^encspect $VERSION(\+[0-9a-f]+)?\$" "$RUNNER_TEMP/version.txt"
+
+      # A runner has no display to open a window on, so the published GUI runs its self-check: it loads Skia's and
+      # HarfBuzz's native libraries and the platform backend's (ANGLE on Windows, Avalonia.Native on macOS) from the
+      # single file and analyzes a fixture through the host, without showing a window.
+      - name: Publish the self-contained GUI
+        run: dotnet publish src/Encspect.Gui --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/gui-${{ matrix.rid }}
+
+      - name: Run the published GUI's self-check
+        shell: bash
+        run: |
+          publish/gui-${{ matrix.rid }}/encspect-gui --self-check tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/gui.txt"
+          grep -q 'Skia and HarfBuzz loaded' "$RUNNER_TEMP/gui.txt"
+          grep -q 'Platform backend' "$RUNNER_TEMP/gui.txt"
+          grep -q 'LAME 3.100' "$RUNNER_TEMP/gui.txt"
+
+      # Linux has two windowing backends, both managed code over the system's libraries: X11, the
+      # default (also under Wayland, through XWayland), and Wayland, which ENCSPECT_GUI_BACKEND=wayland
+      # opts in to. Weston's headless backend with the pixman renderer is a compositor without a GPU
+      # or display; the self-check starts the backend without showing a window and names it, and
+      # the step fails if it is not the one asked for. These greps also guard the screen-handle
+      # descriptors ("WaylandOutput", "XRandRMonitorName") that the GUI tells the backends apart by.
+      # Wayland's start-up blocks synchronously, hence the timeouts.
+      - name: Run the published GUI's self-check on Wayland and X11
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y weston xvfb
+          export XDG_RUNTIME_DIR="$RUNNER_TEMP/runtime"
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          weston --backend=headless --renderer=pixman --socket=encspect-wl --idle-time=0 > "$RUNNER_TEMP/weston.log" 2>&1 &
+          weston_pid=$!
+          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          for _ in $(seq 50); do test -S "$XDG_RUNTIME_DIR/encspect-wl" && break; sleep 0.2; done
+          test -S "$XDG_RUNTIME_DIR/encspect-wl" || { cat "$RUNNER_TEMP/weston.log"; exit 1; }
+          gui=publish/gui-${{ matrix.rid }}/encspect-gui
+          fixture=tests/fixtures/mpeg/external-lame-tagged.mp3
+
+          # Wayland is opt-in.
+          env -u DISPLAY WAYLAND_DISPLAY=encspect-wl ENCSPECT_GUI_BACKEND=wayland timeout 120 $gui --self-check $fixture | tee "$RUNNER_TEMP/wayland.txt"
+          grep -q 'Windowing backend: Wayland\.' "$RUNNER_TEMP/wayland.txt"
+
+          # A session with both a compositor and an X server uses X11 unless Wayland is asked for.
+          env WAYLAND_DISPLAY=encspect-wl timeout 120 xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/both.txt"
+          grep -q 'Windowing backend: X11\.' "$RUNNER_TEMP/both.txt"
+
+          env WAYLAND_DISPLAY=encspect-wl ENCSPECT_GUI_BACKEND=wayland timeout 120 xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/both-wayland.txt"
+          grep -q 'Windowing backend: Wayland\.' "$RUNNER_TEMP/both-wayland.txt"
+
+          env WAYLAND_DISPLAY=encspect-wl ENCSPECT_GUI_BACKEND=x11 timeout 120 xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/forced-x11.txt"
+          grep -q 'Windowing backend: X11\.' "$RUNNER_TEMP/forced-x11.txt"
+
+          env -u WAYLAND_DISPLAY timeout 120 xvfb-run -a $gui --self-check $fixture | tee "$RUNNER_TEMP/x11.txt"
+          grep -q 'Windowing backend: X11\.' "$RUNNER_TEMP/x11.txt"
+
+          # A compositor alone does not start Wayland: the self-check reports that X11 has no display, with exit 0.
+          env -u DISPLAY WAYLAND_DISPLAY=encspect-wl timeout 120 $gui --self-check $fixture | tee "$RUNNER_TEMP/wayland-only.txt"
+          grep -q 'Windowing backend: not started, X11 is chosen' "$RUNNER_TEMP/wayland-only.txt"
+          if grep -q 'Windowing backend: Wayland' "$RUNNER_TEMP/wayland-only.txt"; then exit 1; fi
+
+          # An unknown value warns and chooses automatically.
+          env ENCSPECT_GUI_BACKEND=bogus timeout 120 xvfb-run -a $gui --self-check $fixture > "$RUNNER_TEMP/bogus.err" 2>&1
+          grep -q 'ENCSPECT_GUI_BACKEND=bogus is not recognized; use x11 or wayland' "$RUNNER_TEMP/bogus.err"
+
+          # A forced backend without its display ends with one line and exit code 1, not an abort.
+          status=0
+          env -u DISPLAY -u WAYLAND_DISPLAY ENCSPECT_GUI_BACKEND=wayland timeout 120 $gui 2> "$RUNNER_TEMP/no-wayland.err" || status=$?
+          test "$status" = 1
+          grep -q 'ENCSPECT_GUI_BACKEND' "$RUNNER_TEMP/no-wayland.err"
+          status=0
+          env -u WAYLAND_DISPLAY DISPLAY=:99 ENCSPECT_GUI_BACKEND=x11 timeout 120 $gui 2> "$RUNNER_TEMP/no-x11.err" || status=$?
+          test "$status" = 1
+          grep -q 'ENCSPECT_GUI_BACKEND' "$RUNNER_TEMP/no-x11.err"
+
+      # One folder per archive, so extracting does not scatter files: both single files, the license, the notices of
+      # the libraries inside them and a short README. The pdb files of the publish output are left out.
+      - name: Collect the files of the archive
+        shell: bash
+        run: |
+          name="encspect-$VERSION-${{ matrix.rid }}"
+          ext=""
+          if [ "$RUNNER_OS" = Windows ]; then ext=".exe"; fi
+          mkdir -p "dist/$name"
+          cp "publish/${{ matrix.rid }}/encspect$ext" "publish/gui-${{ matrix.rid }}/encspect-gui$ext" LICENSE THIRD-PARTY-NOTICES.md "dist/$name/"
+          cp docs/releases/package-readme.md "dist/$name/README.md"
+          if [ "$RUNNER_OS" != Windows ]; then chmod +x "dist/$name/encspect" "dist/$name/encspect-gui"; fi
+          ls -l "dist/$name"
+          echo "NAME=$name" >> "$GITHUB_ENV"
+
+      # tar keeps the executable bit; COPYFILE_DISABLE keeps macOS's tar from adding ._ files for extended attributes.
+      - name: Pack the archive (tar.gz)
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          COPYFILE_DISABLE: 1
+        run: |
+          tar -czf "dist/$NAME.tar.gz" -C dist "$NAME"
+          tar -tzvf "dist/$NAME.tar.gz"
+
+      - name: Pack the archive (zip)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist/$env:NAME" -DestinationPath "dist/$env:NAME.zip"
+          Get-Item "dist/$env:NAME.zip"
+
+      # The archive is what users get, so the CLI inside it, extracted elsewhere, is the one run.
+      - name: Run the CLI from the archive
+        shell: bash
+        run: |
+          mkdir "$RUNNER_TEMP/unpacked"
+          if [ "$RUNNER_OS" = Windows ]; then
+            powershell -NoProfile -Command "Expand-Archive -Path 'dist/$NAME.zip' -DestinationPath '$RUNNER_TEMP/unpacked'"
+            cli="$RUNNER_TEMP/unpacked/$NAME/encspect.exe"
+          else
+            tar -xzf "dist/$NAME.tar.gz" -C "$RUNNER_TEMP/unpacked"
+            cli="$RUNNER_TEMP/unpacked/$NAME/encspect"
+          fi
+          "$cli" --version | tee "$RUNNER_TEMP/packed-version.txt"
+          grep -qE "^encspect $VERSION(\+[0-9a-f]+)?\$" "$RUNNER_TEMP/packed-version.txt"
+          test -f "$RUNNER_TEMP/unpacked/$NAME/THIRD-PARTY-NOTICES.md"
+          test -f "$RUNNER_TEMP/unpacked/$NAME/LICENSE"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.rid }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  # The only job that can write to the repository: it creates the release (or, on a rerun, replaces the files of the
+  # existing one). The version 0.x of a project in development is a pre-release.
+  release:
+    name: create the GitHub release
+    needs: [check-tag, build]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.check-tag.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          sparse-checkout: docs/releases
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Write the checksums
+        run: |
+          cd dist
+          archives=(encspect-"$VERSION"-*)
+          test "${#archives[@]}" = 6
+          sha256sum encspect-"$VERSION"-* > SHA256SUMS
+          cat SHA256SUMS
+          sha256sum --check SHA256SUMS
+
+      - name: Create the release
+        run: |
+          title="Encspect $VERSION"
+          notes="docs/releases/$VERSION.md"
+          prerelease=--prerelease
+          case "$VERSION" in 0.*) ;; *) prerelease=--prerelease=false ;; esac
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+            gh release edit "$TAG" --title "$title" --notes-file "$notes" $prerelease
+          else
+            gh release create "$TAG" dist/* --verify-tag --title "$title" --notes-file "$notes" $prerelease
+          fi

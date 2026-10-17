@@ -15,6 +15,7 @@ internal static class CommandLine
     public const string Usage = """
         Usage: encspect [options] [--] <file-or-folder>...
                encspect --learn [<topic>]
+               encspect --version
 
         Analyzes each file, and every file in each folder and its subfolders, hidden ones
         included. A link to a folder is followed only when it leads outside the folder named and
@@ -34,6 +35,9 @@ internal static class CommandLine
           --explain             Say what each node is: its description, and the topic that
                                 --learn explains, under each node of the text tree, or as
                                 "description" and "topic" in JSON. Not with --csv.
+
+        Version:
+          --version             Print the version, as the JSON reports give it in tool.version.
 
         Background:
           --learn [<topic>]     Print the article on a topic, such as mid-side-stereo: why a
@@ -196,6 +200,17 @@ internal static class CommandLine
                     }
 
                     break;
+                case "--version" when inline is null:
+                    if (args.Count != 1)
+                    {
+                        return Fail(stderr, "--version takes no other arguments.");
+                    }
+
+                    return Write(new GuardedStream(stdout), stderr, stream =>
+                    {
+                        using var version = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true);
+                        version.Write("encspect " + ReportJsonWriter.ToolVersion + "\n");
+                    });
                 case "--help" or "-h":
                     return Write(new GuardedStream(stdout), stderr, stream =>
                     {

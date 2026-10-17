@@ -87,11 +87,22 @@ The Graphs tab, next to the findings, draws the stream's series: the bitrate and
 - **Speed:** graphs of 100,000 frames draw as quickly as short ones, since a line is drawn as the smallest and largest value of each pixel column.
 - **Waveform and spectrogram:** these need decoded audio, and no format has a decoder yet, which the tab says in one line.
 
+## About
+
+"About Encspect" shows what build this is.
+
+- **Where:** on macOS in the application menu, as usual there; on Windows and Linux in the Help menu, the menu bar's last menu.
+- **Shows:** the name, the version, one line on what Encspect does, the copyright and the MIT License.
+- **Version:** the same string as `encspect --version` prints after the program name and as `tool.version` in JSON reports (`0.1.0+<commit>`), read from the same place in the host. It can be selected and copied for a bug report.
+- **Third-Party Notices:** the button opens a window with the text of `THIRD-PARTY-NOTICES.md`: the licenses of Avalonia, Skia, HarfBuzz, ANGLE and the .NET runtime. The text is embedded in the executable, so it is there in a single-file build too and is the same file the download carries next to the executables.
+- **Keyboard:** Esc and Enter close the window; the Close button has the focus when it opens. Tab reaches the notices button and the version.
+- **One window:** choosing About again brings the open window forward.
+
 ## Look and platform
 
 - Light and dark mode, the accent color and the UI font follow the system.
 - The file dialogs are the system's (on Linux, the desktop portal's; see "Linux: X11 and Wayland").
-- On macOS the menus are in the menu bar.
+- On macOS the menus are in the menu bar; the About item is in the application menu.
 - Linux runs on X11 by default, which on a Wayland desktop means XWayland. Native Wayland is experimental and opt-in. See "Linux: X11 and Wayland".
 - The GUI is built on Avalonia. Its dependencies and their licenses are listed in [third_party/README.md](../third_party/README.md).
 - The graphs are drawn by the GUI itself, without a charting library.

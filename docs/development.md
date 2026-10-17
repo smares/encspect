@@ -146,6 +146,26 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 - `python3 scripts/ci_report.py` lists the runs on main (pushes, the nightly schedule, manual runs; every workflow) of the last 14 days (`--days`, `--since 2026-10-01`), and for each red one the failed jobs and steps and the failing tests. It uses only the standard library and the public API: without a token the tests come from the annotations; with `GITHUB_TOKEN` (or `GH_TOKEN`) set, from the job logs. A canceled run is listed as CANCELED, apart from the red ones, and counts as not green: it is a commit or a night without a verdict. Exit code 1 means a run is red or canceled. `CLAUDE.md` asks for it at the start of a working session.
 
 
+## Releases
+
+`.github/workflows/release.yml` makes a release; CI itself uploads no build. The first release, 0.1.0, was decided by the project lead on 2026-10-17 (see rollout step 8 in the [plan](PLAN.md)).
+
+To release:
+
+- **Bump the version:** set `Version` in `Directory.Build.props`, the only place. The assembly, file and informational versions, `encspect --version`, the JSON `tool.version` and the GUI's About window follow. The part after `+` is the commit, which .NET appends to the informational version and which stays: a report or bug report names the exact source.
+- **Notes:** add `docs/releases/<version>.md`; the release job uses it as the release text.
+- **Merge:** the change goes to main through a pull request with a green pipeline, as any other.
+- **Tag:** tag the merged commit on main as `v<version>` and push the tag. A manual run of the workflow with the tag as input repeats a release.
+
+What the workflow does:
+
+- **`check-tag`:** fails unless the tag is `v` plus the `Version` in `Directory.Build.props` at the tagged commit, that commit is on main, and the notes exist.
+- **`build`:** on a runner of each platform of CI's full matrix (`linux-x64`, `win-x64`, `osx-arm64`, `win-arm64`, `linux-arm64`, `osx-x64`), publishes the self-contained single-file CLI and GUI with CI's commands and runs CI's checks on them: the CLI on a fixture, the GUI's `--self-check`, and on Linux the Wayland and X11 self-checks. It then checks that `--version` prints the version, packs `encspect-<version>-<rid>.zip` (Windows) or `.tar.gz` with both programs, `LICENSE`, `THIRD-PARTY-NOTICES.md` and `docs/releases/package-readme.md` as `README.md`, and runs the CLI from the unpacked archive.
+- **`release`:** the only job with `contents: write`. It writes `SHA256SUMS` over the six archives and creates the GitHub release "Encspect <version>" with the notes and all files, as a pre-release while the major version is 0. On a rerun it replaces the files of the existing release.
+- **Not signed:** no build is signed or notarized. The release notes say what each system asks.
+- **`THIRD-PARTY-NOTICES.md`:** at the repository root, shipped in each archive and embedded in the GUI for its About window. Update it when a package or the runtime version changes: each text is copied from the restored package (`~/.nuget/packages/<id>/<version>/`) or the runtime pack, not written by hand. `CiWorkflowTests` and the GUI tests check that the file exists and that the GUI embeds it.
+- **`third_party/`:** the sources there are cross-check tools. No project references them and they are in no build.
+
 ## Fixtures and cross-checks
 
 Every format has three kinds of fixture:

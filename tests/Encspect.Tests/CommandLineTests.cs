@@ -415,6 +415,28 @@ public class CommandLineTests
     }
 
     [Fact]
+    public void VersionPrintsTheVersionTheReportsGive()
+    {
+        (int code, string output, string errors) = Run("--version");
+
+        Assert.Equal(CommandLine.Success, code);
+        Assert.Equal("encspect " + ReportJsonWriter.ToolVersion + "\n", output);
+        Assert.StartsWith("encspect 0.1.0", output);
+        Assert.Equal("", errors);
+        Assert.Contains("--version", Run("--help").Output);
+    }
+
+    [Theory]
+    [InlineData("--version", "--json")]
+    [InlineData("--version", "x.mp3")]
+    [InlineData("--json", "--version")]
+    [InlineData("--version=1")]
+    public void VersionTakesNoOtherArguments(params string[] args)
+    {
+        Assert.Equal(CommandLine.UsageError, Run(args).Code);
+    }
+
+    [Fact]
     public void DoubleDashEndsTheOptions()
     {
         (int code, string output, string errors) = Run("--csv", "--", "--json", Tagged);
