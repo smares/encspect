@@ -18,7 +18,8 @@ For every manifest in tests/fixtures/ogg (make_ogg_fixtures.py, make_external_og
   the last granule position: the manifest's samples plus the encoder delay.
 - speexdec -V (speex): the header line ("Decoding 16000 Hz audio using wideband mode (mono)"), the
   vendor string, the bitrate it prints for every frame it decodes, which follows from each frame's
-  submodes (ogg_model.speexdec_bitrate), and the samples it writes (ogg_model.speexdec_samples).
+  submodes (ogg_model.speexdec_bitrate), and the samples it writes (ogg_model.speexdec_samples). A fixture
+  whose packet libspeex refuses names the message speexdec must print ("speexdec_error").
 
 For Vorbis and Opus streams (make_vorbis_opus_fixtures.py, make_external_vorbis_opus_fixtures.py):
 
@@ -281,6 +282,15 @@ def check_speexdec(name, manifest, problems):
         problems.append(f"speexdec writes {samples} samples, the manifest expects {entry['speex']['speexdec_samples']}")
 
 
+def check_speexdec_error(name, manifest, problems):
+    """speexdec refuses the stream's corrupt packet with the message the manifest names (libspeex 1.2.1)."""
+    entry = speex_streams(manifest)[0]
+    _, _, channels = header_fields(name, manifest, entry)
+    _, _, _, text = speexdec(DIRECTORY / name, min(max(channels, 1), 2))
+    if manifest["crosscheck"]["speexdec_error"] not in text:
+        problems.append(f"speexdec does not report {manifest['crosscheck']['speexdec_error']!r}: {text.strip()[-200:]}")
+
+
 def stream_pages(name, manifest, serial):
     """The packets of one stream of the fixture, as (bytes) in order."""
     data, pages = ogg_pages(name, manifest)
@@ -459,6 +469,8 @@ def check(name, manifest):
             check_packets(name, manifest, problems, pages=False)
         if checks.get("speexdec"):
             check_speexdec(name, manifest, problems)
+        if checks.get("speexdec_error"):
+            check_speexdec_error(name, manifest, problems)
         for check_name, reason in checks["not_compared"].items():
             skip(name, check_name, reason)
     return problems

@@ -12,12 +12,12 @@ Vorbis in [Ogg](ogg.md).
 ## Reported
 
 - long and short blocks;
-- the samples the overlap of blocks gives, checked against the granule positions with their start offset and trimming;
+- the samples the overlap of blocks gives, checked against the granule positions with their start offset and trimming (the start trimming is capped at the first two blocks, the end trimming at the last block, as libvorbis does; a larger one is a finding);
 - the bitrate of every packet and per second, and packet sizes.
 
 ## Channel layout
 
-From the channel count, in the order of the Vorbis I specification, section 4.3.9.
+From the channel count, in the order of the Vorbis I specification, section 4.3.9, with the same speaker and layout names as Opus and the other formats.
 
 ## Encoder detection
 
@@ -31,4 +31,4 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
 
 ## Not yet covered
 
-- Floors and residues (planned: entropy pass).
+- The floor and residue data of the audio packets (planned: entropy pass). The setup header's floor and residue configurations are read.

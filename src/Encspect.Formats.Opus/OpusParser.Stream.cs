@@ -16,7 +16,12 @@ public sealed partial class OpusParser
 
         public int StreamCount { get; } = streams;
 
+        // Only the parts that were read: after a stream whose framing broke, the packet's remaining streams are implied as missing,
+        // so a hostile multistream file costs no more per packet than the bytes it holds. With several streams, _firstParts holds
+        // per packet the index of its first part.
         public ChunkedList<PartRecord> Parts { get; } = new();
+
+        private readonly ChunkedList<int> _firstParts = new();
 
         public ChunkedList<ushort> FrameLengths { get; } = new();
 
@@ -55,12 +60,26 @@ public sealed partial class OpusParser
             Count++;
         }
 
-        public PartRecord Part(int packet, int stream) => Parts[(packet * StreamCount) + stream];
+        // Called before the packet's parts are added.
+        public void StartParts()
+        {
+            if (StreamCount > 1)
+            {
+                _firstParts.Add(Parts.Count);
+            }
+        }
+
+        private int FirstPart(int packet) => StreamCount == 1 ? packet : _firstParts[packet];
+
+        public int PartCount(int packet) => StreamCount == 1 ? 1 : (packet + 1 < _firstParts.Count ? _firstParts[packet + 1] : Parts.Count) - _firstParts[packet];
+
+        public PartRecord Part(int packet, int stream) =>
+            stream < PartCount(packet) ? Parts[FirstPart(packet) + stream] : new PartRecord(0, 0, 0, 0, 0, 0, 0, 0, PartStatus.Missing);
 
         public int LengthOf(int packet)
         {
             int length = 0;
-            for (int s = 0; s < StreamCount; s++)
+            for (int s = 0; s < PartCount(packet); s++)
             {
                 length += Part(packet, s).Length;
             }
@@ -203,7 +222,7 @@ public sealed partial class OpusParser
                 Node node = _parent.Add(Node.FromMapped("Opus Head", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.HeadShort,
                     topic: Topics.OpusPreSkip));
                 _findings.Add(Severity.Warning, "opus.header-short", node, _ =>
-                    $"The identification header holds {packet.Length} bytes, too few for its fields (RFC 7845, section 5.1); decoders refuse the stream, and its audio packets are read as single-stream packets.");
+                    $"The identification header holds {Count(packet.Length, "byte", "bytes")}, too few for its fields (RFC 7845, section 5.1); decoders refuse the stream, and its audio packets are read as single-stream packets.");
                 return;
             }
 
@@ -212,14 +231,14 @@ public sealed partial class OpusParser
             if (head.Length < head.ExpectedLength)
             {
                 _findings.Add(Severity.Warning, "opus.header-short", _headNode, _ =>
-                    $"The identification header holds {packet.Length} bytes, fewer than the {head.ExpectedLength} its channel mapping needs (RFC 7845, section 5.1.1); decoders refuse the stream.");
+                    $"The identification header holds {Count(packet.Length, "byte", "bytes")}, fewer than the {head.ExpectedLength} its channel mapping needs (RFC 7845, section 5.1.1); decoders refuse the stream.");
             }
             else if (packet.Length > head.Length)
             {
                 Node extra = _parent.Add(Node.FromMapped("Head Extra Data", packet, head.Length, packet.Length, NodeValue.Integer(packet.Length - head.Length, "bytes", "byte"),
                     description: Explain.HeadExtraData));
                 _findings.Add(Severity.Info, "opus.header-extra-data", extra, _ =>
-                    $"The identification header holds {packet.Length - head.Length} bytes after its fields, which decoders ignore.");
+                    $"The identification header holds {Count(packet.Length - head.Length, "byte", "bytes")} after its fields, which decoders ignore.");
             }
 
             CheckHead(head);
@@ -233,7 +252,7 @@ public sealed partial class OpusParser
             if (context.Configuration?.Delay is { } delay && Math.Abs((delay * Rate) - head.PreSkip) >= 0.5)
             {
                 _findings.Add(Severity.Warning, "opus.container-delay-differs", Field("Pre-skip"), _ =>
-                    $"The container states a codec delay of {delay.ToString("0.#######", CultureInfo.InvariantCulture)} s, {(delay * Rate).ToString("0.#", CultureInfo.InvariantCulture)} samples at 48 kHz, but the identification header's pre-skip is {head.PreSkip} samples; the Matroska codec mapping makes the delay the pre-skip (draft-ietf-cellar-codec, section 3.4.32).");
+                    $"The container states a codec delay of {delay.ToString("0.#######", CultureInfo.InvariantCulture)} s, {(delay * Rate).ToString("0.#", CultureInfo.InvariantCulture)} samples at 48 kHz, but the identification header's pre-skip is {Count(head.PreSkip, "sample", "samples")}; the Matroska codec mapping makes the delay the pre-skip (draft-ietf-cellar-codec, section 3.4.32).");
             }
 
             if ((head.Version & 0xF0) != 0)
@@ -398,14 +417,9 @@ public sealed partial class OpusParser
             // The packet's node needs all its parts, so what is wrong is reported once they are read.
             (int Stream, PartStatus Status, string Error)? broken = null;
             (int Stream, int Samples, int First)? differs = null;
-            for (int s = 0; s < streams; s++)
+            _records.StartParts();
+            for (int s = 0; s < streams && !lost; s++)
             {
-                if (lost)
-                {
-                    _records.Parts.Add(new PartRecord(0, _records.FrameLengths.Count, 0, 0, 0, 0, 0, PartStatus.Missing));
-                    continue;
-                }
-
                 PartRecord part = Framing.Read(data[position..], s < streams - 1, _records.FrameLengths, out string? error);
                 _records.Parts.Add(part);
                 position += part.Length;
@@ -544,7 +558,7 @@ public sealed partial class OpusParser
             if (HasHead && _packets > 0 && preSkip + trim > _decoded)
             {
                 _findings.Add(Severity.Warning, "opus.pre-skip-beyond", Field("Pre-skip"), _ =>
-                    $"The pre-skip of {preSkip} samples and the end trimming of {trim} remove more than the {_decoded} samples the packets hold, so the stream plays nothing.");
+                    $"The pre-skip of {Count(preSkip, "sample", "samples")} and the end trimming of {trim} remove more than the {Count(_decoded, "sample", "samples")} the packets hold, so the stream plays nothing.");
             }
 
             Node? encoder = AddEncoder();
@@ -608,12 +622,12 @@ public sealed partial class OpusParser
             if (offset > 0)
             {
                 _findings.Add(Severity.Info, "opus.start-offset", field, _ =>
-                    $"The first granule position is {offset} samples beyond what the packets before it hold, so the stream starts at a later time, as a stream cut from a longer one does (RFC 7845, section 4.5).");
+                    $"The first granule position is {Count(offset, "sample", "samples")} beyond what the packets before it hold, so the stream starts at a later time, as a stream cut from a longer one does (RFC 7845, section 4.5).");
             }
             else
             {
                 _findings.Add(Severity.Warning, "opus.start-negative", field, _ =>
-                    $"The first granule position is {-offset} samples smaller than what the packets before it hold, which gives a negative start; RFC 7845 allows that only on the end-of-stream page, and decoders treat the stream as invalid (section 4.5).");
+                    $"The first granule position is {Count(-offset, "sample", "samples")} smaller than what the packets before it hold, which gives a negative start; RFC 7845 allows that only on the end-of-stream page, and decoders treat the stream as invalid (section 4.5).");
             }
         }
 
@@ -630,14 +644,14 @@ public sealed partial class OpusParser
             if (trim < 0)
             {
                 _findings.Add(Severity.Warning, "opus.granule-beyond-packets", field, _ =>
-                    $"The last granule position, {position} at 0x{field.Offset:X}, is {-trim} samples beyond what the packets before it hold; decoders end the stream earlier than it says.");
+                    $"The last granule position, {position} at 0x{field.Offset:X}, is {Count(-trim, "sample", "samples")} beyond what the packets before it hold; decoders end the stream earlier than it says.");
                 return 0;
             }
 
             if (trim > _lastPacketSamples)
             {
                 _findings.Add(Severity.Warning, "opus.end-trimming-large", field, _ =>
-                    $"The last granule position, {position} at 0x{field.Offset:X}, trims {trim} samples from the end, more than the {_lastPacketSamples} of the last packet, which RFC 7845 asks trimming not to exceed (section 4.4).");
+                    $"The last granule position, {position} at 0x{field.Offset:X}, trims {Count(trim, "sample", "samples")} from the end, more than the {_lastPacketSamples} of the last packet, which RFC 7845 asks trimming not to exceed (section 4.4).");
             }
 
             return trim;

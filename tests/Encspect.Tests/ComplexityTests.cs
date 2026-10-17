@@ -18,6 +18,111 @@ public class ComplexityTests
 {
     private static readonly TimeSpan Bound = TimeSpan.FromSeconds(30);
 
+    // Junk made of the capture pattern and a header whose segment table claims a page of about 64 KB, over and over: each
+    // candidate once cost the CRC of those 64 KB before any other check (12.9 s for 2 MB).
+    [Fact]
+    public void JunkDenseInCapturePatterns()
+    {
+        byte[] junk = [.. Enumerable.Repeat("OggS\0"u8.ToArray().Concat(Enumerable.Repeat((byte)0xFF, 27)).ToArray(), 400_000).SelectMany(b => b)];
+        byte[] page = new OggBuilder().Page(1, 0, 2, [0xAB]).Bytes;
+
+        Report report = TimedOgg([.. page, .. junk]);
+
+        Assert.Contains(report.Findings, f => f.Code == "ogg.junk");
+    }
+
+    // Candidates 32 bytes apart whose segment tables are chosen so that each claimed page ends at the next candidate: the follow-on check
+    // passes for every one, so the CRC work is capped (ResyncBudget) in proportion to the data, with a finding.
+    [Fact]
+    public void CandidatesThatEachFollowTheNextAreCapped()
+    {
+        byte[] block = LinkedCandidate();
+        byte[] junk = [.. Enumerable.Repeat(block, 250_000).SelectMany(b => b)];
+        byte[] page = new OggBuilder().Page(1, 0, 2, [0xAB]).Bytes;
+
+        Report report = TimedOgg([.. page, .. junk]);
+
+        Assert.Contains(report.Findings, f => f.Code == "ogg.resync-limit");
+    }
+
+    // 32 bytes: "OggS", version 0, a header of 254 segments, and 254 lacing values, which are the bytes of the following copies; byte 25
+    // is one of the two that those 254 values read seven times, and is chosen so that 27 + 254 + the values' sum is a multiple of 32.
+    private static byte[] LinkedCandidate()
+    {
+        for (int tweak = 0; tweak < 256; tweak++)
+        {
+            byte[] block = new byte[32];
+            "OggS"u8.CopyTo(block);
+            block[25] = (byte)tweak;
+            block[26] = 254;
+            for (int i = 27; i < 32; i++)
+            {
+                block[i] = (byte)(60 + (i * 7));
+            }
+
+            int length = 27 + 254;
+            for (int i = 0; i < 254; i++)
+            {
+                length += block[(27 + i) % 32];
+            }
+
+            if (length % 32 == 0)
+            {
+                return block;
+            }
+        }
+
+        throw new InvalidOperationException("No candidate links to the next.");
+    }
+
+    // 300,000 streams of beginning-of-stream pages that never end: for each, a search of the streams for the first of the next link
+    // (40,000 of them took 7.8 s, and the time grew with the square of the count).
+    [Fact]
+    public void ManyLogicalStreamsWithoutAnEnd()
+    {
+        var builder = new OggBuilder();
+        for (uint serial = 1; serial <= 300_000; serial++)
+        {
+            builder.Page(serial, 0, 2, [0xAB]);
+        }
+
+        Report report = TimedOgg(builder.Bytes);
+
+        Assert.Contains(report.Findings, f => f.Code == "ogg.too-many-streams");
+    }
+
+    // The search for the first stream of the next link, once per stream that never ends, was quadratic (40,000 streams took 7.8 s).
+    // The stream limit keeps a whole file far below the counts that show it, so the closing pass is run on a region of 400,000
+    // streams (the old search made 8 * 10^10 comparisons).
+    [Fact]
+    public void ClosingHundredsOfThousandsOfOpenStreamsIsLinear()
+    {
+        const int streams = 400_000;
+        var region = new Encspect.Formats.Ogg.Region(0, streams * 28L);
+        for (int i = 0; i < streams; i++)
+        {
+            region.Pages.Add(new Encspect.Formats.Ogg.PageRecord { Offset = i * 28L, Length = 28, Serial = (uint)i, Flags = 2, Stream = i });
+            region.Streams.Add(new Encspect.Formats.Ogg.LogicalStream(i, (uint)i, 1 + (i / 3), hasBos: true) { Start = i * 28L, End = (i + 1) * 28L, FirstPage = i, LastPage = i });
+        }
+
+        var watch = Stopwatch.StartNew();
+        Encspect.Formats.Ogg.OggParser.CloseStreams(region);
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5), $"Took {watch.Elapsed.TotalSeconds:F1} s");
+    }
+
+    private static Report TimedOgg(byte[] data)
+    {
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("complexity.ogg", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        return report;
+    }
+
     [Fact]
     public void ManyTagsWithSeekFrames()
     {

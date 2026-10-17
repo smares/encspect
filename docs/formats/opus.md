@@ -18,7 +18,7 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
 
 ## Channel layout
 
-From mapping family 0 or 1. Ambisonics and family 255 name no speakers.
+From mapping family 0 or 1, in the Vorbis channel order, with the speakers named as everywhere else ("front left", "back left", "LFE") and the layouts by their common names ("Mono", "Stereo", "3.0", "Quadraphonic", "5.1"). Ambisonics and family 255 name no speakers.
 
 ## Encoder detection
 

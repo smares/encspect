@@ -1,0 +1,199 @@
+{
+ "length": 336,
+ "regions": [
+  {
+   "name": "Ogg",
+   "offset": 0,
+   "length": 336
+  }
+ ],
+ "pages": [
+  {
+   "name": "Page",
+   "offset": 0,
+   "length": 108,
+   "serial": 12513026,
+   "sequence": 0,
+   "granule": 0,
+   "flags": 2,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 108,
+   "length": 60,
+   "serial": 12513026,
+   "sequence": 1,
+   "granule": 0,
+   "flags": 0,
+   "crc_ok": true
+  },
+  {
+   "name": "Page",
+   "offset": 168,
+   "length": 168,
+   "serial": 12513026,
+   "sequence": 2,
+   "granule": 920,
+   "flags": 4,
+   "crc_ok": true
+  }
+ ],
+ "streams": [
+  {
+   "serial": "0x00BEEF02",
+   "codec": "Speex",
+   "link": 1,
+   "pages": 3,
+   "packets": 8,
+   "has_eos": true,
+   "speex": {
+    "header": {
+     "Speex String": "Speex   ",
+     "Speex Version": "1.2.1",
+     "Version ID": "1",
+     "Header Size": "80 bytes",
+     "Sample Rate": "8000 Hz",
+     "Mode": "Narrowband",
+     "Mode Bitstream Version": "4",
+     "Channels": "1",
+     "Bitrate": "-1 (not given)",
+     "Frame Size": "160 samples",
+     "IsVbr": "false",
+     "Frames Per Packet": "1",
+     "Extra Headers": "0",
+     "Reserved 1": "0",
+     "Reserved 2": "0"
+    },
+    "packets": [
+     [
+      201,
+      20
+     ],
+     [
+      221,
+      34
+     ],
+     [
+      255,
+      20
+     ],
+     [
+      275,
+      20
+     ],
+     [
+      295,
+      21
+     ],
+     [
+      316,
+      20
+     ]
+    ],
+    "frames": [
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       112
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ],
+     [],
+     [
+      [
+       3,
+       null,
+       null,
+       0
+      ]
+     ]
+    ],
+    "statistics": {
+     "Packets": "6",
+     "Frames": "5",
+     "Coded Samples": "960 samples",
+     "Encoder Delay": "40 samples",
+     "End Trimming": "0 samples",
+     "Samples": "920 samples",
+     "Duration": "0.115 s",
+     "IsVbr": "true",
+     "Average Bitrate": "9.0 kbps",
+     "Minimum Bitrate": "8.0 kbps",
+     "Maximum Bitrate": "13.6 kbps",
+     "Packet Sizes": "3 sizes",
+     "Packet Sizes/20 bytes": "4 packets (66.7%), 8.0 kbps",
+     "Packet Sizes/21 bytes": "1 packet (16.7%), 8.4 kbps",
+     "Packet Sizes/34 bytes": "1 packet (16.7%), 13.6 kbps",
+     "Narrowband Submodes": "1 submode",
+     "Narrowband Submodes/Submode 3 (160 bits)": "5 frames (100.0%)"
+    },
+    "comment": {
+     "vendor": "Encoded with Speex 1.2.1",
+     "comments": []
+    },
+    "speexdec_samples": 800
+   }
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Speex narrowband",
+   "sample_rate": 8000,
+   "channels": 1,
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 920,
+   "duration": 0.115,
+   "average_bitrate": 9.0,
+   "is_vbr": true,
+   "playback_group": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "speex.frame-invalid",
+   "contains": "a skipped wideband layer has submode 0, which libspeex 1.2.1 cannot skip"
+  },
+  {
+   "code": "speex.wideband-layer-in-narrowband",
+   "contains": "1 audio packet of this narrowband stream carries wideband layers"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "oggz_validate": "ok",
+  "packets": true,
+  "speexdec_error": "More than two wideband layers found. The stream is corrupted.",
+  "not_compared": {
+   "speexdec's samples and bitrates": "speexdec drops the rest of the corrupt packet and goes on, which the model of its output does not follow",
+   "ogginfo and ffprobe": "they do not read frames"
+  }
+ }
+}

@@ -32,6 +32,8 @@ internal static class Explain
     public const string Blocksize0 = "The short block size, a power of two from 64 to 8192 samples, stored as its exponent in four bits (blocksize_0, section 4.2.2).";
     public const string Blocksize1 = "The long block size, a power of two from 64 to 8192 samples and not smaller than the short one, stored as its exponent (blocksize_1, section 4.2.2).";
     public const string FramingBit = "The framing bit, which must be 1; libvorbis refuses a header without it (section 4.2.2).";
+    public const string CommentFramingBit = "The framing bit after the comments, which must be 1; a decoder reads an unset bit as a framing error (section 5.2.1).";
+    public const string SetupFramingBit = "The framing bit after the mode configurations, which must be 1; if it is unset the stream is not decodable (section 4.2.4).";
     public const string IdentificationExtraData = "Bytes in the identification header packet after its framing bit, which decoders ignore.";
     public const string CommentPrefix = "The comment header's packet type 3 and \"vorbis\", before the Vorbis comment (Vorbis I, section 5.2.1).";
     public const string CommentTrailingData = "Bytes in the comment header packet after its framing bit, which readers ignore.";

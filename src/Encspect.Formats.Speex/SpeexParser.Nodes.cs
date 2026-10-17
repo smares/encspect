@@ -99,8 +99,8 @@ public sealed partial class SpeexParser
             {
                 bool ignored = walk.End == WalkEnd.FrameLimit;
                 string value = ignored
-                    ? $"{total - position} bits after the frames the header gives, which decoders ignore"
-                    : $"{total - position} bits: {walk.Error}";
+                    ? $"{Count(total - position, "bit", "bits")} after the frames the header gives, which decoders ignore"
+                    : $"{Count(total - position, "bit", "bits")}: {walk.Error}";
                 nodes.Add(at.Node(ignored ? "Ignored Data" : "Unparsed", position, total, value, ignored ? Explain.IgnoredData : Explain.Unparsed));
             }
             else
