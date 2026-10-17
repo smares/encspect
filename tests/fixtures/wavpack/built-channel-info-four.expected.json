@@ -432,9 +432,18 @@
   {
    "code": "wavpack.channel-count-mismatch",
    "contains": "says 4 channels"
+  },
+  {
+   "code": "wavpack.channel-info-ignored",
+   "contains": "gives 6 channels and a mask of 0x3F, but an earlier one gave 4 channels"
   }
  ],
  "crosscheck": {
-  "valid": false
+  "valid": false,
+  "decode": {
+   "opens": true,
+   "samples": 24000,
+   "errors": 2
+  }
  }
 }

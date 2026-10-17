@@ -169,6 +169,76 @@ def dsd_rate_overflow(block):
     return join(block, parts)
 
 
+# What libwavpack's decoder does with each file: WavpackOpenFileInputEx64 as wvunpack opens it (block checksums verified), then
+# WavpackUnpackSamples to the end. crosscheck_wavpack_fixtures.py runs both and fails on any difference. None: libwavpack refuses to
+# open the file, because the init or metadata code of a block rejects it (a decorrelation term of 0, weights without terms, a DSD block of
+# a mode or size it cannot read, a layout it cannot take, an unknown sub-block that is not optional, a stream version it does not
+# decode). Else (samples unpacked, errors counted): an error is a block it skips, or a checksum or CRC that fails; a cut file decodes
+# up to the cut.
+DECODES = {
+    "ape-and-id3v1": (24000, 0),
+    "ape-encoder-claim": (24000, 0),
+    "ape-encoder-wavpack": (24000, 0),
+    "audio-without-bitstream": (24000, 2),
+    "bad-checksum": (24000, 1),
+    "bad-signature": (24000, 1),
+    "block-index-40-bit": (24000, 0),
+    "block-index-gap": (24000, 1),
+    "block-index-overlap": (24000, 1),
+    "block-size-too-large": (6488, 1),
+    "block-size-too-small": (12975, 1),
+    "block-trailing-byte": (6488, 1),
+    "channel-identities": (12000, 0),
+    "channel-info-four": (24000, 2),
+    "channel-info-ignored": (24000, 0),
+    "channel-info-no-count": (24000, 0),
+    "channel-info-zero": None,
+    "channel-info-after-first-block": (24000, 0),
+    "channel-info-after-bad-block": (12975, 1),
+    "channels-change": (24000, 2),
+    "checksum-missing": (24000, 1),
+    "decorr-terms-invalid": None,
+    "dsd-fast-history-only": None,
+    "dsd-high-rate-step": None,
+    "dsd-high-short": None,
+    "dsd-invalid": None,
+    "dsd-rate-overflow": (65536, 0),
+    "dsd-stored-mode": (65536, 1),
+    "dsd-stored-size": None,
+    "dummy-and-large-subblocks": (24000, 0),
+    "extra-bitstream-missing": (24000, 0),
+    "flags-invalid": None,
+    "garbage-between-blocks": (24000, 0),
+    "garbage-prefix": (24000, 0),
+    "id3v1": (24000, 0),
+    "leading-id3v2": (24000, 0),
+    "missing-first-block": (12975, 0),
+    "no-audio": None,
+    "reorder-too-long": None,
+    "reserved-flag": (24000, 0),
+    "sample-rate-missing": (12000, 0),
+    "sample-rate-zero-custom": (12000, 0),
+    "sample-rate-zero": (24000, 0),
+    "seek-tag-between-blocks": (24000, 0),
+    "set-without-final-limit": (1000, 23),
+    "set-without-final": (24000, 0),
+    "set-without-initial": (24000, 1),
+    "shift-too-large": (24000, 0),
+    "subblock-overrun": (24000, 1),
+    "subblock-sizes-mixed": None,
+    "tag-inside-block": (24000, 1),
+    "total-samples-40-bit": (24000, 0),
+    "total-samples-mismatch": (24000, 0),
+    "total-samples-unknown": (24000, 0),
+    "trailing-garbage": (24000, 0),
+    "truncated-header": (17512, 0),
+    "truncated-last-block": (17512, 0),
+    "unknown-subblocks": None,
+    "version-unsupported": None,
+    "weights-without-terms": (24000, 2),
+}
+
+
 # name: (description, builder, findings, valid). A builder takes no arguments and returns the file's bytes.
 # valid: whether wvunpack and ffprobe read the file as they would an undamaged one (None: not applicable).
 def A():
@@ -263,11 +333,14 @@ def build():
     b["dsd-invalid"] = ("The DSD block of the first block with a mode of 2.", aa([join(dsd[0], dsd_parts), *dsd[1:]]),
                         [("wavpack.dsd-invalid", "mode is 2")], False)
     surround = blocks(base("lossless-51-16"))
-    for label, count, mask, text, finding in (("zero", 0, 0x3F, "Channel info with no channels.", ("wavpack.channel-info-invalid", "refuses")),
-                                              ("four", 4, 0x33, "Channel info for four channels in a file of six.", ("wavpack.channel-count-mismatch", "says 4 channels"))):
+    # The other sets' channel infos, which say 6 channels, are ignored once the first one gives channels (libwavpack keeps the first).
+    for label, count, mask, text, found in (("zero", 0, 0x3F, "Channel info with no channels.",
+                                             [("wavpack.channel-info-invalid", "refuses"), ("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but the flags of the first audio block that verifies gave 2 channels")]),
+                                            ("four", 4, 0x33, "Channel info for four channels in a file of six.",
+                                             [("wavpack.channel-count-mismatch", "says 4 channels"), ("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but an earlier one gave 4 channels")])):
         parts, ids = subs(surround[0])
         parts[where(ids, 0x0D)] = sub(0x0D, bytes([count, mask]))
-        b[f"channel-info-{label}"] = (text, aa([join(surround[0], parts), *surround[1:]]), [finding], False)
+        b[f"channel-info-{label}"] = (text, aa([join(surround[0], parts), *surround[1:]]), found, False)
     b["dsd-rate-overflow"] = ("A DSD file of 2,147,483,647 Hz with a rate power of 31, whose bit rate overflows 32 bits.", aa([dsd_rate_overflow(x) for x in dsd]),
                               [("wavpack.sample-rate-implausible", "more than the 2147483647 Hz")], False)
     samples = struct.unpack_from("<I", dsd[0], 20)[0]
@@ -280,7 +353,7 @@ def build():
                                   [("wavpack.dsd-invalid", "ends right after the history bits")], False)
     digest = bytes(range(16))
     meta = join(patch(a[0], samples=0, index=0, flags=0x34BC1E59), [sub(0x26, digest), sub(0x2F, bytes(4))])
-    b["no-audio"] = ("A single block with no samples, which holds an MD5 digest.", meta, [("wavpack.no-audio", "None of the 1 blocks counts a sample")], None)
+    b["no-audio"] = ("A single block with no samples, which holds an MD5 digest.", meta, [("wavpack.no-audio", "None of the 1 block counts a sample")], None)
     rate = blocks(base("rate-12345"))
     b["sample-rate-missing"] = ("The sample rate sub-block left out of a file of 12,345 Hz.", aa([without(rate[0], 0x27)]),
                                 [("wavpack.sample-rate-missing", "44100 Hz")], True)
@@ -320,9 +393,54 @@ def build():
     small = blocks(base("lossless-16-stereo-small-blocks"))
     b["set-without-final-limit"] = ("24 stereo blocks of which only the first is initial and none is final, each 8 of them with one first sample: libwavpack ends a set at its 8 streams.",
                                     aa([patch(x, flags=(flags(x) & ~0x1800) | (0x800 if i == 0 else 0), index=i // 8 * 8000) for i, x in enumerate(small)]),
-                                    [("wavpack.block-set-broken", "holds 8 blocks without a final block"), ("wavpack.block-index-gap", "samples are missing"),
+                                    [("wavpack.block-set-broken", "holds 8 blocks without a final block"), ("wavpack.block-set-broken", "follows a set that libwavpack ends at its stream limit"),
+                                     ("wavpack.block-index-gap", "samples are missing"),
                                      ("wavpack.total-samples-mismatch", "hold 3000")], False)
     b["leading-id3v2"] = ("An ID3v2 tag before the blocks.", id3v2() + aa(a), [], True)
+
+    # Cases libwavpack's decoder tells apart from what the block reader checks: they open or not, and count errors, as DECODES says.
+    b["channels-change"] = ("The third block of a file of small stereo blocks with the mono flag set: its set holds 1 channel, the first set 2.",
+                            aa([*small[:2], with_flags(small[2], 0x4, True), *small[3:]]),
+                            [("wavpack.format-changes", "holds 1 channel, but the first holds 2 channels"), ("wavpack.subblock-size", "decorrelation weights sub-block"),
+                             ("wavpack.subblock-size", "entropy variables sub-block")], False)
+    dsd_high = blocks(base("dsd-64-high"))
+    b["dsd-high-short"] = ("The DSD block of the first block of a high mode file cut to the mode and 8 bytes: the mode needs 20 for a stereo block.",
+                           aa([dsd_with(dsd_high[0], b"\3" + bytes(8)), *dsd_high[1:]]),
+                           [("wavpack.dsd-invalid", "its high mode needs at least 20 bytes after the mode in a stereo block, but 8 bytes follow")], False)
+    dsd_parts, dsd_ids = subs(dsd_high[0])
+    at = where(dsd_ids, 0x0E)
+    raw = bytearray(dsd_parts[at])
+    raw[(4 if raw[0] & 0x80 else 2) + 3] = 19
+    dsd_parts[at] = bytes(raw)
+    b["dsd-high-rate-step"] = ("The rate step of the high mode in the DSD block of the first block set to 19, not the 20 libwavpack takes.",
+                               aa([join(dsd_high[0], dsd_parts), *dsd_high[1:]]),
+                               [("wavpack.dsd-invalid", "its high mode has a rate step of 19, not 20")], False)
+    b["weights-without-terms"] = ("The decorrelation terms left out of the second block, which keeps its weights and samples.", aa([a[0], without(a[1], 0x02), a[2]]),
+                                  [("wavpack.subblock-size", "decorrelation weights sub-block"), ("wavpack.subblock-size", "decorrelation samples sub-block")], False)
+    parts, ids = subs(a[0])
+    parts[where(ids, 0x2A)] = sub(0x2A, bytes([0, 0, 0x93, 2, 1, 0, 1]))
+    b["reorder-too-long"] = ("The new config block of the first block names a layout of 2 channels and 3 bytes of channel reordering.", aa([join(a[0], parts), *a[1:]]),
+                             [("wavpack.subblock-size", "new config block sub-block")], False)
+    later = next(i for i, x in enumerate(surround) if i > 0 and flags(x) & 0x800)
+    b["channel-info-ignored"] = ("A channel info of 2 channels and a mask of 8 speakers in the initial block of the second set, after the first block's: libwavpack keeps the first.",
+                                 aa([*surround[:later], insert_before_checksum(surround[later], sub(0x0D, bytes([2, 0xFF, 0x00]))), *surround[later + 1:]]),
+                                 [("wavpack.channel-info-ignored", "gives 2 channels and a mask of 0xFF")], True)
+    b["channel-info-after-first-block"] = ("Channel infos in the second and third block of a stereo file whose first block has none (6 channels with a 5.1 mask, then 2 channels with 8 speakers): libwavpack settled on the flags' stereo by then and takes neither.",
+                                           aa([a[0], insert_before_checksum(a[1], sub(0x0D, bytes([6, 0x3F]))), insert_before_checksum(a[2], sub(0x0D, bytes([2, 0xFF, 0x00])))]),
+                                           [("wavpack.channel-info-ignored", "gives 6 channels and a mask of 0x3F, but the flags of the first audio block that verifies gave 2 channels and a mask of 0x3")], False)
+    first_bad = bytearray(a[0])
+    first_bad[200] ^= 0x10
+    b["channel-info-after-bad-block"] = ("The first block's audio changed so its checksum fails, and a channel info of 6 channels in the second: libwavpack skips the first block, so the second is the first audio block that verifies and its channel info settles the channels.",
+                                         aa([bytes(first_bad), insert_before_checksum(a[1], sub(0x0D, bytes([6, 0x3F]))), a[2]]),
+                                         [("wavpack.block-checksum-mismatch", "not the one worked out"), ("wavpack.channel-count-mismatch", "says 6 channels")], False)
+    eight = blocks(base("lossless-8-stereo"))
+    b["shift-too-large"] = ("A left shift of 31 bits in every block of a file of 8-bit samples.", aa([patch(x, flags=(flags(x) & ~(0x1F << 13)) | (31 << 13)) for x in eight]),
+                            [("wavpack.flags-invalid", "left shift of the block at 0x0 is 31 bits, not less than the 8 bits")], False)
+    mixed = blocks(base("lossless-16-stereo"))
+    mixed[0] = join(mixed[0], [sub(0x05, bytes(8)) if i & 0x3F == 0x05 else p for p, i in zip(*subs(mixed[0]))])
+    mixed[1] = insert_before_checksum(mixed[1], sub(0x26, bytes(10)), sub(0x26, bytes(12)))
+    b["subblock-sizes-mixed"] = ("Entropy variables of 8 bytes in the first block, and two MD5 sub-blocks of 10 and 12 bytes in the second.", aa(mixed),
+                                 [("wavpack.subblock-size", "entropy variables sub-block"), ("wavpack.subblock-size", "MD5 sub-block")], False)
     seek = id3v2_seek(100 + len(a[0]))
     b["seek-tag-between-blocks"] = ("Stray bytes and a block after an ID3v2.4 tag whose SEEK frame points at a second ID3v2 tag, then the other blocks: the stream declares no end, so it is read up to the second tag and the bytes after it are not read.",
                                     seek + junk(100) + a[0] + id3v2_title() + aa(a[1:]), [("wavpack.data-after-tag", "follow an ID3v2 tag"), ("wavpack.data-skipped", "100 bytes"), ("wavpack.total-samples-mismatch", "holds")], False)
@@ -350,10 +468,18 @@ def regions(data, name):
     return [("WavPack", 0, len(data))]
 
 
+def decode(name):
+    """The expectation of the decoder pass for the fixture: it does not open, or opens and unpacks this many samples with this many errors."""
+    result = DECODES[name]
+    return {"opens": False} if result is None else {"opens": True, "samples": result[0], "errors": result[1]}
+
+
 def main():
     DIRECTORY.mkdir(parents=True, exist_ok=True)
     count = 0
-    for name, (description, data, findings, valid) in build().items():
+    built = build()
+    assert set(built) == set(DECODES), sorted(set(built) ^ set(DECODES))
+    for name, (description, data, findings, valid) in built.items():
         full = f"built-{name}"
         (DIRECTORY / f"{full}.wv").write_bytes(data)
         top = regions(data, full)
@@ -362,7 +488,7 @@ def main():
         if full == "built-seek-tag-between-blocks":
             end = top[1][1] + top[1][2]
         result = m.manifest(data, start, end, {"regions": [{"name": n, "offset": o, "length": l} for n, o, l in top], "description": description,
-                                               "findings": [{"code": c, "contains": t} for c, t in findings], "crosscheck": {"valid": valid}})
+                                               "findings": [{"code": c, "contains": t} for c, t in findings], "crosscheck": {"valid": valid, "decode": decode(name)}})
         (DIRECTORY / f"{full}.expected.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         count += 1
     print(f"Wrote {count} hand-built fixtures to {DIRECTORY}")

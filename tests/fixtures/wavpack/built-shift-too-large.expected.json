@@ -1,0 +1,213 @@
+{
+ "length": 21110,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 6258,
+   "index": 0,
+   "samples": 11025,
+   "flags": "149ff830",
+   "version": "410",
+   "total": 24000,
+   "crc": "c86155d8",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     66,
+     6
+    ],
+    [
+     92,
+     3,
+     10
+    ],
+    [
+     104,
+     4,
+     8
+    ],
+    [
+     114,
+     5,
+     12
+    ],
+    [
+     128,
+     101,
+     4
+    ],
+    [
+     134,
+     42,
+     0
+    ],
+    [
+     136,
+     138,
+     6112
+    ],
+    [
+     6252,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 6258,
+   "length": 4814,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "149ff830",
+   "version": "410",
+   "total": 24000,
+   "crc": "15232443",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     6290,
+     66,
+     6
+    ],
+    [
+     6298,
+     3,
+     10
+    ],
+    [
+     6310,
+     4,
+     8
+    ],
+    [
+     6320,
+     5,
+     12
+    ],
+    [
+     6334,
+     42,
+     0
+    ],
+    [
+     6336,
+     138,
+     4726
+    ],
+    [
+     11066,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 11072,
+   "length": 10038,
+   "index": 17512,
+   "samples": 6488,
+   "flags": "149ff830",
+   "version": "410",
+   "total": 24000,
+   "crc": "37829b24",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     11104,
+     66,
+     6
+    ],
+    [
+     11112,
+     3,
+     10
+    ],
+    [
+     11124,
+     4,
+     8
+    ],
+    [
+     11134,
+     5,
+     12
+    ],
+    [
+     11148,
+     42,
+     0
+    ],
+    [
+     11150,
+     138,
+     9950
+    ],
+    [
+     21104,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": null,
+   "average_bitrate": 309.6408,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 3,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 21110
+  }
+ ],
+ "description": "A left shift of 31 bits in every block of a file of 8-bit samples.",
+ "findings": [
+  {
+   "code": "wavpack.flags-invalid",
+   "contains": "left shift of the block at 0x0 is 31 bits, not less than the 8 bits"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "decode": {
+   "opens": true,
+   "samples": 24000,
+   "errors": 0
+  }
+ }
+}
