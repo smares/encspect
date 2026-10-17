@@ -36,7 +36,7 @@ internal struct PageRecord
     public long Granule;
 
     // Where the segment table is kept in Region.Lacing.
-    public long Lacing;
+    public uint Lacing;
 
     // The bytes the page covers in the file: header, segment table and body, or as many as there
     // are; a gap may be longer than any page.
@@ -182,7 +182,7 @@ public sealed partial class OggParser
     private static void AddStream(ParseContext context, Region region, PageWindow window, Node parent, LogicalStream stream)
     {
         OggCodec? codec = stream.Magic is { } magic ? OggCodecs.Identify(magic) : null;
-        ref PageRecord first = ref region.Pages[stream.FirstPage];
+        ref readonly PageRecord first = ref region.Pages[stream.FirstPage];
         Node node = parent.Add(new Node("Logical Stream", stream.Start, stream.End - stream.Start, codec?.Name ?? "Unknown")
         {
             Description = Explain.LogicalStream,
@@ -201,7 +201,7 @@ public sealed partial class OggParser
         });
         if (stream.LastGranulePage >= 0)
         {
-            ref PageRecord page = ref region.Pages[stream.LastGranulePage];
+            ref readonly PageRecord page = ref region.Pages[stream.LastGranulePage];
             node.Add(new Node("Last Granule Position", page.Offset + 6, 8, NodeValue.Integer(page.Granule))
             {
                 Description = Explain.LastGranulePosition,
@@ -274,7 +274,7 @@ public sealed partial class OggParser
         public void Feed(int index, List<MappedBytes> completed)
         {
             completed.Clear();
-            ref PageRecord page = ref region.Pages[index];
+            ref readonly PageRecord page = ref region.Pages[index];
             if (page.IsLost || (page.Status & PageStatus.DropsPending) != 0)
             {
                 _assembler.Lose();
@@ -286,7 +286,7 @@ public sealed partial class OggParser
                 }
             }
 
-            PageOutcome outcome = _assembler.Feed((page.Flags & Pages.Continued) != 0, region.Lacing.Read(page.Lacing, page.Segments), _runs);
+            PageOutcome outcome = _assembler.Feed((page.Flags & Pages.Continued) != 0, region.Lacing.Span(page.Lacing, page.Segments), _runs);
             if (outcome.ContinuationMissing)
             {
                 Reset();

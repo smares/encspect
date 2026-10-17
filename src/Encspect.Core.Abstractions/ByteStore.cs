@@ -22,7 +22,9 @@ public sealed class ByteStore
             throw new InvalidDataException("A record is longer than a block of the store.");
         }
 
-        if (_blocks.Count == 0 || length > _blocks[^1].Length - _used)
+        // A full block also starts a new one, so the position of an empty item is always inside a
+        // block: an offset equal to the block size would read as the next block's start.
+        if (_blocks.Count == 0 || _used == _blocks[^1].Length || length > _blocks[^1].Length - _used)
         {
             if (_blocks.Count == 1 << 16)
             {
