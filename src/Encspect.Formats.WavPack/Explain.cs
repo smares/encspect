@@ -70,8 +70,8 @@ internal static class Explain
     public const string IsDsd = "Whether the audio is DSD, 1-bit samples in bytes of 8, instead of PCM, added with version 5.0 (format document, section 2.0, bit 31).";
 
     public const string SubBlock0 = "A sub-block: an ID byte, a size and data padded to an even length (format document, section 3.0).";
-    public const string SubBlockId = "The sub-block's ID byte: a function number in the low five bits, whether a decoder may skip the sub-block (0x20), whether its data is one byte shorter than its size says (0x40) and whether its size takes three bytes (0x80) (format document, section 3.0).";
-    public const string SubBlockFunction = "What the sub-block holds, by number (format document, section 3.0). With the optional bit, the numbers from 0x21 are the ones decoders may skip.";
+    public const string SubBlockId = "The sub-block's ID byte: a function number in the low six bits, bit 5 (0x20) among them marking a sub-block a decoder may skip, whether its data is one byte shorter than its size says (0x40) and whether its size takes three bytes (0x80) (format document, section 3.0).";
+    public const string SubBlockFunction = "What the sub-block holds, by the number in the low six bits of the ID (format document, section 3.0; open_utils.c ID_UNIQUE). A number from 0x20 up is that of an optional sub-block, which decoders may skip.";
     public const string IsOptional = "Whether a decoder that does not know the sub-block may skip it (ID 0x20 in section 3.0). libwavpack refuses a block with an unknown sub-block that is not optional.";
     public const string HasOddSize = "Whether the data is one byte shorter than the size says, the last byte being padding (ID 0x40 in section 3.0).";
     public const string IsLarge = "Whether the size takes three bytes instead of one, for a sub-block of more than 510 bytes (ID 0x80 in section 3.0).";
@@ -163,8 +163,10 @@ internal static class Explain
     public const string Median = "A median of the residuals' magnitudes, stored as a 16-bit logarithm of its value (entropy_utils.c read_entropy_vars).";
     public const string SlowLevel = "The slow-moving level of the residuals, a logarithm, from which hybrid mode sets how coarse its quantization is (entropy_utils.c read_hybrid_profile).";
     public const string BitrateAccumulator = "The accumulator that holds the target bitrate: its high 16 bits are stored. The target is the stored value plus 568, in 1/256 bits per sample, for a mono block or a stereo block with balanced noise (write_words.c word_set_bitrate).";
+    public const string BitrateAccumulatorFalseStereo = "The accumulator that holds the target bitrate of a block whose two channels are the same. Its high 16 bits are stored; the target is the stored value plus 568 and plus 512, halved, in 1/256 bits per sample, since the data is coded once (write_words.c word_set_bitrate).";
     public const string BitrateDelta = "How much the accumulator changes with each sample, a signed logarithm; the encoder writes none (write_words.c).";
     public const string TargetBitrateAtMost = "The bitrate the hybrid encoder aimed at, as a limit: it stores a bitrate accumulator of 0 for any target below 568/256 bits per sample (about 2.22), so a smaller target cannot be told from that one (write_words.c word_set_bitrate).";
+    public const string TargetBitrateAtMostFalseStereo = "The bitrate the hybrid encoder aimed at, as a limit: for a block whose two channels are the same it stores a bitrate accumulator of 0 for any target below 540/256 bits per sample (about 2.11), so a smaller target cannot be told from that one (write_words.c word_set_bitrate).";
     public const string TargetBitrate = "The bitrate the hybrid encoder aimed at, in bits per sample and channel, worked out from the bitrate accumulator as write_words.c sets it from the encoder's setting.";
     public const string ShapingWeight = "A noise shaping weight, restored from the byte as libwavpack restores decorrelation weights.";
     public const string ShapingWeightUnused = "The second weight of a two-byte sub-block, which libwavpack reads for a second channel; a block of one channel has none (decorr_utils.c read_shaping_info).";
@@ -229,6 +231,7 @@ internal static class Explain
     public const string ConfigExe = "Whether the encoder made a self-extracting executable.";
     public const string ConfigCreateWvc = "Whether the encoder wrote a correction file next to this one.";
     public const string ConfigOptimizeWvc = "Whether the encoder maximized the hybrid compression of the lossless result (-cc).";
+    public const string ConfigCompatibleWrite = "Whether the encoder wrote an older stream version, 0x407, for decoders before 4.3, which the legacy WavpackSetConfiguration always asks for (wavpack.h CONFIG_COMPATIBLE_WRITE; pack_utils.c).";
     public const string ConfigCalcNoise = "Whether the encoder calculated the noise in hybrid mode (-n).";
     public const string ConfigExtra = "Whether the encoder used extra processing (-x), whose level follows.";
     public const string ConfigSkipWvx = "Whether the encoder left out the extra bitstream of floating point and large integer data.";
@@ -296,7 +299,7 @@ internal static class Explain
     public const string MaximumBitrate = "The bitrate of the set with the highest bitrate.";
     public const string Smallest = "The smallest set of blocks.";
     public const string Largest = "The largest set of blocks.";
-    public const string BitrateMode = "Whether the sets all have the same bitrate, which needs more than one. Lossless blocks are as long as their data needs; hybrid blocks aim at one bitrate.";
+    public const string BitrateMode = "Whether the sets all have the same bitrate: variable where they differ, constant where they do not, and unknown for a single set, since one set shows no variation. Lossless blocks are as long as their data needs; hybrid blocks aim at one bitrate.";
     public const string Distribution = "How many sets of blocks fall in each bitrate range of 32 kbps.";
     public const string DistributionBin = "The sets whose bitrate falls in this range, and their share.";
     public const string BitrateSeries = "The bitrate of each set of blocks: its bits over the time its samples last.";

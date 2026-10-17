@@ -195,7 +195,7 @@
                 },
                 {
                   "name": "Bitrate Mode",
-                  "value": "variable",
+                  "value": "unknown",
                   "offset": 0,
                   "length": 80506
                 },
@@ -520,11 +520,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 8,
+                          "value": 40,
                           "offset": 32,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -602,11 +602,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 3,
+                          "value": 35,
                           "offset": 38,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -688,7 +688,7 @@
                           "offset": 132,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -894,7 +894,7 @@
                           "offset": 140,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -1058,7 +1058,7 @@
                           "offset": 152,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -1134,7 +1134,7 @@
                           "offset": 162,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -1253,7 +1253,7 @@
                           "offset": 176,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -1337,11 +1337,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 5,
+                          "value": 37,
                           "offset": 180,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -1493,6 +1493,15 @@
                               "bitOrder": "leastSignificantFirst"
                             },
                             {
+                              "name": "WritesCompatibleStream",
+                              "value": false,
+                              "offset": 183,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
                               "name": "CalculatesNoise",
                               "value": false,
                               "offset": 183,
@@ -1583,11 +1592,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 10,
+                          "value": 42,
                           "offset": 186,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -1746,7 +1755,7 @@
                           "offset": 192,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -1818,11 +1827,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 15,
+                          "value": 47,
                           "offset": 25548,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -2174,7 +2183,7 @@
                           "offset": 25586,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -2380,7 +2389,7 @@
                           "offset": 25594,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -2521,7 +2530,7 @@
                           "offset": 25602,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -2597,7 +2606,7 @@
                           "offset": 25608,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -2691,7 +2700,7 @@
                           "offset": 25616,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -2763,11 +2772,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 15,
+                          "value": 47,
                           "offset": 38798,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -3119,7 +3128,7 @@
                           "offset": 38836,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -3325,7 +3334,7 @@
                           "offset": 38844,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -3466,7 +3475,7 @@
                           "offset": 38852,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -3542,7 +3551,7 @@
                           "offset": 38858,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -3636,7 +3645,7 @@
                           "offset": 38866,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -3708,11 +3717,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 15,
+                          "value": 47,
                           "offset": 52210,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -4064,7 +4073,7 @@
                           "offset": 52248,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -4270,7 +4279,7 @@
                           "offset": 52256,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -4434,7 +4443,7 @@
                           "offset": 52268,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -4510,7 +4519,7 @@
                           "offset": 52278,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -4629,7 +4638,7 @@
                           "offset": 52292,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {
@@ -4701,11 +4710,11 @@
                       "children": [
                         {
                           "name": "Function",
-                          "value": 15,
+                          "value": 47,
                           "offset": 80500,
                           "length": 1,
                           "bitOffset": 0,
-                          "bitLength": 5,
+                          "bitLength": 6,
                           "bitOrder": "leastSignificantFirst"
                         },
                         {

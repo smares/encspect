@@ -1,0 +1,301 @@
+{
+ "length": 34744,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 160,
+   "index": 0,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "3d7ba7a9",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     35,
+     92
+    ],
+    [
+     132,
+     101,
+     4
+    ],
+    [
+     138,
+     42,
+     2
+    ],
+    [
+     142,
+     14,
+     10
+    ],
+    [
+     154,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 160,
+   "length": 4970,
+   "index": 8192,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "55866539",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     192,
+     42,
+     2
+    ],
+    [
+     196,
+     206,
+     4924
+    ],
+    [
+     5124,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 5130,
+   "length": 5606,
+   "index": 16384,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "04da595b",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     5162,
+     42,
+     2
+    ],
+    [
+     5166,
+     206,
+     5560
+    ],
+    [
+     10730,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 10736,
+   "length": 5890,
+   "index": 24576,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "fadc0f63",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     10768,
+     42,
+     2
+    ],
+    [
+     10772,
+     206,
+     5844
+    ],
+    [
+     16620,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 16626,
+   "length": 5708,
+   "index": 32768,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "84ad07c3",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     16658,
+     42,
+     2
+    ],
+    [
+     16662,
+     206,
+     5662
+    ],
+    [
+     22328,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 22334,
+   "length": 5118,
+   "index": 40960,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "479dade0",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     22366,
+     42,
+     2
+    ],
+    [
+     22370,
+     206,
+     5072
+    ],
+    [
+     27446,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 27452,
+   "length": 4120,
+   "index": 49152,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "6f961c23",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     27484,
+     42,
+     2
+    ],
+    [
+     27488,
+     206,
+     4074
+    ],
+    [
+     31566,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 31572,
+   "length": 3172,
+   "index": 57344,
+   "samples": 8192,
+   "flags": "961c1800",
+   "version": "410",
+   "total": 65536,
+   "crc": "eba031c0",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     31604,
+     42,
+     2
+    ],
+    [
+     31608,
+     206,
+     3126
+    ],
+    [
+     34738,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 2822400,
+   "channels": 2,
+   "samples": 524288,
+   "duration": 0.18575963718820862,
+   "bits_per_sample": 1,
+   "average_bitrate": 1492.2509765625,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 8,
+   "declared": 65536
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 34744
+  }
+ ],
+ "description": "The DSD block of the first block of a high mode file cut to the mode and 8 bytes: the mode needs 20 for a stereo block.",
+ "findings": [
+  {
+   "code": "wavpack.dsd-invalid",
+   "contains": "its high mode needs at least 20 bytes after the mode in a stereo block, but 8 bytes follow"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "decode": {
+   "opens": false
+  }
+ }
+}

@@ -211,6 +211,21 @@ internal static class PacketParser
         {
             packet.Issues |= PacketIssues.Truncated;
             packet.HeaderLength = bytes.Length;
+
+            // The fields that lie wholly inside the file are read; the others stay 0 and the tree leaves them out.
+            if (position + lengthWidth <= bytes.Length)
+            {
+                packet.PacketLengthField = ReadValue(bytes, ref position, lengthWidth);
+                if (position + sequenceWidth <= bytes.Length)
+                {
+                    packet.Sequence = ReadValue(bytes, ref position, sequenceWidth);
+                    if (position + paddingWidth <= bytes.Length)
+                    {
+                        packet.PaddingLength = ReadValue(bytes, ref position, paddingWidth);
+                    }
+                }
+            }
+
             return;
         }
 
@@ -227,8 +242,9 @@ internal static class PacketParser
             packet.Issues |= PacketIssues.NoPacketSize;
             length = bytes.Length;
         }
-        else if (packet.PacketLengthField != 0 && packetSize > 0 && packet.PacketLengthField != packetSize)
+        else if (packetSize > 0 && (packet.PacketLengthField != 0 || lengthWidth > 0) && packet.PacketLengthField != packetSize)
         {
+            // A present field of 0 states a packet of no bytes (asfdec_f.c rejects it); the packet is still read at the file's size.
             packet.Issues |= PacketIssues.PacketLengthMismatch;
         }
 

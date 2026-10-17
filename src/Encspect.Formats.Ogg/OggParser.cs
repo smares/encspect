@@ -19,6 +19,7 @@ public sealed partial class OggParser : IFormatParser
     // still recognized; another format with a stronger signature wins over it.
     private const int SniffLimit = 1 << 16;
 
+
     public string Name => "Ogg";
 
     // A chain of pages from the start of the data is certain (class 100); one found within the first
@@ -36,7 +37,7 @@ public sealed partial class OggParser : IFormatParser
         }
 
         long limit = Math.Min(reader.End, reader.Start + SniffLimit);
-        long found = Pages.FindChain(window, reader.Start + 1, limit, reader.End, context.CancellationToken);
+        long found = Pages.FindChain(window, reader.Start + 1, limit, reader.End, ResyncBudget.For(limit - reader.Start), context.CancellationToken);
         return found >= 0 ? Chain(60, window, found, reader.End) : SniffResult.None;
     }
 
@@ -91,6 +92,7 @@ public sealed partial class OggParser : IFormatParser
 
         var window = new PageWindow(context.Reader);
         long position = context.Reader.Start;
+        int links = 0;
 
         // A tag found inside the data (through an ID3v2.4 SEEK frame) splits it into regions, each
         // read on its own.
@@ -99,16 +101,18 @@ public sealed partial class OggParser : IFormatParser
             long end = tag?.Offset ?? context.Reader.End;
             if (end > position)
             {
-                ParseRegion(context, window, position, end);
+                links += ParseRegion(context, window, position, end, links);
             }
 
             position = Math.Max(position, tag?.End ?? position);
         }
     }
 
-    private static void ParseRegion(ParseContext context, PageWindow window, long start, long end)
+    // The streams of one link play at the same time and form a playback group; the links of a chain, in this region and the regions
+    // before it (linksBefore), follow one another. Returns the region's number of links.
+    private static int ParseRegion(ParseContext context, PageWindow window, long start, long end, int linksBefore)
     {
-        var region = new Region(start, end);
+        var region = new Region(start, end) { GroupBase = linksBefore };
         Scan(region, window, context.CancellationToken);
         CloseStreams(region);
 
@@ -129,6 +133,7 @@ public sealed partial class OggParser : IFormatParser
         });
 
         region.Findings.Flush(context);
+        return region.Link;
     }
 
     // The scan: pages, gaps, and each page's place in its logical stream.
@@ -166,7 +171,7 @@ public sealed partial class OggParser : IFormatParser
                 {
                     // A page that another page starts inside was cut short there; otherwise the
                     // page that follows confirms its length and only its bytes are damaged.
-                    long cut = Pages.FindChain(window, position + header.HeaderLength, next, end, cancellationToken);
+                    long cut = Pages.FindChain(window, position + header.HeaderLength, next, end, region.Resync, cancellationToken);
                     if (cut >= 0)
                     {
                         AddPage(region, window, header, 0, (int)(cut - position), PageStatus.Truncated, runs);
@@ -187,7 +192,7 @@ public sealed partial class OggParser : IFormatParser
             else if (probe != PageProbe.NotAPage && trusted)
             {
                 // The page runs past the end of the data, or the next page starts inside it.
-                long cut = Pages.FindChain(window, position + 4, end, end, cancellationToken);
+                long cut = Pages.FindChain(window, position + 4, end, end, region.Resync, cancellationToken);
                 long stop = cut >= 0 ? cut : end;
                 if (stop - position >= PageHeader.FixedLength)
                 {
@@ -203,11 +208,17 @@ public sealed partial class OggParser : IFormatParser
                 continue;
             }
 
-            long found = Pages.FindChain(window, position + 1, end, end, cancellationToken);
+            long found = Pages.FindChain(window, position + 1, end, end, region.Resync, cancellationToken);
             long gapEnd = found < 0 ? end : found;
             AddGap(region, position, gapEnd);
             position = gapEnd;
             inSync = found >= 0;
+        }
+
+        if (region.Resync.IsExhausted)
+        {
+            region.Findings.Add(-1, Severity.Warning, "ogg.resync-limit", new Node("Ogg", region.Start, region.End - region.Start), _ =>
+                "The search for pages after damaged data stopped checking candidates, having spent the checksum work it allows for data of this size; what no page was found for is read as a gap.");
         }
     }
 
@@ -234,7 +245,12 @@ public sealed partial class OggParser : IFormatParser
     private static void AddPage(Region region, PageWindow window, in PageHeader header, uint computed, int length, PageStatus status, List<Run> runs)
     {
         int index = region.Pages.Count;
-        LogicalStream stream = Assign(region, header, index);
+        if (Assign(region, header, index) is not { } stream)
+        {
+            AddUntracked(region, window, header, computed, length, status);
+            return;
+        }
+
         int present = Math.Min(header.Segments, length - PageHeader.FixedLength);
         ReadOnlySpan<byte> lacing = window.Get(header.Offset + PageHeader.FixedLength, present);
 
@@ -292,14 +308,48 @@ public sealed partial class OggParser : IFormatParser
         region.PageCount++;
     }
 
+    // A page of a stream beyond the region's limit: kept as a record of the page and its segment table, never followed, so a file of
+    // beginning-of-stream pages costs the records of its pages and no more than the limit's streams cost.
+    private static void AddUntracked(Region region, PageWindow window, in PageHeader header, uint computed, int length, PageStatus status)
+    {
+        int present = Math.Min(header.Segments, length - PageHeader.FixedLength);
+        region.Pages.Add(new PageRecord
+        {
+            Offset = header.Offset,
+            Length = length,
+            Granule = header.Granule,
+            Serial = header.Serial,
+            Sequence = header.Sequence,
+            Crc = header.Crc,
+            ComputedCrc = computed,
+            Flags = header.Flags,
+            Segments = (byte)header.Segments,
+            Lacing = region.Lacing.Add(window.Get(header.Offset + PageHeader.FixedLength, present)),
+            Stream = -1,
+            Status = status | PageStatus.Untracked,
+        });
+        region.PageCount++;
+        long offset = header.Offset;
+        int limit = region.MaxStreams;
+        long size = region.End - region.Start;
+        region.Findings.Add(-1, Severity.Info, "ogg.too-many-streams", HeaderTypeField(offset), count =>
+            $"{CountPages(count)} of logical streams past the analyzer's limit of {limit} streams for {Bytes(size)} of data {(count == 1 ? "is" : "are")} not followed, the first at 0x{offset:X}; the limit bounds what a file of many tiny streams can cost and grows with the data.");
+    }
+
     // Which logical stream a page belongs to. Beginning-of-stream pages start streams; one that
     // comes after other pages, or after every stream of the link has ended, starts the next link of
     // a chain (RFC 3533, section 4: "grouping" puts all beginning-of-stream pages first, "chaining"
     // starts a new group after the last one ends).
-    private static LogicalStream Assign(Region region, PageHeader header, int index)
+    // Null for a page of a stream beyond the region's limit (Region.MaxStreams), which is not followed.
+    private static LogicalStream? Assign(Region region, PageHeader header, int index)
     {
         if (header.IsBeginning)
         {
+            if (region.Streams.Count >= region.MaxStreams)
+            {
+                return null;
+            }
+
             if (region.LinkHasData || (region.Streams.Count > 0 && region.OpenInLink == 0))
             {
                 region.Link++;
@@ -307,11 +357,15 @@ public sealed partial class OggParser : IFormatParser
                 region.OpenInLink = 0;
             }
 
-            if (region.BySerial.TryGetValue(header.Serial, out LogicalStream? existing) && existing.Link == region.Link)
+            if (region.BySerial.TryGetValue(header.Serial, out LogicalStream? existing))
             {
+                // RFC 3533, section 4: a serial number is unique "within the scope of the physical bitstream", so also across the links
+                // of a chain, as in two Ogg files that were joined.
                 uint serial = header.Serial;
-                region.Findings.Add(existing.Index, Severity.Warning, "ogg.serial-reused", SerialField(header.Offset), _ =>
-                    $"The beginning-of-stream page at 0x{header.Offset:X} starts a second logical stream with the serial number 0x{serial:X8} in the same link, which RFC 3533 forbids; its pages are read as a new stream.");
+                bool sameLink = existing.Link == region.Link;
+                region.Findings.Add(existing.Index, Severity.Warning, "ogg.serial-reused", SerialField(header.Offset), _ => sameLink
+                    ? $"The beginning-of-stream page at 0x{header.Offset:X} starts a second logical stream with the serial number 0x{serial:X8} in the same link, which RFC 3533 forbids; its pages are read as a new stream."
+                    : $"The beginning-of-stream page at 0x{header.Offset:X} starts a logical stream in a later link with the serial number 0x{serial:X8} of an earlier one, which RFC 3533 forbids: every logical stream of the physical bitstream has its own; its pages are read as a new stream.");
             }
 
             return NewStream(region, header, index, hasBos: true);
@@ -334,6 +388,11 @@ public sealed partial class OggParser : IFormatParser
             }
 
             return stream;
+        }
+
+        if (region.Streams.Count >= region.MaxStreams)
+        {
+            return null;
         }
 
         LogicalStream started = NewStream(region, header, index, hasBos: false);
@@ -489,15 +548,35 @@ public sealed partial class OggParser : IFormatParser
 
     // A stream without an end-of-stream page was cut short, or the next link of a chain began
     // before it ended.
-    private static void CloseStreams(Region region)
+    internal static void CloseStreams(Region region)
     {
+        // The first beginning-of-stream stream of a later link, per stream; links only grow with the streams' order, so one pass
+        // from the end finds them all.
+        var nextBos = new LogicalStream?[region.Streams.Count];
+        LogicalStream? after = null;
+        LogicalStream? inGroup = null;
+        int groupLink = -1;
+        for (int i = nextBos.Length - 1; i >= 0; i--)
+        {
+            LogicalStream candidate = region.Streams[i];
+            if (candidate.Link != groupLink)
+            {
+                after = inGroup ?? after;
+                inGroup = null;
+                groupLink = candidate.Link;
+            }
+
+            nextBos[i] = after;
+            inGroup = candidate.HasBos ? candidate : inGroup;
+        }
+
         foreach (LogicalStream stream in region.Streams)
         {
             ref PageRecord last = ref region.Pages[stream.LastPage];
             long offset = last.Offset;
             if (!stream.HasEos)
             {
-                LogicalStream? next = region.Streams.FirstOrDefault(s => s.Link > stream.Link && s.HasBos);
+                LogicalStream? next = nextBos[stream.Index];
                 string where = next is not null && !stream.ContinuesAcrossLinks
                     ? $"before the next link of the chain begins at 0x{next.Start:X}"
                     : "before the end of the data, so the file was probably cut short or not finished";

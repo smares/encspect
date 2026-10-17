@@ -1,0 +1,82 @@
+{
+ "description": "Ten unprotected ADTS frames whose headers declare four raw data blocks each (number_of_raw_data_blocks_in_frame 3), each holding one channel pair block: the samples are counted for the block it holds.",
+ "length": 460,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 10240,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   46
+  ],
+  [
+   46,
+   46
+  ],
+  [
+   92,
+   46
+  ],
+  [
+   138,
+   46
+  ],
+  [
+   184,
+   46
+  ],
+  [
+   230,
+   46
+  ],
+  [
+   276,
+   46
+  ],
+  [
+   322,
+   46
+  ],
+  [
+   368,
+   46
+  ],
+  [
+   414,
+   46
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Raw Data Blocks": "10 blocks"
+ },
+ "findings": [
+  [
+   "aac.blocks-missing",
+   "10 ADTS frames hold fewer raw data blocks than their headers declare"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg's parser counts the declared blocks and decodes one.",
+   "faad": "faad2 reads one raw data block per ADTS frame.",
+   "faad_trace": "faad2 reads one raw data block per ADTS frame.",
+   "decode": "ffmpeg decodes one block of a frame that declares four."
+  }
+ }
+}
