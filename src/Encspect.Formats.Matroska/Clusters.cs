@@ -235,7 +235,7 @@ internal sealed partial class FileReader
         {
             _recordsReported = true;
             _findings.AddNow(Severity.Warning, "matroska.too-many-elements",
-                $"The file holds more than {MaxRecords} blocks and elements inside Clusters; the rest, from 0x{position:X}, is not read.",
+                $"The file holds more than {Counts.Of(MaxRecords, "block", "blocks")} and elements inside Clusters; the rest, from 0x{position:X}, is not read.",
                 new Node("Unparsed Data", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.UnparsedData });
         }
 

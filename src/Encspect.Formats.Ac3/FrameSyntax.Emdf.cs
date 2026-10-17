@@ -316,7 +316,7 @@ internal sealed partial class FrameSyntax
             if (declaredEnd > end)
             {
                 Report(Issue.EmdfTruncated, "Container Length", _lastStart, _lastEnd,
-                    $"emdf_container_length gives {lengthBytes} bytes, but the {(end - body) / 8} bytes that remain in the field end first");
+                    $"emdf_container_length gives {Counts.Of(lengthBytes, "byte", "bytes")}, but the {Counts.Of((end - body) / 8, "byte", "bytes")} that remain in the field end first");
             }
 
             _emdfBound = Math.Min(declaredEnd, end);
@@ -358,7 +358,7 @@ internal sealed partial class FrameSyntax
 
             if (!ended)
             {
-                throw new EmdfLimit($"the container holds more than the {MaxEmdfPayloads} payloads the analyzer reads");
+                throw new EmdfLimit($"the container holds more than the {Counts.Of(MaxEmdfPayloads, "payload", "payloads")} the analyzer reads");
             }
 
             EmdfProtection();
@@ -376,7 +376,7 @@ internal sealed partial class FrameSyntax
             if (_b.Position != declaredEnd && declaredEnd <= end)
             {
                 Report(Issue.EmdfLength, "EMDF Container", at, Math.Min(end, Math.Max(declaredEnd, _b.Position)),
-                    $"the fields end after {(_b.Position - body + 7) / 8} bytes, but emdf_container_length gives {lengthBytes}");
+                    $"the fields end after {Counts.Of((_b.Position - body + 7) / 8, "byte", "bytes")}, but emdf_container_length gives {lengthBytes}");
             }
 
             stop = Math.Min(end, Math.Max(declaredEnd, _b.Position));
@@ -386,7 +386,7 @@ internal sealed partial class FrameSyntax
             if (declaredEnd <= end)
             {
                 Report(Issue.EmdfLength, "EMDF Container", at, declaredEnd,
-                    $"the container's fields run past the {lengthBytes} bytes emdf_container_length gives");
+                    $"the container's fields run past the {Counts.Of(lengthBytes, "byte", "bytes")} emdf_container_length gives");
             }
             else
             {
@@ -452,7 +452,7 @@ internal sealed partial class FrameSyntax
         if (payloadEnd > bound)
         {
             Report(Issue.EmdfPayloadSize, "Payload Size", sizeStart, sizeEnd,
-                $"the payload with ID {id} is {size} bytes, but only {(bound - payloadStart) / 8} bytes remain in the container");
+                $"the payload with ID {id} is {Counts.Of(size, "byte", "bytes")}, but only {Counts.Of((bound - payloadStart) / 8, "byte", "bytes")} remain in the container");
             _t?.CloseTo(_t.OpenCount - 1, bound);
             _b.MoveTo(Math.Min(bound, _b.Limit));
             _emdfBound = -1;
@@ -542,14 +542,14 @@ internal sealed partial class FrameSyntax
     private void EmdfProtection()
     {
         _t?.Open("Protection", _b.Position, Explain.EmdfProtection, Topics.ObjectAudio);
-        int primary = E("Primary Protection Length", 2, Explain.EmdfProtectionPrimary, v => v == 0 ? "0 (reserved)" : $"{v} ({ProtectionBits(v)} bits)");
+        int primary = E("Primary Protection Length", 2, Explain.EmdfProtectionPrimary, v => v == 0 ? "0 (reserved)" : $"{v} ({Counts.Of(ProtectionBits(v), "bit", "bits")})");
         if (primary == 0)
         {
             Report(Issue.EmdfReserved, "Primary Protection Length", _lastStart, _lastEnd, "protection_length_primary is 0, which ETSI TS 102 366 H.2.2.4.1 reserves");
             throw new EmdfStop();
         }
 
-        int secondary = E("Secondary Protection Length", 2, Explain.EmdfProtectionSecondary, v => v == 0 ? "0 (none)" : $"{v} ({ProtectionBits(v)} bits)");
+        int secondary = E("Secondary Protection Length", 2, Explain.EmdfProtectionSecondary, v => v == 0 ? "0 (none)" : $"{v} ({Counts.Of(ProtectionBits(v), "bit", "bits")})");
         foreach ((string name, int bits) in new[] { ("Primary Protection Bits", ProtectionBits(primary)), ("Secondary Protection Bits", secondary == 0 ? 0 : ProtectionBits(secondary)) })
         {
             if (bits == 0)
@@ -588,7 +588,7 @@ internal sealed partial class FrameSyntax
         {
             Report(Issue.JocReserved, "JOC Header", start, start + 12,
                 dmx >= 5 ? $"joc_dmx_config_idx is {dmx}, which TS 103 420 Table 47 reserves"
-                : objects > 16 ? $"joc_num_objects_bits gives {objects} objects, above the 16 that 6.3.2.4 allows"
+                : objects > 16 ? $"joc_num_objects_bits gives {Counts.Of(objects, "object", "objects")}, above the 16 that 6.3.2.4 allows"
                 : $"joc_ext_config_idx is {extension}, which TS 103 420 Table 49 reserves");
         }
 

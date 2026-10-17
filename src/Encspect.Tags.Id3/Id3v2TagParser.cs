@@ -120,7 +120,7 @@ public sealed class Id3v2TagParser : ITagParser
         long start = end - (2 * HeaderSize) - size;
         if (start < reader.Start)
         {
-            return TagProbe.Reject(footerStart, $"the footer declares {size} bytes, more than precede it");
+            return TagProbe.Reject(footerStart, $"the footer declares {Counts.Of(size, "byte", "bytes")}, more than precede it");
         }
 
         byte[] header = reader.ReadBytesAt(start, HeaderSize);
@@ -175,7 +175,7 @@ public sealed class Id3v2TagParser : ITagParser
         var state = new ParseState(tag, major) { IsTruncated = truncated };
 
         state.Evidence.Add(new Evidence($"Signature \"ID3\" with version 2.{major}.{revision}", start, 5));
-        state.Evidence.Add(new Evidence($"Syncsafe size of {size} bytes", start + 6, 4));
+        state.Evidence.Add(new Evidence($"Syncsafe size of {Counts.Of(size, "byte", "bytes")}", start + 6, 4));
 
         AddHeaderNode(tag, "Header", "ID3", start, header);
         Node headerNode = tag.Children[^1];
@@ -200,7 +200,7 @@ public sealed class Id3v2TagParser : ITagParser
             state.Findings.Add(new Finding(
                 Severity.Error,
                 "id3v2.truncated",
-                $"The ID3v2 header declares {size} bytes after the header, but the file ends {reader.End - start - HeaderSize} bytes into the tag.",
+                $"The ID3v2 header declares {Counts.Of(size, "byte", "bytes")} after the header, but the file ends {Counts.Of(reader.End - start - HeaderSize, "byte", "bytes")} into the tag.",
                 tag));
         }
 
@@ -246,7 +246,7 @@ public sealed class Id3v2TagParser : ITagParser
                 state.Findings.Add(new Finding(
                     Severity.Warning,
                     "id3v2.padding-size-mismatch",
-                    $"The extended header declares {expected} bytes of padding, but the tag has {padding}.",
+                    $"The extended header declares {Counts.Of(expected, "byte", "bytes")} of padding, but the tag has {padding}.",
                     tag));
             }
 
@@ -532,7 +532,7 @@ public sealed class Id3v2TagParser : ITagParser
             Node node = ext.Add(name, data.OffsetOf(i), data.FileLength(i, i + 1 + length), FormatExtendedValue(name, value), description);
             if (length != expected)
             {
-                AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header's {name.ToLowerInvariant()} data is {length} bytes; ID3v2.4 defines {expected}.");
+                AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header's {name.ToLowerInvariant()} data is {Counts.Of(length, "byte", "bytes")}; ID3v2.4 defines {expected}.");
             }
 
             if (name == "Restrictions" && length == 1)
@@ -551,7 +551,7 @@ public sealed class Id3v2TagParser : ITagParser
         // "Extended header size ... is the size of the whole extended header".
         if (4 + i < size)
         {
-            AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header declares {size} bytes, but its flags and their data take {4 + i}.");
+            AddExtendedHeaderProblem(state, start, body.FilePosition, $"The extended header declares {Counts.Of(size, "byte", "bytes")}, but its flags and their data take {4 + i}.");
         }
 
         return null;
@@ -656,7 +656,7 @@ public sealed class Id3v2TagParser : ITagParser
             Node first = state.NotUnsynchronized[0];
             string which = state.NotUnsynchronized.Count == 1
                 ? $"frame {first.Name} at 0x{first.Offset:X} is not"
-                : $"{state.NotUnsynchronized.Count} frames are not, the first {first.Name} at 0x{first.Offset:X}";
+                : $"{Counts.Of(state.NotUnsynchronized.Count, "frame", "frames")} are not, the first {first.Name} at 0x{first.Offset:X}";
             state.Findings.Add(new Finding(
                 Severity.Warning,
                 "id3v2.unsync-flag-mismatch",
@@ -686,12 +686,12 @@ public sealed class Id3v2TagParser : ITagParser
         };
         if (state.Frames.Count > size.Frames)
         {
-            Violation($"the tag to {size.Text}, but it holds {state.Frames.Count} frames", state.Tag);
+            Violation($"the tag to {size.Text}, but it holds {Counts.Of(state.Frames.Count, "frame", "frames")}", state.Tag);
         }
 
         if (tagLength > size.Bytes)
         {
-            Violation($"the tag to {size.Text}, but it is {tagLength} bytes long", state.Tag);
+            Violation($"the tag to {size.Text}, but it is {Counts.Of(tagLength, "byte", "bytes")} long", state.Tag);
         }
 
         bool latin1OrUtf8 = (restrictions & 0x20) != 0;
@@ -815,7 +815,7 @@ public sealed class Id3v2TagParser : ITagParser
 
             if (header.Length < headerLength)
             {
-                AddUnparsed(state, frameStart, body.FilePosition, "id3v2.frame-header-truncated", $"The {header.Length} bytes at 0x{frameStart:X} are too short for a frame header.");
+                AddUnparsed(state, frameStart, body.FilePosition, "id3v2.frame-header-truncated", $"The {Counts.Of(header.Length, "byte", "bytes")} at 0x{frameStart:X} are too short for a frame header.");
                 return 0;
             }
 
@@ -828,7 +828,7 @@ public sealed class Id3v2TagParser : ITagParser
                     frameStart,
                     body.FilePosition,
                     "id3v2.frame-id-invalid",
-                    $"Invalid frame ID \"{Escape(id)}\" at 0x{frameStart:X}; the remaining {body.FilePosition - frameStart} bytes of the tag are not parsed.");
+                    $"Invalid frame ID \"{Escape(id)}\" at 0x{frameStart:X}; the remaining {Counts.Of(body.FilePosition - frameStart, "byte", "bytes")} of the tag are not parsed.");
                 return 0;
             }
 
@@ -907,7 +907,7 @@ public sealed class Id3v2TagParser : ITagParser
             findings.Add(new Finding(
                 Severity.Warning,
                 "id3v2.frame-too-large",
-                $"Frame {id} at 0x{frameStart:X} declares {frameSize} bytes, but only {readTotal} remain in the tag.",
+                $"Frame {id} at 0x{frameStart:X} declares {Counts.Of(frameSize, "byte", "bytes")}, but only {readTotal} remain in the tag.",
                 frame));
         }
 
@@ -1019,7 +1019,7 @@ public sealed class Id3v2TagParser : ITagParser
             findings.Add(new Finding(
                 Severity.Warning,
                 "id3v2.data-length-mismatch",
-                $"Frame {id} at 0x{frameStart:X} has a data length indicator of {indicated} bytes, but its data is {decodedSize} bytes.",
+                $"Frame {id} at 0x{frameStart:X} has a data length indicator of {Counts.Of(indicated, "byte", "bytes")}, but its data is {Counts.Of(decodedSize, "byte", "bytes")}.",
                 frame));
         }
 
@@ -1064,10 +1064,10 @@ public sealed class Id3v2TagParser : ITagParser
 
         if (output.Length > MaxDecodedFrameBytes)
         {
-            state.Findings.Add(new Finding(Severity.Info, "id3v2.frame-compressed", $"Frame {id} is zlib-compressed and decompresses to more than the decode limit of {MaxDecodedFrameBytes} bytes; its content is not decoded.", frame));
+            state.Findings.Add(new Finding(Severity.Info, "id3v2.frame-compressed", $"Frame {id} is zlib-compressed and decompresses to more than the decode limit of {Counts.Of(MaxDecodedFrameBytes, "byte", "bytes")}; its content is not decoded.", frame));
             if (declared is { } small && small <= MaxDecodedFrameBytes)
             {
-                state.Findings.Add(new Finding(Severity.Warning, "id3v2.decompressed-size-mismatch", $"Frame {id} at 0x{frame.Offset:X} declares {small} bytes in its {field}, but decompresses to more than {MaxDecodedFrameBytes}.", frame));
+                state.Findings.Add(new Finding(Severity.Warning, "id3v2.decompressed-size-mismatch", $"Frame {id} at 0x{frame.Offset:X} declares {Counts.Of(small, "byte", "bytes")} in its {field}, but decompresses to more than {MaxDecodedFrameBytes}.", frame));
             }
 
             return null;
@@ -1075,7 +1075,7 @@ public sealed class Id3v2TagParser : ITagParser
 
         if (declared is { } size && size != output.Length)
         {
-            state.Findings.Add(new Finding(Severity.Warning, "id3v2.decompressed-size-mismatch", $"Frame {id} at 0x{frame.Offset:X} declares {size} bytes in its {field}, but decompresses to {output.Length}.", frame));
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.decompressed-size-mismatch", $"Frame {id} at 0x{frame.Offset:X} declares {Counts.Of(size, "byte", "bytes")} in its {field}, but decompresses to {output.Length}.", frame));
         }
 
         state.Findings.Add(new Finding(Severity.Info, "id3v2.frame-compressed", $"Frame {id} is zlib-compressed; its content is shown decompressed, with every field pointing at the compressed data.", frame));
@@ -1135,13 +1135,13 @@ public sealed class Id3v2TagParser : ITagParser
         if (content.Length != 4)
         {
             frame.Add("Data", content.OffsetOf(0), content.FileLength(0, content.Length), NodeValue.Integer(content.Length, "bytes"), Explain.SeekData);
-            state.Findings.Add(new Finding(Severity.Warning, "id3v2.seek-invalid", $"The SEEK frame holds {content.Length} bytes instead of 4.", frame));
+            state.Findings.Add(new Finding(Severity.Warning, "id3v2.seek-invalid", $"The SEEK frame holds {Counts.Of(content.Length, "byte", "bytes")} instead of 4.", frame));
             return;
         }
 
         uint offset = BinaryPrimitives.ReadUInt32BigEndian(content.Span);
         frame.Add("Minimum Offset", content.OffsetOf(0), content.FileLength(0, 4), NodeValue.Integer(offset), Explain.MinimumOffset);
-        frame.Value = $"next tag at least {offset} bytes after this one";
+        frame.Value = $"next tag at least {Counts.Of(offset, "byte", "bytes")} after this one";
 
         if (state.SeekOffset is not null)
         {

@@ -148,7 +148,7 @@ public sealed class DtsHdParser : IFormatParser
             context.CancellationToken.ThrowIfCancellationRequested();
             if (count++ >= MaxChunks)
             {
-                Trailing(state, position, reader.End, "dtshd.chunk-count", $"The file has more than {MaxChunks} chunks; the bytes from 0x{position:X} are not read, so the file may hold more than was found.");
+                Trailing(state, position, reader.End, "dtshd.chunk-count", $"The file has more than {Counts.Of(MaxChunks, "chunk", "chunks")}; the bytes from 0x{position:X} are not read, so the file may hold more than was found.");
                 capped = true;
                 position = reader.End;
                 break;
@@ -157,7 +157,7 @@ public sealed class DtsHdParser : IFormatParser
             long remaining = reader.End - position;
             if (remaining < ChunkHeader)
             {
-                Trailing(state, position, reader.End, "dtshd.trailing-data", $"{remaining} bytes after the last chunk are too few for a chunk header.");
+                Trailing(state, position, reader.End, "dtshd.trailing-data", $"{Counts.Of(remaining, "byte", "bytes")} after the last chunk are too few for a chunk header.");
                 position = reader.End;
                 break;
             }
@@ -168,7 +168,7 @@ public sealed class DtsHdParser : IFormatParser
             if (!printable || size > MaxSize)
             {
                 Trailing(state, position, reader.End, "dtshd.chunk-header", printable
-                    ? $"The chunk at 0x{position:X} has a size of {size} bytes, more than FFmpeg reads (2^61); the bytes from there are not read."
+                    ? $"The chunk at 0x{position:X} has a size of {Counts.Of(size, "byte", "bytes")}, more than FFmpeg reads (2^61); the bytes from there are not read."
                     : $"The bytes at 0x{position:X} are not a chunk header (an ID of eight printable characters); the bytes from there are not read.");
                 position = reader.End;
                 break;
@@ -187,12 +187,12 @@ public sealed class DtsHdParser : IFormatParser
             chunk.Add(new Node("Chunk Size", position + 8, 8, NodeValue.Integer((long)size, "bytes", "byte")) { Description = Explain.ChunkSize, Topic = Topics.File });
             if (truncated)
             {
-                state.Context.AddFinding(Severity.Warning, "dtshd.chunk-truncated", $"The {id} chunk at 0x{position:X} has a size of {size} bytes, but the file has {available} after its header.", chunk);
+                state.Context.AddFinding(Severity.Warning, "dtshd.chunk-truncated", $"The {id} chunk at 0x{position:X} has a size of {Counts.Of(size, "byte", "bytes")}, but the file has {available} after its header.", chunk);
             }
 
             if (size < 4)
             {
-                state.Note("dtshd.chunk-size", "small", $"The {id} chunk at 0x{position:X} has a size of {size} bytes; FFmpeg refuses a size under 4.", chunk);
+                state.Note("dtshd.chunk-size", "small", $"The {id} chunk at 0x{position:X} has a size of {Counts.Of(size, "byte", "bytes")}; FFmpeg refuses a size under 4.", chunk);
             }
 
             if ((position - reader.Start) % 4 != 0)
@@ -349,7 +349,7 @@ internal sealed record Presentation(Node Chunk, int MaxRate, int Channels, bool 
         if (HasChannels && Channels > 0 && stream.Channels > 0 && Channels != stream.Channels)
         {
             state.Context.AddFinding(Severity.Warning, "dtshd.metadata-differs",
-                $"AUPR-HDR's Channel_Mask names {Channels} channels, but the stream has {stream.Channels}; FFmpeg sets up its decoder from the chunk.", Chunk);
+                $"AUPR-HDR's Channel_Mask names {Counts.Of(Channels, "channel", "channels")}, but the stream has {stream.Channels}; FFmpeg sets up its decoder from the chunk.", Chunk);
         }
     }
 }

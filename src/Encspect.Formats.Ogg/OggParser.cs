@@ -477,7 +477,7 @@ public sealed partial class OggParser : IFormatParser
         region.Findings.Add(stream.Index, Severity.Warning, "ogg.page-truncated", new Node("Page", offset, length), count =>
             count == 1
                 ? $"The page at 0x{offset:X} is cut short after {Bytes(length)} of {Bytes(declared)}; decoders drop it with its packets."
-                : $"{count} pages of the logical stream 0x{stream.Serial:X8} are cut short; decoders drop them with their packets. The first at 0x{offset:X}, after {Bytes(length)} of {Bytes(declared)}.");
+                : $"{Counts.Of(count, "page", "pages")} of the logical stream 0x{stream.Serial:X8} are cut short; decoders drop them with their packets. The first at 0x{offset:X}, after {Bytes(length)} of {Bytes(declared)}.");
     }
 
     // The first bytes of a stream's first packet, which name its codec.

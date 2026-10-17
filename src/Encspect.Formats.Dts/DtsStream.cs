@@ -320,7 +320,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
         if (_resolutions.Count > 0)
         {
-            Add("Source PCM Resolution", string.Join(", ", _resolutions.Order().Select(r => r == 0 ? "invalid" : $"{r} bits")), Explain.StatResolution, Topics.CoreFrames);
+            Add("Source PCM Resolution", string.Join(", ", _resolutions.Order().Select(r => r == 0 ? "invalid" : $"{Counts.Of(r, "bit", "bits")}")), Explain.StatResolution, Topics.CoreFrames);
         }
 
         if (key.HasCore)

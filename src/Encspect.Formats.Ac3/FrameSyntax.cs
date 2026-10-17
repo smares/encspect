@@ -304,7 +304,7 @@ internal sealed partial class FrameSyntax
                 if (hasLength && auxLength > auxStart - dataEnd && !_b.IsBuildingNodes)
                 {
                     Report(Issue.AuxiliaryLength, "Auxiliary Data Length", frameEnd - 32, frameEnd - 18,
-                        $"auxdatal gives {auxLength} bits of auxiliary data, but the field holds {Math.Max(0, auxStart - dataEnd)}");
+                        $"auxdatal gives {Counts.Of(auxLength, "bit", "bits")} of auxiliary data, but the field holds {Math.Max(0, auxStart - dataEnd)}");
                 }
             }
 
@@ -608,7 +608,7 @@ internal sealed partial class FrameSyntax
             if (mapped != _nfchans + (_lfeon ? 1 : 0))
             {
                 Report(Issue.ChannelMapCount, LastField(), _lastStart, _lastEnd,
-                    $"the channel map names {mapped} channels, but acmod and lfeon code {_nfchans + (_lfeon ? 1 : 0)}");
+                    $"the channel map names {Counts.Of(mapped, "channel", "channels")}, but acmod and lfeon code {_nfchans + (_lfeon ? 1 : 0)}");
             }
         }
 
@@ -815,7 +815,7 @@ internal sealed partial class FrameSyntax
             }
 
             Report(Issue.MixDataOverrun, "Mixing Parameters", start, end,
-                $"its fields need more than the {end - start} bits that mixdeflen gives");
+                $"its fields need more than the {Counts.Of(end - start, "bit", "bits")} that mixdeflen gives");
         }
         else if (_b.Position < end)
         {
@@ -1071,7 +1071,7 @@ internal sealed partial class FrameSyntax
     private static NodeValue SampleRateCode(int value) => value < 3 ? NodeValue.Integer(SyncFrame.Rates[value], "Hz") : "3 (reserved)";
 
     private static NodeValue FrameSize(int value, int fscod) =>
-        value < 38 && fscod < 3 ? $"{value} ({Tables.NominalBitrates[value >> 1]} kbps, {SyncFrame.WordsOf(fscod, value) * 2} bytes)" : $"{value} (invalid)";
+        value < 38 && fscod < 3 ? $"{value} ({Tables.NominalBitrates[value >> 1]} kbps, {Counts.Of(SyncFrame.WordsOf(fscod, value) * 2, "byte", "bytes")})" : $"{value} (invalid)";
 
     private static NodeValue ExponentStrategyText(int value) => Ac3Names.ExponentStrategy(value);
 

@@ -963,7 +963,7 @@ internal sealed partial class FrameSyntax
             if (!truncated && !Counted(Issue.Overrun))
             {
                 Report(Issue.Overrun, "Mantissas", start, Math.Max(start, end),
-                    $"the bit allocation gives an audio block's mantissas {bits} bits, more than the frame holds after them");
+                    $"the bit allocation gives an audio block's mantissas {Counts.Of(bits, "bit", "bits")}, more than the frame holds after them");
             }
 
             _b.MoveTo(Math.Max(start, end));

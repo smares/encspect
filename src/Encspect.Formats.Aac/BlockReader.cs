@@ -888,13 +888,13 @@ internal sealed partial class BlockReader
                     int coefficientBits = 3 + resolution - compress;
                     int coefficientsStart = bits.Original;
                     bits.Skip(order * coefficientBits);
-                    Field(filter, "Coefficients", coefficientsStart, bits.Original, n is null ? null : $"{order} of {coefficientBits} bits", Explain.TnsCoefficients);
+                    Field(filter, "Coefficients", coefficientsStart, bits.Original, n is null ? null : $"{order} of {Counts.Of(coefficientBits, "bit", "bits")}", Explain.TnsCoefficients);
                 }
 
                 total++;
                 if (window is not null)
                 {
-                    Close(window, filter!, "Filter", filterStart, bits.Original, $"order {order}, {length} bands{direction}", Explain.TnsFilter, Topics.Tns);
+                    Close(window, filter!, "Filter", filterStart, bits.Original, $"order {order}, {Counts.Of(length, "band", "bands")}{direction}", Explain.TnsFilter, Topics.Tns);
                 }
             }
 

@@ -408,7 +408,7 @@ internal sealed class Id3v2FrameDecoder
             _findings.Add(new Finding(
                 Severity.Info,
                 "id3v2.frame-text-cut",
-                $"Frame {_id} holds {_decodedSize - start} bytes of text; the first {end - start} are decoded and shown, up to the analyzer's limit for one frame.",
+                $"Frame {_id} holds {Counts.Of(_decodedSize - start, "byte", "bytes")} of text; the first {end - start} are decoded and shown, up to the analyzer's limit for one frame.",
                 _frame));
             return text;
         }

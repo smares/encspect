@@ -90,7 +90,7 @@ internal static class Tables
     public static string Arrangement(int amode) => amode switch
     {
         0 => "1/0 (center)",
-        1 => "dual mono (first channel, second channel)",
+        1 => "1+1 (channel 1, channel 2)",
         2 => "2/0 (left, right)",
         3 => "2/0 sum/difference ((left + right), (left - right))",
         4 => "2/0 left total, right total",

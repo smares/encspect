@@ -120,7 +120,7 @@ internal sealed class Ac3Analysis
         }
         else if (truncated)
         {
-            Findings.AddNow(Severity.Warning, "ac3.frame-truncated", $"The last frame at 0x{offset:X} has {available} of its {header.FrameLength} bytes.", FrameAt());
+            Findings.AddNow(Severity.Warning, "ac3.frame-truncated", $"The last frame at 0x{offset:X} has {available} of its {Counts.Of(header.FrameLength, "byte", "bytes")}.", FrameAt());
         }
 
         if (cut)
@@ -175,15 +175,15 @@ internal sealed class Ac3Analysis
                 zeros = cache.ByteAt(at) == 0;
             }
 
-            Findings.AddNow(Severity.Warning, "ac3.leading-junk", $"{length} bytes before the first frame are not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
+            Findings.AddNow(Severity.Warning, "ac3.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame are not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
         }
         else if (trailing)
         {
-            Findings.AddNow(Severity.Warning, "ac3.trailing-data", $"{length} bytes after the last frame at 0x{start:X} are not a frame.", node);
+            Findings.AddNow(Severity.Warning, "ac3.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{start:X} are not a frame.", node);
         }
         else
         {
-            Findings.AddNow(Severity.Warning, "ac3.sync-lost", $"Sync is lost for {length} bytes at 0x{start:X}.", node);
+            Findings.AddNow(Severity.Warning, "ac3.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{start:X}.", node);
         }
     }
 
@@ -451,7 +451,7 @@ internal sealed class Ac3Analysis
                 string from = lastKey.Describe();
                 string to = key.Describe();
                 Findings.Add(Severity.Info, "ac3.stream-changed", FrameAt,
-                    count => $"The stream{substream} changes at 0x{frameOffset:X} from {from} to {to}{(count > 1 ? $"; the streams change {count} times in the file" : string.Empty)}.");
+                    count => $"The stream{substream} changes at 0x{frameOffset:X} from {from} to {to}{(count > 1 ? $"; the streams change {Counts.Of(count, "time", "times")} in the file" : string.Empty)}.");
             }
         }
         else

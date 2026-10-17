@@ -30,6 +30,9 @@ public static class CodecNames
 
     public const string DtsHdMasterAudio = "DTS-HD Master Audio";
 
+    // A coding the container cannot name.
+    public const string Other = "Other";
+
     public const string EncryptedAudio = "Encrypted audio";
 
     public const string EncryptedVideo = "Encrypted video";

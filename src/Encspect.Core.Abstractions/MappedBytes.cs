@@ -60,7 +60,7 @@ public sealed class MappedBytes
 
         if (total != data.Length)
         {
-            throw new ArgumentException($"The ranges hold {total} bytes, the data {data.Length}.", nameof(ranges));
+            throw new ArgumentException($"The ranges hold {Counts.Of(total, "byte", "bytes")}, the data {data.Length}.", nameof(ranges));
         }
 
         long end = previousEnd < 0 ? fileEnd ?? 0 : previousEnd;
@@ -170,7 +170,7 @@ public sealed class MappedBytes
 
         if (total > Array.MaxLength)
         {
-            throw new InvalidDataException($"A packet of {total} bytes is too large to read.");
+            throw new InvalidDataException($"A packet of {Counts.Of(total, "byte", "bytes")} is too large to read.");
         }
 
         var data = new byte[total];

@@ -199,7 +199,7 @@ public sealed partial class AsfParser
         Node? counted = totalNode;
         if (!state.IsBroadcast && (long)total != figures.PacketCount && counted is not null)
         {
-            state.Findings.AddNow(Severity.Warning, "asf.packet-count", $"The Data Object counts {total} packets, but it holds {figures.PacketCount}.", counted);
+            state.Findings.AddNow(Severity.Warning, "asf.packet-count", $"The Data Object counts {Counts.Of(total, "packet", "packets")}, but it holds {figures.PacketCount}.", counted);
         }
     }
 
@@ -226,7 +226,7 @@ public sealed partial class AsfParser
         int packetSize = state.PacketSize;
         if (state.FilePropertiesNode is { } && (state.MaxPacketSize > MaxPacketSize || state.MinPacketSize > MaxPacketSize))
         {
-            state.Findings.AddNow(Severity.Warning, "asf.packet-size", $"The File Properties Object states a packet size above {MaxPacketSize} bytes, which is not read.", state.PacketSizeNode!);
+            state.Findings.AddNow(Severity.Warning, "asf.packet-size", $"The File Properties Object states a packet size above {Counts.Of(MaxPacketSize, "byte", "bytes")}, which is not read.", state.PacketSizeNode!);
         }
 
         byte[] buffer = new byte[Math.Max(packetSize, 1024)];
@@ -459,14 +459,14 @@ public sealed partial class AsfParser
             };
             dataNode.Add(rest);
             state.Findings.AddNow(Severity.Info, "asf.packets-undetailed",
-                $"The Data Object holds {figures.PacketCount} packets; the first {count} are described packet by packet, the {undetailed} after them are counted and their media objects still analyzed.", rest);
+                $"The Data Object holds {Counts.Of(figures.PacketCount, "packet", "packets")}; the first {count} are described packet by packet, the {undetailed} after them are counted and their media objects still analyzed.", rest);
         }
 
         if (figures.UnusedStart >= 0 && figures.UnusedStart < end)
         {
             var unused = new Node("Unused Data", figures.UnusedStart, end - figures.UnusedStart, NodeValue.Integer(end - figures.UnusedStart, "bytes", "byte")) { Description = Explain.UnusedData };
             dataNode.Add(unused);
-            state.Findings.AddNow(Severity.Warning, "asf.data-unused", $"{end - figures.UnusedStart} bytes at the end of the Data Object are too few for a packet.", unused);
+            state.Findings.AddNow(Severity.Warning, "asf.data-unused", $"{Counts.Of(end - figures.UnusedStart, "byte", "bytes")} at the end of the Data Object are too few for a packet.", unused);
         }
 
         AddDataFindings(state, dataNode, figures, start);
@@ -701,7 +701,7 @@ public sealed partial class AsfParser
             }
 
             NodeValue dataValue = payload.IsCompressed
-                ? NodeValue.Text($"{Plural(payload.SubPayloads, "sub-payload", "sub-payloads")}, {payload.DataLength} bytes")
+                ? NodeValue.Text($"{Plural(payload.SubPayloads, "sub-payload", "sub-payloads")}, {Counts.Of(payload.DataLength, "byte", "bytes")}")
                 : NodeValue.Integer(payload.DataLength, "bytes", "byte");
             Field("Payload Data", payload.DataLength, dataValue, payload.IsCompressed ? Explain.SubPayloads : Explain.PayloadData);
 

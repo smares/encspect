@@ -91,13 +91,13 @@ public sealed class Lyrics3TagParser : ITagParser
         var evidence = new List<Evidence>
         {
             new("End marker \"LYRICSEND\"", marker, MarkerSize),
-            new($"\"LYRICSBEGIN\" {marker - start} bytes earlier", start, Begin.Length),
+            new($"\"LYRICSBEGIN\" {Counts.Of(marker - start, "byte", "bytes")} earlier", start, Begin.Length),
         };
         Confidence confidence = Confidence.High;
 
         if (lyricsLength > MaxV1Lyrics)
         {
-            findings.Add(new Finding(Severity.Warning, "lyrics3.too-long", $"The lyrics are {lyricsLength} bytes long; Lyrics3 v1 allows at most 5100.", lyricsNode));
+            findings.Add(new Finding(Severity.Warning, "lyrics3.too-long", $"The lyrics are {Counts.Of(lyricsLength, "byte", "bytes")} long; Lyrics3 v1 allows at most 5100.", lyricsNode));
         }
 
         // Lyrics3 v1: "A byte in the text must not have the binary value 255." $00 is reported as
@@ -265,7 +265,7 @@ public sealed class Lyrics3TagParser : ITagParser
                 // The 1998 Lyrics3 v2.00 text defines 2 characters, id3.org's later one 3.
                 if (fieldSize is not (2 or 3))
                 {
-                    findings.Add(new Finding(Severity.Warning, "lyrics3.ind-size", $"The IND field holds {fieldSize} characters; Lyrics3 v2.00 defines 2, and a later revision 3.", field));
+                    findings.Add(new Finding(Severity.Warning, "lyrics3.ind-size", $"The IND field holds {Counts.Of(fieldSize, "character", "characters")}; Lyrics3 v2.00 defines 2, and a later revision 3.", field));
                 }
 
                 indications = (value, field);
@@ -286,7 +286,7 @@ public sealed class Lyrics3TagParser : ITagParser
 
             if (ShortFields.Contains(id) && fieldSize > 250)
             {
-                findings.Add(new Finding(Severity.Warning, "lyrics3.field-too-long", $"Field {id} holds {fieldSize} characters; Lyrics3 v2.00 allows at most 250.", field));
+                findings.Add(new Finding(Severity.Warning, "lyrics3.field-too-long", $"Field {id} holds {Counts.Of(fieldSize, "character", "characters")}; Lyrics3 v2.00 allows at most 250.", field));
             }
 
             pos += 8 + fieldSize;
@@ -358,7 +358,7 @@ public sealed class Lyrics3TagParser : ITagParser
                 Node part = image.Add(names[i], image.Offset + offset, parts[i].Length, parts[i], texts[i]);
                 if (i == 1 && parts[i].Length > 250)
                 {
-                    findings.Add(new Finding(Severity.Warning, "lyrics3.field-too-long", $"An IMG description holds {parts[i].Length} characters; Lyrics3 v2.00 allows at most 250.", part));
+                    findings.Add(new Finding(Severity.Warning, "lyrics3.field-too-long", $"An IMG description holds {Counts.Of(parts[i].Length, "character", "characters")}; Lyrics3 v2.00 allows at most 250.", part));
                 }
                 else if (i == 2 && parts[i].Length > 0)
                 {

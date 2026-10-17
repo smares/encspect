@@ -1,3 +1,4 @@
+using Encspect.Core;
 namespace Encspect.Formats.Wma;
 
 // What a Windows Media Audio version 1 or 2 stream is configured with, and what follows from it,
@@ -88,7 +89,7 @@ internal sealed class StandardParameters
 
         if (sampleRate <= 0 || sampleRate > 50000 || channels <= 0 || channels > 2 || p.BitRate <= 0)
         {
-            p.Error = $"FFmpeg's decoder takes 1 to 50,000 Hz, 1 or 2 channels and a bitrate above 0 (wma.c: ff_wma_init); the stream has {sampleRate} Hz, {channels} channels and {p.BitRate} bps";
+            p.Error = $"FFmpeg's decoder takes 1 to 50,000 Hz, 1 or 2 channels and a bitrate above 0 (wma.c: ff_wma_init); the stream has {sampleRate} Hz, {Counts.Of(channels, "channel", "channels")} and {p.BitRate} bps";
             return p;
         }
 
@@ -336,7 +337,7 @@ internal sealed class StandardParameters
 
         if (ByteOffsetBits + 3 > 25)
         {
-            Error = $"the bit offset of a superframe would take {ByteOffsetBits + 3} bits, more than FFmpeg's reader caches (wma.c: byte_offset_bits)";
+            Error = $"the bit offset of a superframe would take {Counts.Of(ByteOffsetBits + 3, "bit", "bits")}, more than FFmpeg's reader caches (wma.c: byte_offset_bits)";
         }
     }
 

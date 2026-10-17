@@ -52,7 +52,7 @@ public sealed class WmaVoiceParser : ICodecParser
         if (format.Channels != 1)
         {
             findings.AddNow(Severity.Info, "wma.voice-channels",
-                $"The container states {format.Channels} channels; FFmpeg's decoder outputs mono whatever the container says (wmavoice.c), and a superframe holds one channel.", configuration.Parent);
+                $"The container states {Counts.Of(format.Channels, "channel", "channels")}; FFmpeg's decoder outputs mono whatever the container says (wmavoice.c), and a superframe holds one channel.", configuration.Parent);
         }
 
         VoiceStream stream = null!;

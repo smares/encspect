@@ -24,8 +24,21 @@ public partial class CrossFormatNamingTests
     [GeneratedRegex(@"^\d/\d \((left|center|right)")]
     private static partial Regex ChannelModeWithSpeakers();
 
-    [GeneratedRegex(@"(?<![\w.-]|to )1 (bytes|bits|items|entries|channels|blocks|frames|samples|packets|bands|subbands|levels|degrees|ticks|times|pages|streams|records|elements|segments|objects|values|sets|words|sections|tracks|chunks|payloads|fields|steps|coefficients|granules|groups|ranges|pieces|parts|headers|sizes)\b")]
+    // Any "1" followed by a plural: a count of one reads in the singular. Not a count: a number that names something ("stream 1 codes"), a verb that
+    // follows a count of one, a range ("1 to 1 bytes") and units that end in s.
+    [GeneratedRegex(@"(?<![\w.%#/-]|to |, |\b(?:stream|track|channel|frame|block|packet|page|set|substream|program|segment|group|stage|level|asset|layer|number|index|version|type|mode|band|table|entry|element|object|class|port|marker|region|link|ID|id|pass|part|section|record|item|chunk|atom|box|bit|slot|tap|row|column|scale|cycle|step|state|bin|window|row|line|file|image|object|figure|case|variant|value|code|term|field|byte|sample|of|and|or|bank|stripe|run|path|number|no)\s)1 (?<first>[a-z]+)(?<rest>(?: [a-z]+){0,2}?)(?= |$|[,.;:)]|\b)")]
     private static partial Regex PluralForOne();
+
+    private static readonly HashSet<string> NotACount = new(StringComparer.Ordinal)
+    {
+        "is", "has", "was", "uses", "gives", "states", "holds", "points", "starts", "signals", "does", "plays", "lists", "needs", "contains", "names",
+        "reads", "means", "ends", "follows", "begins", "counts", "includes", "carries", "claims", "declares", "fits", "shows", "reaches", "exceeds",
+        "requires", "takes", "stands", "sets", "gets", "makes", "leaves", "puts", "comes", "goes", "applies", "covers", "cuts", "limits", "expects",
+        "selects", "omits", "adds", "differs", "matches", "precedes", "belongs", "appears", "refers", "kbps", "bps", "ms", "Hz", "dB", "s", "us", "ns",
+        "has", "lies", "opens", "stops", "changes", "decodes", "writes", "equals", "defines", "describes", "indicates", "repeats", "remains", "holds",
+        "spreads", "allows", "permits", "caps", "implies", "leads", "yields", "uses", "multistream", "bits/s", "frames/s", "samples/s", "less", "plus", "minus", "times",
+    };
+
 
     [GeneratedRegex(@"^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$")]
     private static partial Regex Guid();
@@ -109,11 +122,37 @@ public partial class CrossFormatNamingTests
         Assert.Equal("MPEG Layer I and II", Formats.Asf.AsfParser.CodecNameOf(0x0050));
         Assert.Equal("PCM (floating-point)", Formats.Asf.AsfParser.CodecNameOf(0x0003));
 
-        // Every name matches the form the codec parsers give the same coding.
-        foreach (string name in new[] { "MPEG Layer I", "MPEG Layer II", "MPEG Layer III", "MPEG Layer I and II", "MPEG-1 audio", "MPEG-2 audio", "MPEG-4 audio" })
+        Assert.Equal("Other", Formats.Asf.AsfParser.CodecNameOf(0x2000));
+        Assert.Equal("AAC LC", Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/LC"));
+        Assert.Equal("HE-AAC", Formats.Matroska.Codecs.NameOf("A_AAC/MPEG2/LC/SBR"));
+        Assert.Equal("AAC Main", Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/MAIN"));
+    }
+
+    // One coding, one name: a container's fallback name for a coding that a codec parser reads elsewhere is the name that parser gives it, with only what
+    // the container states left out. The parsers' names are read from the fixtures' streams, so a fallback in another form fails.
+    [Fact]
+    public void AFallbackNameIsTheNameTheCodecParserGivesTheSameCoding()
+    {
+        string[] parsed = [.. AllStreams().Select(x => x.Stream.Codec).Distinct(StringComparer.Ordinal)];
+        string WithoutVersion(string name) => System.Text.RegularExpressions.Regex.Replace(name, @"^MPEG-(1|2|2\.5) Layer", "MPEG Layer");
+
+        // The layer the MPEG parser names, without the version it does not state.
+        string[] layers = [.. parsed.Where(n => n.StartsWith("MPEG-", StringComparison.Ordinal) && n.Contains("Layer", StringComparison.Ordinal)).Select(WithoutVersion).Distinct(StringComparer.Ordinal)];
+        foreach (string fallback in new[] { CodecNames.MpegAudioLayerI, CodecNames.MpegAudioLayerII, CodecNames.MpegAudioLayerIII })
         {
-            Assert.Matches(MpegAudioName(), name);
+            Assert.Contains(fallback, layers);
         }
+
+        // The other codings a parser reads.
+        foreach (string fallback in new[] { CodecNames.DtsHdMasterAudio, "DTS Express", "AAC LC", "AAC Main", "AAC SSR", "AAC LTP", "HE-AAC", CodecNames.Pcm })
+        {
+            Assert.Contains(fallback, parsed);
+        }
+
+        // The MPEG names that state only the version carry the parser's version form.
+        Assert.Contains(parsed, n => n.StartsWith("MPEG-1 ", StringComparison.Ordinal));
+        Assert.Equal("MPEG-1 audio", CodecNames.Mpeg1Audio);
+        Assert.Equal("MPEG-2 audio", CodecNames.Mpeg2Audio);
     }
 
     [Fact]
@@ -197,7 +236,11 @@ public partial class CrossFormatNamingTests
             {
                 foreach (Match match in PluralForOne().Matches(line))
                 {
-                    problems.Add($"{name}: \"{match.Value}\" in {line.Trim()}");
+                    string first = match.Groups["first"].Value;
+                    if (first.EndsWith('s') && !NotACount.Contains(first) && !first.EndsWith("ss", StringComparison.Ordinal) && first != "is")
+                    {
+                        problems.Add($"{name}: \"{match.Value}\" in {line.Trim()}");
+                    }
                 }
             }
 

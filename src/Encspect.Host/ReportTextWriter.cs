@@ -98,7 +98,7 @@ public static class ReportTextWriter
             if (node.HasChildren && node.Children.Any(options.Filter.Includes))
             {
                 Indent(writer, depth + 1);
-                writer.WriteLine($"(children nested deeper than {Node.MaxDepth} levels are not shown)");
+                writer.WriteLine($"(children nested deeper than {Counts.Of(Node.MaxDepth, "level", "levels")} are not shown)");
             }
         }
         else

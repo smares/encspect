@@ -684,7 +684,7 @@ internal sealed class VoiceStream
                     Totals.UnfinishedAtEnd++;
                     Totals.TailBitsAtEnd += available;
                     Findings.Add(Severity.Info, "wma.voice-unfinished", () => SuperframeNode(index), _ =>
-                        $"The last packet ends with {available} bits that begin a superframe needing {bits} or more, and no packet follows to finish it; a decoder drops them.");
+                        $"The last packet ends with {Counts.Of(available, "bit", "bits")} that begin a superframe needing {bits} or more, and no packet follows to finish it; a decoder drops them.");
                 }
                 else
                 {

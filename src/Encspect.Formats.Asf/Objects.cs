@@ -43,7 +43,7 @@ public sealed partial class AsfParser
             {
                 Node rest = file.Add(new Node("Unparsed Data", position, reader.End - position, NodeValue.Integer(reader.End - position, "bytes")) { Description = Explain.UnparsedData });
                 state.Findings.AddNow(Severity.Warning, "asf.object-size",
-                    $"The object at 0x{position:X} states a size of {header.Size} bytes, less than the 24 bytes of its GUID and size; the {reader.End - position} bytes from there are not read.", rest);
+                    $"The object at 0x{position:X} states a size of {Counts.Of(header.Size, "byte", "bytes")}, less than the 24 bytes of its GUID and size; the {Counts.Of(reader.End - position, "byte", "bytes")} from there are not read.", rest);
                 position = reader.End;
                 break;
             }
@@ -53,7 +53,7 @@ public sealed partial class AsfParser
             if (!toEnd && header.End > reader.End && file.Children.Count > 0)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.object-truncated",
-                    $"The {AsfGuids.ObjectName(header.Id) ?? "object"} at 0x{position:X} states a size of {header.Size} bytes, but the file ends {header.End - reader.End} bytes sooner: the file is cut short.", file.Children[^1]);
+                    $"The {AsfGuids.ObjectName(header.Id) ?? "object"} at 0x{position:X} states a size of {Counts.Of(header.Size, "byte", "bytes")}, but the file ends {Counts.Of(header.End - reader.End, "byte", "bytes")} sooner: the file is cut short.", file.Children[^1]);
             }
 
             position = end;
@@ -62,7 +62,7 @@ public sealed partial class AsfParser
         if (position < reader.End)
         {
             Node trailing = file.Add(new Node("Trailing Data", position, reader.End - position, NodeValue.Integer(reader.End - position, "bytes")) { Description = Explain.TrailingData });
-            state.Findings.AddNow(Severity.Warning, "asf.trailing-data", $"{reader.End - position} bytes after the last object at 0x{position:X} are not an object.", trailing);
+            state.Findings.AddNow(Severity.Warning, "asf.trailing-data", $"{Counts.Of(reader.End - position, "byte", "bytes")} after the last object at 0x{position:X} are not an object.", trailing);
         }
 
         Check(state);
@@ -162,7 +162,7 @@ public sealed partial class AsfParser
         if (node.Length < minimum)
         {
             state.Findings.AddNow(Severity.Warning, "asf.object-size",
-                $"The {node.Name} at 0x{node.Offset:X} is {node.Length} bytes; the specification gives at least {minimum}.", node);
+                $"The {node.Name} at 0x{node.Offset:X} is {Counts.Of(node.Length, "byte", "bytes")}; the specification gives at least {minimum}.", node);
         }
 
         try
@@ -172,7 +172,7 @@ public sealed partial class AsfParser
         catch (EndOfStreamException)
         {
             state.Findings.AddNow(Severity.Warning, "asf.object-truncated",
-                $"The {node.Name} at 0x{node.Offset:X} is {node.Length} bytes, too few for its fields; they are read as far as they go.", node);
+                $"The {node.Name} at 0x{node.Offset:X} is {Counts.Of(node.Length, "byte", "bytes")}, too few for its fields; they are read as far as they go.", node);
         }
 
         if (coversRest && fields.Remaining > 0 && node.Children.Count > 0 && node.Children[^1].End < node.End)
@@ -222,7 +222,7 @@ public sealed partial class AsfParser
             if (declared != state.HeaderObjects)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.header-object-count",
-                    $"The Header Object counts {declared} objects, but it holds {state.HeaderObjects} (the Header Extension Object counts as one, section 3.1).", node.Children.FirstOrDefault(c => c.Name == "Number of Header Objects") ?? node);
+                    $"The Header Object counts {Counts.Of(declared, "object", "objects")}, but it holds {state.HeaderObjects} (the Header Extension Object counts as one, section 3.1).", node.Children.FirstOrDefault(c => c.Name == "Number of Header Objects") ?? node);
             }
         }
     }
@@ -239,14 +239,14 @@ public sealed partial class AsfParser
             if (end - position < ObjectHeaderSize)
             {
                 Node rest = parent.Add(new Node("Unparsed Data", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnparsedData });
-                state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"{end - position} bytes at 0x{position:X} are too few for an object's GUID and size.", rest);
+                state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"{Counts.Of(end - position, "byte", "bytes")} at 0x{position:X} are too few for an object's GUID and size.", rest);
                 return;
             }
 
             if (count++ >= MaxChildObjects)
             {
                 Node rest = parent.Add(new Node("Unparsed Data", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnparsedData });
-                state.Findings.AddNow(Severity.Warning, "asf.too-many-objects", $"The {parent.Name} holds more than {MaxChildObjects} objects; the rest, from 0x{position:X}, is not read.", rest);
+                state.Findings.AddNow(Severity.Warning, "asf.too-many-objects", $"The {parent.Name} holds more than {Counts.Of(MaxChildObjects, "object", "objects")}; the rest, from 0x{position:X}, is not read.", rest);
                 return;
             }
 
@@ -255,7 +255,7 @@ public sealed partial class AsfParser
             {
                 Node rest = parent.Add(new Node("Unparsed Data", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnparsedData });
                 state.Findings.AddNow(Severity.Warning, "asf.object-size",
-                    $"The object at 0x{position:X} in the {parent.Name} states a size of {header.Size} bytes, less than the 24 bytes of its GUID and size; the {end - position} bytes from there are not read.", rest);
+                    $"The object at 0x{position:X} in the {parent.Name} states a size of {Counts.Of(header.Size, "byte", "bytes")}, less than the 24 bytes of its GUID and size; the {Counts.Of(end - position, "byte", "bytes")} from there are not read.", rest);
                 return;
             }
 
@@ -266,7 +266,7 @@ public sealed partial class AsfParser
             if (header.End > end && parent.Children.Count > 0)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.object-overruns",
-                    $"The {AsfGuids.ObjectName(header.Id) ?? "object"} at 0x{position:X} states a size of {header.Size} bytes, {header.End - end} more than the {parent.Name} that holds it has left; it is read up to the end of the {parent.Name}.",
+                    $"The {AsfGuids.ObjectName(header.Id) ?? "object"} at 0x{position:X} states a size of {Counts.Of(header.Size, "byte", "bytes")}, {header.End - end} more than the {parent.Name} that holds it has left; it is read up to the end of the {parent.Name}.",
                     parent.Children[^1]);
             }
 
@@ -508,7 +508,7 @@ public sealed partial class AsfParser
             if (typeLength > remaining)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.stream-data-length",
-                    $"Stream {entry.Number} states {typeLength} bytes of type-specific data, but the object holds {remaining} after its fixed fields.", typeLengthNode);
+                    $"Stream {entry.Number} states {Counts.Of(typeLength, "byte", "bytes")} of type-specific data, but the object holds {remaining} after its fixed fields.", typeLengthNode);
             }
 
             if (typeBytes > 0)
@@ -520,7 +520,7 @@ public sealed partial class AsfParser
             if (errorLength > f.Remaining)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.stream-data-length",
-                    $"Stream {entry.Number} states {errorLength} bytes of error correction data, but the object holds {f.Remaining} after its type-specific data.", errorLengthNode);
+                    $"Stream {entry.Number} states {Counts.Of(errorLength, "byte", "bytes")} of error correction data, but the object holds {f.Remaining} after its type-specific data.", errorLengthNode);
             }
 
             if (errorBytes > 0)
@@ -581,7 +581,7 @@ public sealed partial class AsfParser
         catch (EndOfStreamException)
         {
             state.Findings.AddNow(Severity.Warning, "asf.waveformat-truncated",
-                $"Stream {entry.Number} holds {length} bytes of type-specific data, too few for a WAVEFORMATEX (16 bytes, section 9.1).", data);
+                $"Stream {entry.Number} holds {Counts.Of(length, "byte", "bytes")} of type-specific data, too few for a WAVEFORMATEX (16 bytes, section 9.1).", data);
         }
 
         f.Reader.Position = start + length;
@@ -606,7 +606,7 @@ public sealed partial class AsfParser
             if (extra > f.Remaining)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.waveformat-extra",
-                    $"Stream {entry.Number}'s WAVEFORMATEX states {extra} bytes of codec-specific data, but {f.Remaining} follow; they are read as far as they go.", f.Node.Children[^1]);
+                    $"Stream {entry.Number}'s WAVEFORMATEX states {Counts.Of(extra, "byte", "bytes")} of codec-specific data, but {f.Remaining} follow; they are read as far as they go.", f.Node.Children[^1]);
                 extra = (int)f.Remaining;
             }
 
@@ -649,7 +649,7 @@ public sealed partial class AsfParser
     internal static NodeValue FormatTagValue(int tag) => NodeValue.Text($"0x{tag:X4} ({FormatTagName(tag)})");
 
     // The codec a stream reports for a format tag no codec parser read: the name every container uses for the coding.
-    internal static string CodecNameOf(int tag) => tag == 0x0003 ? CodecNames.PcmFloat : FormatTagName(tag);
+    internal static string CodecNameOf(int tag) => tag == 0x0003 ? CodecNames.PcmFloat : FormatTagName(tag) is "unknown" or "extensible" ? CodecNames.Other : FormatTagName(tag);
 
     internal static string FormatTagName(int tag) => tag switch
     {
@@ -694,7 +694,7 @@ public sealed partial class AsfParser
             entry.Spread = new SpreadAudio(span, packet, chunk, silence);
             if (silence > spread.Remaining)
             {
-                state.Findings.AddNow(Severity.Warning, "asf.spread-silence", $"Stream {entry.Number}'s spread audio data states {silence} bytes of silence data, but {spread.Remaining} follow.", data.Children[^1]);
+                state.Findings.AddNow(Severity.Warning, "asf.spread-silence", $"Stream {entry.Number}'s spread audio data states {Counts.Of(silence, "byte", "bytes")} of silence data, but {spread.Remaining} follow.", data.Children[^1]);
                 silence = (ushort)spread.Remaining;
             }
 
@@ -710,7 +710,7 @@ public sealed partial class AsfParser
         }
         catch (EndOfStreamException)
         {
-            state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"Stream {entry.Number}'s error correction data holds {length} bytes, too few for the spread audio fields.", data);
+            state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"Stream {entry.Number}'s error correction data holds {Counts.Of(length, "byte", "bytes")}, too few for the spread audio fields.", data);
         }
 
         f.Reader.Position = start + length;
@@ -743,12 +743,12 @@ public sealed partial class AsfParser
             if (size != available)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.extension-size",
-                    $"The Header Extension Object states {size} bytes of data, but its size leaves {available}; the specification makes the two equal (section 3.4).", node.Children[^1]);
+                    $"The Header Extension Object states {Counts.Of(size, "byte", "bytes")} of data, but its size leaves {available}; the specification makes the two equal (section 3.4).", node.Children[^1]);
             }
 
             if (size != 0 && size < ObjectHeaderSize)
             {
-                state.Findings.AddNow(Severity.Warning, "asf.extension-size", $"The Header Extension Object states {size} bytes of data; the specification allows 0 or at least 24.", node.Children[^1]);
+                state.Findings.AddNow(Severity.Warning, "asf.extension-size", $"The Header Extension Object states {Counts.Of(size, "byte", "bytes")} of data; the specification allows 0 or at least 24.", node.Children[^1]);
             }
 
             long dataEnd = Math.Min(end, dataStart + size);
@@ -789,7 +789,7 @@ public sealed partial class AsfParser
 
                 if (f.Remaining < 10)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.codec-list-count", $"The Codec List Object counts {count} entries, but its data holds {i}.", node.Children[^1]);
+                    state.Findings.AddNow(Severity.Warning, "asf.codec-list-count", $"The Codec List Object counts {Counts.Of(count, "entry", "entries")}, but its data holds {i}.", node.Children[^1]);
                     break;
                 }
 
@@ -909,7 +909,7 @@ public sealed partial class AsfParser
                 if (entryLength != expected)
                 {
                     state.Findings.AddNow(Severity.Warning, "asf.marker-entry-length",
-                        $"A marker at 0x{at:X} states an entry length of {entryLength} bytes; its send time, flags, description length and description take {expected} (section 3.7).", shown);
+                        $"A marker at 0x{at:X} states an entry length of {Counts.Of(entryLength, "byte", "bytes")}; its send time, flags, description length and description take {expected} (section 3.7).", shown);
                 }
             }
         });
@@ -947,7 +947,7 @@ public sealed partial class AsfParser
         {
             Guid type = f.Guid("Exclusion Type", Explain.ExclusionType, AsfGuids.ExclusionName);
             ushort records = f.Word("Record Count", Explain.RecordCount);
-            node.Value = $"{AsfGuids.ExclusionName(type) ?? "unknown"}: {records} records";
+            node.Value = $"{AsfGuids.ExclusionName(type) ?? "unknown"}: {Counts.Of(records, "record", "records")}";
             for (int i = 0; i < records; i++)
             {
                 long at = f.Position;
@@ -1021,7 +1021,7 @@ public sealed partial class AsfParser
             uint length = f.Dword("Error Correction Data Length", Explain.ErrorCorrectionDataLength, "bytes");
             if (length > f.Remaining)
             {
-                state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"The Error Correction Object states {length} bytes of data, but {f.Remaining} follow.", node.Children[^1]);
+                state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"The Error Correction Object states {Counts.Of(length, "byte", "bytes")} of data, but {f.Remaining} follow.", node.Children[^1]);
                 length = (uint)f.Remaining;
             }
 
@@ -1176,7 +1176,7 @@ public sealed partial class AsfParser
                     {
                         state.Findings.AddNow(type == 1 ? Severity.Warning : Severity.Info, type == 1 ? "asf.encrypted-object-id-length" : "asf.encrypted-object-id-type",
                             type == 1
-                                ? $"An Encrypted Object Record gives a stream number in {length} bytes; section 4.13 recommends 2 for type 1, a WORD. Which stream it names is not known, so the record is taken to cover every stream."
+                                ? $"An Encrypted Object Record gives a stream number in {Counts.Of(length, "byte", "bytes")}; section 4.13 recommends 2 for type 1, a WORD. Which stream it names is not known, so the record is taken to cover every stream."
                                 : $"An Encrypted Object Record has the ID type 0x{type:X4}; section 4.13 defines only 1, a stream number, so which object it covers is not known. The record is taken to cover every stream.", idTypeNode);
                     }
 
@@ -1239,7 +1239,7 @@ public sealed partial class AsfParser
                     uint dataSize = r.Dword("Data Size", Explain.EncryptionDataSize, "bytes");
                     if (dataSize > r.Remaining)
                     {
-                        state.Findings.AddNow(Severity.Warning, "asf.encryption-data-size", $"A content encryption record of the Advanced Content Encryption Object gives {dataSize} bytes of data, but {r.Remaining} remain in the object.", entry.Children[^1]);
+                        state.Findings.AddNow(Severity.Warning, "asf.encryption-data-size", $"A content encryption record of the Advanced Content Encryption Object gives {Counts.Of(dataSize, "byte", "bytes")} of data, but {r.Remaining} remain in the object.", entry.Children[^1]);
                     }
 
                     r.Bytes("Data", Math.Min(dataSize, r.Remaining), Explain.EncryptionData);

@@ -49,7 +49,7 @@ internal static class StandardReport
         if (stream.Totals.TailBitsAtEnd > 0 && goodFrames > 0)
         {
             findings.AddNow(Severity.Info, "wma.reservoir-at-end",
-                $"The last superframe ends with {stream.Totals.TailBitsAtEnd} bits after its last frame that no frame uses, since no superframe follows to finish a frame begun in them; a decoder drops them.", streamNode.Children.Last());
+                $"The last superframe ends with {Counts.Of(stream.Totals.TailBitsAtEnd, "bit", "bits")} after its last frame that no frame uses, since no superframe follows to finish a frame begun in them; a decoder drops them.", streamNode.Children.Last());
         }
 
         var series = new List<Series>();
@@ -153,7 +153,7 @@ internal static class StandardReport
         {
             if (t.BlocksBySize[i] > 0)
             {
-                sizes.Add($"{p.FrameLength >> i} samples", start, length, Share(t.BlocksBySize[i], t.Blocks, "block", "blocks"), Explain.StatBlockSizeShare);
+                sizes.Add($"{Counts.Of(p.FrameLength >> i, "sample", "samples")}", start, length, Share(t.BlocksBySize[i], t.Blocks, "block", "blocks"), Explain.StatBlockSizeShare);
             }
         }
 

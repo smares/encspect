@@ -548,7 +548,7 @@ public sealed class Analyzer
                 findings.Add(new Finding(
                     Severity.Warning,
                     "tag.next-missing",
-                    $"{label}, but none was found in the {Math.Max(0, limit - from)} bytes searched from there.",
+                    $"{label}, but none was found in the {Counts.Of(Math.Max(0, limit - from), "byte", "bytes")} searched from there.",
                     tag));
             }
         }
@@ -790,7 +790,7 @@ public sealed class Analyzer
             {
                 Node data = root.Add("Data", position, gapEnd - position, null, HostText.DataAfterContainer);
                 findings.Add(new Finding(Severity.Info, "layout.data-between-tags",
-                    $"{gapEnd - position} bytes at 0x{position:X} lie after the end the format declares, between or after tags found there; nothing claims them.", data));
+                    $"{Counts.Of(gapEnd - position, "byte", "bytes")} at 0x{position:X} lie after the end the format declares, between or after tags found there; nothing claims them.", data));
             }
 
             position = Math.Max(position, claim?.Tag.End ?? position);

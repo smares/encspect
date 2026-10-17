@@ -33,7 +33,7 @@ public sealed class VorbisCommentTagParser : ITagParser
         ByteReader reader = context.Reader;
         if (reader.Length > Array.MaxLength)
         {
-            throw new InvalidDataException($"A Vorbis comment of {reader.Length} bytes is too large to read.");
+            throw new InvalidDataException($"A Vorbis comment of {Counts.Of(reader.Length, "byte", "bytes")} is too large to read.");
         }
 
         byte[] data = reader.ReadBytesAt(reader.Start, (int)reader.Length);

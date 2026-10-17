@@ -311,7 +311,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             if (header.IsFreeFormat)
             {
-                findings.Add(Severity.Info, "mpeg.free-format", null, _ => $"The stream is free format: frames of {length} bytes plus padding.");
+                findings.Add(Severity.Info, "mpeg.free-format", null, _ => $"The stream is free format: frames of {Counts.Of(length, "byte", "bytes")} plus padding.");
             }
         }
 
@@ -323,7 +323,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             if (leading && !trailing && gapEnd < end)
             {
                 string what = ZeroRunEnd(blocks, gapStart, gapEnd) == gapEnd ? " (all zero bytes)" : string.Empty;
-                findings.AddNow(Severity.Warning, "mpeg.leading-junk", $"{length} bytes before the first frame are not audio{what}.", GapNode(gap));
+                findings.AddNow(Severity.Warning, "mpeg.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame are not audio{what}.", GapNode(gap));
             }
             else if (leading)
             {
@@ -331,11 +331,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             }
             else if (trailing)
             {
-                findings.AddNow(Severity.Warning, "mpeg.trailing-data", $"{length} bytes after the last frame at 0x{gapStart:X} are not a frame.", GapNode(gap));
+                findings.AddNow(Severity.Warning, "mpeg.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{gapStart:X} are not a frame.", GapNode(gap));
             }
             else
             {
-                findings.AddNow(Severity.Warning, "mpeg.sync-lost", $"Sync is lost for {length} bytes at 0x{gapStart:X}.", GapNode(gap));
+                findings.AddNow(Severity.Warning, "mpeg.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{gapStart:X}.", GapNode(gap));
             }
         }
     }
@@ -492,7 +492,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
         else if (available < length)
         {
-            findings.AddNow(Severity.Warning, "mpeg.frame-truncated", $"The last frame at 0x{position:X} has {available} of its {length} bytes.", FindingNode(frame));
+            findings.AddNow(Severity.Warning, "mpeg.frame-truncated", $"The last frame at 0x{position:X} has {available} of its {Counts.Of(length, "byte", "bytes")}.", FindingNode(frame));
         }
 
         return frame;
@@ -916,7 +916,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             {
                 Layer2Multichannel first = found.Mc;
                 state.Findings.Add(Severity.Info, "mpeg.multichannel-unverified", FindingNode(frames[found.Index]), count =>
-                    $"The ancillary data of {continued} frames looks like an MPEG-2 multichannel extension ({first.Configuration}) whose side information continues in an extension bitstream, a separate file, so it cannot be verified.");
+                    $"The ancillary data of {Counts.Of(continued, "frame", "frames")} looks like an MPEG-2 multichannel extension ({first.Configuration}) whose side information continues in an extension bitstream, a separate file, so it cannot be verified.");
             }
 
             return;
@@ -1007,7 +1007,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             findings.Add(Severity.Warning, "mpeg.main-data-begin-exceeds-buffer",
                 Layer3SideInfo.Span("Main Data Begin", offset, info.MainDataBegin.Bit, info.MainDataBegin.Bit + info.MainDataBegin.Length), count =>
-                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x{position:X} has a main_data_begin of {mainDataBegin} bytes where at most {Math.Max(buffer - frameLength, 0)} are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.");
+                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x{position:X} has a main_data_begin of {Counts.Of(mainDataBegin, "byte", "bytes")} where at most {Math.Max(buffer - frameLength, 0)} are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.");
         }
     }
 
@@ -1038,7 +1038,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             if (part2 > g.Part23Length.Value)
             {
                 yield return ("mpeg.scalefactors-exceed-granule", Field("Part 2 and 3 Length", g.Part23Length), count =>
-                    $"{Frames(count, "has", "have")} scalefactors longer than part2_3_length, the first {part2} of {g.Part23Length.Value} bits at 0x{position:X}.");
+                    $"{Frames(count, "has", "have")} scalefactors longer than part2_3_length, the first {part2} of {Counts.Of(g.Part23Length.Value, "bit", "bits")} at 0x{position:X}.");
             }
 
             // libmad rejects these frames; ffmpeg and mpg123 decode them.

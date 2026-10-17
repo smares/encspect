@@ -96,8 +96,8 @@ internal static class Sv8Parser
             if (header.Status == HeaderStatus.Invalid || header.Size < header.HeaderLength)
             {
                 string why = header.Status == HeaderStatus.Invalid
-                    ? $"its size field runs past {MaxSizeBytes} bytes"
-                    : $"its size, {header.Size} bytes, is smaller than its key and size field";
+                    ? $"its size field runs past {Counts.Of(MaxSizeBytes, "byte", "bytes")}"
+                    : $"its size, {Counts.Of(header.Size, "byte", "bytes")}, is smaller than its key and size field";
                 state.Unreadable = (position, "musepack.packet-size-invalid", $"The packet at 0x{position:X} cannot be followed: {why}. The rest of the data is not read.");
                 break;
             }
@@ -168,7 +168,7 @@ internal static class Sv8Parser
         {
             state.Trailing = (position, end);
             state.Findings.AddNow(Severity.Warning, "musepack.data-after-end",
-                $"{end - position} bytes after the stream end packet, from 0x{position:X}, are not part of the stream; the SV8 specification allows only tags after it, and no tag was found there.",
+                $"{Counts.Of(end - position, "byte", "bytes")} after the stream end packet, from 0x{position:X}, are not part of the stream; the SV8 specification allows only tags after it, and no tag was found there.",
                 GapNode(position, end));
         }
 
@@ -264,7 +264,7 @@ internal static class Sv8Parser
             if (packet.IsTruncated)
             {
                 state.Findings.AddNow(Severity.Warning, "musepack.packet-truncated",
-                    $"The audio packet at 0x{packet.Offset:X} declares {packet.Size} bytes; the data holds {packet.Length}: the stream is cut short.", PacketShell(state, index));
+                    $"The audio packet at 0x{packet.Offset:X} declares {Counts.Of(packet.Size, "byte", "bytes")}; the data holds {packet.Length}: the stream is cut short.", PacketShell(state, index));
             }
 
             return;
@@ -273,7 +273,7 @@ internal static class Sv8Parser
         if (packet.IsTruncated)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.packet-truncated",
-                $"The {KeyText(packet.Key)} packet at 0x{packet.Offset:X} declares {packet.Size} bytes; the data holds {packet.Length}.", PacketShell(state, index));
+                $"The {KeyText(packet.Key)} packet at 0x{packet.Offset:X} declares {Counts.Of(packet.Size, "byte", "bytes")}; the data holds {packet.Length}.", PacketShell(state, index));
         }
 
         if (!IsValidKey(packet.Key))
@@ -321,7 +321,7 @@ internal static class Sv8Parser
                 if (packet.Length != 3 || packet.Size != 3)
                 {
                     state.Findings.AddNow(Severity.Warning, "musepack.end-size",
-                        $"The stream end packet at 0x{packet.Offset:X} is {packet.Size} bytes long; the SV8 specification requires 3.", WithoutChildren(node));
+                        $"The stream end packet at 0x{packet.Offset:X} is {Counts.Of(packet.Size, "byte", "bytes")} long; the SV8 specification requires 3.", WithoutChildren(node));
                 }
 
                 break;
@@ -446,7 +446,7 @@ internal static class Sv8Parser
         state.Findings.Add(Severity.Warning, "musepack.packet-after-audio", () => WithoutChildren(PacketShell(state, index)), count =>
             count == 1
                 ? $"The {key} packet at 0x{packet.Offset:X} comes after the first audio packet; the SV8 specification requires it before."
-                : $"{count} packets come after the first audio packet, the first the {key} packet at 0x{packet.Offset:X}; the SV8 specification requires them before.");
+                : $"{Counts.Of(count, "packet", "packets")} come after the first audio packet, the first the {key} packet at 0x{packet.Offset:X}; the SV8 specification requires them before.");
 
     // The kinds the specification lets sit between audio packets: a stream header, which a streaming
     // server may send whenever it chooses, chapters and seek tables. The others (ReplayGain, seek table
@@ -556,7 +556,7 @@ internal static class Sv8Parser
     }
 
     private static Node RunNode(Packet run) =>
-        new("Undetailed Packets", run.Offset, run.Length, $"{run.Count} packets, {(run.IsMixed ? "several keys" : $"key {KeyText(run.Key)}")}")
+        new("Undetailed Packets", run.Offset, run.Length, $"{Counts.Of(run.Count, "packet", "packets")}, {(run.IsMixed ? "several keys" : $"key {KeyText(run.Key)}")}")
         {
             Kind = NodeKind.Detail,
             Description = Explain.UndetailedPackets,
@@ -696,7 +696,7 @@ internal static class Sv8Parser
         if (channelCount > 2)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.channels-unsupported",
-                $"The stream header gives {channelCount} channels; libmpcdec decodes at most 2 and refuses the stream.", channels);
+                $"The stream header gives {Counts.Of(channelCount, "channel", "channels")}; libmpcdec decodes at most 2 and refuses the stream.", channels);
         }
 
         f.Padding(state, position, "SH");
@@ -892,7 +892,7 @@ internal static class Sv8Parser
         if (broken || decoded < count)
         {
             state.Findings.Add(Severity.Warning, "musepack.seek-table-truncated", () => WithoutChildren(f.Node), times => times == 1
-                ? $"The seek table at 0x{packet.Offset:X} counts {count} entries, but its packet holds only {decoded}."
+                ? $"The seek table at 0x{packet.Offset:X} counts {Counts.Of(count, "entry", "entries")}, but its packet holds only {decoded}."
                 : $"{times} seek tables count more entries than their packets hold, the first at 0x{packet.Offset:X} with {count} counted and {decoded} held.");
         }
 
@@ -950,7 +950,7 @@ internal static class Sv8Parser
             }
 
             string key = Encoding.ASCII.GetString(f.Data, item + 8, keyEnd - item - 8);
-            string value = (flags & 6) == 0 ? Encoding.UTF8.GetString(f.Data, keyEnd + 1, (int)size) : $"{size} bytes";
+            string value = (flags & 6) == 0 ? Encoding.UTF8.GetString(f.Data, keyEnd + 1, (int)size) : $"{Counts.Of(size, "byte", "bytes")}";
             int itemEnd = keyEnd + 1 + (int)size;
             tag.Add(new Node("Item", f.Offset + item, itemEnd - item, $"{key}: {value}") { Description = Explain.ChapterItem });
             item = itemEnd;
@@ -960,7 +960,7 @@ internal static class Sv8Parser
     private static void Truncated(State state, Fields f, string key) =>
         state.Findings.Add(Severity.Warning, "musepack.packet-fields-truncated", () => WithoutChildren(f.Node), count => count == 1
             ? $"The {key} packet at 0x{f.Node.Offset:X} ends inside its fields."
-            : $"{count} packets end inside their fields, the first the {key} packet at 0x{f.Node.Offset:X}.");
+            : $"{Counts.Of(count, "packet", "packets")} end inside their fields, the first the {key} packet at 0x{f.Node.Offset:X}.");
 
     // What the packets say together: the mandatory packets, the seek table against the audio
     // packets, and the audio packets against the stream header's sample count.
@@ -1044,14 +1044,14 @@ internal static class Sv8Parser
                 int entryCount = entries.Count;
                 string firstWrong = first!;
                 state.Findings.Add(Severity.Warning, "musepack.seek-table-mismatch", node, count => count == 1
-                    ? $"{wrongEntries} of the seek table's {entryCount} entries do not point at the audio packet they stand for: {firstWrong}. Players that seek with it land in the wrong place."
+                    ? $"{wrongEntries} of the seek table's {Counts.Of(entryCount, "entry", "entries")} do not point at the audio packet they stand for: {firstWrong}. Players that seek with it land in the wrong place."
                     : $"{count} seek tables have entries that do not point at the audio packet they stand for, the first {wrongEntries} of {entryCount}: {firstWrong}. Players that seek with them land in the wrong place.");
             }
 
             if (decoded < needed)
             {
                 state.Findings.Add(Severity.Info, "musepack.seek-table-short", node, count => count == 1
-                    ? $"The seek table holds {decoded} entries; the stream's {state.AudioPackets.Count} audio packets at one entry every {step} would need {needed}. Decoders seek through the packets after the last entry."
+                    ? $"The seek table holds {Counts.Of(decoded, "entry", "entries")}; the stream's {state.AudioPackets.Count} audio packets at one entry every {step} would need {needed}. Decoders seek through the packets after the last entry."
                     : $"{count} seek tables hold fewer entries than the stream's {state.AudioPackets.Count} audio packets need, the first {decoded} where one entry every {step} needs {needed}. Decoders seek through the packets after the last entry.");
             }
         }
@@ -1059,7 +1059,7 @@ internal static class Sv8Parser
         if (state.Header is { Samples: > 0 } wrapping && wrapping.OverflowsDecoder)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.sample-count-overflows",
-                $"The stream header's {wrapping.Samples} samples leave no room for the decoder delay in the 64-bit count libmpcdec works with, which wraps negative: libmpcdec stops before the first frame and outputs no samples.",
+                $"The stream header's {Counts.Of(wrapping.Samples, "sample", "samples")} leave no room for the decoder delay in the 64-bit count libmpcdec works with, which wraps negative: libmpcdec stops before the first frame and outputs no samples.",
                 state.SampleCountField ?? state.Leading[0]);
         }
         else if (state.Header is { Samples: > 0 } header && state.AudioPackets.Count > 0 && state.Unreadable is null)
@@ -1069,12 +1069,12 @@ internal static class Sv8Parser
             if (state.AudioPackets.Count < packets && !state.Packets[state.AudioPackets[^1]].IsTruncated)
             {
                 state.Findings.AddNow(Severity.Warning, "musepack.audio-packets-missing",
-                    $"The stream header's {header.Samples} samples need {frames} frames in {packets} audio packets; the stream holds {state.AudioPackets.Count}, so decoders end early.", state.Leading[0]);
+                    $"The stream header's {Counts.Of(header.Samples, "sample", "samples")} need {Counts.Of(frames, "frame", "frames")} in {Counts.Of(packets, "audio packet", "audio packets")}; the stream holds {state.AudioPackets.Count}, so decoders end early.", state.Leading[0]);
             }
             else if (state.AudioPackets.Count > packets)
             {
                 state.Findings.AddNow(Severity.Warning, "musepack.audio-packets-extra",
-                    $"The stream header's {header.Samples} samples need {frames} frames in {packets} audio packets; the stream holds {state.AudioPackets.Count}, and decoders stop at the sample count.", state.Leading[0]);
+                    $"The stream header's {Counts.Of(header.Samples, "sample", "samples")} need {Counts.Of(frames, "frame", "frames")} in {Counts.Of(packets, "audio packet", "audio packets")}; the stream holds {state.AudioPackets.Count}, and decoders stop at the sample count.", state.Leading[0]);
             }
         }
 
@@ -1146,7 +1146,7 @@ internal static class Sv8Parser
         if (header is { Samples: 0 } && frames > 0 && state.SampleCountField is { } sampleCount)
         {
             state.Findings.AddNow(Severity.Info, "musepack.sample-count-unknown",
-                $"The stream header's sample count is 0, which the SV8 specification uses for a length it does not know; libmpcdec then outputs no samples, though the audio packets hold {frames} frames.",
+                $"The stream header's sample count is 0, which the SV8 specification uses for a length it does not know; libmpcdec then outputs no samples, though the audio packets hold {Counts.Of(frames, "frame", "frames")}.",
                 sampleCount);
         }
 
@@ -1324,7 +1324,7 @@ internal static class Sv8Parser
             {
                 state.Findings.Add(Severity.Warning, "musepack.padding-not-zero", padding, count => count == 1
                     ? $"The {key} packet's bytes after its last field, at 0x{padding.Offset:X}, are not all zero, which the SV8 specification requires."
-                    : $"{count} packets have bytes after their last field that are not all zero, which the SV8 specification requires; the first is the {key} packet's, at 0x{padding.Offset:X}.");
+                    : $"{Counts.Of(count, "packet", "packets")} have bytes after their last field that are not all zero, which the SV8 specification requires; the first is the {key} packet's, at 0x{padding.Offset:X}.");
             }
         }
     }

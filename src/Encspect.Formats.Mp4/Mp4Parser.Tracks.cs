@@ -462,7 +462,7 @@ public sealed partial class Mp4Parser
         if (firstOutside is { } cut)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-outside-file",
-                $"{Samples(outside)} of track {track.Id} lie outside the file, the first at 0x{cut.Offset:X} with {cut.Size} bytes; they are not analyzed.", table);
+                $"{Samples(outside)} of track {track.Id} lie outside the file, the first at 0x{cut.Offset:X} with {Counts.Of(cut.Size, "byte", "bytes")}; they are not analyzed.", table);
         }
 
         if (empty > 0)
@@ -561,8 +561,8 @@ public sealed partial class Mp4Parser
             if (placed != sized && track.SampleSizeNode is not null)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.chunk-sample-mismatch", placed < sized
-                    ? $"The chunks of {label} hold {placed} samples, but stsz sizes {sized}; the {sized - placed} samples after them have no place in the file."
-                    : $"The chunks of {label} hold {placed} samples, but stsz sizes only {sized}.", stsc);
+                    ? $"The chunks of {label} hold {Counts.Of(placed, "sample", "samples")}, but stsz sizes {sized}; the {Counts.Of(sized - placed, "sample", "samples")} after them have no place in the file."
+                    : $"The chunks of {label} hold {Counts.Of(placed, "sample", "samples")}, but stsz sizes only {sized}.", stsc);
             }
         }
     }
@@ -659,18 +659,18 @@ public sealed partial class Mp4Parser
             if (total > 0 && state.Fragments == 0 && (ulong)sum != total && !(lossless && (ulong)(sum - smpb.Padding) == total))
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.itunsmpb-total",
-                    $"iTunSMPB's encoder delay, samples and padding add up to {sum}, but the samples of track {track.Id} last {total} units of its timescale.", smpb.Node);
+                    $"iTunSMPB's encoder delay, samples and padding add up to {sum}, but the samples of track {track.Id} last {Counts.Of(total, "unit", "units")} of its timescale.", smpb.Node);
             }
 
             if (editDelay is { } delay && delay != smpb.Delay)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.gapless-disagree",
-                    $"The edit list of track {track.Id} skips {delay} samples at the start, but iTunSMPB gives an encoder delay of {smpb.Delay}; players that read one or the other play different samples.", smpb.Node);
+                    $"The edit list of track {track.Id} skips {Counts.Of(delay, "sample", "samples")} at the start, but iTunSMPB gives an encoder delay of {smpb.Delay}; players that read one or the other play different samples.", smpb.Node);
             }
             else if (editPadding is { } padding && padding != smpb.Padding)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.gapless-disagree",
-                    $"The edit list of track {track.Id} leaves {padding} samples at the end, but iTunSMPB gives a padding of {smpb.Padding}; players that read one or the other play different samples.", smpb.Node);
+                    $"The edit list of track {track.Id} leaves {Counts.Of(padding, "sample", "samples")} at the end, but iTunSMPB gives a padding of {smpb.Padding}; players that read one or the other play different samples.", smpb.Node);
             }
         }
 

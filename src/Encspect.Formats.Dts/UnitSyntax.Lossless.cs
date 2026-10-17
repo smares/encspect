@@ -193,7 +193,7 @@ internal sealed partial class UnitSyntax
         _isXllRefused |= width is not (16 or 20 or 24);
         if (resolution > width)
         {
-            Report(Issue.LosslessInconsistent, "Source PCM Resolution", start, resolutionEnd, $"a channel set's source resolution of {resolution} bits is more than its storage width of {width} bits (8.3.2: the samples are stored in the width)");
+            Report(Issue.LosslessInconsistent, "Source PCM Resolution", start, resolutionEnd, $"a channel set's source resolution of {Counts.Of(resolution, "bit", "bits")} is more than its storage width of {Counts.Of(width, "bit", "bits")} (8.3.2: the samples are stored in the width)");
         }
 
         int rate = Tables.ExtensionSampleRate(Num("Sampling Frequency", 4, Explain.XllRate, v => NodeValue.Integer(Tables.ExtensionSampleRate(v), "Hz"), Topics.Lossless));
@@ -266,7 +266,7 @@ internal sealed partial class UnitSyntax
                 int named = System.Numerics.BitOperations.PopCount(mask);
                 if (named != channels)
                 {
-                    Report(Issue.LosslessInconsistent, "Channel Mask", start, _pos, $"a channel set of {channels} channels has a channel mask of {named} speakers");
+                    Report(Issue.LosslessInconsistent, "Channel Mask", start, _pos, $"a channel set of {Counts.Of(channels, "channel", "channels")} has a channel mask of {named} speakers");
                 }
             }
             else
@@ -330,7 +330,7 @@ internal sealed partial class UnitSyntax
         if (counted > NaviMaxEntries)
         {
             _tree?.Field("Navigation Index", _pos, Math.Min(_limit, endBit), NodeValue.Integer(counted, "entries", "entry"), Explain.XllNavigation, Topics.Lossless);
-            Report(Issue.LosslessInconsistent, "Navigation Index", _pos, Math.Min(_limit, endBit), $"the navigation index would have {counted} entries (the most bands, times the segments, times the channel sets), more than the {NaviMaxEntries} that FFmpeg reads");
+            Report(Issue.LosslessInconsistent, "Navigation Index", _pos, Math.Min(_limit, endBit), $"the navigation index would have {Counts.Of(counted, "entry", "entries")} (the most bands, times the segments, times the channel sets), more than the {NaviMaxEntries} that FFmpeg reads");
             return;
         }
 
@@ -391,7 +391,7 @@ internal sealed partial class UnitSyntax
         long frameEnd = at + (long)common.FrameSize;
         if (dataEnd > frameEnd)
         {
-            Report(Issue.LosslessInconsistent, "Frame Size", common.FrameSizeStart, common.FrameSizeEnd, $"the band data sizes of the navigation index end {dataEnd - frameEnd} bytes past the {common.FrameSize} bytes of the frame");
+            Report(Issue.LosslessInconsistent, "Frame Size", common.FrameSizeStart, common.FrameSizeEnd, $"the band data sizes of the navigation index end {Counts.Of(dataEnd - frameEnd, "byte", "bytes")} past the {Counts.Of(common.FrameSize, "byte", "bytes")} of the frame");
         }
 
         int available = _limit / 8;

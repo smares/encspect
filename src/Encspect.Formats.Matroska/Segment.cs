@@ -167,6 +167,6 @@ internal sealed partial class FileReader
 
         _budgetReported = true;
         _findings.Add(Severity.Warning, "matroska.too-many-elements", anchor, _ =>
-            $"The file holds more than {MaxNodes} elements besides the blocks of its Clusters; the elements from 0x{position:X} on are not read, but for the Clusters of a Segment.");
+            $"The file holds more than {Counts.Of(MaxNodes, "element", "elements")} besides the blocks of its Clusters; the elements from 0x{position:X} on are not read, but for the Clusters of a Segment.");
     }
 }

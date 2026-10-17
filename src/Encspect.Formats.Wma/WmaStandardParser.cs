@@ -110,7 +110,7 @@ public sealed class WmaStandardParser : ICodecParser
             && BinaryPrimitives.ReadUInt32LittleEndian(data) == 17u * (uint)p.FrameLength)
         {
             traits.Add(new WmaEncoder.Trait("Microsoft's Windows Media Audio encoder", "Microsoft", Confidence.Medium,
-                $"The codec data states {17 * p.FrameLength} samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them"));
+                $"The codec data states {Counts.Of(17 * p.FrameLength, "sample", "samples")} per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them"));
         }
 
         return traits;

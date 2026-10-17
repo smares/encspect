@@ -35,8 +35,13 @@ internal static class Codecs
     // The coding's name, for a stream the container reports itself, or null for an ID the mapping does not define.
     public static string? NameOf(string codecId) => codecId switch
     {
-        "A_AAC" or "A_AAC/MPEG2/MAIN" or "A_AAC/MPEG2/LC" or "A_AAC/MPEG2/LC/SBR" or "A_AAC/MPEG2/SSR"
-            or "A_AAC/MPEG4/MAIN" or "A_AAC/MPEG4/LC" or "A_AAC/MPEG4/LC/SBR" or "A_AAC/MPEG4/SSR" or "A_AAC/MPEG4/LTP" => "AAC",
+        "A_AAC" => "AAC",
+        // The profile a legacy ID states, in the AAC parser's names.
+        "A_AAC/MPEG2/MAIN" or "A_AAC/MPEG4/MAIN" => "AAC Main",
+        "A_AAC/MPEG2/LC" or "A_AAC/MPEG4/LC" => "AAC LC",
+        "A_AAC/MPEG2/LC/SBR" or "A_AAC/MPEG4/LC/SBR" => "HE-AAC",
+        "A_AAC/MPEG2/SSR" or "A_AAC/MPEG4/SSR" => "AAC SSR",
+        "A_AAC/MPEG4/LTP" => "AAC LTP",
         "A_MPEG/L1" => CodecNames.MpegAudioLayerI,
         "A_MPEG/L2" => CodecNames.MpegAudioLayerII,
         "A_MPEG/L3" => CodecNames.MpegAudioLayerIII,

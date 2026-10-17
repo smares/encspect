@@ -510,19 +510,19 @@ internal static class OldStreamParser
         if (state.DamagedFrom is { } damagedFrom)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.frames-damaged",
-                $"{Sv7Parser.MaxDamagedRun} frames in a row from 0x{w.WordStart(damagedFrom):X} have subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
+                $"{Counts.Of(Sv7Parser.MaxDamagedRun, "frame", "frames")} in a row from 0x{w.WordStart(damagedFrom):X} have subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
                 header.Children.First(c => c.Name == "Frame Count"));
         }
         else if (state.Truncated)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.frames-missing",
-                $"The header counts {h.Frames} frames, but the data holds {decoded} whole ones{(h.KeepsLastFrame ? string.Empty : " before the last")}: the stream is cut short.", header.Children.First(c => c.Name == "Frame Count"));
+                $"The header counts {Counts.Of(h.Frames, "frame", "frames")}, but the data holds {decoded} whole ones{(h.KeepsLastFrame ? string.Empty : " before the last")}: the stream is cut short.", header.Children.First(c => c.Name == "Frame Count"));
         }
         else if (state.LastRunsPast > 0)
         {
             Frame last = state.Frames[state.Frames.Count - 1];
             state.Findings.AddNow(Severity.Info, "musepack.last-frame-unwritten",
-                $"The last of the {h.Frames} frames the header counts runs {state.LastRunsPast} bits past the end of the data: the SV4 and SV5 encoders write whole words only, and decoders (libmpcdec 1.2.6, mppdec) decode the frames before it.",
+                $"The last of the {Counts.Of(h.Frames, "frame", "frames")} the header counts runs {Counts.Of(state.LastRunsPast, "bit", "bits")} past the end of the data: the SV4 and SV5 encoders write whole words only, and decoders (libmpcdec 1.2.6, mppdec) decode the frames before it.",
                 WithoutChildren(w.Field("Frame", last.Bit, Math.Min(limit, last.End), "not decoded", Explain.OldLastFrame, null, NodeKind.Frame)));
         }
 

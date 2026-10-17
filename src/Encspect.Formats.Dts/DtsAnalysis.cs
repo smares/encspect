@@ -77,7 +77,7 @@ internal sealed class DtsAnalysis
         Node UnitAt() => new("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame };
         if (layout.IsTruncated)
         {
-            Findings.AddNow(Severity.Warning, "dts.frame-truncated", $"The last frame at 0x{layout.Offset:X} has {layout.Length} bytes, fewer than its header says.", UnitAt());
+            Findings.AddNow(Severity.Warning, "dts.frame-truncated", $"The last frame at 0x{layout.Offset:X} has {Counts.Of(layout.Length, "byte", "bytes")}, fewer than its header says.", UnitAt());
         }
 
         if (layout.IsCut)
@@ -104,15 +104,15 @@ internal sealed class DtsAnalysis
                 zeros = false;
             }
 
-            Findings.AddNow(Severity.Warning, "dts.leading-junk", $"{length} bytes before the first frame are not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
+            Findings.AddNow(Severity.Warning, "dts.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame are not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
         }
         else if (trailing)
         {
-            Findings.AddNow(Severity.Warning, "dts.trailing-data", $"{length} bytes after the last frame at 0x{start:X} are not a frame.", node);
+            Findings.AddNow(Severity.Warning, "dts.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{start:X} are not a frame.", node);
         }
         else
         {
-            Findings.AddNow(Severity.Warning, "dts.sync-lost", $"Sync is lost for {length} bytes at 0x{start:X}.", node);
+            Findings.AddNow(Severity.Warning, "dts.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{start:X}.", node);
         }
 
     }
@@ -582,7 +582,7 @@ internal static class UnitRecord
         // A frame's line in the tree, such as "3/2 + LFE, 2,012 bytes, 1 extension substream".
         public NodeValue Summary()
         {
-            string text = $"{layout.Length} bytes";
+            string text = $"{Counts.Of(layout.Length, "byte", "bytes")}";
             if (layout.CoreLength > 0 && view.PeekByte(11) >= 0)
             {
                 CoreHeader header = Header();

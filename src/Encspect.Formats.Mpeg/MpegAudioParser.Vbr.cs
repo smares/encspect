@@ -40,7 +40,7 @@ public sealed partial class MpegAudioParser
         if (vbr.InvalidEntrySize is { } entrySize)
         {
             findings.Add(Severity.Warning, "mpeg.vbri-entry-size-invalid", node, count =>
-                $"{Frames(count, "holds", "hold")} a VBRI header whose TOC entries are {entrySize} bytes long, where only 1 to 4 bytes are defined, so its TOC is not read; the first at 0x{position:X}.");
+                $"{Frames(count, "holds", "hold")} a VBRI header whose TOC entries are {Counts.Of(entrySize, "byte", "bytes")} long, where only 1 to 4 bytes are defined, so its TOC is not read; the first at 0x{position:X}.");
         }
 
         if (vbr.VbriVersion is { } version and not 1)

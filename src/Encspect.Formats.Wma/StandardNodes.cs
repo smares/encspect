@@ -119,7 +119,7 @@ internal sealed class StandardNodes
         List<FramePart> parts = PartsOf(frame);
         (long offset, long length, IReadOnlyList<ByteRange>? ranges) = _map.Cover(parts, frame.StartBit, frame.EndBit);
         string value = frame.Status == 0
-            ? $"{Count(frame.BlockCount, "block", "blocks")}, {frame.EndBit - frame.StartBit} bits"
+            ? $"{Count(frame.BlockCount, "block", "blocks")}, {Counts.Of(frame.EndBit - frame.StartBit, "bit", "bits")}"
             : $"invalid: {StandardStream.StatusText((FrameStatus)frame.Status)}";
         return new Node("Frame", offset, length, value, () => FrameChildren(index, parts))
         {
@@ -169,7 +169,7 @@ internal sealed class StandardNodes
     private Node BlockNode(List<FramePart> parts, BlockRecord block, bool failed)
     {
         (long offset, long length, IReadOnlyList<ByteRange>? ranges) = _map.Cover(parts, block.Start, block.End);
-        string value = $"{1 << block.BlockBits} samples{(block.IsMidSide ? ", mid/side" : string.Empty)}{(block.CodedChannels == 0 ? ", not coded" : string.Empty)}{(failed ? ", invalid" : string.Empty)}";
+        string value = $"{Counts.Of(1 << block.BlockBits, "sample", "samples")}{(block.IsMidSide ? ", mid/side" : string.Empty)}{(block.CodedChannels == 0 ? ", not coded" : string.Empty)}{(failed ? ", invalid" : string.Empty)}";
         var node = new Node("Block", offset, length, value) { Ranges = ranges, Description = Explain.Block, Topic = Topics.WmaFrames };
         StandardParameters p = P;
         // A block that failed ends where its reading stopped: only the fields it got to are shown.

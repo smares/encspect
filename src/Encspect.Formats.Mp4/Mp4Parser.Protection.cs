@@ -129,12 +129,12 @@ public sealed partial class Mp4Parser
 
         if (constant is not null && constantSize is { } declared && constant.Length < declared)
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.tenc-constant-iv", $"The tenc box at 0x{node.Offset:X} declares a constant initialization vector of {declared} bytes, but holds {constant.Length}.", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.tenc-constant-iv", $"The tenc box at 0x{node.Offset:X} declares a constant initialization vector of {Counts.Of(declared, "byte", "bytes")}, but holds {constant.Length}.", node);
         }
 
         if (!IsInitializationVectorSize(ivSize))
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.tenc-iv-size", $"The tenc box at 0x{node.Offset:X} gives a per-sample initialization vector size of {ivSize} bytes; 0, 8 and 16 are valid (ISO/IEC 23001-7).", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.tenc-iv-size", $"The tenc box at 0x{node.Offset:X} gives a per-sample initialization vector size of {Counts.Of(ivSize, "byte", "bytes")}; 0, 8 and 16 are valid (ISO/IEC 23001-7).", node);
         }
         else if (isProtected != 0 && ivSize == 0 && constantSize is not (8 or 16))
         {
@@ -194,7 +194,7 @@ public sealed partial class Mp4Parser
             uint size = f.U32(node, "Data Size", Explain.PsshDataSize, unit: "bytes");
             if (size > f.Remaining)
             {
-                state.Findings.AddNow(Severity.Warning, "mp4.pssh-data-exceeds-box", $"The pssh box at 0x{node.Offset:X} declares {size} bytes of data, but holds {f.Remaining}.", node);
+                state.Findings.AddNow(Severity.Warning, "mp4.pssh-data-exceeds-box", $"The pssh box at 0x{node.Offset:X} declares {Counts.Of(size, "byte", "bytes")} of data, but holds {f.Remaining}.", node);
             }
 
             long data = Math.Min(size, f.Remaining);
@@ -288,7 +288,7 @@ public sealed partial class Mp4Parser
         {
             if (count > f.Remaining)
             {
-                state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The saiz box at 0x{node.Offset:X} declares {count} samples, but holds room for {f.Remaining} sizes.", node);
+                state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The saiz box at 0x{node.Offset:X} declares {Counts.Of(count, "sample", "samples")}, but holds room for {Counts.Of(f.Remaining, "size", "sizes")}.", node);
             }
 
             if (f.Remaining > 0)
@@ -310,7 +310,7 @@ public sealed partial class Mp4Parser
         long room = f.Remaining / width;
         if (count > room)
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The saio box at 0x{node.Offset:X} declares {count} offsets, but holds room for {room}.", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.entries-exceed-box", $"The saio box at 0x{node.Offset:X} declares {Counts.Of(count, "offset", "offsets")}, but holds room for {room}.", node);
         }
 
         long start = f.Position;
@@ -404,7 +404,7 @@ public sealed partial class Mp4Parser
     {
         if (f.Remaining < AudibleDrmLength)
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.adrm-short", $"The adrm box at 0x{node.Offset:X} holds {f.Remaining} bytes, fewer than the {AudibleDrmLength} FFmpeg's reader takes from it; its fields are not read.", node);
+            state.Findings.AddNow(Severity.Warning, "mp4.adrm-short", $"The adrm box at 0x{node.Offset:X} holds {Counts.Of(f.Remaining, "byte", "bytes")}, fewer than the {AudibleDrmLength} FFmpeg's reader takes from it; its fields are not read.", node);
             f.Bytes(node, "Data", f.Remaining, Explain.UnreadData);
             return;
         }

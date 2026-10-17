@@ -39,7 +39,7 @@ public sealed partial class Mp4Parser
             uint size = (uint)f.Take(4);
             if (size < 8 || size - 8 > f.Remaining - 4)
             {
-                state.Findings.AddNow(Severity.Warning, "mp4.key-size-invalid", $"The key at 0x{at:X} states a size of {size} bytes, which does not fit its box.", node);
+                state.Findings.AddNow(Severity.Warning, "mp4.key-size-invalid", $"The key at 0x{at:X} states a size of {Counts.Of(size, "byte", "bytes")}, which does not fit its box.", node);
                 return;
             }
 
@@ -225,7 +225,7 @@ public sealed partial class Mp4Parser
             case 3:
                 return Encoding.Latin1.GetString(bytes);
             case 13 or 14 or 27:
-                return $"{DataTypeName(type)} image, {bytes.Length} bytes";
+                return $"{DataTypeName(type)} image, {Counts.Of(bytes.Length, "byte", "bytes")}";
             case 21 or 65 or 66 or 67 or 74 when bytes.Length is 1 or 2 or 3 or 4 or 8:
                 return NodeValue.Integer(Signed(bytes));
             case 22 or 75 or 76 or 77 or 78 when bytes.Length is 1 or 2 or 3 or 4 or 8:

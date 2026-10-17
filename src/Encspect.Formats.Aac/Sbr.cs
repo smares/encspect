@@ -1,3 +1,4 @@
+using Encspect.Core;
 namespace Encspect.Formats.Aac;
 
 // The SBR header of one channel element (ISO/IEC 14496-3 4.4.2, sbr_header) with what its
@@ -189,7 +190,7 @@ internal static class Sbr
         int masterBands = master.Count - 1;
         if (header.XoverBand >= masterBands)
         {
-            return (null, $"bs_xover_band {header.XoverBand} lies beyond the {masterBands} bands of the master frequency table");
+            return (null, $"bs_xover_band {header.XoverBand} lies beyond the {Counts.Of(masterBands, "band", "bands")} of the master frequency table");
         }
 
         int high = masterBands - header.XoverBand;
@@ -380,7 +381,7 @@ internal static class Sbr
                 count = 1 << (int)bits.Read(2);
                 if (count > 4)
                 {
-                    return $"an SBR frame of class FIXFIX with {count} envelopes, more than 4";
+                    return $"an SBR frame of class FIXFIX with {Counts.Of(count, "envelope", "envelopes")}, more than 4";
                 }
 
                 if (count == 1)
@@ -412,7 +413,7 @@ internal static class Sbr
                 count = lead + trail + 1;
                 if (count > MaxEnvelopes)
                 {
-                    return $"an SBR frame of class VARVAR with {count} envelopes, more than {MaxEnvelopes}";
+                    return $"an SBR frame of class VARVAR with {Counts.Of(count, "envelope", "envelopes")}, more than {MaxEnvelopes}";
                 }
 
                 bits.Skip(2 * (lead + trail));
@@ -422,7 +423,7 @@ internal static class Sbr
         int pointer = (int)bits.Read(PointerBits[count]);
         if (pointer > count + 1)
         {
-            return $"bs_pointer {pointer} points past the {count} envelopes of the SBR frame";
+            return $"bs_pointer {pointer} points past the {Counts.Of(count, "envelope", "envelopes")} of the SBR frame";
         }
 
         // bs_freq_res of a FIXVAR frame is sent for the last envelope first (4.4.2.8, sbr_grid).

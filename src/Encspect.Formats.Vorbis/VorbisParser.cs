@@ -45,7 +45,7 @@ public sealed partial class VorbisParser : ICodecParser
 
     // The channel order of section 4.3.9, which names the speakers of one to eight channels; more
     // are left to the application.
-    internal static string ChannelMode(int channels) => Speakers(channels) is { } speakers ? ChannelLayouts.ModeName(speakers) ?? $"{channels} channels" : $"{channels} channels";
+    internal static string ChannelMode(int channels) => Speakers(channels) is { } speakers ? ChannelLayouts.ModeName(speakers) ?? $"{Counts.Of(channels, "channel", "channels")}" : $"{Counts.Of(channels, "channel", "channels")}";
 
     internal static IReadOnlyList<Speaker>? Speakers(int channels) => ChannelLayouts.VorbisOrder(channels);
 }

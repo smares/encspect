@@ -369,7 +369,7 @@ internal sealed partial class FileReader
         ReadOnlySpan<byte> span = data.Span;
         if (span.Length < 1 || span[0] != 2)
         {
-            why = span.Length < 1 ? "is empty" : $"counts {span[0] + 1} packets";
+            why = span.Length < 1 ? "is empty" : $"counts {Counts.Of(span[0] + 1, "packet", "packets")}";
             return false;
         }
 
@@ -515,7 +515,7 @@ internal sealed partial class FileReader
         {
             Protection = protection,
             Nodes = [streamNode],
-            Codec = Codecs.NameOf(codecId) ?? (codecId.Length == 0 ? "unknown" : codecId),
+            Codec = Codecs.NameOf(codecId) ?? (codecId.Length == 0 ? CodecNames.Other : codecId),
             SampleRate = (int)Math.Min(rate, int.MaxValue),
             Channels = channels,
             BitsPerSample = track.BitDepth is { } depth && codecId.StartsWith("A_PCM", StringComparison.Ordinal) ? (int)depth : null,

@@ -396,7 +396,7 @@ internal sealed partial class UnitSyntax
         int segmentLimit = asset.MaxSampleRate > 48000 ? 512 : 256;
         if (asset.MaxSampleRate > 0 && (1 << samplesLog) > segmentLimit)
         {
-            Report(Issue.ReservedValue, "Samples per Segment", _pos - 4, _pos, $"a segment of {1 << samplesLog} samples is more than the {segmentLimit} that 8.3.1 allows at {(asset.MaxSampleRate > 48000 ? "sampling frequencies above 48 kHz" : "48 kHz or below")}");
+            Report(Issue.ReservedValue, "Samples per Segment", _pos - 4, _pos, $"a segment of {Counts.Of(1 << samplesLog, "sample", "samples")} is more than the {segmentLimit} that 8.3.1 allows at {(asset.MaxSampleRate > 48000 ? "sampling frequencies above 48 kHz" : "48 kHz or below")}");
         }
 
         int segmentBits = Num("Segment Size Bits", 5, Explain.XllSegmentBits, Topics.Lossless, "bits", 1) + 1;

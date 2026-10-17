@@ -112,7 +112,7 @@ internal sealed partial class FileReader
         {
             _lacedFramesReported = true;
             _findings.AddNow(Severity.Warning, "matroska.too-many-elements",
-                $"The laced blocks of the file hold more than {MaxLacedFrames} frames; the frames of the blocks from the {name} at 0x{offset:X} on are not read.", new Node(name, offset, length));
+                $"The laced blocks of the file hold more than {Counts.Of(MaxLacedFrames, "frame", "frames")}; the frames of the blocks from the {name} at 0x{offset:X} on are not read.", new Node(name, offset, length));
         }
 
         return false;
@@ -303,7 +303,7 @@ internal sealed partial class FileReader
             case Lacing.FixedSize:
                 if ((remaining - 1) % count != 0)
                 {
-                    why = $"holds {remaining - 1} bytes for {count} frames of one size";
+                    why = $"holds {Counts.Of(remaining - 1, "byte", "bytes")} for {Counts.Of(count, "frame", "frames")} of one size";
                     return false;
                 }
 

@@ -109,7 +109,7 @@ public sealed class WmaProParser : ICodecParser
         if (bytes.Length < ProParameters.ExtraDataSize)
         {
             findings.AddNow(Severity.Warning, "wma.codec-data-size",
-                $"The codec-specific data of Windows Media Audio Professional is {bytes.Length} bytes; FFmpeg's decoder needs 18 and refuses fewer.", holder);
+                $"The codec-specific data of Windows Media Audio Professional is {Counts.Of(bytes.Length, "byte", "bytes")}; FFmpeg's decoder needs 18 and refuses fewer.", holder);
             return;
         }
 

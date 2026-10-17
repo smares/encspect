@@ -131,7 +131,7 @@ internal sealed class State(ParseContext context, ByteReader reader)
             string text = AsfGuids.Text(entry.First.Id);
             string message = entry.Count == 1
                 ? $"The {(key == "top-level" ? "top-level object" : "object")} {text} at 0x{entry.First.Offset:X} in {entry.Place} is none of the objects the specification defines; readers ignore it ({entry.Section})."
-                : $"{entry.Count} objects in {entry.Place} are none of the objects the specification defines, the first {text} at 0x{entry.First.Offset:X}; readers ignore them ({entry.Section}).";
+                : $"{Counts.Of(entry.Count, "object", "objects")} in {entry.Place} are none of the objects the specification defines, the first {text} at 0x{entry.First.Offset:X}; readers ignore them ({entry.Section}).";
             Findings.AddNow(Severity.Info, "asf.unknown-object", message, entry.Node, entry.Count);
         }
 

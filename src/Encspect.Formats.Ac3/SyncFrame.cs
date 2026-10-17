@@ -150,7 +150,7 @@ internal readonly struct SyncFrame(ulong raw)
         }
 
         string type = StreamType switch { 0 => "independent", 1 => "dependent", 2 => "converted from AC-3", _ => "reserved type" };
-        return $"{Codec}, {type} substream {SubstreamId}, {length} bytes, {mode}";
+        return $"{Codec}, {type} substream {SubstreamId}, {Counts.Of(length, "byte", "bytes")}, {mode}";
     }
 
     public NodeValue SummaryValue(int length) => Summary(length);

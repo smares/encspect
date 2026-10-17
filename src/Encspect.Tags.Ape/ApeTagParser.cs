@@ -70,7 +70,7 @@ public sealed class ApeTagParser : ITagParser
         long end = itemsStart + header.Size;
         if (end > reader.End)
         {
-            return TagProbe.Reject(start, $"the header declares {header.Size} bytes after the header, but the file ends {reader.End - itemsStart} bytes into them, so the size points outside the file");
+            return TagProbe.Reject(start, $"the header declares {Counts.Of(header.Size, "byte", "bytes")} after the header, but the file ends {Counts.Of(reader.End - itemsStart, "byte", "bytes")} into them, so the size points outside the file");
         }
 
         long itemsEnd = header.HasFooter ? end - BlockSize : end;
@@ -126,7 +126,7 @@ public sealed class ApeTagParser : ITagParser
         long itemsStart = end - footer.Size;
         if (itemsStart < reader.Start)
         {
-            return TagProbe.Reject(footerStart, $"the tag size {footer.Size} exceeds the {end - reader.Start} bytes up to the end of the footer");
+            return TagProbe.Reject(footerStart, $"the tag size {footer.Size} exceeds the {Counts.Of(end - reader.Start, "byte", "bytes")} up to the end of the footer");
         }
 
         var builder = new Builder(reader, footer, "footer", footerStart);
@@ -149,7 +149,7 @@ public sealed class ApeTagParser : ITagParser
             long headerStart = itemsStart - BlockSize;
             if (headerStart < 0)
             {
-                builder.Problem(null, "ape.header-missing", $"The footer announces a header, which would start {-headerStart} bytes before the start of the file.", Confidence.Medium);
+                builder.Problem(null, "ape.header-missing", $"The footer announces a header, which would start {Counts.Of(-headerStart, "byte", "bytes")} before the start of the file.", Confidence.Medium);
             }
             else if (!reader.MatchesAt(headerStart, Preamble))
             {
@@ -233,7 +233,7 @@ public sealed class ApeTagParser : ITagParser
             else
             {
                 Node unparsed = tag.Add("Unparsed", parsedEnd, itemsEnd - parsedEnd, NodeValue.Integer(itemsEnd - parsedEnd, "bytes"), Explain.Unparsed);
-                Problem(unparsed, "ape.items-invalid", $"{itemProblem} The remaining {itemsEnd - parsedEnd} bytes are not parsed.", Confidence.Low);
+                Problem(unparsed, "ape.items-invalid", $"{itemProblem} The remaining {Counts.Of(itemsEnd - parsedEnd, "byte", "bytes")} are not parsed.", Confidence.Low);
             }
 
             if (Footer is { } footer)
@@ -276,7 +276,7 @@ public sealed class ApeTagParser : ITagParser
             {
                 if (end - pos < MinItemSize)
                 {
-                    return $"Item {index} of {anchor.ItemCount} starts {end - pos} bytes before the end of the items, too few for an item.";
+                    return $"Item {index} of {anchor.ItemCount} starts {Counts.Of(end - pos, "byte", "bytes")} before the end of the items, too few for an item.";
                 }
 
                 byte[] fixedPart = reader.ReadBytesAt(pos, 8);
@@ -363,7 +363,7 @@ public sealed class ApeTagParser : ITagParser
                 parsedEnd = pos;
             }
 
-            return pos == end ? null : $"The {anchorName} lists {anchor.ItemCount} item(s), which end at 0x{pos:X}, {end - pos} bytes before the end of the items.";
+            return pos == end ? null : $"The {anchorName} lists {anchor.ItemCount} item(s), which end at 0x{pos:X}, {Counts.Of(end - pos, "byte", "bytes")} before the end of the items.";
         }
 
         // APEv2 text and external values are UTF-8; text may hold several values separated by $00.

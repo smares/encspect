@@ -351,7 +351,7 @@ internal sealed class Layer2Multichannel
 
         if (!Fits)
         {
-            node.Add(Span("Data", fileOffset, CrcBit + 16, End, $"{(End - CrcBit - 16 + 7) / 8} bytes; the side information continues in the extension bitstream",
+            node.Add(Span("Data", fileOffset, CrcBit + 16, End, $"{Counts.Of((End - CrcBit - 16 + 7) / 8, "byte", "bytes")}; the side information continues in the extension bitstream",
                 Explain.McDataContinued));
             return node;
         }

@@ -312,7 +312,7 @@ public sealed partial class Mp4Parser
                 continue;
             }
 
-            string codedText = coded is null ? $"{stream.Channels} channels" : ChannelLayouts.Describe(coded);
+            string codedText = coded is null ? $"{Counts.Of(stream.Channels, "channel", "channels")}" : ChannelLayouts.Describe(coded);
             state.Findings.AddNow(Severity.Warning, "mp4.channel-layout-differs",
                 $"The {entry.LayoutBox} box of {label} states {ChannelLayouts.Describe(stated)}, but the {stream.Codec} stream states {codedText}"
                 + "; players that follow the container place the channels differently from the coding. The report gives the stream's channels.",
@@ -458,8 +458,8 @@ public sealed partial class Mp4Parser
         {
             UseChannelDescriptions => $"UseChannelDescriptions ({hex})",
             UseChannelBitmap => $"UseChannelBitmap ({hex})",
-            _ when (tag >> 16) == 147 => $"DiscreteInOrder, {tag & 0xFFFF} channels ({hex})",
-            _ when (tag >> 16) == 0xFFFF => $"Unknown, {tag & 0xFFFF} channels ({hex})",
+            _ when (tag >> 16) == 147 => $"DiscreteInOrder, {Counts.Of(tag & 0xFFFF, "channel", "channels")} ({hex})",
+            _ when (tag >> 16) == 0xFFFF => $"Unknown, {Counts.Of(tag & 0xFFFF, "channel", "channels")} ({hex})",
             _ when LayoutTags.TryGetValue(tag >> 16, out (string Name, string Channels) known) => $"{known.Name}: {known.Channels.Replace("-", "discrete", StringComparison.Ordinal)} ({hex})",
             _ => $"not known ({hex})",
         };
