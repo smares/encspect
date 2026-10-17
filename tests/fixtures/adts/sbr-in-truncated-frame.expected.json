@@ -1,0 +1,52 @@
+{
+ "description": "ADTS at 22050 Hz of two channel pair frames and a third that holds two blocks, each a channel pair followed by SBR data, and ends 5 bytes before its stated length: a damaged frame, so its SBR data counts for nothing and the stream stays AAC LC.",
+ "length": 215,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   46
+  ],
+  [
+   46,
+   46
+  ],
+  [
+   92,
+   123
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.frame-truncated",
+   "has"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "ffprobe": "ffmpeg drops the cut frame.",
+   "decode": "ffmpeg drops the cut frame.",
+   "faad_trace": "faad2 reads one raw data block per ADTS frame and does not read the cut frame of two blocks."
+  }
+ }
+}

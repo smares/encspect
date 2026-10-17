@@ -1,0 +1,52 @@
+{
+ "description": "AAC Main (ADTS profile 0), mono at 44100 Hz, max_sfb 40 in every frame with prediction used in all 40 bands, in bands 32 to 39, in every other band, and in band 39 only.",
+ "length": 860,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC Main",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   215
+  ],
+  [
+   215,
+   215
+  ],
+  [
+   430,
+   215
+  ],
+  [
+   645,
+   215
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/Raw Data Block/SCE/Channel/ICS Info/Prediction Used": "0-39",
+  "ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/Prediction Used": "32-39",
+  "ADTS/Frame[2]/Raw Data Block/SCE/Channel/ICS Info/Prediction Used": "0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38",
+  "ADTS/Frame[3]/Raw Data Block/SCE/Channel/ICS Info/Prediction Used": "39"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.093",
+   "rate": 44100
+  }
+ }
+}

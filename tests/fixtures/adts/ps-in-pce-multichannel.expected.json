@@ -1,0 +1,94 @@
+{
+ "description": "ADTS at a core rate of 22050 Hz with channel configuration 0 and a program config element in every block (a front single channel element and a front channel pair element, three channels), the single channel element followed by SBR data with the parametric stereo extension's ID: as with channel configuration 3, parametric stereo is not applied to a core of three channels, and the ID is reported.",
+ "length": 3057,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 3,
+   "channel_mode": "3 channels",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right"
+   ],
+   "samples": 24576,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   256
+  ],
+  [
+   256,
+   255
+  ],
+  [
+   511,
+   254
+  ],
+  [
+   765,
+   255
+  ],
+  [
+   1020,
+   259
+  ],
+  [
+   1279,
+   254
+  ],
+  [
+   1533,
+   256
+  ],
+  [
+   1789,
+   253
+  ],
+  [
+   2042,
+   257
+  ],
+  [
+   2299,
+   253
+  ],
+  [
+   2552,
+   251
+  ],
+  [
+   2803,
+   254
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "12 access units (100.0%)",
+  "ADTS/Statistics/SBR/Parametric Stereo": "12 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "ADTS cannot signal SBR or PS explicitly, but 12 of 12 raw data blocks hold SBR data: the stream is HE-AAC,"
+  ],
+  [
+   "aac.ps-without-mono-core",
+   "12 of 12 raw data blocks carry the parametric stereo extension's ID, but the core has 3 channels"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."
+  }
+ }
+}

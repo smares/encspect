@@ -1,0 +1,82 @@
+{
+ "description": "Ten unprotected ADTS frames of two channel pair blocks each, then three bytes that belong to no block.",
+ "length": 880,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   88
+  ],
+  [
+   88,
+   88
+  ],
+  [
+   176,
+   88
+  ],
+  [
+   264,
+   88
+  ],
+  [
+   352,
+   88
+  ],
+  [
+   440,
+   88
+  ],
+  [
+   528,
+   88
+  ],
+  [
+   616,
+   88
+  ],
+  [
+   704,
+   88
+  ],
+  [
+   792,
+   88
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Raw Data Blocks": "20 blocks"
+ },
+ "findings": [
+  [
+   "aac.block-trailing-bytes",
+   "10 raw data blocks hold bytes after their END element"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg decodes the bytes after the END element as a further block.",
+   "faad": "faad2 reads one raw data block per ADTS frame.",
+   "faad_trace": "faad2 reads one raw data block per ADTS frame.",
+   "decode": "ffmpeg decodes the bytes after the END element as a further block, which fails."
+  }
+ }
+}
