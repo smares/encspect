@@ -398,6 +398,7 @@ def check_trace(path, report, problems, skipped=()):
     return compared - sum(1 for key in skipped if int(key) < compared)
 
 
+LAYERS = {"I": "1", "II": "2", "III": "3"}
 # MediaInfo's format and its AAC profile (Format_AdditionalFeatures) for each of the analyzer's codecs.
 MEDIAINFO_FORMATS = {"AAC LC": ("AAC", "LC"), "HE-AAC": ("AAC", "LC SBR"), "HE-AAC v2": ("AAC", "LC SBR PS"), "AAC Main": ("AAC", "Main"),
                      "AAC LTP": ("AAC", "LTP"), "AAC SSR": ("AAC", "SSR"), "xHE-AAC (USAC)": ("USAC", None), "ER AAC ELD": ("ER AAC ELD", None),
@@ -420,6 +421,7 @@ NO_CHANNELS = "MediaInfo 26.01 gives this track no channel count; it takes the c
 NO_FORMAT = "MediaInfo names the coding from the esds box of the sample entry (File_Mpeg4_Elements.cpp, the sample entry's codec); the analyzer, with no frma box to name the original format, reports the sample entry's own kind"
 MOOV_TRACKS = "MediaInfo lists the audio tracks of moov; the analyzer reports a stream only for samples its tables or fragments place, and these fragments place them for one track or none"
 FIRST_ENTRY = "MediaInfo reads the first sample entry of the track (File_Mpeg4_Elements.cpp), which does not say that the track is encrypted; the analyzer reads the entries the chunks use"
+ALAC_TRACK = "MediaInfo lists the audio track from its sample entry; the analyzer reports a stream only for a coding it analyzes (mp4.codec-not-analyzed)"
 MEDIAINFO_READS_OTHERWISE = {
     "mp4/ffmpeg-cenc-mp3": {"channels": NO_CHANNELS},
     "mp4/cenc-ac3": {"channels": NO_CHANNELS},
@@ -463,6 +465,10 @@ MEDIAINFO_READS_OTHERWISE = {
     "mp4/eld-ld-sbr-7": {"channel layout": "MediaInfo 26.01 names the outside front pair of channel configuration 7 \"Lw Rw\" (File_Aac_Main.cpp, Aac_ChannelLayout: CH_M_L060 and CH_M_R060), which mediainfo_tool does not map to speakers; the analyzer takes it as left and right of center, as ffmpeg's decoder maps it"},
     "mp4/eld-ld-sbr-13": {"channel layout": "MediaInfo 26.01 names the pair after the front left and right of channel configuration 13 \"Lw Rw\" (File_Aac_Main.cpp, Aac_ChannelLayout: CH_M_L060 and CH_M_R060), and the top, bottom and second LFE channels (CH_U_*, CH_T_000, CH_L_*, CH_LFE2), which mediainfo_tool does not map to speakers; the analyzer takes the pairs as ffmpeg's decoder maps them"},
     "adts/stream-change": dict.fromkeys(["streams", "access units"], "MediaInfo reports an ADTS file as one stream (File_Aac.cpp), where the analyzer starts a second one where the sample rate changes"),
+    "mp4/samples-overlap-chunks": {"streams": ALAC_TRACK},
+    "mp4/samples-overlap-fragments": {"streams": ALAC_TRACK},
+    "mp4/too-data-type-0": {"encoding tool": "MediaInfo shows a data atom of the implicit type 0 that it does not decode as \"(Binary)\" (File_Mpeg4_Elements.cpp, moov_meta_ilst_xxxx_data: case 0x00, default branch, lines 3849-3851); the analyzer shows the bytes as hexadecimal text"},
+    "mp4/track-meta-before-mdia": dict.fromkeys(["tag title", "tag track"], "MediaInfo reads a meta box in a trak box (moov_trak_meta, File_Mpeg4_Elements.cpp line 1450) and has no entry for a udta box there, so it skips the item list in trak/udta/meta that the analyzer shows"),
     "mp4/id32": dict.fromkeys(["tag title", "tag track"], "MediaInfo skips the ID3v2 tag in an ID32 box (File_Mpeg4_Elements.cpp, moov_udta_ID32: Skip_XX \"ID3v2data\")"),
     "mp4/ilst-all-types": {"tag performer": "MediaInfo writes \"UTF-16 encoding not yet supported\" for an iTunes data atom of type 2 (File_Mpeg4_Elements.cpp, moov_meta_ilst_xxxx_data)"},
     "mp4/trailing-id3v1": dict.fromkeys(["tag title", "tag track"], "MediaInfo's MP4 parser has no tag helper (File_Mpeg4.h: File_Mpeg4 derives from File__Analyze, not File__Tags_Helper), so it reads no ID3v1 tag after the boxes"),
@@ -543,6 +549,16 @@ def fragment_ticks(report, track_box):
     return ticks
 
 
+def movie_box(report):
+    """The first top-level moov box: the movie. A moov box inside another box, or a second one, is shown and is not the movie (docs/formats/mp4.md)."""
+    return mi.child(report["root"], "MP4", "moov")
+
+
+def movie_tracks(report):
+    """The movie's trak boxes, in order; the streams follow them."""
+    return [n for n in (movie_box(report) or {}).get("children", []) if n["name"] == "trak"]
+
+
 def milliseconds(seconds):
     """Seconds as MediaInfo writes a duration: rounded to the millisecond (ZenLib's float64_int64s)."""
     return f"{math.floor(seconds * 1000 + 0.5) / 1000:.3f}"
@@ -569,8 +585,15 @@ def check_mediainfo(path, tally, check=None):
             tally.compare("sample rate", track.get("SamplingRate"), str(stream["sampleRate"]))
             tally.compare("channels", track.get("Channels", track.get("Channels_Original")), str(stream["channels"]))
             continue
+        if codec.startswith("MPEG") and codec.split()[-1] not in LAYERS:
+            # The stream of MPEG audio whose samples are not in one stretch (mp3-two-chunks-gap): described by its sample entry, its frames are not read, so
+            # neither the layer nor any frame count can be compared. The format, sample rate and channels the entry states are.
+            tally.compare("format", track.get("Format"), "MPEG Audio")
+            tally.compare("sample rate", track.get("SamplingRate"), str(stream["sampleRate"]))
+            tally.compare("channels", track.get("Channels", track.get("Channels_Original")), str(stream["channels"]))
+            continue
         if codec.startswith("MPEG"):
-            version, layer = codec.split()[0][5:], {"I": "1", "II": "2", "III": "3"}[codec.split()[-1]]
+            version, layer = codec.split()[0][5:], LAYERS[codec.split()[-1]]
             tally.compare("format", (track.get("Format"), track.get("Format_Version"), track.get("Format_Profile")), ("MPEG Audio", version, f"Layer {layer}"))
             continue
         tally.compare("format", (track.get("Format"), track.get("Format_AdditionalFeatures")), MEDIAINFO_FORMATS.get(codec, (codec, None)))
@@ -590,7 +613,7 @@ def check_mediainfo(path, tally, check=None):
             sbr, ps = sbr_signaling(report, node, codec)
             tally.compare("SBR signaling", track.get("Format_Settings_SBR"), sbr)
             tally.compare("PS signaling", track.get("Format_Settings_PS"), ps)
-            tracks = [n for n in mi.walk(report["root"]) if n["name"] == "trak"]
+            tracks = movie_tracks(report)
             index = report["streams"].index(stream)
             tally.compare("bitrate mode", track.get("BitRate_Mode"), mediainfo_aac_mode(report, node, tracks[index] if index < len(tracks) else None))
         if node["name"] == "ADIF":
@@ -615,8 +638,8 @@ def check_mediainfo(path, tally, check=None):
         # scale, and where the sample table's differs from it, that one is Source_Duration, rounded
         # to the millisecond.
         index = report["streams"].index(stream)
-        tracks = [n for n in mi.walk(report["root"]) if n["name"] == "trak"]
-        movie = mi.leading_number(next((mi.value(n, "Timescale") for n in mi.walk(report["root"]) if n["name"] == "mvhd"), None))
+        tracks = movie_tracks(report)
+        movie = mi.leading_number(mi.value(mi.child(movie_box(report), "mvhd"), "Timescale"))
         if index >= len(tracks) or not movie:
             continue
         header = mi.leading_number(mi.value(mi.child(tracks[index], "tkhd"), "Duration"))

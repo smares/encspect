@@ -630,7 +630,9 @@ def mp3_gap():
         "mp3-two-chunks-gap", "MPEG-1 Layer III in MP4 (object type 0x6B), 12 frames in two chunks of 6 with 16 bytes between them: the MPEG audio parser reads samples only where they lie in one stretch, "
         "so the track is a stream described by its sample entry and its frames are not read.",
         data, records,
-        [{"codec": "MPEG-1 Audio", "sample_rate": 44100, "channels": 2, "channel_mode": None, "channel_layout": [], "samples": 12 * 1152, "is_vbr": False}], [],
+        [{"codec": "MPEG-1 Audio", "sample_rate": 44100, "channels": 2, "channel_mode": None, "channel_layout": [], "samples": 12 * 1152, "is_vbr": False,
+                     # The stream is described by its sample entry, which states no layout; ffprobe reads the frames and gives stereo.
+                     "ffprobe_channels": 2}], [],
         [["mpeg.packets-not-analyzed", "packets"]], fields={ESDS: "0x6B (MPEG-1 Audio)"},
         crosscheck={"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}})
     # The frames are not read, so ffprobe's packets are compared with the samples.
@@ -802,7 +804,7 @@ def structure():
 
     text = b"hand-built"
     track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2))
-    data, records, offsets = movie([track], ftyp_box=ftyp(b"qt  ", 0x200, (b"qt  ",)), moov_extra=[box("udta", b"", Box(b"\xa9nam", u16(len(text)) + u16(0) + text), after=u32(0))])
+    data, records, offsets = movie([track], ftyp_box=ftyp(b"qt  ", 0x200, (b"qt  ",)), moov_extra=[box("udta", b"", Box(b"\xa9cmt", u16(len(text)) + u16(0) + text), after=u32(0))])
     out.append(hand_built(
         "quicktime-udta-terminator", "A QuickTime movie whose user data list ends in the optional 32-bit zero (QuickTime File Format, \"User data list\"): it is shown as a terminator, with no warning.",
         data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10), [],
