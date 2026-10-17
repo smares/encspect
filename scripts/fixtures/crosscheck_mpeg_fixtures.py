@@ -204,7 +204,8 @@ def guessenc_summary(path):
 
 # Ubuntu 26.04's madplay was linked against a libmad whose mad_build, the string of its build options, has another size than the libmad0 it
 # loads, and glibc's loader warns about that copy relocation on stderr (sysdeps/x86_64/dl-machine.h, R_X86_64_COPY). madplay only
-# prints mad_build for -V, so decoding does not depend on it; this one line is not an error of the stream.
+# prints mad_build for -V, so decoding does not depend on it; this one line, printed once for the process, is not an error of the stream (count=1: a second
+# would be reported).
 MADPLAY_LOADER_WARNING = re.compile(rb"^madplay: Symbol `mad_build' has different size in shared object, consider re-linking\r?\n?", re.MULTILINE)
 
 
@@ -225,7 +226,7 @@ def decodes_to_silence(path, manifest):
             del commands["mpg123"]
     for name, command in commands.items():
         result = subprocess.run(command, capture_output=True)
-        errors = MADPLAY_LOADER_WARNING.sub(b"", result.stderr) if name == "madplay" else result.stderr
+        errors = MADPLAY_LOADER_WARNING.sub(b"", result.stderr, count=1) if name == "madplay" else result.stderr
         if not result.stdout or any(result.stdout) or errors.strip():
             problems.append(f"{name} does not decode to silence without errors: {errors.decode()[:200].strip()}")
     return problems
@@ -477,10 +478,9 @@ def check_vbr_header(path, manifest):
         size = len(data) - tag["frame_offset"] - 4
         concatenated = tag["bytes"] and size > tag["bytes"] and size - tag["bytes"] > tag["bytes"] >> 4
         if tag["frames"] and not concatenated:
-            # FFmpeg 8.0 leaves the encoder delay and padding of a LAME, Lavf or Lavc tag out of the duration (mp3dec.c, mp3_parse_info_tag: the duration is
-            # frames * samples per frame less start_pad and end_pad); 6.1 gave the frames' duration.
-            lame = tag.get("lame")
-            trimmed = lame["delay"] + lame["padding"] if lame and lame["encoder"][:4] in ("LAME", "Lavf", "Lavc") else 0
+            # FFmpeg 8.0 leaves the encoder delay and padding out of the duration (mp3dec.c, mp3_parse_vbr_tags: the duration is frames * samples per frame
+            # less start_pad and end_pad, which mp3_parse_info_tag reads from the raw bytes after any LAME, Lavf or Lavc string); 6.1.1 gave the frames' duration.
+            trimmed = sum(ffmpeg_pads(tag) or (0, 0))
             duration = f"{(tag['frames'] * (1152 if mpeg1 else 576) - trimmed) / rate:.6f}"
             if stream.get("duration") != duration:
                 problems.append(f"ffprobe duration {stream.get('duration')}, the header's frame count implies {duration}")
@@ -500,10 +500,19 @@ def check_vbr_header(path, manifest):
     return problems
 
 
-def ffmpeg_delay(tag):
-    """The encoder delay ffmpeg reads: after any string starting LAME, Lavf or Lavc, a full tag or not."""
+def ffmpeg_pads(tag):
+    """The encoder delay and padding ffmpeg reads (mp3dec.c, mp3_parse_info_tag: the 24 bits at byte 21 after the Xing fields, 12 bits each), after any string
+    starting LAME, Lavf or Lavc, a full tag or not; None without one."""
     after = bytes.fromhex(tag.get("after_fields", "")) if tag else b""
-    return (after[21] << 4 | after[22] >> 4) if len(after) >= 24 and after[:4] in (b"LAME", b"Lavf", b"Lavc") else None
+    if len(after) < 24 or after[:4] not in (b"LAME", b"Lavf", b"Lavc"):
+        return None
+    return after[21] << 4 | after[22] >> 4, (after[22] & 15) << 8 | after[23]
+
+
+def ffmpeg_delay(tag):
+    """The encoder delay ffmpeg reads, see ffmpeg_pads."""
+    pads = ffmpeg_pads(tag)
+    return None if pads is None else pads[0]
 
 
 def rate_is_mpeg1(rate):
@@ -1154,12 +1163,13 @@ def check(path, manifest, tools):
         if speakers and speakers != {channels}:
             problems.append(f"mctoolamed writes {channels} channels, the manifest expects {sorted(speakers)}")
     if manifest.get("crosscheck") is True and manifest.get("streams") and "channel_layout" in manifest["streams"][0]:
-        # A multichannel stream's base frames are stereo. Where the channel mode changes, ffprobe 8.0.1 reports the last mode (the first with 6.1): its stream
-        # information decodes the frames, and the decoder takes the layout from each header (mpegaudiodec_template.c, decode_frame); observed, with 8.0.1 built
-        # from source, on channel-mode-change.mp3.
+        # A multichannel stream's base frames are stereo. Where the channel mode changes, ffprobe 8.0.1 reports the last mode and 6.1.1 reported the first. The
+        # 8.0.1 side is in the source: the parser sets the layout from every header it takes (mpegaudio_parser.c:86-88, av_channel_layout_default), and
+        # avformat_find_stream_info copies the codec context to the stream's parameters (demux.c, avcodec_parameters_from_context). That 6.1.1 reported the
+        # first mode was observed, not traced in its source. Seen on channel-mode-change.mp3, built from source.
         base = min(len(manifest["streams"][0]["channel_layout"]), 2)
         last_mode = manifest["frames"][-1]["fields"].get("Header/Channel Mode") if manifest.get("frames") else None
-        if last_mode is not None and base <= 2:
+        if last_mode is not None:
             base = 1 if last_mode == "Mono" else 2
         if int(ffprobe_stream(path)["channels"]) != base:
             problems.append(f"ffprobe finds {ffprobe_stream(path)['channels']} channels, the manifest's last frame implies {base}")
