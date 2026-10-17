@@ -16,10 +16,25 @@ Box by box:
 
 Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio](mpeg-audio.md) for MP3 in MP4, or [AC-3 and E-AC-3](ac3.md) or [DTS](dts.md).
 
+- **MPEG audio is read only where its samples lie in one stretch** of the file (the MPEG audio parser reads the bytes as it would in a file). A track whose samples lie in several stretches is still a stream, described by its sample entry and its sample tables ("frames not read: samples not in one stretch"), and the MPEG audio parser says its packets are not analyzed (`mpeg.packets-not-analyzed`).
+- **The track's handler** is the one in its `mdia` box (ISO/IEC 14496-12 8.4.3); the handler of a `meta` box in the `trak` box is the metadata's.
+- **Boxes where they do not belong** are shown and reported (`mp4.box-misplaced`): a `moov` box inside another box is not the movie, a `traf` box inside a `traf` box is a track fragment of its own whose protection evidence counts for every track, and a `moof` box inside a `moof` box is a fragment of its own. The tracks of a second `moov` box (`mp4.duplicate-box`; players read the first) are shown and not analyzed.
+- **User data lists** may end in a 32-bit zero (QuickTime File Format, "User data list"); it is shown as a terminator, without a warning.
+
+## Limits
+
+The work and the memory the analysis takes are bounded by the file, not by what its boxes state:
+
+- **Samples** of a valid file do not overlap, so the bytes of the samples that the sample tables and the track fragments place add up to at most the file's length. The fragments draw on that budget as they are read and each track's sample tables when the track is routed; where it runs out, the samples after that are not analyzed and a finding says so (`mp4.samples-overlap`). Chunks that share bytes, or runs that point back to the same data, reach it quickly.
+- **Fragment samples** are kept up to 4,194,304 for the whole file, not per track (`mp4.fragment-samples-limit`); samples of no bytes are counted and not kept (`mp4.empty-samples`).
+- **Boxes** are read up to 100,000 in all; the boxes from the one that passes the limit on are not read (`mp4.too-many-boxes`).
+- **Long lists** (edits, channel descriptions, table entries) show their first 1,000 entries as nodes and count the rest ("More Entries").
+
 ## Findings
 
 - broken box sizes and inconsistent sample tables;
-- samples outside the file or outside mdat;
+- samples outside the file or outside mdat, and samples that overlap;
+- boxes where they do not belong (a moov inside another box, a traf in a traf, a moof in a moof) and more boxes than the limit;
 - durations that disagree;
 - moov after mdat;
 - an edit list and iTunSMPB that disagree on the encoder delay or padding, or an iTunSMPB whose total is not the track's duration (Apple Lossless's duration leaves out the padding, which is accepted);
@@ -36,7 +51,7 @@ A protected track is reported on its stream (`StreamInfo.Protection`: the scheme
 - **Encrypted samples:** a track counts as encrypted unless its key information says no sample is protected and nothing in the file says otherwise. Encspect does not prove sample by sample that encrypted tracks are partly clear. It counts a protected track as clear only if all of this holds:
   - every protected entry in use is a Common Encryption entry whose `sinf` boxes agree on a known scheme, name the original format and give `tenc` boxes that all set the default to not protected (the entries of `drms`, `drmi` and `aavd`, a scheme the project does not know, a missing `sinf` or `tenc`, or two `tenc` boxes that differ never qualify);
   - no `seig` sample group description protects, wherever it lies in the track or its fragments, in version 0, 1 or 2 of the box; one that cannot be read, or of a later version, counts as protecting;
-  - there is no `senc` box, and no `saiz` or `saio` box of an encryption type or without a type, in the track or its fragments.
+  - there is no `senc` box, and no `saiz` or `saio` box of an encryption type or without a type, in the track or its fragments; one of these boxes that ends before the fields that say how it is laid out counts as present, and so does a `saiz` or `saio` box whose type cannot be read.
 
   Evidence counts wherever it lies in the file: a `tenc` box that protects, a `senc`, `saiz` or `saio` box as above, a `seig` description that protects, a `sinf` or `schm` box, and PIFF's sample and track encryption boxes (`uuid` boxes, named as GPAC names them). A sample entry that carries a `sinf` box is a protected entry whatever its type. Evidence inside a trak box, or inside a track fragment that names exactly one existing track, is that track's; evidence anywhere else (the top level, moov, a track fragment that names no track, a missing track or more than one, a traf or moof inside a trak box) is every track's, and so is the rest of a file whose boxes stop before its end (an unknown or damaged top-level box), which is also a finding. A track fragment with more than one `tfhd` box is a finding and its runs are not placed.
   A track whose `tenc` protects by default is encrypted even if its sample groups put every sample in a clear group (MP4Box's `selectiveType="Clear"` writes such a file). The samples of an encrypted track are never handed to a codec parser: AAC, AC-3, E-AC-3 and DTS read the configuration of the sample entry (`esds`, `dac3`, `dec3`, `ddts`) without packets, and the stream shows "frames not read: encrypted"; for MPEG audio, which has no configuration, the container describes the stream from the sample entry. The duration, samples and average bitrate come from the sample tables. An info finding says so (`mp4.samples-encrypted`).
@@ -57,7 +72,7 @@ The codec's layout counts. The chan and chnl boxes complete a stream whose codec
 
 ## Encoder detection
 
-The container's metadata (©too, QuickTime's ©swr) names the writer as written, with low confidence: QuickTime defines ©swr as the software that generated the movie, and no Apple specification defines ©too, so both go to the writer, and the encoder comes from the stream. Text that is ffmpeg's muxer version (`Lavf…`) is the writer in any case, and a libavcodec encoder ID (`Lavc…`) in either atom is an encoder claim. Encoding Params and iTunSMPB are shown but name neither. An ID32 box's TSSE frame is the encoder's, as in any ID3v2 tag.
+The container's metadata (©too, QuickTime's ©swr) names the writer as written (a ©too item counts only if its data atom is of a text type: UTF-8, UTF-16, S/JIS or their sort variants), with low confidence: QuickTime defines ©swr as the software that generated the movie, and no Apple specification defines ©too, so both go to the writer, and the encoder comes from the stream. Text that is ffmpeg's muxer version (`Lavf…`) is the writer in any case, and a libavcodec encoder ID (`Lavc…`) in either atom is an encoder claim. Encoding Params and iTunSMPB are shown but name neither. An ID32 box's TSSE frame is the encoder's, as in any ID3v2 tag.
 
 Apple's AudioToolbox is named from the layout of its files (see [AAC](aac.md)):
 
