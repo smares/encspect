@@ -68,11 +68,15 @@ internal static class Codecs
     public static bool IsWebM(string codecId) =>
         codecId is "V_VP8" or "V_VP9" or "V_AV1" or "A_VORBIS" or "A_OPUS" || codecId.StartsWith("D_WEBVTT/", StringComparison.Ordinal);
 
+    // A sampling frequency RFC 9559 allows (sections 5.1.4.1.29.1 and 5.1.4.1.29.2: greater than 0): a finite number above 0. Anything else is not one.
+    public static bool IsRate(double rate) => rate > 0 && double.IsFinite(rate);
+
     // The AudioSpecificConfig (ISO/IEC 14496-3, section 1.6.2.1) of a legacy A_AAC/MPEG2|4/* track, from the object type its ID names
     // (MAIN 1, LC 2, SSR 3, LTP 4), the sampling frequency, the channel configuration and, for /SBR, the explicit signaling of
     // SBR with the output sampling frequency (the core's where the track gives none). It follows ISO/IEC 14496-3 where FFmpeg's matroskadec.c
     // differs: a frequency outside the table of thirteen is written in full (index 15 and 24 bits), 8 channels are channel configuration 7,
-    // and 7 channels have none. Null where the ID names no object type or the channels have no channel configuration.
+    // and 7 channels have none. Null where the ID names no object type, the channels have no channel configuration, the sampling frequency is not
+    // above 0 or, for /SBR, the output sampling frequency is not (the output of another ID is not used).
     public static byte[]? LegacyAacConfig(string codecId, double? samplingFrequency, double? outputSamplingFrequency, ulong? channels)
     {
         int objectType = codecId.Contains("/MAIN", StringComparison.Ordinal) ? 1
@@ -81,6 +85,11 @@ internal static class Codecs
             : codecId.Contains("/LTP", StringComparison.Ordinal) ? 4 : 0;
         int configuration = (channels ?? 1) switch { >= 1 and <= 6 => (int)(channels ?? 1), 8 => 7, _ => -1 };
         if (objectType == 0 || configuration < 0)
+        {
+            return null;
+        }
+
+        if ((samplingFrequency is { } stated && !IsRate(stated)) || (codecId.EndsWith("/SBR", StringComparison.Ordinal) && outputSamplingFrequency is { } output && !IsRate(output)))
         {
             return null;
         }

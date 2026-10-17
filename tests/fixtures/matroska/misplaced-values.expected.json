@@ -1,0 +1,347 @@
+{
+ "description": "A TimestampScale of 5,000,000 inside Tracks and a WritingApp of \"LAME 3.100\" inside a Tag, both where the schema does not place them, in a file whose Info states 1,000,000 and the mkvmerge apps: the misplaced values are shown and reported but not used, so the PCM track's four blocks, 40 ms apart, last 0.16 s at the Info's scale and its writer is mkvmerge.",
+ "length": 529,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 212,
+     "length": 289,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "libebml v1.4.5 + libmatroska v1.7.1",
+    "writing_app": "mkvmerge v82.0 ('I'm The President') 64-bit"
+   },
+   "length": 489,
+   "declared_end": 529
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   489,
+   [
+    [
+     "Info",
+     46,
+     107,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       38
+      ],
+      [
+       "WritingApp",
+       107,
+       46
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     153,
+     59,
+     [
+      [
+       "TrackEntry",
+       158,
+       47,
+       [
+        [
+         "TrackNumber",
+         160,
+         3
+        ],
+        [
+         "TrackUID",
+         163,
+         5
+        ],
+        [
+         "TrackType",
+         168,
+         3
+        ],
+        [
+         "CodecID",
+         171,
+         15
+        ],
+        [
+         "Audio",
+         186,
+         19,
+         [
+          [
+           "SamplingFrequency",
+           188,
+           10
+          ],
+          [
+           "Channels",
+           198,
+           3
+          ],
+          [
+           "BitDepth",
+           201,
+           4
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TimestampScale",
+       205,
+       7
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     212,
+     289,
+     [
+      [
+       "Timestamp",
+       218,
+       3
+      ],
+      [
+       "SimpleBlock",
+       221,
+       70
+      ],
+      [
+       "SimpleBlock",
+       291,
+       70
+      ],
+      [
+       "SimpleBlock",
+       361,
+       70
+      ],
+      [
+       "SimpleBlock",
+       431,
+       70
+      ]
+     ]
+    ],
+    [
+     "Tags",
+     501,
+     28,
+     [
+      [
+       "Tag",
+       506,
+       23,
+       [
+        [
+         "Targets",
+         509,
+         7,
+         [
+          [
+           "TargetTypeValue",
+           512,
+           4
+          ]
+         ]
+        ],
+        [
+         "WritingApp",
+         516,
+         13
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 221,
+   "length": 70,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     227,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 291,
+   "length": 70,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     297,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 361,
+   "length": 70,
+   "track": 1,
+   "timestamp": 80,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     367,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 431,
+   "length": 70,
+   "track": 1,
+   "timestamp": 120,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     437,
+     64
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": 16,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "mkvmerge v82.0 ('I'm The President') 64-bit",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "PCM (integer, little-endian)",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.misplaced-element",
+   "contains": "2 elements are placed where the schema does not allow"
+  },
+  {
+   "code": "matroska.codec-not-analyzed",
+   "contains": "PCM"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

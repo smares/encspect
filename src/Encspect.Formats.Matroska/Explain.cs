@@ -6,7 +6,7 @@ internal static class Explain
 {
     public const string File = "A Matroska or WebM file: an EBML document, whose EBML Header names the document type and whose Segment holds the tracks and their frames (RFC 9559, section 4.5).";
     public const string SegmentWithoutHeader = "The Top-Level Elements of a Segment whose own element header is missing, because the file starts after it (RFC 9559, section 4.5).";
-    public const string UnknownElement = "An element whose ID the Matroska schema does not list; readers skip it by its size (RFC 8794, section 6.1; RFC 9559, section 4.4).";
+    public const string UnknownElement = "An element whose ID the Matroska schema does not list; readers skip it by its size (RFC 9559, section 7; RFC 8794, section 16).";
     public const string UnparsedData = "Bytes that start no element the analyzer can read, so they are not read as elements.";
     public const string Computed = "The CRC-32 the analyzer computes over the Element Data of the CRC-32 element's parent after the CRC-32 element, to compare with the stored one (RFC 8794, section 11.3.1).";
 

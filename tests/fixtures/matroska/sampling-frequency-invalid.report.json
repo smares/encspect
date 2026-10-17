@@ -1,0 +1,1560 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "sampling-frequency-invalid.mka",
+    "root": {
+      "name": "File",
+      "value": "Matroska",
+      "offset": 0,
+      "length": 1163,
+      "children": [
+        {
+          "name": "Matroska",
+          "value": "4 audio tracks",
+          "offset": 0,
+          "length": 1163,
+          "children": [
+            {
+              "name": "EBML",
+              "offset": 0,
+              "length": 40,
+              "children": [
+                {
+                  "name": "EBMLVersion",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLReadVersion",
+                  "value": 1,
+                  "offset": 9,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxIDLength",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 13,
+                  "length": 4
+                },
+                {
+                  "name": "EBMLMaxSizeLength",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 17,
+                  "length": 4
+                },
+                {
+                  "name": "DocType",
+                  "value": "matroska",
+                  "offset": 21,
+                  "length": 11
+                },
+                {
+                  "name": "DocTypeVersion",
+                  "value": 4,
+                  "offset": 32,
+                  "length": 4
+                },
+                {
+                  "name": "DocTypeReadVersion",
+                  "value": 2,
+                  "offset": 36,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Segment",
+              "value": "4 tracks, 1 cluster",
+              "offset": 40,
+              "length": 1123,
+              "children": [
+                {
+                  "name": "Info",
+                  "offset": 46,
+                  "length": 63,
+                  "children": [
+                    {
+                      "name": "TimestampScale",
+                      "value": 1000000,
+                      "unit": "ns",
+                      "offset": 51,
+                      "length": 7
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 100,
+                      "unit": "ticks",
+                      "offset": 58,
+                      "length": 11
+                    },
+                    {
+                      "name": "MuxingApp",
+                      "value": "encspect fixtures",
+                      "offset": 69,
+                      "length": 20
+                    },
+                    {
+                      "name": "WritingApp",
+                      "value": "encspect fixtures",
+                      "offset": 89,
+                      "length": 20
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "encspect fixtures",
+                      "offset": 46,
+                      "length": 63,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 46,
+                          "length": 63
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment WritingApp element at 0x59 names \"encspect fixtures\"",
+                          "offset": 89,
+                          "length": 20
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Segment MuxingApp element at 0x45 names \"encspect fixtures\"",
+                          "offset": 69,
+                          "length": 20
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Tracks",
+                  "offset": 109,
+                  "length": 205,
+                  "children": [
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_PCM/INT/LIT, 2 channels, NaN Hz",
+                      "offset": 115,
+                      "length": 47,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 1,
+                          "offset": 117,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 4097,
+                          "offset": 120,
+                          "length": 5
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 125,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_PCM/INT/LIT",
+                          "offset": 128,
+                          "length": 15
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 143,
+                          "length": 19,
+                          "children": [
+                            {
+                              "name": "SamplingFrequency",
+                              "value": "NaN",
+                              "offset": 145,
+                              "length": 10
+                            },
+                            {
+                              "name": "Channels",
+                              "value": 2,
+                              "offset": 155,
+                              "length": 3
+                            },
+                            {
+                              "name": "BitDepth",
+                              "value": 16,
+                              "unit": "bits",
+                              "offset": 158,
+                              "length": 4
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_PCM/INT/LIT, 2 channels, -48000 Hz",
+                      "offset": 162,
+                      "length": 47,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 2,
+                          "offset": 164,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 4098,
+                          "offset": 167,
+                          "length": 5
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 172,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_PCM/INT/LIT",
+                          "offset": 175,
+                          "length": 15
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 190,
+                          "length": 19,
+                          "children": [
+                            {
+                              "name": "SamplingFrequency",
+                              "value": -48000,
+                              "unit": "Hz",
+                              "offset": 192,
+                              "length": 10
+                            },
+                            {
+                              "name": "Channels",
+                              "value": 2,
+                              "offset": 202,
+                              "length": 3
+                            },
+                            {
+                              "name": "BitDepth",
+                              "value": 16,
+                              "unit": "bits",
+                              "offset": 205,
+                              "length": 4
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_PCM/INT/LIT, 2 channels, Infinity Hz",
+                      "offset": 209,
+                      "length": 47,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 3,
+                          "offset": 211,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 4099,
+                          "offset": 214,
+                          "length": 5
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 219,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_PCM/INT/LIT",
+                          "offset": 222,
+                          "length": 15
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 237,
+                          "length": 19,
+                          "children": [
+                            {
+                              "name": "SamplingFrequency",
+                              "value": "Infinity",
+                              "offset": 239,
+                              "length": 10
+                            },
+                            {
+                              "name": "Channels",
+                              "value": 2,
+                              "offset": 249,
+                              "length": 3
+                            },
+                            {
+                              "name": "BitDepth",
+                              "value": 16,
+                              "unit": "bits",
+                              "offset": 252,
+                              "length": 4
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "TrackEntry",
+                      "value": "audio, A_PCM/INT/LIT, 2 channels, 48000 Hz",
+                      "offset": 256,
+                      "length": 58,
+                      "children": [
+                        {
+                          "name": "TrackNumber",
+                          "value": 4,
+                          "offset": 258,
+                          "length": 3
+                        },
+                        {
+                          "name": "TrackUID",
+                          "value": 4100,
+                          "offset": 261,
+                          "length": 5
+                        },
+                        {
+                          "name": "TrackType",
+                          "value": "2 (audio)",
+                          "offset": 266,
+                          "length": 3
+                        },
+                        {
+                          "name": "CodecID",
+                          "value": "A_PCM/INT/LIT",
+                          "offset": 269,
+                          "length": 15
+                        },
+                        {
+                          "name": "Audio",
+                          "offset": 284,
+                          "length": 30,
+                          "children": [
+                            {
+                              "name": "SamplingFrequency",
+                              "value": 48000,
+                              "unit": "Hz",
+                              "offset": 286,
+                              "length": 10
+                            },
+                            {
+                              "name": "Channels",
+                              "value": 2,
+                              "offset": 296,
+                              "length": 3
+                            },
+                            {
+                              "name": "BitDepth",
+                              "value": 16,
+                              "unit": "bits",
+                              "offset": 299,
+                              "length": 4
+                            },
+                            {
+                              "name": "OutputSamplingFrequency",
+                              "value": "NaN",
+                              "offset": 303,
+                              "length": 11
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Cluster",
+                  "kind": "Stream",
+                  "value": 12,
+                  "unit": "blocks",
+                  "offset": 314,
+                  "length": 849,
+                  "children": [
+                    {
+                      "name": "Timestamp",
+                      "value": 0,
+                      "unit": "ticks",
+                      "offset": 320,
+                      "length": 3
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 323,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 1,
+                          "offset": 325,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 0,
+                          "unit": "ticks",
+                          "offset": 326,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 328,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 328,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 328,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 328,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 328,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 328,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 329,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 393,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 1,
+                          "offset": 395,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 10,
+                          "unit": "ticks",
+                          "offset": 396,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 398,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 398,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 398,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 398,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 398,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 398,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 399,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 463,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 1,
+                          "offset": 465,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 20,
+                          "unit": "ticks",
+                          "offset": 466,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 468,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 468,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 468,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 468,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 468,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 468,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 469,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 533,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 2,
+                          "offset": 535,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 0,
+                          "unit": "ticks",
+                          "offset": 536,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 538,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 538,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 538,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 538,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 538,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 538,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 539,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 603,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 2,
+                          "offset": 605,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 10,
+                          "unit": "ticks",
+                          "offset": 606,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 608,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 608,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 608,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 608,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 608,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 608,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 609,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 673,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 2,
+                          "offset": 675,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 20,
+                          "unit": "ticks",
+                          "offset": 676,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 678,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 678,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 678,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 678,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 678,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 678,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 679,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 743,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 3,
+                          "offset": 745,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 0,
+                          "unit": "ticks",
+                          "offset": 746,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 748,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 748,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 748,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 748,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 748,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 748,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 749,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 813,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 3,
+                          "offset": 815,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 10,
+                          "unit": "ticks",
+                          "offset": 816,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 818,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 818,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 818,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 818,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 818,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 818,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 819,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 883,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 3,
+                          "offset": 885,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 20,
+                          "unit": "ticks",
+                          "offset": 886,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 888,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 888,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 888,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 888,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 888,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 888,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 889,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 953,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 4,
+                          "offset": 955,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 0,
+                          "unit": "ticks",
+                          "offset": 956,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 958,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 958,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 958,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 958,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 958,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 958,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 959,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 1023,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 4,
+                          "offset": 1025,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 10,
+                          "unit": "ticks",
+                          "offset": 1026,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 1028,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 1028,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 1028,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 1028,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 1028,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 1028,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 1029,
+                          "length": 64
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SimpleBlock",
+                      "kind": "Frame",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 1093,
+                      "length": 70,
+                      "children": [
+                        {
+                          "name": "Track Number",
+                          "value": 4,
+                          "offset": 1095,
+                          "length": 1
+                        },
+                        {
+                          "name": "Timestamp",
+                          "value": 20,
+                          "unit": "ticks",
+                          "offset": 1096,
+                          "length": 2
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 128,
+                          "offset": 1098,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Keyframe",
+                              "value": true,
+                              "offset": 1098,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 1098,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Invisible",
+                              "value": false,
+                              "offset": 1098,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Lacing",
+                              "value": "0 (none)",
+                              "offset": 1098,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Discardable",
+                              "value": false,
+                              "offset": 1098,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 64,
+                          "unit": "bytes",
+                          "offset": 1099,
+                          "length": 64
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            1,
+            0
+          ]
+        ],
+        "codec": "PCM (integer, little-endian)",
+        "sampleRate": 0,
+        "channels": 2,
+        "bitsPerSample": 16,
+        "samples": 0,
+        "duration": 0.03,
+        "averageBitrate": 51.2,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "writer": "encspect fixtures",
+        "writerConfidence": "Low",
+        "series": []
+      },
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            1,
+            1
+          ]
+        ],
+        "codec": "PCM (integer, little-endian)",
+        "sampleRate": 0,
+        "channels": 2,
+        "bitsPerSample": 16,
+        "samples": 0,
+        "duration": 0.03,
+        "averageBitrate": 51.2,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "writer": "encspect fixtures",
+        "writerConfidence": "Low",
+        "series": []
+      },
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            1,
+            2
+          ]
+        ],
+        "codec": "PCM (integer, little-endian)",
+        "sampleRate": 0,
+        "channels": 2,
+        "bitsPerSample": 16,
+        "samples": 0,
+        "duration": 0.03,
+        "averageBitrate": 51.2,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "writer": "encspect fixtures",
+        "writerConfidence": "Low",
+        "series": []
+      },
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            1,
+            3
+          ]
+        ],
+        "codec": "PCM (integer, little-endian)",
+        "sampleRate": 48000,
+        "channels": 2,
+        "bitsPerSample": 16,
+        "samples": 0,
+        "duration": 0.03,
+        "averageBitrate": 51.2,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "writer": "encspect fixtures",
+        "writerConfidence": "Low",
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "matroska.codec-not-analyzed",
+        "message": "Track 1 is coded as PCM (integer, little-endian) (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
+        "offset": 128,
+        "length": 15,
+        "path": [
+          0,
+          1,
+          1,
+          0,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.audio-fields",
+        "message": "Track 1 states a sampling frequency of NaN Hz, which RFC 9559 forbids (section 5.1.4.1.29).",
+        "offset": 145,
+        "length": 10,
+        "path": [
+          0,
+          1,
+          1,
+          0,
+          4,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.codec-not-analyzed",
+        "message": "Track 2 is coded as PCM (integer, little-endian) (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
+        "offset": 175,
+        "length": 15,
+        "path": [
+          0,
+          1,
+          1,
+          1,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.audio-fields",
+        "message": "Track 2 states a sampling frequency of -48000 Hz, which RFC 9559 forbids (section 5.1.4.1.29).",
+        "offset": 192,
+        "length": 10,
+        "path": [
+          0,
+          1,
+          1,
+          1,
+          4,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.codec-not-analyzed",
+        "message": "Track 3 is coded as PCM (integer, little-endian) (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
+        "offset": 222,
+        "length": 15,
+        "path": [
+          0,
+          1,
+          1,
+          2,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.audio-fields",
+        "message": "Track 3 states a sampling frequency of Infinity Hz, which RFC 9559 forbids (section 5.1.4.1.29).",
+        "offset": 239,
+        "length": 10,
+        "path": [
+          0,
+          1,
+          1,
+          2,
+          4,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "matroska.codec-not-analyzed",
+        "message": "Track 4 is coded as PCM (integer, little-endian) (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
+        "offset": 269,
+        "length": 15,
+        "path": [
+          0,
+          1,
+          1,
+          3,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.audio-fields",
+        "message": "Track 4 states an output sampling frequency of NaN Hz, which RFC 9559 forbids (section 5.1.4.1.29.2); it is not used.",
+        "offset": 303,
+        "length": 11,
+        "path": [
+          0,
+          1,
+          1,
+          3,
+          4,
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

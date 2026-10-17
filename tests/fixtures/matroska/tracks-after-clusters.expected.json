@@ -1,0 +1,323 @@
+{
+ "description": "A PCM track with a TrackTimestampScale of 2.0 whose Tracks element comes after the Cluster, which a SeekHead before the Cluster references (RFC 9559 section 6.1 allows it): the blocks' times are worked out with the scale once the Tracks are read, so the blocks at 0 and 1000 Track Ticks are 2 s apart.",
+ "length": 367,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 154,
+     "length": 149,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 327,
+   "declared_end": 367
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   327,
+   [
+    [
+     "SeekHead",
+     46,
+     56,
+     [
+      [
+       "Seek",
+       51,
+       17,
+       [
+        [
+         "SeekID",
+         54,
+         7
+        ],
+        [
+         "SeekPosition",
+         61,
+         7
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       68,
+       17,
+       [
+        [
+         "SeekID",
+         71,
+         7
+        ],
+        [
+         "SeekPosition",
+         78,
+         7
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       85,
+       17,
+       [
+        [
+         "SeekID",
+         88,
+         7
+        ],
+        [
+         "SeekPosition",
+         95,
+         7
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Info",
+     102,
+     52,
+     [
+      [
+       "TimestampScale",
+       107,
+       7
+      ],
+      [
+       "MuxingApp",
+       114,
+       20
+      ],
+      [
+       "WritingApp",
+       134,
+       20
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     154,
+     149,
+     [
+      [
+       "Timestamp",
+       160,
+       3
+      ],
+      [
+       "SimpleBlock",
+       163,
+       70
+      ],
+      [
+       "SimpleBlock",
+       233,
+       70
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     303,
+     64,
+     [
+      [
+       "TrackEntry",
+       308,
+       59,
+       [
+        [
+         "TrackNumber",
+         310,
+         3
+        ],
+        [
+         "TrackUID",
+         313,
+         5
+        ],
+        [
+         "TrackType",
+         318,
+         3
+        ],
+        [
+         "CodecID",
+         321,
+         15
+        ],
+        [
+         "Audio",
+         336,
+         19,
+         [
+          [
+           "SamplingFrequency",
+           338,
+           10
+          ],
+          [
+           "Channels",
+           348,
+           3
+          ],
+          [
+           "BitDepth",
+           351,
+           4
+          ]
+         ]
+        ],
+        [
+         "TrackTimestampScale",
+         355,
+         12
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 163,
+   "length": 70,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     169,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 233,
+   "length": 70,
+   "track": 1,
+   "timestamp": 1000,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     239,
+     64
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": 16,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true,
+   "timestamp_scale": 2.0
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "PCM (integer, little-endian)",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.codec-not-analyzed",
+   "contains": "PCM"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

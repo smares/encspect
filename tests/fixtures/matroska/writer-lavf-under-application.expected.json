@@ -1,0 +1,315 @@
+{
+ "description": "A Segment whose MuxingApp is ffmpeg's muxer version (\"Lavf60.16.100\") and whose WritingApp names another application, as libavformat writes the encoding_tool metadata (matroskaenc.c): the muxer is the library under the application, as libebml and libmatroska are under mkvmerge, so the two do not conflict.",
+ "length": 386,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 190,
+     "length": 196,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "Lavf60.16.100",
+    "writing_app": "HandBrake 1.7.2 2024011600"
+   },
+   "length": 346,
+   "declared_end": 386
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   346,
+   [
+    [
+     "Info",
+     46,
+     68,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       16
+      ],
+      [
+       "WritingApp",
+       85,
+       29
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     114,
+     76,
+     [
+      [
+       "TrackEntry",
+       119,
+       71,
+       [
+        [
+         "TrackNumber",
+         121,
+         3
+        ],
+        [
+         "TrackUID",
+         124,
+         5
+        ],
+        [
+         "TrackType",
+         129,
+         3
+        ],
+        [
+         "CodecID",
+         132,
+         8
+        ],
+        [
+         "CodecPrivate",
+         140,
+         22
+        ],
+        [
+         "CodecDelay",
+         162,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         168,
+         7
+        ],
+        [
+         "Audio",
+         175,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           177,
+           10
+          ],
+          [
+           "Channels",
+           187,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     190,
+     196,
+     [
+      [
+       "Timestamp",
+       196,
+       3
+      ],
+      [
+       "SimpleBlock",
+       199,
+       46
+      ],
+      [
+       "SimpleBlock",
+       245,
+       47
+      ],
+      [
+       "SimpleBlock",
+       292,
+       48
+      ],
+      [
+       "SimpleBlock",
+       340,
+       46
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 199,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     205,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 245,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     251,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 292,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     298,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 340,
+   "length": 46,
+   "track": 1,
+   "timestamp": 60,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     346,
+     40
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    143,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "HandBrake 1.7.2 2024011600",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

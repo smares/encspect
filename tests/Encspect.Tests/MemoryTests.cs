@@ -605,7 +605,9 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] data = MatroskaBuilder.OpusBlocks(6_100_000, blocksPerCluster: 100_000);
         long before = Live();
         Report report = Analyzer.CreateDefault().Analyze("records.mka", new MemoryStream(data));
-        Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Finding limit = Assert.Single(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Assert.Equal("Unparsed Data", limit.Node!.Name);
+        Assert.NotNull(limit.Path);
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         long live = Live() - before;
         GC.KeepAlive(data);
@@ -613,6 +615,53 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(live < 1_400_000_000, $"The live heap grew by {live / 1_000_000} MB.");
         GC.KeepAlive(report);
         Bounded("voids.mka", MatroskaBuilder.File([MatroskaBuilder.OpusTracks(), .. Enumerable.Repeat(MatroskaBuilder.Void(0), 1_000_000)]), 110_000_000, "matroska.too-many-elements");
+    }
+
+    // Every ContentEncoding of a track hides the next, 16,000 of them in a file of 192 KB: the run that hides each was copied (2 GB live on linux-x64).
+    [Fact]
+    public void ManyHidingContentEncodingsStayBounded()
+    {
+        byte[] encodings = MatroskaBuilder.Element(0x6D80, [.. Enumerable.Range(0, 16_000).Select(i => MatroskaBuilder.Element(0x6240, MatroskaBuilder.Unsigned(0x5031, (ulong)i), MatroskaBuilder.Unsigned(0x5032, 5)))]);
+        byte[] data = MatroskaBuilder.File(MatroskaBuilder.Info(), MatroskaBuilder.Element(0x1654AE6B, MatroskaBuilder.OpusTrack(1, encodings)));
+
+        Bounded("encodings.mka", data, 150_000_000, "matroska.encoding-hidden");
+    }
+
+    // Zlib frames that inflate to 40 MiB each, 20 of them in less than a megabyte: the first is refused at the limit on inflated frames, not inflated.
+    [Fact]
+    public void InflatedMatroskaFramesStayBounded()
+    {
+        var packed = new MemoryStream();
+        using (var zlib = new System.IO.Compression.ZLibStream(packed, System.IO.Compression.CompressionLevel.SmallestSize, leaveOpen: true))
+        {
+            zlib.Write(new byte[40 << 20]);
+        }
+
+        byte[] frame = packed.ToArray();
+        byte[] encodings = MatroskaBuilder.Element(0x6D80, MatroskaBuilder.Element(0x6240, MatroskaBuilder.Unsigned(0x5031, 0), MatroskaBuilder.Unsigned(0x5032, 1),
+            MatroskaBuilder.Unsigned(0x5033, 0), MatroskaBuilder.Element(0x5034, MatroskaBuilder.Unsigned(0x4254, 0))));
+        byte[] cluster = MatroskaBuilder.Cluster(0, [.. Enumerable.Range(0, 20).Select(i => MatroskaBuilder.SimpleBlock(1, i * 20, frame))]);
+        byte[] data = MatroskaBuilder.File(MatroskaBuilder.Info(), MatroskaBuilder.Element(0x1654AE6B, MatroskaBuilder.OpusTrack(1, encodings)), cluster);
+
+        Bounded("inflate.mka", data, 30_000_000, "matroska.frame-encoding-invalid");
+    }
+
+    // Concatenated documents (EBML Header, Segment with an Info element and one Opus track): each routed Segment costs its stream, the codec parser's
+    // nodes and the series, about 30 KB, so the node budget charges each audio track for them, and 5,000 of them, past the budget, stay bounded.
+    [Fact]
+    public void ConcatenatedSegmentsStayBounded()
+    {
+        byte[] data = MatroskaBuilder.Concat([.. Enumerable.Repeat(MatroskaBuilder.Document(), 5_000)]);
+
+        (Report report, long kept, long peak) = Measure("stream.mka", data, data[..4096]);
+
+        Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        int segments = report.Streams.Count;
+        output.WriteLine($"{segments} Segments read, {kept / 1_000_000} MB kept and {peak / 1_000_000} MB peak");
+        Assert.InRange(segments, 2_000, 4_500);
+        Assert.True(peak < 250_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
     }
 
     // A block of seven bytes can state 256 frames of no bytes: the frames of laced blocks are counted against a budget, and fixed-size lacing
