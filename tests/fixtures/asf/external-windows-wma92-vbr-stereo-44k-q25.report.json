@@ -1133,7 +1133,7 @@
                               "length": 2,
                               "children": [
                                 {
-                                  "name": "Exponent VLC",
+                                  "name": "Uses Exponent VLC",
                                   "value": true,
                                   "offset": 4897,
                                   "length": 1,
@@ -1142,7 +1142,7 @@
                                   "bitOrder": "leastSignificantFirst"
                                 },
                                 {
-                                  "name": "Bit Reservoir",
+                                  "name": "Uses Bit Reservoir",
                                   "value": true,
                                   "offset": 4897,
                                   "length": 1,
@@ -1151,7 +1151,7 @@
                                   "bitOrder": "leastSignificantFirst"
                                 },
                                 {
-                                  "name": "Variable Block Length",
+                                  "name": "Uses Variable Block Length",
                                   "value": true,
                                   "offset": 4897,
                                   "length": 1,
@@ -23303,14 +23303,14 @@
         "severity": "Info",
         "code": "wma.frame-stuffing",
         "message": "A frame that began in the superframe before is followed by zero bits up to the bit offset the superframe states, which a decoder skips; the first has 145 (in the superframe at 0x36D0).",
-        "offset": 25671,
-        "length": 241,
+        "offset": 13578,
+        "length": 405,
         "path": [
           0,
           1,
           7,
           4,
-          65
+          26
         ],
         "count": 1
       }

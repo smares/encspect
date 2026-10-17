@@ -16,6 +16,15 @@ encoder, its version and the command.
 
 rewrites the manifests from the committed files without the encoder or ffprobe, keeping what only
 the tools give (the "ffprobe" part). Needs ffmpeg 6.1 and ffprobe otherwise.
+
+The external-remux-ffmpeg-* files are `ffmpeg -c copy` remuxes of two committed Windows files (one written
+by the Windows Media Format SDK, one by Media Foundation), without the bit-exact flags, so ffmpeg's ASF
+muxer adds its own WM/EncodingSettings ("Lavf60.16.100") after the attributes it copies, WMFSDKVersion or
+MediaFoundationVersion among them. The other fixtures of ffmpeg are bit-exact and carry no such stamp.
+
+    python3 scripts/fixtures/make_external_asf_fixtures.py --remuxes-only
+
+writes only the remuxes (the same bytes every time with the same ffmpeg).
 """
 
 import argparse
@@ -46,6 +55,13 @@ FIXTURES = [
     ("external-ffmpeg-wmav1-stereo-44k-128k", "wmav1", 2, 44100, 128000),
     ("external-ffmpeg-wmav1-mono-22k-24k", "wmav1", 1, 22050, 24000),
     ("external-ffmpeg-wmav1-stereo-44k-48k", "wmav1", 2, 44100, 48000),
+]
+
+
+# name, the committed Windows file it copies
+REMUXES = [
+    ("external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk", "external-windows-wma92-cbr-stereo-22k-20-sdk.wma"),
+    ("external-remux-ffmpeg-wma92-cbr-stereo-22k-32", "external-windows-wma92-cbr-stereo-22k-32.wma"),
 ]
 
 
@@ -86,11 +102,47 @@ def manifest(name, codec, channels, rate, bit_rate, path, command, tools):
     }
 
 
+def remux_manifest(name, source, path, command, tools):
+    source_path = OUT / source
+    return {
+        "description": f"ffmpeg's -c copy remux of {source}, without the bit-exact flags: ffmpeg's ASF muxer copies the attributes of the file, WMFSDKVersion or MediaFoundationVersion among them, and adds its own WM/EncodingSettings after them.",
+        "format": "ASF",
+        "encoder": FFMPEG_VERSION,
+        "command": command,
+        "input": {"file": source, "sha256": hashlib.sha256(source_path.read_bytes()).hexdigest()},
+        "sha256": hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest(),
+        "reproducible": False,
+        "ffprobe": tools,
+    }
+
+
+def write_remuxes(manifests_only):
+    for name, source in REMUXES:
+        path = OUT / f"{name}.wma"
+        command = ["ffmpeg", "-i", source, "-c", "copy", f"{name}.wma"]
+        if not manifests_only:
+            run(["ffmpeg", "-v", "error", "-y", "-i", str(OUT / source), "-c", "copy", str(path)])
+        elif not path.exists():
+            raise SystemExit(f"{path} is missing.")
+        manifest_path = OUT / f"{name}.expected.json"
+        if manifests_only and manifest_path.exists():
+            tools = json.loads(manifest_path.read_text(encoding="utf-8"))["ffprobe"]
+            tools["file_bytes"] = path.stat().st_size
+        else:
+            tools = probe(path)
+        manifest_path.write_text(json.dumps(remux_manifest(name, source, path, command, tools), indent=1) + "\n", encoding="utf-8")
+        print(f"{name}: {path.stat().st_size} bytes")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--manifests-only", action="store_true")
+    parser.add_argument("--remuxes-only", action="store_true")
     args = parser.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
+    if args.remuxes_only:
+        write_remuxes(False)
+        return 0
     for name, codec, channels, rate, bit_rate in FIXTURES:
         path = OUT / f"{name}.wma"
         command = ["ffmpeg", "-i", "tones.wav", "-c:a", codec, "-b:a", str(bit_rate), "-fflags", "+bitexact", "-flags:a", "+bitexact", f"{name}.wma"]
@@ -110,6 +162,7 @@ def main():
             tools = probe(path)
         manifest_path.write_text(json.dumps(manifest(name, codec, channels, rate, bit_rate, path, command, tools), indent=1) + "\n", encoding="utf-8")
         print(f"{name}: {path.stat().st_size} bytes")
+    write_remuxes(args.manifests_only)
     # Microsoft's encoder files (import_windows_wma_fixtures.py): the same figures, from the files
     # and the provenance record the importer wrote next to each.
     for provenance_path in sorted(OUT.glob("external-windows-*.provenance.json")):

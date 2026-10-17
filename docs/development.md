@@ -249,6 +249,14 @@ The first run of the cross-checks on Ubuntu 26.04 failed in eight jobs (DTS pass
   - MediaInfo 24.01, measured: it finds the extensions of a core and the substream behind it in the 16-bit big endian form only, counts a 14-bit frame as FSIZE + 1 times 8 over 7 bytes, and lays out AMODE 10 to 15 differently; each is listed with its fixtures in the script.
   - libdca reads core frames only: XCh and XXCH channels are not counted, and it reads a frame by its size, so it does not resync inside a cut one.
 
+### ASF remux fixtures
+
+`make_external_asf_fixtures.py` also writes `external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.wma` and `external-remux-ffmpeg-wma92-cbr-stereo-22k-32.wma`: `ffmpeg -i <committed Windows file> -c copy` of a Windows Media Format SDK file and a Media Foundation file, without `-fflags +bitexact`.
+
+- ffmpeg's ASF muxer copies every attribute of the input and adds its own `WM/EncodingSettings` ("Lavf60.16.100") after them, so the files carry WMFSDKVersion or MediaFoundationVersion of the earlier writer and the stamp of the muxer; every other ffmpeg ASF fixture is bit-exact and has no stamp.
+- Their manifests hold the source file and its SHA-256 and what ffprobe says of the remux. `--remuxes-only` writes only these two files (the same bytes with the same ffmpeg); the fixtures job runs `--manifests-only`, which keeps the files.
+- `WmaFixtureTests.AnFFmpegRemuxIsWrittenByFFmpegNotByTheWriterOfTheSource` holds the writer the analyzer names. `crosscheck_asf_fixtures.py` checks them like the other ffmpeg fixtures; MediaInfo states no bit rate mode for them, since ffmpeg writes IsVBR as text.
+
 ### Derived ASF fixture
 
 `make_asf_fixtures.py` derives `derived-ffmpeg-wmav2-tool-name-lavc.asf` from `external-ffmpeg-wmav2-mono-44k-48k.wma`: the same stream, packets and File Properties figures, with a WM/ToolName attribute of "Lavc60.31.102 wmav2" added. It is not an encoder's output, and its manifest says so (`derived`). ffprobe reads the same start and duration as for the source.

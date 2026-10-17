@@ -479,7 +479,7 @@ public sealed partial class AsfParser
             entry.Type = f.Guid("Stream Type", Explain.StreamType, AsfGuids.StreamTypeName);
             entry.ErrorCorrectionType = f.Guid("Error Correction Type", Explain.StreamErrorCorrectionType,
                 g => g == AsfGuids.NoErrorCorrection ? "No error correction" : g == AsfGuids.AudioSpread ? "Audio spread" : null);
-            entry.TimeOffset = f.Qword("Time Offset", Explain.TimeOffset, v => NodeValue.Decimal(v / 10_000_000.0, 3, "s"));
+            f.Qword("Time Offset", Explain.TimeOffset, v => NodeValue.Decimal(v / 10_000_000.0, 3, "s"));
             uint typeLength = f.Dword("Type-Specific Data Length", Explain.TypeSpecificDataLength, "bytes");
             Node typeLengthNode = node.Children[^1];
             uint errorLength = f.Dword("Error Correction Data Length", Explain.ErrorCorrectionDataLength, "bytes");
@@ -1146,6 +1146,11 @@ public sealed partial class AsfParser
                 var pending = new List<(ushort Type, ushort Length, Node Node)>();
                 string? system = null;
 
+                // Section 4.13 says only that the length of a stream number "should" be 2 and defines no other type. An object record that
+                // cannot be read as a stream number leaves the record's scope unknown, and a record that protects nothing it names would
+                // pass ciphertext on as clear data, so the record is taken to cover every stream, as an object that cannot be read is.
+                bool coversAll = false;
+
                 // The record as far as it was read is kept, with the streams it names, whether it ends here for want of bytes or entries.
                 void Attach(long stop)
                 {
@@ -1160,11 +1165,11 @@ public sealed partial class AsfParser
                     {
                         state.Findings.AddNow(type == 1 ? Severity.Warning : Severity.Info, type == 1 ? "asf.encrypted-object-id-length" : "asf.encrypted-object-id-type",
                             type == 1
-                                ? $"An Encrypted Object Record gives a stream number in {length} bytes; section 4.13 sets the length to 2 for type 1."
-                                : $"An Encrypted Object Record has the ID type 0x{type:X4}; section 4.13 defines only 1, a stream number, so which object it covers is not known.", idTypeNode);
+                                ? $"An Encrypted Object Record gives a stream number in {length} bytes; section 4.13 recommends 2 for type 1, a WORD. Which stream it names is not known, so the record is taken to cover every stream."
+                                : $"An Encrypted Object Record has the ID type 0x{type:X4}; section 4.13 defines only 1, a stream number, so which object it covers is not known. The record is taken to cover every stream.", idTypeNode);
                     }
 
-                    state.Protections.Add(new ProtectionObject(ProtectionSchemes.AdvancedEncryption, shown, [system!], streams));
+                    state.Protections.Add(new ProtectionObject(ProtectionSchemes.AdvancedEncryption, shown, [system!], streams, IsWholeFile: coversAll));
                 }
 
                 try
@@ -1210,6 +1215,7 @@ public sealed partial class AsfParser
                         entry.Add(shownRecord);
                         if (!isStream)
                         {
+                            coversAll = true;
                             pending.Add((idType, idLength, idTypeNode));
                         }
                     }
@@ -1244,12 +1250,44 @@ public sealed partial class AsfParser
             state.Protections.Add(new ProtectionObject(ProtectionSchemes.AdvancedEncryption, node, [.. unreadSystems], [], IsWholeFile: true));
         }
 
-        state.Findings.AddNow(Severity.Info, state.Protections.Count > recordsBefore ? "asf.content-encrypted" : "asf.no-content-encryption-record",
-            state.Protections.Count > recordsBefore
-                ? (isRead
-                    ? "The file is protected by Windows Media DRM for network devices; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them."
-                    : "The file is protected by Windows Media DRM for network devices; the object could not be read in full, so every stream is taken to be encrypted and is reported as the file holds it.")
-                : "The Advanced Content Encryption Object holds no content encryption record, so it protects no stream.", node);
+        var added = state.Protections.Skip(recordsBefore).ToList();
+        if (added.Count == 0)
+        {
+            state.Findings.AddNow(Severity.Info, "asf.no-content-encryption-record", "The Advanced Content Encryption Object holds no content encryption record, so it protects no stream.", node);
+            return;
+        }
+
+        // Which streams the records cover is known once the header is read: the finding is made by SummarizeAdvancedEncryption.
+        state.AdvancedEncryptions.Add(new AdvancedEncryption(node, added, isRead));
+    }
+
+    // The finding for an Advanced Content Encryption Object that has records, worded by what they protect in this file.
+    private static void SummarizeAdvancedEncryption(State state)
+    {
+        foreach ((Node node, IReadOnlyList<ProtectionObject> added, bool isRead) in state.AdvancedEncryptions)
+        {
+            const string System = "Windows Media DRM for network devices";
+            if (!isRead)
+            {
+                state.Findings.AddNow(Severity.Info, "asf.content-encrypted", $"The file is protected by {System}; the object could not be read in full, so every stream is taken to be encrypted and is reported as the file holds it.", node);
+            }
+            else if (added.Any(p => p.IsWholeFile))
+            {
+                state.Findings.AddNow(Severity.Info, "asf.content-encrypted", $"The file is protected by {System}; a record names its objects in a way that is not a stream number, so every stream is taken to be encrypted and is reported as the file holds it.", node);
+            }
+            else if (state.Streams.Any(s => added.Any(p => p.Covers(s.Number))))
+            {
+                state.Findings.AddNow(Severity.Info, "asf.content-encrypted", $"The file is protected by {System}; the streams that its records name (0 names them all) are encrypted and are reported as the file holds them.", node);
+            }
+            else if (added.Any(p => p.Streams.Count > 0))
+            {
+                state.Findings.AddNow(Severity.Info, "asf.no-content-encryption-record", $"The records of the Advanced Content Encryption Object ({System}) name only streams that the file does not have, so it protects none.", node);
+            }
+            else
+            {
+                state.Findings.AddNow(Severity.Info, "asf.no-content-encryption-record", $"The records of the Advanced Content Encryption Object ({System}) name no stream, so it protects none.", node);
+            }
+        }
     }
 
     // ---- Stream Bitrate Properties Object (3.12) ----
@@ -1304,9 +1342,23 @@ public sealed partial class AsfParser
     private static void ParseIndexParameters(State state, Node parent, ObjectHeader header, long end, string name, string description, string intervalDescription)
     {
         (Node node, Fields f) = Begin(state, parent, header, end, name, description);
-        if (header.Id == AsfGuids.IndexParameters)
+        bool timecode = header.Id == AsfGuids.TimecodeIndexParameters;
+        bool media = header.Id == AsfGuids.MediaObjectIndexParameters;
+        List<(ushort Stream, ushort Type)> kept;
+        if (timecode)
+        {
+            state.TimecodeIndexParametersNode = node;
+            kept = state.TimecodeIndexSpecifiers;
+        }
+        else if (media)
+        {
+            state.MediaIndexParametersNode = node;
+            kept = state.MediaIndexSpecifiers;
+        }
+        else
         {
             state.IndexParametersNode = node;
+            kept = state.IndexSpecifiers;
         }
 
         Body(state, node, f, 34, () =>
@@ -1333,9 +1385,10 @@ public sealed partial class AsfParser
                 Node specifier = node.Add("Index Specifier", at, 4, $"stream {stream}, {IndexTypeName(type)}", Explain.IndexSpecifier);
                 specifier.Add("Stream Number", at, 2, NodeValue.Integer(stream), Explain.IndexSpecifierStream);
                 specifier.Add("Index Type", at + 2, 2, NodeValue.Text($"{type} ({IndexTypeName(type)})"), Explain.IndexType);
-                if (header.Id == AsfGuids.IndexParameters)
+                kept.Add((stream, type));
+                if (timecode && type == 1)
                 {
-                    state.IndexSpecifiers.Add((stream, type));
+                    state.Findings.AddNow(Severity.Warning, "asf.index-specifiers", $"The {name} lists index type 1, which section 4.11 says is not a valid value for a timecode index.", specifier.Children[^1]);
                 }
             }
         });
