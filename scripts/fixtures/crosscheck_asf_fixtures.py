@@ -78,10 +78,19 @@ def ffprobe_json(path, *args):
 
 
 def decode(path, fmt="s16le", level="error"):
-    result = run(["ffmpeg", "-v", level, "-i", str(path), "-map", "0:a", "-f", fmt, "-"])
-    # The raw PCM muxer warns about timestamps of the decoder's packets for some Lossless files; the samples are what is checked.
-    errors = "\n".join(l for l in result.stderr.decode("utf-8", "replace").splitlines() if "non monotonically increasing dts" not in l).strip()
-    return result.returncode, result.stdout, errors
+    """Decodes every audio stream, one ffmpeg run each, and joins the PCM: ffmpeg 7.1 and later refuse a raw PCM output with more
+    than one audio stream (FF_OFMT_FLAG_MAX_ONE_OF_EACH in libavformat/pcmenc.c of 8.0.1), where 6.1 interleaved them. The samples
+    of all streams count, as before."""
+    probe = run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", str(path)], text=True)
+    count = max(1, len(probe.stdout.split()))
+    code, pcm, lines = 0, b"", []
+    for index in range(count):
+        result = run(["ffmpeg", "-v", level, "-i", str(path), "-map", f"0:a:{index}", "-f", fmt, "-"])
+        code = code or result.returncode
+        pcm += result.stdout
+        # The raw PCM muxer warns about timestamps of the decoder's packets for some Lossless files; the samples are what is checked.
+        lines += [l for l in result.stderr.decode("utf-8", "replace").splitlines() if "non monotonically increasing dts" not in l]
+    return code, pcm, "\n".join(lines).strip()
 
 
 def analyzer_samples(path):
