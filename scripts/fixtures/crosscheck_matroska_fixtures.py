@@ -3,23 +3,24 @@
 
 For every manifest in tests/fixtures/matroska whose crosscheck says "valid":
 
-- mkvinfo (MKVToolNix 82.0, libebml and libmatroska): every element the manifest's tree lists (the CRC-32 elements, which mkvinfo does not
+- mkvinfo (MKVToolNix 97.0, libebml and libmatroska): every element the manifest's tree lists (the CRC-32 elements, which mkvinfo does not
   print, apart) at the position mkvinfo gives it, and every frame of every block, in order, with the offset and size mkvinfo gives it, which
   covers the three lacing modes and the BlockGroups.
-- ffprobe (FFmpeg 6.1, the reference demuxer matroskadec.c): the audio streams' codec, channels and sample rate, the sizes of the packets it
+- ffprobe (FFmpeg 8.0, the reference demuxer matroskadec.c): the audio streams' codec, channels and sample rate, the sizes of the packets it
   reads from each stream (a laced frame is a packet), and, for blocks without lacing, their timestamps: the block's time less the
   track's CodecDelay.
 - the applications: mkvinfo's "Multiplexing application" and "Writing application" of every Segment and MediaInfo's "Writing library" and "Writing application" of the first, against the MuxingApp and WritingApp in the manifest.
 - the protection, on every fixture (those without a ContentEncryption are the negative control): mkvinfo's order, scope, type and encryption
   algorithm of each track's ContentEncodings against the manifest's, and the golden report's protection against what RFC 9559 (section
   5.1.4.1.31.8 and following) makes of the manifest's encodings: a type 1 encoding whose algorithm is not 0 protects, its samples are encrypted
-  when its scope covers the frames (bit 1, or bit 4 over an encoding that covers them), and its scheme names the algorithm and, for AES, the cipher mode. mkvinfo 82.0 lists
-  ContentEncAESSettings as an unknown element, so the cipher mode comes from the manifest, which the independent reader of matroska_model.py
-  wrote. MediaInfo 24.01 prints no Encryption field for a Matroska track (observed on these files; its source was not read), which is compared
-  as absent, so the script fails when a later version starts to report one. A report with another number of streams than the manifest has audio
+  when its scope covers the frames (bit 1, or bit 4 over an encoding that covers them), and its scheme names the algorithm and, for AES, the cipher mode. mkvinfo 82.0 listed
+  ContentEncAESSettings as an unknown element and the fields this script reads (order, scope, type, algorithm) do not include the cipher mode, which
+  97.0 may print since its libmatroska knows the element (KaxSemantic.cpp), so the cipher mode comes from the manifest, which the independent reader of
+  matroska_model.py wrote. MediaInfo 26.01 prints no Encryption field for a Matroska track (File_Mk.cpp fills none; the ContentEncryption elements are only
+  named, ATO2), which is compared as absent, so the script fails when a later version starts to report one. A report with another number of streams than the manifest has audio
   tracks is not compared, and the script prints why.
 - ffmpeg decoding to nothing: no error, for the files an encoder or a muxer made (external-*).
-- MediaInfo (24.01): the format ("Matroska" or "WebM"), the number of audio tracks, and each track's channels and sampling rate against the
+- MediaInfo (26.01): the format ("Matroska" or "WebM"), the number of audio tracks, and each track's channels and sampling rate against the
   analyzer's golden report, wherever MediaInfo reports them.
 
 Fixtures that are damaged on purpose ("valid": false) are run through the same tools, which must finish without crashing; what they say about
@@ -57,7 +58,7 @@ MEDIAINFO_FORMATS = {
     "flac": "FLAC", "alac": "ALAC", "tta": "TTA", "truehd": "MLP FBA", "wavpack": "WavPack", "pcm_s16le": "PCM",
 }
 
-# The analyzer's reading against MediaInfo's, per fixture and field: MediaInfo's own reading with the evidence (MediaInfoLib v24.01,
+# The analyzer's reading against MediaInfo's, per fixture and field: MediaInfo's own reading with the evidence (MediaInfoLib v26.01,
 # Source/MediaInfo). A listed difference that no longer occurs fails the run.
 EXPLAINED = {}
 
@@ -232,12 +233,15 @@ def check_decode(path, problems, opus_tracks=0):
     # The attached picture is probed although it is not mapped.
     lines = [l for l in result.stderr.strip().splitlines() if "[mjpeg" not in l]
     # FFmpeg 8.0's Opus parser checks the empty packet that flushes it at the end of the stream (libavcodec/opus/parser.c, opus_parse: for a demuxer that
-    # sets PARSER_FLAG_COMPLETE_FRAMES it calls set_frame_duration whatever buf_size is, and ff_opus_parse_packet refuses a packet of 0 bytes); 6.1's
+    # sets PARSER_FLAG_COMPLETE_FRAMES it calls set_frame_duration whatever buf_size is, and ff_opus_parse_packet refuses a packet of 0 bytes); 6.1.1's
     # opus_find_frame_end returned for an empty buffer before parsing. The message is that flush, once for each Opus track, and no packet is lost.
-    for _ in range(opus_tracks):
-        flush = next((l for l in reversed(lines) if OPUS_FLUSH.match(l)), None)
-        if flush is not None:
-            lines.remove(flush)
+    # Exactly one line for each Opus track is required, so the entry expires if a later FFmpeg stops printing it (a real "Error parsing" would otherwise
+    # hide behind it).
+    flushes = [l for l in lines if OPUS_FLUSH.match(l)]
+    if len(flushes) != opus_tracks:
+        problems.append(f"ffmpeg prints {len(flushes)} Opus flush messages for {opus_tracks} Opus tracks; FFmpeg 8.0.1 prints one for each (opus/parser.c)")
+    else:
+        lines = [l for l in lines if not OPUS_FLUSH.match(l)]
     if result.returncode != 0 or lines:
         problems.append(f"ffmpeg decoding: {lines[:1] or result.returncode}")
 
