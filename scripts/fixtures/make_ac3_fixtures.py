@@ -305,8 +305,13 @@ def build():
             fields={"AC-3/Frame[1]/Bit Stream Information/Channel Map": "0x0200 (left/right rear surround)",
                     "AC-3/Frame[1]/Bit Stream Information/Stream Type": "1 (dependent)",
                     "AC-3/Statistics[1]": "independent substream 1"},
-            crosscheck={"ffprobe": True, "ffprobe_channels": 8, "decode": True, "skip_insertion": False,
-                        "skip": {"skip_insertion": "ffmpeg decodes only substream 0, so a change to substream 1 would not show."}})
+            crosscheck={"ffprobe": False, "decode": True, "skip_insertion": False,
+                        "skip": {"skip_insertion": "ffmpeg decodes only substream 0, so a change to substream 1 would not show.",
+                                 "ffprobe": "FFmpeg 8.0's AC-3 parser no longer takes a frame of substream 1 as the start of a packet: its header parser returns an error for any "
+                                            "substream ID but 0 (libavcodec/ac3_parser.c, eac3_parse_header: if (hdr->substreamid) return AC3_PARSE_ERROR_FRAME_TYPE), so "
+                                            "ac3_sync does not find it and the frame joins the packet before it, whose sample rate and channels the parser then cannot read "
+                                            "(0 Hz, 2 channels) and which lists 4 packets for the 8 of the frames. 6.1 listed one packet for each of the two programs; the "
+                                            "stream is valid E-AC-3 (ETSI TS 102 366 E.1.2.1 allows substream IDs 0 to 7)."}})
 
     # A dependent substream before any independent one.
     data = eac3(strmtyp=1, acmod=2, chanmap=LRS_RRS, words=160) + eac3(acmod=2, words=200) * 3
