@@ -99,7 +99,7 @@ internal static class Reader
         if (isCut)
         {
             s.Findings.Add(Severity.Warning, "wavpack.block-truncated", () => Nodes.Skipped(s.Records, index), _ =>
-                $"The data ends inside the header of a block at 0x{start:X}: {to - start} of its {Counts.Of(BlockHeader.Length, "byte", "bytes")} are there.", "header");
+                $"The data ends inside the header of a block at 0x{start:X}: {to - start} of its {Counts.Of(BlockHeader.Length, "byte", "bytes")} {Counts.Agree(BlockHeader.Length, "is", "are")} there.", "header");
         }
         else
         {
@@ -772,7 +772,7 @@ internal static class Reader
                 result |= BlockStatus.ChecksumInvalid;
                 s.ChecksumInvalid++;
                 s.Findings.Add(Severity.Warning, "wavpack.block-checksum-mismatch", () => ChecksumNode(s, entry), count =>
-                    $"The checksum stored in the block at 0x{offset:X} is not the one worked out over its bytes{(count > 1 ? $"; {Counts.Of(count, "block", "blocks")} differ" : string.Empty)}; libwavpack skips such a block.");
+                    $"The checksum stored in the block at 0x{offset:X} is not the one worked out over its bytes{(count > 1 ? $"; {Counts.Of(count, "block", "blocks")} {Counts.Agree(count, "differs", "differ")}" : string.Empty)}; libwavpack skips such a block.");
             }
             else
             {
@@ -975,7 +975,7 @@ internal static class Reader
                 if (index > expected)
                 {
                     s.Findings.Add(Severity.Warning, "wavpack.block-index-gap", () => Nodes.HeaderField(s.Records, entry, "Block Index"), count =>
-                        $"The block at 0x{offset:X} begins at sample {index}, but the block before it ends at sample {expected}: {Counts.Of(index - expected, "sample", "samples")} are missing{(count > 1 ? $" ({count} such gaps)" : string.Empty)}.");
+                        $"The block at 0x{offset:X} begins at sample {index}, but the block before it ends at sample {expected}: {Counts.Of(index - expected, "sample", "samples")} {Counts.Agree(index - expected, "is", "are")} missing{(count > 1 ? $" ({count} such gaps)" : string.Empty)}.");
                 }
                 else
                 {

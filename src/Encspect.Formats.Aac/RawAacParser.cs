@@ -925,7 +925,7 @@ public sealed class RawAacParser : IFormatParser
         if (frames >= AppleMinimumFrames && appleHeaders == frames)
         {
             claims = [.. claims, new EncoderClaim("Apple AudioToolbox", FirstFrame(),
-                $"ADTS header layout of Apple's AudioToolbox writer: all {Counts.Of(frames, "frame", "frames")} have the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0", ClaimRole.Writer)
+                $"ADTS header layout of Apple's AudioToolbox writer: all {Counts.Of(frames, "frame", "frames")} {Counts.Agree(frames, "has", "have")} the MPEG-2 ID, the original/copy bit set and an adts_buffer_fullness of 0", ClaimRole.Writer)
             {
                 IsLayout = true,
             }];

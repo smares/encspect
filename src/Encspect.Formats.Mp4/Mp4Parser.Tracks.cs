@@ -561,7 +561,7 @@ public sealed partial class Mp4Parser
             if (placed != sized && track.SampleSizeNode is not null)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.chunk-sample-mismatch", placed < sized
-                    ? $"The chunks of {label} hold {Counts.Of(placed, "sample", "samples")}, but stsz sizes {sized}; the {Counts.Of(sized - placed, "sample", "samples")} after them have no place in the file."
+                    ? $"The chunks of {label} hold {Counts.Of(placed, "sample", "samples")}, but stsz sizes {sized}; the {Counts.Of(sized - placed, "sample", "samples")} after them {Counts.Agree(sized - placed, "has", "have")} no place in the file."
                     : $"The chunks of {label} hold {Counts.Of(placed, "sample", "samples")}, but stsz sizes only {sized}.", stsc);
             }
         }

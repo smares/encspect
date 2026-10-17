@@ -175,7 +175,7 @@ internal sealed class Ac3Analysis
                 zeros = cache.ByteAt(at) == 0;
             }
 
-            Findings.AddNow(Severity.Warning, "ac3.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame are not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
+            Findings.AddNow(Severity.Warning, "ac3.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame {Counts.Agree(length, "is", "are")} not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
         }
         else if (trailing)
         {
@@ -397,14 +397,14 @@ internal sealed class Ac3Analysis
                 }
 
                 Findings.Add(Severity.Warning, "ac3.dependent-without-independent", () => FrameAt(),
-                    count => $"{Count(count)} of a dependent substream come before any independent substream they could belong to (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "comes", "come")} before any independent substream they could belong to (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
                 return null;
             }
 
             if (_currentType == 2)
             {
                 Findings.Add(Severity.Warning, "ac3.dependent-after-converted", () => FrameAt(),
-                    count => $"{Count(count)} of a dependent substream follow an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "follows", "follow")} an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at 0x{frameOffset:X}.");
             }
 
             _current.Regions.Add(region);

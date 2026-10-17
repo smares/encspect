@@ -41,7 +41,7 @@ internal sealed partial class FileReader
             {
                 AddUnparsedItem(records, position, end);
                 _findings.AddNow(Severity.Warning, "matroska.element-header-invalid",
-                    $"No element can be read at 0x{position:X}, in the Cluster at 0x{header.Offset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there are not read.",
+                    $"No element can be read at 0x{position:X}, in the Cluster at 0x{header.Offset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there {Counts.Agree(end - position, "is", "are")} not read.",
                     Unparsed(position, end, "the Cluster"));
                 position = end;
                 break;

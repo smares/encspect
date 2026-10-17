@@ -29,6 +29,10 @@ public partial class CrossFormatNamingTests
     [GeneratedRegex(@"(?<![\w.%#/-]|to |, |\b(?:stream|track|channel|frame|block|packet|page|set|substream|program|segment|group|stage|level|asset|layer|number|index|version|type|mode|band|table|entry|element|object|class|port|marker|region|link|ID|id|pass|part|section|record|item|chunk|atom|box|bit|slot|tap|row|column|scale|cycle|step|state|bin|window|row|line|file|image|object|figure|case|variant|value|code|term|field|byte|sample|of|and|or|bank|stripe|run|path|number|no)\s)1 (?<first>[a-z]+)(?<rest>(?: [a-z]+){0,2}?)(?= |$|[,.;:)]|\b)")]
     private static partial Regex PluralForOne();
 
+    // A count of one with a plural verb: "1 byte are".
+    [GeneratedRegex(@"(?<![\w.%#/-]|to |, |\b(?:stream|track|channel|frame|block|packet|page|set|substream|program|segment|group|stage|level|asset|layer|number|index|version|type|mode|band|table|entry|element|object|class|port|marker|region|link|ID|id|pass|part|section|record|item|chunk|atom|box|bit|slot|tap|row|column|scale|cycle|step|state|bin|window|line|file|image|figure|case|variant|value|code|term|field|byte|sample|of|and|or|bank|stripe|run|path|no|order|every)\s)1 (?:[a-z]+ ){0,2}?[a-z]+ (?:are|were|have|do|follow|come|differ|need|hold|point|fail|remain)\b")]
+    private static partial Regex OneWithPluralVerb();
+
     private static readonly HashSet<string> NotACount = new(StringComparer.Ordinal)
     {
         "is", "has", "was", "uses", "gives", "states", "holds", "points", "starts", "signals", "does", "plays", "lists", "needs", "contains", "names",
@@ -234,6 +238,11 @@ public partial class CrossFormatNamingTests
             // The whole report: every node at every level, frames and side information included, and the findings' messages.
             foreach (string line in text.ToString().Split('\n'))
             {
+                foreach (Match match in OneWithPluralVerb().Matches(line))
+                {
+                    problems.Add($"{name}: \"{match.Value}\" in {line.Trim()}");
+                }
+
                 foreach (Match match in PluralForOne().Matches(line))
                 {
                     string first = match.Groups["first"].Value;

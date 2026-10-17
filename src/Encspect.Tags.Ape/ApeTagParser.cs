@@ -310,7 +310,7 @@ public sealed class ApeTagParser : ITagParser
             else
             {
                 Node unparsed = tag.Add("Unparsed", parsedEnd, itemsEnd - parsedEnd, NodeValue.Integer(itemsEnd - parsedEnd, "bytes"), Explain.Unparsed);
-                Problem(unparsed, "ape.items-invalid", $"{itemProblem} The remaining {Counts.Of(itemsEnd - parsedEnd, "byte", "bytes")} are not parsed.", Confidence.Low);
+                Problem(unparsed, "ape.items-invalid", $"{itemProblem} The remaining {Counts.Of(itemsEnd - parsedEnd, "byte", "bytes")} {Counts.Agree(itemsEnd - parsedEnd, "is", "are")} not parsed.", Confidence.Low);
             }
 
             if (Footer is { } footer)

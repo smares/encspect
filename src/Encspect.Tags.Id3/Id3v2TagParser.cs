@@ -656,7 +656,7 @@ public sealed class Id3v2TagParser : ITagParser
             Node first = state.NotUnsynchronized[0];
             string which = state.NotUnsynchronized.Count == 1
                 ? $"frame {first.Name} at 0x{first.Offset:X} is not"
-                : $"{Counts.Of(state.NotUnsynchronized.Count, "frame", "frames")} are not, the first {first.Name} at 0x{first.Offset:X}";
+                : $"{Counts.Of(state.NotUnsynchronized.Count, "frame", "frames")} {Counts.Agree(state.NotUnsynchronized.Count, "is", "are")} not, the first {first.Name} at 0x{first.Offset:X}";
             state.Findings.Add(new Finding(
                 Severity.Warning,
                 "id3v2.unsync-flag-mismatch",
@@ -828,7 +828,7 @@ public sealed class Id3v2TagParser : ITagParser
                     frameStart,
                     body.FilePosition,
                     "id3v2.frame-id-invalid",
-                    $"Invalid frame ID \"{Escape(id)}\" at 0x{frameStart:X}; the remaining {Counts.Of(body.FilePosition - frameStart, "byte", "bytes")} of the tag are not parsed.");
+                    $"Invalid frame ID \"{Escape(id)}\" at 0x{frameStart:X}; the remaining {Counts.Of(body.FilePosition - frameStart, "byte", "bytes")} of the tag {Counts.Agree(body.FilePosition - frameStart, "is", "are")} not parsed.");
                 return 0;
             }
 

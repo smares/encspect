@@ -43,7 +43,7 @@ public sealed partial class AsfParser
             {
                 Node rest = file.Add(new Node("Unparsed Data", position, reader.End - position, NodeValue.Integer(reader.End - position, "bytes")) { Description = Explain.UnparsedData });
                 state.Findings.AddNow(Severity.Warning, "asf.object-size",
-                    $"The object at 0x{position:X} states a size of {Counts.Of(header.Size, "byte", "bytes")}, less than the 24 bytes of its GUID and size; the {Counts.Of(reader.End - position, "byte", "bytes")} from there are not read.", rest);
+                    $"The object at 0x{position:X} states a size of {Counts.Of(header.Size, "byte", "bytes")}, less than the 24 bytes of its GUID and size; the {Counts.Of(reader.End - position, "byte", "bytes")} from there {Counts.Agree(reader.End - position, "is", "are")} not read.", rest);
                 position = reader.End;
                 break;
             }
@@ -255,7 +255,7 @@ public sealed partial class AsfParser
             {
                 Node rest = parent.Add(new Node("Unparsed Data", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnparsedData });
                 state.Findings.AddNow(Severity.Warning, "asf.object-size",
-                    $"The object at 0x{position:X} in the {parent.Name} states a size of {Counts.Of(header.Size, "byte", "bytes")}, less than the 24 bytes of its GUID and size; the {Counts.Of(end - position, "byte", "bytes")} from there are not read.", rest);
+                    $"The object at 0x{position:X} in the {parent.Name} states a size of {Counts.Of(header.Size, "byte", "bytes")}, less than the 24 bytes of its GUID and size; the {Counts.Of(end - position, "byte", "bytes")} from there {Counts.Agree(end - position, "is", "are")} not read.", rest);
                 return;
             }
 

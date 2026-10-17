@@ -316,7 +316,7 @@ internal sealed partial class FrameSyntax
             if (declaredEnd > end)
             {
                 Report(Issue.EmdfTruncated, "Container Length", _lastStart, _lastEnd,
-                    $"emdf_container_length gives {Counts.Of(lengthBytes, "byte", "bytes")}, but the {Counts.Of((end - body) / 8, "byte", "bytes")} that remain in the field end first");
+                    $"emdf_container_length gives {Counts.Of(lengthBytes, "byte", "bytes")}, but the {Counts.Of((end - body) / 8, "byte", "bytes")} that {Counts.Agree((end - body) / 8, "remains", "remain")} in the field end first");
             }
 
             _emdfBound = Math.Min(declaredEnd, end);
@@ -452,7 +452,7 @@ internal sealed partial class FrameSyntax
         if (payloadEnd > bound)
         {
             Report(Issue.EmdfPayloadSize, "Payload Size", sizeStart, sizeEnd,
-                $"the payload with ID {id} is {Counts.Of(size, "byte", "bytes")}, but only {Counts.Of((bound - payloadStart) / 8, "byte", "bytes")} remain in the container");
+                $"the payload with ID {id} is {Counts.Of(size, "byte", "bytes")}, but only {Counts.Of((bound - payloadStart) / 8, "byte", "bytes")} {Counts.Agree((bound - payloadStart) / 8, "remains", "remain")} in the container");
             _t?.CloseTo(_t.OpenCount - 1, bound);
             _b.MoveTo(Math.Min(bound, _b.Limit));
             _emdfBound = -1;

@@ -104,7 +104,7 @@ internal sealed class DtsAnalysis
                 zeros = false;
             }
 
-            Findings.AddNow(Severity.Warning, "dts.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame are not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
+            Findings.AddNow(Severity.Warning, "dts.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame {Counts.Agree(length, "is", "are")} not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
         }
         else if (trailing)
         {

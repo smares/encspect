@@ -157,7 +157,7 @@ public sealed class DtsHdParser : IFormatParser
             long remaining = reader.End - position;
             if (remaining < ChunkHeader)
             {
-                Trailing(state, position, reader.End, "dtshd.trailing-data", $"{Counts.Of(remaining, "byte", "bytes")} after the last chunk are too few for a chunk header.");
+                Trailing(state, position, reader.End, "dtshd.trailing-data", $"{Counts.Of(remaining, "byte", "bytes")} after the last chunk {Counts.Agree(remaining, "is", "are")} too few for a chunk header.");
                 position = reader.End;
                 break;
             }

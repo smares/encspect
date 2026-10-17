@@ -328,7 +328,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             if (leading && !trailing && gapEnd < end)
             {
                 string what = ZeroRunEnd(blocks, gapStart, gapEnd) == gapEnd ? " (all zero bytes)" : string.Empty;
-                findings.AddNow(Severity.Warning, "mpeg.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame are not audio{what}.", GapNode(gap));
+                findings.AddNow(Severity.Warning, "mpeg.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame {Counts.Agree(length, "is", "are")} not audio{what}.", GapNode(gap));
             }
             else if (leading)
             {

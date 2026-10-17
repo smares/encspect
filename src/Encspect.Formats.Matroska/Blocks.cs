@@ -438,7 +438,7 @@ internal sealed partial class FileReader
             {
                 records.Children.Add(new Child { Offset = position, DataLength = end - position, Depth = (byte)depth, Block = Child.UnparsedBlock });
                 _findings.AddNow(Severity.Warning, "matroska.element-header-invalid",
-                    $"No element can be read at 0x{position:X}, in the {parentName} at 0x{groupOffset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there are not read.",
+                    $"No element can be read at 0x{position:X}, in the {parentName} at 0x{groupOffset:X}: {HeaderWhy(problem)}. The {Bytes(end - position)} from there {Counts.Agree(end - position, "is", "are")} not read.",
                     Unparsed(position, end, "the " + parentName));
                 return blocks;
             }

@@ -272,7 +272,7 @@ public sealed partial class Mp4Parser : IFormatParser
 
                 Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
                 state.Findings.AddNow(Severity.Warning, "mp4.box-size-invalid",
-                    $"The box at 0x{position:X} states a size smaller than its header, or a 64-bit size beyond any file, so the {Counts.Of(end - position, "byte", "bytes")} from there are not read as boxes.", rest);
+                    $"The box at 0x{position:X} states a size smaller than its header, or a 64-bit size beyond any file, so the {Counts.Of(end - position, "byte", "bytes")} from there {Counts.Agree(end - position, "is", "are")} not read as boxes.", rest);
                 return end;
             }
 
