@@ -116,6 +116,10 @@ public sealed class Node
         }
     }
 
+    // Whether the children are built when first read (and again after collection) rather than held: a walk that only looks for something
+    // among them leaves such a node alone.
+    public bool AreChildrenBuiltOnDemand => _source is Func<IReadOnlyList<Node>>;
+
     // Whether the node has children, without building them: true for a node whose children are
     // built on demand until a build shows there are none.
     public bool HasChildren

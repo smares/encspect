@@ -225,7 +225,7 @@ public sealed partial class Mp4Parser : IFormatParser
         BoxNaming? naming = null)
     {
         string? outerParent = state.ParentType;
-        state.ParentType = topLevel ? null : parent.Name;
+        state.ParentType = topLevel ? null : parent.Name == UserDataName ? "udta" : parent.Name;
         try
         {
             return ReadChildrenOf(state, parent, start, end, depth, topLevel, custom, naming);
@@ -251,7 +251,7 @@ public sealed partial class Mp4Parser : IFormatParser
                 }
 
                 // QuickTime File Format, "User data list": the list of a udta box is optionally ended by a 32-bit zero.
-                if (parent.Name == "udta" && end - position == 4 && state.Reader.ReadBytesAt(position, 4).All(b => b == 0))
+                if (state.ParentType == "udta" && end - position == 4 && state.Reader.ReadBytesAt(position, 4).All(b => b == 0))
                 {
                     parent.Add(new Node("Terminator", position, 4, NodeValue.Integer(0)) { Description = Explain.UserDataTerminator });
                     return end;
@@ -322,14 +322,57 @@ public sealed partial class Mp4Parser : IFormatParser
         return position;
     }
 
-    // An item list is the file's iTunes or QuickTime metadata, a tag of the container, and so is each of the user data text atoms that
-    // QuickTime lists; every other box is named by its type.
-    private static BoxName Naming(State state, BoxHeader header) =>
-        header.Type == "ilst"
-            ? new(state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag, Explain.Box(header.Type), Topics.ItunesMetadata)
-            : state.ParentType == "udta" && BoxNames.UserDataText(header.Type) is { } text
-                ? new(text, NodeKind.Tag, Explain.UserDataText(header.Type), Topics.QuickTimeUserData)
-                : new(header.Type, NodeKind.Detail, Explain.Box(header.Type), Explain.BoxTopic(header.Type));
+    // The name of a udta box that holds QuickTime's text atoms, a tag of the container like an item list.
+    private const string UserDataName = "QuickTime User Data";
+
+    // An item list is the file's iTunes or QuickTime metadata, a tag of the container, and so is a user data box that holds text atoms;
+    // every other box is named by its type.
+    private static BoxName Naming(State state, BoxHeader header)
+    {
+        if (header.Type == "ilst")
+        {
+            return new(state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag, Explain.Box(header.Type), Topics.ItunesMetadata);
+        }
+
+        if (header.Type == "udta" && HoldsTextAtom(state, header))
+        {
+            return new(UserDataName, NodeKind.Tag, Explain.UserDataTag, Topics.QuickTimeUserData);
+        }
+
+        if (state.ParentType == "udta" && BoxNames.UserDataText(header.Type) is { } field)
+        {
+            return new(field, NodeKind.Detail, Explain.UserDataText(header.Type), Topics.QuickTimeUserData);
+        }
+
+        return new(header.Type, NodeKind.Detail, Explain.Box(header.Type), Explain.BoxTopic(header.Type));
+    }
+
+    // Whether a text atom the specification lists is among the boxes of the udta box, found by their headers alone.
+    private static bool HoldsTextAtom(State state, BoxHeader header)
+    {
+        long position = header.PayloadStart;
+        for (int i = 0; ReadHeader(state.Reader, position, header.End) is { } child && child.End <= header.End; i++)
+        {
+            if ((i & 0x3FF) == 0)
+            {
+                state.Context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
+            if (BoxNames.UserDataText(child.Type) is not null)
+            {
+                return true;
+            }
+
+            if (child.IsToEnd)
+            {
+                break;
+            }
+
+            position = child.End;
+        }
+
+        return false;
+    }
 
     // The box's node with its header fields, then its payload by type.
     private static Node ParseBox(State state, Node parent, BoxHeader header, int depth, long declared, PayloadParser? custom, BoxName name)

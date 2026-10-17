@@ -676,7 +676,7 @@ def text_atom(kind, *items, tail=b""):
     return Box(kind, b"".join(u16(len(text)) + u16(language) + text for language, text in items) + tail)
 
 
-ENG, GER = 0x15C7, 0x1CB2  # packed ISO 639-2/T "eng" and "ger"
+ENG, DEU = 0x15C7, 0x10B5  # packed ISO 639-2/T "eng" and "deu"
 
 
 def quicktime_text():
@@ -685,7 +685,7 @@ def quicktime_text():
     samples = units("stereo", 20)
     # 0x8E is an e with an acute accent in Macintosh Roman.
     atoms = [
-        text_atom(b"\xa9nam", (0, b"Caf\x8e title"), (GER, "Handgefertigter Titel \u00fcber Caf\u00e9".encode("utf-8"))),
+        text_atom(b"\xa9nam", (0, b"Caf\x8e title"), (DEU, "Handgefertigter Titel \u00fcber Caf\u00e9".encode("utf-8"))),
         text_atom(b"\xa9ART", (ENG, b"Hand-built artist")),
         text_atom(b"\xa9alb", (0x7FFF, b"Unspecified album")),
         text_atom(b"\xa9day", (0, b"2026")),
@@ -695,23 +695,24 @@ def quicktime_text():
         Box(b"\xa9qqq", b"not text"),
         text_atom(b"\xa9cmt", (ENG, b"cut"), tail=u16(40) + u16(ENG) + b"short"),
         text_atom(b"\xa9cpy", (ENG, b"Hand-built copyright"), tail=b"\0\0"),
+        ilst_meta(text_item(b"\xa9gen", "Hand-built genre")),
         box("WLOC", u16(10) + u16(20)),
     ]
     track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), after_mdia=[udta(text_atom(b"\xa9nam", (ENG, b"Track title")))])
     data, records, offsets = movie([track], ftyp_box=ftyp(b"qt  ", 0x200, (b"qt  ",)), moov_extra=[udta(*atoms)])
-    tag = "MP4/moov/udta/QuickTime Title"
+    tag = "MP4/moov/QuickTime User Data/Title"
     return [("quicktime-udta-text", data, {
         "description": "A QuickTime movie whose user data holds text atoms: a title in two languages and encodings (Macintosh Roman, UTF-8), an artist, an album of the unspecified "
-                       "Macintosh language, a UTF-16 description, a software atom (the writer), an unlisted atom that follows the text layout and one that does not, a comment whose second "
+                       "Macintosh language, a UTF-16 description, a software atom (the writer), an item list (genre), an unlisted atom that follows the text layout and one that does not, a comment whose second "
                        "item states more bytes than the atom holds, a copyright with two bytes left over, and a window location. The track's user data holds a title.",
         "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
         "streams": [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True, writer=("hand-built 1.0", "Low"))],
         "units": unit_list(offsets[0], samples, 10),
-        "fields": {tag: "Caf\u00e9 title", tag + "/Text Item[0]/Language": "0 (English, Macintosh language code)", tag + "/Text Item[1]/Language": "ger",
-                   tag + "/Text Item[1]/Text": "Handgefertigter Titel \u00fcber Caf\u00e9", "MP4/moov/udta/QuickTime Artist": "Hand-built artist",
-                   "MP4/moov/udta/QuickTime Album/Text Item/Language": "32767 (unspecified Macintosh language)",
-                   "MP4/moov/udta/QuickTime Description": "Utf sixteen", "MP4/moov/udta/QuickTime Software": "hand-built 1.0",
-                   "MP4/moov/udta/\u00a9xyz": "Unlisted text atom", "MP4/moov/trak/udta/QuickTime Title": "Track title"},
+        "fields": {tag: "Caf\u00e9 title", tag + "/Text Item[0]/Language": "0 (English, Macintosh language code)", tag + "/Text Item[1]/Language": "deu",
+                   tag + "/Text Item[1]/Text": "Handgefertigter Titel \u00fcber Caf\u00e9", "MP4/moov/QuickTime User Data/Artist": "Hand-built artist",
+                   "MP4/moov/QuickTime User Data/Album/Text Item/Language": "32767 (unspecified Macintosh language)",
+                   "MP4/moov/QuickTime User Data/Description": "Utf sixteen", "MP4/moov/QuickTime User Data/Software": "hand-built 1.0",
+                   "MP4/moov/QuickTime User Data/\u00a9xyz": "Unlisted text atom", "MP4/moov/QuickTime User Data/meta/iTunes Metadata/Genre": "Hand-built genre", "MP4/moov/trak/QuickTime User Data/Title": "Track title"},
         "findings": [["mp4.text-size-invalid", "states 40 bytes, but 5 follow"], ["mp4.text-item-truncated", "fewer than the 4 bytes"]],
         "crosscheck": {"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100)},
     })]
@@ -854,7 +855,7 @@ def structure():
     out.append(hand_built(
         "quicktime-udta-terminator", "A QuickTime movie whose user data list ends in the optional 32-bit zero (QuickTime File Format, \"User data list\"): it is shown as a terminator, with no warning.",
         data, records, [stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True)], unit_list(offsets[0], samples, 10), [],
-        fields={"MP4/moov/udta/Terminator": "0", "MP4/moov/udta/QuickTime Title": "hand-built"},
+        fields={"MP4/moov/QuickTime User Data/Terminator": "0", "MP4/moov/QuickTime User Data/Title": "hand-built"},
         crosscheck={"ffprobe": True, "mp4box": True, "faad": faad_line("LC AAC", 2, 44100)}))
 
     # Samples of 6 bytes in 50 chunks that all start at the same 600 bytes: 5,000 samples from a few hundred bytes of mdat.

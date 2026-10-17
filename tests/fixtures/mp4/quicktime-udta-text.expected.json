@@ -1,6 +1,6 @@
 {
- "description": "A QuickTime movie whose user data holds text atoms: a title in two languages and encodings (Macintosh Roman, UTF-8), an artist, an album of the unspecified Macintosh language, a UTF-16 description, a software atom (the writer), an unlisted atom that follows the text layout and one that does not, a comment whose second item states more bytes than the atom holds, a copyright with two bytes left over, and a window location. The track's user data holds a title.",
- "length": 1612,
+ "description": "A QuickTime movie whose user data holds text atoms: a title in two languages and encodings (Macintosh Roman, UTF-8), an artist, an album of the unspecified Macintosh language, a UTF-16 description, a software atom (the writer), an item list (genre), an unlisted atom that follows the text layout and one that does not, a comment whose second item states more bytes than the atom holds, a copyright with two bytes left over, and a window location. The track's user data holds a title.",
+ "length": 1705,
  "format": "MP4",
  "boxes": [
   [
@@ -11,7 +11,7 @@
   [
    "moov",
    20,
-   1001
+   1094
   ],
   [
    "moov/mvhd",
@@ -121,7 +121,7 @@
   [
    "moov/udta",
    702,
-   319
+   412
   ],
   [
    "moov/udta/©nam",
@@ -174,13 +174,38 @@
    34
   ],
   [
-   "moov/udta/WLOC",
+   "moov/udta/meta",
    1009,
+   93
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   1021,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   1054,
+   48
+  ],
+  [
+   "moov/udta/meta/ilst/©gen",
+   1062,
+   40
+  ],
+  [
+   "moov/udta/meta/ilst/©gen/data",
+   1070,
+   32
+  ],
+  [
+   "moov/udta/WLOC",
+   1102,
    12
   ],
   [
    "mdat",
-   1021,
+   1114,
    591
   ]
  ],
@@ -204,97 +229,98 @@
  ],
  "units": [
   [
-   1029,
+   1122,
    6
   ],
   [
-   1035,
+   1128,
    45
   ],
   [
-   1080,
+   1173,
    42
   ],
   [
-   1122,
+   1215,
    39
   ],
   [
-   1161,
+   1254,
    36
   ],
   [
-   1197,
+   1290,
    33
   ],
   [
-   1230,
+   1323,
    30
   ],
   [
-   1260,
+   1353,
    27
   ],
   [
-   1287,
+   1380,
    24
   ],
   [
-   1311,
+   1404,
    20
   ],
   [
-   1331,
+   1424,
    17
   ],
   [
-   1348,
+   1441,
    14
   ],
   [
-   1362,
+   1455,
    11
   ],
   [
-   1373,
+   1466,
    8
   ],
   [
-   1381,
+   1474,
    46
   ],
   [
-   1427,
+   1520,
    43
   ],
   [
-   1470,
+   1563,
    40
   ],
   [
-   1510,
+   1603,
    37
   ],
   [
-   1547,
+   1640,
    34
   ],
   [
-   1581,
+   1674,
    31
   ]
  ],
  "fields": {
-  "MP4/moov/udta/QuickTime Title": "Café title",
-  "MP4/moov/udta/QuickTime Title/Text Item[0]/Language": "0 (English, Macintosh language code)",
-  "MP4/moov/udta/QuickTime Title/Text Item[1]/Language": "ger",
-  "MP4/moov/udta/QuickTime Title/Text Item[1]/Text": "Handgefertigter Titel über Café",
-  "MP4/moov/udta/QuickTime Artist": "Hand-built artist",
-  "MP4/moov/udta/QuickTime Album/Text Item/Language": "32767 (unspecified Macintosh language)",
-  "MP4/moov/udta/QuickTime Description": "Utf sixteen",
-  "MP4/moov/udta/QuickTime Software": "hand-built 1.0",
-  "MP4/moov/udta/©xyz": "Unlisted text atom",
-  "MP4/moov/trak/udta/QuickTime Title": "Track title"
+  "MP4/moov/QuickTime User Data/Title": "Café title",
+  "MP4/moov/QuickTime User Data/Title/Text Item[0]/Language": "0 (English, Macintosh language code)",
+  "MP4/moov/QuickTime User Data/Title/Text Item[1]/Language": "deu",
+  "MP4/moov/QuickTime User Data/Title/Text Item[1]/Text": "Handgefertigter Titel über Café",
+  "MP4/moov/QuickTime User Data/Artist": "Hand-built artist",
+  "MP4/moov/QuickTime User Data/Album/Text Item/Language": "32767 (unspecified Macintosh language)",
+  "MP4/moov/QuickTime User Data/Description": "Utf sixteen",
+  "MP4/moov/QuickTime User Data/Software": "hand-built 1.0",
+  "MP4/moov/QuickTime User Data/©xyz": "Unlisted text atom",
+  "MP4/moov/QuickTime User Data/meta/iTunes Metadata/Genre": "Hand-built genre",
+  "MP4/moov/trak/QuickTime User Data/Title": "Track title"
  },
  "findings": [
   [

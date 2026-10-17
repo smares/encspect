@@ -657,11 +657,21 @@ def check_mediainfo(path, tally, check=None):
         if "Source_Duration" in track and ticks:
             tally.compare("sample table duration", track["Source_Duration"], milliseconds(int(ticks.group(1)) / mi.leading_number(mi.value(media, "Timescale"))))
     general = info["General"] if info else {}
-    tools = [n.get("value") for n in mi.walk(report["root"]) if n["name"] == "Encoding Tool"]
-    # MediaInfo files ©swr and ©too of the movie's user data under the same field (File_Mpeg4.cpp, Metadata_Get), and keeps the first value it meets.
-    tools += [a.get("value") for a in (mi.child(report["root"], "MP4", "moov", "udta") or {}).get("children", []) if a["name"] in ("QuickTime Software", "QuickTime Encoding Tool")]
-    actual_tool = general.get("Encoded_Application")
-    tally.compare("encoding tool", actual_tool, actual_tool if actual_tool in tools else tools[0] if tools else None)
+    # MediaInfo files ©swr and ©too of the movie's user data under the same field as an item list's ©too (File_Mpeg4.cpp, Metadata_Get), and keeps
+    # the first value it meets, so the first tool by offset is compared; a track's user data is filed with the stream.
+    tools = []
+
+    def collect(node, parent=None, in_track=False):
+        in_track = in_track or node["name"] == "trak"
+        in_user_data = parent == "QuickTime User Data"
+        if isinstance(node.get("value"), str) and not (in_track and in_user_data) and (node["name"] == "Encoding Tool" or (in_user_data and node["name"] == "Software")):
+            tools.append((node["offset"], node["value"]))
+        for c in node.get("children", []):
+            collect(c, node["name"], in_track)
+
+    collect(report["root"])
+    tools.sort()
+    tally.compare("encoding tool", general.get("Encoded_Application"), tools[0][1] if tools else None)
     mi.compare_tags(tally, general, report)
     return problems
 
