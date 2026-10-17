@@ -35,6 +35,10 @@ Each MPEG Audio region reports:
   - whether padding, scfsi and scalefactor scaling are used;
   - the ancillary data with its share, data rate and smallest and largest amount per frame.
 
+Streams follow the stream rule shared with ADTS, AC-3 and DTS (the [plan](../PLAN.md), AC-3 and E-AC-3, "Framing and sync"):
+- A change of version, layer, sample rate or free format ends the stream and starts another, also where an earlier configuration returns. `mpeg.stream-changed` is one Info finding with the number of changes.
+- The file has at most 64 streams. The frames from the change that would start stream 65 on are in no stream and are counted in one warning, `mpeg.streams-limited`.
+
 Each stream, which may span regions, reports its codec, duration, average bitrate and encoder, and the bitrate and bit reservoir fill per frame and per second for graphs.
 
 ## Channel layout

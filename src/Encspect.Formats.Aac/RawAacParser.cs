@@ -738,10 +738,16 @@ public sealed class RawAacParser : IFormatParser
         _ => "not checked: the frame is cut short",
     };
 
-    // Streams end where the fixed header changes; a stream continues across gaps and tags.
+    // Streams end where the fixed header changes; a stream continues across gaps and tags. A header that returns starts a
+    // stream of its own, and the change that would start stream MaxStreams + 1 starts none: the frames from there on are in
+    // no stream (aac.streams-limited). Every change is counted in one aac.stream-changed.
+    public const int MaxStreams = 64;
+
     private static void AddStreams(State state, AnalysisContext context, IReadOnlyList<EncoderClaim> claims)
     {
         int start = -1;
+        int streams = 0;
+        bool isLimited = false;
         AdtsHeader? previous = null;
         for (int i = 0; i <= state.Frames.Count; i++)
         {
@@ -759,21 +765,36 @@ public sealed class RawAacParser : IFormatParser
             if (start >= 0 && (header is null || !header.Value.IsSameStream(previous!.Value)))
             {
                 AddStream(state, context, claims, start, i);
+                streams++;
                 start = -1;
             }
 
-            if (header is { } current)
+            if (header is not { } current)
             {
-                if (start < 0 && previous is { } before && !current.IsSameStream(before))
-                {
-                    Node node = FrameNode(state.Records, i);
-                    state.Findings.AddNow(Severity.Info, "aac.stream-changed",
-                        $"The ADTS stream changes at 0x{node.Offset:X} from {Describe(before)} to {Describe(current)}.", WithoutChildren(node));
-                }
-
-                start = start < 0 ? i : start;
-                previous = current;
+                continue;
             }
+
+            if (previous is { } before && !current.IsSameStream(before))
+            {
+                Node node = FrameNode(state.Records, i);
+                state.Findings.Add(Severity.Info, "aac.stream-changed", WithoutChildren(node), count =>
+                    $"The ADTS stream changes {FindingCollector.Times(count)}, first at 0x{node.Offset:X} from {Describe(before)} to {Describe(current)}.");
+                isLimited |= streams >= MaxStreams;
+            }
+
+            if (isLimited)
+            {
+                Node node = FrameNode(state.Records, i);
+                state.Findings.Add(Severity.Warning, "aac.streams-limited", WithoutChildren(node), count =>
+                    $"{(count == 1 ? "One frame is" : $"{count} frames are")} in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of one fixed header, and the frame at 0x{node.Offset:X} is the first to start another.",
+                    state.Frames[i].IsRun ? (int)Math.Min(int.MaxValue, state.Records.Runs[i]) : 1);
+            }
+            else
+            {
+                start = start < 0 ? i : start;
+            }
+
+            previous = current;
         }
     }
 
