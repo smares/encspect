@@ -228,7 +228,7 @@ public sealed class ApeTagParser : ITagParser
             string? itemProblem = ParseItems(items, itemsStart, itemsEnd, out long parsedEnd);
             if (itemProblem is null)
             {
-                Evidence.Add(new Evidence($"{anchor.ItemCount} {(anchor.ItemCount == 1 ? "item" : "items")} end exactly where the size says", itemsStart, itemsEnd - itemsStart));
+                Evidence.Add(new Evidence($"{anchor.ItemCount} {(anchor.ItemCount == 1 ? "item ends" : "items end")} exactly where the size says", itemsStart, itemsEnd - itemsStart));
             }
             else
             {

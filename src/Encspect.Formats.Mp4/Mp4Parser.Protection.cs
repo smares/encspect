@@ -24,6 +24,11 @@ public sealed partial class Mp4Parser
     // vector per sample of 0 (a constant one in tenc), 8 or 16 bytes.
     private static bool IsInitializationVectorSize(int size) => size is 0 or 8 or 16;
 
+    // What a scheme the registry list does not name is called; it reads as a sentence's own words when it stands inside one (InSentence).
+    private const string UnnamedScheme = "Protection scheme";
+
+    private static string InSentence(string scheme) => scheme.StartsWith(UnnamedScheme, StringComparison.Ordinal) ? char.ToLowerInvariant(scheme[0]) + scheme[1..] : scheme;
+
     private static bool ProtectsByCommonEncryption(string? scheme) => scheme is "cenc" or "cens" or "cbc1" or "cbcs";
 
     // The registry's description of a protection scheme (the MP4 registration authority's schemes list, type
@@ -40,7 +45,7 @@ public sealed partial class Mp4Parser
         "sve1" => "AES-CTR content sensitive encryption (sve1)",
         "odkm" => "OMA DRM KMS (odkm)",
         "cpcm" => "CPCM protected content (cpcm)",
-        _ => $"Protection scheme {scheme}",
+        _ => $"{UnnamedScheme} {scheme}",
     };
 
     private static bool IsProtectedEntry(string format) => format is "enca" or "encv" or "encs" or "enct" or "encm" or "encf" or "encu" or "encp" or "enc3" or "drms" or "drmi" or "aavd";
@@ -67,7 +72,8 @@ public sealed partial class Mp4Parser
             f.CString(node, "Scheme URI", Explain.SchemeUri);
         }
 
-        node.Value = $"{type} ({(ProtectsByCommonEncryption(type) ? "Common Encryption" : SchemeName(type))})";
+        string named = ProtectsByCommonEncryption(type) ? "Common Encryption" : SchemeName(type);
+        node.Value = named.StartsWith(UnnamedScheme, StringComparison.Ordinal) ? type : $"{type} ({named})";
         if (!state.InSinf || state.CurrentEntry is not { Protection: not null })
         {
             MarkProtectionScheme(state);
@@ -577,6 +583,6 @@ public sealed partial class Mp4Parser
     {
         "drms" or "drmi" => "iTunes protection (" + entry.Format + ")",
         "aavd" => "Audible (aavd)",
-        _ => entry.Protection?.SchemeType is { } type ? SchemeName(type) : "Protection scheme not stated",
+        _ => entry.Protection?.SchemeType is { } type ? SchemeName(type) : $"{UnnamedScheme} not stated",
     };
 }

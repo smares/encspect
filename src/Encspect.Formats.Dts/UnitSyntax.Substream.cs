@@ -134,7 +134,7 @@ internal sealed partial class UnitSyntax
         _tree?.Close(Here);
         if (headerSize < ExssHeader.MinimumHeaderSize || _pos > crcBit)
         {
-            Report(Issue.SubstreamOverrun, "Header Size", _headerSizeStart, _headerSizeEnd, $"the header's fields end at byte {((_pos + 7) / 8) - baseByte}, past the {headerSize} bytes its size field gives");
+            Report(Issue.SubstreamOverrun, "Header Size", _headerSizeStart, _headerSizeEnd, $"the header's fields end at byte {((_pos + 7) / 8) - baseByte}, past the {Counts.Bytes(headerSize)} its size field gives");
             return;
         }
 

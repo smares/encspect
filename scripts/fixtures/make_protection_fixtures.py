@@ -543,7 +543,7 @@ def other_codecs():
     entry = mp4a(2, 44100, esds(0x6B, None, 128000, 128000), sinf(frma(b"mp4a"), *cenc_sinf()), format=b"enca")
     out.append(encrypted(
         "cenc-mpeg-audio", "MPEG-1 audio (object type 0x6B) in an enca entry: no configuration exists, so the stream is described from the sample entry alone.",
-        entry, samples=mp3, durations=[1152] * 12, codec="MPEG audio", scheme_name=SCHEMES[b"cenc"], mode=None, layout=False, crosscheck=ciphertext_crosscheck("MPEG audio")))
+        entry, samples=mp3, durations=[1152] * 12, codec="MPEG-1 audio", scheme_name=SCHEMES[b"cenc"], mode=None, layout=False, crosscheck=ciphertext_crosscheck("MPEG audio")))
     return out
 
 

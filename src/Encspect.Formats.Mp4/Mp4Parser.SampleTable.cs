@@ -147,22 +147,31 @@ public sealed partial class Mp4Parser
         _ => "other",
     };
 
-    // The codec a stream reports for an entry no codec parser read, in the names every container uses for the coding (CodecNames).
-    private static string StreamCodecName(SampleEntry entry)
+    // The codec a stream reports for an entry no codec parser read, in the names every container uses for the coding (CodecNames): the codec
+    // parsers' forms, with what the entry states.
+    private static string StreamCodecName(SampleEntry entry) => StreamCodecName(entry.EffectiveFormat, entry.ObjectType);
+
+    internal static string StreamCodecName(string format, int? objectType) => format switch
     {
-        string format = entry.EffectiveFormat;
-        return format switch
+        "mp4a" when objectType is { } type => type switch
         {
-            "mp4a" when entry.ObjectType is 0x69 or 0x6B => CodecNames.MpegAudio,
-            "mp4a" when entry.ObjectType is { } type => ObjectTypeName(type),
-            ".mp3" => CodecNames.MpegAudioLayerIII,
-            "lpcm" or "twos" or "sowt" or "in24" or "in32" or "raw " => CodecNames.Pcm,
-            "fl32" or "fl64" => CodecNames.PcmFloat,
-            "enca" => CodecNames.EncryptedAudio,
-            "encv" => CodecNames.EncryptedVideo,
-            _ => FormatName(format) is "other" ? format : FormatName(format),
-        };
-    }
+            0x40 => CodecNames.Mpeg4Audio,
+            0x66 => "AAC Main",
+            0x67 => "AAC LC",
+            0x68 => "AAC SSR",
+            0x69 => CodecNames.Mpeg2Audio,
+            0x6B => CodecNames.Mpeg1Audio,
+            _ => ObjectTypeName(type) is "other" ? "Other" : ObjectTypeName(type),
+        },
+        ".mp3" => CodecNames.MpegAudioLayerIII,
+        "dtsl" => CodecNames.DtsHdMasterAudio,
+        "dtse" => "DTS Express",
+        "lpcm" or "twos" or "sowt" or "in24" or "in32" or "raw " => CodecNames.Pcm,
+        "fl32" or "fl64" => CodecNames.PcmFloat,
+        "enca" => CodecNames.EncryptedAudio,
+        "encv" => CodecNames.EncryptedVideo,
+        _ => FormatName(format) is "other" ? format : FormatName(format),
+    };
 
     // ISO/IEC 14496-14 5.6 (esds) with ISO/IEC 14496-1 7.2.6.5 (ES_Descriptor), 7.2.6.6
     // (DecoderConfigDescriptor) and 7.2.6.7 (DecoderSpecificInfo). A descriptor's size takes one to

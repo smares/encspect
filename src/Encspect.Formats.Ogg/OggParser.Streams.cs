@@ -224,7 +224,7 @@ public sealed partial class OggParser
         int streamsBefore = context.Streams.Count;
         if (context.ParsePackets(codec.Id, node, Packets(region, stream, window, context.CancellationToken)))
         {
-            // A codec that reports several streams is not known to play them together, as Matroska does not mark them.
+            // A codec that reports several streams is not known to play them together here: one group number cannot say that they follow each other (Matroska and MP4 mark the ones their codec reports as playing together).
             List<StreamInfo> made = [.. context.Streams.Skip(streamsBefore)];
             if (made.Count == 1)
             {

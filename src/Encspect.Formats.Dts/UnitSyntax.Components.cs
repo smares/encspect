@@ -240,7 +240,7 @@ internal sealed partial class UnitSyntax
         int crcBit = (at + headerSize - 2) * 8;
         if (headerSize < 6 || _pos > crcBit)
         {
-            Report(Issue.SubstreamOverrun, "Header Size", _headerSizeStart, _headerSizeEnd, $"the {name} header's fields end at byte {((_pos + 7) / 8) - at}, past the {headerSize} bytes its size field gives");
+            Report(Issue.SubstreamOverrun, "Header Size", _headerSizeStart, _headerSizeEnd, $"the {name} header's fields end at byte {((_pos + 7) / 8) - at}, past the {Counts.Bytes(headerSize)} its size field gives");
             return;
         }
 

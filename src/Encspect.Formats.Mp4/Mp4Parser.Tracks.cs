@@ -176,12 +176,12 @@ public sealed partial class Mp4Parser
         if (protection.IsEncrypted)
         {
             state.Findings.AddNow(Severity.Info, "mp4.samples-encrypted",
-                $"The samples of the audio {label} are encrypted ({protection.Scheme}), so their frames are not read; the stream is described by its sample entry and sample tables.", entry.Node);
+                $"The samples of the audio {label} are encrypted ({InSentence(protection.Scheme)}), so their frames are not read; the stream is described by its sample entry and sample tables.", entry.Node);
         }
         else
         {
             state.Findings.AddNow(Severity.Info, "mp4.protected-samples-clear",
-                $"The audio {label} is covered by {protection.Scheme}, but its key information says that no sample is protected: the tenc box sets the default to not protected, and nothing in the file says otherwise (no sample group that protects, no sample encryption box).", entry.Protection?.Encryption?.Node ?? entry.Node);
+                $"The audio {label} is covered by {InSentence(protection.Scheme)}, but its key information says that no sample is protected: the tenc box sets the default to not protected, and nothing in the file says otherwise (no sample group that protects, no sample encryption box).", entry.Protection?.Encryption?.Node ?? entry.Node);
         }
     }
 

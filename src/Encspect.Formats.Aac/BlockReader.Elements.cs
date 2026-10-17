@@ -153,7 +153,7 @@ internal sealed partial class BlockReader
 
             if (parent is not null)
             {
-                Close(parent, n!, "DSE", start, bits.Original, $"data stream element, tag {tag}, {count} bytes", Explain.DataStreamElement, Topics.RawDataBlocks);
+                Close(parent, n!, "DSE", start, bits.Original, $"data stream element, tag {tag}, {Counts.Bytes(count)}", Explain.DataStreamElement, Topics.RawDataBlocks);
             }
         }
         catch (Exception e) when (n is not null && e is BlockError or BlockOverrun)
@@ -427,7 +427,7 @@ internal sealed partial class BlockReader
                 _tally.FillBytes += count;
             }
 
-            summary = count == 0 ? "fill element, no payload" : $"fill element, {string.Join(", ", types.Select(t => AacTables.ExtensionTypeName(t)))}, {count} bytes";
+            summary = count == 0 ? "fill element, no payload" : $"fill element, {string.Join(", ", types.Select(t => AacTables.ExtensionTypeName(t)))}, {Counts.Bytes(count)}";
             _elements.Add(new ElementSpan(6, start, bits.Original, -1));
             if (parent is not null)
             {
@@ -496,7 +496,7 @@ internal sealed partial class BlockReader
 
         if (parent is not null)
         {
-            Close(parent, n!, "Extension Payload", start, bits.Original, $"{AacTables.ExtensionTypeName(type)}, {used} bytes", Explain.ExtensionPayload, topic);
+            Close(parent, n!, "Extension Payload", start, bits.Original, $"{AacTables.ExtensionTypeName(type)}, {Counts.Bytes(used)}", Explain.ExtensionPayload, topic);
         }
 
         return used;

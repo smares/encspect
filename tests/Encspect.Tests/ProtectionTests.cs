@@ -459,7 +459,7 @@ public class ProtectionTests
 
     // A protected stream no codec parser describes is still a stream, so that its protection is reported: MPEG audio, video, a clear track of an unparsed coding.
     [Theory]
-    [InlineData("asf/protected-mpeg-audio.asf", "MPEG audio Layer III", true)]
+    [InlineData("asf/protected-mpeg-audio.asf", "MPEG Layer III", true)]
     [InlineData("asf/protected-video-only.asf", "Video", true)]
     [InlineData("mp4/cenc-clear-unparsed.m4a", "Apple Lossless", false)]
     public void ProtectedStreamsOfUnparsedCodingsAreReported(string name, string codec, bool isEncrypted)

@@ -444,7 +444,7 @@ internal static class Sv7Parser
     private static string Summary(Frame frame)
     {
         var text = new StringBuilder();
-        text.Append(frame.Length).Append(" bits, ").Append(frame.UsedBands).Append(frame.UsedBands == 1 ? " subband" : " subbands");
+        text.Append(Counts.Bits(frame.Length)).Append(", ").Append(frame.UsedBands).Append(frame.UsedBands == 1 ? " subband" : " subbands");
         int midSide = System.Numerics.BitOperations.PopCount(frame.MidSide);
         if (midSide > 0)
         {

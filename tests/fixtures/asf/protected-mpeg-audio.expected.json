@@ -1,5 +1,5 @@
 {
- "description": "MPEG audio Layer III, which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
+ "description": "MPEG Layer III, which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
  "format": "ASF",
  "length": 1435,
  "objects": [
@@ -215,7 +215,7 @@
  "findings": [
   {
    "code": "asf.codec-not-analyzed",
-   "contains": "MPEG audio Layer III"
+   "contains": "MPEG Layer III"
   },
   {
    "code": "asf.content-encrypted",

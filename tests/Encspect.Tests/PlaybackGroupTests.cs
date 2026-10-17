@@ -135,23 +135,79 @@ public class PlaybackGroupTests
         Assert.Equal(report.Streams.Max(s => s.Duration), ReportSummary.From(report).Duration);
     }
 
+    // The E-AC-3 track is in the second Segment, whose number is 2: the number the AC-3 parser gives its substreams inside a container (1) must be replaced.
     [Fact]
     public void TheSubstreamsOfAnEac3TrackInMatroskaShareTheSegmentGroup()
     {
         byte[][] units = Eac3AccessUnits();
+        byte[] first = MatroskaBuilder.Segment(MatroskaBuilder.Info(), MatroskaBuilder.OpusTracks(), MatroskaBuilder.Cluster(0, MatroskaBuilder.SimpleBlock(1, 0, [0xFC, 0xFF, 0xFE])));
+        byte[] second = MatroskaBuilder.Segment(MatroskaBuilder.Info(), Eac3Tracks(), MatroskaBuilder.Cluster(0, MatroskaBuilder.Concat([.. units.Select((u, i) => MatroskaBuilder.SimpleBlock(1, i * 32, u))])));
+
+        Report report = Analyzer.CreateDefault().Analyze("substreams.mka", new MemoryStream(MatroskaBuilder.Concat(MatroskaBuilder.Header(), first, second)));
+
+        Assert.Equal([1, 2, 2], report.Streams.Select(s => s.PlaybackGroup));
+        double eac3 = report.Streams.Skip(1).Max(s => s.Duration);
+        Assert.Equal(report.Streams[0].Duration + eac3, ReportSummary.From(report).Duration!.Value, 6);
+    }
+
+    // An E-AC-3 track with substreams beside an AC-3 track that changes its configuration twice: the substreams play together and with the other track,
+    // the AC-3 streams follow one another and are not grouped.
+    [Fact]
+    public void StreamsOfATrackThatFollowEachOtherAreNotGrouped()
+    {
+        string[] sources = ["ac3/external-ffmpeg-mono-96k.ac3", "ac3/external-ffmpeg-stereo-192k.ac3", "ac3/external-ffmpeg-mono-96k.ac3"];
+        byte[][] frames = [.. sources.Select(f =>
+        {
+            byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, f));
+            return source[..Formats.Ac3.SyncFrame.Read(source).FrameLength];
+        })];
+        byte[][] units = Eac3AccessUnits();
         byte[] rate = new byte[8];
         System.Buffers.Binary.BinaryPrimitives.WriteDoubleBigEndian(rate, 48000);
-        byte[] track = MatroskaBuilder.Element(0xAE, MatroskaBuilder.Unsigned(0xD7, 1), MatroskaBuilder.Unsigned(0x73C5, 1), MatroskaBuilder.Unsigned(0x83, 2),
-            MatroskaBuilder.Text(0x86, "A_EAC3"), MatroskaBuilder.Element(0xE1, MatroskaBuilder.Element(0xB5, rate), MatroskaBuilder.Unsigned(0x9F, 6)));
-        byte[] blocks = MatroskaBuilder.Concat([.. units.Select((u, i) => MatroskaBuilder.SimpleBlock(1, i * 32, u))]);
-        byte[] data = MatroskaBuilder.File(MatroskaBuilder.Info(), MatroskaBuilder.Element(0x1654AE6B, track), MatroskaBuilder.Cluster(0, blocks));
+        byte[] ac3Track = MatroskaBuilder.Element(0xAE, MatroskaBuilder.Unsigned(0xD7, 2), MatroskaBuilder.Unsigned(0x73C5, 2), MatroskaBuilder.Unsigned(0x83, 2),
+            MatroskaBuilder.Text(0x86, "A_AC3"), MatroskaBuilder.Element(0xE1, MatroskaBuilder.Element(0xB5, rate), MatroskaBuilder.Unsigned(0x9F, 2)));
+        byte[] blocks = MatroskaBuilder.Concat([.. units.Select((u, i) => MatroskaBuilder.SimpleBlock(1, i * 32, u)), .. frames.Select((f, i) => MatroskaBuilder.SimpleBlock(2, i * 32, f))]);
+        byte[] data = MatroskaBuilder.File(MatroskaBuilder.Info(), MatroskaBuilder.Element(0x1654AE6B, Eac3TrackEntry(), ac3Track), MatroskaBuilder.Cluster(0, blocks));
 
-        Report report = Analyzer.CreateDefault().Analyze("substreams.mka", new MemoryStream(data));
+        Report report = Analyzer.CreateDefault().Analyze("changes.mka", new MemoryStream(data));
+
+        Assert.Equal(2, report.Streams.Count(s => s.PlaybackGroup == 1));
+        StreamInfo[] following = [.. report.Streams.Where(s => s.PlaybackGroup is null)];
+        Assert.True(following.Length >= 2, $"{following.Length} ungrouped streams");
+        double substreams = report.Streams.Where(s => s.PlaybackGroup == 1).Max(s => s.Duration);
+        Assert.Equal(substreams + following.Sum(s => s.Duration), ReportSummary.From(report).Duration!.Value, 6);
+    }
+
+    [Fact]
+    public void ATrackOfAnMp4ThatChangesItsConfigurationIsNotGrouped()
+    {
+        string[] sources = ["ac3/external-ffmpeg-mono-96k.ac3", "ac3/external-ffmpeg-stereo-192k.ac3"];
+        byte[][] frames = [.. sources.Select(f =>
+        {
+            byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, f));
+            return source[..Formats.Ac3.SyncFrame.Read(source).FrameLength];
+        })];
+        byte[] entry = Mp4Builder.Box("ac-3", [new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xBB, 0x80, 0, 0]]);
+        byte[] data = Mp4Builder.FileWithMoov(
+            at => Mp4Builder.Trak(1, entry, Mp4Builder.Stts(frames.Length, 1536), Mp4Builder.Stsc(frames.Length), Mp4Builder.Sizes(frames.Select(f => f.Length)), Mp4Builder.ChunkOffsets([at])),
+            Mp4Builder.Join(frames));
+
+        Report report = Analyzer.CreateDefault().Analyze("changes.m4a", new MemoryStream(data));
 
         Assert.Equal(2, report.Streams.Count);
-        Assert.All(report.Streams, s => Assert.Equal(1, s.PlaybackGroup));
-        Assert.Equal(report.Streams.Max(s => s.Duration), ReportSummary.From(report).Duration);
+        Assert.All(report.Streams, s => Assert.Null(s.PlaybackGroup));
+        Assert.Equal(report.Streams.Sum(s => s.Duration), ReportSummary.From(report).Duration!.Value, 6);
     }
+
+    private static byte[] Eac3TrackEntry()
+    {
+        byte[] rate = new byte[8];
+        System.Buffers.Binary.BinaryPrimitives.WriteDoubleBigEndian(rate, 48000);
+        return MatroskaBuilder.Element(0xAE, MatroskaBuilder.Unsigned(0xD7, 1), MatroskaBuilder.Unsigned(0x73C5, 1), MatroskaBuilder.Unsigned(0x83, 2),
+            MatroskaBuilder.Text(0x86, "A_EAC3"), MatroskaBuilder.Element(0xE1, MatroskaBuilder.Element(0xB5, rate), MatroskaBuilder.Unsigned(0x9F, 6)));
+    }
+
+    private static byte[] Eac3Tracks() => MatroskaBuilder.Element(0x1654AE6B, Eac3TrackEntry());
 
     // The access units of ac3/substreams.eac3: each starts with a frame of independent substream 0 and holds the frames up to the next one.
     private static byte[][] Eac3AccessUnits()

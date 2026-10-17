@@ -12,16 +12,21 @@ public static class CodecNames
 
     public const string PcmFloat = "PCM (floating-point)";
 
-    // MPEG audio whose layer a container does not state, or whose frames are not read.
-    public const string MpegAudio = "MPEG audio";
+    // MPEG audio the codec parser did not read, named in the parser's form ("MPEG-1 Layer III") with what the container states: the layer
+    // alone where it states no version, the version alone where it states no layer. Where it states both, the parser's own name is used.
+    public const string MpegAudioLayerI = "MPEG Layer I";
 
-    public const string MpegAudioLayerI = "MPEG audio Layer I";
+    public const string MpegAudioLayerII = "MPEG Layer II";
 
-    public const string MpegAudioLayerII = "MPEG audio Layer II";
+    public const string MpegAudioLayerIAndII = "MPEG Layer I and II";
 
-    public const string MpegAudioLayerIAndII = "MPEG audio Layer I and II";
+    public const string MpegAudioLayerIII = "MPEG Layer III";
 
-    public const string MpegAudioLayerIII = "MPEG audio Layer III";
+    public const string Mpeg1Audio = "MPEG-1 audio";
+
+    public const string Mpeg2Audio = "MPEG-2 audio";
+
+    public const string Mpeg4Audio = "MPEG-4 audio";
 
     public const string DtsHdMasterAudio = "DTS-HD Master Audio";
 

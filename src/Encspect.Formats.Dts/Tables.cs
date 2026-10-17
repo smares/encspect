@@ -111,7 +111,7 @@ internal static class Tables
     public static string ArrangementShort(int amode) => amode switch
     {
         0 => "1/0",
-        1 => "dual mono",
+        1 => "1+1",
         2 => "2/0",
         3 => "2/0 sum/difference",
         4 => "2/0 left total, right total",

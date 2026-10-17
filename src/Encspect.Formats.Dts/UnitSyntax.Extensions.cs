@@ -348,7 +348,7 @@ internal sealed partial class UnitSyntax
             int headerEnd = (setStart + size) * 8;
             if (_pos > headerEnd - (setCrc ? 16 : 0))
             {
-                Report(Issue.SubstreamOverrun, "Header Size", sizeStart, sizeEnd, $"channel set {i + 1}'s header fields end at byte {((_pos + 7) / 8) - setStart}, past the {size} bytes its size field gives");
+                Report(Issue.SubstreamOverrun, "Header Size", sizeStart, sizeEnd, $"channel set {i + 1}'s header fields end at byte {((_pos + 7) / 8) - setStart}, past the {Counts.Bytes(size)} its size field gives");
             }
             else if (setCrc)
             {

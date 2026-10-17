@@ -97,7 +97,7 @@ FIXTURES = [
     ffmpeg("ffmpeg-cenc-aac-fragmented", ".mp4", ["-c:a", "aac", "-b:a", "128k"], "AAC LC", 44100, fragmented=True),
     ffmpeg("ffmpeg-cenc-ac3", ".mp4", ["-c:a", "ac3", "-b:a", "192k"], "AC-3", 44100),
     ffmpeg("ffmpeg-cenc-eac3", ".mp4", ["-c:a", "eac3", "-b:a", "192k"], "E-AC-3", 44100),
-    ffmpeg("ffmpeg-cenc-mp3", ".mp4", ["-c:a", "libmp3lame", "-b:a", "128k"], "MPEG audio", 44100),
+    ffmpeg("ffmpeg-cenc-mp3", ".mp4", ["-c:a", "libmp3lame", "-b:a", "128k"], "MPEG-1 audio", 44100),
     ffmpeg("ffmpeg-cenc-alac", ".m4a", ["-c:a", "alac"], "Apple Lossless", 44100, parsed=False),
     ffmpeg("ffmpeg-cenc-flac", ".mp4", ["-c:a", "flac", "-strict", "-2"], "FLAC", 44100, parsed=False),
     ffmpeg("ffmpeg-cenc-opus", ".mp4", ["-c:a", "libopus", "-b:a", "96k", "-strict", "-2"], "Opus", 48000, parsed=False),

@@ -132,7 +132,7 @@ internal sealed partial class UnitSyntax
                 facts = null;
                 if (crcBit <= outerLimit)
                 {
-                    ReportGroup(Issue.SubstreamOverrun, $"Channel Set {index + 1}", groupStart, GroupEnd(), $"the channel set {index + 1} sub-header's fields end past the {size} bytes its size field gives");
+                    ReportGroup(Issue.SubstreamOverrun, $"Channel Set {index + 1}", groupStart, GroupEnd(), $"the channel set {index + 1} sub-header's fields end past the {Counts.Bytes(size)} its size field gives");
                     fits = false;
                 }
                 else if (!IsIncomplete)

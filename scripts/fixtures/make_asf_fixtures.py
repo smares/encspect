@@ -85,7 +85,7 @@ def fixture(name, description, builder, findings=(), crosscheck=None, protection
 
 def unparsed(streams):
     """The info finding for each audio stream whose coding has no parser: PCM and MPEG audio."""
-    names = {0x0001: "PCM", 0x0055: "MPEG audio Layer III"}
+    names = {0x0001: "PCM", 0x0055: "MPEG Layer III"}
     return [finding("asf.codec-not-analyzed", names[s["tag"]]) for s in streams if s.get("tag") in names and not s["encrypted"]]
 
 
@@ -553,7 +553,7 @@ fixture("protection-object-ids", "An Advanced Content Encryption Object with an 
 fixture("protection-truncated", "A Content Encryption Object whose secret data length is 5000 bytes, in an object of 40.", 
         protected([wma(1, encrypted=True), m.obj(m.CONTENT_ENCRYPTION, struct.pack("<I", 5000) + b"secret" + struct.pack("<I", 4) + b"DRM\0")]),
         [DRM1_FINDING, ENCRYPTED, finding("asf.object-truncated", "Content Encryption Object")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
-fixture("protected-mpeg-audio", "MPEG audio Layer III, which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
+fixture("protected-mpeg-audio", "MPEG Layer III, which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
         protected([m.stream_properties(1, m.wave_format(0x0055, 2, 44100, 16000, 1, 0)), m.content_encryption()]), [DRM1_FINDING],
         {"ffprobe": False, "reason": "the MPEG audio payloads are not MPEG audio frames."},
         scheme("Microsoft Digital Rights Manager version 1"))

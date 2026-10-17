@@ -688,7 +688,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     private static void AddMainData(List<Node> children, int index, in Entry frame, long dataStart, BuildContext build)
     {
         ChunkedList<MainDataRun> runs = build.Runs;
-        NodeValue own = frame.Earlier > 0 ? $"{frame.MainDataLength} bytes, {frame.Earlier} of them in earlier frames" : Bytes(frame.MainDataLength);
+        NodeValue own = frame.Earlier > 0 ? $"{Counts.Bytes(frame.MainDataLength)}, {frame.Earlier} of them in earlier frames" : Bytes(frame.MainDataLength);
         int first = children.Count;
         bool hasOwn = false;
         long cursor = dataStart;
@@ -733,7 +733,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     }
 
     private static Node ReservoirNode(long offset, long length, long owner) =>
-        new("Bit Reservoir", offset, length, $"{length} bytes of the main data of the frame at 0x{owner:X}") { Description = Explain.ReservoirBytes, Topic = Topics.BitReservoir };
+        new("Bit Reservoir", offset, length, $"{Counts.Bytes(length)} of the main data of the frame at 0x{owner:X}") { Description = Explain.ReservoirBytes, Topic = Topics.BitReservoir };
 
     private static Node Layer12Ancillary(long start, long end) =>
         new("Ancillary Data", start, end - start, Bytes(end - start)) { Description = Explain.Layer12Ancillary, Topic = Topics.AncillaryData };

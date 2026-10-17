@@ -258,7 +258,7 @@ public sealed partial class Mp4Parser : IFormatParser
                 }
 
                 Node rest = parent.Add(new Node("Unused Bytes", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnusedBytes });
-                state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{end - position} bytes at 0x{position:X} are too few for a box header.", rest);
+                state.Findings.AddNow(Severity.Warning, "mp4.box-header-truncated", $"{Counts.Bytes(end - position)} at 0x{position:X} {(end - position == 1 ? "is" : "are")} too few for a box header.", rest);
                 return end;
             }
 
