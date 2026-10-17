@@ -572,7 +572,7 @@ public sealed partial class OggParser : IFormatParser
 
         foreach (LogicalStream stream in region.Streams)
         {
-            ref PageRecord last = ref region.Pages[stream.LastPage];
+            ref readonly PageRecord last = ref region.Pages[stream.LastPage];
             long offset = last.Offset;
             if (!stream.HasEos)
             {

@@ -297,6 +297,12 @@ public class BlockedChildrenTests
         Assert.Equal((Count - 2) * 3L, list[Count - 2]);
         Assert.Throws<ArgumentOutOfRangeException>(() => list[Count]);
         Assert.Throws<ArgumentOutOfRangeException>(() => new ChunkedList<int>().SetLast(1));
+
+        list.RemoveLast();
+        Assert.Equal(Count - 1, list.Count);
+        list.Add(7L);
+        Assert.Equal(7L, list[Count - 1]);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ChunkedList<int>().RemoveLast());
     }
 
     [Fact]
@@ -319,5 +325,31 @@ public class BlockedChildrenTests
         }
 
         Assert.Throws<InvalidDataException>(() => store.Add(new byte[1 << 16], new byte[1]));
+    }
+
+    [Fact]
+    public void ByteStoreReturnsAValidPositionForAnEmptyItemAfterAFullBlock()
+    {
+        var store = new ByteStore();
+        byte[] first = new byte[1 << 16];
+        first.AsSpan().Fill(0xA5);
+        uint filled = store.Add(first);
+        uint empty = store.Add([]);
+
+        // Read before anything else is added: a position past the last block must not be handed out.
+        Assert.Equal(0, store.Span(empty, 0).Length);
+        uint after = store.Add([1, 2, 3]);
+
+        Assert.True(store.Span(filled, first.Length).SequenceEqual(first));
+        Assert.True(store.Span(after, 3).SequenceEqual(new byte[] { 1, 2, 3 }));
+
+        // An empty item first, in the first block, and one right after a block that is full
+        // before it reaches the maximum size.
+        var small = new ByteStore();
+        Assert.Equal(0, small.Span(small.Add([]), 0).Length);
+        uint block = small.Add(new byte[4096]);
+        Assert.Equal(0, small.Span(small.Add([]), 0).Length);
+        Assert.Equal(4096, small.Span(block, 4096).Length);
+        Assert.Equal(0, small.Span(small.Add([], []), 0).Length);
     }
 }

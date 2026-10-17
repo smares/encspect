@@ -625,7 +625,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
         else if (frame.DataKind == FrameData.SideInfo)
         {
-            children.Add(Layer3SideInfo.Read(build.Store.Read(frame.Data, frame.DataLength), header).ToNode(dataStart, frame.ReservoirFill));
+            children.Add(Layer3SideInfo.Read(build.Store.Span(frame.Data, frame.DataLength).ToArray(), header).ToNode(dataStart, frame.ReservoirFill));
             AddMainData(children, index, frame, dataStart + frame.DataLength, build);
         }
         else if (frame.DataKind == FrameData.Layer2)
@@ -634,7 +634,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
         else if (frame.DataKind == FrameData.Layer1)
         {
-            var audio = Layer1AudioData.Read(build.Store.Read(frame.Data, frame.DataLength), header);
+            var audio = Layer1AudioData.Read(build.Store.Span(frame.Data, frame.DataLength).ToArray(), header);
             children.AddRange(audio.ToNodes(frame.Offset, frame.Length));
             long ancillary = frame.Offset + ((audio.End + 7) / 8);
             if (frame.End > ancillary)
@@ -866,9 +866,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // starts, then the candidate's.
     private static (Layer2Multichannel Mc, long Offset) ReadMultichannel(BuildContext build, in Entry frame, MpegHeader header)
     {
-        var audio = Layer2AudioData.Read(build.Store.Read(frame.Data, frame.DataLength), header);
+        var audio = Layer2AudioData.Read(build.Store.Span(frame.Data, frame.DataLength).ToArray(), header);
         int first = audio.End / 8;
-        byte[] bytes = build.Store.Read(frame.Data + frame.DataLength, frame.MultichannelLength);
+        byte[] bytes = build.Store.Span(frame.Data + (uint)frame.DataLength, frame.MultichannelLength).ToArray();
         var mc = Layer2Multichannel.Read(bytes, audio.End - (first * 8), (int)(frame.Length - first) * 8, BaseAllocation(audio), header.SampleRate);
         return (mc, frame.Offset + first);
     }
@@ -965,7 +965,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
     private static void AddLayer2(List<Node> children, in Entry frame, MpegHeader header, BuildContext build)
     {
-        var audio = Layer2AudioData.Read(build.Store.Read(frame.Data, frame.DataLength), header);
+        var audio = Layer2AudioData.Read(build.Store.Span(frame.Data, frame.DataLength).ToArray(), header);
         children.AddRange(audio.ToNodes(frame.Offset, frame.Length));
         long end = frame.End;
         if (build.HasMultichannel && frame.IsMultichannelCandidate)
@@ -1357,7 +1357,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         public uint Header { get; }
 
-        public long Data { get; init; }
+        public uint Data { get; init; }
 
         public FrameData DataKind { get; init; }
 

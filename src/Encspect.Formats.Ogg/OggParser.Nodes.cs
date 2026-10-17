@@ -96,10 +96,10 @@ public sealed partial class OggParser
         int present = page.LacingPresent;
         if (present > 0)
         {
-            long lacing = page.Lacing;
+            uint lacing = page.Lacing;
             fields.Add(new Node("Segment Table", offset + 27, present, NodeValue.Integer(page.Segments, "lacing values", "lacing value"), () =>
             {
-                ReadOnlySpan<byte> values = region.Lacing.Read(lacing, present);
+                ReadOnlySpan<byte> values = region.Lacing.Span(lacing, present);
                 var nodes = new Node[values.Length];
                 for (int i = 0; i < values.Length; i++)
                 {
@@ -138,7 +138,7 @@ public sealed partial class OggParser
         var assembler = new PacketAssembler();
         assembler.Restore((page.Status & PageStatus.PendingBefore) != 0 && (page.Status & PageStatus.DropsPending) == 0, page.CompletedBefore);
         var runs = new List<Run>();
-        assembler.Feed((page.Flags & Pages.Continued) != 0, region.Lacing.Read(page.Lacing, page.Segments), runs);
+        assembler.Feed((page.Flags & Pages.Continued) != 0, region.Lacing.Span(page.Lacing, page.Segments), runs);
         foreach (Run run in runs)
         {
             string what = run.Kind switch

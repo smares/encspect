@@ -1,3 +1,5 @@
+using Encspect.Core;
+
 namespace Encspect.Formats.Opus;
 
 // What a packet's TOC byte says (RFC 6716, section 3.1): the configuration number in the top five

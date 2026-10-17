@@ -332,6 +332,39 @@ public class OggTests
             "chain.spx", new MemoryStream(chain), new AnalysisOptions { CancellationToken = cancellation.Token, BytesRead = progress }));
     }
 
+    // The segment tables of the pages fill the record store's blocks (4,096 bytes, doubling to 64 KiB)
+    // exactly; the end-of-stream page has no segments, so its table is an empty item added to a
+    // full block.
+    [Fact]
+    public void ASegmentLessPageAfterAFullStoreBlockIsParsed()
+    {
+        byte[] head = [.. "OpusHead"u8, 1, 1, 0x38, 0x01, 0x80, 0xBB, 0, 0, 0, 0, 0];
+        byte[] tags = [.. "OpusTags"u8, 8, 0, 0, 0, .. "Encspect"u8, 0, 0, 0, 0];
+        var builder = new OggBuilder()
+            .Segments(7, 0, 2, [(byte)head.Length], head)
+            .Segments(7, 0, 0, [(byte)tags.Length], tags);
+        int used = 2;
+        long granule = 0;
+        foreach (int target in new[] { 4096, 4096 + 8192, 4096 + 8192 + 16384, 4096 + 8192 + 16384 + 32768, 4096 + 8192 + 16384 + 32768 + 65536 })
+        {
+            while (used < target)
+            {
+                int count = Math.Min(255, target - used);
+                granule += 960;
+                builder.Segments(7, granule, 0, [.. Enumerable.Repeat((byte)1, count)], [.. Enumerable.Repeat((byte)0xF8, count)]);
+                used += count;
+            }
+        }
+
+        builder.Segments(7, granule, 4, [], []);
+
+        Report report = Analyzer.CreateDefault().Analyze("full-block.opus", new MemoryStream(builder.Bytes));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Node stream = report.Root.Children.Single().Children.Single(c => c.Name == "Logical Stream");
+        Assert.Equal("True", stream.Children.Single(c => c.Name == "HasEndOfStream").Value?.ToString(), ignoreCase: true);
+    }
+
     [Fact]
     public void ManyStreamsAndLinksStayShallow()
     {

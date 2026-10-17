@@ -1,3 +1,5 @@
+using Encspect.Core;
+
 namespace Encspect.Formats.Speex;
 
 // One frame as a Speex decoder walks it: the bits of in-band and user data and of skipped wideband
