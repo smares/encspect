@@ -37,6 +37,19 @@ internal sealed class StreamFigures(int sampleRate)
     // In kbps; null without a duration.
     public double? AverageBitrate => _samples > 0 && sampleRate > 0 ? Bytes * 8.0 * sampleRate / _samples / 1000 : null;
 
+    // The same units counted at another sampling frequency, for a stream whose first units did not know theirs (they hold no samples).
+    public StreamFigures WithSampleRate(int rate)
+    {
+        var figures = new StreamFigures(rate);
+        for (int i = 0; i < Count; i++)
+        {
+            Point point = _points[i];
+            figures.Add(point.Offset, point.Length, point.Samples);
+        }
+
+        return figures;
+    }
+
     public void Add(long offset, int length, int samples)
     {
         double bitrate = Bitrate(length, samples);

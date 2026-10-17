@@ -175,7 +175,8 @@ public class ComplexityTests
 
     // Short chains of core frames, each followed by 4 KiB of the extension substream headers above: each break in the chain starts a search
     // for the next one, and every search once had a CRC allowance of its own (1 MiB each, 190 times the size of the data in all). One
-    // allowance for the whole data keeps the time linear (24 s for 32 MiB before, over 30 s for the 48 MiB here).
+    // allowance for the whole data keeps the cost per byte as that of the headers alone: the same amount of data of each pattern is
+    // timed in turn, and the chains must cost no more than a small multiple of the headers (about 10 times before, 1.5 now).
     [Fact]
     public void ShortChainsFollowedByExtensionSubstreamHeadersThatFailTheirCrc()
     {
@@ -183,22 +184,41 @@ public class ComplexityTests
         byte[] template = new byte[16];
         header.CopyTo(template, 0);
         byte[] frame = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", "core-16be.dts"))[..512];
-        var data = new byte[48 << 20];
+        const int size = 16 << 20;
         const int group = (3 * 512) + 4096;
-        for (int at = 0; at + group <= data.Length; at += group)
+        var flood = new byte[size];
+        var groups = new byte[size];
+        for (int at = 0; at + 16 <= size; at += 16)
+        {
+            template.CopyTo(flood, at);
+        }
+
+        for (int at = 0; at + group <= size; at += group)
         {
             for (int i = 0; i < 3; i++)
             {
-                frame.CopyTo(data, at + (i * 512));
+                frame.CopyTo(groups, at + (i * 512));
             }
 
             for (int junk = at + (3 * 512); junk < at + group; junk += 16)
             {
-                template.CopyTo(data, junk);
+                template.CopyTo(groups, junk);
             }
         }
 
-        TimedDts(data);
+        TimeSpan floodTime = TimedDtsAnalysis(flood);
+        TimeSpan groupsTime = TimedDtsAnalysis(groups);
+        Assert.True(groupsTime < (3 * floodTime) + TimeSpan.FromSeconds(1), $"The chains took {groupsTime.TotalSeconds:F1} s, the headers alone {floodTime.TotalSeconds:F1} s");
+    }
+
+    private static TimeSpan TimedDtsAnalysis(byte[] data)
+    {
+        var watch = Stopwatch.StartNew();
+        Report report = new Analyzer([new ForcedDts()]).Analyze("flood.dts", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        return watch.Elapsed;
     }
 
     // Core frames whose arrangement and LFE flag change at every frame still chain (they share their form and sampling frequency), and each

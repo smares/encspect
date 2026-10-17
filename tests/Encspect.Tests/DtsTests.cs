@@ -106,10 +106,10 @@ public class DtsTests
         Assert.Equal(["dts.trailing-data"], report.Findings.Select(f => f.Code));
     }
 
-    // A configuration that returns goes on with its stream: frames that alternate between two arrangements make two streams, not one for each
-    // change, and the changes are one finding with their number.
+    // A change of the configuration ends the stream and starts another, as for the other formats, also where the configuration returns; the
+    // changes are one finding with their number.
     [Fact]
-    public void AConfigurationThatReturnsKeepsItsStream()
+    public void AConfigurationThatReturnsStartsAStream()
     {
         byte[] frame = Fixture("core-16be.dts")[..512];
         var data = new List<byte>();
@@ -121,12 +121,29 @@ public class DtsTests
         }
 
         Report report = Analyzer.CreateDefault().Analyze("alternating.dts", new MemoryStream([.. data]));
-        Assert.Equal(2, report.Streams.Count);
-        Assert.Equal(["2/0", "1/0"], report.Streams.Select(s => s.ChannelMode));
+        Assert.Equal(12, report.Streams.Count);
+        Assert.Equal(["2/0", "1/0"], report.Streams.Take(2).Select(s => s.ChannelMode));
         Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
         Assert.Equal(11, changed.Count);
         Assert.DoesNotContain("limited", changed.Message, StringComparison.Ordinal);
-        Assert.Equal(6 * 512, report.Streams[0].Samples);
+        Assert.Equal(512L, report.Streams[0].Samples);
+    }
+
+    // Extension substream headers that omit the static fields before any header that states them have no figures of their own: they
+    // belong to the stream the first header with the fields starts (a stream of its own would hold no samples), and the stream does not change.
+    [Fact]
+    public void UnitsBeforeTheFirstStaticFieldsJoinTheStreamAfterThem()
+    {
+        byte[] source = Fixture("exss-only-static-first-only.dts");
+        byte[] with = source[..60];
+        byte[] without = source[60..112];
+        byte[] data = [.. without, .. without, .. with, .. without];
+        Report report = Analyzer.CreateDefault().Analyze("late.dts", new MemoryStream(data));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(48000, stream.SampleRate);
+        Assert.Equal(2, stream.Channels);
+        Assert.Equal(2 * 512L, stream.Samples);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "dts.stream-changed");
     }
 
     private static void SetBits(byte[] data, int start, int width, int value)

@@ -211,6 +211,14 @@ def build(api):
              dict(channels=2, mask=0x02), (STEREO, 48000), sets=[m.xll_set(2, polar=True)], xll=x, fields=nox,
              crosscheck=undecodable(cc, "Disabled XLL channel mask is not implemented", "ffmpeg's decoder does not implement polar speaker positions, and stops before the DTS:X word (dca_xll.c: 'Disabled XLL channel mask')"))
 
+    # parse_common_header refuses a segment of more than 512 samples and one of none, before it reads a channel set.
+    lossless("xll-x-segment-samples", "Four units whose lossless common header states segments of 1,024 samples, and the DTS:X word after the band data, which is not looked for.",
+             dict(channels=2, mask=0x02), (STEREO, 48000), xll=dict(x_sync=0x02000850, segments_log=0, samples_log=10), fields=nox,
+             crosscheck=undecodable(cc, "Too many samples per XLL segment", "ffmpeg's decoder refuses segments of more than 512 samples before the DTS:X word (dca_xll.c: 'Too many samples per XLL segment')"))
+    lossless("xll-x-no-segment-samples", "Four units whose lossless common header states segments of 1 sample (log2 0), and the DTS:X word after the band data, which is not looked for.",
+             dict(channels=2, mask=0x02), (STEREO, 48000), xll=dict(x_sync=0x02000850, segments_log=2, samples_log=0), fields=nox,
+             crosscheck=undecodable(cc, "Too few samples per XLL segment", "ffmpeg's decoder refuses a segment of no samples before the DTS:X word (dca_xll.c: 'Too few samples per XLL segment')"))
+
 
 def cc_hd(cc, **extra):
     """The crosscheck of a .dtshd file with a lossless stream: no bit rate in ffprobe, and libdca reads raw DTS only."""

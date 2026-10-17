@@ -23,7 +23,7 @@
  "gaps": [],
  "streams": [
   {
-   "codec": "DTS-ES",
+   "codec": "DTS",
    "sample_rate": 48000,
    "channels": 2,
    "channel_mode": "2/0",
@@ -46,10 +46,8 @@
   "ffprobe": true,
   "decode": false,
   "libdca": true,
-  "ffprobe_profile": false,
   "decode_error": "Invalid number of bits for XXCH speaker mask",
   "skip": {
-   "ffprobe_profile": "ffmpeg's decoder names the profile DTS-ES only when it has decoded the extension (dca_core.c), which it refuses here ('Invalid number of bits for XXCH speaker mask')",
    "decode": "ffmpeg's decoder refuses the XXCH header (dca_core.c: 'Invalid number of bits for XXCH speaker mask')"
   }
  }

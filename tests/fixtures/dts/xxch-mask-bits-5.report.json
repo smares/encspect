@@ -134,7 +134,7 @@
                 },
                 {
                   "name": "Frames With Extension",
-                  "value": 4,
+                  "value": 0,
                   "unit": "frames",
                   "offset": 0,
                   "length": 4096,
@@ -155,7 +155,7 @@
                     },
                     {
                       "name": "XXCH",
-                      "value": 4,
+                      "value": 0,
                       "unit": "frames",
                       "offset": 0,
                       "length": 4096
@@ -199,7 +199,7 @@
                 },
                 {
                   "name": "Coding Components",
-                  "value": "core, XXCH (StreamConstruction 3)",
+                  "value": "core (StreamConstruction 1)",
                   "offset": 0,
                   "length": 4096
                 },
@@ -217,13 +217,13 @@
                 },
                 {
                   "name": "Profile",
-                  "value": "DTS-ES",
+                  "value": "DTS",
                   "offset": 0,
                   "length": 4096,
                   "children": [
                     {
                       "name": "Evidence",
-                      "value": "the core has the XCh or the XXCH extension, found where its sync word and its size or CRC say",
+                      "value": "a core with no extension",
                       "offset": 0,
                       "length": 4096
                     }
@@ -982,6 +982,36 @@
                           "length": 2,
                           "bitOffset": 7,
                           "bitLength": 5
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 28,
+                          "unit": "bits",
+                          "offset": 945,
+                          "length": 4,
+                          "bitOffset": 4,
+                          "bitLength": 28
+                        },
+                        {
+                          "name": "Header CRC",
+                          "value": 9045,
+                          "offset": 949,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Check",
+                              "value": "verified",
+                              "offset": 949,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Extension Audio Data",
+                          "value": 73,
+                          "unit": "bytes",
+                          "offset": 951,
+                          "length": 73
                         }
                       ]
                     }
@@ -1740,6 +1770,36 @@
                           "length": 2,
                           "bitOffset": 7,
                           "bitLength": 5
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 28,
+                          "unit": "bits",
+                          "offset": 1969,
+                          "length": 4,
+                          "bitOffset": 4,
+                          "bitLength": 28
+                        },
+                        {
+                          "name": "Header CRC",
+                          "value": 9045,
+                          "offset": 1973,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Check",
+                              "value": "verified",
+                              "offset": 1973,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Extension Audio Data",
+                          "value": 73,
+                          "unit": "bytes",
+                          "offset": 1975,
+                          "length": 73
                         }
                       ]
                     }
@@ -2498,6 +2558,36 @@
                           "length": 2,
                           "bitOffset": 7,
                           "bitLength": 5
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 28,
+                          "unit": "bits",
+                          "offset": 2993,
+                          "length": 4,
+                          "bitOffset": 4,
+                          "bitLength": 28
+                        },
+                        {
+                          "name": "Header CRC",
+                          "value": 9045,
+                          "offset": 2997,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Check",
+                              "value": "verified",
+                              "offset": 2997,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Extension Audio Data",
+                          "value": 73,
+                          "unit": "bytes",
+                          "offset": 2999,
+                          "length": 73
                         }
                       ]
                     }
@@ -3256,6 +3346,36 @@
                           "length": 2,
                           "bitOffset": 7,
                           "bitLength": 5
+                        },
+                        {
+                          "name": "Reserved",
+                          "value": 28,
+                          "unit": "bits",
+                          "offset": 4017,
+                          "length": 4,
+                          "bitOffset": 4,
+                          "bitLength": 28
+                        },
+                        {
+                          "name": "Header CRC",
+                          "value": 9045,
+                          "offset": 4021,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Check",
+                              "value": "verified",
+                              "offset": 4021,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Extension Audio Data",
+                          "value": 73,
+                          "unit": "bytes",
+                          "offset": 4023,
+                          "length": 73
                         }
                       ]
                     }
@@ -3274,7 +3394,7 @@
             0
           ]
         ],
-        "codec": "DTS-ES",
+        "codec": "DTS",
         "sampleRate": 48000,
         "channels": 2,
         "channelMode": "2/0",

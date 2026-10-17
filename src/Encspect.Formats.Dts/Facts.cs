@@ -116,6 +116,9 @@ internal sealed class AssetFacts
 
     public bool HasStaticFields { get; set; }
 
+    // The figures below are the header's own or those of the last header that stated them; false before any.
+    public bool AreFiguresKnown { get; set; }
+
     public int Channels { get; set; }
 
     public int BitResolution { get; set; }

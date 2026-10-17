@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Dts;
 
 // What the common header of the lossless extension (8.3.1) says that the rest of the frame needs.
-internal readonly record struct XllCommon(int Sets, int FrameSize, int SegmentsLog, int SegmentBits, bool IsScalable, int MaskBits, int FrameSizeStart, int FrameSizeEnd);
+internal readonly record struct XllCommon(int Sets, int FrameSize, int SegmentsLog, int SegmentBits, bool IsScalable, int MaskBits, int FrameSizeStart, int FrameSizeEnd, bool IsRefused = false);
 
 internal sealed partial class UnitSyntax
 {
@@ -20,6 +20,9 @@ internal sealed partial class UnitSyntax
     private const int XllMaxSets = 3;
     private const int XllMaxChannels = 8;
 
+    // DCA_XLL_PBR_BUFFER_MAX: 240 KiB.
+    private const int XllMaxFrameSize = 240 << 10;
+
     // Whether FFmpeg's decoder gives up on the lossless frame in a field the analyzer has read; set by the reading of the common header and
     // of the channel set sub-headers, and read when the word after the band data is looked for.
     private bool _isXllRefused;
@@ -34,7 +37,7 @@ internal sealed partial class UnitSyntax
     {
         int setAt = at + headerSize;
         var sets = new List<XllSetFacts>();
-        _isXllRefused = common.Sets > XllMaxSets;
+        _isXllRefused = common.Sets > XllMaxSets || common.IsRefused;
         int hierChannels = 0;
         bool complete = true;
         bool allFacts = true;
@@ -398,19 +401,19 @@ internal sealed partial class UnitSyntax
             _tree?.Field("Band Data", dataAt * 8, dataLimit * 8, NodeValue.Integer(dataLimit - dataAt, "bytes"), Explain.XllBandData, Topics.Lossless);
         }
 
-        // FFmpeg stops before it looks for the word at a navigation index whose CRC16 fails, and, earlier, in parse_sub_headers, at a channel
-        // set it refuses (a failing CRC16, a source resolution beyond the storage width, a channel mask of another number of speakers than
-        // channels); so does the analyzer. MediaInfo 24.01 still reads the word after such a set. A band data size of the frame's size or
-        // more puts the end of the band data past the frame, where there is no room for the word.
-        if (verdict == 1 && areSetsAccepted)
+        // FFmpeg stops before it looks for the word at a navigation index whose CRC16 fails, and, earlier, at the common header or a channel
+        // set sub-header it refuses (see _isXllRefused for the cases); so does the analyzer, which shows the bytes there as such after a
+        // refused header and not at all after a failing navigation index. MediaInfo 24.01 still reads the word after such a set. A band data
+        // size of the frame's size or more puts the end of the band data past the frame, where there is no room for the word.
+        if (verdict == 1)
         {
-            ReadXllExtensionData(at, endBit, asset, dataEnd, common);
+            ReadXllExtensionData(at, endBit, asset, dataEnd, common, areSetsAccepted);
         }
     }
 
     // dca_xll.c: when the frame is larger than its band data aligned to 32 bits (counted from the sync word), the word there is DTS:X's
     // (0x02000850) or DTS:X IMAX's (0xF14000D0 or 0xF14000D1). A word needs its 4 bytes here; FFmpeg reads it with 1 to 3 left too.
-    private void ReadXllExtensionData(int at, int endBit, AssetFacts asset, long dataEnd, XllCommon common)
+    private void ReadXllExtensionData(int at, int endBit, AssetFacts asset, long dataEnd, XllCommon common, bool isWordRead)
     {
         long aligned = at + ((dataEnd - at + 3) & ~3L);
         long frameEnd = at + (long)common.FrameSize;
@@ -423,6 +426,13 @@ internal sealed partial class UnitSyntax
         int start = (int)aligned;
         EnsureBytes(start, available - start);
         _pos = start * 8;
+        if (!isWordRead)
+        {
+            _limit = Math.Min(_limit, available * 8);
+            _tree?.Field("Data After Band Data", start * 8, _limit, NodeValue.Integer(available - start, "bytes"), Explain.XllTrailing, Topics.Lossless);
+            return;
+        }
+
         uint word = Read(32);
         XllExtension kind = word == XSync ? XllExtension.X : (word >> 1) == (XImaxSync >> 1) ? XllExtension.XImax : XllExtension.None;
         asset.XllExtension = kind;

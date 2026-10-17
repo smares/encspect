@@ -296,6 +296,14 @@ internal sealed partial class UnitSyntax
         {
             // Table 6-23 reads each channel set's mask with nuBits4SpkrMaskXXCh - 6 bits, and FFmpeg refuses a width up to 6 (dca_core.c).
             Report(Issue.ReservedValue, "Speaker Mask Bits", maskStart, _pos, $"the mask has {maskBits} bits, but the channel set masks are read with 6 bits fewer (Table 6-23), so it needs more than 6; the channel sets are not read");
+            // dca_core.c checks the header's CRC16 before it looks at the width, and ignores an extension it refuses: the frame is not an extension frame.
+            ReadHeaderCrc(syncByte, headerSize, "XXCH", Explain.XxchCrc, "The XXCH frame header's CRC16 (6.5.2) fails");
+            AddCoreData(Math.Max(_pos, (syncByte + headerSize) * 8), endBit, "Extension Audio Data", Explain.XxchRefusedData);
+            if (readSync)
+            {
+                Facts.Extension = CoreExtension.None;
+            }
+
             _pos = endBit;
             return;
         }

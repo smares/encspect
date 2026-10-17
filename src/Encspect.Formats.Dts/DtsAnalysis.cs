@@ -17,7 +17,6 @@ internal sealed class DtsAnalysis
     internal const int MaxStreams = 64;
 
     private readonly List<DtsStream> _streams = [];
-    private readonly Dictionary<StreamKey, DtsStream> _byKey = [];
     private DtsStream? _current;
     private StreamKey? _previousKey;
     private Findings.Counted? _changes;
@@ -233,37 +232,38 @@ internal sealed class DtsAnalysis
         }
     }
 
-    // Units in one configuration make a stream; a change of the configuration ends it, and starts another unless the file has been in that
-    // configuration before, when its stream goes on, or has MaxStreams already, when the unit stays in the stream it follows.
+    // Units in one configuration make a stream; a change of the configuration ends it and starts another, as for the other formats, and
+    // after MaxStreams streams the units of a further configuration stay in the last stream. A unit whose assets have no figures yet
+    // (before any header with static fields) matches the configuration after it, which the stream then takes.
     private void Assign(Region region, int index, UnitFacts facts, UnitLayout layout)
     {
         StreamKey key = StreamKey.Of(facts);
-        bool changed = _previousKey is { } previous && previous != key;
+        bool changed = _previousKey is { } previous && !previous.Matches(key);
         if (changed)
         {
             RecordChange(_previousKey!.Value, key, layout);
         }
 
-        _previousKey = key;
-        if (_current is null || changed)
+        if (_current is null || (changed && _streams.Count < MaxStreams))
         {
-            if (_byKey.TryGetValue(key, out DtsStream? known))
-            {
-                _current = known;
-            }
-            else if (_current is null || _streams.Count < MaxStreams)
-            {
-                _current = new DtsStream(key, index);
-                _streams.Add(_current);
-                _byKey[key] = _current;
-            }
-            else
-            {
-                _merged++;
-            }
+            _current = new DtsStream(key, index);
+            _streams.Add(_current);
+        }
+        else if (changed)
+        {
+            _merged++;
+        }
+        else if (_current.Key.IsPartial && !key.IsPartial)
+        {
+            _current.Complete(key);
         }
 
-        _current!.Regions.Add(region);
+        if (!key.IsPartial || _previousKey is not { IsPartial: false })
+        {
+            _previousKey = key;
+        }
+
+        _current.Regions.Add(region);
         _current.Add(layout.Offset, layout.Length, Samples(facts), facts, layout);
     }
 
@@ -295,7 +295,7 @@ internal sealed class DtsAnalysis
 
         _changes = Findings.AddNowCounted(Severity.Info, "dts.stream-changed", new Node("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame }, count =>
             (count == 1 ? $"The stream changes at 0x{offset:X} from {from} to {to}." : $"The stream changes {count} times, first at 0x{offset:X} from {from} to {to}.")
-            + (_merged > 0 ? $" Streams are limited to {MaxStreams}: after that, the units of a configuration without a stream stay in the stream before them ({_merged} changes)." : string.Empty));
+            + (_merged > 0 ? $" Streams are limited to {MaxStreams}: after that, the units of a further configuration stay in the last stream ({_merged} changes)." : string.Empty));
     }
 
     // The samples a unit holds at the stream's sampling frequency: the core's blocks of 32, or an extension substream's duration.
@@ -324,7 +324,6 @@ internal sealed class DtsAnalysis
         }
 
         _streams.Clear();
-        _byKey.Clear();
         Findings.Flush(_context);
     }
 
@@ -445,13 +444,15 @@ internal static class UnitRecord
         buffer.Add((byte)verdicts.Carries.Count);
         foreach (StaticState? carry in verdicts.Carries)
         {
-            var bytes = new byte[1 + StaticState.Bytes];
-            if (carry is not null)
+            if (carry is null)
             {
-                bytes[0] = 1;
-                carry.WriteTo(bytes.AsSpan(1));
+                buffer.Add(0);
+                continue;
             }
 
+            var bytes = new byte[1 + StaticState.Bytes];
+            bytes[0] = 1;
+            carry.WriteTo(bytes.AsSpan(1));
             buffer.AddRange(bytes);
         }
 
@@ -525,8 +526,14 @@ internal static class UnitRecord
         var carries = new List<StaticState?>(carryCount);
         for (int i = 0; i < carryCount; i++)
         {
-            carries.Add(data[at] != 0 ? StaticState.ReadFrom(data.Slice(at + 1, StaticState.Bytes)) : null);
-            at += 1 + StaticState.Bytes;
+            if (data[at++] == 0)
+            {
+                carries.Add(null);
+                continue;
+            }
+
+            carries.Add(StaticState.ReadFrom(data.Slice(at, StaticState.Bytes)));
+            at += StaticState.Bytes;
         }
 
         verdicts = new Verdicts(verdicts.Values, carries);

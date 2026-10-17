@@ -653,10 +653,9 @@ def build_gate2():
     ext = m.xxch(chsets=((1, 0),), core_mask=0x1F, mask_bits=5)
     parts = [m.core_frame(size=1024, extensions=[ext], ext=1, ext_id=6) for _ in range(4)]
     fixture("xxch-mask-bits-5", ".dts", "Four stereo core frames with an XXCH extension whose speaker mask has 5 bits, fewer than the 6 that Table 6-23 subtracts.", b"".join(parts), rows(parts),
-            [stream("DTS-ES", 48000, STEREO, "2/0", 4 * 512)], [("dts.reserved-value", "the mask has 5 bits")],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid number of bits for XXCH speaker mask",
-                          skip={"ffprobe_profile": "ffmpeg's decoder names the profile DTS-ES only when it has decoded the extension (dca_core.c), which it refuses here ('Invalid number of bits for XXCH speaker mask')",
-                                "decode": "ffmpeg's decoder refuses the XXCH header (dca_core.c: 'Invalid number of bits for XXCH speaker mask')"}))
+            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.reserved-value", "the mask has 5 bits")],
+            crosscheck=cc(decode=False, decode_error="Invalid number of bits for XXCH speaker mask",
+                          skip={"decode": "ffmpeg's decoder refuses the XXCH header (dca_core.c: 'Invalid number of bits for XXCH speaker mask')"}))
 
 
 def main():

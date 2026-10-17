@@ -329,6 +329,7 @@ internal sealed partial class UnitSyntax
             embeddedSix = carry.HasEmbeddedSixChannel;
         }
 
+        asset.AreFiguresKnown = _hasStaticFields || (ordinal == 0 && _carry is not null);
         asset.HasEmbeddedStereo = embeddedStereo;
         asset.HasEmbeddedSixChannel = embeddedSix;
 
