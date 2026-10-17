@@ -383,11 +383,10 @@
  ],
  "findings": [],
  "crosscheck": {
-  "valid": false,
-  "oggz_validate": "ok",
-  "packets": true,
-  "not_compared": {
-   "opusinfo, opusdec and ffprobe": "libopus 1.4 of Ubuntu 24.04 was built without the projection decoder family 3 needs, so they refused the stream (not re-checked with 26.04's libopus 1.6.1); the packets oggz lists are compared"
+  "valid": true,
+  "skip": {
+   "opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 3 (\"Failed to open\": info.c, opus_head_parse accepts families 0, 1 and 255 only and returns OP_EBADHEADER for the rest); libopus 1.6.1 of Ubuntu 26.04 has the projection decoder (opus_projection_decoder.c), opusfile never calls it",
+   "ffprobe": "FFmpeg 8.0.1's Opus extradata parser reads mapping families 0, 1, 2 and 255 only and returns AVERROR_PATCHWELCOME for family 3 (libavcodec/opus/parse.c, ff_opus_parse_extradata: \"Mapping type\"), so ffprobe lists no stream"
   }
  }
 }

@@ -646,7 +646,7 @@ def opus_family255():
     audio = [multistream_packet([(29, 0, [20], {}), (29, 0, [21], {}), (29, 0, [22], {})]) for _ in range(20)]
     packets, granules = opus_stream(head, audio)
     f = single("opus-family-255", packets, granules, opus_cuts(len(audio)), serial=0x0F0F0004, extension=".opus", codec="Opus")
-    f.crosscheck = {"valid": True, "skip": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 255 (\"Failed to open\")"}}
+    f.crosscheck = {"valid": True, "skip": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 255 (\"Failed to open\": info.c, opus_head_parse returns OP_EIMPL for it; checked with 0.12 and opus-tools 0.2 of Ubuntu 26.04)"}}
     f.write()
 
 
@@ -657,7 +657,7 @@ def opus_ambisonics2():
     audio = [multistream_packet([(31, 1, [30], {})] + [(31, 0, [10 + s], {}) for s in range(9)]) for _ in range(15)]
     packets, granules = opus_stream(head, audio)
     f = single("opus-ambisonics-family-2", packets, granules, opus_cuts(len(audio)), serial=0x0F0F0005, extension=".opus", codec="Opus")
-    f.crosscheck = {"valid": True, "skip": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 2 (\"Failed to open\")"}}
+    f.crosscheck = {"valid": True, "skip": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 2 (\"Failed to open\": info.c, opus_head_parse accepts families 0, 1 and 255 only and returns OP_EBADHEADER for the rest; checked with 0.12 and opus-tools 0.2 of Ubuntu 26.04)"}}
     f.write()
 
 
@@ -669,8 +669,11 @@ def opus_ambisonics3():
     audio = [multistream_packet([(31, 1, [40], {}), (31, 1, [41], {})]) for _ in range(15)]
     packets, granules = opus_stream(head, audio)
     f = single("opus-ambisonics-family-3", packets, granules, opus_cuts(len(audio)), serial=0x0F0F0006, extension=".opus", codec="Opus")
-    f.crosscheck = {"valid": False, "oggz_validate": "ok", "packets": True, "not_compared": {
-        "opusinfo, opusdec and ffprobe": "libopus 1.4 of Ubuntu 24.04 was built without the projection decoder family 3 needs, so they refused the stream (not re-checked with 26.04's libopus 1.6.1); the packets oggz lists are compared"}}
+    f.crosscheck = {"valid": True, "skip": {
+        "opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 3 (\"Failed to open\": info.c, opus_head_parse accepts families 0, 1 and 255 only and returns "
+                   "OP_EBADHEADER for the rest); libopus 1.6.1 of Ubuntu 26.04 has the projection decoder (opus_projection_decoder.c), opusfile never calls it",
+        "ffprobe": "FFmpeg 8.0.1's Opus extradata parser reads mapping families 0, 1, 2 and 255 only and returns AVERROR_PATCHWELCOME for family 3 (libavcodec/opus/parse.c, "
+                   "ff_opus_parse_extradata: \"Mapping type\"), so ffprobe lists no stream"}}
     f.write()
 
 
