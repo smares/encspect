@@ -257,9 +257,17 @@ def stream_info(data, entries):
     power = dsd_power(first, data) if is_dsd else None
     # The rate of DSD is held to what 31 bits hold (Reader.MaxNativeRate).
     native = min(rate * (1 << power) * 8, 2**31 - 1) if is_dsd and power is not None and power <= 31 else rate
-    max_streams = 8
+    # libwavpack settles the channels at the first audio block that verifies (its open loop skips a block that fails
+    # WavpackVerifySingleBlock): only a channel info in the blocks that verify up to it counts.
+    upto = []
     for e in entries:
-        if e["kind"] == "block" and has(e, 0x0D) and (found := channel_info(e, data)):
+        if e["kind"] == "block" and verifies(e):
+            upto.append(e)
+            if e["header"]["samples"]:
+                break
+    max_streams = 8
+    for e in upto:
+        if has(e, 0x0D) and (found := channel_info(e, data)):
             max_streams = found[2]
             break
     grouped = sets(entries, max_streams)
@@ -267,13 +275,15 @@ def stream_info(data, entries):
     samples = counted * (8 if is_dsd else 1)
     channels = None
     info = None
-    for e in entries:
-        if e["kind"] == "block" and has(e, 0x0D) and (info := channel_info(e, data)):
+    for e in upto:
+        if has(e, 0x0D) and (info := channel_info(e, data)):
             break
     set_channels = sum(1 if b["header"]["flags"] & MONO else 2 for b in grouped[0]["entries"])
     count = info[0] if info else set_channels
     mask = info[1] if info else {1: 4, 2: 3}.get(count, 0)
-    bits = 1 if is_dsd else 32 if h["flags"] & 0x80 else (h["flags"] & 3) * 8 + 8 - (h["flags"] >> 13 & 31)
+    # A shift that leaves no bits gives no bit depth (wavpack.flags-invalid).
+    shifted = (h["flags"] & 3) * 8 + 8 - (h["flags"] >> 13 & 31)
+    bits = 1 if is_dsd else 32 if h["flags"] & 0x80 else shifted if shifted > 0 else None
     set_bits = sum((e["length"] - wrapper_bytes(e)) * 8 for g in grouped for e in g["entries"])
     seconds = samples / native if native else 0
     hybrid = bool(h["flags"] & HYBRID) or any(e["header"]["flags"] & HYBRID for e in audio)

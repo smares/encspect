@@ -1,0 +1,235 @@
+{
+ "length": 14686,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 6016,
+   "index": 0,
+   "samples": 11025,
+   "flags": "74bc1a49",
+   "version": "410",
+   "total": 24000,
+   "crc": "99ef1961",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     66,
+     6
+    ],
+    [
+     92,
+     67,
+     6
+    ],
+    [
+     100,
+     4,
+     4
+    ],
+    [
+     106,
+     5,
+     6
+    ],
+    [
+     114,
+     6,
+     4
+    ],
+    [
+     120,
+     101,
+     4
+    ],
+    [
+     126,
+     42,
+     0
+    ],
+    [
+     128,
+     138,
+     5880
+    ],
+    [
+     6012,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 6016,
+   "length": 3934,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "74bc1a49",
+   "version": "410",
+   "total": 24000,
+   "crc": "ab3a5449",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     6048,
+     66,
+     6
+    ],
+    [
+     6056,
+     67,
+     6
+    ],
+    [
+     6064,
+     4,
+     4
+    ],
+    [
+     6070,
+     5,
+     6
+    ],
+    [
+     6078,
+     6,
+     4
+    ],
+    [
+     6084,
+     42,
+     0
+    ],
+    [
+     6086,
+     138,
+     3856
+    ],
+    [
+     9946,
+     47,
+     2
+    ]
+   ]
+  },
+  {
+   "offset": 9950,
+   "length": 4736,
+   "index": 17512,
+   "samples": 6488,
+   "flags": "74bc1a49",
+   "version": "410",
+   "total": 24000,
+   "crc": "94a05dbf",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     9982,
+     66,
+     6
+    ],
+    [
+     9990,
+     67,
+     6
+    ],
+    [
+     9998,
+     4,
+     4
+    ],
+    [
+     10004,
+     5,
+     6
+    ],
+    [
+     10012,
+     6,
+     4
+    ],
+    [
+     10018,
+     42,
+     0
+    ],
+    [
+     10020,
+     138,
+     4658
+    ],
+    [
+     14682,
+     47,
+     2
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack hybrid",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 215.208,
+   "hybrid": true,
+   "correction": false,
+   "lossless": false,
+   "sets": 3,
+   "declared": 24000
+  }
+ ],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 14686
+  }
+ ],
+ "encoder": {
+  "tool": "wavpack 5.6.0\nlibwavpack 5.6.0 (wavpack package of Ubuntu 24.04)",
+  "arguments": [
+   "-b4"
+  ],
+  "input": {
+   "kind": "wav-identical",
+   "rate": 44100,
+   "bits": 16,
+   "samples": 24000
+  },
+  "file": "main file"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true,
+  "decode": {
+   "opens": true,
+   "samples": 24000,
+   "errors": 0
+  }
+ }
+}

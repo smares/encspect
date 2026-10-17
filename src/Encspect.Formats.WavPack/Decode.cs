@@ -79,7 +79,27 @@ internal static class Decode
 
     // ID_CHANNEL_INFO (read_channel_info). A count of 0 with an empty mask is accepted, and leaves the
     // channels to the block's flags; the caller treats a value without channels as no channel info.
+    // libwavpack takes the first channel info that gives channels and applies these checks to it only
+    // (open_utils.c 459-499); a later one is read as far as it must be 1 to 7 bytes (ChannelInfoFields).
     public static ChannelInfoValue? ChannelInfo(ReadOnlySpan<byte> data)
+    {
+        if (ChannelInfoFields(data) is not { } info)
+        {
+            return null;
+        }
+
+        bool isLong = data.Length >= 6;
+        if ((isLong && info.Channels < info.Streams) || info.Channels > info.Streams * 2 || System.Numerics.BitOperations.PopCount(info.Mask) > info.Channels)
+        {
+            return null;
+        }
+
+        return info;
+    }
+
+    // What the 1 to 7 bytes of a channel info say, whether or not libwavpack would take them as the
+    // first one: null for any other length.
+    public static ChannelInfoValue? ChannelInfoFields(ReadOnlySpan<byte> data)
     {
         if (data.Length is 0 or > 7)
         {
@@ -93,11 +113,6 @@ internal static class Decode
         {
             channels = (data[0] | ((data[2] & 0xF) << 8)) + 1;
             streams = (data[1] | ((data[2] & 0xF0) << 4)) + 1;
-            if (channels < streams)
-            {
-                return null;
-            }
-
             for (int i = 3; i < data.Length; i++)
             {
                 mask |= (uint)data[i] << (8 * (i - 3));
@@ -111,11 +126,6 @@ internal static class Decode
             {
                 mask |= (uint)data[i] << (8 * (i - 1));
             }
-        }
-
-        if (channels > streams * 2 || System.Numerics.BitOperations.PopCount(mask) > channels)
-        {
-            return null;
         }
 
         return new ChannelInfoValue(channels, streams, mask, data.Length);
@@ -168,6 +178,7 @@ internal static class Decode
     public const uint ConfigCreateExe = 0x40000;
     public const uint ConfigCreateWvc = 0x80000;
     public const uint ConfigOptimizeWvc = 0x100000;
+    public const uint ConfigCompatibleWrite = 0x400000;
     public const uint ConfigCalcNoise = 0x800000;
     public const uint ConfigExtraMode = 0x2000000;
     public const uint ConfigSkipWvx = 0x4000000;

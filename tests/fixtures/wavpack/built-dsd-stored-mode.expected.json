@@ -288,6 +288,11 @@
  "description": "The first DSD block in the stored mode with exactly the bytes it counts.",
  "findings": [],
  "crosscheck": {
-  "valid": false
+  "valid": false,
+  "decode": {
+   "opens": true,
+   "samples": 65536,
+   "errors": 1
+  }
  }
 }

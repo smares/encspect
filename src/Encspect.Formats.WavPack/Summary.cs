@@ -72,7 +72,7 @@ internal static partial class Summary
 
         if (s.AudioBlocks == 0)
         {
-            s.Findings.Add(Severity.Warning, "wavpack.no-audio", stream, _ => $"None of the {s.Blocks} blocks counts a sample, so the file holds no audio.");
+            s.Findings.Add(Severity.Warning, "wavpack.no-audio", stream, _ => $"None of the {(s.Blocks == 1 ? "1 block counts" : $"{s.Blocks} blocks count")} a sample, so the file holds no audio.");
             return;
         }
 
@@ -82,7 +82,7 @@ internal static partial class Summary
             int firstExtra = s.ExtraOnlyFirst;
             long at = s.Entries[firstExtra].Offset;
             s.Findings.Add(Severity.Warning, "wavpack.audio-without-bitstream", () => Nodes.Block(s.Records, firstExtra), _ =>
-                $"The block at 0x{at:X} counts samples, but holds only extra bits and no bitstream{(s.ExtraOnly > 1 ? $" ({s.ExtraOnly} blocks)" : string.Empty)}; it cannot be decoded.");
+                $"The block at 0x{at:X} counts samples, but holds only extra bits and no bitstream{(s.ExtraOnly > 1 ? $" ({s.ExtraOnly} blocks)" : string.Empty)}; it cannot be decoded.", "extra-only");
         }
 
         if (isCorrection)
@@ -122,7 +122,7 @@ internal static partial class Summary
         {
             int stated = info.Value.Channels;
             s.Findings.Add(Severity.Warning, "wavpack.channel-count-mismatch", () => Nodes.SubBlock(s.Records, info.Entry, info.SubBlock), _ =>
-                $"The channel info says {stated} channels, but the first set of blocks holds {s.FirstSetChannels}.");
+                $"The channel info says {Reader.Channels(stated)}, but the first set of blocks holds {Reader.Channels(s.FirstSetChannels)}.");
         }
     }
 
@@ -229,7 +229,9 @@ internal static partial class Summary
             layout = Decode.Layout(mask, channels);
         }
 
-        int bits = isDsd ? 1 : first.IsFloat ? 32 : (first.BytesPerSample * 8) - first.LeftShift;
+        // A shift that leaves no bits is a finding (wavpack.flags-invalid); the depth is then unknown.
+        int shifted = (first.BytesPerSample * 8) - first.LeftShift;
+        int? bits = isDsd ? 1 : first.IsFloat ? 32 : shifted > 0 ? shifted : null;
         bool isLossless = !isHybrid && !isCorrection && !s.HasLossyBlocks;
         statistics.Add(Cover3("Audio Blocks", NodeValue.Integer(s.AudioBlocks, "blocks", "block"), Explain.StatAudioBlocks));
         if (s.MetadataBlocks > 0)
@@ -247,7 +249,11 @@ internal static partial class Summary
             statistics.Add(cover("Channel Layout", ChannelLayouts.Describe(layout!), Explain.StatLayout, Topics.Channels));
         }
 
-        statistics.Add(Cover3("Bits Per Sample", NodeValue.Integer(bits, "bits", "bit"), isDsd ? Explain.StatBitsDsd : Explain.StatBits));
+        if (bits is { } sampleBits)
+        {
+            statistics.Add(Cover3("Bits Per Sample", NodeValue.Integer(sampleBits, "bits", "bit"), isDsd ? Explain.StatBitsDsd : Explain.StatBits));
+        }
+
         statistics.Add(cover("IsLossless", NodeValue.Boolean(isLossless), Explain.StatIsLossless, Topics.Hybrid));
         statistics.Add(cover("IsHybrid", NodeValue.Boolean(isHybrid), Explain.StatIsHybrid, Topics.Hybrid));
         statistics.Add(cover("IsCorrectionFileCreated", NodeValue.Boolean(isCorrection || isCorrectionCreated), Explain.StatIsCorrectionFileCreated, Topics.Hybrid));
