@@ -9,15 +9,16 @@ internal sealed class FindingCollector
     private readonly List<string> _order = [];
     private readonly List<Finding> _immediate = [];
 
-    public void Add(Severity severity, string code, Node node, Func<int, string> message)
+    // cases is the number of cases this call stands for, where one entry holds several frames.
+    public void Add(Severity severity, string code, Node node, Func<int, string> message, int cases = 1)
     {
         if (_aggregated.TryGetValue(code, out var existing))
         {
-            _aggregated[code] = existing with { Count = existing.Count + 1 };
+            _aggregated[code] = existing with { Count = (int)Math.Min(int.MaxValue, (long)existing.Count + cases) };
             return;
         }
 
-        _aggregated[code] = (severity, node, 1, message);
+        _aggregated[code] = (severity, node, cases, message);
         _order.Add(code);
     }
 

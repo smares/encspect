@@ -118,6 +118,13 @@ def golden(media):
     return json.loads(path.read_text(encoding="utf-8"))[0]
 
 
+def golden_hides(media):
+    """Whether the fixture's golden report leaves out report sections (the manifest's "golden_hides"): a check that reads the frames from it cannot use it."""
+    stem = media.name[: -len(media.suffix)] if media.suffix else media.name
+    manifest = json.loads(media.with_name(stem + ".expected.json").read_text(encoding="utf-8"))
+    return bool(manifest.get("golden_hides"))
+
+
 def walk(node):
     """The node and every node below it, depth first."""
     yield node

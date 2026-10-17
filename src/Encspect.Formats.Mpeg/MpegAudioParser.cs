@@ -17,6 +17,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // largest frame LAME writes, and this leaves room for Layer I.
     private const int MaxFreeFormatLength = 8192;
 
+    // The streams of a file; the frames from the one that would start the next stream on are in no stream.
+    public const int MaxStreams = 64;
+
     public string Name => "MPEG Audio";
 
     public string Id => "mpeg-audio";
@@ -304,8 +307,10 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         regionState.End = build.Frames.Count;
 
         void StreamChanged(MpegHeader from, MpegHeader to, Node node) =>
-            findings.Add(Severity.Warning, "mpeg.stream-changed", node, count =>
-                $"The stream changes {Times(count)}, first from {from.StreamName} to {to.StreamName} at 0x{node.Offset:X}.");
+            findings.Add(Severity.Info, "mpeg.stream-changed", node, count =>
+                count == 1
+                    ? $"The stream changes from {from.StreamName} to {to.StreamName} at 0x{node.Offset:X}."
+                    : $"The stream changes {count} times, first from {from.StreamName} to {to.StreamName} at 0x{node.Offset:X}.");
 
         void FreeFormat(MpegHeader header, int length)
         {

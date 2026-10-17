@@ -64,7 +64,7 @@ public class MpegFixtureTests
     [MemberData(nameof(Names))]
     public void ReportMatchesGoldenFile(string fileName)
     {
-        string actual = Fixtures.ToJson(Fixtures.AnalyzeMpeg(fileName));
+        string actual = Fixtures.ToGoldenJson(fileName, Fixtures.AnalyzeMpeg(fileName));
         string path = Fixtures.MpegCompanion(fileName, ".report.json");
 
         if (Fixtures.UpdateGolden)

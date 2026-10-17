@@ -89,7 +89,7 @@ public class DtsFixtureTests
     [MemberData(nameof(Names))]
     public void ReportMatchesGoldenFile(string name)
     {
-        string actual = Fixtures.ToJson(Fixtures.AnalyzeMpeg(name));
+        string actual = Fixtures.ToGoldenJson(name, Fixtures.AnalyzeMpeg(name));
         string path = Fixtures.MpegCompanion(name, ".report.json");
 
         if (Fixtures.UpdateGolden)

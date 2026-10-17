@@ -14,17 +14,17 @@ internal sealed class Ac3Analysis
 {
     public const int MaxFrame = 4096;
 
-    public const int MaxPrograms = 64;
+    public const int MaxStreams = 64;
 
     private readonly FrameBits _bits = FrameBits.ForAnalysis();
     private readonly FrameSyntax _syntax;
     private readonly byte[] _buffer = new byte[MaxFrame];
-    // A program is a run of one independent substream (id 0 for AC-3) with one configuration; a change
-    // ends it and starts another. The number of programs is capped so that a stream which changes all
-    // the time cannot grow the report: past the cap, a frame joins a program only when its substream ID and
-    // configuration are the program's, and is otherwise left out (ac3.programs-limited).
+    // A stream is a run of the frames of one independent substream (id 0 for AC-3) with one configuration; a change
+    // ends it and starts another, and a returning configuration starts a new one. The number of streams is capped so that
+    // a file which changes all the time cannot grow the report: a frame that would start a stream past the cap is in no
+    // stream (ac3.streams-limited), and so is every later frame of its substream, which never gets a stream. The other
+    // substreams keep theirs, as they play at the same time.
     private readonly Dictionary<int, Program?> _active = [];
-    private readonly Dictionary<ProgramKey, Program> _byKey = [];
     private readonly Dictionary<int, ProgramKey> _lastKeys = [];
     private readonly List<Program> _programs = [];
     private bool _isIgnoring;
@@ -392,7 +392,7 @@ internal sealed class Ac3Analysis
             {
                 if (_isIgnoring)
                 {
-                    Findings.CountIfKnown("ac3.programs-limited");
+                    Findings.CountIfKnown("ac3.streams-limited");
                     return null;
                 }
 
@@ -431,16 +431,14 @@ internal sealed class Ac3Analysis
         {
             bool changed = _active.ContainsKey(id);
             _lastKeys[id] = key;
-            // Past the cap a frame only joins a program of its own substream ID and configuration; otherwise it is left out.
-            if (_programs.Count < MaxPrograms)
+            if (_programs.Count < MaxStreams)
             {
                 program = new Program(key, index);
                 _programs.Add(program);
-                _byKey[key] = program;
             }
             else
             {
-                _byKey.TryGetValue(key, out program);
+                program = null;
             }
 
             _active[id] = program;
@@ -461,10 +459,10 @@ internal sealed class Ac3Analysis
 
         if (program is null)
         {
-            if (!Findings.CountIfKnown("ac3.programs-limited"))
+            if (!Findings.CountIfKnown("ac3.streams-limited"))
             {
-                Findings.Add(Severity.Warning, "ac3.programs-limited", FrameAt,
-                    count => $"{Count(count)} (with the dependent frames after them) are in no stream: the analyzer keeps at most {MaxPrograms} programs, one per run of an independent substream with one configuration, and these frames start another; the first is at 0x{frameOffset:X}.");
+                Findings.Add(Severity.Warning, "ac3.streams-limited", FrameAt,
+                    count => $"{Count(count)}, dependent frames included, are in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of an independent substream with one configuration, and these frames start another; the first is at 0x{frameOffset:X}.");
             }
 
             _current = null;
@@ -502,7 +500,6 @@ internal sealed class Ac3Analysis
         // streams' series now.
         _programs.Clear();
         _active.Clear();
-        _byKey.Clear();
         _lastKeys.Clear();
         _current = null;
         Findings.Flush(_context);

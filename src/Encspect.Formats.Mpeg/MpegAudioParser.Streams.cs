@@ -7,11 +7,15 @@ namespace Encspect.Formats.Mpeg;
 // stream, and a change of those parameters starts the next (MpegHeader.IsSameStream).
 public sealed partial class MpegAudioParser
 {
+    // At most MaxStreams streams: the frames from the change that would start the next one on are in no stream
+    // (mpeg.streams-limited), and a configuration that returns starts a stream of its own.
     private static void AddStreams(StreamState state, ParseContext context)
     {
         ChunkedList<Entry> frames = state.Build.Frames;
         int start = -1;
         int end = -1;
+        int streams = 0;
+        bool isLimited = false;
         MpegHeader? previous = null;
         for (int i = 0; i < frames.Count; i++)
         {
@@ -22,10 +26,20 @@ public sealed partial class MpegAudioParser
             }
 
             var header = new MpegHeader(frames[i].Header);
-            if (previous is { } last && !header.IsSameStream(last))
+            if (!isLimited && previous is { } last && !header.IsSameStream(last))
             {
                 context.AddStream(Stream(state, start, end));
+                streams++;
                 start = -1;
+                isLimited = streams >= MaxStreams;
+            }
+
+            if (isLimited)
+            {
+                long offset = frames[i].Offset;
+                state.Findings.Add(Severity.Warning, "mpeg.streams-limited", FindingNode(frames[i]), count =>
+                    $"{(count == 1 ? "One frame is" : $"{count} frames are")} in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of one version, layer, sample rate and free format or not, and the frame at 0x{offset:X} is the first to start another.");
+                continue;
             }
 
             start = start < 0 ? i : start;
@@ -33,7 +47,7 @@ public sealed partial class MpegAudioParser
             previous = header;
         }
 
-        if (start >= 0)
+        if (start >= 0 && !isLimited)
         {
             context.AddStream(Stream(state, start, end));
         }

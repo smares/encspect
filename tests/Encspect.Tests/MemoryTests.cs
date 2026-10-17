@@ -1084,6 +1084,53 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // An APEv2 tag of a million items of 14 bytes each (a five-letter key and an empty value): each item once became seven nodes, a
+    // duplicate-key finding and a set entry (a plain tag of 4 M items took 58 s and 8.4 GB). The first 1,024 items become nodes, the next
+    // ones are listed in blocks from records and the bytes kept up to a budget of 4 MiB, all are checked, and one finding counts the
+    // items that are not listed.
+    [Fact]
+    public void ManyApeItemsStayBounded()
+    {
+        const int items = 1_000_000;
+        byte[] data = ApeTagFile(items);
+
+        (Report report, long kept, long peak) = Measure("items.mp3", data, data[..4096]);
+
+        Node tag = report.Root.Children.Single(c => c.Kind == NodeKind.Tag);
+        Node list = tag.Children.Single(c => c.Name == "Items");
+        int listed = list.Children.Count;
+        Assert.InRange(listed, 1024 + 100_000, 1024 + ((4 << 20) / 14));
+        Assert.Equal(ApeKey(1028), list.Children[1028].Name);
+        Assert.Equal(items - listed, Assert.Single(report.Findings, f => f.Code == "ape.items-limited").Count);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "ape.duplicate-key");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        output.WriteLine($"{kept / 1000} KB kept and {peak / 1000} KB peak for {data.Length / 1_000_000} MB, {listed} items listed");
+        Assert.True(kept < 9_000_000, $"The report keeps {kept / 1_000_000} MB.");
+        Assert.True(peak < 14_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
+    }
+
+    internal static string ApeKey(int i) => new([.. Enumerable.Range(0, 5).Reverse().Select(letter => (char)('a' + (i / (int)Math.Pow(26, letter) % 26)))]);
+
+    // A few Layer III frames, then an APEv2 tag of items with an empty value under the keys aaaaa, aaaab, ..., and its footer.
+    internal static byte[] ApeTagFile(int items)
+    {
+        byte[] audio = Layer3Frames(8);
+        var tag = new byte[(items * 14) + 32];
+        for (int i = 0; i < items; i++)
+        {
+            Encoding.ASCII.GetBytes(ApeKey(i)).CopyTo(tag, (i * 14) + 8);
+        }
+
+        Span<byte> footer = tag.AsSpan(items * 14);
+        "APETAGEX"u8.CopyTo(footer);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(footer[8..], 2000);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(footer[12..], (uint)tag.Length);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(footer[16..], (uint)items);
+        return [.. audio, .. tag];
+    }
+
     // Beginning-of-stream pages of 29 bytes, each of a stream of its own that never ends: each stream cost a node of seven
     // children and findings, 10 KB for 29 bytes, so past a count the streams are not followed and one finding counts their pages.
     [Fact]
@@ -1521,6 +1568,34 @@ public class MemoryTests(ITestOutputHelper output)
         Report report = Bounded("end-frames.aac", data, 360_000_000, "aac.frames-limit");
 
         Assert.Equal((count - 1) * 1024L, Assert.Single(report.Streams).Samples);
+    }
+
+    // ADTS frames that alternate between two fixed headers in runs of three. Every change once made a log of the stream's raw data
+    // blocks with a store of 64 KB, 70 KB of heap for 39 bytes of input (6,000 changes took half a gigabyte); now the logs stop at the
+    // stream limit and the frames after it are not read.
+    [Fact]
+    public void AdtsThatChangesItsHeaderStaysBounded()
+    {
+        const int runs = 6_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "stream-change.aac"));
+        byte[][] frames = [source[..13], source[503..516]];
+        var data = new MemoryStream();
+        for (int run = 0; run < runs; run++)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                data.Write(frames[run % 2]);
+            }
+        }
+
+        (Report report, long kept, long peak) = Measure("alternating.aac", data.ToArray());
+
+        Assert.Equal(RawAacParser.MaxStreams, report.Streams.Count);
+        Assert.Equal(runs - 1, Assert.Single(report.Findings, f => f.Code == "aac.stream-changed").Count);
+        output.WriteLine($"{kept / 1000} KB kept and {peak / 1000} KB peak for {data.Length / 1000} KB");
+        Assert.True(kept < 4_000_000, $"The report keeps {kept / 1_000_000} MB.");
+        Assert.True(peak < 6_000_000, $"The live heap grew by {peak / 1_000_000} MB.");
+        GC.KeepAlive(report);
     }
 
     // MPEG-1 Layer III stereo frames at 32 kbps and 44100 Hz, 104 bytes each, whose side

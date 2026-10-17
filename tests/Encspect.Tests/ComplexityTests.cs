@@ -372,11 +372,133 @@ public class ComplexityTests
         watch.Stop();
         Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
-        Assert.InRange(report.Streams.Count, 2, 64);
+        Assert.Equal(64, report.Streams.Count);
         Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
         Assert.Equal((data.Length / 512) - 1, changed.Count);
-        Assert.Contains("limited to 64", changed.Message, StringComparison.Ordinal);
-        Assert.Equal(Severity.Warning, changed.Severity);
+        Assert.Equal(Severity.Info, changed.Severity);
+        Finding limited = Assert.Single(report.Findings, f => f.Code == "dts.streams-limited");
+        Assert.Equal(Severity.Warning, limited.Severity);
+        Assert.Equal((data.Length / 512) - 64, limited.Count);
+    }
+
+    // MPEG-1 Layer III frames of 128 kbit/s that alternate between 44100 and 32000 Hz in runs of three: every run is a stream,
+    // so 4,000 runs once made 4,000 streams with a series each. The streams are limited to 64 and the changes counted in one
+    // finding, which the counts check; the time is linear in the data (the bound only catches a collapse of that, as the
+    // MPEG code was linear before the limit).
+    [Fact]
+    public void MpegAudioThatChangesItsSampleRateAlternately()
+    {
+        const int runs = 4_000;
+        byte[] first = new byte[417];
+        byte[] second = new byte[576];
+        new byte[] { 0xFF, 0xFB, 0x90, 0x00 }.CopyTo(first, 0);
+        new byte[] { 0xFF, 0xFB, 0x98, 0x00 }.CopyTo(second, 0);
+        var data = new MemoryStream();
+        for (int run = 0; run < runs; run++)
+        {
+            byte[] frame = run % 2 == 0 ? first : second;
+            for (int i = 0; i < 3; i++)
+            {
+                data.Write(frame);
+            }
+        }
+
+        Report report = Timed(data.ToArray());
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Equal(Encspect.Formats.Mpeg.MpegAudioParser.MaxStreams, report.Streams.Count);
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "mpeg.stream-changed");
+        Assert.Equal(Severity.Info, changed.Severity);
+        Assert.Equal(runs - 1, changed.Count);
+        Finding limited = Assert.Single(report.Findings, f => f.Code == "mpeg.streams-limited");
+        Assert.Equal(Severity.Warning, limited.Severity);
+        Assert.Equal(3 * (runs - Encspect.Formats.Mpeg.MpegAudioParser.MaxStreams), limited.Count);
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    // ADTS frames that alternate between 44100 and 48000 Hz in runs of three, from the committed stream-change fixture's two
+    // frame shapes: the same limits as for MPEG audio, and a time linear in the data.
+    [Fact]
+    public void AdtsThatChangesItsSampleRateAlternately()
+    {
+        const int runs = 6_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "stream-change.aac"));
+        byte[] first = source[..13];
+        byte[] second = source[503..516];
+        var data = new MemoryStream();
+        for (int run = 0; run < runs; run++)
+        {
+            byte[] frame = run % 2 == 0 ? first : second;
+            for (int i = 0; i < 3; i++)
+            {
+                data.Write(frame);
+            }
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("alternating.aac", new MemoryStream(data.ToArray()));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Equal(Encspect.Formats.Aac.RawAacParser.MaxStreams, report.Streams.Count);
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "aac.stream-changed");
+        Assert.Equal(Severity.Info, changed.Severity);
+        Assert.Equal(runs - 1, changed.Count);
+        Finding limited = Assert.Single(report.Findings, f => f.Code == "aac.streams-limited");
+        Assert.Equal(Severity.Warning, limited.Severity);
+        Assert.Equal(3 * (runs - Encspect.Formats.Aac.RawAacParser.MaxStreams), limited.Count);
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    // 65 runs of three frames that alternate between two headers, then more frames than the record cap of the header of the 65th run: the
+    // frames past the limit of 64 streams are in no stream, those counted past the record cap among them (they have no node, only a run),
+    // and aac.streams-limited counts every one.
+    [Fact]
+    public void AdtsFramesCountedPastTheRecordCapAreInNoStreamPastTheStreamLimit()
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "stream-change.aac"));
+        byte[][] frames = [source[..13], source[503..516]];
+        const int tail = 2_200_000;
+        var data = new MemoryStream();
+        for (int run = 0; run < 65; run++)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                data.Write(frames[run % 2]);
+            }
+        }
+
+        for (int i = 0; i < tail; i++)
+        {
+            data.Write(frames[0]);
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("limited-overflow.aac", new MemoryStream(data.ToArray()));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Contains(report.Findings, f => f.Code == "aac.frames-limit");
+
+        Assert.Equal(Encspect.Formats.Aac.RawAacParser.MaxStreams, report.Streams.Count);
+        Assert.Equal(64 * 3 * 1024L, report.Streams.Sum(s => s.Samples));
+        Assert.Equal(3 + tail, Assert.Single(report.Findings, f => f.Code == "aac.streams-limited").Count);
+    }
+
+    // An APEv2 tag of four million items of 14 bytes each, 56 MB: 58 s and 8.4 GB when each item was seven nodes, a finding and a
+    // set entry. The first 1,024 items are nodes and the next ones are listed from records up to a budget of 4 MiB; the time is linear in the items.
+    [Fact]
+    public void AnApeTagOfMillionsOfItems()
+    {
+        byte[] data = MemoryTests.ApeTagFile(4_000_000);
+
+        Report report = Timed(data);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        int listed = report.Root.Children.Single(c => c.Kind == NodeKind.Tag).Children.Single(c => c.Name == "Items").Children.Count;
+        Assert.InRange(listed, 1024, 1024 + ((4 << 20) / 14));
+        Assert.Equal(4_000_000 - listed, Assert.Single(report.Findings, f => f.Code == "ape.items-limited").Count);
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
     }
 
     private static void SetBits(byte[] data, int start, int width, int value)

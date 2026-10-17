@@ -169,10 +169,10 @@ public class DtsTests
         Assert.Equal(1, Assert.Single(report.Findings, f => f.Code == "dts.stream-changed").Count);
     }
 
-    // Past 64 streams a unit joins the last stream only when its configuration equals the stream's; the others are in no stream, so the last
-    // stream's figures are those of its own units, and the finding is a warning that counts them.
+    // The change that would start stream 65 starts none: that unit and every unit after it, also of the last stream's configuration, are in no
+    // stream, so the last stream's figures are those of its own units, and `dts.streams-limited` counts them. The changes are still counted.
     [Fact]
-    public void PastTheStreamLimitOnlyUnitsOfTheLastConfigurationCount()
+    public void PastTheStreamLimitNoUnitIsInAStream()
     {
         byte[] frame = Fixture("core-16be.dts")[..512];
         var data = new List<byte>();
@@ -188,10 +188,13 @@ public class DtsTests
         StreamInfo last = report.Streams[^1];
         Assert.Equal("1/0", last.ChannelMode);
         Assert.Equal(1, last.Channels);
-        Assert.Equal(4 * 512L, last.Samples);
+        Assert.Equal(512L, last.Samples);
         Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
-        Assert.Equal(Severity.Warning, changed.Severity);
-        Assert.Contains("3 units have a configuration", changed.Message, StringComparison.Ordinal);
+        Assert.Equal(Severity.Info, changed.Severity);
+        Assert.Equal(69, changed.Count);
+        Finding limited = Assert.Single(report.Findings, f => f.Code == "dts.streams-limited");
+        Assert.Equal(Severity.Warning, limited.Severity);
+        Assert.Equal(6, limited.Count);
     }
 
     // A last stream that has no asset figures yet is completed by a unit of its own structure only: here by none, so the unit of an LBR
@@ -215,9 +218,9 @@ public class DtsTests
         Report report = Analyzer.CreateDefault().Analyze("limit-partial.dts", new MemoryStream([.. data]));
         Assert.Equal(64, report.Streams.Count);
         Assert.Equal("DTS-HD Master Audio", report.Streams[^1].Codec);
-        Finding changed = Assert.Single(report.Findings, f => f.Code == "dts.stream-changed");
-        Assert.Equal(Severity.Warning, changed.Severity);
-        Assert.Contains("1 unit has", changed.Message, StringComparison.Ordinal);
+        Assert.Equal(Severity.Info, Assert.Single(report.Findings, f => f.Code == "dts.stream-changed").Severity);
+        Finding limited = Assert.Single(report.Findings, f => f.Code == "dts.streams-limited");
+        Assert.Equal(1, limited.Count);
     }
 
     // Units of an extension substream index that has not stated its static fields yet still give the rate of their LBR header: no stream
