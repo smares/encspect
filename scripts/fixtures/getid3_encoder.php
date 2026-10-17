@@ -2,6 +2,8 @@
 // Prints, for each file named on the command line, the encoder and encoder options getID3 reports
 // (module.audio.mp3.php: the LAME version, recovered from the padding where the tag cuts it short,
 // and GuessEncoderOptions), as one JSON object per line. Uses the getID3 in third_party/getid3.
+// PHP prints its diagnostics (the deprecations of getID3's 2010s code under PHP 8.5) to standard output by default, between the JSON lines.
+ini_set('display_errors', 'stderr');
 require_once __DIR__ . '/../../third_party/getid3/getid3/getid3.php';
 
 $getid3 = new getID3();
