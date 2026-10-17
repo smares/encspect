@@ -66,7 +66,9 @@ class MusepackTests(unittest.TestCase):
         tally = mediainfo_tool.Tally(musepack.MEDIAINFO_READS_OTHERWISE, musepack.MEDIAINFO_CRASHES)
         path = musepack.DIRECTORY / "sv8-rate-reserved.mpc"
         patch = failing(-8) if tracks is None else mock.patch.object(mediainfo_tool, "read", return_value=tracks)
-        with patch:
+        # The documentation job checks out no fixtures, so the analyzer's report is the part check_mediainfo reads of it.
+        report = {"streams": [{"codec": "Musepack SV8"}]}
+        with patch, mock.patch.object(mediainfo_tool, "golden", return_value=report):
             problems = musepack.check_mediainfo("sv8-rate-reserved", path, tally)
         return problems, tally
 
