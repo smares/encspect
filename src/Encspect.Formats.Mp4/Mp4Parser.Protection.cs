@@ -141,7 +141,7 @@ public sealed partial class Mp4Parser
             state.Findings.AddNow(Severity.Warning, "mp4.tenc-constant-iv",
                 constantSize is null
                     ? $"The tenc box at 0x{node.Offset:X} gives no initialization vector per sample and holds no constant one, which a protected track needs (ISO/IEC 23001-7)."
-                    : $"The tenc box at 0x{node.Offset:X} gives a constant initialization vector of {constantSize} bytes; 8 and 16 are valid (ISO/IEC 23001-7).", node);
+                    : $"The tenc box at 0x{node.Offset:X} gives a constant initialization vector of {Counts.Of(constantSize.GetValueOrDefault(), "byte", "bytes")}; 8 and 16 are valid (ISO/IEC 23001-7).", node);
         }
 
         if (state.InSinf && state.CurrentEntry is { Protection: { } protection })

@@ -108,7 +108,7 @@ internal sealed class DtsAnalysis
         }
         else if (trailing)
         {
-            Findings.AddNow(Severity.Warning, "dts.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{start:X} are not a frame.", node);
+            Findings.AddNow(Severity.Warning, "dts.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{start:X} {Counts.Agree(length, "is", "are")} not a frame.", node);
         }
         else
         {

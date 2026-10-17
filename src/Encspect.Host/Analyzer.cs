@@ -790,7 +790,7 @@ public sealed class Analyzer
             {
                 Node data = root.Add("Data", position, gapEnd - position, null, HostText.DataAfterContainer);
                 findings.Add(new Finding(Severity.Info, "layout.data-between-tags",
-                    $"{Counts.Of(gapEnd - position, "byte", "bytes")} at 0x{position:X} lie after the end the format declares, between or after tags found there; nothing claims them.", data));
+                    $"{Counts.Of(gapEnd - position, "byte", "bytes")} at 0x{position:X} {Counts.Agree(gapEnd - position, "lies", "lie")} after the end the format declares, between or after tags found there; nothing claims them.", data));
             }
 
             position = Math.Max(position, claim?.Tag.End ?? position);

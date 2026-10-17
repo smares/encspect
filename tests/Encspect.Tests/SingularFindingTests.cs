@@ -44,4 +44,25 @@ public class SingularFindingTests
         Assert.Contains("1 byte at 0x", finding.Message, StringComparison.Ordinal);
         Assert.Contains(" is too few", finding.Message, StringComparison.Ordinal);
     }
+
+    // One byte of junk before the first frame and after the last, in each raw format: the same wording everywhere, "1 byte … is not …".
+    [Theory]
+    [InlineData("adts/stereo.aac", "aac")]
+    [InlineData("ac3/external-ffmpeg-mono-96k.ac3", "ac3")]
+    [InlineData("dts/external-ffmpeg-mono-8k-64k.dts", "dts")]
+    [InlineData("mpeg/external-lame-cbr128-joint.mp3", "mpeg")]
+    public void OneByteOfJunkBeforeAndAfterTheFramesReadsInTheSingular(string fixture, string prefix)
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, fixture));
+
+        Report leading = Analyzer.CreateDefault().Analyze("lead" + Path.GetExtension(fixture), new MemoryStream([0x55, .. source]));
+        Finding lead = Assert.Single(leading.Findings, f => f.Code == prefix + ".leading-junk");
+        Assert.Contains("1 byte before the first", lead.Message, StringComparison.Ordinal);
+        Assert.Contains(" is not audio", lead.Message, StringComparison.Ordinal);
+
+        Report trailing = Analyzer.CreateDefault().Analyze("trail" + Path.GetExtension(fixture), new MemoryStream([.. source, 0x55]));
+        Finding trail = Assert.Single(trailing.Findings, f => f.Code == prefix + ".trailing-data");
+        Assert.Contains("1 byte after the last", trail.Message, StringComparison.Ordinal);
+        Assert.Contains(" is not a frame", trail.Message, StringComparison.Ordinal);
+    }
 }

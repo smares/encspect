@@ -279,11 +279,11 @@ public sealed class RawAacParser : IFormatParser
         if (leading)
         {
             string what = ZeroRunEnd(state.Cache, start, end) == end ? " (all zero bytes)" : string.Empty;
-            state.Findings.AddNow(Severity.Warning, "aac.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first ADTS frame are not audio{what}.", node);
+            state.Findings.AddNow(Severity.Warning, "aac.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first ADTS frame {Counts.Agree(length, "is", "are")} not audio{what}.", node);
         }
         else if (trailing)
         {
-            state.Findings.AddNow(Severity.Warning, "aac.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last ADTS frame at 0x{start:X} are not a frame.", node);
+            state.Findings.AddNow(Severity.Warning, "aac.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last ADTS frame at 0x{start:X} {Counts.Agree(length, "is", "are")} not a frame.", node);
         }
         else
         {

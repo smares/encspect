@@ -97,7 +97,7 @@ internal sealed class ProParameters
         int maxSubframes = 1 << log2Max;
         if (maxSubframes > MaxSubframes)
         {
-            return Failed($"{maxSubframes} subframes per frame");
+            return Failed($"{Counts.Of(maxSubframes, "subframe", "subframes")} per frame");
         }
 
         int minSamples = samplesPerFrame / maxSubframes;

@@ -56,7 +56,7 @@ internal sealed partial class UnitSyntax
 
         if (sum > substream.Length)
         {
-            ReportGroup(Issue.SubstreamOverrun, "Asset Sizes", _assetSizesStart, _assetSizesEnd, $"the header and the assets' sizes add up to {sum} bytes, more than the substream's {substream.Length}");
+            ReportGroup(Issue.SubstreamOverrun, "Asset Sizes", _assetSizesStart, _assetSizesEnd, $"the header and the assets' sizes add up to {Counts.Of(sum, "byte", "bytes")}, more than the substream's {substream.Length}");
         }
 
         for (int i = 0; i < assets.Length; i++)
@@ -91,7 +91,7 @@ internal sealed partial class UnitSyntax
 
             if (used > assetSizes[i])
             {
-                ReportGroup(Issue.SubstreamOverrun, $"Asset {i + 1} Data", position * 8, assetLimit * 8, $"asset {i + 1}'s components add up to {used} bytes, more than the {assetSizes[i]} its size gives");
+                ReportGroup(Issue.SubstreamOverrun, $"Asset {i + 1} Data", position * 8, assetLimit * 8, $"asset {i + 1}'s components add up to {Counts.Of(used, "byte", "bytes")}, more than the {assetSizes[i]} its size gives");
             }
 
             _tree?.Close(assetLimit * 8, NodeValue.Integer(assetSizes[i], "bytes"));

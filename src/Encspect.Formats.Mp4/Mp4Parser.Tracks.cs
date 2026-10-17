@@ -467,7 +467,7 @@ public sealed partial class Mp4Parser
 
         if (empty > 0)
         {
-            state.Findings.AddNow(Severity.Warning, "mp4.empty-samples", $"{Samples(empty)} of track {track.Id} have a size of 0 bytes; they are not analyzed.", track.SampleSizeNode ?? track.Box);
+            state.Findings.AddNow(Severity.Warning, "mp4.empty-samples", $"{Samples(empty)} of track {track.Id} {Counts.Agree(empty, "has", "have")} a size of 0 bytes; {Counts.Agree(empty, "it is", "they are")} not analyzed.", track.SampleSizeNode ?? track.Box);
         }
 
         if (firstOutsideMdat is { } stray)
@@ -525,7 +525,7 @@ public sealed partial class Mp4Parser
             if (timed != sized)
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.sample-count-mismatch",
-                    $"The stts box of {label} gives durations to {timed} samples, its {stsz.Name} box sizes {sized}.", track.TimeToSampleNode!);
+                    $"The stts box of {label} gives durations to {Counts.Of(timed, "sample", "samples")}, its {stsz.Name} box sizes {sized}.", track.TimeToSampleNode!);
             }
         }
 

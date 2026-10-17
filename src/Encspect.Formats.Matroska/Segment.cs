@@ -135,7 +135,7 @@ internal sealed partial class FileReader
         else if (declaredEnd > _reader.End)
         {
             _findings.AddNow(Severity.Warning, "matroska.element-truncated",
-                $"The Segment states a size of {header.Size} bytes, but the file ends {Bytes(declaredEnd - _reader.End)} sooner: the file is cut short.", segment.Node);
+                $"The Segment states a size of {Counts.Of(header.Size.GetValueOrDefault(), "byte", "bytes")}, but the file ends {Bytes(declaredEnd - _reader.End)} sooner: the file is cut short.", segment.Node);
         }
 
         return end;

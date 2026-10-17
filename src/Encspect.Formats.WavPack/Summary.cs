@@ -93,7 +93,7 @@ internal static partial class Summary
         else if (s.WvcBlocks > 0 && (s.WvBlocks > 0 || s.DsdBlocks > 0))
         {
             s.Findings.Add(Severity.Warning, "wavpack.mixed-streams", stream, _ =>
-                $"{Counts.Of(s.WvcBlocks, "block", "blocks")} {Counts.Agree(s.WvcBlocks, "holds", "hold")} correction data and {s.WvBlocks + s.DsdBlocks} hold audio of their own; a .wv file and a .wvc file are two files.");
+                $"{Counts.Of(s.WvcBlocks, "block", "blocks")} {Counts.Agree(s.WvcBlocks, "holds", "hold")} correction data and {Counts.Of(s.WvBlocks + s.DsdBlocks, "block", "blocks")} {Counts.Agree(s.WvBlocks + s.DsdBlocks, "holds", "hold")} audio of {Counts.Agree(s.WvBlocks + s.DsdBlocks, "its", "their")} own; a .wv file and a .wvc file are two files.");
         }
 
         long counted = s.CountedSamples;

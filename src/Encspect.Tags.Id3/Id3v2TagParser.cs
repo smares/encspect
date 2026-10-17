@@ -815,7 +815,7 @@ public sealed class Id3v2TagParser : ITagParser
 
             if (header.Length < headerLength)
             {
-                AddUnparsed(state, frameStart, body.FilePosition, "id3v2.frame-header-truncated", $"The {Counts.Of(header.Length, "byte", "bytes")} at 0x{frameStart:X} are too short for a frame header.");
+                AddUnparsed(state, frameStart, body.FilePosition, "id3v2.frame-header-truncated", $"The {Counts.Of(header.Length, "byte", "bytes")} at 0x{frameStart:X} {Counts.Agree(header.Length, "is", "are")} too short for a frame header.");
                 return 0;
             }
 

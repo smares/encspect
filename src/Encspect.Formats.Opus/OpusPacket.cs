@@ -177,7 +177,7 @@ internal static class Framing
                         int rest = data.Length - position;
                         if (rest % 2 != 0)
                         {
-                            return Fail(data.Length, first, position, toc, 0, PartStatus.R3, $"its {Bytes(rest)} after the TOC byte do not split into two frames of equal size", out error);
+                            return Fail(data.Length, first, position, toc, 0, PartStatus.R3, $"its {Bytes(rest)} after the TOC byte {Counts.Agree(rest, "does", "do")} not split into two frames of equal size", out error);
                         }
 
                         length = rest / 2;
@@ -185,7 +185,7 @@ internal static class Framing
 
                     if (length > MaxFrameLength)
                     {
-                        return Fail(data.Length, first, position, toc, 0, PartStatus.R2, $"its two frames of {Counts.Of(length, "byte", "bytes")} is longer than the 1275 bytes a frame may take", out error);
+                        return Fail(data.Length, first, position, toc, 0, PartStatus.R2, $"its two frames of {Counts.Of(length, "byte", "bytes")} are longer than the 1275 bytes a frame may take", out error);
                     }
 
                     return Finish(data.Length, frames, first, position, 0, toc, 0, [length, length], 0, selfDelimited, out error);

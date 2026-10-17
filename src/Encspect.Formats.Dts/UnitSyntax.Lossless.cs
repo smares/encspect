@@ -266,7 +266,7 @@ internal sealed partial class UnitSyntax
                 int named = System.Numerics.BitOperations.PopCount(mask);
                 if (named != channels)
                 {
-                    Report(Issue.LosslessInconsistent, "Channel Mask", start, _pos, $"a channel set of {Counts.Of(channels, "channel", "channels")} has a channel mask of {named} speakers");
+                    Report(Issue.LosslessInconsistent, "Channel Mask", start, _pos, $"a channel set of {Counts.Of(channels, "channel", "channels")} has a channel mask of {Counts.Of(named, "speaker", "speakers")}");
                 }
             }
             else

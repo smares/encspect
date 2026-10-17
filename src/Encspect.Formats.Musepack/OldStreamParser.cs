@@ -510,7 +510,7 @@ internal static class OldStreamParser
         if (state.DamagedFrom is { } damagedFrom)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.frames-damaged",
-                $"{Counts.Of(Sv7Parser.MaxDamagedRun, "frame", "frames")} in a row from 0x{w.WordStart(damagedFrom):X} have subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
+                $"{Counts.Of(Sv7Parser.MaxDamagedRun, "frame", "frames")} in a row from 0x{w.WordStart(damagedFrom):X} {Counts.Agree(Sv7Parser.MaxDamagedRun, "has", "have")} subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
                 header.Children.First(c => c.Name == "Frame Count"));
         }
         else if (state.Truncated)

@@ -353,7 +353,7 @@ public sealed partial class Mp4Parser
             {
                 -1 => "-1 (empty edit)",
                 < 0 => $"{mediaTime} (invalid)",
-                _ => NodeValue.Integer(mediaTime, "units of the media's timescale"),
+                _ => NodeValue.Integer(mediaTime, "units of the media's timescale", "unit of the media's timescale"),
             };
             edit.Add(new Node("Media Time", start + size, size, shown) { Description = Explain.MediaTime });
             double rate = f.Fixed(edit, "Media Rate", 4, 16, Explain.MediaRate);

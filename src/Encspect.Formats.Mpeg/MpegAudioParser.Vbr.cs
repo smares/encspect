@@ -104,7 +104,7 @@ public sealed partial class MpegAudioParser
             {
                 long musicLength = vbr.MusicLength;
                 state.Findings.Add(Severity.Warning, "mpeg.music-length-short", node, count =>
-                    $"The LAME tag of {Frames(count)} gives a music length of {Number(musicLength)} bytes, shorter than its own frame, so the music CRC is not verified; the first at 0x{position:X}.");
+                    $"The LAME tag of {Frames(count)} gives a music length of {Counts.Of(musicLength, "byte", "bytes")}, shorter than its own frame, so the music CRC is not verified; the first at 0x{position:X}.");
                 continue;
             }
 
@@ -120,7 +120,7 @@ public sealed partial class MpegAudioParser
                 {
                     long musicLength = vbr.MusicLength;
                     state.Findings.Add(Severity.Warning, "mpeg.music-length-long", node, count =>
-                        $"The LAME tag of {Frames(count)} gives a music length of {Number(musicLength)} bytes, more than the file holds after it, though the stream holds every frame its header counts; the music CRC is not verified. The first at 0x{position:X}.");
+                        $"The LAME tag of {Frames(count)} gives a music length of {Counts.Of(musicLength, "byte", "bytes")}, more than the file holds after it, though the stream holds every frame its header counts; the music CRC is not verified. The first at 0x{position:X}.");
                 }
 
                 continue;

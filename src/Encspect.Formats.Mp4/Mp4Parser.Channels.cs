@@ -191,7 +191,7 @@ public sealed partial class Mp4Parser
         if (read < count)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.chan-descriptions-exceed-box",
-                $"The chan box at 0x{node.Offset:X} declares {count} channel descriptions, but holds room for {read}.", node);
+                $"The chan box at 0x{node.Offset:X} declares {Counts.Of(count, "channel description", "channel descriptions")}, but holds room for {read}.", node);
         }
 
         IReadOnlyList<Speaker>? layout = tag switch

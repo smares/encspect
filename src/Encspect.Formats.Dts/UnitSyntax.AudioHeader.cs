@@ -24,7 +24,7 @@ internal sealed partial class UnitSyntax
             _tree?.Field("Subframes", start, _pos, NodeValue.Integer(subframes, "subframes", "subframe"), Explain.Subfs, Topics.CoreCodingHeader);
             if (header.IsNormalFrame && (header.Blocks < 8 * subframes || header.Blocks > 32 * subframes))
             {
-                Report(Issue.SubframeCount, "Subframes", start, _pos, $"{subframes} subframes cannot hold {Counts.Of(header.Blocks, "block", "blocks")} of 32 samples, which need 8 to 32 blocks each");
+                Report(Issue.SubframeCount, "Subframes", start, _pos, $"{Counts.Of(subframes, "subframe", "subframes")} cannot hold {Counts.Of(header.Blocks, "block", "blocks")} of 32 samples, which need 8 to 32 blocks each");
             }
         }
 

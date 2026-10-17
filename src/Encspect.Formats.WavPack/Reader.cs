@@ -99,7 +99,7 @@ internal static class Reader
         if (isCut)
         {
             s.Findings.Add(Severity.Warning, "wavpack.block-truncated", () => Nodes.Skipped(s.Records, index), _ =>
-                $"The data ends inside the header of a block at 0x{start:X}: {to - start} of its {Counts.Of(BlockHeader.Length, "byte", "bytes")} {Counts.Agree(BlockHeader.Length, "is", "are")} there.", "header");
+                $"The data ends inside the header of a block at 0x{start:X}: {to - start} of its {Counts.Of(BlockHeader.Length, "byte", "bytes")} {Counts.Agree(to - start, "is", "are")} there.", "header");
         }
         else
         {
@@ -720,7 +720,7 @@ internal static class Reader
             }
             else if (data[1] == 3 && data.Length - 2 < (header.IsMonoData ? 13 : 20))
             {
-                (kind, problem) = ("high-size", $"its high mode needs at least {(header.IsMonoData ? 13 : 20)} bytes after the mode in a {(header.IsMonoData ? "mono" : "stereo")} block, but {Bytes(data.Length - 2)} follow");
+                (kind, problem) = ("high-size", $"its high mode needs at least {(header.IsMonoData ? 13 : 20)} bytes after the mode in a {(header.IsMonoData ? "mono" : "stereo")} block, but {Bytes(data.Length - 2)} {Counts.Agree(data.Length - 2, "follows", "follow")}");
             }
             else if (data[1] == 3 && data[3] != HighModeRateS)
             {
@@ -870,7 +870,7 @@ internal static class Reader
                     int power = found.DsdPower;
                     int dsdAt = found.DsdAt;
                     s.Findings.Add(Severity.Warning, "wavpack.sample-rate-implausible", () => Nodes.SubBlock(s.Records, entry, dsdAt), _ =>
-                        $"The first audio block at 0x{offset:X} gives a DSD bit rate of {stored} Hz times 2^{Counts.Of(power, "time", "times")} 8, more than the {MaxNativeRate} Hz a sample rate can hold; the report takes it as {MaxNativeRate} Hz.");
+                        $"The first audio block at 0x{offset:X} gives a DSD bit rate of {stored} Hz times 2^{power} times 8, more than the {MaxNativeRate} Hz a sample rate can hold; the report takes it as {MaxNativeRate} Hz.");
                 }
             }
         }

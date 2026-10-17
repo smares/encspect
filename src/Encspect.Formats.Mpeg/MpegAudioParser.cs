@@ -336,7 +336,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             }
             else if (trailing)
             {
-                findings.AddNow(Severity.Warning, "mpeg.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{gapStart:X} are not a frame.", GapNode(gap));
+                findings.AddNow(Severity.Warning, "mpeg.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{gapStart:X} {Counts.Agree(length, "is", "are")} not a frame.", GapNode(gap));
             }
             else
             {
@@ -948,7 +948,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             if (mc.HasAncillaryOverflow)
             {
                 state.Findings.Add(Severity.Warning, "mpeg.multichannel-ancillary-overflow", node, count =>
-                    $"{Frames(count, "declares", "declare")} more MPEG-1 ancillary bytes in {(count == 1 ? "its" : "their")} multichannel header than the frame holds after the header and its CRC, the first {mc.AncillaryBytes} bytes at 0x{frame.Offset:X}.");
+                    $"{Frames(count, "declares", "declare")} more MPEG-1 ancillary bytes in {(count == 1 ? "its" : "their")} multichannel header than the frame holds after the header and its CRC, the first {Counts.Of(mc.AncillaryBytes, "byte", "bytes")} at 0x{frame.Offset:X}.");
             }
             else if (mc.Fits && !mc.IsCrcValid)
             {
@@ -1012,7 +1012,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             findings.Add(Severity.Warning, "mpeg.main-data-begin-exceeds-buffer",
                 Layer3SideInfo.Span("Main Data Begin", offset, info.MainDataBegin.Bit, info.MainDataBegin.Bit + info.MainDataBegin.Length), count =>
-                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x{position:X} has a main_data_begin of {Counts.Of(mainDataBegin, "byte", "bytes")} where at most {Math.Max(buffer - frameLength, 0)} are allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.");
+                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x{position:X} has a main_data_begin of {Counts.Of(mainDataBegin, "byte", "bytes")} where at most {Math.Max(buffer - frameLength, 0)} {Counts.Agree(Math.Max(buffer - frameLength, 0), "is", "are")} allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.");
         }
     }
 

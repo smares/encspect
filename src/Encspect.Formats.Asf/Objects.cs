@@ -62,7 +62,7 @@ public sealed partial class AsfParser
         if (position < reader.End)
         {
             Node trailing = file.Add(new Node("Trailing Data", position, reader.End - position, NodeValue.Integer(reader.End - position, "bytes")) { Description = Explain.TrailingData });
-            state.Findings.AddNow(Severity.Warning, "asf.trailing-data", $"{Counts.Of(reader.End - position, "byte", "bytes")} after the last object at 0x{position:X} are not an object.", trailing);
+            state.Findings.AddNow(Severity.Warning, "asf.trailing-data", $"{Counts.Of(reader.End - position, "byte", "bytes")} after the last object at 0x{position:X} {Counts.Agree(reader.End - position, "is", "are")} not an object.", trailing);
         }
 
         Check(state);
@@ -239,7 +239,7 @@ public sealed partial class AsfParser
             if (end - position < ObjectHeaderSize)
             {
                 Node rest = parent.Add(new Node("Unparsed Data", position, end - position, NodeValue.Integer(end - position, "bytes")) { Description = Explain.UnparsedData });
-                state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"{Counts.Of(end - position, "byte", "bytes")} at 0x{position:X} are too few for an object's GUID and size.", rest);
+                state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"{Counts.Of(end - position, "byte", "bytes")} at 0x{position:X} {Counts.Agree(end - position, "is", "are")} too few for an object's GUID and size.", rest);
                 return;
             }
 

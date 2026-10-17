@@ -466,7 +466,7 @@ public sealed partial class AsfParser
         {
             var unused = new Node("Unused Data", figures.UnusedStart, end - figures.UnusedStart, NodeValue.Integer(end - figures.UnusedStart, "bytes", "byte")) { Description = Explain.UnusedData };
             dataNode.Add(unused);
-            state.Findings.AddNow(Severity.Warning, "asf.data-unused", $"{Counts.Of(end - figures.UnusedStart, "byte", "bytes")} at the end of the Data Object are too few for a packet.", unused);
+            state.Findings.AddNow(Severity.Warning, "asf.data-unused", $"{Counts.Of(end - figures.UnusedStart, "byte", "bytes")} at the end of the Data Object {Counts.Agree(end - figures.UnusedStart, "is", "are")} too few for a packet.", unused);
         }
 
         AddDataFindings(state, dataNode, figures, start);

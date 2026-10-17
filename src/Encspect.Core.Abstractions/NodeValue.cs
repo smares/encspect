@@ -62,6 +62,9 @@ public sealed class NodeValue : IEquatable<NodeValue>, ISpanFormattable
     public static NodeValue Integer(long value, string? unit = null) =>
         new(NodeValueKind.Integer, null, value, 0, 0, unit, unit is not null && Singulars.TryGetValue(unit, out string? singular) ? singular : null, false);
 
+    // The plural units that read in the singular for one, and their singulars.
+    public static IReadOnlyDictionary<string, string> SingularUnits => Singulars;
+
     private static readonly FrozenDictionary<string, string> Singulars = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["bytes"] = "byte",

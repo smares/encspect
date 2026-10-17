@@ -364,7 +364,7 @@ def unaligned_offsets_file(variable):
 
 fixture("index-offset-unaligned", "An Index Object with an entry whose offset (100) is not the start of a packet of the 256 bytes every packet has.",
         lambda: unaligned_offsets_file(False),
-        [finding("asf.index-offset", "do not point to the start of a packet")])
+        [finding("asf.index-offset", "not point to the start of a packet")])
 fixture("index-offset-variable-packets", "The same index in a file whose minimum packet size is 128 and maximum 256: the size of a packet is not known from the header, so the offset is not checked against packet starts.",
         lambda: unaligned_offsets_file(True),
         [finding("asf.packet-size", "minimum (128)")])

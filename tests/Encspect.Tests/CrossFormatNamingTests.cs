@@ -24,26 +24,6 @@ public partial class CrossFormatNamingTests
     [GeneratedRegex(@"^\d/\d \((left|center|right)")]
     private static partial Regex ChannelModeWithSpeakers();
 
-    // Any "1" followed by a plural: a count of one reads in the singular. Not a count: a number that names something ("stream 1 codes"), a verb that
-    // follows a count of one, a range ("1 to 1 bytes") and units that end in s.
-    [GeneratedRegex(@"(?<![\w.%#/-]|to |, |\b(?:stream|track|channel|frame|block|packet|page|set|substream|program|segment|group|stage|level|asset|layer|number|index|version|type|mode|band|table|entry|element|object|class|port|marker|region|link|ID|id|pass|part|section|record|item|chunk|atom|box|bit|slot|tap|row|column|scale|cycle|step|state|bin|window|row|line|file|image|object|figure|case|variant|value|code|term|field|byte|sample|of|and|or|bank|stripe|run|path|number|no)\s)1 (?<first>[a-z]+)(?<rest>(?: [a-z]+){0,2}?)(?= |$|[,.;:)]|\b)")]
-    private static partial Regex PluralForOne();
-
-    // A count of one with a plural verb: "1 byte are".
-    [GeneratedRegex(@"(?<![\w.%#/-]|to |, |\b(?:stream|track|channel|frame|block|packet|page|set|substream|program|segment|group|stage|level|asset|layer|number|index|version|type|mode|band|table|entry|element|object|class|port|marker|region|link|ID|id|pass|part|section|record|item|chunk|atom|box|bit|slot|tap|row|column|scale|cycle|step|state|bin|window|line|file|image|figure|case|variant|value|code|term|field|byte|sample|of|and|or|bank|stripe|run|path|no|order|every)\s)1 (?:[a-z]+ ){0,2}?[a-z]+ (?:are|were|have|do|follow|come|differ|need|hold|point|fail|remain)\b")]
-    private static partial Regex OneWithPluralVerb();
-
-    private static readonly HashSet<string> NotACount = new(StringComparer.Ordinal)
-    {
-        "is", "has", "was", "uses", "gives", "states", "holds", "points", "starts", "signals", "does", "plays", "lists", "needs", "contains", "names",
-        "reads", "means", "ends", "follows", "begins", "counts", "includes", "carries", "claims", "declares", "fits", "shows", "reaches", "exceeds",
-        "requires", "takes", "stands", "sets", "gets", "makes", "leaves", "puts", "comes", "goes", "applies", "covers", "cuts", "limits", "expects",
-        "selects", "omits", "adds", "differs", "matches", "precedes", "belongs", "appears", "refers", "kbps", "bps", "ms", "Hz", "dB", "s", "us", "ns",
-        "has", "lies", "opens", "stops", "changes", "decodes", "writes", "equals", "defines", "describes", "indicates", "repeats", "remains", "holds",
-        "spreads", "allows", "permits", "caps", "implies", "leads", "yields", "uses", "multistream", "bits/s", "frames/s", "samples/s", "less", "plus", "minus", "times",
-    };
-
-
     [GeneratedRegex(@"^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$")]
     private static partial Regex Guid();
 
@@ -78,7 +58,7 @@ public partial class CrossFormatNamingTests
                 problems.Add($"{name}: \"{codec}\" is not the project's name for the coding");
             }
 
-            if (codec.Length > 0 && !char.IsUpper(codec[0]) && !char.IsDigit(codec[0]) && !LowercaseStarts.Contains(codec, StringComparer.Ordinal) && codec != "unknown")
+            if (codec.Length > 0 && !char.IsUpper(codec[0]) && !char.IsDigit(codec[0]) && !LowercaseStarts.Contains(codec, StringComparer.Ordinal))
             {
                 problems.Add($"{name}: \"{codec}\" does not start with a capital letter");
             }
@@ -238,21 +218,11 @@ public partial class CrossFormatNamingTests
             // The whole report: every node at every level, frames and side information included, and the findings' messages.
             foreach (string line in text.ToString().Split('\n'))
             {
-                foreach (Match match in OneWithPluralVerb().Matches(line))
+                foreach (string problem in SingularCheck.Problems(line))
                 {
-                    problems.Add($"{name}: \"{match.Value}\" in {line.Trim()}");
-                }
-
-                foreach (Match match in PluralForOne().Matches(line))
-                {
-                    string first = match.Groups["first"].Value;
-                    if (first.EndsWith('s') && !NotACount.Contains(first) && !first.EndsWith("ss", StringComparison.Ordinal) && first != "is")
-                    {
-                        problems.Add($"{name}: \"{match.Value}\" in {line.Trim()}");
-                    }
+                    problems.Add($"{name}: \"{problem}\" in {line.Trim()}");
                 }
             }
-
         }
 
         Assert.True(problems.Count == 0, string.Join("\n", problems.Distinct().Take(40)));

@@ -82,7 +82,7 @@ public sealed partial class AsfParser
 
             if (beyond > 0)
             {
-                state.Findings.AddNow(Severity.Warning, "asf.index-packet-number", $"{Counts.Of(beyond, "entry", "entries")} of the Simple Index Object name a packet past the last one ({Counts.Of(packets, "packet", "packets")}).", countNode, (int)Math.Min(beyond, int.MaxValue));
+                state.Findings.AddNow(Severity.Warning, "asf.index-packet-number", $"{Counts.Of(beyond, "entry", "entries")} of the Simple Index Object {Counts.Agree(beyond, "names", "name")} a packet past the last one ({Counts.Of(packets, "packet", "packets")}).", countNode, (int)Math.Min(beyond, int.MaxValue));
             }
 
             if (interval == 0 && count > 0)
@@ -356,7 +356,7 @@ public sealed partial class AsfParser
             if (unalignedOffsets > 0)
             {
                 state.Findings.AddNow(Severity.Warning, "asf.index-offset",
-                    $"{Counts.Of(unalignedOffsets, "offset", "offsets")} of the {name} do not point to the start of a packet of {Counts.Of(state.PacketSize, "byte", "bytes")} (section 6.2).", node, (int)Math.Min(unalignedOffsets, int.MaxValue));
+                    $"{Counts.Of(unalignedOffsets, "offset", "offsets")} of the {name} {Counts.Agree(unalignedOffsets, "does", "do")} not point to the start of a packet of {Counts.Of(state.PacketSize, "byte", "bytes")} (section 6.2).", node, (int)Math.Min(unalignedOffsets, int.MaxValue));
             }
 
             _ = invalidOffsets;

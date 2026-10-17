@@ -166,7 +166,7 @@ internal static class Sv7Parser
             state.TrailingStart = streamEnd;
             var gap = GapNode(streamEnd, end);
             state.Findings.AddNow(Severity.Warning, "musepack.trailing-data",
-                $"{Counts.Of(end - streamEnd, "byte", "bytes")} after the stream's last frame, from 0x{streamEnd:X}, are not part of it.", gap);
+                $"{Counts.Of(end - streamEnd, "byte", "bytes")} after the stream's last frame, from 0x{streamEnd:X}, {Counts.Agree(end - streamEnd, "is", "are")} not part of it.", gap);
         }
 
         int count = state.Frames.Count + (state.TrailingStart is null ? 0 : 1);
@@ -593,7 +593,7 @@ internal static class Sv7Parser
         if (state.DamagedFrom is { } damagedFrom)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.frames-damaged",
-                $"{Counts.Of(MaxDamagedRun, "frame", "frames")} in a row from 0x{state.Layout.WordStart(damagedFrom):X} have subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
+                $"{Counts.Of(MaxDamagedRun, "frame", "frames")} in a row from 0x{state.Layout.WordStart(damagedFrom):X} {Counts.Agree(MaxDamagedRun, "has", "have")} subband resolutions that run past their length, which no encoder writes: the data is damaged, and the frames after them are not read.",
                 header.Children.First(c => c.Name == "Frame Count"));
         }
         else if (counted < h.Frames)

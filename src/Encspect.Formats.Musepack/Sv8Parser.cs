@@ -168,7 +168,7 @@ internal static class Sv8Parser
         {
             state.Trailing = (position, end);
             state.Findings.AddNow(Severity.Warning, "musepack.data-after-end",
-                $"{Counts.Of(end - position, "byte", "bytes")} after the stream end packet, from 0x{position:X}, are not part of the stream; the SV8 specification allows only tags after it, and no tag was found there.",
+                $"{Counts.Of(end - position, "byte", "bytes")} after the stream end packet, from 0x{position:X}, {Counts.Agree(end - position, "is", "are")} not part of the stream; the SV8 specification allows only tags after it, and no tag was found there.",
                 GapNode(position, end));
         }
 
@@ -1044,7 +1044,7 @@ internal static class Sv8Parser
                 int entryCount = entries.Count;
                 string firstWrong = first!;
                 state.Findings.Add(Severity.Warning, "musepack.seek-table-mismatch", node, count => count == 1
-                    ? $"{wrongEntries} of the seek table's {Counts.Of(entryCount, "entry", "entries")} {Counts.Agree(entryCount, "does", "do")} not point at the audio packet they stand for: {firstWrong}. Players that seek with it land in the wrong place."
+                    ? $"{wrongEntries} of the seek table's {Counts.Of(entryCount, "entry", "entries")} {Counts.Agree(wrongEntries, "does", "do")} not point at the audio packet {Counts.Agree(wrongEntries, "it stands", "they stand")} for: {firstWrong}. Players that seek with it land in the wrong place."
                     : $"{count} seek tables have entries that do not point at the audio packet they stand for, the first {wrongEntries} of {entryCount}: {firstWrong}. Players that seek with them land in the wrong place.");
             }
 

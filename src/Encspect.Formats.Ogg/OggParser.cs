@@ -228,7 +228,7 @@ public sealed partial class OggParser : IFormatParser
         region.GapBytes += end - start;
         region.Findings.Add(-1, Severity.Warning, "ogg.junk", new Node("Gap", start, end - start), count =>
             count == 1
-                ? $"{Bytes(end - start)} at 0x{start:X} are not an Ogg page; readers skip them to the next page."
+                ? $"{Bytes(end - start)} at 0x{start:X} {Counts.Agree(end - start, "is", "are")} not an Ogg page; readers skip them to the next page."
                 : $"{count} stretches of bytes, {Bytes(region.GapBytes)} in all, are not Ogg pages; readers skip them to the next page. The first at 0x{start:X}.");
     }
 
@@ -477,7 +477,7 @@ public sealed partial class OggParser : IFormatParser
         region.Findings.Add(stream.Index, Severity.Warning, "ogg.page-truncated", new Node("Page", offset, length), count =>
             count == 1
                 ? $"The page at 0x{offset:X} is cut short after {Bytes(length)} of {Bytes(declared)}; decoders drop it with its packets."
-                : $"{Counts.Of(count, "page", "pages")} of the logical stream 0x{stream.Serial:X8} are cut short; decoders drop them with their packets. The first at 0x{offset:X}, after {Bytes(length)} of {Bytes(declared)}.");
+                : $"{Counts.Of(count, "page", "pages")} of the logical stream 0x{stream.Serial:X8} {Counts.Agree(count, "is", "are")} cut short; decoders drop them with their packets. The first at 0x{offset:X}, after {Bytes(length)} of {Bytes(declared)}.");
     }
 
     // The first bytes of a stream's first packet, which name its codec.

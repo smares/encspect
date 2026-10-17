@@ -74,7 +74,7 @@ public sealed partial class AsfParser
             {
                 if (f.Remaining < 6)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The Extended Content Description Object counts {count} descriptors, but its data holds {i}.", countNode);
+                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The Extended Content Description Object counts {Counts.Of(count, "descriptor", "descriptors")}, but its data holds {i}.", countNode);
                     break;
                 }
 
