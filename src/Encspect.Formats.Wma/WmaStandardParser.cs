@@ -170,9 +170,9 @@ public sealed class WmaStandardParser : ICodecParser
         {
             long at = optionsNode.Offset;
             int options = parameters.Options;
-            OptionBits(optionsNode, at, 0, 1, NodeValue.Boolean((options & 1) != 0), "Exponent VLC", Explain.OptionExponentVlc);
-            OptionBits(optionsNode, at, 1, 1, NodeValue.Boolean((options & 2) != 0), "Bit Reservoir", Explain.OptionBitReservoir, Topics.WmaBitReservoir);
-            OptionBits(optionsNode, at, 2, 1, NodeValue.Boolean((options & 4) != 0), "Variable Block Length", Explain.OptionVariableBlockLength);
+            OptionBits(optionsNode, at, 0, 1, NodeValue.Boolean((options & 1) != 0), "Uses Exponent VLC", Explain.OptionExponentVlc);
+            OptionBits(optionsNode, at, 1, 1, NodeValue.Boolean((options & 2) != 0), "Uses Bit Reservoir", Explain.OptionBitReservoir, Topics.WmaBitReservoir);
+            OptionBits(optionsNode, at, 2, 1, NodeValue.Boolean((options & 4) != 0), "Uses Variable Block Length", Explain.OptionVariableBlockLength);
             OptionBits(optionsNode, at, 3, 2, NodeValue.Integer((options >> 3) & 3), "Block Size Count Code", Explain.OptionBlockSizeCount);
             OptionBits(optionsNode, at, 5, 11, NodeValue.Hex(options >> 5, 4), "Other Options", Explain.OptionOthers);
             if (parameters.Version == 2 && options == 0xD && (options & 4) != 0 && bytes.Length >= 8)

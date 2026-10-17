@@ -1,5 +1,6 @@
 using System.Runtime;
 using Encspect.Core;
+using Encspect.Formats.Aac;
 using Encspect.Host;
 using Xunit.Abstractions;
 
@@ -281,7 +282,7 @@ public class MemoryTests(ITestOutputHelper output)
         Bounded("objects.asf", AsfBuilder.WithUnknownObjects("minimal", 900_000), 150_000_000, "asf.too-many-objects");
     }
 
-    private void Bounded(string name, byte[] data, long bound, string code, bool expectFinding = true)
+    private Report Bounded(string name, byte[] data, long bound, string code, bool expectFinding = true)
     {
         (Report report, long kept, long peak) = Measure(name, data, data[..Math.Min(data.Length, 4096)]);
         output.WriteLine($"{name}: {kept / 1_000_000} MB kept and {peak / 1_000_000} MB peak for {data.Length / 1_000_000} MB");
@@ -293,6 +294,7 @@ public class MemoryTests(ITestOutputHelper output)
 
         Assert.True(peak < bound, $"{name}: the live heap grew by {peak / 1_000_000} MB.");
         GC.KeepAlive(report);
+        return report;
     }
 
     // More packets than are described one by one: the rest are counted, and the heap stays near the cap's.
@@ -1168,8 +1170,9 @@ public class MemoryTests(ITestOutputHelper output)
     // a common window, max_sfb 0 and a global gain of 100 in each channel, and an END element, then
     // zero bytes no decoder reads, so that keeping a sample's bytes would show), in one chunk after
     // moov (ISO/IEC 14496-12 8.5 to 8.7).
-    private static byte[] Mp4Samples(int count)
+    private static byte[] Mp4Samples(int count, byte[]? config = null, int padding = 94)
     {
+        config ??= [0x12, 0x10];
         static byte[] Box(string type, params byte[][] parts)
         {
             byte[] payload = parts.SelectMany(p => p).ToArray();
@@ -1178,10 +1181,11 @@ public class MemoryTests(ITestOutputHelper output)
 
         static byte[] BigEndian(int value) => [(byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value];
 
-        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x64, 0x1C, .. new byte[94]];
+        byte[] unit = [0x21, 0x00, 0x03, 0x20, 0x64, 0x1C, .. new byte[padding]];
         byte[] Moov(int mdatPayload)
         {
-            byte[] esds = Box("esds", [0, 0, 0, 0, 0x03, 25, 0, 1, 0, 0x04, 17, 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x05, 2, 0x12, 0x10, 0x06, 1, 2]);
+            byte[] esds = Box("esds", [0, 0, 0, 0, 0x03, (byte)(20 + config.Length), 0, 1, 0, 0x04, (byte)(15 + config.Length), 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0x05, (byte)config.Length, .. config, 0x06, 1, 2]);
             byte[] mp4a = Box("mp4a", new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xAC, 0x44, 0, 0], esds);
             byte[] stsz = Box("stsz", [0, 0, 0, 0], BigEndian(0), BigEndian(count), Enumerable.Range(0, count).SelectMany(_ => BigEndian(unit.Length)).ToArray());
             byte[] stbl = Box("stbl",
@@ -1204,6 +1208,52 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] moov = Moov(ftyp.Length + moovLength + 8);
         byte[] mdat = [.. BigEndian(8 + (count * unit.Length)), .. "mdat"u8, .. Enumerable.Repeat(unit, count).SelectMany(u => u)];
         return [.. ftyp, .. moov, .. mdat];
+    }
+
+    // Access units of 1 Hz: 1024 seconds each, so the graph of bitrate over time would take a thousand entries per access unit
+    // (the reviewer's file of 200,000 units, 1 MB, took 9 GB). It keeps at most StreamFigures.MaxSeconds entries, and a finding says the
+    // rate is implausible.
+    [Fact]
+    public void AnExplicitSampleRateOfOneHertzKeepsTheGraphBounded()
+    {
+        byte[] config = [0x17, 0x80, 0x00, 0x00, 0x90];
+        byte[] data = Mp4Samples(200_000, config, padding: 0);
+
+        Bounded("rate-1-hz.m4a", data, 45_000_000, "aac.implausible-sample-rate");
+    }
+
+    // ADIF stores a record for each raw data block, and a block can be one byte (an END element and its alignment): past the cap the
+    // blocks are only measured and counted in the stream's figures, with a finding, and the heap stays near the cap's.
+    [Fact]
+    public void AdifBlocksPastTheCapStayBounded()
+    {
+        byte[] header = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "adif.aac"))[..17];
+        byte[] data = [.. header, .. Enumerable.Repeat((byte)0xE0, Adif.MaxBlocks + 1_000)];
+
+        Report report = Bounded("end-blocks.aac", data, 320_000_000, "aac.blocks-limit");
+
+        Assert.Equal((Adif.MaxBlocks + 1_000) * 1024L, Assert.Single(report.Streams).Samples);
+    }
+
+    // The same for ADTS: frames of 8 bytes, a header and an END element; the frames past the cap are counted from their headers.
+    [Fact]
+    public void AdtsFramesPastTheCapStayBounded()
+    {
+        byte[] first = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "ffmpeg-adts.aac"))[..7];
+        byte[] frame = [first[0], first[1], first[2], (byte)((first[3] & 0xFC) | 0), 1, (byte)(((8 & 7) << 5) | (first[5] & 0x1F)), first[6], 0xE0];
+        int count = RawAacParser.MaxFrames + 1_000;
+        byte[] data = new byte[count * 8];
+        for (int i = 0; i < count; i++)
+        {
+            frame.CopyTo(data, i * 8);
+        }
+
+        // One frame past the cap is overwritten with zeros: the counting resyncs after the gap and goes on.
+        Array.Clear(data, (RawAacParser.MaxFrames + 500) * 8, 8);
+
+        Report report = Bounded("end-frames.aac", data, 360_000_000, "aac.frames-limit");
+
+        Assert.Equal((count - 1) * 1024L, Assert.Single(report.Streams).Samples);
     }
 
     // MPEG-1 Layer III stereo frames at 32 kbps and 44100 Hz, 104 bytes each, whose side

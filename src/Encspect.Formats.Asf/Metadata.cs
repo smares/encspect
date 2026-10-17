@@ -13,6 +13,9 @@ public sealed partial class AsfParser
         "WM/EncodingSettings", "WM/Tool", "WM/ToolName", "WM/ToolVersion", "WMFSDKVersion", "MediaFoundationVersion",
     };
 
+    // The most claims the header's attributes may make; a file that repeats them thousands of times names its writer with the first.
+    private const int MaxClaims = 256;
+
     // ---- Content Description Object (section 3.10) ----
 
     private static void ParseContentDescription(State state, Node parent, ObjectHeader header, long end)
@@ -23,9 +26,11 @@ public sealed partial class AsfParser
             string[] names = ["Title", "Author", "Copyright", "Description", "Rating"];
             string[] descriptions = [Explain.Title, Explain.Author, Explain.Copyright, Explain.DescriptionField, Explain.Rating];
             var lengths = new ushort[5];
+            var lengthNodes = new Node[5];
             for (int i = 0; i < 5; i++)
             {
                 lengths[i] = f.Word($"{names[i]} Length", Explain.ContentDescriptionLength, "bytes");
+                lengthNodes[i] = node.Children[^1];
             }
 
             string? first = null;
@@ -38,13 +43,13 @@ public sealed partial class AsfParser
 
                 if (lengths[i] > f.Remaining)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"The Content Description Object states {lengths[i]} bytes for the {names[i].ToLowerInvariant()}, but {f.Remaining} remain.", node.Children[i]);
+                    state.Findings.AddNow(Severity.Warning, "asf.object-truncated", $"The Content Description Object states {lengths[i]} bytes for the {names[i].ToLowerInvariant()}, but {f.Remaining} remain.", lengthNodes[i]);
                     break;
                 }
 
                 if ((lengths[i] & 1) != 0)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.string-odd-length", $"The {names[i].ToLowerInvariant()} in the Content Description Object is {lengths[i]} bytes, not whole UTF-16 characters.", node.Children[i]);
+                    state.Findings.AddNow(Severity.Warning, "asf.string-odd-length", $"The {names[i].ToLowerInvariant()} in the Content Description Object is {lengths[i]} bytes, not whole UTF-16 characters.", lengthNodes[i]);
                 }
 
                 string text = f.Unicode(names[i], lengths[i], descriptions[i]);
@@ -63,16 +68,17 @@ public sealed partial class AsfParser
         Body(state, node, f, 26, () =>
         {
             ushort count = f.Word("Content Descriptors Count", Explain.ContentDescriptorsCount);
+            Node countNode = node.Children[^1];
             node.Value = NodeValue.Integer(count, "descriptors", "descriptor");
             for (int i = 0; i < count; i++)
             {
                 if (f.Remaining < 6)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The Extended Content Description Object counts {count} descriptors, but its data holds {i}.", node.Children[0]);
+                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The Extended Content Description Object counts {count} descriptors, but its data holds {i}.", countNode);
                     break;
                 }
 
-                ReadDescriptor(state, f, node, DescriptorKind.Extended);
+                ReadDescriptor(state, f, node, DescriptorKind.Extended, i == count - 1);
             }
         });
     }
@@ -84,16 +90,17 @@ public sealed partial class AsfParser
         Body(state, node, f, 26, () =>
         {
             ushort count = f.Word("Description Records Count", Explain.DescriptionRecordsCount);
+            Node countNode = node.Children[^1];
             node.Value = NodeValue.Integer(count, "records", "record");
             for (int i = 0; i < count; i++)
             {
                 if (f.Remaining < 12)
                 {
-                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The {node.Name} counts {count} records, but its data holds {i}.", node.Children[0]);
+                    state.Findings.AddNow(Severity.Warning, "asf.descriptor-count", $"The {node.Name} counts {count} records, but its data holds {i}.", countNode);
                     break;
                 }
 
-                ReadDescriptor(state, f, node, library ? DescriptorKind.Library : DescriptorKind.Metadata);
+                ReadDescriptor(state, f, node, library ? DescriptorKind.Library : DescriptorKind.Metadata, false);
             }
         });
     }
@@ -110,7 +117,7 @@ public sealed partial class AsfParser
     // 32-bit boolean; the Metadata and Metadata Library records have a stream number, a 32-bit value
     // length and a 16-bit boolean before the name, and the library a language index and the GUID
     // type).
-    private static void ReadDescriptor(State state, Fields f, Node tag, DescriptorKind kind)
+    private static void ReadDescriptor(State state, Fields f, Node tag, DescriptorKind kind, bool isLast)
     {
         long at = f.Position;
         var item = new Node("Descriptor", at, 0);
@@ -195,8 +202,13 @@ public sealed partial class AsfParser
             }
 
             // The prefixed version texts are the writer's by what they name; the other attributes take their role from their text.
-            state.Context.AddEncoderClaim(new EncoderClaim(text, valueNode, $"{tag.Name} descriptor {name}",
-                name is "WMFSDKVersion" or "MediaFoundationVersion" ? ClaimRole.Writer : ClaimRoles.Of(ClaimRole.Writer, text)));
+            if (state.ClaimCount < MaxClaims)
+            {
+                state.ClaimCount++;
+                state.Context.AddEncoderClaim(new EncoderClaim(text, valueNode, $"{tag.Name} descriptor {name}",
+                    name is "WMFSDKVersion" or "MediaFoundationVersion" ? ClaimRole.Writer : ClaimRoles.Of(ClaimRole.Writer, text))
+                { IsLastItem = isLast });
+            }
         }
 
         _ = stream;
@@ -444,7 +456,7 @@ public sealed partial class AsfParser
             Fields.Bits(flagsNode, "Resend Live Cleanpoints Flag", flagsAt, 3, 1, NodeValue.Boolean((flags & 8) != 0), Explain.ResendLiveCleanpointsFlag);
             Fields.Bits(flagsNode, "Reserved", flagsAt, 4, 28, NodeValue.Hex(flags >> 4, 8), Explain.FlagsReserved);
             info.Number = f.Word("Stream Number", Explain.ExtendedStreamNumber);
-            info.LanguageIndex = f.Word("Stream Language ID Index", Explain.StreamLanguageIdIndex);
+            f.Word("Stream Language ID Index", Explain.StreamLanguageIdIndex);
             f.Qword("Average Time Per Frame", Explain.AverageTimePerFrame, v => NodeValue.Decimal(v / 10_000.0, 3, "ms"));
             ushort names = f.Word("Stream Name Count", Explain.StreamNameCount);
             ushort systems = f.Word("Payload Extension System Count", Explain.PayloadExtensionSystemCount);
@@ -491,7 +503,6 @@ public sealed partial class AsfParser
                 }
 
                 node.Add(shown);
-                info.Extensions.Add((id, size, infoLength));
             }
 
             // An optional Stream Properties Object closes the object (section 4.1).
@@ -534,7 +545,4 @@ internal sealed class ExtensionRecord
 
     public uint DataBitrate { get; set; }
 
-    public int LanguageIndex { get; set; }
-
-    public List<(Guid Id, ushort Size, uint InfoLength)> Extensions { get; } = [];
 }

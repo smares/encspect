@@ -36,6 +36,7 @@ internal sealed partial class BlockReader
     private int _elementCount;
     private int _elementIds;
     private bool _hasSbr;
+    private bool _hasSbrEvidence;
     private bool _hasPs;
 
     public BlockReader(StreamSetup setup, CodingTally? tally)
@@ -99,6 +100,7 @@ internal sealed partial class BlockReader
         _elementCount = 0;
         _elementIds = 0;
         _hasSbr = false;
+        _hasSbrEvidence = false;
         _hasPs = false;
         int sce = 0;
         int cpe = 0;
@@ -214,7 +216,7 @@ internal sealed partial class BlockReader
             }
         }
 
-        return new BlockResult(true, bits.Original, Packed(), _hasSbr, _hasPs, null);
+        return new BlockResult(true, bits.Original, Packed(), _hasSbr, _hasPs, null, _hasSbrEvidence);
     }
 
     private void CountDamaged()
@@ -617,12 +619,12 @@ internal sealed partial class BlockReader
 
             int used = Math.Min(ics.MaxSfb, _setup.PredictionBands);
             int usedStart = bits.Original;
-            uint flags = 0;
+            ulong flags = 0;
             for (int sfb = 0; sfb < used; sfb++)
             {
-                if (bits.ReadBit() && sfb < 32)
+                if (bits.ReadBit())
                 {
-                    flags |= 1u << sfb;
+                    flags |= 1UL << sfb;
                 }
             }
 
@@ -1097,7 +1099,9 @@ internal readonly record struct ElementSpan(int Id, int Start, int End, int Seco
 // What reading a block came to: whether it was read to its end without error, the bit after its
 // END and alignment (or where reading stopped), its elements packed (count in bits 24 to 27, up to
 // eight 3-bit IDs below), whether it holds SBR data and the PS extension, and the error.
-internal readonly record struct BlockResult(bool Ok, int End, int Elements, bool HasSbr, bool HasPs, BlockError? Error);
+// HasSbr: the block holds an SBR payload; HasSbrEvidence: one that follows a channel element, which decoders take for SBR whether or not
+// they can read it (BlockReader.TallySbr).
+internal readonly record struct BlockResult(bool Ok, int End, int Elements, bool HasSbr, bool HasPs, BlockError? Error, bool HasSbrEvidence = false);
 
 // Something a block breaks that stops its reading, with the node it happened in where nodes were
 // built; ToEnd says the node runs to the end of the data.
