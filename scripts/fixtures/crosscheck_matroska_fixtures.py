@@ -224,10 +224,20 @@ def check_ffprobe(manifest, path, problems):
                     break
 
 
-def check_decode(path, problems):
+OPUS_FLUSH = re.compile(r"^\[opus @ [0-9a-fx]+\] Error parsing Opus packet header\.$")
+
+
+def check_decode(path, problems, opus_tracks=0):
     result = run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a", "-f", "null", "-"], text=True)
     # The attached picture is probed although it is not mapped.
     lines = [l for l in result.stderr.strip().splitlines() if "[mjpeg" not in l]
+    # FFmpeg 8.0's Opus parser checks the empty packet that flushes it at the end of the stream (libavcodec/opus/parser.c, opus_parse: for a demuxer that
+    # sets PARSER_FLAG_COMPLETE_FRAMES it calls set_frame_duration whatever buf_size is, and ff_opus_parse_packet refuses a packet of 0 bytes); 6.1's
+    # opus_find_frame_end returned for an empty buffer before parsing. The message is that flush, once for each Opus track, and no packet is lost.
+    for _ in range(opus_tracks):
+        flush = next((l for l in reversed(lines) if OPUS_FLUSH.match(l)), None)
+        if flush is not None:
+            lines.remove(flush)
     if result.returncode != 0 or lines:
         problems.append(f"ffmpeg decoding: {lines[:1] or result.returncode}")
 
@@ -281,7 +291,7 @@ def main():
             check_mkvinfo(manifest, path, problems)
             check_ffprobe(manifest, path, problems)
             if name.startswith("external-"):
-                check_decode(path, problems)
+                check_decode(path, problems, sum(1 for t in manifest["tracks"] if t["type"] == 2 and t["codec"] == "A_OPUS"))
             report = golden_report(path)
             if report is not None:
                 check_mediainfo(name, manifest, path, tally, report)
