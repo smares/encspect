@@ -1,0 +1,123 @@
+{
+ "description": "Two 2/0 frames, two mono frames, two 2/0 frames: the configuration changes twice, and the 2/0 stream continues.",
+ "length": 4608,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   768
+  ],
+  [
+   1536,
+   768
+  ],
+  [
+   2304,
+   768
+  ],
+  [
+   3072,
+   768
+  ],
+  [
+   3840,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": false
+  },
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "1/0 (center)",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.stream-changed",
+   "from AC-3, 48000 Hz, 2/0 to AC-3, 48000 Hz, 1/0; the streams change 2 times"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "liba52": true,
+  "skip": {
+   "ffprobe": "ffprobe reports the first stream's parameters only.",
+   "decode": "ffmpeg's decoder takes the first frame's channel layout and drops the frames that differ."
+  }
+ },
+ "block_ends": {
+  "0": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "768": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "1536": [
+   154,
+   164,
+   174,
+   184,
+   194,
+   204
+  ],
+  "2304": [
+   154,
+   164,
+   174,
+   184,
+   194,
+   204
+  ],
+  "3072": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "3840": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ]
+ }
+}

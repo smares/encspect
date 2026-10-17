@@ -1,0 +1,185 @@
+{
+ "description": "Three access units of an independent 2/0 frame and three dependent frames, all of dependent substream 0, with the rear surround pair.",
+ "length": 4080,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   400
+  ],
+  [
+   400,
+   320
+  ],
+  [
+   720,
+   320
+  ],
+  [
+   1040,
+   320
+  ],
+  [
+   1360,
+   400
+  ],
+  [
+   1760,
+   320
+  ],
+  [
+   2080,
+   320
+  ],
+  [
+   2400,
+   320
+  ],
+  [
+   2720,
+   400
+  ],
+  [
+   3120,
+   320
+  ],
+  [
+   3440,
+   320
+  ],
+  [
+   3760,
+   320
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 4,
+   "channel_mode": "2/0 (left, right)",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "samples": 4608,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.dependent-excess",
+   "6 frames of a dependent substream repeat the substream ID"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "skip": {
+   "ffprobe": "The stream breaks Annex E 2.3.1.2, so what ffmpeg's parser makes of the repeated substream IDs says nothing about the figures.",
+   "decode": "ffmpeg decodes the repeated dependent substreams as it likes; the check says nothing about the figures."
+  }
+ },
+ "block_ends": {
+  "0": [
+   232,
+   236,
+   240,
+   244,
+   248,
+   252
+  ],
+  "400": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "720": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "1040": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "1360": [
+   232,
+   236,
+   240,
+   244,
+   248,
+   252
+  ],
+  "1760": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "2080": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "2400": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "2720": [
+   232,
+   236,
+   240,
+   244,
+   248,
+   252
+  ],
+  "3120": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "3440": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "3760": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ]
+ }
+}

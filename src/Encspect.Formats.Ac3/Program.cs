@@ -15,8 +15,12 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     private long _pendingOffset = -1;
     private int _pendingBytes;
     private int _pendingSamples;
+    private int _pendingDependentIds;
     private bool _firstProgramFrame = true;
     private List<Token>? _dependentTokens;
+    private Ac3Analysis.Region? _firstRegion;
+    private long _spanStart = long.MaxValue;
+    private long _spanEnd;
 
     public Ac3Analysis.ProgramKey Key => key;
 
@@ -90,19 +94,52 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
     private readonly long[] _strategies = new long[4];
 
-    public void Add(int index, long offset, int length, SyncFrame header, FrameResult result, bool crcError)
+    public Ac3Analysis.Region? FirstRegion => _firstRegion;
+
+    // Where the program's frames lie in the first region it appears in (its statistics cover them).
+    public long SpanStart => _spanStart;
+
+    public long SpanEnd => _spanEnd;
+
+    public void Cover(Ac3Analysis.Region region, long offset, int length)
     {
+        _firstRegion ??= region;
+        if (region == _firstRegion)
+        {
+            _spanStart = Math.Min(_spanStart, offset);
+            _spanEnd = Math.Max(_spanEnd, offset + length);
+        }
+    }
+
+    // Whether a dependent frame did not join its program frame: a program frame holds at most one
+    // dependent substream of each ID, so at most 8 (Annex E 2.3.1.2), and the one that repeats an ID
+    // ends the program frame. The dependent frames after it, up to the next independent frame, are
+    // left out of the program frames, so a program frame never grows beyond 9 frames.
+    public bool Add(int index, long offset, int length, SyncFrame header, FrameResult result, bool crcError)
+    {
+        bool excess = false;
         if (header.IsDependent)
         {
             DependentFrames++;
             HasEac3 = true;
-            _pendingBytes += length;
-            _pendingDependents.AddRange(DependentTokens(header, result));
+            int bit = 1 << header.SubstreamId;
+            if (_pendingOffset < 0 || (_pendingDependentIds & bit) != 0)
+            {
+                excess = true;
+                Complete();
+            }
+            else
+            {
+                _pendingDependentIds |= bit;
+                _pendingBytes += length;
+                _pendingDependents.AddRange(DependentTokens(header, result));
+            }
         }
         else
         {
             Complete();
             _pendingOffset = offset;
+            _pendingDependentIds = 0;
             _pendingBytes = length;
             _pendingSamples = header.Samples;
             _nominal.Add(header.NominalBitrate);
@@ -154,6 +191,8 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
         {
             _strategies[i] += result.ExponentStrategies[i];
         }
+
+        return excess;
     }
 
     public void Close()

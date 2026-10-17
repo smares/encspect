@@ -253,7 +253,7 @@ internal static class Explain
     public const string ConfigDataRate = "data_rate: the data rate of all substreams together in kbps, the highest where it varies (ETSI TS 102 366 F.6.2.2).";
     public const string ConfigNumIndSub = "num_ind_sub: the substream ID of the last independent substream, one less than their number (ETSI TS 102 366 F.6.2.3).";
     public const string ConfigAsvc = "asvc: whether the substream is an associated service meant to be mixed with a main one (ETSI TS 102 366 F.6.2.7).";
-    public const string ConfigNumDepSub = "num_dep_sub: how many dependent substreams belong to this independent substream (ETSI TS 102 366 F.6.2.12).";
+    public const string ConfigNumDepSub = "num_dep_sub: how many dependent substreams belong to this independent substream, read as a count the way the box's syntax uses it (a chan_loc field follows when it is above 0); F.6.2.12 words it as the substreamid of the last dependent substream (ETSI TS 102 366 F.6.2.12).";
     public const string ConfigChanLoc = "chan_loc: the channel locations beyond 5.1 that the dependent substreams carry (ETSI TS 102 366 F.6.2.13, Table F.6.1).";
     public const string ConfigTrailing = "Reserved bytes after the fields, which decoders ignore (ETSI TS 102 366 F.6.2.14).";
 
