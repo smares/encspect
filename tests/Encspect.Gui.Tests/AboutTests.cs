@@ -47,6 +47,44 @@ public sealed class AboutTests
         main.Close();
     }
 
+    // The item of the application menu (App.axaml), where macOS has About; the menu exists on every platform.
+    [AvaloniaFact]
+    public void The_application_menu_opens_the_about_window_without_an_owner_when_no_window_is_open()
+    {
+        NativeMenuItem about = NativeMenu.GetMenu(Avalonia.Application.Current!)!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "About Encspect");
+
+        Click(about);
+
+        AboutWindow window = Assert.IsType<AboutWindow>(AboutWindow.Current);
+        Assert.True(window.IsVisible);
+        Assert.Equal("Version " + Version, window.FindControl<TextBlock>("VersionText")!.Text);
+        window.Close();
+        Assert.Null(AboutWindow.Current);
+    }
+
+    [AvaloniaFact]
+    public void The_owner_is_a_visible_window_and_a_closed_one_is_not_chosen()
+    {
+        var closed = new Window();
+        closed.Show();
+        closed.Close();
+        var shown = new Window();
+        shown.Show();
+        var other = new Window();
+        other.Show();
+
+        Assert.Same(shown, AboutWindow.PickOwner([closed, shown]));
+        Assert.Null(AboutWindow.PickOwner([closed]));
+        Assert.Null(AboutWindow.PickOwner([]));
+
+        // With a closed owner, About still opens.
+        AboutWindow.ShowFor(AboutWindow.PickOwner([closed]));
+        Assert.NotNull(AboutWindow.Current);
+        AboutWindow.Current!.Close();
+        shown.Close();
+        other.Close();
+    }
+
     [AvaloniaTheory]
     [InlineData(Key.Escape, PhysicalKey.Escape)]
     [InlineData(Key.Enter, PhysicalKey.Enter)]
@@ -81,6 +119,7 @@ public sealed class AboutTests
         string text = notices.Box.Text!;
         Assert.StartsWith("# Third-party notices", text);
         Assert.Contains("HarfBuzz", text);
+        Assert.Equal("Third-party notices", Avalonia.Automation.AutomationProperties.GetName(notices.Box));
         Assert.Equal(File.ReadAllText(Path.Combine(RepositoryRoot(), "THIRD-PARTY-NOTICES.md")).ReplaceLineEndings("\n"), text.ReplaceLineEndings("\n"));
 
         notices.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);

@@ -67,6 +67,44 @@ public sealed class ReleaseWorkflowTests
         Assert.Contains("git merge-base --is-ancestor HEAD refs/remotes/origin/main", check, StringComparison.Ordinal);
     }
 
+    // A pull request that changes the release files runs the builds, so the release-only steps run before a tag; it must
+    // neither upload nor publish.
+    [Fact]
+    public void APullRequestBuildsButNeverUploadsOrPublishes()
+    {
+        string text = Workflow();
+        Assert.Matches(@"(?s)\n  pull_request:\n    paths:\n(      - [^\n]+\n)*      - \.github/workflows/release\.yml\n", text);
+        Assert.Contains("      - THIRD-PARTY-NOTICES.md", text, StringComparison.Ordinal);
+        Assert.Contains("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", text, StringComparison.Ordinal);
+        Assert.Contains("SOURCE_REF: ${{ github.event_name == 'pull_request' && github.sha || format('refs/tags/{0}', inputs.tag || github.ref_name) }}", text, StringComparison.Ordinal);
+
+        Assert.Contains("    if: github.event_name != 'pull_request'", Job("release"));
+
+        string[] build = Job("build");
+        int upload = Array.FindIndex(build, l => l.Contains("uses: actions/upload-artifact@", StringComparison.Ordinal));
+        Assert.True(upload >= 0);
+        Assert.Equal("        if: github.event_name != 'pull_request'", build[upload + 1]);
+        Assert.Single(build, l => l.Contains("upload-artifact", StringComparison.Ordinal));
+
+        // The tag and main checks are skipped on a pull request, the version and notes checks are not.
+        string check = string.Join('\n', Job("check-tag"));
+        Assert.Contains("if [ \"$GITHUB_EVENT_NAME\" != pull_request ]; then", check, StringComparison.Ordinal);
+        Assert.True(check.IndexOf("docs/releases/$version.md", StringComparison.Ordinal) > check.IndexOf("merge-base", StringComparison.Ordinal));
+        Assert.Contains("ref: ${{ env.SOURCE_REF }}", check, StringComparison.Ordinal);
+    }
+
+    // The jobs build the commit check-tag verified, and a manual run is accepted only from main.
+    [Fact]
+    public void TheVerifiedCommitIsBuiltAndAManualRunNeedsMain()
+    {
+        Assert.Contains("    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'", Job("check-tag"));
+        Assert.Contains("      sha: ${{ steps.check.outputs.sha }}", Job("check-tag"));
+        Assert.Contains("needs.check-tag.outputs.sha", string.Join('\n', Job("build")), StringComparison.Ordinal);
+        Assert.Contains("          ref: ${{ needs.check-tag.outputs.sha }}", Job("release"));
+        Assert.DoesNotContain("ref: refs/tags/", Workflow(), StringComparison.Ordinal);
+        Assert.Contains("--draft=false", string.Join('\n', Job("release")), StringComparison.Ordinal);
+    }
+
     // The builds are made and checked the way CI makes and checks them.
     [Fact]
     public void TheBuildPublishesAndChecksAsCiDoes()

@@ -152,18 +152,27 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 
 To release:
 
-- **Bump the version:** set `Version` in `Directory.Build.props`, the only place. The assembly, file and informational versions, `encspect --version`, the JSON `tool.version` and the GUI's About window follow. The part after `+` is the commit, which .NET appends to the informational version and which stays: a report or bug report names the exact source.
+- **Bump the version:** set `Version` in `Directory.Build.props`, the only place. The assembly, file and informational versions, `encspect --version`, the JSON `tool.version` and the GUI's About window follow. The part after `+` is the commit, which .NET appends to the informational version and which stays: a report or bug report names the exact source. `CommandLineTests` and `AboutTests` expect the version to start with `0.1.0`; update them with it.
 - **Notes:** add `docs/releases/<version>.md`; the release job uses it as the release text.
-- **Merge:** the change goes to main through a pull request with a green pipeline, as any other.
-- **Tag:** tag the merged commit on main as `v<version>` and push the tag. A manual run of the workflow with the tag as input repeats a release.
+- **Notices:** regenerate `THIRD-PARTY-NOTICES.md` when a package or the .NET servicing version changes (below).
+- **Merge:** the change goes to main through a pull request with a green pipeline, as any other. A pull request that touches `release.yml`, `docs/releases/`, `scripts/release/`, the notices or `Directory.Build.props` also runs `release.yml` on its merge commit: the version and notes check, and the six builds with their checks and packaging, but no upload and no release job. That runs the release-only steps before any tag exists.
+- **Tag:** tag the merged commit on main as `v<version>` and push the tag. A manual run of the workflow with the tag as input repeats a release; it is accepted only when started from main.
 
 What the workflow does:
 
-- **`check-tag`:** fails unless the tag is `v` plus the `Version` in `Directory.Build.props` at the tagged commit, that commit is on main, and the notes exist.
-- **`build`:** on a runner of each platform of CI's full matrix (`linux-x64`, `win-x64`, `osx-arm64`, `win-arm64`, `linux-arm64`, `osx-x64`), publishes the self-contained single-file CLI and GUI with CI's commands and runs CI's checks on them: the CLI on a fixture, the GUI's `--self-check`, and on Linux the Wayland and X11 self-checks. It then checks that `--version` prints the version, packs `encspect-<version>-<rid>.zip` (Windows) or `.tar.gz` with both programs, `LICENSE`, `THIRD-PARTY-NOTICES.md` and `docs/releases/package-readme.md` as `README.md`, and runs the CLI from the unpacked archive.
-- **`release`:** the only job with `contents: write`. It writes `SHA256SUMS` over the six archives and creates the GitHub release "Encspect <version>" with the notes and all files, as a pre-release while the major version is 0. On a rerun it replaces the files of the existing release.
-- **Not signed:** no build is signed or notarized. The release notes say what each system asks.
-- **`THIRD-PARTY-NOTICES.md`:** at the repository root, shipped in each archive and embedded in the GUI for its About window. Update it when a package or the runtime version changes: each text is copied from the restored package (`~/.nuget/packages/<id>/<version>/`) or the runtime pack, not written by hand. `CiWorkflowTests` and the GUI tests check that the file exists and that the GUI embeds it.
+- **`check-tag`:** fails unless the tag is `v` plus the `Version` in `Directory.Build.props` at the tagged commit, that commit is on main, and the notes exist. It passes the verified commit to the other jobs, which build that commit and not the tag again.
+- **`build`:** on a runner of each platform of CI's full matrix (`linux-x64`, `win-x64`, `osx-arm64`, `win-arm64`, `linux-arm64`, `osx-x64`), publishes the self-contained single-file CLI and GUI with CI's commands and runs CI's checks on them: the CLI on a fixture, the GUI's `--self-check`, and on Linux the Wayland and X11 self-checks. It also checks that the notices match the build, and that `--version` prints the version. It then packs `encspect-<version>-<rid>.zip` (Windows) or `.tar.gz` with both programs, `LICENSE`, `THIRD-PARTY-NOTICES.md` and `docs/releases/package-readme.md` as `README.md`, and runs the CLI and the GUI's self-check from the unpacked archive.
+- **`release`:** the only job with `contents: write`. It writes `SHA256SUMS` over the six archives and creates the GitHub release "Encspect <version>" with the notes and all files, as a pre-release while the major version is 0. On a rerun it replaces the files of the existing release and makes sure it is not a draft.
+- **Not signed:** no Developer ID or Authenticode signature, and no notarization; the .NET SDK ad-hoc signs the macOS executables. The release notes say what each system asks.
+- **Repository settings** are the owner's: a ruleset that restricts who can create `v*` tags is recommended and not set by this workflow. If the repository turns on immutable releases, a rerun cannot replace files (`gh release upload --clobber` fails on a published release): release a new version instead.
+
+`THIRD-PARTY-NOTICES.md` (repository root) is shipped in each archive and embedded in the GUI for its About window. It is generated, not written:
+
+- **Script:** `python3 scripts/release/make_notices.py --runtime-deps src/Encspect.Cli/bin/Release/net10.0/<rid>/encspect.deps.json` rewrites it after a restore and a publish of the CLI for the RID. `--check` fails when the committed file differs; the `build` job runs it on every platform.
+- **Sources:** the versions come from the GUI's `project.assets.json`; the texts from the restored packages, from the runtime pack the publish bundled (its version is in the deps file) and from `scripts/release/licenses/`, the licensors' own license files. Nothing is written from memory.
+- **Runtime version:** `setup-dotnet` installs the newest 10.0 SDK, whose runtime pack changes with .NET servicing releases. The check then fails until the file is regenerated, which is the point: the notices name the runtime that ships.
+- **Licensors' files:** `python3 scripts/release/make_notices.py --fetch` downloads them from GitHub at the commit each package's nuspec names (Avalonia and DataGrid `licence.md`, NWayland `licence.md`, Tmds.DBus `COPYING`, MicroCom `LICENSE`) into `scripts/release/licenses/`; they are committed, so a run needs no network. Run it when those packages change.
+- **Tests:** `ReleaseWorkflowTests` checks that the file exists and that the GUI project embeds it; `AboutTests` that the About window shows the embedded text.
 - **`third_party/`:** the sources there are cross-check tools. No project references them and they are in no build.
 
 ## Fixtures and cross-checks

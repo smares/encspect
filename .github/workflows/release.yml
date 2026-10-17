@@ -3,11 +3,20 @@ name: Release
 # A pushed version tag (vX.Y.Z) builds the self-contained CLI and GUI for the six targets of CI's full matrix, each on
 # a runner of its own platform, runs the same self-checks CI runs on them, packages them and publishes a GitHub release
 # with the notes of docs/releases/<version>.md. The tag must equal v plus the Version in Directory.Build.props and be
-# on main. A manual run with the tag as input repeats a release (an existing release gets its files replaced). CI itself
-# uploads no build. See "Releases" in docs/development.md.
+# on main. A manual run (from main only) with the tag as input repeats a release (an existing release gets its files
+# replaced). A pull request that changes the release files runs the checks and the six builds on its merge commit, with
+# no upload and no release, so the steps that exist only here run before a tag does. CI itself uploads no build. See
+# "Releases" in docs/development.md.
 on:
   push:
     tags: ["v*.*.*"]
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+      - docs/releases/**
+      - scripts/release/**
+      - THIRD-PARTY-NOTICES.md
+      - Directory.Build.props
   workflow_dispatch:
     inputs:
       tag:
@@ -19,10 +28,11 @@ on:
 permissions:
   contents: read
 
-# Runs of one tag queue behind each other and none is canceled halfway through publishing.
+# Runs of one tag queue behind each other and none is canceled halfway through publishing; a new push to a pull request
+# replaces its running checks.
 concurrency:
   group: release-${{ inputs.tag || github.ref_name }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # Avalonia's build tasks send usage data unless told not to.
@@ -30,20 +40,25 @@ env:
   DOTNET_NOLOGO: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   TAG: ${{ inputs.tag || github.ref_name }}
+  # What check-tag looks at: the merge commit of a pull request, else the tag. The other jobs build the commit it verified.
+  SOURCE_REF: ${{ github.event_name == 'pull_request' && github.sha || format('refs/tags/{0}', inputs.tag || github.ref_name) }}
 
 jobs:
   # Fails unless the tag names the version the sources carry and the tagged commit is on main, so a release is never
-  # built from a branch or under another number.
+  # built from a branch or under another number. On a pull request there is no tag: only the version and the notes are
+  # checked. A manual run is accepted only from main, so that the workflow file of another branch cannot publish.
   check-tag:
     name: check the tag
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
       version: ${{ steps.check.outputs.version }}
+      sha: ${{ steps.check.outputs.sha }}
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: refs/tags/${{ env.TAG }}
+          ref: ${{ env.SOURCE_REF }}
           fetch-depth: 0
 
       - name: Check the tag against Directory.Build.props and main
@@ -54,20 +69,23 @@ jobs:
             echo "::error::Directory.Build.props has no Version of the form X.Y.Z (found '$version')."
             exit 1
           fi
-          if [ "$TAG" != "v$version" ]; then
-            echo "::error::The tag is $TAG, but Directory.Build.props has Version $version, so the tag must be v$version."
-            exit 1
-          fi
-          git fetch --no-tags origin main:refs/remotes/origin/main
-          if ! git merge-base --is-ancestor HEAD refs/remotes/origin/main; then
-            echo "::error::The commit $(git rev-parse --short HEAD) of $TAG is not on main."
-            exit 1
+          if [ "$GITHUB_EVENT_NAME" != pull_request ]; then
+            if [ "$TAG" != "v$version" ]; then
+              echo "::error::The tag is $TAG, but Directory.Build.props has Version $version, so the tag must be v$version."
+              exit 1
+            fi
+            git fetch --no-tags origin main:refs/remotes/origin/main
+            if ! git merge-base --is-ancestor HEAD refs/remotes/origin/main; then
+              echo "::error::The commit $(git rev-parse --short HEAD) of $TAG is not on main."
+              exit 1
+            fi
           fi
           if [ ! -f "docs/releases/$version.md" ]; then
             echo "::error::docs/releases/$version.md, the release notes, is missing."
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   # The same targets as CI's full matrix (scripts/ci/changes.py), each built, run and packaged on its own platform.
   build:
@@ -94,9 +112,10 @@ jobs:
           - os: macos-15-intel
             rid: osx-x64
     steps:
+      # The commit check-tag verified, not the tag again: a tag moved since then cannot change what is built.
       - uses: actions/checkout@v5
         with:
-          ref: refs/tags/${{ env.TAG }}
+          ref: ${{ github.event_name == 'pull_request' && env.SOURCE_REF || needs.check-tag.outputs.sha }}
 
       - uses: actions/setup-dotnet@v5
         with:
@@ -130,6 +149,12 @@ jobs:
       # single file and analyzes a fixture through the host, without showing a window.
       - name: Publish the self-contained GUI
         run: dotnet publish src/Encspect.Gui --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/gui-${{ matrix.rid }}
+
+      # The notices name the runtime pack the publish bundled; a newer .NET servicing release than the one the file was
+      # made from fails here. scripts/release/make_notices.py regenerates the file (see "Releases" in docs/development.md).
+      - name: Check that THIRD-PARTY-NOTICES.md matches this build
+        shell: bash
+        run: bash scripts/ci/python.sh scripts/release/make_notices.py --check --runtime-deps "src/Encspect.Cli/bin/Release/net10.0/${{ matrix.rid }}/encspect.deps.json"
 
       - name: Run the published GUI's self-check
         shell: bash
@@ -231,24 +256,30 @@ jobs:
           Compress-Archive -Path "dist/$env:NAME" -DestinationPath "dist/$env:NAME.zip"
           Get-Item "dist/$env:NAME.zip"
 
-      # The archive is what users get, so the CLI inside it, extracted elsewhere, is the one run.
-      - name: Run the CLI from the archive
+      # The archive is what users get, so the programs in it, extracted elsewhere, are the ones run.
+      - name: Run the CLI and the GUI from the archive
         shell: bash
         run: |
           mkdir "$RUNNER_TEMP/unpacked"
+          ext=""
           if [ "$RUNNER_OS" = Windows ]; then
+            ext=".exe"
             powershell -NoProfile -Command "Expand-Archive -Path 'dist/$NAME.zip' -DestinationPath '$RUNNER_TEMP/unpacked'"
-            cli="$RUNNER_TEMP/unpacked/$NAME/encspect.exe"
           else
             tar -xzf "dist/$NAME.tar.gz" -C "$RUNNER_TEMP/unpacked"
-            cli="$RUNNER_TEMP/unpacked/$NAME/encspect"
           fi
-          "$cli" --version | tee "$RUNNER_TEMP/packed-version.txt"
+          unpacked="$RUNNER_TEMP/unpacked/$NAME"
+          "$unpacked/encspect$ext" --version | tee "$RUNNER_TEMP/packed-version.txt"
           grep -qE "^encspect $VERSION(\+[0-9a-f]+)?\$" "$RUNNER_TEMP/packed-version.txt"
-          test -f "$RUNNER_TEMP/unpacked/$NAME/THIRD-PARTY-NOTICES.md"
-          test -f "$RUNNER_TEMP/unpacked/$NAME/LICENSE"
+          # The GUI as well: a lost executable bit or signature would show here.
+          "$unpacked/encspect-gui$ext" --self-check tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/packed-gui.txt"
+          grep -q 'Skia and HarfBuzz loaded' "$RUNNER_TEMP/packed-gui.txt"
+          test -f "$unpacked/THIRD-PARTY-NOTICES.md"
+          test -f "$unpacked/LICENSE"
 
+      # Not on a pull request: any retention makes the builds downloadable.
       - uses: actions/upload-artifact@v7
+        if: github.event_name != 'pull_request'
         with:
           name: release-${{ matrix.rid }}
           path: |
@@ -261,6 +292,7 @@ jobs:
   # existing one). The version 0.x of a project in development is a pre-release.
   release:
     name: create the GitHub release
+    if: github.event_name != 'pull_request'
     needs: [check-tag, build]
     runs-on: ubuntu-26.04
     timeout-minutes: 15
@@ -273,7 +305,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: refs/tags/${{ env.TAG }}
+          ref: ${{ needs.check-tag.outputs.sha }}
           sparse-checkout: docs/releases
 
       - uses: actions/download-artifact@v8
@@ -299,7 +331,7 @@ jobs:
           case "$VERSION" in 0.*) ;; *) prerelease=--prerelease=false ;; esac
           if gh release view "$TAG" > /dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
-            gh release edit "$TAG" --title "$title" --notes-file "$notes" $prerelease
+            gh release edit "$TAG" --title "$title" --notes-file "$notes" --draft=false $prerelease
           else
             gh release create "$TAG" dist/* --verify-tag --title "$title" --notes-file "$notes" $prerelease
           fi

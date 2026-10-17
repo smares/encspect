@@ -115,8 +115,8 @@ The Graphs tab, next to the findings, draws the stream's series: the bitrate and
 - **Without its display:** a backend that cannot connect (`wayland` without a compositor, `x11` without an X server) ends with one line on stderr naming `ENCSPECT_GUI_BACKEND`, `WAYLAND_DISPLAY` and `DISPLAY`, and exit code 1.
 - **Which compositor:** with `wayland`, libwayland connects to `$WAYLAND_DISPLAY`, and when that is unset to `wayland-0` in `$XDG_RUNTIME_DIR`.
 - **Libraries:** both backends are managed code over the system's own libraries, and the GUI ships no native library for them.
-  - X11: libX11, libXrandr, libXi, libXext, libXfixes, libXcursor, libSM and libICE; libgtk-3 and libgdk-3 for the GTK file dialog when no portal answers.
-  - Wayland: libwayland-client, libwayland-cursor, libwayland-egl, libxkbcommon, libgbm and libdrm, with EGL for drawing; glib only if `UseGLibMainLoop` is set, which the GUI does not do.
+  - X11: libfontconfig (which Skia's library links, on both backends), libX11, libXrandr, libXi, libXext, libXfixes, libXcursor, libSM and libICE; libgtk-3 and libgdk-3 for the GTK file dialog when no portal answers.
+  - Wayland: libfontconfig, libwayland-client, libwayland-cursor, libwayland-egl, libxkbcommon, libgbm and libdrm, with EGL for drawing; glib only if `UseGLibMainLoop` is set, which the GUI does not do.
 - **Which one runs:** `encspect-gui --self-check` starts the chosen backend without showing a window and prints one of these:
   - `Windowing backend: X11.` or `Windowing backend: Wayland.`
   - `Windowing backend: unknown.` when the backend started but reported no screen within 2.5 seconds.

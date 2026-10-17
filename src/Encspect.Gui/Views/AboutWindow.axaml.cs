@@ -12,7 +12,16 @@ public partial class AboutWindow : Window
     // The open About window, so that choosing About again brings it forward instead of opening a second one.
     public static AboutWindow? Current { get; private set; }
 
-    public static void ShowFor(Window owner)
+    // A visible window to own the dialog: the active one, else any other. None is a valid answer: the application menu
+    // on macOS stays usable when only a closed main window is left behind a detail window, or none is open.
+    public static Window? PickOwner(IEnumerable<Window> windows)
+    {
+        Window[] open = [.. windows.Where(w => w.IsVisible && w is not AboutWindow)];
+        return open.FirstOrDefault(w => w.IsActive) ?? open.FirstOrDefault();
+    }
+
+    // Current is set only once the window has been shown, so a failed show leaves the next try a fresh start.
+    public static void ShowFor(Window? owner)
     {
         if (Current is { } open)
         {
@@ -20,9 +29,25 @@ public partial class AboutWindow : Window
             return;
         }
 
-        Current = new AboutWindow();
-        Current.Closed += (_, _) => Current = null;
-        _ = Current.ShowDialog(owner);
+        var window = new AboutWindow();
+        if (owner is { IsVisible: true })
+        {
+            _ = window.ShowDialog(owner);
+        }
+        else
+        {
+            window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            window.Show();
+        }
+
+        Current = window;
+        window.Closed += (_, _) =>
+        {
+            if (Current == window)
+            {
+                Current = null;
+            }
+        };
     }
 
     public NoticesWindow? Notices { get; private set; }

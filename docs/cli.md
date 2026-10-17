@@ -80,7 +80,7 @@ Without it, the output is unchanged.
 
 ### `--version`
 
-Prints `encspect <version>` and exits with 0, for example `encspect 0.1.0+3f2a9c1`.
+Prints `encspect <version>` and exits with 0, for example `encspect 0.1.0+4da770c4bc662c9524f4f219682b00c7634a48fc`.
 
 - **Same string everywhere:** it is the `version` in a JSON report's `tool` object and the version the GUI's About window shows.
 - **Commit suffix:** the part after `+` names the commit the build was made from, so a bug report identifies the exact source. A build without Git metadata has no suffix.
