@@ -55,6 +55,7 @@ public class MatroskaFindingTests
     [Theory]
     [InlineData("matroska/live-id3v1.mka", new[] { "ID3v1" })]
     [InlineData("matroska/live-ape-id3v1.mka", new[] { "APE", "ID3v1" })]
+    [InlineData("matroska/live-ape-large.mka", new[] { "APE" })]
     public void ATagAfterALiveRecordingIsATag(string name, string[] tags)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -62,6 +63,89 @@ public class MatroskaFindingTests
         Assert.Equal(tags, report.Root.Children.Where(c => c.Kind == NodeKind.Tag).Select(c => c.Name));
         Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.element-truncated" or "matroska.unknown-element" || f.Code.StartsWith("tag.", StringComparison.Ordinal));
         Assert.Single(report.Streams);
+    }
+
+    // The Tags element is the file's own tags: the summary lists it and the tags filter hides it, as for MP4's item list.
+    [Fact]
+    public void TheTagsElementIsATagOfTheFile()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/crc-valid.mka");
+
+        Node tags = Descendants(report.Root).Single(n => n.Name == "Tags");
+        Assert.Equal(NodeKind.Tag, tags.Kind);
+        Assert.Equal(["Tags"], ReportSummary.From(report).Tags);
+        Assert.False(new ReportFilter(ReportSections.Tags).Includes(tags));
+        Assert.True(ReportFilter.All.Includes(tags));
+    }
+
+    // The findings of the limits point at a node that exists, named and sized as the finding says.
+    [Fact]
+    public void TheLacedFramesFindingPointsAtTheBlock()
+    {
+        byte[] cluster = MatroskaBuilder.Cluster(0, [.. Enumerable.Repeat(MatroskaBuilder.EmptyLacedBlock(), 20_000)]);
+
+        Report report = Analyzer.CreateDefault().Analyze("laced.mka", new MemoryStream(MatroskaBuilder.Concat(MatroskaBuilder.Header(), MatroskaBuilder.Segment(cluster))));
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Node node = NodeOf(report, finding);
+        Assert.Equal("SimpleBlock", node.Name);
+        Assert.Equal(7, node.Length);
+        Assert.Contains($"0x{node.Offset:X}", finding.Message, StringComparison.Ordinal);
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    // The node budget stops the elements outside Clusters and nothing else: the Clusters behind the elements it skipped are read, the skipped
+    // elements are one Unparsed Data node that the finding names by where it starts, and what the skipped elements may hold is not reported missing.
+    [Fact]
+    public void ClustersAreReadPastTheNodeBudget()
+    {
+        byte[] voids = MatroskaBuilder.Concat([.. Enumerable.Repeat(MatroskaBuilder.Void(0), FileReader.MaxNodes + 10_000)]);
+        byte[] cluster = MatroskaBuilder.Cluster(0, MatroskaBuilder.SimpleBlock(1, 0, [0xFC, 0xFF, 0xFE]), MatroskaBuilder.SimpleBlock(1, 20, [0xFC, 0xFF, 0xFE]));
+        byte[] file = MatroskaBuilder.File(MatroskaBuilder.Info(), MatroskaBuilder.OpusTracks(), voids, cluster, voids, cluster);
+
+        Report report = Analyzer.CreateDefault().Analyze("budget.mka", new MemoryStream(file));
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Node node = NodeOf(report, finding);
+        Assert.Equal("Unparsed Data", node.Name);
+        Assert.Contains($"0x{node.Offset:X}", finding.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.no-clusters" or "matroska.missing-info" or "matroska.missing-tracks" or "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("Opus", stream.Codec);
+        Assert.InRange(stream.Duration, 0.07, 0.09);
+        Node segment = Descendants(report.Root).Single(n => n.Name == "Segment");
+        Assert.Equal(2, segment.Children.Count(c => c.Name == "Cluster"));
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    // A file of thousands of EBML Headers and Segments is not read on past a limit: the rest is one Unparsed Data node.
+    [Fact]
+    public void ElementsAtTheRootAreLimited()
+    {
+        byte[] file = MatroskaBuilder.Concat([MatroskaBuilder.Header(), .. Enumerable.Repeat<byte[]>([0x18, 0x53, 0x80, 0x67, 0x80], FileReader.MaxRootElements + 100)]);
+
+        Report report = Analyzer.CreateDefault().Analyze("segments.mka", new MemoryStream(file));
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Assert.Equal("Unparsed Data", NodeOf(report, finding).Name);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    // Findings that stand for one element each are listed up to a limit, then counted in one more.
+    [Fact]
+    public void FindingsOfManyTracksAreListedUpToALimit()
+    {
+        byte[] tracks = MatroskaBuilder.Element(0x1654AE6B, MatroskaBuilder.Concat([.. Enumerable.Repeat<byte[]>([0xAE, 0x80], 5_000)]));
+
+        Report report = Analyzer.CreateDefault().Analyze("tracks.mka", new MemoryStream(MatroskaBuilder.File(MatroskaBuilder.Info(), tracks)));
+
+        Assert.Equal(FindingCollector.MaxListed + 1, report.Findings.Count(f => f.Code == "matroska.track-field"));
+        Finding rest = report.Findings.Last(f => f.Code == "matroska.track-field");
+        Assert.True(rest.Count > 4_000, $"{rest.Count}");
+        Assert.NotNull(rest.Path);
+        Assert.Equal(FindingCollector.MaxListed + 1, report.Findings.Count(f => f.Code == "matroska.track-not-analyzed"));
     }
 
     [Fact]
@@ -73,6 +157,31 @@ public class MatroskaFindingTests
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(44100, stream.SampleRate);
         Assert.Equal(2, stream.Channels);
+    }
+
+    private static IEnumerable<Node> Descendants(Node node)
+    {
+        yield return node;
+        foreach (Node child in node.Children)
+        {
+            foreach (Node descendant in Descendants(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    // The node a finding's path leads to.
+    private static Node NodeOf(Report report, Finding finding)
+    {
+        Node node = report.Root;
+        foreach (int index in finding.Path!)
+        {
+            node = node.Children[index];
+        }
+
+        Assert.Equal((finding.Node!.Name, finding.Node.Offset, finding.Node.Length), (node.Name, node.Offset, node.Length));
+        return node;
     }
 
     private sealed class ForcedMatroska : IFormatParser

@@ -103,8 +103,9 @@ public sealed class MatroskaParser : IFormatParser
                 break;
             }
 
-            // An element the schema does not list is skipped by its size and the walk goes on, as the parse does (RFC 8794, section 6.2);
-            // one whose size runs past the data ends the walk.
+            // An element the schema does not list is skipped by its size and the walk goes on, as the parse does (RFC 9559, section 7); one whose
+            // size runs past the data ends the walk. It belongs to the elements only if an element the schema lists follows it: what trails the
+            // last of those, such as an APEv2 tag whose header reads as an element ID with a size, is not.
             if (Schema.Find(header.Id) is null)
             {
                 if (header.IsUnknownSize || header.End!.Value > reader.End)
@@ -112,7 +113,7 @@ public sealed class MatroskaParser : IFormatParser
                     break;
                 }
 
-                position = end = header.End.Value;
+                position = header.End.Value;
                 continue;
             }
 
@@ -129,6 +130,7 @@ public sealed class MatroskaParser : IFormatParser
                 }
 
                 position = header.DataOffset;
+                long childrenEnd = position;
                 while (position + 2 <= reader.End)
                 {
                     if (++steps % 4096 == 0)
@@ -160,9 +162,13 @@ public sealed class MatroskaParser : IFormatParser
                     }
 
                     position = child.End.Value;
+                    if (Schema.Find(child.Id) is not null)
+                    {
+                        childrenEnd = position;
+                    }
                 }
 
-                end = position;
+                end = position = childrenEnd;
                 continue;
             }
 
@@ -253,7 +259,11 @@ public sealed class MatroskaParser : IFormatParser
             if (child.Id == 0x4282 && child.Size is > 0 and <= 64)
             {
                 reader.Position = child.DataOffset;
-                docType = Encoding.ASCII.GetString(reader.ReadBytes((int)child.Size.Value)).TrimEnd('\0');
+                docType = Encoding.ASCII.GetString(reader.ReadBytes((int)child.Size.Value));
+                if (docType.IndexOf('\0', StringComparison.Ordinal) is >= 0 and var nul)
+                {
+                    docType = docType[..nul];
+                }
             }
 
             position = child.End!.Value;

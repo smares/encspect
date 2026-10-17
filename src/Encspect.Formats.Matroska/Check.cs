@@ -13,12 +13,12 @@ internal sealed partial class FileReader
         string number = _segments.Count > 1 ? $" {segment.Number}" : string.Empty;
         if (!segment.IsHeaderMissing)
         {
-            if (segment.InfoCount == 0)
+            if (segment.InfoCount == 0 && !segment.HasSkippedElements)
             {
                 _findings.AddNow(Severity.Warning, "matroska.missing-info", $"The Segment{number} holds no Info element, the one Top-Level Element RFC 9559 requires (section 6.1).", anchor);
             }
 
-            if (hasClusters && segment.TracksCount == 0)
+            if (hasClusters && segment.TracksCount == 0 && !segment.HasSkippedElements)
             {
                 _findings.AddNow(Severity.Warning, "matroska.missing-tracks",
                     $"The Segment{number} holds Clusters but no Tracks element, which a playable file needs (RFC 9559, section 6.1), so no block can be assigned to a track.", anchor);
@@ -53,7 +53,7 @@ internal sealed partial class FileReader
 
         foreach ((ulong id, TrackStatistics statistics) in segment.Statistics.Select(p => (p.Key, p.Value)))
         {
-            if (!segment.TracksByNumber.ContainsKey(id))
+            if (!segment.TracksByNumber.ContainsKey(id) && !segment.HasSkippedElements)
             {
                 _findings.Add(Severity.Warning, "matroska.block-track-unknown", statistics.FirstBlock!, count =>
                     $"{(count == 1 ? "Blocks name" : $"Blocks name {count} tracks")} no TrackEntry describes (RFC 9559, section 10): {(id == ulong.MaxValue ? "many track numbers" : $"track {id}")} has {statistics.Blocks} {(statistics.Blocks == 1 ? "block" : "blocks")}, the first at 0x{statistics.FirstBlock!.Offset:X}; they are not assigned to a track.");
@@ -103,7 +103,7 @@ internal sealed partial class FileReader
                 _findings.AddNow(Severity.Warning, "matroska.audio-fields",
                     $"{which} is an audio track without an Audio element, which the codec mapping requires (draft-ietf-cellar-codec, section 3.4); its sampling frequency and channels are unstated.", node);
             }
-            else if (track.Channels == 0 || track.SamplingFrequency is <= 0)
+            else if (track.Channels == 0 || (track.SamplingFrequency is { } rate && !Codecs.IsRate(rate)))
             {
                 _findings.AddNow(Severity.Warning, "matroska.audio-fields",
                     $"{which} states {(track.Channels == 0 ? "0 channels" : $"a sampling frequency of {track.SamplingFrequency?.ToString(CultureInfo.InvariantCulture)} Hz")}, which RFC 9559 forbids (section 5.1.4.1.29).",
@@ -201,14 +201,20 @@ internal sealed partial class FileReader
 
             long absolute = segment.DataStart + position;
             string name = ElementName(id);
-            if (absolute < segment.DataStart || absolute >= segment.End)
+            if (absolute < segment.DataStart || absolute >= segment.DeclaredEnd)
             {
                 _findings.Add(Severity.Warning, "matroska.seek-position", node, count =>
-                    $"{(count == 1 ? "A Seek entry points" : $"{count} Seek entries point")} outside the Segment (RFC 9559, section 5.1.1.1.2); the first names the {name} at position {position}, which is not in the {Bytes(segment.End - segment.DataStart)} of the Segment.");
+                    $"{(count == 1 ? "A Seek entry points" : $"{count} Seek entries point")} outside the Segment (RFC 9559, section 5.1.1.1.2); the first names the {name} at position {position}, which is not in the {Bytes(segment.DeclaredEnd - segment.DataStart)} of the Segment.");
                 continue;
             }
 
-            if (Ebml.TryReadHeader(_reader, absolute, segment.End, segment.Document!.MaxIdLength, segment.Document.MaxSizeLength, out ElementHeader header) != HeaderProblem.None || header.Id != id)
+            // The file is cut short before the element: its absence is the truncation's, which is reported on its own.
+            if (absolute >= segment.End)
+            {
+                continue;
+            }
+
+            if (Ebml.TryReadHeader(_reader, absolute, segment.End, segment.Document!.ReadIdLength, segment.Document.ReadSizeLength, out ElementHeader header) != HeaderProblem.None || header.Id != id)
             {
                 _findings.Add(Severity.Warning, "matroska.seek-position", node, count =>
                     $"{(count == 1 ? "A Seek entry does" : $"{count} Seek entries do")} not point at the element {(count == 1 ? "it names" : "they name")} (RFC 9559, section 5.1.1.1.2); the first names the {name} at position {position}, where the Segment has no such element.");
@@ -226,7 +232,7 @@ internal sealed partial class FileReader
 
         foreach ((long position, Node node) in segment.CuePositions)
         {
-            if (!segment.ClusterPositions.Contains(position))
+            if (!segment.ClusterPositions.Contains(position) && !(segment.DataStart + position >= segment.End && segment.DeclaredEnd > segment.End))
             {
                 _findings.Add(Severity.Warning, "matroska.cue-position", node, count =>
                     $"{(count == 1 ? "A cue points" : $"{count} cues point")} at a position where no Cluster starts (RFC 9559, section 5.1.5.1.2.2); the first, at 0x{node.Offset:X}, gives {position}.");

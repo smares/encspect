@@ -70,7 +70,7 @@ internal sealed partial class FileReader
 
         block.Frames = (ushort)count;
         block.FramesDelta = element.Length + fixedPart + (int)laceBytes;
-        if (count > 1 && GoesToCodec(segment, block.Track) && !AccountFrames(count, element.Offset, name))
+        if (count > 1 && GoesToCodec(segment, block.Track) && !AccountFrames(count, element.Offset, end - element.Offset, name))
         {
             block.Status = BlockStatus.FramesLimit;
             return AddBlock(records, block, name, cluster.Timestamp);
@@ -100,7 +100,7 @@ internal sealed partial class FileReader
 
     // Counts the frames of a laced block, and false once the file's blocks hold more than the analysis keeps: a block of seven bytes
     // can state 256 frames of no bytes.
-    private bool AccountFrames(int count, long offset, string name)
+    private bool AccountFrames(int count, long offset, long length, string name)
     {
         _lacedFrames += count;
         if (_lacedFrames <= MaxLacedFrames)
@@ -112,7 +112,7 @@ internal sealed partial class FileReader
         {
             _lacedFramesReported = true;
             _findings.AddNow(Severity.Warning, "matroska.too-many-elements",
-                $"The laced blocks of the file hold more than {MaxLacedFrames} frames; the frames of the blocks from the {name} at 0x{offset:X} on are not read.", new Node(name, offset, 0));
+                $"The laced blocks of the file hold more than {MaxLacedFrames} frames; the frames of the blocks from the {name} at 0x{offset:X} on are not read.", new Node(name, offset, length));
         }
 
         return false;
@@ -159,7 +159,9 @@ internal sealed partial class FileReader
             ulong key = segment.Statistics.Count >= MaxTrackStatistics ? ulong.MaxValue : block.Track;
             if (!segment.Statistics.TryGetValue(key, out statistics))
             {
-                segment.Statistics[key] = statistics = new TrackStatistics();
+                // A TrackTimestampScale that is not above 0 (RFC 9559, section 5.1.4.1.15) or not a number is read as the default of 1.
+                double scale = segment.TracksByNumber.TryGetValue(key, out TrackInfo? info) && double.IsFinite(info.TimestampScale) && info.TimestampScale > 0 ? info.TimestampScale : 1.0;
+                segment.Statistics[key] = statistics = new TrackStatistics { Scale = scale };
             }
         }
 
@@ -182,7 +184,7 @@ internal sealed partial class FileReader
 
         statistics.Frames += block.Frames;
         statistics.Bytes += block.DataLength - (block.FramesDelta - block.HeaderLength);
-        long timestamp = clusterTimestamp + block.Timestamp;
+        double timestamp = clusterTimestamp + (block.Timestamp * statistics.Scale);
         if (!statistics.HasTimes)
         {
             statistics.HasTimes = true;
@@ -357,7 +359,7 @@ internal sealed partial class FileReader
         while (position < end)
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
-            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.MaxIdLength, segment.Document.MaxSizeLength, out ElementHeader child);
+            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.ReadIdLength, segment.Document.ReadSizeLength, out ElementHeader child);
             if (problem != HeaderProblem.None)
             {
                 records.Children.Add(new Child { Offset = position, DataLength = end - position, Depth = (byte)depth, Block = Child.UnparsedBlock });
@@ -367,8 +369,9 @@ internal sealed partial class FileReader
                 return blocks;
             }
 
-            if (!AccountRecord(records))
+            if (!AccountRecord(position, end))
             {
+                records.Children.Add(new Child { Offset = position, DataLength = end - position, Depth = (byte)depth, Block = Child.UnparsedBlock });
                 return blocks;
             }
 

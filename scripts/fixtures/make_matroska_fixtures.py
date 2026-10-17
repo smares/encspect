@@ -1289,6 +1289,117 @@ def _():
 TAG_WRITERS["writer-tag-without-info"] = "bar 2.0"
 
 
+# --- Gate 2: TrackTimestampScale, tags after live recordings, truncated seeks, misplaced values, null octets, header limits, sampling frequencies ----------
+
+
+PCM_RATE = 48000.0
+TS_SCALE_TRACK_EXTRA = (flt(0x23314F, 2.0),)
+
+
+@fixture("track-timestamp-scale", "A PCM track with a TrackTimestampScale of 2.0 and three Clusters at 0, 1000 and 2000 ticks, each with blocks at 0 and 10 Track Ticks: a block's time is "
+         "(Cluster Timestamp + block timestamp times TrackTimestampScale) times TimestampScale (RFC 9559 section 11.2), so the Cluster's Timestamp is not scaled.", findings=[("matroska.codec-not-analyzed", "PCM")], streams=[("PCM (integer, little-endian)", 48000, 2)])
+def _():
+    pcm = audio_track(1, "A_PCM/INT/LIT", 2, PCM_RATE, bits=16, extra=TS_SCALE_TRACK_EXTRA)
+    clusters = [cluster(t, *[simple_block(1, ts, bytes(range(16)) * 4, key=True) for ts in (0, 10)]) for t in (0, 1000, 2000)]
+    return build(standard(*clusters, track=[pcm]))
+
+
+@fixture("encrypted-track-timestamp-scale", "An encrypted Opus track with a TrackTimestampScale of 2.0 in Clusters at 0 and 1000 ticks: its length comes from the container's timing, "
+         "which scales the blocks' timestamps and not the Clusters'.", findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
+def _():
+    enc = content_encodings(content_encoding(order=0, scope=1, encryption=5, cipher=1, key_id=b"\x01\x02"))
+
+    def sealed(first):
+        return [simple_block(1, ts, bytes((first + ts + k) & 0xFF for k in range(40)), key=True) for ts in (0, 10, 20)]
+
+    return build(standard(cluster(0, *sealed(0)), cluster(1000, *sealed(50)), track=[opus_track(encodings=enc, extra=TS_SCALE_TRACK_EXTRA)]))
+
+
+@fixture("live-ape-large", "A live recording with an APEv2 tag of 2,000 bytes of value after it: the tag's header reads as an element ID (0x4150) and a size of 1,364 bytes, which the "
+         "tag outgrows, so the walk over the unknown element would swallow it. An unknown element counts as part of the recording only if a known one follows it.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
+def _():
+    return live_file(), ape_tag(((b"Title", b"A live recording " * 118),))
+
+
+@fixture("truncated-seek-cues", "A file cut at the end, right after the last Cluster, whose SeekHead names the Cues past the cut: the position lies inside the Segment's declared "
+         "size, so the truncation is the finding and the Seek entry is not.", findings=[("matroska.element-truncated", "The Segment states")], streams=[OPUS], valid=False)
+def _():
+    def make(p):
+        head = seek_head((m.INFO, p.get("info", 0)), (m.TRACKS, p.get("tracks", 0)), (m.CLUSTER, p.get("c0", 0)), (m.CUES, p.get("cues", 0)))
+        inf, trk = info(), tracks(opus_track())
+        c0, c1 = cluster(0, *blocks(count=3)), cluster(60, *blocks(count=3, first=3))
+        cu = cues((0, 1, p.get("c0", 0)), (60, 1, p.get("c1", 0)))
+        seg = segment(head, inf, trk, c0, c1, cu)
+        return [ebml_header(), seg], {"info": inf, "tracks": trk, "c0": c0, "c1": c1, "cues": cu}, seg
+
+    elements = []
+
+    def capture(p):
+        result = make(p)
+        elements[:] = result[0]
+        return result
+
+    data = laid_out(capture)
+    cues_element = elements[1].children[-1]
+    return data[:cues_element.offset]
+
+
+@fixture("misplaced-values", "A TimestampScale of 5,000,000 inside Tracks and a WritingApp of \"LAME 3.100\" inside a Tag, both where the schema does not place them, in a file whose Info "
+         "states 1,000,000 and the mkvmerge apps: the misplaced values are shown and reported but not used, so the PCM track lasts 0.12 s at the Info's scale and its writer is mkvmerge.",
+         findings=[("matroska.misplaced-element", "2 elements are placed where the schema does not allow"), ("matroska.codec-not-analyzed", "PCM")],
+         streams=[("PCM (integer, little-endian)", 48000, 2)], valid=False)
+def _():
+    pcm = audio_track(1, "A_PCM/INT/LIT", 2, PCM_RATE, bits=16)
+    stray_scale = uint(ID["TimestampScale"], 5_000_000)
+    stray_tag = master(ID["Tag"], master(ID["Targets"], uint(ID["TargetTypeValue"], 50)), text(ID["WritingApp"], "LAME 3.100"))
+    inf = master(m.INFO, uint(ID["TimestampScale"], 1_000_000), flt(ID["Duration"], 100.0), text(ID["MuxingApp"], "libebml v1.4.5 + libmatroska v1.7.1"),
+                 text(ID["WritingApp"], "mkvmerge v82.0 ('I'm The President') 64-bit"))
+    return build([ebml_header(), segment(inf, tracks(pcm, stray_scale), cluster(0, *[simple_block(1, i * 40, bytes(range(16)) * 4, key=True) for i in range(4)]),
+                                         master(m.TAGS, stray_tag))])
+
+
+@fixture("string-null", "Strings with a null octet and data after it (RFC 8794 section 13): a CodecID of \"A_OPUS\\0\\0xy\", a DocType of \"matroska\\0xy\" and a Title of \"ab\\0cd\" end at the "
+         "first null octet, so the track is routed as Opus, the file is Matroska and none is invalid text.", streams=[OPUS])
+def _():
+    trk = opus_track()
+    codec = next(c for c in trk.children if c.id == ID["CodecID"])
+    codec.data = b"A_OPUS\x00\x00xy"
+    elements = standard(cluster(0, *blocks(count=4)), track=[trk], info_extra=(E(ID["Title"], b"ab\x00cd"),))
+    return build([ebml_header("matroska\x00xy"), elements[1]])
+
+
+@fixture("header-max-id-length-2", "An EBML Header with an EBMLMaxIDLength of 2: the Segment and the Top-Level Elements have IDs of four octets whatever it says (RFC 9559 section 4.4), "
+         "so the file is read in full and only the header's value is reported.", findings=[("matroska.header-limits", "EBMLMaxIDLength of 2")], streams=[OPUS], valid=False)
+def _():
+    return build([ebml_header(max_id=2), standard(cluster(0, *blocks(count=4)))[1]])
+
+
+@fixture("header-limits-large", "An EBML Header with an EBMLMaxIDLength of 200 and an EBMLMaxSizeLength of 16, which RFC 9559 forbids (section 4.3): the finding states the values as "
+         "the header gives them.", findings=[("matroska.header-limits", "EBMLMaxIDLength of 200 and an EBMLMaxSizeLength of 16")], streams=[OPUS], valid=False)
+def _():
+    return build([ebml_header(max_id=200, max_size=16), standard(cluster(0, *blocks(count=4)))[1]])
+
+
+@fixture("sampling-frequency-invalid", "Three PCM tracks whose SamplingFrequency is not above 0 (RFC 9559 section 5.1.4.1.29.1): NaN, -48000 and infinity. Each is a finding, and "
+         "the streams have no sampling rate.",
+         findings=[("matroska.audio-fields", "NaN Hz"), ("matroska.audio-fields", "-48000 Hz"), ("matroska.audio-fields", "Infinity Hz"),
+                   ("matroska.codec-not-analyzed", "Track 1"), ("matroska.codec-not-analyzed", "Track 2"), ("matroska.codec-not-analyzed", "Track 3")],
+         streams=[("PCM (integer, little-endian)", 0, 2)] * 3, valid=False)
+def _():
+    rates = [float("nan"), -48000.0, float("inf")]
+    entries = [audio_track(i + 1, "A_PCM/INT/LIT", 2, rate, bits=16) for i, rate in enumerate(rates)]
+    items = [simple_block(i + 1, t * 10, bytes(range(16)) * 4, key=True) for i in range(3) for t in range(3)]
+    return build(standard(cluster(0, *items), track=entries))
+
+
+@fixture("writer-lavf-under-application", "A Segment whose MuxingApp is ffmpeg's muxer version (\"Lavf60.16.100\") and whose WritingApp names another application, as libavformat writes "
+         "the encoding_tool metadata (matroskaenc.c): the muxer is the library under the application, as libebml and libmatroska are under mkvmerge, so the two do not conflict.",
+         streams=[OPUS])
+def _():
+    return with_apps("Lavf60.16.100", "HandBrake 1.7.2 2024011600")
+
+
 # --- Writing the files ---------------------------------------------------------------------------------
 
 

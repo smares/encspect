@@ -1,0 +1,321 @@
+{
+ "description": "Strings with a null octet and data after it (RFC 8794 section 13): a CodecID of \"A_OPUS\\0\\0xy\", a DocType of \"matroska\\0xy\" and a Title of \"ab\\0cd\" end at the first null octet, so the track is routed as Opus, the file is Matroska and none is invalid text.",
+ "length": 396,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 43,
+   "clusters": [
+    {
+     "offset": 200,
+     "length": 196,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures",
+    "title": "ab"
+   },
+   "length": 353,
+   "declared_end": 396
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   43,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     14
+    ],
+    [
+     "DocTypeVersion",
+     35,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     39,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   43,
+   353,
+   [
+    [
+     "Info",
+     49,
+     71,
+     [
+      [
+       "TimestampScale",
+       54,
+       7
+      ],
+      [
+       "Duration",
+       61,
+       11
+      ],
+      [
+       "MuxingApp",
+       72,
+       20
+      ],
+      [
+       "WritingApp",
+       92,
+       20
+      ],
+      [
+       "Title",
+       112,
+       8
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     120,
+     80,
+     [
+      [
+       "TrackEntry",
+       125,
+       75,
+       [
+        [
+         "TrackNumber",
+         127,
+         3
+        ],
+        [
+         "TrackUID",
+         130,
+         5
+        ],
+        [
+         "TrackType",
+         135,
+         3
+        ],
+        [
+         "CodecID",
+         138,
+         12
+        ],
+        [
+         "CodecPrivate",
+         150,
+         22
+        ],
+        [
+         "CodecDelay",
+         172,
+         6
+        ],
+        [
+         "SeekPreRoll",
+         178,
+         7
+        ],
+        [
+         "Audio",
+         185,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           187,
+           10
+          ],
+          [
+           "Channels",
+           197,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     200,
+     196,
+     [
+      [
+       "Timestamp",
+       206,
+       3
+      ],
+      [
+       "SimpleBlock",
+       209,
+       46
+      ],
+      [
+       "SimpleBlock",
+       255,
+       47
+      ],
+      [
+       "SimpleBlock",
+       302,
+       48
+      ],
+      [
+       "SimpleBlock",
+       350,
+       46
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 209,
+   "length": 46,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     215,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 255,
+   "length": 47,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     261,
+     41
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 302,
+   "length": 48,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     308,
+     42
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 350,
+   "length": 46,
+   "track": 1,
+   "timestamp": 60,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     356,
+     40
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_OPUS",
+   "private": [
+    153,
+    19
+   ],
+   "channels": 1,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 6500000,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

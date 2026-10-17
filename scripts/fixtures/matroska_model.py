@@ -15,6 +15,7 @@ src/Encspect.Formats.Matroska/Elements.cs, which matroska_tables.py generates fr
 Standard library only, so the hand-built fixtures regenerate identically in CI.
 """
 
+import math
 import pathlib
 import re
 import struct
@@ -29,6 +30,7 @@ MASTER, UNSIGNED, SIGNED, FLOAT, STRING, UTF8, DATE, BINARY = "Master", "Unsigne
 
 
 DEFAULTS = {}
+RECURSIVE = set()
 
 
 def _load():
@@ -39,6 +41,8 @@ def _load():
         table[int(m.group(1), 16)] = (m.group(2), m.group(3), path)
         if m.group(5) is not None:
             DEFAULTS[int(m.group(1), 16)] = m.group(5)
+        if m.group(4).endswith("\\\\+" + m.group(2)):
+            RECURSIVE.add(int(m.group(1), 16))
     return table
 
 
@@ -67,6 +71,19 @@ def is_top_level(ident):
     """A direct child of the Segment."""
     path = path_of(ident)
     return path is not None and path.startswith("\\Segment\\") and path.count("\\") == 2
+
+
+def is_placed(ident, parent):
+    """Whether the schema places the element in its parent (None: the root of the document): the CRC-32 and Void elements fit any master, a
+    recursive element fits in itself, any other by its path (RFC 8794 section 11.1.6.2)."""
+    if ident in (CRC32, VOID):
+        return True
+    path = path_of(ident)
+    if path is None:
+        return False
+    if parent is None:
+        return path.count("\\") == 1
+    return path.rsplit("\\", 1)[0] == path_of(parent) or (parent == ident and ident in RECURSIVE)
 
 
 def is_deprecated(ident):
@@ -542,6 +559,8 @@ class Reader:
         self.track = None
         self.encoding = None
         self.top = []
+        # How many elements that the schema does not place where they stand enclose the one being read: their values are shown, never used.
+        self.displaced = 0
 
     # -- blocks
 
@@ -647,14 +666,21 @@ class Reader:
         name = name_of(ident)
         node = Element(name, h_off, end - h_off, ident=ident)
         kind = type_of(ident)
+        placed = is_placed(ident, parent_def_id) and self.displaced == 0
         if kind == MASTER:
             node.children = []
-            self.begin(ident, node)
+            if placed:
+                self.begin(ident, node)
+            else:
+                self.displaced += 1
             if depth < MAX_DEPTH:
                 self.children(node, data_off, end, depth + 1, complete)
-            self.finish(ident, node)
+            if placed:
+                self.finish(ident, node)
+            else:
+                self.displaced -= 1
         elif kind is not None:
-            node.value = self.leaf(ident, kind, data_off, end)
+            node.value = self.leaf(ident, kind, data_off, end, placed)
         return node, end, complete
 
     def children(self, node, start, end, depth, complete):
@@ -671,7 +697,7 @@ class Reader:
                 child.children = [Element("Computed", position + h[1] + h[2], 4)]
             position = next_position
 
-    def leaf(self, ident, kind, start, end):
+    def leaf(self, ident, kind, start, end, placed=True):
         data = self.data[start:end]
         value = None
         if not data and ident in DEFAULTS:
@@ -685,8 +711,10 @@ class Reader:
         elif kind == FLOAT and len(data) in (0, 4, 8):
             value = 0.0 if not data else struct.unpack(">f" if len(data) == 4 else ">d", data)[0]
         elif kind in (STRING, UTF8):
-            value = data.rstrip(b"\0").decode("utf-8", "replace")
-        self.collect(ident, value, start, end - start)
+            # The value ends at the first null octet (RFC 8794 section 13).
+            value = data.split(b"\0", 1)[0].decode("utf-8", "replace")
+        if placed:
+            self.collect(ident, value, start, end - start)
         return value
 
     # -- what the analysis keeps
@@ -715,7 +743,8 @@ class Reader:
         if ident in names and self.track is None:
             ebml[names[ident]] = value
         if ident == 0x42F2 and value is not None:
-            self.max_id = min(value, 8)
+            # The Body is read with IDs of at least four octets whatever the header says (RFC 9559 section 4.4).
+            self.max_id = max(4, min(value, 8))
             ebml["max_id_length"] = value
         if ident == 0x42F3 and value is not None:
             self.max_size = min(value, 8)
@@ -740,15 +769,19 @@ class Reader:
             elif ident == 0x9F:
                 t["channels"] = value
             elif ident == 0xB5:
-                t["rate"] = value
+                # JSON has no NaN or infinity: a rate that is none is a rate the track does not state.
+                t["rate"] = value if value is not None and math.isfinite(value) else None
             elif ident == 0x78B5:
-                t["output_rate"] = value
+                t["output_rate"] = value if value is not None and math.isfinite(value) else None
             elif ident == 0x6264:
                 t["bits"] = value
             elif ident == 0x56AA:
                 t["delay"] = value
             elif ident == 0x9C:
                 t["lacing"] = value != 0
+            elif ident == 0x23314F and value is not None:
+                # Only a track that states a TrackTimestampScale has one in its facts (the default is 1.0).
+                t["timestamp_scale"] = value
         e = self.encoding
         if e is not None:
             if ident == 0x5031:
@@ -923,8 +956,8 @@ def writers_of(segments):
     RFC 9559 gives a Segment's Info two apps: the WritingApp, "the application that wrote this file", and the MuxingApp, "the muxing
     application or library". Both are claims of the writer role at low confidence, the application first, so it names the writer. Two
     exceptions: a text that is a libavcodec encoder ID ("Lavc60.31.102 libopus": "Lavc" and a digit or a space) names the encoder, not the
-    writer; and a MuxingApp that names the Matroska libraries (mkvtoolnix: "libebml ... + libmatroska ...") is the library under the
-    application and only evidence. ffmpeg's muxer version ("Lavf...") shows as "FFmpeg (<text>)". Streams of one Segment share the
+    writer; and a MuxingApp that names the Matroska libraries (mkvtoolnix: "libebml ... + libmatroska ...") or is ffmpeg's muxer version
+    under the WritingApp of other software is the library under the application and only evidence. ffmpeg's muxer version ("Lavf...") shows as "FFmpeg (<text>)". Streams of one Segment share the
     result; a Segment with no claim has none (None)."""
     result = []
     for segment in segments:
@@ -932,7 +965,10 @@ def writers_of(segments):
         writing, muxing = info.get("writing_app") or "", info.get("muxing_app") or ""
         # The texts as stored: ffmpeg's muxer version may follow white space ("^\s*Lavf" not followed by a letter), its encoder ID may not
         # ("^Lavc" and a digit or a space).
-        library = muxing.startswith(("libebml", "libmatroska")) and writing.strip()
+        # matroskaenc.c (FFmpeg 6.1.1) writes LIBAVFORMAT_IDENT as the MuxingApp always and the encoding_tool metadata as the WritingApp when there is
+        # one, so a "Lavf" MuxingApp under the WritingApp of other software (neither names FFmpeg) is the library under it as well.
+        muxer = re.match(r"^\s*Lavf(?![A-Za-z])", muxing) and not re.search(r"(?<![a-z])(ffmpeg|lavf|lavc|libav)(?![a-z])", writing.lower())
+        library = (muxing.startswith(("libebml", "libmatroska")) or muxer) and writing.strip()
         candidates = [writing] + ([] if library else [muxing])
         text = next((t for t in candidates if t.strip() and not re.match(r"^Lavc(?:\d| )", t)), None)
         if text is None:

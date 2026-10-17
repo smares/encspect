@@ -72,6 +72,9 @@ FIXTURES = {
     "external-ffmpeg-metadata": ("ffmpeg", ["ogg/external-ffmpeg-libopus.opus", "chapters.ffmetadata", "cover.jpg"],
                                  ["-map", "0:a", "-map_metadata", "1", "-map_chapters", "1", "-attach", "cover.jpg", "-metadata:s:t", "mimetype=image/jpeg",
                                   "-c", "copy", "-metadata", "title=A title", "-metadata", "artist=An artist"], [("Opus", 48000, 2)], [], "mka"),
+    # An application that muxes through libavformat and sets encoding_tool: matroskaenc.c writes the muxer's version as the MuxingApp and the tool as the WritingApp.
+    "external-ffmpeg-encoding-tool": ("ffmpeg", ["ogg/external-ffmpeg-libopus.opus"], ["-c", "copy", "-metadata", "encoding_tool=HandBrake 1.7.2 2024011600"],
+                                      [("Opus", 48000, 2)], [], "mka"),
     "external-mkvmerge-mp3": ("mkvmerge", ["mpeg/external-ffmpeg-cbr.mp3"], [], [("MPEG audio Layer III", 44100, 2)], [MPEG_PACKETS], "mka"),
     "external-mkvmerge-aac": ("mkvmerge", ["aac/apple-lc-adts-cbr-st44.aac"], [], [("AAC", 44100, 2)], [], "mka"),
     "external-mkvmerge-aac-he": ("mkvmerge", ["aac/faac-2.2-he-adts.aac"], [], [("AAC", 44100, 2)], [], "mka"),

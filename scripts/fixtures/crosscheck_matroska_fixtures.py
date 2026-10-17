@@ -214,12 +214,13 @@ def check_ffprobe(manifest, path, problems):
             first = next((i for i, (g, w) in enumerate(zip(got, wanted)) if g != w), min(len(got), len(wanted)))
             problems.append(f"track {track['number']}: ffprobe reads {len(got)} packets, the manifest {len(wanted)} frames; the first difference is at {first}")
             continue
-        # A block without lacing is presented at its cluster's time plus its own, less the track's CodecDelay.
+        # A block without lacing is presented at its cluster's time plus its own times the track's TrackTimestampScale (RFC 9559, section 11.2), less the
+        # track's CodecDelay.
         unlaced = [b for b in manifest["blocks"] if b["track"] == track["number"] and b["lacing"] == "none" and "problem" not in b]
         if len(unlaced) == len(packets):
             delay = (track.get("delay") or 0) / 1e9
             for block, packet in zip(unlaced, packets):
-                due = (block["cluster_timestamp"] + block["timestamp"]) * scale / 1e9 - delay
+                due = (block["cluster_timestamp"] + block["timestamp"] * track.get("timestamp_scale", 1.0)) * scale / 1e9 - delay
                 if "pts_time" in packet and abs(float(packet["pts_time"]) - due) > 0.0015:
                     problems.append(f"track {track['number']}: ffprobe presents the block at 0x{block['offset']:X} at {packet['pts_time']} s, the manifest {due:.4f} s")
                     break

@@ -73,6 +73,9 @@ internal static class Codecs
     // SBR with the output sampling frequency (the core's where the track gives none). It follows ISO/IEC 14496-3 where FFmpeg's matroskadec.c
     // differs: a frequency outside the table of thirteen is written in full (index 15 and 24 bits), 8 channels are channel configuration 7,
     // and 7 channels have none. Null where the ID names no object type or the channels have no channel configuration.
+    // A sampling frequency RFC 9559 allows (section 5.1.4.1.29.1: greater than 0): a finite number above 0. Anything else is not one.
+    public static bool IsRate(double rate) => rate > 0 && double.IsFinite(rate);
+
     public static byte[]? LegacyAacConfig(string codecId, double? samplingFrequency, double? outputSamplingFrequency, ulong? channels)
     {
         int objectType = codecId.Contains("/MAIN", StringComparison.Ordinal) ? 1
@@ -81,6 +84,11 @@ internal static class Codecs
             : codecId.Contains("/LTP", StringComparison.Ordinal) ? 4 : 0;
         int configuration = (channels ?? 1) switch { >= 1 and <= 6 => (int)(channels ?? 1), 8 => 7, _ => -1 };
         if (objectType == 0 || configuration < 0)
+        {
+            return null;
+        }
+
+        if ((samplingFrequency is { } stated && !IsRate(stated)) || (outputSamplingFrequency is { } output && !IsRate(output)))
         {
             return null;
         }

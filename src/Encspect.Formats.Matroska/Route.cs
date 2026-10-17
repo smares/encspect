@@ -6,12 +6,20 @@ namespace Encspect.Formats.Matroska;
 
 internal sealed partial class FileReader
 {
-    // Frames larger than this are not decompressed.
-    private const int MaxInflated = 1 << 26;
+    // Inflated frames and CodecPrivates larger than this are not read: a codec packet is far smaller (an Opus packet is under 61,296 bytes,
+    // RFC 6716 section 3.4), and a larger limit lets a few bytes of zlib stand for a thousandfold of memory and time.
+    private const int MaxInflated = 1 << 20;
+
+    // A CodecPrivate larger than this is not read.
+    private const int MaxCodecPrivate = 1 << 26;
+
+    // Encodings of a part of a track that are undone, one after the other, for every frame; real files have one.
+    private const int MaxEncodingSteps = 16;
 
     private void RouteTracks(SegmentState segment)
     {
         PrepareWriterClaims(segment);
+        segment.BlocksByTrack = IndexBlocks(segment);
         foreach (TrackInfo track in segment.Tracks)
         {
             string label = track.Number is { } n ? $"Track {n}" : "A track without a number";
@@ -43,14 +51,58 @@ internal sealed partial class FileReader
                 _context.UpdateStream(made[0], stream with { PlaybackGroup = segment.Number });
             }
         }
+
+        segment.BlocksByTrack = null;
+    }
+
+    // The records of the blocks of each audio track the Segment's Tracks describe, in file order.
+    private Dictionary<ulong, List<int>> IndexBlocks(SegmentState segment)
+    {
+        var index = new Dictionary<ulong, List<int>>();
+        foreach (TrackInfo track in segment.Tracks)
+        {
+            if (track.IsAudio && track.Number is { } number)
+            {
+                index.TryAdd(number, []);
+            }
+        }
+
+        if (index.Count == 0)
+        {
+            return index;
+        }
+
+        ChunkedList<BlockRecord> blocks = segment.Records.Blocks;
+        List<int>? last = null;
+        uint lastTrack = 0;
+        for (int i = 0; i < blocks.Count; i++)
+        {
+            if (i % 4096 == 0)
+            {
+                _context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
+            uint number = blocks[i].Track;
+            if (last is null || number != lastTrack)
+            {
+                lastTrack = number;
+                index.TryGetValue(number, out last);
+            }
+
+            last?.Add(i);
+        }
+
+        return index;
     }
 
     // The Segment's WritingApp and MuxingApp (RFC 9559, sections 5.1.2.14 and 5.1.2.13: "Writing application", "Muxing application or library") are
     // claims of the writer role (a "Lavc" encoder ID takes the encoder role, ClaimRoles.Of), WritingApp first so that on a tie the application
     // that wrote this file outweighs the library that muxed it. They belong to the Segment (each has its own Info) and reach the codec parsers of
     // its tracks through the route's claims, never through the file's, so no other Segment sees them.
-    // - A MuxingApp that names the Matroska libraries (mkvtoolnix writes "libebml v1.4.5 + libmatroska v1.7.1") is the library under the
-    //   WritingApp that uses it and never conflicts with it: the codec parsers do not get it, and the container's own Writer node holds it as evidence.
+    // - A MuxingApp that names the Matroska libraries (mkvtoolnix writes "libebml v1.4.5 + libmatroska v1.7.1") or libavformat's muxer version
+    //   ("Lavf60.16.100": matroskaenc.c always writes it as the MuxingApp and writes the encoding_tool metadata, when there is any, as the WritingApp)
+    //   under the WritingApp of other software is the library under the application that uses it and never conflicts with it: the codec parsers do
+    //   not get it, and the container's own Writer node holds it as evidence.
     // - A MuxingApp and a WritingApp that name different software are one finding per Segment (not one per track); the codec parsers then
     //   get the WritingApp alone.
     private void PrepareWriterClaims(SegmentState segment)
@@ -66,7 +118,7 @@ internal sealed partial class FileReader
             return;
         }
 
-        bool isLibrary = IsMatroskaLibrary(muxing.Text);
+        bool isLibrary = IsMuxingLibrary(segment, muxing.Text);
         bool differs = writing.Role == ClaimRole.Writer && muxing.Role == ClaimRole.Writer && !isLibrary && ClaimRoles.FamilyOf(writing.Text) != ClaimRoles.FamilyOf(muxing.Text);
         segment.StreamClaims.Add(writing);
         if (differs)
@@ -82,9 +134,15 @@ internal sealed partial class FileReader
 
     private static bool IsMatroskaLibrary(string text) => text.StartsWith("libebml", StringComparison.Ordinal) || text.StartsWith("libmatroska", StringComparison.Ordinal);
 
+    // Whether a text is the library under the Segment's WritingApp: the Matroska libraries, or the Segment's MuxingApp where it is libavformat's
+    // muxer version under the WritingApp of other software (a tag that holds the same text is not). The WritingApp is the one that counts as the writer (see PrepareWriterClaims).
+    private static bool IsMuxingLibrary(SegmentState segment, string text) =>
+        IsMatroskaLibrary(text) || (text == segment.MuxingApp && ClaimRoles.IsMuxerVersion(text) && segment.WritingApp is { } writing && !string.IsNullOrWhiteSpace(writing)
+            && ClaimRoles.FamilyOf(writing) != ClaimRoles.FamilyOf(text));
+
     // The family of a library MuxingApp is its WritingApp's: the application uses the library.
     private static string FamilyIn(SegmentState segment, string text) =>
-        IsMatroskaLibrary(text) && segment.WritingApp is { } writing && !string.IsNullOrWhiteSpace(writing) ? ClaimRoles.FamilyOf(writing) : ClaimRoles.FamilyOf(text);
+        IsMuxingLibrary(segment, text) && segment.WritingApp is { } writing && !string.IsNullOrWhiteSpace(writing) ? ClaimRoles.FamilyOf(writing) : ClaimRoles.FamilyOf(text);
 
     private void RouteAudio(SegmentState segment, TrackInfo track, string label)
     {
@@ -174,7 +232,7 @@ internal sealed partial class FileReader
                 return;
             }
         }
-        else if (hasPrivate && track.CodecPrivateLength <= MaxInflated)
+        else if (hasPrivate && track.CodecPrivateLength <= MaxCodecPrivate)
         {
             try
             {
@@ -263,7 +321,7 @@ internal sealed partial class FileReader
 
         // Ciphertext is no valid coding: the codec parser gets the clear configuration (and the headers that come from it) and no frame.
         int streamsBefore = _context.Streams.Count;
-        IEnumerable<MappedBytes> packets = areFramesEncrypted ? headers : Packets(segment, track, headers, plan.Frames.Decoder);
+        IEnumerable<MappedBytes> packets = areFramesEncrypted ? headers : Packets(segment, track, segment.BlocksByTrack?.GetValueOrDefault(track.Number ?? 0), headers, plan.Frames.Decoder);
         bool routed = _context.ParsePackets(codec, node, packets, configuration, segment.StreamClaims);
         if (!routed)
         {
@@ -357,7 +415,7 @@ internal sealed partial class FileReader
 
     // The frames of a track in file order, each as the bytes it came from (with the track's content encoding undone), after the headers
     // that come from the CodecPrivate.
-    private IEnumerable<MappedBytes> Packets(SegmentState segment, TrackInfo track, List<MappedBytes> headers, Decoder? decoder)
+    private IEnumerable<MappedBytes> Packets(SegmentState segment, TrackInfo track, List<int>? indexes, List<MappedBytes> headers, Decoder? decoder)
     {
         foreach (MappedBytes header in headers)
         {
@@ -366,15 +424,20 @@ internal sealed partial class FileReader
 
         Records records = segment.Records;
         ulong number = track.Number ?? 0;
-        for (int i = 0; i < records.Blocks.Count; i++)
+        if (indexes is null)
         {
-            if (i % 4096 == 0)
+            yield break;
+        }
+
+        for (int n = 0; n < indexes.Count; n++)
+        {
+            if (n % 4096 == 0)
             {
                 _context.CancellationToken.ThrowIfCancellationRequested();
             }
 
-            BlockRecord block = records.Blocks[i];
-            if (block.Track != number || block.Status is not (BlockStatus.None or BlockStatus.LaceSingle))
+            BlockRecord block = records.Blocks[indexes[n]];
+            if (block.Status is not (BlockStatus.None or BlockStatus.LaceSingle))
             {
                 continue;
             }
@@ -422,7 +485,7 @@ internal sealed partial class FileReader
     {
         TrackStatistics statistics = track.Statistics;
         double scale = segment.TimestampScale / 1e9;
-        double span = statistics.Blocks > 0 && statistics.HasTimes ? (statistics.Largest - statistics.Smallest) * scale * track.TimestampScale : 0;
+        double span = statistics.Blocks > 0 && statistics.HasTimes ? (statistics.Largest - statistics.Smallest) * scale : 0;
         double step = statistics.Blocks > 1 ? span / (statistics.Blocks - 1) : (track.DefaultDuration is { } d ? d / 1e9 * Math.Max(1, statistics.Frames) : 0);
         return statistics.HasTimes ? span + step : 0;
     }
@@ -438,7 +501,10 @@ internal sealed partial class FileReader
         bool areFramesEncrypted = protection is { IsEncrypted: true };
         bool areSamplesTimed = areFramesEncrypted || isUnordered;
         double duration = areSamplesTimed ? EncryptedDuration(segment, track, isUnordered ? null : privateData) : ContainerDuration(segment, track);
-        double rate = track.OutputSamplingFrequency ?? track.SamplingFrequency ?? (track.HasAudio ? 8000 : 0);
+        // A sampling frequency that is not above 0 (matroska.audio-fields) is no rate: the stream has 0, not a guess.
+        double rate = track.OutputSamplingFrequency is { } output && Codecs.IsRate(output) ? output
+            : track.SamplingFrequency is { } stated ? (Codecs.IsRate(stated) ? stated : 0)
+            : track.HasAudio ? 8000 : 0;
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
         Node? writer = ResolveWriter(segment, streamNode, Codecs.RouteOf(codecId) is { } route ? Codecs.WriterKind(codecId) ?? route : codecId, Codecs.NameOf(codecId) ?? codecId);
@@ -466,7 +532,7 @@ internal sealed partial class FileReader
     private Node? ResolveWriter(SegmentState segment, Node stream, string kind, string label)
     {
         // The Segment's own conflict is reported once, in PrepareWriterClaims; the library MuxingApp joins as evidence.
-        List<EncoderClaim> claims = [.. _context.EncoderClaims, .. segment.OwnClaims.Where(c => segment.StreamClaims.Contains(c) || IsMatroskaLibrary(c.Text))];
+        List<EncoderClaim> claims = [.. _context.EncoderClaims, .. segment.OwnClaims.Where(c => segment.StreamClaims.Contains(c) || IsMuxingLibrary(segment, c.Text))];
         Node place = segment.InfoNode ?? stream;
         void Report(string code, string text, Node node)
         {
@@ -499,6 +565,8 @@ internal sealed partial class FileReader
         return writer;
     }
 
+    private static int RoundedRate(double? rate) => rate is { } value && Codecs.IsRate(value) ? (int)Math.Min(Math.Round(value), int.MaxValue) : 0;
+
     // The codec's stream against the TrackEntry's Audio element: the sample rate and the number of channels must agree where the
     // codec states them (draft-ietf-cellar-codec, section 3.4).
     private void CompareStreams(TrackInfo track, string label, string codec, List<StreamInfo> streams)
@@ -510,9 +578,9 @@ internal sealed partial class FileReader
                 return;
             }
 
-            bool rateKnown = track.SamplingFrequency is not null || track.OutputSamplingFrequency is not null;
+            bool rateKnown = track.SamplingFrequency is { } known && Codecs.IsRate(known) || track.OutputSamplingFrequency is { } knownOutput && Codecs.IsRate(knownOutput);
             bool rateMatches = stream.SampleRate == 0 || codec == "opus" || !rateKnown
-                || stream.SampleRate == (int)Math.Round(track.SamplingFrequency ?? 0) || stream.SampleRate == (int)Math.Round(track.OutputSamplingFrequency ?? 0);
+                || stream.SampleRate == RoundedRate(track.SamplingFrequency) || stream.SampleRate == RoundedRate(track.OutputSamplingFrequency);
             if (!rateMatches)
             {
                 string stated = track.SamplingFrequency is { } rate ? rate.ToString("0.###", CultureInfo.InvariantCulture) : "none";
@@ -575,7 +643,7 @@ internal sealed partial class FileReader
                 if (isEncryption)
                 {
                     // An encryption hidden in the chain may be the one that encrypts it, with an algorithm nobody can read: the scheme then has no algorithm.
-                    cover = new Cover(ordered.HiderEncrypts && !ordered.Hiders.Skip(1).Any(h => h.Type == 1) ? EncryptionName(ordered.Hider) : null);
+                    cover = new Cover(ordered.HiderEncrypts && !ordered.HasHiddenEncryption ? EncryptionName(ordered.Hider!) : null);
                     problem = cover.Name is { } hiddenName ? $"encrypted ({hiddenName})" : "encrypted";
                 }
                 else
@@ -699,7 +767,14 @@ internal sealed partial class FileReader
             }
             else if (_problems.Count == 0 && step is not null)
             {
-                Steps.Add(step);
+                if (Steps.Count < MaxEncodingSteps)
+                {
+                    Steps.Add(step);
+                }
+                else
+                {
+                    _problems.Add($"coded with more than {MaxEncodingSteps} ContentEncodings, which the analyzer does not undo");
+                }
             }
         }
 

@@ -8,6 +8,7 @@ internal sealed partial class FileReader
     // headerMissing: the file starts inside a Segment, so the element at the header's position is the first of its children.
     private long ParseSegment(ElementHeader header, bool headerMissing)
     {
+        _nodes++;
         var segment = new SegmentState { Number = _segments.Count + 1, Records = new Records(), Document = _document, Offset = header.Offset };
         _segments.Add(segment);
         Records records = segment.Records;
@@ -18,18 +19,37 @@ internal sealed partial class FileReader
         long declaredEnd = segment.IsSizeUnknown || headerMissing ? _reader.End : header.End!.Value;
         long end = Math.Min(declaredEnd, _reader.End);
         segment.End = end;
+        segment.DeclaredEnd = declaredEnd;
 
         _segment = segment;
         var holder = new Node("Segment", header.Offset, end - header.Offset);
         ElementDefinition? definition = Schema.Find(Schema.Segment);
         long position = dataStart;
         bool crcPossible = true;
+        long skippedStart = -1;
+        Node? firstSkipped = null;
+
+        // The run of elements skipped past the node budget ends at upTo.
+        void CloseSkipped(long upTo)
+        {
+            if (skippedStart < 0)
+            {
+                return;
+            }
+
+            Node run = holder.Add(Unparsed(skippedStart, upTo, "the Segment"));
+            firstSkipped ??= run;
+            AddEntry(records, run);
+            skippedStart = -1;
+        }
+
         while (position < end)
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
-            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.MaxIdLength, segment.Document.MaxSizeLength, out ElementHeader child);
+            HeaderProblem problem = Ebml.TryReadHeader(_reader, position, end, segment.Document!.ReadIdLength, segment.Document.ReadSizeLength, out ElementHeader child);
             if (problem != HeaderProblem.None)
             {
+                CloseSkipped(position);
                 Node rest = AddUnparsed(holder, position, end, problem, "in the Segment");
                 AddEntry(records, rest);
                 position = end;
@@ -38,12 +58,22 @@ internal sealed partial class FileReader
 
             if (segment.IsSizeUnknown && child.Id is Schema.Ebml or Schema.Segment)
             {
+                CloseSkipped(position);
                 end = segment.End = position;
                 break;
             }
 
             if (child.Id == Schema.Cluster)
             {
+                CloseSkipped(position);
+                if (!AccountRecord(position, end))
+                {
+                    Node rest = holder.Add(Unparsed(position, end, "the Segment"));
+                    AddEntry(records, rest);
+                    position = end;
+                    break;
+                }
+
                 position = ParseCluster(segment, child, end);
                 crcPossible = false;
                 continue;
@@ -51,11 +81,17 @@ internal sealed partial class FileReader
 
             if (_nodes >= MaxNodes)
             {
-                ReportBudget(holder);
-                Node rest = holder.Add(new Node("Unparsed Data", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.UnparsedData });
-                AddEntry(records, rest);
-                position = end;
-                break;
+                // Past the budget the other Top-Level Elements are skipped by their sizes, one Unparsed Data node for each run of them, and the Clusters
+                // are still read: they are records, which have a limit of their own.
+                segment.HasSkippedElements = true;
+                skippedStart = skippedStart < 0 ? position : skippedStart;
+                if (!_budgetReported)
+                {
+                    ReportBudget(position, () => firstSkipped!);
+                }
+
+                position = child.End is { } skippedEnd && skippedEnd <= end ? skippedEnd : end;
+                continue;
             }
 
             Node node = ParseElement(child, definition, end, 2, out long next);
@@ -70,7 +106,13 @@ internal sealed partial class FileReader
             crcPossible = crcPossible && child.Id == Schema.Crc32;
         }
 
+        CloseSkipped(position);
         segment.End = end;
+        if (segment.IsSizeUnknown)
+        {
+            segment.DeclaredEnd = end;
+        }
+
         int count = records.Entries.Count;
         long length = end - header.Offset;
         segment.Node = new Node("Segment", header.Offset, length, SegmentValue(segment), () => new BlockedChildren([], count, i => SegmentEntry(records, i)))
@@ -114,7 +156,9 @@ internal sealed partial class FileReader
     private static NodeValue SegmentValue(SegmentState segment) =>
         $"{(segment.Tracks.Count == 1 ? "1 track" : $"{segment.Tracks.Count} tracks")}, {(segment.ClusterCount == 1 ? "1 cluster" : $"{segment.ClusterCount} clusters")}";
 
-    private void ReportBudget(Node anchor)
+    // The node budget ran out at position: the elements from there on are not read, but for the Clusters of a Segment. anchor is the Unparsed Data
+    // node that covers position, made when the run it starts ends.
+    private void ReportBudget(long position, Func<Node> anchor)
     {
         if (_budgetReported)
         {
@@ -122,7 +166,7 @@ internal sealed partial class FileReader
         }
 
         _budgetReported = true;
-        _findings.AddNow(Severity.Warning, "matroska.too-many-elements",
-            $"The file holds more than {MaxNodes} elements besides the blocks of its Clusters; the elements from {anchor.Name} at 0x{anchor.Offset:X} on are not read.", anchor);
+        _findings.Add(Severity.Warning, "matroska.too-many-elements", anchor, _ =>
+            $"The file holds more than {MaxNodes} elements besides the blocks of its Clusters; the elements from 0x{position:X} on are not read, but for the Clusters of a Segment.");
     }
 }

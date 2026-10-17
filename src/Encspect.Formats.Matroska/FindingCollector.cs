@@ -26,13 +26,46 @@ internal sealed class FindingCollector
         _order.Add(code);
     }
 
-    public void AddNow(Severity severity, string code, string message, Node node, int count = 1) => _immediate.Add(new Finding(severity, code, message, node) { Count = count });
+    // Findings that stand for one element each (a track, a Segment) are listed up to MaxListed of a kind; the rest are counted and said so in one
+    // more, at the last one listed, so that a file of a hundred thousand empty tracks does not raise a million findings.
+    internal const int MaxListed = 100;
+
+    private readonly Dictionary<string, int> _listed = [];
+    private readonly Dictionary<string, (Finding Last, int Skipped)> _overflow = [];
+
+    public void AddNow(Severity severity, string code, string message, Node node, int count = 1)
+    {
+        var finding = new Finding(severity, code, message, node) { Count = count };
+        int listed = _listed.GetValueOrDefault(code);
+        if (listed < MaxListed)
+        {
+            _listed[code] = listed + 1;
+            _immediate.Add(finding);
+            if (listed + 1 == MaxListed)
+            {
+                _overflow[code] = (finding, 0);
+            }
+
+            return;
+        }
+
+        (Finding last, int skipped) = _overflow[code];
+        _overflow[code] = (last, skipped + count);
+    }
 
     public void Flush(AnalysisContext context)
     {
         foreach (Finding finding in _immediate)
         {
             context.AddFinding(finding.Severity, finding.Code, finding.Message, finding.Node, finding.Count);
+        }
+
+        foreach ((string code, (Finding last, int skipped)) in _overflow.Select(p => (p.Key, p.Value)))
+        {
+            if (skipped > 0)
+            {
+                context.AddFinding(last.Severity, code, $"{skipped} more findings of this kind are not listed; the first {MaxListed} are above.", last.Node, skipped);
+            }
         }
 
         foreach (string code in _order)
@@ -42,6 +75,8 @@ internal sealed class FindingCollector
         }
 
         _immediate.Clear();
+        _listed.Clear();
+        _overflow.Clear();
         _aggregated.Clear();
         _order.Clear();
     }
