@@ -3,18 +3,19 @@
 
 For every fixture, its manifest's "crosscheck" says what to confirm:
 
-- "ffprobe": ffprobe (ffmpeg 6.1) must report the first stream's codec, sample rate and channels
+- "ffprobe": ffprobe (ffmpeg 8.0) must report the first stream's codec, sample rate and channels
   ("ffprobe_channels" where ffmpeg takes them from elsewhere, such as an MP4 box or the dependent
   substreams it mixes in), a channel layout that feeds the manifest's speakers (channel_layouts.py;
   ffmpeg places AC-3's only surround pair at the sides, the analyzer at the back as the WAVE channel
   mask does, so a lone pair counts as one position), and exactly the packets the manifest's frames
   make: ffmpeg's parser starts a packet at each AC-3 frame and each independent E-AC-3 frame, and
-  joins dependent frames to the one before. For raw files, ffprobe's bitrate must be the first
+  joins dependent frames to the one before ("ffprobe_packets": "substream 0" where it starts one only at an independent
+  frame of substream 0, and "ffprobe_fields": false where it then reads no sample rate or channels). For raw files, ffprobe's bitrate must be the first
   packet's, unless "ffprobe_bitrate" is false (ffmpeg gives none for frames it cannot decode).
 - "decode": ffmpeg with CRC checking must decode each packet alone without an error, unless the
   packet holds a frame the manifest lists as one decoders reject ("damaged": cut or failing a CRC,
   or a dependent frame without its independent one), which it must reject, as it rejects the frames
-  of independent substreams other than 0, which ffmpeg 6.1 does not decode. MP4 files are decoded
+  of independent substreams other than 0, which ffmpeg 8.0 does not decode (ac3dec.c and eac3dec.c refuse a substream ID but 0). MP4 files are decoded
   whole, without an error.
 - "liba52": liba52 (a52_blocks.c, built here) must end each audio block of every frame in
   "block_ends" at the manifest's bit, and must not reject those frames.
@@ -76,7 +77,7 @@ import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parent
 FIXTURES = ROOT.parents[1] / "tests" / "fixtures" / "ac3"
-CHECKS = ("ffprobe", "ffprobe_bitrate", "decode", "liba52", "skip_insertion", "skip_control")
+CHECKS = ("ffprobe", "ffprobe_fields", "ffprobe_bitrate", "decode", "liba52", "skip_insertion", "skip_control")
 
 
 def ffprobe(path):
@@ -214,11 +215,13 @@ def check_ffprobe(path, data, manifest, problems):
     actual, expected = streams[0], manifest["streams"][0]
     codec = "eac3" if expected["codec"] == "E-AC-3" else "ac3"
     channels = manifest["crosscheck"].get("ffprobe_channels", expected["channels"])
-    if actual.get("codec_name") != codec or int(actual.get("sample_rate", 0)) != expected["sample_rate"] or int(actual.get("channels", 0)) != channels:
-        problems.append(f"ffprobe: {actual.get('codec_name')}, {actual.get('sample_rate')} Hz, {actual.get('channels')} channels; expected {codec}, "
-                        f"{expected['sample_rate']} Hz, {channels}")
+    fields = manifest["crosscheck"].get("ffprobe_fields", True)
+    if actual.get("codec_name") != codec:
+        problems.append(f"ffprobe: {actual.get('codec_name')}, expected {codec}")
+    if fields and (int(actual.get("sample_rate", 0)) != expected["sample_rate"] or int(actual.get("channels", 0)) != channels):
+        problems.append(f"ffprobe: {actual.get('sample_rate')} Hz, {actual.get('channels')} channels; expected {expected['sample_rate']} Hz, {channels}")
     known = channel_layouts.FFMPEG.get(actual.get("channel_layout"))
-    if "ffprobe_channels" not in manifest["crosscheck"] and (known is None or normalized(known) != normalized(expected["channel_layout"])):
+    if fields and "ffprobe_channels" not in manifest["crosscheck"] and (known is None or normalized(known) != normalized(expected["channel_layout"])):
         problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, expected {expected['channel_layout']}")
     flagged = extension_complexities(mi.golden(path))
     expected_profile = "Dolby Digital Plus + Dolby Atmos" if any(c is not None for c in flagged) else None
@@ -226,6 +229,10 @@ def check_ffprobe(path, data, manifest, problems):
         problems.append(f"ffprobe's profile {actual.get('profile')!r}, expected {expected_profile!r} (flag_ec3_extension_type_a set in {sum(c is not None for c in flagged)} frames)")
     packets = [[int(p["pos"]), int(p["size"])] for p in probe.get("packets", [])]
     expected_packets = packets_of(data, manifest["frames"]) if manifest["format"] == "AC-3" else packets_of_samples(data, manifest["frames"])
+    if manifest["crosscheck"].get("ffprobe_packets") == "substream 0":
+        # FFmpeg 8.0.1's parser starts a packet only at a frame of substream 0 (ac3_parser.c, eac3_parse_header refuses any other substream ID), so the
+        # frames of the other substreams join the packet before.
+        expected_packets = packets_of_substream_0(data, manifest["frames"])
     if packets != expected_packets:
         problems.append(f"ffprobe lists {len(packets)} packets, the manifest's frames make {len(expected_packets)}")
     if manifest["format"] == "AC-3" and expected_packets and manifest["crosscheck"].get("ffprobe_bitrate", True):
@@ -235,6 +242,17 @@ def check_ffprobe(path, data, manifest, problems):
                                                                                  576, 640][h["bitrate_code"]] * 1000 >> max(0, h["bsid"] - 8)
         if int(actual.get("bit_rate", 0)) != rate:
             problems.append(f"ffprobe's bitrate {actual.get('bit_rate')}, the first packet's {rate}")
+
+
+def packets_of_substream_0(data, frames):
+    out = []
+    for offset, length in frames:
+        h = m.header(data, offset)
+        if out and h and h["eac3"] and (h["dependent"] or h["substream"] != 0):
+            out[-1][1] += length
+        else:
+            out.append([offset, length])
+    return out
 
 
 def packets_of_samples(data, frames):
@@ -255,7 +273,7 @@ def check_decode(path, data, manifest, problems, work):
         piece.write_bytes(data[offset:offset + length])
         result = subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", "-f", kind, "-i", str(piece), "-f", "null", "-"],
                                 capture_output=True, text=True)
-        # ffmpeg 6.1 decodes independent substream 0 only (eac3dec.c), so it rejects the others.
+        # ffmpeg 8.0.1 decodes independent substream 0 only (eac3dec.c:307 skips any other substream ID), so it rejects the others.
         bad = any(f[0] in damaged for f in manifest["frames"] if offset <= f[0] < offset + length) or m.header(data, offset)["substream"] != 0
         failed = bool(result.stderr.strip())
         if failed != bad:
