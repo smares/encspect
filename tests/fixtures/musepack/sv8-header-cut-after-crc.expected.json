@@ -1,0 +1,58 @@
+{
+ "length": 14264,
+ "version": 8,
+ "packets": [
+  [
+   4,
+   7,
+   "SH"
+  ],
+  [
+   11,
+   12,
+   "RG"
+  ],
+  [
+   23,
+   14238,
+   "AP"
+  ],
+  [
+   14261,
+   3,
+   "SE"
+  ]
+ ],
+ "header": {},
+ "frames": 64,
+ "stream_infos": [
+  {
+   "codec": "Musepack SV8",
+   "sample_rate": 0,
+   "channels": 0,
+   "samples": 0,
+   "average_bitrate": null,
+   "duration": 0
+  }
+ ],
+ "regions": [
+  {
+   "name": "Musepack SV8",
+   "offset": 0,
+   "length": 14264
+  }
+ ],
+ "findings": [
+  {
+   "code": "musepack.packet-fields-truncated",
+   "contains": "SH packet"
+  },
+  {
+   "code": "musepack.header-crc-mismatch",
+   "contains": "damaged"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

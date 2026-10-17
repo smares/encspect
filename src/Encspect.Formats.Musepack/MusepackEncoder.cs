@@ -20,7 +20,7 @@ internal static partial class MusepackEncoder
 {
     private const int MaxClaimedName = 64;
 
-    [GeneratedRegex(@"(?<![a-z])(mpcenc|mppenc|musepack|mpc2sv8|mpcgain)(?![a-z])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"(?<![a-z])(mpcenc|mppenc|musepack|mpc2sv8|mpcgain|mp\+)(?![a-z])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex MusepackWords();
 
     // What each SV7 encoder writes into the header, from encodes with mppenc 1.16 built from source and
@@ -32,8 +32,10 @@ internal static partial class MusepackEncoder
     // with the input's Max Level, and the builds from 1.01j to 1.04 and the three in Rarewares' 1.05z
     // archives with true gapless. Max Level separates Klemm's builds from Buschmann's only where the
     // ReplayGain fields are 0, since ReplayGain tools fill it too (mppenc 1.16 encode_sv7.c); otherwise
-    // both are named, with medium confidence. Some builds write profile 1 ("Unstable/Experimental")
-    // whatever profile is asked for, which sets them apart. The rows are tried in order.
+    // both are named, with medium confidence. Some builds write profile 1 ("Unstable/Experimental") at
+    // every setting tried (the default, --radio and --insane; sv7-encoders.json), where the others
+    // write the profile asked for, which sets them apart; other settings were not tried. The rows are
+    // tried in order.
     private static readonly Sv7Build[] Sv7Builds =
     [
         new(116, null, null, null, "mppenc 1.16", "mppenc 1.16 (built from source)"),
@@ -86,6 +88,12 @@ internal static partial class MusepackEncoder
         _ when version % 2 == 0 => $"Beta {version / 100}.{version % 100:00}",
         _ => $"Alpha {version / 100}.{version % 100:00}",
     };
+
+    // The name for the SV7 header's version byte: libmpcdec takes a byte above 116 into the branch of
+    // the later versions, which reads major, minor and build from the bits above the byte, all 0
+    // (mpc_get_encoder_string, where only SV8 recomputes the version first), and calls such a
+    // version stable for its even minor version.
+    public static string Sv7Name(int version) => version <= 116 ? LibmpcdecName(version) : "stable 0.0.0";
 
     public static string Sv8Name(int major, int minor, int build)
     {

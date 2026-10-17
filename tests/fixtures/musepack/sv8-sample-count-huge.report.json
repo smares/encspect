@@ -1,0 +1,398 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "sv8-sample-count-huge.mpc",
+    "root": {
+      "name": "File",
+      "value": "Musepack",
+      "offset": 0,
+      "length": 14277,
+      "children": [
+        {
+          "name": "Musepack SV8",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 14277,
+          "children": [
+            {
+              "name": "Magic",
+              "value": "MPCK",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 14277,
+              "children": [
+                {
+                  "name": "Audio Packets",
+                  "value": 1,
+                  "unit": "packets",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Frames",
+                  "value": 64,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Coded Samples",
+                  "value": 73728,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Decoder Delay",
+                  "value": 481,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Samples",
+                  "value": 73247,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Duration",
+                  "value": 1.6609297052154195,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 68.1310546875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Smallest Packet",
+                  "value": 14238,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Largest Packet",
+                  "value": 14238,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 68.1310546875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 68.1310546875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 14277,
+                  "children": [
+                    {
+                      "name": "64 to 95 kbps",
+                      "value": "1 packet (100.0%)",
+                      "offset": 0,
+                      "length": 14277
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Stream Header",
+              "value": "SH",
+              "offset": 4,
+              "length": 20,
+              "children": [
+                {
+                  "name": "Key",
+                  "value": "SH",
+                  "offset": 4,
+                  "length": 2
+                },
+                {
+                  "name": "Size",
+                  "value": 20,
+                  "unit": "bytes",
+                  "offset": 6,
+                  "length": 1
+                },
+                {
+                  "name": "CRC",
+                  "value": 2707478239,
+                  "offset": 7,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Check",
+                      "value": "verified",
+                      "offset": 7,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Stream Version",
+                  "value": 8,
+                  "offset": 11,
+                  "length": 1
+                },
+                {
+                  "name": "Sample Count",
+                  "value": 9223372036854775807,
+                  "unit": "samples",
+                  "offset": 12,
+                  "length": 9
+                },
+                {
+                  "name": "Beginning Silence",
+                  "value": 0,
+                  "unit": "samples",
+                  "offset": 21,
+                  "length": 1
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 22,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 3
+                },
+                {
+                  "name": "Max Used Bands",
+                  "value": 18,
+                  "offset": 22,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 5
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "offset": 23,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 4
+                },
+                {
+                  "name": "UsesMidSideStereo",
+                  "value": true,
+                  "offset": 23,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Audio Block Frames",
+                  "value": 64,
+                  "unit": "frames",
+                  "offset": 23,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 3
+                }
+              ]
+            },
+            {
+              "name": "ReplayGain",
+              "value": "RG",
+              "offset": 24,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Key",
+                  "value": "RG",
+                  "offset": 24,
+                  "length": 2
+                },
+                {
+                  "name": "Size",
+                  "value": 12,
+                  "unit": "bytes",
+                  "offset": 26,
+                  "length": 1
+                },
+                {
+                  "name": "Version",
+                  "value": 1,
+                  "offset": 27,
+                  "length": 1
+                },
+                {
+                  "name": "Title Gain",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 28,
+                  "length": 2
+                },
+                {
+                  "name": "Title Peak",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 30,
+                  "length": 2
+                },
+                {
+                  "name": "Album Gain",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Album Peak",
+                  "value": 0,
+                  "unit": "dB",
+                  "offset": 34,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Audio Packet",
+              "kind": "Frame",
+              "value": "64 frames, 14238 bytes",
+              "offset": 36,
+              "length": 14238,
+              "children": [
+                {
+                  "name": "Key",
+                  "value": "AP",
+                  "offset": 36,
+                  "length": 2
+                },
+                {
+                  "name": "Size",
+                  "value": 14238,
+                  "unit": "bytes",
+                  "offset": 38,
+                  "length": 2
+                },
+                {
+                  "name": "Audio Frames",
+                  "value": 64,
+                  "unit": "frames",
+                  "offset": 40,
+                  "length": 14234
+                }
+              ]
+            },
+            {
+              "name": "Stream End",
+              "value": "SE",
+              "offset": 14274,
+              "length": 3,
+              "children": [
+                {
+                  "name": "Key",
+                  "value": "SE",
+                  "offset": 14274,
+                  "length": 2
+                },
+                {
+                  "name": "Size",
+                  "value": 3,
+                  "unit": "bytes",
+                  "offset": 14276,
+                  "length": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "Musepack SV8",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo, mid/side per subband",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 73247,
+        "duration": 1.6609297052154195,
+        "averageBitrate": 68.1310546875,
+        "isVbr": true,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              36
+            ],
+            "values": [
+              68.1310546875
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              68
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "musepack.audio-packets-missing",
+        "message": "The stream header's 9223372036854775807 samples need 8006399337547549 frames in 125099989649181 audio packets; the stream holds 1, so decoders end early.",
+        "offset": 0,
+        "length": 4,
+        "path": [
+          0,
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

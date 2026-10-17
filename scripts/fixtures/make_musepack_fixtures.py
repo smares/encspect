@@ -16,7 +16,10 @@ ReplayGain packet, a packet size that cannot be followed, seek tables with too m
 entries, 4,100 unknown packets before the header, with or without two of an invalid key after them; SV7 streams without the gapless frame but with an
 APEv2 tag after them, whose last frame's samples differ or are invalid, without frames, of another
 version, with an invalid resolution, whose ID3v2 tag names another encoder, broken by a tag a SEEK
-frame finds; and an SV5 stream followed by such a tag.
+frame finds; and an SV5 stream followed by such a tag. Further ones: an SV8 stream header cut after
+its CRC and one cut before its two coding bytes, which report no sample rate or channels; a sample
+count near 2^63; a chapter packet cut inside its fields; an SV7 encoder version byte above 116; and a
+tag claiming the encoder an mppenc 1.16, a Buschmann and a Klemm stream point to.
 
 No SV6 encoder was found, so the SV6 fixtures are derived: the SV5 encoder's variable bitrate streams,
 with and without mid/side, relabeled as version 6 (derived-*-as-sv6, not an encoder's output). SV5
@@ -515,6 +518,44 @@ def sv8_many_unknown_first():
     return data[:4] + b"XX\x03" * 4100 + data[4:]
 
 
+def sv8_header_cut_after_crc():
+    """A stream header packet of its CRC alone, which is not the CRC of nothing."""
+    data = plain()
+    offset, _, _, _, header = find(data, "SH")
+    return replace(data, "SH", packet(b"SH", data[offset + header:offset + header + 4]))
+
+
+def sv8_header_cut_before_coding():
+    """A stream header packet that ends after the beginning silence, before the two bytes with the
+    sample rate and the channels, its CRC matching what is left."""
+    data = plain()
+    payload = sh_payload(base=data)
+    _, at = m.size(payload, 5)
+    _, at = m.size(payload, at)
+    body = payload[4:at]
+    return replace(data, "SH", packet(b"SH", struct.pack(">I", zlib.crc32(body)) + body))
+
+
+HUGE_SAMPLES = 2 ** 63 - 1
+
+
+def sv8_chapter_truncated():
+    """A chapter packet with a sample offset and one byte, where the gain and the peak need four."""
+    return before_end(plain(), packet(b"CT", b"\x05\x01"))
+
+
+def sv7_encoder_above_116():
+    """The SV7 header's encoder version byte set to 200, which no encoder writes."""
+    data = bytearray(external("mppenc-standard"))
+    data[27] = 200
+    return bytes(data)
+
+
+def claimed(name, text):
+    """The encoder-made SV7 fixture name under an ID3v2 tag whose TSSE frame names text."""
+    return tags.id3v2(3, [tags.frame23("TSSE", tags.text_frame_data(0, [text]))]) + external(name)
+
+
 SV8 = "Musepack SV8"
 SV7 = "Musepack SV7"
 
@@ -550,10 +591,19 @@ FIXTURES = {
     "sv7-version-unknown": (sv7_version_unknown, None, [("musepack.version-unknown", "version is 6")]),
     "sv7-resolution-invalid": (sv7_resolution_invalid, None, [("musepack.resolution-invalid", "1 frame codes")]),
     "sv7-encoder-claim": (sv7_encoder_claim, lambda d: (tag_end(d), len(d), [region("ID3v2", 0, tag_end(d)), region(SV7, tag_end(d), len(d))]), [("musepack.encoder-claim-differs", "LAME 3.100")]),
+    "sv7-claim-mppenc": (lambda: claimed("mppenc-standard", "mppenc 1.16"), lambda d: (tag_end(d), len(d), [region("ID3v2", 0, tag_end(d)), region(SV7, tag_end(d), len(d))]), []),
+    "sv7-claim-buschmann": (lambda: claimed("mpp-1.7.9c", "Musepack MP+ 1.7.9c"), lambda d: (tag_end(d), len(d), [region("ID3v2", 0, tag_end(d)), region(SV7, tag_end(d), len(d))]), []),
+    "sv7-claim-klemm": (lambda: claimed("mppenc-0.90r", "mppenc 0.90r"), lambda d: (tag_end(d), len(d), [region("ID3v2", 0, tag_end(d)), region(SV7, tag_end(d), len(d))]), []),
+    "sv7-encoder-above-116": (sv7_encoder_above_116, None, []),
     "sv7-data-after-tag": (sv7_data_after_tag, lambda d: seek_layout(d, SV7), [("musepack.frames-missing", "holds 38 whole ones"), ("musepack.frame-truncated", "cut short"), ("musepack.data-after-tag", "13120 bytes")]),
     "sv5-seek-tag": (sv5_seek_tag, lambda d: seek_layout(d, "Musepack SV5"), [("musepack.last-frame-unwritten", "29 bits past")]),
     "sv8-channels-unsupported": (sv8_header_changed(channels=3), None, [("musepack.channels-unsupported", "3 channels")]),
     "sv8-max-band-32": (sv8_header_changed(bands=32), None, [("musepack.max-band-invalid", "32 used bands")]),
+    "sv8-header-cut-after-crc": (sv8_header_cut_after_crc, None, [("musepack.packet-fields-truncated", "SH packet"), ("musepack.header-crc-mismatch", "damaged")]),
+    "sv8-header-cut-before-coding": (sv8_header_cut_before_coding, None, [("musepack.packet-fields-truncated", "SH packet")]),
+    "sv8-sample-count-huge": (sv8_header_changed(samples=HUGE_SAMPLES), None,
+                              [("musepack.audio-packets-missing", f"{HUGE_SAMPLES} samples need {(HUGE_SAMPLES + 481 + 1151) // 1152} frames")]),
+    "sv8-chapter-truncated": (sv8_chapter_truncated, None, [("musepack.packet-fields-truncated", "CT packet")]),
     "sv8-sample-count-unknown": (sv8_header_changed(samples=0), None, [("musepack.sample-count-unknown", "64 frames")]),
     "sv8-header-crc-zero": (sv8_header_crc_zero, None, [("musepack.header-crc-zero", "CRC is 0"), ("musepack.padding-not-zero", "SH packet")]),
     "sv8-header-missing": (sv8_header_missing, None, [("musepack.header-missing", "no stream header"), ("musepack.audio-before-header", "at 0x10")]),

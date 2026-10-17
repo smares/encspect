@@ -236,16 +236,29 @@ def sv8(data):
     for offset, length, key, declared, header in found:
         if key == "SH" and sh is None:
             p = data[offset + header:offset + length]
+            if len(p) < 4:
+                continue
             crc = struct.unpack(">I", p[:4])[0]
-            samples, at = size(p, 5)
-            silence, at = size(p, at)
-            sh = {"crc": crc, "crc_ok": zlib.crc32(p[4:]) == crc, "version": p[4], "samples": samples, "silence": silence, "rate": p[at] >> 5,
-                  "bands": (p[at] & 31) + 1, "channels": (p[at + 1] >> 4) + 1, "ms": (p[at + 1] >> 3) & 1, "power": p[at + 1] & 7}
+            # A header cut before its two coding bytes keeps the sample count and the silence as far as
+            # they were read, and reports no rate or channels (and counts nothing: the analyzer
+            # takes the sample count only from a header it reads whole).
+            sh = {"crc": crc, "crc_ok": zlib.crc32(p[4:]) == crc, "version": p[4] if len(p) > 4 else None, "samples": None, "silence": None,
+                  "complete": False}
+            read = size(p, 5) if len(p) > 5 else None
+            if read:
+                sh["samples"], at = read
+                read = size(p, at)
+                if read:
+                    sh["silence"], at = read
+                    if at + 2 <= len(p):
+                        sh.update({"complete": True, "rate": p[at] >> 5, "bands": (p[at] & 31) + 1, "channels": (p[at + 1] >> 4) + 1,
+                                   "ms": (p[at + 1] >> 3) & 1, "power": p[at + 1] & 7})
+    complete = sh is not None and sh["complete"]
     audio = [(o, l) for o, l, k, d, h in found if k == "AP" and d == l]
     frames, audio_bytes = 0, 0
     if sh:
-        per = 4 ** sh["power"]
-        expected = (sh["samples"] + DELAY + FRAME - 1) // FRAME if sh["samples"] else None
+        per = 4 ** sh["power"] if complete else 64
+        expected = (sh["samples"] + DELAY + FRAME - 1) // FRAME if complete and sh["samples"] else None
         for i, (_, length) in enumerate(audio):
             left = expected - i * per if expected is not None and i == len(audio) - 1 else per
             count = left if 0 < left <= per else per
@@ -254,9 +267,9 @@ def sv8(data):
                 count = min(count, max(0, expected - frames))
             frames += count
             audio_bytes += length if count else 0
-    samples = max(0, min(sh["samples"], frames * FRAME - DELAY) - sh["silence"]) if sh else 0
-    return {"packets": found, "stop": stop, "sh": sh, "frames": frames, "samples": samples, "rate": RATES[sh["rate"]] if sh and sh["rate"] < 4 else 0,
-            "audio_bytes": audio_bytes}
+    samples = max(0, min(sh["samples"], frames * FRAME - DELAY) - sh["silence"]) if complete else 0
+    return {"packets": found, "stop": stop, "sh": sh, "complete": complete, "frames": frames, "samples": samples,
+            "rate": RATES[sh["rate"]] if complete and sh["rate"] < 4 else 0, "audio_bytes": audio_bytes}
 
 
 def ei_name(major, minor, build):
@@ -265,6 +278,12 @@ def ei_name(major, minor, build):
     if version <= 116:
         return libmpcdec_name(version)
     return f"{'stable' if minor % 2 == 0 else 'unstable'} {major}.{minor}.{build}"
+
+
+def sv7_name(version):
+    """libmpcdec r495's name for the SV7 header's version byte: above 116 its else branch reads major,
+    minor and build from the bits above the byte, all 0 (only SV8 recomputes the version first)."""
+    return libmpcdec_name(version) if version <= 116 else "stable 0.0.0"
 
 
 def libmpcdec_name(version):
@@ -286,11 +305,16 @@ def manifest(data, start, end, extra=None):
         s = sv8(stream)
         sh = s["sh"]
         result["version"] = 8
-        # Once 4,096 packets that are no audio are detailed, runs of packets that neither carry audio
-        # nor describe the stream are one node each, with their count.
-        detailed, listed, runs = 0, [], []
+        # Once 4,096 packets that are no audio are detailed, runs of packets that do not carry audio are
+        # one node each, with their count, except the stream end packet and the first 8 each of the
+        # stream header, ReplayGain and encoder info packets read after them.
+        detailed, listed, runs, late = 0, [], [], {"SH": 0, "RG": 0, "EI": 0}
         for o, l, k, d, h in s["packets"]:
-            if k != "AP" and k not in ("SH", "RG", "EI", "SO", "ST", "SE") and d == l and detailed >= 4096:
+            folded = k not in ("AP", "SE") and d == l and detailed >= 4096
+            if folded and k in late and late[k] < 8:
+                late[k] += 1
+                folded = False
+            if folded:
                 if runs and runs[-1][0] + runs[-1][1] == start + o and runs[-1][3] == len(listed):
                     runs[-1][1] += l
                     runs[-1][2] += 1
@@ -303,12 +327,18 @@ def manifest(data, start, end, extra=None):
         if runs:
             result["packet_runs"] = [r[:3] for r in runs]
         coded = s["frames"] * FRAME
-        info = {"codec": "Musepack SV8", "sample_rate": s["rate"], "channels": sh["channels"] if sh else 0, "samples": s["samples"],
+        info = {"codec": "Musepack SV8", "sample_rate": s["rate"], "channels": sh["channels"] if s["complete"] else 0, "samples": s["samples"],
                 "average_bitrate": s["audio_bytes"] * 8 * s["rate"] / coded / 1000 if coded and s["rate"] else None}
         if sh:
-            result["header"] = {"Sample Count": f"{sh['samples']} samples", "Beginning Silence": f"{sh['silence']} samples",
-                                "Channels": str(sh["channels"]), "Max Used Bands": str(sh["bands"]), "Mid/Side Stereo": "true" if sh["ms"] else "false",
-                                "Audio Block Frames": f"{4 ** sh['power']} frames"}
+            header = {}
+            if sh["samples"] is not None:
+                header["Sample Count"] = f"{sh['samples']} samples"
+            if sh["silence"] is not None:
+                header["Beginning Silence"] = f"{sh['silence']} samples"
+            if s["complete"]:
+                header.update({"Channels": str(sh["channels"]), "Max Used Bands": str(sh["bands"]), "UsesMidSideStereo": "true" if sh["ms"] else "false",
+                               "Audio Block Frames": f"{4 ** sh['power']} frames"})
+            result["header"] = header
         result["frames"] = s["frames"]
     elif stream[:3] == b"MP+" and len(stream) < 28:
         result["version"] = 7
@@ -318,8 +348,8 @@ def manifest(data, start, end, extra=None):
         h = s["header"]
         result["version"] = 7
         result["header"] = {"Frame Count": f"{h['frames']} frame{'s' if h['frames'] != 1 else ''}", "Max Band": str(h["max_band"]),
-                            "Profile": str(h["profile"]), "Sample Rate": f"{RATES[h['rate']]} Hz", "True Gapless": "true" if h["gapless"] else "false",
-                            "Last Frame Samples": f"{h['last']} sample{'s' if h['last'] != 1 else ''}", "Mid/Side Stereo": "true" if h["ms"] else "false",
+                            "Profile": str(h["profile"]), "Sample Rate": f"{RATES[h['rate']]} Hz", "IsTrueGapless": "true" if h["gapless"] else "false",
+                            "Last Frame Samples": f"{h['last']} sample{'s' if h['last'] != 1 else ''}", "UsesMidSideStereo": "true" if h["ms"] else "false",
                             "Encoder Version": str(h["encoder"])}
         result["frames"] = [[f["length"], f["used"], f"{f['ms']:x}", f["noise"]] for f in s["frames"]]
         result["stream_end"] = start + s["end"]
@@ -330,8 +360,8 @@ def manifest(data, start, end, extra=None):
         s = old(stream)
         h = s["header"]
         result["version"] = h["version"]
-        result["header"] = {"Bitrate": f"{h['bitrate']} kbps", "Intensity Stereo": "true" if h["is"] else "false",
-                            "Mid/Side Stereo": "true" if h["ms"] else "false", "Stream Version": str(h["version"]), "Max Band": str(h["max_band"]),
+        result["header"] = {"Bitrate": f"{h['bitrate']} kbps", "UsesIntensityStereo": "true" if h["is"] else "false",
+                            "UsesMidSideStereo": "true" if h["ms"] else "false", "Stream Version": str(h["version"]), "Max Band": str(h["max_band"]),
                             "Block Size": f"{h['block']} frame{'s' if h['block'] != 1 else ''}",
                             "Frame Count": f"{h['frames']} frame{'s' if h['frames'] != 1 else ''}"}
         result["frames"] = [[f["length"], f["used"], f"{f['ms']:x}", 0] for f in s["frames"]]

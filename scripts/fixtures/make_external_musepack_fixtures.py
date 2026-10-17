@@ -7,7 +7,8 @@ perceptual noise substitution, with an APEv2 tag, with ReplayGain from mpcgain a
 mpcchap; one SV8 file is mpc2sv8's conversion of an SV7 one. SV7 comes from mppenc 1.16, the last SV7
 encoder, built from its source release by musepack_tool.py, and from Rarewares' Win32 builds of the
 earlier SV7 encoders under Wine, one fixture for each row of the analyzer's SV7 encoder table; every
-SV7 build's header fields go to sv7-encoders.json, which the tests hold the table against. SV4 and SV5
+SV7 build's header fields, and the profile it writes at --radio and --insane, go to sv7-encoders.json
+(--sv7-encoders-only writes only that file), which the tests hold the table against. SV4 and SV5
 come from Rarewares' Win32 builds of Buschmann's SV4 and SV5 encoders under Wine, which take only
 stereo at 44.1 kHz: frames the decoders read, and streams with superframes, intensity stereo or a
 constant bitrate, which libmpcdec 1.2.6 does not decode. For these, mppdec under Wine decodes each
@@ -168,24 +169,46 @@ def encode(name, tool, rate, channels, samples, arguments, work, mppenc):
     return used
 
 
+# The settings every SV7 build is encoded with besides its defaults, to see which profile it writes: the
+# analyzer's table names the builds that write profile 1 by it.
+PROFILE_SETTINGS = ["--radio", "--insane"]
+
+
+def profiles(build, encode_with):
+    """The profile each setting makes the build write; the builds that take other switches (the 0.90
+    builds and Buschmann's MP+) write nothing for these and are left out."""
+    found = {}
+    for setting in PROFILE_SETTINGS:
+        try:
+            found[setting] = encode_with(build, [setting])["profile"]
+        except (SystemExit, subprocess.CalledProcessError):
+            pass
+    return found
+
+
 def sv7_encoders(work, mppenc):
     """The header fields every SV7 encoder at hand writes for the same stereo input at its default
-    settings, with the name the analyzer must give them."""
+    settings, with the profile each writes at --radio and --insane, and the name the analyzer must
+    give them."""
     source = work / "encoders.wav"
     wav(source, 44100, 2, SHORT)
     rows = []
     target = work / "encoders.mpc"
-    for build in ["1.16", *musepack_tool.SV7_BUILDS]:
+
+    def encode_with(build, arguments):
         target.unlink(missing_ok=True)
         if build == "1.16":
-            subprocess.run([str(mppenc), "--silent", str(source), str(target)], check=True, capture_output=True)
-            archive = musepack_tool.MPPENC[0]
+            subprocess.run([str(mppenc), "--silent", *arguments, str(source), str(target)], check=True, capture_output=True)
         else:
-            musepack_tool.encode_windows(build, [], source, target)
-            archive = musepack_tool.BUILDS[build][0]
-        h = m.sv7_header(m.Words(target.read_bytes()))
+            musepack_tool.encode_windows(build, arguments, source, target)
+        return m.sv7_header(m.Words(target.read_bytes()))
+
+    for build in ["1.16", *musepack_tool.SV7_BUILDS]:
+        h = encode_with(build, [])
+        archive = musepack_tool.MPPENC[0] if build == "1.16" else musepack_tool.BUILDS[build][0]
         rows.append({"build": build, "archive": archive, "encoder": h["encoder"], "profile": h["profile"], "gapless": bool(h["gapless"]),
-                     "last": h["last"], "max_level": h["max_level"], "fast_seek": bool(h["fast_seek"])})
+                     "last": h["last"], "max_level": h["max_level"], "fast_seek": bool(h["fast_seek"]),
+                     "profiles": profiles(build, encode_with)})
     for row in rows:
         row["detected"] = next(name for build, name in SV7_GROUPS if row["build"] in build)
     (OUT / "sv7-encoders.json").write_text(json.dumps(rows, indent=1) + "\n", encoding="utf-8")
@@ -233,9 +256,11 @@ def build_manifest(name, encoder, detected, findings):
 
 def main():
     only_manifests = "--manifests-only" in sys.argv
+    only_encoders = "--sv7-encoders-only" in sys.argv
     mppenc = None
     if not only_manifests:
-        missing = [tool for tool in ("mpcenc", "mpcgain", "mpcchap", "mpc2sv8", "gcc", "wine") if shutil.which(tool) is None]
+        needed = ("gcc", "wine") if only_encoders else ("mpcenc", "mpcgain", "mpcchap", "mpc2sv8", "gcc", "wine")
+        missing = [tool for tool in needed if shutil.which(tool) is None]
         if missing:
             raise SystemExit(f"Missing {', '.join(missing)}; install musepack-tools, gcc and Wine, or pass --manifests-only.")
     OUT.mkdir(parents=True, exist_ok=True)
@@ -243,6 +268,9 @@ def main():
         if not only_manifests:
             mppenc = musepack_tool.build_mppenc(pathlib.Path(work) / "mppenc")
             sv7_encoders(pathlib.Path(work), mppenc)
+        if only_encoders:
+            print(f"Wrote sv7-encoders.json to {OUT}")
+            return
         for name, (tool, rate, channels, samples, arguments, detected, findings) in FIXTURES.items():
             path = OUT / (name + ".expected.json")
             if only_manifests:

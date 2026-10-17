@@ -63,7 +63,8 @@ SKIPS = []
 # Hand-built fixtures that the tools read as they would a valid file, and what each damaged one
 # should make mpcdec do.
 READABLE = {"sv8-tags", "sv7-tags", "sv8-unknown-key", "sv8-no-replaygain", "sv8-data-after-end", "sv8-end-size", "sv7-trailing-data",
-            "sv8-seek-mismatch", "sv8-many-unknown-first", "sv7-encoder-claim",
+            "sv8-seek-mismatch", "sv8-many-unknown-first", "sv7-encoder-claim", "sv7-claim-mppenc", "sv7-claim-buschmann", "sv7-claim-klemm",
+            "sv7-encoder-above-116", "sv8-chapter-truncated",
             "sv8-replaygain-version", "sv6-last-frame-samples-invalid"}
 # Hand-built fixtures that mpcdec's decoded samples and libmpcdec's frames confirm, and why the other checks do not apply.
 DECODE_ONLY = {"sv7-gapless-frame-missing-ape": "mpcdec -i gives the header's length, which counts the missing frame, and ffmpeg shows the APE tag's cover as a second stream",
@@ -90,8 +91,11 @@ DAMAGED = {
     "sv8-seek-table-truncated": "a seek table that counts more entries than it holds",
     "sv8-seek-table-short": "a seek table with fewer entries than the packets need",
     "sv8-invalid-key-in-run": "libmpcdec stops decoding at a key outside A to Z",
+    "sv8-sample-count-huge": "a sample count near 2^63, which mpcdec shows as 4294967295 samples and decodes none of, and ffprobe as a duration of 2e14 s",
 }
 REFUSED = {"sv8-bad-crc": "libmpcdec refuses a stream header whose CRC fails", "sv8-rate-reserved": "libmpcdec refuses a reserved sample rate",
+           "sv8-header-cut-after-crc": "libmpcdec refuses a stream header that ends after its CRC",
+           "sv8-header-cut-before-coding": "libmpcdec refuses a stream header that ends before its sample rate and channels",
            "sv7-header-fields": "libmpcdec refuses a max band of 0", "sv7-header-truncated": "the header is cut short"}
 SHORT = {"sv7-truncated", "sv8-truncated", "sv7-damaged-length"}
 
@@ -129,17 +133,22 @@ def ffprobe(path):
     return json.loads(result.stdout or b"{}")
 
 
+def stream_start(manifest):
+    """Where the Musepack stream starts: a leading tag may hold the magic number's text ("MP+" in a TSSE frame)."""
+    return next(region["offset"] for region in manifest["regions"] if region["name"].startswith("Musepack"))
+
+
 def check_info(name, manifest, path, problems):
     code, info = mpcdec_info(path)
     stream = manifest["stream_infos"][0]
     header = manifest.get("header", {})
     expected = {"stream version": str(manifest["version"]), "samplerate": f"{stream['sample_rate']} Hz", "channels": str(stream["channels"])}
     data = path.read_bytes()
-    start = data.find(b"MPCK" if manifest["version"] == 8 else b"MP+")
+    start = stream_start(manifest)
     if manifest["version"] == 7:
         h = m.sv7_header(m.Words(data[start:]))
         # mpcdec prints libmpcdec r495's own spelling of the name for 0.
-        expected["encoder"] = "Buschmann 1.7.0...9, Klemm 0.90...1.05" if h["encoder"] == 0 else m.libmpcdec_name(h["encoder"]).replace("Alpha", "--Alpha--")
+        expected["encoder"] = "Buschmann 1.7.0...9, Klemm 0.90...1.05" if h["encoder"] == 0 else m.sv7_name(h["encoder"]).replace("Alpha", "--Alpha--").replace("stable ", "--Stable-- ")
         expected["profile"] = f"'{m.PROFILES[h['profile']]}' (q={h['profile'] - 5:.2f})"
         expected["gapless"] = "on" if h["gapless"] else "off"
         expected["mid/side stereo"] = "on" if h["ms"] else "off"
@@ -150,7 +159,7 @@ def check_info(name, manifest, path, problems):
                 major, minor, build = p[1], p[2], p[3]
                 name = m.ei_name(major, minor, build)
                 expected["encoder"] = name.replace("stable ", "--Stable-- ").replace("unstable ", "--Unstable-- ")
-        expected["mid/side stereo"] = "on" if header.get("Mid/Side Stereo") == "true" else "off"
+        expected["mid/side stereo"] = "on" if header.get("UsesMidSideStereo") == "true" else "off"
     for key, value in expected.items():
         if info.get(key) != value:
             problems.append(f"mpcdec -i {key}: {info.get(key)!r}, manifest {value!r}")
@@ -187,7 +196,7 @@ def check_ffprobe(name, manifest, path, problems):
             problems.append(f"ffprobe {key}: {stream.get(key)!r}, manifest {value!r}")
     packets = probe.get("packets", [])
     data = path.read_bytes()
-    start = data.find(b"MPCK" if manifest["version"] == 8 else b"MP+")
+    start = stream_start(manifest)
     if manifest["version"] == 8:
         expected = [(o + h, d - h) for o, l, k, d, h in m.packets(data[start:])[0] if k == "AP"]
         expected = [(start + o, s) for o, s in expected]
@@ -257,13 +266,13 @@ def check_old(name, manifest, path, frames126, portable, problems):
     header = manifest["header"]
     values = dict(zip(lines[0][2::2], lines[0][3::2]))
     version = int(header["Stream Version"])
-    bitrate, intensity, block = int(header["Bitrate"].split()[0]), header["Intensity Stereo"] == "true", int(header["Block Size"].split()[0])
+    bitrate, intensity, block = int(header["Bitrate"].split()[0]), header["UsesIntensityStereo"] == "true", int(header["Block Size"].split()[0])
     expected_status = 2 if bitrate else 3 if intensity else 4 if block != 1 else 0
     frames = int(header["Frame Count"].split()[0])
     # "Bugfix: last frame was invalid for up to SV5": versions 4 and 5 drop the last counted frame.
     decoded_frames = frames if version == 6 else frames - 1
     expected = {"version": header["Stream Version"], "frames": str(decoded_frames if expected_status == 0 else frames), "bitrate": str(bitrate),
-                "is": str(int(intensity)), "ms": str(int(header["Mid/Side Stereo"] == "true")), "max_band": header["Max Band"], "block": str(block)}
+                "is": str(int(intensity)), "ms": str(int(header["UsesMidSideStereo"] == "true")), "max_band": header["Max Band"], "block": str(block)}
     if int(lines[0][1]) != expected_status:
         problems.append(f"libmpcdec 1.2.6 header status {lines[0][1]}, expected {expected_status}")
     for key, value in expected.items():
@@ -351,6 +360,11 @@ MEDIAINFO_READS_OTHERWISE = {
 MEDIAINFO_CRASHES = {"sv8-rate-reserved": (-8, "reads past the four-entry Mpc_SampleFreq table and ends with SIGFPE where it divides by what it finds (File_MpcSv8.cpp:229, SH)", True)}
 
 
+# The sample count of this fixture is 2^63 - 1, so MediaInfo's arithmetic on it (File_MpcSv8.cpp, SH: SampleCount * 1000 over the rate, and the file size
+# * 8 * rate over it) overflows 64 bits; what it prints then is not compared.
+MEDIAINFO_OVERFLOWS = {"sv8-sample-count-huge": "the sample count is 2^63 - 1, which MediaInfo's 64-bit arithmetic on it (File_MpcSv8.cpp, SH) overflows"}
+
+
 def sv7_encoder_text(version):
     """MediaInfo's name for an SV7 encoder version byte (File_Mpc.cpp, FileHeader_Parse)."""
     suffix = "" if version % 10 == 0 else " Beta" if version % 2 == 0 else " Alpha"
@@ -395,8 +409,15 @@ def check_mediainfo(name, path, tally):
         # The stream header holds the sample rate and count.
         tally.compare("sample rate without a stream header", audio.get("SamplingRate"), None)
         return problems
-    tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
+    if name in MEDIAINFO_OVERFLOWS:
+        tally.skip("sample rate, samples, duration and bitrate", MEDIAINFO_OVERFLOWS[name])
+        return problems
     rate = stream["sampleRate"]
+    if not rate and stream["codec"] == "Musepack SV8":
+        # A stream header cut before the sample rate: the analyzer reports none (musepack.packet-fields-truncated), and libmpcdec refuses the stream.
+        tally.skip("sample rate, samples, duration and bitrate", "the stream header ends before the sample rate, which the analyzer leaves at 0; what MediaInfo makes of a cut header is not compared")
+        return problems
+    tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
     if not rate:
         problems.append("the analyzer's sample rate is 0; the rate-derived fields cannot be compared")
         return problems

@@ -173,8 +173,9 @@ public class MusepackFixtureTests
         public void Parse(ParseContext context) => _parser.Parse(context);
     }
 
-    // Frames of length 0, which no encoder writes, stop being followed after a run of them, so 30 MB
-    // of zero bytes do not become 12 million frame records.
+    // Frames whose subband resolutions run past their length, which no encoder writes (a length of 0
+    // among them), stop being followed after a run of them, so 30 MB of zero bytes do not become 12
+    // million frame records.
     [Fact]
     public void RunsOfEmptyFramesStop()
     {
@@ -185,9 +186,80 @@ public class MusepackFixtureTests
         WriteBits(data, 66, 6, 31);
         WriteBits(data, 192, 8, 116);
         Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("empty.mpc", new MemoryStream(data));
-        Assert.Contains(report.Findings, f => f.Code == "musepack.frames-empty");
+        Assert.Contains(report.Findings, f => f.Code == "musepack.frames-damaged");
         Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
         Assert.Equal(4096, stream.Children.Count(c => c.Kind == NodeKind.Frame));
+    }
+
+    // The same for frames that are not empty: a length of 1 bit leaves no room for the resolutions
+    // either, in SV7 and in versions 4 to 6, which are read here without the sniff.
+    [Theory]
+    [InlineData(7)]
+    [InlineData(5)]
+    public void RunsOfTinyFramesStop(int version)
+    {
+        const int frames = 20000;
+        byte[] data = new byte[(8 + (frames * 21 / 8)) + 64];
+        int first;
+        if (version == 7)
+        {
+            "MP+"u8.CopyTo(data);
+            data[3] = 0x07;
+            WriteBits(data, 32, 32, frames);
+            WriteBits(data, 66, 6, 31);
+            WriteBits(data, 192, 8, 116);
+            first = 200;
+        }
+        else
+        {
+            WriteBits(data, 21, 5, 31);
+            WriteBits(data, 11, 10, 5);
+            WriteBits(data, 26, 6, 1);
+            WriteBits(data, 32, 32, frames);
+            first = 64;
+        }
+
+        for (int i = 0; i < frames && first + (i * 21) + 21 <= data.Length * 8; i++)
+        {
+            WriteBits(data, first + (i * 21), 20, 1);
+        }
+
+        Report report = new Encspect.Host.Analyzer([new ForcedMusepack()]).Analyze("tiny.mpc", new MemoryStream(data));
+        Assert.Contains(report.Findings, f => f.Code == "musepack.frames-damaged");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
+        Assert.Equal(4096, stream.Children.Count(c => c.Kind == NodeKind.Frame));
+    }
+
+    // Any first words, forced into the SV4 to SV6 parser: a stream version outside 4 to 6, a constant
+    // bitrate, intensity stereo and blocks of frames all end in a finding and no exception.
+    [Fact]
+    public void ForcedOldStreamsOfAnyVersionGiveFindings()
+    {
+        foreach (int length in new[] { 4, 8, 12, 64 })
+        {
+            for (int version = 0; version < 1024; version++)
+            {
+                foreach (int variant in new[] { 0, 1, 2, 3 })
+                {
+                    byte[] data = new byte[length];
+                    WriteBits(data, 11, 10, version);
+                    WriteBits(data, 26, 6, variant >= 2 ? 2 : 1);
+                    WriteBits(data, 0, 9, variant % 2 == 1 ? 128 : 0);
+                    if (length >= 8)
+                    {
+                        WriteBits(data, 32, 32, 3);
+                    }
+
+                    Report report = new Encspect.Host.Analyzer([new ForcedMusepack()]).Analyze("forced.mpc", new MemoryStream(data));
+                    Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+                    if (version is < 4 or > 6)
+                    {
+                        Assert.Contains(report.Findings, f => f.Code == "musepack.frames-not-read" && f.Message.Contains("not of stream version 4 to 6", StringComparison.Ordinal));
+                    }
+                }
+            }
+        }
     }
 
     // SV8 audio packets without a payload, which no encoder writes, stop being followed after a run
@@ -198,9 +270,108 @@ public class MusepackFixtureTests
         byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/external-mpcenc-no-ei-no-st.mpc"));
         byte[] data = [.. stream[..^3], .. Enumerable.Repeat("AP\x03"u8.ToArray(), 5000).SelectMany(p => p), .. stream[^3..]];
         Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("empty.mpc", new MemoryStream(data));
-        Assert.Contains(report.Findings, f => f.Code == "musepack.packets-empty");
+        Assert.Contains(report.Findings, f => f.Code == "musepack.packets-damaged");
         Node stream8 = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
         Assert.Equal(4097, stream8.Children.Count(c => c.Kind == NodeKind.Frame));
+    }
+
+    // An audio packet holds at least one bit for each of its frames, which the stream header gives as
+    // 64 here: packets of one byte are no more than empty ones, and the walk stops after a run of them.
+    [Fact]
+    public void RunsOfTinyAudioPacketsStop()
+    {
+        byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/external-mpcenc-no-ei-no-st.mpc"));
+        byte[] data = [.. stream[..^3], .. Enumerable.Repeat("AP\x04\x55"u8.ToArray(), 5000).SelectMany(p => p), .. stream[^3..]];
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("tiny.mpc", new MemoryStream(data));
+        Assert.Contains(report.Findings, f => f.Code == "musepack.packets-damaged");
+        Node stream8 = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
+        Assert.InRange(stream8.Children.Count(c => c.Kind == NodeKind.Frame), 4096, 4200);
+    }
+
+    // Seek table offset and seek table packets by the tens of thousands cost time in the number of
+    // packets, not in its square: every offset used to be compared with every table, which took
+    // 25 s for 80,000 of each. The offsets point at tables that start in the part not read, which
+    // are not reported.
+    [Fact]
+    public void ManySeekPacketsAreCheckedInLinearTime()
+    {
+        byte[] stream = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack/external-mpcenc-no-ei-no-st.mpc"));
+        int at = stream.Length - 3;
+        var pairs = new List<byte>();
+        for (int i = 0; i < 80_000; i++)
+        {
+            pairs.AddRange("SO\x04\x03"u8.ToArray());
+            pairs.AddRange("ST\x05\x01\x00"u8.ToArray());
+        }
+
+        byte[] data = [.. stream[..at], .. pairs, .. stream[at..]];
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("seek.mpc", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), $"The analysis took {watch.Elapsed.TotalSeconds:F1} s.");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings.Where(f => f.Code.StartsWith("musepack.seek", StringComparison.Ordinal)), f => Assert.True(f.Count >= 1));
+        Assert.True(report.Findings.Count < 40, $"{report.Findings.Count} findings.");
+    }
+
+    // A stream header cut before its two coding bytes reports no sample rate and no channels, which
+    // it never read, and libmpcdec refuses it; the packets after it are still followed.
+    [Theory]
+    [InlineData("musepack/sv8-header-cut-after-crc.mpc")]
+    [InlineData("musepack/sv8-header-cut-before-coding.mpc")]
+    public void CutStreamHeaderReportsNoRateOrChannels(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo info = report.Streams.Single();
+        Assert.Equal(0, info.SampleRate);
+        Assert.Equal(0, info.Channels);
+        Assert.Null(info.ChannelMode);
+        Assert.Null(info.ChannelLayout);
+        Assert.Contains(report.Findings, f => f.Code == "musepack.packet-fields-truncated");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "musepack.header-missing");
+    }
+
+    // A sample count near 2^63 needs more frames than fit in the sum the frame count is worked out
+    // from: the findings and the stream keep the true figures.
+    [Fact]
+    public void HugeSampleCountDoesNotOverflow()
+    {
+        Report report = Fixtures.AnalyzeMpeg("musepack/sv8-sample-count-huge.mpc");
+        Finding missing = Assert.Single(report.Findings, f => f.Code == "musepack.audio-packets-missing");
+        Assert.DoesNotContain("-", missing.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "musepack.audio-packets-extra");
+        Assert.True(report.Streams.Single().Samples > 0);
+    }
+
+    // The name libmpcdec gives an SV7 version byte above 116 is its SV8 reading with the byte shifted
+    // out, 0.0.0, and no encoder writes such a byte: low confidence, as the description says.
+    [Fact]
+    public void Sv7EncoderByteAbove116IsNamedLikeLibmpcdec()
+    {
+        Report report = Fixtures.AnalyzeMpeg("musepack/sv7-encoder-above-116.mpc");
+        Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
+        Node version = stream.Children.Single(c => c.Name == "Header").Children.Single(c => c.Name == "Encoder Version");
+        Assert.Equal("stable 0.0.0", version.Children.Single(c => c.Name == "Name").Value?.ToString());
+        Assert.Equal("Low", report.Streams.Single().EncoderConfidence?.ToString());
+    }
+
+    // A tag that names the encoder the stream's own fields name agrees with it, whichever family of
+    // builds wrote the stream: Buschmann's MP+ builds among them, whose name has none of the words
+    // the others share but "MP+".
+    [Theory]
+    [InlineData("musepack/sv7-claim-mppenc.mpc", "mppenc 1.16")]
+    [InlineData("musepack/sv7-claim-buschmann.mpc", "MP+ 1.7.8 to 1.7.9c (Buschmann)")]
+    [InlineData("musepack/sv7-claim-klemm.mpc", "mppenc 0.90f to 1.0 (Klemm)")]
+    public void AgreeingEncoderClaimIsEvidenceForEveryFamily(string name, string encoder)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "musepack.encoder-claim-differs");
+        StreamInfo info = report.Streams.Single();
+        Assert.Equal(encoder, info.Encoder);
+        Assert.Equal("High", info.EncoderConfidence?.ToString());
+        Node stream = report.Root.Children.Single(n => n.Kind == NodeKind.Stream);
+        Node node = stream.Children.Single(c => c.Name == "Encoder");
+        Assert.Equal(2, node.Children.Count(c => c.Name == "Evidence"));
     }
 
     // The SV7 encoder table against what each encoder at hand wrote (sv7-encoders.json, written by
@@ -222,6 +393,17 @@ public class MusepackFixtureTests
             StreamInfo info = Encspect.Host.Analyzer.CreateDefault().Analyze("encoder.mpc", new MemoryStream(data)).Streams.Single();
             Assert.True(row.GetProperty("detected").GetString() == info.Encoder, $"{row.GetProperty("build").GetString()}: {info.Encoder}");
             Assert.Equal("High", info.EncoderConfidence?.ToString());
+
+            // The same build at other settings writes the profile asked for, or 1 whatever is asked
+            // for: either way the table names it as before.
+            foreach (JsonProperty setting in row.GetProperty("profiles").EnumerateObject())
+            {
+                byte[] other = (byte[])data.Clone();
+                WriteBits(other, 72, 4, setting.Value.GetInt32());
+                info = Encspect.Host.Analyzer.CreateDefault().Analyze("encoder.mpc", new MemoryStream(other)).Streams.Single();
+                Assert.True(row.GetProperty("detected").GetString() == info.Encoder, $"{row.GetProperty("build").GetString()} {setting.Name}: {info.Encoder}");
+                Assert.Equal("High", info.EncoderConfidence?.ToString());
+            }
 
             // ReplayGain tools fill Max Level too, so with ReplayGain written it tells Klemm's builds
             // from Buschmann's no longer.

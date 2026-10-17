@@ -18,6 +18,12 @@ internal static class Sv8Parser
     private const int MaxDetailedPackets = 4096;
     private const int MaxSeekEntryNodes = 1000;
 
+    // The seek table entries kept over all tables, so tables that count more than their packets hold
+    // or many tables cost no more than this; the stream header, ReplayGain and encoder info packets
+    // read past the detailed ones, which the stream info needs, are limited to a few each.
+    private const int MaxSeekEntriesKept = 1 << 22;
+    private const int MaxLatePackets = 8;
+
     public static bool Sniff(ByteReader reader)
     {
         var cache = new BlockCache(reader);
@@ -70,10 +76,10 @@ internal static class Sv8Parser
 
         long position = start + 4;
         bool ended = false;
-        int empty = 0;
-        while (position < end)
+        int damaged = 0;
+        for (long followed = 0; position < end; followed++)
         {
-            if (state.Packets.Count % 4096 == 0)
+            if (followed % 4096 == 0)
             {
                 state.Cancellation.ThrowIfCancellationRequested();
             }
@@ -98,9 +104,10 @@ internal static class Sv8Parser
             var packet = new Packet(position, length, header.Size, header.Key, (byte)header.HeaderLength);
             int index = state.Packets.Count;
 
-            // Past the packets the analyzer details, a run of packets that neither carry audio nor
-            // describe the stream is kept as one record, so empty packets of 3 bytes cost nothing each.
-            if (header.Key != Key("AP") && !DescribesStream(header.Key) && !packet.IsTruncated && state.Detailed.Count >= MaxDetailedPackets)
+            // Past the packets the analyzer details, a run of packets that do not carry audio is kept as
+            // one record and not read, whatever their key, so packets of 3 bytes cost nothing each.
+            bool folded = IsFolded(state, packet);
+            if (folded)
             {
                 if (index > 0 && state.Packets[index - 1] is { IsRun: true } run && run.Offset + run.Length == position)
                 {
@@ -117,16 +124,26 @@ internal static class Sv8Parser
                 state.Packets.Add(packet);
             }
 
-            Handle(state, cache, index, packet);
+            Handle(state, cache, index, packet, folded);
             position += length;
 
-            // An audio packet holds frames, so no encoder writes one without a payload; after a run
-            // of them, as after a run of SV7 frames of length 0, the packets are not followed further.
-            empty = header.Key == Key("AP") && packet.Length == packet.HeaderLength ? empty + 1 : 0;
-            if (empty == Sv7Parser.MaxEmptyRun && position < end)
+            // An audio packet holds frames and libmpcdec reads at least one bit of each (the number of
+            // used bands), so no encoder writes one with fewer bits than frames; after a run of them,
+            // as after a run of SV7 frames whose subband resolutions run past their length, the
+            // packets are not followed further.
+            if (header.Key == Key("AP") && (packet.Length - packet.HeaderLength) * 8 < (state.Header?.FramesPerPacket ?? 64))
             {
-                state.Unreadable = (position, "musepack.packets-empty",
-                    $"{Sv7Parser.MaxEmptyRun} audio packets in a row up to 0x{position:X} hold no payload, which no encoder writes: the data is damaged, and the rest of it is not read.");
+                damaged++;
+            }
+            else if (header.Key == Key("AP"))
+            {
+                damaged = 0;
+            }
+
+            if (damaged == Sv7Parser.MaxDamagedRun && position < end)
+            {
+                state.Unreadable = (position, "musepack.packets-damaged",
+                    $"{Sv7Parser.MaxDamagedRun} audio packets in a row up to 0x{position:X} are too short to hold one bit for each of their frames, which no encoder writes: the data is damaged, and the rest of it is not read.");
                 break;
             }
 
@@ -229,7 +246,7 @@ internal static class Sv8Parser
         return false;
     }
 
-    private static void Handle(State state, BlockCache cache, int index, Packet packet)
+    private static void Handle(State state, BlockCache cache, int index, Packet packet, bool folded)
     {
         if (packet.Key == Key("AP"))
         {
@@ -263,9 +280,9 @@ internal static class Sv8Parser
             ReportKey(state, index, packet, "musepack.key-unknown");
         }
 
-        // Past the cap, packets are not detailed, but those that describe the stream still are read.
-        if (state.Detailed.Count >= MaxDetailedPackets && !DescribesStream(packet.Key))
+        if (folded)
         {
+            Undetailed(state, index, packet);
             return;
         }
 
@@ -278,7 +295,7 @@ internal static class Sv8Parser
         switch (key)
         {
             case "SH":
-                StreamHeader(state, fields, packet);
+                StreamHeader(state, fields, index, packet);
                 break;
             case "RG":
                 ReplayGain(state, fields);
@@ -293,7 +310,7 @@ internal static class Sv8Parser
                 SeekTable(state, fields, index, packet);
                 break;
             case "CT":
-                Chapter(fields);
+                Chapter(state, fields);
                 break;
             case "SE":
                 if (packet.Length != 3 || packet.Size != 3)
@@ -317,11 +334,63 @@ internal static class Sv8Parser
 
         if (state.AudioPackets.Count > 0 && key is "RG" or "SO")
         {
-            PacketAfterAudio(state, node, key, packet);
+            PacketAfterAudio(state, index, key, packet);
         }
 
         state.Detailed[index] = node;
     }
+
+    // Whether the packet is left out of the detailed ones: past MaxDetailedPackets of them, every
+    // packet that does not carry audio, whatever its key, joins a run. The stream end packet ends the
+    // walk, and the first few of the packets the stream info needs are still read.
+    private static bool IsFolded(State state, Packet packet)
+    {
+        if (packet.Key == Key("AP") || packet.Key == Key("SE") || packet.IsTruncated || state.Detailed.Count < MaxDetailedPackets)
+        {
+            return false;
+        }
+
+        int slot = packet.Key == Key("SH") ? 0 : packet.Key == Key("RG") ? 1 : packet.Key == Key("EI") ? 2 : -1;
+        if (slot >= 0 && state.LatePackets[slot] < MaxLatePackets)
+        {
+            state.LatePackets[slot]++;
+            return false;
+        }
+
+        return true;
+    }
+
+    // What a packet in a run still contributes: the facts the checks on the whole stream need, which
+    // need no fields. Its fields are not read.
+    private static void Undetailed(State state, int index, Packet packet)
+    {
+        string key = KeyText(packet.Key);
+        if (key == "SH" && state.Header is not null)
+        {
+            RepeatedHeader(state, index, packet);
+        }
+        else if (key == "RG")
+        {
+            state.HasReplayGain = true;
+        }
+
+        if (state.AudioPackets.Count > 0 && key is "RG" or "SO")
+        {
+            PacketAfterAudio(state, index, key, packet);
+        }
+    }
+
+    private static void RepeatedHeader(State state, int index, Packet packet)
+    {
+        if (!state.Findings.Repeat("musepack.stream-header-repeated"))
+        {
+            AddRepeatedHeader(state, index, packet);
+        }
+    }
+
+    private static void AddRepeatedHeader(State state, int index, Packet packet) =>
+        state.Findings.Add(Severity.Info, "musepack.stream-header-repeated", () => WithoutChildren(PacketShell(state, index)), count =>
+            $"The stream holds {count + 1} stream header packets, the second at 0x{packet.Offset:X}; the analyzer reads the first. The SV8 specification uses repeated headers for streaming.");
 
     // The findings repeated over many packets count in a method with no lambda: one that captures
     // its parameters allocates its closure on entry, before any check, so every case after the
@@ -360,17 +429,19 @@ internal static class Sv8Parser
         state.Findings.Add(Severity.Warning, "musepack.audio-before-header", () => PacketShell(state, index),
             _ => $"An audio packet at 0x{packet.Offset:X} comes before any stream header packet, which the SV8 specification requires before the first audio packet.");
 
-    private static void PacketAfterAudio(State state, Node node, string key, Packet packet)
+    private static void PacketAfterAudio(State state, int index, string key, Packet packet)
     {
         if (!state.Findings.Repeat("musepack.packet-after-audio"))
         {
-            AddPacketAfterAudio(state, node, key, packet);
+            AddPacketAfterAudio(state, index, key, packet);
         }
     }
 
-    private static void AddPacketAfterAudio(State state, Node node, string key, Packet packet) =>
-        state.Findings.Add(Severity.Warning, "musepack.packet-after-audio", WithoutChildren(node), _ =>
-            $"The {key} packet at 0x{packet.Offset:X} comes after the first audio packet; the SV8 specification requires it before.");
+    private static void AddPacketAfterAudio(State state, int index, string key, Packet packet) =>
+        state.Findings.Add(Severity.Warning, "musepack.packet-after-audio", () => WithoutChildren(PacketShell(state, index)), count =>
+            count == 1
+                ? $"The {key} packet at 0x{packet.Offset:X} comes after the first audio packet; the SV8 specification requires it before."
+                : $"{count} packets come after the first audio packet, the first the {key} packet at 0x{packet.Offset:X}; the SV8 specification requires them before.");
 
     private static bool DescribesStream(ushort key) =>
         key == Key("SH") || key == Key("RG") || key == Key("EI") || key == Key("SO") || key == Key("ST") || key == Key("SE");
@@ -417,7 +488,7 @@ internal static class Sv8Parser
             });
         }
 
-        if (!isAudio && (state.Detailed.Count < MaxDetailedPackets || DescribesStream(packet.Key)))
+        if (!isAudio)
         {
             state.Detailed[index] = node;
         }
@@ -520,12 +591,11 @@ internal static class Sv8Parser
     private static Node WithoutChildren(Node node) =>
         new(node.Name, node.Offset, node.Length, node.Value) { Kind = node.Kind, Description = node.Description, Ranges = node.Ranges };
 
-    private static void StreamHeader(State state, Fields f, Packet packet)
+    private static void StreamHeader(State state, Fields f, int index, Packet packet)
     {
         if (state.Header is not null)
         {
-            state.Findings.Add(Severity.Info, "musepack.stream-header-repeated", WithoutChildren(f.Node), count =>
-                $"The stream holds {count + 1} stream header packets, the second at 0x{packet.Offset:X}; the analyzer reads the first. The SV8 specification uses repeated headers for streaming.");
+            RepeatedHeader(state, index, packet);
             return;
         }
 
@@ -585,23 +655,25 @@ internal static class Sv8Parser
         state.SampleCountField = WithoutChildren(f.Node.Children.First(c => c.Name == "Sample Count"));
         int first = f.Data[position];
         int second = f.Data[position + 1];
-        header.RateIndex = first >> 5;
+        int rateIndex = first >> 5;
+        int channelCount = (second >> 4) + 1;
+        header.RateIndex = rateIndex;
         header.MaxBands = (first & 0x1F) + 1;
-        header.Channels = (second >> 4) + 1;
+        header.Channels = channelCount;
         header.MidSide = (second & 0x08) != 0;
         header.BlockPower = second & 0x07;
         long at = f.Offset + position;
         Node rate = f.Node.Add(Node.FromBits("Sample Rate", at, 0, 3,
-            header.RateIndex < 4 ? NodeValue.Integer(Sv7Parser.SampleRates[header.RateIndex], "Hz") : $"reserved ({header.RateIndex})", NodeKind.Detail, Explain.SampleRateIndex));
+            rateIndex < 4 ? NodeValue.Integer(Sv7Parser.SampleRates[rateIndex], "Hz") : $"reserved ({rateIndex})", NodeKind.Detail, Explain.SampleRateIndex));
         Node bands = f.Node.Add(Node.FromBits("Max Used Bands", at, 3, 8, NodeValue.Integer(header.MaxBands), NodeKind.Detail, Explain.MaxUsedBands, Topics.SubbandCoding));
-        Node channels = f.Node.Add(Node.FromBits("Channels", at + 1, 0, 4, NodeValue.Integer(header.Channels), NodeKind.Detail, Explain.ChannelCount));
-        f.Node.Add(Node.FromBits("Mid/Side Stereo", at + 1, 4, 5, NodeValue.Boolean(header.MidSide), NodeKind.Detail, Explain.Sv8MidSide, Topics.MidSideStereo));
+        Node channels = f.Node.Add(Node.FromBits("Channels", at + 1, 0, 4, NodeValue.Integer(channelCount), NodeKind.Detail, Explain.ChannelCount));
+        f.Node.Add(Node.FromBits("UsesMidSideStereo", at + 1, 4, 5, NodeValue.Boolean(header.MidSide), NodeKind.Detail, Explain.Sv8MidSide, Topics.MidSideStereo));
         f.Node.Add(Node.FromBits("Audio Block Frames", at + 1, 5, 8, NodeValue.Integer(header.FramesPerPacket, "frames", "frame"), NodeKind.Detail, Explain.AudioBlockFrames));
         position += 2;
-        if (header.RateIndex >= 4)
+        if (rateIndex >= 4)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.sample-rate-reserved",
-                $"The stream header's sample rate index is {header.RateIndex}, which the SV8 specification does not define; libmpcdec refuses the stream.", rate);
+                $"The stream header's sample rate index is {rateIndex}, which the SV8 specification does not define; libmpcdec refuses the stream.", rate);
         }
 
         // libmpcdec r495 check_streaminfo: max_band >= 32 fails, and SV8 stores the bands less 1.
@@ -611,10 +683,10 @@ internal static class Sv8Parser
                 "The stream header gives 32 used bands, which the SV8 specification allows but libmpcdec refuses.", bands);
         }
 
-        if (header.Channels > 2)
+        if (channelCount > 2)
         {
             state.Findings.AddNow(Severity.Warning, "musepack.channels-unsupported",
-                $"The stream header gives {header.Channels} channels; libmpcdec decodes at most 2 and refuses the stream.", channels);
+                $"The stream header gives {channelCount} channels; libmpcdec decodes at most 2 and refuses the stream.", channels);
         }
 
         f.Padding(state, position, "SH");
@@ -634,8 +706,9 @@ internal static class Sv8Parser
         Node versionNode = f.Bytes("Version", 0, 1, NodeValue.Integer(version), Explain.ReplayGainVersion, Topics.ReplayGain);
         if (version != 1)
         {
-            state.Findings.AddNow(Severity.Info, "musepack.replaygain-version",
-                $"The ReplayGain packet's version is {version}; libmpcdec reads only version 1 and ignores the values.", WithoutChildren(versionNode));
+            state.Findings.Add(Severity.Info, "musepack.replaygain-version", () => WithoutChildren(versionNode), count => count == 1
+                ? $"The ReplayGain packet's version is {version}; libmpcdec reads only version 1 and ignores the values."
+                : $"{count} ReplayGain packets have a version other than 1, the first {version}; libmpcdec reads only version 1 and ignores the values.");
             return;
         }
 
@@ -679,7 +752,7 @@ internal static class Sv8Parser
         Node node = f.Node.Add(Node.FromBits("Profile", f.Offset, 0, 7, NodeValue.Decimal(profile, 3), NodeKind.Detail, Explain.Sv8Profile, Topics.SubbandCoding));
         node.Add(Node.FromBits("Name", f.Offset, 0, 7, Sv7Parser.ProfileName((int)profile), NodeKind.Detail, Explain.ProfileName));
         node.Add(Node.FromBits("Quality", f.Offset, 0, 7, NodeValue.Decimal(profile - 5, 3), NodeKind.Detail, Explain.Quality));
-        f.Node.Add(Node.FromBits("PNS", f.Offset, 7, 8, NodeValue.Boolean((f.Data[0] & 1) != 0), NodeKind.Detail, Explain.Pns, Topics.NoiseSubstitution));
+        f.Node.Add(Node.FromBits("UsesNoiseSubstitution", f.Offset, 7, 8, NodeValue.Boolean((f.Data[0] & 1) != 0), NodeKind.Detail, Explain.Pns, Topics.NoiseSubstitution));
         int major = f.Data[1];
         int minor = f.Data[2];
         int build = f.Data[3];
@@ -724,6 +797,9 @@ internal static class Sv8Parser
         var entries = new List<long>();
         var starts = new List<(int Start, int End)>();
         bool broken = false;
+        long decoded = 0;
+        long previous = 0;
+        long beforePrevious = 0;
         for (long i = 0; i < count && !broken; i++)
         {
             if (i % 4096 == 0)
@@ -770,7 +846,7 @@ internal static class Sv8Parser
                     code = -(code & ~1L);
                 }
 
-                value = (code >> 1) + (2 * entries[^1]) - entries[^2];
+                value = (code >> 1) + (2 * previous) - beforePrevious;
             }
 
             if (broken)
@@ -778,34 +854,47 @@ internal static class Sv8Parser
                 break;
             }
 
-            entries.Add(value);
-            starts.Add((from, baseBit + bits.Position));
+            beforePrevious = previous;
+            previous = value;
+            decoded++;
+            if (state.SeekEntriesKept < MaxSeekEntriesKept)
+            {
+                entries.Add(value);
+                state.SeekEntriesKept++;
+            }
+
+            if (starts.Count < MaxSeekEntryNodes)
+            {
+                starts.Add((from, baseBit + bits.Position));
+            }
         }
 
-        var list = new Node("Entries", f.Offset + position, f.Data.Length - position, NodeValue.Integer(entries.Count, "entries", "entry"))
+        var list = new Node("Entries", f.Offset + position, f.Data.Length - position, NodeValue.Integer(decoded, "entries", "entry"))
         {
             Description = Explain.SeekEntries,
         };
-        for (int i = 0; i < entries.Count && i < MaxSeekEntryNodes; i++)
+        for (int i = 0; i < starts.Count && i < entries.Count; i++)
         {
             list.Add(Node.FromBits("Entry", f.Offset, starts[i].Start, starts[i].End, NodeValue.Integer(entries[i], "bytes"), NodeKind.Detail, Explain.SeekEntry));
         }
 
         f.Node.Add(list);
-        if (broken || entries.Count < count)
+        if (broken || decoded < count)
         {
-            state.Findings.AddNow(Severity.Warning, "musepack.seek-table-truncated",
-                $"The seek table at 0x{packet.Offset:X} counts {count} entries, but its packet holds only {entries.Count}.", WithoutChildren(f.Node));
+            state.Findings.Add(Severity.Warning, "musepack.seek-table-truncated", () => WithoutChildren(f.Node), times => times == 1
+                ? $"The seek table at 0x{packet.Offset:X} counts {count} entries, but its packet holds only {decoded}."
+                : $"{times} seek tables count more entries than their packets hold, the first at 0x{packet.Offset:X} with {count} counted and {decoded} held.");
         }
 
-        state.SeekTables.Add((index, distance, entries, WithoutChildren(f.Node)));
+        state.SeekTables.Add((index, distance, entries, decoded, WithoutChildren(f.Node)));
     }
 
-    private static void Chapter(Fields f)
+    private static void Chapter(State state, Fields f)
     {
         int position = 0;
         if (!f.Size("Sample Offset", ref position, "samples", "sample", Explain.ChapterSample, out _) || position + 4 > f.Data.Length)
         {
+            Truncated(state, f, "CT");
             return;
         }
 
@@ -851,7 +940,9 @@ internal static class Sv8Parser
     }
 
     private static void Truncated(State state, Fields f, string key) =>
-        state.Findings.AddNow(Severity.Warning, "musepack.packet-fields-truncated", $"The {key} packet at 0x{f.Node.Offset:X} ends inside its fields.", WithoutChildren(f.Node));
+        state.Findings.Add(Severity.Warning, "musepack.packet-fields-truncated", () => WithoutChildren(f.Node), count => count == 1
+            ? $"The {key} packet at 0x{f.Node.Offset:X} ends inside its fields."
+            : $"{count} packets end inside their fields, the first the {key} packet at 0x{f.Node.Offset:X}.");
 
     // What the packets say together: the mandatory packets, the seek table against the audio
     // packets, and the audio packets against the stream header's sample count.
@@ -881,16 +972,31 @@ internal static class Sv8Parser
                 "The stream has no ReplayGain packet, which the SV8 specification marks as mandatory.", state.Leading[0]);
         }
 
+        var seekTables = new HashSet<long>();
+        foreach (var table in state.SeekTables)
+        {
+            seekTables.Add(state.Packets[table.Index].Offset);
+        }
+
+        int checkedTables = 0;
         foreach ((int index, long target, Node field) in state.SeekOffsets)
         {
-            if (!state.SeekTables.Any(t => state.Packets[t.Index].Offset == target))
+            if (checkedTables++ % 4096 == 0)
             {
-                state.Findings.AddNow(Severity.Warning, "musepack.seek-offset-invalid",
-                    $"The seek table offset at 0x{state.Packets[index].Offset:X} points to 0x{target:X}, where no seek table packet starts; decoders seek without it.", field);
+                state.Cancellation.ThrowIfCancellationRequested();
+            }
+
+            // A target inside a run of packets that were not read may be a seek table packet.
+            if (!seekTables.Contains(target) && !InRun(state, target))
+            {
+                long at = state.Packets[index].Offset;
+                state.Findings.Add(Severity.Warning, "musepack.seek-offset-invalid", field, count => count == 1
+                    ? $"The seek table offset at 0x{at:X} points to 0x{target:X}, where no seek table packet starts; decoders seek without it."
+                    : $"{count} seek table offsets point where no seek table packet starts, the first the one at 0x{at:X} to 0x{target:X}; decoders seek without them.");
             }
         }
 
-        foreach ((_, int distance, List<long> entries, Node node) in state.SeekTables)
+        foreach ((_, int distance, List<long> entries, long decoded, Node node) in state.SeekTables)
         {
             long step = 1L << distance;
             long needed = (state.AudioPackets.Count + step - 1) / step;
@@ -898,6 +1004,11 @@ internal static class Sv8Parser
             string? first = null;
             for (int i = 0; i < entries.Count; i++)
             {
+                if (i % 4096 == 0)
+                {
+                    state.Cancellation.ThrowIfCancellationRequested();
+                }
+
                 long audio = i * step;
                 long? actual = audio < state.AudioPackets.Count ? state.Packets[state.AudioPackets[(int)audio]].Offset - state.Start : null;
                 if (actual != entries[i])
@@ -911,16 +1022,20 @@ internal static class Sv8Parser
 
             if (wrong > 0)
             {
-                state.Findings.AddNow(Severity.Warning, "musepack.seek-table-mismatch",
-                    $"{wrong} of the seek table's {entries.Count} entries do not point at the audio packet they stand for: {first}. Players that seek with it land in the wrong place.", node);
+                int wrongEntries = wrong;
+                int entryCount = entries.Count;
+                string firstWrong = first!;
+                state.Findings.Add(Severity.Warning, "musepack.seek-table-mismatch", node, count => count == 1
+                    ? $"{wrongEntries} of the seek table's {entryCount} entries do not point at the audio packet they stand for: {firstWrong}. Players that seek with it land in the wrong place."
+                    : $"{count} seek tables have entries that do not point at the audio packet they stand for, the first {wrongEntries} of {entryCount}: {firstWrong}. Players that seek with them land in the wrong place.");
             }
 
-            if (entries.Count < needed)
+            if (decoded < needed)
             {
-                state.Findings.AddNow(Severity.Info, "musepack.seek-table-short",
-                    $"The seek table holds {entries.Count} entries; the stream's {state.AudioPackets.Count} audio packets at one entry every {step} would need {needed}. Decoders seek through the packets after the last entry.", node);
+                state.Findings.Add(Severity.Info, "musepack.seek-table-short", node, count => count == 1
+                    ? $"The seek table holds {decoded} entries; the stream's {state.AudioPackets.Count} audio packets at one entry every {step} would need {needed}. Decoders seek through the packets after the last entry."
+                    : $"{count} seek tables hold fewer entries than the stream's {state.AudioPackets.Count} audio packets need, the first {decoded} where one entry every {step} needs {needed}. Decoders seek through the packets after the last entry.");
             }
-
         }
 
         if (state.Header is { Samples: > 0 } header && state.AudioPackets.Count > 0 && state.Unreadable is null)
@@ -941,10 +1056,37 @@ internal static class Sv8Parser
 
     }
 
+    // Whether the offset falls inside a run of packets that were not read: the packet that holds it
+    // by binary search over the records, which are in order.
+    private static bool InRun(State state, long offset)
+    {
+        int low = 0;
+        int high = state.Packets.Count - 1;
+        while (low <= high)
+        {
+            int middle = (low + high) / 2;
+            Packet packet = state.Packets[middle];
+            if (offset < packet.Offset)
+            {
+                high = middle - 1;
+            }
+            else if (offset >= packet.Offset + packet.Length)
+            {
+                low = middle + 1;
+            }
+            else
+            {
+                return packet.IsRun;
+            }
+        }
+
+        return false;
+    }
+
     private static void AddStream(State state, Node node, AnalysisContext context, IReadOnlyList<EncoderClaim> claims)
     {
         StreamHeaderInfo? header = state.Header;
-        int rate = header is { RateIndex: < 4 } h ? Sv7Parser.SampleRates[h.RateIndex] : 0;
+        int rate = header is { RateIndex: < 4 and { } rateIndex } ? Sv7Parser.SampleRates[rateIndex] : 0;
         var figures = new StreamFigures(rate);
         long frames = 0;
         for (int i = 0; i < state.AudioPackets.Count; i++)
@@ -1096,11 +1238,13 @@ internal static class Sv8Parser
 
         public long Silence { get; set; }
 
-        public int RateIndex { get; set; }
+        // Null where the header ends before the two bytes that hold the sample rate and the channels,
+        // so a cut header reports no rate or channels it never read.
+        public int? RateIndex { get; set; }
 
         public int MaxBands { get; set; }
 
-        public int Channels { get; set; } = 2;
+        public int? Channels { get; set; }
 
         public bool MidSide { get; set; }
 
@@ -1110,7 +1254,8 @@ internal static class Sv8Parser
 
         // The frames decoders decode: until the samples and the synthesis filter's delay are out
         // (libmpcdec r495 mpc_decoder_decode_frame; mpcenc r495 writes as many).
-        public long ExpectedFrames => (Samples + Sv7Parser.SynthesisDelay + Sv7Parser.FrameSamples - 1) / Sv7Parser.FrameSamples;
+        // Worked out from the quotient and the remainder, since a sample count near 2^63 overflows the sum.
+        public long ExpectedFrames => (Samples / Sv7Parser.FrameSamples) + (((Samples % Sv7Parser.FrameSamples) + Sv7Parser.SynthesisDelay + Sv7Parser.FrameSamples - 1) / Sv7Parser.FrameSamples);
     }
 
     // The fields of one packet's payload, which nodes are added for.
@@ -1149,8 +1294,9 @@ internal static class Sv8Parser
             Node padding = Bytes("Padding", position, data.Length - position, NodeValue.Integer(data.Length - position, "bytes"), Explain.Padding);
             if (data.AsSpan(position).ContainsAnyExcept((byte)0))
             {
-                state.Findings.AddNow(Severity.Warning, "musepack.padding-not-zero",
-                    $"The {key} packet's bytes after its last field, at 0x{padding.Offset:X}, are not all zero, which the SV8 specification requires.", padding);
+                state.Findings.Add(Severity.Warning, "musepack.padding-not-zero", padding, count => count == 1
+                    ? $"The {key} packet's bytes after its last field, at 0x{padding.Offset:X}, are not all zero, which the SV8 specification requires."
+                    : $"{count} packets have bytes after their last field that are not all zero, which the SV8 specification requires; the first is the {key} packet's, at 0x{padding.Offset:X}.");
             }
         }
     }
@@ -1187,7 +1333,12 @@ internal static class Sv8Parser
 
         public List<(int Index, long Target, Node Field)> SeekOffsets { get; } = [];
 
-        public List<(int Index, int Distance, List<long> Entries, Node Node)> SeekTables { get; } = [];
+        public List<(int Index, int Distance, List<long> Entries, long Decoded, Node Node)> SeekTables { get; } = [];
+
+        public int SeekEntriesKept { get; set; }
+
+        // Stream header, ReplayGain and encoder info packets read past the detailed ones.
+        public int[] LatePackets { get; } = new int[3];
 
         public (long Offset, string Code, string Message)? Unreadable { get; set; }
 
