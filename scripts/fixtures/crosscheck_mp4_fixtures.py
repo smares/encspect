@@ -4,7 +4,7 @@
 For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/aac, its manifest's
 "crosscheck" says what to confirm:
 
-- "ffprobe": ffprobe (ffmpeg 6.1) must list exactly the manifest's access units as its audio packets,
+- "ffprobe": ffprobe (ffmpeg 8.0) must list exactly the manifest's access units as its audio packets,
   stream by stream and with edit lists ignored, and report each stream's sample rate and channels (unless
   "ffprobe_streams" is false, for ADTS frames of several protected raw data blocks, which ffmpeg does not
   decode, so it reports no rate). ffmpeg outputs two channels for any mono
@@ -12,8 +12,10 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
   manifest counts the channels the configuration signals, so there ffprobe's 2 is expected
   ("ffprobe_channels"); likewise ffmpeg doubles the rate of an ADTS stream whose access units carry SBR,
   which ADTS can only signal implicitly ("ffprobe_sample_rate"). Where the
-  manifest records ffprobe's profile ("ffprobe_profile"), it must match: ffmpeg names a stream HE-AAC only
-  once it finds SBR data in an access unit, which the hand-built ones do not carry, so those record none.
+  manifest records ffprobe's profile ("ffprobe_profile"), it must match: for an MP4 track ffmpeg names a stream HE-AAC only
+  once it finds SBR data in an access unit, which the hand-built ones do not carry, so those record none; for a raw ADTS stream it names the profile
+  of the ADTS header, since FFmpeg 8.0's parser sets it for every frame header (libavcodec/aac_ac3_parser.c, ff_aac_ac3_parse), after the decoder
+  has named the stream from its SBR data, so those record "LC".
   ffprobe's channel layout must feed the speakers of the stream's "channel_layout", in any order
   (channel_layouts.py), where ffprobe's channels are the manifest's: ffmpeg's decoder gives an AAC
   stream the layout its configuration states, whatever a chan or chnl box says.
@@ -43,13 +45,13 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
   Blocks that "faad_trace_skip" lists, by index, are not compared, each for the reason given.
 - "decode": ffmpeg must decode every access unit without printing an error (ffmpeg -v error ... -f null -).
 - "skip": the tools that are not run on the fixture, each with the reason.
-- MediaInfo 24.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
+- MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
   report: each track's format and AAC profile, ADTS's MPEG version, sample rate, channels and
   layout, SBR and parametric stereo signaling (implicit, explicit or hierarchical), access units
   and stream size, the track header's and sample table's durations (for a fragmented file, the track
   runs' sample durations), the encoding tool (©too) and the iTunes metadata's title, artist and album.
   Its own readings are asserted as such: the AAC bitrate mode, which follows frame sizes more than
-  the encoder's declaration (mediainfo_aac_mode), the mono layout "M" of HE-AAC v2, no duration for
+  the encoder's declaration (mediainfo_aac_mode), no duration for
   ADTS, and one frame for ADIF with the duration and stream size from its bitrate. Fixtures on
   which it reads a field otherwise are listed with the evidence (MEDIAINFO_READS_OTHERWISE).
 
@@ -411,13 +413,12 @@ UNPLACED_UNITS = STTS_COUNT + ", whether or not the chunks place them in the fil
 UNPLACED_SIZE = "MediaInfo sums the sizes stsz lists (File_Mpeg4_Elements.cpp, stsz: stsz_StreamSize, filled in File_Mpeg4.cpp lines 801 and 855), whether or not the chunks place the samples in the file; the analyzer leaves out the samples that have no place, with a finding"
 ADTS_ERRORS = "MediaInfo counts only the ADTS frames whose raw data blocks it parses without an error; its trace (--Details=1) lists every frame"
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
-NO_CHANNELS = "MediaInfo 24.01 gives this track no channel count; it takes the channels of a coding from its frames (File_Ac3, File_Dts, File_Mpega), which are encrypted"
+NO_CHANNELS = "MediaInfo 26.01 gives this track no channel count; it takes the channels of a coding from its frames (File_Ac3, File_Dts, File_Mpega), which are encrypted"
 NO_FORMAT = "MediaInfo names the coding from the esds box of the sample entry (File_Mpeg4_Elements.cpp, the sample entry's codec); the analyzer, with no frma box to name the original format, reports the sample entry's own kind"
 MOOV_TRACKS = "MediaInfo lists the audio tracks of moov; the analyzer reports a stream only for samples its tables or fragments place, and these fragments place them for one track or none"
 FIRST_ENTRY = "MediaInfo reads the first sample entry of the track (File_Mpeg4_Elements.cpp), which does not say that the track is encrypted; the analyzer reads the entries the chunks use"
 MEDIAINFO_READS_OTHERWISE = {
     "mp4/ffmpeg-cenc-mp3": {"channels": NO_CHANNELS},
-    "mp4/ffmpeg-cenc-opus": dict.fromkeys(["format of an encrypted stream", "channels"], "MediaInfo 24.01 names this track \"(Encrypted)\" and gives it no channel count: it reads the format of an enca entry from the codec it recognizes, and has none for Opus in an encrypted entry"),
     "mp4/cenc-ac3": {"channels": NO_CHANNELS},
     "mp4/cenc-dts": {"channels": NO_CHANNELS},
     "mp4/cenc-mpeg-audio": {"channels": NO_CHANNELS},
@@ -428,11 +429,11 @@ MEDIAINFO_READS_OTHERWISE = {
     "mp4/cenc-fragmented-moof-in-trak": {"streams": MOOV_TRACKS},
     "mp4/cenc-fragmented-two-tfhd": {"streams": MOOV_TRACKS},
     "mp4/cenc-fragmented-two-tfhd-protecting": {"streams": MOOV_TRACKS},
-    "mp4/cenc-clear-unparsed": {"channels": "MediaInfo 24.01 gives this track no channel count: it reads an ALAC track's channels from the alac box (File_Mpeg4_Elements.cpp), which the hand-built entry does not have"},
+    "mp4/cenc-clear-unparsed": {"channels": "MediaInfo 26.01 gives this track no channel count: it reads an ALAC track's channels from the alac box (File_Mpeg4_Elements.cpp), which the hand-built entry does not have"},
     "mp4/truncated-in-tenc": {"streams": "MediaInfo lists the audio track from its sample entry, which the cut leaves whole; the analyzer reports a stream only for samples its sample tables place (the cut file has no stts, stsc, stsz or stco box)"},
     "mp4/enca-no-sinf": {"format of an encrypted stream": NO_FORMAT},
     "mp4/sinf-no-frma": {"format of an encrypted stream": NO_FORMAT},
-    "mp4/ps-in-channel-pair": dict.fromkeys(["format", "PS signaling"], "MediaInfo reads a parametric stereo extension in a channel pair's SBR data (File_Aac_GeneralAudio_Sbr.cpp, sbr_channel_pair_element: ps_data); the analyzer, like the decoders, does not apply it there: FFmpeg 6.1 turns PS off for a configuration of more than one channel (aacdec_template.c, decode_ga_specific_config) and skips the extension (aacsbr_template.c, read_sbr_extension), and faad2 2.11 decodes a channel pair's SBR without PS (specrec.c, reconstruct_channel_pair: sbrDecodeCoupleFrame)"),
+    "mp4/ps-in-channel-pair": dict.fromkeys(["format", "PS signaling"], "MediaInfo reads a parametric stereo extension in a channel pair's SBR data (File_Aac_GeneralAudio_Sbr.cpp, sbr_channel_pair_element: ps_data); the analyzer, like the decoders, does not apply it there: FFmpeg 8.0 turns PS off for a configuration of more than one channel (mpeg4audio.c, ff_mpeg4audio_get_config_gb: channels & ~0x01) and skips the extension (aacsbr_template.c, read_sbr_extension), and faad2 2.11 decodes a channel pair's SBR without PS (specrec.c, reconstruct_channel_pair: sbrDecodeCoupleFrame)"),
     "mp4/chunk-outside-file": {"access units": UNPLACED_UNITS, "stream size": UNPLACED_SIZE},
     "mp4/chunk-sample-mismatch": {"access units": UNPLACED_UNITS, "stream size": UNPLACED_SIZE},
     "mp4/truncated": {"access units": UNPLACED_UNITS, "stream size": UNPLACED_SIZE},
@@ -560,13 +561,11 @@ def check_mediainfo(path, tally, check=None):
         tally.compare("sample rate", track.get("SamplingRate"), str(stream["sampleRate"]))
         # With a chan box, MediaInfo gives the configuration's channels as Channels_Original.
         tally.compare("channels", track.get("Channels", track.get("Channels_Original")), str(stream["channels"]))
-        if codec == "HE-AAC v2":
-            # MediaInfo counts parametric stereo's two channels but keeps the mono core's layout (File_Aac_GeneralAudio.cpp, FillInfosHEAACv2).
-            tally.compare("channel layout of HE-AAC v2", track.get("ChannelLayout"), "M")
-        elif stream["channelLayout"]:
-            # The analyzer gives the configuration's layout, and the container's where the configuration names none.
+        if stream["channelLayout"]:
+            # The analyzer gives the configuration's layout, and the container's where the configuration names none. MediaInfo 26.01 gives HE-AAC v2
+            # the layout "L R" with its two channels (File_Aac_GeneralAudio.cpp, FillInfosHEAACv2), which is the analyzer's.
             reserved = any(f["code"] == "aac.reserved-channel-configuration" for f in report["findings"])
-            layout = track.get("ChannelLayout") if reserved else track.get("ChannelLayout_Original", track.get("ChannelLayout"))
+            layout = track.get("ChannelLayout") if reserved or codec == "HE-AAC v2" else track.get("ChannelLayout_Original", track.get("ChannelLayout"))
             tally.compare("channel layout", mi.speakers(layout), mi.normalized(stream["channelLayout"]))
         if codec.startswith(("AAC", "HE-AAC")):
             sbr, ps = sbr_signaling(report, node, codec)

@@ -297,7 +297,7 @@ def sbr_fixvar_adts():
         "ADTS at a core rate of 22050 Hz whose channel pairs are each followed by SBR data with FIXVAR frame grids of three and two envelopes whose "
         "frequency resolutions differ (sent last envelope first): the first channel's envelopes are of high, low and low resolution, the second's of "
         "high and low.", data, rows,
-        [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, ffprobe_profile="HE-AAC")], sbr_fields("ADTS", 12, 3, False),
+        [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, ffprobe_profile="LC")], sbr_fields("ADTS", 12, 3, False),
         [["aac.implicit-sbr", "ADTS cannot signal SBR or PS explicitly, but 12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"]],
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."},
         rate=22050)
@@ -316,7 +316,7 @@ def implicit_sbr_adts():
     return "implicit-sbr.aac", data, manifest(
         "ADTS at a core rate of 22050 Hz whose channel pairs are each followed by a fill element of SBR data, the SBR header in every fourth: "
         "HE-AAC, signaled only implicitly, at 44100 Hz.", data, rows,
-        [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, ffprobe_profile="HE-AAC")], fields,
+        [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, ffprobe_profile="LC")], fields,
         [["aac.implicit-sbr", "ADTS cannot signal SBR or PS explicitly, but 12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"]],
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."},
         rate=22050)
@@ -367,7 +367,7 @@ def faac_style_adts(name, tools, what):
         f"44100 Hz (the header in the first access unit and again in the 31st), where access unit "
         f"{FAAC_DEVIANT + 1} does {what}.",
         data, rows,
-        [stream("HE-AAC", 44100, 2, "Stereo", FAAC_UNITS * 2048, encoder=("FAAC", "Medium") if named else None, ffprobe_profile="HE-AAC")], fields,
+        [stream("HE-AAC", 44100, 2, "Stereo", FAAC_UNITS * 2048, encoder=("FAAC", "Medium") if named else None, ffprobe_profile="LC")], fields,
         [["aac.implicit-sbr", f"{FAAC_UNITS} of {FAAC_UNITS} raw data blocks hold SBR data: the stream is HE-AAC"]],
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold; the trace check reads the SBR data instead."},
         rate=22050)
