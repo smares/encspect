@@ -15,8 +15,9 @@ internal sealed partial class FileReader(ParseContext context)
     // Nodes of elements other than the blocks of Clusters, which are records. A file with more elements than this is not read further.
     internal const int MaxNodes = 250_000;
 
-    // Elements at the root of the document; real files hold one EBML Header and one Segment, or a few chained (RFC 9559 section 23.2).
-    internal const int MaxRootElements = 4096;
+    // What a Segment counts against the node budget besides its elements, for its records and state: a live stream of concatenated Segments
+    // (RFC 9559 section 23.2) reaches the budget at MaxNodes / SegmentNodeCost Segments.
+    internal const int SegmentNodeCost = 16;
 
     // Block records, Cluster items and BlockGroup children together.
     internal const long MaxRecords = 6_000_000;
@@ -36,7 +37,6 @@ internal sealed partial class FileReader(ParseContext context)
     private SegmentState? _segment;
     private DocumentInfo _document = new();
     private int _nodes;
-    private int _rootElements;
     private bool _budgetReported;
     private long _records;
     private bool _recordsReported;
@@ -63,21 +63,12 @@ internal sealed partial class FileReader(ParseContext context)
                 break;
             }
 
-            // The elements at the root of the document (EBML Headers, Segments) are bounded like the elements below them: a file of millions of
-            // empty ones is not read on.
-            if (_nodes >= MaxNodes || _rootElements++ >= MaxRootElements)
+            // The elements at the root of the document (EBML Headers, Segments) are bounded by the node budget like the elements below them, each Segment
+            // counting SegmentNodeCost of it for the state it holds: a file of millions of empty ones is not read on.
+            if (_nodes >= MaxNodes)
             {
                 Node rest = _file.Add(Unparsed(position, _reader.End, "the file"));
-                if (_nodes >= MaxNodes)
-                {
-                    ReportBudget(position, () => rest);
-                }
-                else
-                {
-                    _findings.AddNow(Severity.Warning, "matroska.too-many-elements",
-                        $"The file holds more than {MaxRootElements} elements at its root (EBML Headers and Segments); the file from 0x{position:X} on is not read.", rest);
-                }
-
+                ReportBudget(position, () => rest);
                 break;
             }
 

@@ -155,6 +155,11 @@ internal sealed partial class FileReader
             _context.CancellationToken.ThrowIfCancellationRequested();
             if (_nodes >= MaxNodes)
             {
+                if (_segment is not null)
+                {
+                    _segment.HasSkippedElements = true;
+                }
+
                 Node rest = node.Add(Unparsed(position, end, "the element's data"));
                 ReportBudget(position, () => rest);
                 return;

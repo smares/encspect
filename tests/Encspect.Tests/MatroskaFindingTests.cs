@@ -56,6 +56,7 @@ public class MatroskaFindingTests
     [InlineData("matroska/live-id3v1.mka", new[] { "ID3v1" })]
     [InlineData("matroska/live-ape-id3v1.mka", new[] { "APE", "ID3v1" })]
     [InlineData("matroska/live-ape-large.mka", new[] { "APE" })]
+    [InlineData("matroska/live-ape-binary.mka", new[] { "APE" })]
     public void ATagAfterALiveRecordingIsATag(string name, string[] tags)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -63,6 +64,33 @@ public class MatroskaFindingTests
         Assert.Equal(tags, report.Root.Children.Where(c => c.Kind == NodeKind.Tag).Select(c => c.Name));
         Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.element-truncated" or "matroska.unknown-element" || f.Code.StartsWith("tag.", StringComparison.Ordinal));
         Assert.Single(report.Streams);
+    }
+
+    // Whatever bytes a binary APEv2 item holds, the tag after a live recording is a tag: its data may look like Void, CRC-32 or Cluster child
+    // elements, even ones that run past the data, and none of them makes the unknown element before it (the header's "APETAGEX") part of the recording.
+    [Fact]
+    public void ABinaryApeItemIsNeverSwallowedByTheRecording()
+    {
+        byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "matroska", "live-ape-binary.mka"));
+        int tag = original.AsSpan().IndexOf("APETAGEX"u8);
+        int value = tag + 32 + (8 + 5 + 1 + 16) + 8 + 17 + 1;
+        var random = new Random(7);
+        for (int i = 0; i < 400; i++)
+        {
+            byte[] data = (byte[])original.Clone();
+            random.NextBytes(data.AsSpan(value, 4000));
+            // Every other case puts an element ID where the walk lands.
+            if (i % 2 == 0)
+            {
+                byte[] ids = [0xEC, 0xBF, 0xE7, 0xA3, 0xA0, 0xA7, 0xAB];
+                data[tag + 1368] = ids[random.Next(ids.Length)];
+                data[tag + 1369] = (byte)(i % 4 == 0 ? 0x84 : 0x5F);
+            }
+
+            Report report = Analyzer.CreateDefault().Analyze("live.mka", new MemoryStream(data));
+
+            Assert.True(report.Root.Children.Any(c => c.Name == "APE"), $"case {i}: {string.Join(", ", report.Root.Children.Select(c => c.Name))}");
+        }
     }
 
     // The Tags element is the file's own tags: the summary lists it and the tags filter hides it, as for MP4's item list.
@@ -119,11 +147,13 @@ public class MatroskaFindingTests
         TestFiles.CheckInsideParents(report.Root);
     }
 
-    // A file of thousands of EBML Headers and Segments is not read on past a limit: the rest is one Unparsed Data node.
+    // A file of empty Segments is not read on past the node budget, each Segment counting FileReader.SegmentNodeCost of it: the rest is one
+    // Unparsed Data node. A live stream of fewer Segments than that is read in full.
     [Fact]
-    public void ElementsAtTheRootAreLimited()
+    public void ManySegmentsAreLimitedByTheNodeBudget()
     {
-        byte[] file = MatroskaBuilder.Concat([MatroskaBuilder.Header(), .. Enumerable.Repeat<byte[]>([0x18, 0x53, 0x80, 0x67, 0x80], FileReader.MaxRootElements + 100)]);
+        int limit = (FileReader.MaxNodes / FileReader.SegmentNodeCost) + 100;
+        byte[] file = MatroskaBuilder.Concat([MatroskaBuilder.Header(), .. Enumerable.Repeat<byte[]>([0x18, 0x53, 0x80, 0x67, 0x80], limit)]);
 
         Report report = Analyzer.CreateDefault().Analyze("segments.mka", new MemoryStream(file));
 
@@ -131,6 +161,73 @@ public class MatroskaFindingTests
         Assert.Equal("Unparsed Data", NodeOf(report, finding).Name);
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        Assert.Equal(FileReader.MaxNodes / FileReader.SegmentNodeCost, Descendants(report.Root).Count(n => n.Name == "Segment"));
+    }
+
+    // The Segments of a live stream (RFC 9559 section 23.2): 5,000 of them, each with its Info, are all read.
+    [Fact]
+    public void FiveThousandSegmentsAreRead()
+    {
+        byte[] segment = MatroskaBuilder.WithSize(0x18538067, MatroskaBuilder.Info().Length, MatroskaBuilder.Info());
+        byte[] file = MatroskaBuilder.Concat([MatroskaBuilder.Header(), .. Enumerable.Repeat(segment, 5_000)]);
+
+        Report report = Analyzer.CreateDefault().Analyze("stream.mka", new MemoryStream(file));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.too-many-elements" or "parse.failed");
+        Assert.Equal(5_000, Descendants(report.Root).Count(n => n.Name == "Segment"));
+    }
+
+    // The budget runs out inside the Tracks element, whose TrackEntry 1 is skipped: the blocks that name it are not reported as naming no track.
+    [Fact]
+    public void BlocksOfATrackInSkippedElementsAreNotUnknown()
+    {
+        byte[] tracks = MatroskaBuilder.Element(0x1654AE6B, MatroskaBuilder.Concat([.. Enumerable.Repeat(MatroskaBuilder.Void(0), FileReader.MaxNodes + 10)]), MatroskaBuilder.OpusTrack(1));
+        byte[] cluster = MatroskaBuilder.Cluster(0, MatroskaBuilder.SimpleBlock(1, 0, [0xFC, 0xFF, 0xFE]), MatroskaBuilder.SimpleBlock(1, 20, [0xFC, 0xFF, 0xFE]));
+
+        Report report = Analyzer.CreateDefault().Analyze("tracks.mka", new MemoryStream(MatroskaBuilder.File(MatroskaBuilder.Info(), tracks, cluster)));
+
+        Assert.Contains(report.Findings, f => f.Code == "matroska.too-many-elements");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.block-track-unknown" or "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    // One finding past the listed ones is "1 more finding ... is", not "1 more findings ... are".
+    [Fact]
+    public void TheCountOfUnlistedFindingsIsSingularForOne()
+    {
+        byte[] tracks = MatroskaBuilder.Element(0x1654AE6B, MatroskaBuilder.Concat([.. Enumerable.Repeat<byte[]>([0xAE, 0x80], FindingCollector.MaxListed + 1)]));
+
+        Report report = Analyzer.CreateDefault().Analyze("tracks.mka", new MemoryStream(MatroskaBuilder.File(MatroskaBuilder.Info(), tracks)));
+
+        Finding rest = report.Findings.Last(f => f.Code == "matroska.track-not-analyzed");
+        Assert.StartsWith("1 more finding of this kind is not listed", rest.Message, StringComparison.Ordinal);
+    }
+
+    // A zlib-compressed CodecPrivate may be larger than a frame is allowed to inflate to (a Vorbis comment header with pictures): 2 MiB here.
+    [Fact]
+    public void ALargeInflatedCodecPrivateIsRead()
+    {
+        byte[] head = new byte[19];
+        "OpusHead"u8.CopyTo(head);
+        head[8] = 1;
+        head[9] = 2;
+        BinaryPrimitives.WriteUInt16LittleEndian(head.AsSpan(10), 312);
+        BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(12), 48000);
+        var packed = new MemoryStream();
+        using (var zlib = new System.IO.Compression.ZLibStream(packed, System.IO.Compression.CompressionLevel.SmallestSize, leaveOpen: true))
+        {
+            zlib.Write(head);
+            zlib.Write(new byte[2 << 20]);
+        }
+
+        byte[] encodings = MatroskaBuilder.Element(0x6D80, MatroskaBuilder.Element(0x6240, MatroskaBuilder.Unsigned(0x5031, 0), MatroskaBuilder.Unsigned(0x5032, 2),
+            MatroskaBuilder.Unsigned(0x5033, 0), MatroskaBuilder.Element(0x5034, MatroskaBuilder.Unsigned(0x4254, 0))));
+        byte[] track = MatroskaBuilder.OpusTrackWithPrivate(1, packed.ToArray(), encodings);
+        byte[] cluster = MatroskaBuilder.Cluster(0, MatroskaBuilder.SimpleBlock(1, 0, [0xFC, 0xFF, 0xFE]));
+
+        Report report = Analyzer.CreateDefault().Analyze("private.mka", new MemoryStream(MatroskaBuilder.File(MatroskaBuilder.Info(), MatroskaBuilder.Element(0x1654AE6B, track), cluster)));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "matroska.codec-private-invalid" or "matroska.codec-private-not-read" or "parse.failed");
     }
 
     // Findings that stand for one element each are listed up to a limit, then counted in one more.

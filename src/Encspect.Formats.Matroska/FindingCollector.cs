@@ -64,7 +64,7 @@ internal sealed class FindingCollector
         {
             if (skipped > 0)
             {
-                context.AddFinding(last.Severity, code, $"{skipped} more findings of this kind are not listed; the first {MaxListed} are above.", last.Node, skipped);
+                context.AddFinding(last.Severity, code, $"{(skipped == 1 ? "1 more finding of this kind is" : $"{skipped} more findings of this kind are")} not listed; the first {MaxListed} are above.", last.Node, skipped);
             }
         }
 

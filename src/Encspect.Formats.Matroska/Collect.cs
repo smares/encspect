@@ -219,6 +219,7 @@ internal sealed partial class FileReader
                 break;
             case 0x78B5:
                 track.OutputSamplingFrequency = leaf.D;
+                track.OutputSamplingFrequencyNode = node;
                 break;
             case 0x9F:
                 track.Channels = leaf.U;

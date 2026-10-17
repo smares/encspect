@@ -8,6 +8,7 @@ internal sealed partial class FileReader
     // What the specification requires of a Segment as a whole (RFC 9559 sections 5, 6 and 10), once all of it is read.
     private void CheckSegment(SegmentState segment)
     {
+        ApplyLateScales(segment);
         Node anchor = segment.Node!;
         bool hasClusters = segment.ClusterCount > 0;
         string number = _segments.Count > 1 ? $" {segment.Number}" : string.Empty;
@@ -109,6 +110,15 @@ internal sealed partial class FileReader
                     $"{which} states {(track.Channels == 0 ? "0 channels" : $"a sampling frequency of {track.SamplingFrequency?.ToString(CultureInfo.InvariantCulture)} Hz")}, which RFC 9559 forbids (section 5.1.4.1.29).",
                     track.Channels == 0 ? track.ChannelsNode ?? node : track.SamplingFrequencyNode ?? node);
             }
+        }
+
+        // Like the SamplingFrequency, the OutputSamplingFrequency must be above 0 (section 5.1.4.1.29.2). An invalid one is not used.
+        if (track.IsAudio && track.OutputSamplingFrequency is { } output && !Codecs.IsRate(output))
+        {
+            bool isLegacySbr = track.CodecId is { } codecId && codecId.StartsWith("A_AAC/MPEG", StringComparison.Ordinal) && codecId.EndsWith("/SBR", StringComparison.Ordinal);
+            _findings.AddNow(Severity.Warning, "matroska.audio-fields",
+                $"{which} states an output sampling frequency of {output.ToString(CultureInfo.InvariantCulture)} Hz, which RFC 9559 forbids (section 5.1.4.1.29.2); it is not used{(isLegacySbr ? ", so no AudioSpecificConfig is worked out from the legacy SBR codec ID and the AAC parser gets no configuration" : string.Empty)}.",
+                track.OutputSamplingFrequencyNode ?? track.AudioNode ?? node);
         }
 
         if (track.CodecId == "A_OPUS" && track.CodecDelayNode is null)

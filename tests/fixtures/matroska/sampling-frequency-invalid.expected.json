@@ -1,6 +1,6 @@
 {
- "description": "Three PCM tracks whose SamplingFrequency is not above 0 (RFC 9559 section 5.1.4.1.29.1): NaN, -48000 and infinity. Each is a finding, and the streams have no sampling rate.",
- "length": 895,
+ "description": "Four PCM tracks whose SamplingFrequency or OutputSamplingFrequency is not above 0 (RFC 9559 sections 5.1.4.1.29.1 and 5.1.4.1.29.2): NaN, -48000 and infinity for the first three, and a NaN output sampling frequency beside a valid sampling frequency for the fourth. Each is a finding. The streams of the first three have no sampling rate, and the fourth uses its sampling frequency.",
+ "length": 1163,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,11 +16,11 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 256,
-     "length": 639,
+     "offset": 314,
+     "length": 849,
      "timestamp": 0,
      "size_unknown": false,
-     "blocks": 9
+     "blocks": 12
     }
    ],
    "size_unknown": false,
@@ -31,8 +31,8 @@
     "muxing_app": "encspect fixtures",
     "writing_app": "encspect fixtures"
    },
-   "length": 855,
-   "declared_end": 895
+   "length": 1123,
+   "declared_end": 1163
   }
  ],
  "tree": [
@@ -81,7 +81,7 @@
   [
    "Segment",
    40,
-   855,
+   1123,
    [
     [
      "Info",
@@ -113,7 +113,7 @@
     [
      "Tracks",
      109,
-     147,
+     205,
      [
       [
        "TrackEntry",
@@ -261,62 +261,131 @@
          ]
         ]
        ]
+      ],
+      [
+       "TrackEntry",
+       256,
+       58,
+       [
+        [
+         "TrackNumber",
+         258,
+         3
+        ],
+        [
+         "TrackUID",
+         261,
+         5
+        ],
+        [
+         "TrackType",
+         266,
+         3
+        ],
+        [
+         "CodecID",
+         269,
+         15
+        ],
+        [
+         "Audio",
+         284,
+         30,
+         [
+          [
+           "SamplingFrequency",
+           286,
+           10
+          ],
+          [
+           "Channels",
+           296,
+           3
+          ],
+          [
+           "BitDepth",
+           299,
+           4
+          ],
+          [
+           "OutputSamplingFrequency",
+           303,
+           11
+          ]
+         ]
+        ]
+       ]
       ]
      ]
     ],
     [
      "Cluster",
-     256,
-     639,
+     314,
+     849,
      [
       [
        "Timestamp",
-       262,
+       320,
        3
       ],
       [
        "SimpleBlock",
-       265,
+       323,
        70
       ],
       [
        "SimpleBlock",
-       335,
+       393,
        70
       ],
       [
        "SimpleBlock",
-       405,
+       463,
        70
       ],
       [
        "SimpleBlock",
-       475,
+       533,
        70
       ],
       [
        "SimpleBlock",
-       545,
+       603,
        70
       ],
       [
        "SimpleBlock",
-       615,
+       673,
        70
       ],
       [
        "SimpleBlock",
-       685,
+       743,
        70
       ],
       [
        "SimpleBlock",
-       755,
+       813,
        70
       ],
       [
        "SimpleBlock",
-       825,
+       883,
+       70
+      ],
+      [
+       "SimpleBlock",
+       953,
+       70
+      ],
+      [
+       "SimpleBlock",
+       1023,
+       70
+      ],
+      [
+       "SimpleBlock",
+       1093,
        70
       ]
      ]
@@ -327,7 +396,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 265,
+   "offset": 323,
    "length": 70,
    "track": 1,
    "timestamp": 0,
@@ -336,14 +405,14 @@
    "lacing": "none",
    "frames": [
     [
-     271,
+     329,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 335,
+   "offset": 393,
    "length": 70,
    "track": 1,
    "timestamp": 10,
@@ -352,14 +421,14 @@
    "lacing": "none",
    "frames": [
     [
-     341,
+     399,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 405,
+   "offset": 463,
    "length": 70,
    "track": 1,
    "timestamp": 20,
@@ -368,14 +437,14 @@
    "lacing": "none",
    "frames": [
     [
-     411,
+     469,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 475,
+   "offset": 533,
    "length": 70,
    "track": 2,
    "timestamp": 0,
@@ -384,14 +453,14 @@
    "lacing": "none",
    "frames": [
     [
-     481,
+     539,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 545,
+   "offset": 603,
    "length": 70,
    "track": 2,
    "timestamp": 10,
@@ -400,14 +469,14 @@
    "lacing": "none",
    "frames": [
     [
-     551,
+     609,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 615,
+   "offset": 673,
    "length": 70,
    "track": 2,
    "timestamp": 20,
@@ -416,14 +485,14 @@
    "lacing": "none",
    "frames": [
     [
-     621,
+     679,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 685,
+   "offset": 743,
    "length": 70,
    "track": 3,
    "timestamp": 0,
@@ -432,14 +501,14 @@
    "lacing": "none",
    "frames": [
     [
-     691,
+     749,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 755,
+   "offset": 813,
    "length": 70,
    "track": 3,
    "timestamp": 10,
@@ -448,14 +517,14 @@
    "lacing": "none",
    "frames": [
     [
-     761,
+     819,
      64
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 825,
+   "offset": 883,
    "length": 70,
    "track": 3,
    "timestamp": 20,
@@ -464,7 +533,55 @@
    "lacing": "none",
    "frames": [
     [
-     831,
+     889,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 953,
+   "length": 70,
+   "track": 4,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     959,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1023,
+   "length": 70,
+   "track": 4,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1029,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1093,
+   "length": 70,
+   "track": 4,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1099,
      64
     ]
    ]
@@ -509,6 +626,20 @@
    "delay": 0,
    "encodings": [],
    "lacing": true
+  },
+  {
+   "number": 4,
+   "uid": 4100,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": 16,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true,
+   "output_rate": null
   }
  ],
  "writers": [
@@ -532,12 +663,17 @@
    "codec": "PCM (integer, little-endian)",
    "sample_rate": 0,
    "channels": 2
+  },
+  {
+   "codec": "PCM (integer, little-endian)",
+   "sample_rate": 48000,
+   "channels": 2
   }
  ],
  "findings": [
   {
    "code": "matroska.audio-fields",
-   "contains": "NaN Hz"
+   "contains": "NaN Hz, which"
   },
   {
    "code": "matroska.audio-fields",
@@ -546,6 +682,10 @@
   {
    "code": "matroska.audio-fields",
    "contains": "Infinity Hz"
+  },
+  {
+   "code": "matroska.audio-fields",
+   "contains": "output sampling frequency of NaN Hz"
   },
   {
    "code": "matroska.codec-not-analyzed",
@@ -558,6 +698,10 @@
   {
    "code": "matroska.codec-not-analyzed",
    "contains": "Track 3"
+  },
+  {
+   "code": "matroska.codec-not-analyzed",
+   "contains": "Track 4"
   }
  ],
  "crosscheck": {

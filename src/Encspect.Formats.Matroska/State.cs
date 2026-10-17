@@ -89,9 +89,12 @@ internal sealed class TrackStatistics
     public long Keyframes { get; set; }
 
     // The blocks' timestamps in Segment Ticks: the Cluster's Timestamp plus the block's, which is in Track Ticks, times the TrackTimestampScale
-    // (RFC 9559, section 11.2); Scale is the track's, 1 where the Tracks element has not named the track yet. The first and the last in file
+    // (RFC 9559, section 11.2); Scale is the track's. The first and the last in file
     // order and the extremes.
     public double Scale { get; set; } = 1.0;
+
+    // The track's TrackEntry was not read yet when its first block was, so Scale is the default until the Segment is read.
+    public bool IsScaleAssumed { get; set; }
 
     public bool HasTimes { get; set; }
 
@@ -164,6 +167,8 @@ internal sealed class TrackInfo
     public double? SamplingFrequency { get; set; }
 
     public double? OutputSamplingFrequency { get; set; }
+
+    public Node? OutputSamplingFrequencyNode { get; set; }
 
     public ulong? Channels { get; set; }
 
@@ -277,7 +282,7 @@ internal sealed class SegmentState
     // The writer findings already reported for the Segment, so that its streams do not repeat them.
     public HashSet<string> Reported { get; } = [];
 
-    // Top-Level Elements past the node budget were skipped, so what the Segment lacks may be among them.
+    // Elements of the Segment past the node budget were skipped, so what the Segment lacks may be among them.
     public bool HasSkippedElements { get; set; }
 
     public int InfoCount { get; set; }

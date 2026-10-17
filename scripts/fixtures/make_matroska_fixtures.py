@@ -1137,10 +1137,10 @@ ID3V1 = b"TAG" + b"A live recording".ljust(30, b"\0") + b"A speaker".ljust(30, b
 
 def ape_tag(pairs=((b"Artist", b"A speaker"), (b"Title", b"A live recording"))):
     """An APEv2 tag with a header, the items and a footer (APE tag specification 2.000)."""
-    def item(key, value):
-        return struct.pack("<II", len(value), 0) + key + b"\0" + value
+    def item(key, value, flags=0):
+        return struct.pack("<II", len(value), flags) + key + b"\0" + value
 
-    items = b"".join(item(k, v) for k, v in pairs)
+    items = b"".join(item(*pair) for pair in pairs)
     size = len(items) + 32
     header = b"APETAGEX" + struct.pack("<IIII", 2000, size, len(pairs), 0xA0000000) + bytes(8)
     footer = b"APETAGEX" + struct.pack("<IIII", 2000, size, len(pairs), 0x80000000) + bytes(8)
@@ -1304,6 +1304,21 @@ def _():
     return build(standard(*clusters, track=[pcm]))
 
 
+@fixture("tracks-after-clusters", "A PCM track with a TrackTimestampScale of 2.0 whose Tracks element comes after the Cluster, which a SeekHead before the Cluster references (RFC 9559 "
+         "section 6.1 allows it): the blocks' times are worked out with the scale once the Tracks are read, so the blocks at 0 and 1000 Track Ticks are 2 s apart.",
+         findings=[("matroska.codec-not-analyzed", "PCM")], streams=[("PCM (integer, little-endian)", 48000, 2)])
+def _():
+    def make(p):
+        head = seek_head((m.INFO, p.get("info", 0)), (m.CLUSTER, p.get("c0", 0)), (m.TRACKS, p.get("tracks", 0)))
+        inf = info()
+        trk = tracks(audio_track(1, "A_PCM/INT/LIT", 2, PCM_RATE, bits=16, extra=TS_SCALE_TRACK_EXTRA))
+        c0 = cluster(0, *[simple_block(1, ts, bytes(range(16)) * 4, key=True) for ts in (0, 1000)])
+        seg = segment(head, inf, c0, trk)
+        return [ebml_header(), seg], {"info": inf, "tracks": trk, "c0": c0}, seg
+
+    return laid_out(make)
+
+
 @fixture("encrypted-track-timestamp-scale", "An encrypted Opus track with a TrackTimestampScale of 2.0 in Clusters at 0 and 1000 ticks: its length comes from the container's timing, "
          "which scales the blocks' timestamps and not the Clusters'.", findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("Opus", 48000, 1)], valid=False)
 def _():
@@ -1320,6 +1335,20 @@ def _():
          findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
 def _():
     return live_file(), ape_tag(((b"Title", b"A live recording " * 118),))
+
+
+@fixture("live-ape-binary", "A live recording with an APEv2 tag whose binary cover item has the bytes of a Void element where the walk over the tag lands after the header's "
+         "unknown element (1,368 bytes in) and those of a Cluster child that runs past the data after it: neither vouches for the unknown element before it, so the tag is "
+         "not swallowed. Only a Top-Level Element that follows an unknown element makes it part of the recording.",
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown")], streams=[OPUS], valid=False)
+def _():
+    key = b"Cover Art (Front)"
+    value = bytearray((i * 167 + (i >> 3) * 31 + 5) & 0xFF for i in range(4000))
+    title = (b"Title", b"A live recording")
+    first = 1368 - (32 + 8 + len(title[0]) + 1 + len(title[1]) + 8 + len(key) + 1)
+    value[first:first + 6] = b"\xec\x84\x00\x00\x00\x00"
+    value[first + 6:first + 9] = b"\xa3\x5f\xff"
+    return live_file(), ape_tag((title, (key, bytes(value), 2)))
 
 
 @fixture("truncated-seek-cues", "A file cut at the end, right after the last Cluster, whose SeekHead names the Cues past the cut: the position lies inside the Segment's declared "
@@ -1346,7 +1375,7 @@ def _():
 
 
 @fixture("misplaced-values", "A TimestampScale of 5,000,000 inside Tracks and a WritingApp of \"LAME 3.100\" inside a Tag, both where the schema does not place them, in a file whose Info "
-         "states 1,000,000 and the mkvmerge apps: the misplaced values are shown and reported but not used, so the PCM track lasts 0.12 s at the Info's scale and its writer is mkvmerge.",
+         "states 1,000,000 and the mkvmerge apps: the misplaced values are shown and reported but not used, so the PCM track's four blocks, 40 ms apart, last 0.16 s at the Info's scale and its writer is mkvmerge.",
          findings=[("matroska.misplaced-element", "2 elements are placed where the schema does not allow"), ("matroska.codec-not-analyzed", "PCM")],
          streams=[("PCM (integer, little-endian)", 48000, 2)], valid=False)
 def _():
@@ -1381,16 +1410,28 @@ def _():
     return build([ebml_header(max_id=200, max_size=16), standard(cluster(0, *blocks(count=4)))[1]])
 
 
-@fixture("sampling-frequency-invalid", "Three PCM tracks whose SamplingFrequency is not above 0 (RFC 9559 section 5.1.4.1.29.1): NaN, -48000 and infinity. Each is a finding, and "
-         "the streams have no sampling rate.",
-         findings=[("matroska.audio-fields", "NaN Hz"), ("matroska.audio-fields", "-48000 Hz"), ("matroska.audio-fields", "Infinity Hz"),
-                   ("matroska.codec-not-analyzed", "Track 1"), ("matroska.codec-not-analyzed", "Track 2"), ("matroska.codec-not-analyzed", "Track 3")],
-         streams=[("PCM (integer, little-endian)", 0, 2)] * 3, valid=False)
+@fixture("sampling-frequency-invalid", "Four PCM tracks whose SamplingFrequency or OutputSamplingFrequency is not above 0 (RFC 9559 sections 5.1.4.1.29.1 and 5.1.4.1.29.2): NaN, "
+         "-48000 and infinity for the first three, and a NaN output sampling frequency beside a valid sampling frequency for the fourth. Each is a finding. The streams of "
+         "the first three have no sampling rate, and the fourth uses its sampling frequency.",
+         findings=[("matroska.audio-fields", "NaN Hz, which"), ("matroska.audio-fields", "-48000 Hz"), ("matroska.audio-fields", "Infinity Hz"), ("matroska.audio-fields", "output sampling frequency of NaN Hz"),
+                   ("matroska.codec-not-analyzed", "Track 1"), ("matroska.codec-not-analyzed", "Track 2"), ("matroska.codec-not-analyzed", "Track 3"), ("matroska.codec-not-analyzed", "Track 4")],
+         streams=[("PCM (integer, little-endian)", 0, 2)] * 3 + [("PCM (integer, little-endian)", 48000, 2)], valid=False)
 def _():
-    rates = [float("nan"), -48000.0, float("inf")]
-    entries = [audio_track(i + 1, "A_PCM/INT/LIT", 2, rate, bits=16) for i, rate in enumerate(rates)]
-    items = [simple_block(i + 1, t * 10, bytes(range(16)) * 4, key=True) for i in range(3) for t in range(3)]
+    rates = [float("nan"), -48000.0, float("inf"), 48000.0]
+    entries = [audio_track(i + 1, "A_PCM/INT/LIT", 2, rate, bits=16, audio_extra=(flt(ID["OutputSamplingFrequency"], float("nan")),) if i == 3 else ()) for i, rate in enumerate(rates)]
+    items = [simple_block(i + 1, t * 10, bytes(range(16)) * 4, key=True) for i in range(4) for t in range(3)]
     return build(standard(cluster(0, *items), track=entries))
+
+
+@fixture("aac-legacy-sbr-invalid-output", "A track with the legacy ID A_AAC/MPEG4/LC/SBR whose OutputSamplingFrequency is NaN: it is not used, so no AudioSpecificConfig is worked out "
+         "from the ID and the AAC parser gets no configuration.",
+         findings=[("matroska.audio-fields", "output sampling frequency of NaN Hz"), ("aac.no-configuration", "without an AudioSpecificConfig")], streams=[("AAC", 22050, 2)], valid=False)
+def _():
+    _, rate_index, channels, frames = adts_frames("sbr-fixvar-resolutions")
+    rate = float(AAC_RATES[rate_index])
+    track = audio_track(1, "A_AAC/MPEG4/LC/SBR", channels, rate, audio_extra=(flt(ID["OutputSamplingFrequency"], float("nan")),))
+    items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames)]
+    return build(standard(cluster(0, *items), track=[track]))
 
 
 @fixture("writer-lavf-under-application", "A Segment whose MuxingApp is ffmpeg's muxer version (\"Lavf60.16.100\") and whose WritingApp names another application, as libavformat writes "

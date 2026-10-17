@@ -8,7 +8,7 @@ internal sealed partial class FileReader
     // headerMissing: the file starts inside a Segment, so the element at the header's position is the first of its children.
     private long ParseSegment(ElementHeader header, bool headerMissing)
     {
-        _nodes++;
+        _nodes += SegmentNodeCost;
         var segment = new SegmentState { Number = _segments.Count + 1, Records = new Records(), Document = _document, Offset = header.Offset };
         _segments.Add(segment);
         Records records = segment.Records;

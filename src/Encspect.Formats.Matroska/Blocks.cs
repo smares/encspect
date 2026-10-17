@@ -159,9 +159,8 @@ internal sealed partial class FileReader
             ulong key = segment.Statistics.Count >= MaxTrackStatistics ? ulong.MaxValue : block.Track;
             if (!segment.Statistics.TryGetValue(key, out statistics))
             {
-                // A TrackTimestampScale that is not above 0 (RFC 9559, section 5.1.4.1.15) or not a number is read as the default of 1.
-                double scale = segment.TracksByNumber.TryGetValue(key, out TrackInfo? info) && double.IsFinite(info.TimestampScale) && info.TimestampScale > 0 ? info.TimestampScale : 1.0;
-                segment.Statistics[key] = statistics = new TrackStatistics { Scale = scale };
+                bool isKnown = segment.TracksByNumber.TryGetValue(key, out TrackInfo? info);
+                segment.Statistics[key] = statistics = new TrackStatistics { Scale = isKnown ? ScaleOf(info!) : 1.0, IsScaleAssumed = !isKnown };
             }
         }
 
@@ -184,6 +183,15 @@ internal sealed partial class FileReader
 
         statistics.Frames += block.Frames;
         statistics.Bytes += block.DataLength - (block.FramesDelta - block.HeaderLength);
+        AddTime(statistics, block, name, clusterTimestamp);
+    }
+
+    // A TrackTimestampScale that is not above 0 (RFC 9559, section 5.1.4.1.15) or not a number is read as the default of 1.
+    private static double ScaleOf(TrackInfo track) => double.IsFinite(track.TimestampScale) && track.TimestampScale > 0 ? track.TimestampScale : 1.0;
+
+    // Adds a block's time (RFC 9559, section 11.2) to its track's totals.
+    private static void AddTime(TrackStatistics statistics, in BlockRecord block, string name, long clusterTimestamp)
+    {
         double timestamp = clusterTimestamp + (block.Timestamp * statistics.Scale);
         if (!statistics.HasTimes)
         {
@@ -203,6 +211,72 @@ internal sealed partial class FileReader
         statistics.Smallest = Math.Min(statistics.Smallest, timestamp);
         statistics.Largest = Math.Max(statistics.Largest, timestamp);
         statistics.LastEnd = block.End;
+    }
+
+    // A track whose blocks came before its TrackEntry (Tracks after the Clusters, which RFC 9559 section 6.1 allows behind a SeekHead) had its
+    // blocks' times worked out with a TrackTimestampScale of 1: once the Segment is read, they are worked out again for the tracks that state another.
+    private void ApplyLateScales(SegmentState segment)
+    {
+        Dictionary<ulong, TrackStatistics> late = [];
+        foreach ((ulong number, TrackStatistics statistics) in segment.Statistics.Select(p => (p.Key, p.Value)))
+        {
+            if (statistics.IsScaleAssumed && segment.TracksByNumber.TryGetValue(number, out TrackInfo? track) && ScaleOf(track) != 1.0)
+            {
+                statistics.Scale = ScaleOf(track);
+                statistics.HasTimes = false;
+                statistics.Smallest = double.MaxValue;
+                statistics.Largest = double.MinValue;
+                statistics.Backwards = 0;
+                statistics.FirstBackwards = null;
+                statistics.FirstOffset = -1;
+                statistics.LastEnd = 0;
+                late[number] = statistics;
+            }
+        }
+
+        if (late.Count == 0)
+        {
+            return;
+        }
+
+        Records records = segment.Records;
+        long steps = 0;
+        void Replay(int index, string name, long clusterTimestamp)
+        {
+            BlockRecord block = records.Blocks[index];
+            if (block.Status is (BlockStatus.None or BlockStatus.LaceSingle) && late.TryGetValue(block.Track, out TrackStatistics? statistics))
+            {
+                AddTime(statistics, block, name, clusterTimestamp);
+            }
+        }
+
+        for (int c = 0; c < records.Clusters.Count; c++)
+        {
+            ClusterRecord cluster = records.Clusters[c];
+            for (int i = cluster.FirstItem; i < cluster.FirstItem + cluster.ItemCount; i++)
+            {
+                if (++steps % 4096 == 0)
+                {
+                    _context.CancellationToken.ThrowIfCancellationRequested();
+                }
+
+                Item item = records.Items[i];
+                if (item.Kind == ItemKind.SimpleBlock)
+                {
+                    Replay(item.Index, "SimpleBlock", cluster.Timestamp);
+                }
+                else if (item.Kind == ItemKind.BlockGroup)
+                {
+                    for (int j = item.Index; j < item.Index + item.Value; j++)
+                    {
+                        if (records.Children[j].Block >= 0)
+                        {
+                            Replay(records.Children[j].Block, "Block", cluster.Timestamp);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // The lacing header (RFC 9559 section 10.3) at position: the number of frames, and each frame's size into _laceSizes, the last

@@ -60,7 +60,10 @@ internal static class MatroskaBuilder
     public static byte[] Info() => Element(0x1549A966, Unsigned(0x2AD7B1, 1_000_000));
 
     // A stereo Opus TrackEntry with the given number and the given further children (a ContentEncodings element, a TrackTimestampScale).
-    public static byte[] OpusTrack(uint number, params byte[][] extra)
+    public static byte[] OpusTrack(uint number, params byte[][] extra) => OpusTrackWithPrivate(number, null, extra);
+
+    // The same with the given bytes as the CodecPrivate (the OpusHead where null).
+    public static byte[] OpusTrackWithPrivate(uint number, byte[]? codecPrivate, params byte[][] extra)
     {
         byte[] head = new byte[19];
         Encoding.ASCII.GetBytes("OpusHead").CopyTo(head, 0);
@@ -68,6 +71,7 @@ internal static class MatroskaBuilder
         head[9] = 2;
         BinaryPrimitives.WriteUInt16LittleEndian(head.AsSpan(10), 312);
         BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(12), 48000);
+        head = codecPrivate ?? head;
         byte[] rate = new byte[8];
         BinaryPrimitives.WriteDoubleBigEndian(rate, 48000);
         return Element(0xAE, Unsigned(0xD7, number), Unsigned(0x73C5, number), Unsigned(0x83, 2), Text(0x86, "A_OPUS"), Element(0x63A2, head),

@@ -6,11 +6,11 @@ namespace Encspect.Formats.Matroska;
 
 internal sealed partial class FileReader
 {
-    // Inflated frames and CodecPrivates larger than this are not read: a codec packet is far smaller (an Opus packet is under 61,296 bytes,
+    // Inflated frames larger than this are not read: a codec packet is far smaller (an Opus packet is under 61,296 bytes,
     // RFC 6716 section 3.4), and a larger limit lets a few bytes of zlib stand for a thousandfold of memory and time.
     private const int MaxInflated = 1 << 20;
 
-    // A CodecPrivate larger than this is not read.
+    // A CodecPrivate larger than this is not read, inflated or not (a Vorbis comment header with pictures can be large).
     private const int MaxCodecPrivate = 1 << 26;
 
     // Encodings of a part of a track that are undone, one after the other, for every frame; real files have one.
@@ -737,7 +737,7 @@ internal sealed partial class FileReader
     }
 
     // What one part of a track (its frames or its CodecPrivate) goes through.
-    private sealed class Pipeline
+    private sealed class Pipeline(int limit)
     {
         private readonly List<string> _problems = [];
 
@@ -748,7 +748,7 @@ internal sealed partial class FileReader
         // What the steps undo, for a finding: "zlib compression", "header stripping" or both.
         public string Kinds => Steps.Any(x => !x.IsStripping) ? (Steps.Any(x => x.IsStripping) ? "zlib compression and header stripping" : "zlib compression") : "header stripping";
 
-        public Decoder? Decoder => Steps.Count == 0 || _problems.Count > 0 ? null : new Decoder(Steps);
+        public Decoder? Decoder => Steps.Count == 0 || _problems.Count > 0 ? null : new Decoder(Steps, limit);
 
         public void Apply(bool applies, bool isEncryption, string? problem, Step? step)
         {
@@ -788,9 +788,9 @@ internal sealed partial class FileReader
         // Two encodings share a ContentEncodingOrder: nothing of the track is read.
         public bool IsAmbiguous { get; set; }
 
-        public Pipeline Frames { get; } = new();
+        public Pipeline Frames { get; } = new(MaxInflated);
 
-        public Pipeline Private { get; } = new();
+        public Pipeline Private { get; } = new(MaxCodecPrivate);
 
         // Set where an encryption (not ContentEncAlgo 0) is declared: IsEncrypted only when it covers the frames. ContentEncKeyID names a key and no DRM system.
         public StreamProtection? Protection { get; set; }
@@ -799,20 +799,20 @@ internal sealed partial class FileReader
     private sealed record Step(bool IsStripping, byte[] Prefix);
 
     // Undoes the steps in order: stripped bytes are put back in front of the data, zlib data is inflated.
-    private sealed class Decoder(List<Step> steps)
+    private sealed class Decoder(List<Step> steps, int limit)
     {
         public MappedBytes Decode(byte[] data, long offset, FileReader owner)
         {
             byte[] current = data;
             foreach (Step step in steps)
             {
-                current = step.IsStripping ? [.. step.Prefix, .. current] : Inflate(current);
+                current = step.IsStripping ? [.. step.Prefix, .. current] : Inflate(current, limit);
             }
 
             return MappedBytes.Opaque(current, offset, offset + data.Length);
         }
 
-        private static byte[] Inflate(byte[] data)
+        private static byte[] Inflate(byte[] data, int limit)
         {
             bool isTooLarge = false;
             try
@@ -825,7 +825,7 @@ internal sealed partial class FileReader
                 while ((read = zlib.Read(buffer, 0, buffer.Length)) > 0)
                 {
                     output.Write(buffer, 0, read);
-                    if (output.Length > MaxInflated)
+                    if (output.Length > limit)
                     {
                         isTooLarge = true;
                         break;
