@@ -233,7 +233,7 @@ internal sealed partial class UnitSyntax
         _ => Explain.XllSync,
     };
 
-    // The end of a header that states its size: reserved bits and the byte alignment up to the CRC16 in its last two bytes, and
+    // The end of a header that states its size: reserved bits and the byte alignment up to the CRC-16 in its last two bytes, and
     // that CRC with its verdict. Fields that run past the size leave the CRC unread.
     private void ReadHeaderCrc(int at, int headerSize, string name, string description, string mismatch)
     {
@@ -286,7 +286,7 @@ internal sealed partial class UnitSyntax
             _tree?.Close(Here);
         }
 
-        ReadHeaderCrc(at, headerSize, "XBR", Explain.XbrCrc, "The XBR frame header's CRC16 (6.3.5) fails");
+        ReadHeaderCrc(at, headerSize, "XBR", Explain.XbrCrc, "The XBR frame header's CRC-16 (6.3.5) fails");
 
         AddCoreData(_pos, endBit, "Channel Set Data", Explain.XbrData);
     }
@@ -318,7 +318,7 @@ internal sealed partial class UnitSyntax
         }
 
         _tree?.Close(Here);
-        ReadHeaderCrc(at, headerSize, "X96", Explain.X96Crc, "The X96 frame header's CRC16 (6.2.4.3) fails");
+        ReadHeaderCrc(at, headerSize, "X96", Explain.X96Crc, "The X96 frame header's CRC-16 (6.2.4.3) fails");
 
         AddCoreData(_pos, endBit, "Channel Set Data", Explain.X96Data);
     }
@@ -414,7 +414,7 @@ internal sealed partial class UnitSyntax
             Num("Fixed LSB Width", 4, Explain.XllLsbWidth, Topics.Lossless, "bits");
         }
 
-        ReadHeaderCrc(at, headerSize, "XLL", Explain.XllCrc, "The lossless extension's header CRC16 (8.3.1) fails");
+        ReadHeaderCrc(at, headerSize, "XLL", Explain.XllCrc, "The lossless extension's header CRC-16 (8.3.1) fails");
 
         int bands = asset.MaxSampleRate > 192000 ? 4 : asset.MaxSampleRate > 96000 ? 2 : 1;
         asset.XllSamples = (1 << segmentsLog) * (1 << samplesLog) * bands;

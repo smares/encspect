@@ -72,7 +72,7 @@ internal static partial class Summary
 
         if (s.AudioBlocks == 0)
         {
-            s.Findings.Add(Severity.Warning, "wavpack.no-audio", stream, _ => $"None of the {(s.Blocks == 1 ? "1 block counts" : $"{s.Blocks} blocks count")} a sample, so the file holds no audio.");
+            s.Findings.Add(Severity.Warning, "wavpack.no-audio", stream, _ => $"{(s.Blocks == 1 ? "The only block counts no sample" : $"None of the {s.Blocks} blocks counts a sample")}, so the file holds no audio.");
             return;
         }
 

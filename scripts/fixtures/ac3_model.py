@@ -129,9 +129,8 @@ def speakers(acmod, lfeon, rear_pair=False):
     return front + ([LFE] if lfeon else [])
 
 
-CODING_MODES = ["1+1 (channel 1, channel 2)", "1/0 (center)", "2/0 (left, right)", "3/0 (left, center, right)", "2/1 (left, right, surround)",
-                "3/1 (left, center, right, surround)", "2/2 (left, right, left surround, right surround)",
-                "3/2 (left, center, right, left surround, right surround)"]
+# The stream's channel mode as the report writes it: the arrangement alone, as for DTS; the speakers are in the channel layout.
+CODING_MODES = ["1+1", "1/0", "2/0", "3/0", "2/1", "3/1", "2/2", "3/2"]
 
 
 def exponents(bits, end, absolute=15, strategy=3, gain_range=True):

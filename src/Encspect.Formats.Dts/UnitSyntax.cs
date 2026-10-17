@@ -237,7 +237,7 @@ internal sealed partial class UnitSyntax
         _ => notChecked,
     };
 
-    // The CRC16 of Annex B over bytes [start, start + length) of the unit comes to zero.
+    // The CRC-16 of Annex B over bytes [start, start + length) of the unit comes to zero.
     private int CrcVerdict(int start, int length) => Verdict(() => Crc16.Compute(_view.Peek(start, length)) == 0);
 
     // A 16-bit CRC field, with the node of its verdict under it.

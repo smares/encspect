@@ -2,7 +2,7 @@ namespace Encspect.Formats.Dts;
 
 // The CRC of ETSI TS 102 114 Annex B: the generator polynomial x^16 + x^12 + x^5 + 1 (CRC-CCITT),
 // the register set to 0xFFFF before the first byte and bytes shifted in most significant bit first.
-// Every header that carries a CRC16 is written so that the CRC over the bytes it covers, the CRC
+// Every header that carries a CRC-16 is written so that the CRC over the bytes it covers, the CRC
 // field included, comes to 0.
 internal static class Crc16
 {

@@ -40,7 +40,7 @@ public sealed partial class Mp4Parser
         "sve1" => "AES-CTR content sensitive encryption (sve1)",
         "odkm" => "OMA DRM KMS (odkm)",
         "cpcm" => "CPCM protected content (cpcm)",
-        _ => $"protection scheme {scheme}",
+        _ => $"Protection scheme {scheme}",
     };
 
     private static bool IsProtectedEntry(string format) => format is "enca" or "encv" or "encs" or "enct" or "encm" or "encf" or "encu" or "encp" or "enc3" or "drms" or "drmi" or "aavd";
@@ -577,6 +577,6 @@ public sealed partial class Mp4Parser
     {
         "drms" or "drmi" => "iTunes protection (" + entry.Format + ")",
         "aavd" => "Audible (aavd)",
-        _ => entry.Protection?.SchemeType is { } type ? SchemeName(type) : "protection scheme not stated",
+        _ => entry.Protection?.SchemeType is { } type ? SchemeName(type) : "Protection scheme not stated",
     };
 }

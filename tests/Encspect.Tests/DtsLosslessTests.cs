@@ -103,7 +103,7 @@ public class DtsLosslessTests
         Assert.Equal("2 speakers", Field(polar, $"{Xll}/Channel Set 1/Speaker Positions"));
     }
 
-    // A set whose fields contradict each other, or whose CRC16 fails, says nothing about the layer: the stream keeps the descriptor's figures.
+    // A set whose fields contradict each other, or whose CRC-16 fails, says nothing about the layer: the stream keeps the descriptor's figures.
     [Theory]
     [InlineData("xll-mask-count", "dts.lossless-inconsistent")]
     [InlineData("xll-resolution-over-width", "dts.lossless-inconsistent")]
@@ -183,7 +183,7 @@ public class DtsLosslessTests
         Assert.Equal("DTS-HD Master Audio", Assert.Single(report.Streams).Codec);
     }
 
-    // The common header's reserved bytes and a set's are skipped by their sizes, and the CRC16 sits at the end of each.
+    // The common header's reserved bytes and a set's are skipped by their sizes, and the CRC-16 sits at the end of each.
     [Fact]
     public void ReservedBytesBeforeTheCrcAreShown()
     {
@@ -215,7 +215,7 @@ public class DtsLosslessTests
         Assert.Equal("(missing)", Field(report, "DTS/Statistics/Lossless Channels"));
     }
 
-    // dca_xll.c returns at a navigation index whose CRC16 fails before it compares the word; so does MediaInfo's XLL().
+    // dca_xll.c returns at a navigation index whose CRC-16 fails before it compares the word; so does MediaInfo's XLL().
     [Fact]
     public void TheDtsXWordIsNotLookedForAfterAFailingNavigationIndex()
     {

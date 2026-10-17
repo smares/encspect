@@ -108,12 +108,12 @@ internal static class Explain
     public const string XxchSets = "nuNumChSetsInXXCH: the number of channel sets, which are decodable separately (6.5.2).";
     public const string XxchSetSizes = "pnuChSetFsizeXXCH: the size in bytes of each channel set, from which the position of the next follows (6.5.2).";
     public const string XxchCoreMask = "nuCoreSpkrActivityMask: the loudspeaker positions the core channels feed, by the bits of Table 6-22 (6.5.2).";
-    public const string XxchCrc = "nCRC16HeaderXXCH: the CRC16 of the frame header from the size field to the byte alignment (6.5.2, Annex B).";
+    public const string XxchCrc = "nCRC16HeaderXXCH: the CRC-16 of the frame header from the size field to the byte alignment (6.5.2, Annex B).";
     public const string XxchSet = "A channel set of the XXCH extension: its header and its data (6.5.3).";
     public const string XxchSetHeaderSize = "nuXXCHChSetHeaderSize: the channel set header's size in bytes, which locates its audio data (6.5.3).";
     public const string XxchSetChannels = "nuChInChSetXXCH: the number of channels in the channel set (6.5.3).";
     public const string XxchSetMask = "nuXXCHSpkrLayoutMask: the positions of the channel set's channels, in addition to the core's, by the bits of Table 6-22 (6.5.3).";
-    public const string XxchSetCrcField = "nCRC16HeaderChSet: the CRC16 of the channel set header (6.5.3, Annex B).";
+    public const string XxchSetCrcField = "nCRC16HeaderChSet: the CRC-16 of the channel set header (6.5.3, Annex B).";
     public const string XxchRefusedData = "The channel sets of an extension whose speaker mask width leaves their masks no reading (6.5.3). Not read.";
 
     public const string XxchSetData = "The channel set header's remaining fields and its audio data. Not read (6.5.3, 6.5.4).";
@@ -144,7 +144,7 @@ internal static class Explain
     public const string BcCorePresent = "bBcCorePresent: whether the presentation's backward compatible core is in an extension substream instead of the core substream (7.5.2).";
     public const string BcCoreIndex = "nuBcCoreExtSSIndex: the index of the extension substream that holds the backward compatible core (7.5.2).";
     public const string BcCoreAsset = "nuBcCoreAssetIndex: the index of the asset that holds the backward compatible core (7.5.2).";
-    public const string ExtSsCrc = "nCRC16ExtSSHeader: the CRC16 of the header from nExtSSIndex to the byte alignment (7.5.2, Annex B).";
+    public const string ExtSsCrc = "nCRC16ExtSSHeader: the CRC-16 of the header from nExtSSIndex to the byte alignment (7.5.2, Annex B).";
 
     public const string AssetDescriptor = "An audio asset descriptor: what an asset is, how many channels and at what resolution, its metadata and the coding components it holds (7.5.3).";
     public const string AssetDescriptorSize = "nuAssetDescriptFsize + 1: the descriptor's size in bytes, with which a decoder steps to the next (7.5.3.2).";
@@ -222,7 +222,7 @@ internal static class Explain
     public const string XbrChannels = "nXBRCh + 1: the number of channels in the channel set (6.3.6).";
     public const string XbrBits = "nBits4MaxSubbands: 5 plus this is the number of bits of each channel's subband count (6.3.6).";
     public const string XbrBands = "naXBRActiveBands + 1: the number of subbands coded in the channel, from subband 0 (6.3.6).";
-    public const string XbrCrc = "nCRC16HeaderXBR: the CRC16 of the frame header from the size field to the byte alignment (6.3.5, Annex B).";
+    public const string XbrCrc = "nCRC16HeaderXBR: the CRC-16 of the frame header from the size field to the byte alignment (6.3.5, Annex B).";
     public const string XbrData = "The channel sets' data. Not read (6.3.7).";
     public const string XxchComponent = "The XXCH extension inside the extension substream: channels beyond 5.1, coded like the core's (6.5).";
     public const string X96Component = "The X96 extension inside the extension substream: the high-frequency components of a 96 kHz stream (6.2.4.3).";
@@ -231,7 +231,7 @@ internal static class Explain
     public const string X96Sets = "nNumChSetsInX96: the number of channel sets (6.2.4.3).";
     public const string X96SetSizes = "pnuChSetFsizeX96: the size in bytes of each channel set's data (6.2.4.3).";
     public const string X96SetChannels = "nuChInChSetX96: the number of channels in each channel set (6.2.4.3).";
-    public const string X96Crc = "nCRC16HeaderX96: the CRC16 of the frame header (6.2.4.3, Annex B).";
+    public const string X96Crc = "nCRC16HeaderX96: the CRC-16 of the frame header (6.2.4.3, Annex B).";
     public const string Lbr = "The low bit rate component LBR: a low bit rate coding used in place of the core and its extensions, with its own header and audio in chunks (9.1, 9.4).";
     public const string LbrSync = "SYNCEXTLBR: 0x0A801921, the sync word of the LBR component (9.3, Table 9-1).";
     public const string LbrHeaderType = "ucFmtInfoCode: whether the header is the sync word alone or also holds the decoder initialization data (9.3, Table 9-2).";
@@ -250,15 +250,15 @@ internal static class Explain
     public const string XllSegments = "nSegmentsInFrame: the number of segments in the frame, a power of two (8.3.1).";
     public const string XllSamplesInSegment = "nSmplInSeg: the number of samples in a segment per frequency band of the first channel set, a power of two (8.3.1).";
     public const string XllSegmentBits = "nBits4SSize + 1: how many bits the segment sizes of the navigation table take (8.3.1).";
-    public const string XllBandCrc = "nBandDataCRCEn: where CRC16 words are placed in the frequency band data (8.3.1, Table 8-2).";
+    public const string XllBandCrc = "nBandDataCRCEn: where CRC-16 words are placed in the frequency band data (8.3.1, Table 8-2).";
     public const string XllScalable = "bScalableLSBs: whether the samples of band 0 are split into a most and a least significant part (8.3.1).";
     public const string XllMaskBits = "nBits4ChMask + 1: how many bits each channel set's channel mask has (8.3.1).";
     public const string XllLsbWidth = "nuFixedLSBWidth: the fixed width of the least significant part, or 0 where it varies (8.3.1).";
-    public const string XllCrc = "nCRC16Header: the CRC16 of the common header from the version to the byte alignment (8.3.1, Annex B).";
+    public const string XllCrc = "nCRC16Header: the CRC-16 of the common header from the version to the byte alignment (8.3.1, Annex B).";
     public const string XllData = "The lossless extension's data after the headers that were read: bytes not read (8.3).";
 
     public const string XllChannelSet = "One channel set of the lossless extension: channels with a sampling frequency, a resolution and speaker positions of their own. The sets are coded one after another in every segment, the first being the primary set, which can be a 5.1 core layout or a stereo downmix (8.2.1, 8.2.3, 8.3.2).";
-    public const string XllSetHeaderSize = "nChSetHeaderSize + 1: the size in bytes of this channel set sub-header, from this field to its CRC16; it locates the next sub-header (8.3.2).";
+    public const string XllSetHeaderSize = "nChSetHeaderSize + 1: the size in bytes of this channel set sub-header, from this field to its CRC-16; it locates the next sub-header (8.3.2).";
     public const string XllSetChannels = "nChSetLLChannel + 1: the number of channels in the set (8.3.2).";
     public const string XllResidual = "nResidualChEncode: one bit for each channel, the highest channel in the most significant bit; 0 means the residual is the original audio less the lossy core's, 1 that it is the original audio (8.3.2).";
     public const string XllResolution = "nBitResolution + 1: the resolution in bits of the PCM audio source as it came from the converter, the same concept as the core's source PCM resolution (8.3.2).";
@@ -282,10 +282,10 @@ internal static class Explain
     public const string XllBands = "m_nNumFreqBands: how many frequency bands the set is coded in. A set of 96 kHz or less is coded in the base band alone (8.2.5, 8.3.2).";
     public const string XllMappingParameters = "The channel-to-speaker mapping coefficients and the frequency band parameters of the sub-header. Not read (8.3.2).";
     public const string XllBandParameters = "The parameters of each frequency band: pairwise channel decorrelation, the orders and reflection coefficients of the predictors, and the sizes of the least significant parts. Not read (8.3.2).";
-    public const string XllSetCrc = "nCRC16SubHeader: the CRC16 of the channel set sub-header from its size field to the byte alignment (8.3.2, Annex B).";
-    public const string XllNavigation = "The navigation index: the size of the band data of every frequency band, segment and channel set, and a CRC16 over them (8.3.3, 8.4.2).";
+    public const string XllSetCrc = "nCRC16SubHeader: the CRC-16 of the channel set sub-header from its size field to the byte alignment (8.3.2, Annex B).";
+    public const string XllNavigation = "The navigation index: the size of the band data of every frequency band, segment and channel set, and a CRC-16 over them (8.3.3, 8.4.2).";
     public const string XllNaviSizes = "The byte sizes less one of the band data for each frequency band, segment and channel set that has the band, in the width the common header gives; the pseudo-code of 8.4.2 also reads a total for each segment, which the text, FFmpeg and MediaInfo do not (8.4.2).";
-    public const string XllNaviCrc = "The CRC16 of the navigation index with its byte alignment (8.4.2, Annex B).";
+    public const string XllNaviCrc = "The CRC-16 of the navigation index with its byte alignment (8.4.2, Annex B).";
     public const string XllBandData = "The frequency band data of the frame, segment by segment, as long as the navigation index says. Not decoded (8.3.4).";
     public const string XllExtensionData = "The bytes after the band data of the lossless frame, which start with the word FFmpeg's dca_xll.c reads as DTS:X; no specification describes them.";
     public const string XllXSync = "The word 0x02000850, which FFmpeg's dca_xll.c (and MediaInfo's File_Dts.cpp) takes as the start of DTS:X data.";
@@ -320,7 +320,7 @@ internal static class Explain
     public const string DdtsTrailing = "The ReservedBox that may follow the fields, a place for future additions (E.2.2.3.3).";
 
     public const string Reserved = "Reserved bits or padding that the decoder skips with the header's size.";
-    public const string CrcCheck = "Whether the CRC16 of Annex B over the bytes the field covers, the CRC itself included, comes to zero, as it does for an intact header.";
+    public const string CrcCheck = "Whether the CRC-16 of Annex B over the bytes the field covers, the CRC itself included, comes to zero, as it does for an intact header.";
 
     public const string Statistics = "Figures computed over every frame of the stream.";
     public const string StatUnits = "How many frames the stream has, a core frame and its extension substreams counting as one.";

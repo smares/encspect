@@ -858,7 +858,7 @@ def opus_channel_mode(packet):
     if family in (2, 3) and ambisonics(channels):
         order, stereo = ambisonics(channels)
         return f"Ambisonics, order {order}" + (", with non-diegetic stereo" if stereo else "")
-    return f"{channels} channels"
+    return f"{channels} {'channel' if channels == 1 else 'channels'}"
 
 
 def opus_expectations(head, packets, positions, gaps=()):

@@ -66,7 +66,15 @@ public sealed partial class AsfParser
         }
 
         Check(state);
+        int firstStream = context.Streams.Count;
         Route(state);
+
+        // The streams of an ASF file are interleaved in its one Data Object and play at the same time.
+        for (int i = firstStream; i < context.Streams.Count; i++)
+        {
+            context.UpdateStream(context.Streams[i], context.Streams[i] with { PlaybackGroup = 1 });
+        }
+
         file.Value = Describe(state);
         state.Findings.Flush(context);
     }
@@ -640,13 +648,16 @@ public sealed partial class AsfParser
 
     internal static NodeValue FormatTagValue(int tag) => NodeValue.Text($"0x{tag:X4} ({FormatTagName(tag)})");
 
+    // The codec a stream reports for a format tag no codec parser read: the name every container uses for the coding.
+    internal static string CodecNameOf(int tag) => tag == 0x0003 ? CodecNames.PcmFloat : FormatTagName(tag);
+
     internal static string FormatTagName(int tag) => tag switch
     {
-        0x0001 => "PCM",
+        0x0001 => CodecNames.Pcm,
         0x0003 => "IEEE float",
         0x000A => "Windows Media Audio Voice",
-        0x0050 => "MPEG audio layer I and II",
-        0x0055 => "MPEG audio layer III",
+        0x0050 => CodecNames.MpegAudioLayerIAndII,
+        0x0055 => CodecNames.MpegAudioLayerIII,
         0x0160 => "Windows Media Audio 1",
         0x0161 => "Windows Media Audio 2",
         0x0162 => "Windows Media Audio Professional",
@@ -1175,7 +1186,7 @@ public sealed partial class AsfParser
                 try
                 {
                     Guid id = r.Guid("System ID", Explain.EncryptionSystemId, AsfGuids.EncryptionSystemName);
-                    system = AsfGuids.EncryptionSystemName(id) ?? AsfGuids.Text(id);
+                    system = AsfGuids.EncryptionSystemName(id) ?? ProtectionSystems.Describe(id);
                     r.Dword("System Version", Explain.EncryptionSystemVersion);
                     ushort objects = r.Word("Encrypted Object Record Count", Explain.EncryptedObjectRecordCount);
                     for (int j = 0; j < objects; j++)

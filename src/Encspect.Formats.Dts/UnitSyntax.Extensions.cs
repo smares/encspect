@@ -11,7 +11,7 @@ internal sealed partial class UnitSyntax
     // 6.4.2 (XCh), 6.2.4.2 (X96): the sync word's distance from the end of the frame must equal the size the extension states, since the
     // word may also occur inside the audio data, and the word lies on a 32-bit boundary. FFmpeg searches backwards from the end
     // of the frame, so a word inside the data does not hide the true one (dca_core.c, parse_optional_info); so does this. XXCH
-    // states no size to the frame's end, so its header's CRC16 is the test, as FFmpeg's.
+    // states no size to the frame's end, so its header's CRC-16 is the test, as FFmpeg's.
     private FoundExtension? FindExtension(CoreHeader header, int baseByte, int availablePacked, int declared)
     {
         if (!header.HasExtendedAudio || header.ExtensionAudioId is not (0 or 2 or 6))
@@ -59,7 +59,7 @@ internal sealed partial class UnitSyntax
                             return new FoundExtension(CoreExtension.Xxch, at, false);
                         }
 
-                        // A header whose CRC16 fails is still the extension's where its channel set sizes lead to the end of the frame.
+                        // A header whose CRC-16 fails is still the extension's where its channel set sizes lead to the end of the frame.
                         if (damaged is null && XxchSizesReachEnd(at, headerSize, distance))
                         {
                             damaged = new FoundExtension(CoreExtension.Xxch, at, false);
@@ -131,7 +131,7 @@ internal sealed partial class UnitSyntax
     {
         0 => "no XCh sync word lies at the distance from the end of the frame that its size gives (6.4.2)",
         2 => "no X96 sync word lies at the distance from the end of the frame that its size gives (6.2.4.2)",
-        _ => "no XXCH sync word lies in the frame with a header size that fits and either a CRC16 that holds or channel set sizes that lead to the end of the frame (6.5.2)",
+        _ => "no XXCH sync word lies in the frame with a header size that fits and either a CRC-16 that holds or channel set sizes that lead to the end of the frame (6.5.2)",
     };
 
     private string ExtensionName(CoreHeader header) => header.ExtensionAudioId switch { 0 => "XCh", 2 => "X96", _ => "XXCH" };
@@ -312,10 +312,10 @@ internal sealed partial class UnitSyntax
         _tree?.Close(Here);
         uint coreMask = Hex("Core Speaker Activity Mask", maskBits, Explain.XxchCoreMask, Topics.DtsChannelArrangements);
         Facts.XxchCoreMask = (int)coreMask;
-        ReadHeaderCrc(syncByte, headerSize, "XXCH", Explain.XxchCrc, "The XXCH frame header's CRC16 (6.5.2) fails");
+        ReadHeaderCrc(syncByte, headerSize, "XXCH", Explain.XxchCrc, "The XXCH frame header's CRC-16 (6.5.2) fails");
         if (isMaskTooNarrow)
         {
-            // dca_core.c has checked the header's CRC16 before it looks at the width, and refuses the extension: the frame is not an extension frame.
+            // dca_core.c has checked the header's CRC-16 before it looks at the width, and refuses the extension: the frame is not an extension frame.
             AddCoreData(Math.Max(_pos, (syncByte + headerSize) * 8), endBit, "Extension Audio Data", Explain.XxchRefusedData);
             if (readSync)
             {
@@ -357,7 +357,7 @@ internal sealed partial class UnitSyntax
                 Crc("Header CRC", Explain.XxchSetCrcField, crcVerdict, "not checked");
                 if (crcVerdict == 0)
                 {
-                    Report(Issue.CrcMismatch, "Header CRC", _pos - 16, _pos, $"The CRC16 of XXCH channel set {i + 1}'s header (6.5.3) fails");
+                    Report(Issue.CrcMismatch, "Header CRC", _pos - 16, _pos, $"The CRC-16 of XXCH channel set {i + 1}'s header (6.5.3) fails");
                 }
             }
             else

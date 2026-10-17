@@ -46,7 +46,7 @@
   "skip": {
    "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
    "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame (dca_xll.c), which it does not here, so ffprobe names the core's",
-   "decode": "ffmpeg's decoder checks the CRC16 of the sub-header and of the navigation index over the cut component (dca_xll.c), which fails"
+   "decode": "ffmpeg's decoder checks the CRC-16 of the sub-header and of the navigation index over the cut component (dca_xll.c), which fails"
   }
  }
 }

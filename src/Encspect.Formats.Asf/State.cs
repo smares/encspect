@@ -264,5 +264,5 @@ internal static class ProtectionSchemes
     public const string DrmVersion1 = "Microsoft Digital Rights Manager version 1";
     public const string RightsManager7 = "Windows Media Rights Manager 7";
     public const string AdvancedEncryption = "Windows Media DRM for network devices";
-    public const string StreamFlag = "Encrypted Content Flag (scheme not stated)";
+    public const string StreamFlag = "Protection scheme not stated (Encrypted Content Flag)";
 }

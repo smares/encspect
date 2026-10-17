@@ -488,9 +488,9 @@ internal sealed class Ac3Analysis
         bool several = ids > 1 || programs.Any(p => p.Key.IsEac3);
         // The independent substreams of an E-AC-3 stream play at the same time (Annex E 2.3.1.2), so a summary
         // counts the longest once. Where a substream changes its configuration, its programs follow one
-        // another and the others run beside them: no one number says that, so none is given. A container
-        // groups its own tracks.
-        int? group = _context is not CodecContext && programs.Count > 1 && ids == programs.Count ? 1 : null;
+        // another and the others run beside them: no one number says that, so none is given. A container reads
+        // the number as "these play together" and replaces it with the group of its track.
+        int? group = programs.Count > 1 && ids == programs.Count ? 1 : null;
         foreach (Program program in programs)
         {
             Cancellation.ThrowIfCancellationRequested();
@@ -558,7 +558,7 @@ internal sealed class Ac3Analysis
             Codec = program.Codec,
             SampleRate = program.Key.SampleRate,
             Channels = program.Layout.Count,
-            ChannelMode = Ac3Names.CodingMode(program.Key.Acmod),
+            ChannelMode = Ac3Names.CodingModeShort(program.Key.Acmod),
             ChannelLayout = program.Layout,
             Samples = program.Figures.Samples,
             Duration = program.Figures.Duration,

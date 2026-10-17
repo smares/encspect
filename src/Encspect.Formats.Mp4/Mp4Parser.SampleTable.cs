@@ -127,7 +127,7 @@ public sealed partial class Mp4Parser
     {
         "mp4a" => "MPEG-4 audio",
         ".mp3" => "MPEG-1 Layer III",
-        "alac" => "Apple Lossless",
+        "alac" => CodecNames.AppleLossless,
         "fLaC" => "FLAC",
         "Opus" => "Opus",
         "ac-3" => "AC-3",
@@ -146,6 +146,23 @@ public sealed partial class Mp4Parser
         "mha1" or "mhm1" => "MPEG-H 3D Audio",
         _ => "other",
     };
+
+    // The codec a stream reports for an entry no codec parser read, in the names every container uses for the coding (CodecNames).
+    private static string StreamCodecName(SampleEntry entry)
+    {
+        string format = entry.EffectiveFormat;
+        return format switch
+        {
+            "mp4a" when entry.ObjectType is 0x69 or 0x6B => CodecNames.MpegAudio,
+            "mp4a" when entry.ObjectType is { } type => ObjectTypeName(type),
+            ".mp3" => CodecNames.MpegAudioLayerIII,
+            "lpcm" or "twos" or "sowt" or "in24" or "in32" or "raw " => CodecNames.Pcm,
+            "fl32" or "fl64" => CodecNames.PcmFloat,
+            "enca" => CodecNames.EncryptedAudio,
+            "encv" => CodecNames.EncryptedVideo,
+            _ => FormatName(format) is "other" ? format : FormatName(format),
+        };
+    }
 
     // ISO/IEC 14496-14 5.6 (esds) with ISO/IEC 14496-1 7.2.6.5 (ES_Descriptor), 7.2.6.6
     // (DecoderConfigDescriptor) and 7.2.6.7 (DecoderSpecificInfo). A descriptor's size takes one to
@@ -392,7 +409,7 @@ public sealed partial class Mp4Parser
             entries.Add((first, samples, description));
             if (i < MaxListedEntries)
             {
-                var entry = new Node("Entry", at, 12, $"from chunk {first}: {samples} samples, description {description}") { Description = Explain.ChunkEntry };
+                var entry = new Node("Entry", at, 12, $"from chunk {first}: {samples} {(samples == 1 ? "sample" : "samples")}, description {description}") { Description = Explain.ChunkEntry };
                 entry.Add(new Node("First Chunk", at, 4, NodeValue.Integer(first)) { Description = Explain.FirstChunk });
                 entry.Add(new Node("Samples Per Chunk", at + 4, 4, NodeValue.Integer(samples)) { Description = Explain.SamplesPerChunk });
                 entry.Add(new Node("Sample Description Index", at + 8, 4, NodeValue.Integer(description)) { Description = Explain.SampleDescriptionIndex });

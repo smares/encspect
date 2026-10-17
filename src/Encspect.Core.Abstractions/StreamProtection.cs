@@ -6,7 +6,7 @@ namespace Encspect.Core;
 public sealed record StreamProtection
 {
     // The protection scheme in the project's wording, such as "Common Encryption, AES-CTR (cenc)"
-    // or "Windows Media DRM version 1".
+    // or "Microsoft Digital Rights Manager version 1".
     public required string Scheme { get; init; }
 
     // True where the stream's data is encrypted, so the analyzer did not read its frames. False for a

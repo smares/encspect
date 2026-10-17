@@ -284,7 +284,7 @@ public class ComplexityTests
     }
 
     // An extension substream sync word every 16 bytes, each header stating a size of 4,096 bytes and a megabyte of substream (so the next
-    // header lies where the size points) and failing its CRC16: each is a candidate that costs a 4 KiB read and a CRC if checked in full.
+    // header lies where the size points) and failing its CRC-16: each is a candidate that costs a 4 KiB read and a CRC if checked in full.
     // The search spends a bounded amount of that work, so the time stays linear in the data.
     [Fact]
     public void ManyExtensionSubstreamHeadersThatFailTheirCrc()

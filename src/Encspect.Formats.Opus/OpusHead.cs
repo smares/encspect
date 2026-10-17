@@ -65,7 +65,7 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
         header.Add(Node.FromMapped("Channels", packet, 9, 10, NodeValue.Integer(Channels), description: Explain.Channels, topic: Topics.OpusChannelMapping));
         if (Speakers is { } layout)
         {
-            header.Add(Node.FromMapped("Channel Layout", packet, 9, 10, $"{ChannelLayouts.ModeName(layout) ?? $"{Channels} channels"}: {ChannelLayouts.Speakers(layout)}", description: Explain.ChannelLayout,
+            header.Add(Node.FromMapped("Channel Layout", packet, 9, 10, $"{ChannelLayouts.ModeName(layout) ?? Counted}: {ChannelLayouts.Speakers(layout)}", description: Explain.ChannelLayout,
                 topic: Topics.OpusChannelMapping));
         }
         header.Add(Node.FromMapped("Pre-skip", packet, 10, 12, NodeValue.Integer(PreSkip, "samples", "sample"), description: Explain.PreSkip, topic: Topics.OpusPreSkip));
@@ -139,9 +139,11 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
     public bool IsAmbisonic => Family is 2 or 3;
 
     // What the summary calls the channels.
-    public string ChannelMode => Speakers is { } layout ? ChannelLayouts.ModeName(layout) ?? $"{Channels} channels"
+    public string ChannelMode => Speakers is { } layout ? ChannelLayouts.ModeName(layout) ?? Counted
         : IsAmbisonic && Ambisonics is { } ambisonics ? $"Ambisonics, order {ambisonics.Order}{(ambisonics.HasStereo ? ", with non-diegetic stereo" : string.Empty)}"
-        : $"{Channels} channels";
+        : Counted;
+
+    private string Counted => $"{Channels} {(Channels == 1 ? "channel" : "channels")}";
 
     // What decoded channel a table entry takes (section 5.1.1): the coupled streams give two
     // channels each, left then right, the others one each; 255 is silence.

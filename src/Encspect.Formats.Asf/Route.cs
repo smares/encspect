@@ -247,7 +247,7 @@ public sealed partial class AsfParser
         }
 
         Node parent = state.DataNode ?? stream.Properties!;
-        string name = stream.Format is { } format && stream.IsAudio ? FormatTagName(format.EffectiveTag) : stream.TypeName;
+        string name = stream.Format is { } format && stream.IsAudio ? CodecNameOf(format.EffectiveTag) : stream.TypeName;
         Node node = parent.Add(new Node($"Stream {stream.Number}", parent.Offset, parent.Length, NodeValue.Text("frames not read: encrypted"))
         {
             Kind = NodeKind.Stream,

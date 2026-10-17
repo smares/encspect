@@ -1,5 +1,5 @@
 {
- "description": "Three stereo core frames, then two extension substream sync words with headers that state 4,096 bytes and fail their CRC16.",
+ "description": "Three stereo core frames, then two extension substream sync words with headers that state 4,096 bytes and fail their CRC-16.",
  "length": 1568,
  "format": "DTS",
  "frames": [
@@ -49,7 +49,7 @@
   "libdca": true,
   "skip": {
    "ffprobe": "ffmpeg's parser takes the bytes after the last frame into its last packet",
-   "decode": "ffmpeg's last packet holds the bytes after the last frame, which its decoder reads as an extension substream and rejects for its header CRC16 (dca_exss.c: 'Invalid EXSS header checksum')"
+   "decode": "ffmpeg's last packet holds the bytes after the last frame, which its decoder reads as an extension substream and rejects for its header CRC-16 (dca_exss.c: 'Invalid EXSS header checksum')"
   }
  }
 }

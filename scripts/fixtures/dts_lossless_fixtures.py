@@ -139,16 +139,16 @@ def build(api):
     lossless("xll-mask-count", "Four units whose lossless channel set of 2 channels has a channel mask of 3 speakers.", dict(channels=2, mask=0x02),
              (STEREO, 48000), sets=[m.xll_set(2, mask=0x7)], findings=[("dts.lossless-inconsistent", "channel mask of 3 speakers")],
              crosscheck=undecodable(cc, "Invalid XLL channel mask", "ffmpeg's decoder refuses a mask whose speakers differ from the channels (dca_xll.c: 'Invalid XLL channel mask')"))
-    lossless("xll-set-bad-crc", "Four units whose lossless channel set sub-header has a CRC16 that fails.", dict(channels=2, mask=0x02),
-             (STEREO, 48000), sets=[m.xll_set(2, bad_crc=True)], findings=[("dts.crc-mismatch", "channel set 1 sub-header CRC16")],
-             crosscheck=undecodable(cc, "Invalid XLL sub-header checksum", "ffmpeg's decoder checks the sub-header CRC16 (dca_xll.c: 'Invalid XLL sub-header checksum')"))
-    lossless("xll-navigation-bad-crc", "Four units whose lossless navigation index has a CRC16 that fails.", dict(channels=2, mask=0x02),
-             (STEREO, 48000), xll=dict(bad_navi_crc=True), findings=[("dts.crc-mismatch", "navigation index CRC16")],
-             crosscheck=undecodable(cc, "Invalid NAVI checksum", "ffmpeg's decoder checks the navigation index CRC16 (dca_xll.c: 'Invalid NAVI checksum')"))
-    lossless("xll-x-navigation-bad-crc", "Four units whose lossless frame has the DTS:X word after its band data and a navigation index whose CRC16 fails, so the word is not looked for.", dict(channels=6, mask=0x0F),
-             (SURROUND_5_1, 48000), xll=dict(x_sync=0x02000850, bad_navi_crc=True), findings=[("dts.crc-mismatch", "navigation index CRC16")],
+    lossless("xll-set-bad-crc", "Four units whose lossless channel set sub-header has a CRC-16 that fails.", dict(channels=2, mask=0x02),
+             (STEREO, 48000), sets=[m.xll_set(2, bad_crc=True)], findings=[("dts.crc-mismatch", "channel set 1 sub-header CRC-16")],
+             crosscheck=undecodable(cc, "Invalid XLL sub-header checksum", "ffmpeg's decoder checks the sub-header CRC-16 (dca_xll.c: 'Invalid XLL sub-header checksum')"))
+    lossless("xll-navigation-bad-crc", "Four units whose lossless navigation index has a CRC-16 that fails.", dict(channels=2, mask=0x02),
+             (STEREO, 48000), xll=dict(bad_navi_crc=True), findings=[("dts.crc-mismatch", "navigation index CRC-16")],
+             crosscheck=undecodable(cc, "Invalid NAVI checksum", "ffmpeg's decoder checks the navigation index CRC-16 (dca_xll.c: 'Invalid NAVI checksum')"))
+    lossless("xll-x-navigation-bad-crc", "Four units whose lossless frame has the DTS:X word after its band data and a navigation index whose CRC-16 fails, so the word is not looked for.", dict(channels=6, mask=0x0F),
+             (SURROUND_5_1, 48000), xll=dict(x_sync=0x02000850, bad_navi_crc=True), findings=[("dts.crc-mismatch", "navigation index CRC-16")],
              fields={"DTS/Statistics/HasDtsX": "false"},
-             crosscheck=undecodable(cc, "Invalid NAVI checksum", "ffmpeg's decoder checks the navigation index CRC16 before it looks for the DTS:X word (dca_xll.c: 'Invalid NAVI checksum')"))
+             crosscheck=undecodable(cc, "Invalid NAVI checksum", "ffmpeg's decoder checks the navigation index CRC-16 before it looks for the DTS:X word (dca_xll.c: 'Invalid NAVI checksum')"))
     lossless("xll-x-rejected-set", "Four units whose lossless channel set has a source resolution of 24 bits stored in 16, so it is rejected, and the DTS:X word after the band data, which is not looked for.", dict(channels=2, mask=0x02),
              (STEREO, 48000), sets=[m.xll_set(2, bit_res=24, storage=16)], xll=dict(x_sync=0x02000850),
              findings=[("dts.lossless-inconsistent", "source resolution of 24 bits is more than its storage width of 16 bits")], fields={"DTS/Statistics/HasDtsX": "false"},
@@ -159,7 +159,7 @@ def build(api):
              crosscheck=undecodable(cc, "Read past end of XLL frame", "ffmpeg's decoder refuses band data that runs past the frame's stated size (dca_xll.c: 'Read past end of XLL frame')"))
     lossless("xll-set-size", "Four units whose lossless channel set sub-header states a size of 6 bytes, less than its fields need.", dict(channels=2, mask=0x02),
              (STEREO, 48000), sets=[m.xll_set(2, size_override=6)], findings=[("dts.substream-overrun", "channel set 1 sub-header's fields end past the 6 bytes")],
-             crosscheck=undecodable(cc, "Invalid XLL sub-header checksum", "ffmpeg's decoder checks the sub-header CRC16 over the stated size (dca_xll.c: 'Invalid XLL sub-header checksum')"))
+             crosscheck=undecodable(cc, "Invalid XLL sub-header checksum", "ffmpeg's decoder checks the sub-header CRC-16 over the stated size (dca_xll.c: 'Invalid XLL sub-header checksum')"))
 
     # Cut inside the sub-header and inside the navigation index.
     full = m.xll_frame(96)
@@ -170,10 +170,10 @@ def build(api):
         fixture(file_name, ".dts", f"Two units whose lossless component ends inside the {text}.", b"".join(parts), rows(parts), [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True)],
                 [("dts.header-overrun", wanted)],
                 crosscheck=undecodable(cc, "Invalid XLL sub-header checksum" if "sub-header" in text else "Invalid NAVI checksum",
-                                       "ffmpeg's decoder checks the CRC16 of the sub-header and of the navigation index over the cut component (dca_xll.c), which fails"))
+                                       "ffmpeg's decoder checks the CRC-16 of the sub-header and of the navigation index over the cut component (dca_xll.c), which fails"))
 
     # Padding in the headers: the reserved bytes of the common header and of a sub-header.
-    lossless("xll-header-padding", "Four units whose lossless common header and channel set sub-header end with reserved bytes before the CRC16.", dict(channels=2, mask=0x02),
+    lossless("xll-header-padding", "Four units whose lossless common header and channel set sub-header end with reserved bytes before the CRC-16.", dict(channels=2, mask=0x02),
              (STEREO, 48000), sets=[m.xll_set(2, header_pad=3)], xll=dict(header_pad=2), fields=stats(2, 1, 48000, 24, 24))
 
     # Not loudspeaker feeds: a stereo Lt/Rt set (8.3.2, Table 8-3).

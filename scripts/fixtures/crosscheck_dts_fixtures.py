@@ -244,7 +244,7 @@ MIXED = ["commercial name", "bitrate", "bitrate mode"]
 MEDIAINFO_READS_OTHERWISE = {
     "exss-bad-component-sync": dict.fromkeys(MIXED, CORE_ONLY.format(why="the lossless component does not start with it, which the analyzer reports as dts.component-sync "
                                                                         "and still names the stream from the asset descriptor's component mask")),
-    "exss-bad-crc": dict.fromkeys(MIXED, CORE_ONLY.format(why="it checks the substream header's CRC16 first and skips a substream that fails it (Header - CRC NOK), which the "
+    "exss-bad-crc": dict.fromkeys(MIXED, CORE_ONLY.format(why="it checks the substream header's CRC-16 first and skips a substream that fails it (Header - CRC NOK), which the "
                                                               "analyzer reports as dts.crc-mismatch and reads on")),
     "exss-sizes-overrun": dict.fromkeys(MIXED, CORE_ONLY.format(why="it cuts the asset at the end of the substream, 40 bytes of the 160 its size gives, and finds only the core "
                                                                     "component in them; the analyzer reports dts.substream-overrun and names the stream from the descriptor")),
@@ -288,7 +288,7 @@ for fixture_name in ("exss-lossless", "exss-bad-crc", "exss-bad-component-sync",
     MEDIAINFO_READS_OTHERWISE.setdefault("le16-" + fixture_name, {}).update(dict.fromkeys(MIXED, LITTLE_ENDIAN_EXSS))
 MEDIAINFO_READS_OTHERWISE["exss-component-header-overrun"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="the lossless component is a sync word and four bytes, which MediaInfo does not take for the component (" + MEASURED + "), where the analyzer reports dts.header-overrun and names the stream from the descriptor"))
 MEDIAINFO_READS_OTHERWISE["exss-assets-overrun"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="it ends the asset where its size says, 60 bytes, and finds no component's sync word in the first 60 bytes, which the analyzer reports as dts.substream-overrun and names the stream from the descriptor (" + MEASURED + ")"))
-MEDIAINFO_READS_OTHERWISE["xbr-bad-crc"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="it checks the XBR frame header's CRC16 and leaves a component that fails it (" + MEASURED + "), which the analyzer reports as dts.crc-mismatch and reads on"))
+MEDIAINFO_READS_OTHERWISE["xbr-bad-crc"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="it checks the XBR frame header's CRC-16 and leaves a component that fails it (" + MEASURED + "), which the analyzer reports as dts.crc-mismatch and reads on"))
 MEDIAINFO_READS_OTHERWISE["exss-misaligned"] = dict.fromkeys(MIXED, "MediaInfo looks for the extension substream right after the core frame, not where 32-bit alignment puts it, and reads this one (" + MEASURED + "), where the analyzer and FFmpeg's decoder (dcadec.c) do not")
 for fixture_name in ("le16-exss-high-resolution", "xbr-bad-crc"):
     MEDIAINFO_READS_OTHERWISE[fixture_name].pop("bitrate mode")

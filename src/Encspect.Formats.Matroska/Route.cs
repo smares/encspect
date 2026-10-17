@@ -31,24 +31,26 @@ internal sealed partial class FileReader
                 continue;
             }
 
-            // The audio tracks of a Segment play together, so a summary of the file does not add their durations up. A track whose codec
-            // reported several streams is not marked: those are not known to play together.
+            // The audio tracks of a Segment play together, and so do the streams of one track that the codec parser reports as playing together
+            // (the independent substreams of E-AC-3). Streams of one track that follow one another are not marked: no one number says that they
+            // follow each other and play beside the other tracks.
             int streamsBefore = _context.Streams.Count;
             RouteAudio(segment, track, label);
             List<StreamInfo> made = [.. _context.Streams.Skip(streamsBefore)];
-            if (made.Count == 1)
+            bool isTogether = made.Count == 1 || (made.Count > 1 && made[0].PlaybackGroup is not null && made.All(s => s.PlaybackGroup == made[0].PlaybackGroup));
+            foreach (StreamInfo original in made)
             {
-                StreamInfo stream = made[0];
+                StreamInfo stream = original;
                 // A codec parser that finds no tag to put a Writer in (an Opus track has no comment packet) names no writer: the claims of the
                 // Segment and the file's tags are weighed here.
-                if (stream.Writer is null && stream.Nodes.Count > 0 && Codecs.WriterKind(track.CodecId ?? string.Empty) is { } kind)
+                if (made.Count == 1 && stream.Writer is null && stream.Nodes.Count > 0 && Codecs.WriterKind(track.CodecId ?? string.Empty) is { } kind)
                 {
                     Node? writer = ResolveWriter(segment, stream.Nodes[0], kind, Codecs.NameOf(track.CodecId ?? string.Empty) ?? kind);
                     (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
                     stream = stream with { Writer = writerName, WriterConfidence = writerConfidence };
                 }
 
-                _context.UpdateStream(made[0], stream with { PlaybackGroup = segment.Number });
+                _context.UpdateStream(original, stream with { PlaybackGroup = isTogether ? segment.Number : null });
             }
         }
 

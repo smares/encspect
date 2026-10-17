@@ -1,5 +1,5 @@
 {
- "description": "Three units whose extension substream has an XBR component with a frame header CRC16 that fails.",
+ "description": "Three units whose extension substream has an XBR component with a frame header CRC-16 that fails.",
  "length": 1716,
  "format": "DTS",
  "frames": [
@@ -37,7 +37,7 @@
  "findings": [
   [
    "dts.crc-mismatch",
-   "XBR frame header's CRC16"
+   "XBR frame header's CRC-16"
   ]
  ],
  "crosscheck": {
@@ -48,7 +48,7 @@
   "decode_error": "Invalid XBR frame header checksum",
   "skip": {
    "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
-   "decode": "ffmpeg rejects the XBR frame header whose CRC16 fails (dca_core.c: 'Invalid XBR frame header checksum')"
+   "decode": "ffmpeg rejects the XBR frame header whose CRC-16 fails (dca_core.c: 'Invalid XBR frame header checksum')"
   }
  }
 }

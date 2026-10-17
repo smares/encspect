@@ -18,6 +18,7 @@ ffprobe confirm what this module reads; see crosscheck_mpeg_fixtures.py.
 All values are kept raw here; report_fields() formats them the way the analyzer reports them.
 """
 
+from units import bytes_text
 import re
 import struct
 
@@ -271,7 +272,7 @@ def report_fields(tag, toc_entries=(0, 1, 50, 99)):
             "VBRI/Frame Count": str(tag["frames"]),
             "VBRI/TOC Entries": str(tag["toc_entries"]),
             "VBRI/TOC Scale": str(tag["toc_scale"]),
-            "VBRI/TOC Entry Size": f"{tag['entry_size']} bytes",
+            "VBRI/TOC Entry Size": bytes_text(tag['entry_size']),
             "VBRI/Frames Per TOC Entry": str(tag["frames_per_entry"]),
             "VBRI/TOC": f"{len(tag['toc'])} entries",
         })

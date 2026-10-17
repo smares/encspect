@@ -143,19 +143,19 @@ internal sealed partial class UnitSyntax
             Skip("Reserved", crcBit - _pos, Explain.Reserved);
         }
 
-        // 7.5.2: the CRC16 covers the header from nExtSSIndex (byte 5) to the end of the byte alignment.
+        // 7.5.2: the CRC-16 covers the header from nExtSSIndex (byte 5) to the end of the byte alignment.
         int verdict = CrcVerdict(baseByte + 5, headerSize - 5);
         facts.IsCrcValid = verdict == 1;
         if (stated is not null && verdict != 0 && _staticStates is not null)
         {
-            // FFmpeg checks the CRC16 before it reads the fields, and keeps the earlier ones where it fails.
+            // FFmpeg checks the CRC-16 before it reads the fields, and keeps the earlier ones where it fails.
             _staticStates[index] = stated;
         }
         int crcStart = _pos;
         Crc("Header CRC", Explain.ExtSsCrc, verdict, "not checked");
         if (verdict == 0)
         {
-            Report(Issue.CrcMismatch, "Header CRC", crcStart, _pos, "The extension substream header's CRC16 (7.5.2) fails");
+            Report(Issue.CrcMismatch, "Header CRC", crcStart, _pos, "The extension substream header's CRC-16 (7.5.2) fails");
         }
 
         headerEnd = _pos;

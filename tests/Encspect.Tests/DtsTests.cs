@@ -93,7 +93,7 @@ public class DtsTests
         Assert.Equal("DTS", FormatOf([.. Junk(), .. Fixture(name)]));
     }
 
-    // Extension substream sync words with headers of a megabyte, which each point at the next one, are no units: the CRC16 of a substream
+    // Extension substream sync words with headers of a megabyte, which each point at the next one, are no units: the CRC-16 of a substream
     // is checked wherever one follows a core frame or starts a unit, so the bytes after the last frame stay trailing data.
     [Fact]
     public void ExtensionSubstreamHeadersThatFailTheirCrcAfterTheLastFrameAreTrailingData()

@@ -97,7 +97,7 @@ public sealed class DtsParser : IFormatParser
         UnitInfo? stream = null;
         int frames = 0;
         // One allowance of CRC work for the whole segment, not one per search, so that chains broken by extension substream headers that
-        // fail their CRC16 cost a fixed amount of work per byte of the file.
+        // fail their CRC-16 cost a fixed amount of work per byte of the file.
         var budget = new CrcBudget();
         while (position < end)
         {

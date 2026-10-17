@@ -11,7 +11,9 @@ public class NodeValueTests
     [InlineData(128L, "kbps", "128 kbps")]
     [InlineData(0L, null, "0")]
     [InlineData(-5L, "dB", "-5 dB")]
-    [InlineData(1L, "bytes", "1 bytes")]
+    [InlineData(1L, "bytes", "1 byte")]
+    [InlineData(2L, "bytes", "2 bytes")]
+    [InlineData(1L, "kbps", "1 kbps")]
     public void IntegersShowTheirUnit(long value, string? unit, string expected)
     {
         Assert.Equal(expected, NodeValue.Integer(value, unit).ToString());

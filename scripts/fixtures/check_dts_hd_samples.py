@@ -4,7 +4,7 @@ does not commit: a 7.1 stream of two lossless channel sets, a 96 kHz 5.0 stream 
 a cache directory and checks each file's SHA-256 against the manifest before using it.
 
 They are the only real source of the lossless extension's channel set sub-headers and navigation index (ETSI TS 102 114 8.3.2, 8.4.2): that
-every CRC16 of the headers holds, that the channel masks are in the order of Table 6-22 (the 7.1 file's sets are 0x627 and 0x180), and that
+every CRC-16 of the headers holds, that the channel masks are in the order of Table 6-22 (the 7.1 file's sets are 0x627 and 0x180), and that
 the downmix coefficients are counted as FFmpeg's dca_xll.c counts them (12 and 18) are what the real data settles. No real DTS:X or .dtshd file
 could be found at a public address, so those have hand-built fixtures only.
 

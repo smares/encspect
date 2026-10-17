@@ -37,6 +37,7 @@ The script uses only the standard library and is deterministic, so CI reruns it 
 the committed files differ.
 """
 
+from units import bytes_text
 import json
 import pathlib
 import struct
@@ -195,7 +196,7 @@ class Frame:
             # Everything after the samples is ancillary data.
             data, self.audio_fields = self.payload.payload(self.mode, self.mode_ext)
             if len(body) > len(data):
-                self.audio_fields["Ancillary Data"] = f"{len(body) - len(data)} bytes"
+                self.audio_fields["Ancillary Data"] = bytes_text(len(body) - len(data))
             data = (data + self.payload.ancillary)[: len(body)]
             body[: len(data)] = data
         elif self.payload is not None:
@@ -396,7 +397,7 @@ class Fixture:
         infos = []
         for entry, layout, fill in zip(self.frames, self.layout, fills):
             stated = entry["fields"].get("Side Info/Reservoir Fill")
-            assert stated is None or stated == f"{fill} bytes", (self.name, entry["offset"], stated, fill)
+            assert stated is None or stated == bytes_text(fill), (self.name, entry["offset"], stated, fill)
             fields = entry["fields"]
             bitrate = fields["Header/Bitrate"]
             infos.append(stream_stats.FrameInfo(
@@ -1024,7 +1025,7 @@ def ape_encoder_names_libavcodec():
     )
     f.add_frames(stream(8))
     f.tag("APE", ape("Lavc60.31.102 libmp3lame", key="Encoder"))
-    f.encoder = {"name": "Lavc60.31.102 libmp3lame", "confidence": "Low"}
+    f.encoder = {"name": "FFmpeg (Lavc60.31.102 libmp3lame)", "confidence": "Low"}
     return f
 
 

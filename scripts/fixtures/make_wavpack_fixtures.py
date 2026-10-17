@@ -353,7 +353,7 @@ def build():
                                   [("wavpack.dsd-invalid", "ends right after the history bits")], False)
     digest = bytes(range(16))
     meta = join(patch(a[0], samples=0, index=0, flags=0x34BC1E59), [sub(0x26, digest), sub(0x2F, bytes(4))])
-    b["no-audio"] = ("A single block with no samples, which holds an MD5 digest.", meta, [("wavpack.no-audio", "None of the 1 block counts a sample")], None)
+    b["no-audio"] = ("A single block with no samples, which holds an MD5 digest.", meta, [("wavpack.no-audio", "The only block counts no sample")], None)
     rate = blocks(base("rate-12345"))
     b["sample-rate-missing"] = ("The sample rate sub-block left out of a file of 12,345 Hz.", aa([without(rate[0], 0x27)]),
                                 [("wavpack.sample-rate-missing", "44100 Hz")], True)

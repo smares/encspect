@@ -140,18 +140,14 @@ public sealed partial class Mp4Parser
 
         CompareLayouts(state, entry, streams, label);
 
-        // The tracks of one movie play at the same time; a track whose codec reported several streams in a row is not marked.
+        // The tracks of one movie play at the same time, and so do the streams of one track that the codec parser reports as playing together
+        // (the independent substreams of E-AC-3). Streams of one track that follow one another (a configuration change) are not marked: no one
+        // number says that they follow each other and play beside the other tracks.
         List<StreamInfo> made = [.. state.Context.Streams.Skip(streams)];
-        if (made.Count == 1)
+        bool isTogether = made.Count == 1 || (made.Count > 1 && made[0].PlaybackGroup is not null && made.All(s => s.PlaybackGroup == made[0].PlaybackGroup));
+        foreach (StreamInfo stream in made)
         {
-            state.Context.UpdateStream(made[0], WithUnkept(track, made[0]) with { PlaybackGroup = 1 });
-        }
-        else if (made.Count > 1)
-        {
-            foreach (StreamInfo stream in made)
-            {
-                state.Context.UpdateStream(stream, WithUnkept(track, stream));
-            }
+            state.Context.UpdateStream(stream, WithUnkept(track, stream) with { PlaybackGroup = isTogether ? 1 : null });
         }
     }
 
@@ -209,7 +205,7 @@ public sealed partial class Mp4Parser
 
         if (state.Context.Streams.Count == before)
         {
-            string name = entry.EffectiveFormat == "mp4a" && entry.ObjectType is { } type ? ObjectTypeName(type) : FormatName(entry.EffectiveFormat) is "other" ? entry.EffectiveFormat : FormatName(entry.EffectiveFormat);
+            string name = StreamCodecName(entry);
             // The codec parser's node for the stream it read the configuration of, else one of our own.
             Node stream = samples.Children.Skip(nodes).FirstOrDefault(c => c.Kind == NodeKind.Stream) ?? samples.Add(new Node(name, samples.Offset, samples.Length, NodeValue.Text(isEncrypted ? "frames not read: encrypted" : isScattered ? "frames not read: samples not in one stretch" : "frames not read: coding not analyzed"))
             {
