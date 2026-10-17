@@ -43,6 +43,30 @@ public class ComplexityTests
         Assert.Contains(report.Findings, f => f.Code == "asf.object-incomplete");
     }
 
+    // An Extended Content Description Object of 30,000 WMFSDKVersion attributes: each one is a claim about the writer, and each claim of the
+    // winner's family would be an Evidence node, so the claims the header makes are capped.
+    [Fact]
+    public void ManyAttributesThatNameTheWriter()
+    {
+        const int attributes = 30_000;
+        (byte[] properties, _) = AsfBuilder.Take("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161);
+        byte[] file = AsfBuilder.Assemble(properties, AsfBuilder.SmallPacket, [AsfBuilder.Packet(AsfBuilder.SmallPacket, 1, 0, 0, 40, 0)]);
+        var body = new List<byte> { (byte)(attributes & 0xFF), (byte)(attributes >> 8) };
+        byte[] name = System.Text.Encoding.Unicode.GetBytes("WMFSDKVersion\0");
+        byte[] value = System.Text.Encoding.Unicode.GetBytes("12.0.26100.1\0");
+        for (int i = 0; i < attributes; i++)
+        {
+            body.AddRange([(byte)name.Length, 0, .. name, 0, 0, (byte)value.Length, 0, .. value]);
+        }
+
+        file = AsfBuilder.InHeader(file, AsfBuilder.Object("D2D0A440-E307-11D2-97F0-00A0C95EA850", [.. body]));
+        Report report = Timed(file);
+        Node writer = Descendant(Assert.Single(report.Streams).Nodes[0], "Writer")!;
+        Assert.InRange(writer.Children.Count(c => c.Name == "Evidence"), 1, 300);
+    }
+
+    private static Node? Descendant(Node node, string name) => node.Name == name ? node : node.Children.Select(c => Descendant(c, name)).FirstOrDefault(n => n is not null);
+
     // Every "ID3" in the window a SEEK frame points to is a candidate; these declare a tag larger
     // than the file whose body starts with padding.
     [Fact]

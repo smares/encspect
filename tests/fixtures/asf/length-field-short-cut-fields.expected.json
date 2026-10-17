@@ -1,0 +1,128 @@
+{
+ "description": "The same file cut 8 bytes into its third packet, inside the packet header's fields: the Packet Length field that fits is read, the fields that do not are left out.",
+ "format": "ASF",
+ "length": 846,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   276
+  ],
+  [
+   "Data Object",
+   276,
+   570
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   96
+  ],
+  [
+   "Header Extension Object",
+   230,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  }
+ ],
+ "packets": [
+  [
+   326,
+   256,
+   1
+  ],
+  [
+   582,
+   256,
+   1
+  ],
+  [
+   838,
+   8,
+   0
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   170,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   170,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [],
+ "file": {
+  "file_size": 1094,
+  "packets": 3,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 256,
+  "max_packet": 256,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  },
+  {
+   "code": "asf.packet-truncated",
+   "contains": "ends before its header"
+  },
+  {
+   "code": "asf.packet-length",
+   "contains": "2 packets"
+  },
+  {
+   "code": "asf.object-truncated",
+   "contains": "Data Object"
+  },
+  {
+   "code": "asf.file-size",
+   "contains": "but the file holds 846"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "reason": "the file is cut inside a packet on purpose."
+ }
+}
