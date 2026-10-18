@@ -1,7 +1,7 @@
 # Encspect
 
-[![CI](https://github.com/smares/encspect/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/smares/encspect/actions/workflows/ci.yml?query=branch%3Amain)
-[![Nightly](https://github.com/smares/encspect/actions/workflows/ci.yml/badge.svg?branch=main&event=schedule)](https://github.com/smares/encspect/actions/workflows/ci.yml?query=event%3Aschedule)
+[![main](https://img.shields.io/github/actions/workflow/status/smares/encspect/ci.yml?branch=main&event=push&label=main)](https://github.com/smares/encspect/actions/workflows/ci.yml?query=branch%3Amain+event%3Apush)
+[![nightly](https://img.shields.io/github/actions/workflow/status/smares/encspect/ci.yml?branch=main&event=schedule&label=nightly)](https://github.com/smares/encspect/actions/workflows/ci.yml?query=branch%3Amain+event%3Aschedule)
 
 A cross-platform GUI and CLI tool that reports everything technically knowable about an audio file's structure: encoder and writer detection, bitrate behavior, bit reservoir usage, VBR headers, tags, and more. Every reported value points back to the bytes it came from.
 
