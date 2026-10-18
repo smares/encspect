@@ -28,8 +28,9 @@ public sealed class ReleaseWorkflowTests
     {
         string text = Workflow();
         Assert.Contains("    tags: [\"v*.*.*\"]", text, StringComparison.Ordinal);
-        Assert.Matches(@"(?s)workflow_dispatch:\s+inputs:\s+tag:.*?required: true", text);
-        Assert.Contains("TAG: ${{ inputs.tag || github.ref_name }}", text, StringComparison.Ordinal);
+        Assert.Matches(@"(?s)workflow_dispatch:\s+inputs:\s+tag:.*?required: false", text);
+        Assert.Contains("leave empty to release the version on main", text, StringComparison.Ordinal);
+        Assert.Contains("group: release-${{ inputs.tag || github.ref_name }}", text, StringComparison.Ordinal);
     }
 
     // The workflow is read-only, and a job that is not the release job writes nothing.
@@ -63,7 +64,7 @@ public sealed class ReleaseWorkflowTests
         Assert.Contains("encspect-\"$VERSION\"-*", release, StringComparison.Ordinal);
 
         string check = string.Join('\n', Job("check-tag"));
-        Assert.Contains("[ \"$TAG\" != \"v$version\" ]", check, StringComparison.Ordinal);
+        Assert.Contains("[ \"$tag\" != \"v$version\" ]", check, StringComparison.Ordinal);
         Assert.Contains("git merge-base --is-ancestor HEAD refs/remotes/origin/main", check, StringComparison.Ordinal);
     }
 
@@ -76,7 +77,7 @@ public sealed class ReleaseWorkflowTests
         Assert.Matches(@"(?s)\n  pull_request:\n    paths:\n(      - [^\n]+\n)*      - \.github/workflows/release\.yml\n", text);
         Assert.Contains("      - THIRD-PARTY-NOTICES.md", text, StringComparison.Ordinal);
         Assert.Contains("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", text, StringComparison.Ordinal);
-        Assert.Contains("SOURCE_REF: ${{ github.event_name == 'pull_request' && github.sha || format('refs/tags/{0}', inputs.tag || github.ref_name) }}", text, StringComparison.Ordinal);
+        Assert.Contains("SOURCE_REF: ${{ github.event_name == 'push' && format('refs/tags/{0}', github.ref_name) || github.sha }}", text, StringComparison.Ordinal);
 
         Assert.Contains("    if: github.event_name != 'pull_request'", Job("release"));
 
@@ -109,6 +110,101 @@ public sealed class ReleaseWorkflowTests
         Assert.Contains("          ref: ${{ needs.check-tag.outputs.sha }}", Job("release"));
         Assert.DoesNotContain("ref: refs/tags/", Workflow(), StringComparison.Ordinal);
         Assert.Contains("--draft=false", string.Join('\n', Job("release")), StringComparison.Ordinal);
+    }
+
+    // A manual run may create the tag, but only the release job does, at the commit the checks verified and after the builds.
+    [Fact]
+    public void OnlyTheReleaseJobCreatesTheTagAndAtTheVerifiedCommit()
+    {
+        string text = Workflow();
+        string release = string.Join('\n', Job("release"));
+
+        Assert.Equal(2, Regex.Matches(text, @"gh release create ").Count);
+        Assert.DoesNotContain("git tag", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("git push", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("gh api", text, StringComparison.Ordinal);
+        Assert.Contains("    needs: [check-tag, build]", Job("release"));
+        Assert.Contains("      SHA: ${{ needs.check-tag.outputs.sha }}", Job("release"));
+        Assert.Contains("      CREATE_TAG: ${{ needs.check-tag.outputs.create_tag }}", Job("release"));
+
+        string[] creates = [.. release.Split('\n').Where(l => l.Contains("gh release create ", StringComparison.Ordinal))];
+        Assert.Equal(2, creates.Length);
+        string withTarget = Assert.Single(creates, l => l.Contains("--target", StringComparison.Ordinal));
+        Assert.Contains("--target \"$SHA\"", withTarget, StringComparison.Ordinal);
+        Assert.DoesNotContain("--verify-tag", withTarget, StringComparison.Ordinal);
+        string withVerify = Assert.Single(creates, l => l.Contains("--verify-tag", StringComparison.Ordinal));
+        Assert.DoesNotContain("--target", withVerify, StringComparison.Ordinal);
+
+        // The call that creates the tag is guarded by create_tag and by a second look at the remote.
+        int branch = release.IndexOf("if [ \"$CREATE_TAG\" = true ]; then", StringComparison.Ordinal);
+        int recheck = release.IndexOf("git ls-remote --exit-code --tags origin \"refs/tags/$TAG\"", branch, StringComparison.Ordinal);
+        int create = release.IndexOf("--target", StringComparison.Ordinal);
+        int verify = release.IndexOf("--verify-tag", StringComparison.Ordinal);
+        Assert.True(branch >= 0 && recheck > branch && create > recheck && verify > create, "order: create_tag branch, remote re-check, create with --target, then the --verify-tag path");
+        Assert.Matches(@"GITHUB_TOKEN\s+# starts no other workflow run", text);
+
+        // The other jobs build the verified commit whether or not the tag exists yet.
+        Assert.Contains("needs.check-tag.outputs.sha", string.Join('\n', Job("build")), StringComparison.Ordinal);
+        Assert.Contains("          ref: ${{ needs.check-tag.outputs.sha }}", Job("release"));
+    }
+
+    // check-tag only reads: the manual run with a missing tag is checked against the commit of the run.
+    [Fact]
+    public void CheckTagStaysReadOnlyAndChecksAMissingTagAtTheRunsCommit()
+    {
+        string[] job = Job("check-tag");
+        string check = string.Join('\n', job);
+        Assert.DoesNotContain(job, l => l.Contains("permissions:", StringComparison.Ordinal));
+        Assert.DoesNotContain("gh release", check, StringComparison.Ordinal);
+        Assert.DoesNotContain("git push", check, StringComparison.Ordinal);
+        Assert.DoesNotContain("git tag", check, StringComparison.Ordinal);
+        Assert.DoesNotContain("--target", check, StringComparison.Ordinal);
+
+        Assert.Contains("      create_tag: ${{ steps.check.outputs.create_tag }}", job);
+        Assert.Contains("echo \"create_tag=$create_tag\"", check, StringComparison.Ordinal);
+        Assert.Contains("create_tag=false", check, StringComparison.Ordinal);
+        Assert.Contains("git ls-remote --exit-code --tags origin \"refs/tags/$tag\"", check, StringComparison.Ordinal);
+        // The version and notes checks come after the tag was resolved, so a missing tag meets the same ones.
+        Assert.True(check.IndexOf("create_tag=true", StringComparison.Ordinal) < check.IndexOf("[ \"$tag\" != \"v$version\" ]", StringComparison.Ordinal));
+        Assert.True(check.IndexOf("[ \"$tag\" != \"v$version\" ]", StringComparison.Ordinal) < check.IndexOf("docs/releases/$version.md", StringComparison.Ordinal));
+        Assert.Contains("echo \"sha=$(git rev-parse HEAD)\"", check, StringComparison.Ordinal);
+    }
+
+    // A tag push (the tag exists by definition) is still released only against the existing tag.
+    [Fact]
+    public void ATagPushStillUsesVerifyTag()
+    {
+        string release = string.Join('\n', Job("release"));
+        Assert.Contains("gh release create \"$TAG\" dist/* --verify-tag --title", release, StringComparison.Ordinal);
+        Assert.Contains("elif gh release view \"$TAG\"", release, StringComparison.Ordinal);
+        Assert.Contains("format('refs/tags/{0}', github.ref_name)", Workflow(), StringComparison.Ordinal);
+    }
+
+    // The tag is decided once, in check-tag; no other job reads the input or the ref name.
+    [Fact]
+    public void TheTagIsDerivedInCheckTagAndReadFromItsOutputEverywhereElse()
+    {
+        string text = Workflow();
+        string check = string.Join('\n', Job("check-tag"));
+        Assert.Contains("      tag: ${{ steps.check.outputs.tag }}", Job("check-tag"));
+        Assert.Contains("tag=\"v$(read_version)\"", check, StringComparison.Ordinal);
+        Assert.Contains("if [ -z \"$tag\" ]; then", check, StringComparison.Ordinal);
+        Assert.Contains("[ \"$tag\" != \"v$version\" ]", check, StringComparison.Ordinal);
+        Assert.Contains("echo \"tag=$tag\"", check, StringComparison.Ordinal);
+
+        Assert.Contains("      TAG: ${{ needs.check-tag.outputs.tag }}", Job("release"));
+        Assert.DoesNotContain(Job("build"), l => l.Contains("inputs.", StringComparison.Ordinal) || l.Contains("ref_name", StringComparison.Ordinal) || l.Contains("$TAG", StringComparison.Ordinal));
+        Assert.DoesNotContain(Job("release"), l => l.Contains("inputs.", StringComparison.Ordinal) || l.Contains("ref_name", StringComparison.Ordinal));
+        Assert.DoesNotContain("\n  TAG:", text, StringComparison.Ordinal);
+
+        // inputs.tag and github.ref_name appear only where the tag is read before check-tag decides: the concurrency group,
+        // the checkout of a tag push and check-tag's own step.
+        string[] readers = [.. text.Split('\n').Where(l => !l.TrimStart().StartsWith('#') && (l.Contains("inputs.tag", StringComparison.Ordinal) || l.Contains("ref_name", StringComparison.Ordinal)))];
+        Assert.Equal(4, readers.Length);
+        Assert.Contains(readers, l => l.Contains("group: release-", StringComparison.Ordinal));
+        Assert.Contains(readers, l => l.Contains("SOURCE_REF:", StringComparison.Ordinal));
+        Assert.Contains(readers, l => l.Contains("INPUT_TAG: ${{ inputs.tag }}", StringComparison.Ordinal));
+        Assert.Contains(readers, l => l.Contains("PUSHED_TAG:", StringComparison.Ordinal));
     }
 
     // A stale notice must not hide the packaging steps: it is checked after the archive run, before the upload.

@@ -3,10 +3,11 @@ name: Release
 # A pushed version tag (vX.Y.Z) builds the self-contained CLI and GUI for the six targets of CI's full matrix, each on
 # a runner of its own platform, runs the same self-checks CI runs on them, packages them and publishes a GitHub release
 # with the notes of docs/releases/<version>.md. The tag must equal v plus the Version in Directory.Build.props and be
-# on main. A manual run (from main only) with the tag as input repeats a release (an existing release gets its files
-# replaced). A pull request that changes the release files runs the checks and the six builds on its merge commit, with
-# no upload and no release, so the steps that exist only here run before a tag does. CI itself uploads no build. See
-# "Releases" in docs/development.md.
+# on main. A manual run (from main only) takes the tag as input, or derives v plus the Version when the input is empty:
+# an existing tag repeats a release (an existing release gets its files replaced); a missing one is created by the
+# release job at the head of main the run started from, after every build has passed. A pull request that changes the
+# release files runs the checks and the six builds on its merge commit, with no upload and no release, so the steps that
+# exist only here run before a tag does. CI itself uploads no build. See "Releases" in docs/development.md.
 on:
   push:
     tags: ["v*.*.*"]
@@ -20,15 +21,17 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: The tag to release, such as v0.1.0. It must exist already.
-        required: true
+        description: The tag to release, such as v0.1.0; leave empty to release the version on main (v plus the Version in Directory.Build.props). If the tag does not exist, the release job creates it at the head of main once every build has passed.
+        required: false
+        default: ""
         type: string
 
 # Read-only everywhere but in the job that creates the release.
 permissions:
   contents: read
 
-# Runs of one tag queue behind each other and none is canceled halfway through publishing; a new push to a pull request
+# Runs of one tag queue behind each other (manual runs with an empty input share the group of main, and the release job
+# re-checks that the tag is still missing before it creates it) and none is canceled halfway through publishing; a new push to a pull request
 # replaces its running checks.
 concurrency:
   group: release-${{ inputs.tag || github.ref_name }}
@@ -39,15 +42,17 @@ env:
   AVALONIA_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
-  TAG: ${{ inputs.tag || github.ref_name }}
-  # What check-tag looks at: the merge commit of a pull request, else the tag. The other jobs build the commit it verified.
-  SOURCE_REF: ${{ github.event_name == 'pull_request' && github.sha || format('refs/tags/{0}', inputs.tag || github.ref_name) }}
+  # The tag itself is decided in check-tag and passed on as its output; github.ref_name is read here only for a tag push,
+  # where it names what to check out. What check-tag checks out: the tag of a tag push, else the commit of the run (the merge commit of a pull request, the
+  # head of main for a manual run, which then moves to the tag if it exists). The other jobs build the commit it verified.
+  SOURCE_REF: ${{ github.event_name == 'push' && format('refs/tags/{0}', github.ref_name) || github.sha }}
 
 jobs:
   # Fails unless the tag names the version the sources carry and the tagged commit is on main, so a release is never
   # built from a branch or under another number. On a pull request there is no tag: only the version and the notes are
   # checked. A manual run is accepted only from main, so that the workflow file of another branch cannot publish; started
-  # from anything else it fails, with the reason, in the first step.
+  # from anything else it fails, with the reason, in the first step. A manual run whose tag does not exist yet is checked
+  # against the commit of the run and reports create_tag=true; this job only reads, the release job creates the tag.
   check-tag:
     name: check the tag
     runs-on: ubuntu-26.04
@@ -55,6 +60,8 @@ jobs:
     outputs:
       version: ${{ steps.check.outputs.version }}
       sha: ${{ steps.check.outputs.sha }}
+      create_tag: ${{ steps.check.outputs.create_tag }}
+      tag: ${{ steps.check.outputs.tag }}
     steps:
       - name: Require a manual run to start from main
         if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
@@ -69,22 +76,50 @@ jobs:
           ref: ${{ env.SOURCE_REF }}
           fetch-depth: 0
 
+      # The tag is the pushed one, the input of a manual run, or, for a manual run with an empty input, v plus the Version
+      # at the commit of the run. Every later job reads it from this job's output.
       - name: Check the tag against Directory.Build.props and main
         id: check
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          PUSHED_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
         run: |
-          version=$(sed -n 's|.*<Version>\([^<]*\)</Version>.*|\1|p' Directory.Build.props)
+          read_version() {
+            sed -n 's|.*<Version>\([^<]*\)</Version>.*|\1|p' Directory.Build.props
+          }
+          tag="$PUSHED_TAG"
+          create_tag=false
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            tag="$INPUT_TAG"
+            if [ -z "$tag" ]; then
+              tag="v$(read_version)"
+            fi
+            # An existing tag is checked as a tag push is; a missing one is checked at the commit of this run.
+            status=0
+            git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null || status=$?
+            if [ "$status" = 0 ]; then
+              git fetch --no-tags origin "+refs/tags/$tag:refs/tags/$tag"
+              git checkout --detach "refs/tags/$tag^{commit}"
+            elif [ "$status" = 2 ]; then
+              create_tag=true
+            else
+              echo "::error::Could not look for the tag $tag on origin (git ls-remote exited with $status)."
+              exit 1
+            fi
+          fi
+          version=$(read_version)
           if ! grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' <<< "$version"; then
             echo "::error::Directory.Build.props has no Version of the form X.Y.Z (found '$version')."
             exit 1
           fi
           if [ "$GITHUB_EVENT_NAME" != pull_request ]; then
-            if [ "$TAG" != "v$version" ]; then
-              echo "::error::The tag is $TAG, but Directory.Build.props has Version $version, so the tag must be v$version."
+            if [ "$tag" != "v$version" ]; then
+              echo "::error::The tag is $tag, but Directory.Build.props has Version $version, so the tag must be v$version."
               exit 1
             fi
             git fetch --no-tags origin main:refs/remotes/origin/main
             if ! git merge-base --is-ancestor HEAD refs/remotes/origin/main; then
-              echo "::error::The commit $(git rev-parse --short HEAD) of $TAG is not on main."
+              echo "::error::The commit $(git rev-parse --short HEAD) of $tag is not on main."
               exit 1
             fi
           fi
@@ -92,8 +127,12 @@ jobs:
             echo "::error::docs/releases/$version.md, the release notes, is missing."
             exit 1
           fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$version"
+            echo "sha=$(git rev-parse HEAD)"
+            echo "create_tag=$create_tag"
+            echo "tag=$tag"
+          } >> "$GITHUB_OUTPUT"
 
   # The same targets as CI's full matrix (scripts/ci/changes.py), each built, run and packaged on its own platform.
   build:
@@ -304,7 +343,9 @@ jobs:
           retention-days: 14
 
   # The only job that can write to the repository: it creates the release (or, on a rerun, replaces the files of the
-  # existing one). The version 0.x of a project in development is a pre-release.
+  # existing one). When a manual run found no tag, it also creates the tag, in the same call as the release and at the
+  # commit the checks verified, so the tag appears only after every build has passed. A tag created with GITHUB_TOKEN
+  # starts no other workflow run, so this run does not repeat itself through the tag push trigger. The version 0.x of a project in development is a pre-release.
   release:
     name: create the GitHub release
     if: github.event_name != 'pull_request'
@@ -315,6 +356,9 @@ jobs:
       contents: write
     env:
       VERSION: ${{ needs.check-tag.outputs.version }}
+      SHA: ${{ needs.check-tag.outputs.sha }}
+      TAG: ${{ needs.check-tag.outputs.tag }}
+      CREATE_TAG: ${{ needs.check-tag.outputs.create_tag }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
@@ -344,7 +388,16 @@ jobs:
           notes="docs/releases/$VERSION.md"
           prerelease=--prerelease
           case "$VERSION" in 0.*) ;; *) prerelease=--prerelease=false ;; esac
-          if gh release view "$TAG" > /dev/null 2>&1; then
+          if [ "$CREATE_TAG" = true ]; then
+            # A tag push may have won the race since check-tag looked; then this run must not release a second time.
+            status=0
+            git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null || status=$?
+            if [ "$status" != 2 ]; then
+              echo "::error::The tag $TAG exists on origin now (or could not be looked up: git ls-remote exited with $status). Run the workflow again."
+              exit 1
+            fi
+            gh release create "$TAG" dist/* --target "$SHA" --title "$title" --notes-file "$notes" $prerelease
+          elif gh release view "$TAG" > /dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
             gh release edit "$TAG" --title "$title" --notes-file "$notes" --draft=false $prerelease
           else
