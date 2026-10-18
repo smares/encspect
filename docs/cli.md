@@ -78,6 +78,14 @@ Without it, the output is unchanged.
 - **With `--only-format`:** wrong usage. `--only-format` selects files by the format detection finds and `--as` skips detection, so the two cannot both say which files are meant.
 - **Wrong format:** a format forced on a file that is none of it gives findings (leading junk, sync lost, invalid data), never a failed parser.
 
+### `--version`
+
+Prints `encspect <version>` and exits with 0, for example `encspect 0.1.0+4da770c4bc662c9524f4f219682b00c7634a48fc`.
+
+- **Same string everywhere:** it is the `version` in a JSON report's `tool` object and the version the GUI's About window shows.
+- **Commit suffix:** the part after `+` names the commit the build was made from, so a bug report identifies the exact source. A build without Git metadata has no suffix.
+- **Alone:** with any other argument it is wrong usage.
+
 ### `--fail-on info|warning|error`
 
 Makes the exit code 1 when a finding of that severity or worse turns up.
@@ -106,7 +114,7 @@ A JSON report (schema version 1) is an object:
 ```json
 {
   "schemaVersion": 1,
-  "tool": { "name": "encspect", "version": "1.0.0+…" },
+  "tool": { "name": "encspect", "version": "0.1.0+…" },
   "source": "song.mp3",
   "root": { "name": "File", "value": "MPEG Audio", "offset": 0, "length": 4096, "children": [
     { "name": "MPEG Audio", "kind": "Stream", "value": 10, "unit": "frames", "offset": 0, "length": 4096, "children": [ … ] } ] },
