@@ -24,13 +24,13 @@ public sealed class ReleaseWorkflowTests
     }
 
     [Fact]
-    public void ARunStartsFromAVersionTagOrAManualRunWithATag()
+    public void ARunStartsFromAVersionTagOrAManualRunWithAnOptionalTag()
     {
         string text = Workflow();
         Assert.Contains("    tags: [\"v*.*.*\"]", text, StringComparison.Ordinal);
         Assert.Matches(@"(?s)workflow_dispatch:\s+inputs:\s+tag:.*?required: false", text);
         Assert.Contains("leave empty to release the version on main", text, StringComparison.Ordinal);
-        Assert.Contains("group: release-${{ inputs.tag || github.ref_name }}", text, StringComparison.Ordinal);
+        Assert.Contains("group: release-${{ github.event_name == 'pull_request' && github.ref || 'publish' }}", text, StringComparison.Ordinal);
     }
 
     // The workflow is read-only, and a job that is not the release job writes nothing.
@@ -141,7 +141,8 @@ public sealed class ReleaseWorkflowTests
         int create = release.IndexOf("--target", StringComparison.Ordinal);
         int verify = release.IndexOf("--verify-tag", StringComparison.Ordinal);
         Assert.True(branch >= 0 && recheck > branch && create > recheck && verify > create, "order: create_tag branch, remote re-check, create with --target, then the --verify-tag path");
-        Assert.Matches(@"GITHUB_TOKEN\s+# starts no other workflow run", text);
+        Assert.Single(Regex.Matches(release, "--target"));
+        Assert.Contains("create_tag=true", string.Join('\n', Job("check-tag")), StringComparison.Ordinal);
 
         // The other jobs build the verified commit whether or not the tag exists yet.
         Assert.Contains("needs.check-tag.outputs.sha", string.Join('\n', Job("build")), StringComparison.Ordinal);
@@ -200,8 +201,7 @@ public sealed class ReleaseWorkflowTests
         // inputs.tag and github.ref_name appear only where the tag is read before check-tag decides: the concurrency group,
         // the checkout of a tag push and check-tag's own step.
         string[] readers = [.. text.Split('\n').Where(l => !l.TrimStart().StartsWith('#') && (l.Contains("inputs.tag", StringComparison.Ordinal) || l.Contains("ref_name", StringComparison.Ordinal)))];
-        Assert.Equal(4, readers.Length);
-        Assert.Contains(readers, l => l.Contains("group: release-", StringComparison.Ordinal));
+        Assert.Equal(3, readers.Length);
         Assert.Contains(readers, l => l.Contains("SOURCE_REF:", StringComparison.Ordinal));
         Assert.Contains(readers, l => l.Contains("INPUT_TAG: ${{ inputs.tag }}", StringComparison.Ordinal));
         Assert.Contains(readers, l => l.Contains("PUSHED_TAG:", StringComparison.Ordinal));

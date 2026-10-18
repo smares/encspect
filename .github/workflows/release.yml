@@ -30,11 +30,12 @@ on:
 permissions:
   contents: read
 
-# Runs of one tag queue behind each other (manual runs with an empty input share the group of main, and the release job
-# re-checks that the tag is still missing before it creates it) and none is canceled halfway through publishing; a new push to a pull request
-# replaces its running checks.
+# Every run that can publish (a tag push or a manual run) shares one group and queues behind the others, whatever tag
+# it names, so that two runs never publish at once and none is canceled halfway through publishing; a new push to a
+# pull request replaces its running checks. The release job still re-checks that a missing tag is missing, because a
+# queued run's check-tag looked before the run ahead of it published.
 concurrency:
-  group: release-${{ inputs.tag || github.ref_name }}
+  group: release-${{ github.event_name == 'pull_request' && github.ref || 'publish' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -42,9 +43,10 @@ env:
   AVALONIA_TELEMETRY_OPTOUT: 1
   DOTNET_NOLOGO: 1
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
-  # The tag itself is decided in check-tag and passed on as its output; github.ref_name is read here only for a tag push,
-  # where it names what to check out. What check-tag checks out: the tag of a tag push, else the commit of the run (the merge commit of a pull request, the
-  # head of main for a manual run, which then moves to the tag if it exists). The other jobs build the commit it verified.
+  # The tag itself is decided in check-tag and passed on as its output; github.ref_name is read here only for a tag
+  # push, where it names what to check out. What check-tag checks out: the tag of a tag push, else the commit of the
+  # run (the merge commit of a pull request, the head of main for a manual run, which then moves to the tag if it
+  # exists). The other jobs build the commit it verified.
   SOURCE_REF: ${{ github.event_name == 'push' && format('refs/tags/{0}', github.ref_name) || github.sha }}
 
 jobs:
@@ -345,7 +347,8 @@ jobs:
   # The only job that can write to the repository: it creates the release (or, on a rerun, replaces the files of the
   # existing one). When a manual run found no tag, it also creates the tag, in the same call as the release and at the
   # commit the checks verified, so the tag appears only after every build has passed. A tag created with GITHUB_TOKEN
-  # starts no other workflow run, so this run does not repeat itself through the tag push trigger. The version 0.x of a project in development is a pre-release.
+  # starts no other workflow run, so this run does not repeat itself through the tag push trigger. The version 0.x of a
+  # project in development is a pre-release.
   release:
     name: create the GitHub release
     if: github.event_name != 'pull_request'
@@ -393,7 +396,7 @@ jobs:
             status=0
             git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null || status=$?
             if [ "$status" != 2 ]; then
-              echo "::error::The tag $TAG exists on origin now (or could not be looked up: git ls-remote exited with $status). Run the workflow again."
+              echo "::error::The tag $TAG exists on origin now (or could not be looked up: git ls-remote exited with $status). Start a new run, or use Re-run all jobs (not Re-run failed jobs, which reuses the old check-tag result)."
               exit 1
             fi
             gh release create "$TAG" dist/* --target "$SHA" --title "$title" --notes-file "$notes" $prerelease
