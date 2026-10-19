@@ -21,6 +21,14 @@ The main window lists a folder's files on the right, with these columns:
 
 Columns sort by the figures behind them, so durations and bitrates sort as numbers.
 
+- **Column widths:**
+  - Every column has a fixed width in pixels; the list never squeezes a column on its own.
+  - A column starts at a set width, or at the width its header needs where that is more: the header text, padding and sort glyph, measured at run time with the font in use, so no header is cut off whatever the system font.
+  - The findings column also holds three counts of up to three digits, each after its dot, left-aligned.
+  - Columns can be dragged wider, or narrower down to the width their header needs, not further.
+  - Where the columns together are wider than the window, the list scrolls horizontally.
+  - Name takes the width left over when the window is resized, never less than its set width, until you drag it; after that it keeps your width.
+
 - **Opening files:**
   - Choose a folder in the tree on the left: home, music, desktop and the volumes, with subfolders listed when expanded.
   - File, Open Folder (Cmd+O on macOS, Ctrl+O elsewhere).
