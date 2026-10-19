@@ -107,6 +107,7 @@ public partial class MainWindow : Window
         }
     }
 
+    private const double NameWidth = 260;
     private const double SeverityDot = 8;
     private const double CountGap = 4;
     private const double FindingsSpacing = 10;
@@ -114,7 +115,7 @@ public partial class MainWindow : Window
 
     private static void AddColumns(DataGrid grid)
     {
-        grid.Columns.Add(Column("Name", CompiledBinding.Create<FileRow, string>(r => r.Name), nameof(FileRow.Name), new DataGridLength(1, DataGridLengthUnitType.Star), 180));
+        grid.Columns.Add(Column("Name", CompiledBinding.Create<FileRow, string>(r => r.Name), nameof(FileRow.Name), new DataGridLength(NameWidth)));
         grid.Columns.Add(Column("Format", CompiledBinding.Create<FileRow, string>(r => r.FormatText), nameof(FileRow.FormatText), new DataGridLength(104)));
         grid.Columns.Add(Column("Codec", CompiledBinding.Create<FileRow, string?>(r => r.Codec), nameof(FileRow.Codec), new DataGridLength(128)));
         grid.Columns.Add(Column("Duration", CompiledBinding.Create<FileRow, string?>(r => r.DurationText), nameof(FileRow.Duration), new DataGridLength(82), 0, "numeric"));
@@ -145,7 +146,14 @@ public partial class MainWindow : Window
         var sizer = new ColumnSizer(grid);
         foreach (DataGridColumn column in grid.Columns)
         {
-            sizer.Add(column, column.Width.IsAbsolute ? column.Width.Value : 0, column == findings ? FindingsCellWidth : null);
+            if (column == grid.Columns[0])
+            {
+                sizer.AddFill(column, NameWidth);
+            }
+            else
+            {
+                sizer.Add(column, column.Width.Value, column == findings ? FindingsCellWidth : null);
+            }
         }
     }
 
