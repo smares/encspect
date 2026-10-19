@@ -107,6 +107,11 @@ public partial class MainWindow : Window
         }
     }
 
+    private const double SeverityDot = 8;
+    private const double CountGap = 4;
+    private const double FindingsSpacing = 10;
+    private const double FindingsMargin = 10;
+
     private static void AddColumns(DataGrid grid)
     {
         grid.Columns.Add(Column("Name", CompiledBinding.Create<FileRow, string>(r => r.Name), nameof(FileRow.Name), new DataGridLength(1, DataGridLengthUnitType.Star), 180));
@@ -127,14 +132,26 @@ public partial class MainWindow : Window
         grid.Columns.Add(Column("Written by", CompiledBinding.Create<FileRow, string?>(r => r.WriterText), nameof(FileRow.WriterText), new DataGridLength(150)));
         grid.Columns.Add(Column("Tags", CompiledBinding.Create<FileRow, string?>(r => r.Tags), nameof(FileRow.Tags), new DataGridLength(110)));
         AddProtectionColumn(grid);
-        grid.Columns.Add(new DataGridTemplateColumn
+        var findings = new DataGridTemplateColumn
         {
             Header = "Findings",
             SortMemberPath = nameof(FileRow.FindingsRank),
             Width = new DataGridLength(112),
             CellTemplate = new FuncDataTemplate<FileRow>((_, _) => FindingsCell()),
-        });
+        };
+        grid.Columns.Add(findings);
+
+        // The widths above are what the columns start at where their headers fit; see ColumnSizer.
+        var sizer = new ColumnSizer(grid);
+        foreach (DataGridColumn column in grid.Columns)
+        {
+            sizer.Add(column, column.Width.IsAbsolute ? column.Width.Value : 0, column == findings ? FindingsCellWidth : null);
+        }
     }
+
+    // The width of the findings cell holding all three counts, each of up to three digits.
+    private static double FindingsCellWidth(ColumnSizer.FontSpec font) =>
+        2 * FindingsMargin + 3 * (SeverityDot + CountGap + font.TextWidth("999")) + 2 * FindingsSpacing;
 
     private static void AddProtectionColumn(DataGrid grid) =>
         grid.Columns.Add(new DataGridTemplateColumn
@@ -185,7 +202,7 @@ public partial class MainWindow : Window
     // counts are left out.
     private static StackPanel FindingsCell()
     {
-        var cell = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 10, Margin = new Avalonia.Thickness(10, 0), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+        var cell = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = FindingsSpacing, Margin = new Avalonia.Thickness(FindingsMargin, 0), HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
         cell.Children.Add(Count("error", CompiledBinding.Create<FileRow, string?>(r => r.ErrorsText)));
         cell.Children.Add(Count("warning", CompiledBinding.Create<FileRow, string?>(r => r.WarningsText)));
         cell.Children.Add(Count("info", CompiledBinding.Create<FileRow, string?>(r => r.InfosText)));
@@ -193,12 +210,12 @@ public partial class MainWindow : Window
 
         static StackPanel Count(string severity, CompiledBinding text)
         {
-            var dot = new Avalonia.Controls.Shapes.Ellipse { VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            var dot = new Avalonia.Controls.Shapes.Ellipse { Width = SeverityDot, Height = SeverityDot, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
             dot.Classes.Add("severity");
             dot.Classes.Add(severity);
             var label = new TextBlock { VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
             label.Bind(TextBlock.TextProperty, text);
-            var count = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 4 };
+            var count = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = CountGap };
             count.Children.Add(dot);
             count.Children.Add(label);
             count.Bind(IsVisibleProperty, new CompiledBinding(text.Path!) { Converter = ObjectConverters.IsNotNull });
