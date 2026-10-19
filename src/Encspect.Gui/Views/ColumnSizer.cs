@@ -23,6 +23,7 @@ internal sealed class ColumnSizer
     private double _fillPreferred;
     private double _fillWidth = double.NaN;
     private bool _fillSizedByUser;
+    private double _fillViewport = double.NaN;
 
     public ColumnSizer(DataGrid grid)
     {
@@ -75,12 +76,13 @@ internal sealed class ColumnSizer
 
         // What a header adds around its text (padding, sort glyph, separator, whatever the theme
         // makes them), taken from the realized header. A header measured without a template has
-        // none of it, so the live one is measured and then invalidated, so that its parent measures
-        // it again with its own constraint.
+        // none of it, so the live one is measured and then invalidated, so that the next layout pass
+        // measures it again (with its column's width where the widths change, otherwise as it was).
         sample.Measure(Avalonia.Size.Infinity);
         double overhead = sample.DesiredSize.Width - label.DesiredSize.Width;
         sample.InvalidateMeasure();
         _applied = (header, cell);
+        _fillViewport = double.NaN;
         foreach ((DataGridColumn column, (double preferred, Func<FontSpec, double> cellMinimum)) in _columns)
         {
             double text = column.Header is string name ? header.TextWidth(name) : 0;
@@ -120,6 +122,14 @@ internal sealed class ColumnSizer
             return;
         }
 
+        // Only a change of the list's own width (or a re-apply) refills Name: a drag of another
+        // column keeps Name as it is, so the dragged edge follows the pointer.
+        if (Math.Abs(presenter.Bounds.Width - _fillViewport) < 0.5)
+        {
+            return;
+        }
+
+        _fillViewport = presenter.Bounds.Width;
         double others = _grid.Columns.Where(x => x != fill).Sum(x => x.Width.IsAbsolute ? x.Width.Value : x.ActualWidth);
         double target = Math.Max(Math.Max(_fillPreferred, fill.MinWidth), Math.Floor(presenter.Bounds.Width - others));
         if (Math.Abs(target - fill.Width.Value) > 0.5)

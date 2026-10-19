@@ -145,8 +145,10 @@ public sealed class FileListLayoutTests : IDisposable
         DataGridColumn codec = grid.Columns[2];
         double before = codec.ActualWidth;
         double other = grid.Columns[3].ActualWidth;
+        double name = grid.Columns[0].ActualWidth;
 
         Drag(grid, codec, 60);
+        Assert.Equal(name, grid.Columns[0].ActualWidth, 1);
 
         Assert.Equal(before + 60, codec.ActualWidth, 1);
         Assert.Equal(other, grid.Columns[3].ActualWidth, 1);
@@ -189,20 +191,26 @@ public sealed class FileListLayoutTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void A_font_change_keeps_a_dragged_width_and_the_header_minimum()
+    public void A_font_change_keeps_a_dragged_width_and_raises_the_minimum_to_the_header_need()
     {
         DataGrid grid = Open("default", 3000);
         DataGridColumn findings = grid.Columns[12];
         double need = findings.MinWidth;
         Drag(grid, findings, 50);
         double dragged = findings.ActualWidth;
+        Assert.True(dragged > need + 20);
 
-        _main!.FontSize = 15;
-        UiPump.Until(() => true);
-        _main.UpdateLayout();
+        foreach (Type type in new[] { typeof(DataGridColumnHeader), typeof(DataGridCell) })
+        {
+            _main!.Styles.Add(new Style(s => s.Is(type)) { Setters = { new Setter(TemplatedControl.FontSizeProperty, 20.0) } });
+        }
 
+        Pump();
+        Pump();
+
+        Assert.True(findings.MinWidth > need, $"The minimum is still {findings.MinWidth}: the font change did not apply again.");
+        Assert.True(findings.MinWidth < dragged, $"The minimum rose to the dragged width {dragged}.");
         Assert.Equal(dragged, findings.ActualWidth, 1);
-        Assert.True(findings.MinWidth <= need + 20, $"The minimum went from {need} to {findings.MinWidth}.");
     }
 
     // Drags the column's right edge on its header with real pointer events, by the given distance.
