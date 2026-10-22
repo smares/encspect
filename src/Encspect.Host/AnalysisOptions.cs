@@ -18,4 +18,9 @@ public sealed class AnalysisOptions
     // steps of a few hundred KiB; the file length once the analysis is done. Reported on the
     // analyzing thread.
     public IProgress<long>? BytesRead { get; init; }
+
+    // Null (the default): nothing is decoded. Set: every stream whose codec has a decoder is decoded while it is read,
+    // and the checksums over its decoded audio are compared. The tree is the same either way; the streams' Verification
+    // and the decoder's findings are what decoding adds.
+    public DecodeOptions? Decoding { get; init; }
 }

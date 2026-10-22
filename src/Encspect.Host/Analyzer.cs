@@ -8,6 +8,7 @@ public sealed class Analyzer
     private readonly IReadOnlyList<ITagParser> _tagParsers;
     private readonly IReadOnlyList<IFormatParser> _formatParsers;
     private readonly IReadOnlyList<ICodecParser> _codecParsers;
+    private readonly IReadOnlyList<IDecoder> _decoders;
     private readonly bool _hasContainers;
 
     public Analyzer(IEnumerable<IFormatParser> formatParsers)
@@ -25,22 +26,36 @@ public sealed class Analyzer
     // parsers serve the containers' routes (ParseContext.ParseStream and ParsePackets) by their
     // IDs, and tag parsers the ParseTag route by their names.
     public Analyzer(IEnumerable<ITagParser> tagParsers, IEnumerable<IFormatParser> formatParsers, IEnumerable<ICodecParser> codecParsers)
+        : this(tagParsers, formatParsers, codecParsers, [])
+    {
+    }
+
+    // Decoders serve the sessions parsers start (AnalysisContext.StartDecoding) by their IDs, when AnalysisOptions.Decoding
+    // asks for decoding; without them every session reports that no decoder exists.
+    public Analyzer(IEnumerable<ITagParser> tagParsers, IEnumerable<IFormatParser> formatParsers, IEnumerable<ICodecParser> codecParsers, IEnumerable<IDecoder> decoders)
     {
         ArgumentNullException.ThrowIfNull(tagParsers);
+        ArgumentNullException.ThrowIfNull(decoders);
         ArgumentNullException.ThrowIfNull(formatParsers);
         ArgumentNullException.ThrowIfNull(codecParsers);
 
         _tagParsers = tagParsers.ToList();
         _formatParsers = formatParsers.ToList();
         _codecParsers = codecParsers.ToList();
+        _decoders = decoders.ToList();
         _hasContainers = _formatParsers.Any(DeclaresEnd);
         if (_codecParsers.GroupBy(c => c.Id).FirstOrDefault(g => g.Count() > 1) is { } duplicate)
         {
             throw new ArgumentException($"Two codec parsers have the ID {duplicate.Key}.", nameof(codecParsers));
         }
+
+        if (_decoders.GroupBy(d => d.Id).FirstOrDefault(g => g.Count() > 1) is { } duplicateDecoder)
+        {
+            throw new ArgumentException($"Two decoders have the ID {duplicateDecoder.Key}.", nameof(decoders));
+        }
     }
 
-    public static Analyzer CreateDefault() => new(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs);
+    public static Analyzer CreateDefault() => new(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, DefaultParsers.Decoders);
 
     // Anything that is not a regular file gets a report with a file.not-regular finding without
     // being read, since a FIFO blocks and a device can be read forever. A file that cannot be
@@ -223,7 +238,7 @@ public sealed class Analyzer
             ByteReader window = new ByteReader(stream, options.CancellationToken, progress).Slice(dataStart, formatEnd - dataStart);
             List<Node> inWindow = embedded.Where(c => c.Tag.Offset < formatEnd).Select(c => shown[c.Tag]).ToList();
             var sniff = new SniffContext(window, Path.GetExtension(source)) { FirstEmbeddedTag = inWindow.Count > 0 ? inWindow.Min(t => t.Offset) : null };
-            (streams, detection) = ParseData(sniff, root, inWindow, claims, findings, failures, forced);
+            (streams, detection) = ParseData(sniff, root, inWindow, claims, findings, failures, forced, options.Decoding is { } decoding ? new DecodeRun(decoding, reader.Length) : null);
             AddDataBetweenTags(root, embedded.Where(c => c.Tag.Offset >= formatEnd), dataEnd, findings);
         }
         else
@@ -820,7 +835,7 @@ public sealed class Analyzer
     }
 
     private (IReadOnlyList<StreamInfo> Streams, FormatDetection? Detection) ParseData(SniffContext sniff, Node root, List<Node> embedded, List<EncoderClaim> claims,
-        List<Finding> findings, List<Failure> failures, IFormatParser? forced)
+        List<Finding> findings, List<Failure> failures, IFormatParser? forced, DecodeRun? decoding)
     {
         ByteReader window = sniff.Reader;
         List<Ranked> ranked = Rank(sniff, failures);
@@ -848,7 +863,8 @@ public sealed class Analyzer
         FormatDetection? detection = Describe(ranked, parser, forced is not null, findings, root, sniff, failures);
 
         root.Value = parser.Name;
-        var context = new ParseContext(window, root, embedded, claims, new ParserRouter(_codecParsers, _tagParsers));
+        var router = new ParserRouter(_codecParsers, _tagParsers, _decoders, decoding);
+        var context = new ParseContext(window, root, embedded, claims, router);
 
         try
         {
@@ -867,6 +883,10 @@ public sealed class Analyzer
             failures.Add(new Failure(parser.Name, "parsing the data", ex));
         }
 
+        router.EndOpenSessions(context);
+
+        // The front end's exception travelled through none of the parsers; it reaches the caller now, without a report.
+        decoding?.ThrowIfSinkFailed();
         findings.AddRange(context.Findings);
         return (context.Streams, detection);
     }

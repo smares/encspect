@@ -70,6 +70,10 @@ public sealed record StreamInfo
     // stream a codec parser reported (AnalysisContext.UpdateStream), or on the one it reports itself.
     public StreamProtection? Protection { get; init; }
 
+    // How far the checksums the stream stores vouch for it; set for the phase 3 codings and for WavPack in every mode,
+    // null for the others.
+    public StreamVerification? Verification { get; init; }
+
     // What the stream carries; a stream that is not audio has no sample rate or channels.
     public StreamKind Kind { get; init; } = StreamKind.Audio;
 

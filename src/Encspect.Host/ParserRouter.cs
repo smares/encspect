@@ -6,8 +6,10 @@ namespace Encspect.Host;
 // the codec or tag parser, runs it inside the same exception boundary as the format parser, and
 // merges its findings and streams into the context that asked (a tag's encoder claims too, but not a codec parser's, which belong to its stream). A failure inside a
 // routed parser becomes a finding on the node the container gave it, so the container carries on.
-internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnlyList<ITagParser> tags) : IParserRouter
+internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnlyList<ITagParser> tags, IReadOnlyList<IDecoder>? decoders = null, DecodeRun? run = null) : IParserRouter
 {
+    private readonly List<DecodeSession> _open = [];
+
     // Routes nest (a container hands a codec its packets, the codec a tag), but only a few levels;
     // a parser that routes in circles on crafted data must end in a finding, not a stack overflow.
     internal const int MaxDepth = 8;
@@ -93,6 +95,47 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
         return shown;
     }
 
+    public IDecodeSession StartDecoding(AnalysisContext caller, string codecId, DecodeSetup setup)
+    {
+        ArgumentNullException.ThrowIfNull(setup);
+        ArgumentNullException.ThrowIfNull(setup.Stream);
+        ArgumentOutOfRangeException.ThrowIfLessThan(setup.Channels, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(setup.BitsPerSample, 1);
+
+        IDecoder? decoder = decoders?.FirstOrDefault(d => d.Id == codecId);
+        if (decoder is null)
+        {
+            if (run is not null)
+            {
+                caller.AddFinding(Severity.Info, "decode.no-decoder", $"Decoding was asked for, but no decoder handles {codecId}.", setup.Stream);
+            }
+
+            return new DecodeSession(this, caller, null, codecId, setup, DecodeStatus.NoDecoder);
+        }
+
+        if (run is null)
+        {
+            return new DecodeSession(this, caller, null, codecId, setup, DecodeStatus.NotRequested);
+        }
+
+        var session = new DecodeSession(this, caller, run, codecId, setup, DecodeStatus.Decoded);
+        _open.Add(session);
+        session.Open(decoder);
+        return session;
+    }
+
+    internal void Release(DecodeSession session) => _open.Remove(session);
+
+    // Ends the sessions the owner's parser opened and did not finish, so what their decoders count once per stream joins the
+    // owner's findings.
+    public void EndOpenSessions(AnalysisContext owner)
+    {
+        foreach (DecodeSession session in _open.Where(s => s.Owner == owner).ToList())
+        {
+            session.EndUnfinished();
+        }
+    }
+
     private bool RunCodec(AnalysisContext caller, string codecId, Node parent, Func<CodecContext> create)
     {
         ICodecParser? codec = codecs.FirstOrDefault(c => c.Id == codecId);
@@ -126,6 +169,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
         finally
         {
             _depth--;
+            EndOpenSessions(context);
         }
 
         foreach (Finding finding in context.Findings)

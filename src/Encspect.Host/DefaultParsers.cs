@@ -53,4 +53,8 @@ public static class DefaultParsers
     // Speex, Vorbis and Opus in Ogg and Matroska, AC-3, E-AC-3 and DTS in MP4 and Matroska, AAC in Matroska, Windows Media Audio in ASF.
     public static IReadOnlyList<ICodecParser> Codecs { get; } =
         [Mpeg, new AacCodecParser(), new SpeexParser(), new VorbisParser(), new OpusParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3), new WmaStandardParser(), new WmaProParser(), new WmaLosslessParser(), new WmaVoiceParser(), new DtsCodecParser()];
+
+    // The decoders of the codecs the formats above read, by the same IDs the parsers start their sessions with. Each
+    // lives in its format's project; a format without one is not listed, and its streams report that no decoder exists.
+    public static IReadOnlyList<IDecoder> Decoders { get; } = [];
 }
