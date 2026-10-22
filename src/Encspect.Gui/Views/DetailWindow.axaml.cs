@@ -12,13 +12,14 @@ namespace Encspect.Gui.Views;
 
 public partial class DetailWindow : Window
 {
-    private static readonly FilePickerFileType TextReport = new("Text report") { Patterns = ["*.txt"], MimeTypes = ["text/plain"], AppleUniformTypeIdentifiers = ["public.plain-text"] };
+    internal static readonly FilePickerFileType TextReport = new("Text Report") { Patterns = ["*.txt"], MimeTypes = ["text/plain"], AppleUniformTypeIdentifiers = ["public.plain-text"] };
+    internal const string ExportTitle = "Export Report";
     private const double DefaultTopicWidth = 340;
     private const double MinimumTopicWidth = 260;
     private const double MinimumPaneShare = 0.2;
     private const double MaximumPaneShare = 0.8;
 
-    private static readonly FilePickerFileType JsonReport = new("JSON report") { Patterns = ["*.json"], MimeTypes = ["application/json"], AppleUniformTypeIdentifiers = ["public.json"] };
+    internal static readonly FilePickerFileType JsonReport = new("JSON Report") { Patterns = ["*.json"], MimeTypes = ["application/json"], AppleUniformTypeIdentifiers = ["public.json"] };
 
     // For the XAML previewer and loader only.
     public DetailWindow()
@@ -132,7 +133,7 @@ public partial class DetailWindow : Window
         string name = Path.GetFileNameWithoutExtension(Model.Path) ?? "report";
         SaveFilePickerResult result = await StorageProvider.SaveFilePickerWithResultAsync(new FilePickerSaveOptions
         {
-            Title = "Export Report",
+            Title = ExportTitle,
             SuggestedFileName = name + ".txt",
             DefaultExtension = "txt",
             FileTypeChoices = [TextReport, JsonReport],
@@ -152,7 +153,7 @@ public partial class DetailWindow : Window
         Shortcuts.Submenu(
             "File",
             Shortcuts.Item(this, "Export Report…", Shortcuts.WithCommand(Key.S), () => _ = ExportAsync()),
-            Shortcuts.Submenu("Analyze As", [Shortcuts.Item(this, "Detect Automatically", null, () => _ = Model.AnalyzeAsAsync(null)), new NativeMenuItemSeparator(), .. Model.FormatNames.Select(name => Shortcuts.Item(this, name, null, () => _ = Model.AnalyzeAsAsync(name)))]),
+            Shortcuts.Submenu("Analyze as", [Shortcuts.Item(this, "Detect Automatically", null, () => _ = Model.AnalyzeAsAsync(null)), new NativeMenuItemSeparator(), .. Model.FormatNames.Select(name => Shortcuts.Item(this, name, null, () => _ = Model.AnalyzeAsAsync(name)))]),
             new NativeMenuItemSeparator(),
             Shortcuts.Item(this, "Close", Shortcuts.WithCommand(Key.W), Close)),
         Shortcuts.Submenu(
@@ -170,7 +171,7 @@ public partial class DetailWindow : Window
         flyout.Opening += (_, _) =>
         {
             flyout.Items.Clear();
-            flyout.Items.Add(FormatItem("Detect automatically", null, Model.ForcedFormat is null));
+            flyout.Items.Add(FormatItem("Detect Automatically", null, Model.ForcedFormat is null));
             flyout.Items.Add(new Separator());
             foreach (string name in Model.FormatNames)
             {

@@ -247,6 +247,8 @@ public sealed partial class GraphView
         return layout;
     }
 
+    private static string Capitalize(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
+
     // The legend's entries as text with their shares, and the category each stands for.
     private static List<(string Label, int Category)> LegendEntries(Graph graph) => graph switch
     {
@@ -611,7 +613,7 @@ public sealed partial class GraphView
 
         if (category.View == GraphForm.OverTime)
         {
-            context.DrawText(Text("share of the values in each interval", TextSize, secondary), new Point(4, 2));
+            context.DrawText(Text("Share of the values in each interval", TextSize, secondary), new Point(4, 2));
             DrawPercentTicks(context, plot, grid, secondary);
             CategoryColumns columns = ColumnsFor(category, width, -1);
             double colW = plot.Width / columns.Count;
@@ -634,7 +636,7 @@ public sealed partial class GraphView
         }
         else
         {
-            string caption = layout.Rows > 1 ? $"one row for each of the {series.ValuesPerUnit} values of a frame" : $"{series.ValueLabel} values of each frame";
+            string caption = layout.Rows > 1 ? $"One row for each of the {series.ValuesPerUnit} values of a frame" : Capitalize($"{series.ValueLabel} values of each frame");
             context.DrawText(Text(caption, TextSize, secondary), new Point(4, 2));
             for (int row = 0; row < layout.Rows; row++)
             {
@@ -720,7 +722,7 @@ public sealed partial class GraphView
     {
         IReadOnlyList<Color> hues = isDark ? CategoryColors.Dark : CategoryColors.Light;
         Rect plot = layout.Plot;
-        context.DrawText(Text("share of the audio bits of the two channels in each interval", TextSize, secondary), new Point(4, 2));
+        context.DrawText(Text("Share of the audio bits of the two channels in each interval", TextSize, secondary), new Point(4, 2));
         DrawPercentTicks(context, plot, new Pen(Palette.Grid(this), 1), secondary);
         SplitColumns columns = SplitColumnsOf(graph, Math.Max(1, (int)plot.Width));
         double colW = plot.Width / columns.Count;
@@ -936,7 +938,7 @@ public sealed partial class GraphView
         SummaryLayout layout = SummaryRows(graph, Bounds.Width);
         _scroll = Math.Clamp(_scroll, 0, Math.Max(0, layout.Height - (Bounds.Height - 30)));
         var clip = new Rect(0, 24, Bounds.Width, Math.Max(0, Bounds.Height - 24));
-        context.DrawText(Text("count and share of the values of the whole stream", TextSize, secondary), new Point(4, 2));
+        context.DrawText(Text("Count and share of the values of the whole stream", TextSize, secondary), new Point(4, 2));
         IBrush trackBrush = Palette.Grid(this, 0.1);
         bool highContrast = HasHighContrast();
         using (context.PushClip(clip))
