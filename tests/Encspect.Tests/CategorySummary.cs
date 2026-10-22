@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Encspect.Core;
 
 namespace Encspect.Tests;
@@ -7,7 +9,7 @@ namespace Encspect.Tests;
 // category-summary.json (docs/design/coding-graphs.md, "The summary over the stream"). The tally covers a region and the
 // series a stream, so the comparison is made per connected group: the streams that share an anchor or a node form one
 // group, and it sums the series over its streams against the tallies over its distinct anchors.
-internal sealed class CategorySummary
+internal sealed partial class CategorySummary
 {
     private readonly Dictionary<string, Entry> _entries;
 
@@ -69,14 +71,14 @@ internal sealed class CategorySummary
         {
             foreach (IGrouping<string, CategorySeries> named in group.SelectMany(i => streams[i].CategorySeries).GroupBy(s => s.Name))
             {
-                CheckGroup(report, named.Key, [.. named], problems);
+                CheckGroup(report, named.Key, [.. named], [.. group.SelectMany(i => streams[i].Nodes).Distinct(ReferenceEqualityComparer.Instance).Cast<Node>()], problems);
             }
         }
 
         return problems;
     }
 
-    private void CheckGroup(Report report, string name, List<CategorySeries> series, List<string> problems)
+    private void CheckGroup(Report report, string name, List<CategorySeries> series, List<Node> regions, List<string> problems)
     {
         if (!_entries.TryGetValue(name, out Entry? entry))
         {
@@ -84,17 +86,35 @@ internal sealed class CategorySummary
             return;
         }
 
-        Node?[] anchors = [.. series.Select(s => s.Anchor).Distinct(ReferenceEqualityComparer.Instance).Cast<Node?>()];
-        if (anchors.Any(a => a is null) || anchors.Any(a => a!.Name != entry.Anchor))
+        if (series.Any(s => s.Anchor is null || s.Anchor.Name != entry.Anchor))
         {
-            problems.Add($"{name}: the series is anchored to {string.Join(", ", anchors.Select(a => a?.Name ?? "no node"))}, not to {entry.Anchor}");
+            problems.Add($"{name}: the series is anchored to {string.Join(", ", series.Select(s => s.Anchor?.Name ?? "no node").Distinct())}, not to {entry.Anchor}");
             return;
+        }
+
+        // The tally covers a region and the series a stream: the tallies of the group's regions are summed, and the series of its
+        // streams. A series' own anchor counts too where it lies outside the streams' nodes.
+        var anchors = new List<Node>();
+        foreach (Node region in regions)
+        {
+            if (FindByName(region, entry.Anchor, 0) is { } found && !anchors.Contains(found, ReferenceEqualityComparer.Instance))
+            {
+                anchors.Add(found);
+            }
+        }
+
+        foreach (Node own in series.Select(s => s.Anchor!))
+        {
+            if (!anchors.Contains(own, ReferenceEqualityComparer.Instance))
+            {
+                anchors.Add(own);
+            }
         }
 
         bool mayBeSmaller = report.Findings.Any(f => entry.Findings.Contains(f.Code));
         long seriesTotal = series.Sum(s => s.Total);
         long denominator = 0;
-        foreach (Node anchor in anchors!)
+        foreach (Node anchor in anchors)
         {
             if (Denominator(report.Root, anchor, entry.Denominator) is not { } value)
             {
@@ -108,13 +128,13 @@ internal sealed class CategorySummary
         Compare(name, "total", seriesTotal, denominator, mayBeSmaller, problems);
         if (entry.Form == "flag")
         {
-            long tally = anchors.Sum(a => a!.Value?.AsInteger() ?? -1);
             if (series.Any(s => s.Categories.Count != 2))
             {
                 problems.Add($"{name}: a flag series has two categories");
                 return;
             }
 
+            long tally = anchors.Sum(a => Count(a.Value) ?? 0);
             long with = series.Sum(s => s.Counts[entry.WithCategory]);
             Compare(name, series[0].Categories[entry.WithCategory].Name, with, tally, mayBeSmaller, problems);
             return;
@@ -123,21 +143,56 @@ internal sealed class CategorySummary
         for (int category = 0; category < series[0].Categories.Count; category++)
         {
             string entryName = series[0].Categories[category].Name;
-            long tally = 0;
-            foreach (Node anchor in anchors!)
-            {
-                Node? child = anchor.Children.FirstOrDefault(c => c.Name == entryName);
-                if (child?.Value?.AsInteger() is not { } value)
-                {
-                    problems.Add($"{name}: the anchor has no entry \"{entryName}\" with a whole number");
-                    return;
-                }
 
-                tally += value;
-            }
-
+            // A tally lists the entries that occur: a missing one is 0.
+            long tally = anchors.Sum(a => a.Children.FirstOrDefault(c => c.Name == entryName) is { } child ? Count(child.Value) ?? -1_000_000_000 : 0);
             Compare(name, entryName, series.Sum(s => s.Counts[category]), tally, mayBeSmaller, problems);
         }
+    }
+
+    // The count of a tally entry: a typed integer, or the text the parsers write ("4 granules (1.7%)", "1,234 frames (50.0%)"),
+    // whose leading number is the count. The tallies keep the share in the text, and retyping them would change every golden,
+    // so the harness, which is test code, reads the text.
+    public static long? Count(NodeValue? value)
+    {
+        if (value?.AsInteger() is { } integer)
+        {
+            return integer;
+        }
+
+        if (value?.AsText() is { } text && LeadingCount().Match(text) is { Success: true } match
+            && long.TryParse(match.Groups[1].ValueSpan, NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out long count))
+        {
+            return count;
+        }
+
+        return null;
+    }
+
+    [GeneratedRegex(@"^\s*([0-9][0-9,]*)(?![0-9])")]
+    private static partial Regex LeadingCount();
+
+    private static Node? FindByName(Node node, string name, int depth)
+    {
+        if (node.Name == name)
+        {
+            return node;
+        }
+
+        if (depth >= 6 || !node.HasChildren)
+        {
+            return null;
+        }
+
+        foreach (Node child in node.Children)
+        {
+            if (child.Kind != NodeKind.Frame && FindByName(child, name, depth + 1) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private static void Compare(string name, string what, long actual, long expected, bool mayBeSmaller, List<string> problems)
@@ -164,7 +219,7 @@ internal sealed class CategorySummary
             Node scope = path[Math.Max(0, path.Count - up)];
             if (Search(scope, name, 0) is { } found)
             {
-                return found.Value?.AsInteger();
+                return Count(found.Value);
             }
         }
 
@@ -199,7 +254,7 @@ internal sealed class CategorySummary
 
     private static Node? Search(Node node, string name, int depth)
     {
-        if (node.Name == name && node.Value?.AsInteger() is not null)
+        if (node.Name == name && Count(node.Value) is not null)
         {
             return node;
         }
