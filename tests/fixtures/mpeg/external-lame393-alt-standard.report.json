@@ -181,6 +181,27 @@
                   ]
                 },
                 {
+                  "name": "Stereo Coding",
+                  "value": 79,
+                  "unit": "frames",
+                  "offset": 417,
+                  "length": 35356,
+                  "children": [
+                    {
+                      "name": "Left/right stereo",
+                      "value": "44 frames (55.7%)",
+                      "offset": 417,
+                      "length": 35356
+                    },
+                    {
+                      "name": "Mid/side stereo",
+                      "value": "35 frames (44.3%)",
+                      "offset": 417,
+                      "length": 35356
+                    }
+                  ]
+                },
+                {
                   "name": "Joint Stereo Modes",
                   "value": 79,
                   "unit": "frames",
@@ -235,6 +256,27 @@
                   ]
                 },
                 {
+                  "name": "Block Sizes",
+                  "value": 316,
+                  "unit": "granules",
+                  "offset": 417,
+                  "length": 35356,
+                  "children": [
+                    {
+                      "name": "Long, start and stop",
+                      "value": "288 granules (91.1%)",
+                      "offset": 417,
+                      "length": 35356
+                    },
+                    {
+                      "name": "Short",
+                      "value": "28 granules (8.9%)",
+                      "offset": 417,
+                      "length": 35356
+                    }
+                  ]
+                },
+                {
                   "name": "Global Gain",
                   "offset": 417,
                   "length": 35356,
@@ -276,6 +318,34 @@
                           "length": 35356
                         }
                       ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Channel Bit Share",
+                  "offset": 417,
+                  "length": 35356,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 36.5,
+                      "unit": "%",
+                      "offset": 417,
+                      "length": 35356
+                    },
+                    {
+                      "name": "Overall",
+                      "value": 50.2,
+                      "unit": "%",
+                      "offset": 417,
+                      "length": 35356
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 81.6,
+                      "unit": "%",
+                      "offset": 417,
+                      "length": 35356
                     }
                   ]
                 },
@@ -48988,6 +49058,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               417,
               939,
@@ -49155,6 +49227,8 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0,
               1,
@@ -49170,6 +49244,8 @@
             "name": "Reservoir Fill",
             "unit": "bytes",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Reservoir Fill",
             "x": [
               417,
               939,
@@ -49337,6 +49413,8 @@
             "name": "Reservoir Fill Over Time",
             "unit": "bytes",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Reservoir Fill",
             "x": [
               0,
               1,
@@ -49346,6 +49424,642 @@
               359,
               288,
               496
+            ]
+          },
+          {
+            "name": "Channel Bit Share",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Channel Bit Share",
+            "x": [
+              417,
+              939,
+              1356,
+              1773,
+              2190,
+              2607,
+              3024,
+              3441,
+              3858,
+              4275,
+              4692,
+              5109,
+              5526,
+              5943,
+              6360,
+              6777,
+              7194,
+              7611,
+              8028,
+              8445,
+              8862,
+              9279,
+              9696,
+              10113,
+              10530,
+              10947,
+              11364,
+              11781,
+              12303,
+              12929,
+              13555,
+              14181,
+              14703,
+              15329,
+              15851,
+              16477,
+              16999,
+              17625,
+              18147,
+              18773,
+              19295,
+              19921,
+              20547,
+              21173,
+              21695,
+              22321,
+              22843,
+              23469,
+              23991,
+              24617,
+              25139,
+              25765,
+              26287,
+              26913,
+              27539,
+              28580,
+              28997,
+              29414,
+              29831,
+              30248,
+              30665,
+              31082,
+              31499,
+              31916,
+              32333,
+              32750,
+              33167,
+              33584,
+              34001,
+              34418,
+              34835,
+              35252
+            ],
+            "values": [
+              81.6,
+              48.4,
+              45.8,
+              41.8,
+              41.4,
+              45,
+              44.3,
+              45,
+              45.8,
+              44.8,
+              44.4,
+              48.7,
+              44.5,
+              43.8,
+              44.5,
+              45.4,
+              49,
+              44.8,
+              47.4,
+              40.6,
+              47.5,
+              47,
+              41.7,
+              45.8,
+              47.4,
+              44.5,
+              43,
+              50,
+              48.9,
+              56.2,
+              49.6,
+              48.3,
+              51.8,
+              51.1,
+              51.6,
+              48,
+              52.9,
+              50.4,
+              56,
+              50.4,
+              50.1,
+              48,
+              48.6,
+              54.3,
+              48.7,
+              49.6,
+              47.2,
+              48,
+              52.5,
+              51.1,
+              50.7,
+              49.2,
+              49.8,
+              49.8,
+              48.2,
+              53.9,
+              58.4,
+              46.6,
+              49.2,
+              42.8,
+              44,
+              44.7,
+              36.5,
+              52.1,
+              48.6,
+              53.3,
+              43,
+              51.3,
+              41.7,
+              50.9,
+              48.7,
+              69.9
+            ]
+          },
+          {
+            "name": "Channel Bit Share Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Channel Bit Share",
+            "x": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              50.4,
+              49.6,
+              69.9
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Channel Modes",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 0
+              },
+              {
+                "name": "Joint stereo",
+                "count": 79
+              },
+              {
+                "name": "Dual channel",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 79,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                79
+              ]
+            ],
+            "seconds": [
+              0,
+              39,
+              77
+            ]
+          },
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 44
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 35
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Dual channel",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 79,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                26
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                1,
+                9
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                12
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "seconds": [
+              0,
+              39,
+              77
+            ]
+          },
+          {
+            "name": "Joint Stereo Modes",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 44
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 35
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              }
+            ],
+            "total": 79,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                26
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                1,
+                9
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                12
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "seconds": [
+              0,
+              39,
+              77
+            ]
+          },
+          {
+            "name": "Block Usage",
+            "concept": "blockSwitching",
+            "valueLabel": "granule and channel",
+            "valuesPerUnit": 4,
+            "valueNames": [
+              "granule 1, channel 1",
+              "granule 1, channel 2",
+              "granule 2, channel 1",
+              "granule 2, channel 2"
+            ],
+            "categories": [
+              {
+                "name": "Long",
+                "count": 266
+              },
+              {
+                "name": "Start",
+                "count": 10
+              },
+              {
+                "name": "Short",
+                "count": 28
+              },
+              {
+                "name": "Mixed",
+                "count": 0
+              },
+              {
+                "name": "Stop",
+                "count": 12
+              },
+              {
+                "name": "Reserved",
+                "count": 0,
+                "isReserved": true
+              }
+            ],
+            "total": 316,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                2,
+                4
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                100
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                132
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                8
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                8
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                18
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                4
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                4
+              ]
+            ],
+            "seconds": [
+              0,
+              39,
+              77
+            ]
+          },
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "granule and channel",
+            "valuesPerUnit": 4,
+            "valueNames": [
+              "granule 1, channel 1",
+              "granule 1, channel 2",
+              "granule 2, channel 1",
+              "granule 2, channel 2"
+            ],
+            "categories": [
+              {
+                "name": "Long, start and stop",
+                "count": 288
+              },
+              {
+                "name": "Short",
+                "count": 28
+              },
+              {
+                "name": "Mixed",
+                "count": 0
+              },
+              {
+                "name": "Reserved",
+                "count": 0,
+                "isReserved": true
+              }
+            ],
+            "total": 316,
+            "xSeries": "Bitrate",
+            "groupOf": "Block Usage",
+            "map": [
+              0,
+              0,
+              1,
+              2,
+              0,
+              3
+            ],
+            "seconds": [
+              0,
+              39,
+              77
             ]
           }
         ]
