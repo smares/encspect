@@ -90,6 +90,22 @@ public sealed class CapitalizationTests
         labels.AddRange(ControlLabels(window));
         labels.AddRange(window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("heading")).Select(t => t.Text!));
 
+        // The view buttons of each entry show only while it is selected, so every entry is selected in turn and every one of its forms.
+        foreach (GraphChoice choice in window.Model.Graphs.Choices)
+        {
+            window.Model.Graphs.Selected = choice;
+            foreach (GraphFormChoice form in choice.Forms)
+            {
+                window.Model.Graphs.SelectForm(form.Kind);
+                UiPump.Until(() => true);
+                labels.AddRange(ControlLabels(window));
+            }
+        }
+
+        Assert.Contains("First and Second", labels);
+        Assert.Contains("Distribution", labels);
+        Assert.Contains("Over Time", labels);
+
         var menu = Assert.IsType<MenuFlyout>(window.AnalyzeAsButton.Flyout);
         menu.ShowAt(window.AnalyzeAsButton);
         labels.AddRange(menu.Items.OfType<MenuItem>().Select(i => (string)i.Header!));

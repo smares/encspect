@@ -1486,6 +1486,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         // The statistics figures the stream's series are shown after.
         public Node? Distribution { get; set; }
 
+        // The tally nodes the stream's category series and coding series are anchored to.
+        public TallyNodes Nodes { get; } = new();
+
         public Node? MaximumFill { get; set; }
 
         public Node? Node { get; set; }

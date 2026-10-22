@@ -326,7 +326,7 @@ public class CategoryGraphTests
         Assert.Equal(["Summary", "Stereo Coding", "Block Switching", "Bit Distribution", "Other"], graphs.ChoiceGroups.Select(g => g.Heading));
 
         // A file without category series has the bitrate headings only, and no heading without an entry.
-        graphs.Load(Analyzer.CreateDefault().AnalyzeFile(Fixtures.Stats("vbr-seconds.mp3")));
+        graphs.Load(CategoryTestData.Analyzer(_ => [], _ => []).AnalyzeFile(Fixtures.Stats("vbr-seconds.mp3")));
         Assert.Equal(["Bit Distribution"], graphs.ChoiceGroups.Select(g => g.Heading));
     }
 

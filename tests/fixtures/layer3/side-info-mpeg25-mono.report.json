@@ -119,6 +119,21 @@
                   ]
                 },
                 {
+                  "name": "Stereo Coding",
+                  "value": 6,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 864,
+                  "children": [
+                    {
+                      "name": "Mono",
+                      "value": "6 frames (100.0%)",
+                      "offset": 0,
+                      "length": 864
+                    }
+                  ]
+                },
+                {
                   "name": "Block Usage",
                   "value": 6,
                   "unit": "granules",
@@ -151,6 +166,33 @@
                     },
                     {
                       "name": "Stop",
+                      "value": "1 granule (16.7%)",
+                      "offset": 0,
+                      "length": 864
+                    }
+                  ]
+                },
+                {
+                  "name": "Block Sizes",
+                  "value": 6,
+                  "unit": "granules",
+                  "offset": 0,
+                  "length": 864,
+                  "children": [
+                    {
+                      "name": "Long, start and stop",
+                      "value": "4 granules (66.7%)",
+                      "offset": 0,
+                      "length": 864
+                    },
+                    {
+                      "name": "Short",
+                      "value": "1 granule (16.7%)",
+                      "offset": 0,
+                      "length": 864
+                    },
+                    {
+                      "name": "Mixed",
                       "value": "1 granule (16.7%)",
                       "offset": 0,
                       "length": 864
@@ -1831,6 +1873,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0,
               144,
@@ -1852,6 +1896,8 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0
             ],
@@ -1863,6 +1909,8 @@
             "name": "Reservoir Fill",
             "unit": "bytes",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Reservoir Fill",
             "x": [
               0,
               144,
@@ -1884,11 +1932,191 @@
             "name": "Reservoir Fill Over Time",
             "unit": "bytes",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Reservoir Fill",
             "x": [
               0
             ],
             "values": [
               102
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Channel Modes",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 0
+              },
+              {
+                "name": "Joint stereo",
+                "count": 0
+              },
+              {
+                "name": "Dual channel",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 6
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                3,
+                6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Dual channel",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 6
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                5,
+                6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Block Usage",
+            "concept": "blockSwitching",
+            "valueLabel": "granule and channel",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 2
+              },
+              {
+                "name": "Start",
+                "count": 1
+              },
+              {
+                "name": "Short",
+                "count": 1
+              },
+              {
+                "name": "Mixed",
+                "count": 1
+              },
+              {
+                "name": "Stop",
+                "count": 1
+              },
+              {
+                "name": "Reserved",
+                "count": 0,
+                "isReserved": true
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                4,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "granule and channel",
+            "categories": [
+              {
+                "name": "Long, start and stop",
+                "count": 4
+              },
+              {
+                "name": "Short",
+                "count": 1
+              },
+              {
+                "name": "Mixed",
+                "count": 1
+              },
+              {
+                "name": "Reserved",
+                "count": 0,
+                "isReserved": true
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "groupOf": "Block Usage",
+            "map": [
+              0,
+              0,
+              1,
+              2,
+              0,
+              3
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

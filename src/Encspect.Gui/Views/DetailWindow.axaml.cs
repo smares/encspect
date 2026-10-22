@@ -47,6 +47,7 @@ public partial class DetailWindow : Window
         Graph.CategoryClicked += (_, category) => Model.Graphs.ActivateCategory(category);
         Topic.LinkActivated += (_, id) => Model.ShowTopic(id);
         model.PropertyChanged += OnModelChanged;
+        model.Graphs.PropertyChanged += OnGraphsChanged;
         AnalyzeAsButton.Flyout = CreateFormatMenu();
 
         // The menu shows in macOS's menu bar; elsewhere the window has no menu bar, which would
@@ -221,6 +222,23 @@ public partial class DetailWindow : Window
     private void OnCloseTopic(object? sender, RoutedEventArgs e) => Model.IsTopicOpen = false;
 
     private void OnLearnMore(object? sender, TappedEventArgs e) => Model.ShowTopic(Model.SelectionTopic?.Id);
+
+    // The selected entry of the list comes into view, whatever selected it (a click, the remembered title of the last file, a key).
+    private void OnGraphsChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(GraphsViewModel.Selected))
+        {
+            return;
+        }
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (Model.Graphs.Selected is { } selected && GraphChoices.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => ReferenceEquals(b.DataContext, selected)) is { } button)
+            {
+                button.BringIntoView();
+            }
+        }, Avalonia.Threading.DispatcherPriority.Loaded);
+    }
 
     private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
     {

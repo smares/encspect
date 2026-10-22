@@ -14,3 +14,5 @@ references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4
 **Mixed blocks.** With mixed_block_flag set, a short block keeps long transforms for the two lowest subbands, where frequency resolution matters most, and uses short ones above.
 
 **What you see.** Each granule's Block Type, and the Block Usage statistics, which count granules per type as mp3guessenc and EncSpot do. Encoders differ in how often they switch, which helps tell them apart.
+
+**The graphs.** Block Usage shows the type of every granule and channel, the share of each type per second and a strip with one cell per granule and channel. Block Sizes groups the same granules by the size of the transform, as EncSpot counts them: long (normal, start and stop blocks), short, mixed, and the reserved type apart, which EncSpot counts as long. mp3guessenc counts start, stop and reserved granules together as switch blocks.

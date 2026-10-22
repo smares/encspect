@@ -32,17 +32,34 @@ The coding statistics, also over the complete audio frames, are read from each f
   for a single bitrate. "Joint Stereo Modes" (Layer III) counts the joint stereo frames by their
   stereo coding, "Intensity Stereo Bounds" (Layers I and II) by the subband intensity stereo starts
   at; each share is of the joint stereo frames.
+- "Stereo Coding" counts every audio frame by how it codes its channels (STEREO_CODINGS): the joint
+  stereo frames by their tools (Layer III: mode extension bit 1 mid/side stereo, bit 0 intensity
+  stereo; a joint stereo frame of Layer I or II is intensity stereo above its bound), the others by
+  their channel mode: left/right stereo, dual channel, mono. EncSpot's mode 0 is the entries
+  left/right stereo, dual channel and mono together.
 - Under each bitrate of the distribution, its frames without and with padding and their length,
   mp3guessenc's "size distr".
 - Layer III: "Block Usage" counts granules per channel by block type: long (normal), start, short,
   mixed (short with mixed_block_flag), stop and reserved (block type 0 with window switching).
   mp3guessenc's "switch" granules are start, stop and reserved; EncSpot counts those as long.
+  "Block Sizes" groups the same granules (BLOCK_SIZES): long with start and stop, short, mixed, and
+  the reserved ones apart, which EncSpot counts as long.
   "Global Gain" is the smallest and largest global_gain of each channel; "UsesScfsi" and
   "UsesScalefactorScaling" whether any frame sets scfsi or scalefac_scale; "Scalefactor Scaling"
   the share of granules per channel with scalefac_scale set (EncSpot's "Scalefac", over granules
   times channels times frames); "Average Main Data Begin" and "Maximum Main Data Begin" the mean
   and the largest main_data_begin (EncSpot's "Av. Reservoir", which it truncates to whole bytes,
   and "Max. Reservoir", mp3guessenc's "Max reservoir").
+- "Coded Bandwidth" (Layers I and II): the lowest, most common (the lowest of equally common ones)
+  and highest, over the frames whose allocation, scfsi and scalefactors fit, of the upper edge of
+  the highest subband with an allocation other than 0 in either channel, (subband + 1) * sample
+  rate / 64 rounded half to even to whole hertz, 0 where no subband has one.
+- "Channel Bit Share" (frames of two channels with a share): the lowest, overall and highest share
+  of the first channel in the frame's audio bits, in tenths of a percent rounded half to even;
+  overall is the sum of the first channel's bits over the sum of both channels' bits. Layer III:
+  part2_3_length of every granule, per channel. Layers I and II: each channel's allocation,
+  scfsi, scalefactors and samples, without the allocation and samples above the intensity stereo
+  bound, which both channels share (channel_bits, audio_end). Frames without bits have none.
 - "Ancillary Data" as mp3guessenc counts it: in Layer III each frame's segment from the end of its
   main data, rounded up to a byte, to where the next frame's main data starts in the bit reservoir
   (ancillary_segments, the analyzer's AncillaryScan), without a truncated frame's; in Layers I and
@@ -344,6 +361,9 @@ RATES = {3: ("MPEG-1", [44100, 48000, 32000]), 2: ("MPEG-2", [22050, 24000, 1600
 CHANNEL_MODES = ["Stereo", "Joint stereo", "Dual channel", "Mono"]
 JOINT_STEREO_MODES = ["Left/right stereo", "Intensity stereo", "Mid/side stereo", "Mid/side and intensity stereo"]
 BLOCK_KINDS = ["Long", "Start", "Short", "Mixed", "Stop", "Reserved"]
+STEREO_CODINGS = ["Left/right stereo", "Mid/side stereo", "Intensity stereo", "Mid/side and intensity stereo", "Dual channel", "Mono"]
+# The block kinds EncSpot's long, short and mixed counts and the report's "Block Sizes" group.
+BLOCK_SIZES = {"Long, start and stop": ("Long", "Start", "Stop"), "Short": ("Short",), "Mixed": ("Mixed",), "Reserved": ("Reserved",)}
 
 
 class BitStream:
@@ -414,7 +434,10 @@ def audio_end(frame, coding):
     """Where a Layer I or II frame's samples end, in bits from its start, or None where its
     allocation, scfsi or scalefactors do not fit. Layer I: ISO/IEC 11172-3 2.4.1.5, with the
     forbidden allocation 15 read as 16-bit samples as mpg123 reads it; Layer II: 2.4.1.6 with the
-    allocation tables of Annex B (make_layer2_fixtures.py)."""
+    allocation tables of Annex B (make_layer2_fixtures.py). Where the samples' end can be given,
+    coding["figures"] also holds what the allocation says: the highest subband with an allocation in
+    either channel (-1 for none) and each channel's own bits (allocation, scfsi, scalefactors and
+    samples; the allocation and samples above the intensity stereo bound belong to neither)."""
     import make_layer2_fixtures as layer2
 
     bits = BitStream(frame)
@@ -435,7 +458,12 @@ def audio_end(frame, coding):
         scalefactors = 6 * sum(1 for row in allocation for a in row if a)
         samples = 12 * sum(allocation[ch][sb] + 1 for sb in range(32) for ch in range(channels if sb < bound else 1) if allocation[ch][sb])
         end = bits.position + scalefactors
-        return None if end > len(frame) * 8 else end + samples
+        if end > len(frame) * 8:
+            return None
+        coding["figures"] = figures(allocation, 32, [
+            4 * min(bound, 32) + 6 * sum(1 for a in allocation[ch] if a)
+            + 12 * sum(allocation[ch][sb] + 1 for sb in range(bound) if allocation[ch][sb]) for ch in range(channels)])
+        return end + samples
     version = "1" if coding["version"] == "MPEG-1" else "2"
     bitrate = BITRATES[(version, 2)][coding["bitrate_index"]]
     table = layer2.TABLES[layer2.table_for(version, coding["rate"], bitrate, channels)]
@@ -450,6 +478,7 @@ def audio_end(frame, coding):
     if any(a is None for row in allocation for a in row):
         return None
     scalefactors = 0
+    own = [sum(layer2.NBAL[len(table[sb])] for sb in range(min(bound, len(table)))) for _ in range(channels)]
     for sb in range(len(table)):
         for ch in range(channels):
             if allocation[ch][sb]:
@@ -457,10 +486,22 @@ def audio_end(frame, coding):
                 if scfsi is None:
                     return None
                 scalefactors += 6 * layer2.SCALEFACTORS_PER_SCFSI[scfsi]
+                own[ch] += 2 + 6 * layer2.SCALEFACTORS_PER_SCFSI[scfsi]
     samples = 12 * sum(layer2.zero_code(table[sb][allocation[ch][sb]])[0]
                        for sb in range(len(table)) for ch in range(channels if sb < bound else 1) if allocation[ch][sb])
+    for ch in range(channels):
+        own[ch] += 12 * sum(layer2.zero_code(table[sb][allocation[ch][sb]])[0] for sb in range(bound) if allocation[ch][sb])
     end = bits.position + scalefactors
-    return None if end > len(frame) * 8 else end + samples
+    if end > len(frame) * 8:
+        return None
+    coding["figures"] = figures(allocation, len(table), own)
+    return end + samples
+
+
+def figures(allocation, subbands, own):
+    """The highest subband with an allocation in either channel, -1 for none, and each channel's bits."""
+    highest = max((sb for sb in range(subbands) if any(row[sb] for row in allocation)), default=-1)
+    return {"highest": highest, "bits": own}
 
 
 def ancillary_segments(frames):
@@ -519,6 +560,26 @@ def tenths_text(value, unit):
     return f"{tenths // 10}.{tenths % 10} {unit}"
 
 
+def stereo_code(coding):
+    """How a frame codes its channels, as the report's "Stereo Coding" entries (STEREO_CODINGS) number them. A joint stereo
+    frame of Layer I or II is intensity stereo above its bound, whatever the bound."""
+    if coding["mode"] != 1:
+        return {0: 0, 2: 4, 3: 5}[coding["mode"]]
+    return 2 if coding["layer"] != 3 else {0: 0, 1: 2, 2: 1, 3: 3}[coding["mode_ext"]]
+
+
+def channel_bits(coding):
+    """The bits of each of a two-channel frame's channels, or None: Layer III's part2_3_length summed per channel, Layers I
+    and II's allocation, scfsi, scalefactors and samples that belong to the channel alone."""
+    if coding["channels"] != 2:
+        return None
+    if coding["layer"] == 3:
+        side = coding.get("side_info")
+        return None if side is None else tuple(sum(g["part2_3_length"] for g in side["granules"] if g["channel"] == ch) for ch in (0, 1))
+    figure = coding.get("figures")
+    return None if figure is None else tuple(figure["bits"])
+
+
 def coding_fields(frames, audio, ticks):
     """The coding statistics of a region (see the module docstring), by node path. frames are all
     the region's frames in file order, audio its complete audio frames."""
@@ -528,6 +589,11 @@ def coding_fields(frames, audio, ticks):
     fields["Statistics/Channel Modes"] = f"{len(used)} mode" + ("s" if len(used) != 1 else "")
     for m in used:
         fields[f"Statistics/Channel Modes/{CHANNEL_MODES[m]}"] = share(modes[m], len(audio), "frames")
+    fields["Statistics/Stereo Coding"] = frames_text(len(audio))
+    for code, name in enumerate(STEREO_CODINGS):
+        count = sum(1 for f in audio if stereo_code(f.coding) == code)
+        if count:
+            fields[f"Statistics/Stereo Coding/{name}"] = share(count, len(audio), "frames")
     for name, layers, label in [("Joint Stereo Modes", (3,), lambda e: JOINT_STEREO_MODES[e]),
                                 ("Intensity Stereo Bounds", (1, 2), lambda e: f"Bands {(e + 1) * 4} to 31")]:
         joint = [f for f in audio if f.coding["mode"] == 1 and f.coding["layer"] in layers]
@@ -557,10 +623,28 @@ def coding_fields(frames, audio, ticks):
             count = sum(1 for g in granules if g["block"] == kind)
             if count:
                 fields[f"Statistics/Block Usage/{kind}"] = share(count, len(granules), "granules")
+        fields["Statistics/Block Sizes"] = fields["Statistics/Block Usage"]
+        for name, kinds in BLOCK_SIZES.items():
+            count = sum(1 for g in granules if g["block"] in kinds)
+            if count:
+                fields[f"Statistics/Block Sizes/{name}"] = share(count, len(granules), "granules")
         for ch in sorted({g["channel"] for g in granules}):
             gains = [g["global_gain"] for g in granules if g["channel"] == ch]
             fields[f"Statistics/Global Gain/Channel {ch}/Minimum"] = str(min(gains))
             fields[f"Statistics/Global Gain/Channel {ch}/Maximum"] = str(max(gains))
+
+    bandwidths = [rounded(Fraction((f.coding["figures"]["highest"] + 1) * f.rate, 64)) if f.coding["figures"]["highest"] >= 0 else 0
+                  for f in audio if f.coding["layer"] != 3 and "figures" in f.coding]
+    if bandwidths:
+        fields["Statistics/Coded Bandwidth/Lowest"] = f"{min(bandwidths)} Hz"
+        fields["Statistics/Coded Bandwidth/Most Common"] = f"{min(b for b in set(bandwidths) if bandwidths.count(b) == max(map(bandwidths.count, set(bandwidths))))} Hz"
+        fields["Statistics/Coded Bandwidth/Highest"] = f"{max(bandwidths)} Hz"
+    shares = [bits for bits in (channel_bits(f.coding) for f in audio) if bits and sum(bits) > 0]
+    if shares:
+        tenths = [rounded(Fraction(first * 1000, first + second)) for first, second in shares]
+        overall = rounded(Fraction(sum(first for first, _ in shares) * 1000, sum(first + second for first, second in shares)))
+        for name, value in [("Lowest", min(tenths)), ("Overall", overall), ("Highest", max(tenths))]:
+            fields[f"Statistics/Channel Bit Share/{name}"] = f"{value // 10}.{value % 10} %"
 
     segments = ancillary_segments(frames)
     pieces = [s for s in segments if s > 0]

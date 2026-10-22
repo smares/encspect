@@ -1,6 +1,6 @@
 # Coding graphs: per-frame coding choices and stream summaries
 
-Status: approved by the project lead on 2026-10-22, after two independent reviews, with four changes: dual channel is its own entry of "Stereo Coding" (decision 4), a "Channel Bit Share" series for MPEG (decision 6), the same concepts graphed in every format under the same headings (decision 8), and the real reason AAC and AC-3 record while reading (decision 3). The contract step (rollout step 1) is built, as [As built](#as-built-the-contract-step) says; the formats are not. The decisions are collected under [Decisions](#decisions), and claims that no source read for this design confirms are marked **unverified**.
+Status: approved by the project lead on 2026-10-22, after two independent reviews, with four changes: dual channel is its own entry of "Stereo Coding" (decision 4), a "Channel Bit Share" series for MPEG (decision 6), the same concepts graphed in every format under the same headings (decision 8), and the real reason AAC and AC-3 record while reading (decision 3). The contract step (rollout step 1) is built, as [As built](#as-built-the-contract-step) says, and so is MPEG audio, the reference (step 2: [As built](#as-built-the-mpeg-step)); the other formats are not. The decisions are collected under [Decisions](#decisions), and claims that no source read for this design confirms are marked **unverified**.
 
 ## As built: the contract step
 
@@ -36,6 +36,24 @@ After the independent review of the contract step, and by the project lead's dec
 - **Rounding:** the GUI's shares round half to even as the tree and the text do.
 - **Palette:** the muted first step is a mix of 0.7 with the surface, which passes the validator in both modes (0.55 did not).
 - **Builder:** a refused unit changes no count, values without a category are not counted as uncoded, and a time index's starts must be finite and nondecreasing.
+
+## As built: the MPEG step
+
+What the MPEG pull request built, and where it differs from what is written above:
+
+- **Category series** (all derived at the end, in the pass that builds the bitrate series, from the kept frame records): "Channel Modes", "Stereo Coding" (concept `stereoCoding`), "Joint Stereo Modes" (Layer III), "Intensity Stereo Bounds" (Layers I and II, ordered), "Block Usage" (`blockSwitching`, a fixed layout of granules times the channels of the stream: 4 values per MPEG-1 frame, 2 in MPEG-2 and 2.5, and 2 or 1 in a stream without a two-channel frame) and its grouping "Block Sizes". Each is anchored to its tally node, a series exists where its tally node does (a file without joint stereo frames has no "Joint Stereo Modes"), and all share the stream's time index and the x values of "Bitrate".
+- **Numeric series:** "Coded Bandwidth" (Hz, `codedBandwidth`, Layers I and II) and "Channel Bit Share" (%, `bitDistribution`, streams with a two-channel frame), each per frame and per second ("Over Time": the second's highest bandwidth, bits over bits for the share), with the quantities of the same names. "Bitrate" and "Bitrate Over Time" get the concept `bitDistribution` and the quantity `Bitrate`, "Reservoir Fill" and "Reservoir Fill Over Time" the same concept and the quantity `Reservoir Fill`.
+- **New tally nodes:** "Stereo Coding" (frames), "Block Sizes" (granules), "Coded Bandwidth" (children "Lowest", "Most Common", "Highest", in whole hertz) and "Channel Bit Share" (children "Lowest", "Overall", "Highest", tenths of a percent). The two last are read from the kept audio data and side information when the statistics are built (`FrameFigures`), not counted while the frames are read; the series use the same function.
+- **Deviations from the design above:**
+  - The categories of "Joint Stereo Modes" are in the order of "Stereo Coding" (left/right, mid/side, intensity stereo, both), not in the mode extension's order the tally lists them in, so that a category has the same color in both charts; the harness matches entries by name.
+  - A value of "Coded Bandwidth" is in whole hertz, rounded half to even ((subband + 1) times the sample rate over 64, 689 Hz for subband 0 at 44,100 Hz), and a frame with no allocation has 0 Hz. A frame whose allocation and scalefactors do not fit its bytes has no value, and neither has a frame of "Channel Bit Share" whose channels have no bits, or a mono frame: the series then has its own x values, else the bitrate series' (the budget's 8 bytes per value). A second without a value has no point in the per-second form.
+  - Where both numeric series lack the same frames (a Layer II frame whose allocation does not fit), they keep one array of x values, so the design's 27 bytes a frame hold; a series that lacks frames the other has keeps an x of its own (8 more bytes a frame).
+  - The shares are rounded to a tenth of a percent when they are made (per frame and per second), so the series, the node and the tests agree.
+  - The first channel's bits of a Layer I or II frame count the scalefactors above the intensity stereo bound, as the design says, and the allocation and samples above it count toward neither channel.
+  - `Series.Concept` is also set on the bitrate and reservoir series (the design left that to the format's pull request), and `Quantity` on all four forms.
+  - The Graphs tab of an MPEG file lists "Coding Summary" first, which changes what the default entry is for every MPEG file; the older GUI tests that took the first entry for the bitrate select it by title now. `CategoryTestData` replaces the series the MPEG parser derives with its test ones.
+- **Fixtures:** `external-lame-dual-music`, `external-lame-joint-music` and `external-lame-stereo-music` (LAME 3.100, 128 kbps constant, `-t`, six seconds of different content in each channel at 44,100 Hz) and `external-twolame-dual-music` (TwoLAME 0.4.0, Layer II, 192 kbps, dual channel); the manifests hide the frames from the golden (`golden_hides`), which also makes the MediaInfo comparison skip them. The hand-built and encoder-made manifests hold the statistics' new nodes from `stream_stats.py`.
+- **Verification:** `MpegCodingSeriesTests` (per frame, from the frames' own nodes), `FrameFiguresTests`, the manifests' statistics, mp3guessenc's mode extension counts and sum and its block counts, and EncSpot's counting (an emulation of `ProcessNextFrame`, since the console port does not print its counts) in `crosscheck_mpeg_fixtures.py`.
 
 ## Scope
 

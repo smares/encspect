@@ -250,6 +250,10 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
 
     public CategorySeries Series { get; }
 
+    // The stream's duration in seconds, which gives the last interval its length (0 where unknown): a stream that ends a few
+    // frames into a second has a last interval that is drawn as long as it lasts.
+    public double Duration { get; init; }
+
     // The form this graph draws.
     public GraphForm View { get; }
 
@@ -709,8 +713,11 @@ public sealed class ShareSplitGraph : Graph
         ArgumentNullException.ThrowIfNull(series);
 
         Series = series;
+        Duration = duration;
         _line = new LineGraph(series, frameOffsets, duration);
     }
+
+    public double Duration { get; }
 
     public Series Series { get; }
 

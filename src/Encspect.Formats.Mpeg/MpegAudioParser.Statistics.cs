@@ -60,6 +60,7 @@ public sealed partial class MpegAudioParser
             bits += frame.Length * 8;
             samples += header.Samples;
             hasSideInfo &= frame.HasSideInfo;
+            region.Tally.AddFigure(FigureOf(state.Build, frame, header));
             maximumFill = Math.Max(maximumFill, frame.ReservoirFill);
             if (BitrateOf(frame) is { } kbps)
             {

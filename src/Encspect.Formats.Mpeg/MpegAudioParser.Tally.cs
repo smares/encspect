@@ -1,20 +1,21 @@
 using Encspect.Core;
+using static Encspect.Formats.Mpeg.CodingCategories;
 
 namespace Encspect.Formats.Mpeg;
 
 // The statistics mp3guessenc and EncSpot print about a stream's coding, over a region's complete
-// audio frames like the other statistics: channel modes, the stereo coding of joint stereo frames,
-// Layer III block usage, global gain, scfsi, scalefactor scaling and main_data_begin, padding,
-// ancillary data and the frame sizes of each bitrate. They are counted while the frames are read,
-// so no frame is read twice and nothing is kept per frame.
+// audio frames like the other statistics: channel modes, the stereo coding of all frames and of
+// joint stereo frames, Layer III block usage and block sizes, global gain, scfsi, scalefactor
+// scaling and main_data_begin, padding, ancillary data and the frame sizes of each bitrate. They
+// are counted while the frames are read, so no frame is read twice and nothing is kept per frame;
+// the coded bandwidth and the channel bit share are read from the kept audio data of each frame
+// when the statistics are built (FrameFigures). The series of the streams are derived from the
+// same records and held equal to these counts by CategorySummaryTests.
 public sealed partial class MpegAudioParser
 {
     // By mode extension: Layer III bit 1 is mid/side stereo, bit 0 intensity stereo (ISO/IEC 11172-3
     // 2.4.2.3).
     private static readonly string[] JointStereoModes = ["Left/right stereo", "Intensity stereo", "Mid/side stereo", "Mid/side and intensity stereo"];
-
-    // By FrameTally.BlockKind.
-    private static readonly string[] BlockKinds = ["Long", "Start", "Short", "Mixed", "Stop", "Reserved"];
 
     private static void AddTally(Node node, RegionState region, long start, long length, long audioBytes, long ticks)
     {
@@ -29,19 +30,51 @@ public sealed partial class MpegAudioParser
             }
         }
 
-        AddExtensions("Joint Stereo Modes", tally.Layer3Extensions, e => JointStereoModes[e], Explain.JointStereoModes, Explain.JointStereoMode, Topics.JointStereo);
-        AddExtensions("Intensity Stereo Bounds", tally.Bounds, e => $"Bands {(e + 1) * 4} to 31", Explain.IntensityBounds, Explain.IntensityBound, Topics.IntensityStereo);
+        region.Nodes.ChannelModes = modes;
+        Node coding = node.Add("Stereo Coding", start, length, NodeValue.Integer(frames, "frames", "frame"), Explain.StereoCoding, Topics.JointStereo);
+        for (int code = 0; code < StereoCodings.Length; code++)
+        {
+            if (tally.StereoCodings[code] > 0)
+            {
+                coding.Add(StereoCodings[code].Name, start, length, Share(FramesText(tally.StereoCodings[code]), tally.StereoCodings[code], frames), StereoCodings[code].Description);
+            }
+        }
+
+        region.Nodes.StereoCoding = coding;
+        region.Nodes.JointStereoModes = AddExtensions("Joint Stereo Modes", tally.Layer3Extensions, e => JointStereoModes[e], Explain.JointStereoModes,
+            e => JointCodings[JointCodeOfExtension[e]].Description, Topics.JointStereo);
+        region.Nodes.IntensityStereoBounds = AddExtensions("Intensity Stereo Bounds", tally.Bounds, e => BoundCategories[e].Name, Explain.IntensityBounds,
+            _ => Explain.IntensityBound, Topics.IntensityStereo);
 
         if (tally.Layer3Frames > 0)
         {
             Node blocks = node.Add("Block Usage", start, length, NodeValue.Integer(tally.GranuleChannels, "granules", "granule"), Explain.BlockUsage, Topics.BlockSwitching);
-            for (int kind = 0; kind < BlockKinds.Length; kind++)
+            for (int kind = 0; kind < BlockKindNames.Length; kind++)
             {
                 if (tally.Blocks[kind] > 0)
                 {
-                    blocks.Add(BlockKinds[kind], start, length, Share(GranulesText(tally.Blocks[kind]), tally.Blocks[kind], tally.GranuleChannels), kind == 3 ? Explain.BlockKindMixed : Explain.BlockKind);
+                    blocks.Add(BlockKindNames[kind], start, length, Share(GranulesText(tally.Blocks[kind]), tally.Blocks[kind], tally.GranuleChannels), kind == 3 ? Explain.BlockKindMixed : Explain.BlockKind);
                 }
             }
+
+            region.Nodes.BlockUsage = blocks;
+            Node sizes = node.Add("Block Sizes", start, length, NodeValue.Integer(tally.GranuleChannels, "granules", "granule"), Explain.BlockSizes, Topics.BlockSwitching);
+            int[] bySize = new int[SizeNames.Length];
+            for (int kind = 0; kind < BlockKindNames.Length; kind++)
+            {
+                bySize[SizeOfKind[kind]] += tally.Blocks[kind];
+            }
+
+            string[] sizeDescriptions = [Explain.SizeLong, Explain.SizeShort, Explain.SizeMixed, Explain.SizeReserved];
+            for (int size = 0; size < SizeNames.Length; size++)
+            {
+                if (bySize[size] > 0)
+                {
+                    sizes.Add(SizeNames[size], start, length, Share(GranulesText(bySize[size]), bySize[size], tally.GranuleChannels), sizeDescriptions[size]);
+                }
+            }
+
+            region.Nodes.BlockSizes = sizes;
 
             Node gain = node.Add(new Node("Global Gain", start, length) { Description = Explain.GainRange, Topic = Topics.GlobalGain });
             for (int ch = 0; ch < 2; ch++)
@@ -53,6 +86,24 @@ public sealed partial class MpegAudioParser
                     channel.Add("Maximum", start, length, NodeValue.Integer(tally.MaximumGain[ch]), Explain.GainMaximum);
                 }
             }
+        }
+
+        if (tally.Bandwidths.Count > 0)
+        {
+            Node bandwidth = node.Add(new Node("Coded Bandwidth", start, length) { Description = Explain.CodedBandwidth, Topic = Topics.CodedBandwidth });
+            bandwidth.Add("Lowest", start, length, NodeValue.Integer(tally.Bandwidths.Keys.First(), "Hz"), Explain.BandwidthLowest);
+            bandwidth.Add("Most Common", start, length, NodeValue.Integer(tally.Bandwidths.MaxBy(b => b.Value).Key, "Hz"), Explain.BandwidthMostCommon);
+            bandwidth.Add("Highest", start, length, NodeValue.Integer(tally.Bandwidths.Keys.Last(), "Hz"), Explain.BandwidthHighest);
+            region.Nodes.CodedBandwidth = bandwidth;
+        }
+
+        if (tally.ShareFrames > 0)
+        {
+            Node share = node.Add(new Node("Channel Bit Share", start, length) { Description = Explain.ChannelBitShare, Topic = Topics.ChannelModes });
+            share.Add("Lowest", start, length, NodeValue.Decimal(tally.LowestShare / 10.0, 1, "%"), Explain.ShareLowest);
+            share.Add("Overall", start, length, NodeValue.Decimal(ShareTenths(tally.FirstBits, tally.BothBits) / 10.0, 1, "%"), Explain.ShareOverall);
+            share.Add("Highest", start, length, NodeValue.Decimal(tally.HighestShare / 10.0, 1, "%"), Explain.ShareHighest);
+            region.Nodes.ChannelBitShare = share;
         }
 
         // Layer III's ancillary segments follow mp3guessenc's scan (AncillaryScan); Layers I and II
@@ -82,12 +133,12 @@ public sealed partial class MpegAudioParser
             node.Add("Maximum Main Data Begin", start, length, NodeValue.Integer(tally.MaximumMainDataBegin, "bytes"), Explain.MaximumMainDataBegin, Topics.BitReservoir);
         }
 
-        void AddExtensions(string name, int[] counts, Func<int, string> label, string description, string entryDescription, string topic)
+        Node? AddExtensions(string name, int[] counts, Func<int, string> label, string description, Func<int, string> entryDescription, string topic)
         {
             int joint = counts.Sum();
             if (joint == 0)
             {
-                return;
+                return null;
             }
 
             Node parent = node.Add(name, start, length, NodeValue.Integer(joint, "frames", "frame"), description, topic);
@@ -95,9 +146,11 @@ public sealed partial class MpegAudioParser
             {
                 if (counts[e] > 0)
                 {
-                    parent.Add(label(e), start, length, Share(FramesText(counts[e]), counts[e], joint), entryDescription);
+                    parent.Add(label(e), start, length, Share(FramesText(counts[e]), counts[e], joint), entryDescription(e));
                 }
             }
+
+            return parent;
         }
     }
 
@@ -131,13 +184,31 @@ public sealed partial class MpegAudioParser
 
         public int[] Bounds { get; } = new int[4];
 
+        // All frames by StereoCode.
+        public int[] StereoCodings { get; } = new int[6];
+
+        // Layers I and II: frames by coded bandwidth in Hz.
+        public SortedDictionary<int, int> Bandwidths { get; } = [];
+
+        // Stereo frames with a share: the first channel's bits and both channels' in all of them, and the smallest and largest
+        // share of one frame in tenths of a percent.
+        public int ShareFrames { get; private set; }
+
+        public long FirstBits { get; private set; }
+
+        public long BothBits { get; private set; }
+
+        public int LowestShare { get; private set; } = int.MaxValue;
+
+        public int HighestShare { get; private set; } = -1;
+
         public bool UsesPadding { get; private set; }
 
         // Frames by bitrate (null for free format), padding and length.
         public Dictionary<(int? Bitrate, bool IsPadded, int Length), int> Sizes { get; } = [];
 
         // Layer III: frames, granules counted per channel as mp3guessenc and EncSpot count them, and
-        // those of each BlockKinds entry and with scalefac_scale set.
+        // those of each block kind (CodingCategories.BlockKindNames) and with scalefac_scale set.
         public int Layer3Frames { get; private set; }
 
         public int GranuleChannels { get; private set; }
@@ -168,6 +239,7 @@ public sealed partial class MpegAudioParser
         public void Add(MpegHeader header, int length, Layer3SideInfo? info, int audioEnd)
         {
             ChannelModes[header.ChannelModeBits]++;
+            StereoCodings[StereoCode(header)]++;
             UsesPadding |= header.Padding == 1;
             var key = (header.IsFreeFormat ? (int?)null : header.Bitrate, header.Padding == 1, length);
             Sizes[key] = Sizes.GetValueOrDefault(key) + 1;
@@ -191,6 +263,25 @@ public sealed partial class MpegAudioParser
                     SmallestLayer12 = SmallestLayer12 == 0 ? bytes : Math.Min(SmallestLayer12, bytes);
                     LargestLayer12 = Math.Max(LargestLayer12, bytes);
                 }
+            }
+        }
+
+        public void AddFigure(FrameFigures.Figure figure)
+        {
+            if (figure.HasBandwidth)
+            {
+                Bandwidths[figure.Bandwidth] = Bandwidths.GetValueOrDefault(figure.Bandwidth) + 1;
+            }
+
+            if (figure.HasShare)
+            {
+                long both = figure.FirstBits + figure.SecondBits;
+                int tenths = ShareTenths(figure.FirstBits, both);
+                ShareFrames++;
+                FirstBits += figure.FirstBits;
+                BothBits += both;
+                LowestShare = Math.Min(LowestShare, tenths);
+                HighestShare = Math.Max(HighestShare, tenths);
             }
         }
 
