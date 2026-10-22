@@ -212,22 +212,22 @@ public class CategoryGraphTests
         Assert.Equal(
             [
                 ("Summary", "Coding Summary"),
-                ("Stereo coding", "Stereo Coding"),
-                ("Block switching", "Block Usage"),
-                ("Block switching", "Block Sizes"),
-                ("Block switching", "Window Sequences"),
-                ("Block switching", "Channel Streams"),
-                ("Bit distribution", "Bitrate"),
-                ("Bit distribution", "Reservoir Fill"),
-                ("Bit distribution", "Channel Bit Share"),
+                ("Stereo Coding", "Stereo Coding"),
+                ("Block Switching", "Block Usage"),
+                ("Block Switching", "Block Sizes"),
+                ("Block Switching", "Window Sequences"),
+                ("Block Switching", "Channel Streams"),
+                ("Bit Distribution", "Bitrate"),
+                ("Bit Distribution", "Reservoir Fill"),
+                ("Bit Distribution", "Channel Bit Share"),
                 ("Other", "Submodes"),
             ],
             graphs.Choices.Select(c => (c.Heading, c.Title)));
-        Assert.Equal(["Summary", "Stereo coding", "Block switching", "Bit distribution", "Other"], graphs.ChoiceGroups.Select(g => g.Heading));
+        Assert.Equal(["Summary", "Stereo Coding", "Block Switching", "Bit Distribution", "Other"], graphs.ChoiceGroups.Select(g => g.Heading));
 
         // A file without category series has the bitrate headings only, and no heading without an entry.
         graphs.Load(Analyzer.CreateDefault().AnalyzeFile(Fixtures.Stats("vbr-seconds.mp3")));
-        Assert.Equal(["Bit distribution"], graphs.ChoiceGroups.Select(g => g.Heading));
+        Assert.Equal(["Bit Distribution"], graphs.ChoiceGroups.Select(g => g.Heading));
     }
 
     [Fact]
@@ -246,7 +246,7 @@ public class CategoryGraphTests
         IReadOnlyList<GraphChoice> entries = GraphsViewModel.For(stream);
 
         Assert.Equal(
-            [("Coded bandwidth", "Coded Bandwidth"), ("Bit distribution", "Bitrate"), ("Bit distribution", "Reservoir Fill"), ("Bit distribution", "Channel Bit Share"), ("Other", "Odd")],
+            [("Coded Bandwidth", "Coded Bandwidth"), ("Bit Distribution", "Bitrate"), ("Bit Distribution", "Reservoir Fill"), ("Bit Distribution", "Channel Bit Share"), ("Other", "Odd")],
             entries.Select(e => (e.Heading, e.Title)));
     }
 
@@ -282,7 +282,7 @@ public class CategoryGraphTests
         graphs.Load(report);
         graphs.Selected = graphs.Choices.Single(c => c.Title == "Stereo Coding");
         Assert.Equal(GraphForm.OverTime, graphs.Form);
-        Assert.Equal(["Over time", "Frames", "Summary"], graphs.Forms.Select(v => v.Title));
+        Assert.Equal(["Over Time", "Frames", "Summary"], graphs.Forms.Select(v => v.Title));
         Assert.True(graphs.HasForms);
 
         long offset = (long)report.Streams[0].Series[0].X.Span[77];

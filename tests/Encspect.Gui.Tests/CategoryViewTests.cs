@@ -51,7 +51,7 @@ public class CategoryViewTests
     {
         DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"));
 
-        Assert.Equal(["Summary", "Stereo coding", "Block switching", "Bit distribution", "Other"], window.Model.Graphs.ChoiceGroups.Select(g => g.Heading));
+        Assert.Equal(["Summary", "Stereo Coding", "Block Switching", "Bit Distribution", "Other"], window.Model.Graphs.ChoiceGroups.Select(g => g.Heading));
         Assert.True(window.GraphChoices.IsEffectivelyVisible);
         Assert.False(window.GraphFormChoices.IsEffectivelyVisible);
         Choose(window, "Block Usage");
@@ -387,7 +387,7 @@ public class CategoryViewTests
         DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"));
         Choose(window, "Bitrate", GraphForm.Frames);
 
-        Assert.Equal(["Per frame", "Over time", "Distribution"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time", "Distribution"], window.Model.Graphs.Forms.Select(f => f.Title));
         Assert.Equal(SeriesAxis.FrameOffset, ((LineGraph)window.Graph.Graph!).Axis);
         Choose(window, "Bitrate", GraphForm.OverTime);
         Assert.Equal(SeriesAxis.Seconds, ((LineGraph)window.Graph.Graph!).Axis);
@@ -553,8 +553,8 @@ public class CategoryViewTests
         DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"));
         Choose(window, "Channel Bit Share", GraphForm.Split);
         var graph = (ShareSplitGraph)window.Graph.Graph!;
-        Assert.Equal(["Per frame", "Over time", "First and second"], window.Model.Graphs.Forms.Select(f => f.Title));
-        Assert.Equal("Bit distribution", graph.Heading);
+        Assert.Equal(["Per Frame", "Over Time", "First and Second"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Assert.Equal("Bit Distribution", graph.Heading);
 
         Point point = ScreenshotTests.PointOver(window, 2);
         window.MouseMove(point);

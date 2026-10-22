@@ -44,7 +44,7 @@ public sealed class GraphChoice : ObservableObject
 
     public string Title { get; }
 
-    // The heading it is listed under: the concept it shows ("Stereo coding"), or "Other".
+    // The heading it is listed under: the concept it shows ("Stereo Coding"), or "Other".
     public string Heading { get; }
 
     public string? Description { get; }
@@ -81,7 +81,7 @@ public sealed class GraphChoice : ObservableObject
     }
 }
 
-// The entries of one heading ("Stereo coding"), one under the other.
+// The entries of one heading ("Stereo Coding"), one under the other.
 public sealed class GraphChoiceGroup(string heading, IReadOnlyList<GraphChoice> choices)
 {
     public string Heading { get; } = heading;
@@ -230,7 +230,7 @@ public sealed class GraphsViewModel : ObservableObject
         {
             GraphFormChoice[] forms = [.. CategoryGraph.FormsOf(series).Select(f => new GraphFormChoice(f, f switch
             {
-                GraphForm.OverTime => "Over time",
+                GraphForm.OverTime => "Over Time",
                 GraphForm.Frames => "Frames",
                 _ => "Summary",
             }, f switch
@@ -296,15 +296,15 @@ public sealed class GraphsViewModel : ObservableObject
         var forms = new List<GraphFormChoice>();
         if (perFrame is not null)
         {
-            forms.Add(new GraphFormChoice(GraphForm.Frames, "Per frame", "One point for every frame", new LineGraph(perFrame, frameOffsets, duration)));
+            forms.Add(new GraphFormChoice(GraphForm.Frames, "Per Frame", "One point for every frame", new LineGraph(perFrame, frameOffsets, duration)));
         }
 
         if (perSecond is not null)
         {
-            forms.Add(new GraphFormChoice(GraphForm.OverTime, "Over time", "One point for every second of audio", new LineGraph(perSecond, frameOffsets, duration)));
+            forms.Add(new GraphFormChoice(GraphForm.OverTime, "Over Time", "One point for every second of audio", new LineGraph(perSecond, frameOffsets, duration)));
             if (perSecond is { Concept: GraphConcept.BitDistribution, Unit: "%" })
             {
-                forms.Add(new GraphFormChoice(GraphForm.Split, "First and second", "The share of each of the two parts in every second of audio", new ShareSplitGraph(perSecond, frameOffsets, duration)));
+                forms.Add(new GraphFormChoice(GraphForm.Split, "First and Second", "The share of each of the two parts in every second of audio", new ShareSplitGraph(perSecond, frameOffsets, duration)));
             }
         }
 

@@ -18,7 +18,7 @@ public abstract class Graph
 
     public string Unit { get; }
 
-    // The heading its chip is listed under: the concept it shows ("Stereo coding"), or "Other".
+    // The heading its chip is listed under: the concept it shows ("Stereo Coding"), or "Other".
     public virtual string Heading => GraphHeadings.Other;
 
     // What the chart shows, for its chip's tooltip; from the series, as its parser describes it.
@@ -408,16 +408,16 @@ public static class GraphColumns
     }
 }
 
-// The headings the Graphs tab lists a stream's series under, the same in every format: "Stereo coding", "Block
-// switching", "Coded bandwidth" and "Bit distribution", then "Other". A series says its concept; the bitrate series, which
+// The headings the Graphs tab lists a stream's series under, the same in every format: "Stereo Coding", "Block
+// switching", "Coded Bandwidth" and "Bit Distribution", then "Other". A series says its concept; the bitrate series, which
 // set none, are placed by their unit.
 public static class GraphHeadings
 {
     public const string Summary = "Summary";
-    public const string StereoCoding = "Stereo coding";
-    public const string BlockSwitching = "Block switching";
-    public const string CodedBandwidth = "Coded bandwidth";
-    public const string BitDistribution = "Bit distribution";
+    public const string StereoCoding = "Stereo Coding";
+    public const string BlockSwitching = "Block Switching";
+    public const string CodedBandwidth = "Coded Bandwidth";
+    public const string BitDistribution = "Bit Distribution";
     public const string Other = "Other";
 
     // In the order the tab lists them.

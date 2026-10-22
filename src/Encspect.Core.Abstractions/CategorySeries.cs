@@ -223,7 +223,7 @@ public sealed class CategorySeries
 
     // A grouping of this series: each code maps to a category of the new series (map has one entry per category here).
     // It shares this series' storage and costs the map, not a byte per value; Counts are the sums of this series'. A grouping
-    // inherits its source's Concept, so "Block Sizes" sits under "Block switching" with "Block Usage" without a parameter.
+    // inherits its source's Concept, so "Block Sizes" sits under "Block Switching" with "Block Usage" without a parameter.
     public CategorySeries Group(string name, IReadOnlyList<Category> categories, ReadOnlySpan<byte> map, Node? anchor, string description, string? topic = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);

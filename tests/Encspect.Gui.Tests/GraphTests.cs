@@ -63,7 +63,7 @@ public class GraphTests
         // One entry for each quantity: the per-frame and per-second series in the same unit are its forms.
         Assert.Equal(["Bitrate", "Reservoir Fill"], entries.Select(e => e.Title));
         Assert.Equal([GraphForm.Frames, GraphForm.OverTime, GraphForm.Summary], entries[0].Forms.Select(f => f.Kind));
-        Assert.Equal(["Per frame", "Over time", "Distribution"], entries[0].Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time", "Distribution"], entries[0].Forms.Select(f => f.Title));
         Assert.Equal([GraphForm.Frames], entries[1].Forms.Select(f => f.Kind));
         Assert.False(entries[1].HasForms);
         Graph[] graphs = [entries[0].Forms[0].Graph, entries[0].Forms[2].Graph, entries[0].Forms[1].Graph, entries[1].Graph];
@@ -140,8 +140,8 @@ public class GraphTests
         Assert.True(graphs.HasGraphs);
         Assert.False(graphs.HasStreamChoice);
         Assert.Equal(["Bitrate", "Reservoir Fill"], graphs.Choices.Select(c => c.Title));
-        Assert.Equal(["Per frame", "Over time", "Distribution"], graphs.Choices[0].Forms.Select(f => f.Title));
-        Assert.Equal(["Per frame", "Over time"], graphs.Choices[1].Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time", "Distribution"], graphs.Choices[0].Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time"], graphs.Choices[1].Forms.Select(f => f.Title));
         Assert.Same(graphs.Choices[0], graphs.Selected);
         Assert.True(graphs.Choices[0].IsSelected);
         Assert.Equal("Waveform and spectrogram need a decoder, which MPEG Audio does not have yet.", graphs.DecoderNote);
