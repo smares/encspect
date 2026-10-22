@@ -216,11 +216,12 @@ class RepositoryTests(unittest.TestCase):
 
     def test_a_copy_of_a_real_golden_goes_through_git(self):
         real = json.loads(REAL.read_text())
+        real[0]["streams"][0].pop("categorySeries", None)
         self.write("tests/fixtures/mpeg/real.report.json", real)
         self.git("add", "-A")
         self.git("commit", "-qm", "real")
         self.git("checkout", "-qb", "pr2")
-        changed = json.loads(REAL.read_text())
+        changed = json.loads(json.dumps(real))
         changed[0]["streams"][0]["categorySeries"] = []
         self.write("tests/fixtures/mpeg/real.report.json", changed)
         self.write("tests/fixtures/mpeg/golden-changes.json", {"goldens": ["tests/fixtures/mpeg/real.report.json"], "added": [{"scope": "stream", "key": "categorySeries"}]})
