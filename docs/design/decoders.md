@@ -1,6 +1,6 @@
 # Decoders: the contract for phase 3
 
-Status: draft for the project lead's sign-off (October 2026), revised after an independent review. Nothing here is implemented, and no format agent starts on a decoder before the sign-off. The decisions that need it are collected under [Decisions for sign-off](#decisions-for-sign-off); the few claims that no source read for this design confirms are marked **unverified**.
+Status: approved by the project lead on 2026-10-22, after two independent reviews, with decoders inside their format projects (decision 1). Nothing here is implemented yet; the decisions are collected under [Decisions](#decisions), and the few claims that no source read for this design confirms are marked **unverified**.
 
 ## Scope
 
@@ -15,7 +15,7 @@ What phase 3 brings, from the rollout table of the [plan](../PLAN.md):
 What the plan already settles, and this design keeps:
 
 - Decoding is optional, per format. Formats without a decoder still get the full structure report.
-- Decoders are separate and optional, so no parser ever depends on one.
+- Decoders are separate and optional, so no parser ever depends on one. Here "separate" means kept apart inside the format project (see [Where decoders live](#where-decoders-live)), and optional means a host may register none.
 - No bundled decoders or native audio libraries: every decoder is Encspect's own managed code.
 - No playback, and no settings below the front ends: options reach the analysis through the host's public API.
 
@@ -38,8 +38,8 @@ Sources read for this design, all pinned or public:
 
 ## The design in short
 
-- A decoder is a project of its own, `Encspect.Decoders.<Format>`, that references `Core.Abstractions` and the one format project whose syntax it decodes. Parsers never reference a decoder.
-- The parser owns every bit of the coded syntax. The decoder reads the bits with the parser's own code, through the parser's `Syntax` namespace, and adds only what turns them into samples: prediction, channel decorrelation, matrixing, output shifts, and the checksums over decoded audio.
+- A format's decoder lives in its format project, in the namespace `<project>.Decoding`. Parser code never references that namespace, which a test checks in the compiled assembly; the host registers the decoders next to the parsers.
+- The parser owns every bit of the coded syntax. The decoder reads the bits with the parser's own code and adds only what turns them into samples: prediction, channel decorrelation, matrixing, output shifts, and the checksums over decoded audio.
 - A parser hands each frame to a decode session through a new route on its context, `StartDecoding`, in the same pass in which it reads the frame. The host serves the route: it finds the decoder, runs it inside an exception boundary and a work budget, and ends the session with the stream's verdict.
 - The parser declares every checksum the stream stores, of either kind, with how many values it stores. It compares the ones over coded bytes in every analysis; the decoder compares the ones over decoded audio. Both end up in one record on the stream, `StreamInfo.Verification`, with a tri-state `IsVerified`.
 - Decoding is off unless a front end asks for it: `AnalysisOptions.Decoding` in the library, `--verify` in the CLI, a "Verify Audio" command in the GUI's detail window. The file list never decodes, and no verdict over decoded audio is cached.
@@ -47,39 +47,63 @@ Sources read for this design, all pinned or public:
 
 ## Where decoders live
 
-### Options considered
+### The layout
 
-- **A. A decoder project that references only `Core.Abstractions`.**
-  - The cleanest dependency graph.
-  - But the decoder must read the coded syntax again: FLAC's subframe headers, Rice partitions and coefficients, ALAC's elements, TrueHD's restart headers, decoding parameters and Huffman-coded block data.
-  - That is two readings of the same bits, which can drift apart: the parser says a subframe ends at one bit and the decoder reads another.
-- **B. The decoder inside the format project.**
-  - One reading of the bits, no new projects.
-  - But the parser and the decoder share an assembly, so the rule "parsers never reference a decoder" can no longer be checked from the project files.
-  - A front end or a third party cannot leave the decoders out of a build.
-- **C. A decoder project that references `Core.Abstractions` and its own format project (recommended).**
-  - The format project grants it `InternalsVisibleTo`, so the decoder calls the parser's internal syntax readers; the dependency points from the decoder to the parser, never back.
-  - One reading of the bits, and a parser change that breaks the decoder fails the build instead of drifting.
+The project lead chose the layout on 2026-10-22: a format's decoder lives in its format project, in a namespace of its own.
 
-**Decision:** C.
+- `src/Encspect.Formats.Flac` holds the FLAC parsers and, in `Encspect.Formats.Flac.Decoding`, the FLAC decoder. Monkey's Audio, WavPack and TrueHD get the same, and later ALAC, TTA and WMA Lossless (`Encspect.Formats.Wma.Decoding`).
+- No project is added for a decoder. The format project still references `Core.Abstractions` only, so "parsers depend only on `Core.Abstractions`" holds, and so does every rule about project references.
+- Why it works:
+  - One reading of the bits: the decoder calls the parser's internal syntax readers directly, with no `InternalsVisibleTo` between assemblies.
+  - A parser change that breaks its decoder fails the build of the same project, so the two cannot drift.
+  - The separation that matters is the direction of use, not the assembly: parser code never uses decoding code. That direction is checked in the compiled assembly (below), which is stricter than a project reference, since it sees every type a method touches.
 
-### Reference rules
+Options that were considered:
 
-- `Encspect.Formats.*` and `Encspect.Tags.*` reference `Core.Abstractions` only, as today.
-- `Encspect.Decoders.<Format>` references `Core.Abstractions` and exactly one `Encspect.Formats.*` project, the one whose coding it decodes (`Encspect.Decoders.Flac` references `Encspect.Formats.Flac`). It references no other decoder.
-- A decoder uses only the types of its format project's `Syntax` namespace (`Encspect.Formats.Flac.Syntax`): the readers of the coded syntax, the configuration's reader, the frame and field names and the node factories its findings need. `InternalsVisibleTo` opens the whole assembly, so a test keeps the coupling to that namespace.
-- Only the host references decoder projects. The front ends reach decoding through the host's public API.
-- `ProjectReferenceTests` reads every `.csproj` and fails on any other reference, and fails on a decoder source file that names a type of its format project outside `Syntax`.
+- **A decoder that reads the syntax a second time with code of its own** (its own project on `Core.Abstractions` only): two readings of the same bits, which can drift apart.
+- **A decoder project that references its format project** through `InternalsVisibleTo`: one reading of the bits too, at the cost of a project per decoder and an assembly boundary that the rule needs no longer.
+- **The decoder in the format project (chosen).**
 
-The rules need lines in `CLAUDE.md` and the plan; they are proposed under [Rollout](#rollout) and applied only after the sign-off.
+### The rule inside one assembly
 
-### Wiring
+- Parser code never references the `Decoding` namespace of its project. "Parser code" is every type of the format project outside `<project>.Decoding`, including the types the compiler generates for its lambdas, iterators and local functions.
+- Decoding code may use any internal type of its project: the parser's syntax readers, the configuration's reader, the frame and field names and the node factories its findings need.
+- The parser reaches decoding only through `StartDecoding` on its context (below), which the host serves. It never creates, holds or calls a decoder.
 
+The earlier draft limited a decoder to a `Syntax` namespace of its parser, to keep the coupling across an assembly boundary deliberate. That limit is dropped:
+
+- Inside one assembly the coupling that can do harm is the parser's on the decoder, and the test below forbids it.
+- The existing parsers (WavPack, WMA) keep their readers where they are; moving them into a `Syntax` namespace would be churn with no check behind it.
+
+### How a test enforces it
+
+`DecodingBoundaryTests` reads each format assembly's metadata with `System.Reflection.Metadata`, which is part of .NET and needs no package:
+
+- For every type outside a `.Decoding` namespace (a nested type counts as the namespace of the type that declares it), it collects every type the type touches:
+  - its base type, interfaces, generic constraints and custom attributes;
+  - the signatures of its fields, methods and properties;
+  - the local variable signatures and every token in the IL of its method bodies (`call`, `newobj`, `ldfld`, `ldtoken`, `castclass` and the rest), with type specifications, member references and method specifications decoded to the types they name.
+- It fails on any of them that lies in a `.Decoding` namespace, naming the type, the method and the decoding type.
+- A negative control proves that it works: the test project holds a small type pair, `Encspect.Tests.BoundarySamples.Parser` that calls `Encspect.Tests.BoundarySamples.Decoding.Sample` through a lambda, and the check run over the test assembly must report it.
+
+Why the IL and not the source:
+
+- A source scan for `using …Decoding` misses fully qualified names, `global using`, `<Using>` items in a project file, aliases and code in the same namespace as a partial type.
+- Roslyn's semantic model would be exact, but it brings a large package into the tests for one check.
+- The compiled assembly is what runs: whatever path a reference takes in the source, it ends as a token in the metadata or the IL, where the check reads it.
+
+### Optional, and how the host finds decoders
+
+- The host references every format project already, so it lists the decoders itself: `DefaultParsers.Decoders` holds `new Encspect.Formats.Flac.Decoding.FlacDecoder()` and the others, next to `Codecs`. The parser is never asked for its decoder and does not know one exists.
 - A decoder implements `IDecoder` (below), whose `Id` is the codec ID the parsers route by: `flac`, `monkeys-audio`, `wavpack`, `truehd`, `mlp`, and later `alac`, `tta`, `wma-lossless`, `pcm`.
 - A raw format parser uses the same ID for its coding: the FLAC format parser and the FLAC codec parser that Ogg, MP4 and Matroska reach both start sessions with `flac`.
-- `DefaultParsers.Decoders` lists them, next to `Codecs`.
 - `Analyzer` gets a constructor that takes the decoders after the codec parsers; `Analyzer.CreateDefault()` passes `DefaultParsers.Decoders`. Two decoders with one ID are an `ArgumentException`, as two codec parsers are.
-- An analyzer built without decoders works as today: every session reports `NoDecoder`.
+- Decoders stay optional where it counts, at run time:
+  - An analyzer built without decoders, by the host or by a third party, works as today: every session reports `NoDecoder`, and the structure report is the same.
+  - No parser depends on a decoder, which the boundary test holds.
+- What is lost is leaving the decoding code out of a build: it ships in the format's assembly.
+
+The rules need lines in `CLAUDE.md` and the plan; they are proposed under [Rollout](#rollout) and land with the contract pull request.
 
 ## The interface
 
@@ -90,7 +114,7 @@ The rules need lines in `CLAUDE.md` and the plan; they are proposed under [Rollo
 - That code takes an optional destination. Given none, it only walks the bits and counts what the structure report shows; given buffers, it also stores warm-up samples and residuals. One function, two uses:
 
 ```csharp
-namespace Encspect.Formats.Flac.Syntax;
+namespace Encspect.Formats.Flac;
 
 // Where a subframe's samples go: nowhere (the structure pass), 32-bit buffers, or 64-bit ones for the side channel of a
 // 32-bit stream, which needs 33 bits (RFC 9639, section 9.2.3).
@@ -103,7 +127,7 @@ internal readonly ref struct SubframeSamples
     public bool IsEmpty => Narrow.IsEmpty && Wide.IsEmpty;
 }
 
-// Visible to Encspect.Decoders.Flac.
+// Parser code, which Encspect.Formats.Flac.Decoding calls too.
 internal static class SubframeSyntax
 {
     // Reads one subframe from the bit after the frame header (RFC 9639, section 9.2). With samples empty it walks the bits
@@ -113,7 +137,7 @@ internal static class SubframeSyntax
 ```
 
 - The decoder adds what the structure report never needs: restoring samples from the predictor, undoing left/side, right/side and mid/side coding, wasted bits, and the MD5. It never reads a field with code of its own.
-- A coding whose entropy-coded data the parser does not walk (Monkey's Audio's range coder, whose frames the seek table delimits) keeps its entropy decoder in the decoder project. The parser still owns the header, seek table and frame start fields, which the decoder reads with the parser's code.
+- A coding whose entropy-coded data the parser does not walk (Monkey's Audio's range coder, whose frames the seek table delimits) keeps its entropy decoder in its `Decoding` namespace. The parser still owns the header, seek table and frame start fields, which the decoder reads with the parser's code.
 - The configuration reaches the decoder as the bytes the parser read it from (`DecodeSetup.Configuration`), and the decoder reads them with the parser's own reader: a few dozen bytes read twice by one piece of code, not two readings.
 - Guards against drift beyond the shared code: the fixture tests check that the decoder ends every frame at the bit where the parser's walk ends, and the bit-exact cross-checks (below) catch a misreading the two would share.
 
@@ -406,7 +430,7 @@ WavPack:
 - **A group past the ceiling** (below): its blocks are decoded one at a time and their CRCs compared, and the MD5 is not, with `wavpack.md5-group-too-large`.
 - **Hybrid files:**
   - The main file decodes to the lossy samples, the stream the report describes, and their header CRCs are compared; the CRC covers all of that lossy stream (`CoversAllAudio` as above).
-  - A hybrid file without an MD5 (the encoder stores one only with `-m`) is therefore verified as its lossy stream.
+  - A hybrid file without an MD5 (the encoder stores one only with `-m`) is therefore verified as its lossy stream, which the decoder marks with `StreamVerification.IsLossy`: the text output and the GUI say "verified (lossy stream)", and JSON gives the plain `isVerified` next to the stream's codec, which names the hybrid mode.
   - A hybrid file with an MD5, which is of the lossless audio, stays unverified: the MD5 is not compared (`wavpack.md5-needs-correction-file`) until the host can find the `.wvc`.
   - A `.wvc` file analyzed alone decodes nothing (`NotPossible`, `decode.not-possible`), since its blocks only correct the main file's.
 
@@ -539,6 +563,11 @@ public sealed record StreamVerification
     // The samples per channel the decoder decoded, the sum of what IFrameDecoder.Decode returned.
     public long DecodedSamples { get; init; }
 
+    // True where the audio the checksums vouch for is a lossy coding's output: a WavPack hybrid file decoded without its
+    // correction file. The text output and the GUI then say "verified (lossy stream)"; JSON writes no field for it, since
+    // the stream's codec names the hybrid mode.
+    public bool IsLossy { get; init; }
+
     public IReadOnlyList<ChecksumTally> Checksums { get; init; } = [];
 
     // False where a stored checksum differs. True where every stored checksum was compared and holds, and at least one
@@ -598,7 +627,7 @@ Every code follows the plan's severity rules: a stored checksum that differs is 
 | `decode.limit` | Info | the stream | the analysis's PCM budget ran out (below) |
 | `decode.failed` | Error | the stream | any other exception from the decoder, or results that name no declared checksum or compare more values than are stored: a bug, never an acceptable result, like `parse.failed`; that stream's decoding stops and its decoder results are dropped |
 
-- The decoder builds the node of a mismatch with its parser's node factories (in `Syntax`), equal in name, offset and length to the one the parser builds, so the host resolves its path as for any finding.
+- The decoder builds the node of a mismatch with its parser's node factories, equal in name, offset and length to the one the parser builds, so the host resolves its path as for any finding.
 - The computed value goes into the finding's message ("computed 3e84…, stored 9a1f…").
 - Decoding adds no node, so the tree is the same with decoding and without it, which a test holds for every fixture.
 
@@ -616,9 +645,9 @@ Every code follows the plan's severity rules: a stored checksum that differs is 
   - `decodedSamples`;
   - `checksums`, each with `name`, `covers` (`header`, `codedData`, `decodedAudio`), `coversAllAudio`, `stored`, `checked` and `failed`.
   - A field is added, so `schemaVersion` stays 1.
-- **Text:** a line under each stream, such as "Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)", "no (…)" or "not verified (STREAMINFO MD5 not compared: decoding was not asked for)".
+- **Text:** a line under each stream, such as "Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)", "no (…)" or "not verified (STREAMINFO MD5 not compared: decoding was not asked for)". A verified WavPack hybrid file decoded without its `.wvc` reads "Verified: yes (lossy stream; block header CRC 120 of 120)".
 - **CSV:** `Is Verified` after `Is Protected`, filled only where decoding was asked for (`--verify`): false where a stream's is false, true where every stream's is true, empty otherwise. Without `--verify` it is empty for every file, so a folder export never mixes verdicts from coded data alone (TTA) with empty ones (FLAC). `ReportSummary` gains the field, so the GUI's summary cache format becomes 6.
-- **GUI:** the stream line of the detail window names the verdict and links to the article. The file list gets no column in Gate 3, for the same reason as the CSV.
+- **GUI:** the stream line of the detail window names the verdict, "verified (lossy stream)" for a WavPack hybrid file verified without its `.wvc`, and links to the article. The file list gets no column in Gate 3, for the same reason as the CSV.
 - **Article:** `verification` in `src/Encspect.Host/Topics`: what stored checksums cover (a header, coded data, decoded audio), why an MD5 needs decoding, what "verified" means in the report. The stored checksum fields of the lossless formats point to it.
 
 ## When decoding runs
@@ -850,7 +879,7 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
   - `Decode` returns of 0 for all but a group's final block, counted once in `DecodedSamples` and the budget;
   - results that name no declared checksum, or compare more values than are stored (`decode.failed`, results dropped).
 - **Bit cursor, MD5 and CRC-32:** `BitCursorTests` against `BitReader` on random data and at every end; `Md5Tests` with RFC 1321's vectors and against `System.Security.Cryptography.MD5`, in the test only; `Crc32Tests` against the existing copies.
-- **References:** `ProjectReferenceTests` (above).
+- **Boundary:** `DecodingBoundaryTests` (above), with its negative control.
 - **Fuzzing:** `Encspect.Fuzz` analyzes the lossless fixtures' mutations with decoding on as well, with a lowered `MaxPcmBytes`, and fails on `decode.failed`; its finds join `tests/fixtures/fuzz`.
 - **Memory:** `MemoryTests` analyzes a long stream of each decoded coding with decoding on and bounds the peak to that of the analysis without it plus a constant, so a session that keeps something per frame fails.
 - **Complexity:** `ComplexityTests`, with a lowered `MaxPcmBytes` so the budget stops them in seconds:
@@ -869,19 +898,19 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
    - the types above in `Core.Abstractions`, with `BitCursor`, `LsbBitCursor`, `Md5`, `Crc32` and the canonical layout;
    - the router's sessions, boundary, sink guard and budget in the host; `AnalysisOptions.Decoding`; the writers; `--verify`;
    - the `verification` article;
-   - `DecodeRouteTests`, `ProjectReferenceTests`, `BitCursorTests`, `Md5Tests`, `Crc32Tests`;
+   - `DecodeRouteTests`, `DecodingBoundaryTests`, `BitCursorTests`, `Md5Tests`, `Crc32Tests`;
    - the throwaway FLAC prototype and its measurement, which settle [the second entropy pass](#the-second-entropy-pass) before this pull request merges;
    - `ffmpeg_sources.py`, whose `FILES` list holds none of the files this design cites yet: it gets the FLAC, Monkey's Audio, TTA, TrueHD and MLP, and ALAC files, and `check_sources.py` checks them; the citations are to 6.1.1, and CI's FFmpeg 8.0.1 keeps the key lines (see Sources);
    - documentation: `--verify` in `docs/cli.md`, the verification output in the JSON and CSV sections there, the decode goldens and manifests in `docs/development.md`;
    - the lines of `CLAUDE.md` and the plan below.
    - No format changes.
 2. **FLAC, the reference implementation:**
-   - `Encspect.Formats.Flac` (the raw format and the codec "flac", which Ogg already routes by that ID) and `Encspect.Decoders.Flac`;
+   - `Encspect.Formats.Flac`: the raw format, the codec "flac" (which Ogg already routes by that ID), and the decoder in `Encspect.Formats.Flac.Decoding`;
    - fixtures from `flac` and FFmpeg and hand-built damage; a `flac-crosscheck` job;
    - the GUI's "Verify Audio", documented in `docs/gui.md`;
    - `docs/formats/flac.md` with a "Decoding" section, and its line in `docs/formats/README.md`.
    - A milestone review of the contract and FLAC follows, which also walks the WavPack and TrueHD data flows (above) through the contract as built: which `CodedFrame`s, which state, which tallies, which findings. Its findings are fixed before step 3 starts.
-3. **In parallel, each in its own projects and pull request, with its format's "Decoding" section:**
+3. **In parallel, each in its own pull request, with its decoder in its format project's `Decoding` namespace and its format's "Decoding" section:**
    - the WavPack decoder (its parser exists), and a "wavpack" codec parser for Matroska's blocks, which carry a reduced header that FFmpeg rebuilds into the 32-byte one (`matroskadec.c` 3608-3670);
    - Monkey's Audio, parser and decoder;
    - TrueHD and MLP, parser and decoder, raw files first;
@@ -893,29 +922,33 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
    - Matroska: `A_FLAC`, `A_ALAC`, `A_TRUEHD`, `A_MLP`, `A_TTA1`, `A_WAVPACK4`.
    - Ogg needs no change for FLAC, and ASF none for WMA Lossless, whose route exists.
 
-Proposed lines, applied in step 1 after the sign-off:
+Proposed lines, applied with the contract pull request (step 1):
 
 - `CLAUDE.md`, Stack: "no third-party decoders or audio libraries" in place of "no bundled decoders or audio libraries", since Encspect's own decoders are part of the build.
-- `CLAUDE.md`, Layout: "`src/Encspect.Decoders.<Format>`: the optional decoder of one coding; it references `Core.Abstractions` and the format project whose syntax it decodes, which grants it `InternalsVisibleTo`, uses only that project's `Syntax` namespace, and only the host references it."
-- `CLAUDE.md`, Architecture rules: "Parsers reach decoders only through `StartDecoding` on their context and never reference one; they declare every checksum a stream stores. A decoder reads the coded syntax with its parser's code and adds only reconstruction and the checksums over decoded audio; decoding never changes the parser's nodes."
+- `CLAUDE.md`, Layout, in place of "Format parsers and tag parsers are added as further projects.": "Format parsers and tag parsers are added as further projects. A format's decoder, where it has one, lives in its format project under the namespace `<project>.Decoding`; the host registers it next to the parsers."
+- `CLAUDE.md`, Architecture rules, in place of "They never reference each other and never reference a decoder.": "They never reference each other, and parser code never references a decoder, the `Decoding` namespace of its own project included; `DecodingBoundaryTests` checks this in the compiled assemblies."
+- `CLAUDE.md`, Architecture rules, a new item: "Parsers reach decoding only through `StartDecoding` on their context, and declare every checksum a stream stores. A decoder reads the coded syntax with its parser's code and adds only reconstruction and the checksums over decoded audio; decoding never changes the parser's nodes."
+- The plan, Architecture: "Decoders are separate and optional, so no parser ever depends on one." becomes "Decoders are optional and live in their format's project apart from its parsers, which never use them, so no parser ever depends on one."
 - The plan's decision table: decoding is "for checksum verification, waveform, spectrogram, lowpass and similar". The phase 3 row names the decoders the scope decision keeps.
 
-## Decisions for sign-off
+## Decisions
 
-1. **Layout:** each decoder is a project that references `Core.Abstractions` and its own format project, reading the bits only through that project's `Syntax` namespace; `CLAUDE.md` then says "no third-party decoders". Alternatives: the decoder inside the format project, or a decoder with its own second reading of the syntax.
-2. **Data flow:** the parser hands each frame to a decode session while it reads it, in the one pass over the file; a prototype in the contract step measures the second entropy pass, and the session lends the parser its buffers if that pass costs more than a quarter of decoding. Alternative: a second pass the host drives.
-3. **Defaults:** decoding is off in the library, the CLI (`--verify`) and the GUI ("Verify Audio" in the detail window); the file list never decodes, no verdict is cached, and the CSV's `Is Verified` is filled only with `--verify`. Checks over coded data run in every analysis, Monkey's Audio's descriptor MD5 included (3.98 and later): its parser then reads the whole file, and a mismatch cannot say where the damage is, which the frame CRCs with `--verify` can. Alternative: that MD5 only with `--verify`.
-4. **Meaning of verified:** every checksum the stream stores was compared and holds, and at least one compared checksum covers all of its audio, coded or decoded; for the phase 3 codings and WavPack in every mode. Alternatives: count only checksums over decoded audio, or cover the lossy formats' CRCs now.
-5. **Scope:** Gate 3 decoders for FLAC, Monkey's Audio, WavPack, and TrueHD and MLP, the codings with a checksum over decoded audio; ALAC, TTA and WMA Lossless decoders move to "Later", which leaves their waveform and lowpass without a decoder until then (costs listed under "What the table means"). A WavPack hybrid file is verified as its lossy stream by its header CRCs; one with an MD5 stays unverified until companion-file access finds its `.wvc`. Alternative: all seven decoders, and `.wvc` access, now.
-6. **TrueHD:** compare the lossless check of every presentation up to substream 2, one tally each, not the Atmos substream. The check never counts as covering all audio, since the last interval of each segment is never checked; a stream is verified only where substream CRC-8s in every access unit cover it and every lossless check holds. Alternatives: compare the top presentation only, as FFmpeg does, or count the check as covering and report the samples it leaves out.
-7. **PCM analyses:** lowpass and similar analyses run in the host on the decoded PCM and add figures to the stream, never nodes; the hook is fixed now, the figures come with the first feature. Alternative: a later change to the contract.
-8. **Budget:** decoding stops with an info past the larger of 16 GiB of PCM in the canonical layout and 256 times the file's size, which `DecodeOptions.MaxPcmBytes` overrides for tests. Alternative: no bound in the library.
-9. **Tools:** build Monkey's Audio SDK 13.42 (3-clause BSD) and libtta-c 2.3 (LGPLv3) from pinned source for the cross-checks, since no Ubuntu series packages them; no `ffmpeg` fallback for decoding (the plan's open question), FFmpeg stays a cross-check tool. Alternative: FFmpeg as the only second decoder, which cannot decode Monkey's Audio beyond 2 channels and 24 bits.
+The project lead decided all nine on 2026-10-22: decision 1 as below, in place of the separate decoder projects this design had recommended; decisions 2 to 9 approved as written.
+
+1. **Layout (the lead's choice):** each decoder lives in its format project, in the namespace `<project>.Decoding`; parser code never references it, which `DecodingBoundaryTests` checks in the compiled assembly, and the host registers the decoders; `CLAUDE.md` then says "no third-party decoders". It works because the decoder reads the bits with the parser's own code, a change that breaks one fails the same build, and the only coupling that could harm, the parser's on its decoder, is checked. The alternative it replaces: a decoder project per format that references its format project.
+2. **Data flow (approved):** the parser hands each frame to a decode session while it reads it, in the one pass over the file; a prototype in the contract step measures the second entropy pass, and the session lends the parser its buffers if that pass costs more than a quarter of decoding. Alternative: a second pass the host drives.
+3. **Defaults (approved):** decoding is off in the library, the CLI (`--verify`) and the GUI ("Verify Audio" in the detail window); the file list never decodes, no verdict is cached, and the CSV's `Is Verified` is filled only with `--verify`. Checks over coded data run in every analysis, Monkey's Audio's descriptor MD5 included (3.98 and later): its parser then reads the whole file, and a mismatch cannot say where the damage is, which the frame CRCs with `--verify` can. Alternative: that MD5 only with `--verify`.
+4. **Meaning of verified (approved):** every checksum the stream stores was compared and holds, and at least one compared checksum covers all of its audio, coded or decoded; for the phase 3 codings and WavPack in every mode. Alternatives: count only checksums over decoded audio, or cover the lossy formats' CRCs now.
+5. **Scope (approved):** Gate 3 decoders for FLAC, Monkey's Audio, WavPack, and TrueHD and MLP, the codings with a checksum over decoded audio; ALAC, TTA and WMA Lossless decoders move to "Later", which leaves their waveform and lowpass without a decoder until then (costs listed under "What the table means"). A WavPack hybrid file is verified as its lossy stream by its header CRCs; one with an MD5 stays unverified until companion-file access finds its `.wvc`. Alternative: all seven decoders, and `.wvc` access, now.
+6. **TrueHD (approved):** compare the lossless check of every presentation up to substream 2, one tally each, not the Atmos substream. The check never counts as covering all audio, since the last interval of each segment is never checked; a stream is verified only where substream CRC-8s in every access unit cover it and every lossless check holds. Alternatives: compare the top presentation only, as FFmpeg does, or count the check as covering and report the samples it leaves out.
+7. **PCM analyses (approved):** lowpass and similar analyses run in the host on the decoded PCM and add figures to the stream, never nodes; the hook is fixed now, the figures come with the first feature. Alternative: a later change to the contract.
+8. **Budget (approved):** decoding stops with an info past the larger of 16 GiB of PCM in the canonical layout and 256 times the file's size, which `DecodeOptions.MaxPcmBytes` overrides for tests. Alternative: no bound in the library.
+9. **Tools (approved):** build Monkey's Audio SDK 13.42 (3-clause BSD) and libtta-c 2.3 (LGPLv3) from pinned source for the cross-checks, since no Ubuntu series packages them; no `ffmpeg` fallback for decoding (the plan's open question), FFmpeg stays a cross-check tool. Alternative: FFmpeg as the only second decoder, which cannot decode Monkey's Audio beyond 2 channels and 24 bits.
 
 ## Open risks and unverified claims
 
 - **Unverified:** whether WMA Lossless holds a checksum that FFmpeg skips; no specification is public.
 - **TrueHD presentations:** what decoding the lower presentations costs beyond their matrices and output, and whether FFmpeg's `-downmix` output gives each presentation's check, is settled by the TrueHD work; decision 6 only says what is compared.
 - **Cost not measured:** the second entropy pass (step 1), Monkey's Audio's filters in managed code, and the MD5 throughput are estimates until steps 1 and 2 measure them.
-- **Shared syntax:** a parser refactor now has to keep its decoder building; that is the point of option C, but it couples their pull requests.
+- **Shared syntax:** a parser refactor now has to keep its decoder building; that is the point of the layout, but it couples their changes within one project.
 - **The plan's row** names checksum verification for ALAC and WMA Lossless, which store none; it needs rewording whatever the scope decision is.
