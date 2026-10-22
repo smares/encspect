@@ -18,6 +18,9 @@ public abstract class Graph
 
     public string Unit { get; }
 
+    // The heading its chip is listed under: the concept it shows ("Stereo Coding"), or "Other".
+    public virtual string Heading => GraphHeadings.Other;
+
     // What the chart shows, for its chip's tooltip; from the series, as its parser describes it.
     public abstract string? Description { get; }
 
@@ -94,6 +97,8 @@ public sealed class LineGraph : Graph
     public SeriesAxis Axis => Series.Axis;
 
     public override string? Description => Series.Description;
+
+    public override string Heading => GraphHeadings.Of(Series);
 
     public override int Count => Series.Values.Length;
 
@@ -230,6 +235,8 @@ public sealed class DistributionGraph : Graph
     }
 
     public IReadOnlyList<Bar> Bars => _bars;
+
+    public override string Heading => GraphHeadings.Of(_series);
 
     public override int Count => _bars.Length;
 
@@ -399,4 +406,37 @@ public static class GraphColumns
 
         return result;
     }
+}
+
+// The headings the Graphs tab lists a stream's series under, the same in every format: "Stereo Coding", "Block
+// switching", "Coded Bandwidth" and "Bit Distribution", then "Other". A series says its concept; the bitrate series, which
+// set none, are placed by their unit.
+public static class GraphHeadings
+{
+    public const string Summary = "Summary";
+    public const string StereoCoding = "Stereo Coding";
+    public const string BlockSwitching = "Block Switching";
+    public const string CodedBandwidth = "Coded Bandwidth";
+    public const string BitDistribution = "Bit Distribution";
+    public const string Other = "Other";
+
+    // In the order the tab lists them.
+    public static IReadOnlyList<string> All { get; } = [Summary, StereoCoding, BlockSwitching, CodedBandwidth, BitDistribution, Other];
+
+    public static string Of(GraphConcept concept) => concept switch
+    {
+        GraphConcept.StereoCoding => StereoCoding,
+        GraphConcept.BlockSwitching => BlockSwitching,
+        GraphConcept.CodedBandwidth => CodedBandwidth,
+        GraphConcept.BitDistribution => BitDistribution,
+        _ => Other,
+    };
+
+    // The bitrate series are in kbps and the bit reservoir fill in bytes, whatever a format names them.
+    public static string Of(Series series) =>
+        series.Concept != GraphConcept.None ? Of(series.Concept) : series.Unit is "kbps" or "bytes" ? BitDistribution : Other;
+
+    // A stable sort of graphs into the order of the headings.
+    public static IReadOnlyList<T> Order<T>(IEnumerable<T> graphs, Func<T, string> heading) =>
+        [.. graphs.Select((g, i) => (g, i)).OrderBy(p => Math.Max(0, All.ToList().IndexOf(heading(p.g)))).ThenBy(p => p.i).Select(p => p.g)];
 }

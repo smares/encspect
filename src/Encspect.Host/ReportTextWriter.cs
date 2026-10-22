@@ -33,13 +33,28 @@ public static class ReportTextWriter
             list.Add(series);
         }
 
+        // The streams of a report that anchor category series to one node are told apart by their numbers.
+        Dictionary<Node, List<(CategorySeries Series, int Stream)>> shares = new(ReferenceEqualityComparer.Instance);
+        for (int i = 0; i < report.Streams.Count; i++)
+        {
+            foreach (CategorySeries series in report.Streams[i].CategorySeries.Where(s => s.Anchor is not null && s.Time is not null))
+            {
+                if (!shares.TryGetValue(series.Anchor!, out List<(CategorySeries, int)>? list))
+                {
+                    shares[series.Anchor!] = list = [];
+                }
+
+                list.Add((series, i + 1));
+            }
+        }
+
         Dictionary<Node, string> verified = new(ReferenceEqualityComparer.Instance);
         foreach (StreamInfo stream in report.Streams.Where(s => s.Verification is not null && s.Nodes.Count > 0))
         {
             verified.TryAdd(stream.Nodes[0], VerificationText.Describe(stream.Verification!));
         }
 
-        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified), 0, anchored);
+        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified, shares), 0, anchored);
 
         if (report.Detection is { } detection)
         {
@@ -132,6 +147,89 @@ public static class ReportTextWriter
                 WriteSeries(item, writer, depth, options);
             }
         }
+
+        if (options.Shares.TryGetValue(node, out List<(CategorySeries Series, int Stream)>? categorySeries))
+        {
+            bool severalStreams = categorySeries.Select(c => c.Stream).Distinct().Count() > 1;
+            foreach ((CategorySeries item, int stream) in categorySeries)
+            {
+                WriteShares(item, severalStreams ? stream : null, writer, depth, options);
+            }
+        }
+    }
+
+    // One line for each category that occurs, after the node the series is anchored to: its share of the values of
+    // each interval of the time index in percent, rounded half to even to 0.1 as the tallies round, and "-" for an
+    // interval without values, "Long Share Over Time: 100,90,80".
+    private static void WriteShares(CategorySeries series, int? stream, TextWriter writer, int depth, Options options)
+    {
+        ReadOnlySpan<int> first = series.Time!.FirstUnits.Span;
+        int categories = series.Categories.Count;
+        long[] counts = new long[categories];
+        string suffix = stream is { } number ? $" (stream {number.ToString(CultureInfo.InvariantCulture)})" : string.Empty;
+
+        // One pass over the intervals, each counted once, whatever the number of categories.
+        var lines = new System.Text.StringBuilder?[categories];
+        for (int category = 0; category < categories; category++)
+        {
+            if (series.Counts[category] > 0)
+            {
+                lines[category] = new System.Text.StringBuilder();
+            }
+        }
+
+        for (int interval = 0; interval < first.Length; interval++)
+        {
+            Array.Clear(counts);
+            series.CountRange(first[interval], interval + 1 < first.Length ? first[interval + 1] : series.Count, counts);
+            long total = counts.Sum();
+            for (int category = 0; category < categories; category++)
+            {
+                if (lines[category] is not { } line)
+                {
+                    continue;
+                }
+
+                if (interval > 0)
+                {
+                    line.Append(',');
+                }
+
+                if (total == 0)
+                {
+                    line.Append('-');
+                }
+                else
+                {
+                    line.Append(Math.Round(100.0 * counts[category] / total, 1, MidpointRounding.ToEven).ToString("0.#", CultureInfo.InvariantCulture));
+                }
+            }
+        }
+
+        for (int category = 0; category < categories; category++)
+        {
+            if (lines[category] is not { } line)
+            {
+                continue;
+            }
+
+            Indent(writer, depth);
+            writer.Write(Escape(series.Categories[category].Name));
+            writer.Write(" Share Over Time");
+            writer.Write(suffix);
+            writer.Write(": ");
+            writer.Write(line.ToString());
+            if (options.ShowOffsets)
+            {
+                WriteLocation(series.Anchor!, writer);
+            }
+
+            writer.WriteLine();
+            if (options.Explain)
+            {
+                WriteExplanation(series.Categories[category].Description, series.Categories[category].Topic, writer, depth);
+            }
+        }
     }
 
     // The description, and the topic to read with --learn, wrapped under the node's line and
@@ -180,7 +278,7 @@ public static class ReportTextWriter
         }
     }
 
-    private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter, Dictionary<Node, string> Verified);
+    private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter, Dictionary<Node, string> Verified, Dictionary<Node, List<(CategorySeries Series, int Stream)>> Shares);
 
     // Values from the file are text and escaped; numbers are written without a string per node.
     private static void WriteValue(NodeValue value, TextWriter writer)

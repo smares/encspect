@@ -15,6 +15,8 @@ public partial class DetailWindow : Window
     private static readonly FilePickerFileType TextReport = new("Text report") { Patterns = ["*.txt"], MimeTypes = ["text/plain"], AppleUniformTypeIdentifiers = ["public.plain-text"] };
     private const double DefaultTopicWidth = 340;
     private const double MinimumTopicWidth = 260;
+    private const double MinimumPaneShare = 0.2;
+    private const double MaximumPaneShare = 0.8;
 
     private static readonly FilePickerFileType JsonReport = new("JSON report") { Patterns = ["*.json"], MimeTypes = ["application/json"], AppleUniformTypeIdentifiers = ["public.json"] };
 
@@ -41,6 +43,7 @@ public partial class DetailWindow : Window
         };
         TreeList.AddHandler(KeyDownEvent, OnTreeKeyDown, RoutingStrategies.Tunnel);
         Graph.PointClicked += (_, index) => Model.Graphs.Activate(index);
+        Graph.CategoryClicked += (_, category) => Model.Graphs.ActivateCategory(category);
         Topic.LinkActivated += (_, id) => Model.ShowTopic(id);
         model.PropertyChanged += OnModelChanged;
         AnalyzeAsButton.Flyout = CreateFormatMenu();
@@ -69,6 +72,11 @@ public partial class DetailWindow : Window
             _topicWidth = value?.TopicPaneWidth is { } width and >= MinimumTopicWidth ? width : DefaultTopicWidth;
             Model.IsTopicOpen = value?.IsTopicPaneOpen == true;
             ShowTopicPane();
+            if (value?.GraphPaneShare is { } share and >= MinimumPaneShare and <= MaximumPaneShare)
+            {
+                Panes.RowDefinitions[0].Height = new GridLength(1 - share, GridUnitType.Star);
+                Panes.RowDefinitions[2].Height = new GridLength(share, GridUnitType.Star);
+            }
         }
     }
 
@@ -192,6 +200,14 @@ public partial class DetailWindow : Window
 
     private void OnGraphsTab(object? sender, RoutedEventArgs e) => Model.IsGraphsShown = true;
 
+    private void OnGraphForm(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: GraphFormChoice choice })
+        {
+            Model.Graphs.SelectForm(choice.Kind);
+        }
+    }
+
     private void OnGraphChoice(object? sender, RoutedEventArgs e)
     {
         if (sender is Button { DataContext: GraphChoice choice })
@@ -246,6 +262,13 @@ public partial class DetailWindow : Window
         if (Model.IsTopicOpen && Body.ColumnDefinitions[2].ActualWidth >= MinimumTopicWidth)
         {
             _topicWidth = Body.ColumnDefinitions[2].ActualWidth;
+        }
+
+        double above = Panes.RowDefinitions[0].ActualHeight;
+        double below = Panes.RowDefinitions[2].ActualHeight;
+        if (above + below > 0 && below / (above + below) is >= MinimumPaneShare and <= MaximumPaneShare)
+        {
+            settings.GraphPaneShare = below / (above + below);
         }
 
         settings.IsTopicPaneOpen = Model.IsTopicOpen;

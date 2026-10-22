@@ -1503,7 +1503,7 @@ public class MemoryTests(ITestOutputHelper output)
     // record says 49 MB and the gap changes between calls, which showed as 3.5 MB kept after 1
     // million unknown SV8 packets and 9.4 MB after 4 million. Collections repeat until two
     // readings in a row agree to within 64 KB.
-    private static long Live()
+    internal static long Live()
     {
         long previous = long.MaxValue;
         long current = 0;

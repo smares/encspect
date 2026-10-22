@@ -167,7 +167,8 @@ public sealed class ExplanationTests : IDisposable
         UiPump.Until(() => window.Model.Graphs.Choices.Count > 0);
 
         Assert.All(window.Model.Graphs.Choices, c => Assert.False(string.IsNullOrEmpty(c.Description)));
-        Assert.StartsWith("How many frames have each value. The bitrate", window.Model.Graphs.Choices.Single(c => c.Graph is DistributionGraph).Description);
+        Assert.All(window.Model.Graphs.Choices.SelectMany(c => c.Forms), f => Assert.False(string.IsNullOrEmpty(f.Description)));
+        Assert.StartsWith("How many frames have each value. The bitrate", window.Model.Graphs.Choices.SelectMany(c => c.Forms).Select(f => f.Graph).OfType<DistributionGraph>().Single().Description);
         Assert.NotNull(ToolTip.GetTip(window.StreamsText));
         window.Close();
     }

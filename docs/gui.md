@@ -93,13 +93,48 @@ Only the other files are analyzed.
 
 ## Graphs
 
-The Graphs tab, next to the findings, draws the stream's series: the bitrate and, for Layer III, the bit reservoir fill, per frame and per second of audio, and the distribution of the bitrates. A file of several streams has a choice of stream.
+The Graphs tab, next to the findings, draws the stream's series: the bitrate and, for Layer III, the bit reservoir fill, per frame and per second of audio, and the distribution of the bitrates, and the category series of its coding choices. A file of several streams has a choice of stream.
+
+- **The list:** the graphs are a vertical list on the left of the graph area, and the chart takes the rest. The list is grouped under the same headings in every format, so an MP3 and an AAC file are compared the same way: "Summary" (the Coding Summary), "Stereo Coding", "Block Switching", "Coded Bandwidth", "Bit Distribution" and "Other". A series says which heading it belongs to (its concept); the bitrate series, which set none, go under "Bit Distribution" by their unit (kbps), and the bit reservoir fill by its (bytes). A heading with no entry for the file is not shown.
+- **One entry for each quantity,** with the forms it can be drawn in as a view switcher above the chart, remembered for the next entry that has a form of that kind:
+  - a category series: "Over Time", "Frames" and "Summary" (see below);
+  - a numeric quantity such as the bitrate: "Per Frame", "Over Time" (per second of audio) and, for the bitrate, "Distribution"; the channel bit share adds "First and Second", the two channels' shares as two segments of each interval with the 50% line marked.
+  - The forms of one quantity are the series of the stream that carry the same `quantity` (JSON). A series that names none is paired by what it is, never by name: a stream's one per-frame and one per-second series in kbps are the bitrate, and the same two in bytes the bit reservoir, until their formats set a `quantity`.
+- **Layout:** the pane below the tree and hex view starts at half the window and its splitter position is remembered, with a minimum height. The plot is never lower than about 110 pixels (a strip at least what its rows need, 8 pixels each): the legend folds to one line first, a strip whose rows do not fit becomes one stacked row, and what still does not fit scrolls with the mouse wheel. Percent ticks are every 25% where each has room, else every 50%, else the ends.
+- **Capitalization:** everything that names something (headings, entries, the view switcher and its "View" label) is Title Case, as the tree's node names and the file list's columns are; values and prose (category names in legends and tables, captions, hover text, descriptions) are sentence case.
+- **One font size:** headings, entries, the view switcher and the chart's text (legend, tables, hover) are the app's size; a heading differs by weight and the secondary color. Only the tick labels along the axes are a point smaller (12), since they sit close together; the one-line captions above the plots are the standard size.
 
 - **Hovering** a point shows its value.
 - **Clicking** a point selects its frame in the tree and hex view. A bar of the distribution selects the next frame of that bitrate, and a point of a per-second graph the first frame of that second.
 - **Selecting** a frame in the tree marks it on the graph.
 - **Speed:** graphs of 100,000 frames draw as quickly as short ones, since a line is drawn as the smallest and largest value of each pixel column.
+- **Keyboard:** Tab reaches the stream choice, the entries, the view switcher and the graph. Left and Right move a cursor from point to point, from interval to interval over time and from cell to cell in the strip (Ctrl moves by a pixel column's worth of cells, Home and End to the ends), and Enter selects what the cursor shows. In a strip of several rows Up and Down change the row; in a table, Up and Down step like Left and Right.
+- **Automation:** the entries and the switcher's buttons have names. The graph's name is its title and its help text lists the legend with the shares and says what the cursor is on, so what the picture shows is in words; the legend entries are not elements of their own.
 - **Waveform and spectrogram:** these need decoded audio, and no format has a decoder yet, which the tab says in one line.
+
+### Category series
+
+A category series (the Layer III block types, the stereo coding of each frame, AAC's window sequences) is one entry of the list with three forms:
+
+- **Over Time:** a 100% stacked column for each interval of audio time, the categories stacked in their order with the plain category at the bottom. Where intervals outnumber pixel columns, neighboring intervals merge into one column, weighted by their values.
+- **Frames:** a strip, one cell for each frame. A fixed layout of up to 8 values (Layer III's granule 1 and 2 of each channel, AC-3's 6 blocks) has a row for each value; a variable layout, or one of more values, draws one row whose cell stacks the shares of the unit's values. Where frames outnumber pixel columns, a column stacks the shares of its frames.
+  - **Rare categories stay visible:** every category in a column keeps at least one pixel of its stack, taken from the largest, and a column that holds a category in one frame only gets a one-pixel tick above the row in that category's color. At 100,000 frames, a single short granule among 400 values would otherwise be 0.03 pixels. The hover text says the column is drawn with its rare categories enlarged and gives the true counts, and where several frames are marked it says how many and that clicking again steps to the next.
+- **Summary:** a table of each category's name, count and share with a bar, like EncSpot's. The **Coding Summary** entry shows the tables of every category series of the stream at once. A series that has values past its caps says how many were counted without a code. Long tables scroll with the mouse wheel.
+
+Interaction:
+
+- **Hovering** says the interval and every share ("0:12 to 0:13 · Short 12.5% (24 values) · Long 87.5% (168 values)", the rarest first), a cell its frame and category ("Frame 1,234 · 0x1A2B · granule 2, channel 1: Short"), a table row its count and share.
+- **Clicking** a column of the over-time view selects the first frame of its interval, found from the time index and not estimated; an empty interval selects nothing. A cell selects its frame, and a column of many frames a frame that holds one of the categories its ticks mark; the ticks of a column share its pixel, so clicking the column again selects the next such frame after the selected one, wrapping around. A table row or a legend entry selects the next frame after the selected one that has its category, wrapping around, so choosing it again steps through them.
+- **Selecting** a frame in the tree marks it with a line across the over-time view and the strip.
+
+Colors and text:
+
+- **Palette:** six fixed hues, not the system accent, so a category has one hue in every file and in both modes (the modes use different steps). Light: `#2a78d6`, `#eb6834`, `#1baf7a`, `#eda100`, `#e87ba4`, `#008300`. Dark: `#3987e5`, `#d95926`, `#199e70`, `#c98500`, `#d55181`, `#008300`. The first category, the plain coding, takes the first hue in a muted step, a mix of 0.7 of the hue with the surface (`#6aa0e2` in light mode, `#285ea0` in dark).
+  - An **ordered** series (frame sizes, submodes) uses a ramp of the first hue from light to dark for up to eight steps. Any category past the sixth (past the eighth of a ramp) is one flat gray, "Other"; no hue is ever generated. The legend, the table and the hover name every category.
+  - A category the parser marks reserved (`Category.IsReserved`, `isReserved` in JSON) is gray with a hatch, since it marks a value the specification does not allow; the front end never reads the name. A value without a category stays empty, and its hover text says "no category". Stacked segments are separated by a two-pixel gap in the surface color where both are at least four pixels high; a thinner one would vanish in it.
+  - With the system's high contrast preference (`Application.PlatformSettings.GetColorValues().ContrastPreference` of Avalonia 12) every second category is hatched too.
+- **The validator** (the `dataviz` skill's `validate_palette.js`, run on these values and on the palette as drawn, with the muted first step, against the graph surfaces, `#ffffff` and `#000000`, which a test reads from `SystemRegionBrush`): light mode passes its checks, with a worst adjacent separation for color vision deficiencies of ΔE 9.1 (protan) and 5.8 (tritan, below the method's floor of 6), 19.6 for normal vision, and aqua, yellow and magenta below 3:1 against the surface (2.82, 2.17, 2.69), and the muted blue too (2.71); dark mode passes with 8.4 (protan), 8.7 (tritan), 19.3 and all six at 3:1 or more, the muted blue included. The ordered ramps are one hue in steps and are not categorical, so the validator's checks do not apply to them. The tritan figure and the contrast warnings are accepted because names and shares are always in text: the legend, the table and every hover, and series of up to four categories label their segments where they are wide enough.
+- **Speed:** a view aggregates once per width and series, in one pass over the codes, and draws at most columns × categories rectangles. A test holds 200,000 units of 4 values to the 500 ms a frame the 200,000-point line is held to.
 
 ## About
 
@@ -119,7 +154,7 @@ The Graphs tab, next to the findings, draws the stream's series: the bitrate and
 - On macOS the menus are in the menu bar; the About item is in the application menu.
 - Linux runs on X11 by default, which on a Wayland desktop means XWayland. Native Wayland is experimental and opt-in. See "Linux: X11 and Wayland".
 - The GUI is built on Avalonia. Its dependencies and their licenses are listed in [third_party/README.md](../third_party/README.md).
-- The graphs are drawn by the GUI itself, without a charting library.
+- The graphs are drawn by the GUI itself, without a charting library. The accent color follows the system, but the graph palette of the category charts is fixed (see "Category series"), so a category keeps its color in light and dark mode.
 
 ## Linux: X11 and Wayland
 
