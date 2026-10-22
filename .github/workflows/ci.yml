@@ -58,6 +58,7 @@ jobs:
       ogg-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ogg-crosscheck }}
       musepack-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.musepack-crosscheck }}
       wavpack-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.wavpack-crosscheck }}
+      flac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.flac-crosscheck }}
       asf-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.asf-crosscheck }}
       ac3-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ac3-crosscheck }}
       dts-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.dts-crosscheck }}
@@ -454,6 +455,11 @@ jobs:
           python3 scripts/fixtures/make_wavpack_fixtures.py
           python3 scripts/fixtures/make_external_wavpack_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built FLAC fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_flac_fixtures.py
+          python3 scripts/fixtures/make_external_flac_fixtures.py --manifests-only
+
       - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ac3_fixtures.py
@@ -799,6 +805,28 @@ jobs:
       - name: Cross-check the WavPack fixtures
         run: python3 scripts/fixtures/crosscheck_wavpack_fixtures.py
 
+  flac-crosscheck:
+    name: FLAC fixtures agree with flac, metaflac, FFmpeg and MediaInfo, and the decoder with flac -d and FFmpeg
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.flac-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      # flac 1.5.0, ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts assert (the
+      # manifests were checked with 1.4.3, 6.1.1 and 24.01).
+      - name: Install flac, ffmpeg and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flac ffmpeg mediainfo
+
+      - name: Cross-check the FLAC fixtures
+        run: python3 scripts/fixtures/crosscheck_flac_fixtures.py
+
   asf-crosscheck:
     name: ASF and WMA fixtures agree with ffprobe, ffmpeg and MediaInfo, and the WMA tables with FFmpeg
     runs-on: ubuntu-26.04
@@ -1057,6 +1085,7 @@ jobs:
       - ogg-crosscheck
       - musepack-crosscheck
       - wavpack-crosscheck
+      - flac-crosscheck
       - asf-crosscheck
       - ac3-crosscheck
       - dts-crosscheck

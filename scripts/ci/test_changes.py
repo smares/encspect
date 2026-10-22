@@ -46,6 +46,12 @@ class ChangesTests(unittest.TestCase):
     def test_fixture_runs_its_cross_check_and_the_reproducibility_job(self):
         self.assertEqual(run("tests/fixtures/wavpack/a.wv"), set(changes.CI_JOBS_DOTNET) | {"wavpack-crosscheck", "fixtures"})
 
+    def test_flac_parser_decoder_scripts_and_fixtures_belong_to_the_flac_job(self):
+        for path in ("src/Encspect.Formats.Flac/FlacParser.cs", "src/Encspect.Formats.Flac/Decoding/FrameDecoder.cs", "tests/fixtures/flac/a.flac",
+                     "scripts/fixtures/flac_model.py", "scripts/fixtures/make_flac_fixtures.py"):
+            self.assertIn("flac-crosscheck", run(path), path)
+        self.assertEqual(run("scripts/fixtures/crosscheck_flac_fixtures.py"), {"flac-crosscheck", "fixtures"})
+
     def test_cross_check_script_runs_only_its_job(self):
         self.assertEqual(run("scripts/fixtures/crosscheck_asf_fixtures.py"), {"asf-crosscheck", "fixtures"})
 
@@ -77,14 +83,14 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(run("tests/fixtures/fuzz/a.bin"), set(changes.CI_JOBS_DOTNET) | {"fixtures"})
 
     def test_unknown_path_runs_everything(self):
-        self.assertEqual(run("src/Encspect.Formats.Flac/FlacParser.cs"), set(changes.ALL_JOBS))
+        self.assertEqual(run("src/Encspect.Formats.Vqf/VqfParser.cs"), set(changes.ALL_JOBS))
         self.assertEqual(run("somewhere/else.bin"), set(changes.ALL_JOBS))
 
     def test_encoder_script_reruns_only_the_reproducibility_job(self):
         self.assertEqual(run("scripts/fixtures/faac_tool.py"), {"fixtures"})
 
     def test_new_check_script_runs_everything(self):
-        self.assertEqual(run("scripts/fixtures/crosscheck_flac_fixtures.py"), set(changes.ALL_JOBS))
+        self.assertEqual(run("scripts/fixtures/crosscheck_vqf_fixtures.py"), set(changes.ALL_JOBS))
 
     def test_every_cross_check_script_belongs_to_an_area(self):
         entries = {e for spec in changes.AREAS.values() for e in spec["scripts"]}
