@@ -3,17 +3,22 @@ using Encspect.Core;
 
 namespace Encspect.Gui.ViewModels;
 
-// The three views of a category series.
-public enum CategoryView
+// The forms a graph entry is offered in, which the view switcher lists and the window remembers by kind: for a category
+// series the share over time, the strip of one cell per frame and the table of counts and shares; for a numeric quantity
+// its value per frame, per second of audio and its distribution.
+public enum GraphForm
 {
-    // The share of each category in each interval of audio time, stacked to 100%.
-    OverTime,
-
-    // One cell per unit, the categories of its values.
+    // One point or cell per frame.
     Frames,
 
-    // The count and share of each category over the whole stream, as EncSpot's window shows them.
+    // One point or column per interval of audio time.
+    OverTime,
+
+    // Over the whole stream: a table of counts and shares, or the distribution of the values.
     Summary,
+
+    // The first and second part of a quantity that divides in two, per interval of audio time.
+    Split,
 }
 
 // A graph that draws tables of categories with counts and shares.
@@ -230,44 +235,42 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
     // A strip of a fixed layout draws a row for each of this many values at most; more values share one row.
     public const int MaxRows = 8;
 
-    private CategoryView _view;
-
-    public CategoryGraph(CategorySeries series)
+    public CategoryGraph(CategorySeries series, GraphForm view)
         : base(series.Name, string.Empty)
     {
         ArgumentNullException.ThrowIfNull(series);
+        if (view is GraphForm.Split || (view == GraphForm.OverTime && series.Time is not { FirstUnits.Length: > 0 }) || (view == GraphForm.Frames && series.Count == 0))
+        {
+            throw new ArgumentException($"A series of {series.Count} units cannot be drawn as {view}.", nameof(view));
+        }
 
         Series = series;
-        var views = new List<CategoryView>();
-        if (series.Time is { FirstUnits.Length: > 0 })
-        {
-            views.Add(CategoryView.OverTime);
-        }
-
-        if (series.Count > 0)
-        {
-            views.Add(CategoryView.Frames);
-        }
-
-        views.Add(CategoryView.Summary);
-        Views = views;
-        _view = views[0];
+        View = view;
     }
 
     public CategorySeries Series { get; }
 
-    public IReadOnlyList<CategoryView> Views { get; }
+    // The form this graph draws.
+    public GraphForm View { get; }
 
-    public CategoryView View
+    // The forms a series can be drawn in, in the order they are offered.
+    public static IReadOnlyList<GraphForm> FormsOf(CategorySeries series)
     {
-        get => _view;
-        set
+        ArgumentNullException.ThrowIfNull(series);
+
+        var forms = new List<GraphForm>();
+        if (series.Time is { FirstUnits.Length: > 0 })
         {
-            if (Views.Contains(value))
-            {
-                _view = value;
-            }
+            forms.Add(GraphForm.OverTime);
         }
+
+        if (series.Count > 0)
+        {
+            forms.Add(GraphForm.Frames);
+        }
+
+        forms.Add(GraphForm.Summary);
+        return forms;
     }
 
     public IReadOnlyList<CategorySeries> Tables => [Series];
@@ -276,14 +279,14 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
 
     public override string? Description => Series.Description;
 
-    public override int Count => _view switch
+    public override int Count => View switch
     {
-        CategoryView.OverTime => Series.Time!.FirstUnits.Length,
-        CategoryView.Frames => Series.Count,
+        GraphForm.OverTime => Series.Time!.FirstUnits.Length,
+        GraphForm.Frames => Series.Count,
         _ => Series.Categories.Count,
     };
 
-    public override double Maximum => _view == CategoryView.OverTime ? 100 : 1;
+    public override double Maximum => View == GraphForm.OverTime ? 100 : 1;
 
     // The rows of the strip: one for each value of a fixed layout of up to MaxRows values, else one for all values.
     public int Rows => Series.ValuesPerUnit is > 1 and <= MaxRows ? Series.ValuesPerUnit : 1;
@@ -291,11 +294,11 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
     // The values of an interval, a unit or a category: the weighted count of a category, the values of an interval.
     public override double ValueAt(int index)
     {
-        switch (_view)
+        switch (View)
         {
-            case CategoryView.Summary:
+            case GraphForm.Summary:
                 return Series.Counts[index];
-            case CategoryView.Frames:
+            case GraphForm.Frames:
                 return Series.ValueCount(index);
             default:
                 var counts = new long[Series.Categories.Count];
@@ -307,11 +310,11 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
 
     public override string Describe(int index)
     {
-        switch (_view)
+        switch (View)
         {
-            case CategoryView.Summary:
+            case GraphForm.Summary:
                 return DescribeCategory(Series, index);
-            case CategoryView.Frames:
+            case GraphForm.Frames:
                 return DescribeUnits(index, index + 1, -1);
             default:
                 return DescribeIntervals(index, index + 1);
@@ -341,7 +344,8 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
             if (lane >= 0 && Series.ValueCount(first) > lane)
             {
                 string name = lane < Series.ValueNames.Count ? Series.ValueNames[lane] : $"{Series.ValueLabel} {lane + 1}";
-                return $"{frame} · {name}: {Series.Categories[Series[first, lane]].Name}";
+                byte code = Series[first, lane];
+                return $"{frame} · {name}: {(code == CategorySeries.None ? "no category" : Series.Categories[code].Name)}";
             }
 
             var own = new long[Series.Categories.Count];
@@ -362,11 +366,11 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
             return null;
         }
 
-        switch (_view)
+        switch (View)
         {
-            case CategoryView.Summary:
+            case GraphForm.Summary:
                 return NextUnit(Series, index, selected);
-            case CategoryView.Frames:
+            case GraphForm.Frames:
                 return (long)Series.X.Span[index];
             default:
                 int unit = FirstUnitOfInterval(index);
@@ -377,12 +381,12 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
     public override int? IndexOfFrame(long offset)
     {
         int unit = FrameIndex(Series.X.Span, offset);
-        if (unit < 0 || _view == CategoryView.Summary)
+        if (unit < 0 || View == GraphForm.Summary)
         {
             return null;
         }
 
-        if (_view == CategoryView.Frames)
+        if (View == GraphForm.Frames)
         {
             return unit;
         }
@@ -556,8 +560,24 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
         return order.Count > 8 ? $"{text} · {order.Count - 8} more" : text;
     }
 
-    public static string SharePercent(long count, long total) =>
-        total <= 0 ? "0.0%" : (100.0 * count / total).ToString("0.0", CultureInfo.InvariantCulture) + "%";
+    // A share in percent to one decimal, rounded half to even as the tallies and the text tree round it, in integers.
+    public static string SharePercent(long count, long total)
+    {
+        if (total <= 0)
+        {
+            return "0.0%";
+        }
+
+        Int128 scaled = (Int128)count * 1000;
+        Int128 tenths = scaled / total;
+        Int128 twice = (scaled % total) * 2;
+        if (twice > total || (twice == total && !Int128.IsEvenInteger(tenths)))
+        {
+            tenths++;
+        }
+
+        return string.Create(CultureInfo.InvariantCulture, $"{tenths / 10}.{tenths % 10}%");
+    }
 
     private string FrameText(int unit) =>
         $"Frame {(unit + 1).ToString("N0", CultureInfo.InvariantCulture)} · {Format.Hex((long)Series.X.Span[unit])}";
@@ -612,4 +632,61 @@ public sealed class CodingSummaryGraph : Graph, ISummaryGraph
     }
 
     public override int? IndexOfFrame(long offset) => null;
+}
+
+// A quantity that divides in two, such as the first coded channel's share of a frame's audio bits, in percent, per second of
+// audio: each interval as a 100% column of two segments, the first part at the bottom, with the 50% line marked. Made from the
+// per-second series; a click selects the interval's first frame, as for the other per-second graphs.
+public sealed class ShareSplitGraph : Graph
+{
+    private readonly LineGraph _line;
+
+    public ShareSplitGraph(Series series, ReadOnlyMemory<double> frameOffsets, double duration)
+        : base(series.Name, series.Unit)
+    {
+        ArgumentNullException.ThrowIfNull(series);
+
+        Series = series;
+        _line = new LineGraph(series, frameOffsets, duration);
+        double[] values = [.. series.Values.Span.ToArray().Where(double.IsFinite)];
+        Mean = values.Length == 0 ? double.NaN : values.Average();
+    }
+
+    public Series Series { get; }
+
+    // The mean of the first part's share over the intervals.
+    public double Mean { get; }
+
+    public override string Heading => GraphHeadings.Of(Series);
+
+    public override string? Description => Series.Description;
+
+    public override int Count => _line.Count;
+
+    public override double Maximum => 100;
+
+    // The first part's share of an interval in percent, or NaN where it has none.
+    public double FirstShare(int index)
+    {
+        double value = Series.Values.Span[index];
+        return double.IsFinite(value) ? Math.Clamp(value, 0, 100) : double.NaN;
+    }
+
+    public override double ValueAt(int index) => FirstShare(index);
+
+    public override string Describe(int index)
+    {
+        string time = Format.Clock(Series.X.Span[index]);
+        double first = FirstShare(index);
+        return double.IsNaN(first)
+            ? $"{time} · no share"
+            : $"{time} · first channel {Percent(first)} · second channel {Percent(100 - first)}";
+    }
+
+    // Percent to one decimal, rounded half to even.
+    public static string Percent(double value) => Math.Round(value, 1, MidpointRounding.ToEven).ToString("0.0", CultureInfo.InvariantCulture) + "%";
+
+    public override long? FrameAt(int index, long? selected) => _line.FrameAt(index, selected);
+
+    public override int? IndexOfFrame(long offset) => _line.IndexOfFrame(offset);
 }

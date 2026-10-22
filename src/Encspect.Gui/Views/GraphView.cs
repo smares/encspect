@@ -20,12 +20,9 @@ public sealed partial class GraphView : Control
     public static readonly StyledProperty<int?> MarkedIndexProperty =
         AvaloniaProperty.Register<GraphView, int?>(nameof(MarkedIndex));
 
-    // The view of a category series, bound so that choosing another one draws again.
-    public static readonly StyledProperty<CategoryView?> ViewProperty =
-        AvaloniaProperty.Register<GraphView, CategoryView?>(nameof(View));
-
-    private const double FontSize = 11.5;
-    private const double TooltipSize = 12.5;
+    // The chart's text is the app's size; only the labels along the axes, which sit close together, are a point smaller.
+    private const double TextSize = 14;
+    private const double AxisSize = 12;
     private const double MaxBarWidth = 24;
 
     // Seconds between time labels: whole minutes and hours once they get long.
@@ -39,7 +36,7 @@ public sealed partial class GraphView : Control
 
     static GraphView()
     {
-        AffectsRender<GraphView>(GraphProperty, MarkedIndexProperty, ViewProperty);
+        AffectsRender<GraphView>(GraphProperty, MarkedIndexProperty);
         FocusableProperty.OverrideDefaultValue<GraphView>(true);
     }
 
@@ -59,12 +56,6 @@ public sealed partial class GraphView : Control
     {
         get => GetValue(GraphProperty);
         set => SetValue(GraphProperty, value);
-    }
-
-    public CategoryView? View
-    {
-        get => GetValue(ViewProperty);
-        set => SetValue(ViewProperty, value);
     }
 
     public int? MarkedIndex
@@ -146,7 +137,7 @@ public sealed partial class GraphView : Control
         {
             double y = Math.Round(layout.Y(tick)) + 0.5;
             context.DrawLine(grid, new Point(plot.Left, y), new Point(plot.Right, y));
-            FormattedText label = Text(Graph.FormatValue(tick, string.Empty), FontSize, secondary);
+            FormattedText label = Text(Graph.FormatValue(tick, string.Empty), AxisSize, secondary);
             context.DrawText(label, new Point(plot.Left - 8 - label.Width, y - (label.Height / 2)));
         }
 
@@ -154,7 +145,7 @@ public sealed partial class GraphView : Control
         string yUnit = graph is DistributionGraph ? "frames" : graph.Unit;
         if (yUnit.Length > 0)
         {
-            context.DrawText(Text(yUnit, FontSize, secondary), new Point(4, 2));
+            context.DrawText(Text(yUnit, AxisSize, secondary), new Point(4, 2));
         }
 
         if (graph is LineGraph line)
@@ -183,14 +174,25 @@ public sealed partial class GraphView : Control
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == GraphProperty || change.Property == ViewProperty)
+        if (change.Property == GraphProperty)
         {
             _hover = null;
             _hoverText = null;
             _columns = null;
             _scroll = 0;
             _categoryColumns.Clear();
-            AutomationProperties.SetName(this, Graph is { } graph ? graph.Title : null);
+            _layoutCache = null;
+            _hoverArea = default;
+            _hoverLane = -1;
+            if (Graph is { } graph)
+            {
+                UpdateAutomation(graph);
+            }
+            else
+            {
+                AutomationProperties.SetName(this, null);
+                AutomationProperties.SetHelpText(this, null);
+            }
         }
     }
 
@@ -294,7 +296,7 @@ public sealed partial class GraphView : Control
             ticks.Add(tick);
         }
 
-        double labelWidth = ticks.Max(t => Text(Graph.FormatValue(t, string.Empty), FontSize, Brushes.Black).Width);
+        double labelWidth = ticks.Max(t => Text(Graph.FormatValue(t, string.Empty), AxisSize, Brushes.Black).Width);
         double left = 12 + labelWidth + 8;
         var plot = new Rect(left, top, Math.Max(10, Bounds.Width - left - 16), Math.Max(10, bottom - top));
         return new Layout(plot, axisMax, ticks);
@@ -403,11 +405,11 @@ public sealed partial class GraphView : Control
         int step = line.Axis == Core.SeriesAxis.Seconds ? NiceTimeStep(perLabel) : NiceStep(perLabel);
         double y = plot.Bottom + 4;
         double lastEnd = double.NegativeInfinity;
-        FormattedText? caption = line.Axis == Core.SeriesAxis.FrameOffset ? Text("frames", FontSize, secondary) : null;
+        FormattedText? caption = line.Axis == Core.SeriesAxis.FrameOffset ? Text("frames", AxisSize, secondary) : null;
         double limit = plot.Right - (caption is null ? 0 : caption.Width + 12);
         for (long position = 0; position <= count; position += step)
         {
-            FormattedText label = Text(line.AxisLabel(position), FontSize, secondary);
+            FormattedText label = Text(line.AxisLabel(position), AxisSize, secondary);
             double x = plot.Left + (position * plot.Width / count);
             double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12 || start + label.Width > limit)
@@ -435,7 +437,7 @@ public sealed partial class GraphView : Control
         var fill = new ImmutableSolidColorBrush(Mix(accent, Palette.SurfaceColor(this), 0.82));
         var hovered = new ImmutableSolidColorBrush(accent);
         double lastEnd = double.NegativeInfinity;
-        FormattedText? caption = bars.Unit.Length > 0 ? Text(bars.Unit, FontSize, secondary) : null;
+        FormattedText? caption = bars.Unit.Length > 0 ? Text(bars.Unit, AxisSize, secondary) : null;
         double limit = plot.Right - (caption is null ? 0 : caption.Width + 12);
         for (int i = 0; i < count; i++)
         {
@@ -456,7 +458,7 @@ public sealed partial class GraphView : Control
                 context.FillRectangle(hovered, new Rect(center - (width / 2), plot.Bottom + 2, width, 3), 1.5f);
             }
 
-            FormattedText label = Text(bars.Label(i), FontSize, secondary);
+            FormattedText label = Text(bars.Label(i), AxisSize, secondary);
             double start = center - (label.Width / 2);
             if (start >= lastEnd + 6 && start + label.Width <= limit)
             {
@@ -474,7 +476,7 @@ public sealed partial class GraphView : Control
     // The value in a box beside the point, on whichever side has room.
     private void DrawTooltip(DrawingContext context, string text, Point at, Rect plot)
     {
-        FormattedText label = Text(text, TooltipSize, Palette.Foreground(this));
+        FormattedText label = Text(text, TextSize, Palette.Foreground(this));
         label.MaxTextWidth = Math.Max(160, Bounds.Width - 40);
         var size = new Size(label.Width + 16, label.Height + 8);
         double x = at.X + 12 + size.Width <= Bounds.Width - 2 ? at.X + 12 : at.X - 12 - size.Width;

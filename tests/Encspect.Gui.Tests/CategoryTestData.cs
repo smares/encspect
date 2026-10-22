@@ -14,7 +14,7 @@ internal static class CategoryTestData
         new("Short", "Short block."),
         new("Mixed", "Mixed block."),
         new("Stop", "Stop block."),
-        new("Reserved", "Reserved block type."),
+        new("Reserved", "Reserved block type.") { IsReserved = true },
     ];
 
     public static readonly IReadOnlyList<Category> StereoCodings =
@@ -71,7 +71,7 @@ internal static class CategoryTestData
         }
 
         CategorySeries usage = builder.Build(bitrate.X, bitrate, null, "The block type of each granule and channel.", null, withTime ? TimeOf(stream, units) : null);
-        Category[] sizes = [new("Long, start and stop", "Long transforms."), new("Short", "Short transforms."), new("Mixed", "Mixed transforms."), new("Reserved", "Reserved.")];
+        Category[] sizes = [new("Long, start and stop", "Long transforms."), new("Short", "Short transforms."), new("Mixed", "Mixed transforms."), new("Reserved", "Reserved.") { IsReserved = true }];
         return [usage, usage.Group("Block Sizes", sizes, [0, 0, 1, 2, 0, 3], null, "Long against short granules.")];
     }
 
@@ -119,13 +119,66 @@ internal static class CategoryTestData
         return builder.Build(bitrate.X, bitrate, null, "The submode of each frame.", null, TimeOf(stream, units));
     }
 
-    public static CategorySeries[] All(StreamInfo stream) => [.. BlockUsage(stream), StereoCoding(stream), WindowSequences(stream), Submodes(stream)];
+    // Two values per frame, the second without a category in every fifth frame (a mono frame in a stream that changes channel
+    // modes): the case of a fixed layout whose value is None.
+    public static CategorySeries ChannelStreams(StreamInfo stream)
+    {
+        Series bitrate = stream.Series.First(s => s.Name == "Bitrate");
+        int units = bitrate.X.Length;
+        var builder = new CategorySeriesBuilder("Channel Streams", [new("Long", "l"), new("Short", "s")], "channel stream", 2, ["channel 1", "channel 2"], concept: GraphConcept.BlockSwitching);
+        for (int frame = 0; frame < units; frame++)
+        {
+            builder.Add([(byte)(frame % 17 == 0 ? 1 : 0), frame % 5 == 0 ? CategorySeries.None : (byte)(frame % 13 == 0 ? 1 : 0)]);
+        }
+
+        return builder.Build(bitrate.X, bitrate, null, "The coding of each channel stream.", null, TimeOf(stream, units));
+    }
+
+    // The first coded channel's share of the frame's audio bits, per frame (its own x: not every frame has one) and per second,
+    // the forms of one quantity.
+    public static Series[] ChannelBitShare(StreamInfo stream)
+    {
+        Series bitrate = stream.Series.First(s => s.Name == "Bitrate");
+        int units = bitrate.X.Length;
+        double[] offsets = [.. bitrate.X.ToArray().Where((_, i) => i % 7 != 3)];
+        double[] shares = [.. offsets.Select((_, i) => 50 + (8 * Math.Sin(i / 9.0)) + (i % 11 == 0 ? 9 : 0))];
+        TimeIndex time = TimeOf(stream, units);
+        double[] perSecond = [.. time.Starts.ToArray().Select((_, i) => 48 + (6 * Math.Sin(i * 1.7)))];
+        return
+        [
+            new Series("Channel Bit Share", "%", SeriesAxis.FrameOffset, offsets, shares) { Quantity = "Channel Bit Share", Concept = GraphConcept.BitDistribution, Description = "The first coded channel's share of the frame's audio bits." },
+            new Series("Channel Bit Share Over Time", "%", SeriesAxis.Seconds, time.Starts, perSecond) { Quantity = "Channel Bit Share", Concept = GraphConcept.BitDistribution, Description = "The first coded channel's mean share in each second." },
+        ];
+    }
+
+    // A stream with many entries: a dozen category series under all the headings and a few numeric quantities.
+    public static CategorySeries[] ManyCategorySeries(StreamInfo stream)
+    {
+        var all = new List<CategorySeries>(All(stream));
+        Series bitrate = stream.Series.First(s => s.Name == "Bitrate");
+        int units = bitrate.X.Length;
+        GraphConcept[] concepts = [GraphConcept.StereoCoding, GraphConcept.BlockSwitching, GraphConcept.CodedBandwidth, GraphConcept.None];
+        for (int i = 0; i < 8; i++)
+        {
+            var builder = new CategorySeriesBuilder($"Coding Tool {i + 1}", Numbered("State", 3 + (i % 3)), "frame", 1, concept: concepts[i % concepts.Length]);
+            for (int frame = 0; frame < units; frame++)
+            {
+                builder.Add((byte)((frame / (3 + i)) % (3 + (i % 3))));
+            }
+
+            all.Add(builder.Build(bitrate.X, bitrate, null, $"Test series number {i + 1}.", null, TimeOf(stream, units)));
+        }
+
+        return [.. all];
+    }
+
+    public static CategorySeries[] All(StreamInfo stream) => [.. BlockUsage(stream), StereoCoding(stream), WindowSequences(stream), ChannelStreams(stream), Submodes(stream)];
 
     // The default parsers with the MPEG one wrapped to add category series to the streams it reports.
-    public static Analyzer Analyzer(Func<StreamInfo, IReadOnlyList<CategorySeries>>? make = null) =>
-        new(DefaultParsers.Tags, [new CategoryParser(DefaultParsers.Formats[0], make ?? All), .. DefaultParsers.Formats.Skip(1)], DefaultParsers.Codecs);
+    public static Analyzer Analyzer(Func<StreamInfo, IReadOnlyList<CategorySeries>>? make = null, Func<StreamInfo, IReadOnlyList<Series>>? extra = null) =>
+        new(DefaultParsers.Tags, [new CategoryParser(DefaultParsers.Formats[0], make ?? All, extra ?? ChannelBitShare), .. DefaultParsers.Formats.Skip(1)], DefaultParsers.Codecs);
 
-    private sealed class CategoryParser(IFormatParser inner, Func<StreamInfo, IReadOnlyList<CategorySeries>> make) : IFormatParser
+    private sealed class CategoryParser(IFormatParser inner, Func<StreamInfo, IReadOnlyList<CategorySeries>> make, Func<StreamInfo, IReadOnlyList<Series>> extra) : IFormatParser
     {
         public string Name => inner.Name;
 
@@ -138,7 +191,7 @@ internal static class CategoryTestData
             inner.Parse(context);
             foreach (StreamInfo stream in context.Streams.ToArray())
             {
-                context.UpdateStream(stream, stream with { CategorySeries = make(stream) });
+                context.UpdateStream(stream, stream with { CategorySeries = make(stream), Series = [.. stream.Series, .. extra(stream)] });
             }
         }
     }

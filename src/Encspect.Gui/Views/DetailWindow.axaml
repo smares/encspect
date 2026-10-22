@@ -55,7 +55,12 @@
     <ProgressBar Grid.Row="1" Height="2" MinHeight="2" Maximum="1" Value="{Binding Progress}" IsVisible="{Binding IsLoading}" />
 
     <Grid Grid.Row="2" Name="Body" ColumnDefinitions="*,Auto,0">
-      <Grid RowDefinitions="*,1,230" ColumnDefinitions="5*,1,6*">
+      <Grid Name="Panes" ColumnDefinitions="5*,1,6*">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" MinHeight="120" />
+          <RowDefinition Height="1" />
+          <RowDefinition Height="*" MinHeight="250" />
+        </Grid.RowDefinitions>
         <ListBox Name="TreeList" Classes="compact" ItemsSource="{Binding Tree}" SelectedItem="{Binding SelectedNode}"
                  Background="Transparent" Padding="0,4">
           <ListBox.ItemTemplate>
@@ -138,44 +143,17 @@
                   </DataTemplate>
                 </ComboBox.ItemTemplate>
               </ComboBox>
-              <ItemsControl Name="GraphChoices" ItemsSource="{Binding Graphs.ChoiceGroups}">
-                <ItemsControl.ItemsPanel>
-                  <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Horizontal" />
-                  </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate DataType="vm:GraphChoiceGroup">
-                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,14,2">
-                      <TextBlock Text="{Binding Heading}" Classes="secondary heading" VerticalAlignment="Center" />
-                      <ItemsControl ItemsSource="{Binding Choices}">
-                        <ItemsControl.ItemsPanel>
-                          <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="6" />
-                          </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate DataType="vm:GraphChoice">
-                            <Button Content="{Binding Title}" Classes="chip" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" ToolTip.Tip="{Binding Description}"
-                                    AutomationProperties.Name="{Binding Title}" />
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                    </StackPanel>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <StackPanel Name="GraphViewChoices" Orientation="Horizontal" Spacing="6" Margin="0,2,0,2" IsVisible="{Binding Graphs.HasViews}">
-                <TextBlock Text="View" Classes="secondary heading" VerticalAlignment="Center" />
-                <ItemsControl ItemsSource="{Binding Graphs.Views}">
+              <StackPanel Name="GraphFormChoices" Orientation="Horizontal" Spacing="6" Margin="0,2,0,2" IsVisible="{Binding Graphs.HasForms}">
+                <TextBlock Text="View" Classes="secondary" VerticalAlignment="Center" />
+                <ItemsControl ItemsSource="{Binding Graphs.Forms}">
                   <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                       <StackPanel Orientation="Horizontal" Spacing="6" />
                     </ItemsPanelTemplate>
                   </ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="vm:ViewChoice">
-                      <Button Content="{Binding Title}" Classes="chip" Classes.selected="{Binding IsSelected}" Click="OnGraphView" ToolTip.Tip="{Binding Description}"
+                    <DataTemplate DataType="vm:GraphFormChoice">
+                      <Button Content="{Binding Title}" Classes="chip" Classes.selected="{Binding IsSelected}" Click="OnGraphForm" ToolTip.Tip="{Binding Description}"
                               AutomationProperties.Name="{Binding Title}" />
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
@@ -203,13 +181,35 @@
           </Panel>
 
           <DockPanel IsVisible="{Binding IsGraphsShown}">
-            <TextBlock Name="DecoderNote" DockPanel.Dock="Bottom" Text="{Binding Graphs.DecoderNote}" Classes="secondary" FontSize="12"
+            <TextBlock Name="DecoderNote" DockPanel.Dock="Bottom" Text="{Binding Graphs.DecoderNote}" Classes="secondary"
                        Margin="14,0,12,8" TextTrimming="CharacterEllipsis" IsVisible="{Binding Graphs.DecoderNote, Converter={x:Static ObjectConverters.IsNotNull}}" />
-            <Panel>
-              <TextBlock Text="No graphs: the file has no stream with figures over time." Classes="secondary" Margin="14,6" VerticalAlignment="Top"
-                         IsVisible="{Binding HasNoGraphs}" />
-              <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" View="{Binding Graphs.View}" Margin="6,2,8,4" />
-            </Panel>
+            <Grid ColumnDefinitions="Auto,1,*">
+              <ScrollViewer Name="GraphList" Width="210" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <ItemsControl Name="GraphChoices" ItemsSource="{Binding Graphs.ChoiceGroups}" Margin="6,0,6,6">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="vm:GraphChoiceGroup">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Heading}" Classes="secondary heading" />
+                        <ItemsControl ItemsSource="{Binding Choices}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:GraphChoice">
+                              <Button Content="{Binding Title}" Classes="entry" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" ToolTip.Tip="{Binding Description}"
+                                      AutomationProperties.Name="{Binding Title}" />
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+              <Border Grid.Column="1" Classes="divider" BorderThickness="1,0,0,0" />
+              <Panel Grid.Column="2">
+                <TextBlock Text="No graphs: the file has no stream with figures over time." Classes="secondary" Margin="14,6" VerticalAlignment="Top"
+                           IsVisible="{Binding HasNoGraphs}" />
+                <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" Margin="6,2,8,4" />
+              </Panel>
+            </Grid>
           </DockPanel>
         </DockPanel>
       </Grid>

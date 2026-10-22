@@ -186,8 +186,21 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Opacity" Value="0.7" />
   </Style>
+  <!-- The list of graphs: headings and entries are the app's one size, a heading set apart by weight and the secondary color. -->
   <Style Selector="TextBlock.heading">
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Margin" Value="8,10,0,2" />
+  </Style>
+  <Style Selector="Button.entry">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.entry.selected">
+    <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundChecked}" />
   </Style>
   <Style Selector="Button.chip.selected">
     <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundChecked}" />

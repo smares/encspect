@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -11,32 +12,59 @@ using Encspect.Gui.ViewModels;
 
 namespace Encspect.Gui.Views;
 
-// The category charts: the share of each category over time, the strip of one cell per frame and the summary tables. Made
-// from the series alone, in the palette of CategoryColors, always with names and shares in text.
+// The category charts: the share of each category over time, the strip of one cell per frame, the summary tables and the
+// two-part share. Made from the series alone, in the palette of CategoryColors, always with names and shares in text.
 public sealed partial class GraphView
 {
-    private const double RowHeightOfTable = 22;
     private const double TableHeader = 28;
+    private const double RowHeightOfTable = 22;
     private const double TableWidth = 470;
     private const double LegendLine = 18;
     private const int MaxLegendLines = 3;
     private const double StripGap = 6;
+    private const double CaptionHeight = 20;
+    private const double AxisHeight = 24;
 
-    private readonly Dictionary<(int View, int Width, int Lane), CategoryColumns> _categoryColumns = [];
+    // The plot is never lower than this: a view with less room scrolls instead of squeezing the chart.
+    private const double MinOverTimeHeight = 110;
+    private const double MinStripRow = 8;
+
+    private readonly Dictionary<(int Form, int Width, int Lane), CategoryColumns> _categoryColumns = [];
     private Graph? _categoryColumnsGraph;
     private double _scroll;
     private int _hoverLane = -1;
     private Rect _hoverArea;
+    private (Graph Graph, Size Size, ChartLayout Layout)? _layoutCache;
 
     // The category chart's answer to a pointer position or to a key: the point it stands for (what the graph's FrameAt
     // takes), its hover text, the cell it covers, the strip row, and for a legend entry its category.
     private readonly record struct CategoryHit(int Index, string Text, Rect Area, int Lane = -1, bool IsLegend = false, int Category = -1);
 
-    private readonly record struct CategoryLayout(Rect Plot, double RowHeight, int Rows, IReadOnlyList<(Rect Rect, int Category)> Legend, double LegendBottom);
+    // Where a chart puts its parts, in content coordinates (scrolled by _scroll when the content is taller than the view).
+    private readonly record struct ChartLayout(Rect Plot, double RowHeight, int Rows, IReadOnlyList<(Rect Rect, int Category)> Legend, int LegendEntries, double ContentHeight);
 
-    private static bool IsCategory(Graph graph) => graph is CategoryGraph or CodingSummaryGraph;
+    // The plot's height, the rows of a strip, the height of all the content and whether it is taller than the view, so that tests
+    // can hold the layout to its minimums; null for a graph that is no category chart.
+    public (double PlotHeight, int Rows, double ContentHeight, bool Scrolls)? ChartMetrics()
+    {
+        if (Graph is not { } graph || !IsCategory(graph) || Bounds.Width < 80 || Bounds.Height < 60)
+        {
+            return null;
+        }
 
-    private static bool IsSummary(Graph graph) => graph is CodingSummaryGraph || graph is CategoryGraph { View: CategoryView.Summary };
+        if (IsSummary(graph))
+        {
+            double height = ContentHeightOf(graph);
+            return (Bounds.Height, 0, height, height > Bounds.Height);
+        }
+
+        ChartLayout layout = ChartLayoutFor(graph);
+        return (layout.Plot.Height, layout.Rows, layout.ContentHeight, layout.ContentHeight > Bounds.Height);
+    }
+
+    private static bool IsCategory(Graph graph) => graph is CategoryGraph or CodingSummaryGraph or ShareSplitGraph;
+
+    private static bool IsSummary(Graph graph) => graph is CodingSummaryGraph || graph is CategoryGraph { View: GraphForm.Summary };
 
     private static bool HasHighContrast()
     {
@@ -69,6 +97,17 @@ public sealed partial class GraphView
             return;
         }
 
+        // Up and Down change the row of a strip of several; in a table, and everywhere else, they step like Left and Right.
+        if (e.Key is Key.Up or Key.Down && graph is CategoryGraph { View: GraphForm.Frames } strip && ChartLayoutFor(strip).Rows > 1)
+        {
+            int rows = ChartLayoutFor(strip).Rows;
+            int lane = Math.Clamp((_hoverLane < 0 ? 0 : _hoverLane) + (e.Key == Key.Down ? 1 : -1), 0, rows - 1);
+            _hoverLane = lane;
+            SetCategoryHit(HitOfIndex(graph, Math.Clamp(_hover ?? MarkedIndex ?? 0, 0, graph.Count - 1)));
+            e.Handled = true;
+            return;
+        }
+
         int count = graph.Count;
         int current = _hover ?? MarkedIndex ?? -1;
         int? next = e.Key switch
@@ -98,7 +137,7 @@ public sealed partial class GraphView
     // One point, or with Ctrl one pixel column's worth of units.
     private int Step(Graph graph, KeyEventArgs e)
     {
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || graph is not CategoryGraph { View: CategoryView.Frames } frames)
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || graph is not CategoryGraph { View: GraphForm.Frames } frames)
         {
             return 1;
         }
@@ -117,16 +156,35 @@ public sealed partial class GraphView
             _hoverText = text;
             _hoverLane = lane;
             _hoverArea = hit?.Area ?? default;
+            if (Graph is { } graph)
+            {
+                UpdateAutomation(graph);
+            }
+
             InvalidateVisual();
         }
+    }
+
+    // The graph's name and help text carry what the picture shows in words: the chart, its legend with the shares, and what
+    // the cursor is on.
+    private void UpdateAutomation(Graph graph)
+    {
+        string legend = graph switch
+        {
+            CategoryGraph { View: not GraphForm.Summary } category => "Legend: " + string.Join(", ", category.Series.Categories.Select((c, i) => $"{c.Name} {CategoryGraph.SharePercent(category.Series.Counts[i], category.Series.Total)}")),
+            ShareSplitGraph split => $"Legend: first channel, second channel; mean first channel share {ShareSplitGraph.Percent(split.Mean)}",
+            _ => string.Empty,
+        };
+        AutomationProperties.SetName(this, graph.Title);
+        AutomationProperties.SetHelpText(this, string.Join(". ", new[] { legend, _hoverText ?? string.Empty }.Where(t => t.Length > 0)));
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         base.OnPointerWheelChanged(e);
-        if (Graph is { } graph && IsCategory(graph) && IsSummary(graph))
+        if (Graph is { } graph && IsCategory(graph))
         {
-            double max = Math.Max(0, SummaryRows(graph, Bounds.Width).Height - (Bounds.Height - 30));
+            double max = Math.Max(0, ContentHeightOf(graph) - Bounds.Height);
             double next = Math.Clamp(_scroll - (e.Delta.Y * 40), 0, max);
             if (next != _scroll)
             {
@@ -136,6 +194,10 @@ public sealed partial class GraphView
             }
         }
     }
+
+    private double ContentHeightOf(Graph graph) => IsSummary(graph)
+        ? SummaryRows(graph, Bounds.Width).Height + 30
+        : ChartLayoutFor(graph).ContentHeight;
 
     private CategoryColumns ColumnsFor(CategoryGraph graph, int width, int lane)
     {
@@ -153,80 +215,117 @@ public sealed partial class GraphView
                 _categoryColumns.Clear();
             }
 
-            columns = graph.View == CategoryView.OverTime ? CategoryColumns.OverTime(graph.Series, width) : CategoryColumns.Frames(graph.Series, width, lane);
+            columns = graph.View == GraphForm.OverTime ? CategoryColumns.OverTime(graph.Series, width) : CategoryColumns.Frames(graph.Series, width, lane);
             _categoryColumns[key] = columns;
         }
 
         return columns;
     }
 
-    private (CategoryGraph Graph, CategoryView View, Size Size, CategoryLayout Layout)? _layoutCache;
-
-    private CategoryLayout LayoutOfCategory(CategoryGraph graph)
+    private ChartLayout ChartLayoutFor(Graph graph)
     {
-        if (_layoutCache is { } cached && ReferenceEquals(cached.Graph, graph) && cached.View == graph.View && cached.Size == Bounds.Size)
+        if (_layoutCache is { } cached && ReferenceEquals(cached.Graph, graph) && cached.Size == Bounds.Size)
         {
             return cached.Layout;
         }
 
-        CategoryLayout layout = MeasureCategoryLayout(graph);
-        _layoutCache = (graph, graph.View, Bounds.Size, layout);
+        ChartLayout layout = MeasureChart(graph);
+        _layoutCache = (graph, Bounds.Size, layout);
         return layout;
     }
 
-    private CategoryLayout MeasureCategoryLayout(CategoryGraph graph)
+    // The legend's entries as text with their shares, and the category each stands for.
+    private static List<(string Label, int Category)> LegendEntries(Graph graph) => graph switch
     {
-        CategorySeries series = graph.Series;
-        double labelWidth = 0;
-        if (graph.View == CategoryView.OverTime)
-        {
-            labelWidth = Text("100%", FontSize, Brushes.Black).Width;
-        }
-        else if (graph.Rows > 1 && series.ValueNames.Count > 0)
-        {
-            labelWidth = Math.Min(150, series.ValueNames.Max(n => Text(n, FontSize, Brushes.Black).Width));
-        }
+        CategoryGraph category => [.. Enumerable.Range(0, category.Series.Categories.Count).Select(c => ($"{category.Series.Categories[c].Name} {CategoryGraph.SharePercent(category.Series.Counts[c], category.Series.Total)}", c))],
+        ShareSplitGraph split => [($"First channel, mean {ShareSplitGraph.Percent(split.Mean)}", 0), ($"Second channel, mean {ShareSplitGraph.Percent(100 - split.Mean)}", 1)],
+        _ => [],
+    };
 
-        double left = 12 + labelWidth + (labelWidth > 0 ? 8 : 0);
-        double right = Bounds.Width - 16;
-        var legend = new List<(Rect, int)>();
+    // Packs the legend entries into lines at most maxLines of them.
+    private static (List<(Rect, int)> Rects, int Lines, int Shown) PackLegend(List<(string Label, int Category)> entries, double right, int maxLines)
+    {
+        var rects = new List<(Rect, int)>();
         double x = 12;
-        double y = 0;
         int line = 0;
-        int shown = 0;
-        double legendTop = Bounds.Height - 6 - (MaxLegendLines * LegendLine);
-        for (int category = 0; category < series.Categories.Count; category++)
+        foreach ((string label, int category) in entries)
         {
-            string label = $"{series.Categories[category].Name} {CategoryGraph.SharePercent(series.Counts[category], series.Total)}";
-            double width = 16 + Text(label, FontSize, Brushes.Black).Width + 14;
+            double width = 16 + Text(label, TextSize, Brushes.Black).Width + 14;
             if (x + width > right && x > 12)
             {
                 line++;
                 x = 12;
             }
 
-            if (line >= MaxLegendLines)
+            if (line >= maxLines)
             {
                 break;
             }
 
-            legend.Add((new Rect(x, y + (line * LegendLine), width, LegendLine), category));
+            rects.Add((new Rect(x, line * LegendLine, width, LegendLine), category));
             x += width;
-            shown = line + 1;
         }
 
-        double legendHeight = (Math.Max(1, shown) * LegendLine) + 8;
-        double top = 22;
-        double bottom = Math.Max(top + 20, Bounds.Height - legendHeight - 24);
-        double legendOrigin = bottom + 24;
-        var placed = legend.Select(l => (new Rect(l.Item1.X, legendOrigin + l.Item1.Y, l.Item1.Width, l.Item1.Height), l.Item2)).ToList();
-        var plot = new Rect(left, top, Math.Max(10, right - left), Math.Max(10, bottom - top));
-        double rowHeight = graph.View == CategoryView.Frames ? Math.Clamp((plot.Height - ((graph.Rows - 1) * StripGap) - 8) / graph.Rows, 6, 64) : plot.Height;
-        _ = legendTop;
-        return new CategoryLayout(plot, rowHeight, graph.View == CategoryView.Frames ? graph.Rows : 1, placed, legendOrigin + legendHeight);
+        return (rects, rects.Count == 0 ? 1 : line + 1, rects.Count);
     }
 
-    private double RowTop(CategoryLayout layout, int row) => layout.Plot.Top + 8 + (row * (layout.RowHeight + StripGap));
+    // The chart's parts for the size of the view. The plot is never lower than a minimum (about 110 pixels over time, what
+    // its rows need in a strip): the legend folds to one line first, a strip whose rows do not fit becomes one stacked row,
+    // and the content that is still taller than the view scrolls.
+    private ChartLayout MeasureChart(Graph graph)
+    {
+        var category = graph as CategoryGraph;
+        double right = Bounds.Width - 16;
+        int rows = category is { View: GraphForm.Frames } ? category.Rows : 1;
+        double labelWidth = category is { View: GraphForm.Frames }
+            ? rows > 1 && category.Series.ValueNames.Count > 0 ? Math.Min(150, category.Series.ValueNames.Max(n => Text(n, AxisSize, Brushes.Black).Width)) : 0
+            : Text("100%", AxisSize, Brushes.Black).Width;
+        double left = 12 + labelWidth + (labelWidth > 0 ? 8 : 0);
+
+        List<(string, int)> entries = LegendEntries(graph);
+        (List<(Rect, int)> rects, int lines, int shown) = PackLegend(entries, right, MaxLegendLines);
+        double Needed(int r) => (r * MinStripRow) + ((r - 1) * StripGap) + 14;
+        double minPlot = category is { View: GraphForm.Frames } ? Math.Max(60, Needed(rows)) : MinOverTimeHeight;
+
+        // Rows that cannot each get their minimum, in the room left with a one-line legend, become one stacked row.
+        double roomWithOneLine = Bounds.Height - CaptionHeight - AxisHeight - (LegendLine + 8);
+        if (rows > 1 && roomWithOneLine < Needed(rows))
+        {
+            rows = 1;
+            minPlot = 60;
+        }
+
+        int chosenLines = 1;
+        double plotHeight = minPlot;
+        for (int l = lines; l >= 1; l--)
+        {
+            double room = Bounds.Height - CaptionHeight - AxisHeight - ((l * LegendLine) + 8);
+            if (room >= minPlot)
+            {
+                chosenLines = l;
+                plotHeight = room;
+                break;
+            }
+        }
+
+        if (plotHeight == minPlot && Bounds.Height - CaptionHeight - AxisHeight - ((lines * LegendLine) + 8) < minPlot)
+        {
+            chosenLines = 1;
+        }
+
+        if (chosenLines < lines)
+        {
+            (rects, _, shown) = PackLegend(entries, right, chosenLines);
+        }
+
+        double legendTop = CaptionHeight + plotHeight + AxisHeight;
+        var placed = rects.Select(r => (new Rect(r.Item1.X, legendTop + r.Item1.Y, r.Item1.Width, r.Item1.Height), r.Item2)).ToList();
+        var plot = new Rect(left, CaptionHeight, Math.Max(10, right - left), plotHeight);
+        double rowHeight = category is { View: GraphForm.Frames } ? Math.Clamp((plotHeight - ((rows - 1) * StripGap) - 8) / rows, MinStripRow, 64) : plotHeight;
+        return new ChartLayout(plot, rowHeight, rows, placed, shown, legendTop + (chosenLines * LegendLine) + 8);
+    }
+
+    private static double RowTop(ChartLayout layout, int row) => layout.Plot.Top + 8 + (row * (layout.RowHeight + StripGap));
 
     private CategoryHit? CategoryHitAt(Point point, bool withText = true)
     {
@@ -251,13 +350,15 @@ public sealed partial class GraphView
             return null;
         }
 
-        var category = (CategoryGraph)graph;
-        CategoryLayout layout = LayoutOfCategory(category);
+        point = new Point(point.X, point.Y + _scroll);
+        ChartLayout layout = ChartLayoutFor(graph);
         foreach ((Rect rect, int index) in layout.Legend)
         {
             if (rect.Contains(point))
             {
-                return new CategoryHit(-1, withText ? CategoryGraph.DescribeCategory(category.Series, index) : string.Empty, rect, IsLegend: true, Category: index);
+                return graph is CategoryGraph legendOwner
+                    ? new CategoryHit(-1, withText ? CategoryGraph.DescribeCategory(legendOwner.Series, index) : string.Empty, rect, IsLegend: true, Category: index)
+                    : null;
             }
         }
 
@@ -268,7 +369,20 @@ public sealed partial class GraphView
         }
 
         int width = Math.Max(1, (int)plot.Width);
-        if (category.View == CategoryView.OverTime)
+        if (graph is ShareSplitGraph split)
+        {
+            if (point.Y < plot.Top || point.Y > plot.Bottom)
+            {
+                return null;
+            }
+
+            SplitColumns columns = SplitColumnsOf(split, width);
+            int column = Math.Clamp((int)((point.X - plot.Left) * columns.Count / plot.Width), 0, columns.Count - 1);
+            return SplitHit(split, columns, column, plot, withText);
+        }
+
+        var category = (CategoryGraph)graph;
+        if (category.View == GraphForm.OverTime)
         {
             if (point.Y < plot.Top || point.Y > plot.Bottom)
             {
@@ -297,7 +411,7 @@ public sealed partial class GraphView
         return null;
     }
 
-    private CategoryHit OverTimeHit(CategoryGraph graph, CategoryColumns columns, int column, Rect plot, bool withText = true)
+    private static CategoryHit OverTimeHit(CategoryGraph graph, CategoryColumns columns, int column, Rect plot, bool withText = true)
     {
         double colW = plot.Width / columns.Count;
         var area = new Rect(plot.Left + (column * colW), plot.Top, Math.Max(1, colW), plot.Height);
@@ -307,13 +421,30 @@ public sealed partial class GraphView
         return new CategoryHit(filled >= 0 ? filled : first, withText ? graph.DescribeIntervals(first, end) : string.Empty, area);
     }
 
-    private CategoryHit StripHit(CategoryGraph graph, CategoryColumns columns, int column, int lane, Rect plot, double top, double rowHeight, bool withText = true)
+    private static CategoryHit StripHit(CategoryGraph graph, CategoryColumns columns, int column, int lane, Rect plot, double top, double rowHeight, bool withText = true)
     {
         double colW = plot.Width / columns.Count;
         var area = new Rect(plot.Left + (column * colW), top, Math.Max(1, colW), rowHeight);
         int first = columns.First(column);
         int end = columns.End(column);
         return new CategoryHit(graph.UnitOfColumn(first, end, lane), withText ? graph.DescribeUnits(first, end, lane) : string.Empty, area, lane);
+    }
+
+    private static CategoryHit SplitHit(ShareSplitGraph graph, SplitColumns columns, int column, Rect plot, bool withText = true)
+    {
+        double colW = plot.Width / columns.Count;
+        var area = new Rect(plot.Left + (column * colW), plot.Top, Math.Max(1, colW), plot.Height);
+        int first = columns.First(column);
+        int end = columns.First(column + 1);
+        string text = string.Empty;
+        if (withText)
+        {
+            text = end - first <= 1
+                ? graph.Describe(first)
+                : $"{Format.Clock(graph.Series.X.Span[first])} to {Format.Clock(graph.Series.X.Span[end - 1])} · first channel {ShareSplitGraph.Percent(columns.Share(column))} · second channel {ShareSplitGraph.Percent(100 - columns.Share(column))} (mean of {end - first} intervals)";
+        }
+
+        return new CategoryHit(first, text, area);
     }
 
     // The hit for a key: the interval, unit or row at the index, in the strip's row that was last pointed at.
@@ -328,22 +459,27 @@ public sealed partial class GraphView
             return new CategoryHit(index, graph.Describe(index), area);
         }
 
-        var category = (CategoryGraph)graph;
-        CategoryLayout layout = LayoutOfCategory(category);
+        ChartLayout layout = ChartLayoutFor(graph);
         int width = Math.Max(1, (int)layout.Plot.Width);
-        if (category.View == CategoryView.OverTime)
+        if (graph is ShareSplitGraph split)
+        {
+            SplitColumns splitColumns = SplitColumnsOf(split, width);
+            CategoryHit hit = SplitHit(split, splitColumns, ColumnOf(splitColumns.Firsts, index), layout.Plot);
+            return hit with { Index = index, Text = split.Describe(index) };
+        }
+
+        var category = (CategoryGraph)graph;
+        if (category.View == GraphForm.OverTime)
         {
             CategoryColumns columns = ColumnsFor(category, width, -1);
-            int column = ColumnOf(columns, index);
-            CategoryHit hit = OverTimeHit(category, columns, column, layout.Plot);
+            CategoryHit hit = OverTimeHit(category, columns, ColumnOf(columns, index), layout.Plot);
             return hit with { Index = index, Text = category.Describe(index) };
         }
 
-        int row2 = Math.Clamp(_hoverLane, 0, layout.Rows - 1);
-        int lane = layout.Rows > 1 ? row2 : -1;
+        int rowIndex = Math.Clamp(_hoverLane, 0, layout.Rows - 1);
+        int lane = layout.Rows > 1 ? rowIndex : -1;
         CategoryColumns strip = ColumnsFor(category, width, lane);
-        int cell = ColumnOf(strip, index);
-        CategoryHit stripHit = StripHit(category, strip, cell, lane, layout.Plot, RowTop(layout, layout.Rows > 1 ? row2 : 0), layout.RowHeight);
+        CategoryHit stripHit = StripHit(category, strip, ColumnOf(strip, index), lane, layout.Plot, RowTop(layout, layout.Rows > 1 ? rowIndex : 0), layout.RowHeight);
         return stripHit with { Index = index, Text = category.DescribeUnits(index, index + 1, lane) };
     }
 
@@ -368,6 +504,54 @@ public sealed partial class GraphView
         return low;
     }
 
+    private static int ColumnOf(int[] firsts, int item)
+    {
+        int found = Array.BinarySearch(firsts, 0, firsts.Length - 1, item);
+        return found >= 0 ? found : Math.Max(0, ~found - 1);
+    }
+
+    // The intervals of a two-part share merged into at most as many columns as pixels: the mean of the first part's share in each.
+    private sealed class SplitColumns(int[] firsts, double[] shares)
+    {
+        public int[] Firsts { get; } = firsts;
+
+        public int Count => shares.Length;
+
+        public int First(int column) => Firsts[column];
+
+        public double Share(int column) => shares[column];
+    }
+
+    private SplitColumns SplitColumnsOf(ShareSplitGraph graph, int width)
+    {
+        int n = graph.Count;
+        int used = Math.Max(1, Math.Min(n, width));
+        var firsts = new int[used + 1];
+        var shares = new double[used];
+        for (int column = 0; column < used; column++)
+        {
+            int from = (int)((long)column * n / used);
+            int to = (int)((long)(column + 1) * n / used);
+            firsts[column] = from;
+            double sum = 0;
+            int count = 0;
+            for (int i = from; i < to; i++)
+            {
+                double value = graph.FirstShare(i);
+                if (!double.IsNaN(value))
+                {
+                    sum += value;
+                    count++;
+                }
+            }
+
+            shares[column] = count == 0 ? double.NaN : sum / count;
+        }
+
+        firsts[used] = n;
+        return new SplitColumns(firsts, shares);
+    }
+
     private void RenderCategory(DrawingContext context, Graph graph)
     {
         bool isDark = ActualThemeVariant == ThemeVariant.Dark;
@@ -377,7 +561,7 @@ public sealed partial class GraphView
         if (IsSummary(graph))
         {
             DrawSummary(context, (ISummaryGraph)graph, graph, isDark, surface, secondary, foreground);
-            if (_hover is { } row && _hoverText is { } text)
+            if (_hover is not null && _hoverText is { } text)
             {
                 DrawTooltip(context, text, new Point(_hoverArea.Center.X, _hoverArea.Y), new Rect(0, 0, Bounds.Width, Bounds.Height));
             }
@@ -385,28 +569,37 @@ public sealed partial class GraphView
             return;
         }
 
-        var category = (CategoryGraph)graph;
+        ChartLayout layout = ChartLayoutFor(graph);
+        _scroll = Math.Clamp(_scroll, 0, Math.Max(0, layout.ContentHeight - Bounds.Height));
+        using (context.PushClip(new Rect(Bounds.Size)))
+        using (context.PushTransform(Matrix.CreateTranslation(0, -_scroll)))
+        {
+            if (graph is ShareSplitGraph split)
+            {
+                DrawSplit(context, split, layout, isDark, surface, secondary, foreground);
+            }
+            else
+            {
+                DrawChart(context, (CategoryGraph)graph, layout, isDark, surface, secondary, foreground);
+            }
+        }
+    }
+
+    private void DrawChart(DrawingContext context, CategoryGraph category, ChartLayout layout, bool isDark, Color surface, IBrush secondary, IBrush foreground)
+    {
         CategorySeries series = category.Series;
         CategoryStyle[] styles = CategoryColors.For(series, isDark, surface);
         IBrush[] brushes = [.. styles.Select(s => (IBrush)new ImmutableSolidColorBrush(s.Color))];
         bool highContrast = HasHighContrast();
-        CategoryLayout layout = LayoutOfCategory(category);
         Rect plot = layout.Plot;
         IPen grid = new Pen(Palette.Grid(this), 1);
         int width = Math.Max(1, (int)plot.Width);
         var heights = new double[series.Categories.Count];
 
-        if (category.View == CategoryView.OverTime)
+        if (category.View == GraphForm.OverTime)
         {
-            context.DrawText(Text("share of values", FontSize, secondary), new Point(4, 2));
-            foreach (int percent in new[] { 0, 25, 50, 75, 100 })
-            {
-                double y = Math.Round(plot.Bottom - (plot.Height * percent / 100.0)) + 0.5;
-                context.DrawLine(grid, new Point(plot.Left, y), new Point(plot.Right, y));
-                FormattedText label = Text(percent + "%", FontSize, secondary);
-                context.DrawText(label, new Point(plot.Left - 8 - label.Width, y - (label.Height / 2)));
-            }
-
+            context.DrawText(Text("share of the values in each interval", AxisSize, secondary), new Point(4, 2));
+            DrawPercentTicks(context, plot, grid, secondary);
             CategoryColumns columns = ColumnsFor(category, width, -1);
             double colW = plot.Width / columns.Count;
             for (int column = 0; column < columns.Count; column++)
@@ -419,7 +612,7 @@ public sealed partial class GraphView
                 DrawStack(context, columns.Counts(column), plot.Left + (column * colW), colW, plot.Top, plot.Height, styles, brushes, heights, surface, highContrast, series);
             }
 
-            DrawTimeAxis(context, category, columns, plot, secondary);
+            DrawTimeAxis(context, series.Time!.Starts.Span, columns.Count, columns.First, plot, secondary);
             if (MarkedIndex is { } marked && marked < category.Count)
             {
                 double x = Math.Round(plot.Left + ((ColumnOf(columns, marked) + 0.5) * colW)) + 0.5;
@@ -428,7 +621,8 @@ public sealed partial class GraphView
         }
         else
         {
-            context.DrawText(Text(series.ValueLabel + (layout.Rows > 1 ? "s per frame" : " of each frame"), FontSize, secondary), new Point(4, 2));
+            string caption = layout.Rows > 1 ? $"one row for each of the {series.ValuesPerUnit} values of a frame" : $"{series.ValueLabel} values of each frame";
+            context.DrawText(Text(caption, AxisSize, secondary), new Point(4, 2));
             for (int row = 0; row < layout.Rows; row++)
             {
                 int lane = layout.Rows > 1 ? row : -1;
@@ -456,7 +650,7 @@ public sealed partial class GraphView
 
                 if (layout.Rows > 1 && row < series.ValueNames.Count)
                 {
-                    FormattedText name = Fit(series.ValueNames[row], FontSize, secondary, plot.Left - 20);
+                    FormattedText name = Fit(series.ValueNames[row], AxisSize, secondary, plot.Left - 20);
                     context.DrawText(name, new Point(plot.Left - 8 - name.Width, top + ((layout.RowHeight - name.Height) / 2)));
                 }
             }
@@ -469,14 +663,81 @@ public sealed partial class GraphView
             }
         }
 
-        DrawLegend(context, category, layout, brushes, styles, secondary, surface);
+        DrawLegend(context, layout, series, brushes, styles, secondary, surface);
+        DrawCursor(context, plot, foreground);
+    }
 
-        if (_hover is { } hover && _hoverText is { } hoverText)
+    private void DrawCursor(DrawingContext context, Rect plot, IBrush foreground)
+    {
+        if (_hover is not null && _hoverText is { } text)
         {
             context.DrawRectangle(null, new Pen(foreground, 1), _hoverArea.Inflate(0.5));
-            DrawTooltip(context, hoverText, new Point(_hoverArea.Center.X, _hoverArea.Y), plot);
-            _ = hover;
+            DrawTooltip(context, text, new Point(_hoverArea.Center.X, _hoverArea.Y), plot);
         }
+    }
+
+    // Ticks by the room between them: every 25% where each has 22 pixels, else every 50%, else the ends.
+    private void DrawPercentTicks(DrawingContext context, Rect plot, IPen grid, IBrush secondary)
+    {
+        int[] ticks = plot.Height / 4 >= 22 ? [0, 25, 50, 75, 100] : plot.Height / 2 >= 22 ? [0, 50, 100] : [0, 100];
+        foreach (int percent in ticks)
+        {
+            double y = Math.Round(plot.Bottom - (plot.Height * percent / 100.0)) + 0.5;
+            context.DrawLine(grid, new Point(plot.Left, y), new Point(plot.Right, y));
+            FormattedText label = Text(percent + "%", AxisSize, secondary);
+            context.DrawText(label, new Point(plot.Left - 8 - label.Width, Math.Clamp(y - (label.Height / 2), plot.Top - 4, plot.Bottom - label.Height + 4)));
+        }
+    }
+
+    private void DrawSplit(DrawingContext context, ShareSplitGraph graph, ChartLayout layout, bool isDark, Color surface, IBrush secondary, IBrush foreground)
+    {
+        IReadOnlyList<Color> hues = isDark ? CategoryColors.Dark : CategoryColors.Light;
+        Rect plot = layout.Plot;
+        context.DrawText(Text("share of the audio bits of the two channels in each interval", AxisSize, secondary), new Point(4, 2));
+        DrawPercentTicks(context, plot, new Pen(Palette.Grid(this), 1), secondary);
+        SplitColumns columns = SplitColumnsOf(graph, Math.Max(1, (int)plot.Width));
+        double colW = plot.Width / columns.Count;
+        IBrush first = new ImmutableSolidColorBrush(hues[0]);
+        IBrush second = new ImmutableSolidColorBrush(hues[1]);
+        IBrush gap = new ImmutableSolidColorBrush(surface);
+        for (int column = 0; column < columns.Count; column++)
+        {
+            double share = columns.Share(column);
+            if (double.IsNaN(share))
+            {
+                continue;
+            }
+
+            double x = plot.Left + (column * colW);
+            double width = colW >= 4 ? colW - 1 : colW;
+            double low = plot.Height * share / 100;
+            context.FillRectangle(first, new Rect(x, plot.Bottom - low, width, low));
+            context.FillRectangle(second, new Rect(x, plot.Top, width, plot.Height - low));
+            if (low >= 4 && plot.Height - low >= 4)
+            {
+                context.FillRectangle(gap, new Rect(x, plot.Bottom - low - 1, width, 2));
+            }
+        }
+
+        // The 50% line.
+        double mid = Math.Round(plot.Bottom - (plot.Height / 2)) + 0.5;
+        context.DrawLine(new Pen(foreground, 1, dashStyle: DashStyle.Dash), new Point(plot.Left, mid), new Point(plot.Right, mid));
+        DrawTimeAxis(context, graph.Series.X.Span, columns.Count, columns.First, plot, secondary);
+        if (MarkedIndex is { } marked && marked < graph.Count)
+        {
+            double x = Math.Round(plot.Left + ((ColumnOf(columns.Firsts, marked) + 0.5) * colW)) + 0.5;
+            context.DrawLine(new Pen(foreground, 1.5), new Point(x, plot.Top), new Point(x, plot.Bottom));
+        }
+
+        foreach ((Rect rect, int index) in layout.Legend)
+        {
+            var swatch = new Rect(rect.X, rect.Y + ((rect.Height - 10) / 2), 10, 10);
+            context.FillRectangle(index == 0 ? first : second, swatch, 2f);
+            FormattedText text = Text(LegendEntries(graph)[index].Label, TextSize, foreground);
+            context.DrawText(text, new Point(rect.X + 16, rect.Y + ((rect.Height - text.Height) / 2)));
+        }
+
+        DrawCursor(context, plot, foreground);
     }
 
     // One stack of segments, the plain category at the bottom, each category present at least a pixel high, two pixels of
@@ -511,7 +772,7 @@ public sealed partial class GraphView
 
             if (label && h >= 14)
             {
-                FormattedText name = Fit(series.Categories[category].Name, FontSize, new ImmutableSolidColorBrush(Readable(styles[category].Color)), width - 8);
+                FormattedText name = Fit(series.Categories[category].Name, TextSize, new ImmutableSolidColorBrush(Readable(styles[category].Color)), width - 8);
                 context.DrawText(name, new Point(x + 4, y + ((h - name.Height) / 2)));
             }
 
@@ -537,9 +798,8 @@ public sealed partial class GraphView
         }
     }
 
-    private void DrawLegend(DrawingContext context, CategoryGraph graph, CategoryLayout layout, IBrush[] brushes, CategoryStyle[] styles, IBrush secondary, Color surface)
+    private void DrawLegend(DrawingContext context, ChartLayout layout, CategorySeries series, IBrush[] brushes, CategoryStyle[] styles, IBrush secondary, Color surface)
     {
-        CategorySeries series = graph.Series;
         IBrush foreground = Palette.Foreground(this);
         foreach ((Rect rect, int category) in layout.Legend)
         {
@@ -551,27 +811,27 @@ public sealed partial class GraphView
             }
 
             string label = $"{series.Categories[category].Name} {CategoryGraph.SharePercent(series.Counts[category], series.Total)}";
-            FormattedText text = Text(label, FontSize, series.Counts[category] > 0 ? foreground : secondary);
+            FormattedText text = Text(label, TextSize, series.Counts[category] > 0 ? foreground : secondary);
             context.DrawText(text, new Point(rect.X + 16, rect.Y + ((rect.Height - text.Height) / 2)));
         }
 
-        if (layout.Legend.Count < series.Categories.Count)
+        if (layout.Legend.Count < series.Categories.Count && layout.Legend.Count > 0)
         {
             Rect last = layout.Legend[^1].Rect;
             string more = $"+{series.Categories.Count - layout.Legend.Count} more in the Summary";
-            context.DrawText(Text(more, FontSize, secondary), new Point(last.Right, last.Y + 2));
+            context.DrawText(Text(more, TextSize, secondary), new Point(last.Right, last.Y + 2));
         }
     }
 
-    private void DrawTimeAxis(DrawingContext context, CategoryGraph graph, CategoryColumns columns, Rect plot, IBrush secondary)
+    // Time labels about every 90 pixels under the columns, from the start of each column's first interval.
+    private void DrawTimeAxis(DrawingContext context, ReadOnlySpan<double> starts, int columns, Func<int, int> firstOf, Rect plot, IBrush secondary)
     {
-        ReadOnlySpan<double> starts = graph.Series.Time!.Starts.Span;
-        double colW = plot.Width / columns.Count;
+        double colW = plot.Width / columns;
         double lastEnd = double.NegativeInfinity;
         int step = Math.Max(1, (int)Math.Ceiling(90 / colW));
-        for (int column = 0; column < columns.Count; column += step)
+        for (int column = 0; column < columns; column += step)
         {
-            FormattedText label = Text(Format.Clock(starts[columns.First(column)]), FontSize, secondary);
+            FormattedText label = Text(Format.Clock(starts[firstOf(column)]), AxisSize, secondary);
             double x = plot.Left + (column * colW);
             double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12)
@@ -589,11 +849,11 @@ public sealed partial class GraphView
         int count = graph.Count;
         int step = NiceStep(count * 90 / plot.Width);
         double lastEnd = double.NegativeInfinity;
-        FormattedText caption = Text("frames", FontSize, secondary);
+        FormattedText caption = Text("frames", AxisSize, secondary);
         double limit = plot.Right - (caption.Width + 12);
         for (long position = 0; position <= count; position += step)
         {
-            FormattedText label = Text(position.ToString("N0", CultureInfo.InvariantCulture), FontSize, secondary);
+            FormattedText label = Text(position.ToString("N0", CultureInfo.InvariantCulture), AxisSize, secondary);
             double x = plot.Left + (position * plot.Width / count);
             double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12 || start + label.Width > limit)
@@ -649,7 +909,7 @@ public sealed partial class GraphView
         SummaryLayout layout = SummaryRows(graph, Bounds.Width);
         _scroll = Math.Clamp(_scroll, 0, Math.Max(0, layout.Height - (Bounds.Height - 30)));
         var clip = new Rect(0, 24, Bounds.Width, Math.Max(0, Bounds.Height - 24));
-        context.DrawText(Text("count and share of the values of the whole stream", FontSize, secondary), new Point(4, 2));
+        context.DrawText(Text("count and share of the values of the whole stream", TextSize, secondary), new Point(4, 2));
         IBrush trackBrush = Palette.Grid(this, 0.1);
         bool highContrast = HasHighContrast();
         using (context.PushClip(clip))
@@ -659,17 +919,17 @@ public sealed partial class GraphView
             foreach (SummaryTable header in layout.Tables)
             {
                 CategorySeries series = summary.Tables[header.Table];
-                FormattedText title = Text(series.Name, 13, foreground);
+                FormattedText title = Text(series.Name, TextSize, foreground);
                 title.SetFontWeight(FontWeight.SemiBold);
                 context.DrawText(title, new Point(header.Header.X, header.Header.Y + 2));
                 string totals = Format.Count(series.Total, "value", "values") + " · " + series.ValueLabel;
-                FormattedText sub = Fit(totals, FontSize, secondary, header.Header.Width - title.Width - 12);
+                FormattedText sub = Fit(totals, TextSize, secondary, header.Header.Width - title.Width - 12);
                 context.DrawText(sub, new Point(header.Header.Right - sub.Width, header.Header.Y + 4));
                 context.DrawLine(new Pen(Palette.Grid(this, 0.25), 1), new Point(header.Header.X, header.Header.Bottom - 2), new Point(header.Header.Right, header.Header.Bottom - 2));
                 if (series.UncodedValues > 0)
                 {
                     string note = $"{Format.Count(series.UncodedValues, "value", "values")} counted without a code, not drawn per frame";
-                    context.DrawText(Fit(note, FontSize, secondary, header.Header.Width), new Point(header.Header.X, header.Header.Bottom));
+                    context.DrawText(Fit(note, TextSize, secondary, header.Header.Width), new Point(header.Header.X, header.Header.Bottom));
                 }
             }
 
@@ -703,12 +963,12 @@ public sealed partial class GraphView
                     context.FillRectangle(new ImmutableSolidColorBrush(style.Color), new Rect(track.X, track.Y, Math.Max(2, barWidth * share), 8), 2f);
                 }
 
-                FormattedText percent = Text(CategoryGraph.SharePercent(count, series.Total), FontSize, foreground);
+                FormattedText percent = Text(CategoryGraph.SharePercent(count, series.Total), TextSize, foreground);
                 context.DrawText(percent, new Point(track.X - 8 - percent.Width, rect.Y + ((rect.Height - percent.Height) / 2)));
-                FormattedText number = Text(count.ToString("N0", CultureInfo.InvariantCulture), FontSize, count > 0 ? foreground : secondary);
+                FormattedText number = Text(count.ToString("N0", CultureInfo.InvariantCulture), TextSize, count > 0 ? foreground : secondary);
                 double countRight = track.X - 8 - shareWidth;
                 context.DrawText(number, new Point(countRight - number.Width, rect.Y + ((rect.Height - number.Height) / 2)));
-                FormattedText name = Fit(series.Categories[row.Category].Name, FontSize, count > 0 ? foreground : secondary, Math.Max(40, countRight - countWidth - rect.X - 20));
+                FormattedText name = Fit(series.Categories[row.Category].Name, TextSize, count > 0 ? foreground : secondary, Math.Max(40, countRight - countWidth - rect.X - 20));
                 context.DrawText(name, new Point(rect.X + 18, rect.Y + ((rect.Height - name.Height) / 2)));
             }
         }

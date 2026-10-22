@@ -11,12 +11,11 @@ public readonly record struct CategoryStyle(Color Color, bool IsHatched, bool Is
 // magenta and green; the values are those of the dataviz skill's default palette, validated against the graph surfaces
 // (#ffffff in light mode, #000000 in dark; docs/gui.md has the validator's output, and a test holds the surfaces).
 // A series uses them for its first six categories in order, an ordered series a ramp of the first hue for its first
-// eight, any category past that one flat gray, and a category named "Reserved" a hatched gray.
+// eight, any category past that one flat gray, and a category marked reserved (`Category.IsReserved`) a hatched gray.
 public static class CategoryColors
 {
     public const int Hues = 6;
     public const int RampSteps = 8;
-    public const string ReservedName = "Reserved";
 
     public static IReadOnlyList<Color> Light { get; } =
         [Color.Parse("#2a78d6"), Color.Parse("#eb6834"), Color.Parse("#1baf7a"), Color.Parse("#eda100"), Color.Parse("#e87ba4"), Color.Parse("#008300")];
@@ -25,7 +24,8 @@ public static class CategoryColors
         [Color.Parse("#3987e5"), Color.Parse("#d95926"), Color.Parse("#199e70"), Color.Parse("#c98500"), Color.Parse("#d55181"), Color.Parse("#008300")];
 
     // Index 0, the plain coding, takes the first hue in a muted step.
-    private const double MutedShare = 0.55;
+    // The muted step is a mix of 0.7 of the hue with the surface, which passes the validator in both modes (docs/gui.md).
+    private const double MutedShare = 0.7;
 
     public static CategoryStyle[] For(CategorySeries series, bool isDark, Color surface)
     {
@@ -36,10 +36,10 @@ public static class CategoryColors
         Color reserved = isDark ? Color.Parse("#bdbdbd") : Color.Parse("#5f5f5f");
         var styles = new CategoryStyle[series.Categories.Count];
         int slot = 0;
-        int rampSize = Math.Min(RampSteps, series.Categories.Count(c => c.Name != ReservedName));
+        int rampSize = Math.Min(RampSteps, series.Categories.Count(c => !c.IsReserved));
         for (int i = 0; i < styles.Length; i++)
         {
-            if (series.Categories[i].Name == ReservedName)
+            if (series.Categories[i].IsReserved)
             {
                 styles[i] = new CategoryStyle(reserved, true, false);
                 continue;

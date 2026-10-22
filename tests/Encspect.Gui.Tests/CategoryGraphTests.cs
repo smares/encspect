@@ -139,9 +139,9 @@ public class CategoryGraphTests
     {
         int[] first = [0, 4, 4, 8];
         CategorySeries series = Strip(10, i => [(byte)(i % 3)], 1, time: new TimeIndex(new double[] { 0, 1, 2, 3 }, first));
-        var graph = new CategoryGraph(series);
+        var graph = new CategoryGraph(series, GraphForm.OverTime);
 
-        Assert.Equal(CategoryView.OverTime, graph.View);
+        Assert.Equal(GraphForm.OverTime, graph.View);
         Assert.Equal(4, graph.Count);
         Assert.Equal(0, graph.FrameAt(0, null));
         Assert.Null(graph.FrameAt(1, null));
@@ -151,7 +151,7 @@ public class CategoryGraphTests
         Assert.Equal(3, graph.IndexOfFrame(900));
         Assert.Null(graph.IndexOfFrame(450));
 
-        graph.View = CategoryView.Frames;
+        graph = new CategoryGraph(series, GraphForm.Frames);
         Assert.Equal(10, graph.Count);
         Assert.Equal(700, graph.FrameAt(7, null));
         Assert.Equal(7, graph.IndexOfFrame(700));
@@ -171,9 +171,7 @@ public class CategoryGraphTests
         Assert.Null(CategoryGraph.NextUnit(series, 2, null));
         Assert.Equal(300, CategoryGraph.NextUnit(series, 0, 200));
 
-        var graph = new CategoryGraph(series);
-        Assert.Equal(CategoryView.Frames, graph.View);
-        graph.View = CategoryView.Summary;
+        var graph = new CategoryGraph(series, GraphForm.Summary);
         Assert.Equal(500, graph.FrameAt(1, 200));
         Assert.Equal("Start · 3 values · 15.0%", graph.Describe(1));
     }
@@ -182,7 +180,7 @@ public class CategoryGraphTests
     public void The_strip_column_of_many_units_selects_the_unit_of_its_rarest_category()
     {
         CategorySeries series = Strip(1000, i => i == 123 ? [0, 0, 2, 0] : [0, 0, 0, 0], 4);
-        var graph = new CategoryGraph(series);
+        var graph = new CategoryGraph(series, GraphForm.Frames);
 
         Assert.Equal(123, graph.UnitOfColumn(100, 200, -1));
         Assert.Equal(123, graph.UnitOfColumn(100, 200, 2));
@@ -200,7 +198,7 @@ public class CategoryGraphTests
             builder.Add([series[unit, 0], series[unit, 1], series[unit, 2], series[unit, 3]]);
         }
 
-        return new CategoryGraph(builder.Build(series.X, null, null, "Named."));
+        return new CategoryGraph(builder.Build(series.X, null, null, "Named."), GraphForm.Frames);
     }
 
     [Fact]
@@ -218,17 +216,16 @@ public class CategoryGraphTests
                 ("Block switching", "Block Usage"),
                 ("Block switching", "Block Sizes"),
                 ("Block switching", "Window Sequences"),
+                ("Block switching", "Channel Streams"),
                 ("Bit distribution", "Bitrate"),
-                ("Bit distribution", "Bitrate Distribution"),
-                ("Bit distribution", "Bitrate Over Time"),
                 ("Bit distribution", "Reservoir Fill"),
-                ("Bit distribution", "Reservoir Fill Over Time"),
+                ("Bit distribution", "Channel Bit Share"),
                 ("Other", "Submodes"),
             ],
-            graphs.Choices.Select(c => (c.Graph.Heading, c.Title)));
+            graphs.Choices.Select(c => (c.Heading, c.Title)));
         Assert.Equal(["Summary", "Stereo coding", "Block switching", "Bit distribution", "Other"], graphs.ChoiceGroups.Select(g => g.Heading));
 
-        // A file without category series has the bitrate headings only, and no heading without a graph.
+        // A file without category series has the bitrate headings only, and no heading without an entry.
         graphs.Load(Analyzer.CreateDefault().AnalyzeFile(Fixtures.Stats("vbr-seconds.mp3")));
         Assert.Equal(["Bit distribution"], graphs.ChoiceGroups.Select(g => g.Heading));
     }
@@ -246,41 +243,71 @@ public class CategoryGraphTests
             Series = [Make("Bitrate", "kbps"), Make("Reservoir Fill", "bytes"), Make("Coded Bandwidth", "Hz", GraphConcept.CodedBandwidth), Make("Channel Bit Share", "%", GraphConcept.BitDistribution), Make("Odd", "things")],
         };
 
-        IReadOnlyList<Graph> graphs = GraphsViewModel.For(stream);
+        IReadOnlyList<GraphChoice> entries = GraphsViewModel.For(stream);
 
         Assert.Equal(
-            [("Coded bandwidth", "Coded Bandwidth"), ("Bit distribution", "Bitrate"), ("Bit distribution", "Bitrate Distribution"), ("Bit distribution", "Reservoir Fill"), ("Bit distribution", "Channel Bit Share"), ("Other", "Odd")],
-            graphs.Select(g => (g.Heading, g.Title)));
+            [("Coded bandwidth", "Coded Bandwidth"), ("Bit distribution", "Bitrate"), ("Bit distribution", "Reservoir Fill"), ("Bit distribution", "Channel Bit Share"), ("Other", "Odd")],
+            entries.Select(e => (e.Heading, e.Title)));
+    }
+
+    // The forms of one quantity are linked by the series' Quantity, never by their names.
+    [Fact]
+    public void Series_that_name_a_quantity_are_its_forms_whatever_they_are_called()
+    {
+        double[] offsets = [0, 10, 20];
+        double[] seconds = [0, 1];
+        Series Frames(string name, string unit, string? quantity) => new(name, unit, SeriesAxis.FrameOffset, offsets, new double[] { 1, 2, 3 }) { Quantity = quantity, Concept = GraphConcept.CodedBandwidth };
+        Series Seconds(string name, string unit, string? quantity) => new(name, unit, SeriesAxis.Seconds, seconds, new double[] { 1, 2 }) { Quantity = quantity, Concept = GraphConcept.CodedBandwidth };
+        var stream = new StreamInfo
+        {
+            Nodes = [],
+            Codec = "Test",
+            Duration = 2,
+            Series = [Frames("Reach", "Hz", "Coded Bandwidth"), Seconds("Highest in each second", "Hz", "Coded Bandwidth"), Frames("Reach", "Hz", null), Seconds("Highest in each second", "Hz", null)],
+        };
+
+        IReadOnlyList<GraphChoice> entries = GraphsViewModel.For(stream);
+
+        // The two that name the quantity are one entry; the two that name none stay as they are, since a unit other than kbps and bytes pairs nothing.
+        Assert.Equal(["Coded Bandwidth", "Reach", "Highest in each second"], entries.Select(e => e.Title));
+        Assert.Equal([GraphForm.Frames, GraphForm.OverTime], entries[0].Forms.Select(f => f.Kind));
+        Assert.Single(entries[1].Forms);
     }
 
     [Fact]
-    public void A_view_choice_holds_for_the_next_category_series_and_marks_the_frame_in_it()
+    public void An_entry_chosen_in_a_form_keeps_the_form_for_the_next_entry_and_marks_the_frame_in_it()
     {
         Report report = CategoryTestData.Analyzer().AnalyzeFile(Fixtures.Stats("vbr-seconds.mp3"));
         var graphs = new GraphsViewModel();
         graphs.Load(report);
         graphs.Selected = graphs.Choices.Single(c => c.Title == "Stereo Coding");
-        Assert.Equal(CategoryView.OverTime, graphs.View);
-        Assert.Equal(["Over time", "Frames", "Summary"], graphs.Views.Select(v => v.Title));
-        Assert.True(graphs.HasViews);
+        Assert.Equal(GraphForm.OverTime, graphs.Form);
+        Assert.Equal(["Over time", "Frames", "Summary"], graphs.Forms.Select(v => v.Title));
+        Assert.True(graphs.HasForms);
 
         long offset = (long)report.Streams[0].Series[0].X.Span[77];
         graphs.MarkFrame(offset);
         int interval = graphs.MarkedIndex!.Value;
-        graphs.SelectView(CategoryView.Frames);
+        graphs.SelectForm(GraphForm.Frames);
         Assert.Equal(77, graphs.MarkedIndex);
-        Assert.Equal([false, true, false], graphs.Views.Select(v => v.IsSelected));
+        Assert.Equal([false, true, false], graphs.Forms.Select(v => v.IsSelected));
 
         graphs.Selected = graphs.Choices.Single(c => c.Title == "Window Sequences");
-        Assert.Equal(CategoryView.Frames, graphs.View);
+        Assert.Equal(GraphForm.Frames, graphs.Form);
         Assert.Equal(77, graphs.MarkedIndex);
-        graphs.SelectView(CategoryView.OverTime);
+        graphs.SelectForm(GraphForm.OverTime);
         Assert.Equal(interval, graphs.MarkedIndex);
 
-        // A line graph has no views.
-        graphs.Selected = graphs.Choices.First(c => c.Graph is LineGraph);
-        Assert.False(graphs.HasViews);
-        Assert.Null(graphs.View);
+        // A numeric quantity has its own forms of the same kinds: per frame for Frames, per second for OverTime.
+        graphs.Selected = graphs.Choices.Single(c => c.Title == "Bitrate");
+        Assert.Equal(GraphForm.OverTime, graphs.Form);
+        Assert.IsType<LineGraph>(graphs.Graph);
+        Assert.Equal(SeriesAxis.Seconds, ((LineGraph)graphs.Graph!).Axis);
+
+        // An entry of a single form has no switcher.
+        graphs.Selected = graphs.Choices.Single(c => c.Title == "Coding Summary");
+        Assert.False(graphs.HasForms);
+        Assert.Empty(graphs.Forms);
     }
 
     [Fact]
@@ -288,7 +315,7 @@ public class CategoryGraphTests
     {
         Report report = CategoryTestData.Analyzer().AnalyzeFile(Fixtures.Stats("vbr-seconds.mp3"));
         StreamInfo stream = report.Streams[0];
-        var summary = (CodingSummaryGraph)GraphsViewModel.For(stream).OfType<CodingSummaryGraph>().Single();
+        var summary = (CodingSummaryGraph)GraphsViewModel.For(stream).Single(e => e.Title == "Coding Summary").Graph;
 
         Assert.Equal(stream.CategorySeries.Select(s => s.Name), summary.Tables.Select(t => t.Name));
         Assert.Equal(stream.CategorySeries.Sum(s => s.Categories.Count), summary.Count);
@@ -296,6 +323,45 @@ public class CategoryGraphTests
         Assert.Equal(stream.CategorySeries[series].Counts[category], summary.ValueAt(2));
         Assert.StartsWith("Block Usage · Short · ", summary.Describe(2), StringComparison.Ordinal);
         Assert.NotNull(summary.FrameAt(2, null));
+    }
+
+    [Fact]
+    public void A_value_without_a_category_is_described_and_never_indexes_the_categories()
+    {
+        // A mono frame in a stream that changes to joint stereo leaves its second channel without a category.
+        CategorySeries series = Strip(10, i => i % 2 == 0 ? [0, CategorySeries.None] : [0, 1], 2);
+        var strip = new CategoryGraph(series, GraphForm.Frames);
+
+        Assert.Equal("Frame 1 · 0x0 · value 2: no category", strip.DescribeUnits(0, 1, 1));
+        Assert.Equal("Frame 2 · 0x64 · value 2: Start", strip.DescribeUnits(1, 2, 1));
+        Assert.Contains("Long 100.0%", strip.DescribeUnits(0, 1, -1), StringComparison.Ordinal);
+        Assert.Equal("Frames 1 to 4 · Start 33.3% (2 values) · Long 66.7% (4 values) · drawn with its rare categories enlarged", strip.DescribeUnits(0, 4, -1));
+
+        // A variable layout with nothing in a unit, and a unit all without categories.
+        var builder = new CategorySeriesBuilder("V", CategoryTestData.BlockTypes, "value");
+        builder.Add([]);
+        builder.Add([CategorySeries.None, CategorySeries.None]);
+        builder.Add([2]);
+        var variable = new CategoryGraph(builder.Build(new double[] { 0, 1, 2 }, null, null, "d"), GraphForm.Frames);
+        Assert.Equal("Frame 1 · 0x0 · no values", variable.DescribeUnits(0, 1, -1));
+        Assert.Equal("Frame 2 · 0x1 · no values", variable.DescribeUnits(1, 2, -1));
+        Assert.Equal(2, variable.UnitOfColumn(0, 3, -1));
+    }
+
+    [Fact]
+    public void Shares_are_rounded_half_to_even_as_the_tree_and_the_text_round_them()
+    {
+        // 1 of 80 is 1.25%: 1.2 as the tallies' RoundHalfEven and the text share lines give it, not the 1.3 of away from zero.
+        Assert.Equal("1.2%", CategoryGraph.SharePercent(1, 80));
+        Assert.Equal("3.8%", CategoryGraph.SharePercent(3, 80));
+        Assert.Equal("6.2%", CategoryGraph.SharePercent(5, 80));
+        Assert.Equal("8.8%", CategoryGraph.SharePercent(7, 80));
+        Assert.Equal("0.0%", CategoryGraph.SharePercent(0, 80));
+        Assert.Equal("100.0%", CategoryGraph.SharePercent(80, 80));
+        Assert.Equal("0.0%", CategoryGraph.SharePercent(5, 0));
+        Assert.Equal("33.3%", CategoryGraph.SharePercent(1, 3));
+        Assert.Equal("1.2%", ShareSplitGraph.Percent(1.25));
+        Assert.Equal("3.8%", ShareSplitGraph.Percent(3.75));
     }
 
     [Fact]
@@ -340,5 +406,12 @@ public class CategoryGraphTests
         Assert.Equal(CategoryColors.Light[4], reserved[4].Color);
         Assert.NotNull(types);
         Assert.NotNull(ordered);
+
+        // The flag decides, not the name: a valid category called "Reserved" is a hue, a flagged one of another name is hatched.
+        var named = new CategorySeriesBuilder("Modes", [new Category("Reserved", "d"), new Category("Spare", "d") { IsReserved = true }], "frame", 1);
+        named.Add(0);
+        CategoryStyle[] byFlag = CategoryColors.For(named.Build(new double[1], null, null, "d"), false, surface);
+        Assert.False(byFlag[0].IsHatched);
+        Assert.True(byFlag[1].IsHatched);
     }
 }
