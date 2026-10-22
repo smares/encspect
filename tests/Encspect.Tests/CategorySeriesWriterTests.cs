@@ -83,6 +83,28 @@ public class CategorySeriesWriterTests
     }
 
     [Fact]
+    public void A_reserved_category_a_quantity_and_a_groupings_missing_x_are_written()
+    {
+        var builder = new CategorySeriesBuilder("Block Usage", [new("Long", "l"), new("Reserved", "r") { IsReserved = true }], "block", 1);
+        builder.Add(0);
+        builder.Add(1);
+        CategorySeries usage = builder.Build(new double[] { 0, 10 }, null, null, "Blocks.");
+        CategorySeries grouped = usage.Group("Block Sizes", [new("Long", "l"), new("Reserved", "r")], [0, 1], null, "Sizes.");
+        var share = new Series("Channel Bit Share", "%", SeriesAxis.FrameOffset, new double[] { 0 }, new double[] { 48 }) { Quantity = "Channel Bit Share", Concept = GraphConcept.BitDistribution };
+        Report report = new("a.bin", new Node("File", 0, 20), [], [new StreamInfo { Nodes = [], Codec = "Test", Series = [share], CategorySeries = [usage, grouped] }]);
+
+        using JsonDocument document = JsonDocument.Parse(Json(report));
+        JsonElement stream = document.RootElement[0].GetProperty("streams")[0];
+
+        Assert.Equal("Channel Bit Share", stream.GetProperty("series")[0].GetProperty("quantity").GetString());
+        JsonElement categories = stream.GetProperty("categorySeries")[0].GetProperty("categories");
+        Assert.False(categories[0].TryGetProperty("isReserved", out _));
+        Assert.True(categories[1].GetProperty("isReserved").GetBoolean());
+        Assert.True(stream.GetProperty("categorySeries")[0].TryGetProperty("x", out _));
+        Assert.False(stream.GetProperty("categorySeries")[1].TryGetProperty("x", out _));
+    }
+
+    [Fact]
     public void Explain_adds_the_descriptions_of_the_series_and_its_categories()
     {
         (Report report, _) = Example();

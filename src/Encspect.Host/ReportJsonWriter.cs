@@ -14,9 +14,10 @@ namespace Encspect.Host;
 // then, and the alternatives with their evidence (class, offset, frames, verifiedFrames, note). A stream of a coding that
 // stores checksums has verification after protection: isVerified (where known), isLossy (where true), decoding,
 // decodedSamples and checksums (name, covers, coversAllAudio, stored, checked, failed). A stream with category series
-// has categorySeries after series (name, concept, valueLabel, valuesPerUnit, valueNames, categories with their counts,
-// total, uncodedValues, xSeries or x, runs of [code, length], valueCounts, weights, seconds, or groupOf and map for a
-// grouping); a series, numeric or category, that belongs to a shared concept also has concept.
+// has categorySeries after series (name, concept, valueLabel, valuesPerUnit, valueNames, categories with their counts
+// and isReserved, total, uncodedValues, xSeries or x, valueCounts, runs of [code, length], weights, seconds, or groupOf
+// and map for a grouping, which has the x of its source); a series, numeric or category, that belongs to a shared
+// concept also has concept, and a numeric series that is a form of a quantity has quantity.
 public static class ReportJsonWriter
 {
     // Raised whenever a field changes meaning or type, or one is removed; added fields keep it.
@@ -358,6 +359,11 @@ public static class ReportJsonWriter
                 writer.WriteString("concept", ConceptName(series.Concept));
             }
 
+            if (series.Quantity is { } quantity)
+            {
+                writer.WriteString("quantity", quantity);
+            }
+
             if (explain && series.Description is { } description)
             {
                 writer.WriteString("description", description);
@@ -434,6 +440,11 @@ public static class ReportJsonWriter
             writer.WriteStartObject();
             writer.WriteString("name", category.Name);
             writer.WriteNumber("count", series.Counts[i]);
+            if (category.IsReserved)
+            {
+                writer.WriteBoolean("isReserved", true);
+            }
+
             if (explain)
             {
                 writer.WriteString("description", category.Description);
@@ -457,7 +468,7 @@ public static class ReportJsonWriter
         {
             writer.WriteString("xSeries", xSeries.Name);
         }
-        else
+        else if (series.Source is null)
         {
             WriteNumbers(writer, "x", series.X.Span);
         }

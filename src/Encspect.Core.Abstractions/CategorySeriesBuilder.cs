@@ -81,17 +81,24 @@ public sealed class CategorySeriesBuilder
             throw new InvalidOperationException("A series holds at most int.MaxValue units.");
         }
 
+        // Everything is checked before a count changes, so a refused unit leaves the builder as it was.
         bool anyWeight = false;
+        if (!weights.IsEmpty)
+        {
+            foreach (byte weight in weights)
+            {
+                if (weight == 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(weights), "A weight is at least 1.");
+                }
+
+                anyWeight |= weight != 1;
+            }
+        }
+
         for (int i = 0; i < codes.Length; i++)
         {
-            byte weight = weights.IsEmpty ? (byte)1 : weights[i];
-            if (weight == 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(weights), "A weight is at least 1.");
-            }
-
-            _counts[codes[i]] += weight;
-            anyWeight |= weight != 1;
+            _counts[codes[i]] += weights.IsEmpty ? 1 : weights[i];
         }
 
         int room = CategorySeries.MaxCodedValues - _codes.Count;
@@ -131,7 +138,11 @@ public sealed class CategorySeriesBuilder
             _codedUnits++;
         }
 
-        _uncoded += codes.Length - Math.Max(stored, 0);
+        for (int i = Math.Max(stored, 0); i < codes.Length; i++)
+        {
+            _uncoded += codes[i] == CategorySeries.None ? 0 : 1;
+        }
+
         Count++;
     }
 
@@ -196,6 +207,17 @@ public sealed class CategorySeriesBuilder
         if (time.Starts.Length != first.Length)
         {
             throw new ArgumentException("A time index has a start for each first unit.", nameof(time));
+        }
+
+        double previousStart = double.NegativeInfinity;
+        foreach (double start in time.Starts.Span)
+        {
+            if (!double.IsFinite(start) || start < previousStart)
+            {
+                throw new ArgumentException("The starts of a time index are finite and nondecreasing.", nameof(time));
+            }
+
+            previousStart = start;
         }
 
         int previous = 0;

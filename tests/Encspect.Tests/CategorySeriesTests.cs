@@ -349,4 +349,47 @@ public class CategorySeriesTests
         Assert.Throws<ArgumentException>(() => new CategorySeriesBuilder("Many", [.. many, new("C255", "d")], "value"));
         Assert.Throws<ArgumentException>(() => new CategorySeriesBuilder("None", [], "value"));
     }
+
+    [Fact]
+    public void Values_without_a_category_past_a_cap_are_not_counted_as_uncoded()
+    {
+        var builder = new CategorySeriesBuilder("Block Sizes", BlockTypes, "block");
+        builder.Add([.. Enumerable.Repeat(CategorySeries.None, 300)]);
+        builder.Add([.. Enumerable.Repeat((byte)0, 250), .. Enumerable.Repeat(CategorySeries.None, 10), 2, 2]);
+
+        CategorySeries series = builder.Build(Offsets(2), null, null, "d");
+
+        Assert.Equal(252, series.Total);
+        Assert.Equal(2, series.UncodedValues);
+    }
+
+    [Fact]
+    public void A_unit_with_a_weight_of_zero_is_refused_before_a_count_changes()
+    {
+        var builder = new CategorySeriesBuilder("Modes", [new("A", "a"), new("B", "b")], "value");
+        builder.Add([0, 1], [2, 2]);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => builder.Add([1, 1, 0], [3, 0, 1]));
+        CategorySeries series = builder.Build(Offsets(1), null, null, "d");
+
+        Assert.Equal([2L, 2], series.Counts);
+        Assert.Equal(1, series.Count);
+    }
+
+    [Fact]
+    public void The_starts_of_a_time_index_are_finite_and_nondecreasing()
+    {
+        CategorySeriesBuilder Filled()
+        {
+            var builder = new CategorySeriesBuilder("Block Usage", BlockTypes, "block", 1);
+            builder.Add(0);
+            builder.Add(0);
+            return builder;
+        }
+
+        Assert.Throws<ArgumentException>(() => Filled().Build(Offsets(2), null, null, "d", null, new TimeIndex(new[] { 0, double.NaN }, new[] { 0, 1 })));
+        Assert.Throws<ArgumentException>(() => Filled().Build(Offsets(2), null, null, "d", null, new TimeIndex(new[] { 0, double.PositiveInfinity }, new[] { 0, 1 })));
+        Assert.Throws<ArgumentException>(() => Filled().Build(Offsets(2), null, null, "d", null, new TimeIndex(new double[] { 2, 1 }, new[] { 0, 1 })));
+        Assert.NotNull(Filled().Build(Offsets(2), null, null, "d", null, new TimeIndex(new double[] { 1, 1 }, new[] { 0, 1 })));
+    }
 }

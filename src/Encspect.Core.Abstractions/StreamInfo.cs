@@ -146,6 +146,11 @@ public sealed class Series
     // What the series shows, as a node's Description says what its field is.
     public string? Description { get; init; }
 
+    // The quantity the series shows, such as "Bitrate", where the series of a stream that show it in other forms (per frame, per
+    // second of audio) carry the same text: front ends offer them as one graph with the forms to choose from, and never pair
+    // series by name. Null for a series that is a quantity of its own.
+    public string? Quantity { get; init; }
+
     // The shared concept the series shows, which front ends group by; None for a series that belongs to none.
     public GraphConcept Concept { get; init; }
 }

@@ -5,7 +5,8 @@
     golden_additions.py [--repo DIR] [--base REV] [--head REV] [change-file ...]
 
 It compares each changed golden (tests/**/*.report.json) at the merge base of --base and --head with its version at
---head, as parsed JSON trees and never as bytes. The change file removes from the new tree what it lists as added,
+--head, as parsed JSON trees and never as bytes. A golden is the JSON array of reports the writer writes (one report
+for a file): the old and new arrays must have the same length and are compared pairwise. The change file removes from the new tree what it lists as added,
 reverses what it lists as renamed or moved, ignores the fields it lists as changed, maps the paths of findings and
 streams through the nodes that shifted, and requires the rest to equal the old tree.
 
@@ -18,6 +19,7 @@ every child of that name. A change file:
       "goldens": ["tests/fixtures/mpeg/", "tests/fixtures/mp4/some.report.json"],   # files or folders it covers
       "added":   [{"scope": "stream", "key": "categorySeries"},                      # a key of every stream
                   {"scope": "stream", "array": "series", "name": "Coded Bandwidth"}, # elements of a stream's array
+                  {"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"},  # a key of those elements
                   {"scope": "report", "key": "someKey"},
                   {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"}],
       "renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],
@@ -72,8 +74,12 @@ def remove_added(report, added):
             report.pop(entry["key"], None)
         elif scope == "stream":
             for stream in report.get("streams", []):
-                if "key" in entry:
+                if "array" not in entry:
                     stream.pop(entry["key"], None)
+                elif "key" in entry:
+                    for element in stream.get(entry["array"], []):
+                        if element.get("name") == entry["name"]:
+                            element.pop(entry["key"], None)
                 else:
                     kept = [e for e in stream.get(entry["array"], []) if e.get("name") != entry["name"]]
                     if kept:
@@ -91,25 +97,33 @@ def remove_added(report, added):
             raise ChangeError(f"unknown scope in added: {entry}")
 
 
-def reverse_moves(report, moved):
-    for entry in moved:
-        targets = matching(report["root"], entry["to"])
-        origins = matching(report["root"], entry["from"])
-        if not origins:
-            raise ChangeError(f"moved: no node at {entry['from']}")
-        for target in targets:
+def detach_moved(report, moved):
+    """Takes every moved node out of its new parent, and returns what to put back where it came from."""
+    detached = []
+    for entry in sorted(moved, key=lambda e: e["fromPosition"]):
+        nodes = []
+        for target in matching(report["root"], entry["to"]):
             children = target.get("children", [])
-            nodes = [c for c in children if c.get("name") == entry["name"]]
-            if not nodes:
-                continue
+            nodes += [c for c in children if c.get("name") == entry["name"]]
             kept = [c for c in children if c.get("name") != entry["name"]]
             if kept:
                 target["children"] = kept
             else:
                 target.pop("children", None)
-            for origin in origins:
-                siblings = origin.setdefault("children", [])
-                siblings[entry["fromPosition"]:entry["fromPosition"]] = copy.deepcopy(nodes)
+        detached.append((entry, nodes))
+    return detached
+
+
+def reattach_moved(report, detached):
+    """Puts the moved nodes back at their old positions, once the added nodes are gone, so that the positions count
+    the same siblings as in the old report."""
+    for entry, nodes in detached:
+        origins = matching(report["root"], entry["from"])
+        if not origins:
+            raise ChangeError(f"moved: no node at {entry['from']}")
+        for origin in origins:
+            siblings = origin.setdefault("children", [])
+            siblings[entry["fromPosition"]:entry["fromPosition"]] = copy.deepcopy(nodes)
 
 
 def reverse_renames(report, renamed):
@@ -144,12 +158,13 @@ def map_path(path, mapping):
 
 
 def transform(new, change):
-    """The new report with the change taken back, ready to compare with the old one."""
+    """A new report with the change taken back, ready to compare with the old one."""
     report = copy.deepcopy(new)
     tag(report["root"], [])
     drop_changed(report, change.get("changed", []))
-    reverse_moves(report, change.get("moved", []))
+    detached = detach_moved(report, change.get("moved", []))
     remove_added(report, change.get("added", []))
+    reattach_moved(report, detached)
     reverse_renames(report, change.get("renamed", []))
     mapping = {}
     final_paths(report["root"], [], mapping)
@@ -190,15 +205,26 @@ def differences(old, new, path="", limit=10):
     return found
 
 
+def reports(golden):
+    """The reports of a golden: the JSON array the writer writes, or one bare report."""
+    return golden if isinstance(golden, list) else [golden]
+
+
 def check_golden(old, new, change):
-    """The problems of one golden against one change file."""
-    old = copy.deepcopy(old)
-    drop_changed(old, change.get("changed", []))
-    try:
-        expected = transform(new, change)
-    except ChangeError as error:
-        return [str(error)]
-    return differences(old, expected)
+    """The problems of one golden (an array of reports) against one change file."""
+    olds, news = reports(old), reports(new)
+    if len(olds) != len(news):
+        return [f"{len(olds)} reports in the old golden, {len(news)} in the new"]
+    problems = []
+    for index, (before, after) in enumerate(zip(olds, news)):
+        before = copy.deepcopy(before)
+        drop_changed(before, change.get("changed", []))
+        try:
+            expected = transform(after, change)
+        except ChangeError as error:
+            return [str(error)]
+        problems += differences(before, expected, f"[{index}]")
+    return problems
 
 
 def covers(change, path):

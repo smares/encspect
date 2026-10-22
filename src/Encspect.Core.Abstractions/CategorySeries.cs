@@ -16,6 +16,10 @@ public enum GraphConcept
 public sealed record Category(string Name, string Description)
 {
     public string? Topic { get; init; }
+
+    // Whether the category marks a value the specification does not allow (a reserved block type): front ends draw it apart from the
+    // valid ones, which they cannot tell from its name.
+    public bool IsReserved { get; init; }
 }
 
 // The intervals of audio time a parser counts its per-second series over: the start of each in seconds, shared with
@@ -124,7 +128,7 @@ public sealed class CategorySeries
 
     public long Total { get; }
 
-    // Values counted without a code, past MaxValuesPerUnit of a unit or MaxCodedValues of the series.
+    // Values with a category counted without a code, past MaxValuesPerUnit of a unit or MaxCodedValues of the series.
     public long UncodedValues { get; }
 
     public TimeIndex? Time { get; }

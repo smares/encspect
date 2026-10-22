@@ -164,11 +164,51 @@ public static class ReportTextWriter
     private static void WriteShares(CategorySeries series, int? stream, TextWriter writer, int depth, Options options)
     {
         ReadOnlySpan<int> first = series.Time!.FirstUnits.Span;
-        Span<long> counts = stackalloc long[series.Categories.Count];
+        int categories = series.Categories.Count;
+        long[] counts = new long[categories];
         string suffix = stream is { } number ? $" (stream {number.ToString(CultureInfo.InvariantCulture)})" : string.Empty;
-        for (int category = 0; category < series.Categories.Count; category++)
+
+        // One pass over the intervals, each counted once, whatever the number of categories.
+        var lines = new System.Text.StringBuilder?[categories];
+        for (int category = 0; category < categories; category++)
         {
-            if (series.Counts[category] == 0)
+            if (series.Counts[category] > 0)
+            {
+                lines[category] = new System.Text.StringBuilder();
+            }
+        }
+
+        for (int interval = 0; interval < first.Length; interval++)
+        {
+            Array.Clear(counts);
+            series.CountRange(first[interval], interval + 1 < first.Length ? first[interval + 1] : series.Count, counts);
+            long total = counts.Sum();
+            for (int category = 0; category < categories; category++)
+            {
+                if (lines[category] is not { } line)
+                {
+                    continue;
+                }
+
+                if (interval > 0)
+                {
+                    line.Append(',');
+                }
+
+                if (total == 0)
+                {
+                    line.Append('-');
+                }
+                else
+                {
+                    line.Append(Math.Round(100.0 * counts[category] / total, 1, MidpointRounding.ToEven).ToString("0.#", CultureInfo.InvariantCulture));
+                }
+            }
+        }
+
+        for (int category = 0; category < categories; category++)
+        {
+            if (lines[category] is not { } line)
             {
                 continue;
             }
@@ -178,32 +218,7 @@ public static class ReportTextWriter
             writer.Write(" Share Over Time");
             writer.Write(suffix);
             writer.Write(": ");
-            for (int interval = 0; interval < first.Length; interval++)
-            {
-                counts.Clear();
-                series.CountRange(first[interval], interval + 1 < first.Length ? first[interval + 1] : series.Count, counts);
-                long total = 0;
-                foreach (long count in counts)
-                {
-                    total += count;
-                }
-
-                if (interval > 0)
-                {
-                    writer.Write(',');
-                }
-
-                if (total == 0)
-                {
-                    writer.Write('-');
-                }
-                else
-                {
-                    double share = Math.Round(100.0 * counts[category] / total, 1, MidpointRounding.ToEven);
-                    writer.Write(share.ToString("0.#", CultureInfo.InvariantCulture));
-                }
-            }
-
+            writer.Write(line.ToString());
             if (options.ShowOffsets)
             {
                 WriteLocation(series.Anchor!, writer);
