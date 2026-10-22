@@ -62,6 +62,19 @@ public sealed partial class GraphView
         return (layout.Plot.Height, layout.Rows, layout.ContentHeight, layout.ContentHeight > Bounds.Height);
     }
 
+    // The rows of a strip as the pointer is answered in them (top and height in the view's own coordinates), for tests; null for
+    // anything else.
+    public IReadOnlyList<(double Top, double Height)>? StripRowBounds()
+    {
+        if (Graph is not CategoryGraph { View: GraphForm.Frames } strip || Bounds.Width < 80 || Bounds.Height < 60)
+        {
+            return null;
+        }
+
+        ChartLayout layout = ChartLayoutFor(strip);
+        return [.. Enumerable.Range(0, layout.Rows).Select(r => (RowTop(layout, r) - _scroll, layout.RowHeight))];
+    }
+
     private static bool IsCategory(Graph graph) => graph is CategoryGraph or CodingSummaryGraph or ShareSplitGraph;
 
     private static bool IsSummary(Graph graph) => graph is CodingSummaryGraph || graph is CategoryGraph { View: GraphForm.Summary };
@@ -327,7 +340,7 @@ public sealed partial class GraphView
 
     private static double RowTop(ChartLayout layout, int row) => layout.Plot.Top + 8 + (row * (layout.RowHeight + StripGap));
 
-    private CategoryHit? CategoryHitAt(Point point, bool withText = true)
+    private CategoryHit? CategoryHitAt(Point point, bool withText = true, bool stepping = false)
     {
         if (Graph is not { Count: > 0 } graph || Bounds.Width < 80 || Bounds.Height < 60)
         {
@@ -405,7 +418,7 @@ public sealed partial class GraphView
             int lane = layout.Rows > 1 ? row : -1;
             CategoryColumns columns = ColumnsFor(category, width, lane);
             int column = Math.Clamp((int)((point.X - plot.Left) * columns.Count / plot.Width), 0, columns.Count - 1);
-            return StripHit(category, columns, column, lane, plot, top, layout.RowHeight, withText);
+            return StripHit(category, columns, column, lane, plot, top, layout.RowHeight, withText, stepping ? MarkedIndex : null);
         }
 
         return null;
@@ -421,13 +434,13 @@ public sealed partial class GraphView
         return new CategoryHit(filled >= 0 ? filled : first, withText ? graph.DescribeIntervals(first, end) : string.Empty, area);
     }
 
-    private static CategoryHit StripHit(CategoryGraph graph, CategoryColumns columns, int column, int lane, Rect plot, double top, double rowHeight, bool withText = true)
+    private static CategoryHit StripHit(CategoryGraph graph, CategoryColumns columns, int column, int lane, Rect plot, double top, double rowHeight, bool withText = true, int? after = null)
     {
         double colW = plot.Width / columns.Count;
         var area = new Rect(plot.Left + (column * colW), top, Math.Max(1, colW), rowHeight);
         int first = columns.First(column);
         int end = columns.End(column);
-        return new CategoryHit(graph.UnitOfColumn(first, end, lane), withText ? graph.DescribeUnits(first, end, lane) : string.Empty, area, lane);
+        return new CategoryHit(graph.UnitOfColumn(first, end, lane, after), withText ? graph.DescribeUnits(first, end, lane) : string.Empty, area, lane);
     }
 
     private static CategoryHit SplitHit(ShareSplitGraph graph, SplitColumns columns, int column, Rect plot, bool withText = true)

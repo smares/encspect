@@ -435,13 +435,73 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
         return -1;
     }
 
-    // The unit a strip column selects: its only unit, else the first unit that holds the column's rarest category, so
-    // that choosing a tick leads to the frame it marks.
-    public int UnitOfColumn(int first, int end, int lane)
+    // The units of a strip column that hold a category no other unit of the column holds: the ones its ticks mark, in unit
+    // order. A column may have several, one for each rare category, and they share the column's one pixel.
+    public IReadOnlyList<int> RareUnits(int first, int end, int lane)
+    {
+        if (end - first <= 1)
+        {
+            return [];
+        }
+
+        Span<byte> codes = stackalloc byte[CategorySeries.MaxValuesPerUnit];
+        Span<int> units = stackalloc int[256];
+        Span<int> stamp = stackalloc int[256];
+        CategorySeries.UnitReader reader = Series.Reader(first);
+        for (int unit = first; unit < end; unit++)
+        {
+            int n = reader.Next(codes);
+            for (int i = lane < 0 ? 0 : lane; i < (lane < 0 ? n : Math.Min(n, lane + 1)); i++)
+            {
+                byte code = codes[i];
+                if (code != CategorySeries.None && stamp[code] != unit + 1)
+                {
+                    stamp[code] = unit + 1;
+                    units[code]++;
+                }
+            }
+        }
+
+        var rare = new List<int>();
+        reader = Series.Reader(first);
+        for (int unit = first; unit < end; unit++)
+        {
+            int n = reader.Next(codes);
+            for (int i = lane < 0 ? 0 : lane; i < (lane < 0 ? n : Math.Min(n, lane + 1)); i++)
+            {
+                if (codes[i] != CategorySeries.None && units[codes[i]] == 1)
+                {
+                    rare.Add(unit);
+                    break;
+                }
+            }
+        }
+
+        return rare;
+    }
+
+    // The unit a strip column selects: its only unit, else a unit that holds a category of its ticks (RareUnits): the first,
+    // or after a unit (the one selected now) the next, wrapping around, so that choosing the column again steps through the
+    // units its ticks mark, which share its pixel. A column without a tick selects the first unit of its rarest category.
+    public int UnitOfColumn(int first, int end, int lane, int? after = null)
     {
         if (end - first <= 1)
         {
             return first;
+        }
+
+        IReadOnlyList<int> rare = RareUnits(first, end, lane);
+        if (rare.Count > 0)
+        {
+            foreach (int unit in rare)
+            {
+                if (after is not { } selected || unit > selected)
+                {
+                    return unit;
+                }
+            }
+
+            return rare[0];
         }
 
         var counts = new long[Series.Categories.Count];

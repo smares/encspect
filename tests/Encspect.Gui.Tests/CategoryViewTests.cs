@@ -258,10 +258,16 @@ public class CategoryViewTests
             Assert.True(perFrame < 500, $"{mode}: {perFrame} ms a frame");
         }
 
-        // A lone category's column can be found by pointing, at any width: every point of the strip is probed (no probe is skipped by
-        // what an earlier one returned), and the unit must be among the answers. A column holds 200,000 / columns units, so the
-        // narrow widths put the lone granule in columns of many hundreds of units, where the column's first unit is far from it.
+        // A lone category's column can be found by pointing, at any width, and a column with several lone categories (they share its
+        // pixel) is stepped through by clicking it again. Every point of the strip is probed, with no early stop, and the points
+        // that answer near the unit are clicked until the unit is the answer.
         view.Graph = strip;
+        int? marked = null;
+        view.PointClicked += (_, index) =>
+        {
+            marked = index;
+            view.MarkedIndex = index;
+        };
         foreach (double width in new[] { 420.0, 700, 1042 })
         {
             window.Width = width;
@@ -271,21 +277,30 @@ public class CategoryViewTests
             view.InvalidateVisual();
             AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
             Assert.True(view.ChartMetrics() is not null, $"The strip has no layout at {view.Bounds}.");
-            var answers = new HashSet<int>();
-            for (double x = 0; x < view.Bounds.Width; x++)
+            // The row of granule 2, channel 1, the third.
+            (double top, double rowHeight) = view.StripRowBounds()![2];
+            double rowY = top + (rowHeight / 2);
+            int near = 0;
+            bool reached = false;
+            for (double x = 0; x < view.Bounds.Width && !reached; x++)
             {
-                for (double y = 0; y < view.Bounds.Height; y++)
+                if (view.IndexAt(new Point(x, rowY)) is not { } answer || Math.Abs(answer - 123_456) > 2_000)
                 {
-                    if (view.IndexAt(new Point(x, y)) is { } at)
-                    {
-                        answers.Add(at);
-                    }
+                    continue;
+                }
+
+                near++;
+                view.MarkedIndex = null;
+                for (int click = 0; click < 8 && !reached; click++)
+                {
+                    Point inWindow = view.TranslatePoint(new Point(x, rowY), window)!.Value;
+                    window.MouseDown(inWindow, MouseButton.Left);
+                    window.MouseUp(inWindow, MouseButton.Left);
+                    reached = marked == 123_456;
                 }
             }
 
-            string where = $"view {view.Bounds}, window {window.Width} x {window.Height} (client {window.ClientSize}), metrics {view.ChartMetrics()}, {answers.Count} answers"
-                + (answers.Count > 0 ? $" from {answers.Min()} to {answers.Max()}, nearest to the unit {answers.OrderBy(a => Math.Abs(a - 123_456)).First()}" : string.Empty);
-            Assert.True(answers.Contains(123_456), $"The lone short granule is not reachable: {where}.");
+            Assert.True(reached, $"The lone short granule is not reachable: view {view.Bounds}, metrics {view.ChartMetrics()}, {near} columns answer near it, last answer {marked}.");
         }
 
         window.Close();
@@ -652,5 +667,46 @@ public class CategoryViewTests
         ScreenshotTests.Save(many, $"many-entries-coding-summary-{variant}.png");
         many.Close();
         Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
+    }
+
+    // The drawn columns and rows and the hit-tested ones agree, with no font in the numbers: each unit has a cell of its own, and
+    // along a row the answers are the units in order, each over one run of points, in every row of the strip.
+    [AvaloniaFact]
+    public void Every_cell_of_the_strip_answers_with_its_own_unit_in_every_row()
+    {
+        const int units = 300;
+        var builder = new CategorySeriesBuilder("Block Usage", CategoryTestData.BlockTypes, "granule and channel", 4, ["a", "b", "c", "d"]);
+        for (int unit = 0; unit < units; unit++)
+        {
+            builder.Add([0, 0, 0, 0]);
+        }
+
+        CategorySeries series = builder.Build(Enumerable.Range(0, units).Select(i => i * 10.0).ToArray(), null, null, "d");
+        var view = new GraphView { Graph = new CategoryGraph(series, GraphForm.Frames) };
+        var window = new Window { Width = 1000, Height = 360, Content = view };
+        window.Show();
+        UiPump.Until(() => view.Bounds.Width > 0);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+        Assert.Equal(4, view.ChartMetrics()!.Value.Rows);
+
+        // The rows, four of them, each answering every unit along x.
+        IReadOnlyList<(double Top, double Height)> rows = view.StripRowBounds()!;
+        Assert.Equal(4, rows.Count);
+        for (int row = 0; row < rows.Count; row++)
+        {
+            double? y = rows[row].Top + (rows[row].Height / 2) - 2;
+            var answers = new List<int>();
+            for (double x = 0; x < view.Bounds.Width; x++)
+            {
+                if (view.IndexAt(new Point(x, y.Value + 2)) is { } unit && (answers.Count == 0 || answers[^1] != unit))
+                {
+                    answers.Add(unit);
+                }
+            }
+
+            Assert.Equal(Enumerable.Range(0, units), answers);
+        }
+
+        window.Close();
     }
 }

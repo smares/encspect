@@ -190,6 +190,51 @@ public class CategoryGraphTests
         Assert.Equal("Frame 124 · 0x300C · granule 2, channel 1: Short", NamedSeries(series).DescribeUnits(123, 124, 2));
     }
 
+    // The lone categories of a column share its pixel: clicking it again steps through their units, and a unit that is the lone
+    // one of its category is reached at every width, whatever else is rare beside it. The numbers are those of the failing CI run
+    // (a unit of category 2 among 200,000 granules, with category 1 in 2% of the units), without a font in them.
+    [Fact]
+    public void A_column_with_several_lone_categories_steps_through_their_units_at_every_width()
+    {
+        const int units = 200_000;
+        var random = new Random(9);
+        var builder = new CategorySeriesBuilder("Block Usage", CategoryTestData.BlockTypes, "granule and channel", 4);
+        for (int unit = 0; unit < units; unit++)
+        {
+            builder.Add(unit == 123_456 ? [0, 0, 2, 0] : random.Next(50) == 0 ? [0, 0, 1, 1] : [0, 0, 0, 0]);
+        }
+
+        CategorySeries series = builder.Build(new double[units], null, null, "d");
+        var graph = new CategoryGraph(series, GraphForm.Frames);
+        int ties = 0;
+        for (int width = 300; width <= 1400; width += 5)
+        {
+            CategoryColumns columns = CategoryColumns.Frames(series, width, 2);
+            int column = Enumerable.Range(0, columns.Count).Single(c => columns.First(c) <= 123_456 && 123_456 < columns.End(c));
+            int first = columns.First(column);
+            int end = columns.End(column);
+            IReadOnlyList<int> rare = graph.RareUnits(first, end, 2);
+
+            Assert.Contains(123_456, rare);
+            ties += rare.Count > 1 ? 1 : 0;
+
+            // Clicking again and again reaches the unit, in at most as many clicks as the column has lone units.
+            int? selected = null;
+            var seen = new List<int>();
+            for (int click = 0; click < rare.Count; click++)
+            {
+                selected = graph.UnitOfColumn(first, end, 2, selected);
+                seen.Add(selected.Value);
+            }
+
+            Assert.Equal(rare, seen);
+            Assert.Contains(123_456, seen);
+            Assert.Equal(rare[0], graph.UnitOfColumn(first, end, 2, rare[^1]));
+        }
+
+        Assert.True(ties > 0, "No width made the unit share its column's pixel with another lone category; the test data no longer shows the case.");
+    }
+
     private static CategoryGraph NamedSeries(CategorySeries series)
     {
         var builder = new CategorySeriesBuilder("Test", series.Categories, "value", 4, ["granule 1, channel 1", "granule 1, channel 2", "granule 2, channel 1", "granule 2, channel 2"]);

@@ -118,7 +118,7 @@ A category series (the Layer III block types, the stereo coding of each frame, A
 Interaction:
 
 - **Hovering** says the interval and every share ("0:12 to 0:13 · Short 12.5% (24 values) · Long 87.5% (168 values)", the rarest first), a cell its frame and category ("Frame 1,234 · 0x1A2B · granule 2, channel 1: Short"), a table row its count and share.
-- **Clicking** a column of the over-time view selects the first frame of its interval, found from the time index and not estimated; an empty interval selects nothing. A cell selects its frame, and a column of many frames the first frame that holds its rarest category. A table row or a legend entry selects the next frame after the selected one that has its category, wrapping around, so choosing it again steps through them.
+- **Clicking** a column of the over-time view selects the first frame of its interval, found from the time index and not estimated; an empty interval selects nothing. A cell selects its frame, and a column of many frames a frame that holds one of the categories its ticks mark; the ticks of a column share its pixel, so clicking the column again selects the next such frame after the selected one, wrapping around. A table row or a legend entry selects the next frame after the selected one that has its category, wrapping around, so choosing it again steps through them.
 - **Selecting** a frame in the tree marks it with a line across the over-time view and the strip.
 
 Colors and text:

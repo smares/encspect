@@ -226,7 +226,7 @@ public sealed partial class GraphView : Control
         Focus();
         if (Graph is { Count: > 0 } graph && IsCategory(graph))
         {
-            CategoryHit? hit = CategoryHitAt(e.GetPosition(this));
+            CategoryHit? hit = CategoryHitAt(e.GetPosition(this), stepping: true);
             SetCategoryHit(hit);
             if (hit is { IsLegend: true } legend)
             {
