@@ -89,7 +89,8 @@ public class ScreenshotTests
         window.MouseMove(PointOver(window, 90));
         Save(window, $"graphs-{variant}.png");
 
-        window.Model.Graphs.Selected = window.Model.Graphs.Choices.First(c => c.Graph is DistributionGraph);
+        window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == "Bitrate");
+        window.Model.Graphs.SelectForm(GraphForm.Summary);
         UiPump.Until(() => true);
         AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
         window.MouseMove(PointOver(window, window.Graph.Graph!.Count / 2));
@@ -124,7 +125,7 @@ public class ScreenshotTests
         throw new InvalidOperationException($"No point of {graph.Title} at {index}.");
     }
 
-    private static void Save(Avalonia.Controls.TopLevel window, string name)
+    internal static void Save(Avalonia.Controls.TopLevel window, string name)
     {
         UiPump.Until(() => true);
         AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);

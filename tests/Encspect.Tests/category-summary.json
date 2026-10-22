@@ -1,0 +1,4 @@
+{
+  "note": "Each category series of a stream is held equal to the tally node it is anchored to (docs/design/coding-graphs.md, 'The summary over the stream'). A series missing from this table fails CategorySummaryTests, so no exception is guessed. 'entries': the series' count of each category equals the value of the anchor's entry of the same name, and its total equals the value of the node named by 'denominator' (found among the anchor's siblings, else below the anchor's grandparent). 'flag': two categories for a tally that is a single value; the count of category 'withCategory' (default 0) equals the anchor's value and the total the denominator's. 'findings': codes of findings that allow the series to be smaller than the tally (frames that belong to no stream). Each format's pull request adds its series here.",
+  "series": {}
+}

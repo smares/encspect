@@ -58,9 +58,15 @@ public class GraphTests
     {
         StreamInfo stream = Stream(frames: 100_000, out double[] bitrates, out _);
 
-        IReadOnlyList<Graph> graphs = GraphsViewModel.For(stream);
+        IReadOnlyList<GraphChoice> entries = GraphsViewModel.For(stream);
 
-        Assert.Equal(["Bitrate", "Bitrate Distribution", "Bitrate Over Time", "Reservoir Fill"], graphs.Select(g => g.Title));
+        // One entry for each quantity: the per-frame and per-second series in the same unit are its forms.
+        Assert.Equal(["Bitrate", "Reservoir Fill"], entries.Select(e => e.Title));
+        Assert.Equal([GraphForm.Frames, GraphForm.OverTime, GraphForm.Summary], entries[0].Forms.Select(f => f.Kind));
+        Assert.Equal(["Per Frame", "Over Time", "Distribution"], entries[0].Forms.Select(f => f.Title));
+        Assert.Equal([GraphForm.Frames], entries[1].Forms.Select(f => f.Kind));
+        Assert.False(entries[1].HasForms);
+        Graph[] graphs = [entries[0].Forms[0].Graph, entries[0].Forms[2].Graph, entries[0].Forms[1].Graph, entries[1].Graph];
         var line = (LineGraph)graphs[0];
         Assert.Equal(100_000, line.Count);
         Assert.Equal("kbps", line.Unit);
@@ -77,7 +83,7 @@ public class GraphTests
     public void The_distribution_counts_the_per_frame_bitrates()
     {
         StreamInfo stream = Stream(frames: 100_000, out double[] bitrates, out double[] offsets);
-        var distribution = (DistributionGraph)GraphsViewModel.For(stream)[1];
+        var distribution = (DistributionGraph)GraphsViewModel.For(stream)[0].Forms.Single(f => f.Kind == GraphForm.Summary).Graph;
 
         var expected = bitrates.GroupBy(b => b).OrderBy(g => g.Key).Select(g => (g.Key, g.Count())).ToList();
         Assert.Equal(expected, distribution.Bars.Select(b => (b.Low, b.Count)));
@@ -115,7 +121,7 @@ public class GraphTests
     {
         // 1152 samples at 44.1 kHz: frame 39 starts at 1.0187 s, frame 38 at 0.9926 s.
         StreamInfo stream = Stream(frames: 400, out _, out double[] offsets);
-        LineGraph perSecond = GraphsViewModel.For(stream).OfType<LineGraph>().Single(g => g.Axis == SeriesAxis.Seconds);
+        LineGraph perSecond = GraphsViewModel.For(stream).SelectMany(e => e.Forms).Select(f => f.Graph).OfType<LineGraph>().Single(g => g.Axis == SeriesAxis.Seconds && g.Unit == "kbps");
 
         Assert.Equal((long)offsets[0], perSecond.FrameAt(0, null));
         Assert.Equal((long)offsets[39], perSecond.FrameAt(1, null));
@@ -133,13 +139,15 @@ public class GraphTests
 
         Assert.True(graphs.HasGraphs);
         Assert.False(graphs.HasStreamChoice);
-        Assert.Equal(["Bitrate", "Bitrate Distribution", "Bitrate Over Time", "Reservoir Fill", "Reservoir Fill Over Time"], graphs.Choices.Select(c => c.Title));
+        Assert.Equal(["Bitrate", "Reservoir Fill"], graphs.Choices.Select(c => c.Title));
+        Assert.Equal(["Per Frame", "Over Time", "Distribution"], graphs.Choices[0].Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time"], graphs.Choices[1].Forms.Select(f => f.Title));
         Assert.Same(graphs.Choices[0], graphs.Selected);
         Assert.True(graphs.Choices[0].IsSelected);
         Assert.Equal("Waveform and spectrogram need a decoder, which MPEG Audio does not have yet.", graphs.DecoderNote);
 
         // The choice holds for the next file that has a graph of that title.
-        graphs.Selected = graphs.Choices[3];
+        graphs.Selected = graphs.Choices[1];
         graphs.Load(Analyzer.CreateDefault().AnalyzeFile(Fixtures.Mpeg("external-lame-vbr-v2.mp3")));
         Assert.Equal("Reservoir Fill", graphs.Selected!.Title);
 
@@ -171,12 +179,14 @@ public class GraphTests
         Assert.Equal(77, model.Graphs.MarkedIndex);
 
         // A bar selects a frame of its bitrate; the per-second graph the first frame of its second.
-        model.Graphs.Selected = model.Graphs.Choices.Single(c => c.Graph is DistributionGraph);
+        model.Graphs.Selected = model.Graphs.Choices.Single(c => c.Title == "Bitrate");
+        model.Graphs.SelectForm(GraphForm.Summary);
         var bars = (DistributionGraph)model.Graphs.Graph!;
         Assert.Equal(bars.IndexOfFrame(offset), model.Graphs.MarkedIndex);
         model.Graphs.Activate(0);
         Assert.Equal(bars.Bars[0].Low, line.ValueAt(line.IndexOfFrame(model.SelectedNode!.Node.Offset)!.Value));
-        model.Graphs.Selected = model.Graphs.Choices.Single(c => c.Title == "Bitrate Over Time");
+        model.Graphs.Selected = model.Graphs.Choices.Single(c => c.Title == "Bitrate");
+        model.Graphs.SelectForm(GraphForm.OverTime);
         model.Graphs.Activate(1);
         Assert.Equal(1, model.Graphs.MarkedIndex);
         Assert.Equal(NodeKind.Frame, model.SelectedNode!.Kind);
@@ -213,9 +223,9 @@ public class GraphTests
         Assert.Equal(2, graphs.Streams.Count);
         Assert.Equal("Stream 2: 48 kHz · 0:00.5", graphs.Streams[1].Text);
 
-        graphs.Selected = graphs.Choices[2];
+        graphs.Selected = graphs.Choices[1];
         graphs.SelectedStream = graphs.Streams[1];
-        Assert.Equal(graphs.Choices[2].Title, graphs.Selected!.Title);
+        Assert.Equal(graphs.Choices[1].Title, graphs.Selected!.Title);
         var line = (LineGraph)graphs.Choices[0].Graph;
         Assert.Same(model.Report!.Streams[1].Series[0], line.Series);
 

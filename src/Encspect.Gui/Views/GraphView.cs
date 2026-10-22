@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -11,7 +12,7 @@ namespace Encspect.Gui.Views;
 // Draws one graph: a line, decimated to the smallest and largest value of each pixel column so a
 // stream of any length draws in as many segments as the chart is wide, or bars. Hovering a point
 // shows its value; clicking it raises PointClicked, which selects its frame.
-public sealed class GraphView : Control
+public sealed partial class GraphView : Control
 {
     public static readonly StyledProperty<Graph?> GraphProperty =
         AvaloniaProperty.Register<GraphView, Graph?>(nameof(Graph));
@@ -19,14 +20,16 @@ public sealed class GraphView : Control
     public static readonly StyledProperty<int?> MarkedIndexProperty =
         AvaloniaProperty.Register<GraphView, int?>(nameof(MarkedIndex));
 
-    private const double FontSize = 11.5;
-    private const double TooltipSize = 12.5;
+    // The chart's text is the app's size; only the labels along the axes, which sit close together, are a point smaller.
+    private const double TextSize = 14;
+    private const double AxisSize = 12;
     private const double MaxBarWidth = 24;
 
     // Seconds between time labels: whole minutes and hours once they get long.
     private static readonly double[] TimeSteps = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 18000, 36000];
 
     private int? _hover;
+    private string? _hoverText;
     private GraphColumn[]? _columns;
     private Graph? _columnsGraph;
     private int _columnsWidth;
@@ -34,7 +37,7 @@ public sealed class GraphView : Control
     static GraphView()
     {
         AffectsRender<GraphView>(GraphProperty, MarkedIndexProperty);
-        FocusableProperty.OverrideDefaultValue<GraphView>(false);
+        FocusableProperty.OverrideDefaultValue<GraphView>(true);
     }
 
     public GraphView()
@@ -45,6 +48,9 @@ public sealed class GraphView : Control
     }
 
     public event EventHandler<int>? PointClicked;
+
+    // A click on a legend entry of a category chart, with the category.
+    public event EventHandler<int>? CategoryClicked;
 
     public Graph? Graph
     {
@@ -61,7 +67,7 @@ public sealed class GraphView : Control
     // The point under the pointer and what it shows; exposed for tests.
     public int? HoverIndex => _hover;
 
-    public string? HoverText => _hover is { } index && Graph is { } graph && index < graph.Count ? graph.Describe(index) : null;
+    public string? HoverText => _hoverText ?? (_hover is { } index && Graph is { } graph && index < graph.Count ? graph.Describe(index) : null);
 
     // The point under a position in the control, or null outside the plot. On a line of more points
     // than pixels, the one in that pixel column whose value is nearest the position's height.
@@ -70,6 +76,11 @@ public sealed class GraphView : Control
         if (Graph is not { Count: > 0 } graph)
         {
             return null;
+        }
+
+        if (IsCategory(graph))
+        {
+            return CategoryHitAt(point, withText: false) is { Index: >= 0 } hit ? hit.Index : null;
         }
 
         Layout layout = LayoutFor(graph);
@@ -109,6 +120,12 @@ public sealed class GraphView : Control
             return;
         }
 
+        if (IsCategory(graph))
+        {
+            RenderCategory(context, graph);
+            return;
+        }
+
         Layout layout = LayoutFor(graph);
         Rect plot = layout.Plot;
         IBrush secondary = Palette.Secondary(this);
@@ -120,7 +137,7 @@ public sealed class GraphView : Control
         {
             double y = Math.Round(layout.Y(tick)) + 0.5;
             context.DrawLine(grid, new Point(plot.Left, y), new Point(plot.Right, y));
-            FormattedText label = Text(Graph.FormatValue(tick, string.Empty), FontSize, secondary);
+            FormattedText label = Text(Graph.FormatValue(tick, string.Empty), AxisSize, secondary);
             context.DrawText(label, new Point(plot.Left - 8 - label.Width, y - (label.Height / 2)));
         }
 
@@ -128,7 +145,7 @@ public sealed class GraphView : Control
         string yUnit = graph is DistributionGraph ? "frames" : graph.Unit;
         if (yUnit.Length > 0)
         {
-            context.DrawText(Text(yUnit, FontSize, secondary), new Point(4, 2));
+            context.DrawText(Text(yUnit, TextSize, secondary), new Point(4, 2));
         }
 
         if (graph is LineGraph line)
@@ -160,13 +177,34 @@ public sealed class GraphView : Control
         if (change.Property == GraphProperty)
         {
             _hover = null;
+            _hoverText = null;
             _columns = null;
+            _scroll = 0;
+            _categoryColumns.Clear();
+            _layoutCache = null;
+            _hoverArea = default;
+            _hoverLane = -1;
+            if (Graph is { } graph)
+            {
+                UpdateAutomation(graph);
+            }
+            else
+            {
+                AutomationProperties.SetName(this, null);
+                AutomationProperties.SetHelpText(this, null);
+            }
         }
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
+        if (Graph is { Count: > 0 } graph && IsCategory(graph))
+        {
+            SetCategoryHit(CategoryHitAt(e.GetPosition(this)));
+            return;
+        }
+
         SetHover(IndexAt(e.GetPosition(this)));
     }
 
@@ -174,6 +212,7 @@ public sealed class GraphView : Control
     {
         base.OnPointerExited(e);
         SetHover(null);
+        _hoverText = null;
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -181,6 +220,25 @@ public sealed class GraphView : Control
         base.OnPointerPressed(e);
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
+            return;
+        }
+
+        Focus();
+        if (Graph is { Count: > 0 } graph && IsCategory(graph))
+        {
+            CategoryHit? hit = CategoryHitAt(e.GetPosition(this), stepping: true);
+            SetCategoryHit(hit);
+            if (hit is { IsLegend: true } legend)
+            {
+                CategoryClicked?.Invoke(this, legend.Category);
+                e.Handled = true;
+            }
+            else if (hit is { Index: >= 0 } point)
+            {
+                PointClicked?.Invoke(this, point.Index);
+                e.Handled = true;
+            }
+
             return;
         }
 
@@ -215,9 +273,10 @@ public sealed class GraphView : Control
 
     private void SetHover(int? index)
     {
-        if (_hover != index)
+        if (_hover != index || _hoverText is not null)
         {
             _hover = index;
+            _hoverText = null;
             InvalidateVisual();
         }
     }
@@ -237,7 +296,7 @@ public sealed class GraphView : Control
             ticks.Add(tick);
         }
 
-        double labelWidth = ticks.Max(t => Text(Graph.FormatValue(t, string.Empty), FontSize, Brushes.Black).Width);
+        double labelWidth = ticks.Max(t => Text(Graph.FormatValue(t, string.Empty), AxisSize, Brushes.Black).Width);
         double left = 12 + labelWidth + 8;
         var plot = new Rect(left, top, Math.Max(10, Bounds.Width - left - 16), Math.Max(10, bottom - top));
         return new Layout(plot, axisMax, ticks);
@@ -346,11 +405,11 @@ public sealed class GraphView : Control
         int step = line.Axis == Core.SeriesAxis.Seconds ? NiceTimeStep(perLabel) : NiceStep(perLabel);
         double y = plot.Bottom + 4;
         double lastEnd = double.NegativeInfinity;
-        FormattedText? caption = line.Axis == Core.SeriesAxis.FrameOffset ? Text("frames", FontSize, secondary) : null;
+        FormattedText? caption = line.Axis == Core.SeriesAxis.FrameOffset ? Text("frames", AxisSize, secondary) : null;
         double limit = plot.Right - (caption is null ? 0 : caption.Width + 12);
         for (long position = 0; position <= count; position += step)
         {
-            FormattedText label = Text(line.AxisLabel(position), FontSize, secondary);
+            FormattedText label = Text(line.AxisLabel(position), AxisSize, secondary);
             double x = plot.Left + (position * plot.Width / count);
             double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12 || start + label.Width > limit)
@@ -378,7 +437,7 @@ public sealed class GraphView : Control
         var fill = new ImmutableSolidColorBrush(Mix(accent, Palette.SurfaceColor(this), 0.82));
         var hovered = new ImmutableSolidColorBrush(accent);
         double lastEnd = double.NegativeInfinity;
-        FormattedText? caption = bars.Unit.Length > 0 ? Text(bars.Unit, FontSize, secondary) : null;
+        FormattedText? caption = bars.Unit.Length > 0 ? Text(bars.Unit, AxisSize, secondary) : null;
         double limit = plot.Right - (caption is null ? 0 : caption.Width + 12);
         for (int i = 0; i < count; i++)
         {
@@ -399,7 +458,7 @@ public sealed class GraphView : Control
                 context.FillRectangle(hovered, new Rect(center - (width / 2), plot.Bottom + 2, width, 3), 1.5f);
             }
 
-            FormattedText label = Text(bars.Label(i), FontSize, secondary);
+            FormattedText label = Text(bars.Label(i), AxisSize, secondary);
             double start = center - (label.Width / 2);
             if (start >= lastEnd + 6 && start + label.Width <= limit)
             {
@@ -417,7 +476,8 @@ public sealed class GraphView : Control
     // The value in a box beside the point, on whichever side has room.
     private void DrawTooltip(DrawingContext context, string text, Point at, Rect plot)
     {
-        FormattedText label = Text(text, TooltipSize, Palette.Foreground(this));
+        FormattedText label = Text(text, TextSize, Palette.Foreground(this));
+        label.MaxTextWidth = Math.Max(160, Bounds.Width - 40);
         var size = new Size(label.Width + 16, label.Height + 8);
         double x = at.X + 12 + size.Width <= Bounds.Width - 2 ? at.X + 12 : at.X - 12 - size.Width;
         double y = Math.Clamp(at.Y - size.Height - 8, 2, Math.Max(2, plot.Bottom - size.Height));

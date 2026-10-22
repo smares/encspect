@@ -22,6 +22,9 @@ public sealed class Settings
 
     public double? TopicPaneWidth { get; set; }
 
+    // The share of the detail window's height that the graphs and findings take below the tree and hex view, as the splitter left it.
+    public double? GraphPaneShare { get; set; }
+
     [JsonIgnore]
     public string? FilePath { get; private set; }
 
