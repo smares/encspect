@@ -145,7 +145,7 @@ public sealed partial class GraphView : Control
         string yUnit = graph is DistributionGraph ? "frames" : graph.Unit;
         if (yUnit.Length > 0)
         {
-            context.DrawText(Text(yUnit, AxisSize, secondary), new Point(4, 2));
+            context.DrawText(Text(yUnit, TextSize, secondary), new Point(4, 2));
         }
 
         if (graph is LineGraph line)

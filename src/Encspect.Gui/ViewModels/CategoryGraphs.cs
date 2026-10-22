@@ -648,14 +648,9 @@ public sealed class ShareSplitGraph : Graph
 
         Series = series;
         _line = new LineGraph(series, frameOffsets, duration);
-        double[] values = [.. series.Values.Span.ToArray().Where(double.IsFinite)];
-        Mean = values.Length == 0 ? double.NaN : values.Average();
     }
 
     public Series Series { get; }
-
-    // The mean of the first part's share over the intervals.
-    public double Mean { get; }
 
     public override string Heading => GraphHeadings.Of(Series);
 

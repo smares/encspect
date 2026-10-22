@@ -172,7 +172,7 @@ public sealed partial class GraphView
         string legend = graph switch
         {
             CategoryGraph { View: not GraphForm.Summary } category => "Legend: " + string.Join(", ", category.Series.Categories.Select((c, i) => $"{c.Name} {CategoryGraph.SharePercent(category.Series.Counts[i], category.Series.Total)}")),
-            ShareSplitGraph split => $"Legend: first channel, second channel; mean first channel share {ShareSplitGraph.Percent(split.Mean)}",
+            ShareSplitGraph split => $"Legend: first channel, second channel",
             _ => string.Empty,
         };
         AutomationProperties.SetName(this, graph.Title);
@@ -238,7 +238,7 @@ public sealed partial class GraphView
     private static List<(string Label, int Category)> LegendEntries(Graph graph) => graph switch
     {
         CategoryGraph category => [.. Enumerable.Range(0, category.Series.Categories.Count).Select(c => ($"{category.Series.Categories[c].Name} {CategoryGraph.SharePercent(category.Series.Counts[c], category.Series.Total)}", c))],
-        ShareSplitGraph split => [($"First channel, mean {ShareSplitGraph.Percent(split.Mean)}", 0), ($"Second channel, mean {ShareSplitGraph.Percent(100 - split.Mean)}", 1)],
+        ShareSplitGraph split => [("First channel", 0), ("Second channel", 1)],
         _ => [],
     };
 
@@ -563,7 +563,7 @@ public sealed partial class GraphView
             DrawSummary(context, (ISummaryGraph)graph, graph, isDark, surface, secondary, foreground);
             if (_hover is not null && _hoverText is { } text)
             {
-                DrawTooltip(context, text, new Point(_hoverArea.Center.X, _hoverArea.Y), new Rect(0, 0, Bounds.Width, Bounds.Height));
+                DrawRowTooltip(context, text);
             }
 
             return;
@@ -598,7 +598,7 @@ public sealed partial class GraphView
 
         if (category.View == GraphForm.OverTime)
         {
-            context.DrawText(Text("share of the values in each interval", AxisSize, secondary), new Point(4, 2));
+            context.DrawText(Text("share of the values in each interval", TextSize, secondary), new Point(4, 2));
             DrawPercentTicks(context, plot, grid, secondary);
             CategoryColumns columns = ColumnsFor(category, width, -1);
             double colW = plot.Width / columns.Count;
@@ -622,7 +622,7 @@ public sealed partial class GraphView
         else
         {
             string caption = layout.Rows > 1 ? $"one row for each of the {series.ValuesPerUnit} values of a frame" : $"{series.ValueLabel} values of each frame";
-            context.DrawText(Text(caption, AxisSize, secondary), new Point(4, 2));
+            context.DrawText(Text(caption, TextSize, secondary), new Point(4, 2));
             for (int row = 0; row < layout.Rows; row++)
             {
                 int lane = layout.Rows > 1 ? row : -1;
@@ -667,6 +667,20 @@ public sealed partial class GraphView
         DrawCursor(context, plot, foreground);
     }
 
+    // The hover text of a table row on the row itself, from its middle to the right (over its bar and counts), so that the rows
+    // above and below the pointer stay readable.
+    private void DrawRowTooltip(DrawingContext context, string text)
+    {
+        FormattedText label = Text(text, TextSize, Palette.Foreground(this));
+        label.MaxTextWidth = Math.Max(160, Bounds.Width - 40);
+        var size = new Size(label.Width + 16, label.Height + 8);
+        double x = Math.Min(Math.Max(2, _hoverArea.X + (_hoverArea.Width / 2)), Math.Max(2, Bounds.Width - size.Width - 2));
+        double y = Math.Clamp(_hoverArea.Y + ((_hoverArea.Height - size.Height) / 2), 2, Math.Max(2, Bounds.Height - size.Height - 2));
+        var box = new Rect(x, y, size.Width, size.Height);
+        context.DrawRectangle(Palette.TooltipBackground(this), new Pen(Palette.Grid(this, 0.3), 1), box, 4, 4);
+        context.DrawText(label, new Point(box.X + 8, box.Y + 4));
+    }
+
     private void DrawCursor(DrawingContext context, Rect plot, IBrush foreground)
     {
         if (_hover is not null && _hoverText is { } text)
@@ -693,7 +707,7 @@ public sealed partial class GraphView
     {
         IReadOnlyList<Color> hues = isDark ? CategoryColors.Dark : CategoryColors.Light;
         Rect plot = layout.Plot;
-        context.DrawText(Text("share of the audio bits of the two channels in each interval", AxisSize, secondary), new Point(4, 2));
+        context.DrawText(Text("share of the audio bits of the two channels in each interval", TextSize, secondary), new Point(4, 2));
         DrawPercentTicks(context, plot, new Pen(Palette.Grid(this), 1), secondary);
         SplitColumns columns = SplitColumnsOf(graph, Math.Max(1, (int)plot.Width));
         double colW = plot.Width / columns.Count;

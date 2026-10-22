@@ -8,7 +8,7 @@ namespace Encspect.Tests;
 // Holds every category series of a report equal to the tally node it is anchored to, by the table in
 // category-summary.json (docs/design/coding-graphs.md, "The summary over the stream"). The tally covers a region and the
 // series a stream, so the comparison is made per connected group: the streams that share an anchor or a node form one
-// group, and it sums the series over its streams against the tallies over its distinct anchors.
+// group, and it sums the series over its streams against the tallies over its regions.
 internal sealed partial class CategorySummary
 {
     private readonly Dictionary<string, Entry> _entries;
