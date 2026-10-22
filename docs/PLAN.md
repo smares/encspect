@@ -691,6 +691,7 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
   - Vorbis floors and residues, Opus SILK and CELT.
   - AAC USAC, ER AAC and SBR envelope data.
 - Decoders for waveform and spectrogram, format by format.
+- ALAC, TTA and WMA Lossless decoders (they store no checksum over decoded audio, so phase 3 leaves them out; docs/design/decoders.md, decision 5).
 - Small separate items:
   - WMA Pro frames without the length prefix.
   - WavPack 1 to 3.

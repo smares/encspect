@@ -41,7 +41,7 @@ Sources read for this design, all pinned or public:
 - A format's decoder lives in its format project, in the namespace `<project>.Decoding`. Parser code never references that namespace, which a test checks in the compiled assembly; the host registers the decoders next to the parsers.
 - The parser owns every bit of the coded syntax. The decoder reads the bits with the parser's own code and adds only what turns them into samples: prediction, channel decorrelation, matrixing, output shifts, and the checksums over decoded audio.
 - A parser hands each frame to a decode session through a new route on its context, `StartDecoding`, in the same pass in which it reads the frame. The host serves the route: it finds the decoder, runs it inside an exception boundary and a work budget, and ends the session with the stream's verdict.
-- The parser declares every checksum the stream stores, of either kind, with how many values it stores. It compares the ones over coded bytes in every analysis; the decoder compares the ones over decoded audio. Both end up in one record on the stream, `StreamInfo.Verification`, with a tri-state `IsVerified`.
+- The parser declares every checksum the stream stores, of either kind, with how many values it stores. It compares the ones over coded data in every analysis; the decoder compares the ones over decoded audio. Both end up in one record on the stream, `StreamInfo.Verification`, with a tri-state `IsVerified`.
 - Decoding is off unless a front end asks for it: `AnalysisOptions.Decoding` in the library, `--verify` in the CLI, a "Verify Audio" command in the GUI's detail window. The file list never decodes, and no verdict over decoded audio is cached.
 - Decoding never changes the parser's nodes: it adds findings, the stream's verification and, once host-side PCM analyses exist, their figures on the stream.
 
@@ -113,7 +113,7 @@ The earlier draft limited a decoder to a `Syntax` namespace of its parser, to ke
 - an iterator, an async method, a local function;
 - a `Decoding` type that implements a parser-side interface.
 
-The check counts only references to decoding types defined in the assembly it scans, the same rule it applies to the format assemblies, so the test assembly's own tests that use `Encspect.Formats.*.Decoding` types on purpose are not counted. Over the test assembly it must then report exactly these pairs, no more and no fewer, because the IL walker is hand-written (`System.Reflection.Metadata` has no IL reader), so an operand-size mistake that skips tokens shows up as a missing pair.
+The check counts only references to decoding types defined in the assembly it scans, the same rule it applies to the format assemblies, so the test assembly's own tests that use `Encspect.Formats.*.Decoding` types on purpose are not counted. Over the test assembly it must then report exactly these pairs, no more and no fewer, because the IL walker is hand-written (`System.Reflection.Metadata` has no IL reader), so an operand-size mistake either reads an undefined opcode or runs past the body, which fails the scan with a message naming the method and the IL offset, or lands on valid opcodes and reads wrong tokens, which shows as a missing or extra pair. The control's C# samples have the shapes real code has, but a compiler adds evidence of its own (a constructor calls the base constructor, a property has accessors that carry its type), so a second part of the test builds a small assembly with `System.Reflection.Emit` for each way of reaching a type, in which that way alone is the evidence, and shows that scanning with that way switched off loses exactly the pair. Two ways have no such assembly because a C# or IL type cannot have the evidence alone: the signature of a member reference, and an explicit interface implementation (which also implements the interface).
 
 Why the compiled assembly and not the source:
 
@@ -229,6 +229,7 @@ With decoding on, a coding whose parser walks its entropy-coded data (FLAC, ALAC
 | 16-bit stereo, level 8 | 60 min | 3.769 s | 10.354 s | 2.649 s | 25.6 % |
 
 - **Result:** S / D is 23 % to 52 % with a median of 31 %; eleven of twelve files are above a quarter, and the hour of CD audio at level 5 (the case the design named) is at 37.5 %. The decoder alone runs at 340 to 610 times real time, so an hour of CD audio decodes in 9 to 10 s.
+- **End to end:** lending saves S / (walk + decoder), about 21 % of the analysis time of a FLAC file with decoding on, as the review's rerun of the prototype measured (the `RESULT` lines of the prototype give 19 % to 34 %).
 - **Noise:** repeated runs of one file differ by up to ten points (the same file read 23.8 % to 41.8 % in the differential form, S taken as the difference of the walk-and-decode time and the lending variant's, `RESULT` lines of the prototype), because S is a difference of times. The direct form above is the steadier one, and it also reads above a quarter on 11 of 12 files; the one below it is the highest-order setting, where prediction is most expensive.
 - **What would lower S / D:** a faster decoder, not a faster read: both reads use the same cursor, so making `BitCursor` faster lowers S and the walk alike, while vectorizing the 64-bit LPC path (this prototype's 17-bit side channel at LPC precision 15 runs it scalar) lowers D and raises S / D. Neither moves a median of 31 % below a quarter.
 - **Not measured:** ALAC and TrueHD (their walks are built in Gate 3), and music. The lending variant is the contract for all three; a coding whose walk cannot store (Monkey's Audio's range coder, which the parser does not walk) does not use it.
@@ -253,8 +254,9 @@ public interface IDecoder
     IFrameDecoder Open(DecodeContext context);
 }
 
-// The decoding state of one stream in one analysis. The host calls it on one thread, frame by frame, and always ends it
-// with Finish, also when the parser does not (see "Ending sessions"). Its buffers are its own arrays, dropped with it.
+// The decoding state of one stream in one analysis. The host calls it on one thread, frame by frame, and ends it
+// with Finish, also when the parser does not (see "Ending sessions"); only a decoder that failed (decode.failed) is not
+// called again. Its buffers are its own arrays, dropped with it.
 public interface IFrameDecoder
 {
     // Decodes one frame, checks what the frame stores about its decoded audio (a Monkey's Audio frame CRC), and returns
@@ -311,7 +313,7 @@ public sealed record DecodeSetup
 // FirstSample: the unit's position in the stream in samples per channel. Samples: how many the parser says it codes.
 public readonly record struct CodedFrame(MappedBytes Bytes, string NodeName, long FirstSample, int Samples)
 {
-    // The parser found the frame damaged: a checksum over its coded bytes fails, or the data ends inside it. The decoder
+    // The parser found the frame damaged: a checksum over its coded data fails, or the data ends inside it. The decoder
     // still decodes what it can, so a whole-stream checksum then says the audio differs.
     public bool IsDamaged { get; init; }
 
@@ -345,7 +347,7 @@ public sealed class DecodeContext
 
     // Called once, before the first block: the PCM the decoder will write, and where to write it. The sink is the
     // host's: it forwards to the front end's sink (DecodeOptions.Output) and later to the host's PCM analyses, and it
-    // never throws. A coding that decodes to something other than PCM (WavPack's DSD) does not call it.
+    // never throws, and the host alone ends it (IPcmSink.End): a call from the decoder is ignored. A coding that decodes to something other than PCM (WavPack's DSD) does not call it.
     public IPcmSink DeclareOutput(PcmFormat format);
 }
 ```
@@ -377,7 +379,7 @@ public interface IDecodeSession
     bool Decode(in CodedFrame frame);
 
     // Ends the session, once. stored lists every checksum the stream stores, of either kind, with Stored set, and for
-    // those over coded bytes what the parser compared. The host fills in the decoder's results for those over decoded
+    // those over coded data what the parser compared. The host fills in the decoder's results for those over decoded
     // audio and returns the verification the parser puts on its StreamInfo.
     StreamVerification Finish(IReadOnlyList<ChecksumTally> stored);
 }
@@ -594,7 +596,7 @@ WMA Lossless, later:
 
 What the table means for the plan's list:
 
-- ALAC and WMA Lossless store no checksum, and TTA's checksums all cover coded bytes, which its parser compares.
+- ALAC and WMA Lossless store no checksum, and TTA's checksums all cover coded data, which its parser compares.
 - The decoders that compare something are FLAC, Monkey's Audio, WavPack, and TrueHD and MLP. Decision 5 sets the scope from this.
 - What deferring the other three costs:
   - Their waveform, spectrogram and lowpass panels say "no decoder" until "Later" (plan, GUI: they "appear only for formats that have a decoder"). Lowpass detection of lossless files made from lossy sources is a prime use for ALAC.
@@ -755,7 +757,7 @@ Every code follows the plan's severity rules: a stored checksum that differs is 
   - `decodedSamples`;
   - `checksums`, each with `name`, `covers` (`header`, `codedData`, `decodedAudio`), `coversAllAudio`, `stored`, `checked` and `failed`.
   - A field is added, so `schemaVersion` stays 1.
-- **Text:** a line under each stream, such as "Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)", "no (…)" or "not verified (STREAMINFO MD5 not compared: decoding was not asked for)". A WavPack hybrid file decoded without its `.wvc`, verified and with `IsLossy` set, reads "Verified: yes (lossy stream; block header CRC 120 of 120)".
+- **Text:** a line under each stream, such as "Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)", "no (…)" or "unknown (STREAMINFO MD5 not compared: decoding was not asked for)". A WavPack hybrid file decoded without its `.wvc`, verified and with `IsLossy` set, reads "Verified: yes (lossy stream; block header CRC 120 of 120)".
 - **CSV:** `Is Verified` after `Is Protected`, filled only where decoding was asked for (`--verify`): false where a stream's is false, true where every stream's is true, empty otherwise. Without `--verify` it is empty for every file, so a folder export never mixes verdicts from coded data alone (TTA) with empty ones (FLAC). `ReportSummary` gains the field, so the GUI's summary cache format becomes 6.
 - **GUI:** the stream line of the detail window names the verdict, "verified (lossy stream)" where the stream is verified and `IsLossy` is set (a WavPack hybrid file without its `.wvc`), and links to the article. The file list gets no column in Gate 3, for the same reason as the CSV.
 - **Article:** `verification` in `src/Encspect.Host/Topics`: what stored checksums cover (a header, coded data, decoded audio), why an MD5 needs decoding, what "verified" means in the report. The stored checksum fields of the lossless formats point to it.
@@ -926,6 +928,7 @@ public interface IPcmSink
     // On the analysis thread, in stream order; a sink copies what it keeps.
     void Write(PcmBlock block);
 
+    // Called once by the host when the stream's decoding ends, with the samples per channel decoded; a decoder never calls it.
     void End(long samples);
 }
 ```
@@ -953,7 +956,7 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
 - The fixture scripts compute them from a reference decoder's output, never from the analyzer; the cross-check job recomputes them with a second decoder where one exists.
 - `DecoderFixtureTests` decodes every such fixture with a hashing sink and holds the analyzer to the manifest, and checks that the tree equals the one of the analysis without decoding.
 - **Damage that only the decoded audio shows**, hand-built for each coding:
-  - A residual bit flipped with the frame's coded checksums recomputed (and, for Monkey's Audio, the descriptor MD5, since it covers the coded bytes), so every coded check holds and only the MD5, the Monkey's Audio frame CRC, the WavPack header CRC or the TrueHD lossless check fails.
+  - A residual bit flipped with the frame's coded checksums recomputed (and, for Monkey's Audio, the descriptor MD5, since it covers the coded data), so every coded check holds and only the MD5, the Monkey's Audio frame CRC, the WavPack header CRC or the TrueHD lossless check fails.
   - A stored MD5 changed.
   - A frame cut short, so the whole-stream checksum is not compared.
   - A FLAC file with an MD5 of 0, cut after a whole frame, and one with frames removed from the middle: every CRC-16 holds, and the stream must not be verified (the parser reports the missing samples or the gap).
@@ -1057,6 +1060,14 @@ What the contract pull request implements, and where it differs from the signatu
 - **`Crc32`:** `Update` works on the register, as the copies the formats keep; `Initial`, `Finish` and `Of` are added. `Md5` has `HashLength`.
 - **Output:** `VerificationText.Describe` is the text of the verification for the text tree and for a front end; the text tree prints "Verified: …" under the stream's first node, one level deeper. `ReportSummary.IsVerified` holds the verdict of the audio streams, and the GUI's summary cache stores it (format 6); the GUI shows nothing yet.
 - **CSV:** `ReportCsvWriter.Write(reports, writer, isVerifying)` fills `Is Verified` only when `isVerifying` is true.
+- **Sink:** the host alone ends the PCM sink (`IPcmSink.End`, once, with the samples it counted; also for a session ended without `Finish`); the sink a decoder gets ignores `End`, so a front end never sees two. A sink that throws only in `End` is rethrown like any other.
+- **Setup figures:** a stream that states fewer than 1 channel, or a sample width outside 1 to 64 bits, is not decoded: `decode.not-possible` (status `NotPossible`) when decoding was asked for, nothing otherwise. A crafted file can state these, so a parser may pass them as they are; a null setup or stream is the parser's bug.
+- **Tallies:** a parser's tallies are checked in `Finish`: no negative count, `Checked` at most `Stored`, `Failed` at most `Checked`, no `CoversAllAudio` on a header checksum, and no two of one name. A violation is a parser bug and throws `ArgumentException` (`parse.failed`), not `decode.failed`, which is for decoders.
+- **Lent buffers:** `DecodeContext.LentBuffers` is empty unless the frame being decoded has `IsWalked`.
+- **Verdict text:** the null verdict reads "Verified: unknown (…)" in the text tree. The reason a checksum over decoded audio was not compared when decoding ran but the stream is incomplete names the three causes: a frame not decoded, a frame missing (a gap), or samples that differ from the stated count.
+- **Analyze:** a negative `MaxPcmBytes` is refused before anything is read, for every input; the exceptions `Analyze` throws are listed in its comment.
+- **CLAUDE.md:** the sentence "Design documents are drafted on Opus with high effort; fixes to them count as implementation." in Verification is not one of the proposed lines: the project lead added it to this pull request on 2026-10-22. Two of the proposed lines are completed for decoders: the host reports `decode.failed` for a decoder as it reports `parse.failed` for a parser, and a decoder checks `DecodeContext.CancellationToken`.
+- **For step 2:** `decode.frame-too-large` is listed among the contract tests but cannot be tested before a decoder exists, since only a decoder knows its ceiling; the FLAC decoder's tests cover it.
 - **Not built:** the host's internal list of PCM analyses (the sink forwards to the front end's sink only), and every decoder: `DefaultParsers.Decoders` is empty.
 
 ## Decisions
@@ -1079,4 +1090,3 @@ The project lead decided all nine on 2026-10-22: decision 1 as below, in place o
 - **TrueHD presentations:** what decoding the lower presentations costs beyond their matrices and output, and whether FFmpeg's `-downmix` output gives each presentation's check, is settled by the TrueHD work; decision 6 only says what is compared.
 - **Cost not measured:** Monkey's Audio's filters in managed code are an estimate until its decoder measures them. The second entropy pass is measured for FLAC (step 1); the MD5 throughput of `Md5` is measured as part of the prototype's decoder, not alone.
 - **Shared syntax:** a parser refactor now has to keep its decoder building; that is the point of the layout, but it couples their changes within one project.
-- **The plan's row** names checksum verification for ALAC and WMA Lossless, which store none; it needs rewording whatever the scope decision is.

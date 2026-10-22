@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Downloads FFmpeg 6.1.1's source release, pinned by its SHA-256, into a directory outside the
-repository and extracts the files the WMA and ASF work is written from:
+repository and extracts the files the format work is written from (the WMA, ASF, WavPack, DTS and MP4 parsers, and the phase 3
+lossless codings the decoder design cites):
 
     python3 scripts/fixtures/ffmpeg_sources.py [directory]
 

@@ -58,7 +58,7 @@ Without it, the output is unchanged.
 
 ### `--verify`
 
-Decodes each file's audio while reading it and compares the checksums that cover decoded audio, such as a FLAC file's MD5. Without it, only the checksums over coded bytes are compared, so a stream whose checksum over decoded audio was not compared says so.
+Decodes each file's audio while reading it and compares the checksums that cover decoded audio, for the codings that have a decoder (an MD5 over all samples, a CRC over the samples of a frame). Without it, only the checksums over coded data are compared, so a stream whose checksum over decoded audio was not compared says so.
 
 - **Cost:** decoding runs in the same pass over the file and costs time for every sample, much more than the structure analysis alone. The PCM a stream decodes to is counted in bytes of the canonical layout (signed, little-endian, whole bytes a sample), and decoding stops with an info finding (`decode.limit`) past the larger of 16 GiB and 256 times the file's size.
 - **Formats without a decoder:** the stream says so (`decode.no-decoder`, info) and the report is otherwise the same. No format has a decoder yet; the decoders arrive with their formats.
@@ -67,12 +67,12 @@ Decodes each file's audio while reading it and compares the checksums that cover
 
 ### The verification of a stream
 
-A stream of a coding that stores checksums has a verification, with or without `--verify`. A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio (`encspect --learn verification` explains it).
+A stream of a coding that declares its checksums has a verification, with or without `--verify`. No format declares them yet: the phase 3 codings and WavPack do so as their work lands, and the examples below show what they will write. A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio (`encspect --learn verification` explains it).
 
 - **Text tree:** a line under the stream's first node.
   - `Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)`: each checksum with the values compared of those stored.
   - `Verified: no (STREAMINFO MD5 1 of 1 differ)`: a stored checksum differs.
-  - `Verified: not verified (STREAMINFO MD5 not compared: decoding was not asked for)`: something stored was not compared, or nothing compared covers all of the audio.
+  - `Verified: unknown (STREAMINFO MD5 not compared: decoding was not asked for)`: something stored was not compared, or nothing compared covers all of the audio.
   - `Verified: yes (lossy stream; block header CRC 120 of 120)`: the checksums vouch for the output of a lossy coding (a WavPack hybrid file without its correction file).
 - **JSON:** `verification` in the stream, after `protection`:
   - `isVerified`, written where it is not null;
