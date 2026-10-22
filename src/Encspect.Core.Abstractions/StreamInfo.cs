@@ -94,6 +94,9 @@ public sealed record StreamInfo
     public Confidence? WriterConfidence { get; init; }
 
     public IReadOnlyList<Series> Series { get; init; } = [];
+
+    // Categories per frame for graphs and for the summary over the stream, such as the Layer III block types.
+    public IReadOnlyList<CategorySeries> CategorySeries { get; init; } = [];
 }
 
 public enum SeriesAxis
@@ -142,4 +145,7 @@ public sealed class Series
 
     // What the series shows, as a node's Description says what its field is.
     public string? Description { get; init; }
+
+    // The shared concept the series shows, which front ends group by; None for a series that belongs to none.
+    public GraphConcept Concept { get; init; }
 }
