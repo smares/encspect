@@ -1,6 +1,6 @@
 # Ogg
 
-The Ogg container (RFC 3533). Its codecs have their own pages: [Speex](speex.md), [Vorbis](vorbis.md) and [Opus](opus.md).
+The Ogg container (RFC 3533). Its codecs have their own pages: [Speex](speex.md), [Vorbis](vorbis.md), [Opus](opus.md) and [FLAC](flac.md).
 
 ## What is read
 
@@ -24,7 +24,7 @@ What breaks RFC 3533, such as:
 
 ## Not covered
 
-- **Recognized, not analyzed:** the mappings of FLAC, Theora, Skeleton, CELT, Kate, Dirac, PCM and VP8 are told apart by their first packet and named, but only their pages are read; the stream gets `ogg.codec-not-analyzed`, and no stream figures, packets or tags.
+- **Recognized, not analyzed:** the mappings of Theora, Skeleton, CELT, Kate, Dirac, PCM and VP8 are told apart by their first packet and named, but only their pages are read; the stream gets `ogg.codec-not-analyzed`, and no stream figures, packets or tags.
 - **Unknown mappings:** a first packet no mapping names is `ogg.codec-unknown`; its pages are read too.
 - **Analyzed:** Speex, Vorbis and Opus.
 - **Streams past the limit** above, and the packets of any stream over 64 MiB, are not read.

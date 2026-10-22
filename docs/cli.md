@@ -61,13 +61,13 @@ Without it, the output is unchanged.
 Decodes each file's audio while reading it and compares the checksums that cover decoded audio, for the codings that have a decoder (an MD5 over all samples, a CRC over the samples of a frame). Without it, only the checksums over coded data are compared, so a stream whose checksum over decoded audio was not compared says so.
 
 - **Cost:** decoding runs in the same pass over the file and costs time for every sample, much more than the structure analysis alone. The PCM a stream decodes to is counted in bytes of the canonical layout (signed, little-endian, whole bytes a sample), and decoding stops with an info finding (`decode.limit`) past the larger of 16 GiB and 256 times the file's size.
-- **Formats without a decoder:** the stream says so (`decode.no-decoder`, info) and the report is otherwise the same. No format has a decoder yet; the decoders arrive with their formats.
+- **Formats without a decoder:** the stream says so (`decode.no-decoder`, info) and the report is otherwise the same. FLAC has a decoder (native and in Ogg); the decoders of the other formats arrive with them.
 - **Findings:** a stored checksum that differs is a warning, so `--fail-on warning` fails the run. A decoder that fails (`decode.failed`) is an error and a bug.
 - **Output:** the text tree, JSON and CSV carry the verdict (see below). Without `--verify` the tree and every other field are the same.
 
 ### The verification of a stream
 
-A stream of a coding that declares its checksums has a verification, with or without `--verify`. No format declares them yet: the phase 3 codings and WavPack do so as their work lands, and the examples below show what they will write. A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio (`encspect --learn verification` explains it).
+A stream of a coding that declares its checksums has a verification, with or without `--verify`. FLAC declares them (frame header CRC-8, frame CRC-16 and STREAMINFO MD5); the other codings do so as their decoders land. A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio (`encspect --learn verification` explains it).
 
 - **Text tree:** a line under the stream's first node.
   - `Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)`: each checksum with the values compared of those stored.
@@ -88,7 +88,7 @@ A stream of a coding that declares its checksums has a verification, with or wit
 
 ### `--only-format`
 
-`--only-format mpeg` (or `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `ac-3`, `asf`, `dts`, `dts-hd`, `matroska`, several separated by commas) analyzes only files whose detected format starts with that name and skips the rest. Detection looks at the bytes, not the extension. A name that starts no known format is wrong usage, as is a missing list (`--only-format` followed by a file or folder).
+`--only-format mpeg` (or `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `ac-3`, `asf`, `dts`, `dts-hd`, `matroska`, several separated by commas) analyzes only files whose detected format starts with that name and skips the rest. Detection looks at the bytes, not the extension. A name that starts no known format is wrong usage, as is a missing list (`--only-format` followed by a file or folder).
 
 - **Names:** the same as for `--as` (see below), so `ac3` is `ac-3`. A prefix several formats share (`a`) selects all of them. `dts` is the DTS parser's own name, so `--only-format dts` selects raw DTS files and not `.dtshd` files, which are `dts-hd`.
 
@@ -96,7 +96,7 @@ A stream of a coding that declares its checksums has a verification, with or wit
 
 `--as aac` skips format detection and analyzes every file as that format, for a file whose format detection does not find (a damaged one) or finds wrongly. The format is named like this, ignoring case, spaces, hyphens and underscores; one that fits no format, or several (`a`), is wrong usage, as is a missing name (`--as` followed by a file or folder).
 
-- **The formats and the start of their names:** `mpeg` (MPEG Audio), `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `ac-3` (also `ac3`), `asf`, `dts`, `dts-hd`, `matroska`.
+- **The formats and the start of their names:** `mpeg` (MPEG Audio), `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `ac-3` (also `ac3`), `asf`, `dts`, `dts-hd`, `matroska`.
 - **Other names a format goes by:** `mp1`, `mp2`, `mp3` for MPEG Audio; `m4a`, `m4b`, `mov`, `3gp` for MP4; `adts`, `adif` for AAC; `eac3`, `ec3` for AC-3; `vorbis`, `opus`, `speex`, `spx`, `oga` for Ogg; `wma` for ASF; `mkv`, `mka`, `webm` for Matroska; `mpc` for Musepack; `wv` for WavPack. `dtshd` is the name of DTS-HD itself (ignoring the hyphen), so `--as dtshd` analyzes a file as a DTS-HD file, with its chunks; before the DTS-HD parser existed it meant DTS. `--as dts` reads the same file as a raw DTS stream.
 
 - **Tags:** found as always; only the format parser changes. The forced format's declared size decides which signatures inside the data are no tags only where the format matches the data; otherwise the detected format's does, so forcing a format that is not there leaves the tags as detection finds them.

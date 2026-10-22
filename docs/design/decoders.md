@@ -1058,7 +1058,7 @@ What the contract pull request implements, and where it differs from the signatu
 - **Budget:** the default is the larger of 16 GiB and 256 times the size of the whole file (`DecodeOptions.MinimumBudget`, `BudgetPerInputByte`); a session that passes it stops at once, and the others at their next frame. A negative `MaxPcmBytes` is an `ArgumentOutOfRangeException` from `Analyze`.
 - **Byte layout:** `CanonicalPcm` (`BytesPerSample`, `ByteCount`, `Write`) is the canonical layout; floats are written as their IEEE 754 bytes.
 - **`Crc32`:** `Update` works on the register, as the copies the formats keep; `Initial`, `Finish` and `Of` are added. `Md5` has `HashLength`.
-- **Output:** `VerificationText.Describe` is the text of the verification for the text tree and for a front end; the text tree prints "Verified: …" under the stream's first node, one level deeper. `ReportSummary.IsVerified` holds the verdict of the audio streams, and the GUI's summary cache stores it (format 6); the GUI shows nothing yet.
+- **Output:** `VerificationText.Describe` is the text of the verification for the text tree and for a front end; the text tree prints "Verified: …" under the stream's first node, one level deeper. `ReportSummary.IsVerified` holds the verdict of the audio streams, and the GUI's summary cache stores it (format 6); the detail window shows it from step 2.
 - **CSV:** `ReportCsvWriter.Write(reports, writer, isVerifying)` fills `Is Verified` only when `isVerifying` is true.
 - **Sink:** the host alone ends the PCM sink (`IPcmSink.End`, once, with the samples it counted; also for a session ended without `Finish`); the sink a decoder gets ignores `End`, so a front end never sees two. A sink that throws only in `End` is rethrown like any other.
 - **Setup figures:** a stream that states fewer than 1 channel, or a sample width outside 1 to 64 bits, is not decoded: `decode.not-possible` (status `NotPossible`) when decoding was asked for, nothing otherwise. A crafted file can state these, so a parser may pass them as they are; a null setup or stream is the parser's bug.
@@ -1069,6 +1069,47 @@ What the contract pull request implements, and where it differs from the signatu
 - **CLAUDE.md:** the sentence "Design documents are drafted on Opus with high effort; fixes to them count as implementation." in Verification is not one of the proposed lines: the project lead added it to this pull request on 2026-10-22. Two of the proposed lines are completed for decoders: the host reports `decode.failed` for a decoder as it reports `parse.failed` for a parser, and a decoder checks `DecodeContext.CancellationToken`.
 - **For step 2:** `decode.frame-too-large` is listed among the contract tests but cannot be tested before a decoder exists, since only a decoder knows its ceiling; the FLAC decoder's tests cover it.
 - **Not built:** the host's internal list of PCM analyses (the sink forwards to the front end's sink only), and every decoder: `DefaultParsers.Decoders` is empty.
+
+## As built in step 2
+
+What the FLAC pull request implements: the parser (`Encspect.Formats.Flac`), the decoder (`Encspect.Formats.Flac.Decoding`, ID `flac`, registered in `DefaultParsers.Decoders`), the codec parser for Ogg FLAC, "Verify Audio" in the GUI and the `flac-crosscheck` job. [flac.md](../formats/flac.md) describes it from the user's side.
+
+- **Lending:** the parser's walk is the only reader of the coded syntax: `SubframeSyntax.Read` fills the lent planes (warm-up samples and residuals) and 38 meta slots after the samples (type, order, wasted bits, coefficient precision and shift, whether the plane is wide, 32 coefficients), so a lent stride is the block size plus `SubframeLayout.MetaSlots`. The decoder reads those and reconstructs. `DecodingBoundaryTests` stay green: the decoder references no reader of its own.
+- **Frames the walk did not store:** a frame that was walked without a session (or by a parser that does not lend) is read by the decoder with the same `SubframeSyntax.Read` into buffers of its own. This is the path the measurement below uses for "walk, then decoder"; it is covered by a test.
+- **The wide plane** is chosen before the wasted bits are subtracted (`frameBits + side > 32`): a 32-bit side channel with wasted bits still needs 64-bit planes for the samples of the frame, and the 33-bit fixture caught the decoder taking the narrow plane.
+- **Checksums:** three tallies, declared by the parser: "frame header CRC-8" (header), "frame CRC-16" (coded data) and "STREAMINFO MD5" (decoded audio). `CoversAllAudio` of the CRC-16 is true only when no frame is missing, the frames' samples equal STREAMINFO's count, no frame was cut and none was unreadable. An MD5 of 0 is "not stored", not a mismatch. Fixtures where every CRC holds but frames are missing, repeated or out of order (the `*-md5-zero` ones) are not verified, which the contract's R2 asked for.
+- **Frames the decoder refuses:** a frame whose channels or bit depth differ from STREAMINFO's cannot be decoded into the stream's PCM layout; the stream is `NotPossible`. A STREAMINFO with fewer than 4 bits per sample is refused too.
+- **Resync:** a header counts as a frame when its CRC-8 holds and either a consistent header follows or the stream ends; a frame whose CRC-8 fails is taken when its walk completes and a header follows (a flipped bit in the CRC-8 byte also fails the CRC-16 of an intact frame). The search past damage reads at most 64 MiB plus four times the file. A frame is at most 16 MiB (`MaxFrameBytes`).
+- **Deviations from this document:**
+  - `decode.frame-too-large` cannot be reached by any file: a frame header gives at most 65,535 samples and a stream has at most eight channels, which is exactly the decoder's ceiling of 65,535 x 8 samples. The guard stays, since the constant is the decoder's own statement of what it handles, and no test reaches it.
+  - An unreadable frame (a header that reads and a subframe that breaks the syntax) makes `CoversAllAudio` of the CRC-16 and of the MD5 tally false although the frame count may match, since that frame's samples are missing from the MD5.
+  - A frame whose CRC-8 fails is decoded when the walk completes and a header follows; one whose extent was only found by search (`ExtentFound`) and whose walk completed is decoded too. The frames that fail the CRC-16 or are cut are handed to the decoder flagged `IsDamaged`.
+- **GUI:** "Verify Audio" in the detail window analyzes the file again with decoding on while the old analysis stays on screen; Stop cancels it; a failure shows as "Not verified". The file list and the summary cache never decode. See [gui.md](../gui.md).
+- **Measurement on the built decoder** (below).
+
+### The second entropy pass, measured again on the built decoder
+
+The step 1 prototype used FFmpeg's encoder on synthetic signals. This run uses the real parser and decoder, files written by `flac` 1.4.3, and music.
+
+- **Machine and build:** as in step 1 (Intel Xeon at 2.80 GHz, 4 vCPUs, Linux 6.18, .NET 10.0.401, Release, one thread). Each figure is the best of 5 runs after a warm-up, over the whole analysis of the file from the page cache.
+- **Files:** `flac` 1.4.3 at levels 0, 5 and 8. Synthetic: 10 minutes of 16-bit 44.1 kHz stereo, three sines (440, 1,000 and 3,000 Hz) plus white noise at 0.002, 0.05 and 0.3 of full scale. Music: two commercial tracks of 3:46 and 4:20, decoded from MP3 to 16-bit 44.1 kHz stereo (so music with a lossy source's spectrum; the files are not committed).
+- **Variants:** A is the analysis without decoding. B is the analysis with decoding as built (the walk stores into the lent buffers). C is the analysis with decoding and the walk not storing (`FlacParser.LendsBuffers = false`), so the decoder reads every frame again: the contract as first drafted. The decoder alone of step 1 corresponds to D = C - A; the second read, net of what the stores add to the walk, to S = C - B.
+
+| File | Length | A | B | C | D = C - A | S = C - B | S / D | Decoding alone (B - A), times real time |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| music 1, level 5 | 3:46 | 0.470 s | 0.755 s | 0.885 s | 0.415 s | 0.130 s | 31.3 % | 791 |
+| music 1, level 8 | 3:46 | 0.412 s | 0.756 s | 0.940 s | 0.528 s | 0.184 s | 34.9 % | 657 |
+| music 2, level 5 | 4:20 | 0.469 s | 0.829 s | 1.027 s | 0.558 s | 0.198 s | 35.4 % | 722 |
+| noise 0.002, level 5 | 10 min | 0.816 s | 1.518 s | 1.790 s | 0.975 s | 0.272 s | 27.9 % | 854 |
+| noise 0.3, level 5 | 10 min | 0.880 s | 1.354 s | 1.629 s | 0.748 s | 0.274 s | 36.6 % | 1,265 |
+| noise 0.05, level 0 | 10 min | 2.529 s | 3.085 s | 3.757 s | 1.228 s | 0.672 s | 54.8 % | 1,080 |
+| noise 0.05, level 5 | 10 min | 0.857 s | 1.494 s | 1.737 s | 0.880 s | 0.243 s | 27.7 % | 943 |
+| noise 0.05, level 8 | 10 min | 0.864 s | 1.547 s | 1.788 s | 0.924 s | 0.241 s | 26.1 % | 879 |
+
+- **Result:** S / D is 26 % to 55 % with a median of 33 %; the seven files at levels 5 and 8 sit between 26 % and 37 %, and the level 0 file, whose frames are mostly fixed predictors and so cheap to predict, is at 55 %. Seven of eight files are above a quarter, as in step 1 (23 % to 52 %, median 31 %): the lending variant stays the right contract.
+- **End to end:** lending saves (C - B) / C of the time of an analysis with decoding, 13.5 % to 19.6 % (median 16 %), in line with the 19 % to 34 % that step 1's differential form gave for S / (walk + decoder).
+- **Speed:** the decoding added to the analysis (B - A: prediction, reconstruction, undoing the channel assignment and the MD5, with the walk's stores) runs at 650 to 1,270 times real time, which is faster than step 1's decoder alone (340 to 610 times) since the read is no longer part of it. The analysis without decoding (A) runs at 480 to 740 times real time for the files at levels 5 and 8.
+- **Not measured:** 24-bit and multichannel files, the hour-long files of step 1, and level 0 on music.
 
 ## Decisions
 
