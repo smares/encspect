@@ -28,7 +28,7 @@ Each MPEG Audio region reports:
 - the counts a VBR header claims against the ones counted, and the gapless sample count;
 - the coding statistics mp3guessenc and EncSpot print:
   - frames per channel mode;
-  - **Stereo Coding** over all frames: left/right stereo, mid/side stereo, intensity stereo, both tools, dual channel and mono. A joint stereo frame of Layer I or II is intensity stereo above its bound. EncSpot's mode 0 is the entries left/right stereo, dual channel and mono together; mp3guessenc prints the three tools' counts and the sum of all frames;
+  - **Stereo Coding** over all frames: left/right stereo, mid/side stereo, intensity stereo, both tools, dual channel and mono. A joint stereo frame of Layer I or II is intensity stereo above its bound, as its header selects, even where a Layer II bound lies at or above the highest coded subband. EncSpot's mode 0 is the entries left/right stereo, dual channel and mono together; mp3guessenc prints the three tools' counts and the sum of all frames;
   - **Joint Stereo Modes**, the stereo coding of the joint stereo frames of Layer III only, or **Intensity Stereo Bounds**, their intensity stereo bound in Layers I and II;
   - Layer III **Block Usage** (long, start, short, mixed, stop, reserved, granules counted per channel) and global gain per channel;
   - **Block Sizes**, the same granules grouped as EncSpot counts them: long (with start and stop), short, mixed, and the reserved block type apart, which EncSpot counts as long;
@@ -39,8 +39,8 @@ Each MPEG Audio region reports:
 - **Coded Bandwidth** (Layers I and II): the lowest, most common and highest of the frames' coded bandwidths, the upper edge of the highest subband with a bit allocation other than 0 in either channel, in whole hertz. It is read from the allocation, a bound the data states; it is not the encoder's lowpass and not a measurement of decoded audio. Layer III states no such bound in its side information, so it has none;
 - **Channel Bit Share** (stereo, joint stereo and dual channel frames of all layers): the lowest, overall and highest share of the first channel in a frame's audio bits.
   - Layer III counts part2_3_length of every granule and channel (the scalefactors and the Huffman-coded values), not the header, the side information or the padding.
-  - Layers I and II count each channel's allocation, scalefactor selection (Layer II), scalefactors and samples. Above the intensity stereo bound both channels share the allocation and the samples, and those bits count toward neither channel nor the total; the scalefactor selection and the scalefactors stay per channel.
-  - The first channel is left in left/right stereo, dual channel and intensity stereo frames and mid in mid/side frames, so a stream that switches between them mixes the two. The overall share is bit-weighted: the first channel's bits over both channels' bits in all frames.
+  - Layers I and II count each channel's allocation, scalefactor selection information, scfsi (Layer II), scalefactors and samples. Above the intensity stereo bound both channels share the allocation and the samples, and those bits count toward neither channel nor the total; the scalefactor selection and the scalefactors stay per channel.
+  - The first channel is left in left/right stereo, dual channel and intensity stereo frames and mid in mid/side frames (in a frame with both tools only below the intensity stereo region), so a stream that switches between them mixes the two. The overall share is bit-weighted: the first channel's bits over both channels' bits in all frames.
 
 Streams follow the stream rule shared with ADTS, AC-3 and DTS (the [plan](../PLAN.md), AC-3 and E-AC-3, "Framing and sync"):
 - A change of version, layer, sample rate or free format ends the stream and starts another, also where an earlier configuration returns. `mpeg.stream-changed` is one Info finding with the number of changes.

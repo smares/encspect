@@ -155,13 +155,13 @@ public sealed partial class MpegAudioParser
         private readonly Numeric? _share;
         private int _unit;
 
-        public StreamCoding(BuildContext build, double[] offsets, int count, IReadOnlyList<RegionState> regions, MpegHeader header, bool hasTwoChannels)
+        public StreamCoding(BuildContext build, double[] offsets, int count, IReadOnlyList<RegionState> regions, MpegHeader header, bool hasTwoChannels, bool hasJointStereo)
         {
             (_build, _offsets, _regions, _hasTwoChannels, _layer) = (build, offsets, regions, hasTwoChannels, header.Layer);
             _channels = hasTwoChannels ? 2 : 1;
             if (_layer == 3)
             {
-                _joint = Has(r => r.Nodes.JointStereoModes) ? new("Joint Stereo Modes", JointCodings, "frame", 1, concept: GraphConcept.StereoCoding) : null;
+                _joint = hasJointStereo && Has(r => r.Nodes.JointStereoModes) ? new("Joint Stereo Modes", JointCodings, "frame", 1, concept: GraphConcept.StereoCoding) : null;
                 if (Has(r => r.Nodes.BlockUsage))
                 {
                     int granules = FrameFigures.Granules(header);
@@ -172,7 +172,7 @@ public sealed partial class MpegAudioParser
             }
             else
             {
-                _bounds = Has(r => r.Nodes.IntensityStereoBounds) ? new("Intensity Stereo Bounds", BoundCategories, "frame", 1, isOrdered: true, concept: GraphConcept.StereoCoding) : null;
+                _bounds = hasJointStereo && Has(r => r.Nodes.IntensityStereoBounds) ? new("Intensity Stereo Bounds", BoundCategories, "frame", 1, isOrdered: true, concept: GraphConcept.StereoCoding) : null;
                 _bandwidth = new Numeric(count, offsets);
             }
 
@@ -253,10 +253,12 @@ public sealed partial class MpegAudioParser
                 categories.Add(usage.Group("Block Sizes", SizeCategories, SizeOfKind, Anchor(r => r.Nodes.BlockSizes), SeriesText.BlockSizesSeries, Topics.BlockSwitching));
             }
 
+            Series? bandwidthSeries = null;
             if (_bandwidth?.Count > 0)
             {
                 Node? anchor = Anchor(r => r.Nodes.CodedBandwidth);
-                series.Add(_bandwidth.PerFrame("Coded Bandwidth", "Hz", SeriesText.CodedBandwidth, GraphConcept.CodedBandwidth, "Coded Bandwidth", null));
+                bandwidthSeries = _bandwidth.PerFrame("Coded Bandwidth", "Hz", SeriesText.CodedBandwidth, GraphConcept.CodedBandwidth, "Coded Bandwidth", null, _bandwidth.X);
+                series.Add(bandwidthSeries);
                 series.Add(_bandwidth.PerSecond("Coded Bandwidth Over Time", "Hz", SeriesText.CodedBandwidthOverTime, GraphConcept.CodedBandwidth, "Coded Bandwidth", secondStarts,
                     anchor, share: false));
             }
@@ -264,7 +266,14 @@ public sealed partial class MpegAudioParser
             if (_share?.Count > 0)
             {
                 Node? anchor = Anchor(r => r.Nodes.ChannelBitShare);
-                series.Add(_share.PerFrame("Channel Bit Share", "%", SeriesText.ChannelBitShare, GraphConcept.BitDistribution, "Channel Bit Share", null));
+                // Where both series lack the same frames (a Layer I or II frame whose allocation does not fit), they have the same x values and keep one array.
+                ReadOnlyMemory<double> shareX = _share.X;
+                if (bandwidthSeries is not null && bandwidthSeries.X.Span.SequenceEqual(shareX.Span))
+                {
+                    shareX = bandwidthSeries.X;
+                }
+
+                series.Add(_share.PerFrame("Channel Bit Share", "%", SeriesText.ChannelBitShare, GraphConcept.BitDistribution, "Channel Bit Share", null, shareX));
                 series.Add(_share.PerSecond("Channel Bit Share Over Time", "%", SeriesText.ChannelBitShareOverTime, GraphConcept.BitDistribution, "Channel Bit Share", secondStarts,
                     anchor, share: true));
             }
@@ -320,12 +329,12 @@ public sealed partial class MpegAudioParser
             _seconds[second] = (double.IsNaN(max) || v > max ? v : max, f + first, b + both);
         }
 
-        private ReadOnlyMemory<double> X => _own is null && Count == _values.Length ? _offsets : (_own ?? _offsets).AsSpan(0, Count).ToArray();
+        public ReadOnlyMemory<double> X => _own is null && Count == _values.Length ? _offsets : (_own ?? _offsets).AsSpan(0, Count).ToArray();
 
         private ReadOnlyMemory<double> Values => Count == _values.Length ? _values : _values.AsSpan(0, Count).ToArray();
 
-        public Series PerFrame(string name, string unit, string description, GraphConcept concept, string quantity, Node? anchor) =>
-            new(name, unit, SeriesAxis.FrameOffset, X, Values, anchor) { Description = description, Concept = concept, Quantity = quantity };
+        public Series PerFrame(string name, string unit, string description, GraphConcept concept, string quantity, Node? anchor, ReadOnlyMemory<double> x) =>
+            new(name, unit, SeriesAxis.FrameOffset, x, Values, anchor) { Description = description, Concept = concept, Quantity = quantity };
 
         // Each second's highest value, or its share over the bits of the frames that start in it; seconds without a value have
         // no point.

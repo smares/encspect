@@ -5,7 +5,8 @@ namespace Encspect.Formats.Mpeg;
 // What a frame's kept audio data says about how it is coded, read straight from the bits at the positions the syntax gives
 // (ISO/IEC 11172-3 2.4.1.5 to 2.4.1.7), without building the objects that make the frame's nodes: the series of a stream are
 // derived from the frame records at the end, once for each frame, and a long file has many frames. Layer1AudioData,
-// Layer2AudioData and Layer3SideInfo stay the readers of the nodes; the tests hold these figures equal to what they give.
+// Layer2AudioData and Layer3SideInfo stay the readers of the nodes; MpegCodingSeriesTests hold these figures equal to what the nodes
+// state, frame by frame (the bandwidth and the share of each layer), and FrameFiguresTests to frames built by hand.
 internal static class FrameFigures
 {
     public const int None = -1;

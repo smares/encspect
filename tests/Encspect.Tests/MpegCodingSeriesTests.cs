@@ -1,5 +1,6 @@
 using Encspect.Core;
 using Encspect.Formats.Mpeg;
+using Encspect.Host;
 
 namespace Encspect.Tests;
 
@@ -171,6 +172,79 @@ public class MpegCodingSeriesTests
         Assert.Equal(unit, share.Values.Length);
     }
 
+    // Layer I and II's channel bit share follows from the nodes too: for each channel the bit widths of its allocation fields, its scfsi
+    // fields and scalefactors (the nodes' own bit lengths), and its samples from the levels the allocation node states, below the intensity
+    // stereo bound; the allocation and samples above it ("Channels 0 and 1") are shared and belong to neither channel.
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void The_channel_bit_share_of_every_layer_I_and_II_frame_equals_what_its_allocation_nodes_state(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        if (report.Streams.Count != 1 || report.Streams[0].Series.FirstOrDefault(s => s.Name == "Channel Bit Share") is not { } share
+            || report.Streams[0].Codec.EndsWith("III", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        bool isLayer1 = report.Streams[0].Codec.EndsWith("Layer I", StringComparison.Ordinal);
+        int unit = 0;
+        foreach (Node frame in AudioFrames(report.Streams[0]))
+        {
+            Node? allocation = Fixtures.Resolve(frame, "Bit Allocation").FirstOrDefault();
+            if (allocation is null)
+            {
+                continue;
+            }
+
+            long[] bits = new long[2];
+            bool hasSecond = false;
+            foreach (Node subband in allocation.Children)
+            {
+                foreach (Node channel in subband.Children.Where(c => c.Name.StartsWith("Channel ", StringComparison.Ordinal) && c.Name.Length == 9))
+                {
+                    int ch = channel.Name[^1] - '0';
+                    hasSecond |= ch == 1;
+                    bits[ch] += channel.BitLength!.Value;
+                    string value = channel.Value!.ToString()!;
+                    bits[ch] += value switch
+                    {
+                        "None" => 0,
+                        "Forbidden" => 12 * 16,
+                        _ when isLayer1 => 12 * int.Parse(value.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture),
+                        _ => 12 * Layer2SampleBits(int.Parse(value.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture)),
+                    };
+                }
+            }
+
+            foreach (string kind in new[] { "SCFSI", "Scalefactors" })
+            {
+                foreach (Node subband in Fixtures.Resolve(frame, kind).FirstOrDefault()?.Children ?? [])
+                {
+                    foreach (Node channel in subband.Children.Where(c => c.Name.Length == 9 && c.Name.StartsWith("Channel ", StringComparison.Ordinal)))
+                    {
+                        bits[channel.Name[^1] - '0'] += channel.BitLength!.Value;
+                    }
+                }
+            }
+
+            if (!hasSecond || bits[0] + bits[1] == 0)
+            {
+                continue;
+            }
+
+            double expected = Math.Round(bits[0] * 1000.0 / (bits[0] + bits[1]), MidpointRounding.ToEven) / 10;
+            Assert.True(share.X.Span[unit] == frame.Offset, $"{name}: unit {unit}");
+            Assert.True(expected == share.Values.Span[unit], $"{name}, frame at {frame.Offset}: {share.Values.Span[unit]}%, the nodes give {expected}% ({bits[0]} and {bits[1]} bits)");
+            unit++;
+        }
+
+        Assert.Equal(unit, share.Values.Length);
+    }
+
+    // The bits of a codeword of three samples (ISO/IEC 11172-3 Annex B): 5, 7 or 10 for the grouped 3, 5 and 9 levels, else three samples of
+    // as many bits as the levels need.
+    private static int Layer2SampleBits(int levels) => levels switch { 3 => 5, 5 => 7, 9 => 10, _ => 3 * (32 - int.LeadingZeroCount(levels)) };
+
     private static long PartBits(Node channel) => channel.Children.Single(c => c.Name == "Part 2 and 3 Length").Value!.AsInteger()!.Value;
 
     [Fact]
@@ -261,6 +335,56 @@ public class MpegCodingSeriesTests
 
         // The frames of this stream state no bits (part2_3_length 0 everywhere), so they have no share to graph.
         Assert.DoesNotContain(stream.Series, s => s.Name.StartsWith("Channel Bit Share", StringComparison.Ordinal));
+    }
+
+    // A stream has a series of the joint stereo modes (or of the intensity stereo bounds) only if it has a joint stereo frame of its own, whatever its
+    // region's tally holds: vbr/lame-after-joined-frames has two streams in one region, and the first has none.
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void A_stream_has_a_joint_stereo_series_only_if_it_has_a_joint_stereo_frame(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        foreach (StreamInfo stream in report.Streams)
+        {
+            CategorySeries? modes = Series(stream, "Channel Modes");
+            bool hasJoint = modes is not null && modes.Counts[1] > 0;
+            bool isLayer3 = stream.Codec.EndsWith("III", StringComparison.Ordinal);
+            Assert.Equal(hasJoint && isLayer3, Series(stream, "Joint Stereo Modes") is not null);
+            Assert.Equal(hasJoint && !isLayer3, Series(stream, "Intensity Stereo Bounds") is not null);
+        }
+    }
+
+    [Fact]
+    public void The_first_stream_of_a_region_that_holds_two_has_no_joint_stereo_modes_of_the_second()
+    {
+        Report report = Fixtures.AnalyzeMpeg("vbr/lame-after-joined-frames.mp3");
+
+        Assert.Equal(2, report.Streams.Count);
+        Assert.Equal([false, true], report.Streams.Select(s => Series(s, "Joint Stereo Modes") is not null));
+    }
+
+    // MPEG-2 Layer II stereo frames of 48 bytes (8 kbps at 24,000 Hz), alternately with no allocation and with all allocation bits set,
+    // whose scalefactors then do not fit the frame: those have no coded bandwidth and no share, so both series lack the same frames
+    // and keep one array of x values (docs/design/coding-graphs.md, "Memory budget").
+    [Fact]
+    public void Two_numeric_series_that_lack_the_same_frames_share_their_x_values()
+    {
+        var data = new List<byte>();
+        for (int i = 0; i < 20; i++)
+        {
+            data.AddRange([0xFF, 0xF5, 0x14, 0x00]);
+            data.AddRange(Enumerable.Repeat((byte)(i % 2 == 0 ? 0 : 0xFF), 44));
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("short.mp2", new MemoryStream([.. data]));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Series bandwidth = stream.Series.Single(s => s.Name == "Coded Bandwidth");
+        Series share = stream.Series.Single(s => s.Name == "Channel Bit Share");
+
+        Assert.Equal(10, bandwidth.Values.Length);
+        Assert.True(bandwidth.X.Span.SequenceEqual(share.X.Span));
+        Assert.True(System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bandwidth.X, out ArraySegment<double> first)
+            && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(share.X, out ArraySegment<double> second) && ReferenceEquals(first.Array, second.Array));
     }
 
     private static CategorySeries? Series(StreamInfo stream, string name) => stream.CategorySeries.FirstOrDefault(s => s.Name == name);

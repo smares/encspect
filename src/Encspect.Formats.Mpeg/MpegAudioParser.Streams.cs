@@ -73,6 +73,7 @@ public sealed partial class MpegAudioParser
         bool isVbr = false;
         int audio = 0;
         bool hasTwoChannels = false;
+        bool hasJointStereo = false;
         var regions = new List<RegionState>();
         int region = RegionOf(state, start);
         for (int i = start; i < end; i++)
@@ -100,6 +101,7 @@ public sealed partial class MpegAudioParser
                 bits += frame.Length * 8;
                 samples += new MpegHeader(frame.Header).Samples;
                 hasTwoChannels |= !new MpegHeader(frame.Header).IsMono;
+                hasJointStereo |= new MpegHeader(frame.Header).ChannelModeBits == 1;
                 int? bitrate = BitrateOf(frame);
                 isVbr |= audio > 0 && bitrate != firstBitrate;
                 firstBitrate = audio == 0 ? bitrate : firstBitrate;
@@ -111,7 +113,7 @@ public sealed partial class MpegAudioParser
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(regions.Select(r => r.Writer).FirstOrDefault(w => w is not null));
         (IReadOnlyList<Speaker> layout, int multilingual) = Layout(state, start, end, header);
-        (List<Series> series, List<CategorySeries> categories) = Series(state, start, end, audio, regions, hasTwoChannels);
+        (List<Series> series, List<CategorySeries> categories) = Series(state, start, end, audio, regions, hasTwoChannels, hasJointStereo);
 
         return new StreamInfo
         {
@@ -206,7 +208,7 @@ public sealed partial class MpegAudioParser
     // the frames' offsets and the intervals of the seconds. Only these arrays grow with the number
     // of frames.
     private static (List<Series> Series, List<CategorySeries> Categories) Series(StreamState state, int start, int end, int count,
-        IReadOnlyList<RegionState> regions, bool hasTwoChannels)
+        IReadOnlyList<RegionState> regions, bool hasTwoChannels, bool hasJointStereo)
     {
         if (count == 0)
         {
@@ -231,7 +233,7 @@ public sealed partial class MpegAudioParser
             }
         }
 
-        StreamCoding coding = new(state.Build, offsets, count, regions, new MpegHeader(frames[firstAudio].Header), hasTwoChannels);
+        StreamCoding coding = new(state.Build, offsets, count, regions, new MpegHeader(frames[firstAudio].Header), hasTwoChannels, hasJointStereo);
         int n = 0;
         for (int i = start; i < end; i++)
         {
