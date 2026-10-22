@@ -1286,9 +1286,9 @@ public class DecodeRouteTests
     }
 
     [Fact]
-    public void ADefaultAnalyzerHasNoDecodersYetAndSaysSoWhenDecodingIsAskedFor()
+    public void ADefaultAnalyzerSaysSoWhenDecodingIsAskedForAndNoDecoderHasTheCodec()
     {
-        Assert.Empty(DefaultParsers.Decoders);
+        Assert.Equal(["flac"], DefaultParsers.Decoders.Select(d => d.Id));
         Report report = Analyze(new FrameParser(), DefaultParsers.Decoders, Verify);
         Assert.Contains(report.Findings, f => f.Code == "decode.no-decoder");
     }

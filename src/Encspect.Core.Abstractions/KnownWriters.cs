@@ -14,6 +14,7 @@ public static class KnownWriters
     public const string Vorbis = "vorbis";
     public const string Speex = "speex";
     public const string WavPack = "wavpack";
+    public const string Flac = "flac";
 
     // Kinds no listed software writes yet; a listed writer on one of them is the case the table exists for.
     public const string Musepack = "musepack";
@@ -39,6 +40,8 @@ public static class KnownWriters
         ["speexenc"] = (Speex, "Speex"),
         // wavpack 5.6.0 (make_external_wavpack_fixtures.py): WavPack.
         ["wavpack"] = (WavPack, "WavPack"),
+        // flac 1.4.3 (make_external_flac_fixtures.py): native FLAC and Ogg FLAC.
+        ["flac"] = (Flac, "FLAC"),
     };
 
     // What the software named by a writer's text writes, as a label such as "MPEG audio", when it is listed and writes another kind

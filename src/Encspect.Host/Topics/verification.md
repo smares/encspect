@@ -1,7 +1,7 @@
 ---
 id: verification
 title: Verified streams and stored checksums
-related: crc
+related: crc, flac-streaminfo, flac-frames
 references: RFC 9639 (FLAC), sections 8.2, 9.1.8 and 9.3
 ---
 
