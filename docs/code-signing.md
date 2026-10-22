@@ -1,6 +1,8 @@
 # Code signing policy
 
-> **Draft.** Encspect has not applied to SignPath yet, and no release is signed. This page takes effect, and is linked from the README and the release notes, once SignPath Foundation accepts the project and the release workflow signs the Windows executables.
+> **Draft.** No release is signed. This page takes effect, and is linked from the README and the release notes, once SignPath Foundation accepts the project and the release workflow signs the Windows executables.
+>
+> **Status (October 2026):** SignPath Foundation declined the first application because the project needs an established community first. Encspect will apply again once it has one; until then the Windows builds stay unsigned, and this page is kept as the policy for that application.
 
 Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
 
