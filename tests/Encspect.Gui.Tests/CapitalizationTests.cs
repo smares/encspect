@@ -37,6 +37,19 @@ public sealed class CapitalizationTests
     [InlineData("the Frame Header", false)]
     [InlineData("Open in New Window", true)]
     [InlineData("MPEG Audio", true)]
+    [InlineData("Third-Party Notices", true)]
+    [InlineData("Third-party Notices", false)]
+    [InlineData("Open/close Window", false)]
+    [InlineData("Open/Close Window", true)]
+    [InlineData("Stereo mid/side Coding", true)]
+    [InlineData("Layout 5.1 and ID3v2", true)]
+    [InlineData("MPEG-1 Audio in the Header", true)]
+    [InlineData("Include Subfolders…", true)]
+    [InlineData("Include subfolders…", false)]
+    [InlineData("Detect Automatically", true)]
+    [InlineData("Detect automatically", false)]
+    [InlineData("Learn More: the Frame", false)]
+    [InlineData("", false)]
     public void The_rule_itself_behaves(string label, bool expected) =>
         Assert.Equal(expected, IsTitleCase(label));
 
@@ -89,6 +102,61 @@ public sealed class CapitalizationTests
         window.Close();
     }
 
+    [AvaloniaFact]
+    public void Labels_in_the_main_window_with_a_cache_and_in_the_application_menu_are_in_title_case()
+    {
+        string store = Path.Combine(Path.GetTempPath(), "encspect-case-" + Guid.NewGuid().ToString("N") + ".json");
+        using var cache = new Cache.SummaryCache(store, "test");
+        var main = new MainWindow(Analyzer.CreateDefault(), new Settings(), new MainViewModel(Analyzer.CreateDefault(), roots: [], cache: cache), cache);
+        main.Show();
+        List<string> labels = [.. MenuLabels(main), .. MenuLabels(NativeMenu.GetMenu(Avalonia.Application.Current!)!)];
+        Assert.Contains("Clear Summary Cache", labels);
+        Assert.Contains("About Encspect", labels);
+        labels.AddRange([MainWindow.OpenFolderTitle, MainWindow.OpenFilesTitle, DetailWindow.ExportTitle, DetailWindow.TextReport.Name, DetailWindow.JsonReport.Name]);
+        AssertTitleCase(labels);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void Labels_in_the_about_and_notices_windows_are_in_title_case()
+    {
+        var about = new AboutWindow();
+        about.Show();
+        List<string> labels = [about.Title!, .. ControlLabels(about)];
+        about.FindControl<Button>("NoticesButton")!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        NoticesWindow notices = about.Notices!;
+        labels.Add(notices.Title!);
+        labels.AddRange(ControlLabels(notices));
+        labels.Add(Avalonia.Automation.AutomationProperties.GetName(notices.Box)!);
+        Assert.Contains("Third-Party Notices", labels);
+        AssertTitleCase(labels);
+        notices.Close();
+        about.Close();
+    }
+
+    [AvaloniaFact]
+    public void Labels_in_the_topic_pane_are_in_title_case()
+    {
+        var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1100, Height = 760 };
+        window.Show();
+        Task load = window.Model.LoadAsync(Fixtures.Mpeg("external-lame-vbr-v2.mp3"));
+        UiPump.Until(() => load.IsCompleted);
+        List<string> labels = [];
+        foreach (string? id in new string?[] { null, "mid-side-stereo" })
+        {
+            window.Model.ShowTopic(id);
+            UiPump.Until(() => true);
+            TopicView view = window.Topic;
+            labels.AddRange(view.Links.Where(l => l.Tag is null).Select(l => l.Text!));
+            labels.AddRange(view.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("title") && id is null || t.Margin == new Thickness(0, 6, 0, -4)).Select(t => t.Text!));
+        }
+
+        Assert.Contains("All Topics", labels);
+        Assert.Contains("Topics", labels);
+        AssertTitleCase(labels);
+        window.Close();
+    }
+
     private static IEnumerable<string> ControlLabels(Visual root)
     {
         foreach (Visual visual in root.GetVisualDescendants())
@@ -108,13 +176,20 @@ public sealed class CapitalizationTests
     private static IEnumerable<string> MenuLabels(Window window)
     {
         NativeMenu? menu = NativeMenu.GetMenu(window);
-        return menu is null ? [] : Walk(menu);
+        return menu is null ? [] : MenuLabels(menu);
+    }
 
-        static IEnumerable<string> Walk(NativeMenu menu)
+    // The Window menu lists the open windows by their titles, which are file names, not labels.
+    private static IEnumerable<string> MenuLabels(NativeMenu menu)
+    {
+        string?[] titles = [.. WindowList.Windows.Select(w => w.Title)];
+        return Walk(menu);
+
+        IEnumerable<string> Walk(NativeMenu menu)
         {
             foreach (NativeMenuItem item in menu.Items.OfType<NativeMenuItem>())
             {
-                if (item.Header is { } header && !item.ToggleType.Equals(MenuItemToggleType.CheckBox))
+                if (item.Header is { } header && !titles.Contains(header))
                 {
                     yield return header;
                 }
@@ -133,25 +208,45 @@ public sealed class CapitalizationTests
     private static void AssertTitleCase(IEnumerable<string> labels)
     {
         string[] wrong = [.. labels.Distinct().Where(l => !Exceptions.Contains(l) && !IsTitleCase(l))];
+        Assert.NotEmpty(labels);
         Assert.True(wrong.Length == 0, "Not in Title Case: " + string.Join(", ", wrong.Select(l => $"\"{l}\"")));
     }
 
     private static bool IsTitleCase(string label)
     {
         string[] words = label.TrimEnd('…').Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        for (int i = 0; i < words.Length; i++)
+        if (words.Length == 0)
         {
-            string word = words[i].Trim('(', ')', ':', ',');
-            if (word.Length == 0 || OwnSpelling.Contains(word) || !char.IsLetter(word[0]))
+            return false;
+        }
+
+        // A word after a colon starts a new phrase, so it counts as first.
+        bool first = true;
+        foreach (string raw in words)
+        {
+            string word = raw.Trim('(', ')', ',');
+            bool endsPhrase = word.EndsWith(':');
+            word = word.TrimEnd(':');
+            if (word.Length > 0 && !OwnSpelling.Contains(word))
             {
-                continue;
+                string[] parts = word.Split('-', '/');
+                for (int p = 0; p < parts.Length; p++)
+                {
+                    string part = parts[p];
+                    if (part.Length == 0 || !char.IsLetter(part[0]))
+                    {
+                        continue;
+                    }
+
+                    bool shouldBeLower = !(first && p == 0) && FunctionWords.Contains(part.ToLowerInvariant());
+                    if (char.IsUpper(part[0]) == shouldBeLower)
+                    {
+                        return false;
+                    }
+                }
             }
 
-            bool shouldBeLower = i > 0 && FunctionWords.Contains(word.ToLowerInvariant());
-            if (char.IsUpper(word[0]) == shouldBeLower)
-            {
-                return false;
-            }
+            first = endsPhrase;
         }
 
         return true;

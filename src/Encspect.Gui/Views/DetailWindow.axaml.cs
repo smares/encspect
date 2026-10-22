@@ -12,13 +12,14 @@ namespace Encspect.Gui.Views;
 
 public partial class DetailWindow : Window
 {
-    private static readonly FilePickerFileType TextReport = new("Text Report") { Patterns = ["*.txt"], MimeTypes = ["text/plain"], AppleUniformTypeIdentifiers = ["public.plain-text"] };
+    internal static readonly FilePickerFileType TextReport = new("Text Report") { Patterns = ["*.txt"], MimeTypes = ["text/plain"], AppleUniformTypeIdentifiers = ["public.plain-text"] };
+    internal const string ExportTitle = "Export Report";
     private const double DefaultTopicWidth = 340;
     private const double MinimumTopicWidth = 260;
     private const double MinimumPaneShare = 0.2;
     private const double MaximumPaneShare = 0.8;
 
-    private static readonly FilePickerFileType JsonReport = new("JSON Report") { Patterns = ["*.json"], MimeTypes = ["application/json"], AppleUniformTypeIdentifiers = ["public.json"] };
+    internal static readonly FilePickerFileType JsonReport = new("JSON Report") { Patterns = ["*.json"], MimeTypes = ["application/json"], AppleUniformTypeIdentifiers = ["public.json"] };
 
     // For the XAML previewer and loader only.
     public DetailWindow()
@@ -132,7 +133,7 @@ public partial class DetailWindow : Window
         string name = Path.GetFileNameWithoutExtension(Model.Path) ?? "report";
         SaveFilePickerResult result = await StorageProvider.SaveFilePickerWithResultAsync(new FilePickerSaveOptions
         {
-            Title = "Export Report",
+            Title = ExportTitle,
             SuggestedFileName = name + ".txt",
             DefaultExtension = "txt",
             FileTypeChoices = [TextReport, JsonReport],
