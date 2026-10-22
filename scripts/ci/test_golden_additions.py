@@ -131,7 +131,10 @@ class CheckTests(unittest.TestCase):
     def test_a_real_golden_with_a_node_a_key_and_a_shifted_finding(self):
         old = json.loads(REAL.read_text())
         self.assertIsInstance(old, list)
-        new = json.loads(REAL.read_text())
+        # The committed golden has the category series its format produces since the MPEG step; the test adds one of its own, so
+        # it starts from the report without.
+        old[0]["streams"][0].pop("categorySeries", None)
+        new = json.loads(json.dumps(old))
         new[0]["root"]["children"][0]["children"].insert(0, node("Added", value=1))
         shifted = 0
         for finding in new[0]["findings"]:

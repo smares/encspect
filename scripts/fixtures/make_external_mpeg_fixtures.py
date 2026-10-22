@@ -114,9 +114,13 @@ def write_tone(path, rate, channels, seconds=0.5, signal="tone"):
     """16-bit PCM. "tone": a 440 Hz sine (the right channel at 660 Hz, 5.1 channels each at their
     own frequency). "clicks": a quiet sine with a loud click every 50 ms, whose transients make LAME
     switch to short blocks. "music": two seconds that give an encoder something to decide, tones,
-    then noise with clicks, then a pause and a chord. "silence": all zeros."""
+    then noise with clicks, then a pause and a chord. "long-music": that, three times, in six seconds, with
+    different content in each channel. "silence": all zeros."""
+    loop = None
     if signal == "music":
         seconds = 2.0
+    elif signal == "long-music":
+        signal, seconds, loop = "music", 6.0, 2.0
     rng = random.Random(7)
     frames = int(rate * seconds)
     with wave.open(str(path), "wb") as out:
@@ -125,7 +129,7 @@ def write_tone(path, rate, channels, seconds=0.5, signal="tone"):
         out.setframerate(rate)
         data = bytearray()
         for i in range(frames):
-            t = i / rate
+            t = i / rate if loop is None else (i / rate) % loop
             for channel in range(channels):
                 frequency = SURROUND_FREQUENCIES[channel] if channels == 6 else 440 if channel == 0 else 660
                 sample = 12000 * math.sin(2 * math.pi * frequency * i / rate)
@@ -392,6 +396,16 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-gogo-mpeg2-mono", ".mp3", 22050, 1, ["gogo", "-b", "64", "-m", "m"],
      dict(version="2", layer=3, sample_rate=22050, channel_mode="Mono", bitrate=64, info_frame=False, signal="music")),
+    # Six seconds of different content in each channel, from LAME at one constant bitrate in dual channel, joint stereo and left/right
+    # stereo, and from TwoLAME in dual channel, for the Channel Bit Share series; the goldens leave the frames out.
+    ("external-lame-dual-music", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "-b", "128", "-m", "d"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Dual channel", bitrate=128, info_frame=False, signal="long-music", golden_hides=["frames"])),
+    ("external-lame-joint-music", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "-b", "128", "-m", "j"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="long-music", golden_hides=["frames"])),
+    ("external-lame-stereo-music", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "-b", "128", "-m", "s"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="long-music", golden_hides=["frames"])),
+    ("external-twolame-dual-music", ".mp2", 44100, 2, ["twolame", "--quiet", "-b", "192", "-m", "d"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Dual channel", bitrate=192, info_frame=False, signal="long-music", golden_hides=["frames"])),
     ("external-twolame-music", ".mp2", 48000, 2, ["twolame", "--quiet", "-b", "192", "-m", "s"],
      dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=192, info_frame=False, signal="music")),
     ("external-ffmpeg-mp2", ".mp2", 48000, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-c:a", "mp2", "-b:a", "192k", "{out}"],
@@ -903,14 +917,16 @@ def encode(command, source, path, temp):
 
 def write_manifest(name, path, rate, channels, command, settings, dumper):
     signal = {"clicks": "0.5 s of a quiet 440/660 Hz tone with a click every 50 ms", "music": "2 s of tones, noise with clicks and a chord",
-              "silence": "0.5 s of silence"}.get(settings.get("signal"), "0.5 s of a 440/660 Hz tone")
+              "long-music": "6 s of tones, noise with clicks and a chord, three times, different in each channel", "silence": "0.5 s of silence"}.get(settings.get("signal"), "0.5 s of a 440/660 Hz tone")
     if channels == 6:
         signal = f"0.5 s of a 5.1 tone of {'/'.join(map(str, SURROUND_FREQUENCIES))} Hz"
     manifest = {
         "description": f"{' '.join(command)} on {signal}, {rate} Hz, {channels} channels.",
         "crosscheck": True,
-        "encoder": {"command": command, **settings},
+        "encoder": {"command": command, **{k: v for k, v in settings.items() if k != "golden_hides"}},
     }
+    if settings.get("golden_hides"):
+        manifest["golden_hides"] = settings["golden_hides"]
     if settings.get("free_format"):
         manifest["mpg123_frames"] = mpg123_frame_count(path, 1152, channels)
     else:
