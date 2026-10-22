@@ -258,24 +258,36 @@ public class CategoryViewTests
             Assert.True(perFrame < 500, $"{mode}: {perFrame} ms a frame");
         }
 
-        // The lone short granule is in a column of its own tick: pointing along the strip finds the unit.
+        // A lone category's column can be found by pointing, at any width: every point of the strip is probed (no probe is skipped by
+        // what an earlier one returned), and the unit must be among the answers. A column holds 200,000 / columns units, so the
+        // narrow widths put the lone granule in columns of many hundreds of units, where the column's first unit is far from it.
         view.Graph = strip;
-        view.InvalidateVisual();
-        AvaloniaHeadlessPlatform.ForceRenderTimerTick();
-        int? found = null;
-        for (double x = 0; x < view.Bounds.Width && found != 123_456; x++)
+        foreach (double width in new[] { 420.0, 700, 1042 })
         {
-            for (double y = 20; y < view.Bounds.Height - 40 && found != 123_456; y += 3)
+            window.Width = width;
+
+            // The resize is laid out on the dispatcher, on every platform's own schedule: wait for the view to have the new size.
+            UiPump.Until(() => view.Bounds.Width > 0 && view.Bounds.Width <= width && view.Bounds.Height > 0);
+            view.InvalidateVisual();
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+            Assert.True(view.ChartMetrics() is not null, $"The strip has no layout at {view.Bounds}.");
+            var answers = new HashSet<int>();
+            for (double x = 0; x < view.Bounds.Width; x++)
             {
-                found = view.IndexAt(new Point(x, y));
-                if (found is { } at && Math.Abs(at - 123_456) > 400)
+                for (double y = 0; y < view.Bounds.Height; y++)
                 {
-                    break;
+                    if (view.IndexAt(new Point(x, y)) is { } at)
+                    {
+                        answers.Add(at);
+                    }
                 }
             }
+
+            string where = $"view {view.Bounds}, window {window.Width} x {window.Height} (client {window.ClientSize}), metrics {view.ChartMetrics()}, {answers.Count} answers"
+                + (answers.Count > 0 ? $" from {answers.Min()} to {answers.Max()}, nearest to the unit {answers.OrderBy(a => Math.Abs(a - 123_456)).First()}" : string.Empty);
+            Assert.True(answers.Contains(123_456), $"The lone short granule is not reachable: {where}.");
         }
 
-        Assert.Equal(123_456, found);
         window.Close();
     }
 
