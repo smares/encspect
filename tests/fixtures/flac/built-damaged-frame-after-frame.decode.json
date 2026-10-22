@@ -1,0 +1,35 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "frame header CRC-8",
+        "stored": 7,
+        "checked": 7,
+        "failed": 0
+      },
+      {
+        "name": "frame CRC-16",
+        "stored": 7,
+        "checked": 7,
+        "failed": 1
+      },
+      {
+        "name": "STREAMINFO MD5",
+        "stored": 1,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The flac decoder could not decode the frame at 0x391F: the subframe of channel 1 starts with a bit the specification reserves as 0."
+    }
+  ]
+}

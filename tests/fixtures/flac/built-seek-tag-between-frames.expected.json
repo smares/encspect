@@ -1,0 +1,216 @@
+{
+ "length": 52000,
+ "metadata": [
+  {
+   "offset": 28,
+   "length": 38,
+   "type": "STREAMINFO",
+   "is_last": false,
+   "body_length": 34
+  },
+  {
+   "offset": 66,
+   "length": 22,
+   "type": "SEEKTABLE",
+   "is_last": false,
+   "body_length": 18
+  },
+  {
+   "offset": 88,
+   "length": 44,
+   "type": "VORBIS_COMMENT",
+   "is_last": false,
+   "body_length": 40
+  },
+  {
+   "offset": 132,
+   "length": 8196,
+   "type": "PADDING",
+   "is_last": true,
+   "body_length": 8192
+  }
+ ],
+ "frames": [
+  {
+   "offset": 8328,
+   "length": 3195,
+   "variable": false,
+   "block_size": 4096,
+   "sample_rate": 44100,
+   "channel_code": 1,
+   "bits": 16,
+   "number": 0,
+   "crc8": "c2",
+   "status": [],
+   "crc16": "b218",
+   "subframes": [
+    [
+     "lpc",
+     5,
+     0,
+     0
+    ],
+    [
+     "lpc",
+     5,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 11523,
+   "length": 3124,
+   "variable": false,
+   "block_size": 4096,
+   "sample_rate": 44100,
+   "channel_code": 1,
+   "bits": 16,
+   "number": 1,
+   "crc8": "c5",
+   "status": [],
+   "crc16": "1bbe",
+   "subframes": [
+    [
+     "lpc",
+     5,
+     0,
+     0
+    ],
+    [
+     "lpc",
+     5,
+     0,
+     0
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_info": {
+  "min_block": 4096,
+  "max_block": 4096,
+  "min_frame": 2938,
+  "max_frame": 13857,
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "total": 24000,
+  "md5": "6339e0d8d1e5dc3bc3b480ecfe393edb"
+ },
+ "stream_infos": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 8192,
+   "duration": 0.18575963718820862,
+   "bits_per_sample": 16,
+   "average_bitrate": 272.13662109375,
+   "layout": [
+    "front left",
+    "front right"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "code": "flac.total-samples-mismatch"
+  },
+  {
+   "code": "flac.data-after-tag"
+  }
+ ],
+ "decoded_samples": 8192,
+ "decoded_pcm_md5": "b0997d463a8135b4a99927d088241838",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": null,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "regions": [
+  {
+   "name": "ID3v2",
+   "offset": 0,
+   "length": 24
+  },
+  {
+   "name": "FLAC",
+   "offset": 24,
+   "length": 14623
+  },
+  {
+   "name": "ID3v2",
+   "offset": 14647,
+   "length": 26
+  },
+  {
+   "name": "Data",
+   "offset": 14673,
+   "length": 37327
+  }
+ ],
+ "description": "An ID3v2.4 tag whose SEEK frame points at a second ID3v2 tag after the second frame, then the other frames: the stream is read up to the second tag and the bytes after it are not read.",
+ "crosscheck": {
+  "flac_test": null,
+  "decodes": true,
+  "ffmpeg": true
+ }
+}

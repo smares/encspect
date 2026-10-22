@@ -233,6 +233,7 @@ public sealed class FlacCodecParser : ICodecParser
                     int rest = data.Length - walk.Length;
                     bytes = packet.Slice(0, walk.Length);
                     Node trailing = Node.FromMapped("Trailing Data", packet, walk.Length, packet.Length, NodeValue.Integer(rest, "bytes"), description: Explain.TrailingPacketData);
+                    s.AddLeading(trailing);
                     s.Findings.Add(Severity.Warning, "flac.ogg-packet-trailing", trailing, _ => $"The frame in the packet at 0x{packet.FileStart:X} ends {Counts.Of(rest, "byte", "bytes")} before the packet does.");
                 }
             }

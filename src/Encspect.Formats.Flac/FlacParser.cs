@@ -15,6 +15,13 @@ public sealed class FlacParser : IFormatParser
 
     public string Name => "FLAC";
 
+    // What a search for frames in damaged data may read in candidates that did not hold, beyond four times the data. A test lowers it.
+    internal long ProbeAllowance { get; init; } = 64L << 20;
+
+    // False makes the walk store nothing, so the decoder reads every frame again: the contract as first drafted, which the measurement
+    // in docs/design/decoders.md compares the lending walk with.
+    internal bool LendsBuffers { get; init; } = true;
+
     // The marker followed by a STREAMINFO block header is certain (class 100); the marker with another first block is likely (80). Without
     // the marker, a chain of frames whose headers, CRC-8 and CRC-16 hold: 85 from the start of the data, 50 further in, as the other formats'
     // chains are.
@@ -92,7 +99,7 @@ public sealed class FlacParser : IFormatParser
         Node stream = Summary.StreamNode(reader.Start, reader.End - reader.Start, state.Leading, state.Records);
         state.Stream = stream;
         context.Root.Add(stream);
-        RawReader.Run(state, new Source(reader));
+        RawReader.Run(state, new Source(reader), ProbeAllowance, LendsBuffers);
         Summary.Finish(state, reader.Start, reader.End);
 
         long position = reader.End;

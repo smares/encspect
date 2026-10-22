@@ -8,16 +8,14 @@ internal static class RawReader
 {
     private static readonly byte[] Marker = "fLaC"u8.ToArray();
 
-    // What the searches may read in candidates that did not hold, beyond four times the data: 64 MiB.
-    private const long ProbeAllowance = 64L << 20;
-
-    public static void Run(State s, Source source)
+    public static void Run(State s, Source source, long probeAllowance, bool lends = true)
     {
         long start = source.Start;
-        var scanner = new FrameScanner(source, null, ProbeAllowance + (4 * (source.End - source.Start)));
+        var scanner = new FrameScanner(source, null, probeAllowance + (4 * (source.End - source.Start)));
         long position = Metadata(s, scanner, source, start);
+        scanner.Info = s.Info;
         s.StartSession();
-        Frames(s, scanner, source, position);
+        Frames(s, scanner, source, position, lends);
         if (scanner.IsProbeLimitReached)
         {
             long probed = scanner.ProbedBytes;
@@ -168,7 +166,7 @@ internal static class RawReader
         return true;
     }
 
-    private static void Frames(State s, FrameScanner scanner, Source source, long position)
+    private static void Frames(State s, FrameScanner scanner, Source source, long position, bool lends)
     {
         long end = source.End;
         long skipFrom = -1;
@@ -180,7 +178,7 @@ internal static class RawReader
                 s.Context.CancellationToken.ThrowIfCancellationRequested();
             }
 
-            IDecodeSession? session = s.Session is { IsDecoding: true } active ? active : null;
+            IDecodeSession? session = lends && s.Session is { IsDecoding: true } active ? active : null;
             Attempt attempt = scanner.Read(position, session, scanner.Logs);
             long length = -1;
             EntryStatus status = EntryStatus.None;
@@ -191,21 +189,14 @@ internal static class RawReader
                 if (walk.IsComplete)
                 {
                     long frameEnd = position + walk.Length;
-                    if (walk.Crc16Holds)
+                    if (walk.Crc16Holds || frameEnd == end || scanner.IsHeaderAt(frameEnd))
                     {
                         length = walk.Length;
                     }
-                    else if (isHeaderIntact)
+                    else if (isHeaderIntact && scanner.FindNext(position + 1, position + FrameWalker.MaxFrameBytes) is var next and >= 0)
                     {
-                        if (frameEnd == end || scanner.IsHeaderAt(frameEnd))
-                        {
-                            length = walk.Length;
-                        }
-                        else if (scanner.FindNext(position + 1, position + FrameWalker.MaxFrameBytes) is var next and >= 0)
-                        {
-                            length = next - position;
-                            status = EntryStatus.ExtentFound;
-                        }
+                        length = next - position;
+                        status = EntryStatus.ExtentFound;
                     }
                 }
                 else if (walk.IsCut && isHeaderIntact)

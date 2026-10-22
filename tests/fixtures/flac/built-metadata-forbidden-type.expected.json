@@ -1,0 +1,173 @@
+{
+ "length": 831,
+ "metadata": [
+  {
+   "offset": 4,
+   "length": 38,
+   "type": "STREAMINFO",
+   "is_last": false,
+   "body_length": 34
+  }
+ ],
+ "frames": [
+  {
+   "offset": 46,
+   "length": 324,
+   "variable": false,
+   "block_size": 256,
+   "sample_rate": 44100,
+   "channel_code": 0,
+   "bits": 16,
+   "number": 0,
+   "crc8": "13",
+   "status": [],
+   "crc16": "c1cd",
+   "subframes": [
+    [
+     "fixed",
+     1,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 370,
+   "length": 461,
+   "variable": false,
+   "block_size": 256,
+   "sample_rate": 44100,
+   "channel_code": 0,
+   "bits": 16,
+   "number": 1,
+   "crc8": "14",
+   "status": [],
+   "crc16": "a6c6",
+   "subframes": [
+    [
+     "fixed",
+     1,
+     0,
+     0
+    ]
+   ]
+  }
+ ],
+ "skipped": [
+  [
+   42,
+   4
+  ]
+ ],
+ "stream_info": {
+  "min_block": 256,
+  "max_block": 256,
+  "min_frame": 324,
+  "max_frame": 461,
+  "sample_rate": 44100,
+  "channels": 1,
+  "bits": 16,
+  "total": 512,
+  "md5": "709bd22edf565da04de6aec16783d03e"
+ },
+ "stream_infos": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "samples": 512,
+   "duration": 0.011609977324263039,
+   "bits_per_sample": 16,
+   "average_bitrate": 540.9140625,
+   "layout": [
+    "front center"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "code": "flac.metadata-forbidden-type"
+  },
+  {
+   "code": "flac.data-skipped",
+   "count": 1
+  }
+ ],
+ "decoded_samples": 512,
+ "decoded_pcm_md5": "709bd22edf565da04de6aec16783d03e",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "regions": [
+  {
+   "name": "FLAC",
+   "offset": 0,
+   "length": 831
+  }
+ ],
+ "description": "A block header with the forbidden type 127 after STREAMINFO.",
+ "crosscheck": {
+  "flac_test": null,
+  "decodes": true,
+  "ffmpeg": true
+ }
+}

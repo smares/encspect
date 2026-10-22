@@ -1,0 +1,344 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-metadata-truncated.flac",
+    "root": {
+      "name": "File",
+      "value": "FLAC",
+      "offset": 0,
+      "length": 66,
+      "children": [
+        {
+          "name": "FLAC",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 66,
+          "children": [
+            {
+              "name": "Stream Marker",
+              "value": "fLaC",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Metadata Block",
+              "value": "STREAMINFO",
+              "offset": 4,
+              "length": 38,
+              "children": [
+                {
+                  "name": "Block Header",
+                  "offset": 4,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "IsLastBlock",
+                      "value": false,
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Block Type",
+                      "value": "STREAMINFO (0)",
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "Block Length",
+                      "value": 34,
+                      "unit": "bytes",
+                      "offset": 5,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Minimum Block Size",
+                  "value": 256,
+                  "unit": "samples",
+                  "offset": 8,
+                  "length": 2
+                },
+                {
+                  "name": "Maximum Block Size",
+                  "value": 256,
+                  "unit": "samples",
+                  "offset": 10,
+                  "length": 2
+                },
+                {
+                  "name": "Minimum Frame Size",
+                  "value": 324,
+                  "unit": "bytes",
+                  "offset": 12,
+                  "length": 3
+                },
+                {
+                  "name": "Maximum Frame Size",
+                  "value": 461,
+                  "unit": "bytes",
+                  "offset": 15,
+                  "length": 3
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 18,
+                  "length": 3,
+                  "bitOffset": 0,
+                  "bitLength": 20
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 20,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 3
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 20,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 5
+                },
+                {
+                  "name": "Total Samples",
+                  "value": 512,
+                  "unit": "samples",
+                  "offset": 21,
+                  "length": 5,
+                  "bitOffset": 4,
+                  "bitLength": 36
+                },
+                {
+                  "name": "MD5 Signature",
+                  "value": "709bd22edf565da04de6aec16783d03e",
+                  "offset": 26,
+                  "length": 16
+                }
+              ]
+            },
+            {
+              "name": "Metadata Block",
+              "value": "APPLICATION",
+              "offset": 42,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Block Header",
+                  "offset": 42,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "IsLastBlock",
+                      "value": false,
+                      "offset": 42,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Block Type",
+                      "value": "APPLICATION (2)",
+                      "offset": 42,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "Block Length",
+                      "value": 1000,
+                      "unit": "bytes",
+                      "offset": 43,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Application ID",
+                  "value": "0x00000000",
+                  "offset": 46,
+                  "length": 4
+                },
+                {
+                  "name": "Application Data",
+                  "value": 996,
+                  "unit": "bytes",
+                  "offset": 50,
+                  "length": 16
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 66,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 66
+                },
+                {
+                  "name": "Samples",
+                  "value": 0,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 66
+                },
+                {
+                  "name": "Duration",
+                  "value": 0,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 66
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 66
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 66
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "mono (front center)",
+                  "offset": 0,
+                  "length": 66
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 66
+                },
+                {
+                  "name": "Verified Header Checksums",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 66
+                },
+                {
+                  "name": "Verified Frame Checksums",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 66
+                },
+                {
+                  "name": "MD5 Signature",
+                  "value": "709bd22edf565da04de6aec16783d03e",
+                  "offset": 0,
+                  "length": 66
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "FLAC",
+        "sampleRate": 44100,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 16,
+        "samples": 0,
+        "duration": 0,
+        "isVbr": false,
+        "verification": {
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame header CRC-8",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "frame CRC-16",
+              "covers": "codedData",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "STREAMINFO MD5",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 1,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "flac.no-frames",
+        "message": "The stream holds no frame, so it holds no audio.",
+        "offset": 0,
+        "length": 66,
+        "path": [
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "flac.metadata-truncated",
+        "message": "The data ends inside the metadata block at 0x2A, which states 1000 bytes.",
+        "offset": 42,
+        "length": 24,
+        "path": [
+          0,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

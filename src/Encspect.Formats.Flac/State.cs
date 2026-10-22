@@ -331,7 +331,7 @@ internal sealed class State
 
             MaxFrameLength = Math.Max(MaxFrameLength, coded);
             MinFrameLength = Math.Min(MinFrameLength, coded);
-            Figures ??= new StreamFigures(header.SampleRate > 0 ? header.SampleRate : Info?.SampleRate ?? 0);
+            Figures ??= new StreamFigures(Info is { SampleRate: > 0 } rate ? rate.SampleRate : header.SampleRate);
             Figures.Add(offset, coded * 8L, header.BlockSize);
         }
 

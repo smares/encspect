@@ -70,7 +70,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
         else
         {
-            Walk(data, header, stride, needsWide, frame.Bytes.FileStart);
+            Walk(data, header, stride, needsWide);
             narrow = _narrow.AsSpan(0, channels * stride);
             wide = _wide.AsSpan(0, needsWide ? channels * stride : 0);
         }
@@ -101,7 +101,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // The frame was not walked into buffers the session lent, so the same walk runs here, into buffers of this decoder.
-    private void Walk(ReadOnlySpan<byte> data, in FrameHeader header, int stride, bool needsWide, long offset)
+    private void Walk(ReadOnlySpan<byte> data, in FrameHeader header, int stride, bool needsWide)
     {
         int channels = header.Channels;
         if (_narrow.Length < channels * stride)
@@ -127,7 +127,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
             if (facts.Fault != SubframeFault.None)
             {
-                throw new InvalidDataException($"The frame at 0x{offset:X} cannot be read: {State.Describe(facts.Fault, c)}.");
+                throw new InvalidDataException(State.Describe(facts.Fault, c));
             }
         }
     }

@@ -122,7 +122,7 @@ internal static partial class Summary
     {
         long md5 = s.Info is not null && !StreamInfoBlock.IsMd5Unknown(s.InfoBytes!.Span) ? 1 : 0;
         bool matches = s.Info is not { TotalSamples: > 0 } info || info.TotalSamples == s.Samples;
-        bool coversAll = !s.HasGap && matches && s.CutFrames == 0;
+        bool coversAll = !s.HasGap && matches && s.CutFrames == 0 && s.UnreadableFrames == 0;
         IDecodeSession session = s.Session ?? s.Context.StartDecoding(FlacCodecParser.CodecId, new DecodeSetup { Stream = s.Stream, Channels = 1, BitsPerSample = 16 });
         return session.Finish(
         [

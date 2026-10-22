@@ -1,0 +1,264 @@
+{
+ "length": 43646,
+ "metadata": [],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 3195,
+   "variable": false,
+   "block_size": 4096,
+   "sample_rate": 44100,
+   "channel_code": 1,
+   "bits": 16,
+   "number": 0,
+   "crc8": "c2",
+   "status": [],
+   "crc16": "b218",
+   "subframes": [
+    [
+     "lpc",
+     5,
+     0,
+     0
+    ],
+    [
+     "lpc",
+     5,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 3195,
+   "length": 3124,
+   "variable": false,
+   "block_size": 4096,
+   "sample_rate": 44100,
+   "channel_code": 1,
+   "bits": 16,
+   "number": 1,
+   "crc8": "c5",
+   "status": [],
+   "crc16": "1bbe",
+   "subframes": [
+    [
+     "lpc",
+     5,
+     0,
+     0
+    ],
+    [
+     "lpc",
+     5,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 6319,
+   "length": 2938,
+   "variable": false,
+   "block_size": 4096,
+   "sample_rate": 44100,
+   "channel_code": 1,
+   "bits": 16,
+   "number": 2,
+   "crc8": "cc",
+   "status": [],
+   "crc16": "9780",
+   "subframes": [
+    [
+     "lpc",
+     3,
+     0,
+     3
+    ],
+    [
+     "lpc",
+     3,
+     0,
+     3
+    ]
+   ]
+  },
+  {
+   "offset": 9257,
+   "length": 8578,
+   "variable": false,
+   "block_size": 4096,
+   "sample_rate": 44100,
+   "channel_code": 10,
+   "bits": 16,
+   "number": 3,
+   "crc8": "84",
+   "status": [],
+   "crc16": "da1f",
+   "subframes": [
+    [
+     "lpc",
+     6,
+     0,
+     5
+    ],
+    [
+     "lpc",
+     8,
+     0,
+     5
+    ]
+   ]
+  },
+  {
+   "offset": 17835,
+   "length": 13857,
+   "variable": false,
+   "block_size": 4096,
+   "sample_rate": 44100,
+   "channel_code": 10,
+   "bits": 16,
+   "number": 4,
+   "crc8": "91",
+   "status": [],
+   "crc16": "f9a0",
+   "subframes": [
+    [
+     "fixed",
+     0,
+     0,
+     0
+    ],
+    [
+     "fixed",
+     0,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 31692,
+   "length": 11954,
+   "variable": false,
+   "block_size": 3520,
+   "sample_rate": 44100,
+   "channel_code": 10,
+   "bits": 16,
+   "number": 5,
+   "crc8": "83",
+   "status": [],
+   "crc16": "76ab",
+   "subframes": [
+    [
+     "fixed",
+     0,
+     0,
+     0
+    ],
+    [
+     "fixed",
+     0,
+     0,
+     0
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 641.5962,
+   "layout": [
+    "front left",
+    "front right"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "code": "flac.no-marker"
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": true,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 6,
+     "checked": 6,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 6,
+     "checked": 6,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "notPossible",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 6,
+     "checked": 6,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 6,
+     "checked": 6,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "regions": [
+  {
+   "name": "FLAC",
+   "offset": 0,
+   "length": 43646
+  }
+ ],
+ "description": "A stream cut out of a longer one: it starts at a frame, with no marker and no metadata.",
+ "crosscheck": {
+  "flac_test": null,
+  "decodes": false,
+  "ffmpeg": true
+ }
+}

@@ -1,0 +1,194 @@
+{
+ "length": 52119,
+ "metadata": [
+  {
+   "offset": 4,
+   "length": 38,
+   "type": "STREAMINFO",
+   "is_last": false,
+   "body_length": 34
+  },
+  {
+   "offset": 42,
+   "length": 22,
+   "type": "SEEKTABLE",
+   "is_last": false,
+   "body_length": 18
+  },
+  {
+   "offset": 64,
+   "length": 44,
+   "type": "VORBIS_COMMENT",
+   "is_last": false,
+   "body_length": 40
+  },
+  {
+   "offset": 108,
+   "length": 8196,
+   "type": "PADDING",
+   "is_last": true,
+   "body_length": 8192
+  }
+ ],
+ "frames": [
+  {
+   "offset": 8304,
+   "length": 40478,
+   "variable": false,
+   "block_size": 65535,
+   "sample_rate": 22050,
+   "channel_code": 0,
+   "bits": 8,
+   "number": 0,
+   "crc8": "ee",
+   "status": [],
+   "crc16": "53be",
+   "subframes": [
+    [
+     "lpc",
+     8,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 48782,
+   "length": 3337,
+   "variable": false,
+   "block_size": 4465,
+   "sample_rate": 22050,
+   "channel_code": 0,
+   "bits": 8,
+   "number": 1,
+   "crc8": "b3",
+   "status": [],
+   "crc16": "987e",
+   "subframes": [
+    [
+     "fixed",
+     0,
+     0,
+     0
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_info": {
+  "min_block": 65535,
+  "max_block": 65535,
+  "min_frame": 3337,
+  "max_frame": 40478,
+  "sample_rate": 22050,
+  "channels": 1,
+  "bits": 8,
+  "total": 70000,
+  "md5": "39d2bc44da372bf52006b0c5285b62d3"
+ },
+ "stream_infos": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 22050,
+   "channels": 1,
+   "samples": 70000,
+   "duration": 3.1746031746031744,
+   "bits_per_sample": 8,
+   "average_bitrate": 110.41380000000001,
+   "layout": [
+    "front center"
+   ]
+  }
+ ],
+ "findings": [],
+ "decoded_samples": 70000,
+ "decoded_pcm_md5": "39d2bc44da372bf52006b0c5285b62d3",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "regions": [
+  {
+   "name": "FLAC",
+   "offset": 0,
+   "length": 52119
+  }
+ ],
+ "encoder": {
+  "tool": "flac 1.4.3 (flac package of Ubuntu 24.04)",
+  "arguments": [
+   "-5",
+   "-b",
+   "65535",
+   "--lax"
+  ],
+  "input": {
+   "kind": "music",
+   "rate": 22050,
+   "channels": 1,
+   "bits": 8,
+   "samples": 70000
+  }
+ },
+ "crosscheck": {
+  "flac_test": true
+ }
+}

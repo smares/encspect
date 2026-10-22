@@ -26,6 +26,8 @@ PROGRAMS = {
     "php": (["php", "-r", "echo PHP_VERSION;"], r"^(\d+\.\d+)", "8.5"),
     "oggz": (["oggz", "--version"], r"^oggz version (\S+)", "1.1.3"),
     "ogginfo": (["ogginfo", "-V"], r"^ogginfo from vorbis-tools (\S+)", "1.4.3"),
+    "flac": (["flac", "--version"], r"^flac (\S+)", "1.5.0"),
+    "metaflac": (["metaflac", "--version"], r"^metaflac (\S+)", "1.5.0"),
 }
 
 # name: (dpkg package, expected upstream version).

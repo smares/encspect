@@ -36,7 +36,7 @@ internal static class Program
         new Guid("D6E229D3-35DA-11D1-9034-00A0C90349BE").ToByteArray(), new Guid("14E6A5CB-C672-4332-8399-A96952065B5A").ToByteArray(),
         [0x62, 0x01, 0x00, 0x00], [0x61, 0x01, 0x00, 0x00], [0xE0, 0x00],
         "MPCK"u8.ToArray(), "MP+\x07"u8.ToArray(), "SH"u8.ToArray(), "AP"u8.ToArray(), "SE\x03"u8.ToArray(), "ST"u8.ToArray(),
-        "wvpk"u8.ToArray(), [0x10, 0x04], [0x02, 0x04], [0x2F, 0x02], [0x2F, 0x03], [0x8A], [0x21, 0x16], [0x25, 0x01], [0x2A, 0x00], [0x0D, 0x01],
+        "fLaC"u8.ToArray(), [0xFF, 0xF8], [0xFF, 0xF9], [0x7F, 0x46, 0x4C, 0x41, 0x43], "wvpk"u8.ToArray(), [0x10, 0x04], [0x02, 0x04], [0x2F, 0x02], [0x2F, 0x03], [0x8A], [0x21, 0x16], [0x25, 0x01], [0x2A, 0x00], [0x0D, 0x01],
         [0x7F, 0xFE, 0x80, 0x01], [0xFE, 0x7F, 0x01, 0x80], [0x1F, 0xFF, 0xE8, 0x00, 0x07, 0xF0], [0xFF, 0x1F, 0x00, 0xE8, 0xF0, 0x07],
         [0x64, 0x58, 0x20, 0x25], [0x58, 0x64, 0x25, 0x20], [0x5A, 0x5A, 0x5A, 0x5A], [0x1D, 0x95, 0xF2, 0x62], [0x47, 0x00, 0x4A, 0x03],
         [0x65, 0x5E, 0x31, 0x5E], [0x0A, 0x80, 0x19, 0x21], [0x41, 0xA2, 0x95, 0x47], [0x02, 0xB0, 0x92, 0x61], "ddts"u8.ToArray(), "dtsc"u8.ToArray(),
@@ -72,7 +72,7 @@ internal static class Program
         long? only = Option(args, "--iteration") is { } i ? long.Parse(i, CultureInfo.InvariantCulture) : null;
 
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
-            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" or ".dts" or ".dtshd" or ".mka" or ".mkv" or ".webm" && new FileInfo(f).Length <= MaxCorpusFileSize)
+            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" or ".flac" or ".dts" or ".dtshd" or ".mka" or ".mkv" or ".webm" && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
             .Select(File.ReadAllBytes)
             .ToArray();
@@ -122,9 +122,10 @@ internal static class Program
         return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
     }
 
-    private static string? Check(Analyzer analyzer, byte[] input, bool checksCollection)
+    private static string? Run(Analyzer analyzer, byte[] input, AnalysisOptions? options, out Report? report)
     {
-        var task = Task.Run(() => analyzer.Analyze("fuzz", new MemoryStream(input)));
+        report = null;
+        var task = Task.Run(() => analyzer.Analyze("fuzz", new MemoryStream(input), options));
         try
         {
             if (!task.Wait(PerInputLimit))
@@ -137,7 +138,29 @@ internal static class Program
             return $"{ex.InnerException?.GetType().Name}: {ex.InnerException?.Message}\n{ex.InnerException?.StackTrace}";
         }
 
-        Report report = task.Result;
+        report = task.Result;
+        return null;
+    }
+
+    private static string? Check(Analyzer analyzer, byte[] input, bool checksCollection)
+    {
+        // Decoding runs on the same input with the PCM budget lowered, so a stream that codes a lot of audio stops early; a decoder that fails is a bug.
+        if (Run(analyzer, input, new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 1 << 20 } }, out Report? decoded) is { } decodeFailure)
+        {
+            return "decoding: " + decodeFailure;
+        }
+
+        if (decoded!.Findings.FirstOrDefault(f => f.Code is "decode.failed" or "parse.failed") is { } decodeFailed)
+        {
+            return decodeFailed.Message;
+        }
+
+        if (Run(analyzer, input, null, out Report? analyzed) is { } failure)
+        {
+            return failure;
+        }
+
+        Report report = analyzed!;
         if (report.Findings.FirstOrDefault(f => f.Code == "parse.failed") is { } failed)
         {
             return failed.Message;

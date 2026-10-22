@@ -1,0 +1,3552 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-ffmpeg-8ch.flac",
+    "root": {
+      "name": "File",
+      "value": "FLAC",
+      "offset": 0,
+      "length": 68168,
+      "children": [
+        {
+          "name": "FLAC",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 68168,
+          "children": [
+            {
+              "name": "Stream Marker",
+              "value": "fLaC",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Metadata Block",
+              "value": "STREAMINFO",
+              "offset": 4,
+              "length": 38,
+              "children": [
+                {
+                  "name": "Block Header",
+                  "offset": 4,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "IsLastBlock",
+                      "value": false,
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Block Type",
+                      "value": "STREAMINFO (0)",
+                      "offset": 4,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "Block Length",
+                      "value": 34,
+                      "unit": "bytes",
+                      "offset": 5,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Minimum Block Size",
+                  "value": 4608,
+                  "unit": "samples",
+                  "offset": 8,
+                  "length": 2
+                },
+                {
+                  "name": "Maximum Block Size",
+                  "value": 4608,
+                  "unit": "samples",
+                  "offset": 10,
+                  "length": 2
+                },
+                {
+                  "name": "Minimum Frame Size",
+                  "value": 11726,
+                  "unit": "bytes",
+                  "offset": 12,
+                  "length": 3
+                },
+                {
+                  "name": "Maximum Frame Size",
+                  "value": 48154,
+                  "unit": "bytes",
+                  "offset": 15,
+                  "length": 3
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 18,
+                  "length": 3,
+                  "bitOffset": 0,
+                  "bitLength": 20
+                },
+                {
+                  "name": "Channels",
+                  "value": 8,
+                  "unit": "channels",
+                  "offset": 20,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 3
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 20,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 5
+                },
+                {
+                  "name": "Total Samples",
+                  "value": 8000,
+                  "unit": "samples",
+                  "offset": 21,
+                  "length": 5,
+                  "bitOffset": 4,
+                  "bitLength": 36
+                },
+                {
+                  "name": "MD5 Signature",
+                  "value": "3cd4a863e8b2d7fbae1d9e03c9895911",
+                  "offset": 26,
+                  "length": 16
+                }
+              ]
+            },
+            {
+              "name": "Metadata Block",
+              "value": "VORBIS_COMMENT",
+              "offset": 42,
+              "length": 50,
+              "children": [
+                {
+                  "name": "Block Header",
+                  "offset": 42,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "IsLastBlock",
+                      "value": false,
+                      "offset": 42,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Block Type",
+                      "value": "VORBIS_COMMENT (4)",
+                      "offset": 42,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "Block Length",
+                      "value": 46,
+                      "unit": "bytes",
+                      "offset": 43,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Vorbis Comment",
+                  "kind": "Tag",
+                  "value": 1,
+                  "unit": "comments",
+                  "offset": 46,
+                  "length": 46,
+                  "children": [
+                    {
+                      "name": "Vendor Length",
+                      "value": 13,
+                      "unit": "bytes",
+                      "offset": 46,
+                      "length": 4
+                    },
+                    {
+                      "name": "Vendor",
+                      "value": "Lavf60.16.100",
+                      "offset": 50,
+                      "length": 13
+                    },
+                    {
+                      "name": "Comment Count",
+                      "value": 1,
+                      "offset": 63,
+                      "length": 4
+                    },
+                    {
+                      "name": "encoder",
+                      "value": "Lavf60.16.100",
+                      "offset": 67,
+                      "length": 25,
+                      "children": [
+                        {
+                          "name": "Length",
+                          "value": 21,
+                          "unit": "bytes",
+                          "offset": 67,
+                          "length": 4
+                        },
+                        {
+                          "name": "Field Name",
+                          "value": "encoder",
+                          "offset": 71,
+                          "length": 7
+                        },
+                        {
+                          "name": "Value",
+                          "value": "Lavf60.16.100",
+                          "offset": 79,
+                          "length": 13
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Detection",
+                      "value": "High",
+                      "offset": 46,
+                      "length": 46,
+                      "children": [
+                        {
+                          "name": "Evidence",
+                          "value": "The vendor string and 1 comment fit the data",
+                          "offset": 46,
+                          "length": 46
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Metadata Block",
+              "value": "PADDING",
+              "offset": 92,
+              "length": 8196,
+              "children": [
+                {
+                  "name": "Block Header",
+                  "offset": 92,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "IsLastBlock",
+                      "value": true,
+                      "offset": 92,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Block Type",
+                      "value": "PADDING (1)",
+                      "offset": 92,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "Block Length",
+                      "value": 8192,
+                      "unit": "bytes",
+                      "offset": 93,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Padding",
+                  "value": 8192,
+                  "unit": "bytes",
+                  "offset": 96,
+                  "length": 8192
+                }
+              ]
+            },
+            {
+              "name": "Writer",
+              "value": "FFmpeg (Lavf60.16.100)",
+              "offset": 0,
+              "length": 68168,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Vorbis comment vendor string at 0x32 names \"Lavf60.16.100\"",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Vorbis comment ENCODER field at 0x43 names \"Lavf60.16.100\"",
+                  "offset": 0,
+                  "length": 68168
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 68168,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 2,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Samples",
+                  "value": 8000,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.16666666666666666,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Channels",
+                  "value": 8,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "7.1 (front left, front right, front center, LFE, back left, back right, side left, side right)",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Blocking Strategy",
+                  "value": "fixed",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Smallest Block Size",
+                  "value": 3392,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Largest Block Size",
+                  "value": 4608,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Subframe Types",
+                  "value": 16,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 68168,
+                  "children": [
+                    {
+                      "name": "Constant",
+                      "value": "0 subframes (0.0%)",
+                      "offset": 0,
+                      "length": 68168
+                    },
+                    {
+                      "name": "Verbatim",
+                      "value": "0 subframes (0.0%)",
+                      "offset": 0,
+                      "length": 68168
+                    },
+                    {
+                      "name": "Fixed Predictor",
+                      "value": "0 subframes (0.0%)",
+                      "offset": 0,
+                      "length": 68168
+                    },
+                    {
+                      "name": "Linear Predictor",
+                      "value": "16 subframes (100.0%)",
+                      "offset": 0,
+                      "length": 68168
+                    }
+                  ]
+                },
+                {
+                  "name": "Average Predictor Order",
+                  "value": 4.5,
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Highest Predictor Order",
+                  "value": 8,
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Coefficient Precision",
+                  "value": 15,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Subframes With Wasted Bits",
+                  "value": "0 subframes (0.0%)",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Partition Orders",
+                  "value": 16,
+                  "unit": "residuals",
+                  "offset": 0,
+                  "length": 68168,
+                  "children": [
+                    {
+                      "name": "Order 0",
+                      "value": "8 subframes (50.0%)",
+                      "offset": 0,
+                      "length": 68168
+                    },
+                    {
+                      "name": "Order 2",
+                      "value": "8 subframes (50.0%)",
+                      "offset": 0,
+                      "length": 68168
+                    }
+                  ]
+                },
+                {
+                  "name": "Rice With 5-Bit Parameters",
+                  "value": "0 subframes (0.0%)",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Escaped Partitions",
+                  "value": 0,
+                  "unit": "partitions",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Verified Header Checksums",
+                  "value": 2,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Verified Frame Checksums",
+                  "value": 2,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "MD5 Signature",
+                  "value": "3cd4a863e8b2d7fbae1d9e03c9895911",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 2874.24,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 11726,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 48154,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 977.1666666666666,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 5451.396226415094,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 68168
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 68168,
+                  "children": [
+                    {
+                      "name": "960 to 991 kbps",
+                      "value": "1 frame (50.0%)",
+                      "offset": 0,
+                      "length": 68168
+                    },
+                    {
+                      "name": "5440 to 5471 kbps",
+                      "value": "1 frame (50.0%)",
+                      "offset": 0,
+                      "length": 68168
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 4608,
+              "unit": "samples",
+              "offset": 8288,
+              "length": 11726,
+              "children": [
+                {
+                  "name": "Frame Header",
+                  "offset": 8288,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "Sync Code",
+                      "value": 16382,
+                      "offset": 8288,
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 14
+                    },
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 8289,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Blocking Strategy",
+                      "value": "fixed",
+                      "offset": 8289,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Block Size",
+                      "value": 4608,
+                      "unit": "samples",
+                      "offset": 8290,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 8290,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Channel Assignment",
+                      "value": "8 channels",
+                      "offset": 8291,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Size",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 8291,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 8291,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 0,
+                      "offset": 8292,
+                      "length": 1
+                    },
+                    {
+                      "name": "CRC-8",
+                      "value": 35,
+                      "offset": 8293,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 8",
+                  "offset": 8294,
+                  "length": 1397,
+                  "bitOffset": 0,
+                  "bitLength": 11171,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 8294,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 8294,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 8,
+                      "offset": 8294,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 8294,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 8,
+                      "unit": "samples",
+                      "offset": 8295,
+                      "length": 16
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 8311,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 12,
+                      "unit": "bits",
+                      "offset": 8311,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "8339, -1083, -3423, -2219, 248, 1993, 2150, -1910",
+                      "offset": 8312,
+                      "length": 16,
+                      "bitOffset": 1,
+                      "bitLength": 120
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 8327,
+                      "length": 1364,
+                      "bitOffset": 1,
+                      "bitLength": 10906,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 8327,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 0,
+                          "offset": 8327,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 1,
+                          "unit": "partitions",
+                          "offset": 8327,
+                          "length": 1364,
+                          "bitOffset": 7,
+                          "bitLength": 10900,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 0",
+                              "offset": 8327,
+                              "length": 1364,
+                              "bitOffset": 7,
+                              "bitLength": 10900,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 0,
+                                  "offset": 8327,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "0",
+                          "offset": 8327,
+                          "length": 1364,
+                          "bitOffset": 7,
+                          "bitLength": 10900
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 8",
+                  "offset": 9690,
+                  "length": 1438,
+                  "bitOffset": 3,
+                  "bitLength": 11495,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 9690,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 9690,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 8,
+                      "offset": 9690,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 9691,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 8,
+                      "unit": "samples",
+                      "offset": 9691,
+                      "length": 17,
+                      "bitOffset": 3,
+                      "bitLength": 128
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 9707,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 12,
+                      "unit": "bits",
+                      "offset": 9707,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "8937, -2597, -2946, -1267, 140, 1723, 1717, -1612",
+                      "offset": 9708,
+                      "length": 16,
+                      "bitOffset": 4,
+                      "bitLength": 120
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 9723,
+                      "length": 1405,
+                      "bitOffset": 4,
+                      "bitLength": 11230,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 9723,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 0,
+                          "offset": 9723,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 1,
+                          "unit": "partitions",
+                          "offset": 9724,
+                          "length": 1404,
+                          "bitOffset": 2,
+                          "bitLength": 11224,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 0",
+                              "offset": 9724,
+                              "length": 1404,
+                              "bitOffset": 2,
+                              "bitLength": 11224,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 0,
+                                  "offset": 9724,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "0",
+                          "offset": 9724,
+                          "length": 1404,
+                          "bitOffset": 2,
+                          "bitLength": 11224
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 8",
+                  "offset": 11127,
+                  "length": 1373,
+                  "bitOffset": 2,
+                  "bitLength": 10979,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 11127,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 11127,
+                      "length": 2,
+                      "bitOffset": 3,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 8,
+                      "offset": 11127,
+                      "length": 2,
+                      "bitOffset": 3,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 11128,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 8,
+                      "unit": "samples",
+                      "offset": 11128,
+                      "length": 17,
+                      "bitOffset": 2,
+                      "bitLength": 128
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 11144,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 13,
+                      "unit": "bits",
+                      "offset": 11144,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "16370, -1771, -7256, -3884, 141, 4778, 3391, -3581",
+                      "offset": 11145,
+                      "length": 16,
+                      "bitOffset": 3,
+                      "bitLength": 120
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 11160,
+                      "length": 1340,
+                      "bitOffset": 3,
+                      "bitLength": 10714,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 11160,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 0,
+                          "offset": 11160,
+                          "length": 2,
+                          "bitOffset": 5,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 1,
+                          "unit": "partitions",
+                          "offset": 11161,
+                          "length": 1339,
+                          "bitOffset": 1,
+                          "bitLength": 10708,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 0",
+                              "offset": 11161,
+                              "length": 1339,
+                              "bitOffset": 1,
+                              "bitLength": 10708,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 0,
+                                  "offset": 11161,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "0",
+                          "offset": 11161,
+                          "length": 1339,
+                          "bitOffset": 1,
+                          "bitLength": 10708
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 8",
+                  "offset": 12499,
+                  "length": 1527,
+                  "bitOffset": 5,
+                  "bitLength": 12204,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 12499,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 12499,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 8,
+                      "offset": 12499,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 12500,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 8,
+                      "unit": "samples",
+                      "offset": 12500,
+                      "length": 17,
+                      "bitOffset": 5,
+                      "bitLength": 128
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 12516,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 12,
+                      "unit": "bits",
+                      "offset": 12517,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "8699, -1976, -3647, -1437, 1007, 2038, 606, -1197",
+                      "offset": 12517,
+                      "length": 16,
+                      "bitOffset": 6,
+                      "bitLength": 120
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 12532,
+                      "length": 1494,
+                      "bitOffset": 6,
+                      "bitLength": 11939,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 12532,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 0,
+                          "offset": 12533,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 1,
+                          "unit": "partitions",
+                          "offset": 12533,
+                          "length": 1493,
+                          "bitOffset": 4,
+                          "bitLength": 11933,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 0",
+                              "offset": 12533,
+                              "length": 1493,
+                              "bitOffset": 4,
+                              "bitLength": 11933,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 0,
+                                  "offset": 12533,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "0",
+                          "offset": 12533,
+                          "length": 1493,
+                          "bitOffset": 4,
+                          "bitLength": 11933
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 8",
+                  "offset": 14025,
+                  "length": 1444,
+                  "bitOffset": 1,
+                  "bitLength": 11545,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 14025,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 14025,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 8,
+                      "offset": 14025,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 14026,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 8,
+                      "unit": "samples",
+                      "offset": 14026,
+                      "length": 17,
+                      "bitOffset": 1,
+                      "bitLength": 128
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 14042,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 12,
+                      "unit": "bits",
+                      "offset": 14042,
+                      "length": 2,
+                      "bitOffset": 5,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "9285, -3499, -3157, -416, 931, 1515, 381, -947",
+                      "offset": 14043,
+                      "length": 16,
+                      "bitOffset": 2,
+                      "bitLength": 120
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 14058,
+                      "length": 1411,
+                      "bitOffset": 2,
+                      "bitLength": 11280,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 14058,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 0,
+                          "offset": 14058,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 1,
+                          "unit": "partitions",
+                          "offset": 14059,
+                          "length": 1410,
+                          "bitOffset": 0,
+                          "bitLength": 11274,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 0",
+                              "offset": 14059,
+                              "length": 1410,
+                              "bitOffset": 0,
+                              "bitLength": 11274,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 0,
+                                  "offset": 14059,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "0",
+                          "offset": 14059,
+                          "length": 1410,
+                          "bitOffset": 0,
+                          "bitLength": 11274
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 7",
+                  "offset": 15468,
+                  "length": 1448,
+                  "bitOffset": 2,
+                  "bitLength": 11581,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 15468,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 15468,
+                      "length": 2,
+                      "bitOffset": 3,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 7,
+                      "offset": 15468,
+                      "length": 2,
+                      "bitOffset": 3,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 15469,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 7,
+                      "unit": "samples",
+                      "offset": 15469,
+                      "length": 15,
+                      "bitOffset": 2,
+                      "bitLength": 112
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 15483,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 12,
+                      "unit": "bits",
+                      "offset": 15483,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "9555, -3633, -4220, 51, 2218, 1787, -1665",
+                      "offset": 15484,
+                      "length": 14,
+                      "bitOffset": 3,
+                      "bitLength": 105
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 15497,
+                      "length": 1419,
+                      "bitOffset": 4,
+                      "bitLength": 11347,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 15497,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 0,
+                          "offset": 15497,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 1,
+                          "unit": "partitions",
+                          "offset": 15498,
+                          "length": 1418,
+                          "bitOffset": 2,
+                          "bitLength": 11341,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 0",
+                              "offset": 15498,
+                              "length": 1418,
+                              "bitOffset": 2,
+                              "bitLength": 11341,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 0,
+                                  "offset": 15498,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "0",
+                          "offset": 15498,
+                          "length": 1418,
+                          "bitOffset": 2,
+                          "bitLength": 11341
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 7",
+                  "offset": 16915,
+                  "length": 1515,
+                  "bitOffset": 7,
+                  "bitLength": 12112,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 16915,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 16916,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 7,
+                      "offset": 16916,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 16916,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 7,
+                      "unit": "samples",
+                      "offset": 16916,
+                      "length": 15,
+                      "bitOffset": 7,
+                      "bitLength": 112
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 16930,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 12,
+                      "unit": "bits",
+                      "offset": 16931,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "10192, -5372, -3503, 1273, 1969, 623, -1089",
+                      "offset": 16932,
+                      "length": 14,
+                      "bitOffset": 0,
+                      "bitLength": 105
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 16945,
+                      "length": 1485,
+                      "bitOffset": 1,
+                      "bitLength": 11878,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 16945,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 0,
+                          "offset": 16945,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 1,
+                          "unit": "partitions",
+                          "offset": 16945,
+                          "length": 1485,
+                          "bitOffset": 7,
+                          "bitLength": 11872,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 0",
+                              "offset": 16945,
+                              "length": 1485,
+                              "bitOffset": 7,
+                              "bitLength": 11872,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 0,
+                                  "offset": 16945,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "0",
+                          "offset": 16945,
+                          "length": 1485,
+                          "bitOffset": 7,
+                          "bitLength": 11872
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 8",
+                  "offset": 18429,
+                  "length": 1583,
+                  "bitOffset": 7,
+                  "bitLength": 12657,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 18429,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 18430,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 8,
+                      "offset": 18430,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 18430,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 8,
+                      "unit": "samples",
+                      "offset": 18430,
+                      "length": 17,
+                      "bitOffset": 7,
+                      "bitLength": 128
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 18446,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 12,
+                      "unit": "bits",
+                      "offset": 18447,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "10548, -5948, -3833, 1592, 2905, 580, -2473, 722",
+                      "offset": 18448,
+                      "length": 15
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 18463,
+                      "length": 1549,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 18463,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 0,
+                          "offset": 18463,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 1,
+                          "unit": "partitions",
+                          "offset": 18463,
+                          "length": 1549,
+                          "bitOffset": 6,
+                          "bitLength": 12386,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 0",
+                              "offset": 18463,
+                              "length": 1549,
+                              "bitOffset": 6,
+                              "bitLength": 12386,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 0,
+                                  "offset": 18463,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "0",
+                          "offset": 18463,
+                          "length": 1549,
+                          "bitOffset": 6,
+                          "bitLength": 12386
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "CRC-16",
+                  "value": 56943,
+                  "offset": 20012,
+                  "length": 2
+                },
+                {
+                  "name": "Computed CRC-16",
+                  "value": 56943,
+                  "offset": 20012,
+                  "length": 2
+                },
+                {
+                  "name": "IsCrc16Valid",
+                  "value": true,
+                  "offset": 20012,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 3392,
+              "unit": "samples",
+              "offset": 20014,
+              "length": 48154,
+              "children": [
+                {
+                  "name": "Frame Header",
+                  "offset": 20014,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Code",
+                      "value": 16382,
+                      "offset": 20014,
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 14
+                    },
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 20015,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Blocking Strategy",
+                      "value": "fixed",
+                      "offset": 20015,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Block Size",
+                      "value": 3392,
+                      "unit": "samples",
+                      "offset": 20016,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 20016,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Channel Assignment",
+                      "value": "8 channels",
+                      "offset": 20017,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Size",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 20017,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 20017,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 1,
+                      "offset": 20018,
+                      "length": 1
+                    },
+                    {
+                      "name": "Uncommon Block Size",
+                      "value": 3392,
+                      "unit": "samples",
+                      "offset": 20019,
+                      "length": 2
+                    },
+                    {
+                      "name": "CRC-8",
+                      "value": 202,
+                      "offset": 20021,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 1",
+                  "offset": 20022,
+                  "length": 6021,
+                  "bitOffset": 0,
+                  "bitLength": 48166,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 20022,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 20022,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 1,
+                      "offset": 20022,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 20022,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 1,
+                      "unit": "samples",
+                      "offset": 20023,
+                      "length": 2
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 20025,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 20025,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "1105",
+                      "offset": 20026,
+                      "length": 2,
+                      "bitOffset": 1,
+                      "bitLength": 15
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 20028,
+                      "length": 6015,
+                      "bitOffset": 0,
+                      "bitLength": 48118,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 20028,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 2,
+                          "offset": 20028,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 4,
+                          "unit": "partitions",
+                          "offset": 20028,
+                          "length": 6015,
+                          "bitOffset": 6,
+                          "bitLength": 48112,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 13",
+                              "offset": 20028,
+                              "length": 1559,
+                              "bitOffset": 6,
+                              "bitLength": 12466,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 13,
+                                  "offset": 20028,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 21587,
+                              "length": 1480,
+                              "bitOffset": 0,
+                              "bitLength": 11837,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 21587,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 23066,
+                              "length": 1483,
+                              "bitOffset": 5,
+                              "bitLength": 11854,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 23066,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 24548,
+                              "length": 1495,
+                              "bitOffset": 3,
+                              "bitLength": 11955,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 24548,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "12 to 13",
+                          "offset": 20028,
+                          "length": 6015,
+                          "bitOffset": 6,
+                          "bitLength": 48112
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 3",
+                  "offset": 26042,
+                  "length": 6017,
+                  "bitOffset": 6,
+                  "bitLength": 48129,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 26042,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 26042,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 3,
+                      "offset": 26042,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 26043,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 3,
+                      "unit": "samples",
+                      "offset": 26043,
+                      "length": 7,
+                      "bitOffset": 6,
+                      "bitLength": 48
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 26049,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 26050,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "726, -1252, 3299",
+                      "offset": 26050,
+                      "length": 7,
+                      "bitOffset": 7,
+                      "bitLength": 45
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 26056,
+                      "length": 6003,
+                      "bitOffset": 4,
+                      "bitLength": 48019,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 26056,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 2,
+                          "offset": 26056,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 4,
+                          "unit": "partitions",
+                          "offset": 26057,
+                          "length": 6002,
+                          "bitOffset": 2,
+                          "bitLength": 48013,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 13",
+                              "offset": 26057,
+                              "length": 1549,
+                              "bitOffset": 2,
+                              "bitLength": 12383,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 13,
+                                  "offset": 26057,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 27605,
+                              "length": 1482,
+                              "bitOffset": 1,
+                              "bitLength": 11850,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 27605,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 29086,
+                              "length": 1484,
+                              "bitOffset": 3,
+                              "bitLength": 11862,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 29086,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 30569,
+                              "length": 1490,
+                              "bitOffset": 1,
+                              "bitLength": 11918,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 30569,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "12 to 13",
+                          "offset": 26057,
+                          "length": 6002,
+                          "bitOffset": 2,
+                          "bitLength": 48013
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 1",
+                  "offset": 32058,
+                  "length": 6022,
+                  "bitOffset": 7,
+                  "bitLength": 48169,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 32058,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 32059,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 1,
+                      "offset": 32059,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 32059,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 1,
+                      "unit": "samples",
+                      "offset": 32059,
+                      "length": 3,
+                      "bitOffset": 7,
+                      "bitLength": 16
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 32061,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 32062,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "612",
+                      "offset": 32063,
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 15
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 32064,
+                      "length": 6016,
+                      "bitOffset": 7,
+                      "bitLength": 48121,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 32064,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 2,
+                          "offset": 32065,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 4,
+                          "unit": "partitions",
+                          "offset": 32065,
+                          "length": 6015,
+                          "bitOffset": 5,
+                          "bitLength": 48115,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 13",
+                              "offset": 32065,
+                              "length": 1559,
+                              "bitOffset": 5,
+                              "bitLength": 12461,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 13,
+                                  "offset": 32065,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 33623,
+                              "length": 1482,
+                              "bitOffset": 2,
+                              "bitLength": 11851,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 33623,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 35104,
+                              "length": 1488,
+                              "bitOffset": 5,
+                              "bitLength": 11892,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 35104,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 36591,
+                              "length": 1489,
+                              "bitOffset": 1,
+                              "bitLength": 11911,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 36591,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "12 to 13",
+                          "offset": 32065,
+                          "length": 6015,
+                          "bitOffset": 5,
+                          "bitLength": 48115
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 1",
+                  "offset": 38080,
+                  "length": 6020,
+                  "bitOffset": 0,
+                  "bitLength": 48155,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 38080,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 38080,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 1,
+                      "offset": 38080,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 38080,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 1,
+                      "unit": "samples",
+                      "offset": 38081,
+                      "length": 2
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 38083,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 38083,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "3",
+                      "offset": 38084,
+                      "length": 2,
+                      "bitOffset": 1,
+                      "bitLength": 15
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 38086,
+                      "length": 6014,
+                      "bitOffset": 0,
+                      "bitLength": 48107,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 38086,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 2,
+                          "offset": 38086,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 4,
+                          "unit": "partitions",
+                          "offset": 38086,
+                          "length": 6014,
+                          "bitOffset": 6,
+                          "bitLength": 48101,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 13",
+                              "offset": 38086,
+                              "length": 1561,
+                              "bitOffset": 6,
+                              "bitLength": 12476,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 13,
+                                  "offset": 38086,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 39646,
+                              "length": 1482,
+                              "bitOffset": 2,
+                              "bitLength": 11853,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 39646,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 41127,
+                              "length": 1485,
+                              "bitOffset": 7,
+                              "bitLength": 11869,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 41127,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 42611,
+                              "length": 1489,
+                              "bitOffset": 4,
+                              "bitLength": 11903,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 42611,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "12 to 13",
+                          "offset": 38086,
+                          "length": 6014,
+                          "bitOffset": 6,
+                          "bitLength": 48101
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 1",
+                  "offset": 44099,
+                  "length": 6015,
+                  "bitOffset": 3,
+                  "bitLength": 48111,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 44099,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 44099,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 1,
+                      "offset": 44099,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 44100,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 1,
+                      "unit": "samples",
+                      "offset": 44100,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 16
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 44102,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 44102,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "910",
+                      "offset": 44103,
+                      "length": 3,
+                      "bitOffset": 4,
+                      "bitLength": 15
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 44105,
+                      "length": 6009,
+                      "bitOffset": 3,
+                      "bitLength": 48063,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 44105,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 2,
+                          "offset": 44105,
+                          "length": 2,
+                          "bitOffset": 5,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 4,
+                          "unit": "partitions",
+                          "offset": 44106,
+                          "length": 6008,
+                          "bitOffset": 1,
+                          "bitLength": 48057,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 13",
+                              "offset": 44106,
+                              "length": 1558,
+                              "bitOffset": 1,
+                              "bitLength": 12460,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 13,
+                                  "offset": 44106,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 45663,
+                              "length": 1484,
+                              "bitOffset": 5,
+                              "bitLength": 11864,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 45663,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 47146,
+                              "length": 1483,
+                              "bitOffset": 5,
+                              "bitLength": 11852,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 47146,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 48628,
+                              "length": 1486,
+                              "bitOffset": 1,
+                              "bitLength": 11881,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 48628,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "12 to 13",
+                          "offset": 44106,
+                          "length": 6008,
+                          "bitOffset": 1,
+                          "bitLength": 48057
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 1",
+                  "offset": 50113,
+                  "length": 6021,
+                  "bitOffset": 2,
+                  "bitLength": 48165,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 50113,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 50113,
+                      "length": 2,
+                      "bitOffset": 3,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 1,
+                      "offset": 50113,
+                      "length": 2,
+                      "bitOffset": 3,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 50114,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 1,
+                      "unit": "samples",
+                      "offset": 50114,
+                      "length": 3,
+                      "bitOffset": 2,
+                      "bitLength": 16
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 50116,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 50116,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "180",
+                      "offset": 50117,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 15
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 50119,
+                      "length": 6015,
+                      "bitOffset": 2,
+                      "bitLength": 48117,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 50119,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 2,
+                          "offset": 50119,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 4,
+                          "unit": "partitions",
+                          "offset": 50120,
+                          "length": 6014,
+                          "bitOffset": 0,
+                          "bitLength": 48111,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 13",
+                              "offset": 50120,
+                              "length": 1561,
+                              "bitOffset": 0,
+                              "bitLength": 12482,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 13,
+                                  "offset": 50120,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 51680,
+                              "length": 1488,
+                              "bitOffset": 2,
+                              "bitLength": 11895,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 51680,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 53167,
+                              "length": 1479,
+                              "bitOffset": 1,
+                              "bitLength": 11826,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 53167,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 54645,
+                              "length": 1489,
+                              "bitOffset": 3,
+                              "bitLength": 11908,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 54645,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "12 to 13",
+                          "offset": 50120,
+                          "length": 6014,
+                          "bitOffset": 0,
+                          "bitLength": 48111
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 1",
+                  "offset": 56133,
+                  "length": 6016,
+                  "bitOffset": 7,
+                  "bitLength": 48116,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 56133,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 56134,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 1,
+                      "offset": 56134,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 56134,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 1,
+                      "unit": "samples",
+                      "offset": 56134,
+                      "length": 3,
+                      "bitOffset": 7,
+                      "bitLength": 16
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 56136,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 56137,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "673",
+                      "offset": 56138,
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 15
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 56139,
+                      "length": 6010,
+                      "bitOffset": 7,
+                      "bitLength": 48068,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 56139,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 2,
+                          "offset": 56140,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 4,
+                          "unit": "partitions",
+                          "offset": 56140,
+                          "length": 6009,
+                          "bitOffset": 5,
+                          "bitLength": 48062,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 13",
+                              "offset": 56140,
+                              "length": 1559,
+                              "bitOffset": 5,
+                              "bitLength": 12460,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 13,
+                                  "offset": 56140,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 57698,
+                              "length": 1481,
+                              "bitOffset": 1,
+                              "bitLength": 11844,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 57698,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 59178,
+                              "length": 1483,
+                              "bitOffset": 5,
+                              "bitLength": 11855,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 59178,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 60660,
+                              "length": 1489,
+                              "bitOffset": 4,
+                              "bitLength": 11903,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 60660,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "12 to 13",
+                          "offset": 56140,
+                          "length": 6009,
+                          "bitOffset": 5,
+                          "bitLength": 48062
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe",
+                  "value": "linear predictor, order 1",
+                  "offset": 62148,
+                  "length": 6018,
+                  "bitOffset": 3,
+                  "bitLength": 48140,
+                  "children": [
+                    {
+                      "name": "Reserved Bit",
+                      "value": 0,
+                      "offset": 62148,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Subframe Type",
+                      "value": "linear predictor",
+                      "offset": 62148,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Predictor Order",
+                      "value": 1,
+                      "offset": 62148,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 6
+                    },
+                    {
+                      "name": "Wasted Bits",
+                      "value": 0,
+                      "unit": "bits",
+                      "offset": 62149,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Warm-up Samples",
+                      "value": 1,
+                      "unit": "samples",
+                      "offset": 62149,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 16
+                    },
+                    {
+                      "name": "Coefficient Precision",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 62151,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Coefficient Shift",
+                      "value": 15,
+                      "unit": "bits",
+                      "offset": 62151,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 5
+                    },
+                    {
+                      "name": "Coefficients",
+                      "value": "1437",
+                      "offset": 62152,
+                      "length": 3,
+                      "bitOffset": 4,
+                      "bitLength": 15
+                    },
+                    {
+                      "name": "Residual",
+                      "offset": 62154,
+                      "length": 6012,
+                      "bitOffset": 3,
+                      "bitLength": 48092,
+                      "children": [
+                        {
+                          "name": "Residual Coding Method",
+                          "value": "Rice",
+                          "offset": 62154,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Partition Order",
+                          "value": 2,
+                          "offset": 62154,
+                          "length": 2,
+                          "bitOffset": 5,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Partitions",
+                          "value": 4,
+                          "unit": "partitions",
+                          "offset": 62155,
+                          "length": 6011,
+                          "bitOffset": 1,
+                          "bitLength": 48086,
+                          "children": [
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 13",
+                              "offset": 62155,
+                              "length": 1557,
+                              "bitOffset": 1,
+                              "bitLength": 12451,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 13,
+                                  "offset": 62155,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 63711,
+                              "length": 1483,
+                              "bitOffset": 4,
+                              "bitLength": 11856,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 63711,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 65193,
+                              "length": 1487,
+                              "bitOffset": 4,
+                              "bitLength": 11885,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 65193,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Partition",
+                              "value": "Rice parameter 12",
+                              "offset": 66679,
+                              "length": 1487,
+                              "bitOffset": 1,
+                              "bitLength": 11894,
+                              "children": [
+                                {
+                                  "name": "Rice Parameter",
+                                  "value": 12,
+                                  "offset": 66679,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Rice Parameter Range",
+                          "value": "12 to 13",
+                          "offset": 62155,
+                          "length": 6011,
+                          "bitOffset": 1,
+                          "bitLength": 48086
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "CRC-16",
+                  "value": 21430,
+                  "offset": 68166,
+                  "length": 2
+                },
+                {
+                  "name": "Computed CRC-16",
+                  "value": 21430,
+                  "offset": 68166,
+                  "length": 2
+                },
+                {
+                  "name": "IsCrc16Valid",
+                  "value": true,
+                  "offset": 68166,
+                  "length": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "FLAC",
+        "sampleRate": 48000,
+        "channels": 8,
+        "channelMode": "Multichannel",
+        "channelLayout": [
+          "front left",
+          "front right",
+          "front center",
+          "LFE",
+          "back left",
+          "back right",
+          "side left",
+          "side right"
+        ],
+        "channelLayoutName": "7.1",
+        "bitsPerSample": 16,
+        "samples": 8000,
+        "duration": 0.16666666666666666,
+        "averageBitrate": 2874.24,
+        "isVbr": true,
+        "verification": {
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame header CRC-8",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 2,
+              "checked": 2,
+              "failed": 0
+            },
+            {
+              "name": "frame CRC-16",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 2,
+              "checked": 2,
+              "failed": 0
+            },
+            {
+              "name": "STREAMINFO MD5",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 1,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              8288,
+              20014
+            ],
+            "values": [
+              977.1666666666666,
+              5451.396226415094
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              2874
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": []
+  }
+]

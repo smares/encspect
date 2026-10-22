@@ -1,0 +1,35 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 19904,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "frame header CRC-8",
+        "stored": 6,
+        "checked": 6,
+        "failed": 0
+      },
+      {
+        "name": "frame CRC-16",
+        "stored": 6,
+        "checked": 6,
+        "failed": 1
+      },
+      {
+        "name": "STREAMINFO MD5",
+        "stored": 1,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The flac decoder could not decode the frame at 0x2CEB: the subframe of channel 2 has a type the specification reserves."
+    }
+  ]
+}
