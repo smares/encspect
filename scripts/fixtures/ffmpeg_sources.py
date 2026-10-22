@@ -51,7 +51,21 @@ FILES = [
     "libavcodec/dca_sample_rate_tab.h", "libavcodec/dcadata.c", "libavcodec/dcadata.h", "libavcodec/dcadec.c",
     "libavcodec/dcaenc.c", "libavcodec/dcaenc.h", "libavformat/dtsdec.c", "libavformat/dtshddec.c", "libavformat/isom.c",
     "libavformat/mov.c", "libavformat/isom.h", "libavformat/movenccenc.c", "libavutil/encryption_info.h",
+    "libavcodec/flac.c", "libavcodec/flac.h", "libavcodec/flacdec.c", "libavcodec/flacenc.c", "libavformat/flacdec.c",
+    "libavcodec/apedec.c", "libavformat/ape.c",
+    "libavcodec/tta.c", "libavcodec/ttadata.c", "libavcodec/ttadata.h", "libavcodec/ttaenc.c", "libavformat/tta.c",
+    "libavcodec/mlp.c", "libavcodec/mlp.h", "libavcodec/mlp_parse.c", "libavcodec/mlp_parse.h", "libavcodec/mlpdec.c",
+    "libavcodec/mlpdsp.c", "libavcodec/mlpenc.c", "libavcodec/mlp_parser.c",
+    "libavcodec/alac.c", "libavcodec/alac_data.c", "libavcodec/alac_data.h",
+    "libavformat/matroskadec.c",
 ]
+
+
+def missing(archive):
+    """The names in FILES that the archive at this path does not hold, so a pinned list cannot name a file the release lacks."""
+    with tarfile.open(archive) as tar:
+        names = set(tar.getnames())
+    return [name for name in FILES if f"ffmpeg-{VERSION}/{name}" not in names]
 
 
 def fetch(directory):
