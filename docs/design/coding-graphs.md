@@ -1,6 +1,6 @@
 # Coding graphs: per-frame coding choices and stream summaries
 
-Status: a design for the project lead's sign-off. Nothing here is implemented. The decisions are collected under [Decisions](#decisions), and claims that no source read for this design confirms are marked **unverified**.
+Status: a design for the project lead's sign-off, revised after an independent review. Nothing here is implemented. The decisions are collected under [Decisions](#decisions), and claims that no source read for this design confirms are marked **unverified**.
 
 ## Scope
 
@@ -10,7 +10,7 @@ What the lead asked for:
   - the stereo coding of joint stereo frames (left/right, mid/side, intensity stereo, mid/side and intensity stereo);
   - the distribution of long and short blocks (long, start, short, stop and mixed for Layer III; the window sequences for AAC);
   - whatever else the parsers read that is worth a graph.
-- Summaries over the whole stream, as EncSpot's window shows them: the share of mid/side, intensity stereo and plain stereo frames, of long and short blocks, and so on.
+- Summaries over the whole stream, as EncSpot's window shows them: the share of mid/side, intensity stereo and simple stereo frames, of long and short blocks, and so on. EncSpot's shares are over all frames, so this design delivers shares over all frames ("Stereo Coding", "Block Sizes"), beside the existing tallies that cover joint stereo frames only and that count start and stop blocks apart.
 
 What the plan already settles, and this design keeps:
 
@@ -26,19 +26,20 @@ What is not in scope:
 
 Sources read for this design:
 
-- The code at 2310aa3: `StreamInfo` and `Series`; the MPEG parser's `MpegAudioParser.Tally.cs`, `.Statistics.cs`, `.Streams.cs`, `Layer3SideInfo.cs` and the frame record `Entry`; AAC's `CodingTally`, `CodingStatistics`, `StreamFigures`, `StreamSetup` and `BlockReader`; AC-3's `Program`, `FrameResult`, `FrameSyntax.Blocks.cs` and `StreamFigures`; DTS's `UnitSyntax.*`, `Facts`, `DtsStream`; Musepack's `Sv7Parser`, `OldStreamParser`, `Sv8Parser`; Vorbis's, Opus's and Speex's records and reports; WMA's `StandardDecoder`, `StandardStream`, `StandardReport`, `ProRecords`, `ProReport`, `VoiceRecords`; WavPack's `Model`, `Reader`, `Summary`; the host's JSON and text writers and `ReportSummary`; the GUI's `Graph`, `GraphsViewModel`, `GraphView`, `Palette`; `MemoryTests`, `ScreenshotTests`, `GraphViewTests`; the cross-check tools in `scripts/fixtures`.
-- The vendored references: minimp3 (`third_party/minimp3/minimp3.h`: `L3_huffman`, `L3_reorder`), EncSpot (`third_party/encspot/lib/Mp3File.cpp`: `ProcessNextFrame`), mp3guessenc.
+- The code at 2310aa3: `StreamInfo` and `Series`; the MPEG parser's `MpegAudioParser.Tally.cs`, `.Statistics.cs`, `.Streams.cs`, `Layer3SideInfo.cs` and the frame record `Entry`; AAC's `CodingTally`, `CodingStatistics`, `StreamFigures`, `StreamSetup`, `BlockReader` and `RawAacParser`; AC-3's `Program`, `FrameResult`, `FrameSyntax.Blocks.cs` and `StreamFigures`; DTS's `UnitSyntax.*`, `Facts`, `DtsStream`; Musepack's `Sv7Parser`, `OldStreamParser`, `Sv8Parser`; Vorbis's, Opus's and Speex's records and reports; WMA's `StandardDecoder`, `StandardStream`, `StandardReport`, `ProRecords`, `ProReport`, `VoiceRecords`; WavPack's `Model`, `Reader`, `Summary`; the host's JSON and text writers and `ReportSummary`; the GUI's `Graph`, `GraphsViewModel`, `GraphView`, `Palette`; `MemoryTests`, `ScreenshotTests`, `GraphViewTests`; the cross-check tools in `scripts/fixtures`.
+- The vendored references: minimp3 (`third_party/minimp3/minimp3.h`: `L3_huffman`, `L3_reorder`), EncSpot (`third_party/encspot/lib/Mp3File.cpp`: `ProcessNextFrame`; the vendored source is the console port, `third_party/encspot/README`), mp3guessenc.
+- Sources the independent review read, whose statements this design cites where it relies on them: FFmpeg 6.1.1 (`aacdec_template.c` `decode_cpe`, `ac3dec.c`), liba52 0.7.4 (`a52.h`, `parse.c`).
 - The decoder contract under way on `feature/decoder-contract` (its working tree, read only), for the fields it adds to `StreamInfo`, the writers and `ReportSummary`.
 - The specification sections the parsers cite in their code and descriptions; where this design cites a section no parser cites, it says so.
 
 ## The design in short
 
-- A new type in `Core.Abstractions`, `CategorySeries`, holds one category per frame, or per granule and channel, block and channel or packet and stream: compact codes of one byte each, the categories with names and descriptions, and the counts over the whole stream. It sits beside `Series`, which keeps holding numbers.
-- The parsers record the codes while they read the frames, as they count their tallies now. A Layer III frame of MPEG-1 stereo keeps 6 bytes more: 4 block types, its joint stereo mode and its channel mode.
-- The whole-stream summary stays what the parsers already report: the tally nodes under Statistics ("Block Usage", "Joint Stereo Modes"). Each category series carries the same categories, under the same names, anchored to that node; the counts over the series are computed by the shared type, and a test holds them equal to the tally.
-- Coded bandwidth over time is a numeric `Series`, "Coded Bandwidth" in Hz, wherever a header or side information states it without decoding.
-- JSON adds a `categorySeries` array to each stream, so `schemaVersion` stays 1. The text tree prints each category's share per second after its tally node. The CSV does not change in this rollout.
-- The GUI draws three views of a category series (share per second, a per-frame strip, a summary table like EncSpot's) in a fixed palette checked for color vision deficiencies, always with names and shares in text.
+- A new type in `Core.Abstractions`, `CategorySeries`, holds the category of each value of each unit (a frame, access unit, packet or block): compact codes of one byte each, a unit carrying as many values as it has (a count byte per unit where that varies), the categories with names and descriptions, and the counts over the whole stream. It sits beside `Series`, which keeps holding numbers. A series can also be a grouping of another one (long, start and stop blocks as "long") that costs no bytes per value.
+- The whole-stream summary stays what the parsers report, the tally nodes under Statistics, and gains two nodes over all frames: "Stereo Coding" (MPEG frames, AAC channel pairs) and "Block Sizes" (long against short). Each category series carries the categories of the tally node it is anchored to, under the same names. The counts over the series are computed by the shared type, and a data-driven test holds them equal to the tally.
+- Codes are derived at the end from the records the parser keeps already wherever they hold the fields (MPEG, Vorbis, Opus, Speex, Musepack, WMA, WavPack); only AAC and AC-3, which keep no per-frame fields, record them while reading.
+- Coded bandwidth over time is a numeric `Series`, "Coded Bandwidth" in Hz, wherever a header or the coded syntax states it without decoding.
+- JSON adds a `categorySeries` array to each stream, omitted when empty, so `schemaVersion` stays 1 and no golden changes until a parser produces a series. The text tree prints each category's share per second after its tally node. The CSV does not change in this rollout.
+- The GUI draws three views of a category series (share per second, a per-frame strip that keeps rare categories visible, a summary table like EncSpot's) in a fixed palette with a rule for series that have more categories than colors, always with names and shares in text.
 - Rollout: the contract after the decoder contract merges, MPEG as the reference, then the other formats in parallel.
 
 ## The survey
@@ -46,7 +47,7 @@ Sources read for this design:
 What each parser reads per frame, packet or block today that is worth a graph or a summary.
 
 - **Read** says whether the parser reads the field now; **Tallied** whether its Statistics node counts it now.
-- **Kept per unit** is what the design adds per frame, packet or block: one byte per value of a category series, 8 bytes per value of a numeric series. The x values (frame offsets) are shared with the stream's per-frame bitrate series and cost nothing more.
+- **Kept per unit** is what the design adds per frame, packet or block to what the parser keeps now: one byte per value of a category series (plus a count byte per unit where the number of values varies, and a weight byte per value where a weight is used), 8 bytes per value of a numeric series. "Derived" means the codes are computed at the end from the kept records; "recorded" means the parser adds them while reading. The x values (frame offsets) are shared with the stream's per-frame bitrate series and cost nothing more.
 - **Status:** "code" is verified from the parser's code at 2310aa3, "spec" from a specification or reference source cited there, **unverified** otherwise.
 - **Wave:** 1 is the first rollout, 2 the second wave, "later" waits for the entropy pass or a parser change.
 
@@ -54,11 +55,13 @@ What each parser reads per frame, packet or block today that is worth a graph or
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Channel modes | header mode, ISO/IEC 11172-3 2.4.2.3 | yes, in the frame record's header | "Channel Modes" | 1 byte per frame, or none: derived from the kept header | code | 1 |
-| Joint stereo modes, Layer III | mode_extension: bit 1 mid/side stereo, bit 0 intensity stereo (2.4.2.3) | yes, in the kept header | "Joint Stereo Modes" (joint stereo frames only) | 1 byte per frame, or none (derived) | code | 1 |
-| Intensity stereo bounds, Layers I and II | mode_extension: bands 4, 8, 12 or 16 to 31 (2.4.2.3) | yes, in the kept header | "Intensity Stereo Bounds" | 1 byte per frame, or none (derived) | code | 1 |
-| Block usage, Layer III | block_type, window_switching_flag, mixed_block_flag per granule and channel (2.4.1.7, 2.4.2.7) | yes, side information kept in the store | "Block Usage", granules counted per channel: long, start, short, mixed, stop, reserved | 4 bytes per MPEG-1 stereo frame (2 granules × 2 channels), 2 for MPEG-2 stereo, 1 or 2 for mono | code | 1 |
-| Coded bandwidth, Layers I and II | the highest subband with a bit allocation other than 0 in either channel; 32 subbands of fs/64 each | yes, the allocation is read for every frame (Layer II's Annex B tables) | no | 8 bytes per frame (1 byte recorded while reading, the value built at the end) | code (reading); the Hz conversion spec | 1 |
+| Channel modes | header mode, ISO/IEC 11172-3 2.4.2.3 | yes, in the frame record's header | "Channel Modes" | 1 byte per frame, derived from the kept header | code | 1 |
+| Joint stereo modes, Layer III | mode_extension: bit 1 mid/side stereo, bit 0 intensity stereo (2.4.2.3) | yes, in the kept header | "Joint Stereo Modes" (joint stereo frames only) | 1 byte per frame, derived; `None` for a frame that is not joint stereo, which the tally does not count | code | 1 |
+| Stereo coding, all frames (new) | the channel mode with mode_extension: left/right stereo, the three joint stereo codings, and mono and dual channel frames apart | yes, in the kept header | new node "Stereo Coding" over all complete frames | 1 byte per frame, derived | code | 1 |
+| Intensity stereo bounds, Layers I and II | mode_extension: bands 4, 8, 12 or 16 to 31 (2.4.2.3) | yes, in the kept header | "Intensity Stereo Bounds" | 1 byte per frame, derived | code | 1 |
+| Block usage, Layer III | block_type, window_switching_flag, mixed_block_flag per granule and channel (2.4.1.7, 2.4.2.7) | yes, side information kept in the store | "Block Usage", granules counted per channel: long, start, short, mixed, stop, reserved | 4 bytes per MPEG-1 stereo frame (2 granules × 2 channels), 2 for MPEG-2 stereo, 1 or 2 for mono; derived by reading the block_type bits at their known positions in the stored side information | code | 1 |
+| Block sizes, all granules (new) | the same fields, grouped as EncSpot counts them: long (with start and stop), short, mixed, reserved | yes | new node "Block Sizes" | none: a grouping of "Block Usage" | code | 1 |
+| Coded bandwidth, Layers I and II | the highest subband with a bit allocation other than 0 in either channel; 32 subbands of fs/64 each | yes, the allocation is in the stored audio data | no | 8 bytes per frame (the numeric series), derived at the end from the stored allocation | code; the Hz conversion spec | 1 |
 | Scalefactor scaling, Layer III | scalefac_scale per granule and channel (2.4.2.7) | yes | share of granules ("Scalefactor Scaling") | 4 bytes per frame | code | 2 |
 | Global gain, Layer III | global_gain per granule and channel | yes | smallest and largest per channel | 8 bytes per value as a numeric series | code | 2 |
 | big_values region end, Layer III | big_values × 2 lines (2.4.2.7); lines above it are the count1 region, whose end needs Huffman decoding | big_values yes; count1 no (the parser does no Huffman decoding) | no | 8 bytes per frame | code; minimp3 `L3_huffman` reads count1 until part2_3_length's bits run out | later |
@@ -68,15 +71,15 @@ What big_values tells and what it does not:
 
 - It is the number of pairs of frequency lines, from the lowest, in the big-values region, where values may exceed 1 (the parser's own description of the field).
 - Above it lies the count1 region of quadruples of -1, 0 or 1, which runs until the granule's part2_3_length bits are spent (minimp3 `L3_huffman`). Its end, and with it the highest line that is not zero, needs Huffman decoding.
-- So big_values × 2 is neither the coded bandwidth nor a bound of it: nonzero lines of ±1 may lie above it, and the big-values region may end in zeros.
+- So big_values × 2 bounds the highest line whose magnitude exceeds 1, but neither the coded bandwidth nor the highest nonzero line: lines of ±1 may lie above it, and the big-values region may end in zeros.
 - In short blocks the lines are coded band by band, each band's three windows one after the other (minimp3 `L3_reorder` undoes that order), so the line index still maps to frequency at the granularity of a scalefactor band.
-- It does follow an encoder's lowpass where the encoder filters the input, but a graph of it named as bandwidth would mislead. It waits for the entropy pass, where the end of the count1 region gives the real highest coded line.
+- It does follow an encoder's lowpass where the encoder filters the input, but a graph of it named as bandwidth would mislead. It waits for the entropy pass, where the end of the count1 region gives the real highest coded line. EncSpot recorded it (`bigvalues` in `ProcessNextFrame`, for frames whose last switched granule is short, 0 otherwise), so a reader of its output may expect a graph of it; Decision 6 covers that.
 
-How EncSpot counts, from its source (`Mp3File.cpp`, `ProcessNextFrame`), which the cross-check needs:
+How EncSpot counts, from its source (`Mp3File.cpp`, `ProcessNextFrame`), which the cross-check and the new all-frames nodes need:
 
-- Its mode counts take the mode extension of joint stereo frames and count every other frame (stereo, dual channel, mono) as mode 0, so its "plain stereo" share is the report's stereo, dual channel and mono frames plus the joint stereo frames coded left/right.
-- It counts long, short and mixed granules; start and stop blocks count as long.
-- Its per-frame lists (the ones its window graphs) keep the mode extension of every frame and one block type per frame, the last switched granule's.
+- Its mode counts take the mode extension of joint stereo frames and count every other frame (stereo, dual channel, mono) as mode 0. Its mode 0 share is therefore the report's "Stereo Coding" entries "Left/right stereo" and "Mono and dual channel" together; its modes 1 to 3 are the report's mid/side, intensity stereo, and both.
+- It counts long, short and mixed granules; start and stop blocks count as long, as the report's "Block Sizes" entry "Long, start and stop" does. The existing "Block Usage" keeps them apart.
+- Its per-frame lists keep the mode extension of every frame and one block type per frame, the last switched granule's. What the Windows program drew from them cannot be checked: the vendored source is the console port.
 
 ### AAC (ADTS, ADIF, MP4, Matroska)
 
@@ -84,33 +87,44 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Window sequences | window_sequence of each channel stream (ISO/IEC 14496-3 4.4.2, ics_info): only long, long start, eight short, long stop | yes, every raw data block of Main, LC, SSR and LTP | "Window Sequences", per channel stream | 1 byte per channel stream (2 for a stereo access unit) | code | 1 |
-| Stereo coding of channel pairs | ms_mask_present and ms_used (4.6.8.1); intensity stereo codebooks 14 and 15 in the second channel (4.6.8.2) | yes | "Channel Pairs": common window, mid/side masks, mid/side bands, intensity stereo pairs and bands | 1 byte per channel pair element | code | 1 |
-| Coded bandwidth | max_sfb of each channel stream, taken to the end of its band in the window's swb_offset table (long or short, 1024 or 960 lines), in Hz | yes; the long and short tables are in `StreamSetup` | the most common long max_sfb as "Bandwidth" (text) | 8 bytes per access unit | code | 1 |
+| Window sequences | window_sequence of each channel stream (ISO/IEC 14496-3 4.4.2, ics_info): only long, long start, eight short, long stop | yes, every raw data block of Main, LC, SSR and LTP | "Window Sequences", per channel stream | variable: 1 byte per channel stream of every raw data block of the unit, recorded, plus a count byte | code | 1 |
+| Block sizes, all channel streams (new) | the same field, grouped: long (with start and stop), short | yes | new node "Block Sizes" | none: a grouping of "Window Sequences" | code | 1 |
+| Stereo coding of channel pairs, all pairs (new) | ms_mask_present and ms_used (4.6.8.1); intensity stereo codebooks 14 and 15 in the second channel (4.6.8.2); rule below | yes | new node "Stereo Coding" over every channel pair; "Channel Pairs" keeps its counts | variable: 1 byte per channel pair of the unit, recorded, plus a count byte | code | 1 |
+| Coded bandwidth | max_sfb of each channel stream, taken to the end of its band in the window's swb_offset table (long or short, 1024 or 960 lines), in Hz | yes; the long and short tables are in `StreamSetup` | the most common long max_sfb as "Bandwidth" (text), renamed "Coded Bandwidth" | 8 bytes per unit (the highest over its channel streams), recorded as it is read | code | 1 |
 | Window shapes | window_shape: sine, KBD | yes | "Window Shapes" | 1 byte per channel stream | code | 2 |
 | TNS, noise substitution, pulse data | tns_data_present (4.6.9), codebook 13 bands (4.6.2, as the `pns` article cites it), pulse_data_present (4.5.2, as `aac-pulse-data` cites it) | yes | shares of channel streams | 1 byte per channel stream each | code | 2 |
 | SBR and parametric stereo per access unit | SBR payloads in fill elements | yes | "SBR", "Parametric Stereo" | 1 byte per access unit | code | 2 |
 | Bands coded mid/side per access unit | count of ms_used bands over the pair's bands | yes | the share over the stream | 8 bytes per access unit as a numeric series | code | 2 |
 
 - Coded bandwidth from max_sfb is the top of the highest band the channel stream codes, whatever its codebook. Bands coded with the zero codebook, noise substitution or intensity stereo lie below it, and SBR adds content above the core that this does not show. The description says so.
-- The tally counts a pair's stereo coding only where it has a common window (`TallyPair` returns before the masks otherwise). Whether a decoder applies intensity stereo in a pair without a common window is **unverified**; the category series keeps the tally's rule and gives such pairs a category of their own.
-- Past 2,097,152 frame or block records an ADTS or ADIF stream is only counted (`aac.frames-limit`, `aac.blocks-limit`), and the graphs and coding statistics stop there. The category series stop at the same unit.
+- **The unit** is what shares x with the stream's "Bitrate" series: an ADTS frame (`RawAacParser` adds one bitrate point per frame, for all its raw data blocks together) or an access unit of MP4 or Matroska. It holds the channel streams of every raw data block it contains, so a unit carries a variable number of values. Nothing bounds that number but the 64 KiB a raw data block may span (`BlockLog.MaxBlockBytes`) times the blocks of a frame; `CodingTally.MaxGainChannels` (48) bounds only the global-gain statistics.
+- **Classifying a channel pair**, per pair and independent of the window (an earlier draft hid intensity stereo in pairs without a common window):
+  - intensity stereo: some band of the second channel uses codebook 14 or 15, in any channel pair;
+  - mid/side stereo: ms_mask_present is 2 (all bands), or 1 with at least one ms_used band set; it can occur only with a common window;
+  - both: both conditions hold; neither: left/right stereo;
+  - ms_mask_present 3 is reserved by the specification and gets its own category, "Reserved".
+- **Why:** FFmpeg 6.1.1 (`decode_cpe`, `aacdec_template.c`) reads the intensity stereo codebooks from the section data of every pair and calls `apply_intensity_stereo(ac, cpe, ms_present)` outside its `if (common_window)` block, so a pair without a common window can use intensity stereo. FFmpeg rejects ms_present 3 as an error.
+- **The tally changes to match:** `TallyPair` returns before the masks where there is no common window, so "Channel Pairs" does not count intensity stereo in such pairs. The AAC pull request makes that count follow the rule above, which changes the numbers in AAC goldens (listed with the rename of "Bandwidth"); the node "Channel Pairs" keeps its name and entries.
+- Past 2,097,152 frame or block records an ADTS or ADIF stream is only counted (`aac.frames-limit`, `aac.blocks-limit`), and the graphs and coding statistics stop there. The category series stop at the same unit, so the series and the tally still agree.
 
 ### AC-3 and E-AC-3
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Block switching | blksw per channel and block (ATSC A/52 5.4.3.1); E-AC-3 only where blkswe is set | yes, every block read | "Blocks With Block Switching", per block (any channel) | 1 byte per block: 6 per AC-3 frame, 1 to 6 in E-AC-3 | code | 1 |
-| Coupling | cplinu per block (5.4.3.8) | yes | "Blocks With Coupling" | 1 byte per block | code | 1 |
-| Rematrixing (2/0 only) | rematflg per band and block (5.4.3.20) | yes | "Blocks With Rematrixing", "Bands Coded as Sum/Difference" | 1 byte per block | code | 1 |
-| Spectral extension (E-AC-3) | spxinu per block (Annex E 2.3.3.2) | yes | "Blocks With Spectral Extension" | 1 byte per block | code | 1 |
-| Coded bandwidth | the end bin of each full-bandwidth channel: 37 + 3 × (chbwcod + 12) where it codes its own exponents, the end of the coupling range (37 + 12 × (cplendf + 3)) for a coupled channel; bin k is k × fs / 512 Hz | yes, `_endMant` per channel and block | no | 8 bytes per frame (the highest over its blocks and channels) | code | 1 |
+| Block switching | blksw per channel and block (ATSC A/52 5.4.3.1); E-AC-3 only where blkswe is set | yes, every block read | "Blocks With Block Switching", per block (any channel); a value node without entries | variable: 1 byte per block of the program frame, recorded, plus a count byte (6 in AC-3; in E-AC-3 the blocks of the independent frame and of every dependent frame, up to 9 frames and 54 blocks) | code | 1 |
+| Coupling | cplinu per block (5.4.3.8) | yes | "Blocks With Coupling", a value node | as above | code | 1 |
+| Rematrixing (2/0 only) | rematflg per band and block (5.4.3.20) | yes | "Blocks With Rematrixing", "Bands Coded as Sum/Difference" | as above; `None` for a block that is not 2/0 | code | 1 |
+| Spectral extension (E-AC-3) | spxinu per block (Annex E 2.3.3.2) | yes | "Blocks With Spectral Extension", a value node | as above | code | 1 |
+| Coded bandwidth | the end bin of each full-bandwidth channel: 37 + 3 × (chbwcod + 12) where it codes its own exponents; for a coupled channel the end of the coupling range (37 + 12 × (cplendf + 3)); bin k is k × fs / 512 Hz | yes: the highest of `_endMant[ch]` of the channels and, where a channel is coupled, `_endMant[Cpl]` (a coupled channel's own `_endMant` is the coupling begin, 37 + 12 × cplbegf) | no | 8 bytes per program frame (the highest over its blocks and channels) | code; chbwcod as FFmpeg `ac3dec.c` and liba52 `parse.c` | 1 |
 | Exponent strategies | D15, D25, D45, reuse per channel and block | yes | "Exponent Strategies" | up to 30 bytes per frame | code | later |
 | Dynamic range gain, delta bit allocation | per block | yes | counted per block | 1 byte per block each | code | later |
 
 - Spectral extension regenerates the band above its begin frequency from lower bands, so that band is not coded data; the coded bandwidth of a channel in spectral extension ends where spectral extension begins (bin 25 + 12 × its begin sub-band, as the parser sets `_endMant`). The LFE channel is left out.
-- Blocks the parser does not read (adaptive hybrid transform, enhanced coupling, reduced sample rates; `StopReason`) get no category, as they count in "Audio Blocks" but not in "Audio Blocks Read".
+- **The unit** is the program frame, the point of the bitrate series: an independent frame with the dependent frames that follow it (`Program.Add`, Annex E 2.3.1.2), up to 8 of them. The tallies add the dependent frames' blocks to the program (`Program.cs` runs the block tallies for dependents too), so the series must as well, or it cannot equal the tally on a 7.1 file. The number of blocks per frame can change within a stream (`ProgramKey` does not include it), which is why the number of values varies per unit.
+- Blocks the parser does not read (adaptive hybrid transform, enhanced coupling, reduced sample rates; `StopReason`) get no value, as they count in "Audio Blocks" but not in "Audio Blocks Read".
+- The tallies above are single values without entries. Their series are **flag series** of two categories ("Without" and "With"), whose "With" count equals the node and whose total equals "Audio Blocks Read"; see [The summary over the stream](#the-summary-over-the-stream).
 - Per-channel block switching would be 6 × channels bytes a frame and has no tally; it is left for later.
+- What AC-3's frame record keeps, and so whether these codes could be derived at the end instead of recorded, is checked by the AC-3 pull request; the design records them while reading until then.
 
 ### DTS and DTS-HD
 
@@ -128,8 +142,8 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Block sizes | the mode's blockflag (Vorbis I 4.3.1), with the previous and next window flags | yes, in the packet record (`PacketFlags.Long`, `PreviousLong`, `NextLong`) | "Long Blocks", "Short Blocks" | none recorded: derived from the record; 1 byte per packet in the series | code | 1 |
-| Modes | mode number per packet | yes, in the record | "Modes" | 1 byte per packet | code | 1 |
+| Block sizes | the mode's blockflag (Vorbis I 4.3.1), with the previous and next window flags | yes, in the packet record (`PacketFlags.Long`, `PreviousLong`, `NextLong`) | "Long Blocks" and "Short Blocks", two sibling nodes; a parent "Block Sizes" is added so the series has one node to anchor to | none: a grouping of "Modes" | code | 1 |
+| Modes | mode number per packet | yes, in the record | "Modes" | 1 byte per packet, derived | code | 1 |
 | Coded bandwidth | residue_end of each residue (8.6.1) | yes, in the setup header | no | | code | not a series |
 
 - residue_end is fixed per residue, so the bandwidth it implies changes only with the mode a packet chooses; the "Modes" series already shows that. Where the coded spectrum really ends needs the floors and residues, which wait for the entropy pass.
@@ -139,12 +153,12 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Modes | TOC config: SILK-only, hybrid, CELT-only (RFC 6716 3.1) | yes, the TOC byte is in the record | "Modes", per frame | none recorded; 1 byte per stream packet in the series, plus a weight byte (its frames) | code | 1 |
-| Bandwidth | TOC config: narrowband (4 kHz) to fullband (20 kHz), RFC 6716 table 1 | yes | "Bandwidths", per frame | as above | code | 1 |
+| Modes | TOC config: SILK-only, hybrid, CELT-only (RFC 6716 3.1) | yes, the TOC byte is in the record | "Modes", per frame | derived; 1 byte per stream packet in the series, plus a weight byte (its frames) | code | 1 |
+| Bandwidths | TOC config: narrowband (4 kHz) to fullband (20 kHz), RFC 6716 table 1 | yes | "Bandwidths", per frame | as above | code | 1 |
 | Frame sizes | TOC config: 2.5 to 60 ms | yes | "Frame Sizes", per frame | as above | code | 1 |
-| Stereo coding | TOC s bit: stereo or mono packet | yes | "Stereo Coding", per stream packet | 1 byte per stream packet | code | 1 |
+| Channel counts | TOC s bit: stereo or mono packet | yes | "Stereo Coding" today, per stream packet; renamed "Channel Counts" so that "Stereo Coding" names one concept (left/right, mid/side, intensity stereo) in every format | 1 byte per stream packet, derived | code | 1 |
 
-- Opus states its coded audio bandwidth in every packet, so its "Bandwidth" is a category series, not a number: the five bandwidths are what the format defines, and their names carry the frequency.
+- Opus states its bandwidth in every packet, so its "Bandwidths" is a category series, not a number: the five bandwidths are what the format defines, and their names carry the frequency. It is not "Coded Bandwidth": that name is for the highest frequency the coded data reaches, which for Opus needs SILK or CELT's range decoder.
 - The tally counts modes, bandwidths and frame sizes per frame and stereo coding per stream packet. All frames of a packet share its TOC, so a weight of the packet's frames makes the series' counts equal to the tally's.
 - What SILK or CELT does inside a frame (CELT's intensity stereo, its band energies) needs the range decoder: later.
 
@@ -152,17 +166,17 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Narrowband submode | 4-bit submode per frame (libspeex 1.2.1 `nb_decode`); 0 is a frame without speech data | yes, the 4-byte frame record | frames of each submode per layer | none recorded; 1 byte per frame in the series | code | 1 |
-| Wideband and ultra-wideband submodes | 3-bit submode per layer (`sb_decode`) | yes | as above | 1 byte per frame and layer | code | 1 |
+| Narrowband submode | 4-bit submode per frame (libspeex 1.2.1 `nb_decode`); 0 is a frame without speech data | yes, the 4-byte frame record | frames of each submode per layer | 1 byte per frame in the series, derived | code | 1 |
+| Wideband and ultra-wideband submodes | 3-bit submode per layer (`sb_decode`) | yes | as above | 1 byte per frame and layer, derived | code | 1 |
 
-- Ogg Speex states the frames per packet in its header, so a packet is the unit and its frames are the slots; the x values are the packets', shared with the bitrate series.
+- Ogg Speex states the frames per packet in its header, so a packet is the unit and its frames are the values of the unit; the x values are the packets', shared with the bitrate series.
 
 ### Musepack SV4 to SV8
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Coded bandwidth, SV4 to SV7 | used subbands: the highest subband with a resolution other than 0 in either channel, plus 1 (libmpcdec r495 `mpc_decoder_read_bitstream_sv7`, 1.2.6 for SV4 to SV6); 32 subbands of fs/64 | yes, `UsedBands` in the 24-byte frame record | no | none recorded; 8 bytes per frame in the series | code | 1 |
-| Mid/side stereo, SV4 to SV7 | the mid/side flag of each coded subband | yes, `MidSide` mask in the record | "Frames With Mid/Side", "Subband Stereo Coding" | none recorded; 1 byte per frame | code | 1 |
+| Coded bandwidth, SV4 to SV7 | used subbands: the highest subband with a resolution other than 0 in either channel, plus 1 (libmpcdec r495 `mpc_decoder_read_bitstream_sv7`, 1.2.6 for SV4 to SV6); 32 subbands of fs/64. Resolution -1 is noise substitution and is not 0, so a noise-substituted subband counts as coded | yes, `UsedBands` in the 24-byte frame record | no | 8 bytes per frame in the series, derived | code | 1 |
+| Mid/side stereo, SV4 to SV7 | the mid/side flag of each coded subband | yes, `MidSide` mask in the record | "Frames With Mid/Side", a value node; "Subband Stereo Coding" | 1 byte per frame, derived; a flag series | code | 1 |
 | Noise substitution, SV7 | subband channels at resolution -1 | yes, `NoiseChannels` | "Noise-Substituted Channels" total | 8 bytes per frame as a numeric series | code | 2 |
 | SV8 | the frames inside audio packets | no: audio packets are not read | no | | code | later |
 
@@ -172,28 +186,28 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Block sizes, standard | block length per block, from frame length >> n (FFmpeg 6.1.1 `wmadec.c` `wma_decode_block`) | yes, `BlockRecord.BlockBits` | "Block Sizes" | 1 byte per block | code | 2 |
-| Mid/side stereo, standard | ms_stereo bit per block | yes, `BlockRecord.IsMidSide` | "Mid/Side Blocks" | 1 byte per block | code | 2 |
-| Noise substitution, standard | noise-coded bands per block | yes, `NoiseBands0`, `NoiseBands1` | "Noise-Substituted Blocks" | 1 byte per block | code | 2 |
-| Coded bandwidth, standard | the last nonzero coefficient of each channel, from the run-level codes the parser walks; (first coded line + last + 1) × (fs / 2) / block length, where version 1 codes from line 3 (`CoefsStart`) | yes, `BlockRecord.Last0`, `Last1` | no | 8 bytes per block | code | 2 |
+| Block sizes, standard | block length per block, from frame length >> n (FFmpeg 6.1.1 `wmadec.c` `wma_decode_block`) | yes, `BlockRecord.BlockBits` | "Block Sizes" | 1 byte per block, derived | code | 2 |
+| Mid/side stereo, standard | ms_stereo bit per block | yes, `BlockRecord.IsMidSide` | "Mid/Side Blocks" ("x of y stereo blocks") | 1 byte per block, derived; a flag series over stereo blocks, `None` for mono | code | 2 |
+| Noise substitution, standard | noise-coded bands per block | yes, `NoiseBands0`, `NoiseBands1` | "Noise-Substituted Blocks" | 1 byte per block, derived | code | 2 |
+| Coded bandwidth, standard | the last nonzero coefficient of each channel, from the run-level codes the parser walks; (first coded line + last + 1) × (fs / 2) / block length, where version 1 codes from line 3 (`CoefsStart`). This is a coded value, not a signaled bound | yes, `BlockRecord.Last0`, `Last1` | no | 16 bytes per block: the value, and its own x because blocks share their frame's offset | code | 2 |
 | Subframe sizes and channel transforms, Pro | subframe length per channel; transform per channel group | yes (`ProSubframeRecord`, `ProGroupRecord`) | "Subframe Sizes", "Channel Groups" | 1 byte per subframe and group | code | later |
-| Frame types, Voice | the frame type of each frame (`wmavoice.c`) | yes, `VoiceFrameRecord.Type` | frames by type | 1 byte per frame | code | 2 |
+| Frame types, Voice | the frame type of each frame (`wmavoice.c`) | yes, `VoiceFrameRecord.Type` | frames by type | 1 byte per frame, derived | code | 2 |
 
 - WMA fixes two bounds per block size for the whole stream (`StandardParameters`, after `ff_wma_init`): `CoefsEnd`, 91% of the block's lines, past which no coefficient is coded, and `HighBandStart`, from the bits per sample, where noise coding may begin. The last nonzero coefficient is where each block's coded spectrum really ends; noise-substituted bands are synthesized and not counted.
-- Blocks lie inside frames that may span superframes, so a block's x value is its frame's offset, and choosing a block selects its frame.
+- Blocks lie inside frames that may span superframes, so a block's x value is its frame's offset, and choosing a block selects its frame. Several blocks then share an x value, so the block series carry their own x (8 bytes per block, counted in the table) and are not shared with the bitrate series.
 
 ### WavPack
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Mid/side stereo | the joint stereo flag of each stereo block's header | yes, the header is in the block record | "Mid/Side Blocks" | none recorded; 1 byte per block | code | 2 |
+| Mid/side stereo | the joint stereo flag of each stereo block's header | yes, the header is in the block record | "Mid/Side Blocks" ("x of y stereo blocks") | 1 byte per block, derived; a flag series over stereo blocks | code | 2 |
 | Decorrelation passes | decorrelation terms per block | yes | the smallest and largest | 8 bytes per block as a numeric series | code | 2 |
 
-- A WavPack block holds about half a second to a second of audio, so these graphs have few points; they are cheap and fill the summary.
+- A WavPack block holds a whole number of samples chosen by the encoder, so these graphs have as many points as the file has blocks; their cost is the bytes in the table.
 
 ### What goes in the first rollout
 
-- **Wave 1**, one series per tally the lead named, in the formats that read them per frame today: MPEG (channel modes, joint stereo modes, intensity stereo bounds, block usage, coded bandwidth of Layers I and II), AAC (window sequences, stereo coding of channel pairs, coded bandwidth), AC-3 and E-AC-3 (block switching, coupling, rematrixing, spectral extension, coded bandwidth), Vorbis (block sizes, modes), Opus (modes, bandwidth, frame sizes, stereo coding), Speex (submodes), Musepack SV4 to SV7 (coded bandwidth, mid/side stereo).
+- **Wave 1**, one series per tally the lead named, in the formats that read them per frame today: MPEG (channel modes, stereo coding, joint stereo modes, intensity stereo bounds, block usage, block sizes, coded bandwidth of Layers I and II), AAC (window sequences, block sizes, stereo coding, coded bandwidth), AC-3 and E-AC-3 (block switching, coupling, rematrixing, spectral extension, coded bandwidth), Vorbis (block sizes, modes), Opus (modes, bandwidths, frame sizes, channel counts), Speex (submodes), Musepack SV4 to SV7 (coded bandwidth, mid/side stereo).
 - **Wave 2:** the further tallies of MPEG and AAC, DTS, WMA standard and Voice, WavPack.
 - **Later:** what needs the entropy pass (Layer III's big_values region end and intensity stereo bound, DTS transient modes, Musepack SV8), WMA Pro's subframes and transforms, AC-3's exponent strategies and per-channel block switching.
 
@@ -204,18 +218,28 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 - **Generalize `Series`** with a kind and integer values. JSON's `series` entries would then hold values that are no numbers in a unit, which changes the meaning of a field consumers already read: `schemaVersion` 2, and every graph in the GUI would branch on the kind.
 - **Nodes per frame** for the categories. They exist already (the side information), and front ends must not read names.
 - **A category series beside `Series` (recommended).** `Series` stays as it is; the new type has its own array in JSON and its own charts in the GUI.
+- **A fixed number of slots per unit** (an earlier draft). It cannot hold AAC or E-AC-3, below, and is replaced by units with a variable number of values.
 
-### Units, slots and weights
+### Units and values
 
-- A **unit** is what the parser records once: a frame, an access unit, a packet, a block. Its x value is its byte offset, as for a per-frame `Series`, and choosing it in a graph selects that node.
-- A **slot** is one value a unit carries. A Layer III frame of MPEG-1 has 2 granules × 2 channels = 4 slots of block types; an AC-3 frame 6 slots, one per block; an AAC access unit one slot per channel stream; a single slot is the common case.
-- The number of slots is fixed per series: the largest a unit of the stream can have. A slot a unit does not have holds `CategorySeries.None`: the second channel of a mono frame in a stream that changes between mono and stereo (an MPEG stream does not end at a channel mode change), the blocks of an E-AC-3 frame of fewer blocks, a block the parser could not read.
-- Every value of every slot counts once: block usage counts granules per channel, as mp3guessenc and EncSpot count them and as the tally does, and window sequences count channel streams.
-- A **weight** says how many of the tally's things a value stands for, where that is not one: an Opus stream packet stands for its frames. Weights are optional and cost nothing where absent.
+- A **unit** is what the parser records once, and the point of the stream's bitrate series: a frame, an ADTS frame or access unit, a program frame, a packet, a block. Its x value is its byte offset, and choosing it in a graph selects that node.
+- A **value** is one coded choice a unit carries: a granule of one channel, a block, a channel stream, a channel pair. Every value counts once in the series' counts, as the tally counts it: block usage counts granules per channel, window sequences count channel streams.
+- A unit carries **as many values as it has**:
+  - Fixed layouts (Layer III granules and channels, Speex frames and layers): every unit has the same number, stored once for the series. A value a unit lacks holds `CategorySeries.None`, such as the second channel of a mono frame in a stream that changes between mono and stereo.
+  - Variable layouts (AAC channel streams of every raw data block in a frame, AC-3 and E-AC-3 blocks of a program frame with its dependent frames, Opus stream packets): one count byte per unit.
+- Why this is needed, from the code:
+  - **AAC.** `BlockReader` counts every individual_channel_stream into the window sequence tally. A raw data block may span 64 KiB (`BlockLog.MaxBlockBytes`), enough for thousands of minimal channel elements, and an ADTS frame may hold several raw data blocks, with one bitrate point for all of them (`RawAacParser`, `figures.Add(frame.Offset, …)`). The 48 of `CodingTally.MaxGainChannels` bounds only the global-gain statistics.
+  - **E-AC-3.** A program frame is an independent frame with up to 8 dependent frames, up to 54 blocks, and the tallies count all of them. The block count of a program is not part of `ProgramKey` and can change within a stream.
+- A **weight** says how many of the tally's things a value stands for, where that is not one: an Opus stream packet stands for its frames. Weights are optional and cost a byte per value only in a series that uses them.
+- **Caps, and what the tally does past them:**
+  - At most 254 values of a unit are coded; at most 2^24 values per series. A value past either cap is **counted without a code**: it adds to `Counts` and `Total`, so the series still equals the tally, and the graphs draw the coded values only. The series says how many values are uncoded (`UncodedValues`), and the views and JSON show it.
+  - So memory per series is bounded by a constant (16 MiB of codes, plus counts and weights), whatever a crafted file does, and the tallies are unaffected.
+  - Units stop where the parsers' record limits stop the graphs (`aac.frames-limit`, `wma.records-limit`, Matroska's frame budget); the tallies stop there too.
 
 ### Time
 
 - A category series may carry a `TimeIndex`: the start of each interval of audio in seconds and the first unit that starts in it. It is the same partition the parser's per-second series use ("the frames that start in that second"), and its starts are shared with the "Bitrate Over Time" series' x values.
+- The first units are nondecreasing, not strictly rising: an interval that no unit starts in (AAC at implausible sample rates) repeats the previous value. The GUI draws such an interval as an empty column, and the text prints "-" for it.
 - AAC's per-second series merges neighboring seconds past 131,072 entries; the index follows the same intervals.
 - A stream without per-second series (Vorbis whose long blocks last longer than a second, from a corrupt sample rate) has no index, and its graph shows frames only.
 
@@ -232,80 +256,110 @@ public sealed record Category(string Name, string Description)
 }
 
 // The intervals of audio time a parser counts its per-second series over: the start of each in seconds, shared with
-// that series' x values, and the index of the first unit that starts in it. Starts and FirstUnits have the same length.
+// that series' x values, and the index of the first unit that starts in it. Starts and FirstUnits have the same length;
+// FirstUnits is nondecreasing and within 0 to the series' Count.
 public sealed record TimeIndex(ReadOnlyMemory<double> Starts, ReadOnlyMemory<int> FirstUnits);
 
-// One category per unit (frame, access unit, packet, block) and slot (granule and channel, block, channel stream) over a
-// stream, for graphs and for the summary over the stream. Immutable once built, so the writers and the GUI read it on
-// any thread; built by CategorySeriesBuilder.
+// One category per value and unit over a stream, for graphs and for the summary over the stream. Immutable once built,
+// so the writers and the GUI read it on any thread; built by CategorySeriesBuilder, or as a grouping by Group.
 public sealed class CategorySeries
 {
-    // The code of a slot without a value.
-    public const byte None = byte.MaxValue;
+    // The code of a value without a category. Codes 0 to 254 are categories.
+    public const byte None = 255;
 
-    // At most 254 categories (codes 0 to 253) and 64 slots.
-    public const int MaxCategories = 254;
+    public const int MaxCategories = 255;
 
-    public const int MaxSlots = 64;
+    // Coded values of one unit, and of one series; further values are counted without a code.
+    public const int MaxValuesPerUnit = 254;
 
+    public const int MaxCodedValues = 1 << 24;
+
+    // Named as the tally node it is anchored to.
     public string Name { get; }
 
-    // In the order the parser gives; index 0 is the plain coding (long blocks, left/right stereo), which the GUI draws
-    // in the first color of its palette.
+    // In the order the parser gives; index 0 is the plain coding (long blocks, left/right stereo).
     public IReadOnlyList<Category> Categories { get; }
 
-    public int Slots { get; }
+    // Whether the categories are ordered, such as frame sizes or submodes; the GUI then draws a ramp of one hue.
+    public bool IsOrdered { get; }
 
-    // What each slot is, such as "granule 1, channel 2"; empty where Slots is 1.
-    public IReadOnlyList<string> SlotNames { get; }
+    // What one value is, such as "granule and channel", "block", "channel stream".
+    public string ValueLabel { get; }
 
-    // The byte offset of each unit, the same memory as the stream's per-frame Series where they share units.
+    // Values per unit when every unit has the same number, else 0.
+    public int ValuesPerUnit { get; }
+
+    // For a fixed layout, what each value is, such as "granule 1, channel 2"; empty otherwise.
+    public IReadOnlyList<string> ValueNames { get; }
+
+    // The byte offset of each unit.
     public ReadOnlyMemory<double> X { get; }
 
+    // The per-frame numeric series of the stream whose x this series shares, or null; the JSON names it.
+    public Series? XSeries { get; }
+
+    // Units.
     public int Count { get; }
 
-    // The code of one slot of one unit: an index into Categories, or None.
-    public byte this[int unit, int slot] { get; }
+    // The coded values of a unit (a lookup by a sparse index of one int per 1,024 units for a variable layout).
+    public int ValueCount(int unit);
+
+    // The code of one value of one unit: an index into Categories, or None.
+    public byte this[int unit, int value] { get; }
 
     // What the value stands for in the counts: 1 unless the parser gave weights.
-    public int WeightAt(int unit, int slot);
+    public int WeightAt(int unit, int value);
 
-    // Per category, the weighted values over the whole series, and their sum: computed once when built.
+    // Per category, the weighted values over the whole series, uncoded ones included, and their sum: kept as the
+    // series is built, so a series equals its tally even past the caps.
     public IReadOnlyList<long> Counts { get; }
 
     public long Total { get; }
 
-    // Adds the weighted values of the units first to end - 1 to counts, one entry per category: the per-second shares,
-    // the GUI's pixel columns and the summary of a range all use it.
+    public long UncodedValues { get; }
+
+    // Adds the weighted values of the units first to end - 1 to counts, one entry per category: the per-second shares and
+    // the GUI's pixel columns use it. The second form counts only one value of each unit (a fixed layout's lane).
     public void CountRange(int first, int end, Span<long> counts);
+
+    public void CountRange(int first, int end, int value, Span<long> counts);
 
     public TimeIndex? Time { get; }
 
     // The tally node whose entries are these categories; the text tree prints the per-second shares after it.
     public Node? Anchor { get; }
 
-    public string? Description { get; init; }
+    // For a grouping, the series it groups; otherwise null.
+    public CategorySeries? Source { get; }
 
-    public string? Topic { get; init; }
+    public string Description { get; }
+
+    public string? Topic { get; }
+
+    // A grouping of this series: each code maps to a category of the new series (map has one entry per category here).
+    // It shares this series' storage and costs the map, not a byte per value; Counts are the sums of this series'.
+    public CategorySeries Group(string name, IReadOnlyList<Category> categories, ReadOnlySpan<byte> map, Node? anchor, string description, string? topic = null);
 }
 
-// Records a category series while a parser reads its units, in chunks, so nothing is copied when it is built and nothing
-// is kept per unit beyond the codes (and the weights, once a weight other than 1 is added).
+// Records a category series while a parser reads or derives its units, in chunks, so nothing is copied when it is built
+// and nothing is kept per unit beyond the codes, the count byte of a variable layout and the weights.
 public sealed class CategorySeriesBuilder
 {
-    public CategorySeriesBuilder(string name, IReadOnlyList<Category> categories, int slots = 1, IReadOnlyList<string>? slotNames = null);
+    // valuesPerUnit 0 means a variable layout.
+    public CategorySeriesBuilder(string name, IReadOnlyList<Category> categories, string valueLabel, int valuesPerUnit = 0, IReadOnlyList<string>? valueNames = null, bool isOrdered = false);
 
     public int Count { get; }
 
-    // One unit of one slot.
+    // One unit of one value.
     public void Add(byte code, byte weight = 1);
 
-    // One unit; codes.Length is Slots, weights empty or of the same length.
+    // One unit; codes.Length equals valuesPerUnit for a fixed layout, else is any length, and weights are empty or of the
+    // same length. Values past the caps are counted without a code.
     public void Add(ReadOnlySpan<byte> codes, ReadOnlySpan<byte> weights = default);
 
     // x must hold Count values. Throws ArgumentException on a code past the categories, a mismatched x or a TimeIndex
-    // whose first units do not rise within 0 to Count: a parser bug, which the host reports as parse.failed.
-    public CategorySeries Build(ReadOnlyMemory<double> x, Node? anchor, string description, string? topic = null, TimeIndex? time = null);
+    // that is not nondecreasing within 0 to Count: a parser bug, which the host reports as parse.failed.
+    public CategorySeries Build(ReadOnlyMemory<double> x, Series? xSeries, Node? anchor, string description, string? topic = null, TimeIndex? time = null);
 }
 ```
 
@@ -319,99 +373,155 @@ public sealed record StreamInfo
 }
 ```
 
-- The storage is the builder's chunks (`ChunkedList<byte>`, which `Core.Abstractions` already has), handed to the series without a copy.
+- The storage is the builder's chunks (`ChunkedList<byte>`, which `Core.Abstractions` already has) for the codes, the count bytes and the weights, handed to the series without a copy.
 - No per-call state: a builder belongs to one stream of one analysis, as a tally does.
-- The parser stores no other per-frame state for a series: codes it can derive from its records at the end (Opus's TOC, Vorbis's packet flags, MPEG's header) are added to the builder in the pass that builds the other series, and codes it cannot (Layer III block types, AC-3's block flags) are added while it reads the frame.
+
+### When the codes are made
+
+- **Derive at the end wherever the kept records hold the fields.** This is the rule, because the parsers that keep a record per frame decide their streams late and already have the data:
+  - **MPEG.** `AddStreams` splits the frame records into streams afterwards (`IsSameStream`), frames past `MaxStreams` are in no stream (`mpeg.streams-limited`), and a version change switches between 4 and 2 granule values. A builder per stream therefore cannot exist while the frames are read. The header is in the frame record, and the Layer III side information and the Layer II allocation are in the shared store (`build.Store`), so the codes are read at known bit positions in the pass that builds the per-stream `Series` (`MpegAudioParser.Streams.cs`), with no new per-frame state and no `Layer3SideInfo` object.
+  - **Vorbis** (packet flags and mode), **Opus** (TOC byte), **Speex** (frame record), **Musepack** (frame record), **WMA** (block and voice records), **WavPack** (block header): the same.
+- **Record while reading only where nothing per frame is kept:** AAC (its 24-byte record has no per-channel-stream fields) and AC-3 (to be confirmed, above). Their builders belong to the stream the parser is reading.
+- The cost of deriving is one more pass over the records, which every other series already makes; it allocates nothing per frame.
 
 ### The summary over the stream
 
-- **Reported by the parser, as now.** The tally nodes under Statistics are the summary in the tree: "Block Usage: 496 granules", "Short: 16 granules (3.2%)". They keep their names, values and scope.
-- **The same categories on the series.** Each category is named as its tally entry is, and the series is anchored to the tally node. A format whose tally lacks the split a series makes gets the tally node with it (AAC's stereo coding of channel pairs, below), so no figure exists only on the series.
-- **Counts derived once, by the shared type.** `CategorySeries.Counts` is computed when the series is built. JSON writes it beside each category, and the GUI's summary reads it, never a node.
-- **Held equal by a test.** `CategorySummaryTests` walks every fixture and compares each series' counts with the leading count of its anchor's entries, where the series covers exactly the anchor's units. That is every stream except an MPEG stream that a tag splits into several regions or a region that holds several streams: there the tally covers a region and the series a stream, as the bitrate distribution and the "Bitrate Over Time" series already differ. The JSON's counts then cover the stream and the tree's the region, and each says what it covers.
+- **Reported by the parser, as now.** The tally nodes under Statistics are the summary in the tree: "Block Usage: 480 granules", "Short: 24 granules (5.0%)". They keep their names, values and scope, except for the renames below.
+- **Two nodes over all frames are added**, because the lead asked for EncSpot's shares and EncSpot's are over all frames (Decision 4):
+  - "Stereo Coding": MPEG frames, with entries "Left/right stereo", "Mid/side stereo", "Intensity stereo", "Mid/side and intensity stereo" and "Mono and dual channel" (frames with no stereo coding at all); AAC channel pairs, with the same four and "Reserved". In Layers I and II a joint stereo frame is intensity stereo above its bound.
+  - "Block Sizes": Layer III granules as "Long, start and stop", "Short", "Mixed" and "Reserved", the way EncSpot counts them; AAC channel streams as "Long, start and stop" and "Short". Vorbis gets the parent node "Block Sizes" over its "Long Blocks" and "Short Blocks".
+  - The existing nodes stay as the detail: "Joint Stereo Modes" over joint stereo frames only (mp3guessenc's and EncSpot's mode extension counts), "Block Usage" with start and stop apart.
+  - The series "Joint Stereo Modes" gives a Layer III frame that is not joint stereo the code `None`, so its counts equal the tally, which counts joint stereo frames only. The series "Stereo Coding" gives it left/right stereo (or "Mono and dual channel").
+- **The same categories on the series.** Each category is named as its tally entry is, and the series is named as and anchored to the tally node. "Block Sizes" is a grouping of "Block Usage" (AAC: of "Window Sequences"), so it costs no byte per value.
+- **Counts derived once, by the shared type.** `CategorySeries.Counts` is kept as the series is built. JSON writes it beside each category, and the GUI's summary reads it, never a node.
+- **Held equal by a test, from data.** `CategorySummaryTests` walks every fixture and compares each series with its anchor, using a table in the test project (`category-summary.json`) that gives each series name its form and the nodes to compare. A series missing from the table fails, so no exception is guessed. Two forms:
+  - **Entries:** the series' count for each category equals the value of the anchor's entry of that name, and the total the node's own value. Used where the tally has entries (Layer III, AAC, Opus, Speex, Vorbis' new parent).
+  - **Flag series:** two categories, "Without" and "With", for a tally that is a single value without entries: AC-3's "Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing", "Blocks With Spectral Extension", Musepack's "Frames With Mid/Side", WMA's and WavPack's "Mid/Side Blocks". "With" equals the value; the total equals the denominator node the table names ("Audio Blocks Read", the frames, the stereo blocks); "Without" is the total minus "With", a complement stated in the description, not a figure of its own.
+- **Where series and tally legitimately differ, exhaustively:**
+  - an MPEG stream that a tag splits into several regions, or a region that holds several streams: the tally covers a region and the series a stream, so the test sums the series of the streams of the region, and the JSON's counts then cover the stream while the tree's cover the region (as the bitrate figures already differ);
+  - MPEG frames in no stream (`mpeg.streams-limited`): the sum is at most the tally, and the table lists the finding that allows it;
+  - nothing else. Past a record limit both stop at the same unit, and past a cap the series counts the uncoded values, so AAC, Opus multistream and the rest stay equal.
+- **Several streams anchored to one node:** the text tree labels each stream's lines with its number ("Long Share Over Time (stream 2)"), so they do not read as duplicates.
 - **Considered:** the host derives the summary nodes from the series, and the parsers drop their tally code. That changes every golden's Statistics node, loses the region scope, and puts nodes of the host into a parser's tree.
 - **One figure, one name:** a category has one name in the tree, the series, JSON and the GUI. What the series adds over the tally is time, not new figures.
 
 ### Names across formats
 
-- The stereo codings of MPEG Layer III and AAC channel pairs are the same four: "Left/right stereo", "Mid/side stereo", "Intensity stereo", "Mid/side and intensity stereo", as `JointStereoModes` names them. AAC adds "Separate windows" for pairs without a common window.
+One concept, one name, checked across the tally nodes, series, JSON and docs:
+
+| Concept | Name | Where | Change to an existing node |
+| --- | --- | --- | --- |
+| Left/right, mid/side, intensity stereo, both, per frame (MPEG) or channel pair (AAC) | "Stereo Coding" | new node in MPEG and AAC | none |
+| Opus's stereo or mono packets (TOC s bit) | "Channel Counts" | Opus | rename of "Stereo Coding", which names the concept above; every Opus golden |
+| Joint stereo frames only, with the four codings | "Joint Stereo Modes" | MPEG | none |
+| The same four codings of a channel pair, whatever the window | "Stereo Coding" with "Channel Pairs" for the window and mask counts | AAC | the counts in "Channel Pairs" follow the classification rule |
+| Long against short transforms | "Block Sizes" | new in MPEG and AAC; new parent in Vorbis; WMA's own node, whose entries are lengths | Vorbis: "Long Blocks" and "Short Blocks" move under the parent; every Vorbis golden |
+| Highest frequency the coded data reaches | "Coded Bandwidth" | new in the formats of the survey | AAC "Bandwidth" renamed; every AAC golden |
+| The bandwidth a packet states | "Bandwidths" | Opus | none |
+
+- The word "plain stereo" is not used. EncSpot's mode 0 is two entries of "Stereo Coding", as above.
+- AAC's pair categories are the four codings of `JointStereoModes`, named alike, plus "Reserved". There is no "Separate windows" category: it hid intensity stereo.
 - Block types keep their format's names: Layer III's "Long", "Start", "Short", "Mixed", "Stop", "Reserved"; AAC's "Only Long", "Long Start", "Eight Short", "Long Stop"; AC-3's blocks with and without block switching; Vorbis's long and short blocks. They are different mechanisms, and the articles say how they correspond.
-- "Coded Bandwidth" is the one name for the highest frequency a frame's coded data reaches, from the syntax. It is not the lowpass:
-  - The LAME tag's "Lowpass" is the encoder's setting.
-  - A lowpass measured from decoded audio would be a figure of the host-side PCM analyses of the decoder design.
-  - The articles keep the three apart.
-- AAC's statistics node "Bandwidth" ("highest coded band ends at about 16,000 Hz (max_sfb 49)") is the same concept, so it becomes "Coded Bandwidth" with the AAC rollout.
+- Series names are their anchors' names; the Opus series is "Bandwidths", not "Bandwidth".
 
 ### Coded bandwidth
 
-- A numeric `Series` "Coded Bandwidth", unit "Hz", per frame, at the frame offsets the bitrate series uses. `Series` does not change.
+"Coded Bandwidth" is the upper edge of the highest unit of frequency (subband, scalefactor band, bin or coefficient) that a frame's data codes something for, read from the coded syntax without decoding. Formats state it in two ways, and the description of each series says which:
+
+| Format | Value | Kind |
+| --- | --- | --- |
+| Layers I and II | highest subband with a nonzero bit allocation in either channel | a stated bound |
+| AAC | max_sfb of each channel stream, to the end of its band | a stated bound |
+| AC-3, E-AC-3 | chbwcod end, coupling end, spectral extension begin | a stated bound |
+| Musepack | highest subband with a resolution other than 0, noise-substituted subbands included | a stated bound |
+| DTS core | highest active subband (SUBS + 2) | a stated bound |
+| WMA standard | the last coefficient coded nonzero | a coded value, at coefficient resolution |
+
+- What it leaves out, per format: SBR, spectral extension and DTS joint intensity coding add content above or within it; noise substitution and intensity stereo are coded within it (Musepack's noise subbands count as coded, as above; AAC's and WMA's noise-substituted bands are not removed).
+- A numeric `Series` "Coded Bandwidth", unit "Hz", per frame, at the frame offsets the bitrate series uses (WMA's own, per block). `Series` does not change.
 - Per frame, the highest over the frame's channels and blocks: a graph of the stream's reach, which a lowpass shapes. Per-channel values are left for later.
 - A Statistics node "Coded Bandwidth" with the lowest, most common and highest value, and a per-second series "Coded Bandwidth Over Time" (each second's highest), anchored to it, so the text tree shows it as it shows "Bitrate Over Time".
-- Each format's description says what its value is and what it leaves out (SBR and spectral extension above, noise substitution, intensity stereo and joint intensity coding).
+- It is not the lowpass:
+  - The LAME tag's "Lowpass" is the encoder's setting.
+  - A lowpass measured from decoded audio would be a figure of the host-side PCM analyses of the decoder design.
+  - The articles keep the three apart. Opus's signaled "Bandwidths" is a fourth thing and is named as such in the article.
 
 ### Memory budget
 
-Kept per frame, against the bounds `MemoryTests` holds now:
+Bytes added per unit to what the report keeps now, against the bounds `MemoryTests` holds:
 
-| Stream | Added per unit | Kept today, measured or stated | Bound in `MemoryTests` (kept, peak) |
+- A category series costs its values (1 byte each), a count byte per unit in a variable layout, a weight byte per value where weights are used, and 4 bytes per 1,024 units of index. A grouping costs nothing per value. A numeric series costs 8 bytes per value.
+
+| Stream | Added per unit | Kept today (plan, `MemoryTests`) | Bound in `MemoryTests` (kept, peak) |
 | --- | --- | --- | --- |
-| MPEG-1 Layer III stereo | 6 bytes: block usage 4, joint stereo mode 1, channel mode 1 | about 130 bytes (plan, "Large inputs") | 250, 350 per frame |
-| MPEG Layer II stereo | 10 bytes: channel mode 1, intensity stereo bound 1, coded bandwidth 8 | as above | 250, 350 |
-| AAC stereo (ADTS) | 11 bytes: window sequences 2, stereo coding 1, coded bandwidth 8 | 91 to 116 bytes per access unit (plan) | 220, 250 per frame (ADTS); 110, 180 per sample (MP4) |
-| AC-3 2/0, 6 blocks | 26 bytes: 3 block series × 6 slots, coded bandwidth 8 | 70 bytes per mono frame (plan) | 220, 300 |
-| Smallest E-AC-3 frames (1 block) | at most 12 bytes | 46 bytes (plan) | 90, 180 |
-| Opus | 4 bytes and 3 weight bytes | 40 bytes per packet (plan) | about twice that |
-| Speex | 1 or 2 bytes per frame | 30 bytes per packet (plan) | 80, 110 per packet |
-| Vorbis | 2 bytes per packet | 26 bytes per packet (plan) | about twice that |
-| Musepack SV7 | 9 bytes per frame | 42 bytes, peak 59 (`MemoryTests`) | about twice that |
+| MPEG-1 Layer III stereo | 7 bytes: channel modes 1, stereo coding 1, joint stereo modes 1, block usage 4; block sizes is a grouping | about 130 bytes per frame | 250, 350 |
+| MPEG Layer II stereo | 11 bytes: channel modes 1, stereo coding 1, intensity stereo bounds 1, coded bandwidth 8 | as above | 250, 350 |
+| AAC stereo | 13 bytes: window sequences 2 and its count byte, stereo coding 1 and its count byte, coded bandwidth 8 (all recorded while reading) | 91 to 116 bytes per access unit | 220, 250 per frame (ADTS); 110, 180 per sample (MP4) |
+| AC-3 2/0, 6 blocks | 26 bytes: block switching, coupling, rematrixing 6 each, coded bandwidth 8; fixed layout | 70 bytes per mono frame, measured on a 1/0 fixture | 220, 300 |
+| Smallest E-AC-3 frames (1 block) | 16 bytes: 4 flag series of 1 value and a count byte, coded bandwidth 8 | 46 bytes | 90, 180 |
+| E-AC-3 5.1 with a dependent frame | about 60 bytes: 12 blocks in each of 4 series, 4 count bytes, coded bandwidth 8 | not measured | not yet set |
+| Opus | 7 bytes per single-stream packet (a fixed layout): three TOC series of a code and a weight byte each, channel counts 1; a multistream file adds the same per further stream | 40 bytes per packet | about twice that |
+| Speex | 1 or 2 bytes per frame | 30 bytes per packet | 80, 110 per packet |
+| Vorbis | 1 byte per packet (modes; block sizes is a grouping) | 26 bytes per packet | about twice that |
+| Musepack SV7 | 9 bytes: mid/side flag 1, coded bandwidth 8 | 42 bytes, peak 59 | about twice that |
+| WMA standard | 19 bytes per block: block sizes 1, mid/side flag 1, noise substitution 1, coded bandwidth with its own x 16 | not measured | not yet set |
 
-- Every addition fits the bounds as they are: no bound is raised. Each format's pull request adds a check that the report keeps at most `Slots` bytes per unit per series (weights included) plus chunk overhead, from `CategorySeries`' own size, so a regression that keeps more per unit fails there and not only in the total.
-- The peak grows by the codes only: the numeric series are built at the end as now, and the codes are not copied when built.
-- A crafted file cannot make a series grow faster than the records it already keeps: a slot is recorded only for a field the parser read from the file (a block type, a block switch flag, a TOC byte), units stop where the parser's record limits stop the graphs (`aac.frames-limit`, `wma.records-limit`, Matroska's frame budget), and `MaxSlots` bounds a unit. An AAC access unit has at most 48 channel streams counted (`CodingTally.MaxGainChannels`); an Opus multistream packet past 64 stream packets is graphed in its first 64, which only the ambisonics families (2 and 3) and family 255 can reach; the series then leaves the others' slots out, as series stop at the record limits.
+- Every addition fits the bounds as they are, with two things to measure, not assume: AAC in MP4 (91 plus 13 against a bound of 110 per sample) and E-AC-3 with dependent frames, for which the AC-3 pull request adds a memory test whose bound is its measured figure plus this addition. No existing bound is raised. If AAC in MP4 reaches 110, the AAC pull request says so and the lead decides; nothing is raised silently.
+- The earlier draft's AC-3 figure added stereo series to a baseline measured on mono, and left out the E-AC-3 dependent frames and WMA's own x; the table above does not.
+- The peak grows by the codes only for the series recorded while reading (AAC, AC-3); the series derived at the end are built in the pass that builds the numeric series, and their chunks are not copied when built.
+- Each format's pull request adds a check that the report keeps at most the bytes above per unit per series, from `CategorySeries`' own size, so a regression that keeps more fails there and not only in the total.
+- A crafted file cannot make a series grow faster than the records it already keeps, by the caps above: 254 coded values per unit, 2^24 per series. `ComplexityTests` is sized on the real worst case: a 64 KiB raw data block of the smallest single channel elements the syntax allows, and ADTS frames of several such blocks (the test measures how many fit), E-AC-3 frames of one block in 5 channels with 8 dependent frames, and Opus multistream packets. Its time and memory stay linear in the file's length. An Opus multistream packet past 64 stream packets is coded in its first 64 and counted in full.
 
 ## Output
 
 ### JSON
 
-Each stream gets `categorySeries` after `series`:
+Each stream gets `categorySeries` after `series`, **omitted when the stream has none**, as the writer would otherwise add an empty array to every golden. The example is the Layer III stream of the text example below (120 frames, 40 per second):
 
 ```json
 "categorySeries": [
   { "name": "Block Usage",
-    "slots": ["granule 1, channel 1", "granule 1, channel 2", "granule 2, channel 1", "granule 2, channel 2"],
-    "categories": [ { "name": "Long", "count": 480 }, { "name": "Start", "count": 4 }, { "name": "Short", "count": 8 },
-                    { "name": "Mixed", "count": 0 }, { "name": "Stop", "count": 4 }, { "name": "Reserved", "count": 0 } ],
-    "total": 496,
+    "valueLabel": "granule and channel",
+    "valueNames": ["granule 1, channel 1", "granule 1, channel 2", "granule 2, channel 1", "granule 2, channel 2"],
+    "categories": [ { "name": "Long", "count": 432 }, { "name": "Start", "count": 12 }, { "name": "Short", "count": 24 },
+                    { "name": "Mixed", "count": 0 }, { "name": "Stop", "count": 12 }, { "name": "Reserved", "count": 0 } ],
+    "total": 480,
     "xSeries": "Bitrate",
-    "runs": [[0, 300], [1, 4], [2, 8], [4, 4], [0, 180]],
-    "seconds": [0, 39, 78] } ]
+    "runs": [[0, 198], [1, 2], [2, 4], [4, 2], [0, 76], [1, 2], [2, 4], [4, 2], [0, 52], [1, 2], [2, 4], [4, 2],
+             [0, 24], [1, 2], [2, 4], [4, 2], [0, 24], [1, 2], [2, 4], [4, 2], [0, 34]],
+    "seconds": [0, 40, 80] } ]
 ```
 
-- `categories`: every category of the series, with `count` (weighted); with `--explain` also `description` and `topic`, and the series' own.
-- `slots`: present where a unit has more than one value.
-- `xSeries` names the per-frame series of the stream whose `x` the units share; where they share none, `x` holds the offsets as a series' does.
-- `runs`: the codes as runs of `[code, length]`, slot by slot within each unit and unit by unit, `null` for a slot without a value. Runs keep a long stream's JSON short (a CBR file of long blocks is one run) and a golden diff readable.
+The codes in `runs` are indices into `categories` (Long 0, Start 1, Short 2, Mixed 3, Stop 4, Reserved 5).
+
+- `categories`: every category of the series, with `count` (weighted, uncoded values included); with `--explain` also `description` and `topic`, and the series' own.
+- `valueNames`: present for a fixed layout of more than one value; `valuesPerUnit` then gives the number. A variable layout writes `valueCounts` as runs of `[count, units]`.
+- `uncodedValues`: present only when not zero.
+- `xSeries` names the per-frame series of the stream whose `x` the units share, as the model carries it (`CategorySeries.XSeries`); where they share none, `x` holds the offsets as a series' does.
+- `runs`: the codes as runs of `[code, length]`, value by value within each unit and unit by unit, `null` for a value without a category. Runs keep a long stream's JSON short (a CBR file of long blocks is one run) and a golden diff readable.
 - `weights`: runs of weights, present only where a weight is not 1.
 - `seconds`: the first unit of each interval of `TimeIndex`, whose starts are the `x` of the stream's "Bitrate Over Time"; absent without an index.
+- A grouping writes `groupOf` (the source's name) and `map` (the new category of each source code), with no runs.
 - **Schema version:** a field is added and none changes meaning, so `schemaVersion` stays 1, as the plan's rule and the decoder design's `verification` do. A consumer that reads `series` sees the new numeric series ("Coded Bandwidth") as further entries of the same shape.
 
 ### Text
 
-- After a series' anchor, one line per category that occurs, with its share of each interval in percent, rounded half to even to 0.1, as the tallies round:
+- After a series' anchor and its children, at the anchor's depth as `WriteSeries` writes anchored series, one line per category that occurs, in the series' category order, with its share of each interval in percent, rounded half to even to 0.1, as the tallies round. The names follow "Bitrate Over Time": the category, "Share Over Time". An interval without values prints "-".
 
 ```
-        Block Usage: 496 granules
-          Long: 480 granules (96.8%)
-          Start: 4 granules (0.8%)
-          Short: 8 granules (1.6%)
-          Stop: 4 granules (0.8%)
-          Short per second: 0,3.2,1.6
-          Start per second: 0,1.6,0.8
-          Stop per second: 0,1.6,0.8
-          Long per second: 100,93.6,96.8
+      Block Usage: 480 granules
+        Long: 432 granules (90.0%)
+        Start: 12 granules (2.5%)
+        Short: 24 granules (5.0%)
+        Stop: 12 granules (2.5%)
+      Long Share Over Time: 100,90,80
+      Start Share Over Time: 0,2.5,5
+      Short Share Over Time: 0,5,10
+      Stop Share Over Time: 0,2.5,5
 ```
 
-- The plain category comes last, since it is the remainder. A series without a time index prints no lines; its summary is the tally above.
+- The example stream is invented for round numbers: 3 seconds of 40 frames, 4 values per frame; seconds 2 and 3 hold 2 and 4 switches, each a frame with start blocks in granule 2, a frame of short blocks and a frame with stop blocks in granule 1. The JSON runs above follow from it.
+- A series without a time index prints no lines; its summary is the tally above.
 - With `--offsets`, the anchor's location, as anchored series have now. With `--hide statistics`, the anchor is hidden and the lines with it. With `--explain`, each line's category description.
 - The per-frame codes are not printed in the text tree, as per-frame numeric series are not.
 
@@ -423,16 +533,22 @@ Each stream gets `categorySeries` after `series`:
 
 ### Golden reports
 
-The contract changes no golden: no parser produces a series yet. Each format's pull request then changes the goldens of the fixtures whose streams get series:
+The contract changes no golden: it writes `categorySeries` and the share lines only for a stream that has category series, and no parser produces one yet. The contract's pull request shows this by running the golden tests unchanged. Each format's pull request then changes the goldens of the fixtures whose streams get series, new nodes or renames:
 
 - MPEG: the fixtures in `mpeg`, `layer2`, `layer3`, `vbr`, `stats`, the tag fixtures that hold MPEG audio, and the MP4 and WAV payloads the MPEG codec parser reads. The pull request counts them with a script and names the count.
-- AAC: `aac`, `adts`, and the `mp4` and `matroska` fixtures with AAC tracks; AC-3: `ac3` and its MP4 and Matroska tracks; and so on.
+- AAC: `aac`, `adts`, and the `mp4` and `matroska` fixtures with AAC tracks (about 100 files hold the node "Bandwidth" now); AC-3: `ac3` and its MP4 and Matroska tracks; Opus: the Opus fixtures in `ogg` and their MP4 and Matroska tracks (143 files hold the node "Stereo Coding" now); Vorbis: 73 files hold "Long Blocks"; and so on.
+- **Renames and their goldens:** the Opus pull request renames "Stereo Coding" to "Channel Counts"; the AAC pull request renames "Bandwidth" to "Coded Bandwidth" and changes "Channel Pairs" counts to the classification rule; the Vorbis pull request moves "Long Blocks" and "Short Blocks" under "Block Sizes". Each format regenerates its own goldens in its own pull request, so a rename adds no file to a pull request beyond those the new series change anyway.
 
 How the diffs stay reviewable:
 
 - **Run-length codes,** above: a golden gains a few dozen lines per series, not one per frame.
 - **Two commits per format:** the code with its tests, then the regenerated goldens (`ENCSPECT_UPDATE_GOLDEN=1`) alone.
-- **A check of the golden commit:** `scripts/ci/golden_additions.py <old> <new>` removes the new keys (`categorySeries`, the "Coded Bandwidth" series and nodes, a format's new tally node) from each new golden and requires the result to equal the old golden byte for byte. A reviewer then reads only what was added, and an unintended change anywhere else fails the check. The renamed AAC node is listed in the script's rename table for that one pull request.
+- **The check, `scripts/ci/golden_additions.py`**, written and tested in the contract's pull request (with `test_golden_additions.py`, as the other `scripts/ci` scripts have):
+  - It compares goldens at the pull request's merge base with its head, so it does not depend on finding "the golden commit" and survives a squash merge.
+  - It compares **parsed trees**, never bytes: it parses both JSON documents, removes what the change file lists as added, reverses what it lists as renamed, and requires the rest to be equal. Re-serializing in Python does not reproduce the writer's indentation and number formatting, and byte equality is not what matters.
+  - It handles **path shifts**: a finding's `path` is a list of child indices, and a node added among a node's children moves the indices behind it. The change file gives each added node's parent and position, and the script maps every old path through it before comparing.
+  - **Where the tables live:** one file per format pull request, `tests/fixtures/<format>/golden-changes.json`, committed in that pull request's golden commit: the added keys and nodes (`categorySeries`, "Coded Bandwidth" series and node, the new tally nodes with parent and position) and the renames (old name, new name, parent). The script itself is not edited per pull request.
+  - **Who runs it:** a step of the CI workflow's test job, on pull requests whose diff touches a golden report, with the change file as input; a reviewer can run it locally with the same arguments. A pull request that touches goldens and has no change file fails the step.
 - `golden_hides` (development.md) does not hide category series: they are small, and the golden is where a per-frame change shows.
 
 ## GUI
@@ -441,45 +557,50 @@ How the diffs stay reviewable:
 
 The Graphs tab offers each category series as a chip, as it offers each `Series` now, with three views:
 
-- **Over time:** a 100% stacked column per interval of the time index, the categories stacked in their order with the plain category at the bottom. Where intervals outnumber pixel columns, neighboring intervals merge into one column, weighted by their values, as a line of more points than pixels draws each column's smallest and largest value now.
-- **Frames:** a strip with one row per slot (four rows for Layer III: granule 1 and 2 of each channel), each unit a cell in its category's color. Where units outnumber pixel columns, a column shows the shares of its units as a stacked cell, so a rare short block still shows as a sliver rather than vanishing under the most common category.
-- **Summary:** a table like EncSpot's: each category's name, count and share, with a horizontal bar. A "Coding Summary" chip shows the tables of every category series of the stream at once (for MPEG: channel modes, joint stereo modes, block usage), which is EncSpot's panel.
+- **Over time:** a 100% stacked column per interval of the time index, the categories stacked in their order with the plain category at the bottom, in a muted step so that rare categories stand out. Where intervals outnumber pixel columns, neighboring intervals merge into one column, weighted by their values, as a line of more points than pixels draws each column's smallest and largest value now.
+- **Frames:** a strip, one row per value for a fixed layout of up to 8 values (Layer III's granule 1 and 2 of each channel, AC-3's 6 blocks), each unit a cell in its category's color. A variable layout, or a fixed one of more than 8 values, draws one row whose cell shows the shares of the unit's values stacked. Where units outnumber pixel columns, a column shows the shares of its units as a stacked cell.
+  - **Rare categories stay visible:** every category present in a column gets at least 1 pixel of its stack, taken from the largest, and a column holding a category in at most 1 of its units is marked with a one-pixel tick above the row in that category's color. At 100,000 frames over about 1,000 columns, a single short granule of 400 values would be 0.03 pixels without this rule. The hover text says the column is drawn with its rare categories enlarged, and gives the true counts.
+  - Rows use `CountRange(first, end, value, counts)`, the shares lane `CountRange(first, end, counts)`.
+- **Summary:** a table like EncSpot's: each category's name, count and share, with a horizontal bar. A "Coding Summary" chip shows the tables of every category series of the stream at once (for MPEG: channel modes, stereo coding, joint stereo modes, block usage, block sizes), which is EncSpot's panel and delivers its shares over all frames from the report's own figures. Series with uncoded values say how many.
 
 "Coded Bandwidth" is a `Series` and draws as a line, with no change to the line graph.
 
 ### Interaction
 
 - **Hovering:** a column shows its interval and every share, "0:12 to 0:13 · Short 12.5% (24 granules) · Long 87.5% (168 granules)"; a strip cell its unit, "Frame 1,234 · 0x1A2B · granule 2, channel 1: Short"; a summary bar its count and share.
-- **Clicking** a column selects the first unit of its interval, from `TimeIndex.FirstUnits`, exactly rather than estimated from the duration as per-second points are now. A strip cell selects its unit. A summary bar, or a legend entry, selects the next unit after the selected one that has its category, so choosing it again steps through them, as a bar of the bitrate distribution does.
+- **Clicking** a column selects the first unit of its interval, from `TimeIndex.FirstUnits`, exactly rather than estimated from the duration as per-second points are now; an empty interval selects nothing. A strip cell selects its unit. A summary bar, or a legend entry, selects the next unit after the selected one that has its category, so choosing it again steps through them, as a bar of the bitrate distribution does.
 - **Selecting** a frame in the tree marks it: a vertical line across the over-time and strip views, in the foreground color.
 - **Keyboard:** the chips and views are reached with Tab; Left and Right move a cursor from unit to unit in the strip and from interval to interval over time, Enter selects. The existing line graph gets the same keys.
 
 ### Palette
 
-- A fixed categorical palette, not the system accent, so a category has the same color in every file and in both modes. Index 0, the plain coding, takes the first color.
-- The default palette of the data visualization method this design follows, its first six slots: blue, orange, aqua, yellow, magenta, green. Light: `#2a78d6`, `#eb6834`, `#1baf7a`, `#eda100`, `#e87ba4`, `#008300`. Dark: `#3987e5`, `#d95926`, `#199e70`, `#c98500`, `#d55181`, `#008300`.
-- Its validator, run for this design, passes both modes: worst adjacent separation for color vision deficiencies ΔE 9.1 (light) and 8.4 (dark), normal vision 19.6 and 19.3. In light mode aqua, yellow and magenta fall below 3:1 against the surface, which obliges visible labels or a table view; the summary table and the legend are that.
-- The validator measured against its own surfaces (`#fcfcfb`, `#1a1a19`). Whether the result holds against Fluent's `SystemRegionBrush` in both modes is **unverified** until the implementation runs the validator with the theme's colors and records them in a test.
-- A "Reserved" or other invalid category is drawn in gray with a hatch, never in a hue of the palette, since it marks a value the specification does not allow.
-- A slot without a value is left empty, the surface showing through.
-- Segments are separated by a 1-pixel gap in the surface color, so neighbors of similar lightness stay apart.
+- A fixed categorical palette, not the system accent, so a category has the same hue in every file and in both modes (the two modes use different steps of one hue, not the same color). Index 0, the plain coding, takes the first hue in a muted step.
+- The source is the default palette of the `dataviz` skill (its `references/palette.md` and validator), which is not a file of this repository. The implementation commits the six values in `Palette` and the validator's output in [gui.md](../gui.md), so the claim becomes checkable. Its first six slots: blue, orange, aqua, yellow, magenta, green. Light: `#2a78d6`, `#eb6834`, `#1baf7a`, `#eda100`, `#e87ba4`, `#008300`. Dark: `#3987e5`, `#d95926`, `#199e70`, `#c98500`, `#d55181`, `#008300`.
+- The validator's results, run for this design and reproduced by the review: worst adjacent separation for color vision deficiencies ΔE 9.1 (light) and 8.4 (dark), normal vision 19.6 and 19.3; **tritan separation 5.8 in light mode, below the method's floor of 6**, which this design accepts only because names and shares are always in text (Decision 8). Against the method's reference surfaces, aqua, yellow and magenta are below 3:1 in light mode (2.74, 2.11, 2.62).
+- **Against the app's graph surfaces:** sampled from the Graphs tab screenshots of an earlier session (not committed), the surfaces are `#ffffff` in light mode and `#000000` in dark. The same validator gives aqua 2.82, yellow 2.17 and magenta 2.69 below 3:1 in light mode (which obliges the visible labels and the table below) and all six at 3:1 or more in dark. The implementation reads `SystemRegionBrush` in both modes, runs the validator with the theme's colors and records the result in a test; a surface that changes is then caught.
+- **More categories than colors:** a series uses the six hues for its first six categories, in the order the parser gives them.
+  - An **ordered** series (`IsOrdered`: frame sizes, block sizes, submodes, Opus bandwidths) uses a ramp of one hue, light to dark in order, up to eight steps.
+  - Any category past the sixth (past the eighth for a ramp) is drawn in one flat mid gray, "Other", in the strip and the columns. The legend, the summary table and the hover list every real category by name and share, so nothing is lost but the color. This covers Speex's 9 narrowband submodes plus "no wideband layer", Vorbis' up to 64 modes, Opus' 6 frame sizes and WMA's 5 block sizes. A generated hue is never added.
+- A "Reserved" or other invalid category is drawn in gray with a hatch, never in a hue of the palette, since it marks a value the specification does not allow; it is distinct from the flat gray of "Other".
+- A value without a category is left empty, the surface showing through.
+- Stacked segments of a column are separated by a 2-pixel gap in the surface color, so neighbors of similar lightness stay apart; strip cells narrower than 4 pixels have none.
 
 ### Accessibility
 
 - Never color alone: a legend with names and shares is always shown; the summary is a table with text; every hover says the category by name; series of up to four categories label their segments directly where they are wide enough.
-- A hatch is available per category for high contrast settings, where the system's contrast theme is on.
+- A hatch is available per category for high contrast settings. How Avalonia 12 exposes the system's contrast preference to the application is **unverified**; the implementation names the API it uses, or the hatch is a setting of the tab.
 - The views are reachable and usable by keyboard (above), and the chips and legend entries have automation names.
 
 ### Speed
 
-- A view aggregates once per width and per series, in one pass over the codes (`CountRange` per pixel column), and draws at most columns × categories rectangles. For 100,000 frames of 4 slots, that is 400,000 bytes read per resize.
+- A view aggregates once per width and per series, in one pass over the codes (`CountRange` per pixel column), and draws at most columns × categories rectangles. For 100,000 frames of 4 values, that is 400,000 bytes read per resize.
 - No timing is measured yet. The test below bounds it with the line graph's existing test as the reference.
 
 ### Tests
 
-- `GraphTests`: aggregation per column against a brute-force count, weights, `None` slots, intervals merged into columns, the frame each click selects, the next unit of a category after the selected one.
-- `GraphViewTests`: a series of 200,000 units in 4 slots draws and answers the pointer within the bound the 200,000-point line test uses.
-- `ScreenshotTests`, light and dark: the Graphs tab of a LAME VBR fixture with short blocks on each of the three views, and of an AAC fixture's window sequences; saved with `ENCSPECT_SCREENSHOTS` for review, as the existing screenshots are.
+- `GraphTests`: aggregation per column against a brute-force count, weights, `None` values, intervals merged into columns, the frame each click selects, the next unit of a category after the selected one, the rule for rare categories (a lone short granule keeps at least one pixel), the "Other" fold past the sixth category.
+- `GraphViewTests`: a series of 200,000 units in 4 values draws and answers the pointer within the bound the 200,000-point line test uses.
+- `ScreenshotTests`, light and dark: the Graphs tab of an MPEG fixture with short blocks on each of the three views, and of an AAC fixture's window sequences; saved with `ENCSPECT_SCREENSHOTS` for review, as the existing screenshots are. Which fixtures carry short blocks is found by script (the golden's block usage counts), not assumed.
 - A pixel test that needs no image comparison: a scripted series of known categories, rendered headless, sampled at fixed columns, whose colors must be the palette's.
 - `DetailViewModelTests`: the Coding Summary lists the categories and counts the series carry, read from the stream and not the tree.
 
@@ -490,22 +611,22 @@ The Graphs tab offers each category series as a chip, as it offers each `Series`
 - Every `CategorySeries` has a `Description` saying what one value stands for and what the series counts ("The block type of each granule and channel of every complete audio frame, counted per channel as the Block Usage statistics count them (ISO/IEC 11172-3 2.4.2.7)").
 - Every `Category` has one, written once as a constant by the parser that knows the field, citing the section: Layer III's "Short" is "block_type 2 without mixed_block_flag: three short transforms in every subband (ISO/IEC 11172-3 2.4.2.7)".
 - The tally entry and its category share the constant, so the tree and the graph say the same.
-- Every "Coded Bandwidth" series says how its format derives the value and what it leaves out.
+- Every "Coded Bandwidth" series says how its format derives the value, whether it is a stated bound or a coded value, and what it leaves out.
 - `DescriptionTests` gains the walk over every fixture's category series: a series or category without a description, or with a topic that does not exist, fails.
 
 ### Articles
 
 Existing articles, extended with one paragraph each, where they say what you see:
 
-- `block-switching`: the Block Usage graph and summary, and how the other formats' block mechanisms correspond (AAC's window sequences, AC-3's block switching, Vorbis's two block sizes, WMA's block sizes), each linking its own article.
-- `joint-stereo`: the graph of joint stereo modes over time, and EncSpot's counting of every frame that is not joint stereo as mode 0, so its plain stereo share differs from the report's, by how much the channel modes say.
+- `block-switching`: the Block Usage and Block Sizes graphs and summary, and how the other formats' block mechanisms correspond (AAC's window sequences, AC-3's block switching, Vorbis's two block sizes, WMA's block sizes), each linking its own article.
+- `joint-stereo`: the graphs of stereo coding and joint stereo modes over time, and EncSpot's counting of every frame that is not joint stereo as mode 0: its mode 0 share is the report's "Left/right stereo" and "Mono and dual channel" entries together, and the report's channel modes say how the two split.
 - `lowpass`: that coded bandwidth, from the syntax, shows where the coded spectrum ends without decoding, and why it is not the lowpass.
 - The format articles as their formats land: `aac-windows-and-blocks`, `ac3-audio-blocks`, `vorbis-blocks`, `opus-toc`, `speex-modes`, `musepack-subband-coding`, `wma-frames-and-blocks`.
 
 A new shared article, `coded-bandwidth`:
 
 - The problem: encoders spend no bits on frequencies they filtered out or chose not to code, and the coded data says where they stopped.
-- How each format states it: Layers I and II's bit allocation, AAC's max_sfb, AC-3's chbwcod and coupling range, Musepack's used subbands, DTS's active subbands, WMA's last coefficient, Opus's bandwidth in the TOC.
+- How each format states it, and whether that is a stated bound or a coded value (the table above): Layers I and II's bit allocation, AAC's max_sfb, AC-3's chbwcod and coupling range, Musepack's used subbands, DTS's active subbands, WMA's last coefficient. Opus states its bandwidth in the TOC, which is a different figure, "Bandwidths".
 - What it does not show: SBR and spectral extension above, noise substitution, intensity stereo and joint intensity coding within, quiet content that the coded data still reaches.
 - How it relates to the LAME tag's lowpass and to a lowpass measured from decoded audio.
 - References: the sections in the survey above. About 300 words.
@@ -516,48 +637,52 @@ Observations of how often an encoder switches blocks or codes mid/side go into a
 
 ### Per-frame cross-checks
 
-The tools CI already builds or installs give per-frame references for most series:
+The tools CI already builds or installs give per-frame references for some series; for the rest the references are the project's own models, which are checks of consistency and not independent readers, and the table says which is which.
 
 | Format | Per frame or block | Per stream |
 | --- | --- | --- |
-| MPEG Layer III | minimp3's side information per granule and channel (`minimp3_side_info.c`): block_type and mixed_block_flag | mp3guessenc's block usage and stereo mode counts; EncSpot's mode and block counts, through an emulation of its counting (above) |
+| MPEG Layer III | minimp3's side information per granule and channel (`minimp3_side_info.c`): block_type and mixed_block_flag; it rejects reserved blocks, so the reserved fixture compares as "rejected" | mp3guessenc's block usage and stereo mode counts; EncSpot's mode and block counts, through an emulation of its counting (above) |
 | MPEG Layer II | minimp3's allocation per subband and channel (same tool): the highest allocated subband | mp3guessenc |
-| AAC | faad2's trace (`faad_trace_tool.py`): window_sequence, max_sfb, ms_mask_present, ms_used, every band's codebook | the tally |
-| AC-3 | none in CI: `a52_blocks.c` prints where each block ends, not its fields. Whether liba52 0.7.4's `a52.h` exposes blksw, cplinu, rematflg and the end mantissa per channel to extend it is **unverified**; otherwise the hand-built fixtures of `ac3_model.py` carry the expected values in their manifests | the tally |
+| AAC | faad2's trace (`faad_trace_tool.py`): window_sequence, max_sfb, ms_mask_present, ms_used, every band's codebook; the pair classification is computed from these by the script | the tally |
+| AC-3 | liba52 0.7.4's `a52.h` declares `a52_state_t` with `chincpl`, `cplendmant`, `rematflg` and `endmant[5]`: extending `a52_blocks.c` (which reads `buffer_start` and `bits_left` after each `a52_block()` now) to print them cross-checks coupling, rematrixing and the end mantissa per block. **Block switching has no per-block reference:** `blksw` is a local array of `a52_block` (`parse.c`) and is not exposed. | the tally |
+| E-AC-3 | none: liba52 does not decode E-AC-3. The hand-built fixtures of `ac3_model.py` carry the expected values in their manifests | the tally |
 | Musepack SV4 to SV7 | libmpcdec's used subbands and mid/side mask per frame (`mpcdec_frames.c`) | the tally |
-| Opus, Vorbis, Speex | the independent model `ogg_model.py` for the TOC and the packet flags; speexdec's per-frame bitrates, which the submodes give | opusinfo, the tally |
+| Opus, Vorbis | the project's own model `vorbis_opus_model.py` (`toc_info`) for the TOC and the packet flags; not independent | the tally; opusinfo gives pre-skip, gain, channels, rates, counts, comments, length and hard CBR (`crosscheck_ogg_fixtures.py`), none of the modes, bandwidths or stereo counts, so it checks none of these series |
+| Speex | speexdec's per-frame bitrates, which the submodes give | the tally |
 | WavPack | libwavpack's block headers (`wavpack_blocks.c`) | the tally |
 | WMA, DTS | the hand-built fixtures' models (`asf_model.py`, `dts_model.py`); `dca_frames.c` prints no audio coding header fields | the tally |
 
 - The cross-check scripts compare unit by unit, so a series that is right in sum but wrong in order fails.
 - ffprobe and libavcodec's debug output have no per-frame block type or stereo mode for these codecs that the scripts read today; this design does not add one.
+- The new cross-checks and the golden-additions check are documented in `docs/development.md`.
 
 ### Fixtures
 
-- Existing encoder fixtures carry most categories: LAME's VBR files switch blocks; FFmpeg's and FAAC's AAC switch windows; the AC-3 encoders switch blocks and rematrix.
+- Which existing encoder fixtures carry which categories is found by a script that reads the goldens' tallies, as each format's pull request begins; this design names none as fact.
 - Hand-built ones, from the existing models, for what encoders rarely write:
   - Layer III intensity stereo and both tools together; mixed and reserved blocks;
-  - a stream that changes between mono and joint stereo, so slots are empty;
+  - a stream that changes between mono and joint stereo, so values are empty;
   - MPEG-2's one granule; a truncated last frame and a VBR header frame, which no series counts;
   - Layer II intensity stereo bounds;
-  - E-AC-3 frames of 1, 2 and 3 blocks; spectral extension;
-  - AAC pairs without a common window;
+  - E-AC-3 frames of 1, 2 and 3 blocks, with dependent frames and a block count that changes; spectral extension;
+  - AAC pairs without a common window that use intensity stereo; ms_mask_present 3; ADTS frames of several raw data blocks;
   - Opus packets of several frames and a multistream file.
 - Each manifest lists the expected counts per category, which `CategorySummaryTests` holds against both the series and the tally.
 
 ### Tests
 
-- **Contract:** `CategorySeriesTests`: building, `None`, weights, `CountRange`, a `TimeIndex` that does not fit (an exception, so the host's `parse.failed`), the 254-category and 64-slot limits; the JSON runs written and read back; the text lines' rounding.
-- **Summary:** `CategorySummaryTests` (above), on every fixture.
+- **Contract:** `CategorySeriesTests`: building, `None`, weights, fixed and variable layouts with the sparse index, values past the caps counted without a code, groupings, `CountRange` in both forms, a `TimeIndex` that does not fit (an exception, so the host's `parse.failed`) and one with an empty interval, the 255-category limit; the JSON runs written and read back; the text lines' rounding.
+- **Summary:** `CategorySummaryTests` (above), on every fixture, from its data table.
 - **Descriptions:** `DescriptionTests`, extended.
-- **Memory:** the existing `MemoryTests` bounds hold, and each format adds its per-series check (above).
-- **Complexity:** `ComplexityTests` with the largest slot counts per byte a crafted file can reach (AAC access units of 48 single channel elements, E-AC-3 frames of one block in 5 channels, Opus multistream packets) stays linear in the file's length.
+- **Memory:** the existing `MemoryTests` bounds hold, each format adds its per-series check (above), and the AC-3 pull request adds the E-AC-3 dependent-frame test.
+- **Complexity:** `ComplexityTests` on the worst cases above stays linear in the file's length.
 - **Threads:** `ParallelAnalysisMatchTests` covers the series through the JSON it compares.
 - **Decoding:** with decoding on, the category series are the same, as the decoder design holds for the tree.
+- **Golden check:** `test_golden_additions.py`, with a pair of small goldens, a rename and a path shift.
 
 ## Fitting alongside the decoder contract
 
-The decoder contract, being built on `feature/decoder-contract`, adds to `StreamInfo` the property `Verification` after `Protection`, writes `verification` in JSON before `encoder`, adds a verification line to the text tree under each stream, `Is Verified` to the CSV and `IsVerified` to `ReportSummary` (summary cache format 6), and changes several lines of `CLAUDE.md`. This design touches different places, so the two merge without conflict:
+The decoder contract, being built on `feature/decoder-contract`, adds to `StreamInfo` the property `Verification` after `Protection`, writes `verification` in JSON before `encoder`, adds a verification line to the text tree under each stream, `Is Verified` to the CSV and `IsVerified` to `ReportSummary` (summary cache format 6), and changes several lines of `CLAUDE.md`. This design lands after it and rebases onto it. Both change `ReportTextWriter`'s `Options` record and the `WriteNode` signature (the contract adds `Verified`), so those two places are merged by hand when the contract's pull request has merged, not before; the other places are different:
 
 - `StreamInfo`: `CategorySeries` after `Series`, the last property.
 - JSON: `categorySeries` after `series`, the last field of a stream.
@@ -570,43 +695,43 @@ The decoder contract, being built on `feature/decoder-contract`, adds to `Stream
 
 1. **Contract**, one pull request, after the decoder contract merges:
    - `Category`, `TimeIndex`, `CategorySeries`, `CategorySeriesBuilder` and `StreamInfo.CategorySeries`;
-   - the JSON and text writers; `scripts/ci/golden_additions.py`;
+   - the JSON and text writers, writing nothing for a stream without category series; `scripts/ci/golden_additions.py` with its test and its CI step;
    - the GUI's three views, palette, Coding Summary and keyboard handling, tested with scripted series (`TestParsers.cs`);
    - `CategorySeriesTests`, the `DescriptionTests` extension, `CategorySummaryTests` (empty until a parser produces series);
-   - documentation: `docs/cli.md` (JSON and text), `docs/gui.md` ("Graphs"), `docs/formats/README.md` ("Series"), the `CLAUDE.md` sentence above.
+   - documentation: `docs/cli.md` (JSON and text), `docs/gui.md` ("Graphs", and "Look and platform", where the accent color follows the system but the graph palette is fixed), `docs/development.md` (the golden-additions check and the change files), `docs/formats/README.md` ("Series"), `docs/PLAN.md` (the graph list, the sentence that the coding statistics are counted "so nothing is kept per frame", the "Large inputs" per-frame figures), the `CLAUDE.md` sentence above; the code comments that say nothing is kept per frame (`MpegAudioParser.Tally.cs`, `CodingTally.cs`) change in the pull requests of their formats.
    - No parser changes, no golden changes.
 2. **MPEG, the reference:**
-   - channel modes, joint stereo modes, intensity stereo bounds, block usage, coded bandwidth of Layers I and II, with the "Coded Bandwidth" statistics node;
-   - minimp3, mp3guessenc and EncSpot cross-checks; the hand-built fixtures; goldens in their own commit;
-   - the articles `coded-bandwidth`, `block-switching`, `joint-stereo`, `lowpass`; `docs/formats/mpeg-audio.md`.
+   - channel modes, stereo coding, joint stereo modes, intensity stereo bounds, block usage, block sizes, coded bandwidth of Layers I and II, with the "Coded Bandwidth" statistics node;
+   - minimp3, mp3guessenc and EncSpot cross-checks; the hand-built fixtures; goldens in their own commit with their change file;
+   - the articles `coded-bandwidth`, `block-switching`, `joint-stereo`, `lowpass`; `docs/formats/mpeg-audio.md`, `docs/development.md` for the cross-checks.
    - A milestone review of the contract and MPEG follows, on Opus with high effort; its findings are fixed before step 3.
-3. **Wave 1, in parallel, a pull request each:** AAC (with the "Stereo Coding" tally node of channel pairs and the rename to "Coded Bandwidth"), AC-3 and E-AC-3, Vorbis, Opus, Speex, Musepack. Each with its cross-check, fixtures, golden commit, format page and article paragraph.
+3. **Wave 1, in parallel, a pull request each:** AAC (with the "Stereo Coding" and "Block Sizes" nodes, the pair classification and the rename to "Coded Bandwidth"), AC-3 and E-AC-3, Vorbis (with the "Block Sizes" parent), Opus (with the rename to "Channel Counts"), Speex, Musepack. Each with its cross-check, fixtures, golden commit and change file, format page, `docs/development.md` lines and article paragraph.
 4. **Wave 2,** the same way: the further MPEG and AAC tallies, DTS, WMA standard and Voice, WavPack.
 5. **Later:** the series that wait for the entropy pass, WMA Pro, a CSV column if wanted.
 
 What is serial:
 
 - Everything in `Core.Abstractions`, the host's writers and the GUI is in step 1 alone. A format that finds the contract lacking changes it in a small pull request of its own, merged before the format's, never inside it.
-- The shared articles (`coded-bandwidth`, `block-switching`, `mid-side-stereo`) get one paragraph or line from each format pull request: small conflicts of text, merged in order.
-- `CategorySummaryTests`, `DescriptionTests` and the memory tests are generic and need no change per format beyond fixtures and the per-series check.
+- The shared articles (`coded-bandwidth`, `block-switching`, `joint-stereo`) get one paragraph or line from each format pull request: small conflicts of text, merged in order.
+- `CategorySummaryTests`, `DescriptionTests` and the memory tests are generic and need no change per format beyond fixtures, the per-series check and the format's rows in the summary table.
 
 ## Decisions
 
-1. **Model:** a `CategorySeries` beside `Series`, one byte per value, slots for granules, channels and blocks, optional weights, its own JSON array; `schemaVersion` stays 1. Alternative: one `Series` with a kind, which changes `series` for consumers (version 2).
-2. **Summary:** the parsers' tally nodes stay the summary in the tree; each series uses the same category names, is anchored to its tally node, and its counts (written in JSON, read by the GUI) are held equal to the tally by a test. Alternative: the host builds summary nodes from the series and the parsers drop their tallies.
-3. **Memory:** parsers record codes while reading, at most one byte per value and nothing else per frame (6 bytes for an MPEG-1 stereo Layer III frame); no `MemoryTests` bound is raised. Alternative: derive the codes at the end from the kept side information, a second pass with allocations per frame.
-4. **Coded bandwidth:** a numeric "Coded Bandwidth" series in Hz where the syntax states it (Layers I and II, AAC, AC-3, Musepack, then DTS and WMA); Opus keeps its signaled bandwidth as categories; Layer III's big_values waits for the entropy pass, since without count1 it bounds nothing. Alternative: graph big_values now as "Big Values Region End".
-5. **Output:** JSON writes categories with counts, slot names, the per-second index and run-length codes; the text tree prints each category's share per second after its tally node; the CSV stays as it is. Alternative: CSV columns for the mid/side and short block shares, which bump the summary cache again.
-6. **GUI:** per series an over-time view, a per-frame strip with one row per slot and an EncSpot-like summary table, plus a Coding Summary of all series; a fixed six-color palette validated for color vision deficiencies in both modes, with names and shares always in text. Alternative: the summary and over-time views only, without the strip.
-7. **Rollout:** contract after the decoder contract, MPEG as the reference with a milestone review, then AAC, AC-3, Vorbis, Opus, Speex and Musepack in parallel; DTS, WMA and WavPack in a second wave. Alternative: every format in the first wave.
-8. **Goldens:** regenerated in a commit of their own per format, checked by a script that removing the additions gives the old golden byte for byte. Alternative: hide category series from the goldens and rely on manifests.
+1. **Model:** a `CategorySeries` beside `Series`: one byte per value, units with a variable number of values (a count byte, a sparse index), caps that count values without coding them, optional weights, groupings that cost nothing per value, its own JSON array; `schemaVersion` stays 1. Alternative: a fixed slot count per series, which cannot hold AAC or E-AC-3 dependent frames; or one `Series` with a kind (version 2).
+2. **Summary:** the parsers' tally nodes stay the summary in the tree; each series uses the same category names, is anchored to its node, and its counts are held equal to the tally by a data-driven test, with flag series for value-only tallies. Alternative: the host builds summary nodes from the series and the parsers drop their tallies.
+3. **When codes are made:** derive at the end from the kept records wherever they hold the fields (MPEG first, then Vorbis, Opus, Speex, Musepack, WMA, WavPack), which needs no new per-frame state and allows one builder per stream; record while reading only in AAC and AC-3. Alternative: record while reading everywhere, which cannot split MPEG by stream and keeps bytes the records already hold.
+4. **EncSpot-style shares over all frames:** add the nodes "Stereo Coding" (left/right, mid/side, intensity stereo, both, mono and dual channel) and "Block Sizes" (long with start and stop, short, mixed) in MPEG and AAC, and keep "Joint Stereo Modes" and "Block Usage" as the detail. EncSpot's mode 0 is the report's left/right and mono and dual channel entries together. Alternative: keep only the joint-stereo-only tallies and let the reader add up the tables; combining them only in the GUI breaks the plan's rule that the GUI shows nothing the reports cannot.
+5. **Names:** "Stereo Coding" means the four codings everywhere, so Opus's node of that name becomes "Channel Counts"; AAC's "Bandwidth" becomes "Coded Bandwidth"; Vorbis gets the parent "Block Sizes". Each format regenerates its goldens in its own pull request, with the renames in its change file. Alternative: keep Opus's and AAC's names and call the new concepts something else, leaving two names for coded bandwidth and two meanings of "Stereo Coding".
+6. **Coded bandwidth:** a numeric "Coded Bandwidth" series in Hz where the syntax states it or the coded values show it (Layers I and II, AAC, AC-3, Musepack, then DTS and WMA), each description saying which; Opus keeps its signaled "Bandwidths" as categories; Layer III's big_values waits for the entropy pass, since it bounds only the lines above magnitude 1. Alternative: graph big_values now as "Big Values Region End", as EncSpot recorded it.
+7. **Output:** JSON writes categories with counts, the per-second index and run-length codes, and nothing for a stream without series; the text tree prints each category's share per second after its tally node; the CSV stays as it is. Alternative: CSV columns for the mid/side and short block shares, which bump the summary cache again.
+8. **GUI:** per series an over-time view, a per-frame strip that keeps rare categories visible, and an EncSpot-like summary table, plus a Coding Summary of all series; a fixed six-hue palette with a flat gray "Other" past the sixth category and ramps for ordered series, always with names and shares in text. Its tritan separation is 5.8 in light mode, below the method's 6, accepted because of the text. Alternative: the summary and over-time views only, without the strip.
+9. **Rollout and goldens:** contract after the decoder contract (no golden changes), MPEG as the reference with a milestone review, then the wave-1 formats in parallel; goldens regenerated in a commit of their own per format, checked in CI by comparing parsed trees with a per-format change file for additions, renames and path shifts. Alternative: every format in the first wave; or hiding category series from the goldens and relying on manifests.
 
 ## Open risks and unverified claims
 
-- **Unverified:** whether liba52 0.7.4 exposes AC-3's per-block fields to a cross-check tool; without it AC-3's series rest on the hand-built fixtures and the tally.
-- **Unverified:** whether decoders apply AAC intensity stereo in a channel pair without a common window; the series follows the tally's rule and gives such pairs a category of their own.
-- **Unverified:** the palette against Fluent's actual surfaces in light and dark; the validator ran against the method's reference surfaces.
-- **Not measured:** the GUI's drawing time at 100,000 frames and the parsers' added time; the estimates above are reasoning, not runs.
-- **Scope of MPEG summaries:** a stream split by an embedded tag has its series over the stream and its tally per region, so the JSON counts and the tree's differ there, as the bitrate figures already do. The equality test skips those streams.
-- **Run-length codes** make goldens short for steady streams; a stream that switches every frame (block types of some encoders) gives about one run per frame and slot, which the golden commit's size will show per format.
-- **The CI report** (`scripts/ci_report.py`) did not answer within a minute in this session, so the state of main and the nightly runs was not checked for this design.
+- **Unverified:** how Avalonia 12 exposes the system's contrast preference, for the hatch.
+- **Unverified:** the palette against Fluent's `SystemRegionBrush` in light and dark; the graph surfaces sampled from screenshots are `#ffffff` and `#000000`, and the implementation records the theme's.
+- **Unverified:** what AC-3's frame record keeps, and so whether its codes can be derived at the end.
+- **Not measured:** the GUI's drawing time at 100,000 frames and the parsers' added time; the estimates above are reasoning, not runs. The AAC in MP4 bound (13 added bytes against 19 of margin) and E-AC-3 with dependent frames are the memory figures to measure first.
+- **Scope of MPEG summaries:** a stream split by an embedded tag has its series over the stream and its tally per region, so the JSON counts and the tree's differ there, as the bitrate figures already do. The equality test sums the series of a region's streams.
+- **Run-length codes** make goldens short for steady streams; a stream that switches every frame (block types of some encoders) gives about one run per frame and value, which the golden commit's size will show per format.
