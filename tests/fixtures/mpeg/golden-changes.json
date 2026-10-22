@@ -1,4 +1,5 @@
 {
+  "note": "The MPEG step adds categorySeries, the series Coded Bandwidth and Channel Bit Share, concept and quantity on the bitrate and reservoir series and the statistics nodes Stereo Coding, Block Sizes, Coded Bandwidth and Channel Bit Share. A stream gets a Joint Stereo Modes or Intensity Stereo Bounds series only if it has a joint stereo frame of its own, so the two streams of a region in vbr/lame-after-joined-frames and lame-before-joined-frames differ in their categorySeries, which is one added key either way.",
   "goldens": [
     "tests/fixtures/aac/ffmpeg-mp3.report.json",
     "tests/fixtures/adts/adts-inside-mp3.report.json",
