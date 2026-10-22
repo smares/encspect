@@ -4,7 +4,9 @@ using static Encspect.Tests.BoundarySamples.Decoding.ImportedTarget;
 
 // The negative control of DecodingBoundaryTests: parser-side types that reach a type in the Decoding namespace, one sample
 // for each path the check reads, and Decoding types that extend parser-side types. Nothing here runs; the compiled
-// assembly is what the check scans, and it must report exactly the pairs ControlPairs lists.
+// assembly is what the check scans, and it must report exactly the pairs ControlPairs lists. The compiler adds evidence of its
+// own to most of these (a constructor calls the base constructor, a property has accessors), so they show the shapes real code
+// has; BoundarySynthetic builds the assemblies in which each path is the only evidence.
 namespace Encspect.Tests.BoundarySamples
 {
     internal static class ControlPairs
@@ -25,6 +27,12 @@ namespace Encspect.Tests.BoundarySamples
             ("ViaCatch", "Decoding.CaughtException"),
             ("ViaAttributeTypeof", "Decoding.AttributeArgument"),
             ("ViaAttributeEnum", "Decoding.AttributeMode"),
+            ("ViaAttributeTypeofArray", "Decoding.AttributeArrayElement"),
+            ("ViaAttributeTypeofGeneric", "Decoding.AttributeGenericArgument"),
+            ("ViaAttributeOnParameter", "Decoding.OnParameterTarget"),
+            ("ViaAttributeOnReturn", "Decoding.OnReturnTarget"),
+            ("ViaAttributeOnField", "Decoding.OnFieldTarget"),
+            ("ViaAttributeOnMethod", "Decoding.OnMethodTarget"),
             ("ViaUsingStatic", "Decoding.ImportedTarget"),
             ("IDefaultBody", "Decoding.DefaultBodyTarget"),
             ("ViaIterator", "Decoding.IteratorTarget"),
@@ -146,6 +154,39 @@ namespace Encspect.Tests.BoundarySamples
 
     [ObjectArgument(Decoding.AttributeMode.Fast)]
     internal sealed class ViaAttributeEnum;
+
+    [TypeArgument(typeof(Decoding.AttributeArrayElement[]))]
+    internal sealed class ViaAttributeTypeofArray;
+
+    [TypeArgument(typeof(List<Decoding.AttributeGenericArgument>))]
+    internal sealed class ViaAttributeTypeofGeneric;
+
+    internal static class ViaAttributeOnParameter
+    {
+        public static void Run([TypeArgument(typeof(Decoding.OnParameterTarget))] int value)
+        {
+        }
+    }
+
+    internal static class ViaAttributeOnReturn
+    {
+        [return: TypeArgument(typeof(Decoding.OnReturnTarget))]
+        public static int Run() => 0;
+    }
+
+    internal sealed class ViaAttributeOnField
+    {
+        [TypeArgument(typeof(Decoding.OnFieldTarget))]
+        private int _field;
+    }
+
+    internal static class ViaAttributeOnMethod
+    {
+        [TypeArgument(typeof(Decoding.OnMethodTarget))]
+        public static void Run()
+        {
+        }
+    }
 
     internal static class ViaUsingStatic
     {
@@ -281,6 +322,18 @@ namespace Encspect.Tests.BoundarySamples.Decoding
         Slow,
         Fast,
     }
+
+    internal sealed class AttributeArrayElement;
+
+    internal sealed class AttributeGenericArgument;
+
+    internal sealed class OnParameterTarget;
+
+    internal sealed class OnReturnTarget;
+
+    internal sealed class OnFieldTarget;
+
+    internal sealed class OnMethodTarget;
 
     internal static class ImportedTarget
     {

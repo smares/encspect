@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
+using System.Text.RegularExpressions;
 
 namespace Encspect.Tests;
 
@@ -14,18 +15,65 @@ internal readonly record struct BoundaryViolation(string From, string Member, st
 // Reads a compiled assembly's metadata and IL for every way parser code can name a type of the Decoding namespace of its
 // own assembly (docs/design/decoders.md, "How a test enforces it"). The IL walker is hand-written because
 // System.Reflection.Metadata has no IL reader: it takes the operand sizes from System.Reflection.Emit.OpCodes and reads
-// the tokens of the operands that hold one. An operand-size mistake would skip tokens, which the negative control in
-// Encspect.Tests.BoundarySamples shows as a missing pair.
-internal static class BoundaryScanner
+// the tokens of the operands that hold one. An operand-size mistake loses the walk's place: it then reads an undefined opcode
+// or runs past the end of the body, and the scan fails with a message that names the method and the IL offset (never a
+// silent miss); a size that happens to land on valid opcodes reads wrong tokens, which the negative control shows as a missing
+// or extra pair.
+//
+// Disabled turns off one way of reaching a type, so a test can show that each way is needed: BoundarySynthetic builds an
+// assembly for each, in which that way is the only evidence of a pair.
+internal static partial class BoundaryScanner
 {
+    [Flags]
+    public enum ScanPath : long
+    {
+        None = 0,
+        BaseType = 1L << 0,
+        Interfaces = 1L << 1,
+        TypeConstraints = 1L << 2,
+        MethodConstraints = 1L << 3,
+        FieldSignature = 1L << 4,
+        PropertySignature = 1L << 5,
+        EventType = 1L << 6,
+        MethodSignature = 1L << 7,
+        LocalSignature = 1L << 8,
+        CatchType = 1L << 9,
+        MethodDefToken = 1L << 10,
+        FieldDefToken = 1L << 11,
+        TypeDefToken = 1L << 12,
+        TypeSpecToken = 1L << 13,
+        MemberRefParent = 1L << 14,
+        MethodSpecInstantiation = 1L << 15,
+        CalliSignature = 1L << 16,
+        AttributeConstructor = 1L << 17,
+        AttributeTypeofArgument = 1L << 18,
+        AttributeEnumArgument = 1L << 19,
+        AttributeArrayArgument = 1L << 20,
+        AttributeTypeNameForms = 1L << 21,
+        AttributesOnType = 1L << 22,
+        AttributesOnField = 1L << 23,
+        AttributesOnMethod = 1L << 24,
+        AttributesOnParameter = 1L << 25,
+        AttributesOnProperty = 1L << 26,
+        AttributesOnEvent = 1L << 27,
+        AttributesOnGenericParameter = 1L << 28,
+        AttributesOnAssembly = 1L << 29,
+        AttributesOnModule = 1L << 30,
+    }
+
     // A namespace is decoding code where Decoding is one of its segments: X.Decoding and X.Decoding.Y, not X.DecodingTables.
     public static bool IsDecodingNamespace(string ns) => ns.Split('.').Contains("Decoding", StringComparer.Ordinal);
 
-    public static IReadOnlyList<BoundaryViolation> Scan(Assembly assembly)
+    public static IReadOnlyList<BoundaryViolation> Scan(Assembly assembly, ScanPath disabled = ScanPath.None)
     {
         using FileStream stream = File.OpenRead(assembly.Location);
-        using var pe = new PEReader(stream);
-        return new Walk(pe, pe.GetMetadataReader()).Run();
+        return Scan(stream, disabled);
+    }
+
+    public static IReadOnlyList<BoundaryViolation> Scan(Stream image, ScanPath disabled = ScanPath.None)
+    {
+        using var pe = new PEReader(image, PEStreamOptions.LeaveOpen);
+        return new Walk(pe, pe.GetMetadataReader(), disabled).Run();
     }
 
     private static readonly Dictionary<ushort, OperandType> OperandTypes = BuildOperandTable();
@@ -50,10 +98,72 @@ internal static class BoundaryScanner
         return table;
     }
 
+    // The metadata tokens in the operands of a method body, read with the operand sizes of every opcode. An opcode that does not
+    // exist, or an operand that runs past the body, means an earlier operand was read with the wrong size: the walk fails.
+    public static List<EntityHandle> TokensIn(byte[] il, string method)
+    {
+        var tokens = new List<EntityHandle>();
+        int i = 0;
+        while (i < il.Length)
+        {
+            int at = i;
+            ushort code = il[i++];
+            if (code == 0xFE)
+            {
+                if (i >= il.Length)
+                {
+                    throw Lost(method, at, "the body ends inside a two-byte opcode");
+                }
+
+                code = (ushort)(0xFE00 | il[i++]);
+            }
+
+            if (!OperandTypes.TryGetValue(code, out OperandType operand))
+            {
+                throw Lost(method, at, $"0x{code:X} is no opcode, so an earlier operand was read with the wrong size");
+            }
+
+            int size = operand switch
+            {
+                OperandType.InlineNone => 0,
+                OperandType.ShortInlineBrTarget or OperandType.ShortInlineI or OperandType.ShortInlineVar => 1,
+                OperandType.InlineVar => 2,
+                OperandType.InlineI8 or OperandType.InlineR => 8,
+                _ => 4,
+            };
+            if (i + size > il.Length)
+            {
+                throw Lost(method, at, "the operand runs past the end of the body");
+            }
+
+            if (operand == OperandType.InlineSwitch)
+            {
+                long targets = BitConverter.ToUInt32(il.AsSpan(i, 4));
+                if (i + 4 + (4 * targets) > il.Length)
+                {
+                    throw Lost(method, at, "the switch targets run past the end of the body");
+                }
+
+                size = 4 + (4 * (int)targets);
+            }
+            else if (operand is OperandType.InlineMethod or OperandType.InlineField or OperandType.InlineType or OperandType.InlineTok or OperandType.InlineSig)
+            {
+                tokens.Add(MetadataTokens.EntityHandle(BitConverter.ToInt32(il.AsSpan(i, 4))));
+            }
+
+            i += size;
+        }
+
+        return tokens;
+    }
+
+    private static InvalidDataException Lost(string method, int offset, string why) =>
+        new($"The IL walk lost its place in {method} at IL offset {offset}: {why}.");
+
     // The type a custom attribute's blob names, as a definition of the assembly or by its serialized name.
     private readonly record struct AttributeType(TypeDefinitionHandle Definition, string? Name);
 
-    private sealed class Walk(PEReader pe, MetadataReader md)
+    private sealed class Walk(PEReader pe, MetadataReader md, ScanPath disabled)
     {
         private readonly TypeCollector _collector = new();
         private readonly AttributeTypes _attributeTypes = new(md);
@@ -61,6 +171,8 @@ internal static class BoundaryScanner
         private readonly List<BoundaryViolation> _violations = [];
         private string _from = string.Empty;
         private string _member = string.Empty;
+
+        private bool On(ScanPath path) => (disabled & path) == 0;
 
         public IReadOnlyList<BoundaryViolation> Run()
         {
@@ -79,9 +191,9 @@ internal static class BoundaryScanner
 
             _from = "<assembly>";
             _member = "assembly attributes";
-            ReadAttributes(md.GetAssemblyDefinition().GetCustomAttributes());
+            ReadAttributes(md.GetAssemblyDefinition().GetCustomAttributes(), ScanPath.AttributesOnAssembly);
             _member = "module attributes";
-            ReadAttributes(md.GetModuleDefinition().GetCustomAttributes());
+            ReadAttributes(md.GetModuleDefinition().GetCustomAttributes(), ScanPath.AttributesOnModule);
 
             return _violations.Distinct().ToList();
         }
@@ -131,25 +243,32 @@ internal static class BoundaryScanner
             _from = FullName(md, Outermost(handle));
 
             _member = "base type";
-            Touch(type.BaseType);
+            if (On(ScanPath.BaseType))
+            {
+                Touch(type.BaseType);
+            }
+
             _member = "interface";
             foreach (InterfaceImplementationHandle implementation in type.GetInterfaceImplementations())
             {
-                Touch(md.GetInterfaceImplementation(implementation).Interface);
+                if (On(ScanPath.Interfaces))
+                {
+                    Touch(md.GetInterfaceImplementation(implementation).Interface);
+                }
             }
 
             _member = "generic parameters";
-            ReadGenericParameters(type.GetGenericParameters());
+            ReadGenericParameters(type.GetGenericParameters(), ScanPath.TypeConstraints);
             _member = "type attributes";
-            ReadAttributes(type.GetCustomAttributes());
+            ReadAttributes(type.GetCustomAttributes(), ScanPath.AttributesOnType);
 
             foreach (FieldDefinitionHandle fieldHandle in type.GetFields())
             {
                 FieldDefinition field = md.GetFieldDefinition(fieldHandle);
                 _member = $"field {md.GetString(field.Name)}";
                 field.DecodeSignature(_collector, null);
-                Collect();
-                ReadAttributes(field.GetCustomAttributes());
+                Collect(ScanPath.FieldSignature);
+                ReadAttributes(field.GetCustomAttributes(), ScanPath.AttributesOnField);
             }
 
             foreach (PropertyDefinitionHandle propertyHandle in type.GetProperties())
@@ -157,16 +276,20 @@ internal static class BoundaryScanner
                 PropertyDefinition property = md.GetPropertyDefinition(propertyHandle);
                 _member = $"property {md.GetString(property.Name)}";
                 property.DecodeSignature(_collector, null);
-                Collect();
-                ReadAttributes(property.GetCustomAttributes());
+                Collect(ScanPath.PropertySignature);
+                ReadAttributes(property.GetCustomAttributes(), ScanPath.AttributesOnProperty);
             }
 
             foreach (EventDefinitionHandle eventHandle in type.GetEvents())
             {
                 EventDefinition declared = md.GetEventDefinition(eventHandle);
                 _member = $"event {md.GetString(declared.Name)}";
-                Touch(declared.Type);
-                ReadAttributes(declared.GetCustomAttributes());
+                if (On(ScanPath.EventType))
+                {
+                    Touch(declared.Type);
+                }
+
+                ReadAttributes(declared.GetCustomAttributes(), ScanPath.AttributesOnEvent);
             }
 
             foreach (MethodImplementationHandle implementationHandle in type.GetMethodImplementations())
@@ -187,12 +310,12 @@ internal static class BoundaryScanner
         {
             _member = $"method {md.GetString(method.Name)}";
             method.DecodeSignature(_collector, null);
-            Collect();
-            ReadGenericParameters(method.GetGenericParameters());
-            ReadAttributes(method.GetCustomAttributes());
+            Collect(ScanPath.MethodSignature);
+            ReadGenericParameters(method.GetGenericParameters(), ScanPath.MethodConstraints);
+            ReadAttributes(method.GetCustomAttributes(), ScanPath.AttributesOnMethod);
             foreach (ParameterHandle parameter in method.GetParameters())
             {
-                ReadAttributes(md.GetParameter(parameter).GetCustomAttributes());
+                ReadAttributes(md.GetParameter(parameter).GetCustomAttributes(), ScanPath.AttributesOnParameter);
             }
 
             if (method.RelativeVirtualAddress == 0)
@@ -204,79 +327,78 @@ internal static class BoundaryScanner
             if (!body.LocalSignature.IsNil)
             {
                 md.GetStandaloneSignature(body.LocalSignature).DecodeLocalSignature(_collector, null);
-                Collect();
+                Collect(ScanPath.LocalSignature);
             }
 
             foreach (ExceptionRegion region in body.ExceptionRegions)
             {
-                if (region.Kind == ExceptionRegionKind.Catch)
+                if (region.Kind == ExceptionRegionKind.Catch && On(ScanPath.CatchType))
                 {
                     Touch(region.CatchType);
                 }
             }
 
-            ReadIl(body.GetILBytes() ?? []);
+            ReadIl(body.GetILBytes() ?? [], md.GetString(method.Name));
         }
 
-        private void ReadGenericParameters(GenericParameterHandleCollection parameters)
+        private void ReadGenericParameters(GenericParameterHandleCollection parameters, ScanPath constraints)
         {
             foreach (GenericParameterHandle handle in parameters)
             {
                 GenericParameter parameter = md.GetGenericParameter(handle);
                 foreach (GenericParameterConstraintHandle constraint in parameter.GetConstraints())
                 {
-                    Touch(md.GetGenericParameterConstraint(constraint).Type);
+                    if (On(constraints))
+                    {
+                        Touch(md.GetGenericParameterConstraint(constraint).Type);
+                    }
                 }
 
-                ReadAttributes(parameter.GetCustomAttributes());
+                ReadAttributes(parameter.GetCustomAttributes(), ScanPath.AttributesOnGenericParameter);
             }
         }
 
-        private void ReadIl(byte[] il)
+        private void ReadIl(byte[] il, string method)
         {
-            int i = 0;
-            while (i < il.Length)
+            foreach (EntityHandle token in TokensIn(il, method))
             {
-                ushort code = il[i++];
-                if (code == 0xFE)
-                {
-                    code = (ushort)(0xFE00 | il[i++]);
-                }
-
-                switch (OperandTypes[code])
-                {
-                    case OperandType.InlineNone:
-                        break;
-                    case OperandType.ShortInlineBrTarget or OperandType.ShortInlineI or OperandType.ShortInlineVar:
-                        i += 1;
-                        break;
-                    case OperandType.InlineVar:
-                        i += 2;
-                        break;
-                    case OperandType.InlineI8 or OperandType.InlineR:
-                        i += 8;
-                        break;
-                    case OperandType.InlineSwitch:
-                        i += 4 + (4 * BitConverter.ToInt32(il.AsSpan(i, 4)));
-                        break;
-                    case OperandType.InlineMethod or OperandType.InlineField or OperandType.InlineType or OperandType.InlineTok or OperandType.InlineSig:
-                        Touch(MetadataTokens.EntityHandle(BitConverter.ToInt32(il.AsSpan(i, 4))));
-                        i += 4;
-                        break;
-                    default:
-                        // InlineI, InlineBrTarget, InlineString, ShortInlineR.
-                        i += 4;
-                        break;
-                }
+                TouchToken(token);
             }
         }
 
-        private void ReadAttributes(CustomAttributeHandleCollection attributes)
+        // The way a token reaches a type decides which path can be switched off.
+        private void TouchToken(EntityHandle handle)
         {
+            ScanPath path = handle.Kind switch
+            {
+                HandleKind.MethodDefinition => ScanPath.MethodDefToken,
+                HandleKind.FieldDefinition => ScanPath.FieldDefToken,
+                HandleKind.TypeDefinition => ScanPath.TypeDefToken,
+                HandleKind.TypeSpecification => ScanPath.TypeSpecToken,
+                HandleKind.StandaloneSignature => ScanPath.CalliSignature,
+                _ => ScanPath.None,
+            };
+            if (path == ScanPath.None || On(path))
+            {
+                Touch(handle);
+            }
+        }
+
+        private void ReadAttributes(CustomAttributeHandleCollection attributes, ScanPath site)
+        {
+            if (!On(site))
+            {
+                return;
+            }
+
             foreach (CustomAttributeHandle handle in attributes)
             {
                 CustomAttribute attribute = md.GetCustomAttribute(handle);
-                Touch(attribute.Constructor);
+                if (On(ScanPath.AttributeConstructor))
+                {
+                    Touch(attribute.Constructor);
+                }
+
                 CustomAttributeValue<AttributeType> value = attribute.DecodeValue(_attributeTypes);
                 foreach (CustomAttributeTypedArgument<AttributeType> argument in value.FixedArguments)
                 {
@@ -292,13 +414,17 @@ internal static class BoundaryScanner
 
         private void TouchArgument(CustomAttributeTypedArgument<AttributeType> argument)
         {
-            TouchAttributeType(argument.Type);
+            if (On(ScanPath.AttributeEnumArgument))
+            {
+                TouchAttributeType(argument.Type);
+            }
+
             switch (argument.Value)
             {
-                case AttributeType type:
+                case AttributeType type when On(ScanPath.AttributeTypeofArgument):
                     TouchAttributeType(type);
                     break;
-                case ImmutableArray<CustomAttributeTypedArgument<AttributeType>> array:
+                case ImmutableArray<CustomAttributeTypedArgument<AttributeType>> array when On(ScanPath.AttributeArrayArgument):
                     foreach (CustomAttributeTypedArgument<AttributeType> element in array)
                     {
                         TouchArgument(element);
@@ -308,18 +434,39 @@ internal static class BoundaryScanner
             }
         }
 
+        // A serialized type name is "Namespace.Type" for a type of this assembly and "Namespace.Type, Assembly, Version=…" for
+        // another; an array adds [] (or * and &), and a generic instance lists its arguments in [[…]], each with its assembly.
         private void TouchAttributeType(AttributeType type)
         {
             if (!type.Definition.IsNil)
             {
                 Report(type.Definition);
+                return;
             }
-            else if (type.Name is { } name)
+
+            if (type.Name is not { } name)
             {
-                // "Namespace.Type, Assembly": a type of this assembly is written without the assembly, or with its own name.
-                string typeName = name.Contains(',', StringComparison.Ordinal) ? name[..name.IndexOf(',', StringComparison.Ordinal)] : name;
-                string? assembly = name.Contains(',', StringComparison.Ordinal) ? name[(name.IndexOf(',', StringComparison.Ordinal) + 1)..].Split(',')[0].Trim() : null;
-                if ((assembly is null || assembly == md.GetString(md.GetAssemblyDefinition().Name)) && _byName.TryGetValue(typeName, out TypeDefinitionHandle found))
+                return;
+            }
+
+            string ours = md.GetString(md.GetAssemblyDefinition().Name);
+            if (!On(ScanPath.AttributeTypeNameForms))
+            {
+                // The first name only, as written for a plain type.
+                int comma = name.IndexOf(',', StringComparison.Ordinal);
+                string head = comma < 0 ? name : name[..comma];
+                if (_byName.TryGetValue(head, out TypeDefinitionHandle plain))
+                {
+                    Report(plain);
+                }
+
+                return;
+            }
+
+            foreach (Match match in NamePart().Matches(Decorations().Replace(name, string.Empty)))
+            {
+                string? assembly = match.Groups[2].Success ? match.Groups[2].Value : null;
+                if ((assembly is null || assembly == ours) && _byName.TryGetValue(match.Groups[1].Value, out TypeDefinitionHandle found))
                 {
                     Report(found);
                 }
@@ -327,11 +474,14 @@ internal static class BoundaryScanner
         }
 
         // What a signature named is in the collector; it is reported and cleared.
-        private void Collect()
+        private void Collect(ScanPath path = ScanPath.None)
         {
-            foreach (TypeDefinitionHandle seen in _collector.Seen)
+            if (path == ScanPath.None || On(path))
             {
-                Report(seen);
+                foreach (TypeDefinitionHandle seen in _collector.Seen)
+                {
+                    Report(seen);
+                }
             }
 
             _collector.Seen.Clear();
@@ -361,7 +511,11 @@ internal static class BoundaryScanner
                     break;
                 case HandleKind.MemberReference:
                     MemberReference member = md.GetMemberReference((MemberReferenceHandle)handle);
-                    Touch(member.Parent);
+                    if (On(ScanPath.MemberRefParent))
+                    {
+                        Touch(member.Parent);
+                    }
+
                     if (member.GetKind() == MemberReferenceKind.Method)
                     {
                         member.DecodeMethodSignature(_collector, null);
@@ -377,7 +531,7 @@ internal static class BoundaryScanner
                     MethodSpecification specification = md.GetMethodSpecification((MethodSpecificationHandle)handle);
                     Touch(specification.Method);
                     specification.DecodeSignature(_collector, null);
-                    Collect();
+                    Collect(ScanPath.MethodSpecInstantiation);
                     break;
                 case HandleKind.StandaloneSignature:
                     StandaloneSignature signature = md.GetStandaloneSignature((StandaloneSignatureHandle)handle);
@@ -416,6 +570,12 @@ internal static class BoundaryScanner
         string ns = md.GetString(type.Namespace);
         return ns.Length == 0 ? name : $"{ns}.{name}";
     }
+
+    [GeneratedRegex(@"\[,*\]|[*&]")]
+    private static partial Regex Decorations();
+
+    [GeneratedRegex(@"([A-Za-z_][\w.+`]*)(?:,\s*([A-Za-z_][\w.]*))?")]
+    private static partial Regex NamePart();
 
     // Collects every type definition a signature names, generic arguments, arrays, pointers, modifiers and function
     // pointers included, and returns the head of the type it decodes (the generic type of an instantiation).
