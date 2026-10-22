@@ -15,7 +15,7 @@ What phase 3 brings, from the rollout table of the [plan](../PLAN.md):
 What the plan already settles, and this design keeps:
 
 - Decoding is optional, per format. Formats without a decoder still get the full structure report.
-- Decoders are separate and optional, so no parser ever depends on one. Here "separate" means kept apart inside the format project (see [Where decoders live](#where-decoders-live)), and optional means a host may register none.
+- Decoders are optional and live in their format's project apart from its parsers, which reach them only through the host, so no parser ever depends on one. "Apart" means kept apart inside the format project (see [Where decoders live](#where-decoders-live)), and optional means a host may register none.
 - No bundled decoders or native audio libraries: every decoder is Encspect's own managed code.
 - No playback, and no settings below the front ends: options reach the analysis through the host's public API.
 
@@ -113,7 +113,7 @@ The earlier draft limited a decoder to a `Syntax` namespace of its parser, to ke
 - an iterator, an async method, a local function;
 - a `Decoding` type that implements a parser-side interface.
 
-The check run over the test assembly must report exactly these pairs, no more and no fewer: other test classes reference `Encspect.Formats.*.Decoding` types on purpose, and the IL walker is hand-written (`System.Reflection.Metadata` has no IL reader), so an operand-size mistake that skips tokens shows up as a missing pair.
+The check counts only references to decoding types defined in the assembly it scans, the same rule it applies to the format assemblies, so the test assembly's own tests that use `Encspect.Formats.*.Decoding` types on purpose are not counted. Over the test assembly it must then report exactly these pairs, no more and no fewer, because the IL walker is hand-written (`System.Reflection.Metadata` has no IL reader), so an operand-size mistake that skips tokens shows up as a missing pair.
 
 Why the compiled assembly and not the source:
 
@@ -970,7 +970,7 @@ Proposed lines, applied with the contract pull request (step 1):
 - `CLAUDE.md`, Architecture rules, in place of "They never reference each other and never reference a decoder.": "They never reference each other, and parser code never references a decoder, the `Decoding` namespace of its own project included; `DecodingBoundaryTests` checks this in the compiled assemblies."
 - `CLAUDE.md`, Architecture rules, a new item: "Parsers reach decoding only through `StartDecoding` on their context, and declare every checksum a stream stores. A decoder reads the coded syntax with its parser's code and adds only reconstruction and the checksums over decoded audio; decoding never changes the parser's nodes."
 - `CLAUDE.md`, Architecture rules: "One parser instance serves every analysis and thread" becomes "One parser or decoder instance serves every analysis and thread", and "Parsers throw only …" becomes "Parsers and decoders throw only …", since decoders live in the same projects and the contract asks both of them (`IDecoder`).
-- Applied to the plan with the approval (2026-10-22): the Architecture sentence "Decoders are separate and optional, so no parser ever depends on one." now reads "Decoders are optional and live in their format's project apart from its parsers, which never use them, so no parser ever depends on one.", and the architecture diagram shows the decoders in the format projects, with frames to decode and decoded PCM going through the host.
+- Applied to the plan with the approval (2026-10-22): the Architecture sentence "Decoders are separate and optional, so no parser ever depends on one." now reads "Decoders are optional and live in their format's project apart from its parsers, which reach them only through the host, so no parser ever depends on one.", and the architecture diagram shows the decoders in the format projects, with frames to decode and decoded PCM going through the host.
 - The plan's decision table, with the contract pull request: decoding is "for checksum verification, waveform, spectrogram, lowpass and similar". The phase 3 row names the decoders the scope decision keeps.
 
 ## Decisions
