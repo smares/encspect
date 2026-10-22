@@ -12,6 +12,8 @@ internal static class Fixtures
 
     public static string Ogg(string name) => Path.Combine(Directory, "ogg", name);
 
+    public static string Flac(string name) => Path.Combine(Directory, "flac", name);
+
     private static string FindRepositoryRoot()
     {
         for (string? directory = AppContext.BaseDirectory; directory is not null; directory = Path.GetDirectoryName(directory))
