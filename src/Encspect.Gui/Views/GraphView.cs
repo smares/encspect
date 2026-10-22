@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -11,13 +12,17 @@ namespace Encspect.Gui.Views;
 // Draws one graph: a line, decimated to the smallest and largest value of each pixel column so a
 // stream of any length draws in as many segments as the chart is wide, or bars. Hovering a point
 // shows its value; clicking it raises PointClicked, which selects its frame.
-public sealed class GraphView : Control
+public sealed partial class GraphView : Control
 {
     public static readonly StyledProperty<Graph?> GraphProperty =
         AvaloniaProperty.Register<GraphView, Graph?>(nameof(Graph));
 
     public static readonly StyledProperty<int?> MarkedIndexProperty =
         AvaloniaProperty.Register<GraphView, int?>(nameof(MarkedIndex));
+
+    // The view of a category series, bound so that choosing another one draws again.
+    public static readonly StyledProperty<CategoryView?> ViewProperty =
+        AvaloniaProperty.Register<GraphView, CategoryView?>(nameof(View));
 
     private const double FontSize = 11.5;
     private const double TooltipSize = 12.5;
@@ -27,14 +32,15 @@ public sealed class GraphView : Control
     private static readonly double[] TimeSteps = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 18000, 36000];
 
     private int? _hover;
+    private string? _hoverText;
     private GraphColumn[]? _columns;
     private Graph? _columnsGraph;
     private int _columnsWidth;
 
     static GraphView()
     {
-        AffectsRender<GraphView>(GraphProperty, MarkedIndexProperty);
-        FocusableProperty.OverrideDefaultValue<GraphView>(false);
+        AffectsRender<GraphView>(GraphProperty, MarkedIndexProperty, ViewProperty);
+        FocusableProperty.OverrideDefaultValue<GraphView>(true);
     }
 
     public GraphView()
@@ -46,10 +52,19 @@ public sealed class GraphView : Control
 
     public event EventHandler<int>? PointClicked;
 
+    // A click on a legend entry of a category chart, with the category.
+    public event EventHandler<int>? CategoryClicked;
+
     public Graph? Graph
     {
         get => GetValue(GraphProperty);
         set => SetValue(GraphProperty, value);
+    }
+
+    public CategoryView? View
+    {
+        get => GetValue(ViewProperty);
+        set => SetValue(ViewProperty, value);
     }
 
     public int? MarkedIndex
@@ -61,7 +76,7 @@ public sealed class GraphView : Control
     // The point under the pointer and what it shows; exposed for tests.
     public int? HoverIndex => _hover;
 
-    public string? HoverText => _hover is { } index && Graph is { } graph && index < graph.Count ? graph.Describe(index) : null;
+    public string? HoverText => _hoverText ?? (_hover is { } index && Graph is { } graph && index < graph.Count ? graph.Describe(index) : null);
 
     // The point under a position in the control, or null outside the plot. On a line of more points
     // than pixels, the one in that pixel column whose value is nearest the position's height.
@@ -70,6 +85,11 @@ public sealed class GraphView : Control
         if (Graph is not { Count: > 0 } graph)
         {
             return null;
+        }
+
+        if (IsCategory(graph))
+        {
+            return CategoryHitAt(point, withText: false) is { Index: >= 0 } hit ? hit.Index : null;
         }
 
         Layout layout = LayoutFor(graph);
@@ -106,6 +126,12 @@ public sealed class GraphView : Control
         context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
         if (Graph is not { Count: > 0 } graph || Bounds.Width < 80 || Bounds.Height < 60)
         {
+            return;
+        }
+
+        if (IsCategory(graph))
+        {
+            RenderCategory(context, graph);
             return;
         }
 
@@ -157,16 +183,26 @@ public sealed class GraphView : Control
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == GraphProperty)
+        if (change.Property == GraphProperty || change.Property == ViewProperty)
         {
             _hover = null;
+            _hoverText = null;
             _columns = null;
+            _scroll = 0;
+            _categoryColumns.Clear();
+            AutomationProperties.SetName(this, Graph is { } graph ? graph.Title : null);
         }
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
+        if (Graph is { Count: > 0 } graph && IsCategory(graph))
+        {
+            SetCategoryHit(CategoryHitAt(e.GetPosition(this)));
+            return;
+        }
+
         SetHover(IndexAt(e.GetPosition(this)));
     }
 
@@ -174,6 +210,7 @@ public sealed class GraphView : Control
     {
         base.OnPointerExited(e);
         SetHover(null);
+        _hoverText = null;
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -181,6 +218,25 @@ public sealed class GraphView : Control
         base.OnPointerPressed(e);
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
+            return;
+        }
+
+        Focus();
+        if (Graph is { Count: > 0 } graph && IsCategory(graph))
+        {
+            CategoryHit? hit = CategoryHitAt(e.GetPosition(this));
+            SetCategoryHit(hit);
+            if (hit is { IsLegend: true } legend)
+            {
+                CategoryClicked?.Invoke(this, legend.Category);
+                e.Handled = true;
+            }
+            else if (hit is { Index: >= 0 } point)
+            {
+                PointClicked?.Invoke(this, point.Index);
+                e.Handled = true;
+            }
+
             return;
         }
 
@@ -215,9 +271,10 @@ public sealed class GraphView : Control
 
     private void SetHover(int? index)
     {
-        if (_hover != index)
+        if (_hover != index || _hoverText is not null)
         {
             _hover = index;
+            _hoverText = null;
             InvalidateVisual();
         }
     }
@@ -418,6 +475,7 @@ public sealed class GraphView : Control
     private void DrawTooltip(DrawingContext context, string text, Point at, Rect plot)
     {
         FormattedText label = Text(text, TooltipSize, Palette.Foreground(this));
+        label.MaxTextWidth = Math.Max(160, Bounds.Width - 40);
         var size = new Size(label.Width + 16, label.Height + 8);
         double x = at.X + 12 + size.Width <= Bounds.Width - 2 ? at.X + 12 : at.X - 12 - size.Width;
         double y = Math.Clamp(at.Y - size.Height - 8, 2, Math.Max(2, plot.Bottom - size.Height));

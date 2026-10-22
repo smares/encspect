@@ -186,6 +186,9 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Opacity" Value="0.7" />
   </Style>
+  <Style Selector="TextBlock.heading">
+    <Setter Property="FontSize" Value="12" />
+  </Style>
   <Style Selector="Button.chip.selected">
     <Setter Property="Background" Value="{DynamicResource ToggleButtonBackgroundChecked}" />
     <Setter Property="Opacity" Value="1" />

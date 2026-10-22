@@ -41,6 +41,7 @@ public partial class DetailWindow : Window
         };
         TreeList.AddHandler(KeyDownEvent, OnTreeKeyDown, RoutingStrategies.Tunnel);
         Graph.PointClicked += (_, index) => Model.Graphs.Activate(index);
+        Graph.CategoryClicked += (_, category) => Model.Graphs.ActivateCategory(category);
         Topic.LinkActivated += (_, id) => Model.ShowTopic(id);
         model.PropertyChanged += OnModelChanged;
         AnalyzeAsButton.Flyout = CreateFormatMenu();
@@ -190,6 +191,14 @@ public partial class DetailWindow : Window
     private void OnFindingsTab(object? sender, RoutedEventArgs e) => Model.IsGraphsShown = false;
 
     private void OnGraphsTab(object? sender, RoutedEventArgs e) => Model.IsGraphsShown = true;
+
+    private void OnGraphView(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: ViewChoice choice })
+        {
+            Model.Graphs.SelectView(choice.View);
+        }
+    }
 
     private void OnGraphChoice(object? sender, RoutedEventArgs e)
     {

@@ -124,7 +124,7 @@ public class ScreenshotTests
         throw new InvalidOperationException($"No point of {graph.Title} at {index}.");
     }
 
-    private static void Save(Avalonia.Controls.TopLevel window, string name)
+    internal static void Save(Avalonia.Controls.TopLevel window, string name)
     {
         UiPump.Until(() => true);
         AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
