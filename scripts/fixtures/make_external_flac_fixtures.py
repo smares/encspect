@@ -167,9 +167,6 @@ def build_manifest(path, encoder):
         return ogg_manifest(path, data, encoder)
     result = m.manifest(data, 0, len(data), {"regions": [{"name": "FLAC", "offset": 0, "length": len(data)}], "encoder": encoder})
     result["crosscheck"] = {"flac_test": True}
-    if "cuesheet" in path.name:
-        # libFLAC 1.4.3 writes the lead-out as track 170 with the compact disc flag clear, where RFC 9639, section 8.7.1 gives 255: an info finding.
-        result["findings"].append({"code": "flac.cuesheet-invalid"})
     return result
 
 

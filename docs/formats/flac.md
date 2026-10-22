@@ -6,7 +6,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 
 - The `fLaC` marker, then every metadata block by its 4-byte header (type, last-block flag, 24-bit length):
   - STREAMINFO: block sizes, frame sizes, sample rate, channels, bits per sample, total samples and the MD5 of the audio;
-  - PADDING (a nonzero byte is a finding), APPLICATION (the registered ID), SEEKTABLE (every seek point, placeholders, order), CUESHEET (tracks and index points; the lead-out must be track 170 for a compact disc and 255 otherwise, but libFLAC writes 170 with the flag clear, which is an info and not a warning; the reserved bytes of index points must be zero), PICTURE (type, MIME type, description, size and the length of the data, which is not read);
+  - PADDING (a nonzero byte is a finding), APPLICATION (the registered ID), SEEKTABLE (every seek point, placeholders, order), CUESHEET (tracks and index points; the lead-out must be track 170 for a compact disc and 255 otherwise, but flac 1.4.3 writes 170 with the flag clear for a cue sheet imported with `--cuesheet`, so that mismatch is the info `flac.cuesheet-lead-out-medium` and not a warning; the reserved bytes of index points must be zero), PICTURE (type, MIME type, description, size and the length of the data, which is not read);
   - VORBIS_COMMENT, handed to the Vorbis comment tag parser by name (`ParseTag`);
   - reserved types (7 to 126) and the invalid type 127 (`flac.metadata-forbidden-type`).
 - Every frame:
@@ -90,7 +90,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 ## Findings
 
 - Stream: `flac.no-marker`, `flac.no-streaminfo`, `flac.no-frames`, `flac.total-samples-mismatch`, `flac.total-samples-unknown`, `flac.first-sample-not-zero`, `flac.blocking-strategy-changes`, `flac.sample-number-discontinuity`, `flac.data-skipped`, `flac.resync-limit`, `flac.data-after-tag`, `flac.payload-not-analyzed`, `flac.sample-rate-zero`.
-- Metadata: `flac.streaminfo-invalid`, `flac.streaminfo-length`, `flac.streaminfo-misplaced`, `flac.metadata-forbidden-type`, `flac.metadata-no-last-block`, `flac.metadata-truncated`, `flac.metadata-block-repeated`, `flac.metadata-blocks-not-listed`, `flac.padding-not-zero`, `flac.seek-table-length`, `flac.seek-table-unordered`, `flac.seek-table-placeholder`, `flac.cuesheet-invalid`, `flac.cuesheet-reserved`, `flac.picture-invalid`, `flac.comment-not-read`, `flac.comment-trailing-bytes`.
+- Metadata: `flac.streaminfo-invalid`, `flac.streaminfo-length`, `flac.streaminfo-misplaced`, `flac.metadata-forbidden-type`, `flac.metadata-no-last-block`, `flac.metadata-truncated`, `flac.metadata-block-repeated`, `flac.metadata-blocks-not-listed`, `flac.padding-not-zero`, `flac.seek-table-length`, `flac.seek-table-unordered`, `flac.seek-table-placeholder`, `flac.cuesheet-invalid`, `flac.cuesheet-lead-out-medium`, `flac.cuesheet-reserved`, `flac.picture-invalid`, `flac.comment-not-read`, `flac.comment-trailing-bytes`.
 - Frames: `flac.header-crc-mismatch`, `flac.crc16-mismatch`, `flac.frame-cut`, `flac.subframe-invalid`, `flac.padding-bits-set`, `flac.partition-order-too-high`, `flac.residual-out-of-range`, `flac.frame-differs-from-streaminfo`, `flac.block-size-out-of-range`, `flac.frame-size-out-of-range`.
 - Decoding: `flac.md5-mismatch`, `decode.frame-too-large` (a guard: a frame the specification allows cannot reach it).
 - Encoder: `flac.encoder-other-format`, `flac.writer-claim-differs`, `flac.writer-other-format`.

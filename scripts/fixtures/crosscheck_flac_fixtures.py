@@ -14,9 +14,9 @@ For every manifest in tests/fixtures/flac (make_external_flac_fixtures.py, make_
   the codec, the sample rate, the channels, the bit depth and, where STREAMINFO counts them, the duration.
 - MediaInfo 26.01 (mediainfo_tool.py): the audio stream's format, sample rate, channels and, where STREAMINFO counts the samples, duration.
 
-- `flac -a -F` (analyze, continue through errors) lists the offset of every frame flac decodes, which is an independent view of where the frames of
-  even a damaged file are, since flac's resync is its own. For a fixture `flac -t` accepts the offsets must equal the manifest's. For a damaged one
-  flac lists frames whose CRCs fail and loses sync differently, so the frames the manifest calls intact that flac does not list, and the offsets
+- `flac -a -F` (analyze, continue through errors) lists the offset of every frame flac decodes. For a fixture `flac -t` accepts the offsets must equal
+  the manifest's. For a damaged one flac reports its read position after an error and not always a frame start, and loses sync differently, so the notes
+  show where the two readings part and are not evidence of frame starts: the frames the manifest calls intact that flac does not list, and the offsets
   flac lists that the manifest does not, are only printed ("note"), as the places where flac's and Encspect's rules differ (flac takes a header with
   a good CRC-8 for a frame wherever it is, and does not follow a SEEK tag). The manifests of damaged files are decided by the model's reading of
   docs/formats/flac.md, not by a tool (docs/development.md).

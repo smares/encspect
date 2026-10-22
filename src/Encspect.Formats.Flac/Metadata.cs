@@ -352,9 +352,10 @@ internal static class Metadata
         }
         else if (trackCount > 0 && lastNumber != (isCompactDisc ? 170 : 255))
         {
-            // libFLAC writes 170 whatever the flag says, so this is information and not a warning.
-            s.Findings.Add(Severity.Info, "flac.cuesheet-invalid", node, _ =>
-                $"The lead-out track of the cue sheet at 0x{node.Offset:X} is number {lastNumber}, but the compact disc flag is {(isCompactDisc ? "set" : "not set")}, for which the specification gives {(isCompactDisc ? 170 : 255)}.", "lead-out-medium");
+            // flac 1.4.3 writes track 170 with the compact disc flag clear for a cue sheet imported with --cuesheet (the encoder-written fixture), so this
+            // is information and not a warning.
+            s.Findings.Add(Severity.Info, "flac.cuesheet-lead-out-medium", node, _ =>
+                $"The lead-out track of the cue sheet at 0x{node.Offset:X} is number {lastNumber}, but the compact disc flag is {(isCompactDisc ? "set" : "not set")}, for which the specification gives {(isCompactDisc ? 170 : 255)}.");
         }
         else if (trackCount == 0)
         {

@@ -28,6 +28,8 @@ public class DecodeRouteTests
 
         public List<long> FirstSamples { get; } = [];
 
+        public List<bool> Gaps { get; } = [];
+
         public int Opens { get; private set; }
 
         public string Id => id;
@@ -44,6 +46,7 @@ public class DecodeRouteTests
             public int Decode(in CodedFrame frame)
             {
                 owner.FirstSamples.Add(frame.FirstSample);
+                owner.Gaps.Add(frame.FollowsGap);
                 return owner.OnDecode is { } decode ? decode(frame) : frame.Samples;
             }
 
@@ -458,6 +461,7 @@ public class DecodeRouteTests
         Report report = Analyze(parser, [decoder], Verify);
 
         Assert.Equal([0, 100, 300], decoder.FirstSamples);
+        Assert.Equal([false, false, true], decoder.Gaps);
         Assert.Equal(new DecodeEnd(false, 1), Assert.Single(decoder.Ends));
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal));
         StreamVerification verification = Assert.Single(report.Streams).Verification!;

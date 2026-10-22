@@ -478,6 +478,8 @@ class Stream:
                 return p
             body_end = p + 4 + length
             self.blocks.append({"offset": p, "length": 4 + min(length, end - p - 4), "type": kind, "last": last, "body": length})
+            if kind == 5 and body_end <= end:
+                self._cuesheet(data[p + 4:body_end])
             if kind == 0 and index == 0 and length >= 34 and p + 38 <= end:
                 self.info = streaminfo(data[p + 4:p + 38])
             if body_end > end:
@@ -490,6 +492,23 @@ class Stream:
         if self.info is None:
             self.finding("flac.no-streaminfo")
         return p
+
+    def _cuesheet(self, body):
+        """RFC 9639, section 8.7: the lead-out is the last track, 170 for a compact disc and 255 otherwise. Only a cue sheet whose tracks fill the block is
+        judged; the number is information when it is the other medium's."""
+        if len(body) < 396:
+            return
+        compact_disc = bool(body[136] & 0x80)
+        tracks, at, last = body[395], 396, None
+        for _ in range(tracks):
+            if at + 36 > len(body):
+                return
+            last = body[at + 8]
+            at += 36 + 12 * body[at + 35]
+            if at > len(body):
+                return
+        if at == len(body) and tracks and last in (170, 255) and last != (170 if compact_disc else 255):
+            self.finding("flac.cuesheet-lead-out-medium")
 
     def _frames(self, p):
         data, end = self.data, self.end
