@@ -1,4 +1,7 @@
 using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Styling;
@@ -121,5 +124,79 @@ public class MpegGraphsTests
         ScreenshotTests.Save(layer2, $"mpeg-layer2-coding-summary-{variant}.png");
         layer2.Close();
         Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
+    }
+}
+
+// The layout rules the review of the MPEG step found wanting: the summary table's columns, the legends, the list and the last interval.
+public class MpegGraphLayoutTests
+{
+    [AvaloniaFact]
+    public void The_count_and_the_share_of_a_summary_row_are_at_least_12_pixels_apart_whatever_the_count()
+    {
+        (double share, double count) = GraphView.SummaryColumns([231, 12_345, 3], 14);
+        double widest = new FormattedText("100.0%", System.Globalization.CultureInfo.InvariantCulture, Avalonia.Media.FlowDirection.LeftToRight, Avalonia.Media.Typeface.Default, 14, Avalonia.Media.Brushes.Black).Width;
+        double digits = new FormattedText("12,345", System.Globalization.CultureInfo.InvariantCulture, Avalonia.Media.FlowDirection.LeftToRight, Avalonia.Media.Typeface.Default, 14, Avalonia.Media.Brushes.Black).Width;
+
+        // The share is right-aligned in its column and the count ends where the column starts, so the gap is the column less the text.
+        Assert.True(share - widest >= 12, $"The gap after the count is {share - widest}.");
+        Assert.True(count - digits >= 12, $"The count column leaves {count - digits} for the name.");
+    }
+
+    [AvaloniaFact]
+    public void A_legend_of_a_chart_leaves_out_the_categories_that_do_not_occur()
+    {
+        DetailWindow window = Open(Fixtures.Mpeg("external-lame-joint-music.mp3"));
+        window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == "Stereo Coding");
+        window.Model.Graphs.SelectForm(GraphForm.OverTime);
+
+        List<(string Label, int Category)> entries = GraphView.LegendEntries(window.Model.Graphs.Graph!);
+
+        Assert.Equal([0, 1], entries.Select(e => e.Category));
+        Assert.All(entries, e => Assert.DoesNotContain("0.0%", e.Label, StringComparison.Ordinal));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void The_selected_entry_of_the_list_is_scrolled_into_view()
+    {
+        DetailWindow window = Open(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), 1180, 700);
+
+        window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == "Channel Modes");
+        UiPump.Until(() => true);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+
+        Button button = window.GraphChoices.GetVisualDescendants().OfType<Button>().Single(b => ReferenceEquals(b.DataContext, window.Model.Graphs.Selected));
+        double top = button.TranslatePoint(new Point(0, 0), window.GraphList)!.Value.Y;
+        double bottom = top + button.Bounds.Height;
+        Assert.True(top >= -1 && bottom <= window.GraphList.Bounds.Height + 1, $"The entry is at {top} to {bottom} of a list {window.GraphList.Bounds.Height} high.");
+        window.Close();
+    }
+
+    [Fact]
+    public void A_last_interval_that_lasts_a_quarter_of_a_second_takes_a_quarter_of_the_width()
+    {
+        GraphView.Slots slots = GraphView.SlotsOf(new Rect(10, 0, 225, 100), 3, [0, 1, 2], 2.25);
+
+        Assert.Equal(100, slots.W(0), 6);
+        Assert.Equal(25, slots.W(2), 6);
+        Assert.Equal(210, slots.X(2), 6);
+        Assert.Equal(2, slots.At(230));
+        Assert.Equal(1, slots.At(205));
+
+        // A stream that ends on a whole second, or columns that merge intervals, are equal.
+        Assert.Equal(75, GraphView.SlotsOf(new Rect(0, 0, 225, 100), 3, [0, 1, 2], 3).W(2), 6);
+        Assert.Equal(75, GraphView.SlotsOf(new Rect(0, 0, 225, 100), 3, [0, 1, 2, 3, 4], 4.25).W(2), 6);
+    }
+
+    private static DetailWindow Open(string fixture, double width = 1180, double height = 800)
+    {
+        var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = width, Height = height };
+        window.Show();
+        Task load = window.Model.LoadAsync(fixture);
+        UiPump.Until(() => load.IsCompleted);
+        window.Model.IsGraphsShown = true;
+        UiPump.Until(() => true);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+        return window;
     }
 }
