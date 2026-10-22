@@ -369,7 +369,7 @@ StreamVerification verification = decoding.Finish(
 [
     new ChecksumTally { Name = ChecksumNames.HeaderCrc8, Covers = ChecksumCoverage.Header, Stored = frames, Checked = frames, Failed = headerCrcFailures },
     // A per-frame checksum covers all audio only where no frame is missing: no gap, and the samples STREAMINFO counts.
-    new ChecksumTally { Name = ChecksumNames.FrameCrc16, Covers = ChecksumCoverage.CodedData, CoversAllAudio = !hasGap && samplesMatchStreamInfo, Stored = frames, Checked = wholeFrames, Failed = frameCrcFailures },
+    new ChecksumTally { Name = ChecksumNames.FrameCrc16, Covers = ChecksumCoverage.CodedData, CoversAllAudio = !hasGap && samplesMatchStated, Stored = frames, Checked = wholeFrames, Failed = frameCrcFailures },
     new ChecksumTally { Name = ChecksumNames.StreamInfoMd5, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = md5IsZero ? 0 : 1 },
 ]);
 context.AddStream(stream with { Verification = verification });
@@ -824,7 +824,7 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
   - FFmpeg's log reports the lossless check (with `-downmix` for the lower presentations);
   - `wvunpack` reports the CRC errors and the MD5.
 - **Monkey's Audio insane level:** a fixture from the SDK at its insane level, whose frames hold 1,179,648 samples per channel.
-- **TrueHD:** FFmpeg's MLP and TrueHD encoder is experimental (`mlpenc.c` 2304, 2325) and writes one substream for MLP and at most two for TrueHD (`mlpenc.c` 589). Three presentations, Dolby Atmos and real encoders' output therefore need real files, downloaded at pinned SHA-256 and never committed, as for DTS-HD and E-AC-3.
+- **TrueHD:** FFmpeg's MLP and TrueHD encoder is experimental (`mlpenc.c` 2304, 2325) and writes one substream for MLP and at most two for TrueHD (`mlpenc.c` 589). Three presentations, Dolby Atmos and real encoders' output therefore need real files, downloaded at pinned SHA-256 and never committed, as for DTS-HD and E-AC-3. FFmpeg's encoder always writes the substream parity and CRC-8 (`mlpenc.c` 1073-1080); no source says whether Dolby's encoders do, so the real-file check records how often each substream carries them, since a TrueHD stream without them is never verified.
 
 ### Reference decoders
 
