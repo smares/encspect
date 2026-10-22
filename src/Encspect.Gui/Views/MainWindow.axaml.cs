@@ -107,6 +107,8 @@ public partial class MainWindow : Window
         }
     }
 
+    internal const string OpenFolderTitle = "Open Folder";
+    internal const string OpenFilesTitle = "Open Files";
     private const double NameWidth = 260;
     private const double SeverityDot = 8;
     private const double CountGap = 4;
@@ -289,7 +291,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            IReadOnlyList<IStorageFolder> folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Open Folder", AllowMultiple = false });
+            IReadOnlyList<IStorageFolder> folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = OpenFolderTitle, AllowMultiple = false });
             if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path)
             {
                 Model.Open(FileSource.ForFolder(path));
@@ -305,7 +307,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Open Files", AllowMultiple = true });
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = OpenFilesTitle, AllowMultiple = true });
             OpenItems(files.Select(f => f.TryGetLocalPath()).OfType<string>().ToList());
         }
         catch (Exception ex) when (UnhandledErrors.IsRecoverable(ex))

@@ -78,7 +78,7 @@ public sealed class TopicView : ContentControl
                 panel.Children.Add(new SelectableTextBlock { Text = string.Join("; ", topic.References), TextWrapping = TextWrapping.Wrap, Classes = { "secondary" } });
             }
 
-            TextBlock all = Link("All topics", null);
+            TextBlock all = Link("All Topics", null);
             all.Margin = new Thickness(0, 6, 0, 0);
             panel.Children.Add(all);
         }
@@ -159,5 +159,5 @@ public sealed class TopicView : ContentControl
         return link;
     }
 
-    private static TextBlock Caption(string text) => new() { Text = text, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 6, 0, -4) };
+    private static TextBlock Caption(string text) => new() { Text = text, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 6, 0, -4), Classes = { "caption" } };
 }

@@ -215,7 +215,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         }
     }
 
-    public string? LearnMoreText => SelectionTopic is { } topic ? $"Learn more: {topic.Title}" : null;
+    public string? LearnMoreText => SelectionTopic is { } topic ? $"Learn More: {topic.Title}" : null;
 
     // The side pane with a background article, or with the list of topics while ShownTopic is
     // null. Closed by default; the window remembers whether it was open.

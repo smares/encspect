@@ -37,7 +37,7 @@ Columns sort by the figures behind them, so durations and bitrates sort as numbe
 - **Analysis:**
   - Files are analyzed in the background, a few at a time, and rows fill in as they are done. A list sorted by a column sorts again as they do, keeping the selected row.
   - Stop cancels, and choosing another folder cancels the run before it.
-  - "Include subfolders" walks the whole tree as the CLI does.
+  - "Include Subfolders" walks the whole tree as the CLI does.
   - Rows keep a file's summary, not its report.
 
 ## Summary cache
@@ -74,12 +74,12 @@ Only the other files are analyzed.
   - a hex view read from the file as it scrolls. Selecting a node marks its bytes, all its ranges where they are not contiguous, and, for a field of a few bits, the bits themselves, also in the bit strip below.
 - **Explanations:**
   - Every row's tooltip says what the field is and what its value means.
-  - The panel under the hex view shows that for the selected node, with a "Learn more" link to a background article on the concept behind it, such as mid/side stereo or the bit reservoir.
+  - The panel under the hex view shows that for the selected node, with a "Learn More" link to a background article on the concept behind it, such as mid/side stereo or the bit reservoir.
   - Articles open in a side pane, closed by default, whose links lead to related articles. Topics (F1) opens it on the selected node's article, or on the list of all of them.
   - The column headers of the file list, the streams line and the graphs' choices explain what they show too.
 - **Format:**
   - Where other formats also match with real evidence, the header says "Also matches:" and offers one button per format (its tooltip gives the evidence). Choosing one analyzes the file again as that format.
-  - "Analyze as…" in the header lists every format, and "Detect automatically", for a file whose format is not detected or detected wrongly. On macOS the same list is File, Analyze As.
+  - "Analyze as…" in the header lists every format, and "Detect Automatically", for a file whose format is not detected or detected wrongly. On macOS the same list is File, Analyze as.
   - A forced analysis says so in the header, with the format detection would have chosen. The choice stays while the window shows the file, through a refresh, and is dropped when another file is shown.
   - Forced analyses happen only in the detail window, which never uses the summary cache, so a forced result never reaches the file list or the cache.
 - **Verification:**
@@ -149,6 +149,13 @@ Colors and text:
 
 ## Look and platform
 
+- **Capitalization:**
+  - Labels that name something (menus and their items, buttons, checkboxes, tabs, column and section headings, list entries, view names, window and dialog titles) are in Title Case.
+  - Short function words stay lowercase unless they come first: a, an, the, and, or, of, in, on, for, to, as, by, at, with, from ("Written by", "Analyze as…").
+  - Values, messages, hover text, descriptions, status-bar text and captions are in sentence case.
+  - Text from the analysis (node names, values, findings, article titles) and product or spec names keep their own spelling.
+  - A trailing ellipsis (…) marks a command that asks for more input.
+  - `CapitalizationTests` walks the menus, buttons, checkboxes and tabs of the main and detail windows.
 - Light and dark mode, the accent color and the UI font follow the system.
 - The file dialogs are the system's (on Linux, the desktop portal's; see "Linux: X11 and Wayland").
 - On macOS the menus are in the menu bar; the About item is in the application menu.

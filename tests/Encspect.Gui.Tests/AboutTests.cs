@@ -115,7 +115,7 @@ public sealed class AboutTests
         string text = notices.Box.Text!;
         Assert.StartsWith("# Third-party notices", text);
         Assert.Contains("HarfBuzz", text);
-        Assert.Equal("Third-party notices", Avalonia.Automation.AutomationProperties.GetName(notices.Box));
+        Assert.Equal("Third-Party Notices", Avalonia.Automation.AutomationProperties.GetName(notices.Box));
         Assert.Equal(File.ReadAllText(Path.Combine(RepositoryRoot(), "THIRD-PARTY-NOTICES.md")).ReplaceLineEndings("\n"), text.ReplaceLineEndings("\n"));
 
         notices.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
