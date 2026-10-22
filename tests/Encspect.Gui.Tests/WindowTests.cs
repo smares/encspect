@@ -438,7 +438,7 @@ public sealed class WindowTests : IDisposable
         var menu = Assert.IsType<Avalonia.Controls.MenuFlyout>(window.AnalyzeAsButton.Flyout);
         menu.ShowAt(window.AnalyzeAsButton);
         string[] headers = [.. menu.Items.OfType<MenuItem>().Select(i => (string)i.Header!)];
-        Assert.Equal(["Detect automatically", .. window.Model.FormatNames], headers);
+        Assert.Equal(["Detect Automatically", .. window.Model.FormatNames], headers);
         MenuItem dts = menu.Items.OfType<MenuItem>().Single(i => (string?)i.Header == "DTS");
         dts.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         UiPump.Until(() => window.Model.ForcedFormat == "DTS" && window.Model.Report is { Detection.Format: "DTS" });

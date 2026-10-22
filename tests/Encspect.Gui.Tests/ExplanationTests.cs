@@ -59,13 +59,13 @@ public sealed class ExplanationTests : IDisposable
         Assert.True(window.SelectionDescription.IsVisible);
         Assert.Equal(field.Node.Description, window.SelectionDescription.Text);
         Assert.True(window.LearnMore.IsVisible);
-        Assert.Equal("Learn more: Mid/side stereo", window.LearnMore.Text);
+        Assert.Equal("Learn More: Mid/side stereo", window.LearnMore.Text);
 
         // A node without a topic of its own leads to its nearest ancestor's.
         TreeRow emphasis = Below(window, field.Parent!).First(r => r.Name == "IsPrivate");
         window.Model.SelectedNode = emphasis;
         Assert.Null(emphasis.Node.Topic);
-        Assert.Equal("Learn more: The MPEG audio frame header", window.Model.LearnMoreText);
+        Assert.Equal("Learn More: The MPEG audio frame header", window.Model.LearnMoreText);
         window.Close();
     }
 

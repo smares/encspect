@@ -35,7 +35,7 @@ public sealed class NoticesWindow : Window
             FontSize = 12,
         };
         Box = text;
-        Avalonia.Automation.AutomationProperties.SetName(text, "Third-party notices");
+        Avalonia.Automation.AutomationProperties.SetName(text, "Third-Party Notices");
         text.Bind(FontFamilyProperty, text.GetResourceObservable("MonospaceFontFamily"));
         ScrollViewer.SetHorizontalScrollBarVisibility(text, Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
         ScrollViewer.SetVerticalScrollBarVisibility(text, Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);

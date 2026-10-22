@@ -36,6 +36,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 - Booleans that appear in the GUI or in JSON output read as booleans (`IsVbr`, `HasLameTag`), not as nouns.
 - Stereo and channel terms are written out in output, messages and docs: mid/side, intensity stereo, left/right, never MS, IS or LR. Spec acronyms such as CRC, VBR, CBR, ABR, TOC, ATH, LFE and SCFSI stay abbreviated.
 - One concept, one name: a format, profile, field or mechanism is named and worded the same way everywhere it appears (stream info, node names and values, findings, descriptions, articles, docs and the plan). Check how the reference tools (FFmpeg, MediaInfo) name things, but follow the project's own wording, written out where it is in other formats; map their strings in the cross-checks instead of copying them.
+- GUI labels that name something (menus, buttons, checkboxes, tabs, column and section headings, list entries, view names, window and dialog titles) are in Title Case, with short function words (a, an, the, and, or, of, in, on, for, to, as, by, at, with, from) lowercase unless first; values, messages, hover text, descriptions and captions are in sentence case. Text from the analysis and product or spec names keep their own spelling. `CapitalizationTests` enforces it.
 - American English everywhere, including comments, docs and prose (-ize, not -ise). Write "ID" capitalized in comments when it means the word.
 
 ## Documentation
