@@ -61,6 +61,8 @@ public partial class DescriptionTests
             Check(series.Description, $"series {series.Name}", problems);
         }
 
+        CheckCategorySeries(report, problems);
+
         Assert.True(problems.Count == 0, $"{name}:\n" + string.Join("\n", problems.Distinct().Take(40)));
 
         void Walk(Node node, string path, int depth, List<string> found)
@@ -215,6 +217,48 @@ public partial class DescriptionTests
             topic.Blocks[0].Inlines);
         Assert.True(topic.Blocks[1].IsListItem);
         Assert.Equal("six seven", Assert.Single(topic.Blocks[1].Inlines).Text);
+    }
+
+    private static void CheckCategorySeries(Report report, List<string> problems)
+    {
+        foreach (CategorySeries series in report.Streams.SelectMany(s => s.CategorySeries))
+        {
+            Check(series.Description, $"category series {series.Name}", problems);
+            CheckTopic(series.Topic, $"category series {series.Name}", problems);
+            foreach (Category category in series.Categories)
+            {
+                Check(category.Description, $"category {category.Name} of {series.Name}", problems);
+                CheckTopic(category.Topic, $"category {category.Name} of {series.Name}", problems);
+            }
+        }
+    }
+
+    [Fact]
+    public void CategorySeriesAndTheirCategoriesAreDescribed()
+    {
+        var builder = new CategorySeriesBuilder("Modes", [new("A", "Described."), new("B", "") { Topic = "no-such-topic" }], "frame", 1);
+        builder.Add(0);
+        CategorySeries bad = builder.Build(new double[1], null, null, "no period");
+        Report report = new("a.bin", new Node("File", 0, 1), [], [new StreamInfo { Nodes = [], Codec = "Test", CategorySeries = [bad] }]);
+        var problems = new List<string>();
+
+        CheckCategorySeries(report, problems);
+
+        Assert.Equal(
+            [
+                "category series Modes: description ends with neither a period nor a closing parenthesis: \"no period\"",
+                "category B of Modes: no description",
+                "category B of Modes: topic \"no-such-topic\" does not exist",
+            ],
+            problems);
+    }
+
+    private static void CheckTopic(string? topic, string where, List<string> problems)
+    {
+        if (topic is not null && TopicLibrary.Find(topic) is null)
+        {
+            problems.Add($"{where}: topic \"{topic}\" does not exist");
+        }
     }
 
     private static void Check(string? description, string where, List<string> problems)

@@ -13,7 +13,10 @@ namespace Encspect.Host;
 // the format that ran, its evidence, whether it was forced, the format detection would have chosen
 // then, and the alternatives with their evidence (class, offset, frames, verifiedFrames, note). A stream of a coding that
 // stores checksums has verification after protection: isVerified (where known), isLossy (where true), decoding,
-// decodedSamples and checksums (name, covers, coversAllAudio, stored, checked, failed).
+// decodedSamples and checksums (name, covers, coversAllAudio, stored, checked, failed). A stream with category series
+// has categorySeries after series (name, concept, valueLabel, valuesPerUnit, valueNames, categories with their counts,
+// total, uncodedValues, xSeries or x, runs of [code, length], valueCounts, weights, seconds, or groupOf and map for a
+// grouping); a series, numeric or category, that belongs to a shared concept also has concept.
 public static class ReportJsonWriter
 {
     // Raised whenever a field changes meaning or type, or one is removed; added fields keep it.
@@ -350,6 +353,11 @@ public static class ReportJsonWriter
             writer.WriteString("name", series.Name);
             writer.WriteString("unit", series.Unit);
             writer.WriteString("axis", series.Axis == SeriesAxis.FrameOffset ? "frameOffset" : "seconds");
+            if (series.Concept != GraphConcept.None)
+            {
+                writer.WriteString("concept", ConceptName(series.Concept));
+            }
+
             if (explain && series.Description is { } description)
             {
                 writer.WriteString("description", description);
@@ -361,7 +369,231 @@ public static class ReportJsonWriter
         }
 
         writer.WriteEndArray();
+        if (stream.CategorySeries.Count > 0)
+        {
+            writer.WriteStartArray("categorySeries");
+            foreach (CategorySeries series in stream.CategorySeries)
+            {
+                WriteCategorySeries(writer, series, explain);
+            }
+
+            writer.WriteEndArray();
+        }
+
         writer.WriteEndObject();
+    }
+
+    private static string ConceptName(GraphConcept concept) => concept switch
+    {
+        GraphConcept.StereoCoding => "stereoCoding",
+        GraphConcept.BlockSwitching => "blockSwitching",
+        GraphConcept.CodedBandwidth => "codedBandwidth",
+        GraphConcept.BitDistribution => "bitDistribution",
+        _ => throw new ArgumentOutOfRangeException(nameof(concept)),
+    };
+
+    private static void WriteCategorySeries(Utf8JsonWriter writer, CategorySeries series, bool explain)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("name", series.Name);
+        if (series.Concept != GraphConcept.None)
+        {
+            writer.WriteString("concept", ConceptName(series.Concept));
+        }
+
+        writer.WriteString("valueLabel", series.ValueLabel);
+        if (series.ValuesPerUnit > 1)
+        {
+            writer.WriteNumber("valuesPerUnit", series.ValuesPerUnit);
+        }
+
+        if (series.ValuesPerUnit > 1 && series.ValueNames.Count > 0)
+        {
+            writer.WriteStartArray("valueNames");
+            foreach (string name in series.ValueNames)
+            {
+                writer.WriteStringValue(name);
+            }
+
+            writer.WriteEndArray();
+        }
+
+        if (explain)
+        {
+            writer.WriteString("description", series.Description);
+            if (series.Topic is { } topic)
+            {
+                writer.WriteString("topic", topic);
+            }
+        }
+
+        writer.WriteStartArray("categories");
+        for (int i = 0; i < series.Categories.Count; i++)
+        {
+            Category category = series.Categories[i];
+            writer.WriteStartObject();
+            writer.WriteString("name", category.Name);
+            writer.WriteNumber("count", series.Counts[i]);
+            if (explain)
+            {
+                writer.WriteString("description", category.Description);
+                if (category.Topic is { } categoryTopic)
+                {
+                    writer.WriteString("topic", categoryTopic);
+                }
+            }
+
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
+        writer.WriteNumber("total", series.Total);
+        if (series.UncodedValues > 0)
+        {
+            writer.WriteNumber("uncodedValues", series.UncodedValues);
+        }
+
+        if (series.XSeries is { } xSeries)
+        {
+            writer.WriteString("xSeries", xSeries.Name);
+        }
+        else
+        {
+            WriteNumbers(writer, "x", series.X.Span);
+        }
+
+        if (series.Source is { } source)
+        {
+            writer.WriteString("groupOf", source.Name);
+            writer.WriteStartArray("map");
+            foreach (byte code in series.Map)
+            {
+                if (code == CategorySeries.None)
+                {
+                    writer.WriteNullValue();
+                }
+                else
+                {
+                    writer.WriteNumberValue(code);
+                }
+            }
+
+            writer.WriteEndArray();
+        }
+        else
+        {
+            WriteRuns(writer, series);
+        }
+
+        if (series.Time is { } time)
+        {
+            WriteIntegers(writer, "seconds", time.FirstUnits.Span);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    // The coded values value by value within each unit and unit by unit as runs of [code, length], null for a value
+    // without a category; a variable layout's number of values per unit as runs of [count, units]; weights as runs of
+    // [weight, length] where any is not 1.
+    private static void WriteRuns(Utf8JsonWriter writer, CategorySeries series)
+    {
+        Span<byte> codes = stackalloc byte[CategorySeries.MaxValuesPerUnit];
+        Span<byte> weights = stackalloc byte[CategorySeries.MaxValuesPerUnit];
+
+        if (series.ValuesPerUnit == 0)
+        {
+            writer.WriteStartArray("valueCounts");
+            var counts = new Runs(writer);
+            CategorySeries.UnitReader reader = series.Reader();
+            int n;
+            while ((n = reader.Next(codes)) >= 0)
+            {
+                counts.Add(n);
+            }
+
+            counts.End();
+            writer.WriteEndArray();
+        }
+
+        writer.WriteStartArray("runs");
+        var runs = new Runs(writer, CategorySeries.None);
+        CategorySeries.UnitReader values = series.Reader();
+        int count;
+        while ((count = values.Next(codes)) >= 0)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                runs.Add(codes[i]);
+            }
+        }
+
+        runs.End();
+        writer.WriteEndArray();
+
+        if (series.HasWeights)
+        {
+            writer.WriteStartArray("weights");
+            var weightRuns = new Runs(writer);
+            CategorySeries.UnitReader reader = series.Reader();
+            while ((count = reader.Next(codes, weights)) >= 0)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    weightRuns.Add(weights[i]);
+                }
+            }
+
+            weightRuns.End();
+            writer.WriteEndArray();
+        }
+    }
+
+    // Writes a sequence of integers as [value, length] pairs; nullValue, the code of a value without a category, is
+    // written as null.
+    private struct Runs(Utf8JsonWriter writer, int nullValue = -1)
+    {
+        private int _value = -1;
+        private long _length;
+
+        public void Add(int value)
+        {
+            if (value == _value)
+            {
+                _length++;
+                return;
+            }
+
+            End();
+            _value = value;
+            _length = 1;
+        }
+
+        public void End()
+        {
+            if (_length == 0)
+            {
+                return;
+            }
+
+            writer.WriteStartArray();
+            if (_value == nullValue)
+            {
+                writer.WriteNullValue();
+            }
+            else
+            {
+                writer.WriteNumberValue(_value);
+            }
+
+            writer.WriteNumberValue(_length);
+            writer.WriteEndArray();
+            _length = 0;
+            if (writer.BytesPending > FlushThreshold)
+            {
+                writer.Flush();
+            }
+        }
     }
 
     private static void WriteVerification(Utf8JsonWriter writer, StreamVerification verification)
@@ -408,6 +640,21 @@ public static class ReportJsonWriter
     {
         writer.WriteStartArray(name);
         foreach (double value in values)
+        {
+            writer.WriteNumberValue(value);
+            if (writer.BytesPending > FlushThreshold)
+            {
+                writer.Flush();
+            }
+        }
+
+        writer.WriteEndArray();
+    }
+
+    private static void WriteIntegers(Utf8JsonWriter writer, string name, ReadOnlySpan<int> values)
+    {
+        writer.WriteStartArray(name);
+        foreach (int value in values)
         {
             writer.WriteNumberValue(value);
             if (writer.BytesPending > FlushThreshold)
