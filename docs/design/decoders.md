@@ -77,31 +77,67 @@ The earlier draft limited a decoder to a `Syntax` namespace of its parser, to ke
 
 ### How a test enforces it
 
-`DecodingBoundaryTests` reads each format assembly's metadata with `System.Reflection.Metadata`, which is part of .NET and needs no package:
+`DecodingBoundaryTests` reads each format assembly's metadata with `System.Reflection.Metadata`, which is part of .NET and needs no package.
 
-- For every type outside a `.Decoding` namespace (a nested type counts as the namespace of the type that declares it), it collects every type the type touches:
-  - its base type, interfaces, generic constraints and custom attributes;
-  - the signatures of its fields, methods and properties;
-  - the local variable signatures and every token in the IL of its method bodies (`call`, `newobj`, `ldfld`, `ldtoken`, `castclass` and the rest), with type specifications, member references and method specifications decoded to the types they name.
-- It fails on any of them that lies in a `.Decoding` namespace, naming the type, the method and the decoding type.
-- A negative control proves that it works: the test project holds a small type pair, `Encspect.Tests.BoundarySamples.Parser` that calls `Encspect.Tests.BoundarySamples.Decoding.Sample` through a lambda, and the check run over the test assembly must report it.
+**Which assemblies.** The assemblies of the format and codec parsers the host lists (`DefaultParsers.Formats` and `DefaultParsers.Codecs`), so a new format project is covered without a change to the test.
 
-Why the IL and not the source:
+**Which types are decoding code.** A type is decoding code where its namespace has `Decoding` as a whole segment (`X.Decoding` and `X.Decoding.Y`, not `X.DecodingTables`). A nested type has no namespace of its own, so it takes the namespace of the outermost type that declares it. The same rule classifies both sides of every reference:
+
+- the referencing side, so the display classes, iterator and async state machines and local functions the compiler nests in a parser type count as parser code;
+- the referenced side, so `Decoding.FlacDecoder.State` counts as decoding code.
+
+**What it reads.** For every type that is parser code, every type and member it touches:
+
+- its base type, interfaces, and the constraints of its generic parameters and of its methods' generic parameters;
+- the signatures of its fields, methods, properties and events, with `modreq` and `modopt` modifiers;
+- in each method body:
+  - the local variable signature;
+  - every token in the IL (`call`, `callvirt`, `newobj`, `ldftn`, `ldfld`, `stsfld`, `ldtoken`, `castclass`, `calli` and the rest);
+  - the catch types of the exception regions, which a `catch` without a variable leaves nowhere else.
+- the custom attributes on the type, its members, their parameters and return values, and its generic parameters, with their blobs decoded (`CustomAttribute.DecodeValue`) so that `typeof(…)` arguments and enum arguments, which the blob holds as type names, are resolved. The assembly's and the module's attributes are read once per assembly, since they belong to no type.
+
+**How tokens resolve.**
+
+- A TypeDef is classified by the rule above.
+- A MethodDef or FieldDef is classified by its declaring type. Inside one assembly the compiler emits these, not member references, for calls, delegates and field accesses on non-generic types: direct calls, `using static` calls, extension methods and method groups all take this path.
+- A TypeSpec, MemberRef (on a TypeSpec parent), MethodSpec and StandAloneSig (`calli`, function pointers) are decoded to every type they name, generic arguments included.
+
+**What fails.** Any resolved type that is decoding code, named with the parser type, the method and the decoding type. And, to close the indirect path below, any `Decoding` type that derives from or implements a type of its own project that is not decoding code: a decoder implements `Core.Abstractions` contracts and .NET types only, so a parser cannot call into it through an abstract type or interface of its own.
+
+**The negative control.** The test project holds one sample per path, each a parser-side type in `Encspect.Tests.BoundarySamples` that reaches a type in `Encspect.Tests.BoundarySamples.Decoding`:
+
+- a static call, a field, a constructor, a nested `Decoding` type;
+- `List<Decoding.X>`, a member of `Decoding.G<int>`, `M<Decoding.X>()`;
+- `typeof`, a method group as a delegate, a function pointer, `catch (Decoding.E)`;
+- an attribute with `typeof(Decoding.X)`, a `using static` call, a default interface method's body;
+- an iterator, an async method, a local function;
+- a `Decoding` type that implements a parser-side interface.
+
+The check run over the test assembly must report exactly these pairs, no more and no fewer: other test classes reference `Encspect.Formats.*.Decoding` types on purpose, and the IL walker is hand-written (`System.Reflection.Metadata` has no IL reader), so an operand-size mistake that skips tokens shows up as a missing pair.
+
+Why the compiled assembly and not the source:
 
 - A source scan for `using …Decoding` misses fully qualified names, `global using`, `<Using>` items in a project file, aliases and code in the same namespace as a partial type.
 - Roslyn's semantic model would be exact, but it brings a large package into the tests for one check.
-- The compiled assembly is what runs: whatever path a reference takes in the source, it ends as a token in the metadata or the IL, where the check reads it.
+- The compiled assembly is what runs: whatever path a reference takes in the source, it ends as a token or a type name in the metadata or the IL, where the check reads it.
+
+**What no metadata check sees,** so reviews hold these as rules and the test is no proof of them:
+
+- `const` fields and enum members of `Decoding` types used in parser code, which the compiler inlines as literals, and `nameof(…)`, which becomes a string;
+- reflection by name, such as `Type.GetType("…Decoding…")`;
+- a delegate or a static field of parser code that decoding code sets, through which parser code would call decoding code without naming it.
 
 ### Optional, and how the host finds decoders
 
 - The host references every format project already, so it lists the decoders itself: `DefaultParsers.Decoders` holds `new Encspect.Formats.Flac.Decoding.FlacDecoder()` and the others, next to `Codecs`. The parser is never asked for its decoder and does not know one exists.
+- A decoder class is public, as the parser classes the host constructs are (`new Mp4Parser()`); the parser internals it calls stay internal.
 - A decoder implements `IDecoder` (below), whose `Id` is the codec ID the parsers route by: `flac`, `monkeys-audio`, `wavpack`, `truehd`, `mlp`, and later `alac`, `tta`, `wma-lossless`, `pcm`.
 - A raw format parser uses the same ID for its coding: the FLAC format parser and the FLAC codec parser that Ogg, MP4 and Matroska reach both start sessions with `flac`.
 - `Analyzer` gets a constructor that takes the decoders after the codec parsers; `Analyzer.CreateDefault()` passes `DefaultParsers.Decoders`. Two decoders with one ID are an `ArgumentException`, as two codec parsers are.
 - Decoders stay optional where it counts, at run time:
   - An analyzer built without decoders, by the host or by a third party, works as today: every session reports `NoDecoder`, and the structure report is the same.
   - No parser depends on a decoder, which the boundary test holds.
-- What is lost is leaving the decoding code out of a build: it ships in the format's assembly.
+- What is lost is leaving the decoding code out of the default build: it ships in the format's assembly. A program that publishes trimmed and never refers to the decoders still has them trimmed away.
 
 The rules need lines in `CLAUDE.md` and the plan; they are proposed under [Rollout](#rollout) and land with the contract pull request.
 
@@ -230,6 +266,10 @@ public sealed record DecodeSetup
 
     // The WAVEFORMATEX a container states (ASF's WMA Lossless, WAV's PCM), or null.
     public AudioFormat? Format { get; init; }
+
+    // True where the stream's decoded audio is a lossy coding's output (a WavPack hybrid file without its correction
+    // file); the host copies it into StreamVerification.IsLossy.
+    public bool IsLossy { get; init; }
 }
 
 // The unit the coding decodes one at a time, as the parser read it: a frame, a block or an access unit; a packet where
@@ -430,7 +470,7 @@ WavPack:
 - **A group past the ceiling** (below): its blocks are decoded one at a time and their CRCs compared, and the MD5 is not, with `wavpack.md5-group-too-large`.
 - **Hybrid files:**
   - The main file decodes to the lossy samples, the stream the report describes, and their header CRCs are compared; the CRC covers all of that lossy stream (`CoversAllAudio` as above).
-  - A hybrid file without an MD5 (the encoder stores one only with `-m`) is therefore verified as its lossy stream, which the decoder marks with `StreamVerification.IsLossy`: the text output and the GUI say "verified (lossy stream)", and JSON gives the plain `isVerified` next to the stream's codec, which names the hybrid mode.
+  - A hybrid file without an MD5 (the encoder stores one only with `-m`) is therefore verified as its lossy stream. The parser, which reads the hybrid flag, sets `DecodeSetup.IsLossy`, and the host copies it into `StreamVerification.IsLossy`: where the stream is verified, the text output and the GUI say "verified (lossy stream)", and JSON writes `isLossy` next to `isVerified`.
   - A hybrid file with an MD5, which is of the lossless audio, stays unverified: the MD5 is not compared (`wavpack.md5-needs-correction-file`) until the host can find the `.wvc`.
   - A `.wvc` file analyzed alone decodes nothing (`NotPossible`, `decode.not-possible`), since its blocks only correct the main file's.
 
@@ -564,8 +604,8 @@ public sealed record StreamVerification
     public long DecodedSamples { get; init; }
 
     // True where the audio the checksums vouch for is a lossy coding's output: a WavPack hybrid file decoded without its
-    // correction file. The text output and the GUI then say "verified (lossy stream)"; JSON writes no field for it, since
-    // the stream's codec names the hybrid mode.
+    // correction file. The host copies it from DecodeSetup.IsLossy, which the parser sets. Where IsVerified is true, the
+    // text output and the GUI say "verified (lossy stream)"; JSON writes isLossy where it is true.
     public bool IsLossy { get; init; }
 
     public IReadOnlyList<ChecksumTally> Checksums { get; init; } = [];
@@ -641,13 +681,14 @@ Every code follows the plan's severity rules: a stored checksum that differs is 
 
 - **JSON:** `verification` in each stream, after `protection`:
   - `isVerified`, written where it is not null;
+  - `isLossy`, written where it is true (a WavPack hybrid file decoded without its `.wvc`);
   - `decoding`: `notRequested`, `noDecoder`, `notPossible`, `decoded`, `stopped` or `failed`;
   - `decodedSamples`;
   - `checksums`, each with `name`, `covers` (`header`, `codedData`, `decodedAudio`), `coversAllAudio`, `stored`, `checked` and `failed`.
   - A field is added, so `schemaVersion` stays 1.
-- **Text:** a line under each stream, such as "Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)", "no (…)" or "not verified (STREAMINFO MD5 not compared: decoding was not asked for)". A verified WavPack hybrid file decoded without its `.wvc` reads "Verified: yes (lossy stream; block header CRC 120 of 120)".
+- **Text:** a line under each stream, such as "Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)", "no (…)" or "not verified (STREAMINFO MD5 not compared: decoding was not asked for)". A WavPack hybrid file decoded without its `.wvc`, verified and with `IsLossy` set, reads "Verified: yes (lossy stream; block header CRC 120 of 120)".
 - **CSV:** `Is Verified` after `Is Protected`, filled only where decoding was asked for (`--verify`): false where a stream's is false, true where every stream's is true, empty otherwise. Without `--verify` it is empty for every file, so a folder export never mixes verdicts from coded data alone (TTA) with empty ones (FLAC). `ReportSummary` gains the field, so the GUI's summary cache format becomes 6.
-- **GUI:** the stream line of the detail window names the verdict, "verified (lossy stream)" for a WavPack hybrid file verified without its `.wvc`, and links to the article. The file list gets no column in Gate 3, for the same reason as the CSV.
+- **GUI:** the stream line of the detail window names the verdict, "verified (lossy stream)" where the stream is verified and `IsLossy` is set (a WavPack hybrid file without its `.wvc`), and links to the article. The file list gets no column in Gate 3, for the same reason as the CSV.
 - **Article:** `verification` in `src/Encspect.Host/Topics`: what stored checksums cover (a header, coded data, decoded audio), why an MD5 needs decoding, what "verified" means in the report. The stored checksum fields of the lossless formats point to it.
 
 ## When decoding runs
@@ -928,8 +969,9 @@ Proposed lines, applied with the contract pull request (step 1):
 - `CLAUDE.md`, Layout, in place of "Format parsers and tag parsers are added as further projects.": "Format parsers and tag parsers are added as further projects. A format's decoder, where it has one, lives in its format project under the namespace `<project>.Decoding`; the host registers it next to the parsers."
 - `CLAUDE.md`, Architecture rules, in place of "They never reference each other and never reference a decoder.": "They never reference each other, and parser code never references a decoder, the `Decoding` namespace of its own project included; `DecodingBoundaryTests` checks this in the compiled assemblies."
 - `CLAUDE.md`, Architecture rules, a new item: "Parsers reach decoding only through `StartDecoding` on their context, and declare every checksum a stream stores. A decoder reads the coded syntax with its parser's code and adds only reconstruction and the checksums over decoded audio; decoding never changes the parser's nodes."
-- The plan, Architecture: "Decoders are separate and optional, so no parser ever depends on one." becomes "Decoders are optional and live in their format's project apart from its parsers, which never use them, so no parser ever depends on one."
-- The plan's decision table: decoding is "for checksum verification, waveform, spectrogram, lowpass and similar". The phase 3 row names the decoders the scope decision keeps.
+- `CLAUDE.md`, Architecture rules: "One parser instance serves every analysis and thread" becomes "One parser or decoder instance serves every analysis and thread", and "Parsers throw only …" becomes "Parsers and decoders throw only …", since decoders live in the same projects and the contract asks both of them (`IDecoder`).
+- Applied to the plan with the approval (2026-10-22): the Architecture sentence "Decoders are separate and optional, so no parser ever depends on one." now reads "Decoders are optional and live in their format's project apart from its parsers, which never use them, so no parser ever depends on one.", and the architecture diagram shows the decoders in the format projects, with frames to decode and decoded PCM going through the host.
+- The plan's decision table, with the contract pull request: decoding is "for checksum verification, waveform, spectrogram, lowpass and similar". The phase 3 row names the decoders the scope decision keeps.
 
 ## Decisions
 
