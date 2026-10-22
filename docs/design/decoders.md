@@ -317,6 +317,10 @@ public readonly record struct CodedFrame(MappedBytes Bytes, string NodeName, lon
     // still decodes what it can, so a whole-stream checksum then says the audio differs.
     public bool IsDamaged { get; init; }
 
+    // The parser could not read the unit at all and reported that itself. The host counts it as not decoded and
+    // does not call the decoder (see "After the milestone review").
+    public bool IsUnreadable { get; init; }
+
     // Frames the parser counted in the stream were lost before this one (a gap, a resync), so the decoder resets
     // what it carries from frame to frame and the whole-stream checksums cannot be compared.
     public bool FollowsGap { get; init; }
@@ -1067,7 +1071,7 @@ What the contract pull request implements, and where it differs from the signatu
 - **Verdict text:** the null verdict reads "Verified: unknown (…)" in the text tree. The reason a checksum over decoded audio was not compared when decoding ran but the stream is incomplete names the three causes: a frame not decoded, a frame missing (a gap), or samples that differ from the stated count.
 - **Analyze:** a negative `MaxPcmBytes` is refused before anything is read, for every input; the exceptions `Analyze` throws are listed in its comment.
 - **CLAUDE.md:** the sentence "Design documents are drafted on Opus with high effort; fixes to them count as implementation." in Verification is not one of the proposed lines: the project lead added it to this pull request on 2026-10-22. Two of the proposed lines are completed for decoders: the host reports `decode.failed` for a decoder as it reports `parse.failed` for a parser, and a decoder checks `DecodeContext.CancellationToken`.
-- **For step 2:** `decode.frame-too-large` is listed among the contract tests but cannot be tested before a decoder exists, since only a decoder knows its ceiling; the FLAC decoder's tests cover it.
+- **For step 2:** `decode.frame-too-large` is listed among the contract tests but cannot be tested before a decoder exists, since only a decoder knows its ceiling. The FLAC decoder's ceiling is 65,535 samples of eight channels, which no frame header can exceed, so the guard is unreachable and no test covers it; the next decoders are to say whether theirs can be reached.
 - **Not built:** the host's internal list of PCM analyses (the sink forwards to the front end's sink only), and every decoder: `DefaultParsers.Decoders` is empty.
 
 ## As built in step 2
@@ -1078,14 +1082,14 @@ What the FLAC pull request implements: the parser (`Encspect.Formats.Flac`), the
 - **Frames the walk did not store:** a frame that was walked without a session (or by a parser that does not lend) is read by the decoder with the same `SubframeSyntax.Read` into buffers of its own. This is the path the measurement below uses for "walk, then decoder"; it is covered by a test.
 - **The wide plane** is chosen before the wasted bits are subtracted (`frameBits + side > 32`): a 32-bit side channel with wasted bits still needs 64-bit planes for the samples of the frame, and the 33-bit fixture caught the decoder taking the narrow plane.
 - **Checksums:** three tallies, declared by the parser: "frame header CRC-8" (header), "frame CRC-16" (coded data) and "STREAMINFO MD5" (decoded audio). `CoversAllAudio` of the CRC-16 is true only when no frame is missing, the frames' samples equal STREAMINFO's count, no frame was cut and none was unreadable. An MD5 of 0 is "not stored", not a mismatch. Fixtures where every CRC holds but frames are missing, repeated or out of order (the `*-md5-zero` ones) are not verified, which the contract's R2 asked for.
-- **Frames the decoder refuses:** a frame whose channels or bit depth differ from STREAMINFO's cannot be decoded into the stream's PCM layout; the stream is `NotPossible`. A STREAMINFO with fewer than 4 bits per sample is refused too.
+- **Frames the decoder refuses:** a frame whose channels or bit depth differ from STREAMINFO's cannot go into the PCM layout the session declared. The decoder throws `InvalidDataException` for it, so the host reports `decode.frame-invalid` on the frame (a warning), the stream's decoding is `Decoded`, the samples are fewer and the stream is not verified. This is the contract's exception boundary and it is kept: a decoder cannot change the stream's status after `Open`, and a per-frame refusal is what the boundary is for. Only a STREAMINFO the decoder cannot use at all (fewer than 4 bits per sample, or none) is `NotPossible`.
 - **Resync:** a header counts as a frame when its CRC-8 holds and either a consistent header follows or the stream ends; a frame whose CRC-8 fails is taken when its walk completes and a header follows (a flipped bit in the CRC-8 byte also fails the CRC-16 of an intact frame). The search past damage reads at most 64 MiB plus four times the file. A frame is at most 16 MiB (`MaxFrameBytes`).
 - **Deviations from this document:**
   - `decode.frame-too-large` cannot be reached by any file: a frame header gives at most 65,535 samples and a stream has at most eight channels, which is exactly the decoder's ceiling of 65,535 x 8 samples. The guard stays, since the constant is the decoder's own statement of what it handles, and no test reaches it.
   - An unreadable frame (a header that reads and a subframe that breaks the syntax) makes `CoversAllAudio` of the CRC-16 and of the MD5 tally false although the frame count may match, since that frame's samples are missing from the MD5.
   - A frame whose CRC-8 fails is decoded when the walk completes and a header follows; one whose extent was only found by search (`ExtentFound`) and whose walk completed is decoded too. The frames that fail the CRC-16 or are cut are handed to the decoder flagged `IsDamaged`.
 - **GUI:** "Verify Audio" in the detail window analyzes the file again with decoding on while the old analysis stays on screen; Stop cancels it; a failure shows as "Not verified". The file list and the summary cache never decode. See [gui.md](../gui.md).
-- **Measurement on the built decoder** (below).
+- **Measurement on the built decoder** (below); its harness is `FlacDecodingMeasurement` in `tests/Encspect.Tests`, run as [development.md](../development.md) says.
 
 ### The second entropy pass, measured again on the built decoder
 
@@ -1110,6 +1114,20 @@ The step 1 prototype used FFmpeg's encoder on synthetic signals. This run uses t
 - **End to end:** lending saves (C - B) / C of the time of an analysis with decoding, 13.5 % to 19.6 % (median 16 %), in line with the 19 % to 34 % that step 1's differential form gave for S / (walk + decoder).
 - **Speed:** the decoding added to the analysis (B - A: prediction, reconstruction, undoing the channel assignment and the MD5, with the walk's stores) runs at 650 to 1,270 times real time, which is faster than step 1's decoder alone (340 to 610 times) since the read is no longer part of it. The analysis without decoding (A) runs at 480 to 740 times real time for the files at levels 5 and 8.
 - **Not measured:** 24-bit and multichannel files, the hour-long files of step 1, and level 0 on music.
+
+## After the milestone review
+
+The independent review of the FLAC step found two blocking defects and a set of smaller ones, all fixed; the rules it drew from them hold for every format, and the work on WavPack, TrueHD and WMA Lossless starts from them.
+
+1. **Every walk counts against the budget.** A search for the next unit that walks a candidate counts the bytes of the walk whether or not the candidate holds, and checks what a header alone can say (its checksum, its fields, its agreement with the stream's configuration) before it walks anything. The FLAC search had counted only the candidates whose CRC-16 held: a crafted file made it walk a full frame for every 12 bytes, about an hour per 100 MB, and the sniffer ran the same search on every file without the marker. This is a parser rule for every format that resyncs, and the sniffers are included.
+2. **Walk loops stop at the end of the data.** What a walk costs follows the bytes present and not the count a header declares: a loop over the samples, residuals or coefficients ends as soon as the cursor runs past the data, or is not started where the data cannot hold it. A packet of a dozen bytes that claims 65,535 samples must cost about a dozen bytes, in the Ogg route as in a file.
+3. **A unit the parser cannot read is handed once and reported once.** A parser reports a unit whose syntax breaks itself (a finding on the unit) and hands it to the session with `CodedFrame.IsUnreadable`. The host counts it as not decoded (`DecodeEnd.FramesNotDecoded`, so the stream is incomplete) and does not call the decoder, which would fail on the same bytes and add a second finding (`decode.frame-invalid`) for one fault.
+4. **Decoder messages end without a period.** The exception message of a decoder is the reason in "The flac decoder could not decode the frame at 0x…: <reason>.", and the host adds the period. A message that ends in one reads "..".
+5. **An unreadable unit makes `CoversAllAudio` false, for every format.** A checksum over the decoded audio, or over coded data, vouches for the units that were read; a unit the parser could not read is missing from what it vouches for, so the tally cannot cover all of the audio however the counts come out. This is a rule of the contract and not a FLAC deviation.
+6. **WMA Lossless hands reassembled frames.** Lending serves one frame per `Decode`, but a packet can end several frames, so the unit of WMA Lossless is the frame and not the ASF packet: the parser reassembles the frames that cross packets and hands each as a `CodedFrame` whose `MappedBytes` carries the file ranges of its pieces, as the FLAC codec parser already does for Ogg packets that span pages. The unit is then uniform and lending works.
+7. **WavPack checks the DSD sample units.** For DSD the unit of `DecodeSetup.Samples` must equal what `Decode` returns (the same count in the same unit), or `IsComplete` never holds and the MD5 is never compared; the WavPack step checks it before building the decoder and states the unit in its notes.
+
+Smaller decisions of the same review: a parser that offers an unlisted node (a block the report does not list) points its findings to the node that stands for it, not to a node that is not in the tree; the GUI's Stop cancels the whole analysis, which leaves the structure report on screen, since decoding runs inside the structure pass; and the GUI decodes a reload or another format only after a verification has completed.
 
 ## Decisions
 
