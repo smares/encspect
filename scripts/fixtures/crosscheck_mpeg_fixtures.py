@@ -48,8 +48,8 @@ Layer II and III fixtures are checked whatever their "crosscheck" value:
   granules the long, start and stop and reserved ones together. EncSpot's console port prints neither
   its mode counts nor its block counts, so encspot_counts applies the rule of its source
   (CMp3File::ProcessNextFrame) to the frames it reads: modes of joint stereo frames by mode extension,
-  every other frame mode 0, blocks of type 2 short or mixed and all others long. Its block counts are
-  checked against minimp3's block types of the same frames, and where it reads the frames the
+  every other frame mode 0, blocks of type 2 short or mixed and all others long. Its block of each granule is
+  checked against minimp3's block type of the same frames, frame by frame, and where it reads the frames the
   statistics count, both against "Stereo Coding" and "Block Sizes".
 
 - "vbr_header": the raw values of the first frame's Xing, Info, LAME or VBRI header (vbr_tags.py).
@@ -1031,14 +1031,17 @@ def encspot_counts(data, frames):
     switching counts as long, so start, stop and reserved blocks are long ones. The console port does not print them (the Windows
     program drew them from its per-frame lists), so the counts follow the source."""
     padded = data + bytes(64)  # readBits reads zeros past the end
-    modes, blocks = [0] * 4, {"long": 0, "short": 0, "mixed": 0}
+    modes, blocks, kinds = [0] * 4, {"long": 0, "short": 0, "mixed": 0}, {}
     for offset in frames:
         header = encspot_header(data, offset)
         coding = stream_stats.read_frame(padded, offset, header[0])
         modes[coding["mode_ext"] if coding["mode"] == 1 else 0] += 1
+        kinds[offset] = []
         for granule in coding["side_info"]["granules"]:
-            blocks[{"Short": "short", "Mixed": "mixed"}.get(granule["block"], "long")] += 1
-    return modes, blocks
+            kind = {"Short": "short", "Mixed": "mixed"}.get(granule["block"], "long")
+            blocks[kind] += 1
+            kinds[offset].append(kind)
+    return modes, blocks, kinds
 
 
 def fixture_frames(manifest):
@@ -1152,17 +1155,23 @@ def encspot_problems(path, manifest):
     if actual.get("Sync Errors") != "none":
         problems.append(f"EncSpot reports sync errors: {actual.get('Sync Errors')}")
 
-    # EncSpot's block counts over the frames it reads, from minimp3's block types and mixed_block_flag of each granule and channel, which is
-    # a reader of its own: a block of type 2 is short or mixed, every other is long.
-    modes, blocks = encspot_counts(data, frames)
+    # EncSpot's block of each granule and channel over the frames it reads, against minimp3's block type and mixed_block_flag, which is a reader
+    # of its own: a block of type 2 is short or mixed, every other is long. Compared frame by frame and granule by granule, in the order the
+    # granules are coded; a fixture without minimp3's rows (the hand-built ones, whose side information the manifest's frames hold and
+    # check_side_info compares with minimp3) or with a frame it rejects is counted with its reason.
+    modes, blocks, kinds = encspot_counts(data, frames)
     rows = {row["offset"]: row for row in manifest.get("minimp3_side_info", []) if row.get("granules")}
-    if rows and all(offset in rows for offset in frames):
-        theirs = {"long": 0, "short": 0, "mixed": 0}
+    if not manifest.get("minimp3_side_info"):
+        COMPARED["EncSpot block types, per granule"]["skipped: no minimp3 rows in the manifest (hand-built: the manifest's frames are checked in check_side_info)"] += 1
+    elif not all(offset in rows for offset in frames):
+        COMPARED["EncSpot block types, per granule"]["skipped: minimp3 rejects a frame EncSpot reads"] += 1
+    else:
+        COMPARED["EncSpot block types, per granule"]["compared with minimp3"] += 1
         for offset in frames:
-            for granule in rows[offset]["granules"]:
-                theirs["long" if granule["block_type"] != 2 else "mixed" if granule.get("mixed_block_flag") else "short"] += 1
-        if theirs != blocks:
-            problems.append(f"EncSpot's block counts over its frames, from minimp3: {theirs}, the emulation {blocks}")
+            theirs = ["long" if g["block_type"] != 2 else "mixed" if g.get("mixed_block_flag") else "short" for g in rows[offset]["granules"]]
+            if theirs != kinds[offset]:
+                problems.append(f"EncSpot's block types of the frame at 0x{offset:X}, from minimp3: {theirs}, the emulation {kinds[offset]}")
+                break
     direct = frames == fixture_frames(manifest)
     if direct:
         frames_count = statistics_frames(fields)
@@ -1604,7 +1613,7 @@ def check_mediainfo(path, tally):
 
 
 # How each fixture's coding statistics were compared with mp3guessenc and EncSpot, or why not.
-COMPARED = {"mp3guessenc": collections.Counter(), "EncSpot": collections.Counter()}
+COMPARED = {"mp3guessenc": collections.Counter(), "EncSpot": collections.Counter(), "EncSpot block types, per granule": collections.Counter()}
 
 
 def main():
