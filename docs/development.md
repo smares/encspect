@@ -11,7 +11,7 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 ## Tests
 
 - `tests/Encspect.Tests`: the core, host, parsers and CLI, on xUnit 2.
-- `tests/Encspect.Gui.Tests`: the GUI, on Avalonia's headless platform without a display. These run on xUnit v3, which the headless test support needs. Set `ENCSPECT_SCREENSHOTS` to a folder to have them save screenshots of both windows and of the graphs, in light and dark mode.
+- `tests/Encspect.Gui.Tests`: the GUI, on Avalonia's headless platform without a display. These run on xUnit v3, which the headless test support needs. Set `ENCSPECT_SCREENSHOTS` to a folder to have them save screenshots of both windows and of the graphs, in light and dark mode, and of each view of the category charts, which no format produces yet: they run on a parser that wraps the MPEG one and adds test-only category series (`CategoryTestData`).
 - **GUI backends on Linux:** CI runs the published GUI's `--self-check` under a headless Weston (`weston --backend=headless --renderer=pixman --socket=...`) and under `xvfb-run`, and checks the `Windowing backend:` line. It covers X11 as the default with both displays present, Wayland only with `ENCSPECT_GUI_BACKEND=wayland`, a compositor alone not starting Wayland, and a forced backend without its display exiting with code 1.
   - Locally: `apt-get install weston xvfb`, publish the GUI for your RID, then run the step from `.github/workflows/ci.yml`.
   - The step does not run as written: replace `${{ matrix.rid }}` with the RID (`linux-x64`) and export `RUNNER_TEMP` as a short absolute path such as `/tmp/ci`, created beforehand. Unset, `RUNNER_TEMP` makes the socket directory `/runtime`; a long one exceeds the 108-byte limit of a Unix socket path.
@@ -67,6 +67,17 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
     - The hammer, the block list tests and `InputReleaseTests` run in full every time.
   - On a mismatch between two writes, `ReportRendering` writes both again as text and names the first differing line.
   - Only the two public mutable static arrays (`Sv7Parser.SampleRates`, `SpeexHeader.ModeNames`) became read-only; the internal `static readonly` tables stay arrays.
+
+### Category series
+
+- `CategorySeriesTests` cover the builder and the series: fixed and variable layouts with the sparse index, weights, the caps (254 values per unit, 2^24 per series, past which values are counted without a code), groupings, `CountRange` in both forms, the time index and the memory the series keeps against its budget. `CategorySeriesWriterTests` hold the JSON (counts, slot names, runs, the time index) and the text share lines to the example of the design.
+- **`CategorySummaryTests`** hold every category series equal to the tally node it is anchored to, on every fixture, from `tests/Encspect.Tests/category-summary.json`: a series missing from the table fails, so no exception is guessed. The table names each series' form and nodes:
+  - `entries`: the series' count for each category equals the value of the anchor's entry of the same name, and its total the value of the `denominator` node (found beside the anchor or below its grandparent), never the anchor's own value;
+  - `flag`: two categories for a tally that is a single value; the `withCategory` count equals the anchor's value;
+  - `findings`: codes of findings that allow the series to be smaller than the tally (MPEG frames that belong to no stream).
+  - A tally covers a region and a series a stream, so streams that share a region or an anchor are compared as a group, summing the series against the tallies of the group's distinct anchors. The table is empty until a format produces series; each format's pull request adds its rows.
+- `DescriptionTests` also walks every fixture's category series: a series or a category without a description, or with a topic that does not exist, fails.
+- The GUI tests (`CategoryGraphTests`, `CategoryViewTests`) hold the aggregation per pixel column against a brute-force count, the rule that keeps rare categories visible, the frame each click selects, the headings, the palette (the surfaces it was validated against and the pixels the views draw) and the speed at 200,000 units.
 
 ## CI
 
@@ -185,6 +196,21 @@ What the workflow does:
 - **Licensors' files:** `python3 scripts/release/make_notices.py --fetch` downloads them from GitHub at the commit each package's nuspec names (Avalonia and DataGrid `licence.md`, NWayland `licence.md`, Tmds.DBus `COPYING`, MicroCom `LICENSE`) into `scripts/release/licenses/`; they are committed, so a run needs no network. Run it when those packages change.
 - **Tests:** `ReleaseWorkflowTests` checks that the file exists and that the GUI project embeds it; `AboutTests` that the About window shows the embedded text.
 - **`third_party/`:** the sources there are cross-check tools. No project references them and they are in no build.
+
+### Golden-change files
+
+A pull request that changes goldens in a way a script can state, such as a format's pull request that adds category series and new nodes, can say so in `tests/fixtures/<format>/golden-changes.json`, committed with the regenerated goldens (two commits per format: the code with its tests, then the goldens alone). `scripts/ci/golden_additions.py` then checks the change:
+
+- It compares each changed golden (`*.report.json`) at the merge base with its version at the head, as parsed JSON trees and never as bytes, so it does not depend on finding "the golden commit" and survives a squash merge.
+- The change file lists what changed, with node names as paths from the report's root:
+  - `added`: a key of every stream (`categorySeries`), elements of a stream's `series` array by name, a node under a parent;
+  - `renamed`: old name, new name and parent;
+  - `moved`: the node, its old parent and position, its new parent and position;
+  - `changed`: the path and the fields whose values may differ.
+- The script removes what is added, reverses the renames and moves, ignores the changed fields and requires the rest to equal the old report. A finding's `path` is a list of child indexes, so it maps every path of the new report (findings and a stream's `nodes`) through the nodes that were added or moved, and a finding that points into an added node fails.
+- A changed golden that no change file covers fails once any change file is part of the pull request. A pull request without one is reviewed as before: the check is opt-in.
+- **CI:** a step of the `fixtures` job runs `python3 scripts/ci/golden_additions.py --base HEAD^1 --head HEAD` on pull requests; the script itself passes when the diff adds or changes no change file. Run it locally with `--base origin/main`. `test_golden_additions.py` tests it in the `docs` job. The change files of earlier pull requests stay committed and are ignored.
+- `golden_hides` does not hide category series: they are small (run-length codes), and the golden is where a per-frame change shows.
 
 ## Fixtures and cross-checks
 

@@ -1,6 +1,23 @@
 # Coding graphs: per-frame coding choices and stream summaries
 
-Status: approved by the project lead on 2026-10-22, after two independent reviews, with four changes: dual channel is its own entry of "Stereo Coding" (decision 4), a "Channel Bit Share" series for MPEG (decision 6), the same concepts graphed in every format under the same headings (decision 8), and the real reason AAC and AC-3 record while reading (decision 3). Nothing here is implemented. The decisions are collected under [Decisions](#decisions), and claims that no source read for this design confirms are marked **unverified**.
+Status: approved by the project lead on 2026-10-22, after two independent reviews, with four changes: dual channel is its own entry of "Stereo Coding" (decision 4), a "Channel Bit Share" series for MPEG (decision 6), the same concepts graphed in every format under the same headings (decision 8), and the real reason AAC and AC-3 record while reading (decision 3). The contract step (rollout step 1) is built, as [As built](#as-built-the-contract-step) says; the formats are not. The decisions are collected under [Decisions](#decisions), and claims that no source read for this design confirms are marked **unverified**.
+
+## As built: the contract step
+
+Where the contract step differs from, or adds to, what is written below:
+
+- **Core:** `CategorySeries` also exposes `HasWeights`, `Map` (a grouping's map), `StorageBytes` (the bytes of codes, count bytes, weights and index it keeps, for the formats' per-series memory checks) and `Reader()`, a struct that reads units one after another in time proportional to their values, which the JSON writer needs since a variable layout's lookup by unit costs up to 1,023 steps. A builder is used once (`Build` seals it), rejects a weight of 0, and checks codes at `Build` as designed. `Build` accepts an `x` that equals `xSeries.X` by content as well as by identity. A unit of a fixed layout is coded whole or not at all past the cap.
+- **JSON:** `valuesPerUnit` is written for every fixed layout of more than one value (the example above lacked it, the prose asks for it).
+- **Text:** a category's line is its name followed by "Share Over Time", so "Long, start and stop Share Over Time"; streams are numbered only where more than one stream anchors series to the same node.
+- **GUI:**
+  - The chips are one per series, with the three views chosen beside them and remembered for the next series; the Coding Summary sits under a "Summary" heading before the concept headings.
+  - A hover lists "values" (`24 values`), not the series' noun, since a value label such as "granule and channel" has no plural; it lists the rarest category first and at most eight.
+  - A category named "Reserved" is the invalid one that is drawn hatched. Under Avalonia 12's high contrast preference (`PlatformSettings.GetColorValues().ContrastPreference`) every second category is hatched too.
+  - A strip column of many frames selects the first frame that holds its rarest category.
+  - The Channel Bit Share view (two segments over time) is not built: no series exists before the MPEG step, which adds it with the series.
+- **Tests:** the summary table `category-summary.json` has a schema of its own (`form` entries or flag, `anchor`, `denominator`, `withCategory`, `findings`), documented in `docs/development.md`, and its harness is tested on reports built in the test. `ScreenshotTests` run the category views on a parser that wraps the MPEG one and adds test-only series.
+- **Golden check:** the change file's schema is in `scripts/ci/golden_additions.py` and `docs/development.md`; its CI step is in the `fixtures` job, which runs when a golden or change file changes, with a checkout two commits deep.
+- **Palette validator:** the `dataviz` skill's validator was run on the two palettes against `#ffffff` and `#000000`; its output matches the figures below and is in `docs/gui.md`.
 
 ## Scope
 
