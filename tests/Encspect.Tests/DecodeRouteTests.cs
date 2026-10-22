@@ -1094,14 +1094,14 @@ public class DecodeRouteTests
     }
 
     [Theory]
-    [InlineData(2, 3, 0, false, "Checked above Stored")]
-    [InlineData(2, -1, 0, false, "negative Checked")]
-    [InlineData(2, 2, 3, false, "Failed above Checked")]
-    [InlineData(2, 2, -1, false, "negative Failed")]
-    [InlineData(-1, 0, 0, false, "negative Stored")]
-    public void ATallyThatCannotBeIsAParserBug(long stored, long checkedValues, long failed, bool all, string why)
+    [InlineData(2, 3, 0, "Checked above Stored")]
+    [InlineData(2, -1, 0, "negative Checked")]
+    [InlineData(2, 2, 3, "Failed above Checked")]
+    [InlineData(2, 2, -1, "negative Failed")]
+    [InlineData(-1, 0, 0, "negative Stored")]
+    public void ATallyThatCannotBeIsAParserBug(long stored, long checkedValues, long failed, string why)
     {
-        var parser = new FrameParser { Stored = [Tally("crc", false, stored, checkedValues, all, failed)] };
+        var parser = new FrameParser { Stored = [Tally("crc", false, stored, checkedValues, failed: failed)] };
 
         Report report = Analyze(parser, [new ScriptedDecoder()], Verify);
 

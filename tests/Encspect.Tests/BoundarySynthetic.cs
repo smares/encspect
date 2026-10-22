@@ -207,7 +207,7 @@ internal static class BoundarySynthetic
         }), Patch: PatchCalli),
         new("attribute constructor", ScanPath.AttributeConstructor, b => b.Host().SetCustomAttribute(b.AttributeConstructor, [1, 0, 0, 0]), To: "Syn.Decoding.Mark"),
         new("typeof argument", ScanPath.AttributeTypeofArgument, b => b.Host().SetCustomAttribute(TypeConverter, TypeofBlob("Syn.Decoding.T"))),
-        new("enum argument", ScanPath.AttributeEnumArgument, b => b.Host().SetCustomAttribute(ObjectArgument, EnumBlob("Syn.Decoding.Mode", 1)), To: "Syn.Decoding.Mode"),
+        new("enum argument", ScanPath.AttributeArgumentType, b => b.Host().SetCustomAttribute(ObjectArgument, EnumBlob("Syn.Decoding.Mode", 1)), To: "Syn.Decoding.Mode"),
         new("array argument", ScanPath.AttributeArrayArgument, b => b.Host().SetCustomAttribute(ObjectArgument, TypeArrayBlob("Syn.Decoding.T"))),
         new("typeof an array", ScanPath.AttributeTypeNameForms, b => b.Host().SetCustomAttribute(TypeConverter, TypeofBlob("Syn.Decoding.T[]"))),
         new("typeof a generic instance", ScanPath.AttributeTypeNameForms, b => b.Host().SetCustomAttribute(

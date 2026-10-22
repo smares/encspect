@@ -47,7 +47,7 @@ internal static partial class BoundaryScanner
         CalliSignature = 1L << 16,
         AttributeConstructor = 1L << 17,
         AttributeTypeofArgument = 1L << 18,
-        AttributeEnumArgument = 1L << 19,
+        AttributeArgumentType = 1L << 19,
         AttributeArrayArgument = 1L << 20,
         AttributeTypeNameForms = 1L << 21,
         AttributesOnType = 1L << 22,
@@ -414,7 +414,7 @@ internal static partial class BoundaryScanner
 
         private void TouchArgument(CustomAttributeTypedArgument<AttributeType> argument)
         {
-            if (On(ScanPath.AttributeEnumArgument))
+            if (On(ScanPath.AttributeArgumentType))
             {
                 TouchAttributeType(argument.Type);
             }
