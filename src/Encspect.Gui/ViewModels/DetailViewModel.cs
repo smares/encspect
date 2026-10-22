@@ -16,6 +16,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     private string? _path;
     private bool _isLoading;
     private bool _isVerifying;
+    // The audio of the file shown was decoded: a reload or another format keeps decoding it. A verification that is still running does not count.
     private bool _isVerifyRequested;
     private double _progress;
     private Report? _report;
@@ -33,7 +34,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     private bool _canGoPrevious;
     private bool _canGoNext;
     private bool _isGraphsShown;
-    private string? _exportError;
+    private string? _commandError;
     private string? _folderError;
     private string? _forcedFormat;
     private bool _isTopicOpen;
@@ -390,11 +391,11 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         set => Set(ref _canGoNext, value);
     }
 
-    // Why the last export failed, until the next export or file.
-    public string? ExportError
+    // Why the last export or verification failed, until the next one or the next file.
+    public string? CommandError
     {
-        get => _exportError;
-        private set => Set(ref _exportError, value);
+        get => _commandError;
+        private set => Set(ref _commandError, value);
     }
 
     // Analyzes the file on a background thread; a folder that could not be listed shows why. The
@@ -475,7 +476,11 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         _loading = cancellation;
         int generation = ++_generation;
 
-        _isVerifyRequested = verify;
+        if (!keepShown && !verify)
+        {
+            _isVerifyRequested = false;
+        }
+
         _path = path;
         _folderError = folderError;
         _forcedFormat = forced;
@@ -485,7 +490,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Raise(nameof(Folder));
         if (keepShown)
         {
-            ExportError = null;
+            CommandError = null;
             IsVerifying = true;
         }
         else
@@ -547,17 +552,17 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                         document?.Dispose();
                         if (keepShown && generation == _generation)
                         {
-                            _isVerifyRequested = false;
                             IsVerifying = false;
                             if (failure is not null)
                             {
-                                ExportError = "Not verified: " + failure;
+                                CommandError = "Not verified: " + failure;
                             }
                         }
                     }
                     else
                     {
                         Show(report, document, keep);
+                        _isVerifyRequested = verify;
                     }
 
                     shown.TrySetResult();
@@ -652,7 +657,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     {
         ArgumentNullException.ThrowIfNull(export);
 
-        ExportError = null;
+        CommandError = null;
         try
         {
             await export();
@@ -664,7 +669,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                 ErrorLog.Write("exporting the report", ex);
             }
 
-            ExportError = "Not exported: " + ex.Message;
+            CommandError = "Not exported: " + ex.Message;
         }
     }
 
@@ -781,7 +786,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Raise(nameof(HasNoGraphs));
         RaiseDetection();
         RaiseCounts();
-        ExportError = null;
+        CommandError = null;
         IsLoading = false;
     }
 

@@ -24,10 +24,10 @@ public sealed class ErrorTests : IDisposable
         window.PickExportTarget = () => Task.FromResult<ExportTarget?>(new ExportTarget(target, null, ReportFormat.Text));
 
         window.ExportButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        UiPump.Until(() => window.Model.ExportError is not null);
+        UiPump.Until(() => window.Model.CommandError is not null);
 
-        Assert.StartsWith("Not exported: ", window.Model.ExportError, StringComparison.Ordinal);
-        Assert.True(window.ExportErrorText.IsVisible);
+        Assert.StartsWith("Not exported: ", window.Model.CommandError, StringComparison.Ordinal);
+        Assert.True(window.CommandErrorText.IsVisible);
         Assert.False(File.Exists(target));
         Assert.True(window.IsVisible);
 
@@ -35,8 +35,8 @@ public sealed class ErrorTests : IDisposable
         target = _folder["report.txt"];
         window.ExportButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         UiPump.Until(() => File.Exists(target));
-        UiPump.Until(() => window.Model.ExportError is null);
-        Assert.False(window.ExportErrorText.IsVisible);
+        UiPump.Until(() => window.Model.CommandError is null);
+        Assert.False(window.CommandErrorText.IsVisible);
         window.Close();
     }
 
@@ -55,7 +55,7 @@ public sealed class ErrorTests : IDisposable
         UiPump.Until(() => export.IsCompleted);
 
         Assert.True(export.IsCompletedSuccessfully);
-        Assert.NotNull(window.Model.ExportError);
+        Assert.NotNull(window.Model.CommandError);
         Assert.Equal("kept", File.ReadAllText(Path.Combine(target, "inside.txt")));
         Assert.Equal(["inside.txt", "song.mp3", "taken.txt"], Directory.EnumerateFileSystemEntries(_folder.Path, "*", SearchOption.AllDirectories).Select(Path.GetFileName).Order(StringComparer.Ordinal));
         window.Close();
@@ -72,7 +72,7 @@ public sealed class ErrorTests : IDisposable
         Task export = window.ExportAsync();
         UiPump.Until(() => export.IsCompleted);
 
-        Assert.Null(window.Model.ExportError);
+        Assert.Null(window.Model.CommandError);
         Assert.StartsWith("[", File.ReadAllText(target), StringComparison.Ordinal);
         Assert.Equal(2, Directory.GetFiles(_folder.Path).Length);
         window.Close();
@@ -93,7 +93,7 @@ public sealed class ErrorTests : IDisposable
         Task export = window.ExportAsync();
         UiPump.Until(() => export.IsCompleted);
 
-        Assert.Contains("No space left on device", window.Model.ExportError, StringComparison.Ordinal);
+        Assert.Contains("No space left on device", window.Model.CommandError, StringComparison.Ordinal);
         Assert.Empty(Directory.GetFiles("/dev", ".full.*"));
         window.Close();
     }
@@ -107,7 +107,7 @@ public sealed class ErrorTests : IDisposable
         Task export = window.ExportAsync();
         UiPump.Until(() => export.IsCompleted);
 
-        Assert.Equal("Not exported: The portal refused.", window.Model.ExportError);
+        Assert.Equal("Not exported: The portal refused.", window.Model.CommandError);
         window.Close();
     }
 

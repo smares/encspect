@@ -31,7 +31,7 @@ public class VerifyAudioTests
         Assert.StartsWith("Verified: yes (", model.VerificationText, StringComparison.Ordinal);
         Assert.Contains("STREAMINFO MD5 1 of 1", model.VerificationText, StringComparison.Ordinal);
         Assert.False(model.CanVerifyAudio);
-        Assert.Null(model.ExportError);
+        Assert.Null(model.CommandError);
     }
 
     [Fact]
@@ -125,7 +125,45 @@ public class VerifyAudioTests
         Assert.False(model.IsVerifying);
         Assert.Same(before, model.Report);
         Assert.True(model.CanVerifyAudio);
-        Assert.Null(model.ExportError);
+        Assert.Null(model.CommandError);
+    }
+
+    [Fact]
+    public void Analyzing_as_a_format_while_verifying_does_not_decode()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        Task load = model.LoadAsync(Fixtures.Flac("external-16-stereo-l5.flac"));
+        ui.Until(() => load.IsCompleted);
+
+        Task verify = model.VerifyAudioAsync();
+        Task forced = model.AnalyzeAsAsync(null);
+        ui.Until(() => forced.IsCompleted && verify.IsCompleted);
+
+        Assert.False(model.IsVerifying);
+        Assert.StartsWith("Verified: unknown", model.VerificationText, StringComparison.Ordinal);
+        Assert.True(model.CanVerifyAudio);
+    }
+
+    [Fact]
+    public void A_file_that_cannot_be_read_again_shows_why_and_leaves_the_analysis_as_it_was()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        using var folder = new TempFolder();
+        string path = folder.Copy(Fixtures.Flac("external-16-stereo-l5.flac"), "a.flac");
+        Task load = model.LoadAsync(path);
+        ui.Until(() => load.IsCompleted);
+        Report before = model.Report!;
+
+        File.Delete(path);
+        Task verify = model.VerifyAudioAsync();
+        ui.Until(() => verify.IsCompleted);
+
+        Assert.StartsWith("Not verified: ", model.CommandError, StringComparison.Ordinal);
+        Assert.Same(before, model.Report);
+        Assert.False(model.IsVerifying);
+        Assert.True(model.CanVerifyAudio);
     }
 
     [Fact]
