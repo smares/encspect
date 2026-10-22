@@ -270,7 +270,7 @@ internal static partial class Summary
 
         if (s.Subframes > 0)
         {
-            Node types = Cover3("Subframe Types", NodeValue.Integer(s.Subframes, "subframes"), Explain.StatSubframeTypes);
+            Node types = Cover3("Subframe Types", NodeValue.Integer(s.Subframes, "subframes", "subframe"), Explain.StatSubframeTypes);
             types.Add(cover("Constant", Share(s.SubframeTypes[(int)SubframeType.Constant], s.Subframes), Explain.StatConstant, Topics.Subframes));
             types.Add(cover("Verbatim", Share(s.SubframeTypes[(int)SubframeType.Verbatim], s.Subframes), Explain.StatVerbatim, Topics.Subframes));
             types.Add(cover("Fixed Predictor", Share(s.SubframeTypes[(int)SubframeType.Fixed], s.Subframes), Explain.StatFixed, Topics.LinearPrediction));
@@ -287,7 +287,7 @@ internal static partial class Summary
             statistics.Add(cover("Subframes With Wasted Bits", Share(s.WastedSubframes, s.Subframes), Explain.StatWasted, Topics.WastedBits));
             if (s.ResidualSubframes > 0)
             {
-                Node orders = Cover3("Partition Orders", NodeValue.Integer(s.ResidualSubframes, "residuals"), Explain.StatPartitionOrders);
+                Node orders = Cover3("Partition Orders", NodeValue.Integer(s.ResidualSubframes, "residuals", "residual"), Explain.StatPartitionOrders);
                 for (int order = 0; order < s.PartitionOrders.Length; order++)
                 {
                     if (s.PartitionOrders[order] > 0)
@@ -298,7 +298,7 @@ internal static partial class Summary
 
                 statistics.Add(orders);
                 statistics.Add(cover("Rice With 5-Bit Parameters", Share(s.Rice2Subframes, s.ResidualSubframes), Explain.StatRice2, Topics.RiceCoding));
-                statistics.Add(cover("Escaped Partitions", NodeValue.Integer(s.EscapedPartitions, "partitions"), Explain.EscapedPartitionsStat, Topics.RiceCoding));
+                statistics.Add(cover("Escaped Partitions", NodeValue.Integer(s.EscapedPartitions, "partitions", "partition"), Explain.EscapedPartitionsStat, Topics.RiceCoding));
             }
         }
 

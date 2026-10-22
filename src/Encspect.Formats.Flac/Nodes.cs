@@ -230,7 +230,7 @@ internal static class Nodes
         if (partitions > s.Partitions)
         {
             int from = s.Partitions > 0 ? BinaryPrimitives.ReadInt32BigEndian(stored[(coefficientBytes + (s.Partitions * 6))..]) : start + 6;
-            list.Add(map.Bits("Further Partitions", from, s.EndBit, NodeValue.Integer(partitions - s.Partitions, "partitions"), Explain.FurtherPartitions, Topics.RiceCoding));
+            list.Add(map.Bits("Further Partitions", from, s.EndBit, NodeValue.Integer(partitions - s.Partitions, "partitions", "partition"), Explain.FurtherPartitions, Topics.RiceCoding));
         }
 
         residual.Add(list);
@@ -241,7 +241,7 @@ internal static class Nodes
 
         if (s.EscapedPartitions > 0)
         {
-            residual.Add(map.Bits("Escaped Partitions", start + 6, s.EndBit, NodeValue.Integer(s.EscapedPartitions, "partitions"), Explain.EscapedPartitions, Topics.RiceCoding));
+            residual.Add(map.Bits("Escaped Partitions", start + 6, s.EndBit, NodeValue.Integer(s.EscapedPartitions, "partitions", "partition"), Explain.EscapedPartitions, Topics.RiceCoding));
         }
 
         return residual;
