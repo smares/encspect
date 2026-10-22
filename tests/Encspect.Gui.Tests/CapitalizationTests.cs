@@ -148,11 +148,13 @@ public sealed class CapitalizationTests
             UiPump.Until(() => true);
             TopicView view = window.Topic;
             labels.AddRange(view.Links.Where(l => l.Tag is null).Select(l => l.Text!));
-            labels.AddRange(view.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("title") && id is null || t.Margin == new Thickness(0, 6, 0, -4)).Select(t => t.Text!));
+            labels.AddRange(view.GetVisualDescendants().OfType<TextBlock>().Where(t => (t.Classes.Contains("title") && id is null) || t.Classes.Contains("caption")).Select(t => t.Text!));
         }
 
         Assert.Contains("All Topics", labels);
         Assert.Contains("Topics", labels);
+        Assert.Contains("Related", labels);
+        Assert.Contains("Specified in", labels);
         AssertTitleCase(labels);
         window.Close();
     }

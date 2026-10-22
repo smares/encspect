@@ -159,5 +159,5 @@ public sealed class TopicView : ContentControl
         return link;
     }
 
-    private static TextBlock Caption(string text) => new() { Text = text, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 6, 0, -4) };
+    private static TextBlock Caption(string text) => new() { Text = text, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 6, 0, -4), Classes = { "caption" } };
 }
