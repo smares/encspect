@@ -138,6 +138,12 @@ internal sealed class DecodeSession : IDecodeSession
         }
 
         _sawGap |= frame.FollowsGap;
+        if (frame.IsUnreadable)
+        {
+            _framesNotDecoded++;
+            return IsDecoding;
+        }
+
         try
         {
             _isFrameWalked = frame.IsWalked;

@@ -15,6 +15,11 @@ RATES = {1: 88200, 2: 176400, 3: 192000, 4: 8000, 5: 16000, 6: 22050, 7: 24000, 
 SIZES = {1: 8, 2: 12, 4: 16, 5: 20, 6: 24, 7: 32}
 BLOCK_TYPES = {0: "STREAMINFO", 1: "PADDING", 2: "APPLICATION", 3: "SEEKTABLE", 4: "VORBIS_COMMENT", 5: "CUESHEET", 6: "PICTURE", 127: "Forbidden"}
 MAX_FRAME = (1 << 24) - 1
+
+# docs/formats/flac.md, "Frames and resync": the search past damage reads at most 64 MiB plus four times the file's length in candidates that did not
+# hold. The model counts the bytes every candidate walk reads, with a header that does not read or agree costing the shortest header.
+PROBE_ALLOWANCE = 64 << 20
+MIN_HEADER = 6
 ASSIGNMENTS = {8: "left/side", 9: "side/right", 10: "mid/side"}
 LAYOUTS = {
     1: ["front center"],
@@ -195,8 +200,6 @@ def header(data, p):
             rate, at = (d[at] << 8 | d[at + 1]) * 10, at + 2
         else:
             rate = RATES.get(rate_code, 0)
-        if rate_code >= 12 and rate == 0:
-            return None, "samplerate"
         stored = d[at]
     except IndexError:
         return None, "truncated"
@@ -268,6 +271,8 @@ def read_residual(bits, d, block, order):
         raise Fault("PartitionOrder")
     width = 4 if method == 0 else 5
     escape = (1 << width) - 1
+    # Section 9.2.7: the samples of a partition must outnumber the predictor order, and the residual -2^31 is excluded; both are decoded and reported.
+    d["tight"] = block >> partition_order == order
     values = []
     parameters = []
     escaped = 0
@@ -289,6 +294,8 @@ def read_residual(bits, d, block, order):
                     d["remainder_lsb"] = bits.pos - 1
                 if folded >> 32:
                     raise Fault("ResidualOverflow")
+                if folded == 0xFFFFFFFF:
+                    d["min_residual"] = True
                 values.append(folded >> 1 ^ -(folded & 1))
     rice = [p for _, p, e in parameters if not e]
     d.update({"method": method, "partition_order": partition_order, "partitions": parameters, "escaped": escaped,
@@ -351,6 +358,8 @@ def walk_frame(data, p, h):
     except Cut:
         result["cut"] = True
         return result
+    finally:
+        result["bytes_read"] = max(0, ((bits.pos + 7) >> 3) - p)
 
 
 def decorrelate(h, ch):
@@ -378,6 +387,8 @@ class Stream:
         self.frames = []
         self.skipped = []
         self.findings = []
+        self.probed = 0
+        self.budget = PROBE_ALLOWANCE + 4 * (self.end - self.start)
         self._parse()
 
     def finding(self, code, **extra):
@@ -385,7 +396,7 @@ class Stream:
 
     def resolve(self, h):
         h = dict(h)
-        if self.info and not h["sample_rate"]:
+        if self.info and h["rate_code"] == 0:
             h["sample_rate"] = self.info["sample_rate"]
         if self.info and not h["bits"]:
             h["bits"] = self.info["bits"]
@@ -395,7 +406,7 @@ class Stream:
         i = self.info
         if not i:
             return True
-        return (h["channels"] == i["channels"] and (h["rate_code"] == 0 or h["sample_rate"] == i["sample_rate"])
+        return (h["channels"] == i["channels"] and (h["rate_code"] == 0 or h["sample_rate"] in (0, i["sample_rate"]))
                 and (h["size_code"] == 0 or h["bits"] == i["bits"]))
 
     def header_at(self, p):
@@ -416,8 +427,13 @@ class Stream:
         return h, fault, walk
 
     def chained(self, p):
+        h, fault = header(self.data, p)
+        if fault is not None or h is None or not self.consistent(self.resolve(h)) or not self.resolve(h)["bits"]:
+            self.probed += MIN_HEADER
+            return False
         h, fault, walk = self.attempt(p)
-        if fault is not None or h is None or not self.consistent(h) or not walk["complete"]:
+        self.probed += max(walk["bytes_read"], MIN_HEADER)
+        if not walk["complete"]:
             return False
         if walk["crc16"] != walk["computed_crc16"]:
             return False
@@ -427,7 +443,7 @@ class Stream:
     def find_next(self, frm, limit):
         limit = min(limit, self.end - 1)
         p = max(frm, self.start)
-        while p < limit:
+        while p < limit and self.probed <= self.budget:
             q = self.data.find(b"\xff", p, limit)
             if q < 0:
                 return -1
@@ -511,6 +527,8 @@ class Stream:
             self.skipped.append([skip, end - skip])
         if self.skipped:
             self.finding("flac.data-skipped", count=len(self.skipped))
+        if self.probed > self.budget:
+            self.finding("flac.resync-limit")
         self._finish()
 
     def _add(self, p, length, h, walk, status, fault):
@@ -534,6 +552,8 @@ class Stream:
         if h["variable"] != self.strategy:
             self.finding("flac.blocking-strategy-changes")
         self.next_sample = first + h["block_size"]
+        if h["rate_code"] >= 12 and h["sample_rate"] == 0:
+            self.finding("flac.sample-rate-zero")
         if self.frames and i and self.frames[-1]["header"]["block_size"] < i["min_block"] and not cut:
             self.finding("flac.block-size-out-of-range")
         if i and i["max_block"] >= 16 and h["block_size"] > i["max_block"]:
@@ -541,7 +561,7 @@ class Stream:
         if i and not cut and ((i["max_frame"] and length > i["max_frame"]) or (i["min_frame"] and length < i["min_frame"])):
             self.finding("flac.frame-size-out-of-range")
         if i:
-            if h["rate_code"] and h["sample_rate"] != i["sample_rate"]:
+            if h["rate_code"] and h["sample_rate"] and h["sample_rate"] != i["sample_rate"]:
                 self.finding("flac.frame-differs-from-streaminfo", problem="sample rate")
             if h["size_code"] and h["bits"] != i["bits"]:
                 self.finding("flac.frame-differs-from-streaminfo", problem="bits per sample")
@@ -567,6 +587,11 @@ class Stream:
         if walk and walk["complete"] and not ({"extent", "unreadable"} & status):
             if walk["padding_set"]:
                 self.finding("flac.padding-bits-set")
+            for sub in walk["subframes"]:
+                if sub.get("tight"):
+                    self.finding("flac.partition-order-too-high")
+                if sub.get("min_residual"):
+                    self.finding("flac.residual-out-of-range")
         if "crc8" in frame["status"]:
             self.finding("flac.header-crc-mismatch")
         if "crc16" in frame["status"]:

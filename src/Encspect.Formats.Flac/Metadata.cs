@@ -72,7 +72,7 @@ internal static class Metadata
                 CueSheet(s, node, map, body, declared, isPartial);
                 break;
             case BlockTypes.Picture:
-                Picture(s, node, map, body, declared);
+                Picture(s, node, map, body, declared, available);
                 break;
             default:
                 if (declared > 0)
@@ -126,7 +126,11 @@ internal static class Metadata
         bool isZero = StreamInfoBlock.IsMd5Unknown(body);
         Node md5 = node.Add(map.Bytes("MD5 Signature", 4 + StreamInfoBlock.Md5Offset, StreamInfoBlock.Md5Length, isZero ? "not stored" : Convert.ToHexStringLower(StreamInfoBlock.Md5(body)),
             isZero ? Explain.Md5NotStored : Explain.Md5, Topics.Verification));
-        s.Md5Node = md5;
+        if (index == 0)
+        {
+            s.Md5Node = md5;
+        }
+
         Check(s, node, block.FileStart, info);
     }
 
@@ -280,6 +284,7 @@ internal static class Metadata
         node.Add(map.Bytes("Lead-in", 4 + 128, 8, NodeValue.Integer((long)Math.Min(BinaryPrimitives.ReadUInt64BigEndian(body[128..]), long.MaxValue), "samples"), Explain.CueLeadIn, Topics.CueSheet));
         node.Add(map.Bits("IsCompactDisc", (4 + 136) * 8, ((4 + 136) * 8) + 1, NodeValue.Boolean((body[136] & 0x80) != 0), Explain.CueIsCompactDisc, Topics.CueSheet));
         int trackCount = body[395];
+        bool isCompactDisc = (body[136] & 0x80) != 0;
         node.Add(map.Bytes("Track Count", 4 + 395, 1, NodeValue.Integer(trackCount, "tracks"), Explain.CueTrackCount, Topics.CueSheet));
         int at = Header;
         long lastNumber = -1;
@@ -305,6 +310,10 @@ internal static class Metadata
             int number0 = track[8];
             lastNumber = number0;
             hasReserved |= (track[21] & 0x3F) != 0 || track[22..35].ContainsAnyExcept((byte)0);
+            for (int i = 0; i < indexes && !hasReserved; i++)
+            {
+                hasReserved |= track.Slice(36 + (i * 12) + 9, 3).ContainsAnyExcept((byte)0);
+            }
             if (t < ListedTracks)
             {
                 bool isAudio = (track[21] & 0x80) == 0;
@@ -336,10 +345,16 @@ internal static class Metadata
             s.Findings.Add(Severity.Warning, "flac.cuesheet-invalid", node, _ =>
                 $"The cue sheet at 0x{node.Offset:X} does not hold the {Counts.Of(trackCount, "track", "tracks")} it counts in its {Counts.Of(declared, "byte", "bytes")}.", "tracks");
         }
-        else if (trackCount > 0 && lastNumber != 170 && lastNumber != 255)
+        else if (trackCount > 0 && lastNumber is not (170 or 255))
         {
             s.Findings.Add(Severity.Warning, "flac.cuesheet-invalid", node, _ =>
                 $"The last track of the cue sheet at 0x{node.Offset:X} is number {lastNumber}; the specification ends a cue sheet with the lead-out track, 170 for a compact disc and 255 for any other medium.", "lead-out");
+        }
+        else if (trackCount > 0 && lastNumber != (isCompactDisc ? 170 : 255))
+        {
+            // libFLAC writes 170 whatever the flag says, so this is information and not a warning.
+            s.Findings.Add(Severity.Info, "flac.cuesheet-invalid", node, _ =>
+                $"The lead-out track of the cue sheet at 0x{node.Offset:X} is number {lastNumber}, but the compact disc flag is {(isCompactDisc ? "set" : "not set")}, for which the specification gives {(isCompactDisc ? 170 : 255)}.", "lead-out-medium");
         }
         else if (trackCount == 0)
         {
@@ -352,7 +367,7 @@ internal static class Metadata
         }
     }
 
-    private static void Picture(State s, Node node, FieldMap map, ReadOnlySpan<byte> body, int declared)
+    private static void Picture(State s, Node node, FieldMap map, ReadOnlySpan<byte> body, int declared, int available)
     {
         int at = 0;
         string? problem = null;
@@ -393,7 +408,7 @@ internal static class Metadata
                     uint dataLength = BinaryPrimitives.ReadUInt32BigEndian(body[(at + 16)..]);
                     node.Add(map.Bytes("Data Length", 20 + at, 4, NodeValue.Integer(dataLength, "bytes"), Explain.PictureDataLength, Topics.Picture));
                     at += 20;
-                    node.Add(map.Bytes("Picture Data", 4 + at, body.Length - at, NodeValue.Integer(declared - at, "bytes"), Explain.PictureData, Topics.Picture));
+                    node.Add(map.Bytes("Picture Data", 4 + at, available - at, NodeValue.Integer(declared - at, "bytes"), Explain.PictureData, Topics.Picture));
                     if ((long)at + dataLength != declared)
                     {
                         int fields = at;

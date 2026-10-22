@@ -125,3 +125,23 @@ public class CorruptMusepackFileTests
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
+
+// The FLAC fixtures written by flac and FFmpeg, each analyzed with and without decoding.
+public class CorruptFlacFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("flac/external-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The hand-built FLAC fixtures, each analyzed with and without decoding.
+public class CorruptFlacBuiltFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("flac/built-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}

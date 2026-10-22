@@ -41,6 +41,7 @@ internal static class RawReader
         long moreStart = -1;
         long moreEnd = 0;
         int more = 0;
+        Node? further = null;
         while (position < end)
         {
             s.Context.CancellationToken.ThrowIfCancellationRequested();
@@ -80,14 +81,16 @@ internal static class RawReader
 
             var block = new MappedBytes(source.Slice(position, 4 + read)[..(4 + read)].ToArray(), position);
             long bodyStart = position + 4;
-            Func<Node, Node?>? comment = type == BlockTypes.VorbisComment && !isTruncated
+            bool isListed = index < Encspect.Formats.Flac.Metadata.MaxListedBlocks;
+            s.Findings.Redirect = isListed ? null : () => further!;
+            Func<Node, Node?>? comment = type == BlockTypes.VorbisComment && !isTruncated && isListed
                 ? parent => s.Context.ParseTag(TagName, source.Reader.Slice(bodyStart, length), parent)
                 : null;
             Node node = Encspect.Formats.Flac.Metadata.Read(s, block, isLast, type, length, available, index, paddingIsZero, comment);
 
             s.MetadataBlocks++;
             RepeatedBlocks(s, type, node);
-            if (index < Encspect.Formats.Flac.Metadata.MaxListedBlocks)
+            if (isListed)
             {
                 s.AddLeading(node);
             }
@@ -105,9 +108,11 @@ internal static class RawReader
                 int declared = length;
                 s.Findings.Add(Severity.Warning, "flac.metadata-truncated", node, _ => $"The data ends inside the metadata block at 0x{at:X}, which states {Counts.Of(declared, "byte", "bytes")}.");
                 position = end;
+                s.Findings.Redirect = null;
                 break;
             }
 
+            s.Findings.Redirect = null;
             position = bodyEnd;
             if (isLast)
             {
@@ -115,9 +120,12 @@ internal static class RawReader
             }
         }
 
+        s.Findings.Redirect = null;
+
         if (more > 0)
         {
-            s.AddLeading(new Node("Further Metadata Blocks", moreStart, moreEnd - moreStart, NodeValue.Integer(more, "blocks")) { Description = Explain.FurtherMetadataBlocks, Topic = Topics.MetadataBlocks });
+            further = new Node("Further Metadata Blocks", moreStart, moreEnd - moreStart, NodeValue.Integer(more, "blocks", "block")) { Description = Explain.FurtherMetadataBlocks, Topic = Topics.MetadataBlocks };
+            s.AddLeading(further);
             int count = more;
             s.Findings.Add(Severity.Info, "flac.metadata-blocks-not-listed", s.Stream, _ => $"The report lists the first {Encspect.Formats.Flac.Metadata.MaxListedBlocks} metadata blocks; {Counts.Of(count, "more", "more")} {Counts.Agree(count, "is", "are")} read but not listed.");
         }

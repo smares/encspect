@@ -48,6 +48,7 @@ public sealed class FlacCodecParser : ICodecParser
         private bool _inHeaders = true;
         private bool _isBroken;
         private int _blocks;
+        private long? _granuleBase;
         private long _granuleMismatches;
         private Node? _firstMismatch;
         private long _firstMismatchGranule;
@@ -247,7 +248,14 @@ public sealed class FlacCodecParser : ICodecParser
             }
 
             s.AddFrame(bytes, header, walk, _facts, status, _logs, packet.FollowsGap);
-            if (packet.EndPosition is { } granule && granule != s.NextSample)
+            if (packet.EndPosition is { } stated)
+            {
+                // RFC 9639, section 10.1: the first audio page of a stream that is joined mid-way may state more than the samples counted;
+                // that excess is the base the other pages count from.
+                _granuleBase ??= Math.Max(0, stated - s.NextSample);
+            }
+
+            if (packet.EndPosition is { } granule && granule - (_granuleBase ?? 0) != s.NextSample)
             {
                 _granuleMismatches++;
                 if (_firstMismatch is null)

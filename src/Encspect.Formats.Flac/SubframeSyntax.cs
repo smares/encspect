@@ -129,6 +129,11 @@ internal struct SubframeFacts
     public int MinParameter;
     public int MaxParameter;
 
+    // RFC 9639, section 9.2.7: a partition order that leaves no more samples in a partition than the predictor order has, and the residual -2^31,
+    // are both forbidden. libFLAC decodes both, and so does this reader, which reports them.
+    public bool IsPartitionOrderTooHigh;
+    public bool HasMinimumResidual;
+
     // The value of a constant subframe, before the wasted bits are put back.
     public long Constant;
 
@@ -228,7 +233,7 @@ internal static class SubframeSyntax
 
                 break;
             case SubframeType.Verbatim:
-                if (!store)
+                if (!store || Lacks(ref bits, (long)blockSize * sampleBits))
                 {
                     bits.Skip(checked(blockSize * sampleBits));
                 }
@@ -332,6 +337,10 @@ internal static class SubframeSyntax
     }
 
     // RFC 9639, section 9.2.7. The residual of sample i goes to buffer[i] for i from the predictor order on.
+    // Whether the data cannot hold the bits a loop would read: the loop is then skipped, so what a unit costs follows the bytes present and not the
+    // count it declares (a packet of a dozen bytes that claims 65,535 samples).
+    private static bool Lacks(ref BitCursor bits, long needed) => bits.BitsLeft < needed;
+
     private static SubframeFault ReadResidual(ref BitCursor bits, ref SubframeFacts facts, int blockSize, Span<int> narrow, Span<long> wide, PartitionLog? log)
     {
         int method = (int)bits.Read(2);
@@ -362,6 +371,7 @@ internal static class SubframeSyntax
         bool isWide = !wide.IsEmpty;
         int minimum = int.MaxValue;
         int maximum = -1;
+        facts.IsPartitionOrderTooHigh = perPartition == facts.Order && partitions > 0;
         for (int partition = 0; partition < partitions; partition++)
         {
             int count = partition == 0 ? perPartition - facts.Order : perPartition;
@@ -403,7 +413,7 @@ internal static class SubframeSyntax
                         }
                     }
                 }
-                else if (!store)
+                else if (!store || Lacks(ref bits, (long)count * width))
                 {
                     bits.Skip(checked(count * width));
                 }
@@ -432,12 +442,20 @@ internal static class SubframeSyntax
                     for (int i = 0; i < count; i++)
                     {
                         int quotient = bits.CountZeros(int.MaxValue);
+                        if (bits.IsOverrun)
+                        {
+                            return SubframeFault.Overrun;
+                        }
+
                         if ((uint)quotient > limit)
                         {
                             return SubframeFault.ResidualOverflow;
                         }
 
-                        bits.Skip(parameter);
+                        if (((uint)quotient << parameter | bits.Read(parameter)) == uint.MaxValue)
+                        {
+                            facts.HasMinimumResidual = true;
+                        }
                     }
                 }
                 else if (isWide)
@@ -445,12 +463,18 @@ internal static class SubframeSyntax
                     for (int i = 0; i < count; i++)
                     {
                         int quotient = bits.CountZeros(int.MaxValue);
+                        if (bits.IsOverrun)
+                        {
+                            return SubframeFault.Overrun;
+                        }
+
                         if ((uint)quotient > limit)
                         {
                             return SubframeFault.ResidualOverflow;
                         }
 
                         uint folded = ((uint)quotient << parameter) | bits.Read(parameter);
+                        facts.HasMinimumResidual |= folded == uint.MaxValue;
                         wide[at + i] = (int)(folded >> 1) ^ -(int)(folded & 1);
                     }
                 }
@@ -459,12 +483,18 @@ internal static class SubframeSyntax
                     for (int i = 0; i < count; i++)
                     {
                         int quotient = bits.CountZeros(int.MaxValue);
+                        if (bits.IsOverrun)
+                        {
+                            return SubframeFault.Overrun;
+                        }
+
                         if ((uint)quotient > limit)
                         {
                             return SubframeFault.ResidualOverflow;
                         }
 
                         uint folded = ((uint)quotient << parameter) | bits.Read(parameter);
+                        facts.HasMinimumResidual |= folded == uint.MaxValue;
                         narrow[at + i] = (int)(folded >> 1) ^ -(int)(folded & 1);
                     }
                 }

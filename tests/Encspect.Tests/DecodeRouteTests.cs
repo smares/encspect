@@ -448,6 +448,23 @@ public class DecodeRouteTests
         Assert.Equal([0, 1], finding.Path);
     }
 
+    // A unit the parser could not read is its own finding; the host counts it as not decoded, makes the stream incomplete and reports nothing more.
+    [Fact]
+    public void AnUnreadableUnitIsCountedAsNotDecodedAndReportedByNoOneButTheParser()
+    {
+        var decoder = new ScriptedDecoder { OnFinish = end => end.IsComplete ? Md5() : [] };
+        var parser = new FrameParser { Shape = (i, frame) => i == 2 ? frame with { IsUnreadable = true } : frame };
+
+        Report report = Analyze(parser, [decoder], Verify);
+
+        Assert.Equal([0, 100, 300], decoder.FirstSamples);
+        Assert.Equal(new DecodeEnd(false, 1), Assert.Single(decoder.Ends));
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal));
+        StreamVerification verification = Assert.Single(report.Streams).Verification!;
+        Assert.Equal(300, verification.DecodedSamples);
+        Assert.NotEqual(true, verification.IsVerified);
+    }
+
     [Fact]
     public void ASourceOfNodesForNonContiguousFramesKeepsTheirRanges()
     {

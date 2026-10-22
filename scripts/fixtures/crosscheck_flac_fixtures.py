@@ -14,6 +14,13 @@ For every manifest in tests/fixtures/flac (make_external_flac_fixtures.py, make_
   the codec, the sample rate, the channels, the bit depth and, where STREAMINFO counts them, the duration.
 - MediaInfo 26.01 (mediainfo_tool.py): the audio stream's format, sample rate, channels and, where STREAMINFO counts the samples, duration.
 
+- `flac -a -F` (analyze, continue through errors) lists the offset of every frame flac decodes, which is an independent view of where the frames of
+  even a damaged file are, since flac's resync is its own. For a fixture `flac -t` accepts the offsets must equal the manifest's. For a damaged one
+  flac lists frames whose CRCs fail and loses sync differently, so the frames the manifest calls intact that flac does not list, and the offsets
+  flac lists that the manifest does not, are only printed ("note"), as the places where flac's and Encspect's rules differ (flac takes a header with
+  a good CRC-8 for a frame wherever it is, and does not follow a SEEK tag). The manifests of damaged files are decided by the model's reading of
+  docs/formats/flac.md, not by a tool (docs/development.md).
+
 Every skipped check prints its reason. Disagreements fail the run (exit status 1).
 
     python3 scripts/fixtures/crosscheck_flac_fixtures.py [name ...]
@@ -96,7 +103,7 @@ def check_metaflac(name, manifest, path, problems):
         if out != want:
             problems.append(f"metaflac {option} says {out}, the manifest {want}")
     listing = run(["metaflac", "--list", str(path)]).stdout.decode()
-    blocks = re.findall(r"METADATA block #(\d+)\n  type: (\d+) \((\w+)\)\n  is last: (\w+)\n  length: (\d+)", listing)
+    blocks = re.findall(r"METADATA block #(\d+)\s+type: (\d+) \((\w+)\)\s+is last: (\w+)\s+length: (\d+)", listing)
     expected = manifest["metadata"]
     if len(blocks) != len(expected):
         problems.append(f"metaflac lists {len(blocks)} metadata blocks, the manifest {len(expected)}")
@@ -104,6 +111,17 @@ def check_metaflac(name, manifest, path, problems):
     for (number, kind, label, last, length), want in zip(blocks, expected):
         if int(length) != want["body_length"] or (last == "true") != want["is_last"] or (want["type"] in m.BLOCK_TYPES.values() and label != want["type"]):
             problems.append(f"metaflac block {number}: {label}, last {last}, {length} bytes; the manifest {want['type']}, last {want['is_last']}, {want['body_length']} bytes")
+
+
+def wav_data(raw):
+    """The data chunk of a RIFF/WAVE file, found by walking its chunks (a chunk ID can also occur inside another chunk)."""
+    at = 12
+    while at + 8 <= len(raw):
+        size = int.from_bytes(raw[at + 4:at + 8], "little")
+        if raw[at:at + 4] == b"data":
+            return raw[at + 8:at + 8 + size] if size != 0xFFFFFFFF else raw[at + 8:]
+        at += 8 + size + (size & 1)
+    raise ValueError("the WAVE file has no data chunk")
 
 
 def check_decode(name, manifest, path, work, problems):
@@ -124,8 +142,7 @@ def check_decode(name, manifest, path, work, problems):
     raw = out.read_bytes()
     if out.suffix == ".wav":
         # flac writes the bit depths raw output refuses as WAVE_FORMAT_EXTENSIBLE with the samples left-aligned in whole bytes.
-        at = raw.index(b"data") + 8
-        raw = raw[at:]
+        raw = wav_data(raw)
         shift = width * 8 - bits
         raw = b"".join((int.from_bytes(raw[i:i + width], "little", signed=True) >> shift).to_bytes(width, "little", signed=True) for i in range(0, len(raw) - width + 1, width))
     digest = hashlib.md5(raw).hexdigest()
@@ -155,7 +172,7 @@ def check_ffmpeg(name, manifest, path, problems):
     for key, want in (("codec_name", "flac"), ("sample_rate", str(info["sample_rate"])), ("channels", info["channels"])):
         if stream.get(key) != want:
             problems.append(f"ffprobe {key} is {stream.get(key)}, the manifest {want}")
-    if str(stream.get("bits_per_raw_sample")) != str(info["bits"]):
+    if stream.get("bits_per_raw_sample") is not None and str(stream.get("bits_per_raw_sample")) != str(info["bits"]):
         problems.append(f"ffprobe bits_per_raw_sample is {stream.get('bits_per_raw_sample')}, the manifest {info['bits']}")
     if info["total"] == 0:
         skip(name, "ffprobe duration", NO_DURATION)
@@ -180,9 +197,37 @@ def check_mediainfo(name, manifest, path, problems):
     if info["total"] == 0:
         skip(name, "MediaInfo duration", NO_DURATION)
     else:
-        duration = float(audio.get("Duration") or -1)
+        if audio.get("Duration") is None:
+            skip(name, "MediaInfo duration", "MediaInfo reports no duration")
+            return
+        duration = float(audio.get("Duration"))
         if abs(duration - info["total"] / info["sample_rate"]) > 0.002:
             problems.append(f"MediaInfo duration is {duration}, STREAMINFO counts {info['total'] / info['sample_rate']}")
+
+
+def check_frames(name, manifest, path, work, problems):
+    if path.suffix == ".ogg":
+        skip(name, "flac -a", "flac reads native FLAC files only")
+        return
+    copy = work / "analyze.flac"
+    copy.write_bytes(path.read_bytes())
+    analysis = work / "analyze.ana"
+    analysis.unlink(missing_ok=True)
+    run(["flac", "-a", "-F", "-s", str(copy)])
+    if not analysis.exists():
+        skip(name, "flac -a", "flac reads no frame of the file")
+        return
+    seen = [int(x) for x in re.findall(r"^frame=\d+\toffset=(\d+)", analysis.read_text(), re.M)]
+    frames = {f["offset"]: f for f in manifest["frames"]}
+    intact = sorted(o for o, f in frames.items() if not f["status"])
+    if manifest["crosscheck"]["flac_test"] is True:
+        if sorted(set(seen)) != intact:
+            problems.append(f"flac lists the frames at {sorted(set(seen))}, the manifest {intact}")
+        return
+    missing = [o for o in intact if o not in seen]
+    extra = sorted(set(o for o in seen if o not in frames))
+    if missing or extra:
+        print(f"note {name}: intact in the manifest but not decoded by flac {missing[:4]}; decoded by flac but not in the manifest {extra[:4]}")
 
 
 def main():
@@ -202,6 +247,7 @@ def main():
             path = find(manifest_path)
             problems = []
             passed = check_flac_test(name, manifest, path, problems)
+            check_frames(name, manifest, path, work, problems)
             valid = manifest["crosscheck"]["flac_test"] is True and passed
             if valid:
                 check_metaflac(name, manifest, path, problems)

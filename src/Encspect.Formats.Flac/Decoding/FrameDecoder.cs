@@ -35,19 +35,19 @@ internal sealed class FrameDecoder : IFrameDecoder
                 throw new EndOfStreamException();
             }
 
-            throw new InvalidDataException("The frame does not start with a header that reads.");
+            throw new InvalidDataException("The frame does not start with a header that reads");
         }
 
         header = header.Resolve(_info.SampleRate, _info.BitsPerSample);
         int channels = header.Channels;
         if (channels != _info.Channels)
         {
-            throw new InvalidDataException($"The frame has {Counts.Of(channels, "channel", "channels")}, but STREAMINFO says {_info.Channels}.");
+            throw new InvalidDataException($"The frame has {Counts.Of(channels, "channel", "channels")}, but STREAMINFO says {_info.Channels}");
         }
 
         if (header.BitsPerSample != _info.BitsPerSample)
         {
-            throw new InvalidDataException($"The frame has {Counts.Of(header.BitsPerSample, "bit", "bits")} per sample, but STREAMINFO says {_info.BitsPerSample}.");
+            throw new InvalidDataException($"The frame has {Counts.Of(header.BitsPerSample, "bit", "bits")} per sample, but STREAMINFO says {_info.BitsPerSample}");
         }
 
         int n = header.BlockSize;

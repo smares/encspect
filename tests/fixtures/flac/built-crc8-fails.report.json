@@ -4328,7 +4328,7 @@
       {
         "severity": "Warning",
         "code": "flac.header-crc-mismatch",
-        "message": "The header of the frame at 0x391F has the CRC-8 0xDC, but 0xCC is computed over it, while the rest of the frame reads and holds its CRC-16.",
+        "message": "The header of the frame at 0x391F has the CRC-8 0xDC, but 0xCC is computed over it; the frame has no CRC-16 that holds either.",
         "offset": 14623,
         "length": 2938,
         "path": [

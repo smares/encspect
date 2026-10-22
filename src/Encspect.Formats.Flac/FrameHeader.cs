@@ -87,7 +87,7 @@ internal readonly record struct FrameHeader
 
     // This frame's figures where the header leaves them to STREAMINFO.
     public FrameHeader Resolve(int sampleRate, int bitsPerSample) =>
-        this with { SampleRate = SampleRate == 0 ? sampleRate : SampleRate, BitsPerSample = BitsPerSample == 0 ? bitsPerSample : BitsPerSample };
+        this with { SampleRate = SampleRateCode == 0 ? sampleRate : SampleRate, BitsPerSample = BitsPerSample == 0 ? bitsPerSample : BitsPerSample };
 
     // The channel of a frame that holds the side signal, which has one bit more than the others (RFC 9639, section 9.2).
     public bool IsSide(int channel) => Assignment switch
@@ -211,11 +211,6 @@ internal readonly record struct FrameHeader
             default:
                 sampleRate = FixedRates[rateCode];
                 break;
-        }
-
-        if (rateCode >= 12 && sampleRate == 0)
-        {
-            return HeaderFault.SampleRate;
         }
 
         if (data.Length < at + 1)

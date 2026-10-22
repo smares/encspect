@@ -4721,6 +4721,19 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "flac.cuesheet-invalid",
+        "message": "The lead-out track of the cue sheet at 0x52 is number 170, but the compact disc flag is not set, for which the specification gives 255.",
+        "offset": 82,
+        "length": 532,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

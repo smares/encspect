@@ -299,14 +299,21 @@ internal sealed class State
         }
 
         Frames++;
+        if (header.SampleRateBytes > 0 && header.SampleRate == 0)
+        {
+            Findings.Add(Severity.Info, "flac.sample-rate-zero", () => Nodes.Frame(records, index), count =>
+                $"The header of the frame at 0x{offset:X} states the sample rate 0, which the specification allows for content that is not audio{(count > 1 ? $"; {count - 1} more frames do" : string.Empty)}.");
+        }
+
         if (header.StoredCrc8 != header.ComputedCrc8)
         {
             Crc8Failures++;
             status |= EntryStatus.Crc8Fails;
             byte storedCrc8 = header.StoredCrc8;
             byte computedCrc8 = header.ComputedCrc8;
+            bool isCrc16Right = !isCut && (status & EntryStatus.Crc16Fails) == 0;
             Findings.Add(Severity.Warning, "flac.header-crc-mismatch", () => Nodes.Frame(records, index), count =>
-                $"The header of the frame at 0x{offset:X} has the CRC-8 0x{storedCrc8:X2}, but 0x{computedCrc8:X2} is computed over it, while the rest of the frame reads and holds its CRC-16{(count > 1 ? $"; {count - 1} more headers differ" : string.Empty)}.");
+                $"The header of the frame at 0x{offset:X} has the CRC-8 0x{storedCrc8:X2}, but 0x{computedCrc8:X2} is computed over it; {(isCrc16Right ? "the rest of the frame reads and holds its CRC-16" : "the frame has no CRC-16 that holds either")}{(count > 1 ? $"; {count - 1} more headers differ" : string.Empty)}.");
         }
 
         if (isCut)
@@ -347,6 +354,7 @@ internal sealed class State
         if (isWalked)
         {
             Count(facts[..header.Channels]);
+            ReportResidualLimits(facts[..header.Channels], offset, index);
             if (index < MaxDetailedFrames && Records.Details.Count < MaxDetailedFrames)
             {
                 detail = Records.Details.Count;
@@ -398,6 +406,7 @@ internal sealed class State
                 IsDamaged = (status & (EntryStatus.Crc16Fails | EntryStatus.Cut | EntryStatus.Unreadable | EntryStatus.ExtentFound | EntryStatus.Crc8Fails)) != 0,
                 FollowsGap = followsGap,
                 IsWalked = walk.IsStored && isWalked,
+                IsUnreadable = (status & EntryStatus.Unreadable) != 0,
             };
             session.Decode(codedFrame);
         }
@@ -443,7 +452,7 @@ internal sealed class State
         void Differs(string problem, string text) =>
             Findings.Add(Severity.Warning, "flac.frame-differs-from-streaminfo", () => Nodes.Frame(records, index), count =>
                 $"The frame at 0x{offset:X} {text}, but STREAMINFO says otherwise{(count > 1 ? $"; {count - 1} more frames differ in the same way" : string.Empty)}.", problem);
-        if (header.SampleRateCode != 0 && header.SampleRate != info.SampleRate)
+        if (header.SampleRateCode != 0 && header.SampleRate != 0 && header.SampleRate != info.SampleRate)
         {
             Differs("sample rate", $"has the sample rate {header.SampleRate} Hz");
         }
@@ -456,6 +465,26 @@ internal sealed class State
         if (header.Channels != info.Channels)
         {
             Differs("channels", $"has {Counts.Of(header.Channels, "channel", "channels")}");
+        }
+    }
+
+    private void ReportResidualLimits(ReadOnlySpan<SubframeFacts> facts, long offset, int index)
+    {
+        foreach (ref readonly SubframeFacts f in facts)
+        {
+            if (f.IsPartitionOrderTooHigh && f.ResidualMethod >= 0)
+            {
+                int order = f.PartitionOrder;
+                int predictor = f.Order;
+                Findings.Add(Severity.Warning, "flac.partition-order-too-high", () => Nodes.Frame(Records, index), count =>
+                    $"The residual of a subframe in the frame at 0x{offset:X} has partition order {order}, which leaves as many samples in each partition as the predictor order {predictor}; the specification requires more{(count > 1 ? $" ({count - 1} more frames)" : string.Empty)}.");
+            }
+
+            if (f.HasMinimumResidual)
+            {
+                Findings.Add(Severity.Warning, "flac.residual-out-of-range", () => Nodes.Frame(Records, index), count =>
+                    $"A subframe in the frame at 0x{offset:X} has the residual sample -2^31, which the specification excludes{(count > 1 ? $" ({count - 1} more frames)" : string.Empty)}.");
+            }
         }
     }
 

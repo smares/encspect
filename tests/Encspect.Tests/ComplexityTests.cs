@@ -754,6 +754,95 @@ public class ComplexityTests
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
     }
 
+    // A 12-byte unit repeated: a frame header of 65,535 samples (a fixed order 0 subframe whose Rice code of parameter 0 would run on for 65,535
+    // residuals) followed by the subframe, so that every 12th byte starts a candidate. The review's input: before every walk counted against the
+    // search budget, a candidate with a wrong CRC-8 or one that disagrees with STREAMINFO cost a full walk each and the budget never ran out.
+    private static byte[] DenseCandidates(int size, bool isCrc8Right, int channels, bool hasMarker)
+    {
+        byte[] header = [0xFF, 0xF8, 0x70, (byte)(((channels - 1) << 4) | 0x08), 0x00, 0xFF, 0xFE];
+        byte crc = FlacBuilder.Crc8(header);
+        byte[] unit = [.. header, isCrc8Right ? crc : (byte)(crc ^ 1), 0x10, 0x00, 0x0F, 0xFF];
+        var data = new List<byte>(size);
+        if (hasMarker)
+        {
+            data.AddRange(FlacBuilder.Marker);
+            data.AddRange(FlacBuilder.Block(0, FlacBuilder.StreamInfo(16, 44100, 1, 16, 0), isLast: true));
+        }
+
+        while (data.Count < size)
+        {
+            data.AddRange(unit);
+        }
+
+        return [.. data.Take(size)];
+    }
+
+    [Theory]
+    [InlineData(false, 1, true)]
+    [InlineData(true, 2, true)]
+    [InlineData(false, 1, false)]
+    [InlineData(true, 1, false)]
+    public void FlacCandidatesThatAreDenseButDoNotHold(bool isCrc8Right, int channels, bool hasMarker)
+    {
+        byte[] data = DenseCandidates(8 << 20, isCrc8Right, channels, hasMarker);
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("dense.bin", new MemoryStream(data));
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    // Ogg packets of about 16 bytes whose frame headers claim 65,535 samples: a fixed predictor and a Rice code of parameter 0 that the data ends in.
+    // The walk of a packet costs what the packet holds, not the 65,535 residuals it declares (the loops are skipped where the data cannot hold them).
+    [Fact]
+    public void TinyOggFlacPacketsThatClaimLargeBlocks()
+    {
+        byte[] packet = FlacBuilder.Frame(0, 65535, 44100, 1, 16, false, body =>
+        {
+            FlacBuilder.Bits(body, 0, 1);
+            FlacBuilder.Bits(body, 9, 6);
+            FlacBuilder.Bits(body, 0, 1);
+            FlacBuilder.Bits(body, 0, 16);
+            FlacBuilder.Bits(body, 0, 2);
+            FlacBuilder.Bits(body, 0, 4);
+            FlacBuilder.Bits(body, 0, 4);
+        });
+        byte[] first = [0x7F, .. "FLAC"u8, 1, 0, 0, 0, .. "fLaC"u8, .. FlacBuilder.Block(0, FlacBuilder.StreamInfo(16, 44100, 1, 16, 0), isLast: true)];
+        var ogg = new OggBuilder();
+        ogg.Page(7, 0, 2, first);
+        for (int page = 0; page < 400; page++)
+        {
+            ogg.Page(7, 0, 0, [.. Enumerable.Repeat(packet, 250)]);
+        }
+
+        byte[] data = ogg.Bytes;
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("tiny.ogg", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(8), $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
+    // Only the detection: the sniffers of every format run over a file that is no FLAC, whose first megabyte is dense in sync codes.
+    [Fact]
+    public void SniffingDenseSyncCodesWithoutTheMarker()
+    {
+        byte[] data = DenseCandidates(4 << 20, isCrc8Right: false, channels: 1, hasMarker: false);
+        var parser = new Encspect.Formats.Flac.FlacParser();
+
+        var watch = Stopwatch.StartNew();
+        for (int i = 0; i < 20; i++)
+        {
+            parser.Sniff(new SniffContext(new ByteReader(new MemoryStream(data))));
+        }
+
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+    }
+
     // Linear predictors of order 32 in frames of 65,535 samples, decoded: 2 million multiplications per frame, which the budget does not count.
     [Fact]
     public void FlacPredictorsOfTheHighestOrderAtTheLargestBlock()

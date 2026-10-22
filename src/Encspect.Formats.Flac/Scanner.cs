@@ -44,7 +44,7 @@ internal sealed class FrameScanner(Source source, StreamInfoBlock? info, long pr
         }
 
         return header.Channels == stream.Channels
-            && (header.SampleRateCode == 0 || header.SampleRate == stream.SampleRate)
+            && (header.SampleRateCode == 0 || header.SampleRate == 0 || header.SampleRate == stream.SampleRate)
             && (header.SampleSizeCode == 0 || header.BitsPerSample == stream.BitsPerSample);
     }
 
@@ -105,12 +105,22 @@ internal sealed class FrameScanner(Source source, StreamInfoBlock? info, long pr
     // Whether a frame that is chained to its successor starts at position: see the class comment.
     public bool IsChained(long position)
     {
-        Attempt attempt = Read(position, null);
-        if (attempt.Fault != HeaderFault.None || !IsConsistent(attempt.Header))
+        // The header is checked before any walk, and every walk counts against the budget whether or not the candidate holds.
+        ReadOnlySpan<byte> head = source.Window(position, FrameHeader.MaxLength);
+        if (FrameHeader.TryRead(head, out FrameHeader candidate) != HeaderFault.None)
         {
+            ProbedBytes += FrameHeader.MinLength;
             return false;
         }
 
+        candidate = Resolve(candidate, Info);
+        if (candidate.BitsPerSample == 0 || !IsConsistent(candidate))
+        {
+            ProbedBytes += FrameHeader.MinLength;
+            return false;
+        }
+
+        Attempt attempt = Read(position, null);
         ProbedBytes += Math.Max(attempt.Walk.BytesRead, FrameHeader.MinLength);
         if (!attempt.Walk.Crc16Holds)
         {
