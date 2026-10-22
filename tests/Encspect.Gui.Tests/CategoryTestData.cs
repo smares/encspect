@@ -3,8 +3,9 @@ using Encspect.Host;
 
 namespace Encspect.Gui.Tests;
 
-// Category series for the tests of the category charts. No format produces one yet, so they are made here from a real
-// stream's frame offsets and per-second series, and handed to the detail window by a parser that wraps the MPEG one.
+// Category series for the tests of the category charts. MPEG audio produces the series of its own coding, but the cases the
+// charts must handle (AAC's variable layout, many categories, a series without a time index) are made here from a real stream's
+// frame offsets and per-second series, and handed to the detail window by a parser that wraps the MPEG one, which they replace.
 internal static class CategoryTestData
 {
     public static readonly IReadOnlyList<Category> BlockTypes =
@@ -191,7 +192,12 @@ internal static class CategoryTestData
             inner.Parse(context);
             foreach (StreamInfo stream in context.Streams.ToArray())
             {
-                context.UpdateStream(stream, stream with { CategorySeries = make(stream), Series = [.. stream.Series, .. extra(stream)] });
+                IReadOnlyList<Series> added = extra(stream);
+                context.UpdateStream(stream, stream with
+                {
+                    CategorySeries = make(stream),
+                    Series = [.. stream.Series.Where(s => added.All(a => a.Name != s.Name)), .. added],
+                });
             }
         }
     }

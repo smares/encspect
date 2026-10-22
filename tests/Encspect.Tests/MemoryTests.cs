@@ -37,7 +37,58 @@ public class MemoryTests(ITestOutputHelper output)
         output.WriteLine($"{kept / Frames} bytes kept and {peak / Frames} bytes peak per frame");
         Assert.True(kept < Frames * 250L, $"The report keeps {kept / Frames} bytes per frame.");
         Assert.True(peak < Frames * 350L, $"The live heap grew by {peak / Frames} bytes per frame.");
+
+        // The coding series of the stream (docs/design/coding-graphs.md, "Memory budget"): a Layer III stereo frame adds at most 23 bytes,
+        // channel modes 1, stereo coding 1, joint stereo modes 1, block usage 4 and channel bit share 16 (a value and its own x); block
+        // sizes is a grouping and costs its map. This frame is stereo, not joint stereo, and has a share, so its x values are the bitrate series'.
+        StreamInfo stream = Assert.Single(report.Streams);
+        CheckCodingBytes(stream, categoryBytesPerFrame: 6, numericBytesPerFrame: 8);
+        output.WriteLine($"{stream.CategorySeries.Sum(c => c.StorageBytes) / Frames} bytes of category series per frame");
         GC.KeepAlive(report);
+    }
+
+    // The same for MPEG-1 Layer II stereo frames of 417 bytes, whose series are channel modes 1, stereo coding 1, intensity stereo bounds
+    // 1, coded bandwidth 8 and channel bit share 16: 27 bytes per frame at most.
+    [Fact]
+    public void ManyLayer2FramesStayCompact()
+    {
+        byte[] data = Layer2Frames(Frames);
+
+        (Report report, long kept, long peak) = Measure("memory.mp2", data, data[..(417 * 100)]);
+
+        Assert.Equal(NodeValue.Integer(Frames, "frames", "frame"), report.Root.Children.Single(c => c.Name == "MPEG Audio").Value);
+        output.WriteLine($"{kept / Frames} bytes kept and {peak / Frames} bytes peak per frame");
+        Assert.True(kept < Frames * 250L, $"The report keeps {kept / Frames} bytes per frame.");
+        Assert.True(peak < Frames * 350L, $"The live heap grew by {peak / Frames} bytes per frame.");
+        StreamInfo stream = Assert.Single(report.Streams);
+        CheckCodingBytes(stream, categoryBytesPerFrame: 2, numericBytesPerFrame: 16);
+        output.WriteLine($"{stream.CategorySeries.Sum(c => c.StorageBytes) / Frames} bytes of category series per frame");
+        GC.KeepAlive(report);
+    }
+
+    // What the stream's coding series keep, from their own sizes: the codes (and the sparse index) of the category series, and 8 bytes
+    // for each value of the numeric series that the report did not keep already; a series whose frames all have a value shares the
+    // bitrate series' x values.
+    private static void CheckCodingBytes(StreamInfo stream, int categoryBytesPerFrame, int numericBytesPerFrame)
+    {
+        long index = stream.CategorySeries.Count * 4L * ((Frames / 1024) + 1);
+        long categories = stream.CategorySeries.Sum(c => c.StorageBytes);
+        Assert.True(categories <= (Frames * (long)categoryBytesPerFrame) + index, $"The category series keep {categories / (double)Frames} bytes per frame.");
+        Series bitrate = stream.Series.Single(s => s.Name == "Bitrate");
+        long numeric = 0;
+        foreach (Series series in stream.Series.Where(s => s.Name is "Coded Bandwidth" or "Channel Bit Share"))
+        {
+            numeric += series.Values.Length * 8L;
+            if (series.Values.Length == Frames)
+            {
+                Assert.True(series.X.Span.SequenceEqual(bitrate.X.Span), $"{series.Name} has its own x values although every frame has a value.");
+                Assert.True(System.Runtime.InteropServices.MemoryMarshal.TryGetArray(series.X, out ArraySegment<double> own)
+                    && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
+                    $"{series.Name} copies the bitrate series' x values.");
+            }
+        }
+
+        Assert.True(numeric <= Frames * (long)numericBytesPerFrame, $"The numeric coding series keep {numeric / (double)Frames} bytes per frame.");
     }
 
     // An MP4 file keeps a compact record per access unit, the arrays of its graphs and each raw data
@@ -1604,6 +1655,14 @@ public class MemoryTests(ITestOutputHelper output)
     private static byte[] Layer3Frames(int count)
     {
         byte[] frame = [0xFF, 0xFB, 0x10, 0x00, 0x00, 0x00, 0x01, 0x90, .. new byte[96]];
+        return Enumerable.Repeat(frame, count).SelectMany(b => b).ToArray();
+    }
+
+    // MPEG-1 Layer II stereo frames at 128 kbps and 44100 Hz, 417 bytes each, with 3 in the first allocation field: subband 0 of
+    // the first channel is coded, so the frame has a coded bandwidth of 689 Hz, and the first channel its own bits.
+    private static byte[] Layer2Frames(int count)
+    {
+        byte[] frame = [0xFF, 0xFD, 0x80, 0x00, 0x30, .. new byte[412]];
         return Enumerable.Repeat(frame, count).SelectMany(b => b).ToArray();
     }
 

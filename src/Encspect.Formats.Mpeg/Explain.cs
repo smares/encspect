@@ -39,6 +39,7 @@ internal static class Topics
     public const string EncoderDetection = "encoder-detection";
     public const string Mp3Pro = "mp3pro";
     public const string Mp3Surround = "mp3-surround";
+    public const string CodedBandwidth = "coded-bandwidth";
 }
 
 // What each MPEG node is, in the words the report shows next to it. Constants only: frame nodes
@@ -241,6 +242,34 @@ internal static class Explain
     public const string BlockUsage = "Granules by block type, counted for each channel as mp3guessenc and EncSpot count them.";
     public const string BlockKind = "The granules of this block type, with their share.";
     public const string BlockKindMixed = "The granules of short blocks with mixed_block_flag set, with their share.";
+
+    public const string StereoCoding = "How the complete frames code their channels, counted over all of them whatever their channel mode: left/right stereo, the joint stereo tools (mid/side stereo and intensity stereo in Layer III, intensity stereo above a bound in Layers I and II), dual channel and mono (ISO/IEC 11172-3 2.4.2.3). EncSpot counts left/right stereo, dual channel and mono together as its mode 0.";
+    public const string CodingLeftRight = "The channels are coded on their own: a stereo frame, or a joint stereo frame whose mode_extension selects no joint stereo tool (ISO/IEC 11172-3 2.4.2.3).";
+    public const string CodingMidSide = "A Layer III joint stereo frame that codes the sum and the difference of the channels: mode_extension bit 1 set and bit 0 clear (ISO/IEC 11172-3 2.4.2.3).";
+    public const string CodingIntensity = "A joint stereo frame that codes high frequencies once for both channels: Layer III with mode_extension bit 0 set and bit 1 clear, Layers I and II above the subband mode_extension gives (ISO/IEC 11172-3 2.4.2.3).";
+    public const string CodingMidSideAndIntensity = "A Layer III joint stereo frame with both mode_extension bits set: mid/side stereo in the bands below the intensity stereo region, intensity stereo above it (ISO/IEC 11172-3 2.4.2.3, 2.4.3.4).";
+    public const string CodingDual = "Two independent channels, such as two languages, coded separately; no joint stereo tool applies (ISO/IEC 11172-3 2.4.2.3).";
+    public const string CodingMono = "A single channel (ISO/IEC 11172-3 2.4.2.3).";
+
+    public const string JointLeftRight = "The joint stereo frames whose mode_extension selects no tool, coded as left and right, with their share.";
+    public const string JointMidSide = "The joint stereo frames coded as mid and side (mode_extension bit 1 only), with their share.";
+    public const string JointIntensity = "The joint stereo frames with intensity stereo (mode_extension bit 0 only), with their share.";
+    public const string JointMidSideAndIntensity = "The joint stereo frames with both tools (both mode_extension bits), with their share.";
+
+    public const string BlockSizes = "Granules by the size of their transform, counted for each channel and grouped as EncSpot counts them: long (with start and stop blocks), short and mixed, and the reserved block type apart, which EncSpot counts as long.";
+    public const string SizeLong = "Granules with a long transform: normal blocks and the start and stop blocks, whose long transforms use the windows that lead into and out of short blocks (ISO/IEC 11172-3 2.4.2.7), with their share.";
+    public const string SizeShort = "The granules of short blocks without mixed_block_flag: three short transforms in every subband (ISO/IEC 11172-3 2.4.2.7), with their share.";
+    public const string SizeMixed = "The granules of short blocks with mixed_block_flag set: long transforms in the two lowest subbands, short ones above (ISO/IEC 11172-3 2.4.2.7), with their share.";
+    public const string SizeReserved = "The granules with window_switching_flag set and block_type 0, which ISO/IEC 11172-3 2.4.2.7 reserves, with their share.";
+
+    public const string CodedBandwidth = "The upper edge of the highest subband with a bit allocation other than 0 in either channel, read from each Layer I or II frame without decoding (ISO/IEC 11172-3 2.4.2.5, 2.4.2.6). It is a bound the coded data states, not the encoder's lowpass setting and not a measurement of decoded audio.";
+    public const string BandwidthLowest = "The lowest coded bandwidth of any frame.";
+    public const string BandwidthMostCommon = "The coded bandwidth most frames have; the lowest of them where several are equally common.";
+    public const string BandwidthHighest = "The highest coded bandwidth of any frame.";
+    public const string ChannelBitShare = "How the audio bits of stereo, joint stereo and dual channel frames divide between the two channels, as the first channel's share. Layer III counts part2_3_length of every granule and channel; Layers I and II count each channel's allocation, scalefactor selection, scalefactors and samples, leaving out the allocation and samples above the intensity stereo bound that both channels share. The first channel is left in left/right stereo, dual channel and intensity stereo frames and mid in mid/side frames, so a stream that switches between them mixes the two.";
+    public const string ShareLowest = "The smallest first channel share of any frame.";
+    public const string ShareOverall = "The first channel's bits over both channels' bits in all frames.";
+    public const string ShareHighest = "The largest first channel share of any frame.";
     public const string GainRange = "The smallest and largest global_gain of each channel.";
     public const string GainChannel = "This channel's range of global_gain.";
     public const string GainMinimum = "The smallest global_gain of the channel.";
@@ -277,4 +306,15 @@ internal static class SeriesText
     public const string BitrateOverTime = "The bitrate of each second of audio: the bits of the frames that start in it over their playing time.";
     public const string ReservoirFill = "The free bytes in the bit reservoir as each frame starts, which the frame may borrow for its main data.";
     public const string ReservoirFillOverTime = "The mean bit reservoir fill of the frames that start in each second of audio.";
+    public const string CodedBandwidth = "The coded bandwidth of each Layer I or II frame: the upper edge of the highest subband with a bit allocation other than 0 in either channel, in whole hertz (ISO/IEC 11172-3 2.4.2.5, 2.4.2.6). It is the bound the frame's own allocation states, read without decoding; a subband below it may still be quiet, and it is not the encoder's lowpass setting.";
+    public const string CodedBandwidthOverTime = "The highest coded bandwidth of the frames that start in each second of audio.";
+    public const string ChannelBitShare = "The first channel's share of the audio bits of each stereo, joint stereo or dual channel frame, in percent; the second channel has the rest. Layer III counts part2_3_length of every granule and channel, the scalefactors and the Huffman-coded values (ISO/IEC 11172-3 2.4.2.7). Layers I and II count each channel's allocation, scalefactor selection, scalefactors and samples; above the intensity stereo bound both channels share the allocation and the samples, and those bits count toward neither channel nor the total. The first channel is left in left/right stereo, dual channel and intensity stereo frames and mid in mid/side frames.";
+    public const string ChannelBitShareOverTime = "The first channel's share of the audio bits of the frames that start in each second of audio, bits over bits, in percent; seconds without a stereo frame have no point. A stream that switches between left/right and mid/side frames mixes the two in one share.";
+
+    public const string ChannelModesSeries = "The channel mode of each complete audio frame (ISO/IEC 11172-3 2.4.2.3).";
+    public const string StereoCodingSeries = "How each complete audio frame codes its channels, whatever its channel mode: left/right stereo, mid/side stereo, intensity stereo, both tools, dual channel or mono (ISO/IEC 11172-3 2.4.2.3). A joint stereo frame of Layer I or II counts as intensity stereo, which is all its mode_extension selects.";
+    public const string JointStereoModesSeries = "The Layer III stereo coding of each joint stereo frame, which its mode_extension selects (ISO/IEC 11172-3 2.4.2.3); frames of the other channel modes have no value.";
+    public const string IntensityStereoBoundsSeries = "The subband from which each joint stereo frame of Layer I or II codes intensity stereo, which its mode_extension selects (ISO/IEC 11172-3 2.4.2.3); frames of the other channel modes have no value.";
+    public const string BlockUsageSeries = "The block type of each granule and channel of every complete Layer III audio frame, counted per channel as the Block Usage statistics count them (ISO/IEC 11172-3 2.4.2.7); the second channel of a mono frame has no value.";
+    public const string BlockSizesSeries = "The granules of Block Usage grouped by the size of their transform, as EncSpot counts them: long with start and stop blocks, short, mixed, and the reserved block type apart.";
 }

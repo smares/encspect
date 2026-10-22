@@ -79,6 +79,7 @@ public class ScreenshotTests
         Task load = window.Model.LoadAsync(Fixtures.Stats("vbr-seconds.mp3"));
         UiPump.Until(() => load.IsCompleted);
         window.Model.IsGraphsShown = true;
+        window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == "Bitrate");
         UiPump.Until(() => true);
         AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
 
