@@ -137,6 +137,8 @@ public abstract class AnalysisContext
     // or no decoder has the ID, the session decodes nothing and its Finish says so. The parser hands the session each
     // frame it reads and ends it with Finish; a session it leaves open is ended when its route or the format parser
     // returns (docs/design/decoders.md, "Ending sessions").
+    // A stream whose channels or sample width the decoder cannot take (below 1, or above 64 bits) is not decoded and the host reports
+    // decode.not-possible, so a parser may pass what the file states; a null setup or stream is the parser's bug.
     public IDecodeSession StartDecoding(string codecId, DecodeSetup setup)
     {
         ArgumentException.ThrowIfNullOrEmpty(codecId);

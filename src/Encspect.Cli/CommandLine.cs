@@ -37,11 +37,11 @@ internal static class CommandLine
                                 "description" and "topic" in JSON. Not with --csv.
 
         Verification:
-          --verify              Decode each file's audio while reading it and compare the checksums
-                                that cover decoded audio (a FLAC file's MD5, a Monkey's Audio frame's
-                                CRC). Slower than the default analysis, which compares only the
-                                checksums over coded bytes. Streams of a coding without a decoder
-                                say so. With --csv, fills Is Verified.
+          --verify              Decode each file's audio while reading it and compare the
+                                checksums that cover decoded audio, for the codings that have a
+                                decoder. Slower than the default analysis, which compares only the
+                                checksums over coded data. A stream whose coding has no decoder
+                                says so. With --csv, fills Is Verified.
 
         Version:
           --version             Print the version, as the JSON reports give it in tool.version.
@@ -75,7 +75,8 @@ internal static class CommandLine
         Csv,
     }
 
-    public static int Run(IReadOnlyList<string> args, Stream stdout, TextWriter stderr)
+    // analyzerOverride: the analyzer to run, for tests; the default one otherwise.
+    public static int Run(IReadOnlyList<string> args, Stream stdout, TextWriter stderr, Analyzer? analyzerOverride = null)
     {
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(stdout);
@@ -88,7 +89,7 @@ internal static class CommandLine
         ReportSections hidden = ReportSections.None;
         var formats = new List<string>();
         string? forcedFormat = null;
-        var analyzer = Analyzer.CreateDefault();
+        Analyzer analyzer = analyzerOverride ?? Analyzer.CreateDefault();
         Severity? failOn = null;
         var paths = new List<string>();
         bool optionsEnded = false;

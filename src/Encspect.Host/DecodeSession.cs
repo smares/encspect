@@ -15,7 +15,8 @@ internal sealed class DecodeSession : IDecodeSession
     private readonly int _bytesPerSample;
     private IFrameDecoder? _decoder;
     private DecodeStatus _status;
-    private IPcmSink? _sink;
+    private DecodeRun.GuardedSink? _sink;
+    private bool _isFrameWalked;
     private bool _isEnded;
     private bool _isFailed;
     private bool _sawGap;
@@ -51,7 +52,7 @@ internal sealed class DecodeSession : IDecodeSession
         _codecId = codecId;
         _setup = setup;
         _status = status;
-        _bytesPerSample = CanonicalPcm.BytesPerSample(setup.BitsPerSample);
+        _bytesPerSample = setup.BitsPerSample is >= 1 and <= 64 ? CanonicalPcm.BytesPerSample(setup.BitsPerSample) : 0;
     }
 
     public AnalysisContext Owner { get; }
@@ -63,7 +64,7 @@ internal sealed class DecodeSession : IDecodeSession
     {
         try
         {
-            _decoder = decoder.Open(new DecodeContext(_setup, Owner.CancellationToken, AddFromDecoder, DeclareOutput, LentNow));
+            _decoder = decoder.Open(new DecodeContext(_setup, Owner.CancellationToken, AddFromDecoder, DeclareOutput, LentToDecoder));
             _status = DecodeStatus.Decoded;
         }
         catch (InvalidDataException ex)
@@ -107,10 +108,13 @@ internal sealed class DecodeSession : IDecodeSession
         }
 
         (_lentChannels, _lentStride, _isLentWide) = (channels, samples, needsWide);
-        return LentNow();
+        return LentBuffers();
     }
 
-    private SampleBuffers LentNow() => _lentChannels == 0
+    // The decoder sees the buffers only for a frame the parser walked into them.
+    private SampleBuffers LentToDecoder() => _isFrameWalked ? LentBuffers() : default;
+
+    private SampleBuffers LentBuffers() => _lentChannels == 0
         ? default
         : new SampleBuffers(_narrow.AsSpan(0, _lentChannels * _lentStride), _isLentWide ? _wide.AsSpan(0, _lentChannels * _lentStride) : default, _lentChannels, _lentStride);
 
@@ -136,6 +140,7 @@ internal sealed class DecodeSession : IDecodeSession
         _sawGap |= frame.FollowsGap;
         try
         {
+            _isFrameWalked = frame.IsWalked;
             int samples = _decoder!.Decode(in frame);
             if (samples < 0)
             {
@@ -157,6 +162,7 @@ internal sealed class DecodeSession : IDecodeSession
             Fail($"The {_codecId} decoder failed decoding the frame at 0x{frame.Bytes.FileStart:X}", ex);
         }
 
+        _isFrameWalked = false;
         if (IsDecoding)
         {
             EndIfAsked();
@@ -174,9 +180,23 @@ internal sealed class DecodeSession : IDecodeSession
             return _verification;
         }
 
+        // A parser that declares an inconsistent tally has a bug, as one that declares two of a name: parse.failed.
         if (stored.Select(t => t.Name).Distinct().Count() != stored.Count)
         {
             throw new ArgumentException("Two checksums have the same name.", nameof(stored));
+        }
+
+        foreach (ChecksumTally tally in stored)
+        {
+            if (tally.Stored < 0 || tally.Checked < 0 || tally.Failed < 0 || tally.Checked > tally.Stored || tally.Failed > tally.Checked)
+            {
+                throw new ArgumentException($"The checksum \"{tally.Name}\" declares {tally.Checked} of {tally.Stored} compared and {tally.Failed} failed, which cannot be.", nameof(stored));
+            }
+
+            if (tally.Covers == ChecksumCoverage.Header && tally.CoversAllAudio)
+            {
+                throw new ArgumentException($"The header checksum \"{tally.Name}\" cannot cover all of the audio.", nameof(stored));
+            }
         }
 
         IReadOnlyList<ChecksumResult> results = Close(isFinishing: true, stored);
@@ -242,10 +262,7 @@ internal sealed class DecodeSession : IDecodeSession
             }
         }
 
-        if (_sink is not null)
-        {
-            _sink.End(_decodedSamples);
-        }
+        _sink?.EndByHost(_decodedSamples);
 
         foreach (Pending finding in _findings)
         {
@@ -305,6 +322,12 @@ internal sealed class DecodeSession : IDecodeSession
         }
 
         return _isEnded;
+    }
+
+    // Called by the router for a stream whose channels or sample width cannot be decoded.
+    public void RefuseSetup()
+    {
+        NotPossible($"it declares {Counts.Of(_setup.Channels, "channel", "channels")} of {Counts.Of(_setup.BitsPerSample, "bit", "bits")}.");
     }
 
     private void NotPossible(string message)

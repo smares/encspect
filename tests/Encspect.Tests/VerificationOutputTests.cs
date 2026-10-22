@@ -70,7 +70,7 @@ public class VerificationOutputTests
             Checksums = [Holds.Checksums[1], Tally("STREAMINFO MD5", ChecksumCoverage.DecodedAudio, 1, 0, all: true)],
         };
 
-        Assert.Contains("Verified: not verified (frame CRC-16 40 of 40, STREAMINFO MD5 not compared: decoding was not asked for)", Text(ReportWith(skipped)));
+        Assert.Contains("Verified: unknown (frame CRC-16 40 of 40, STREAMINFO MD5 not compared: decoding was not asked for)", Text(ReportWith(skipped)));
     }
 
     [Fact]
@@ -82,11 +82,11 @@ public class VerificationOutputTests
             (DecodeStatus.NotPossible, "the stream cannot be decoded"),
             (DecodeStatus.Stopped, "decoding was stopped"),
             (DecodeStatus.Failed, "the decoder failed"),
-            (DecodeStatus.Decoded, "a frame was not decoded, or the data ends inside it"),
+            (DecodeStatus.Decoded, "the decoded stream is incomplete: a frame was not decoded, a frame is missing, or the samples differ from the stated count"),
         })
         {
             var verification = new StreamVerification { Decoding = status, Checksums = [Tally("MD5", ChecksumCoverage.DecodedAudio, 1, 0, all: true)] };
-            Assert.Equal($"not verified (MD5 not compared: {reason})", VerificationText.Describe(verification));
+            Assert.Equal($"unknown (MD5 not compared: {reason})", VerificationText.Describe(verification));
         }
     }
 
@@ -94,12 +94,12 @@ public class VerificationOutputTests
     public void ACheckedChecksumThatCoversNoAudioAndAStreamWithoutChecksumsAreSaid()
     {
         var header = new StreamVerification { Decoding = DecodeStatus.Decoded, Checksums = [Tally("major sync CRC-16", ChecksumCoverage.Header, 3, 3)] };
-        Assert.Equal("not verified (major sync CRC-16 3 of 3, no checksum that was compared covers all of the audio)", VerificationText.Describe(header));
+        Assert.Equal("unknown (major sync CRC-16 3 of 3, no checksum that was compared covers all of the audio)", VerificationText.Describe(header));
 
-        Assert.Equal("not verified (the stream stores no checksum)", VerificationText.Describe(new StreamVerification { Decoding = DecodeStatus.NotRequested }));
+        Assert.Equal("unknown (the stream stores no checksum)", VerificationText.Describe(new StreamVerification { Decoding = DecodeStatus.NotRequested }));
 
         var partial = new StreamVerification { Decoding = DecodeStatus.NotRequested, Checksums = [Tally("frame CRC-16", ChecksumCoverage.CodedData, 40, 39, all: true)] };
-        Assert.Equal("not verified (frame CRC-16 39 of 40 compared)", VerificationText.Describe(partial));
+        Assert.Equal("unknown (frame CRC-16 39 of 40 compared)", VerificationText.Describe(partial));
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class VerificationOutputTests
         };
 
         Assert.Equal("yes (lossy stream; block header CRC 120 of 120)", VerificationText.Describe(hybrid));
-        Assert.Equal("not verified (block header CRC not compared: decoding was not asked for)", VerificationText.Describe(hybrid with { Decoding = DecodeStatus.NotRequested, Checksums = [Tally("block header CRC", ChecksumCoverage.DecodedAudio, 120, 0, all: true)] }));
+        Assert.Equal("unknown (block header CRC not compared: decoding was not asked for)", VerificationText.Describe(hybrid with { Decoding = DecodeStatus.NotRequested, Checksums = [Tally("block header CRC", ChecksumCoverage.DecodedAudio, 120, 0, all: true)] }));
     }
 
     [Fact]
@@ -148,6 +148,31 @@ public class VerificationOutputTests
         Assert.Equal("header", verification.GetProperty("checksums")[0].GetProperty("covers").GetString());
         Assert.Equal("codedData", verification.GetProperty("checksums")[1].GetProperty("covers").GetString());
         Assert.Equal(1, ReportJsonWriter.SchemaVersion);
+    }
+
+    [Fact]
+    public void JsonWritesTheVerificationDirectlyAfterTheProtection()
+    {
+        var root = new Node("File", 0, 100, "Test");
+        Node node = root.Add("Stream", 0, 100);
+        var stream = new StreamInfo
+        {
+            Nodes = [node],
+            Codec = "Test",
+            Protection = new StreamProtection { Scheme = "Test scheme", IsEncrypted = false, Systems = [] },
+            Encoder = "Encoder 1",
+            Verification = Holds,
+        };
+
+        using var output = new MemoryStream();
+        ReportJsonWriter.Write([new Report("test.bin", root, [], [stream])], output);
+        using JsonDocument document = JsonDocument.Parse(output.ToArray());
+        string[] names = document.RootElement[0].GetProperty("streams")[0].EnumerateObject().Select(p => p.Name).ToArray();
+
+        int protection = Array.IndexOf(names, "protection");
+        Assert.True(protection > 0);
+        Assert.Equal("verification", names[protection + 1]);
+        Assert.Equal("encoder", names[protection + 2]);
     }
 
     [Fact]
@@ -226,11 +251,13 @@ public class VerificationOutputTests
 
     // The command line.
 
-    private static (int Code, string Output, string Errors) Run(params string[] args)
+    private static (int Code, string Output, string Errors) Run(params string[] args) => RunWith(null, args);
+
+    private static (int Code, string Output, string Errors) RunWith(Analyzer? analyzer, params string[] args)
     {
         using var stdout = new MemoryStream();
         var stderr = new StringWriter();
-        int code = CommandLine.Run(args, stdout, stderr);
+        int code = CommandLine.Run(args, stdout, stderr, analyzer);
         return (code, Encoding.UTF8.GetString(stdout.ToArray()), stderr.ToString());
     }
 
@@ -277,5 +304,84 @@ public class VerificationOutputTests
         (_, string verified, _) = Run("--verify", "--json", Fixture());
 
         Assert.Equal(plain, verified);
+    }
+
+    // The decoder this analyzer has decides what --verify changes: with it the stream is decoded and its MD5 compared.
+    private static Analyzer AnalyzerWithADecoder() => new(
+        [],
+        [new DecodeRouteTests.FrameParser { Stored = [new ChecksumTally { Name = "stream MD5", Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = 1 }] }],
+        [],
+        [new DecodeRouteTests.ScriptedDecoder { OnFinish = _ => [new ChecksumResult("stream MD5", 1, 0)] }]);
+
+    private static string Sample()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"encspect-verify-{Guid.NewGuid():N}.bin");
+        File.WriteAllBytes(path, new byte[64]);
+        return path;
+    }
+
+    [Fact]
+    public void VerifySetsDecodingOnTheAnalysisAndWithoutItNothingIsDecoded()
+    {
+        string path = Sample();
+        try
+        {
+            string Decoding(params string[] args)
+            {
+                (int code, string output, _) = RunWith(AnalyzerWithADecoder(), [.. args, "--json", path]);
+                Assert.Equal(0, code);
+                using JsonDocument document = JsonDocument.Parse(output);
+                JsonElement verification = document.RootElement[0].GetProperty("streams")[0].GetProperty("verification");
+                return $"{verification.GetProperty("decoding").GetString()} {verification.TryGetProperty("isVerified", out JsonElement v) && v.GetBoolean()}";
+            }
+
+            Assert.Equal("notRequested False", Decoding());
+            Assert.Equal("decoded True", Decoding("--verify"));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void VerifyFillsIsVerifiedInTheCsvOnlyWithVerify()
+    {
+        string path = Sample();
+        try
+        {
+            string Column(params string[] args)
+            {
+                (_, string output, _) = RunWith(AnalyzerWithADecoder(), [.. args, "--csv", path]);
+                string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+                return lines[1].Split(',')[Array.IndexOf(lines[0].Split(','), "Is Verified")];
+            }
+
+            Assert.Equal("", Column());
+            Assert.Equal("true", Column("--verify"));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void VerifyShowsTheVerdictInTheTextTree()
+    {
+        string path = Sample();
+        try
+        {
+            (_, string plain, _) = RunWith(AnalyzerWithADecoder(), path);
+            (_, string verified, _) = RunWith(AnalyzerWithADecoder(), "--verify", path);
+
+            Assert.Contains("Verified: unknown (", plain);
+            Assert.Contains("stream MD5 not compared: decoding was not asked for", plain);
+            Assert.Contains("Verified: yes (", verified);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 }

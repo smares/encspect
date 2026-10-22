@@ -99,8 +99,6 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
     {
         ArgumentNullException.ThrowIfNull(setup);
         ArgumentNullException.ThrowIfNull(setup.Stream);
-        ArgumentOutOfRangeException.ThrowIfLessThan(setup.Channels, 1);
-        ArgumentOutOfRangeException.ThrowIfLessThan(setup.BitsPerSample, 1);
 
         IDecoder? decoder = decoders?.FirstOrDefault(d => d.Id == codecId);
         if (decoder is null)
@@ -118,9 +116,18 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
             return new DecodeSession(this, caller, null, codecId, setup, DecodeStatus.NotRequested);
         }
 
+        // Figures a crafted file can state are not a bug of the parser: a stream that cannot be decoded is a finding.
         var session = new DecodeSession(this, caller, run, codecId, setup, DecodeStatus.Decoded);
         _open.Add(session);
-        session.Open(decoder);
+        if (setup.Channels < 1 || setup.BitsPerSample is < 1 or > 64)
+        {
+            session.RefuseSetup();
+        }
+        else
+        {
+            session.Open(decoder);
+        }
+
         return session;
     }
 

@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Host;
 
 // How a stream's verification reads in the text output and in the front ends: "yes (frame CRC-16 40 of 40, STREAMINFO MD5
-// 1 of 1)", "no (STREAMINFO MD5 1 of 1 differ)" or "not verified (STREAMINFO MD5 not compared: decoding was not asked for)".
+// 1 of 1)", "no (STREAMINFO MD5 1 of 1 differ)" or "unknown (STREAMINFO MD5 not compared: decoding was not asked for)".
 // "n of m" is the values compared of the values stored; a failed checksum reads "n of m differ", the differing values of
 // those compared.
 public static class VerificationText
@@ -49,7 +49,7 @@ public static class VerificationText
             details = "lossy stream; " + string.Join(", ", parts.Skip(1));
         }
 
-        string verdict = verification.IsVerified switch { true => "yes", false => "no", null => "not verified" };
+        string verdict = verification.IsVerified switch { true => "yes", false => "no", null => "unknown" };
         return details.Length == 0 ? verdict : $"{verdict} ({details})";
     }
 
@@ -60,6 +60,6 @@ public static class VerificationText
         DecodeStatus.NotPossible => "the stream cannot be decoded",
         DecodeStatus.Stopped => "decoding was stopped",
         DecodeStatus.Failed => "the decoder failed",
-        _ => "a frame was not decoded, or the data ends inside it",
+        _ => "the decoded stream is incomplete: a frame was not decoded, a frame is missing, or the samples differ from the stated count",
     };
 }

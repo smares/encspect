@@ -18,7 +18,7 @@ public interface IDecodeSession
     bool Decode(in CodedFrame frame);
 
     // Ends the session, once. stored lists every checksum the stream stores, of either kind, with Stored set, and for
-    // those over coded bytes what the parser compared. The host fills in the decoder's results for those over decoded
+    // those over coded data what the parser compared. The host fills in the decoder's results for those over decoded
     // audio and returns the verification the parser puts on its StreamInfo. Further calls return the same verification.
     StreamVerification Finish(IReadOnlyList<ChecksumTally> stored);
 }

@@ -237,6 +237,23 @@ public class BitCursorTests
     }
 
     [Fact]
+    public void ACountPastTheEndNeverMovesThePositionBackward()
+    {
+        var cursor = new BitCursor([0x00, 0x00]);
+        cursor.Skip(1000);
+        Assert.Equal(0, cursor.CountZeros(5));
+        Assert.Equal(0, cursor.CountOnes(5));
+        Assert.Equal(1000, cursor.Position);
+        Assert.True(cursor.IsOverrun);
+
+        var lsb = new LsbBitCursor([0x00, 0x00]);
+        lsb.Skip(1000);
+        Assert.Equal(0, lsb.CountZeros(5));
+        Assert.Equal(0, lsb.CountOnes(5));
+        Assert.Equal(1000, lsb.Position);
+    }
+
+    [Fact]
     public void SkipAndAlignMoveThePosition()
     {
         var cursor = new BitCursor(RandomBytes(3, 4));

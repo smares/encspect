@@ -86,6 +86,8 @@ public interface IPcmSink
     // On the analysis thread, in stream order; a sink copies what it keeps.
     void Write(PcmBlock block);
 
+    // Called once by the host when the stream's decoding ends, with the samples per channel decoded. A decoder never calls it:
+    // the sink a decoder gets from DeclareOutput ignores it.
     void End(long samples);
 }
 

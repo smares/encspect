@@ -4,7 +4,7 @@ using System.Numerics;
 namespace Encspect.Core;
 
 // The same members for bits least significant first: the first bit read is the least significant bit of the first
-// byte and of the value read (TTA, WavPack).
+// byte and of the value read (TTA, WavPack). As BitCursor, it takes at most 256 MiB.
 public ref struct LsbBitCursor
 {
     private readonly ReadOnlySpan<byte> _data;
@@ -122,7 +122,7 @@ public ref struct LsbBitCursor
             long remaining = Length - _position;
             if (remaining <= 0)
             {
-                _position = Length + 1;
+                _position = Math.Max(_position, Length + 1L);
                 return total;
             }
 

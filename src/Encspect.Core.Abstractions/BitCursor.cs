@@ -5,7 +5,8 @@ namespace Encspect.Core;
 
 // Reads bits most significant first from a span through a 64-bit window, without allocating. Past the end it reads
 // zero bits and sets IsOverrun, as BitReader does. LsbBitCursor has the same members for least significant first
-// (TTA, WavPack). A cursor is for loops over every coded bit; BitReader is the class for header fields.
+// (TTA, WavPack). A cursor is for loops over every coded bit; BitReader is the class for header fields. Positions count bits in
+// an int, so a span is at most 256 MiB: a parser bounds the unit it hands a cursor (a frame, a block) before it does.
 public ref struct BitCursor
 {
     private readonly ReadOnlySpan<byte> _data;
@@ -126,7 +127,7 @@ public ref struct BitCursor
             long remaining = Length - _position;
             if (remaining <= 0)
             {
-                _position = Length + 1;
+                _position = Math.Max(_position, Length + 1L);
                 return total;
             }
 

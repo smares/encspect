@@ -418,7 +418,7 @@ public sealed class SummaryCache : IDisposable
         bool? isVbr = reader.ReadBoolean() ? reader.ReadBoolean() : null;
         string? problem = ReadText(reader);
         summary = ReadProtection(reader, summary);
-        summary = summary with { IsVerified = reader.ReadBoolean() ? reader.ReadInt32() != 0 : null };
+        summary = summary with { IsVerified = reader.ReadBoolean() ? reader.ReadBoolean() : null };
         return new Entry(new FileFingerprint(size, ticks, id, hash), version, schemaVersion, lastUsed, new FileSummary(summary, isVbr, problem));
     }
 
@@ -564,7 +564,7 @@ public sealed class SummaryCache : IDisposable
         WriteOptional(writer, entry.Summary.IsVbr, writer.Write);
         WriteText(writer, entry.Summary.Problem);
         WriteProtection(writer, summary);
-        WriteOptional(writer, summary.IsVerified is { } verified ? (verified ? 1 : 0) : (int?)null, writer.Write);
+        WriteOptional(writer, summary.IsVerified, writer.Write);
     }
 
     // The protection figures of a summary: whether a stream is protected, then its schemes and systems.

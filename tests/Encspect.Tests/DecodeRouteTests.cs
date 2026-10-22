@@ -14,7 +14,7 @@ public class DecodeRouteTests
 
     // A decoder whose behavior the test scripts. One instance serves one test, but keeps its per-stream state in the
     // IFrameDecoder it opens, as the contract asks.
-    private sealed class ScriptedDecoder(string id = "test") : IDecoder
+    internal sealed class ScriptedDecoder(string id = "test") : IDecoder
     {
         public Func<DecodeContext, IFrameDecoder>? OnOpen { get; init; }
 
@@ -36,10 +36,10 @@ public class DecodeRouteTests
         {
             Opens++;
             OnOpened?.Invoke(context);
-            return OnOpen?.Invoke(context) ?? new Frames(this, context);
+            return OnOpen?.Invoke(context) ?? new Frames(this);
         }
 
-        private sealed class Frames(ScriptedDecoder owner, DecodeContext context) : IFrameDecoder
+        private sealed class Frames(ScriptedDecoder owner) : IFrameDecoder
         {
             public int Decode(in CodedFrame frame)
             {
@@ -50,14 +50,13 @@ public class DecodeRouteTests
             public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end)
             {
                 owner.Ends.Add(end);
-                _ = context;
                 return owner.OnFinish?.Invoke(end) ?? [];
             }
         }
     }
 
     // A format parser over 64 bytes that reads four frames of 16 bytes and decodes them, as the design's FLAC outline does.
-    private sealed class FrameParser : IFormatParser
+    internal sealed class FrameParser : IFormatParser
     {
         public string CodecId { get; init; } = "test";
 
@@ -381,7 +380,6 @@ public class DecodeRouteTests
     [Fact]
     public void TheBudgetIsSharedByTheSessionsOfOneAnalysis()
     {
-        var first = new FrameParser();
         var second = new SecondStreamParser();
         var decoder = new ScriptedDecoder();
         var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 1000 } };
@@ -392,7 +390,6 @@ public class DecodeRouteTests
         Assert.All(report.Streams, s => Assert.Equal(DecodeStatus.Stopped, s.Verification!.Decoding));
         Assert.Equal(2, report.Findings.Count(f => f.Code == "decode.limit"));
         Assert.Equal(3, decoder.FirstSamples.Count);
-        _ = first;
     }
 
     // Two streams in one file: the second session is stopped by the budget the first one spent.
@@ -604,7 +601,7 @@ public class DecodeRouteTests
     }
 
     // A decoder that declares its output and writes one block a frame.
-    private static ScriptedDecoder Writing(Action<PcmBlock>? afterWrite = null)
+    private static ScriptedDecoder Writing()
     {
         IPcmSink? sink = null;
         return new ScriptedDecoder
@@ -616,7 +613,7 @@ public class DecodeRouteTests
                 sink!.Write(new PcmBlock(f.FirstSample, f.Samples, 2, f.Samples, samples));
                 return f.Samples;
             },
-            OnFinish = _ => { sink!.End(0); return Md5(); },
+            OnFinish = _ => Md5(),
         };
     }
 
@@ -624,11 +621,13 @@ public class DecodeRouteTests
     {
         public List<(long Position, int Length)> Blocks { get; } = [];
 
-        public long? Ended { get; private set; }
+        public List<long> Ends { get; } = [];
+
+        public long? Ended => Ends.Count == 0 ? null : Ends[^1];
 
         public void Write(PcmBlock block) => Blocks.Add((block.Position, block.Length));
 
-        public void End(long samples) => Ended = samples;
+        public void End(long samples) => Ends.Add(samples);
     }
 
     [Fact]
@@ -644,8 +643,41 @@ public class DecodeRouteTests
         Assert.Equal("Stream", asked.Stream.Name);
         Assert.Equal(new PcmFormat(44100, 2, 16, SampleFormat.Integer), asked.Format);
         Assert.Equal([(0L, 100), (100L, 100), (200L, 100), (300L, 100)], sink.Blocks);
-        Assert.Equal(400, sink.Ended);
+        Assert.Equal([400L], sink.Ends);
         Assert.True(Assert.Single(report.Streams).Verification!.IsVerified);
+    }
+
+    [Fact]
+    public void TheFrontEndSeesExactlyOneEndTheHostsEvenIfTheDecoderCallsItToo()
+    {
+        IPcmSink? output = null;
+        var decoder = new ScriptedDecoder
+        {
+            OnOpened = context => output = context.DeclareOutput(new PcmFormat(44100, 2, 16, SampleFormat.Integer)),
+            OnFinish = _ =>
+            {
+                output!.End(7);
+                output.End(8);
+                return Md5();
+            },
+        };
+        var sink = new RecordingSink();
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => sink } };
+
+        Analyze(new FrameParser(), [decoder], options);
+
+        Assert.Equal([400L], sink.Ends);
+    }
+
+    [Fact]
+    public void ASessionEndedWithoutFinishEndsTheSinkOnceToo()
+    {
+        var sink = new RecordingSink();
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => sink } };
+
+        Analyze(new FrameParser { Finishes = false }, [Writing()], options);
+
+        Assert.Equal([400L], sink.Ends);
     }
 
     [Fact]
@@ -699,6 +731,26 @@ public class DecodeRouteTests
         {
             Writes++;
             ExceptionDispatchInfo.Capture(exception).Throw();
+        }
+
+        public void End(long samples) => throw exception;
+    }
+
+    [Fact]
+    public void ASinkThatThrowsOnlyInEndIsRethrownToo()
+    {
+        var thrown = new InvalidOperationException("closing failed");
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new EndThrowingSink(thrown) } };
+
+        InvalidOperationException caught = Assert.Throws<InvalidOperationException>(() => Analyze(new FrameParser(), [Writing()], options));
+
+        Assert.Same(thrown, caught);
+    }
+
+    private sealed class EndThrowingSink(Exception exception) : IPcmSink
+    {
+        public void Write(PcmBlock block)
+        {
         }
 
         public void End(long samples) => throw exception;
@@ -1019,13 +1071,198 @@ public class DecodeRouteTests
     }
 
     [Fact]
-    public void FinishIsOnceAndTwoChecksumsOfOneNameAreRefused()
+    public void TwoChecksumsOfOneNameAreRefused()
     {
         var parser = new FrameParser { Stored = [Tally("a", false, 1, 1), Tally("a", false, 1, 1)] };
 
         Report report = Analyze(parser, [new ScriptedDecoder()]);
 
         Assert.Contains(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    [Fact]
+    public void ASessionFinishesOnceAndFinishAgainReturnsTheSameVerification()
+    {
+        var decoder = new ScriptedDecoder { OnFinish = _ => Md5() };
+        var parser = new FrameParser();
+
+        Analyze(parser, [decoder], Verify);
+        StreamVerification again = parser.Session!.Finish(parser.Stored);
+
+        Assert.Same(parser.Verification, again);
+        Assert.Single(decoder.Ends);
+    }
+
+    [Theory]
+    [InlineData(2, 3, 0, false, "Checked above Stored")]
+    [InlineData(2, -1, 0, false, "negative Checked")]
+    [InlineData(2, 2, 3, false, "Failed above Checked")]
+    [InlineData(2, 2, -1, false, "negative Failed")]
+    [InlineData(-1, 0, 0, false, "negative Stored")]
+    public void ATallyThatCannotBeIsAParserBug(long stored, long checkedValues, long failed, bool all, string why)
+    {
+        var parser = new FrameParser { Stored = [Tally("crc", false, stored, checkedValues, all, failed)] };
+
+        Report report = Analyze(parser, [new ScriptedDecoder()], Verify);
+
+        Assert.True(report.Findings.Any(f => f.Code == "parse.failed" && f.Message.Contains("crc", StringComparison.Ordinal)), why);
+    }
+
+    [Fact]
+    public void AHeaderChecksumCannotCoverAllTheAudio()
+    {
+        var parser = new FrameParser { Stored = [new ChecksumTally { Name = "header CRC", Covers = ChecksumCoverage.Header, CoversAllAudio = true, Stored = 4, Checked = 4 }] };
+
+        Report report = Analyze(parser, [new ScriptedDecoder()], Verify);
+
+        Assert.Contains(report.Findings, f => f.Code == "parse.failed" && f.Message.Contains("header CRC", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ConsistentTalliesAreNotRefused()
+    {
+        var parser = new FrameParser { Stored = [Tally("crc", false, 2, 2, all: true, failed: 2)] };
+
+        Assert.DoesNotContain(Analyze(parser, [new ScriptedDecoder()], Verify).Findings, f => f.Code == "parse.failed");
+    }
+
+    [Fact]
+    public void ANegativeBudgetIsRefusedWhateverTheFile()
+    {
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = -1 } };
+        var analyzer = new Analyzer([], [new FrameParser()], [], [new ScriptedDecoder()]);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => analyzer.Analyze("empty.bin", new MemoryStream(), options));
+        Assert.Throws<ArgumentOutOfRangeException>(() => analyzer.Analyze("tags.bin", new MemoryStream(new byte[64]), options));
+    }
+
+    [Fact]
+    public void AnEndOfStreamFromOpenIsNotPossibleNotFailed()
+    {
+        var decoder = new ScriptedDecoder { OnOpen = _ => throw new EndOfStreamException() };
+
+        Report report = Analyze(new FrameParser(), [decoder], Verify);
+
+        Assert.Equal(DecodeStatus.NotPossible, Assert.Single(report.Streams).Verification!.Decoding);
+        Assert.Equal("decode.not-possible", Assert.Single(report.Findings).Code);
+    }
+
+    [Theory]
+    [InlineData(0, 16)]
+    [InlineData(-1, 16)]
+    [InlineData(2, 0)]
+    [InlineData(2, 65)]
+    [InlineData(2, -8)]
+    public void ASetupACraftedFileStatesAndNoDecoderCanTakeIsAFindingNotAParseFailure(int channels, int bits)
+    {
+        var decoder = new ScriptedDecoder();
+        var parser = new FrameParser { Channels = channels, BitsPerSample = bits };
+
+        Report report = Analyze(parser, [decoder], Verify);
+
+        Assert.Equal(0, decoder.Opens);
+        Assert.False(parser.Session!.IsDecoding);
+        Assert.Equal(DecodeStatus.NotPossible, Assert.Single(report.Streams).Verification!.Decoding);
+        Finding finding = Assert.Single(report.Findings);
+        Assert.Equal(("decode.not-possible", Severity.Info), (finding.Code, finding.Severity));
+        Assert.Equal("Stream", finding.Node!.Name);
+    }
+
+    [Fact]
+    public void ASetupACraftedFileStatesIsNotCheckedWhereNothingIsDecoded()
+    {
+        Report report = Analyze(new FrameParser { Channels = 0, BitsPerSample = 99 }, [new ScriptedDecoder()]);
+
+        Assert.Empty(report.Findings);
+        Assert.Equal(DecodeStatus.NotRequested, Assert.Single(report.Streams).Verification!.Decoding);
+
+        var context = new ParseContext(new ByteReader(new MemoryStream(new byte[8]), CancellationToken.None), new Node("File", 0, 8));
+        Assert.False(context.StartDecoding("test", new DecodeSetup { Stream = context.Root, Channels = 0, BitsPerSample = 99 }).IsDecoding);
+    }
+
+    [Fact]
+    public void TheBudgetSaturatesInsteadOfWrappingForAbsurdFigures()
+    {
+        // 2^31 samples of 2^31 channels of 8 bytes would wrap a long.
+        var decoder = new ScriptedDecoder { OnDecode = _ => int.MaxValue };
+        var parser = new FrameParser { Channels = int.MaxValue, BitsPerSample = 64, Samples = null };
+
+        Report report = Analyze(parser, [decoder], Verify);
+
+        Assert.Equal(DecodeStatus.Stopped, Assert.Single(report.Streams).Verification!.Decoding);
+        Assert.Single(decoder.FirstSamples);
+        Assert.Equal("decode.limit", Assert.Single(report.Findings).Code);
+    }
+
+    [Fact]
+    public void TheDecoderSeesLentBuffersOnlyForAFrameTheParserWalked()
+    {
+        DecodeContext? context = null;
+        var seen = new List<bool>();
+        var decoder = new ScriptedDecoder
+        {
+            OnOpened = c => context = c,
+            OnDecode = f =>
+            {
+                seen.Add(context!.LentBuffers.IsEmpty);
+                return f.Samples;
+            },
+        };
+        var parser = new LendThenDecodeParser();
+
+        Report report = Analyze(parser, [decoder], Verify);
+
+        Assert.Equal([false, true], seen);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Equal(new[] { false, false }, parser.LentEmpty);
+    }
+
+    private sealed class LendThenDecodeParser : IFormatParser
+    {
+        public List<bool> LentEmpty { get; } = [];
+
+        public string Name => "LendThenDecode";
+
+        public SniffResult Sniff(SniffContext context) => new(100);
+
+        public void Parse(ParseContext context)
+        {
+            IDecodeSession session = context.StartDecoding("test", new DecodeSetup { Stream = context.Root, Channels = 1, BitsPerSample = 16 });
+            LentEmpty.Add(session.Lend(4, 1).IsEmpty);
+            session.Decode(new CodedFrame(new MappedBytes(new byte[8], 0), "Frame", 0, 4) { IsWalked = true });
+            LentEmpty.Add(session.Lend(4, 1).IsEmpty);
+            session.Decode(new CodedFrame(new MappedBytes(new byte[8], 0), "Frame", 4, 4));
+            session.Finish([]);
+        }
+    }
+
+    [Fact]
+    public void TheLimitOfLentSamplesIsAnExactBound()
+    {
+        var parser = new LimitParser();
+
+        Report report = Analyze(parser, [new ScriptedDecoder()], Verify);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.Equal([false, true, false], parser.Empty);
+    }
+
+    private sealed class LimitParser : IFormatParser
+    {
+        public List<bool> Empty { get; } = [];
+
+        public string Name => "Limit";
+
+        public SniffResult Sniff(SniffContext context) => new(100);
+
+        public void Parse(ParseContext context)
+        {
+            IDecodeSession session = context.StartDecoding("test", new DecodeSetup { Stream = context.Root, Channels = 2, BitsPerSample = 16 });
+            Empty.Add(session.Lend(1 << 23, 2).IsEmpty);
+            Empty.Add(session.Lend((1 << 23) + 1, 2).IsEmpty);
+            Empty.Add(session.Lend(1 << 23, 2).IsEmpty);
+            session.Finish([]);
+        }
     }
 
     [Fact]
@@ -1049,7 +1286,7 @@ public class DecodeRouteTests
     }
 
     [Fact]
-    public void ADefaultAnalyzerHasNoDecodersYetAndStaysQuiet()
+    public void ADefaultAnalyzerHasNoDecodersYetAndSaysSoWhenDecodingIsAskedFor()
     {
         Assert.Empty(DefaultParsers.Decoders);
         Report report = Analyze(new FrameParser(), DefaultParsers.Decoders, Verify);

@@ -32,11 +32,13 @@ internal sealed class DecodeRun
 
     public bool HasSinkFailure => _sinkFailure is not null;
 
-    // Bytes of the canonical layout, saturating.
+    // Bytes of the canonical layout, saturating (the product of three ints can pass a long only with absurd channel counts,
+    // but a crafted file may state them).
     public void Count(long samples, int channels, int bytesPerSample)
     {
-        long bytes = samples * channels * bytesPerSample;
-        _pcmBytes = _pcmBytes > long.MaxValue - bytes ? long.MaxValue : _pcmBytes + bytes;
+        UInt128 bytes = (UInt128)(ulong)samples * (ulong)channels * (ulong)bytesPerSample;
+        UInt128 total = (UInt128)(ulong)_pcmBytes + bytes;
+        _pcmBytes = total > long.MaxValue ? long.MaxValue : (long)total;
     }
 
     public void Capture(Exception ex) => _sinkFailure ??= ExceptionDispatchInfo.Capture(ex);
@@ -44,7 +46,7 @@ internal sealed class DecodeRun
     public void ThrowIfSinkFailed() => _sinkFailure?.Throw();
 
     // The sink a decoder gets: it forwards to the front end's and never throws.
-    public IPcmSink OpenSink(DecodedStream stream)
+    public GuardedSink OpenSink(DecodedStream stream)
     {
         IPcmSink? target = null;
         if (Options.Output is { } output && !HasSinkFailure)
@@ -62,8 +64,12 @@ internal sealed class DecodeRun
         return new GuardedSink(this, target);
     }
 
-    private sealed class GuardedSink(DecodeRun run, IPcmSink? target) : IPcmSink
+    // The decoder writes to it; the host alone ends it (EndByHost), so the front end's sink sees exactly one End, with the
+    // samples the host counted. An End from the decoder is ignored.
+    internal sealed class GuardedSink(DecodeRun run, IPcmSink? target) : IPcmSink
     {
+        private bool _isEnded;
+
         public void Write(PcmBlock block)
         {
             if (target is null || run.HasSinkFailure)
@@ -83,10 +89,16 @@ internal sealed class DecodeRun
 
         public void End(long samples)
         {
-            if (target is null || run.HasSinkFailure)
+        }
+
+        public void EndByHost(long samples)
+        {
+            if (_isEnded || target is null || run.HasSinkFailure)
             {
                 return;
             }
+
+            _isEnded = true;
 
             try
             {

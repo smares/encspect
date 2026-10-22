@@ -35,7 +35,7 @@ public sealed record DecodeSetup
 // FirstSample: the unit's position in the stream in samples per channel. Samples: how many the parser says it codes.
 public readonly record struct CodedFrame(MappedBytes Bytes, string NodeName, long FirstSample, int Samples)
 {
-    // The parser found the frame damaged: a checksum over its coded bytes fails, or the data ends inside it. The decoder
+    // The parser found the frame damaged: a checksum over its coded data fails, or the data ends inside it. The decoder
     // still decodes what it can, so a whole-stream checksum then says the audio differs.
     public bool IsDamaged { get; init; }
 

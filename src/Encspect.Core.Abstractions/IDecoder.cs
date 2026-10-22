@@ -14,9 +14,9 @@ public interface IDecoder
     IFrameDecoder Open(DecodeContext context);
 }
 
-// The decoding state of one stream in one analysis. The host calls it on one thread, frame by frame, and always ends it
-// with Finish, also when the parser does not (see "Ending sessions" in the design). Its buffers are its own arrays,
-// dropped with it.
+// The decoding state of one stream in one analysis. The host calls it on one thread, frame by frame, and ends it with
+// Finish, also when the parser does not (see "Ending sessions" in the design); only a decoder that failed (decode.failed) is
+// not called again. Its buffers are its own arrays, dropped with it.
 public interface IFrameDecoder
 {
     // Decodes one frame, checks what the frame stores about its decoded audio (a Monkey's Audio frame CRC), and returns
