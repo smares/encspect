@@ -11,7 +11,9 @@ namespace Encspect.Host;
 // severity, code, message, offset, length, path and count. A report whose format is not the
 // plain detected one (other formats match, or the analysis was forced) also has detection, with
 // the format that ran, its evidence, whether it was forced, the format detection would have chosen
-// then, and the alternatives with their evidence (class, offset, frames, verifiedFrames, note).
+// then, and the alternatives with their evidence (class, offset, frames, verifiedFrames, note). A stream of a coding that
+// stores checksums has verification after protection: isVerified (where known), isLossy (where true), decoding,
+// decodedSamples and checksums (name, covers, coversAllAudio, stored, checked, failed).
 public static class ReportJsonWriter
 {
     // Raised whenever a field changes meaning or type, or one is removed; added fields keep it.
@@ -316,6 +318,11 @@ public static class ReportJsonWriter
             writer.WriteEndObject();
         }
 
+        if (stream.Verification is { } verification)
+        {
+            WriteVerification(writer, verification);
+        }
+
         if (stream.Encoder is not null)
         {
             writer.WriteString("encoder", stream.Encoder);
@@ -350,6 +357,46 @@ public static class ReportJsonWriter
 
             WriteNumbers(writer, "x", series.X.Span);
             WriteNumbers(writer, "values", series.Values.Span);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
+        writer.WriteEndObject();
+    }
+
+    private static void WriteVerification(Utf8JsonWriter writer, StreamVerification verification)
+    {
+        writer.WriteStartObject("verification");
+        if (verification.IsVerified is { } isVerified)
+        {
+            writer.WriteBoolean("isVerified", isVerified);
+        }
+
+        if (verification.IsLossy)
+        {
+            writer.WriteBoolean("isLossy", true);
+        }
+
+        writer.WriteString("decoding", verification.Decoding switch
+        {
+            DecodeStatus.NotRequested => "notRequested",
+            DecodeStatus.NoDecoder => "noDecoder",
+            DecodeStatus.NotPossible => "notPossible",
+            DecodeStatus.Decoded => "decoded",
+            DecodeStatus.Stopped => "stopped",
+            _ => "failed",
+        });
+        writer.WriteNumber("decodedSamples", verification.DecodedSamples);
+        writer.WriteStartArray("checksums");
+        foreach (ChecksumTally tally in verification.Checksums)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("name", tally.Name);
+            writer.WriteString("covers", tally.Covers switch { ChecksumCoverage.Header => "header", ChecksumCoverage.CodedData => "codedData", _ => "decodedAudio" });
+            writer.WriteBoolean("coversAllAudio", tally.CoversAllAudio);
+            writer.WriteNumber("stored", tally.Stored);
+            writer.WriteNumber("checked", tally.Checked);
+            writer.WriteNumber("failed", tally.Failed);
             writer.WriteEndObject();
         }
 

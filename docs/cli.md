@@ -56,6 +56,32 @@ Says what each node is: its description, as the parser that read it gives it, an
 
 Without it, the output is unchanged.
 
+### `--verify`
+
+Decodes each file's audio while reading it and compares the checksums that cover decoded audio, for the codings that have a decoder (an MD5 over all samples, a CRC over the samples of a frame). Without it, only the checksums over coded data are compared, so a stream whose checksum over decoded audio was not compared says so.
+
+- **Cost:** decoding runs in the same pass over the file and costs time for every sample, much more than the structure analysis alone. The PCM a stream decodes to is counted in bytes of the canonical layout (signed, little-endian, whole bytes a sample), and decoding stops with an info finding (`decode.limit`) past the larger of 16 GiB and 256 times the file's size.
+- **Formats without a decoder:** the stream says so (`decode.no-decoder`, info) and the report is otherwise the same. No format has a decoder yet; the decoders arrive with their formats.
+- **Findings:** a stored checksum that differs is a warning, so `--fail-on warning` fails the run. A decoder that fails (`decode.failed`) is an error and a bug.
+- **Output:** the text tree, JSON and CSV carry the verdict (see below). Without `--verify` the tree and every other field are the same.
+
+### The verification of a stream
+
+A stream of a coding that declares its checksums has a verification, with or without `--verify`. No format declares them yet: the phase 3 codings and WavPack do so as their work lands, and the examples below show what they will write. A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio (`encspect --learn verification` explains it).
+
+- **Text tree:** a line under the stream's first node.
+  - `Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)`: each checksum with the values compared of those stored.
+  - `Verified: no (STREAMINFO MD5 1 of 1 differ)`: a stored checksum differs.
+  - `Verified: unknown (STREAMINFO MD5 not compared: decoding was not asked for)`: something stored was not compared, or nothing compared covers all of the audio.
+  - `Verified: yes (lossy stream; block header CRC 120 of 120)`: the checksums vouch for the output of a lossy coding (a WavPack hybrid file without its correction file).
+- **JSON:** `verification` in the stream, after `protection`:
+  - `isVerified`, written where it is not null;
+  - `isLossy`, written where it is true;
+  - `decoding`: `notRequested`, `noDecoder`, `notPossible`, `decoded`, `stopped` or `failed`;
+  - `decodedSamples`, the samples per channel the decoder decoded;
+  - `checksums`, each with `name`, `covers` (`header`, `codedData` or `decodedAudio`), `coversAllAudio`, `stored`, `checked` and `failed`.
+- **CSV:** the `Is Verified` column, filled only with `--verify`: `false` where a stream's verification is false, `true` where every audio stream's is true, empty otherwise. Without `--verify` it is empty for every file, so a folder export never mixes verdicts from coded data alone with empty ones.
+
 ### `--learn`
 
 `encspect --learn` lists the background articles, and `encspect --learn mid-side-stereo` prints one as plain text: why a coding tool such as mid/side stereo or scfsi exists, how it works, what seeing it in a file means and where it is specified.
@@ -148,6 +174,7 @@ A JSON report (schema version 1) is an object:
   - `kind` is `Video` or `Other` for a stream that is not audio (an ASF video stream that is protected, reported so that its protection is not lost), which then has no `sampleRate`, `channels`, `samples` or `isVbr`; it is left out for audio. The summary and the CSV take the codec, sample rate, channel mode, duration and samples from the audio streams only (empty where there is none), and the protection from all streams.
   - A track counts as encrypted unless its key information says no sample is protected and nothing in the file says otherwise; Encspect does not prove sample by sample that encrypted tracks are partly clear.
   - `isProtected` is `true` for a stream that its container protects, with `protection` (both are left out otherwise): `scheme` names it ("Common Encryption, AES-CTR (cenc)", "iTunes protection (drms)", "Microsoft Digital Rights Manager version 1"), `isEncrypted` says whether its samples are encrypted, so that the analyzer read no frames of them (false only where the key information says that no sample is protected and nothing in the file says otherwise), and `systems` lists the DRM systems the file names, from the DASH-IF registry for MP4's pssh boxes and from the specification for ASF's Advanced Content Encryption Object; a system the tables do not list is its ID, in lower case as the registry writes it (`ProtectionSystems.Text`), in both formats. Nothing is decrypted, and no key or license is read.
+  - `verification` is written for a stream of a coding that stores checksums (see "The verification of a stream"); the schema version stays 1, since it adds a field.
   - `multilingualChannels` counts the MPEG-2 multilingual channels a stream carries besides its layout.
   - `series` are numbers for graphs, per frame (`axis` `frameOffset`, `x` the frame's byte offset) and per second of audio (`seconds`, `x` the start of each second). MPEG gives the bitrate and, for Layer III, the bit reservoir fill, both ways.
 - **Detection:** `detection`, present only when other formats also match or the analysis was forced, has:
@@ -171,7 +198,7 @@ The CSV row of a file has:
 - the tags, including those a container holds in its chunks;
 - the number of errors, warnings and infos;
 - `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known;
-- `Is Protected`, `true` if any stream is protected and `false` otherwise (empty for a file without a stream), `Protection Scheme`, the schemes of the protected streams, and `DRM Systems`, the systems their files name; several are separated by `; `.
+- `Is Protected`, `true` if any stream is protected and `false` otherwise (empty for a file without a stream), `Is Verified` (see `--verify`), `Protection Scheme`, the schemes of the protected streams, and `DRM Systems`, the systems their files name; several are separated by `; `.
 
 ## Exit codes
 

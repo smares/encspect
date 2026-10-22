@@ -1,7 +1,7 @@
 ---
 id: crc
 title: The frame CRC
-related: dts-core-frames, dts-extension-substream, wavpack-sub-blocks, frame-header, lame-tag, granules-and-frames, adts, ac3-frames-and-bsi, musepack-sv8-packets
+related: verification, dts-core-frames, dts-extension-substream, wavpack-sub-blocks, frame-header, lame-tag, granules-and-frames, adts, ac3-frames-and-bsi, musepack-sv8-packets
 references: ISO/IEC 11172-3 2.4.3.1; ISO/IEC 14496-3 1.A.2.2.2; ATSC A/52:2018 7.10.1; ETSI TS 102 114 5.4.2, Annex B
 ---
 

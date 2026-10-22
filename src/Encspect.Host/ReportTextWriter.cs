@@ -33,7 +33,13 @@ public static class ReportTextWriter
             list.Add(series);
         }
 
-        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter), 0, anchored);
+        Dictionary<Node, string> verified = new(ReferenceEqualityComparer.Instance);
+        foreach (StreamInfo stream in report.Streams.Where(s => s.Verification is not null && s.Nodes.Count > 0))
+        {
+            verified.TryAdd(stream.Nodes[0], VerificationText.Describe(stream.Verification!));
+        }
+
+        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified), 0, anchored);
 
         if (report.Detection is { } detection)
         {
@@ -91,6 +97,13 @@ public static class ReportTextWriter
         if (options.Explain)
         {
             WriteExplanation(node.Description, node.Topic, writer, depth);
+        }
+
+        if (options.Verified.TryGetValue(node, out string? verification))
+        {
+            Indent(writer, depth + 1);
+            writer.Write("Verified: ");
+            writer.WriteLine(Escape(verification));
         }
 
         if (depth >= Node.MaxDepth)
@@ -167,7 +180,7 @@ public static class ReportTextWriter
         }
     }
 
-    private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter);
+    private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter, Dictionary<Node, string> Verified);
 
     // Values from the file are text and escaped; numbers are written without a string per node.
     private static void WriteValue(NodeValue value, TextWriter writer)

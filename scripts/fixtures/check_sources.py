@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Downloads every pinned file the scripts fetch from every one of its addresses (downloads.py)
-and checks its SHA-256, so the scheduled sources workflow notices when an original address or one
+and checks its SHA-256 (and that FFmpeg's release holds every file ffmpeg_sources.py extracts), so the scheduled sources workflow notices when an original address or one
 of its copies stops serving it, before the fallback is all that is left. FAAC's releases are pinned by
 the commits of their tags (faac_tool.py), which it asks both repositories for.
 
@@ -113,6 +113,11 @@ def main():
                 elif downloads.sha256(path) != digest:
                     problem = f"serves SHA-256 {downloads.sha256(path)}"
                 else:
+                    # The archive is the one the scripts extract FILES from: each must be in it.
+                    if name == ffmpeg_sources.ARCHIVE:
+                        for absent in ffmpeg_sources.missing(path):
+                            problems += 1
+                            print(f"{name}: {address} does not hold {absent}")
                     continue
                 problems += 1
                 print(f"{name}: {address} {problem}")

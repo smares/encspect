@@ -10,10 +10,14 @@ public static class ReportCsvWriter
     [
         "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
         "Channel Layout", "Encoder", "Encoder Confidence", "Writer", "Writer Confidence", "Tags", "Errors", "Warnings", "Infos", "Has Object Audio", "JOC Object Count",
-        "Is Protected", "Protection Scheme", "DRM Systems",
+        "Is Protected", "Is Verified", "Protection Scheme", "DRM Systems",
     ];
 
-    public static void Write(IEnumerable<Report> reports, TextWriter writer)
+    public static void Write(IEnumerable<Report> reports, TextWriter writer) => Write(reports, writer, isVerifying: false);
+
+    // isVerifying: the analysis asked for decoding (--verify), so Is Verified holds its verdict; otherwise it is empty for
+    // every file, and a folder export never mixes verdicts from coded data alone with empty ones.
+    public static void Write(IEnumerable<Report> reports, TextWriter writer, bool isVerifying)
     {
         ArgumentNullException.ThrowIfNull(reports);
         ArgumentNullException.ThrowIfNull(writer);
@@ -28,7 +32,8 @@ public static class ReportCsvWriter
                 Fixed(s.AverageBitrate, 1), s.SampleRate?.ToString(CultureInfo.InvariantCulture), s.ChannelMode, s.ChannelLayoutText, s.Encoder,
                 s.EncoderConfidence?.ToString(), s.Writer, s.WriterConfidence?.ToString(), string.Join(", ", s.Tags), Count(s.Errors), Count(s.Warnings), Count(s.Infos),
                 s.Streams == 0 ? null : s.HasObjectAudio ? "true" : "false", s.JocObjectCount?.ToString(CultureInfo.InvariantCulture),
-                s.Streams == 0 ? null : s.IsProtected ? "true" : "false", string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems),
+                s.Streams == 0 ? null : s.IsProtected ? "true" : "false", isVerifying && s.IsVerified is { } verified ? (verified ? "true" : "false") : null,
+                string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems),
             ]);
             writer.Flush();
         }

@@ -132,4 +132,37 @@ public abstract class AnalysisContext
 
         return _router?.ParseTag(this, tagName, tag, parent);
     }
+
+    // Starts the decoding of one stream by the decoder with that codec ID. Never null: where decoding was not asked for,
+    // or no decoder has the ID, the session decodes nothing and its Finish says so. The parser hands the session each
+    // frame it reads and ends it with Finish; a session it leaves open is ended when its route or the format parser
+    // returns (docs/design/decoders.md, "Ending sessions").
+    // A stream whose channels or sample width the decoder cannot take (below 1, or above 64 bits) is not decoded and the host reports
+    // decode.not-possible, so a parser may pass what the file states; a null setup or stream is the parser's bug.
+    public IDecodeSession StartDecoding(string codecId, DecodeSetup setup)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(codecId);
+        ArgumentNullException.ThrowIfNull(setup);
+
+        return _router?.StartDecoding(this, codecId, setup) ?? new UnroutedSession(setup);
+    }
+
+    // The session of a context without a router (a parser run by itself): no decoder exists to decode anything.
+    private sealed class UnroutedSession(DecodeSetup setup) : IDecodeSession
+    {
+        private StreamVerification? _verification;
+
+        public bool IsDecoding => false;
+
+        public SampleBuffers Lend(int samples, int channels, bool needsWide = false) => default;
+
+        public bool Decode(in CodedFrame frame) => false;
+
+        public StreamVerification Finish(IReadOnlyList<ChecksumTally> stored)
+        {
+            ArgumentNullException.ThrowIfNull(stored);
+
+            return _verification ??= new StreamVerification { Decoding = DecodeStatus.NoDecoder, IsLossy = setup.IsLossy, Checksums = [.. stored] };
+        }
+    }
 }
