@@ -35,6 +35,11 @@ public sealed record ReportSummary(
     IReadOnlyList<string>? ProtectionSchemes = null,
     IReadOnlyList<string>? DrmSystems = null)
 {
+    // The verdict over the audio streams' verification: false where one stream's is false, true where every audio stream has
+    // a verification and each is true, null otherwise (including a file without audio streams). Verification is a
+    // property of the analysis, not of the file: the CSV writes it only for an analysis that asked for decoding.
+    public bool? IsVerified { get; init; }
+
     // The schemes and systems as lists even for a summary made without them.
     public IReadOnlyList<string> ProtectionSchemes { get; init; } = ProtectionSchemes ?? [];
 
@@ -63,6 +68,10 @@ public sealed record ReportSummary(
         double duration = counted.Sum(s => s.Duration);
         long samples = counted.Sum(s => s.Samples);
 
+        bool? verified = audio.Any(s => s.Verification?.IsVerified == false) ? false
+            : audio.Count > 0 && audio.All(s => s.Verification?.IsVerified == true) ? true
+            : null;
+
         return new ReportSummary(
             report.Source,
             report.Root.Value?.ToString(),
@@ -86,7 +95,10 @@ public sealed record ReportSummary(
             streams.Where(s => s.JocObjectCount is not null).Select(s => s.JocObjectCount).Max(),
             streams.Any(s => s.IsProtected),
             [.. streams.Select(s => s.Protection?.Scheme).OfType<string>().Distinct()],
-            [.. streams.SelectMany(s => s.Protection?.Systems ?? []).Distinct()]);
+            [.. streams.SelectMany(s => s.Protection?.Systems ?? []).Distinct()])
+        {
+            IsVerified = verified,
+        };
     }
 
     // Only plain details are searched below, as a container's chunks are, never streams, frames or

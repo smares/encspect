@@ -36,6 +36,13 @@ internal static class CommandLine
                                 --learn explains, under each node of the text tree, or as
                                 "description" and "topic" in JSON. Not with --csv.
 
+        Verification:
+          --verify              Decode each file's audio while reading it and compare the checksums
+                                that cover decoded audio (a FLAC file's MD5, a Monkey's Audio frame's
+                                CRC). Slower than the default analysis, which compares only the
+                                checksums over coded bytes. Streams of a coding without a decoder
+                                say so. With --csv, fills Is Verified.
+
         Version:
           --version             Print the version, as the JSON reports give it in tool.version.
 
@@ -77,6 +84,7 @@ internal static class CommandLine
         Output? output = null;
         bool offsets = false;
         bool explain = false;
+        bool verify = false;
         ReportSections hidden = ReportSections.None;
         var formats = new List<string>();
         string? forcedFormat = null;
@@ -119,6 +127,9 @@ internal static class CommandLine
                     break;
                 case "--offsets" when inline is null:
                     offsets = true;
+                    break;
+                case "--verify" when inline is null:
+                    verify = true;
                     break;
                 case "--explain" when inline is null:
                     explain = true;
@@ -283,7 +294,7 @@ internal static class CommandLine
                 case Output.Csv:
                     using (var writer = new StreamWriter(stream, new UTF8Encoding(false), 1 << 16, leaveOpen: true))
                     {
-                        ReportCsvWriter.Write(Reports(), writer);
+                        ReportCsvWriter.Write(Reports(), writer, verify);
                     }
 
                     break;
@@ -359,7 +370,7 @@ internal static class CommandLine
                     return null;
                 }
 
-                return analyzer.AnalyzeFile(input.Path, forcedFormat is null ? null : new AnalysisOptions { ForcedFormat = forcedFormat });
+                return analyzer.AnalyzeFile(input.Path, forcedFormat is null && !verify ? null : new AnalysisOptions { ForcedFormat = forcedFormat, Decoding = verify ? new DecodeOptions() : null });
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

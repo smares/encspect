@@ -52,12 +52,12 @@ public class ProtectionTests
         ReportCsvWriter.Write([Fixtures.AnalyzeMpeg("mp4/cenc-aac.m4a"), Fixtures.AnalyzeMpeg("mp4/itunes-purchase-clear.m4a"), Fixtures.AnalyzeMpeg("mp4/moov-missing.m4a")], writer);
 
         string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        Assert.EndsWith(",Is Protected,Protection Scheme,DRM Systems", lines[0], StringComparison.Ordinal);
-        Assert.EndsWith(",false,,true,\"Common Encryption, AES-CTR (cenc)\",Widevine Content Protection; Microsoft PlayReady; 01234567-89ab-cdef-0123-456789abcdef", lines[1], StringComparison.Ordinal);
-        Assert.EndsWith(",false,,false,,", lines[2], StringComparison.Ordinal);
+        Assert.EndsWith(",Is Protected,Is Verified,Protection Scheme,DRM Systems", lines[0], StringComparison.Ordinal);
+        Assert.EndsWith(",false,,true,,\"Common Encryption, AES-CTR (cenc)\",Widevine Content Protection; Microsoft PlayReady; 01234567-89ab-cdef-0123-456789abcdef", lines[1], StringComparison.Ordinal);
+        Assert.EndsWith(",false,,false,,,", lines[2], StringComparison.Ordinal);
 
         // A file without a stream says nothing about protection.
-        Assert.EndsWith(",,,,,", lines[3], StringComparison.Ordinal);
+        Assert.EndsWith(",,,,,,", lines[3], StringComparison.Ordinal);
 
         ReportSummary summary = ReportSummary.From(Fixtures.AnalyzeMpeg("mp4/cenc-aac.m4a"));
         Assert.True(summary.IsProtected);
