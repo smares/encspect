@@ -356,7 +356,9 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
         var counts = new long[Series.Categories.Count];
         Series.CountRange(first, end, lane, counts);
         string range = $"Frames {(first + 1).ToString("N0", CultureInfo.InvariantCulture)} to {end.ToString("N0", CultureInfo.InvariantCulture)}";
-        return $"{range} · {Shares(Series, counts)} · drawn with its rare categories enlarged";
+        int marked = RareUnits(first, end, lane).Count;
+        string stepping = marked > 1 ? $" · {marked} marked frames · click again for the next" : string.Empty;
+        return $"{range} · {Shares(Series, counts)} · drawn with its rare categories enlarged{stepping}";
     }
 
     public override long? FrameAt(int index, long? selected)

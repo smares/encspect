@@ -235,6 +235,61 @@ public class CategoryGraphTests
         Assert.True(ties > 0, "No width made the unit share its column's pixel with another lone category; the test data no longer shows the case.");
     }
 
+    // Stacked rows and variable layouts (lane -1): several lone units in one column, a unit without any category, and a unit that
+    // holds two lone categories, which is one unit to step to.
+    [Fact]
+    public void A_column_of_a_variable_layout_steps_through_its_lone_units_and_says_so_when_hovered()
+    {
+        var builder = new CategorySeriesBuilder("Window Sequences", CategoryTestData.BlockTypes, "channel stream");
+        for (int unit = 0; unit < 20; unit++)
+        {
+            builder.Add(unit switch
+            {
+                3 => [0, 2],
+                5 => [CategorySeries.None],
+                8 => [1, 4],
+                12 => [3],
+                _ => [0],
+            });
+        }
+
+        CategorySeries series = builder.Build(Enumerable.Range(0, 20).Select(i => i * 10.0).ToArray(), null, null, "d");
+        var graph = new CategoryGraph(series, GraphForm.Frames);
+
+        Assert.Equal([3, 8, 12], graph.RareUnits(0, 20, -1));
+        Assert.Equal(3, graph.UnitOfColumn(0, 20, -1));
+        Assert.Equal(8, graph.UnitOfColumn(0, 20, -1, 3));
+        Assert.Equal(12, graph.UnitOfColumn(0, 20, -1, 8));
+        Assert.Equal(3, graph.UnitOfColumn(0, 20, -1, 12));
+        Assert.Equal(8, graph.UnitOfColumn(0, 20, -1, 5));
+        Assert.EndsWith(" · 3 marked frames · click again for the next", graph.DescribeUnits(0, 20, -1), StringComparison.Ordinal);
+
+        // A column of one lone unit, or of none, says nothing of stepping; a unit without any category is no lone unit.
+        Assert.DoesNotContain("marked", graph.DescribeUnits(0, 5, -1), StringComparison.Ordinal);
+        Assert.Equal([3], graph.RareUnits(0, 5, -1));
+        Assert.Empty(graph.RareUnits(4, 7, -1));
+        Assert.Equal(4, graph.UnitOfColumn(4, 7, -1));
+
+        // The same in a fixed layout of two values drawn as one stacked row.
+        var fixedBuilder = new CategorySeriesBuilder("Block Usage", CategoryTestData.BlockTypes, "granule", 2);
+        for (int unit = 0; unit < 10; unit++)
+        {
+            fixedBuilder.Add(unit switch
+            {
+                2 => [0, 2],
+                4 => [CategorySeries.None, CategorySeries.None],
+                6 => [4, 1],
+                _ => [0, 0],
+            });
+        }
+
+        var stacked = new CategoryGraph(fixedBuilder.Build(new double[10], null, null, "d"), GraphForm.Frames);
+        Assert.Equal([2, 6], stacked.RareUnits(0, 10, -1));
+        Assert.Equal(6, stacked.UnitOfColumn(0, 10, -1, 2));
+        Assert.Equal(2, stacked.UnitOfColumn(0, 10, -1, 6));
+        Assert.Equal([2, 6], stacked.RareUnits(0, 10, 1));
+    }
+
     private static CategoryGraph NamedSeries(CategorySeries series)
     {
         var builder = new CategorySeriesBuilder("Test", series.Categories, "value", 4, ["granule 1, channel 1", "granule 1, channel 2", "granule 2, channel 1", "granule 2, channel 2"]);
