@@ -75,9 +75,11 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - `entries`: the series' count for each category equals the value of the anchor's entry of the same name, and its total the value of the `denominator` node (found beside the anchor or below its grandparent), never the anchor's own value;
   - `flag`: two categories for a tally that is a single value; the `withCategory` count equals the anchor's value;
   - `findings`: codes of findings that allow the series to be smaller than the tally (MPEG frames that belong to no stream).
-  - A tally covers a region and a series a stream, so streams that share a region or an anchor are compared as a group, summing the series against the tallies of the group's distinct anchors. The table is empty until a format produces series; each format's pull request adds its rows.
+  - A tally covers a region and a series a stream, so streams that share a region or an anchor are compared as a group: the series are summed over its streams, and the tallies over its regions (the node of the table's anchor name below each of the streams' nodes).
+  - The tallies' entries are text (`4 granules (1.7%)`), and a tally lists only the entries that occurred. The harness, which is test code, reads the leading number of the text and takes a missing entry as 0; the entries are not retyped, since that would change every golden.
+  - The table is empty until a format produces series; each format's pull request adds its rows.
 - `DescriptionTests` also walks every fixture's category series: a series or a category without a description, or with a topic that does not exist, fails.
-- The GUI tests (`CategoryGraphTests`, `CategoryViewTests`) hold the aggregation per pixel column against a brute-force count, the rule that keeps rare categories visible, the frame each click selects, the headings, the palette (the surfaces it was validated against and the pixels the views draw) and the speed at 200,000 units.
+- The GUI tests (`CategoryGraphTests`, `CategoryViewTests`) hold the aggregation per pixel column against a brute-force count, the rule that keeps rare categories visible, the frame each click selects, the entries, their forms and the headings, a value without a category in every layout (pointer and keys), the minimums of the layout in short panes, the palette (the surfaces it was validated against and the pixels the views draw) and the speed at 200,000 units, with the aggregation timed (the width changes every frame). The screenshots of the list, each form, a narrow window and a stream with many entries are saved with `ENCSPECT_SCREENSHOTS`.
 
 ## CI
 
@@ -207,6 +209,7 @@ A pull request that changes goldens in a way a script can state, such as a forma
   - `renamed`: old name, new name and parent;
   - `moved`: the node, its old parent and position, its new parent and position;
   - `changed`: the path and the fields whose values may differ.
+  - A golden is the JSON array of reports the writer writes; old and new are compared report by report. Moved nodes are detached, the added nodes removed and the moved nodes reattached at their old positions, so the positions count the same siblings as the old report. A key of existing `series` elements (`concept`, `quantity`) is listed as `{"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"}`.
 - The script removes what is added, reverses the renames and moves, ignores the changed fields and requires the rest to equal the old report. A finding's `path` is a list of child indexes, so it maps every path of the new report (findings and a stream's `nodes`) through the nodes that were added or moved, and a finding that points into an added node fails.
 - A changed golden that no change file covers fails once any change file is part of the pull request. A pull request without one is reviewed as before: the check is opt-in.
 - **CI:** a step of the `fixtures` job runs `python3 scripts/ci/golden_additions.py --base HEAD^1 --head HEAD` on pull requests; the script itself passes when the diff adds or changes no change file. Run it locally with `--base origin/main`. `test_golden_additions.py` tests it in the `docs` job. The change files of earlier pull requests stay committed and are ignored.

@@ -50,9 +50,8 @@ Leaves those sections out of the text tree and JSON; it does not apply to `--csv
 
 Says what each node is: its description, as the parser that read it gives it, and the background topic it belongs to.
 
-- **Text tree:** indented under each node and wrapped at 100 columns (`[topic:mid-side-stereo]`).
+- **Text tree:** indented under each node and wrapped at 100 columns (`[topic:mid-side-stereo]`). Each share line of a category series (see "Shares over time") is followed by the description of its category.
 - **JSON:** `description` and `topic`, with a `description` for each series and, for a category series, a `description` and `topic` for it and for each of its categories.
-- **Text tree:** with `--explain` each share line of a category series (see "Shares over time") is followed by the description of its category.
 - **CSV:** does not apply.
 
 Without it, the output is unchanged.
@@ -178,13 +177,14 @@ A JSON report (schema version 1) is an object:
   - `verification` is written for a stream of a coding that stores checksums (see "The verification of a stream"); the schema version stays 1, since it adds a field.
   - `multilingualChannels` counts the MPEG-2 multilingual channels a stream carries besides its layout.
   - `series` are numbers for graphs, per frame (`axis` `frameOffset`, `x` the frame's byte offset) and per second of audio (`seconds`, `x` the start of each second). MPEG gives the bitrate and, for Layer III, the bit reservoir fill, both ways. A series that belongs to a shared concept also has `concept`.
+  - `quantity` names the quantity a numeric series shows, such as `Bitrate`, where the series of one stream that show it in other forms (per frame, per second of audio) carry the same text; the GUI offers them as one entry with the forms to choose from. It is left out where a series stands alone, and no format sets it yet.
   - `concept` is `stereoCoding`, `blockSwitching`, `codedBandwidth` or `bitDistribution`, on a numeric series or a category series, and is left out where a series has none. Front ends group graphs by it, never by name.
   - `categorySeries` holds the category of each value of each unit (a frame, packet or block) of the stream, for graphs and for the summary over the stream. It is left out when the stream has none, and a field was added, so the schema version stays 1. Each entry has:
     - `name`, the name of the tally node it is anchored to, and `valueLabel`, what one value is (`granule and channel`);
-    - `valuesPerUnit` and `valueNames` for a unit of a fixed number of values (`granule 1, channel 1`, …); a variable layout writes `valueCounts`, the number of values of each unit as runs of `[count, units]`;
-    - `categories`, each with its `name` and `count` (weighted, and including values past the caps); with `--explain` also `description` and `topic`, as the series itself has;
-    - `total`, the sum of the counts, and `uncodedValues` where values past 254 of a unit or 2^24 of the series were counted without a code;
-    - `xSeries`, the name of the per-frame series whose `x` the units share, or `x` with the byte offset of each unit where they share none;
+    - `valuesPerUnit` and `valueNames` for a unit of a fixed number of values (`granule 1, channel 1`, …); a variable layout writes `valueCounts`, the number of values of each unit as runs of `[count, units]`; a fixed layout of one value writes neither, and one value per unit is meant;
+    - `categories`, each with its `name` and `count` (weighted, and including values past the caps), and `isReserved` where the category marks a value the specification does not allow; with `--explain` also `description` and `topic`, as the series itself has;
+    - `total`, the sum of the counts, and `uncodedValues` where values with a category past 254 of a unit or 2^24 of the series were counted without a code;
+    - `xSeries`, the name of the per-frame series whose `x` the units share, or `x` with the byte offset of each unit where they share none (a grouping has its source's);
     - `runs`, the codes as runs of `[code, length]`, value by value within each unit and unit by unit, `null` for a value without a category; the codes index `categories`. A steady stream is a few runs. `weights` gives runs of weights where a value stands for more than one;
     - `seconds`, the first unit of each interval of audio time (the starts are the `x` of the stream's per-second series), absent without one;
     - for a grouping of another series (long, start and stop blocks as "long"), `groupOf`, the name of its source, and `map`, the category of the group for each source category, and no runs.
@@ -207,6 +207,8 @@ A JSON report (schema version 1) is an object:
 
 A category series that has a time index and an anchor in the tree prints, after its anchor node and its children and at the anchor's depth, one line for each category that occurs, in the series' category order: the category's share of the values in each interval of audio time, in percent rounded half to even to 0.1, as the tallies round, and `-` for an interval without values.
 
+The lines follow the anchor and its entries (the tally's own lines, not shown here):
+
 ```
       Block Usage: 480 granules
       Long Share Over Time: 100,90,80
@@ -215,6 +217,7 @@ A category series that has a time index and an anchor in the tree prints, after 
       Stop Share Over Time: 0,2.5,5
 ```
 
+- **Cost:** each interval is counted once for all categories, so the lines cost a pass over the values however many categories there are.
 - **Several streams** anchored to one node label their lines with the stream's number (`Long Share Over Time (stream 2)`).
 - **`--offsets`** adds the anchor's location to each line, **`--hide statistics`** hides the lines with their anchor, and **`--explain`** adds each category's description.
 - **The per-frame codes** are not printed, as per-frame numeric series are not; the JSON has them.

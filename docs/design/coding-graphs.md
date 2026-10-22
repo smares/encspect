@@ -10,14 +10,31 @@ Where the contract step differs from, or adds to, what is written below:
 - **JSON:** `valuesPerUnit` is written for every fixed layout of more than one value (the example above lacked it, the prose asks for it).
 - **Text:** a category's line is its name followed by "Share Over Time", so "Long, start and stop Share Over Time"; streams are numbered only where more than one stream anchors series to the same node.
 - **GUI:**
-  - The chips are one per series, with the three views chosen beside them and remembered for the next series; the Coding Summary sits under a "Summary" heading before the concept headings.
+  - Navigation is the list of the review round, not chips; the Coding Summary sits under a "Summary" heading before the concept headings.
   - A hover lists "values" (`24 values`), not the series' noun, since a value label such as "granule and channel" has no plural; it lists the rarest category first and at most eight.
-  - A category named "Reserved" is the invalid one that is drawn hatched. Under Avalonia 12's high contrast preference (`PlatformSettings.GetColorValues().ContrastPreference`) every second category is hatched too.
+  - A category with `IsReserved` is the invalid one that is drawn hatched (the first version recognized the name; the review rejected that). Under Avalonia 12's high contrast preference (`PlatformSettings.GetColorValues().ContrastPreference`) every second category is hatched too.
   - A strip column of many frames selects the first frame that holds its rarest category.
-  - The Channel Bit Share view (two segments over time) is not built: no series exists before the MPEG step, which adds it with the series.
+  - The Channel Bit Share view is built in the review round (see above), with a scripted series.
 - **Tests:** the summary table `category-summary.json` has a schema of its own (`form` entries or flag, `anchor`, `denominator`, `withCategory`, `findings`), documented in `docs/development.md`, and its harness is tested on reports built in the test. `ScreenshotTests` run the category views on a parser that wraps the MPEG one and adds test-only series.
 - **Golden check:** the change file's schema is in `scripts/ci/golden_additions.py` and `docs/development.md`; its CI step is in the `fixtures` job, which runs when a golden or change file changes, with a checkout two commits deep.
 - **Palette validator:** the `dataviz` skill's validator was run on the two palettes against `#ffffff` and `#000000`; its output matches the figures below and is in `docs/gui.md`.
+
+### Review round and the lead's navigation (2026-10-22)
+
+After the independent review of the contract step, and by the project lead's decision:
+
+- **Navigation:** the chip rows are replaced by a vertical list on the left of the graph area, grouped under the concept headings ("Summary", "Stereo coding", "Block switching", "Coded bandwidth", "Bit distribution", "Other"), with the chart in the rest of the pane. One entry stands for one quantity, with a view switcher for its forms: a category series offers over time, frames and summary; a numeric quantity per frame, over time and, for the bitrate, its distribution. The lead chose a left list over a dropdown; the dropdown is the fallback if the screenshots do not look right.
+  - Each form is a `Graph` of its own (`CategoryGraph` is made for one form; `GraphChoice` is the entry, `GraphFormChoice` a form), and the remembered form is per kind (`GraphForm`: per frame or frames, over time, summary).
+  - The forms of a numeric quantity are linked by an explicit field, `Series.Quantity`, written to JSON as `quantity` only where set, so `schemaVersion` stays 1. No parser sets it yet, so no golden changes; until a format does, a stream's one per-frame and one per-second series in the same unit (kbps, bytes) are paired by unit and axis, never by name. A pull request that sets `Quantity` on its series adds `quantity` to its goldens with a change file entry.
+  - One font size: headings, entries, the view switcher and the chart's text are the app's size, a heading set apart by weight and color; only the axis labels are a point smaller, because they sit close together along the axes.
+- **`Category.IsReserved`** replaces recognizing the name "Reserved" (`isReserved` in JSON where true).
+- **Channel Bit Share view** is built here (`ShareSplitGraph`, the form "First and second"): per interval a 100% column of two segments, the first channel at the bottom, the 50% line marked, from the per-second series of a quantity in percent with the concept "Bit distribution". Tests drive it with a scripted series.
+- **The summary harness** reads the tallies as they are: the entries are text ("4 granules (1.7%)"), so the harness, which is test code, parses the leading count, and an entry a tally omits is 0. The alternative, retyping the entries as integers with the share as text, would change every golden for a test's convenience. The tallies of a group's regions are summed, found by the table's anchor name below each region.
+- **The golden check** reads a golden as the array of reports it is, takes additions back before it reattaches moved nodes, and can add a key to existing series elements.
+- **Layout:** the pane starts at half the window height with a remembered splitter position and a minimum height; the plot keeps at least about 110 pixels (a strip what its rows need), the legend folds first, a strip that cannot give each row eight pixels becomes one stacked row, and the rest scrolls; percent ticks follow the room between them.
+- **Rounding:** the GUI's shares round half to even as the tree and the text do.
+- **Palette:** the muted first step is a mix of 0.7 with the surface, which passes the validator in both modes (0.55 did not).
+- **Builder:** a refused unit changes no count, values without a category are not counted as uncoded, and a time index's starts must be finite and nondecreasing.
 
 ## Scope
 
