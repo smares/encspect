@@ -372,15 +372,16 @@ public class OverTimeFormTests
         Reset();
     }
 
-    // A layer one value in 400 is a pixel of its own color, not a tint of it: the area gives every category that occurs a pixel,
-    // and the line between layers is not drawn over a layer that small.
+    // A layer one value in 4,000 would be 0.06 of a pixel; the area gives every category that occurs a pixel, of its own color,
+    // not a tint of it: the line between layers is not drawn over a layer that small.
     [AvaloniaTheory]
     [InlineData("light")]
     [InlineData("dark")]
     public void A_rare_layer_between_two_others_keeps_its_color(string variant)
     {
-        // 397 values of the first category, 2 of the second and 1 of the third: the second is in the middle of the stack.
-        CategorySeries series = Make(3, 10, s => 400, (s, u) => u < 397 ? 0 : u < 399 ? 1 : 2);
+        // 3,997 values of the first category, 2 of the second and 1 of the third: the second is in the middle of the stack, at
+        // 0.1 pixel; the third is on top of it at 0.05.
+        CategorySeries series = Make(3, 10, s => 4000, (s, u) => u < 3997 ? 0 : u < 3999 ? 1 : 2);
         (Window window, GraphView view) = Show(new CategoryGraph(series, GraphForm.OverTime), variant);
         Rect plot = view.PlotArea()!.Value;
         CategoryStyle[] styles = CategoryColors.ForStack(series, variant == "dark", SurfaceOf(variant));
@@ -394,7 +395,7 @@ public class OverTimeFormTests
                 rows += Near(styles[category].Color, Pixel(frame, plot.Left + 100, y), 6) ? 1 : 0;
             }
 
-            Assert.True(rows >= 1, $"No pixel of category {category} in its own color.");
+            Assert.Equal(1, rows);
         }
 
         window.Close();
