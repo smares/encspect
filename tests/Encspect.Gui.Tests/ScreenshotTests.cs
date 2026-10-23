@@ -108,7 +108,7 @@ public class ScreenshotTests
     }
 
     // The over-time forms of a category chart of a stream longer than 30 seconds, scripted: the stepped area and its smoothed
-    // variant, with the layers' names, a gap of two empty seconds and a last interval of a few frames dimmed.
+    // variant, a gap of two empty seconds and a last interval of a few frames hatched.
     [AvaloniaTheory]
     [InlineData("light")]
     [InlineData("dark")]

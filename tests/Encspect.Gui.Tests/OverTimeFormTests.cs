@@ -543,45 +543,160 @@ public class OverTimeFormTests
         Reset();
     }
 
-    // The last interval of a partial one of a few frames is dimmed in the area: the colors blended with the surface, so wide that
-    // it can be seen even where it lasts a fraction of a pixel; a longer one, the average and a column that merges intervals are not.
-    [AvaloniaFact]
-    public void A_partial_last_interval_of_few_frames_is_dimmed_in_the_area_only()
+    // A partial last interval of a few frames keeps its exact shares and is hatched: lines of the text color falling to the right
+    // over the layers' own colors, which show between them. The other intervals are not hatched.
+    [AvaloniaTheory]
+    [InlineData("light")]
+    [InlineData("dark")]
+    public void A_partial_last_interval_of_few_frames_is_hatched_over_its_own_colors(string variant)
     {
-        // 9 seconds, then 3 frames of a tenth of a second.
-        CategorySeries series = Series(10, s => 0, 3);
-        Color surface = Colors.White;
-        Color color = CategoryColors.ForStack(series, false, surface)[0].Color;
-        Color dimmed = CategoryColors.Mix(color, surface, 0.4);
-
-        (Window window, GraphView view) = Show(new CategoryGraph(series, GraphForm.OverTime) { Duration = 9.075 });
+        // Nine seconds, then 3 frames of 0.9 s: wide enough to see.
+        CategorySeries series = Make(2, 10, s => s == 9 ? 3 : 40, (s, u) => s == 9 ? (u < 2 ? 1 : 0) : (u < 12 ? 1 : 0));
+        (Window window, GraphView view) = Show(new CategoryGraph(series, GraphForm.OverTime) { Duration = 9.9 }, variant);
         Rect plot = view.PlotArea()!.Value;
-        double y = plot.Top + (plot.Height * 0.6);
+        CategoryStyle[] styles = CategoryColors.ForStack(series, variant == "dark", SurfaceOf(variant));
         WriteableBitmap frame = window.CaptureRenderedFrame()!;
-        Assert.True(Near(color, Pixel(frame, plot.Left + (plot.Width * 8.5 / 9.075), y)));
-        Assert.True(Near(dimmed, Pixel(frame, plot.Right - 3, y), 6), $"The last interval is {Pixel(frame, plot.Right - 3, y)}, not {dimmed}.");
+        double unit = plot.Width / 9.9;
+        double x0 = plot.Left + (9 * unit) + 4;
+        double x1 = plot.Right - 4;
+
+        // In the layer of the first category (the bottom one: 28 of 40 values, 1 of 3 in the last) a share of the pixels is the
+        // layer's own color and the rest the hatch, never the surface; in the interval before it, all of them are the layer's.
+        double y = plot.Top + (plot.Height * 0.85);
+        (int own, int other, int surface) = Count(frame, x0, x1, y, y + 20, styles[0].Color, SurfaceOf(variant));
+        Assert.True(own > 0.3 * (own + other), $"The layer's own color is {own} of {own + other} pixels.");
+        Assert.True(other > 0.1 * (own + other), $"The hatch is {other} of {own + other} pixels.");
+        Assert.Equal(0, surface);
+        (own, other, _) = Count(frame, plot.Left + (7 * unit) + 4, plot.Left + (8 * unit) - 4, y, y + 20, styles[0].Color, SurfaceOf(variant));
+        Assert.Equal(0, other);
+        Assert.True(own > 0);
+
+        // The hatch falls to the right; the reserved categories' hatch rises to it.
+        double hatchShift = Shift(frame, x0, x1, y, styles[0].Color);
+        Assert.True(hatchShift > 0, $"The last interval's hatch leans {hatchShift}.");
+
+        window.Close();
+        IReadOnlyList<Category> categories = [new Category("Real", "a."), new Category("Reserved", "b.") { IsReserved = true }];
+        var builder = new CategorySeriesBuilder("R", categories, "frame", 1);
+        for (int unit2 = 0; unit2 < 400; unit2++)
+        {
+            builder.Add((byte)(unit2 % 40 < 30 ? 1 : 0));
+        }
+
+        CategorySeries reserved = builder.Build(Enumerable.Range(0, 400).Select(i => i * 100.0).ToArray(), null, null, "d.", null, new TimeIndex(Enumerable.Range(0, 10).Select(i => (double)i).ToArray(), Enumerable.Range(0, 10).Select(i => i * 40).ToArray()));
+        (window, view) = Show(new CategoryGraph(reserved, GraphForm.OverTime), variant);
+        plot = view.PlotArea()!.Value;
+        frame = window.CaptureRenderedFrame()!;
+        Color gray = CategoryColors.ForStack(reserved, variant == "dark", SurfaceOf(variant))[1].Color;
+        double reservedShift = Shift(frame, plot.Left + 10, plot.Left + 70, plot.Bottom - 30, gray);
+        Assert.True(reservedShift < 0, $"The reserved hatch leans {reservedShift}.");
+        window.Close();
+        Reset();
+    }
+
+    // The pixels of a stretch in the layer's color, in another color and in the surface's.
+    private static (int Own, int Other, int Surface) Count(WriteableBitmap frame, double x0, double x1, double y0, double y1, Color layer, Color surface)
+    {
+        int own = 0;
+        int other = 0;
+        int onSurface = 0;
+        for (double y = y0; y < y1; y++)
+        {
+            for (double x = x0; x < x1; x++)
+            {
+                Color pixel = Pixel(frame, x, y);
+                if (Near(layer, pixel, 6))
+                {
+                    own++;
+                }
+                else
+                {
+                    other++;
+                    onSurface += Near(surface, pixel, 6) ? 1 : 0;
+                }
+            }
+        }
+
+        return (own, other, onSurface);
+    }
+
+    // Which way a hatch leans: the correlation of how far each pixel of a row is from the layer's color with the next row's, a pixel
+    // to the right against a pixel to the left. Positive for lines that fall to the right, negative for lines that rise.
+    private static double Shift(WriteableBitmap frame, double x0, double x1, double y, Color layer)
+    {
+        double Distance(double x, double row)
+        {
+            Color p = Pixel(frame, x, row);
+            return Math.Abs(p.R - layer.R) + Math.Abs(p.G - layer.G) + Math.Abs(p.B - layer.B);
+        }
+
+        double right = 0;
+        double left = 0;
+        for (double row = y; row < y + 12; row++)
+        {
+            for (double x = x0 + 2; x < x1 - 2; x++)
+            {
+                right += Distance(x, row) * Distance(x + 1, row + 1);
+                left += Distance(x, row) * Distance(x - 1, row + 1);
+            }
+        }
+
+        Assert.True(right + left > 0, "No hatch.");
+        return right - left;
+    }
+
+    // The note next to the caption names the hatched interval, and is there only while it is hatched.
+    [AvaloniaFact]
+    public void The_caption_note_names_the_hatched_last_interval_and_shows_only_while_it_is_hatched()
+    {
+        CategorySeries few = Series(10, s => 0, 3);
+
+        (Window window, GraphView view) = Show(new CategoryGraph(few, GraphForm.OverTime) { Duration = 9.03 });
+        Assert.Equal("Last 0.03 s: 3 frames, hatched", view.HatchNote);
+        Assert.True(CaptionNotePixels(window, view) > 20, "The note is not drawn.");
         window.Close();
 
-        foreach ((CategorySeries other, GraphForm form, double duration) in new[] { (series, GraphForm.Smoothed, 9.075), (Series(10, s => 0, 20), GraphForm.OverTime, 9.5), (Series(10, s => 0, 5), GraphForm.OverTime, 10) })
+        foreach ((CategorySeries series, GraphForm form, double duration) in new[]
         {
-            (window, view) = Show(new CategoryGraph(other, form) { Duration = duration });
-            plot = view.PlotArea()!.Value;
-            frame = window.CaptureRenderedFrame()!;
-            Assert.True(Near(color, Pixel(frame, plot.Right - 3, plot.Top + (plot.Height * 0.6))), $"{form} of {duration} is dimmed.");
+            (few, GraphForm.Smoothed, 9.03),
+            (Series(10, s => 0, 20), GraphForm.OverTime, 9.5),
+            (Series(10, s => 0, 5), GraphForm.OverTime, 10),
+            (Series(10, s => 0, 0), GraphForm.OverTime, 9.5),
+            (few, GraphForm.OverTime, 0),
+        })
+        {
+            (window, view) = Show(new CategoryGraph(series, form) { Duration = duration });
+            Assert.Null(view.HatchNote);
+            if (form == GraphForm.OverTime)
+            {
+                Assert.Equal(0, CaptionNotePixels(window, view));
+            }
+
             window.Close();
         }
 
-        // 3,000 intervals in some 830 pixels: the last column merges four of them, and is not dimmed, nor named in the hover text.
-        CategorySeries merged = Make(2, 3000, s => s == 2999 ? 3 : 4, (s, u) => 0);
-        (window, view) = Show(new CategoryGraph(merged, GraphForm.OverTime) { Duration = 2999.5 });
-        plot = view.PlotArea()!.Value;
-        frame = window.CaptureRenderedFrame()!;
-        Assert.True(Near(CategoryColors.ForStack(merged, false, surface)[0].Color, Pixel(frame, plot.Right - 1, plot.Top + (plot.Height * 0.6))));
-        window.MouseMove(view.TranslatePoint(new Point(plot.Right - 1, plot.Top + 20), window)!.Value);
-        UiPump.Until(() => true);
-        Assert.DoesNotContain("Last", AutomationProperties.GetHelpText(view), StringComparison.Ordinal);
+        // A column that merges intervals is not hatched and has no note.
+        (window, view) = Show(new CategoryGraph(Make(2, 3000, s => s == 2999 ? 3 : 4, (s, u) => 0), GraphForm.OverTime) { Duration = 2999.5 });
+        Assert.Null(view.HatchNote);
         window.Close();
         Reset();
+    }
+
+    // The pixels of the caption row right of the caption's own text, which the note is the only thing to draw.
+    private static int CaptionNotePixels(Window window, GraphView view)
+    {
+        WriteableBitmap frame = window.CaptureRenderedFrame()!;
+        Color surface = Pixel(frame, 600, 3);
+        int count = 0;
+        for (double y = 2; y < 18; y++)
+        {
+            for (double x = 330; x < 700; x++)
+            {
+                count += Near(surface, Pixel(frame, x, y), 12) ? 0 : 1;
+            }
+        }
+
+        return count;
     }
 
     [AvaloniaFact]

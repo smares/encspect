@@ -355,7 +355,7 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
     public int[] StackOrder => _stackOrder ??= CategoryColumns.StackOrder(Series);
 
     // The last interval of the time index where it is a partial one (the stream ends inside it, shorter than the interval
-    // before) of one frame or more but fewer than FewFrames, which the chart draws dimmed and the hover text names: how many
+    // before) of one frame or more but fewer than FewFrames, which the chart draws hatched and the hover text names: how many
     // frames it holds and how many seconds it lasts. IsFew is false for any other last interval, and the property null where the
     // series has one interval or the duration is not known.
     public (bool IsFew, int Frames, double Seconds)? LastInterval
@@ -389,7 +389,7 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
 
     public static bool IsOverTimeForm(GraphForm form) => form is GraphForm.OverTime or GraphForm.Smoothed;
 
-    // A partial last interval (LastInterval) is drawn dimmed and named in its hover text when it holds fewer frames than this:
+    // A partial last interval (LastInterval) is drawn hatched and named in its hover text when it holds fewer frames than this:
     // a stream rarely ends on a second boundary, and a few frames say little about a share. The figure is a count of frames,
     // since the frames of a second differ by format; for MPEG audio it is about a fifth of a second.
     public const int FewFrames = 8;
@@ -489,8 +489,12 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
     }
 
     // "Last 0.03 s, 1 frame".
-    private static string DescribeLast((bool IsFew, int Frames, double Seconds) last) =>
-        $"Last {(last.Seconds < 0.01 ? "under 0.01" : last.Seconds.ToString("0.00", CultureInfo.InvariantCulture))} s, {Format.Count(last.Frames, "frame", "frames")}";
+    private static string DescribeLast((bool IsFew, int Frames, double Seconds) last) => $"Last {LastSeconds(last.Seconds)} s, {Format.Count(last.Frames, "frame", "frames")}";
+
+    // The note under the caption of a chart that draws the last interval hatched: "Last 0.03 s: 1 frame, hatched".
+    public static string DescribeHatchedLast((bool IsFew, int Frames, double Seconds) last) => $"Last {LastSeconds(last.Seconds)} s: {Format.Count(last.Frames, "frame", "frames")}, hatched";
+
+    private static string LastSeconds(double seconds) => seconds < 0.01 ? "under 0.01" : seconds.ToString("0.00", CultureInfo.InvariantCulture);
 
     // Hover text of the smoothed form: the interval's own shares and the average the chart draws, in the same order:
     // "0:12 to 0:13 · Long 87.5% (168 values) · Short 12.5% (24 values) · average of 5 seconds: Long 86.0% · Short 14.0%". The

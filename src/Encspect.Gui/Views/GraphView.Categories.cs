@@ -24,7 +24,7 @@ public sealed partial class GraphView
     private const double StripGap = 6;
     private const double CaptionHeight = 20;
     private const double AxisHeight = 24;
-    private const double DimmedLastOpacity = 0.6;
+    private const double HatchedLastOpacity = 0.6;
     private const double MinSeparated = 3;
     internal const double MinLastWidth = 3;
 
@@ -627,10 +627,16 @@ public sealed partial class GraphView
             string caption = category.View == GraphForm.Smoothed
                 ? $"Share of the values, each interval averaged with its neighbors over {CategoryGraph.SmoothingWindow} seconds"
                 : "Share of the values in each interval";
-            context.DrawText(Text(caption, TextSize, secondary), new Point(4, 2));
+            FormattedText captionText = Text(caption, TextSize, secondary);
+            context.DrawText(captionText, new Point(4, 2));
             DrawPercentTicks(context, plot, grid, secondary);
             CategoryColumns columns = ColumnsFor(category, width, -1);
             Slots slots = SlotsOf(plot, category, columns);
+            if (HatchedLastNote(category, columns) is { } note)
+            {
+                context.DrawText(Text(note, TextSize, secondary), new Point(4 + captionText.Width + 16, 2));
+            }
+
             DrawArea(context, category, columns, slots, plot, styles, brushes, surface, highContrast);
             DrawTimeAxis(context, series.Time!.Starts.Span, slots, columns.First, secondary, plot);
             if (MarkedIndex is { } marked && marked < category.Count)
@@ -896,21 +902,32 @@ public sealed partial class GraphView
 
         DrawSeparators(context, columns, start, end, tops, bottoms, order, surface);
 
-        // A partial last interval of only a few frames is dimmed, as the hover text says (CategoryGraph.LastInterval): in the
-        // area, not in the average, whose last level is not a share of those frames, and not in a column that merges intervals.
+        // A partial last interval of only a few frames keeps its exact shares and is hatched, as the note under the caption and the
+        // hover text say (CategoryGraph.LastInterval): in the area, not in the average, whose last level is not a share of those
+        // frames, and not in a column that merges intervals. The hatch is the text color at an angle opposite to the reserved
+        // categories' hatch, over the layers' own colors, which show between its lines.
         int last = columns.Count - 1;
-        if (graph.View == GraphForm.OverTime && IsDimmed(graph, columns))
+        if (HatchedLastNote(graph, columns) is not null)
         {
-            context.FillRectangle(new ImmutableSolidColorBrush(surface, DimmedLastOpacity), new Rect(start[last], plot.Top, end[last] - start[last], plot.Height));
+            Color ink = Palette.Foreground(this) is ISolidColorBrush foreground ? foreground.Color : Colors.Gray;
+            DrawLastHatch(context, new Rect(start[last], plot.Top, end[last] - start[last], plot.Height), ink);
         }
     }
 
-    // Whether the last column of an over-time chart is the one partial last interval of few frames.
-    private static bool IsDimmed(CategoryGraph graph, CategoryColumns columns)
+    // The note under the caption when the chart draws its last interval hatched, else null: the Over Time form, with the last
+    // interval as a column of its own that has values and is a partial one of a few frames.
+    private static string? HatchedLastNote(CategoryGraph graph, CategoryColumns columns)
     {
         int last = columns.Count - 1;
-        return graph.LastInterval is { IsFew: true } && columns.End(last) - columns.First(last) == 1 && columns.Total(last) > 0;
+        return graph.View == GraphForm.OverTime && graph.LastInterval is { IsFew: true } interval && columns.End(last) - columns.First(last) == 1 && columns.Total(last) > 0
+            ? CategoryGraph.DescribeHatchedLast(interval)
+            : null;
     }
+
+    // The note the chart shows now, for tests.
+    internal string? HatchNote => Graph is CategoryGraph { IsOverTime: true } graph && Bounds.Width >= 80 && Bounds.Height >= 60
+        ? HatchedLastNote(graph, ColumnsFor(graph, Math.Max(1, (int)ChartLayoutFor(graph).Plot.Width), -1))
+        : null;
 
     // The surface line between a layer and the layer above it, as level segments (a run of columns at one height is one
     // segment) and only where both are at least MinSeparated pixels high.
@@ -1016,6 +1033,19 @@ public sealed partial class GraphView
             for (double dx = -rect.Height; dx < rect.Width; dx += 5)
             {
                 context.DrawLine(pen, new Point(rect.X + dx, rect.Bottom), new Point(rect.X + dx + rect.Height, rect.Y));
+            }
+        }
+    }
+
+    // The hatch of the last interval: lines falling to the right every 4 pixels, the reserved categories' rising to the right every 5.
+    private static void DrawLastHatch(DrawingContext context, Rect rect, Color ink)
+    {
+        var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, HatchedLastOpacity), 1);
+        using (context.PushClip(rect))
+        {
+            for (double dx = -rect.Height; dx < rect.Width; dx += 4)
+            {
+                context.DrawLine(pen, new Point(rect.X + dx, rect.Y), new Point(rect.X + dx + rect.Height, rect.Bottom));
             }
         }
     }
