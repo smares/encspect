@@ -1,11 +1,12 @@
 {
-  "note": "Each category series of a stream is held equal to the tally node it is anchored to (docs/design/coding-graphs.md, 'The summary over the stream'). A series missing from this table fails CategorySummaryTests, so no exception is guessed. 'entries': the series' count of each category equals the value of the anchor's entry of the same name, and its total equals the value of the node named by 'denominator' (found among the anchor's siblings, else below the anchor's grandparent). 'flag': two categories for a tally that is a single value; the count of category 'withCategory' (default 0) equals the anchor's value and the total the denominator's. 'findings': codes of findings that allow the series to be smaller than the tally (frames that belong to no stream). Each format's pull request adds its series here.",
+  "note": "Each category series of a stream is held equal to the tally node it is anchored to (docs/design/coding-graphs.md, 'The summary over the stream'). A series missing from this table fails CategorySummaryTests, so no exception is guessed. 'entries': the series' count of each category equals the value of the anchor's entry of the same name, and its total equals the value of the node named by 'denominator' (a name, or a list of names of which the first found counts: a series that two formats share has the denominator of each; found among the anchor's siblings, else below the anchor's grandparent). 'flag': two categories for a tally that is a single value; the count of category 'withCategory' (default 0) equals the anchor's value and the total the denominator's. 'findings': codes of findings that allow the series to be smaller than the tally (frames that belong to no stream). Each format's pull request adds its series here.",
   "series": {
     "Channel Modes": { "form": "entries", "anchor": "Channel Modes", "denominator": "Frames", "findings": ["mpeg.streams-limited"] },
-    "Stereo Coding": { "form": "entries", "anchor": "Stereo Coding", "denominator": "Frames", "findings": ["mpeg.streams-limited"] },
+    "Stereo Coding": { "form": "entries", "anchor": "Stereo Coding", "denominator": ["Channel Pairs", "Frames"], "findings": ["mpeg.streams-limited"] },
     "Joint Stereo Modes": { "form": "entries", "anchor": "Joint Stereo Modes", "denominator": "Joint Stereo Modes", "findings": ["mpeg.streams-limited"] },
     "Intensity Stereo Bounds": { "form": "entries", "anchor": "Intensity Stereo Bounds", "denominator": "Intensity Stereo Bounds", "findings": ["mpeg.streams-limited"] },
     "Block Usage": { "form": "entries", "anchor": "Block Usage", "denominator": "Block Usage", "findings": ["mpeg.streams-limited"] },
-    "Block Sizes": { "form": "entries", "anchor": "Block Sizes", "denominator": "Block Usage", "findings": ["mpeg.streams-limited"] }
+    "Block Sizes": { "form": "entries", "anchor": "Block Sizes", "denominator": ["Block Usage", "Window Sequences"], "findings": ["mpeg.streams-limited"] },
+    "Window Sequences": { "form": "entries", "anchor": "Window Sequences", "denominator": "Window Sequences" }
   }
 }

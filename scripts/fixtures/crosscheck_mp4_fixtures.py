@@ -43,6 +43,12 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
   band, the extension payloads' types, the SBR headers' start, stop and crossover fields, the parametric stereo extension, and the
   block's length in bits. It runs on every fixture whose report holds read raw data blocks.
   Blocks that "faad_trace_skip" lists, by index, are not compared, each for the reason given.
+- the same trace, per unit, against the coding series of the golden report (check_series): the window sequence of every channel stream, the
+  stereo coding of every channel pair (intensity stereo where the second channel has a band of codebook 14 or 15, whether or not the pair has a
+  common window; mid/side stereo where a band that is no intensity stereo band has its ms_used flag set, ms_mask_present 2 setting every band; computed from the
+  trace's flags and codebooks by the rule of ISO/IEC 14496-3 4.6.8, not read from the analyzer) and the coded bandwidth (the top of band max_sfb of the highest
+  channel stream, in whole hertz from the band tables of aac_tables.py), for the units of a file with one stream. A unit holds the raw data blocks of
+  an ADTS frame, and a block of "faad_trace_skip" or one the analyzer could not read leaves its unit out.
 - "decode": ffmpeg must decode every access unit without printing an error (ffmpeg -v error ... -f null -).
 - "skip": the tools that are not run on the fixture, each with the reason.
 - MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
@@ -59,6 +65,7 @@ The analyzer's agreement with the manifests is checked by the tests (Mp4FixtureT
 when anything disagrees. Needs ffmpeg, gpac, faad and mediainfo.
 """
 
+import bisect
 import json
 import math
 import pathlib
@@ -67,6 +74,7 @@ import subprocess
 import sys
 import tempfile
 
+import aac_tables
 import channel_layouts
 import faad_trace_tool
 import mediainfo_tool as mi
@@ -363,6 +371,8 @@ def faad_records(block):
                     records.append(["PS"])
             previous = record[0]
             continue
+        if record[0] == "MS":
+            continue
         if record[0] == "CPE" and len(record) == 3:
             record = record[:3]
         records.append(record)
@@ -375,12 +385,167 @@ def decode_messages(path):
     return result.stderr.decode("utf-8", "replace").strip()
 
 
+WINDOW_SEQUENCES = ["Only Long", "Long Start", "Eight Short", "Long Stop"]
+STEREO_CODINGS = ["Left/right stereo", "Mid/side stereo", "Intensity stereo", "Mid/side and intensity stereo", "Reserved"]
+BLOCK_SIZES = ["Long, start and stop", "Short"]
+
+
+def config_values(report, name, default=None, holders=("AudioSpecificConfig", "Frame", "Program Config Element")):
+    """A field of the AudioSpecificConfig, an ADTS header or ADIF's program config element in the golden: the first node named so that
+    one of them holds."""
+    for node in mi.walk(report["root"]):
+        if node["name"] in holders:
+            for child in node.get("children") or []:
+                if child["name"] == name and isinstance(child.get("value"), int):
+                    return child["value"]
+    return default
+
+
+def core_rate(report):
+    """The core's sample rate from the golden."""
+    return config_values(report, "Sample Rate")
+
+
+def trace_unit(blocks, rate, is960=False):
+    """The coding values of a unit that faad2's trace states for its raw data blocks: the window sequence of each channel stream, the stereo
+    coding of each channel pair and the highest top of a band, in whole hertz (None for a unit without a channel stream)."""
+    index = aac_tables_index(rate)
+    windows, pairs, top = [], [], None
+    for block in blocks:
+        records = block["records"]
+        decisions = iter(r for r in records if r[0] == "MS")      # in the order of the pairs that have ms_mask_present 1 or 2
+        skip = 0
+        i = 0
+        while i < len(records):
+            record = records[i]
+            if record[0] == "EL" and record[1] == "2":
+                skip = 1                                    # the coupling channel element's stream is no channel stream of the tally
+            elif record[0] in ("CPE", "ICS"):
+                streams = []
+                common = mask = 0
+                if record[0] == "CPE":
+                    common, mask = int(record[1]), int(record[2])
+                    streams = [r for r in records[i + 1:i + 3] if r[0] == "ICS"]
+                    i += len(streams)
+                elif skip:
+                    skip -= 1
+                else:
+                    streams = [record]
+                for stream in streams:
+                    windows.append(int(stream[1]))
+                    short = int(stream[1]) == 2
+                    table = (aac_tables.SWB_SHORT_120 if is960 else aac_tables.SWB_SHORT) if short else (aac_tables.SWB_LONG_960 if is960 else aac_tables.SWB_LONG)
+                    lines = (120 if is960 else 128) if short else (960 if is960 else 1024)
+                    hertz = round_half_even(table[index][int(stream[3])] * rate, 2 * lines)
+                    top = hertz if top is None else max(top, hertz)
+                if record[0] == "CPE" and len(streams) == 2:
+                    decision = next(decisions, None) if common and mask in (1, 2) else None
+                    pairs.append(trace_pair(streams[1][11], decision[2] if decision and len(decision) > 2 else ""))
+            i += 1
+    return windows, pairs, top
+
+
+def trace_pair(books, applied):
+    """The stereo coding of a channel pair from what faad2 decides (ISO/IEC 14496-3 4.6.8): intensity stereo where a band of the second
+    channel has codebook 14 or 15 ('e' or 'f' in the trace), and mid/side stereo where faad2's ms_decode applies mid/side to a band ("@@MS": ms_used or
+    mask 2, and neither intensity stereo in the second channel nor noise substitution in the first), also taking FFmpeg's rule that a noise band of the
+    second channel gets none (faad2 checks the first channel's only). The codes of ms_mask_present 3 are not traced: faad2 rejects it."""
+    intensity = any(book in "ef" for book in books)
+    midside = any(bit == "1" and books[band] != "d" for band, bit in enumerate(applied))
+    return 3 if intensity and midside else 2 if intensity else 1 if midside else 0
+
+
+def round_half_even(numerator, denominator):
+    quotient, rest = divmod(numerator, denominator)
+    return quotient + (1 if rest * 2 > denominator or (rest * 2 == denominator and quotient % 2) else 0)
+
+
+# The sampling frequency index of a rate: the first whose lower limit the rate reaches, the ranges ffmpeg and faad2 both use.
+RATE_LIMITS = [92017, 75132, 55426, 46009, 37566, 27713, 23004, 18783, 13856, 11502, 9391]
+
+
+def aac_tables_index(rate):
+    return next((index for index, limit in enumerate(RATE_LIMITS) if rate >= limit), 11)
+
+
+def series_units(series, count):
+    """The values of each unit of a category series of the report, from its run-length codes."""
+    flat = [code for code, length in series["runs"] for _ in range(length)]
+    counts = [c for c, units in series["valueCounts"] for _ in range(units)] if "valueCounts" in series else [series.get("valuesPerUnit", 1)] * count
+    out, at = [], 0
+    for c in counts:
+        out.append(flat[at:at + c])
+        at += c
+    return out
+
+
+# What check_series compared, and the fixtures it left out with the reason: printed at the end of a run.
+SERIES_COMPARED = []
+SERIES_SKIPPED = []
+
+
+def check_series(ours, theirs, report, problems, skipped=()):
+    """Holds the coding series of the golden report to faad2's trace, unit by unit (see the module's documentation). Returns the number of
+    units compared and the reason it compared none, or None."""
+    streams = [s for s in report["streams"] if any(c["name"] == "Window Sequences" for c in s.get("categorySeries", []))]
+    rate = core_rate(report)
+    if len(streams) != 1:
+        return 0, f"{len(streams)} streams have coding series"
+    if rate is None:
+        return 0, "no core sample rate in the report"
+    if len(ours) != len(theirs):
+        return 0, f"faad2 reads {len(theirs)} raw data blocks, the analyzer {len(ours)}"
+    is960 = config_values(report, "Frame Length", 1024, ("AudioSpecificConfig",)) == 960
+    stream = streams[0]
+    by_name = {c["name"]: c for c in stream["categorySeries"]}
+    windows, pairs, sizes = by_name["Window Sequences"], by_name.get("Stereo Coding"), by_name["Block Sizes"]
+    if [c["name"] for c in windows["categories"]] != WINDOW_SEQUENCES or (pairs and [c["name"] for c in pairs["categories"]] != STEREO_CODINGS):
+        problems.append("the coding series' categories are not the window sequences and stereo codings the check expects")
+        return 0, None
+    if [c["name"] for c in sizes["categories"]] != BLOCK_SIZES or sizes.get("groupOf") != "Window Sequences" or sizes.get("map") != [0, 0, 1, 0]:
+        problems.append("Block Sizes is not the grouping of Window Sequences into long (with start and stop) and short windows")
+    xs = next((s["x"] for s in stream["series"] if s["name"] == windows.get("xSeries", "Bitrate")), None)
+    if xs is None or len(xs) != len(series_units(windows, len(xs))):
+        return 0, "the series' units have no x values in the report"
+    bandwidth = next((s for s in stream["series"] if s["name"] == "Coded Bandwidth"), None)
+    points = dict(zip(bandwidth["x"], bandwidth["values"])) if bandwidth else {}
+    expected_windows, expected_pairs, expected_top = [[] for _ in xs], [[] for _ in xs], [None] * len(xs)
+    damaged = set()
+    blocks = [[] for _ in xs]
+    for index, (mine, faad) in enumerate(zip(ours, theirs)):
+        unit = max(0, bisect.bisect_right(xs, mine["offset"]) - 1)
+        if analyzer_records(mine)[0] is None or str(index) in skipped:
+            damaged.add(unit)
+        blocks[unit].append(faad)
+    unit_windows, unit_pairs = series_units(windows, len(xs)), series_units(pairs, len(xs)) if pairs else [[] for _ in xs]
+    compared = 0
+    for unit, group in enumerate(blocks):
+        if unit in damaged or not group:
+            continue
+        expected_windows[unit], expected_pairs[unit], expected_top[unit] = trace_unit(group, rate, is960)
+        compared += 1
+        if unit_windows[unit] != expected_windows[unit]:
+            problems.append(f"unit {unit}: window sequences {unit_windows[unit]}, faad2 reads {expected_windows[unit]}")
+        if unit_pairs[unit] != expected_pairs[unit]:
+            problems.append(f"unit {unit}: stereo codings {unit_pairs[unit]}, faad2's decisions give {expected_pairs[unit]}")
+        if points.get(xs[unit]) != expected_top[unit]:
+            problems.append(f"unit {unit}: coded bandwidth {points.get(xs[unit])} Hz, faad2's max_sfb gives {expected_top[unit]} Hz")
+        if len(problems) > 5:
+            break
+    return compared, (None if compared else "every unit holds a block the manifest skips or the analyzer could not read")
+
+
 def check_trace(path, report, problems, skipped=()):
     """Compares the raw data blocks of the golden report with faad2's trace; returns how many blocks were compared."""
     ours = analyzer_blocks(report)
     if not ours:
         return 0
     theirs = faad_trace_tool.trace(path)
+    units, reason = check_series(ours, theirs, report, problems, skipped)
+    if units:
+        SERIES_COMPARED.append((path.name, units))
+    elif reason and any(c["name"] == "Window Sequences" for st in report["streams"] for c in st.get("categorySeries", [])):
+        SERIES_SKIPPED.append((path.name, reason))
     if len(theirs) != len(ours):
         problems.append(f"faad2 reads {len(theirs)} raw data blocks, the analyzer {len(ours)}")
     for index, (mine, faad) in enumerate(zip(ours, theirs)):
@@ -739,6 +904,11 @@ def main():
             if not {"faad_trace", "all"} & set(check.get("skip", {})) and (directory / (path.stem + ".report.json")).exists():
                 report = json.loads((directory / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0]
                 traced += check_trace(path, report, problems, check.get("faad_trace_skip", {}))
+            elif (directory / (path.stem + ".report.json")).exists():
+                skips = check.get("skip", {})
+                reason = skips.get("faad_trace") or skips.get("all")
+                if any(s.get("categorySeries") for s in json.loads((directory / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0].get("streams", [])):
+                    SERIES_SKIPPED.append((path.name, f"the manifest skips the faad2 trace: {reason}"))
             if check.get("decode"):
                 messages = decode_messages(path)
                 if messages:
@@ -753,6 +923,9 @@ def main():
         failures += 1
     tally.print()
     print(f"{checked} fixtures checked, {traced} raw data blocks against faad2's trace, {failures} disagree.")
+    print(f"Coding series: {len(SERIES_COMPARED)} fixtures, {sum(n for _, n in SERIES_COMPARED)} units compared with faad2's decisions.")
+    for name, reason in SERIES_SKIPPED:
+        print(f"Coding series of {name} not compared: {reason}")
     return 1 if failures else 0
 
 

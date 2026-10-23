@@ -22,13 +22,16 @@ every child of that name. A change file:
                   {"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"},  # a key of those elements
                   {"scope": "report", "key": "someKey"},
                   {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"}],
-      "renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],
+      "renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],  # only where the old report has it
       "moved":   [{"name": "Long Blocks", "from": ["Ogg", "Statistics"], "fromPosition": 4,
                    "to": ["Ogg", "Statistics", "Block Sizes"], "position": 0}],
       "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"]}]
     }
 
-Paths and names are those of the new report, except "from" of renamed and moved, which are the old names.
+Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
+where the old report has a node of the old name under the parent; where it has none, the node of the new name is an addition and the
+change lists it as added too (the AAC step's "Coded Bandwidth" replaces "Bandwidth" in some goldens and is new in the others). A node
+whose value or children change with its name is listed as changed under both names.
 """
 
 import argparse
@@ -67,8 +70,15 @@ def untag(node):
         untag(child)
 
 
-def remove_added(report, added):
-    for entry in added:
+def has_child(report, parent, name):
+    return any(child.get("name") == name for node in matching(report["root"], parent) for child in node.get("children", []))
+
+
+def remove_added(report, added, renamed_nodes=frozenset(), old=None):
+    """Takes what the change adds out of the new report. A node that the old report has under another name (renamed_nodes: its parent's
+    path and its new name) is the renamed node and stays, and so does one that the old report has under that name; a node comes out only
+    when its children have come out too, which takes an entry for each (the deepest entries run first), so a child nobody listed fails."""
+    for entry in sorted(added, key=lambda e: -len(e["parent"]) if e.get("scope") == "node" else 1):
         scope = entry.get("scope")
         if scope == "report":
             report.pop(entry["key"], None)
@@ -81,14 +91,20 @@ def remove_added(report, added):
                         if element.get("name") == entry["name"]:
                             element.pop(entry["key"], None)
                 else:
-                    kept = [e for e in stream.get(entry["array"], []) if e.get("name") != entry["name"]]
+                    # An array that the stream has empty stays; one that holds only what the change adds is the absent one.
+                    elements = stream.get(entry["array"], [])
+                    kept = [e for e in elements if e.get("name") != entry["name"]]
+                    if len(kept) == len(elements):
+                        continue
                     if kept:
                         stream[entry["array"]] = kept
                     else:
                         stream.pop(entry["array"], None)
         elif scope == "node":
+            if (tuple(entry["parent"]), entry["name"]) in renamed_nodes or (old is not None and has_child(old, entry["parent"], entry["name"])):
+                continue
             for parent in matching(report["root"], entry["parent"]):
-                kept = [c for c in parent.get("children", []) if c.get("name") != entry["name"]]
+                kept = [c for c in parent.get("children", []) if c.get("name") != entry["name"] or c.get("children")]
                 if kept:
                     parent["children"] = kept
                 else:
@@ -157,13 +173,35 @@ def map_path(path, mapping):
     return mapping.get(tuple(path), ["<added node>"])
 
 
-def transform(new, change):
-    """A new report with the change taken back, ready to compare with the old one."""
+def renamed_in(old, renamed):
+    """The renames the old report shows: where it has a node of the old name under the parent, the node of the new name is that one
+    renamed; where it has none, the node of the new name is an addition, which the change lists as added."""
+    return frozenset((tuple(entry["parent"]), entry["to"]) for entry in renamed
+                     if any(child.get("name") == entry["from"] for parent in matching(old["root"], entry["parent"]) for child in parent.get("children", [])))
+
+
+def changed_in_old(changed, renamed, counted):
+    """The changed entries as they read in the old report: a path through a node that the old report has under the old name of a
+    rename goes by that name, so a change file lists such a node once, under its new name."""
+    out = []
+    for entry in changed:
+        path = list(entry["path"])
+        for rename in renamed:
+            parent = list(rename["parent"])
+            if (tuple(parent), rename["to"]) in counted and path[:len(parent) + 1] == parent + [rename["to"]]:
+                path[len(parent)] = rename["from"]
+        out.append({**entry, "path": path})
+    return out
+
+
+def transform(new, change, old=None):
+    """A new report with the change taken back, ready to compare with the old one. Without the old report every rename counts as one."""
     report = copy.deepcopy(new)
     tag(report["root"], [])
     drop_changed(report, change.get("changed", []))
     detached = detach_moved(report, change.get("moved", []))
-    remove_added(report, change.get("added", []))
+    renamed = change.get("renamed", [])
+    remove_added(report, change.get("added", []), renamed_in(old, renamed) if old is not None else frozenset((tuple(e["parent"]), e["to"]) for e in renamed), old)
     reattach_moved(report, detached)
     reverse_renames(report, change.get("renamed", []))
     mapping = {}
@@ -218,9 +256,19 @@ def check_golden(old, new, change):
     problems = []
     for index, (before, after) in enumerate(zip(olds, news)):
         before = copy.deepcopy(before)
-        drop_changed(before, change.get("changed", []))
+        counted = renamed_in(before, change.get("renamed", []))
+        # A renamed node counts only if the new report has it under the new name and no longer under the old.
+        for entry in change.get("renamed", []):
+            if (tuple(entry["parent"]), entry["to"]) in counted:
+                for parent in matching(after["root"], entry["parent"]):
+                    names = [c.get("name") for c in parent.get("children", [])]
+                    if entry["from"] in names:
+                        problems.append(f"[{index}]: the node {entry['from']} is still there under {'/'.join(entry['parent'])}, which the change renames to {entry['to']}")
+                    if entry["to"] not in names:
+                        problems.append(f"[{index}]: the node {entry['to']} is missing under {'/'.join(entry['parent'])}, where the change renames {entry['from']} to it")
+        drop_changed(before, changed_in_old(change.get("changed", []), change.get("renamed", []), counted))
         try:
-            expected = transform(after, change)
+            expected = transform(after, change, before)
         except ChangeError as error:
             return [str(error)]
         problems += differences(before, expected, f"[{index}]")

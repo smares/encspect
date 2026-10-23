@@ -331,6 +331,7 @@ public sealed class RawAacParser : IFormatParser
         }
 
         FrameDetails details = Analyze(bytes, position, header, length < header.FrameLength || cut, log, () => node, state.Findings);
+        log.EndUnit();
         if (details.CrcState == CrcState.Mismatch)
         {
             state.Findings.Add(Severity.Warning, "aac.crc-mismatch", node, count =>
@@ -957,11 +958,13 @@ public sealed class RawAacParser : IFormatParser
         ClaimRoles.CompleteVersion(encoder, claims, AacEncoder.WriterName);
 
         Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, kind, description), "Frame", "Frames", out Node bitrate);
-        CodingStatistics.Add(statistics, found.Tally, found.Setup, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
+        CodingNodes nodes = CodingStatistics.Add(statistics, found, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
         first.Leading.Add(statistics);
 
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
+        List<Series> series = figures.Series(bitrate, state.Cancellation);
+        IReadOnlyList<CategorySeries> categories = found.Recorder.Build(series.Count > 0 ? series[0].X : Array.Empty<double>(), series.Count > 0 ? series[0] : null, figures.Time, nodes, series, state.Cancellation);
         context.AddStream(new StreamInfo
         {
             Nodes = regions.Select(r => r.Node!).ToList(),
@@ -978,7 +981,8 @@ public sealed class RawAacParser : IFormatParser
             EncoderConfidence = encoderConfidence,
             Writer = writerName,
             WriterConfidence = writerConfidence,
-            Series = figures.Series(bitrate, state.Cancellation),
+            Series = series,
+            CategorySeries = categories,
         });
     }
 

@@ -1610,6 +1610,21 @@
                               ]
                             },
                             {
+                              "name": "Block Sizes",
+                              "value": 40,
+                              "unit": "channel streams",
+                              "offset": 723,
+                              "length": 583,
+                              "children": [
+                                {
+                                  "name": "Long, start and stop",
+                                  "value": "40 channel streams (100.0%)",
+                                  "offset": 723,
+                                  "length": 583
+                                }
+                              ]
+                            },
+                            {
                               "name": "Window Shapes",
                               "value": 40,
                               "unit": "channel streams",
@@ -1668,6 +1683,21 @@
                               ]
                             },
                             {
+                              "name": "Stereo Coding",
+                              "value": 20,
+                              "unit": "channel pairs",
+                              "offset": 723,
+                              "length": 583,
+                              "children": [
+                                {
+                                  "name": "Left/right stereo",
+                                  "value": "20 channel pairs (100.0%)",
+                                  "offset": 723,
+                                  "length": 583
+                                }
+                              ]
+                            },
+                            {
                               "name": "Noise Substitution",
                               "value": "0 channel streams (0.0%)",
                               "offset": 723,
@@ -1719,6 +1749,34 @@
                                 {
                                   "name": "0",
                                   "value": "40 channel streams (100.0%)",
+                                  "offset": 723,
+                                  "length": 583
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Coded Bandwidth",
+                              "offset": 723,
+                              "length": 583,
+                              "children": [
+                                {
+                                  "name": "Lowest",
+                                  "value": 0,
+                                  "unit": "Hz",
+                                  "offset": 723,
+                                  "length": 583
+                                },
+                                {
+                                  "name": "Most Common",
+                                  "value": 0,
+                                  "unit": "Hz",
+                                  "offset": 723,
+                                  "length": 583
+                                },
+                                {
+                                  "name": "Highest",
+                                  "value": 0,
+                                  "unit": "Hz",
                                   "offset": 723,
                                   "length": 583
                                 }
@@ -8345,6 +8403,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               723,
               729,
@@ -8394,11 +8454,191 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0
             ],
             "values": [
               10
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              723,
+              729,
+              774,
+              816,
+              855,
+              891,
+              924,
+              954,
+              981,
+              1005,
+              1025,
+              1042,
+              1056,
+              1067,
+              1075,
+              1121,
+              1164,
+              1204,
+              1241,
+              1275
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              0
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Window Sequences",
+            "concept": "blockSwitching",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Only Long",
+                "count": 40
+              },
+              {
+                "name": "Long Start",
+                "count": 0
+              },
+              {
+                "name": "Eight Short",
+                "count": 0
+              },
+              {
+                "name": "Long Stop",
+                "count": 0
+              }
+            ],
+            "total": 40,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                20
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                40
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Long, start and stop",
+                "count": 40
+              },
+              {
+                "name": "Short",
+                "count": 0
+              }
+            ],
+            "total": 40,
+            "xSeries": "Bitrate",
+            "groupOf": "Window Sequences",
+            "map": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "channel pair",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 20
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Reserved",
+                "count": 0,
+                "isReserved": true
+              }
+            ],
+            "total": 20,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                20
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                20
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

@@ -29,6 +29,7 @@ internal sealed partial class CategorySummary
         {
             JsonElement value = property.Value;
             string form = value.GetProperty("form").GetString()!;
+            JsonElement denominator = value.GetProperty("denominator");
             if (form is not ("entries" or "flag"))
             {
                 throw new InvalidDataException($"{property.Name}: form \"{form}\" is neither entries nor flag.");
@@ -37,7 +38,7 @@ internal sealed partial class CategorySummary
             entries.Add(property.Name, new Entry(
                 form,
                 value.GetProperty("anchor").GetString()!,
-                value.GetProperty("denominator").GetString()!,
+                denominator.ValueKind == JsonValueKind.Array ? [.. denominator.EnumerateArray().Select(d => d.GetString()!)] : [denominator.GetString()!],
                 value.TryGetProperty("withCategory", out JsonElement with) ? with.GetInt32() : 0,
                 value.TryGetProperty("findings", out JsonElement findings) ? [.. findings.EnumerateArray().Select(f => f.GetString()!)] : []));
         }
@@ -116,9 +117,10 @@ internal sealed partial class CategorySummary
         long denominator = 0;
         foreach (Node anchor in anchors)
         {
-            if (Denominator(report.Root, anchor, entry.Denominator) is not { } value)
+            // The first of the names that has a node beside the anchor: a series two formats share has the denominator of each.
+            if (entry.Denominator.Select(n => Denominator(report.Root, anchor, n)).FirstOrDefault(d => d is not null) is not { } value)
             {
-                problems.Add($"{name}: no node {entry.Denominator} with a whole number beside {anchor.Name}");
+                problems.Add($"{name}: no node {string.Join(" or ", entry.Denominator)} with a whole number beside {anchor.Name}");
                 return;
             }
 
@@ -275,5 +277,5 @@ internal sealed partial class CategorySummary
         return null;
     }
 
-    private sealed record Entry(string Form, string Anchor, string Denominator, int WithCategory, IReadOnlyList<string> Findings);
+    private sealed record Entry(string Form, string Anchor, IReadOnlyList<string> Denominator, int WithCategory, IReadOnlyList<string> Findings);
 }

@@ -247,6 +247,178 @@ def intensity_noise():
         "mask on some of them inverts the sign, and whose channels code other bands with noise substitution.",
         data, rows, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)], fields)
 
+STEREO_CODINGS = ["Left/right stereo", "Mid/side stereo", "Intensity stereo", "Mid/side and intensity stereo", "Reserved"]
+
+
+def classify(first, second, common, mask, ms_used):
+    """The stereo coding of a channel pair (ISO/IEC 14496-3 4.6.8), whether or not it has a common window: ms_mask_present 3 is reserved and
+    comes first; intensity stereo is any band of the second channel with codebook 14 or 15; mid/side is any band whose ms_used flag is set
+    (ms_mask_present 2 sets every band; the flags need a common window) where neither channel has codebook 13, 14 or 15, as FFmpeg's
+    apply_mid_side_stereo requires (faad2's ms_decode checks the first channel's noise only). Written from the decoders' rule, not from the analyzer."""
+    if common and mask == 3:
+        return 4
+    intensity = midside = False
+    for g, (books, firsts) in enumerate(zip(second.codebooks(), first.codebooks())):
+        for sfb, book in enumerate(books):
+            if book in (14, 15):
+                intensity = True
+            elif common and (mask == 2 or (mask == 1 and ms_used[g][sfb])) and book != 13 and firsts[sfb] < 13:
+                midside = True
+    return 3 if intensity and midside else 2 if intensity else 1 if midside else 0
+
+
+def round_half_even(numerator, denominator):
+    quotient, rest = divmod(numerator, denominator)
+    return quotient + (1 if rest * 2 > denominator or (rest * 2 == denominator and quotient % 2) else 0)
+
+
+def coding_fields(prefix, units, rate=RATE, short_frame=False):
+    """The statistics Block Sizes and Coded Bandwidth of units given as the lists of their channel streams (Ics objects, coupling channel
+    elements left out): the share of long (with start and stop) and short windows, and the lowest, most common and highest of the units'
+    highest top of a band in whole hertz, from the band tables of aac_tables.py through the model."""
+    streams = [s for unit in units for s in unit]
+    fields = {}
+    short = sum(1 for s in streams if s.sequence == M.EIGHT_SHORT)
+    for name, count in (("Long, start and stop", len(streams) - short), ("Short", short)):
+        if count:
+            fields[f"{prefix}/Statistics/Block Sizes/{name}"] = share(count, len(streams), "channel stream")
+    index = rate_index(rate)
+    tops = []
+    for unit in units:
+        hertz = [round_half_even(M.bands(index, s.sequence, short_frame)[s.max_sfb] * rate,
+                                 2 * ((120 if short_frame else 128) if s.sequence == M.EIGHT_SHORT else (960 if short_frame else 1024))) for s in unit]
+        if hertz:
+            tops.append(max(hertz))
+    if tops:
+        common = min(tops, key=lambda t: (-tops.count(t), t))
+        fields.update({f"{prefix}/Statistics/Coded Bandwidth/Lowest": f"{min(tops)} Hz", f"{prefix}/Statistics/Coded Bandwidth/Most Common": f"{common} Hz",
+                       f"{prefix}/Statistics/Coded Bandwidth/Highest": f"{max(tops)} Hz"})
+    return fields
+
+
+def pair_statistics(prefix, pairs):
+    """The statistics of channel pairs that a model description (second channel, common, mask, ms_used, first channel) fixes: the common
+    window and intensity stereo counts, the share of the second channels' bands in intensity stereo, and the stereo codings."""
+    fields = {f"{prefix}/Statistics/Channel Pairs/Common Window": share(sum(1 for p in pairs if p[1]), len(pairs), "element")}
+    intensity = [any(b in (14, 15) for g in p[0].codebooks() for b in g) for p in pairs]
+    fields[f"{prefix}/Statistics/Channel Pairs/Intensity Stereo"] = share(sum(intensity), len(pairs), "element")
+    bands = sum(len(g) for p in pairs for g in p[0].codebooks())
+    intensity_bands = sum(1 for p in pairs for g in p[0].codebooks() for b in g if b in (14, 15))
+    if intensity_bands:
+        fields[f"{prefix}/Statistics/Channel Pairs/Intensity Stereo Bands"] = f"{tenths(intensity_bands, bands)} %"
+        # Out of phase: codebook 14, or codebook 15 inverted by ms_used, which only ms_mask_present 1 does here (faad2's invert_intensity and
+        # fdk-aac, whose stereo.cpp clears the mid/side flags before intensity stereo; FFmpeg inverts for mask 2 too)
+        out = sum(1 for second, common, mask, used, _ in pairs for g, books in enumerate(second.codebooks()) for sfb, book in enumerate(books)
+                  if book in (14, 15) and (book == 14) != bool(common and mask == 1 and used[g][sfb]))
+        fields[f"{prefix}/Statistics/Channel Pairs/Out of Phase"] = share(out, intensity_bands, "band")
+    codes = [classify(p[4], p[0], p[1], p[2], p[3]) for p in pairs]
+    for code, name in enumerate(STEREO_CODINGS):
+        if code in codes:
+            fields[f"{prefix}/Statistics/Stereo Coding/{name}"] = share(codes.count(code), len(pairs), "channel pair")
+    return fields
+
+
+def stereo_coding():
+    """Channel pairs of every stereo coding: the intensity stereo bands of the second channel make a pair intensity stereo whether or not it
+    has a common window, an ms_used flag on an intensity stereo band inverts the sign and does not code mid/side, and an ms_used flag on a band
+    that either channel codes with noise substitution signals correlated noise and codes none either."""
+    first = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 10), (1, 20), (0, 6)]], seed=21)
+    plain = channel(M.ONLY_LONG, 1, [[(9, 6), (3, 14), (1, 14), (0, 6)]], gain=90, seed=22)
+    partial = channel(M.ONLY_LONG, 1, [[(9, 6), (3, 14), (15, 10), (14, 4), (0, 6)]], gain=95, seed=23)
+    whole = channel(M.ONLY_LONG, 1, [[(15, 40)]], gain=95, seed=24)
+    short = channel(M.EIGHT_SHORT, 0, [[(11, 4), (15, 10)], [(3, 6), (14, 8)]], groups=(4, 4), seed=25)
+    noisy_first = channel(M.ONLY_LONG, 1, [[(11, 4), (13, 10), (1, 20), (0, 6)]], seed=27)
+    noisy = channel(M.ONLY_LONG, 1, [[(9, 6), (3, 14), (13, 10), (1, 4), (0, 6)]], gain=90, seed=28)
+    noisy_intensity = channel(M.ONLY_LONG, 1, [[(9, 6), (3, 14), (13, 5), (15, 10), (0, 5)]], gain=95, seed=29)
+    long_first = channel(M.ONLY_LONG, 1, [[(11, 30)]], seed=26)
+
+    def flags(*bands):
+        return [[1 if b in bands else 0 for b in range(40)]]
+
+    # (second channel, common window, ms_mask_present, ms_used, first channel)
+    cases = [
+        (plain, True, 0, None, first), (plain, True, 1, flags(), first), (plain, True, 1, flags(0, 3, 7), first), (plain, True, 2, None, first),
+        (partial, True, 1, flags(22, 23), first), (partial, True, 1, flags(3, 25), first), (whole, True, 2, None, first), (partial, True, 2, None, first),
+        (partial, False, 0, None, first), (plain, False, 0, None, first), (short, False, 0, None, long_first),
+        # ms_used only on noise substitution bands: of the second channel, of the first, and with intensity stereo bands beside them
+        (noisy, True, 1, flags(22, 23), first), (plain, True, 1, flags(6, 7), noisy_first), (noisy, True, 1, flags(3, 22), first),
+        (noisy_intensity, True, 1, flags(21, 22, 27), first), (noisy, True, 2, None, noisy_first),
+    ]
+    made = [pair_block(mask, used, common=common, first=a, second=b) for b, common, mask, used, a in cases]
+    data, rows = concat(adts_frames([m[0] for m in made], channels=2))
+    pairs = [(b, common, mask, used, a) for b, common, mask, used, a in cases]
+    units = [list(m[1]) for m in made]
+    fields = {**pair_statistics("ADTS", pairs), **statistics("ADTS", [s for u in units for s in u]), **coding_fields("ADTS", units)}
+    return "stereo-coding.aac", data, manifest(
+        "Sixteen channel pairs: left/right (mask 0, and mask 1 with no flag set), mid/side (mask 1 with flags, mask 2), intensity stereo with the "
+        "mid/side flag set only on intensity stereo bands, in every band of a mask 2 pair, and in pairs without a common window (long and short "
+        "windows), both coding tools at once (mask 1 and mask 2 with intensity stereo bands), and the mid/side flag on noise substitution bands "
+        "of either channel, which codes no mid/side, alone, beside a flag on an ordinary band and beside intensity stereo bands.",
+        data, rows, [stream("AAC LC", RATE, 2, "Stereo", len(cases) * 1024)], fields,
+        [["aac.intensity-without-common-window", "without a common window"]])
+
+
+def stereo_coding_reserved():
+    """Channel pairs with ms_mask_present 3, which the specification reserves."""
+    first = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 10), (1, 20), (0, 6)]], seed=31)
+    plain = channel(M.ONLY_LONG, 1, [[(9, 6), (3, 14), (1, 14), (0, 6)]], gain=90, seed=32)
+    partial = channel(M.ONLY_LONG, 1, [[(9, 6), (3, 14), (15, 10), (14, 4), (0, 6)]], gain=95, seed=33)
+    cases = [(plain, True, 3, None, first), (partial, True, 3, None, first), (plain, True, 0, None, first)]
+    made = [pair_block(mask, used, common=common, first=a, second=b) for b, common, mask, used, a in cases]
+    data, rows = concat(adts_frames([m[0] for m in made], channels=2))
+    units = [list(m[1]) for m in made]
+    fields = {**pair_statistics("ADTS", cases), **statistics("ADTS", [s for u in units for s in u]), **coding_fields("ADTS", units)}
+    return "stereo-coding-reserved.aac", data, manifest(
+        "Channel pairs with ms_mask_present 3, which is reserved: with and without intensity stereo bands, which it takes precedence over, and one "
+        "pair of left and right.", data, rows, [stream("AAC LC", RATE, 2, "Stereo", len(cases) * 1024)], fields,
+        [["aac.ms-mask-reserved", "ms_mask_present 3"]],
+        skip={"decode": "ffmpeg rejects ms_mask_present 3 (aacdec_template.c, decode_cpe: ms_present = 3 is reserved).",
+              "faad_trace": "faad2 rejects ms_mask_present 3 (syntax.c, error 32) and stops at the first frame it rejects."})
+
+
+def stereo_coding_elements():
+    """Frames of a 5.1 stream whose blocks hold several channel pairs: a single channel element, two channel pair elements of different
+    codings and an LFE element, so that a unit has six channel streams and two pairs."""
+    center = channel(M.ONLY_LONG, 1, [[(11, 12), (5, 20)]], seed=41)
+    lfe = channel(M.ONLY_LONG, 1, [[(1, 8)]], seed=42)
+    long_a = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 10), (1, 20), (0, 6)]], seed=43)
+    long_b = channel(M.ONLY_LONG, 1, [[(9, 6), (3, 14), (1, 14), (0, 6)]], gain=90, seed=44)
+    intense = channel(M.ONLY_LONG, 1, [[(9, 6), (3, 14), (15, 10), (14, 4), (0, 6)]], gain=95, seed=45)
+    start = channel(M.LONG_START, 0, [[(11, 6), (3, 20)]], seed=46)
+    start_b = channel(M.LONG_START, 0, [[(9, 6), (3, 20)]], seed=47)
+    shorts = channel(M.EIGHT_SHORT, 0, [[(11, 4), (5, 6)]], groups=(8,), seed=48)
+    shorts_b = channel(M.EIGHT_SHORT, 0, [[(9, 4), (5, 6)]], groups=(8,), seed=49)
+    used = [[1 if b % 3 == 0 else 0 for b in range(40)]]
+    frames = [
+        # a mid/side pair and an intensity stereo pair
+        [(M.SCE, center), (M.CPE, long_a, long_b, True, 1, used), (M.CPE, long_a, intense, True, 0, None), (M.LFE, lfe)],
+        # a left/right pair and a pair of long start windows with mid/side stereo in every band
+        [(M.SCE, center), (M.CPE, long_a, long_b, True, 0, None), (M.CPE, start, start_b, True, 2, None), (M.LFE, lfe)],
+        # a pair of eight short windows and one without a common window
+        [(M.SCE, center), (M.CPE, shorts, shorts_b, True, 2, None), (M.CPE, long_a, long_b, False, 0, None), (M.LFE, lfe)],
+    ]
+    blocks, units, pairs = [], [], []
+    for frame in frames:
+        elements, streams = [], []
+        for item in frame:
+            if item[0] == M.CPE:
+                _, a, b, common, mask, flags = item
+                elements.append(M.Element(M.CPE, ics=(a, b), common=common, mask=mask, ms_used=flags))
+                streams += [a, b]
+                pairs.append((b, common, mask, flags, a))
+            else:
+                elements.append(M.Element(item[0], ics=item[1]))
+                streams.append(item[1])
+        blocks.append(M.raw_data_block(elements, rate_index=rate_index(RATE)))
+        units.append(streams)
+    data, rows = concat(adts_frames(blocks, channels=6))
+    fields = {**pair_statistics("ADTS", pairs), **statistics("ADTS", [s for u in units for s in u]), **coding_fields("ADTS", units),
+              "ADTS/Statistics/Window Sequences": f"{sum(len(u) for u in units)} channel streams"}
+    return "stereo-coding-elements.aac", data, manifest(
+        "Three frames of a 5.1 stream, each holding a single channel element, two channel pair elements and an LFE element: six channel streams "
+        "and two pairs in every unit, with mid/side, intensity stereo, left/right, mid/side in long start windows, eight short windows and a pair "
+        "without a common window.", data, rows, [stream("AAC LC", RATE, 6, "5.1", len(frames) * 1024)], fields)
+
 
 SBR_HEADER = {"amp_res": 1, "start": 5, "stop": 9, "xover": 0}
 
@@ -587,17 +759,22 @@ def object_types():
         skip={"decode": "ffmpeg skips SSR's gain control and reports it as a missing feature.", "faad": "faad2 is built without SSR.",
               "faad_trace": "faad2 is built without SSR and stops at gain control data."})))
     # A coupling channel element in a stream of channel configuration 2.
-    blocks = []
+    blocks, units, pairs = [], [], []
     for n in range(4):
-        cpe = M.Element(M.CPE, ics=(channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=n), channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=n + 1)), mask=0)
+        pair = (channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=n), channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=n + 1))
+        cpe = M.Element(M.CPE, ics=pair, mask=0)
         cce = M.Element(M.CCE, tag=0, independent=n % 2, targets=[(1, 0, 1, 1)], ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 4)]], seed=n + 2))
         blocks.append(M.raw_data_block([cpe, cce]))
+        # the coupling channel element's stream is no channel stream of the statistics or the series
+        units.append(list(pair))
+        pairs.append((pair[1], True, 0, None, pair[0]))
     data, rows = concat(adts_frames(blocks, channels=2))
     out.append(("coupling.aac", data, manifest(
         "A channel pair and a coupling channel element coupled to both its channels, with a gain element list for the second, in a stream of "
         "channel configuration 2, which provides for no coupling channel element.", data, rows, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)],
         {"ADTS/Frame/Raw Data Block/CCE/Target": "CPE 0, both channels", "ADTS/Frame/Raw Data Block/CCE/Gain Element Lists": "1",
-         "ADTS/Frame[1]/Raw Data Block/CCE/IsIndependentlySwitched": "true"},
+         "ADTS/Frame[1]/Raw Data Block/CCE/IsIndependentlySwitched": "true",
+         "ADTS/Statistics/Window Sequences": "8 channel streams", **pair_statistics("ADTS", pairs), **coding_fields("ADTS", units)},
         [["aac.coupling-without-program", "4 raw data blocks hold a coupling channel element, which channel configuration 2 does not provide for"]],
         skip={"faad": "faad2 is built without coupling and stops at the element.", "faad_trace": "faad2 is built without coupling and stops at the element.",
               "decode": "ffmpeg's decoder finds no channel for the coupling element in a stream of channel configuration 2.",
@@ -1046,7 +1223,7 @@ def rate_fixtures():
 
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), stereo(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out
