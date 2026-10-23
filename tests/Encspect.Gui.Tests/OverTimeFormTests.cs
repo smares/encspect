@@ -15,8 +15,7 @@ namespace Encspect.Gui.Tests;
 
 // The over-time forms of a category chart: the stepped stacked area (the default) and its smoothed variant. Each interval keeps
 // its own shares, with a vertical step at its boundary and no gap between intervals; a stream that ends inside an interval gives
-// the last one only the width it lasts; the bottom layer is the largest category, in the muted color, and wide stretches carry
-// the layer's name. The pixel tests look at what is drawn, with positions worked out from the plot and the number of intervals
+// the last one only the width it lasts; the bottom layer is the largest category, in the muted color. The pixel tests look at what is drawn, with positions worked out from the plot and the number of intervals
 // alone and colors from the palette.
 public class OverTimeFormTests
 {
@@ -541,62 +540,6 @@ public class OverTimeFormTests
 
         window.Close();
         Reset();
-    }
-
-    // A layer carries its name where a stretch of it is wide and tall enough for the text, in black or white; not where it is
-    // too narrow or too short.
-    [AvaloniaTheory]
-    [InlineData("light")]
-    [InlineData("dark")]
-    public void A_wide_stretch_of_a_layer_carries_its_name_and_a_narrow_or_short_one_does_not(string variant)
-    {
-        Color surface = SurfaceOf(variant);
-        bool dark = variant == "dark";
-
-        // Five seconds of the first category, then five of the second: each layer fills the plot over five wide intervals.
-        CategorySeries wide = Series(10, s => s < 5 ? 0 : 40);
-        (Window window, GraphView view) = Show(new CategoryGraph(wide, GraphForm.OverTime), variant);
-        Rect plot = view.PlotArea()!.Value;
-        CategoryStyle[] styles = CategoryColors.ForStack(wide, dark, surface);
-        double unit = plot.Width / 10;
-        Assert.True(Text(window, plot, 0, 5 * unit, styles[0].Color) >= 30, "The first layer has no name.");
-        Assert.True(Text(window, plot, 5 * unit, 10 * unit, styles[1].Color) >= 30, "The second layer has no name.");
-        window.Close();
-
-        // Single intervals one after the other are narrower than the name.
-        CategorySeries narrow = Series(10, s => s % 2 == 0 ? 0 : 40);
-        (window, view) = Show(new CategoryGraph(narrow, GraphForm.OverTime), variant);
-        styles = CategoryColors.ForStack(narrow, dark, surface);
-        Assert.Equal(0, Text(window, plot, 0, 10 * unit, styles[0].Color));
-        Assert.Equal(0, Text(window, plot, 0, 10 * unit, styles[1].Color));
-        window.Close();
-
-        // A layer of 5% of the plot is 11 pixels, less than the text; the layer below it is named.
-        CategorySeries thin = Series(10, s => 2);
-        (window, view) = Show(new CategoryGraph(thin, GraphForm.OverTime), variant);
-        styles = CategoryColors.ForStack(thin, dark, surface);
-        Assert.True(Text(window, plot, 0, 10 * unit, styles[0].Color, plot.Top + 12, plot.Bottom) >= 30, "The large layer has no name.");
-        Assert.Equal(0, Text(window, plot, 0, 10 * unit, styles[1].Color, plot.Top, plot.Top + 12));
-        window.Close();
-        Reset();
-    }
-
-    // The pixels of the black or white text of a layer: those inside the plot's stretch of columns and rows that are the color
-    // of the text and not the layer's.
-    private static int Text(Window window, Rect plot, double from, double to, Color layer, double? top = null, double? bottom = null)
-    {
-        WriteableBitmap frame = window.CaptureRenderedFrame()!;
-        Color text = CategoryColors.Readable(layer);
-        int count = 0;
-        for (double y = (top ?? plot.Top) + 2; y < (bottom ?? plot.Bottom) - 2; y++)
-        {
-            for (double x = plot.Left + from + 3; x < plot.Left + to - 3; x++)
-            {
-                count += Near(text, Pixel(frame, x, y), 40) ? 1 : 0;
-            }
-        }
-
-        return count;
     }
 
     // The last interval of a partial one of a few frames is dimmed in the area: the colors blended with the surface, so wide that

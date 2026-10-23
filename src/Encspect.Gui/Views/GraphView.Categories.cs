@@ -27,8 +27,6 @@ public sealed partial class GraphView
     private const double DimmedLastOpacity = 0.6;
     private const double MinSeparated = 3;
     internal const double MinLastWidth = 3;
-    private const double LabelMarginX = 6;
-    private const double LabelMarginY = 2;
 
     // The plot is never lower than this: a view with less room scrolls instead of squeezing the chart.
     private const double MinOverTimeHeight = 110;
@@ -820,8 +818,8 @@ public sealed partial class GraphView
     // largest share is the bottom layer, the one with a flat baseline, in the muted color (CategoryColors.ForStack). Levels are
     // whole pixels, and a category that occurs is at least a pixel high. A 1-pixel line of the surface separates two layers
     // where both are at least MinSeparated pixels high, as the strip separates its segments, so a rare layer keeps its color and
-    // a full switch shows no stripe at its step. Where a stretch of a layer is wide and tall enough for its name, the name
-    // is written in it. An interval of no values is a gap.
+    // a full switch shows no stripe at its step. An interval of no values is a gap. The layers carry no names: the legend, in the
+    // order of the stack, and the hover text name them.
     private void DrawArea(DrawingContext context, CategoryGraph graph, CategoryColumns columns, Slots slots, Rect plot, CategoryStyle[] styles, IBrush[] brushes, Color surface, bool highContrast)
     {
         CategorySeries series = graph.Series;
@@ -897,7 +895,6 @@ public sealed partial class GraphView
         }
 
         DrawSeparators(context, columns, start, end, tops, bottoms, order, surface);
-        DrawLayerNames(context, graph, columns, start, end, tops, bottoms, styles);
 
         // A partial last interval of only a few frames is dimmed, as the hover text says (CategoryGraph.LastInterval): in the
         // area, not in the average, whose last level is not a share of those frames, and not in a column that merges intervals.
@@ -969,66 +966,6 @@ public sealed partial class GraphView
         }
 
         return double.NaN;
-    }
-
-    // The name of a category inside its layer, once for each stretch of columns where the layer is tall enough for the text,
-    // where the stretch is wide enough for it and the text fits between the layer's edges over the whole of its width. The
-    // size of the text is the font's (the width and height of the formatted name), with a margin of 6 pixels at each side and 2
-    // above and below; the color is black or white, whichever contrasts more with the layer's. Hatched layers are not named,
-    // since the hatching would run through the text, and neither is the dimmed last interval.
-    private void DrawLayerNames(DrawingContext context, CategoryGraph graph, CategoryColumns columns, double[] start, double[] end, double[] tops, double[] bottoms, CategoryStyle[] styles)
-    {
-        CategorySeries series = graph.Series;
-        int categories = series.Categories.Count;
-        int usable = IsDimmed(graph, columns) && graph.View == GraphForm.OverTime ? columns.Count - 1 : columns.Count;
-        foreach (int category in graph.StackOrder)
-        {
-            if (series.Counts[category] == 0 || styles[category].IsHatched)
-            {
-                continue;
-            }
-
-            FormattedText name = Text(series.Categories[category].Name, TextSize, new ImmutableSolidColorBrush(CategoryColors.Readable(styles[category].Color)));
-            double neededWidth = name.Width + (2 * LabelMarginX);
-            double neededHeight = name.Height + (2 * LabelMarginY);
-            int column = 0;
-            while (column < usable)
-            {
-                if (columns.Total(column) == 0 || bottoms[(column * categories) + category] - tops[(column * categories) + category] < neededHeight)
-                {
-                    column++;
-                    continue;
-                }
-
-                int from = column;
-                while (column < usable && columns.Total(column) > 0 && bottoms[(column * categories) + category] - tops[(column * categories) + category] >= neededHeight)
-                {
-                    column++;
-                }
-
-                if (end[column - 1] - start[from] < neededWidth)
-                {
-                    continue;
-                }
-
-                double x = ((start[from] + end[column - 1]) / 2) - (name.Width / 2);
-                double top = double.NegativeInfinity;
-                double bottom = double.PositiveInfinity;
-                for (int k = from; k < column; k++)
-                {
-                    if (end[k] > x && start[k] < x + name.Width)
-                    {
-                        top = Math.Max(top, tops[(k * categories) + category]);
-                        bottom = Math.Min(bottom, bottoms[(k * categories) + category]);
-                    }
-                }
-
-                if (bottom - top >= neededHeight)
-                {
-                    context.DrawText(name, new Point(x, ((top + bottom) / 2) - (name.Height / 2)));
-                }
-            }
-        }
     }
 
     // One stack of segments, the plain category at the bottom, each category present at least a pixel high, two pixels of

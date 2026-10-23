@@ -187,6 +187,18 @@ public class MpegGraphLayoutTests
             Assert.True(!scrolls || bottom >= list.Viewport.Height - 8, $"The last entry ends at {bottom} in {list.Viewport.Height}, short of the end.");
         }
 
+        // Where the list scrolls, a fade over its bottom edge says that there is more, until the end of the list; where it fits,
+        // there is none.
+        list.ScrollToHome();
+        UiPump.Until(() => true);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+        bool overflows = list.Extent.Height > list.Viewport.Height + 0.5;
+        Assert.Equal(overflows, list.OpacityMask is not null);
+        list.ScrollToEnd();
+        UiPump.Until(() => true);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+        Assert.Null(list.OpacityMask);
+
         // The first heading is at the top of the list, and the decoder note is under the chart, not under the list.
         TextBlock first = window.GraphChoices.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("heading"));
         list.ScrollToHome();

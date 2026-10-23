@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using Encspect.Gui.ViewModels;
@@ -34,6 +35,7 @@ public partial class DetailWindow : Window
         DataContext = model;
         PickExportTarget = PickExportTargetAsync;
         WindowList.Register(this);
+        GraphList.ScrollChanged += (_, _) => UpdateListFade();
         TreeList.AddHandler(TappedEvent, OnTreeTapped, RoutingStrategies.Bubble, handledEventsToo: true);
         TreeList.DoubleTapped += (_, e) =>
         {
@@ -303,6 +305,24 @@ public partial class DetailWindow : Window
 
     private static bool IsOnExpander(object? source) =>
         source is Avalonia.Visual visual && visual.GetSelfAndVisualAncestors().Any(v => v is Border { Name: "Expander" });
+
+    // Where the list of graphs can be scrolled further down, its last visible entry fades out over its bottom ListFadeHeight pixels,
+    // so that an entry cut by the edge reads as "scroll for more"; at the end of the list, or where it fits, there is no fade.
+    private const double ListFadeHeight = 20;
+
+    private void UpdateListFade()
+    {
+        double height = GraphList.Viewport.Height;
+        bool more = height > 2 * ListFadeHeight && GraphList.Offset.Y + height < GraphList.Extent.Height - 0.5;
+        GraphList.OpacityMask = more
+            ? new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
+                GradientStops = { new GradientStop(Colors.Black, 0), new GradientStop(Colors.Black, 1 - (ListFadeHeight / height)), new GradientStop(Color.FromArgb(48, 0, 0, 0), 1) },
+            }
+            : null;
+    }
 
     private void OnTreeTapped(object? sender, TappedEventArgs e)
     {
