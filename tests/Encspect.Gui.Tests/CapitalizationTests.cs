@@ -24,7 +24,12 @@ public sealed class CapitalizationTests
     private static readonly HashSet<string> OwnSpelling = new(StringComparer.Ordinal) { "mid/side" };
 
     // Whole labels that legitimately break the rule, with the reason.
-    private static readonly HashSet<string> Exceptions = new(StringComparer.Ordinal);
+    // The names of AC-3's tally nodes are text from the analysis, which keeps its own spelling; the series carry them (docs/design/coding-graphs.md,
+    // "Names across formats").
+    private static readonly HashSet<string> Exceptions = new(StringComparer.Ordinal)
+    {
+        "Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing", "Blocks With Spectral Extension",
+    };
 
     [Theory]
     [InlineData("Include Subfolders", true)]
@@ -146,6 +151,37 @@ public sealed class CapitalizationTests
         Assert.Contains("Window Sequences", labels);
         Assert.Contains("Coded Bandwidth", labels);
         Assert.Contains("Stereo Coding", labels);
+        AssertTitleCase(labels);
+        window.Close();
+    }
+
+    // The entries and forms of an E-AC-3 file's graphs (the four flag series and Coded Bandwidth), each selected in turn.
+    [AvaloniaFact]
+    public void Labels_of_the_graphs_of_an_ac3_file_are_in_title_case()
+    {
+        var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1100, Height = 760 };
+        window.Show();
+        Task load = window.Model.LoadAsync(Fixtures.Ac3("coding-eac3-blocks.eac3"));
+        UiPump.Until(() => load.IsCompleted);
+        window.Model.IsGraphsShown = true;
+        UiPump.Until(() => true);
+
+        List<string> labels = [.. ControlLabels(window)];
+        labels.AddRange(window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("heading")).Select(t => t.Text!));
+        foreach (GraphChoice choice in window.Model.Graphs.Choices)
+        {
+            window.Model.Graphs.Selected = choice;
+            foreach (GraphFormChoice form in choice.Forms)
+            {
+                window.Model.Graphs.SelectForm(form.Kind);
+                UiPump.Until(() => true);
+                labels.AddRange(ControlLabels(window));
+            }
+        }
+
+        Assert.Contains("Blocks With Block Switching", labels);
+        Assert.Contains("Blocks With Spectral Extension", labels);
+        Assert.Contains("Coded Bandwidth", labels);
         AssertTitleCase(labels);
         window.Close();
     }
