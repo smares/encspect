@@ -208,7 +208,8 @@ public class AacGraphLayoutTests
         List<(string Label, int Category)> entries = GraphView.LegendEntries(window.Model.Graphs.Graph!);
 
         // The pairs of this file code mid/side stereo, or mid/side and intensity stereo: two of the five categories.
-        Assert.Equal([1, 3], entries.Select(e => e.Category));
+        // In the order of the stack, the largest share first.
+        Assert.Equal([3, 1], entries.Select(e => e.Category));
         Assert.All(entries, e => Assert.DoesNotContain("0.0%", e.Label, StringComparison.Ordinal));
         window.Close();
     }

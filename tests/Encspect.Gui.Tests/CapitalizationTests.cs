@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
+using Encspect.Core;
 using Encspect.Gui.ViewModels;
 using Encspect.Gui.Views;
 using Encspect.Host;
@@ -252,6 +253,26 @@ public sealed class CapitalizationTests
                 }
             }
         }
+    }
+
+    // The forms of a category chart, among them the smoothed one that only a stream longer than the threshold offers.
+    [Fact]
+    public void The_forms_of_a_long_category_series_are_in_title_case()
+    {
+        var builder = new CategorySeriesBuilder("Stereo Coding", [new Category("Left/right stereo", "a."), new Category("Mid/side stereo", "b.")], "frame", 1);
+        for (int unit = 0; unit < 200; unit++)
+        {
+            builder.Add((byte)(unit / 10 % 2));
+        }
+
+        var time = new TimeIndex(Enumerable.Range(0, 40).Select(s => (double)s).ToArray(), Enumerable.Range(0, 40).Select(s => s * 5).ToArray());
+        CategorySeries series = builder.Build(Enumerable.Range(0, 200).Select(i => i * 100.0).ToArray(), null, null, "d.", null, time);
+        var stream = new StreamInfo { Nodes = [], Codec = "Test", Series = [], CategorySeries = [series], Duration = 40 };
+
+        GraphChoice choice = GraphsViewModel.For(stream).Single(c => c.Title == "Stereo Coding");
+
+        Assert.Equal(["Over Time", "Smoothed", "Frames", "Summary"], choice.Forms.Select(f => f.Title));
+        AssertTitleCase(choice.Forms.Select(f => f.Title));
     }
 
     private static void AssertTitleCase(IEnumerable<string> labels)

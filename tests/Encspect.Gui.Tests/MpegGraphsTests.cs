@@ -151,9 +151,92 @@ public class MpegGraphLayoutTests
 
         List<(string Label, int Category)> entries = GraphView.LegendEntries(window.Model.Graphs.Graph!);
 
-        Assert.Equal([0, 1], entries.Select(e => e.Category));
+        // Largest share first: the stack's bottom layer.
+        Assert.Equal([1, 0], entries.Select(e => e.Category));
         Assert.All(entries, e => Assert.DoesNotContain("0.0%", e.Label, StringComparison.Ordinal));
         window.Close();
+    }
+
+    // The list of graphs shows whole items only: at any scroll position every heading and entry is entirely in its viewport or
+    // entirely out of it, and the viewport ends where an item does (the room under it stays empty). Whether a list fits is not
+    // asserted where it depends on the fonts of the platform (a nine-entry list at 1180 by 800 is some 310 pixels in 325 on Linux
+    // and 328 in 324 on Windows): a window tall enough that it fits with room to spare on any font has no scrollbar, one too short
+    // for it scrolls, and a list that fits, wherever it does, has no scrollbar.
+    [AvaloniaTheory]
+    [InlineData("external-lame-dual-music.mp3", 1500, "fits")]
+    [InlineData("external-lame-dual-music.mp3", 800, "either")]
+    [InlineData("external-lame-dual-music.mp3", 560, "either")]
+    [InlineData("external-lame-joint-music.mp3", 800, "either")]
+    [InlineData("external-lame-joint-music.mp3", 640, "either")]
+    [InlineData("external-lame-joint-music.mp3", 520, "scrolls")]
+    [InlineData("external-lame-cbr128-joint.mp3", 640, "either")]
+    [InlineData("external-lame-cbr128-joint.mp3", 800, "either")]
+    public void The_list_of_graphs_shows_whole_items_only(string fixture, double height, string expected)
+    {
+        DetailWindow window = Open(Fixtures.Mpeg(fixture), 1180, height);
+        ScrollViewer list = window.GraphList;
+        foreach (string title in new[] { "Coding Summary", "Stereo Coding", "Bitrate", "Block Usage" })
+        {
+            window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == title);
+            Settle();
+            bool scrolls = list.Extent.Height > list.Viewport.Height + 0.5;
+            Assert.True(expected != "fits" || !scrolls, $"The list of {list.Extent.Height} scrolls in {list.Viewport.Height} with {title} selected.");
+            Assert.True(expected != "scrolls" || scrolls, $"The list of {list.Extent.Height} fits in {list.Viewport.Height} with {title} selected.");
+            Assert.Equal(scrolls, list.GetVisualDescendants().OfType<Avalonia.Controls.Primitives.ScrollBar>().First(b => b.Orientation == Avalonia.Layout.Orientation.Vertical).IsVisible);
+            Assert.True(list.Bounds.Height <= ((Control)list.Parent!).Bounds.Height + 0.5);
+
+            double max = list.Extent.Height - list.Viewport.Height;
+            foreach (double fraction in new[] { 0, 0.2, 0.37, 0.5, 0.71, 0.9, 1 })
+            {
+                list.Offset = new Vector(0, max * fraction);
+                Settle();
+                AssertWholeItems(window, list, $"{fixture} at {height}, {title}, position {fraction}");
+            }
+
+            list.ScrollToEnd();
+            Settle();
+            AssertWholeItems(window, list, $"{fixture} at {height}, {title}, at the end");
+            Button last = window.GraphChoices.GetVisualDescendants().OfType<Button>().Last();
+            Assert.True(last.TranslatePoint(new Point(0, last.Bounds.Height), list)!.Value.Y <= list.Viewport.Height + 0.5);
+            list.ScrollToHome();
+            Settle();
+            AssertWholeItems(window, list, $"{fixture} at {height}, {title}, at the top");
+        }
+
+        window.Close();
+    }
+
+    private static void Settle()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            UiPump.Until(() => true);
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+        }
+    }
+
+    // Every heading and entry is inside the viewport whole or outside it altogether, and the last one inside ends the viewport.
+    private static void AssertWholeItems(DetailWindow window, ScrollViewer list, string where)
+    {
+        double viewport = list.Viewport.Height;
+        var items = window.GraphChoices.GetVisualDescendants().OfType<Control>()
+            .Where(c => (c is TextBlock t && t.Classes.Contains("heading")) || (c is Button b && b.Classes.Contains("entry")))
+            .Select(c => (Top: c.TranslatePoint(default, list)!.Value.Y, Bottom: c.TranslatePoint(new Point(0, c.Bounds.Height), list)!.Value.Y, Control: c))
+            .ToList();
+        foreach ((double top, double bottom, Control control) in items)
+        {
+            bool inside = top >= -0.5 && bottom <= viewport + 0.5;
+            bool outside = bottom <= 0.5 || top >= viewport - 0.5;
+            Assert.True(inside || outside, $"{where}: an item at {top} to {bottom} is cut by a viewport of {viewport}.");
+        }
+
+        if (list.Extent.Height <= viewport + 0.5)
+        {
+            return;
+        }
+
+        double lastBottom = items.Where(i => i.Top >= -0.5 && i.Bottom <= viewport + 0.5).Max(i => i.Bottom);
+        Assert.True(viewport - lastBottom <= 10, $"{where}: the viewport of {viewport} ends {viewport - lastBottom} under its last item.");
     }
 
     [AvaloniaFact]
