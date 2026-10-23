@@ -1,0 +1,328 @@
+{
+ "length": 47722,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 13510,
+   "index": 0,
+   "samples": 11025,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "20e0c500",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     35,
+     54
+    ],
+    [
+     94,
+     66,
+     6
+    ],
+    [
+     102,
+     3,
+     10
+    ],
+    [
+     114,
+     4,
+     8
+    ],
+    [
+     124,
+     5,
+     12
+    ],
+    [
+     138,
+     101,
+     4
+    ],
+    [
+     144,
+     42,
+     2
+    ],
+    [
+     148,
+     138,
+     13352
+    ],
+    [
+     13504,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 13510,
+   "length": 11096,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "765ca55f",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     13542,
+     66,
+     6
+    ],
+    [
+     13550,
+     3,
+     10
+    ],
+    [
+     13562,
+     4,
+     8
+    ],
+    [
+     13572,
+     5,
+     12
+    ],
+    [
+     13586,
+     42,
+     2
+    ],
+    [
+     13590,
+     138,
+     11006
+    ],
+    [
+     24600,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 24606,
+   "length": 23060,
+   "index": 17512,
+   "samples": 6488,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "96dc5ca8",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     24638,
+     66,
+     6
+    ],
+    [
+     24646,
+     3,
+     10
+    ],
+    [
+     24658,
+     4,
+     8
+    ],
+    [
+     24668,
+     5,
+     12
+    ],
+    [
+     24682,
+     42,
+     2
+    ],
+    [
+     24686,
+     138,
+     22970
+    ],
+    [
+     47660,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 47666,
+   "length": 56,
+   "index": 0,
+   "samples": 0,
+   "flags": "10000000",
+   "version": "410",
+   "total": 24000,
+   "crc": "00000000",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     47698,
+     41,
+     16
+    ],
+    [
+     47716,
+     47,
+     4
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 699.867,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 3,
+   "declared": 24000
+  }
+ ],
+ "decoded_samples": 24000,
+ "pcm_samples": 24000,
+ "decoded_pcm_md5": "33f110d8eb91888849a451b5f07f99a7",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 4,
+     "checked": 4,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 4,
+     "checked": 4,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 3,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 47722
+  }
+ ],
+ "encoder": {
+  "tool": "wavpack 5.6.0\nlibwavpack 5.6.0 (wavpack package of Ubuntu 24.04)",
+  "arguments": [
+   "-m"
+  ],
+  "input": {
+   "kind": "aiff",
+   "rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "bits": 16
+  },
+  "file": "main file"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true,
+  "decode": {
+   "opens": true,
+   "samples": 24000,
+   "errors": 0
+  }
+ }
+}

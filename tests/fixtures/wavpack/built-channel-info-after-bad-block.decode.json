@@ -1,0 +1,41 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 0,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "block checksum",
+        "stored": 3,
+        "checked": 3,
+        "failed": 1
+      },
+      {
+        "name": "block header CRC",
+        "stored": 3,
+        "checked": 2,
+        "failed": 0
+      },
+      {
+        "name": "extended CRC",
+        "stored": 0,
+        "checked": 0,
+        "failed": 0
+      },
+      {
+        "name": "MD5",
+        "stored": 0,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 2,
+      "message": "The wavpack decoder could not decode the frame at 0x34BA: The blocks of the group hold 2 channels, but the stream has 6."
+    }
+  ]
+}

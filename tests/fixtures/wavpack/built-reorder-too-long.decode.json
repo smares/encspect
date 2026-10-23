@@ -1,0 +1,41 @@
+{
+  "verification": {
+    "decoding": "NotPossible",
+    "decodedSamples": 0,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "block checksum",
+        "stored": 3,
+        "checked": 3,
+        "failed": 0
+      },
+      {
+        "name": "block header CRC",
+        "stored": 3,
+        "checked": 0,
+        "failed": 0
+      },
+      {
+        "name": "extended CRC",
+        "stored": 0,
+        "checked": 0,
+        "failed": 0
+      },
+      {
+        "name": "MD5",
+        "stored": 0,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.not-possible",
+      "severity": "Info",
+      "count": 1,
+      "message": "The stream was not decoded: The first block with audio cannot be decoded: the new config block sub-block has a size libwavpack refuses; it takes at most 6 bytes, as its layout has 2 channels to reorder."
+    }
+  ]
+}

@@ -1,0 +1,292 @@
+{
+ "length": 46150,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 13498,
+   "index": 0,
+   "samples": 11025,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "20e0c500",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     104,
+     4
+    ],
+    [
+     38,
+     33,
+     44
+    ],
+    [
+     84,
+     66,
+     6
+    ],
+    [
+     92,
+     3,
+     10
+    ],
+    [
+     104,
+     4,
+     8
+    ],
+    [
+     114,
+     5,
+     12
+    ],
+    [
+     128,
+     101,
+     4
+    ],
+    [
+     134,
+     42,
+     0
+    ],
+    [
+     136,
+     138,
+     13352
+    ],
+    [
+     13492,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 13498,
+   "length": 11094,
+   "index": 11025,
+   "samples": 6487,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "765ca55f",
+   "verifies": true,
+   "checksum": "valid",
+   "status": [],
+   "sub_blocks": [
+    [
+     13530,
+     66,
+     6
+    ],
+    [
+     13538,
+     3,
+     10
+    ],
+    [
+     13550,
+     4,
+     8
+    ],
+    [
+     13560,
+     5,
+     12
+    ],
+    [
+     13574,
+     42,
+     0
+    ],
+    [
+     13576,
+     138,
+     11006
+    ],
+    [
+     24586,
+     47,
+     4
+    ]
+   ]
+  },
+  {
+   "offset": 24592,
+   "length": 21558,
+   "index": 17512,
+   "samples": 6488,
+   "flags": "14bc1831",
+   "version": "410",
+   "total": 24000,
+   "crc": "96dc5ca8",
+   "verifies": false,
+   "checksum": null,
+   "status": [
+    "truncated"
+   ],
+   "sub_blocks": [
+    [
+     24624,
+     66,
+     6
+    ],
+    [
+     24632,
+     3,
+     10
+    ],
+    [
+     24644,
+     4,
+     8
+    ],
+    [
+     24654,
+     5,
+     12
+    ],
+    [
+     24668,
+     42,
+     0
+    ],
+    [
+     24670,
+     138,
+     22970
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 677.7288000000001,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 3,
+   "declared": 24000
+  }
+ ],
+ "decoded_samples": 17512,
+ "pcm_samples": 17512,
+ "decoded_pcm_md5": "beabb2e45f00d9e45e1922ff80e1695e",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 3,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": null,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 3,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 46150
+  }
+ ],
+ "description": "A file with an MD5 cut 1,500 bytes before the end of its last block with audio, which takes the MD5 block with it.",
+ "findings": [
+  {
+   "code": "wavpack.block-truncated",
+   "contains": "states"
+  }
+ ],
+ "crosscheck": {
+  "valid": false,
+  "decode": {
+   "opens": true,
+   "samples": 17512,
+   "errors": 0
+  }
+ }
+}

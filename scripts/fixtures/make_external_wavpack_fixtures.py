@@ -56,10 +56,20 @@ FIXTURES = {
     "lossless-3ch-unassigned": (("wav", 44100, 3, 16, SHORT, 0), [], ["wv"]),
     "lossless-4ch-two-unassigned": (("wav", 44100, 4, 16, 12000, 0), ["--channel-order=FL,FR,..."], ["wv"]),
     "lossless-16-stereo-md5": (("wav", 44100, 2, 16, SHORT), ["-m"], ["wv"]),
+    "lossless-16-stereo-md5-small-blocks": (("wav", 44100, 2, 16, SHORT), ["-m", "--blocksize=1000"], ["wv"]),
+    "lossless-16-mono-md5": (("wav", 44100, 1, 16, SHORT), ["-m"], ["wv"]),
+    "lossless-8-stereo-md5": (("wav", 44100, 2, 8, SHORT), ["-m"], ["wv"]),
+    "lossless-24-stereo-md5": (("wav", 44100, 2, 24, SHORT), ["-m"], ["wv"]),
+    "lossless-32-stereo-md5": (("wav", 44100, 2, 32, SHORT), ["-m"], ["wv"]),
+    "lossless-float-stereo-md5": (("float", 44100, 2, SHORT), ["-m"], ["wv"]),
+    "lossless-51-16-md5": (("wav", 48000, 6, 16, SHORT, 0x3F), ["-m"], ["wv"]),
     "lossless-16-stereo-chunks": (("wav", 44100, 2, 16, SHORT, None, BEXT, LIST_CHUNK), [], ["wv"]),
     "lossless-16-stereo-no-wrapper": (("wav", 44100, 2, 16, SHORT), ["-r"], ["wv"]),
     "hybrid-lossy-b4": (("wav", 44100, 2, 16, SHORT), ["-b4"], ["wv"]),
     "hybrid-b4-correction": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c"], ["wv", "wvc"]),
+    "hybrid-b4-md5": (("wav", 44100, 2, 16, SHORT), ["-b4", "-m"], ["wv"]),
+    "hybrid-b4-correction-md5": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c", "-m"], ["wv"]),
+    "hybrid-mono-b3-md5": (("wav", 44100, 1, 16, SHORT), ["-b3", "-m"], ["wv"]),
     "hybrid-mono-b3": (("wav", 44100, 1, 16, SHORT), ["-b3"], ["wv"]),
     "hybrid-mono-b3-correction": (("wav", 44100, 1, 16, SHORT), ["-b3", "-c"], ["wv", "wvc"]),
     "hybrid-kbps-b256": (("wav", 44100, 2, 16, SHORT), ["-b256"], ["wv"]),
@@ -91,8 +101,14 @@ FIXTURES = {
     "dsd-64-high": (("dsf", 2822400, 2, 65536), ["-h", "--blocksize=8192"], ["wv"]),
     "dsd-64-mono": (("dsf", 2822400, 1, 32768), [], ["wv"]),
     "dsd-128": (("dsf", 5644800, 2, 32768), [], ["wv"]),
+    "dsd-64-md5": (("dsf", 2822400, 2, 65536), ["-m", "--blocksize=8192"], ["wv"]),
+    "dsd-64-high-md5": (("dsf", 2822400, 2, 65536), ["-m", "-h", "--blocksize=8192"], ["wv"]),
+    "dsd-64-mono-md5": (("dsf", 2822400, 1, 32768), ["-m"], ["wv"]),
     "apev2-tag": (("wav", 44100, 2, 16, SHORT), ["-w", "Artist=Fixture artist", "-w", "Title=Fixture title", "-w", "Encoder", "-w", "Settings"], ["wv"]),
     "from-aiff": (("aiff", 44100, 2, SHORT, 16), [], ["wv"]),
+    "from-aiff-md5": (("aiff", 44100, 2, SHORT, 16), ["-m"], ["wv"]),
+    "from-caf-md5": (("caf", 44100, 2, SHORT, 16, (100 << 16) | 2), ["-m"], ["wv"]),
+    "from-caf-51-md5": (("caf", 48000, 6, 12000, 16, (121 << 16) | 6), ["-m"], ["wv"]),
     "from-caf": (("caf", 44100, 2, SHORT, 16, (100 << 16) | 2), [], ["wv"]),
     "from-caf-51": (("caf", 48000, 6, 12000, 16, (121 << 16) | 6), [], ["wv"]),
 }
@@ -101,6 +117,11 @@ FIXTURES = {
 # name: (input, files); the encoder is ffmpeg with its defaults, which stamps the "encoder" item.
 FFMPEG_FIXTURES = {
     "ffmpeg-apev2-tag": (("wav", 44100, 2, 16, SHORT), ["wv"]),
+    "ffmpeg-16-stereo": (("wav", 44100, 2, 16, SHORT), ["wv"]),
+    "ffmpeg-24-stereo": (("wav", 44100, 2, 24, SHORT), ["wv"]),
+    "ffmpeg-float-stereo": (("float", 44100, 2, SHORT), ["wv"]),
+    "ffmpeg-8-mono": (("wav", 44100, 1, 8, SHORT), ["wv"]),
+    "ffmpeg-51-16": (("wav", 48000, 6, 16, SHORT, 0x3F), ["wv"]),
 }
 
 
@@ -188,7 +209,8 @@ def describe(spec):
 
 
 def regions(data, path, apev2):
-    """The top-level nodes: the WavPack stream and, after it, an APEv2 tag."""
+    """The top-level nodes: the WavPack stream and, after it, an APEv2 tag (FFmpeg's muxer always writes one)."""
+    apev2 = apev2 or data[-32:-24] == b"APETAGEX"
     if apev2:
         tag = data.rindex(b"APETAGEX", 0, len(data) - 32)
         return tag, [{"name": "WavPack", "offset": 0, "length": tag}, {"name": "APE", "offset": tag, "length": len(data) - tag}]
