@@ -31,7 +31,9 @@
  "findings": [],
  "crosscheck": {
   "ffprobe": true,
+  "ffprobe_channels": 2,
   "decode": true,
+  "liba52": true,
   "skip_insertion": false,
   "skip": {
    "skip_insertion": "The check rewrites E-AC-3 frames with skip fields; the coding fixtures' blocks would need nothing new from it."

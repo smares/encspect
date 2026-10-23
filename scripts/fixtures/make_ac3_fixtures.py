@@ -687,7 +687,7 @@ def build_coding():
     data = b"".join(f for f, _ in built)
     fixture("coding-ac3-stereo", ".ac3", "Six 2/0 frames with block switching in one or both channels of some blocks, rematrixing flags sent in block 0 and again later, "
             "reused and cleared, and bandwidth codes that differ between the channels.", data, frames_of(data), [stream("AC-3", 48000, 2, 0, 6 * 1536)], [],
-            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False, "skip": ok["skip"]}, coding=[[coding_unit(48000, [r], False) for _, r in built]])
+            crosscheck={"ffprobe": True, "decode": True, "liba52": True, "skip_insertion": False, "skip": ok["skip"]}, coding=[[coding_unit(48000, [r], False) for _, r in built]])
 
     # 2/0 with coupling that starts, stops, changes its range and starts again within a frame, which changes the number of rematrixing bands.
     options = [
@@ -701,7 +701,7 @@ def build_coding():
     data = b"".join(f for f, _ in built)
     fixture("coding-ac3-coupling", ".ac3", "Five 2/0 frames with coupling that starts, stops, changes its range and starts again within a frame, rematrixing flags for the "
             "number of bands each range gives, and one frame with no coupling.", data, frames_of(data), [stream("AC-3", 48000, 2, 0, 5 * 1536)], [],
-            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False, "skip": ok["skip"]}, coding=[[coding_unit(48000, [r], False) for _, r in built]])
+            crosscheck={"ffprobe": True, "decode": True, "liba52": True, "skip_insertion": False, "skip": ok["skip"]}, coding=[[coding_unit(48000, [r], False) for _, r in built]])
 
     # 3/2 with LFE: coupling of all five channels in some blocks, block switching in single channels, no rematrixing.
     options = [
@@ -712,7 +712,7 @@ def build_coding():
     data = b"".join(f for f, _ in built)
     fixture("coding-ac3-surround", ".ac3", "Two 3/2 frames with an LFE channel, coupling of all five channels in some blocks and block switching in single channels.",
             data, frames_of(data), [stream("AC-3", 48000, 7, 1, 2 * 1536)], [],
-            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False, "skip": ok["skip"]}, coding=[[coding_unit(48000, [r], False) for _, r in built]])
+            crosscheck={"ffprobe": True, "decode": True, "liba52": True, "skip_insertion": False, "skip": ok["skip"]}, coding=[[coding_unit(48000, [r], False) for _, r in built]])
 
     # 1+1: two independent channels, which have no rematrixing and no coupling.
     options = [dict(acmod=0, blksw=[(0, 0), (1, 0), (0, 1), (1, 1), (0, 0), (0, 0)], chbwcod=[10, 40]), dict(acmod=0, blksw=[(0, 0)] * 6, chbwcod=[50, 5])]
@@ -720,7 +720,7 @@ def build_coding():
     data = b"".join(f for f, _ in built)
     fixture("coding-ac3-dual-mono", ".ac3", "Two 1+1 frames with block switching in one or both channels of some blocks and different bandwidths.", data, frames_of(data),
             [stream("AC-3", 48000, 0, 0, 2 * 1536)], [],
-            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False, "skip": ok["skip"]}, coding=[[coding_unit(48000, [r], False) for _, r in built]])
+            crosscheck={"ffprobe": True, "ffprobe_channels": 2, "decode": True, "liba52": True, "skip_insertion": False, "skip": ok["skip"]}, coding=[[coding_unit(48000, [r], False) for _, r in built]])
 
     # E-AC-3: frames of 6, 3, 2 and 1 blocks in one stream, with block switching, rematrixing and spectral extension that starts and stops.
     def eac3_frame(**o):
@@ -733,7 +733,7 @@ def build_coding():
     six = [
         dict(numblkscod=3, blksw=sw, remat=[0b0110, None, 0, None, 0b1000, None], spx_blocks=[True, None, False, None, True, None], spx_range=(3, 5)),
         dict(numblkscod=3, blksw=quiet, remat=[0, None, None, None, None, 0b0001], spx_blocks=[False] + [None] * 5),
-        dict(numblkscod=2, blksw=[(1, 1), (0, 0), (0, 1)], remat=[0b1111, 0, None], spx_blocks=[False, True, None], spx_range=(3, 5)),
+        dict(numblkscod=2, blksw=[(1, 1), (0, 0), (0, 1)], remat=[0b1111, 0, None], spx_blocks=[False, True, None], spx_range=(1, 3)),
         dict(numblkscod=1, blksw=[(0, 1), (1, 0)], remat=[0b0011, None], spx_blocks=[True, False], spx_range=(3, 5)),
         dict(numblkscod=0, blksw=[(1, 1)], remat=[0b0100], spx_blocks=[True], spx_range=(3, 5)),
         dict(numblkscod=3, blksw=quiet, remat=[0b1111, None, None, None, None, None], spx_blocks=[True] * 6, spx_range=(3, 5)),
@@ -743,7 +743,7 @@ def build_coding():
     samples = sum(256 * [1, 2, 3, 6][o["numblkscod"]] for o in six)
     fixture("coding-eac3-blocks", ".eac3", "Six 2/0 frames of 6, 6, 3, 2, 1 and 6 blocks with block switching, rematrixing flags and spectral extension that starts and stops.",
             data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, samples)], [],
-            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False, "skip": ok["skip"]}, coding=[[coding_unit(48000, [r], True) for _, r in built]])
+            crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True, "skip_control": False, "skip": {"skip_control": ZERO_ALLOCATION}}, coding=[[coding_unit(48000, [r], True) for _, r in built]])
 
     # E-AC-3 program frames of an independent 2/0 frame and a dependent frame: the blocks of both make the frame's values, a dependent mono
     # frame that adds the center channel has no rematrixing, and the number of blocks changes between program frames.

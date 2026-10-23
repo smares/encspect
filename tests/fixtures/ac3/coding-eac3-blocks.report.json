@@ -147,7 +147,7 @@
                 },
                 {
                   "name": "Bands Coded as Sum/Difference",
-                  "value": "40 of 96",
+                  "value": "40 of 94",
                   "offset": 0,
                   "length": 3072
                 },
@@ -211,7 +211,7 @@
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 21997,
+                  "value": 22026,
                   "unit": "bits",
                   "offset": 0,
                   "length": 3072
@@ -3387,9 +3387,9 @@
                   "kind": "SideInfo",
                   "value": 1,
                   "offset": 1050,
-                  "length": 26,
+                  "length": 23,
                   "bitOffset": 1,
-                  "bitLength": 206,
+                  "bitLength": 177,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
@@ -3457,7 +3457,7 @@
                     },
                     {
                       "name": "Spectral Extension Begin Code",
-                      "value": "3 (sub-band 5)",
+                      "value": "1 (sub-band 3)",
                       "offset": 1051,
                       "length": 1,
                       "bitOffset": 2,
@@ -3465,7 +3465,7 @@
                     },
                     {
                       "name": "Spectral Extension End Code",
-                      "value": "5 (to sub-band 13)",
+                      "value": "3 (to sub-band 9)",
                       "offset": 1051,
                       "length": 1,
                       "bitOffset": 5,
@@ -3703,43 +3703,43 @@
                     },
                     {
                       "name": "Rematrixing Flags",
-                      "value": "left/right, left/right, left/right, left/right",
+                      "value": "left/right, left/right, left/right",
                       "offset": 1061,
                       "length": 1,
                       "bitOffset": 4,
-                      "bitLength": 4
+                      "bitLength": 3
                     },
                     {
                       "name": "Exponents (left)",
                       "value": "D45",
-                      "offset": 1062,
-                      "length": 7,
-                      "bitOffset": 0,
-                      "bitLength": 55,
+                      "offset": 1061,
+                      "length": 6,
+                      "bitOffset": 7,
+                      "bitLength": 41,
                       "children": [
                         {
                           "name": "First Exponent",
                           "value": 15,
-                          "offset": 1062,
-                          "length": 1,
-                          "bitOffset": 0,
+                          "offset": 1061,
+                          "length": 2,
+                          "bitOffset": 7,
                           "bitLength": 4
                         },
                         {
                           "name": "Exponent Groups",
-                          "value": 7,
+                          "value": 5,
                           "unit": "groups",
                           "offset": 1062,
-                          "length": 7,
-                          "bitOffset": 4,
-                          "bitLength": 49
+                          "length": 5,
+                          "bitOffset": 3,
+                          "bitLength": 35
                         },
                         {
                           "name": "Gain Range Code",
                           "value": 0,
-                          "offset": 1068,
+                          "offset": 1066,
                           "length": 1,
-                          "bitOffset": 5,
+                          "bitOffset": 6,
                           "bitLength": 2
                         }
                       ]
@@ -3747,34 +3747,34 @@
                     {
                       "name": "Exponents (right)",
                       "value": "D45",
-                      "offset": 1068,
-                      "length": 8,
-                      "bitOffset": 7,
-                      "bitLength": 55,
+                      "offset": 1067,
+                      "length": 6,
+                      "bitOffset": 0,
+                      "bitLength": 41,
                       "children": [
                         {
                           "name": "First Exponent",
                           "value": 15,
-                          "offset": 1068,
-                          "length": 2,
-                          "bitOffset": 7,
+                          "offset": 1067,
+                          "length": 1,
+                          "bitOffset": 0,
                           "bitLength": 4
                         },
                         {
                           "name": "Exponent Groups",
-                          "value": 7,
+                          "value": 5,
                           "unit": "groups",
-                          "offset": 1069,
-                          "length": 7,
-                          "bitOffset": 3,
-                          "bitLength": 49
+                          "offset": 1067,
+                          "length": 5,
+                          "bitOffset": 4,
+                          "bitLength": 35
                         },
                         {
                           "name": "Gain Range Code",
                           "value": 0,
-                          "offset": 1075,
-                          "length": 1,
-                          "bitOffset": 4,
+                          "offset": 1071,
+                          "length": 2,
+                          "bitOffset": 7,
                           "bitLength": 2
                         }
                       ]
@@ -3782,18 +3782,18 @@
                     {
                       "name": "HasConverterSnrOffset",
                       "value": false,
-                      "offset": 1075,
+                      "offset": 1072,
                       "length": 1,
-                      "bitOffset": 6,
+                      "bitOffset": 1,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 1075,
+                      "offset": 1072,
                       "length": 1,
-                      "bitOffset": 7,
+                      "bitOffset": 2,
                       "bitLength": 0
                     }
                   ]
@@ -3802,94 +3802,94 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 2,
-                  "offset": 1075,
+                  "offset": 1072,
                   "length": 2,
-                  "bitOffset": 7,
+                  "bitOffset": 2,
                   "bitLength": 8,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 1075,
-                      "length": 1,
-                      "bitOffset": 7,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsBlockSwitched (right)",
-                      "value": true,
-                      "offset": 1076,
-                      "length": 1,
-                      "bitOffset": 0,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 1076,
-                      "length": 1,
-                      "bitOffset": 1,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": false,
-                      "offset": 1076,
+                      "offset": 1072,
                       "length": 1,
                       "bitOffset": 2,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (left)",
-                      "value": false,
-                      "offset": 1076,
+                      "name": "IsBlockSwitched (right)",
+                      "value": true,
+                      "offset": 1072,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (right)",
+                      "name": "HasDynamicRange",
                       "value": false,
-                      "offset": 1076,
+                      "offset": 1072,
                       "length": 1,
                       "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasRematrixing",
+                      "name": "HasSpectralExtensionStrategy",
                       "value": false,
-                      "offset": 1076,
+                      "offset": 1072,
                       "length": 1,
                       "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasConverterSnrOffset",
+                      "name": "HasSpectralExtensionCoordinates (left)",
                       "value": false,
-                      "offset": 1076,
+                      "offset": 1072,
                       "length": 1,
                       "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionCoordinates (right)",
+                      "value": false,
+                      "offset": 1072,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasRematrixing",
+                      "value": false,
+                      "offset": 1073,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasConverterSnrOffset",
+                      "value": false,
+                      "offset": 1073,
+                      "length": 1,
+                      "bitOffset": 1,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 1076,
+                      "offset": 1073,
                       "length": 1,
-                      "bitOffset": 7,
+                      "bitOffset": 2,
                       "bitLength": 0
                     }
                   ]
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 3655,
+                  "value": 3684,
                   "unit": "bits",
-                  "offset": 1076,
-                  "length": 458,
-                  "bitOffset": 7,
-                  "bitLength": 3655
+                  "offset": 1073,
+                  "length": 461,
+                  "bitOffset": 2,
+                  "bitLength": 3684
                 },
                 {
                   "name": "HasAuxiliaryLength",
@@ -3916,7 +3916,7 @@
                     },
                     {
                       "name": "CRC2",
-                      "value": 24915,
+                      "value": 10305,
                       "offset": 1534,
                       "length": 2,
                       "children": [
@@ -7220,7 +7220,7 @@
             "values": [
               7969,
               6844,
-              7969,
+              6844,
               7969,
               7969,
               7969

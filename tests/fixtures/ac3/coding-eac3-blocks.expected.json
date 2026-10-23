@@ -48,9 +48,10 @@
  "crosscheck": {
   "ffprobe": true,
   "decode": true,
-  "skip_insertion": false,
+  "skip_insertion": true,
+  "skip_control": false,
   "skip": {
-   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields; the coding fixtures' blocks would need nothing new from it."
+   "skip_control": "The frames' SNR offsets are 0, so no mantissa takes a bit and a moved skip field in the last block changes no sample."
   }
  },
  "block_ends": {
@@ -72,8 +73,8 @@
   ],
   "1024": [
    209,
-   415,
-   423
+   386,
+   394
   ],
   "1536": [
    291,
@@ -184,7 +185,7 @@
      true,
      true
     ],
-    "bandwidth": 7969
+    "bandwidth": 6844
    },
    {
     "switching": [
