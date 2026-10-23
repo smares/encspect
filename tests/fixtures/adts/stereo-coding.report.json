@@ -228,7 +228,7 @@
                     },
                     {
                       "name": "Out of Phase",
-                      "value": "74 bands (59.7%)",
+                      "value": "28 bands (22.6%)",
                       "offset": 0,
                       "length": 5249
                     }
@@ -3750,7 +3750,7 @@
                             },
                             {
                               "name": "Intensity Stereo Bands",
-                              "value": "0-39 out of phase",
+                              "value": "0-39 in phase",
                               "offset": 2258,
                               "length": 3,
                               "bitOffset": 5,
@@ -4237,7 +4237,7 @@
                             },
                             {
                               "name": "Intensity Stereo Bands",
-                              "value": "30-33 in phase; 20-29 out of phase",
+                              "value": "20-29 in phase; 30-33 out of phase",
                               "offset": 2470,
                               "length": 7,
                               "bitOffset": 5,
@@ -8595,6 +8595,23 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "aac.intensity-without-common-window",
+        "message": "2 raw data blocks hold intensity stereo bands in a channel pair without a common window, outside what ISO/IEC 14496-3 4.6.8.2.3 allows as fdk-aac's source quotes it, though FFmpeg and faad2 decode them; the first at 0xAC1.",
+        "offset": 2753,
+        "length": 7,
+        "path": [
+          0,
+          9,
+          15,
+          0,
+          4,
+          8
+        ],
+        "count": 2
+      }
+    ]
   }
 ]

@@ -390,11 +390,11 @@ STEREO_CODINGS = ["Left/right stereo", "Mid/side stereo", "Intensity stereo", "M
 BLOCK_SIZES = ["Long, start and stop", "Short"]
 
 
-def config_values(report, name, default=None):
+def config_values(report, name, default=None, holders=("AudioSpecificConfig", "Frame", "Program Config Element")):
     """A field of the AudioSpecificConfig, an ADTS header or ADIF's program config element in the golden: the first node named so that
     one of them holds."""
     for node in mi.walk(report["root"]):
-        if node["name"] in ("AudioSpecificConfig", "Frame", "Program Config Element"):
+        if node["name"] in holders:
             for child in node.get("children") or []:
                 if child["name"] == name and isinstance(child.get("value"), int):
                     return child["value"]
@@ -495,7 +495,7 @@ def check_series(ours, theirs, report, problems, skipped=()):
         return 0, "no core sample rate in the report"
     if len(ours) != len(theirs):
         return 0, f"faad2 reads {len(theirs)} raw data blocks, the analyzer {len(ours)}"
-    is960 = config_values(report, "Frame Length", 1024) == 960
+    is960 = config_values(report, "Frame Length", 1024, ("AudioSpecificConfig",)) == 960
     stream = streams[0]
     by_name = {c["name"]: c for c in stream["categorySeries"]}
     windows, pairs, sizes = by_name["Window Sequences"], by_name.get("Stereo Coding"), by_name["Block Sizes"]

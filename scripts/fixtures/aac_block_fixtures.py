@@ -306,6 +306,11 @@ def pair_statistics(prefix, pairs):
     intensity_bands = sum(1 for p in pairs for g in p[0].codebooks() for b in g if b in (14, 15))
     if intensity_bands:
         fields[f"{prefix}/Statistics/Channel Pairs/Intensity Stereo Bands"] = f"{tenths(intensity_bands, bands)} %"
+        # Out of phase: codebook 14, or codebook 15 inverted by ms_used, which only ms_mask_present 1 does here (faad2's invert_intensity and
+        # fdk-aac, whose stereo.cpp clears the mid/side flags before intensity stereo; FFmpeg inverts for mask 2 too)
+        out = sum(1 for second, common, mask, used, _ in pairs for g, books in enumerate(second.codebooks()) for sfb, book in enumerate(books)
+                  if book in (14, 15) and (book == 14) != bool(common and mask == 1 and used[g][sfb]))
+        fields[f"{prefix}/Statistics/Channel Pairs/Out of Phase"] = share(out, intensity_bands, "band")
     codes = [classify(p[4], p[0], p[1], p[2], p[3]) for p in pairs]
     for code, name in enumerate(STEREO_CODINGS):
         if code in codes:
@@ -349,7 +354,8 @@ def stereo_coding():
         "mid/side flag set only on intensity stereo bands, in every band of a mask 2 pair, and in pairs without a common window (long and short "
         "windows), both coding tools at once (mask 1 and mask 2 with intensity stereo bands), and the mid/side flag on noise substitution bands "
         "of either channel, which codes no mid/side, alone, beside a flag on an ordinary band and beside intensity stereo bands.",
-        data, rows, [stream("AAC LC", RATE, 2, "Stereo", len(cases) * 1024)], fields)
+        data, rows, [stream("AAC LC", RATE, 2, "Stereo", len(cases) * 1024)], fields,
+        [["aac.intensity-without-common-window", "without a common window"]])
 
 
 def stereo_coding_reserved():

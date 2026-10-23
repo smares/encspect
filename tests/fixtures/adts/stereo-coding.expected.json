@@ -87,6 +87,7 @@
   "ADTS/Statistics/Channel Pairs/Common Window": "13 elements (81.2%)",
   "ADTS/Statistics/Channel Pairs/Intensity Stereo": "7 elements (43.8%)",
   "ADTS/Statistics/Channel Pairs/Intensity Stereo Bands": "19.7 %",
+  "ADTS/Statistics/Channel Pairs/Out of Phase": "28 bands (22.6%)",
   "ADTS/Statistics/Stereo Coding/Left/right stereo": "5 channel pairs (31.2%)",
   "ADTS/Statistics/Stereo Coding/Mid/side stereo": "4 channel pairs (25.0%)",
   "ADTS/Statistics/Stereo Coding/Intensity stereo": "5 channel pairs (31.2%)",
@@ -110,7 +111,12 @@
   "ADTS/Statistics/Coded Bandwidth/Most Common": "14470 Hz",
   "ADTS/Statistics/Coded Bandwidth/Highest": "22050 Hz"
  },
- "findings": [],
+ "findings": [
+  [
+   "aac.intensity-without-common-window",
+   "without a common window"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "decode": true,

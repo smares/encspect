@@ -18,6 +18,7 @@ Bit positions count from the start of what the decoder was handed, so only diffe
     python3 scripts/fixtures/faad_trace_tool.py file.m4a
 """
 
+import hashlib
 import pathlib
 import subprocess
 import sys
@@ -78,7 +79,10 @@ PATCHES = {
 def build():
     """Returns the faad binary with the trace, building it once."""
     binary = ROOT / "build" / "faad"
-    if binary.exists():
+    stamp = ROOT / "build" / "patches.sha256"
+    # The binary is rebuilt when the patches or the pinned commit changed, not only when it is missing.
+    wanted = hashlib.sha256(repr((COMMIT, sorted(PATCHES.items()))).encode()).hexdigest()
+    if binary.exists() and stamp.exists() and stamp.read_text() == wanted:
         return binary
     if not ROOT.exists():
         ROOT.parent.mkdir(parents=True, exist_ok=True)
@@ -97,6 +101,7 @@ def build():
         path.write_text(text, encoding="latin-1")
     subprocess.run(["cmake", "-S", str(ROOT), "-B", str(ROOT / "build"), "-DCMAKE_BUILD_TYPE=Release"], check=True, capture_output=True)
     subprocess.run(["cmake", "--build", str(ROOT / "build"), "-j8"], check=True, capture_output=True)
+    stamp.write_text(wanted)
     return binary
 
 
