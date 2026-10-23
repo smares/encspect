@@ -19,6 +19,16 @@ public enum GraphForm
 
     // The first and second part of a quantity that divides in two, per interval of audio time.
     Split,
+
+    // A category series' share over time as one stacked column per interval, with gaps between them (the form before the
+    // stepped area took over OverTime).
+    Columns,
+
+    // A category series' share over time as a stepped stacked area, each interval averaged with its neighbors.
+    Smoothed,
+
+    // A category series' share over time as one stepped line for each category.
+    Lines,
 }
 
 // A graph that draws tables of categories with counts and shares.
@@ -70,7 +80,7 @@ public sealed class CategoryColumns
     public bool IsRare(int column, int category) => _rare[(column * Categories) + category];
 
     // The intervals of the series' time index, merged into at most the given number of columns.
-    public static CategoryColumns OverTime(CategorySeries series, int columns)
+    public static CategoryColumns OverTime(CategorySeries series, int columns, int smoothing = 0)
     {
         ReadOnlySpan<int> firstUnits = series.Time!.FirstUnits.Span;
         int intervals = firstUnits.Length;
@@ -78,12 +88,23 @@ public sealed class CategoryColumns
         int categories = series.Categories.Count;
         var first = new int[used + 1];
         var counts = new long[used * categories];
+        long[]? smoothed = smoothing > 1 ? SmoothedCounts(series, smoothing) : null;
         for (int column = 0; column < used; column++)
         {
             int from = (int)((long)column * intervals / used);
             int to = (int)((long)(column + 1) * intervals / used);
             first[column] = from;
-            if (to > from)
+            if (smoothed is not null)
+            {
+                for (int interval = from; interval < to; interval++)
+                {
+                    for (int category = 0; category < categories; category++)
+                    {
+                        counts[(column * categories) + category] += smoothed[(interval * categories) + category];
+                    }
+                }
+            }
+            else if (to > from)
             {
                 int firstUnit = firstUnits[from];
                 int endUnit = to < intervals ? firstUnits[to] : series.Count;
@@ -93,6 +114,53 @@ public sealed class CategoryColumns
 
         first[used] = intervals;
         return new CategoryColumns(first, counts, new bool[used * categories], categories);
+    }
+
+    // The counts of each interval (categories in a row) summed with those of the intervals within half the window on either
+    // side, the window shrinking at the ends: a centered moving average that weighs every value alike.
+    public static long[] SmoothedCounts(CategorySeries series, int window)
+    {
+        ReadOnlySpan<int> firstUnits = series.Time!.FirstUnits.Span;
+        int intervals = firstUnits.Length;
+        int categories = series.Categories.Count;
+        var prefix = new long[(intervals + 1) * categories];
+        var own = new long[categories];
+        for (int interval = 0; interval < intervals; interval++)
+        {
+            Array.Clear(own);
+            int endUnit = interval + 1 < intervals ? firstUnits[interval + 1] : series.Count;
+            if (endUnit > firstUnits[interval])
+            {
+                series.CountRange(firstUnits[interval], endUnit, own);
+            }
+
+            for (int category = 0; category < categories; category++)
+            {
+                prefix[((interval + 1) * categories) + category] = prefix[(interval * categories) + category] + own[category];
+            }
+        }
+
+        int half = window / 2;
+        var result = new long[intervals * categories];
+        for (int interval = 0; interval < intervals; interval++)
+        {
+            int from = Math.Max(0, interval - half);
+            int to = Math.Min(intervals, interval + half + 1);
+            for (int category = 0; category < categories; category++)
+            {
+                result[(interval * categories) + category] = prefix[(to * categories) + category] - prefix[(from * categories) + category];
+            }
+        }
+
+        return result;
+    }
+
+    // The categories of a series from the bottom of a stack up: the one with the largest share first (the first of equals),
+    // because only the bottom layer has a flat baseline to read.
+    public static int[] StackOrder(CategorySeries series)
+    {
+        ArgumentNullException.ThrowIfNull(series);
+        return [.. Enumerable.Range(0, series.Categories.Count).OrderByDescending(c => series.Counts[c]).ThenBy(c => c)];
     }
 
     // The units, merged into at most the given number of columns; lane is the value of each unit to count, or -1 for all.
@@ -239,7 +307,7 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
         : base(series.Name, string.Empty)
     {
         ArgumentNullException.ThrowIfNull(series);
-        if (view is GraphForm.Split || (view == GraphForm.OverTime && series.Time is not { FirstUnits.Length: > 0 }) || (view == GraphForm.Frames && series.Count == 0))
+        if (view is GraphForm.Split || (IsOverTimeForm(view) && series.Time is not { FirstUnits.Length: > 0 }) || (view == GraphForm.Frames && series.Count == 0))
         {
             throw new ArgumentException($"A series of {series.Count} units cannot be drawn as {view}.", nameof(view));
         }
@@ -257,6 +325,17 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
     // The form this graph draws.
     public GraphForm View { get; }
 
+    // The number of intervals of a smoothed form's centered moving average, and the number of intervals above which
+    // a series is offered in it: a short file is not smoothed, it has few steps to begin with.
+    public const int SmoothingWindow = 5;
+
+    public const int SmoothingThreshold = 30;
+
+    public static bool IsOverTimeForm(GraphForm form) => form is GraphForm.OverTime or GraphForm.Columns or GraphForm.Smoothed or GraphForm.Lines;
+
+    // Whether this graph is a chart of the share over time, in whichever of its forms.
+    public bool IsOverTime => IsOverTimeForm(View);
+
     // The forms a series can be drawn in, in the order they are offered.
     public static IReadOnlyList<GraphForm> FormsOf(CategorySeries series)
     {
@@ -266,6 +345,13 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
         if (series.Time is { FirstUnits.Length: > 0 })
         {
             forms.Add(GraphForm.OverTime);
+            if (series.Time.FirstUnits.Length > SmoothingThreshold)
+            {
+                forms.Add(GraphForm.Smoothed);
+            }
+
+            forms.Add(GraphForm.Lines);
+            forms.Add(GraphForm.Columns);
         }
 
         if (series.Count > 0)
@@ -285,12 +371,12 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
 
     public override int Count => View switch
     {
-        GraphForm.OverTime => Series.Time!.FirstUnits.Length,
         GraphForm.Frames => Series.Count,
-        _ => Series.Categories.Count,
+        GraphForm.Summary => Series.Categories.Count,
+        _ => Series.Time!.FirstUnits.Length,
     };
 
-    public override double Maximum => View == GraphForm.OverTime ? 100 : 1;
+    public override double Maximum => IsOverTime ? 100 : 1;
 
     // The rows of the strip: one for each value of a fixed layout of up to MaxRows values, else one for all values.
     public int Rows => Series.ValuesPerUnit is > 1 and <= MaxRows ? Series.ValuesPerUnit : 1;
@@ -320,6 +406,8 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
                 return DescribeCategory(Series, index);
             case GraphForm.Frames:
                 return DescribeUnits(index, index + 1, -1);
+            case GraphForm.Smoothed:
+                return DescribeSmoothed(index, index + 1);
             default:
                 return DescribeIntervals(index, index + 1);
         }
@@ -335,6 +423,27 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
         string from = Format.Clock(starts[first]);
         string range = end < starts.Length ? $"{from} to {Format.Clock(starts[end])}" : $"{from} to the end";
         return $"{range} · {Shares(Series, counts)}";
+    }
+
+    // Hover text of the smoothed form: the intervals' own shares and the average the chart draws, as the same categories'
+    // shares: "0:12 to 0:13 · Short 12.5% (24 values) · Long 87.5% (168 values) · average of 5 seconds: Short 14.0% · Long 86.0%".
+    public string DescribeSmoothed(int first, int end)
+    {
+        long[] smoothed = CategoryColumns.SmoothedCounts(Series, SmoothingWindow);
+        int categories = Series.Categories.Count;
+        var counts = new long[categories];
+        for (int interval = first; interval < end; interval++)
+        {
+            for (int category = 0; category < categories; category++)
+            {
+                counts[category] += smoothed[(interval * categories) + category];
+            }
+        }
+
+        long total = counts.Sum();
+        var order = Enumerable.Range(0, categories).Where(c => counts[c] > 0).OrderBy(c => counts[c]).ThenBy(c => c).Take(8);
+        string average = total == 0 ? "no values" : string.Join(" · ", order.Select(c => $"{Series.Categories[c].Name} {SharePercent(counts[c], total)}"));
+        return $"{DescribeIntervals(first, end)} · average of {SmoothingWindow} seconds: {average}";
     }
 
     // Hover text of a strip cell of units [first, end) in a row (lane, or -1 for all values): one unit says which

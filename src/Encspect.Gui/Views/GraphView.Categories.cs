@@ -62,6 +62,9 @@ public sealed partial class GraphView
         return (layout.Plot.Height, layout.Rows, layout.ContentHeight, layout.ContentHeight > Bounds.Height);
     }
 
+    // The plot of a category chart in the view's coordinates (not scrolled), for tests; null for anything else.
+    public Rect? PlotArea() => Graph is { } graph && IsCategory(graph) && !IsSummary(graph) && Bounds.Width >= 80 && Bounds.Height >= 60 ? ChartLayoutFor(graph).Plot : null;
+
     // The rows of a strip as the pointer is answered in them (top and height in the view's own coordinates), for tests; null for
     // anything else.
     public IReadOnlyList<(double Top, double Height)>? StripRowBounds()
@@ -228,7 +231,7 @@ public sealed partial class GraphView
                 _categoryColumns.Clear();
             }
 
-            columns = graph.View == GraphForm.OverTime ? CategoryColumns.OverTime(graph.Series, width) : CategoryColumns.Frames(graph.Series, width, lane);
+            columns = graph.IsOverTime ? CategoryColumns.OverTime(graph.Series, width, graph.View == GraphForm.Smoothed ? CategoryGraph.SmoothingWindow : 0) : CategoryColumns.Frames(graph.Series, width, lane);
             _categoryColumns[key] = columns;
         }
 
@@ -396,7 +399,7 @@ public sealed partial class GraphView
         }
 
         var category = (CategoryGraph)graph;
-        if (category.View == GraphForm.OverTime)
+        if (category.IsOverTime)
         {
             if (point.Y < plot.Top || point.Y > plot.Bottom)
             {
@@ -431,7 +434,7 @@ public sealed partial class GraphView
         int first = columns.First(column);
         int end = columns.End(column);
         int filled = graph.FirstFilledInterval(first, end);
-        return new CategoryHit(filled >= 0 ? filled : first, withText ? graph.DescribeIntervals(first, end) : string.Empty, area);
+        return new CategoryHit(filled >= 0 ? filled : first, withText ? (graph.View == GraphForm.Smoothed ? graph.DescribeSmoothed(first, end) : graph.DescribeIntervals(first, end)) : string.Empty, area);
     }
 
     private static CategoryHit StripHit(CategoryGraph graph, CategoryColumns columns, int column, int lane, Rect plot, double top, double rowHeight, bool withText = true, int? after = null)
@@ -482,7 +485,7 @@ public sealed partial class GraphView
         }
 
         var category = (CategoryGraph)graph;
-        if (category.View == GraphForm.OverTime)
+        if (category.IsOverTime)
         {
             CategoryColumns columns = ColumnsFor(category, width, -1);
             CategoryHit hit = OverTimeHit(category, columns, ColumnOf(columns, index), layout.Plot);
@@ -609,20 +612,34 @@ public sealed partial class GraphView
         int width = Math.Max(1, (int)plot.Width);
         var heights = new double[series.Categories.Count];
 
-        if (category.View == GraphForm.OverTime)
+        if (category.IsOverTime)
         {
-            context.DrawText(Text("Share of the values in each interval", TextSize, secondary), new Point(4, 2));
+            string caption = category.View == GraphForm.Smoothed
+                ? $"Share of the values, each interval averaged with its neighbors over {CategoryGraph.SmoothingWindow} seconds"
+                : "Share of the values in each interval";
+            context.DrawText(Text(caption, TextSize, secondary), new Point(4, 2));
             DrawPercentTicks(context, plot, grid, secondary);
             CategoryColumns columns = ColumnsFor(category, width, -1);
             Slots slots = SlotsOf(plot, category, columns);
-            for (int column = 0; column < columns.Count; column++)
+            if (category.View == GraphForm.Columns)
             {
-                if (columns.Total(column) == 0)
+                for (int column = 0; column < columns.Count; column++)
                 {
-                    continue;
-                }
+                    if (columns.Total(column) == 0)
+                    {
+                        continue;
+                    }
 
-                DrawStack(context, columns.Counts(column), slots.X(column), slots.W(column), plot.Top, plot.Height, styles, brushes, heights, surface, highContrast, series);
+                    DrawStack(context, columns.Counts(column), slots.X(column), slots.W(column), plot.Top, plot.Height, styles, brushes, heights, surface, highContrast, series);
+                }
+            }
+            else if (category.View == GraphForm.Lines)
+            {
+                DrawLines(context, series, columns, slots, plot, styles, brushes);
+            }
+            else
+            {
+                DrawArea(context, series, columns, slots, plot, styles, brushes, surface, highContrast);
             }
 
             DrawTimeAxis(context, series.Time!.Starts.Span, slots, columns.First, secondary, plot);
@@ -766,6 +783,181 @@ public sealed partial class GraphView
         }
 
         DrawCursor(context, plot, foreground);
+    }
+
+    // The edges of every column of an over-time chart: where a column starts and where it ends, which for all but the last
+    // is where the next starts, so that neighbors share an edge exactly.
+    private static (double[] Start, double[] End) ColumnEdges(Slots slots)
+    {
+        var start = new double[slots.Count];
+        var end = new double[slots.Count];
+        for (int column = 0; column < slots.Count; column++)
+        {
+            start[column] = slots.X(column);
+            end[column] = column + 1 < slots.Count ? slots.X(column + 1) : slots.X(column) + slots.W(column);
+        }
+
+        return (start, end);
+    }
+
+    // The runs of columns that hold values: an interval without any leaves a gap instead of a step.
+    private static List<(int From, int To)> FilledRuns(CategoryColumns columns)
+    {
+        var runs = new List<(int, int)>();
+        int from = -1;
+        for (int column = 0; column <= columns.Count; column++)
+        {
+            bool filled = column < columns.Count && columns.Total(column) > 0;
+            if (filled && from < 0)
+            {
+                from = column;
+            }
+            else if (!filled && from >= 0)
+            {
+                runs.Add((from, column));
+                from = -1;
+            }
+        }
+
+        return runs;
+    }
+
+    // The share of each category over time as a stacked area with stepped edges: each interval is a level that lasts exactly
+    // as long as the interval does, with a vertical step at each boundary and no slope between them. The category with the
+    // largest share is the bottom layer, the one with a flat baseline. Heights are as in a column (a category that occurs
+    // is at least a pixel high); a thin line of the surface separates the layers.
+    private void DrawArea(DrawingContext context, CategorySeries series, CategoryColumns columns, Slots slots, Rect plot, CategoryStyle[] styles, IBrush[] brushes, Color surface, bool highContrast)
+    {
+        int categories = series.Categories.Count;
+        int[] order = CategoryColumns.StackOrder(series);
+        var tops = new double[columns.Count * categories];
+        var bottoms = new double[columns.Count * categories];
+        var heights = new double[categories];
+        for (int column = 0; column < columns.Count; column++)
+        {
+            if (columns.Total(column) == 0)
+            {
+                continue;
+            }
+
+            CategoryColumns.StackHeights(columns.Counts(column), plot.Height, heights);
+            double level = plot.Bottom;
+            foreach (int category in order)
+            {
+                bottoms[(column * categories) + category] = level;
+                level -= heights[category];
+                tops[(column * categories) + category] = level;
+            }
+        }
+
+        (double[] start, double[] end) = ColumnEdges(slots);
+        IPen separator = new ImmutablePen(new ImmutableSolidColorBrush(surface), 1);
+        List<(int From, int To)> runs = FilledRuns(columns);
+        for (int rank = 0; rank < order.Length; rank++)
+        {
+            int category = order[rank];
+            foreach ((int from, int to) in runs)
+            {
+                bool present = false;
+                for (int column = from; column < to && !present; column++)
+                {
+                    present = columns.Counts(column)[category] > 0;
+                }
+
+                if (!present)
+                {
+                    continue;
+                }
+
+                var area = new StreamGeometry();
+                var edge = new StreamGeometry();
+                using (StreamGeometryContext fill = area.Open())
+                using (StreamGeometryContext line = edge.Open())
+                {
+                    fill.BeginFigure(new Point(start[from], tops[(from * categories) + category]), true);
+                    line.BeginFigure(new Point(start[from], tops[(from * categories) + category]), false);
+                    for (int column = from; column < to; column++)
+                    {
+                        double top = tops[(column * categories) + category];
+                        if (column > from)
+                        {
+                            fill.LineTo(new Point(start[column], top));
+                            line.LineTo(new Point(start[column], top));
+                        }
+
+                        fill.LineTo(new Point(end[column], top));
+                        line.LineTo(new Point(end[column], top));
+                    }
+
+                    for (int column = to - 1; column >= from; column--)
+                    {
+                        double bottom = bottoms[(column * categories) + category];
+                        fill.LineTo(new Point(end[column], bottom));
+                        fill.LineTo(new Point(start[column], bottom));
+                    }
+
+                    fill.EndFigure(true);
+                    line.EndFigure(false);
+                }
+
+                context.DrawGeometry(brushes[category], null, area);
+                if (styles[category].IsHatched || (highContrast && category % 2 == 1))
+                {
+                    using (context.PushGeometryClip(area))
+                    {
+                        DrawHatch(context, area.Bounds, surface);
+                    }
+                }
+
+                if (rank > 0 || order.Length > 1)
+                {
+                    context.DrawGeometry(null, separator, edge);
+                }
+            }
+        }
+    }
+
+    // The share of each category over time as a stepped line: one level for each interval, at the share it has there, on the
+    // plot's 0 to 100% scale. The largest category is drawn first and the others over it; a reserved category's line is dashed.
+    private static void DrawLines(DrawingContext context, CategorySeries series, CategoryColumns columns, Slots slots, Rect plot, CategoryStyle[] styles, IBrush[] brushes)
+    {
+        (double[] start, double[] end) = ColumnEdges(slots);
+        double bottom = plot.Bottom - 1;
+        double span = plot.Height - 2;
+        foreach (int category in CategoryColumns.StackOrder(series))
+        {
+            if (series.Counts[category] == 0)
+            {
+                continue;
+            }
+
+            var pen = new Pen(brushes[category], 2, styles[category].IsHatched ? new DashStyle([4, 3], 0) : null, PenLineCap.Flat, PenLineJoin.Miter);
+            foreach ((int from, int to) in FilledRuns(columns))
+            {
+                var line = new StreamGeometry();
+                using (StreamGeometryContext g = line.Open())
+                {
+                    for (int column = from; column < to; column++)
+                    {
+                        double y = bottom - (span * columns.Counts(column)[category] / columns.Total(column));
+                        if (column == from)
+                        {
+                            g.BeginFigure(new Point(start[column], y), false);
+                        }
+                        else
+                        {
+                            g.LineTo(new Point(start[column], y));
+                        }
+
+                        g.LineTo(new Point(end[column], y));
+                    }
+
+                    g.EndFigure(false);
+                }
+
+                context.DrawGeometry(null, pen, line);
+            }
+        }
     }
 
     // One stack of segments, the plain category at the bottom, each category present at least a pixel high, two pixels of

@@ -382,7 +382,7 @@ public class CategoryGraphTests
         graphs.Load(report);
         graphs.Selected = graphs.Choices.Single(c => c.Title == "Stereo Coding");
         Assert.Equal(GraphForm.OverTime, graphs.Form);
-        Assert.Equal(["Over Time", "Frames", "Summary"], graphs.Forms.Select(v => v.Title));
+        Assert.Equal(["Over Time", "Lines", "Columns", "Frames", "Summary"], graphs.Forms.Select(v => v.Title));
         Assert.True(graphs.HasForms);
 
         long offset = (long)report.Streams[0].Series[0].X.Span[77];
@@ -390,7 +390,7 @@ public class CategoryGraphTests
         int interval = graphs.MarkedIndex!.Value;
         graphs.SelectForm(GraphForm.Frames);
         Assert.Equal(77, graphs.MarkedIndex);
-        Assert.Equal([false, true, false], graphs.Forms.Select(v => v.IsSelected));
+        Assert.Equal([false, false, false, true, false], graphs.Forms.Select(v => v.IsSelected));
 
         graphs.Selected = graphs.Choices.Single(c => c.Title == "Window Sequences");
         Assert.Equal(GraphForm.Frames, graphs.Form);
