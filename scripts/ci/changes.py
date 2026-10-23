@@ -64,7 +64,7 @@ AREAS = {
         "projects": ["Encspect.Formats.WavPack", "Encspect.Tags.Ape"],
         "fixtures": ["wavpack"],
         "scripts": ["crosscheck_wavpack_fixtures.py"],
-        "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*wavpack*"],
+        "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*wavpack*", "scripts/fixtures/wavpack_*"],
     },
     "flac-crosscheck": {
         "projects": ["Encspect.Formats.Flac", "Encspect.Tags.VorbisComment"],

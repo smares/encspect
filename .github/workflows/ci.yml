@@ -776,7 +776,7 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
   wavpack-crosscheck:
-    name: WavPack fixtures agree with libwavpack, wvunpack, ffprobe and MediaInfo
+    name: WavPack fixtures and decoded audio agree with libwavpack, wvunpack, FFmpeg and MediaInfo
     runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.wavpack-crosscheck == 'true'

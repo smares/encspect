@@ -110,6 +110,22 @@ def without(block, function):
     return join(block, [p for p, i in zip(parts, ids) if i & 0x3F != function])
 
 
+def with_crc(block, crc):
+    """The block with the CRC of its audio set in the header, its checksum worked out again."""
+    out = bytearray(block)
+    struct.pack_into("<I", out, 28, crc)
+    return join(bytes(out), subs(bytes(out))[0])
+
+
+def with_sub(block, function, change):
+    """The block with the data of its first sub-block of this function changed by change(bytes) -> bytes, its checksum worked out again."""
+    parts, ids = subs(block)
+    at = where(ids, function)
+    head = 4 if parts[at][0] & 0x80 else 2
+    parts[at] = sub(function, change(parts[at][head:]))
+    return join(block, parts)
+
+
 def insert_before_checksum(block, *new):
     parts, ids = subs(block)
     return join(block, parts[:-1] + list(new) + parts[-1:])
@@ -236,6 +252,20 @@ DECODES = {
     "unknown-subblocks": None,
     "version-unsupported": None,
     "weights-without-terms": (24000, 2),
+    "audio-bit-flipped": (24000, 1),
+    "bitstream-cut": (24000, 1),
+    "block-crc-changed": (24000, 1),
+    "block-removed-md5": (24000, 1),
+    "block-repeated-md5": (24000, 1),
+    "blocks-swapped-md5": (24000, 2),
+    "cut-after-block": (17512, 0),
+    "dsd-md5-changed": (65536, 0),
+    "extra-crc-changed": (24000, 1),
+    "inner-block-index-md5": (24000, 0),
+    "md5-digest-changed": (24000, 0),
+    "md5-file-cut": (17512, 0),
+    "md5-layout-differs": (24000, 0),
+    "set-channels-missing": (24000, 3),
 }
 
 
@@ -444,6 +474,49 @@ def build():
     seek = id3v2_seek(100 + len(a[0]))
     b["seek-tag-between-blocks"] = ("Stray bytes and a block after an ID3v2.4 tag whose SEEK frame points at a second ID3v2 tag, then the other blocks: the stream declares no end, so it is read up to the second tag and the bytes after it are not read.",
                                     seek + junk(100) + a[0] + id3v2_title() + aa(a[1:]), [("wavpack.data-after-tag", "follow an ID3v2 tag"), ("wavpack.data-skipped", "100 bytes"), ("wavpack.total-samples-mismatch", "holds")], False)
+
+    # Damage that only the decoded audio shows: every checksum over the coded data holds (the block checksums are worked out again),
+    # and the CRC of a block's audio, the CRC of the extra bits or the MD5 differs.
+    mb = blocks(base("lossless-16-stereo-md5"))
+    flipped = bytearray(mb[0])
+    found, _ = m.sub_blocks(mb[0])
+    stream_at = next(p + hl for i, p, hl, size, length, clipped in found if i & 0x3F == 0x0A)
+    flipped[stream_at + 3000] ^= 0x04
+    b["audio-bit-flipped"] = ("One bit of the first block's bitstream flipped and the block checksum worked out again: every checksum over the coded data holds, and only the CRC of the block's audio and the MD5 differ.",
+                              aa([join(bytes(flipped), subs(bytes(flipped))[0]), *mb[1:]]), [], False)
+    b["bitstream-cut"] = ("The bitstream of the second block cut by 100 bytes, its sizes and checksum put right: the coded data ends before its samples do, so libwavpack mutes the block.",
+                          aa([mb[0], with_sub(mb[1], 0x0A, lambda d: d[:-100]), *mb[2:]]), [], False)
+    b["block-crc-changed"] = ("The CRC of the audio in the second block's header changed and the block checksum worked out again: the audio is intact, the CRC it should have is not.",
+                              aa([mb[0], with_crc(mb[1], struct.unpack_from("<I", mb[1], 28)[0] ^ 0x1), *mb[2:]]), [], False)
+    b["md5-digest-changed"] = ("The MD5 digest in the last block changed and the block checksum worked out again: only the MD5 of the audio differs.",
+                               aa([*mb[:3], with_sub(mb[3], 0x26, lambda d: bytes([d[0] ^ 0x80]) + d[1:])]), [], False)
+    b["cut-after-block"] = ("The file cut after its second block: every checksum over the coded data holds, the audio is not all there and the MD5 block is gone.",
+                            aa(mb[:2]), [("wavpack.total-samples-mismatch", "holds")], False)
+    b["block-removed-md5"] = ("The second block left out of a file with an MD5: the first sample of the third block does not follow the first block.",
+                              aa([mb[0], *mb[2:]]), [("wavpack.block-index-gap", "samples are missing"), ("wavpack.total-samples-mismatch", "holds")], False)
+    b["block-repeated-md5"] = ("The second block twice in a file with an MD5.", aa([mb[0], mb[1], mb[1], *mb[2:]]),
+                               [("wavpack.block-index-overlap", "samples overlap"), ("wavpack.total-samples-mismatch", "holds")], False)
+    b["blocks-swapped-md5"] = ("The second and third block exchanged in a file with an MD5.", aa([mb[0], mb[2], mb[1], mb[3]]),
+                               [("wavpack.block-index-gap", "samples are missing"), ("wavpack.block-index-overlap", "samples overlap")], False)
+    b["md5-file-cut"] = ("A file with an MD5 cut 1,500 bytes before the end of its last block with audio, which takes the MD5 block with it.", aa(mb)[:-56 - 1500],
+                         [("wavpack.block-truncated", "states")], False)
+    wide = blocks(base("lossless-32-stereo-md5"))
+    with_extra = next(i for i, x in enumerate(wide) if m.has(m.walk(x, 0, len(x))[0], 0x0C))
+    b["extra-crc-changed"] = ("The CRC of the extra bits in the first block of a 32-bit file changed and the block checksum worked out again: the CRC of the block's audio and the MD5 hold, the CRC of the extra bits does not.",
+                              aa([with_sub(x, 0x0C, lambda d: bytes([d[0] ^ 1]) + d[1:]) if i == with_extra else x for i, x in enumerate(wide)]), [], False)
+    aiff = blocks(base("from-aiff-md5"))
+    b["md5-layout-differs"] = ("The qualify mode in the new config block of a file from a big-endian source changed to little-endian, so the MD5 of the audio is worked out over another layout than the one stored.",
+                               aa([with_sub(aiff[0], 0x2A, lambda d: bytes([d[0], 0]) + d[2:]), *aiff[1:]]), [], False)
+    dsd_md5 = blocks(base("dsd-64-md5"))
+    b["dsd-md5-changed"] = ("The MD5 digest in the last block of a DSD file changed and the block checksum worked out again.",
+                            aa([*dsd_md5[:-1], with_sub(dsd_md5[-1], 0x29, lambda d: bytes([d[0] ^ 0x80]) + d[1:])]), [], False)
+    sixteen = blocks(base("lossless-51-16-md5"))
+    first_set = [i for i, x in enumerate(sixteen) if flags(x) & 0x1000][0]
+    b["set-channels-missing"] = ("The second block of the first set of a 5.1 file left out, so the set holds five channels where the stream has six.",
+                                 aa([sixteen[0], *sixteen[2:]]),
+                                 [("wavpack.channel-count-mismatch", "first set of blocks holds 5 channels"), ("wavpack.format-changes", "holds 6 channels, but the first holds 5 channels")], False)
+    b["inner-block-index-md5"] = ("The block index of the second block of the first set of a 5.1 file with an MD5 changed from 0 to 5, its checksum worked out again: libwavpack takes the index of each block of a set from the block itself (open_utils.c 357) and decodes the audio, whose MD5 holds.",
+                                  aa([sixteen[0], patch(sixteen[1], index=5), *sixteen[2:]]), [("wavpack.block-set-broken", "begins at sample 5")], False)
     return b
 
 

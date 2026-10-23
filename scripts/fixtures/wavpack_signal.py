@@ -58,6 +58,21 @@ def floats(rate, channels, count):
     return bytes(out)
 
 
+def wav_extremes(rate, channels, count, bits):
+    """WAVE whose every sample is the lowest or the highest value of the sample size, chosen by the fixed generator."""
+    top = (1 << (bits - 1)) - 1
+    state = 777
+    body = bytearray()
+    for i in range(count):
+        for channel in range(channels):
+            state = (state * 1103515245 + 12345) & 0x7FFFFFFF
+            body += (top if (state >> 16) & 1 else -top - 1).to_bytes(bits // 8, "little", signed=True)
+    width = bits // 8
+    fmt = struct.pack("<HHIIHH", 1, channels, rate, rate * channels * width, channels * width, bits)
+    chunks = b"fmt " + struct.pack("<I", len(fmt)) + fmt + b"data" + struct.pack("<I", len(body)) + bytes(body)
+    return b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
+
+
 def wav(rate, channels, count, bits, mask=None, is_float=False, before=b"", after=b""):
     """A WAVE file; with a channel mask (or more than 2 channels, or more than 16 bits) the format is
     WAVE_FORMAT_EXTENSIBLE. before and after are chunks put before the data chunk and after it."""

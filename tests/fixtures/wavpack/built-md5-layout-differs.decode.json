@@ -1,0 +1,41 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "block checksum",
+        "stored": 4,
+        "checked": 4,
+        "failed": 0
+      },
+      {
+        "name": "block header CRC",
+        "stored": 3,
+        "checked": 3,
+        "failed": 0
+      },
+      {
+        "name": "extended CRC",
+        "stored": 0,
+        "checked": 0,
+        "failed": 0
+      },
+      {
+        "name": "MD5",
+        "stored": 1,
+        "checked": 1,
+        "failed": 1
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "wavpack.md5-mismatch",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The MD5 of the decoded audio is 33f110d8eb91888849a451b5f07f99a7, but the file stores 6722c773a8695a7b9686222739531c3d: the audio differs from what the encoder read."
+    }
+  ]
+}

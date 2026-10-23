@@ -56,10 +56,20 @@ FIXTURES = {
     "lossless-3ch-unassigned": (("wav", 44100, 3, 16, SHORT, 0), [], ["wv"]),
     "lossless-4ch-two-unassigned": (("wav", 44100, 4, 16, 12000, 0), ["--channel-order=FL,FR,..."], ["wv"]),
     "lossless-16-stereo-md5": (("wav", 44100, 2, 16, SHORT), ["-m"], ["wv"]),
+    "lossless-16-stereo-md5-small-blocks": (("wav", 44100, 2, 16, SHORT), ["-m", "--blocksize=1000"], ["wv"]),
+    "lossless-16-mono-md5": (("wav", 44100, 1, 16, SHORT), ["-m"], ["wv"]),
+    "lossless-8-stereo-md5": (("wav", 44100, 2, 8, SHORT), ["-m"], ["wv"]),
+    "lossless-24-stereo-md5": (("wav", 44100, 2, 24, SHORT), ["-m"], ["wv"]),
+    "lossless-32-stereo-md5": (("wav", 44100, 2, 32, SHORT), ["-m"], ["wv"]),
+    "lossless-float-stereo-md5": (("float", 44100, 2, SHORT), ["-m"], ["wv"]),
+    "lossless-51-16-md5": (("wav", 48000, 6, 16, SHORT, 0x3F), ["-m"], ["wv"]),
     "lossless-16-stereo-chunks": (("wav", 44100, 2, 16, SHORT, None, BEXT, LIST_CHUNK), [], ["wv"]),
     "lossless-16-stereo-no-wrapper": (("wav", 44100, 2, 16, SHORT), ["-r"], ["wv"]),
     "hybrid-lossy-b4": (("wav", 44100, 2, 16, SHORT), ["-b4"], ["wv"]),
     "hybrid-b4-correction": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c"], ["wv", "wvc"]),
+    "hybrid-b4-md5": (("wav", 44100, 2, 16, SHORT), ["-b4", "-m"], ["wv"]),
+    "hybrid-b4-correction-md5": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c", "-m"], ["wv"]),
+    "hybrid-mono-b3-md5": (("wav", 44100, 1, 16, SHORT), ["-b3", "-m"], ["wv"]),
     "hybrid-mono-b3": (("wav", 44100, 1, 16, SHORT), ["-b3"], ["wv"]),
     "hybrid-mono-b3-correction": (("wav", 44100, 1, 16, SHORT), ["-b3", "-c"], ["wv", "wvc"]),
     "hybrid-kbps-b256": (("wav", 44100, 2, 16, SHORT), ["-b256"], ["wv"]),
@@ -72,6 +82,8 @@ FIXTURES = {
     "hybrid-b2": (("wav", 44100, 2, 16, SHORT), ["-b2"], ["wv"]),
     "hybrid-false-stereo-b2": (("wav-identical", 44100, 16, SHORT), ["-b2"], ["wv"]),
     "hybrid-false-stereo-b4": (("wav-identical", 44100, 16, SHORT), ["-b4"], ["wv"]),
+    "hybrid-clip-16": (("wav-extremes", 44100, 2, 16, SHORT), ["-b2"], ["wv"]),
+    "hybrid-clip-24": (("wav-extremes", 44100, 2, 24, SHORT), ["-b2"], ["wv"]),
     "hybrid-b22": (("wav", 44100, 2, 16, SHORT), ["-b2.2"], ["wv"]),
     "hybrid-b4-flat-noise": (("wav", 44100, 2, 16, SHORT), ["-b4", "-s0"], ["wv"]),
     "hybrid-b4-left-right": (("wav", 44100, 2, 16, SHORT), ["-b4", "-j0", "-c"], ["wv", "wvc"]),
@@ -91,8 +103,14 @@ FIXTURES = {
     "dsd-64-high": (("dsf", 2822400, 2, 65536), ["-h", "--blocksize=8192"], ["wv"]),
     "dsd-64-mono": (("dsf", 2822400, 1, 32768), [], ["wv"]),
     "dsd-128": (("dsf", 5644800, 2, 32768), [], ["wv"]),
+    "dsd-64-md5": (("dsf", 2822400, 2, 65536), ["-m", "--blocksize=8192"], ["wv"]),
+    "dsd-64-high-md5": (("dsf", 2822400, 2, 65536), ["-m", "-h", "--blocksize=8192"], ["wv"]),
+    "dsd-64-mono-md5": (("dsf", 2822400, 1, 32768), ["-m"], ["wv"]),
     "apev2-tag": (("wav", 44100, 2, 16, SHORT), ["-w", "Artist=Fixture artist", "-w", "Title=Fixture title", "-w", "Encoder", "-w", "Settings"], ["wv"]),
     "from-aiff": (("aiff", 44100, 2, SHORT, 16), [], ["wv"]),
+    "from-aiff-md5": (("aiff", 44100, 2, SHORT, 16), ["-m"], ["wv"]),
+    "from-caf-md5": (("caf", 44100, 2, SHORT, 16, (100 << 16) | 2), ["-m"], ["wv"]),
+    "from-caf-51-md5": (("caf", 48000, 6, 12000, 16, (121 << 16) | 6), ["-m"], ["wv"]),
     "from-caf": (("caf", 44100, 2, SHORT, 16, (100 << 16) | 2), [], ["wv"]),
     "from-caf-51": (("caf", 48000, 6, 12000, 16, (121 << 16) | 6), [], ["wv"]),
 }
@@ -101,6 +119,11 @@ FIXTURES = {
 # name: (input, files); the encoder is ffmpeg with its defaults, which stamps the "encoder" item.
 FFMPEG_FIXTURES = {
     "ffmpeg-apev2-tag": (("wav", 44100, 2, 16, SHORT), ["wv"]),
+    "ffmpeg-16-stereo": (("wav", 44100, 2, 16, SHORT), ["wv"]),
+    "ffmpeg-24-stereo": (("wav", 44100, 2, 24, SHORT), ["wv"]),
+    "ffmpeg-float-stereo": (("float", 44100, 2, SHORT), ["wv"]),
+    "ffmpeg-8-mono": (("wav", 44100, 1, 8, SHORT), ["wv"]),
+    "ffmpeg-51-16": (("wav", 48000, 6, 16, SHORT, 0x3F), ["wv"]),
 }
 
 
@@ -119,6 +142,12 @@ def make_input(spec, work):
         fmt = struct.pack("<HHIIHH", 1, 2, rate, rate * 2 * bits // 8, 2 * bits // 8, bits)
         chunks = b"fmt " + struct.pack("<I", len(fmt)) + fmt + b"data" + struct.pack("<I", len(body)) + body
         data = b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
+        name = "in.wav"
+    elif kind == "wav-extremes":
+        # Samples at the lowest or highest value only: the quantization error of a hybrid file at a low bitrate takes decoded samples
+        # past the range of the sample size, which fixup_samples clips (unpack.c 764-787).
+        rate, channels, bits, count = p
+        data = sig.wav_extremes(rate, channels, count, bits)
         name = "in.wav"
     elif kind == "float":
         rate, channels, count = p
@@ -178,7 +207,7 @@ def encode_ffmpeg(name, spec, work):
 
 def describe(spec):
     kind, *p = spec
-    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "wav-identical": ["rate", "bits", "samples"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
+    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "wav-identical": ["rate", "bits", "samples"], "wav-extremes": ["rate", "channels", "bits", "samples"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
              "caf": ["rate", "channels", "samples", "bits", "layout_tag"], "dsf": ["rate", "channels", "bytes_per_channel"]}[kind]
     result = {"kind": kind}
     for key, value in zip(names, p):
@@ -188,7 +217,8 @@ def describe(spec):
 
 
 def regions(data, path, apev2):
-    """The top-level nodes: the WavPack stream and, after it, an APEv2 tag."""
+    """The top-level nodes: the WavPack stream and, after it, an APEv2 tag (FFmpeg's muxer always writes one)."""
+    apev2 = apev2 or data[-32:-24] == b"APETAGEX"
     if apev2:
         tag = data.rindex(b"APETAGEX", 0, len(data) - 32)
         return tag, [{"name": "WavPack", "offset": 0, "length": tag}, {"name": "APE", "offset": tag, "length": len(data) - tag}]

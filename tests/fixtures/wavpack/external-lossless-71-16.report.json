@@ -5829,6 +5829,44 @@
         "duration": 0.25,
         "averageBitrate": 3570.944,
         "isVbr": false,
+        "verification": {
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "block checksum",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 5,
+              "checked": 5,
+              "failed": 0
+            },
+            {
+              "name": "block header CRC",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 5,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "extended CRC",
+              "covers": "decodedAudio",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "MD5",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
         "encoder": "WavPack 5.0 or later",
         "encoderConfidence": "Medium",
         "series": [

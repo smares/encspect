@@ -29,11 +29,12 @@ internal sealed class Records
 
 // The state of one analysis: the entries (blocks and runs of bytes between them) in file order, the
 // details of the first blocks, and the figures worked out as the blocks are read.
-internal sealed class State(Source source, CancellationToken cancellation)
+internal sealed class State(Source source, CancellationToken cancellation, AnalysisContext context)
 {
     // Blocks past these are kept as 64-byte entries without their sub-blocks, so a file of a million
     // blocks costs no more than that per block.
     public const int MaxDetailedBlocks = 4096;
+    public const int MaxExtraDetailedBlocks = 64;
     public const int MaxListedSubBlocks = 1024;
     public const int MaxStoredPerSubBlock = 4096;
     public const int MaxStoredPerBlock = 1 << 16;
@@ -47,6 +48,14 @@ internal sealed class State(Source source, CancellationToken cancellation)
     public Source Source { get; } = source;
 
     public CancellationToken Cancellation { get; } = cancellation;
+
+    public AnalysisContext Context { get; } = context;
+
+    // The stream's node, which the decoding session names for findings about the whole stream; built before the blocks are read.
+    public Node Stream { get; set; } = null!;
+
+    // What hands the blocks to the decoding session and declares the checksums.
+    public DecodeFeed Feed { get; } = new();
 
     public Records Records { get; } = new();
 
@@ -78,6 +87,24 @@ internal sealed class State(Source source, CancellationToken cancellation)
     public int ChecksumInvalid { get; set; }
 
     public int ChecksumMissing { get; set; }
+
+    // Audio blocks that carry a block checksum, and MD5 sub-blocks of 16 bytes.
+    public int AudioChecksummed { get; set; }
+
+    public int Md5Count { get; set; }
+
+    public int ExtraDetailedBlocks { get; set; }
+
+    // Blocks that are not handed to the decoder because they cannot be read, sets that are broken, and whether samples are
+    // missing or repeated between sets: what keeps the checksums of the blocks from vouching for all of the audio.
+    public int UnreadableBlocks { get; set; }
+
+    public int BrokenSets { get; set; }
+
+    public bool HasGap { get; set; }
+
+    // The next audio block follows a gap in the sample positions.
+    public bool FollowsGap { get; set; }
 
     public int ExtraOnly { get; set; }
 
