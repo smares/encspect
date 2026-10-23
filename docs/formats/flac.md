@@ -71,9 +71,14 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 | STREAMINFO MD5 | the decoded audio | the decoder decoded every frame and the sample count matches |
 
 - A stream is verified when every stored checksum was compared, none failed, and at least one compared checksum covers all the audio. Frames whose every CRC holds do not verify a stream that is missing frames, has them out of order or has a frame it could not read: with an MD5 of 0, such a stream reads "unknown" (`encspect --learn verification`).
-- Findings from the decoder: `flac.md5-mismatch` (the MD5 differs) and the host's `decode.*` findings (budget, stop, a frame that cannot be decoded, failure). `flac.md5-not-stored` (an MD5 of 0, with the CRCs as the only check) is the parser's, with or without decoding.
+- Findings from the decoder: `flac.md5-mismatch` (the MD5 differs) and the host's `decode.*` findings (work budget, stop, a frame that cannot be decoded, failure). `flac.md5-not-stored` (an MD5 of 0, with the CRCs as the only check) is the parser's, with or without decoding.
 - A frame whose channels or bit depth differ from STREAMINFO's cannot go into the PCM layout the stream declared: the decoder refuses that frame (`decode.frame-invalid`, a warning on the frame), the stream's decoding is `Decoded` with fewer samples, and it is not verified. A STREAMINFO with fewer than 4 bits per sample, or none, is `NotPossible` for the whole stream.
 - The 33-bit side channel and 32-bit data are decoded in 64-bit planes; the other streams use 32-bit planes.
+- **The work a frame is charged** to the host's work budget, before the decoder does it (see "As built: the work budget" in [the decoder design](../design/decoders.md)):
+  - for each sample of each channel, the fixed work of the sample for its width: 13, 16, 19 or 22 units for 1 to 4 bytes;
+  - for each sample of each channel, the order of its predictor (a fixed predictor's 0 to 4, a linear predictor's 1 to 32), also in the 64-bit sums;
+  - for a frame the parser's walk did not store, which the decoder reads itself, 16 units for each byte of the frame.
+  - A frame is charged once, before it is decoded, so one that passes the budget is decoded in full and then ends the decoding.
 
 ## Memory
 

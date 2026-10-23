@@ -20,7 +20,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     // The work of one decorrelation pass on one sample of one channel (libwavpack's decorr_mono_pass and decorr_stereo_pass).
     internal const long WorkPerPass = 8;
 
-    // Measured, not designed (docs/design/decoders.md, "As built: the work budget"): a PCM sample of a channel costs about 28 ns beyond its
+    // Measured, not designed (docs/design/decoders.md, "As built: the work budget"): a PCM sample of a channel costs about 25 ns beyond its
     // passes whatever its width, 2.5 times what DecodeWork.ForSample says, so the entropy decoder's word, the mute check, the CRC and the copy
     // into the set's planes are charged on top of it; restoring the bits of a float costs about 7 ns more.
     internal const long WorkPerPcmSample = 16;

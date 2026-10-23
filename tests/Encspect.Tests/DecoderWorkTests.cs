@@ -380,7 +380,8 @@ public sealed class DecoderWorkTests(ITestOutputHelper output)
             }));
         }
 
-        // Fixed predictors of order 4: 16 units a sample of each channel and 4 taps.
+        // Fixed predictors of order 4: 16 units a sample of each channel and 4 taps, over a residual of a bit or two a sample so that the walk,
+        // which is out of the figure but in the time of the analysis, does not take most of it.
         public static byte[] FixedOrder4(long target = Target)
         {
             const int block = 4096;
@@ -399,7 +400,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output)
                         w.Write((ulong)(random.Next(-100, 100) & 0xFFFF), 16);
                     }
 
-                    Residual(w, random, block - 4, 64, 6);
+                    Residual(w, random, block - 4, 2, 1);
                 }
 
                 return FlacBuilder.FrameOf(number, block, Rate, 1, 16, w.ToArray());
