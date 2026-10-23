@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using Encspect.Gui.ViewModels;
@@ -35,7 +36,9 @@ public partial class DetailWindow : Window
         DataContext = model;
         PickExportTarget = PickExportTargetAsync;
         WindowList.Register(this);
-        GraphList.ScrollChanged += (_, _) => UpdateListFade();
+        GraphList.ScrollChanged += (_, _) => RequestListSnap();
+        ((Control)GraphList.Parent!).SizeChanged += (_, _) => RequestListSnap();
+        Loaded += (_, _) => RequestListSnap();
         TreeList.AddHandler(TappedEvent, OnTreeTapped, RoutingStrategies.Bubble, handledEventsToo: true);
         TreeList.DoubleTapped += (_, e) =>
         {
@@ -306,22 +309,74 @@ public partial class DetailWindow : Window
     private static bool IsOnExpander(object? source) =>
         source is Avalonia.Visual visual && visual.GetSelfAndVisualAncestors().Any(v => v is Border { Name: "Expander" });
 
-    // Where the list of graphs can be scrolled further down, its last visible entry fades out over its bottom ListFadeHeight pixels,
-    // so that an entry cut by the edge reads as "scroll for more"; at the end of the list, or where it fits, there is no fade.
-    private const double ListFadeHeight = 20;
+    // The list of graphs shows whole items only: headings and entries are never cut by its edges. Its viewport is as high as the
+    // whole items that fit in the room it has (the rest stays empty below it), and it scrolls from the top of one item to the top
+    // of another, down to the last position whose items all fit. Where all of them fit it has no scrollbar.
+    private bool _snapping;
+    private bool _snapPending;
+    private double _snappedOffset;
 
-    private void UpdateListFade()
+    private void RequestListSnap()
     {
-        double height = GraphList.Viewport.Height;
-        bool more = height > 2 * ListFadeHeight && GraphList.Offset.Y + height < GraphList.Extent.Height - 0.5;
-        GraphList.OpacityMask = more
-            ? new LinearGradientBrush
+        if (_snapping || _snapPending)
+        {
+            return;
+        }
+
+        _snapPending = true;
+        Dispatcher.UIThread.Post(SnapList);
+    }
+
+    // The room of an item: from its top margin to its bottom margin, in the coordinates of the list's content.
+    private List<(double Top, double Bottom)> ListItems() =>
+    [
+        .. GraphChoices.GetVisualDescendants().OfType<Control>()
+            .Where(c => (c is TextBlock t && t.Classes.Contains("heading")) || (c is Button b && b.Classes.Contains("entry")))
+            .Select(c => (Top: c.TranslatePoint(default, GraphChoices)!.Value.Y - c.Margin.Top + GraphChoices.Margin.Top, Bottom: c.TranslatePoint(new Point(0, c.Bounds.Height), GraphChoices)!.Value.Y + c.Margin.Bottom + GraphChoices.Margin.Top))
+            .OrderBy(i => i.Top),
+    ];
+
+    private void SnapList()
+    {
+        _snapPending = false;
+        if (GraphList.Parent is not Control host || host.Bounds.Height <= 0)
+        {
+            return;
+        }
+
+        _snapping = true;
+        try
+        {
+            List<(double Top, double Bottom)> items = ListItems();
+            double room = host.Bounds.Height;
+            double end = GraphList.Extent.Height;
+            if (items.Count == 0 || end <= room + 0.5)
             {
-                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
-                EndPoint = new RelativePoint(0, 1, RelativeUnit.Relative),
-                GradientStops = { new GradientStop(Colors.Black, 0), new GradientStop(Colors.Black, 1 - (ListFadeHeight / height)), new GradientStop(Color.FromArgb(48, 0, 0, 0), 1) },
+                GraphList.Height = double.NaN;
+                _snappedOffset = 0;
+                return;
             }
-            : null;
+
+            // The first item reaches up to the top of the content (the list's own margin above the first heading is none).
+            double offset = GraphList.Offset.Y;
+            double[] tops = [0, .. items.Skip(1).Select(i => i.Top)];
+            double lastTop = tops.First(t => end - t <= room + 0.5);
+            double top = offset > _snappedOffset + 0.5
+                ? tops.FirstOrDefault(t => t >= offset - 0.5, lastTop)
+                : offset < _snappedOffset - 0.5
+                    ? tops.LastOrDefault(t => t <= offset + 0.5, 0)
+                    : tops.OrderBy(t => Math.Abs(t - offset)).First();
+            top = Math.Min(top, lastTop);
+            double bottom = top >= lastTop ? end : items.Last(i => i.Bottom - top <= room + 0.5).Bottom;
+            GraphList.Height = bottom - top;
+            GraphList.UpdateLayout();
+            GraphList.Offset = new Vector(0, top);
+            _snappedOffset = top;
+        }
+        finally
+        {
+            _snapping = false;
+        }
     }
 
     private void OnTreeTapped(object? sender, TappedEventArgs e)
