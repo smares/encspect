@@ -893,20 +893,33 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // The bound is on the growth of what decoding holds above the heap the analysis starts and ends with, from 50,000 to 200,000 frames
+    // (MeasureExcess: live objects only, read at fixed places in the input), less the same growth without decoding, so the session's
+    // buffers, the MD5's state and what the collector's allocation budgets add to a reading cancel. The first version compared the peaks
+    // Measure reads at one count, with 4 MB of room: that is a difference of two readings that each vary by megabytes with the
+    // platform's allocation budgets, and it read 8.2 MB on windows-latest where linux-x64 reads 0.01 to 1.3 MB at 25,000 to 200,000
+    // frames (0.6 MB at 200,000, so not growing with the count). Here linux-x64 reads 0 without decoding and 0.6, 0.7, 0.7, 1.0 and 1.2 MB
+    // with it at 25,000, 50,000, 100,000, 200,000 and 400,000 frames: 0.5 to 2.2 bytes per further frame. The bound is 8, half of what
+    // keeping the smallest reference or length per frame would cost.
     [Fact]
     public void DecodingManyFlacFramesHoldsNothingPerFrame()
     {
-        const int frames = 100_000;
-        byte[] data = FlacFrames(frames);
+        const int fewer = 50_000;
+        const int frames = 200_000;
         var options = new AnalysisOptions { Decoding = new DecodeOptions() };
+        byte[] warmUp = FlacFrames(100);
 
-        (Report plain, long plainKept, long plainPeak) = Measure("frames.flac", data, FlacFrames(100));
-        (Report decoded, long decodedKept, long decodedPeak) = Measure("frames.flac", data, FlacFrames(100), options);
+        (_, long fewerKept, long fewerExcess, string fewerWhere) = MeasureExcess("frames.flac", FlacFrames(fewer), warmUp, options);
+        (Report decoded, long kept, long excess, string where) = MeasureExcess("frames.flac", FlacFrames(frames), warmUp, options);
+        (_, _, long plainFewerExcess, string plainFewerWhere) = MeasureExcess("frames.flac", FlacFrames(fewer), warmUp);
+        (Report plain, long plainKept, long plainExcess, string plainWhere) = MeasureExcess("frames.flac", FlacFrames(frames), warmUp);
 
         Assert.Equal(frames * 4096L, decoded.Streams.Single().Verification!.DecodedSamples);
-        output.WriteLine($"without decoding {plainKept / frames} kept and {plainPeak / frames} peak per frame; with {decodedKept / frames} and {decodedPeak / frames}");
-        Assert.True(decodedKept < plainKept + 1_000_000, $"Decoding made the report keep {(decodedKept - plainKept) / frames} bytes more per frame.");
-        Assert.True(decodedPeak < plainPeak + 4_000_000, $"Decoding raised the peak by {(decodedPeak - plainPeak) / frames} bytes per frame.");
+        double excessPerFrame = (excess - fewerExcess) / (double)(frames - fewer);
+        double plainPerFrame = (plainExcess - plainFewerExcess) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the start and end: {fewerExcess} and {excess} with decoding ({Hundredths(excessPerFrame)} per further frame), {plainFewerExcess} and {plainExcess} without ({Hundredths(plainPerFrame)}); {fewerWhere} {where} {plainFewerWhere} {plainWhere}");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(excessPerFrame - plainPerFrame < DecodingFrameBound, $"Decoding held {excessPerFrame - plainPerFrame:F2} more bytes per further frame than the analysis starts and ends with. {RuntimeSettings()}");
         GC.KeepAlive(plain);
         GC.KeepAlive(decoded);
     }
@@ -1254,16 +1267,16 @@ public class MemoryTests(ITestOutputHelper output)
     // higher of the heap before the analysis and the heap at its end, so memory that earlier work
     // releases during the analysis lowers the reading instead of raising it. As with kept, two
     // analyses are taken and the smaller excess counts.
-    private static (Report Report, long Kept, long Excess, string Where) MeasureExcess(string name, byte[] data, byte[]? warmUp = null)
+    private static (Report Report, long Kept, long Excess, string Where) MeasureExcess(string name, byte[] data, byte[]? warmUp = null, AnalysisOptions? options = null)
     {
         var analyzer = Analyzer.CreateDefault();
-        analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]));
+        analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]), options);
         Live();
-        (long before, long withReport, long highest, string where) = ProbedAnalysis(analyzer, name, data);
+        (long before, long withReport, long highest, string where) = ProbedAnalysis(analyzer, name, data, options);
         long withoutReport = Live();
-        (long secondBefore, long secondWithReport, long secondHighest, string secondWhere) = ProbedAnalysis(analyzer, name, data);
+        (long secondBefore, long secondWithReport, long secondHighest, string secondWhere) = ProbedAnalysis(analyzer, name, data, options);
         long secondWithoutReport = Live();
-        Report report = analyzer.Analyze(name, new MemoryStream(data));
+        Report report = analyzer.Analyze(name, new MemoryStream(data), options);
         GC.KeepAlive(data);
         long kept = Math.Min(withReport - withoutReport, secondWithReport - secondWithoutReport);
         long excess = Math.Max(0, highest - Math.Max(before, withReport));
@@ -1275,7 +1288,7 @@ public class MemoryTests(ITestOutputHelper output)
     // The live heap before the analysis, with its report alive after it, and the highest live heap
     // read during it; the report is dropped on return. A measurement whose probes did not fire is a failure, not a pass.
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private static (long Before, long WithReport, long Highest, string Where) ProbedAnalysis(Analyzer analyzer, string name, byte[] data)
+    private static (long Before, long WithReport, long Highest, string Where) ProbedAnalysis(Analyzer analyzer, string name, byte[] data, AnalysisOptions? options)
     {
         var stream = new ProbeStream(data);
         long before = Live();
@@ -1301,7 +1314,7 @@ public class MemoryTests(ITestOutputHelper output)
         Report report;
         try
         {
-            report = analyzer.Analyze(name, stream);
+            report = analyzer.Analyze(name, stream, options);
         }
         finally
         {
@@ -1652,6 +1665,8 @@ public class MemoryTests(ITestOutputHelper output)
 
     // Bytes per further undetailed SV8 packet of 3 bytes: runs are one record each, so close to 0.
     private const long UndetailedPacketBound = 1;
+
+    private const long DecodingFrameBound = 8;
 
     // An SV7 stream (libmpcdec r495 streaminfo_read_header_sv7): a header with mid/side, max band 1
     // and no true gapless, then frames of 400 zero bits, which read as subband 0 left out and
