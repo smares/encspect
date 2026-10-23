@@ -9,6 +9,11 @@ public interface IDecoder
     // The codec ID the parsers start sessions with, as ICodecParser.Id: "flac", "monkeys-audio", "truehd".
     string Id { get; }
 
+    // The work units per byte of the file that the host allows the analysis in total (the larger of 2^35 and the file's size
+    // times this, for the largest value among the decoders that started a session). A decoder overrides the default only
+    // with the derivation of its worst legitimate case in its "As built" section of docs/design/decoders.md.
+    long WorkPerInputByte => DecodeWork.DefaultPerInputByte;
+
     // Reads the configuration and returns the decoder of one stream. InvalidDataException means the stream cannot be
     // decoded as configured (the report says why); the parser has reported the configuration's faults already.
     IFrameDecoder Open(DecodeContext context);
@@ -22,7 +27,11 @@ public interface IFrameDecoder
     // Decodes one frame, checks what the frame stores about its decoded audio (a Monkey's Audio frame CRC), and returns
     // the samples per channel by which the stream's decoded output advanced: 0 for a frame it could not decode, 0 for
     // the blocks of a WavPack group before its final block and the group's samples on that block, and for a WMA Lossless
-    // packet the samples of the frames that end in it. The frame's bytes are valid only during the call.
+    // packet the samples of the frames that end in it. The frame's bytes are valid only during the call. The decoder
+    // charges the work of the frame through DecodeContext.AddWork before it does it; the host compares the totals with
+    // DecodeWork.ForSample per sample of each channel returned, and a decoder that charges less is decode.failed. A
+    // budget or a stop that comes during the frame cancels DecodeContext.CancellationToken: the decoder may throw
+    // OperationCanceledException at its next check, and the frame then counts as not decoded.
     int Decode(in CodedFrame frame);
 
     // Ends the stream: compares the checksums over the whole stream (FLAC's MD5) where end.IsComplete, and returns what it

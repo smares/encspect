@@ -58,6 +58,15 @@ internal sealed class FrameDecoder : IFrameDecoder
             return 0;
         }
 
+        // The work is charged before it is done (docs/design/decoders.md, "Work instead of samples"): the fixed work of each sample
+        // of each channel, and 16 a byte for a frame this decoder reads itself (a walked frame's reading is the parser's).
+        long perSample = DecodeWork.ForSample(_bytesPerSample);
+        _context.AddWork(checked(perSample * channels * n));
+        if (!frame.IsWalked)
+        {
+            _context.AddWork(DecodeWork.PerCodedByte * data.Length);
+        }
+
         int stride = n + SubframeLayout.MetaSlots;
         SampleBuffers lent = frame.IsWalked ? _context.LentBuffers : default;
         bool needsWide = header.BitsPerSample == 32 && header.Assignment != ChannelAssignment.Independent;
@@ -80,6 +89,18 @@ internal sealed class FrameDecoder : IFrameDecoder
             _output = new int[channels * n];
         }
 
+        // Each predictor's order is one tap a sample (RFC 9639, sections 9.2.5 and 9.2.6), in the 32-bit and 64-bit sums alike.
+        long taps = 0;
+        for (int c = 0; c < channels; c++)
+        {
+            Span<int> meta = narrow.Slice((c * stride) + n, SubframeLayout.MetaSlots);
+            if ((SubframeType)meta[SubframeLayout.Type] is SubframeType.Fixed or SubframeType.Lpc)
+            {
+                taps += meta[SubframeLayout.Order];
+            }
+        }
+
+        _context.AddWork(DecodeWork.PerTap * taps * n);
         for (int c = 0; c < channels; c++)
         {
             Restore(narrow.Slice(c * stride, stride), needsWide ? wide.Slice(c * stride, stride) : default, n, header.BitsPerSample + (header.IsSide(c) ? 1 : 0));

@@ -1754,6 +1754,50 @@ public class MemoryTests(ITestOutputHelper output)
         return info.HeapSizeBytes - info.FragmentedBytes;
     }
 
+    // A decoder that charges the floor and nothing else, keeping nothing per analysis.
+    private sealed class Charging : IDecoder, IFrameDecoder
+    {
+        private DecodeContext? _context;
+
+        public string Id => "test";
+
+        public IFrameDecoder Open(DecodeContext context) => new Charging { _context = context };
+
+        public int Decode(in CodedFrame frame)
+        {
+            _context!.AddWork(DecodeRouteTests.Charge(_context.Setup, frame.Samples));
+            return frame.Samples;
+        }
+
+        public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end) => [];
+    }
+
+    // A library caller that reuses one token for every analysis: the decoding's token is linked to it, and a linked source that is not
+    // disposed stays registered on it for good (about 100 bytes each, 20,000 analyses would keep megabytes).
+    [Fact]
+    public void ManyDecodingAnalysesWithOneTokenLeaveNoLinkedSourceRegistered()
+    {
+        using var cts = new CancellationTokenSource();
+        var analyzer = new Analyzer([], [new DecodeRouteTests.FrameParser()], [], [new Charging()]);
+        var options = new AnalysisOptions { CancellationToken = cts.Token, Decoding = new DecodeOptions { Stop = cts.Token } };
+        byte[] data = new byte[64];
+
+        for (int i = 0; i < 200; i++)
+        {
+            analyzer.Analyze("sample.bin", new MemoryStream(data), options);
+        }
+
+        long before = Live();
+        for (int i = 0; i < 20_000; i++)
+        {
+            analyzer.Analyze("sample.bin", new MemoryStream(data), options);
+        }
+
+        long growth = Live() - before;
+        output.WriteLine($"The live heap grew by {growth} bytes over 20,000 analyses.");
+        Assert.True(growth < 256 * 1024, $"The live heap grew by {growth} bytes over 20,000 analyses with one token.");
+    }
+
     // One such collection: a reading to compare with a bound of MB, taken while the analysis runs,
     // where the repeats of Live (for what finalizers release) would cost seconds.
     private static long LiveOnce()

@@ -8,8 +8,8 @@ public sealed record DecodeSetup
 
     public required int Channels { get; init; }
 
-    // The width of a sample in the canonical layout's terms: ceil(BitsPerSample / 8) bytes count toward the budget. For
-    // DSD, 8, with one byte of DSD per channel as one sample.
+    // The width of a sample in the canonical layout's terms: ceil(BitsPerSample / 8) bytes are what the checksums hash, which
+    // sets the per-sample charge (DecodeWork.ForSample) and its floor. For DSD, 8, with one byte of DSD per channel as one sample.
     public required int BitsPerSample { get; init; }
 
     // The samples per channel the parser counts in the stream, or null where it cannot tell.

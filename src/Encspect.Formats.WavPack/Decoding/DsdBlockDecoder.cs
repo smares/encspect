@@ -93,6 +93,38 @@ internal sealed class DsdBlockDecoder
         return (!isOk, crc);
     }
 
+    // The work units of the block's table setup, which costs far more than the block's bytes: the fast mode clears the bins' 256
+    // probabilities, sums them (the loop always runs) and fills the lookup, which holds at most 1,280 bytes a bin; the high mode builds
+    // its probability table in a few thousand steps (InitTable's first Approach).
+    public static long SetupWork(ReadOnlySpan<byte> data)
+    {
+        if (data.Length < 3)
+        {
+            return 0;
+        }
+
+        return data[1] switch
+        {
+            1 => (1L << Math.Min((int)data[2], MaxHistoryBits)) * (256 + 256 + MaxBytesPerBin),
+            3 => HighSetupWork,
+            _ => 0,
+        };
+    }
+
+    // The work units of each byte of each channel on top of the sample's fixed work: the fast mode divides twice a byte, the high mode
+    // decodes eight bits through the range coder and the filters; the stored mode copies. Measured on the committed fixtures
+    // (docs/design/decoders.md, "As built: the work budget"): about 35 ns a byte in the fast mode and 100 ns in the high mode.
+    public static long WorkPerByte(ReadOnlySpan<byte> data) => data.Length < 2 ? 0 : data[1] switch
+    {
+        0 => 0,
+        1 => FastWorkPerByte,
+        _ => HighWorkPerByte,
+    };
+
+    internal const long HighSetupWork = 4096;
+    internal const long FastWorkPerByte = 32;
+    internal const long HighWorkPerByte = 128;
+
     // What libwavpack's init_dsd_block does for the block's mode: reads the tables of the fast mode and the filters of the high mode,
     // and refuses what it cannot take. The mode and the size of the stored mode were checked when the sub-blocks were read.
     public void Prepare(ReadOnlySpan<byte> data, bool isMono)

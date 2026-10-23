@@ -1,3 +1,4 @@
+using System.Globalization;
 using Encspect.Core;
 
 namespace Encspect.Host;
@@ -30,6 +31,7 @@ internal sealed class DecodeSession : IDecodeSession
     private long _framesNotDecoded;
     private bool _isAfterUnreadable;
     private long _decodedSamples;
+    private long _work;
     private StreamVerification? _verification;
 
     private sealed class Pending(Severity severity, string code, string message, Node? node, int count)
@@ -65,7 +67,7 @@ internal sealed class DecodeSession : IDecodeSession
     {
         try
         {
-            _decoder = decoder.Open(new DecodeContext(_setup, Owner.CancellationToken, AddFromDecoder, DeclareOutput, LentToDecoder));
+            _decoder = decoder.Open(new DecodeContext(_setup, _run!.Token, AddFromDecoder, DeclareOutput, AddWorkFromDecoder, LentToDecoder));
             _status = DecodeStatus.Decoded;
         }
         catch (InvalidDataException ex)
@@ -164,7 +166,13 @@ internal sealed class DecodeSession : IDecodeSession
 
             _decodedSamples += samples;
             _framesDecoded++;
-            run.Count(samples, _setup.Channels, _bytesPerSample);
+            CheckFloorOfCharge();
+        }
+        catch (OperationCanceledException) when (!Owner.CancellationToken.IsCancellationRequested && (run.HasSinkFailure || run.IsStopRequested || run.IsOutOfBudget))
+        {
+            // The sink's failure, the stop or the budget canceled the decoding's token inside the frame, which then counts as not
+            // decoded; the finding is picked from the host's own state below. Any other cancellation passes through.
+            _framesNotDecoded++;
         }
         catch (Exception ex) when (ex is InvalidDataException or EndOfStreamException)
         {
@@ -184,6 +192,21 @@ internal sealed class DecodeSession : IDecodeSession
         }
 
         return IsDecoding;
+    }
+
+    // The work a decoder charged over the whole stream so far cannot be less than the fixed charge of the samples it has returned
+    // (totals, since a WavPack set returns the samples of all its channels on its final block). A decoder that forgets to charge
+    // is a bug that no fixture may pass with. It cannot catch a missing charge for a stage (a pass, a tap): DecoderWorkTests does.
+    private void CheckFloorOfCharge()
+    {
+        UInt128 product = (UInt128)(ulong)DecodeWork.ForSample(_bytesPerSample) * (ulong)_setup.Channels * (ulong)_decodedSamples;
+
+        // The count saturates at a long, so the floor does (a crafted file can state absurd channel counts).
+        long floor = product > long.MaxValue ? long.MaxValue : (long)product;
+        if (_work < floor)
+        {
+            throw new InvalidOperationException($"The decoder charged {_work} work units for {_decodedSamples} samples of {Counts.Of(_setup.Channels, "channel", "channels")}, fewer than the {floor} that {DecodeWork.ForSample(_bytesPerSample)} units for each of them make");
+        }
     }
 
     public StreamVerification Finish(IReadOnlyList<ChecksumTally> stored)
@@ -328,7 +351,7 @@ internal sealed class DecodeSession : IDecodeSession
         else if (run.IsOutOfBudget)
         {
             _isEnded = true;
-            Add(Severity.Info, "decode.limit", $"Decoding stopped after {Counts.Of(_framesDecoded, "frame", "frames")}: the PCM it produced passed the budget of {Counts.Of(run.Budget, "byte", "bytes")}.", null, 1);
+            Add(Severity.Info, "decode.limit", $"Decoding stopped after {Counts.Of(_framesDecoded, "frame", "frames")}: its work passed the budget of {run.Budget.ToString("N0", CultureInfo.InvariantCulture)} work units that the file's size allows.", null, 1);
         }
 
         if (_isEnded && _status == DecodeStatus.Decoded)
@@ -371,6 +394,12 @@ internal sealed class DecodeSession : IDecodeSession
         {
             existing.Count += count;
         }
+    }
+
+    private void AddWorkFromDecoder(long units)
+    {
+        _work = units > long.MaxValue - _work ? long.MaxValue : _work + units;
+        _run!.AddWork(units);
     }
 
     private void AddFromDecoder(Severity severity, string code, string message, Node? node, int count) => Add(severity, code, message, node, count);
