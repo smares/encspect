@@ -1,0 +1,96 @@
+{
+ "description": "Eleven channel pairs: left/right (mask 0, and mask 1 with no flag set), mid/side (mask 1 with flags, mask 2), intensity stereo with the mid/side flag set only on intensity stereo bands, in every band of a mask 2 pair, and in pairs without a common window (long and short windows), and both coding tools at once (mask 1 and mask 2 with intensity stereo bands).",
+ "length": 3691,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 11264,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   372
+  ],
+  [
+   372,
+   377
+  ],
+  [
+   749,
+   377
+  ],
+  [
+   1126,
+   372
+  ],
+  [
+   1498,
+   287
+  ],
+  [
+   1785,
+   287
+  ],
+  [
+   2072,
+   212
+  ],
+  [
+   2284,
+   282
+  ],
+  [
+   2566,
+   283
+  ],
+  [
+   2849,
+   374
+  ],
+  [
+   3223,
+   468
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Channel Pairs/Common Window": "8 elements (72.7%)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo": "6 elements (54.5%)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo Bands": "26.6 %",
+  "ADTS/Statistics/Stereo Coding/Left/right stereo": "3 channel pairs (27.3%)",
+  "ADTS/Statistics/Stereo Coding/Mid/side stereo": "2 channel pairs (18.2%)",
+  "ADTS/Statistics/Stereo Coding/Intensity stereo": "4 channel pairs (36.4%)",
+  "ADTS/Statistics/Stereo Coding/Mid/side and intensity stereo": "2 channel pairs (18.2%)",
+  "ADTS/Statistics/Window Sequences/Only Long": "21 channel streams (95.5%)",
+  "ADTS/Statistics/Window Sequences/Eight Short": "1 channel stream (4.5%)",
+  "ADTS/Statistics/Window Shapes/Sine": "1 channel stream (4.5%)",
+  "ADTS/Statistics/Window Shapes/KBD": "21 channel streams (95.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "114 bands (13.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "270 bands (31.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "132 bands (15.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "100 bands (11.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "54 bands (6.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 11": "74 bands (8.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 14": "24 bands (2.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 15": "90 bands (10.5%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.255",
+   "rate": 44100
+  }
+ }
+}
