@@ -105,8 +105,8 @@ internal static partial class Explain
     public const string StatMidSideMasks = "Channel pairs with a common window by ms_mask_present: no mid/side, a mask per band, or every band mid/side.";
     public const string StatMidSideMask = "The pairs with this ms_mask_present, with their share of pairs with a common window.";
     public const string StatMidSideBands = "The share of the scalefactor bands of pairs with a common window that are coded as mid/side, intensity stereo bands aside.";
-    public const string StatIntensityPairs = "Pairs with a common window that code at least one band with intensity stereo (codebooks 14 and 15).";
-    public const string StatIntensityBands = "The share of the scalefactor bands of pairs with a common window coded with intensity stereo.";
+    public const string StatIntensityPairs = "Channel pairs that code at least one band of their second channel with intensity stereo (codebooks 14 and 15), whether or not they have a common window, with their share of all pairs (ISO/IEC 14496-3 4.6.8.2).";
+    public const string StatIntensityBands = "The share of the scalefactor bands of the second channel of all channel pairs that are coded with intensity stereo.";
     public const string StatOutOfPhase = "Intensity stereo bands whose second channel is out of phase with the first: codebook 14, or codebook 15 inverted by ms_used.";
     public const string StatNoise = "Channel streams that code at least one band with perceptual noise substitution (codebook 13).";
     public const string StatNoiseBands = "The share of all coded scalefactor bands that are noise substitution bands.";
@@ -123,7 +123,6 @@ internal static partial class Explain
     public const string StatMaxSfbLong = "How often each max_sfb occurs in long windows: how many scalefactor bands, from the lowest, are coded, which sets the coded bandwidth.";
     public const string StatMaxSfbShort = "How often each max_sfb occurs in eight short windows.";
     public const string StatMaxSfbValue = "The channel streams with this max_sfb, with their share.";
-    public const string StatBandwidth = "Where the highest scalefactor band of the most common max_sfb of long windows ends, in Hz at the core's sample rate: the top of the spectrum the core codes, before any SBR.";
     public const string StatGlobalGain = "The smallest and largest global_gain of each channel, in the order of the elements.";
     public const string StatGainChannel = "One channel's global_gain range.";
     public const string StatGainMinimum = "The channel's smallest global_gain.";

@@ -157,9 +157,10 @@ public sealed class AacCodecParser : ICodecParser
             }
         }
 
+        CodingNodes? nodes = null;
         if (log.Blocks is { } read)
         {
-            CodingStatistics.Add(statistics, read.Tally, read.Setup, (name, value, description, topic) => Cover(name, value, description, topic: topic));
+            nodes = CodingStatistics.Add(statistics, read, (name, value, description, topic) => Cover(name, value, description, topic: topic));
         }
 
         if (config is { IsUsac: true })
@@ -190,6 +191,10 @@ public sealed class AacCodecParser : ICodecParser
 
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
+        List<Series> series = figures.Series(bitrate, context.CancellationToken);
+        IReadOnlyList<CategorySeries> categories = log.Blocks is { } coded && nodes is not null && !encrypted
+            ? coded.Recorder.Build(series.Count > 0 ? series[0].X : Array.Empty<double>(), series.Count > 0 ? series[0] : null, figures.Time, nodes, series, context.CancellationToken)
+            : [];
         context.AddStream(new StreamInfo
         {
             Nodes = [stream],
@@ -206,7 +211,8 @@ public sealed class AacCodecParser : ICodecParser
             EncoderConfidence = encoderConfidence,
             Writer = writerName,
             WriterConfidence = writerConfidence,
-            Series = figures.Series(bitrate, context.CancellationToken),
+            Series = series,
+            CategorySeries = categories,
         });
     }
 
@@ -387,6 +393,7 @@ public sealed class AacCodecParser : ICodecParser
                 flags |= IsRead;
                 var where = new UnitBytes(packet.FileStart, packet.Length, ranges.Count > 1 ? ranges : null);
                 (skeleton, BlockResult result) = Blocks.Read(packet.Span, 0, packet.Length * 8, where, () => UnitNodeAt(packet, ranges));
+                Blocks.EndUnit();
                 elements = result.Elements;
                 Blocks.AddEvidence(result, Blocks.Count - 1);
                 int first = BlockLog.FirstElement(elements);

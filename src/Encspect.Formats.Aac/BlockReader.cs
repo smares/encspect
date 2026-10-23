@@ -18,6 +18,7 @@ internal sealed partial class BlockReader
 
     private readonly StreamSetup _setup;
     private readonly CodingTally? _tally;
+    private readonly CodingRecorder? _recorder;
     private readonly Dictionary<int, SbrHeader> _sbr = [];
     private readonly Dictionary<int, int> _sbrHeaderBlock = [];
     private readonly List<BlockCut> _cuts = [];
@@ -39,10 +40,11 @@ internal sealed partial class BlockReader
     private bool _hasSbrEvidence;
     private bool _hasPs;
 
-    public BlockReader(StreamSetup setup, CodingTally? tally)
+    public BlockReader(StreamSetup setup, CodingTally? tally, CodingRecorder? recorder = null)
     {
         _setup = setup;
         _tally = tally;
+        _recorder = recorder;
     }
 
     // What the last block's skeleton leaves out, in order.
@@ -346,25 +348,29 @@ internal sealed partial class BlockReader
         }
     }
 
+    // The pair's stereo coding (ISO/IEC 14496-3 4.6.8), whether or not it has a common window: intensity stereo is in any band of the
+    // second channel with codebook 14 or 15, and mid/side stereo in any other band whose ms_used flag is set, which needs a common
+    // window (ms_mask_present 2 sets every band). ms_mask_present 3 is reserved and takes precedence.
     private void TallyPair(Ics first, Ics second, bool common, int mask)
     {
         CodingTally tally = _tally!;
         tally.Pairs++;
-        if (!common)
+        if (common)
         {
-            return;
+            tally.CommonWindow++;
+            tally.MidSideMasks[mask]++;
         }
 
-        tally.CommonWindow++;
-        tally.MidSideMasks[mask]++;
         bool intensity = false;
-        for (int g = 0; g < first.Groups; g++)
+        bool midSide = false;
+        for (int g = 0; g < second.Groups; g++)
         {
-            for (int sfb = 0; sfb < first.MaxSfb; sfb++)
+            for (int sfb = 0; sfb < second.MaxSfb; sfb++)
             {
                 int book = second.Codebooks[(g * MaxBands) + sfb];
-                bool ms = mask != 0 && mask != 3 && _midSide[(g * MaxBands) + sfb];
-                tally.PairBands++;
+                bool ms = common && mask != 0 && mask != 3 && _midSide[(g * MaxBands) + sfb];
+                tally.ChannelBands++;
+                tally.PairBands += common ? 1 : 0;
                 if (book is 14 or 15)
                 {
                     intensity = true;
@@ -377,15 +383,18 @@ internal sealed partial class BlockReader
                 }
                 else if (ms)
                 {
+                    midSide = true;
                     tally.MidSideBands++;
                 }
             }
         }
 
-        if (intensity)
-        {
-            tally.IntensityPairs++;
-        }
+        tally.IntensityPairs += intensity ? 1 : 0;
+        byte code = mask == 3 && common ? CodingCategories.CodeReserved
+            : intensity ? (midSide ? CodingCategories.CodeMidSideAndIntensity : CodingCategories.CodeIntensity)
+            : midSide ? CodingCategories.CodeMidSide : CodingCategories.CodeLeftRight;
+        tally.StereoCodings[code]++;
+        _recorder?.Pair(code);
     }
 
     // individual_channel_stream (ISO/IEC 14496-3 4.4.2): global_gain, ics_info unless the pair shares
@@ -463,6 +472,7 @@ internal sealed partial class BlockReader
         CodingTally tally = _tally!;
         tally.ChannelStreams++;
         tally.WindowSequences[ics.WindowSequence]++;
+        _recorder?.Stream(ics.WindowSequence, ics.Offsets[ics.MaxSfb]);
         tally.WindowShapes[ics.WindowShape]++;
         if (tns)
         {

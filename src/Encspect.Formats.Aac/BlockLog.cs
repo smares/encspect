@@ -21,7 +21,8 @@ internal sealed class BlockLog
     {
         this.setup = setup;
         this.findings = findings;
-        _reader = new BlockReader(setup, Tally);
+        Recorder = new CodingRecorder(setup);
+        _reader = new BlockReader(setup, Tally, Recorder);
     }
 
     public StreamSetup Setup => setup;
@@ -29,6 +30,12 @@ internal sealed class BlockLog
     public CodingTally Tally { get; } = new();
 
     public UnitStore Store { get; } = new();
+
+    // The coding series of the stream, recorded as the tally is counted.
+    public CodingRecorder Recorder { get; }
+
+    // Ends the unit (access unit, ADTS frame or ADIF block) whose blocks were read since the last one.
+    public void EndUnit() => Recorder.EndUnit();
 
     public int Count { get; private set; }
 

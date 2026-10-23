@@ -5,16 +5,23 @@ namespace Encspect.Formats.Aac;
 
 // The Statistics nodes of a stream's coding, from its CodingTally, as the MPEG parser shows the
 // coding statistics mp3guessenc and EncSpot print: window sequences and shapes, stereo coding, the
-// tools channel streams use, codebooks, max_sfb and the bandwidth it gives, global gain, SBR, fill
-// and data stream elements. Shares are rounded half to even, to tenths of a percent.
+// tools channel streams use, codebooks, max_sfb and the coded bandwidth it gives, global gain, SBR, fill
+// and data stream elements. Shares are rounded half to even, to tenths of a percent. The nodes that
+// the coding series are anchored to (Window Sequences, Block Sizes, Stereo Coding and Coded
+// Bandwidth) are returned.
 internal static class CodingStatistics
 {
-    private static readonly string[] WindowSequences = ["Only Long", "Long Start", "Eight Short", "Long Stop"];
     private static readonly string[] MidSideMasks = ["None (0)", "Per Band (1)", "All Bands (2)", "Reserved (3)"];
 
     // cover makes a node over the stream's bytes with a value, description and topic.
-    public static void Add(Node statistics, CodingTally tally, StreamSetup setup, Func<string, NodeValue?, string, string?, Node> cover)
+    public static CodingNodes Add(Node statistics, BlockLog log, Func<string, NodeValue?, string, string?, Node> cover)
     {
+        CodingTally tally = log.Tally;
+        StreamSetup setup = log.Setup;
+        Node? windows = null;
+        Node? sizes = null;
+        Node? stereo = null;
+        Node? bandwidth = null;
         Node blocks = statistics.Add(cover("Raw Data Blocks", NodeValue.Integer(tally.Blocks, "blocks", "block"), Explain.StatBlocks, Topics.RawDataBlocks));
         if (tally.DamagedBlocks > 0)
         {
@@ -33,12 +40,27 @@ internal static class CodingStatistics
         long streams = tally.ChannelStreams;
         if (streams > 0)
         {
-            Node windows = statistics.Add(cover("Window Sequences", NodeValue.Integer(streams, "channel streams", "channel stream"), Explain.StatWindowSequences, Topics.Windows));
+            windows = statistics.Add(cover("Window Sequences", NodeValue.Integer(streams, "channel streams", "channel stream"), Explain.StatWindowSequences, Topics.Windows));
             for (int w = 0; w < 4; w++)
             {
                 if (tally.WindowSequences[w] > 0)
                 {
-                    windows.Add(cover(WindowSequences[w], Share(tally.WindowSequences[w], streams, "channel stream"), Explain.StatWindowSequence, null));
+                    windows.Add(cover(CodingCategories.WindowSequenceNames[w], Share(tally.WindowSequences[w], streams, "channel stream"), CodingCategories.WindowSequences[w].Description, null));
+                }
+            }
+
+            sizes = statistics.Add(cover("Block Sizes", NodeValue.Integer(streams, "channel streams", "channel stream"), Explain.StatBlockSizes, Topics.Windows));
+            long[] bySize = new long[CodingCategories.Sizes.Length];
+            for (int w = 0; w < 4; w++)
+            {
+                bySize[CodingCategories.SizeOfWindow[w]] += tally.WindowSequences[w];
+            }
+
+            for (int size = 0; size < bySize.Length; size++)
+            {
+                if (bySize[size] > 0)
+                {
+                    sizes.Add(cover(CodingCategories.Sizes[size].Name, Share(bySize[size], streams, "channel stream"), CodingCategories.Sizes[size].Description, null));
                 }
             }
 
@@ -68,11 +90,24 @@ internal static class CodingStatistics
                 }
 
                 pairs.Add(cover("Mid/Side Bands", Percent(tally.MidSideBands, tally.PairBands), Explain.StatMidSideBands, Topics.MidSide));
-                pairs.Add(cover("Intensity Stereo", Share(tally.IntensityPairs, tally.CommonWindow, "element"), Explain.StatIntensityPairs, Topics.Intensity));
+            }
+
+            if (tally.CommonWindow > 0 || tally.IntensityPairs > 0)
+            {
+                pairs.Add(cover("Intensity Stereo", Share(tally.IntensityPairs, tally.Pairs, "element"), Explain.StatIntensityPairs, Topics.Intensity));
                 if (tally.IntensityBands > 0)
                 {
-                    pairs.Add(cover("Intensity Stereo Bands", Percent(tally.IntensityBands, tally.PairBands), Explain.StatIntensityBands, Topics.Intensity));
+                    pairs.Add(cover("Intensity Stereo Bands", Percent(tally.IntensityBands, tally.ChannelBands), Explain.StatIntensityBands, Topics.Intensity));
                     pairs.Add(cover("Out of Phase", Share(tally.IntensityOutOfPhase, tally.IntensityBands, "band"), Explain.StatOutOfPhase, Topics.Intensity));
+                }
+            }
+
+            stereo = statistics.Add(cover("Stereo Coding", NodeValue.Integer(tally.Pairs, "channel pairs", "channel pair"), Explain.StatStereoCoding, Topics.MidSide));
+            for (int code = 0; code < CodingCategories.StereoCodings.Length; code++)
+            {
+                if (tally.StereoCodings[code] > 0)
+                {
+                    stereo.Add(cover(CodingCategories.StereoCodings[code].Name, Share(tally.StereoCodings[code], tally.Pairs, "channel pair"), CodingCategories.StereoCodings[code].Description, null));
                 }
             }
         }
@@ -87,7 +122,7 @@ internal static class CodingStatistics
             {
                 if (tally.WindowSequences[w] > 0)
                 {
-                    tnsNode.Add(cover(WindowSequences[w], $"{Number(tally.Tns[w])} of {Number(tally.WindowSequences[w])} ({Tenths(tally.Tns[w], tally.WindowSequences[w])}%)",
+                    tnsNode.Add(cover(CodingCategories.WindowSequenceNames[w], $"{Number(tally.Tns[w])} of {Number(tally.WindowSequences[w])} ({Tenths(tally.Tns[w], tally.WindowSequences[w])}%)",
                         Explain.StatTnsWindow, null));
                 }
             }
@@ -125,11 +160,13 @@ internal static class CodingStatistics
 
             AddMaxSfb(statistics, "Max SFB (Long Windows)", tally.MaxSfbLong, cover, Explain.StatMaxSfbLong);
             AddMaxSfb(statistics, "Max SFB (Short Windows)", tally.MaxSfbShort, cover, Explain.StatMaxSfbShort);
-            int common = MostCommon(tally.MaxSfbLong);
-            if (common > 0 && common <= setup.LongBands)
+            if (log.Recorder.Bandwidths.Count > 0)
             {
-                int hertz = (int)Math.Round(setup.LineFrequency(setup.LongOffsets[common]), MidpointRounding.ToEven);
-                statistics.Add(cover("Bandwidth", $"highest coded band ends at about {Number(hertz)} Hz (max_sfb {common})", Explain.StatBandwidth, Topics.Windows));
+                SortedDictionary<int, long> hertz = log.Recorder.Bandwidths;
+                bandwidth = statistics.Add(cover("Coded Bandwidth", null, Explain.StatCodedBandwidth, Topics.CodedBandwidth));
+                bandwidth.Add(cover("Lowest", NodeValue.Integer(hertz.Keys.First(), "Hz"), Explain.BandwidthLowest, null));
+                bandwidth.Add(cover("Most Common", NodeValue.Integer(hertz.MaxBy(b => b.Value).Key, "Hz"), Explain.BandwidthMostCommon, null));
+                bandwidth.Add(cover("Highest", NodeValue.Integer(hertz.Keys.Last(), "Hz"), Explain.BandwidthHighest, null));
             }
 
             Node gain = statistics.Add(cover("Global Gain", null, Explain.StatGlobalGain, null));
@@ -188,6 +225,8 @@ internal static class CodingStatistics
         {
             statistics.Add(cover("Data Stream Elements", $"{Count(tally.Elements[4], "element")}, {Count(tally.DataStreamBytes, "byte")}", Explain.StatDse, Topics.RawDataBlocks));
         }
+
+        return new CodingNodes(windows, sizes, stereo, bandwidth);
     }
 
     private static void AddMaxSfb(Node statistics, string name, long[] counts, Func<string, NodeValue?, string, string?, Node> cover, string description)
@@ -208,20 +247,6 @@ internal static class CodingStatistics
         }
     }
 
-    private static int MostCommon(long[] counts)
-    {
-        int best = -1;
-        for (int i = 0; i < counts.Length; i++)
-        {
-            if (counts[i] > 0 && (best < 0 || counts[i] > counts[best]))
-            {
-                best = i;
-            }
-        }
-
-        return best;
-    }
-
     private static string Share(long part, long whole, string unit) =>
         $"{(part == 1 ? $"1 {unit}" : $"{Number(part)} {unit}s")} ({Tenths(part, whole)}%)";
 
@@ -233,7 +258,7 @@ internal static class CodingStatistics
         return $"{Number(tenths / 10)}.{Number(tenths % 10)}";
     }
 
-    private static long RoundHalfEven(long numerator, long denominator)
+    internal static long RoundHalfEven(long numerator, long denominator)
     {
         if (denominator == 0)
         {
