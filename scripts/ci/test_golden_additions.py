@@ -61,6 +61,11 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(self.check(report(OLD_STATS), new, change), [])
         self.assertTrue(self.check(report(OLD_STATS), new, {"added": change["added"][:1]}))
 
+    def test_a_series_array_that_is_empty_in_both_reports_stays(self):
+        old = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "PCM", "series": []}])
+        change = {"added": [{"scope": "stream", "array": "series", "name": "Coded Bandwidth"}]}
+        self.assertEqual(self.check(old, report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "PCM", "series": []}]), change), [])
+
     def test_an_added_node_shifts_the_paths_of_findings_and_streams(self):
         old = report(OLD_STATS, findings=[{"code": "x", "path": [1, 1, 3]}])
         new = report([node("Frames", value=10), node("Added"), *OLD_STATS[1:]], findings=[{"code": "x", "path": [1, 1, 4]}])
@@ -85,6 +90,25 @@ class CheckTests(unittest.TestCase):
         change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}]}
         self.assertEqual(self.check(report(OLD_STATS), new, change), [])
         self.assertTrue(self.check(report(OLD_STATS), new, {}))
+
+    def test_a_rename_counts_only_where_the_old_report_has_the_old_name_and_the_node_is_an_addition_elsewhere(self):
+        change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],
+                  "added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Coded Bandwidth"},
+                            {"scope": "node", "parent": ["MPEG Audio", "Statistics", "Coded Bandwidth"], "name": "Lowest"}]}
+
+        # Where the old report has Bandwidth, the new node is that one renamed and its new child is an addition.
+        renamed = report([OLD_STATS[0], node("Coded Bandwidth", [node("Lowest", value=1)], value=16000), *OLD_STATS[2:]])
+        self.assertEqual(self.check(report(OLD_STATS), renamed, change), [])
+
+        # Where it has none, the same node is an addition, with its child.
+        without = [OLD_STATS[0], *OLD_STATS[2:]]
+        added = report([OLD_STATS[0], node("Coded Bandwidth", [node("Lowest", value=1)], value=16000), *OLD_STATS[2:]])
+        self.assertEqual(self.check(report(without), added, change), [])
+
+        # Neither is covered by the rename alone, and a node that is not listed as added is not taken for one.
+        self.assertTrue(self.check(report(without), added, {"renamed": change["renamed"]}))
+        self.assertTrue(self.check(report(OLD_STATS), renamed, {"renamed": change["renamed"]}))
+        self.assertTrue(self.check(report(OLD_STATS), renamed, {"added": change["added"][:1]}))
 
     def test_a_move_is_reversed_with_the_path_shift(self):
         old = report(OLD_STATS, findings=[{"code": "x", "path": [1, 1, 3]}])
