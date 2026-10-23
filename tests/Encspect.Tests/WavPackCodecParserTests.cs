@@ -283,6 +283,25 @@ public class WavPackCodecParserTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed");
     }
 
+    // A block the parser cannot take is handed on as unreadable, so the host counts it as not decoded: the samples it would have given are
+    // missing from the decoding, which goes on with the packets after it, and the stream is not verified.
+    [Fact]
+    public void ABlockThatCannotBeRebuiltIsNotDecodedAndTheStreamGoesOn()
+    {
+        List<byte[]> packets = Packets("external-lossless-16-mono.wv");
+        (Report whole, _) = Decode(Container(packets));
+        long total = whole.Streams.Single().Verification!.DecodedSamples;
+
+        byte[] odd = [.. packets[1], 0];
+        (Report report, HashingSink sink) = Decode(Container([packets[0], odd, .. packets.Skip(2)]));
+        StreamVerification verification = report.Streams.Single().Verification!;
+        Assert.Contains(report.Findings, f => f.Code == "wavpack.matroska-block-invalid");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed");
+        Assert.Equal(total - BinaryPrimitives.ReadUInt32LittleEndian(packets[1]), verification.DecodedSamples);
+        Assert.Equal(verification.DecodedSamples, sink.Samples);
+        Assert.NotEqual(true, verification.IsVerified);
+    }
+
     [Fact]
     public void AnythingElseThanPacketsIsNotAnalyzed()
     {

@@ -88,7 +88,7 @@ public class WavPackDecoderFixtureTests
         }
 
         var actual = new SortedDictionary<string, int>(StringComparer.Ordinal);
-        foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "wavpack.audio-crc-mismatch" or "wavpack.md5-mismatch" or "wavpack.md5-needs-correction-file" or "wavpack.md5-group-too-large"))
+        foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "wavpack.audio-crc-mismatch" or "wavpack.md5-mismatch" or "wavpack.md5-needs-correction-file" or "wavpack.md5-set-too-large"))
         {
             actual[finding.Code] = finding.Count;
         }
@@ -188,7 +188,7 @@ public class WavPackDecoderFixtureTests
             }
 
             writer.WriteStartArray("findings");
-            foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "wavpack.audio-crc-mismatch" or "wavpack.md5-mismatch" or "wavpack.md5-needs-correction-file" or "wavpack.md5-group-too-large"))
+            foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "wavpack.audio-crc-mismatch" or "wavpack.md5-mismatch" or "wavpack.md5-needs-correction-file" or "wavpack.md5-set-too-large"))
             {
                 writer.WriteStartObject();
                 writer.WriteString("code", finding.Code);

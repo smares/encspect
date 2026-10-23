@@ -117,6 +117,28 @@ public class VerificationOutputTests
     }
 
     [Fact]
+    public void ALossyStreamWhoseDigestIsOfTheLosslessAudioSaysWhy()
+    {
+        var hybrid = new StreamVerification
+        {
+            Decoding = DecodeStatus.Decoded,
+            IsLossy = true,
+            Checksums = [Tally("block header CRC", ChecksumCoverage.DecodedAudio, 120, 120, all: true), Tally("MD5", ChecksumCoverage.DecodedAudio, 1, 0, all: true)],
+        };
+
+        Assert.Equal("unknown (block header CRC 120 of 120, MD5 not compared: the stream decodes to lossy audio, and the checksum is of the lossless audio)", VerificationText.Describe(hybrid));
+    }
+
+    [Fact]
+    public void AHybridWavPackFileWithAnMd5SaysItNeedsTheCorrectionFile()
+    {
+        Report report = Analyzer.CreateDefault().Analyze("hybrid.wv", File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "external-hybrid-b4-md5.wv")), new AnalysisOptions { Decoding = new DecodeOptions() });
+        string text = VerificationText.Describe(report.Streams.Single().Verification!);
+        Assert.Contains("MD5 not compared: the stream decodes to lossy audio, and the checksum is of the lossless audio", text);
+        Assert.DoesNotContain("incomplete", text);
+    }
+
+    [Fact]
     public void AStreamWithoutVerificationGetsNoLine()
     {
         Assert.DoesNotContain("Verified", Text(ReportWith((StreamVerification?)null)));

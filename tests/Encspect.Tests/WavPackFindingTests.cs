@@ -38,24 +38,9 @@ public class WavPackFindingTests
     // Findings that decoding raises, and the crafted file that raises each.
     private static readonly Dictionary<string, Func<byte[]>> DecodedCrafts = new()
     {
-        // A set of 100 mono blocks of 196,607 samples each holds more samples over its channels than the decoder keeps at once (2^24).
-        ["wavpack.md5-group-too-large"] = () =>
-        {
-            byte[] block = WavPackBuilder.Blocks("external-lossless-16-mono.wv")[0];
-            byte[] info = WavPackBuilder.Sub(0x0D, [99, 99, 0, 0, 0, 0]);
-            var blocks = new List<byte[]>();
-            for (int i = 0; i < 100; i++)
-            {
-                byte[] copy = [.. block[..32], .. (i == 0 ? info : []), .. WavPackBuilder.Sub(0x0A, new byte[16]), .. WavPackBuilder.Sub(0x2F, new byte[4])];
-                BinaryPrimitives.WriteUInt32LittleEndian(copy.AsSpan(20), 196_607);
-                BinaryPrimitives.WriteUInt32LittleEndian(copy.AsSpan(12), uint.MaxValue);
-                uint flags = 0x14BC1805u & ~0x1800u | (i == 0 ? 0x800u : 0) | (i == 99 ? 0x1000u : 0);
-                BinaryPrimitives.WriteUInt32LittleEndian(copy.AsSpan(24), flags);
-                blocks.Add(WavPackBuilder.Join(copy, WavPackBuilder.Parts(copy)));
-            }
-
-            return WavPackBuilder.Concat(blocks);
-        },
+        // A set of 100 mono blocks of 196,607 samples each holds more samples over its channels than the decoder keeps at once (2^24), and
+        // the MD5 block that ends the file gives the finding its node.
+        ["wavpack.md5-set-too-large"] = () => OversizedSet(hasMd5: true),
     };
 
     // Findings of the codec parser for the packets of a container, and the packets that raise each.
@@ -70,6 +55,66 @@ public class WavPackFindingTests
         },
         ["wavpack.payload-not-analyzed"] = () => [.. "PKTS"u8, 0xFF, 0xFF, .. new byte[100]],
     };
+
+    private static byte[] OversizedSet(bool hasMd5)
+    {
+        byte[] block = WavPackBuilder.Blocks("external-lossless-16-mono.wv")[0];
+        byte[] info = WavPackBuilder.Sub(0x0D, [99, 99, 0, 0, 0, 0]);
+        var blocks = new List<byte[]>();
+        for (int i = 0; i < 100; i++)
+        {
+            byte[] copy = [.. block[..32], .. (i == 0 ? info : []), .. WavPackBuilder.Sub(0x0A, new byte[16]), .. WavPackBuilder.Sub(0x2F, new byte[4])];
+            BinaryPrimitives.WriteUInt32LittleEndian(copy.AsSpan(20), 196_607);
+            BinaryPrimitives.WriteUInt32LittleEndian(copy.AsSpan(12), uint.MaxValue);
+            uint flags = 0x14BC1805u & ~0x1800u | (i == 0 ? 0x800u : 0) | (i == 99 ? 0x1000u : 0);
+            BinaryPrimitives.WriteUInt32LittleEndian(copy.AsSpan(24), flags);
+            blocks.Add(WavPackBuilder.Join(copy, WavPackBuilder.Parts(copy)));
+        }
+
+        if (hasMd5)
+        {
+            byte[] last = [.. block[..32]];
+            BinaryPrimitives.WriteUInt32LittleEndian(last.AsSpan(20), 0);
+            BinaryPrimitives.WriteUInt32LittleEndian(last.AsSpan(24), 0);
+            blocks.Add(WavPackBuilder.Join(last, [WavPackBuilder.Sub(0x26, new byte[16])]));
+        }
+
+        return WavPackBuilder.Concat(blocks);
+    }
+
+    [Fact]
+    public void TheOversizedSetFindingPointsToTheMd5AndNeedsOne()
+    {
+        var options = new AnalysisOptions { Decoding = new DecodeOptions() };
+        Report with = Analyzer.CreateDefault().Analyze("crafted.wv", new MemoryStream(OversizedSet(hasMd5: true)), options);
+        Finding finding = Assert.Single(with.Findings, f => f.Code == "wavpack.md5-set-too-large");
+        Assert.Equal("MD5 Checksum", finding.Node!.Name);
+        Assert.NotNull(finding.Path);
+
+        Report without = Analyzer.CreateDefault().Analyze("crafted.wv", new MemoryStream(OversizedSet(hasMd5: false)), options);
+        Assert.DoesNotContain(without.Findings, f => f.Code == "wavpack.md5-set-too-large");
+    }
+
+    // The blocks past the first 4,096 are not detailed, but the MD5 sub-block comes last: the 64 blocks without audio past the cap that
+    // are detailed are what lets the finding of a digest that differs resolve to a node.
+    [Fact]
+    public void TheMd5AfterMoreThanTheDetailedBlocksStillGetsItsFinding()
+    {
+        List<byte[]> blocks = WavPackBuilder.Blocks("external-lossless-16-mono-md5.wv");
+        byte[] last = blocks[^1];
+        int function = WavPackBuilder.Parts(last).Select(WavPackBuilder.Function).First(f => f is 0x26 or 0x29);
+        byte[] changed = WavPackBuilder.Replace(last, function, WavPackBuilder.Sub(function, new byte[16]));
+        byte[] filler = WavPackBuilder.Join(last, []);
+        byte[] data = WavPackBuilder.Concat([.. blocks[..^1], .. Enumerable.Repeat(filler, 5_000), changed]);
+
+        Report report = Analyzer.CreateDefault().Analyze("many.wv", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wavpack.md5-mismatch");
+        Assert.NotNull(finding.Path);
+        Assert.Equal("MD5 Checksum", finding.Node!.Name);
+        Assert.False(report.Streams.Single().Verification!.IsVerified);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
 
     public static TheoryData<string> Codes => [.. Crafts.Keys.Order(StringComparer.Ordinal)];
 
