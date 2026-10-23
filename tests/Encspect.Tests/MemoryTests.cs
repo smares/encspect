@@ -996,6 +996,33 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // The decoding of a WavPack file holds its decorrelation and entropy state for the block at hand, the planes of the set, the MD5's state
+    // and the findings it counts, so what it holds above the heap the analysis starts and ends with does not grow with the blocks, measured as
+    // the FLAC test above does (MeasureExcess at 50,000 and 200,000 blocks, less the same growth without decoding). The blocks of
+    // WavPackTinyBlocks end before their samples do, so each is muted and fails its CRC, which exercises the whole of the decoder's work.
+    [Fact]
+    public void DecodingManyWavPackBlocksHoldsNothingPerBlock()
+    {
+        const int fewer = 50_000;
+        const int blocks = 200_000;
+        var options = new AnalysisOptions { Decoding = new DecodeOptions() };
+        byte[] warmUp = WavPackTinyBlocks(100);
+
+        (_, long fewerKept, long fewerExcess, string fewerWhere) = MeasureExcess("blocks.wv", WavPackTinyBlocks(fewer), warmUp, options);
+        (Report decoded, long kept, long excess, string where) = MeasureExcess("blocks.wv", WavPackTinyBlocks(blocks), warmUp, options);
+        (_, _, long plainFewerExcess, string plainFewerWhere) = MeasureExcess("blocks.wv", WavPackTinyBlocks(fewer), warmUp);
+        (Report plain, long plainKept, long plainExcess, string plainWhere) = MeasureExcess("blocks.wv", WavPackTinyBlocks(blocks), warmUp);
+
+        Assert.Equal(blocks * 128L, decoded.Streams.Single().Verification!.DecodedSamples);
+        double excessPerBlock = (excess - fewerExcess) / (double)(blocks - fewer);
+        double plainPerBlock = (plainExcess - plainFewerExcess) / (double)(blocks - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the start and end: {fewerExcess} and {excess} with decoding ({Hundredths(excessPerBlock)} per further block), {plainFewerExcess} and {plainExcess} without ({Hundredths(plainPerBlock)}); {fewerWhere} {where} {plainFewerWhere} {plainWhere}");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)blocks:F2} bytes more per block.");
+        Assert.True(excessPerBlock - plainPerBlock < DecodingFrameBound, $"Decoding held {excessPerBlock - plainPerBlock:F2} more bytes per further block than the analysis starts and ends with. {RuntimeSettings()}");
+        GC.KeepAlive(plain);
+        GC.KeepAlive(decoded);
+    }
+
     // A block of up to 1 MiB with a sub-block for every two bytes lists the first 1,024 and counts the rest.
     [Fact]
     public void ManyWavPackSubBlocksAreBounded()

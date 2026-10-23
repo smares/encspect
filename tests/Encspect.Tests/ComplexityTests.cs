@@ -258,6 +258,33 @@ public class ComplexityTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
     }
 
+    // Mono blocks of 196,607 samples (the most a block may state) whose bitstream is 16 bytes: 6,000 of them state 1.2 billion samples. Each block ends
+    // before its samples do and is muted, so the decoding costs by the bytes, not by the samples they state; it must finish in seconds without an exception.
+    [Fact]
+    public void WavPackBlocksThatStateMoreSamplesThanTheyCode()
+    {
+        byte[] block = WavPackBuilder.Blocks("external-lossless-16-mono.wv")[0];
+        var blocks = new List<byte[]>();
+        for (int i = 0; i < 6_000; i++)
+        {
+            byte[] copy = [.. block[..32], .. (i == 0 ? WavPackBuilder.Sub(0x0D, [99, 99, 0, 0, 0, 0]) : []), .. WavPackBuilder.Sub(0x0A, new byte[16]), .. WavPackBuilder.Sub(0x2F, new byte[4])];
+            BinaryPrimitives.WriteUInt32LittleEndian(copy.AsSpan(20), 196_607);
+            BinaryPrimitives.WriteUInt32LittleEndian(copy.AsSpan(12), (uint)(i * 196_607L));
+            uint flags = 0x14BC1805u | 0x1800u;
+            BinaryPrimitives.WriteUInt32LittleEndian(copy.AsSpan(24), flags);
+            blocks.Add(WavPackBuilder.Join(copy, WavPackBuilder.Parts(copy)));
+        }
+
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 64L << 20 } };
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("states.wv", new MemoryStream(WavPackBuilder.Concat(blocks)), options);
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.NotNull(report.Streams.Single().Verification);
+    }
+
     // Core frame headers every 96 bytes (the smallest frame) that state 16 KiB frames: each is a candidate whose chain the
     // scan looks for 16 KiB on, and finds none; the time must stay linear in the data.
     [Fact]
