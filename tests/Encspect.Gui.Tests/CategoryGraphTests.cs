@@ -374,6 +374,38 @@ public class CategoryGraphTests
         Assert.Single(entries[1].Forms);
     }
 
+    // Smoothed is a form of the long series only; an entry without it takes Over Time, the form it smooths.
+    [Fact]
+    public void The_smoothed_form_carries_to_an_entry_without_it_as_over_time()
+    {
+        CategorySeries Long(int seconds)
+        {
+            var builder = new CategorySeriesBuilder("Stereo Coding", CategoryTestData.Numbered("Mode", 2), "frame", 1);
+            for (int unit = 0; unit < seconds * 4; unit++)
+            {
+                builder.Add((byte)(unit / 4 % 2));
+            }
+
+            return builder.Build(Enumerable.Range(0, seconds * 4).Select(i => i * 100.0).ToArray(), null, null, "d.", null, new TimeIndex(Enumerable.Range(0, seconds).Select(i => (double)i).ToArray(), Enumerable.Range(0, seconds).Select(i => i * 4).ToArray()));
+        }
+
+        GraphChoice Entry(CategorySeries series) => new(series.Name, "Stereo Coding", null, [.. CategoryGraph.FormsOf(series).Select(f => new GraphFormChoice(f, f.ToString(), "d", new CategoryGraph(series, f)))]);
+
+        GraphChoice longEntry = Entry(Long(40));
+        GraphChoice shortEntry = Entry(Long(10));
+        GraphChoice frameOnly = new("Bitrate", "Bit Distribution", null, [new GraphFormChoice(GraphForm.Frames, "Per Frame", "d", new CategoryGraph(Long(10), GraphForm.Frames))]);
+
+        Assert.True(longEntry.SelectForm(GraphForm.Smoothed));
+        Assert.Equal(GraphForm.Smoothed, longEntry.Form.Kind);
+        Assert.False(shortEntry.SelectForm(GraphForm.Smoothed));
+        Assert.Equal(GraphForm.OverTime, shortEntry.Form.Kind);
+        Assert.True(shortEntry.SelectForm(GraphForm.Frames));
+        Assert.True(shortEntry.SelectForm(GraphForm.Smoothed));
+        Assert.Equal(GraphForm.OverTime, shortEntry.Form.Kind);
+        Assert.False(frameOnly.SelectForm(GraphForm.Smoothed));
+        Assert.Equal(GraphForm.Frames, frameOnly.Form.Kind);
+    }
+
     [Fact]
     public void An_entry_chosen_in_a_form_keeps_the_form_for_the_next_entry_and_marks_the_frame_in_it()
     {

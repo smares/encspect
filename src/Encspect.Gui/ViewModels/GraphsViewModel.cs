@@ -63,10 +63,13 @@ public sealed class GraphChoice : ObservableObject
         internal set => Set(ref _isSelected, value);
     }
 
-    // Draws the entry in the form of that kind, or keeps the one it has where it has none; returns whether it changed.
+    // Draws the entry in the form of that kind, or keeps the one it has where it has none; returns whether it changed. An entry
+    // that has no smoothed form takes the form it smooths, Over Time, so that the choice carries from a long series to a short
+    // one or to a quantity.
     internal bool SelectForm(GraphForm kind)
     {
-        GraphFormChoice? choice = Forms.FirstOrDefault(f => f.Kind == kind);
+        GraphFormChoice? choice = Forms.FirstOrDefault(f => f.Kind == kind)
+            ?? (kind == GraphForm.Smoothed ? Forms.FirstOrDefault(f => f.Kind == GraphForm.OverTime) : null);
         if (choice is null || choice == _form)
         {
             return false;
@@ -231,11 +234,13 @@ public sealed class GraphsViewModel : ObservableObject
             GraphFormChoice[] forms = [.. CategoryGraph.FormsOf(series).Select(f => new GraphFormChoice(f, f switch
             {
                 GraphForm.OverTime => "Over Time",
+                GraphForm.Smoothed => "Smoothed",
                 GraphForm.Frames => "Frames",
                 _ => "Summary",
             }, f switch
             {
-                GraphForm.OverTime => "The share of each category in every second of the stream",
+                GraphForm.OverTime => "The share of each category in every second of the stream, as a stacked area with the largest category at the bottom",
+                GraphForm.Smoothed => "The same area with each second averaged with the two seconds on either side",
                 GraphForm.Frames => "The category of every frame, one cell each",
                 _ => "The count and share of each category over the whole stream",
             }, new CategoryGraph(series, f) { Duration = stream.Duration }))];
@@ -372,6 +377,7 @@ public sealed class GraphsViewModel : ObservableObject
         {
             return;
         }
+
 
         _preferredForm = kind;
         if (entry.SelectForm(kind))

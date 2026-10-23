@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using Encspect.Core;
+using Encspect.Gui.ViewModels;
 
 namespace Encspect.Gui.Views;
 
@@ -27,7 +28,18 @@ public static class CategoryColors
     // The muted step is a mix of 0.7 of the hue with the surface, which passes the validator in both modes (docs/gui.md).
     private const double MutedShare = 0.7;
 
-    public static CategoryStyle[] For(CategorySeries series, bool isDark, Color surface)
+    public static CategoryStyle[] For(CategorySeries series, bool isDark, Color surface) => For(series, isDark, surface, null);
+
+    // The colors of the over-time charts: the palette's slots go to the categories in the order of the stack, so that the
+    // bottom layer, the largest, is the muted first hue and the rarer layers above it stand out in full colors. A series of
+    // a ramp keeps its ramp by category, since its steps say the order of the categories.
+    public static CategoryStyle[] ForStack(CategorySeries series, bool isDark, Color surface)
+    {
+        ArgumentNullException.ThrowIfNull(series);
+        return For(series, isDark, surface, series.IsOrdered ? null : CategoryColumns.StackOrder(series));
+    }
+
+    private static CategoryStyle[] For(CategorySeries series, bool isDark, Color surface, int[]? order)
     {
         ArgumentNullException.ThrowIfNull(series);
 
@@ -37,7 +49,7 @@ public static class CategoryColors
         var styles = new CategoryStyle[series.Categories.Count];
         int slot = 0;
         int rampSize = Math.Min(RampSteps, series.Categories.Count(c => !c.IsReserved));
-        for (int i = 0; i < styles.Length; i++)
+        foreach (int i in order ?? [.. Enumerable.Range(0, styles.Length)])
         {
             if (series.Categories[i].IsReserved)
             {
@@ -71,6 +83,30 @@ public static class CategoryColors
         return t < 0.5
             ? Mix(hue, Colors.White, 0.4 + (0.6 * (t / 0.5)))
             : Mix(hue, Colors.Black, 1 - (0.45 * ((t - 0.5) / 0.5)));
+    }
+
+    // The text color for a label on a background: black or white, whichever has the higher contrast ratio, which is at least
+    // 4.58 : 1 on any color.
+    public static Color Readable(Color background) =>
+        ContrastRatio(Colors.Black, background) >= ContrastRatio(Colors.White, background) ? Colors.Black : Colors.White;
+
+    // The WCAG contrast ratio of two colors, 1 to 21.
+    public static double ContrastRatio(Color a, Color b)
+    {
+        double la = Luminance(a);
+        double lb = Luminance(b);
+        return (Math.Max(la, lb) + 0.05) / (Math.Min(la, lb) + 0.05);
+    }
+
+    private static double Luminance(Color color)
+    {
+        static double Linear(byte channel)
+        {
+            double c = channel / 255.0;
+            return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
+        }
+
+        return (0.2126 * Linear(color.R)) + (0.7152 * Linear(color.G)) + (0.0722 * Linear(color.B));
     }
 
     // amount of the color, the rest of the background.
