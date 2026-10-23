@@ -107,6 +107,10 @@ internal enum BlockStatus : ushort
 
     // A skipped run that starts a block header the data ends in.
     CutHeader = 0x400,
+
+    // The block holds something libwavpack's decoder refuses (a sub-block of a size or content it does not take, no bitstream of
+    // its kind, flags it does not decode), so the block is not decoded; the findings tell what.
+    Refused = 0x800,
 }
 
 // A block, or a run of bytes between blocks that hold none, in 64 bytes.

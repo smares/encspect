@@ -17,16 +17,8 @@ internal static partial class Summary
     {
         long start = s.Source.Start;
         long end = s.Source.End;
-        Node? stream = null;
-        Node Stream() => stream!;
-        Records records = s.Records;
-        List<Node> leading = s.Leading;
-        stream = new Node("WavPack", start, end - start, null, () => new BlockedChildren(leading, records.Entries.Count, i => EntryNode(records, i)))
-        {
-            Kind = NodeKind.Stream,
-            Description = Explain.Stream,
-            Topic = Topics.Blocks,
-        };
+        Node stream = s.Stream;
+        Node Stream() => stream;
         context.Root.Add(stream);
         Checks(s, Stream);
         Node Cover(string name, NodeValue? value, string description, string? topic = null) =>
@@ -52,6 +44,21 @@ internal static partial class Summary
         }
 
         s.Findings.Flush(context);
+    }
+
+    // The stream's node, built before the blocks are read so the decoding session can point findings at it.
+    public static Node StreamNode(State s)
+    {
+        long start = s.Source.Start;
+        long end = s.Source.End;
+        Records records = s.Records;
+        List<Node> leading = s.Leading;
+        return new Node("WavPack", start, end - start, null, () => new BlockedChildren(leading, records.Entries.Count, i => EntryNode(records, i)))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Stream,
+            Topic = Topics.Blocks,
+        };
     }
 
     // Audio blocks without a bitstream of their own that hold correction data or extra bits are a
@@ -302,7 +309,7 @@ internal static partial class Summary
 
         if (s.Md5 is { } md5)
         {
-            statistics.Add(cover("MD5 Checksum", md5.Value, Explain.StatMd5, Topics.Wrapper));
+            statistics.Add(cover("MD5 Checksum", md5.Value, Explain.StatMd5, Topics.AudioChecksums));
         }
 
         if (s.HasNewConfig)
@@ -348,6 +355,7 @@ internal static partial class Summary
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
             Series = s.Figures?.Series(anchor, s.Cancellation) ?? [],
+            Verification = s.Feed.Finish(s, isCorrection),
         };
     }
 

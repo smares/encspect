@@ -114,11 +114,24 @@ internal static partial class Nodes
         });
         header.Add("Block Samples", o + 20, 4, NodeValue.Integer(h.Samples, "samples", "sample"), h.HasAudio ? Explain.BlockSamples : Explain.BlockSamplesZero, Topics.Blocks);
         header.Add(FlagsNode(h, o + 24));
-        header.Add("CRC", o + 28, 4, NodeValue.Hex(h.Crc, 8), Explain.BlockCrc, Topics.Crc);
+        header.Add(BlockCrc(o, h.Crc));
         return header;
     }
 
-    private static Node FlagsNode(in BlockHeader h, long offset)
+    // The CRC field of the header of the block at this offset; the decoder points its findings at an equal node.
+    internal static Node BlockCrc(long blockOffset, uint crc) =>
+        new("CRC", blockOffset + 28, 4, NodeValue.Hex(crc, 8)) { Description = Explain.BlockCrc, Topic = Topics.AudioChecksums };
+
+    // The same for a block the decoder holds: a block in a file has its header in the file, one that a container stores without its header
+    // (the bytes are not the file's) has the CRC in the 4 bytes after the flags, at the start of its range.
+    internal static Node BlockCrc(MappedBytes block, uint crc) =>
+        block.IsOpaque ? new Node("CRC", block.FileStart + 4, 4, NodeValue.Hex(crc, 8)) { Description = Explain.BlockCrc, Topic = Topics.AudioChecksums } : BlockCrc(block.FileStart, crc);
+
+    // A sub-block as a node without its fields, for the list of a block whose bytes the report does not detail.
+    internal static Node SubBlockSummary(long offset, int length, int function, int dataLength) =>
+        new(SubBlockIds.Name(function), offset, length, NodeValue.Integer(dataLength, "bytes", "byte")) { Description = Explain.SubBlock(function), Topic = TopicOf(function) };
+
+    internal static Node FlagsNode(in BlockHeader h, long offset)
     {
         uint f = h.Flags;
         var flags = new Node("Flags", offset, 4, NodeValue.Hex(f, 8)) { Description = Explain.Flags, Topic = Topics.Blocks };
@@ -166,13 +179,14 @@ internal static partial class Nodes
 
     private static string TopicOf(int function) => function switch
     {
-        SubBlockIds.DecorrTerms or SubBlockIds.DecorrWeights or SubBlockIds.DecorrSamples or SubBlockIds.EntropyVars => Topics.Decorrelation,
+        SubBlockIds.DecorrTerms or SubBlockIds.DecorrWeights or SubBlockIds.DecorrSamples => Topics.Decorrelation,
+        SubBlockIds.EntropyVars => Topics.EntropyCoding,
         SubBlockIds.HybridProfile or SubBlockIds.ShapingWeights => Topics.Hybrid,
         SubBlockIds.WvcBitstream => Topics.Hybrid,
         SubBlockIds.FloatInfo or SubBlockIds.Int32Info or SubBlockIds.WvxBitstream => Topics.FloatAndLargeIntegers,
         SubBlockIds.DsdBlock => Topics.Dsd,
-        SubBlockIds.RiffHeader or SubBlockIds.RiffTrailer or SubBlockIds.AltHeader or SubBlockIds.AltTrailer or SubBlockIds.Md5Checksum
-            or SubBlockIds.AltMd5Checksum or SubBlockIds.AltExtension or SubBlockIds.NewConfigBlock => Topics.Wrapper,
+        SubBlockIds.Md5Checksum or SubBlockIds.AltMd5Checksum => Topics.AudioChecksums,
+        SubBlockIds.RiffHeader or SubBlockIds.RiffTrailer or SubBlockIds.AltHeader or SubBlockIds.AltTrailer or SubBlockIds.AltExtension or SubBlockIds.NewConfigBlock => Topics.Wrapper,
         SubBlockIds.BlockChecksum => Topics.Crc,
         _ => Topics.SubBlocks,
     };
