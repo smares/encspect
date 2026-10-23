@@ -1,6 +1,7 @@
 # Coding graphs: per-frame coding choices and stream summaries
 
 Status: approved by the project lead on 2026-10-22, after two independent reviews, with four changes: dual channel is its own entry of "Stereo Coding" (decision 4), a "Channel Bit Share" series for MPEG (decision 6), the same concepts graphed in every format under the same headings (decision 8), and the real reason AAC and AC-3 record while reading (decision 3). The contract step (rollout step 1) is built, as [As built](#as-built-the-contract-step) says, and so are MPEG audio, the reference (step 2: [As built](#as-built-the-mpeg-step)), and AAC (step 3: [As built](#as-built-aac)); the other formats are not. On 2026-10-23 the lead added FLAC, Monkey's Audio, TTA and WAV and AIFF to wave 2 (decision 11); their survey is under [FLAC](#flac), [Monkey's Audio](#monkeys-audio), [TTA](#tta) and [WAV and AIFF](#wav-and-aiff), and the lead approved the "Prediction" heading they bring and "side/right" as FLAC's name everywhere (decision 12). The decisions are collected under [Decisions](#decisions), and claims that no source read for this design confirms are marked **unverified**.
+
 ## As built: the contract step
 
 Where the contract step differs from, or adds to, what is written below:
