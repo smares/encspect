@@ -1,6 +1,6 @@
 # Decoders: the contract for phase 3
 
-Status: approved by the project lead on 2026-10-22, after two independent reviews, with decoders inside their format projects (decision 1). Step 1 of the [rollout](#rollout), the contract, is implemented (see [As built in step 1](#as-built-in-step-1)); the FLAC decoder (step 2) and the WavPack decoder (step 3) are built (see [step 2](#as-built-in-step-2) and [step 3](#as-built-in-step-3-wavpack)). The decisions are collected under [Decisions](#decisions), and the few claims that no source read for this design confirms are marked **unverified**.
+Status: approved by the project lead on 2026-10-22, after two independent reviews, with decoders inside their format projects (decision 1). Step 1 of the [rollout](#rollout), the contract, is implemented (see [As built in step 1](#as-built-in-step-1)); the FLAC decoder (step 2) and the WavPack decoder (step 3) are built (see [step 2](#as-built-in-step-2) and [step 3](#as-built-in-step-3-wavpack)). The project lead changed decision 8 on 2026-10-23: the budget counts the work decoding takes instead of the PCM it produces. [Work instead of samples](#work-instead-of-samples) is the draft of that change, for the lead's review; it is not built. The decisions are collected under [Decisions](#decisions), and the few claims that no source read for this design confirms are marked **unverified**.
 
 ## Scope
 
@@ -262,7 +262,8 @@ public interface IFrameDecoder
     // Decodes one frame, checks what the frame stores about its decoded audio (a Monkey's Audio frame CRC), and returns
     // the samples per channel by which the stream's decoded output advanced: 0 for a frame it could not decode, 0 for
     // the blocks of a WavPack set before its final block and the set's samples on that block, and for a WMA Lossless
-    // packet the samples of the frames that end in it. The frame's bytes are valid only during the call.
+    // packet the samples of the frames that end in it. It charges its work (DecodeContext.AddWork) before it does it.
+    // The frame's bytes are valid only during the call.
     int Decode(in CodedFrame frame);
 
     // Ends the stream: compares the checksums over the whole stream (FLAC's MD5) where end.IsComplete, and returns what it
@@ -286,8 +287,8 @@ public sealed record DecodeSetup
 
     public required int Channels { get; init; }
 
-    // The width of a sample in the canonical layout's terms: ceil(BitsPerSample / 8) bytes count toward the budget. For
-    // DSD, 8, with one byte of DSD per channel as one sample.
+    // The width of a sample, which the canonical layout writes in ceil(BitsPerSample / 8) bytes. For DSD, 8, with one
+    // byte of DSD per channel as one sample.
     public required int BitsPerSample { get; init; }
 
     // The samples per channel the parser counts in the stream, or null where it cannot tell.
@@ -338,13 +339,18 @@ public sealed class DecodeContext
 {
     public DecodeSetup Setup { get; }
 
-    // The analysis's token: canceling throws OperationCanceledException. The host checks it between frames; a decoder
-    // whose single frame can take more than about 100 ms (Monkey's Audio at its highest levels) checks it every few
-    // thousand samples inside the frame.
+    // The analysis's token, linked with the decoding's own stop (the work budget, DecodeOptions.Stop): canceling throws
+    // OperationCanceledException, and the host tells which one it was. The host checks it between frames; a decoder
+    // whose single frame can be charged more than 2^27 work units (Monkey's Audio at its highest levels) checks it every
+    // few thousand samples inside the frame.
     public CancellationToken CancellationToken { get; }
 
     // The buffers the session lent the parser for the frame being decoded, where its CodedFrame.IsWalked; empty otherwise.
     public SampleBuffers LentBuffers { get; }
+
+    // Charges work units to the analysis's work budget (see "Work instead of samples"), before the work is done: at
+    // least once per frame, and per chunk inside a frame that is checked inside. Negative units throw.
+    public void AddWork(long units);
 
     // Findings on the parser's nodes or on equal ones; findings of one kind are reported once per stream with a count.
     public void AddFinding(Severity severity, string code, string message, Node? node = null, int count = 1);
@@ -534,14 +540,14 @@ FLAC exercises the simplest flow. The flows of WavPack and TrueHD, walked throug
 WavPack:
 
 - **Units:** one `CodedFrame` per block. The blocks of one set, from the block with the initial flag to the one with the final flag, carry the channels of the same samples; the decoder reads the flags with the parser's code and keeps the set's samples until its final block, then writes one `PcmBlock`.
-- **Samples:** `Decode` returns 0 for the blocks before a set's final block and the set's samples on the final one, so `DecodedSamples` and the budget count each sample once, not once per block.
+- **Samples:** `Decode` returns 0 for the blocks before a set's final block and the set's samples on the final one, so `DecodedSamples` counts each sample once, not once per block; the work budget counts the work of every block as it is decoded.
 - **State:** none from set to set beyond the decoder's configuration.
 - **Declared checksums:**
   - the block checksum sub-block (coded data, every block that has one; the parser compares it today);
   - the block header CRC (decoded audio, one per audio block, `CoversAllAudio` where the stream has no gap and its samples equal the total the first block states);
   - the extended CRC (decoded audio, one per block with an extra bitstream);
   - the MD5 (decoded audio, 0 or 1 stored, `ID_MD5_CHECKSUM` or `ID_ALT_MD5_CHECKSUM`).
-- **DSD:** the decoder never calls `DeclareOutput`; `Decode` returns the DSD bytes per channel, which count toward the budget at 8 bits.
+- **DSD:** the decoder never calls `DeclareOutput`; `Decode` returns the DSD bytes per channel, which the decoder charges as samples (see [Work instead of samples](#work-instead-of-samples)).
 - **A set past the ceiling** (below): its blocks are decoded one at a time and their CRCs compared, and the MD5 is not, with `wavpack.md5-set-too-large`.
 - **Hybrid files:**
   - The main file decodes to the lossy samples, the stream the report describes, and their header CRCs are compared; the CRC covers all of that lossy stream (`CoversAllAudio` as above).
@@ -739,7 +745,7 @@ Every code follows the plan's severity rules: a stored checksum that differs is 
 | `decode.no-decoder` | Info | the stream | decoding was asked for and no decoder has the stream's codec ID |
 | `decode.not-possible` | Info | the stream | the decoder refused the configuration or the stream cannot be decoded alone; the message says why |
 | `decode.stopped` | Info | the stream | the front end stopped decoding; the message says how many frames were decoded |
-| `decode.limit` | Info | the stream | the analysis's PCM budget ran out (below) |
+| `decode.limit` | Info | the stream | the analysis's work budget ran out (see [Work instead of samples](#work-instead-of-samples)) |
 | `decode.failed` | Error | the stream | any other exception from the decoder, or results that name no declared checksum or compare more values than are stored: a bug, never an acceptable result, like `parse.failed`; that stream's decoding stops and its decoder results are dropped |
 
 - The decoder builds the node of a mismatch with its parser's node factories, equal in name, offset and length to the one the parser builds, so the host resolves its path as for any finding.
@@ -771,10 +777,12 @@ Every code follows the plan's severity rules: a stored checksum that differs is 
 ### Cost
 
 - Decoding reads every coded bit into buffers and writes every sample. The structure pass of a format that walks its entropy-coded data (FLAC, ALAC, TrueHD) does the first half already (see [The second entropy pass](#the-second-entropy-pass)).
-- Decoding time grows with the samples decoded, with a constant per coding:
+- Decoding time grows with the samples decoded, times a cost per sample that the coding and its settings set, and that differs between codings tenfold and more:
   - FLAC's predictor uses at most 32 coefficients a sample;
+  - WavPack runs up to 16 decorrelation passes over every sample; its crafted worst case decodes about 22 MB/s of 16-bit PCM (see [As built in step 3](#as-built-in-step-3-wavpack));
   - Monkey's Audio's highest level about 1,550 filter taps per sample of each channel (16 + 256 + 1,280, `apedec.c` 81-87), so it decodes far slower than FLAC, and its filters need `System.Numerics.Vector`.
 - Step 1's prototype measured FLAC: the decoder alone, without the structure walk, runs at 340 to 610 times real time on the build machine's one thread (see [The second entropy pass](#the-second-entropy-pass)). The real decoder's figures, and Monkey's Audio's, come with the steps that build them and are recorded in the plan.
+- So the budget counts that cost, which each decoder reports, and not the samples (see [Work instead of samples](#work-instead-of-samples)).
 
 ### Defaults and how a front end asks
 
@@ -798,9 +806,9 @@ public sealed class DecodeOptions
     // only checks.
     public Func<DecodedStream, IPcmSink?>? Output { get; init; }
 
-    // The analysis's PCM budget in bytes of the canonical layout; null for the default (below). Tests and the fuzzer
-    // lower it. An option of the call, not a setting.
-    public long? MaxPcmBytes { get; init; }
+    // The analysis's work budget in work units; null for the default (see "Work instead of samples"). Tests and the
+    // fuzzer lower it. An option of the call, not a setting.
+    public long? MaxWork { get; init; }
 }
 
 public sealed record DecodedStream(string CodecId, Node Stream, PcmFormat Format);
@@ -816,7 +824,7 @@ public sealed record DecodedStream(string CodecId, Node Stream, PcmFormat Format
 ### Cancellation, progress and partial results
 
 - Decoding runs in the structure pass, so `AnalysisOptions.BytesRead` reports its progress as it does now; it just moves slower.
-- `AnalysisOptions.CancellationToken` cancels everything, as now. `DecodeOptions.Stop` ends every open session at the next frame; the parse carries on to the end without decoding.
+- `AnalysisOptions.CancellationToken` cancels everything, as now. `DecodeOptions.Stop` ends every open session at the decoder's next check of its token (inside a frame for the decoders that check there, else at the next frame); the parse carries on to the end without decoding.
 - A stopped session keeps what it found: a frame CRC that failed stays reported, the tallies count what was compared, and the whole-stream checksums say "not compared". The stream's `Decoding` is `Stopped`.
 
 ### Ranges
@@ -871,13 +879,204 @@ Exceptions from the front end, which run inside the parser's call stack, never t
   - TrueHD: `MAX_FIR_ORDER` 8, `MAX_IIR_ORDER` 4, `MAX_MATRICES` 8;
   - WavPack: 16 decorrelation terms.
 - **Amplification:** a 49-byte FLAC frame codes more than 2 MB of PCM (RFC 9639, section 11), so 100 MB of such frames code about 4.3 TB.
-- **The budget:** the host counts the PCM bytes all sessions of an analysis decode, in the canonical layout (`ceil(bits / 8)` bytes a sample, from `DecodeSetup.BitsPerSample` and what `Decode` returns), whether or not a sink takes them. Once they pass the larger of 16 GiB and 256 times the file's size, it stops every session with `decode.limit`; `DecodeOptions.MaxPcmBytes` replaces that bound.
-- What the budget allows:
-  - An hour of 8 channels of 24 bits at 192 kHz is 16.59 GB in 3-byte samples and fits under the 16 GiB (17.18 GB).
-  - Music coded losslessly gives a few bytes of PCM per coded byte, far below 256 (not measured here).
-  - A crafted file of 100 MB stops after 25.6 GB of PCM, about 43 seconds of MD5 at an estimated 600 MB/s, instead of hours.
-- **Decision:** these two numbers, to be tuned once measured. The alternative is no bound in the library, leaving the front ends' Stop as the only one.
-- **Per-frame time:** a frame's work is bounded by the format's largest frame times its per-sample constant, so the host's check between frames bounds the latency of cancellation; Monkey's Audio checks inside its frames.
+- **The budget:** the host counts the work all sessions of an analysis charge, in work units that each decoder reports per frame (`DecodeContext.AddWork`), whether or not a sink takes the PCM. Once it passes the larger of 2^35 units and 2,048 units per byte of the file, about 21 s and 1.2 s per MB on the measurement machine, it stops every session with `decode.limit`; `DecodeOptions.MaxWork` replaces that bound. The unit, what each decoder counts and the numbers are in [Work instead of samples](#work-instead-of-samples).
+- A crafted file of 100 MB stops after 2 × 10^11 units, about 2 minutes, whichever decoder it aims at; a file under 16 MiB after about 21 s.
+- **Decision 8, as changed on 2026-10-23:** count work, not PCM. The approved bound counted PCM bytes (the larger of 16 GiB and 256 times the file's size), which WavPack's worst case showed to be about 13 minutes on a 3.2 MB file (see [As built in step 3](#as-built-in-step-3-wavpack)).
+- **Per-frame time:** a frame's work is bounded by the format's largest frame times its work per sample, so the host's check between frames bounds the latency of cancellation where a frame is charged at most 2^27 units (about 80 ms). For the samples of its largest frame FLAC charges at most 2.5 × 10^7, WavPack 5.7 × 10^7, TrueHD and MLP 5 × 10^4 a substream; the charge per byte of coded data comes on top, bounded by the frame's bytes. Monkey's Audio charges and checks inside its frames.
+
+## Work instead of samples
+
+The project lead changed decision 8 on 2026-10-23: the work budget counts the work decoding takes, which each decoder reports frame by frame, and not the PCM it produces. This section is the draft of that change, for the lead's review; nothing in it is built.
+
+### Why samples are not enough
+
+- PCM bytes track time only where every coding costs about the same per sample, and they do not:
+  - the built FLAC decoder adds 9 to 17 ns per sample of each channel to an analysis (step 2's table, B - A over the samples of both channels);
+  - WavPack's crafted worst case costs about 95 ns per sample, with 16 decorrelation passes (18.7 s for 196.6 million mono samples, see [As built in step 3](#as-built-in-step-3-wavpack));
+  - Monkey's Audio's insane level runs 1,552 filter taps per sample of each channel (`apedec.c` 81-87), not measured.
+- So the 16 GiB of PCM the approved bound allowed, about 29 s at the 600 MB/s the design estimated, is about 13 minutes of WavPack's worst case on a 3.2 MB file.
+- Work that produces no PCM escapes a count of PCM:
+  - the blocks of WavPack sets that never complete, which `StreamDecoder.MaxWastedSamples` has to cap inside the decoder;
+  - a frame the decoder works through and then refuses (`decode.frame-invalid`), since the host counts a frame's PCM only when `Decode` returns.
+
+### The unit
+
+- **Work unit:** the work of one tap of a predictor or filter on one sample of one channel, a multiply-accumulate. Every other kind of decoding work is counted as a whole number of these units.
+- A decoder charges, for each frame:
+  - **per sample of each channel it outputs**, decoded or muted: 16 units (`DecodeWork.PerSample`), for the fixed work of a sample: the steps of reconstruction that do not depend on settings, undoing the channel coding, wasted bits and shifts, the output and the checksums over the decoded audio;
+  - **per byte of entropy-coded data it reads itself**: 16 units (`DecodeWork.PerCodedByte`), for bit reads, unary and Rice codes and range-coder steps, whose number follows the bytes and not the samples. A frame whose data the parser's walk stored in lent buffers (`CodedFrame.IsWalked`) charges none: the walk is the structure pass's cost, bounded by the bytes (rule 2 of [After the milestone review](#after-the-milestone-review));
+  - **per stage, per sample of each channel the stage runs on**: the stage's units from the lists below (1 per tap, `DecodeWork.PerTap`).
+- The weights come from the existing measurements (below), so that a unit takes about the same time in every decoder, and the work tests (below) hold each decoder to that:
+  - a sample's fixed work is about 10 ns: FLAC at level 0, with fixed predictors of at most 4 taps, adds 10.5 ns a sample;
+  - a FLAC tap is about 0.75 ns: music 1 at levels 8 and 5 differs by 3 ns a sample, for up to 4 more taps;
+  - a WavPack pass is about 5 ns: its worst case's 95 ns a sample, less the fixed work, over 16 passes;
+  - so 16 units for the fixed work, 1 for a tap and 8 for a pass, at about 0.6 ns a unit.
+- Work that grows with neither samples nor coded bytes (a header, a sub-block list, a configuration) is bounded by the frame's bytes, which the structure pass reads anyway, and is not charged.
+
+### What each decoder counts
+
+**FLAC** (RFC 9639, section 9.2; `FrameDecoder` and `Prediction`):
+
+- 16 per sample of each channel of the frame (its block size times its channels).
+- Constant and verbatim subframes: nothing more.
+- Fixed predictor: its order, 0 to 4, per sample (section 9.2.5).
+- Linear predictor: its order, 1 to 32, per sample (section 9.2.6), in 32-bit and 64-bit sums alike; the 64-bit path at that weight is **unverified**.
+- Rice partitions: nothing of their own. A partition costs its parameter's few bits (section 9.2.7), which the parser's walk reads; a frame the decoder reads itself (not walked) charges 16 per byte of the frame, partitions, escapes and unary codes included.
+- The undoing of left/side, side/right and mid/side coding, wasted bits and the MD5: in the 16.
+
+**WavPack** (libwavpack 5.6.0; `PcmBlockDecoder`, `DsdBlockDecoder`, `WordDecoder`):
+
+- 16 per sample of each channel of the block, muted blocks included; for DSD per byte of each channel, the unit `Decode` returns.
+- 16 per byte of the bitstream sub-blocks it reads: the main bitstream, the extra bitstream of floats and of integers above 24 bits, the DSD data. This covers the entropy decoder's work that follows the bits, such as the hybrid error limit's search, one bit a step (**unverified** at that weight); a run of zeros costs per sample, in the 16.
+- Decorrelation passes (`decorr_mono_pass`, `decorr_stereo_pass`): 8 per pass per sample of each channel, for every term (1 to 8, 17, 18, and -1 to -3 between the channels), up to 16 passes. Measured for term 17 only; the others are **unverified**.
+- DSD: 16 more per byte of each channel in the fast mode (`decode_fast`, two 32-bit divisions a byte) and 64 more in the high mode (`decode_high`, eight bits each through the range coder and the filters); both **unverified**.
+- The integer, float and lossy fix-ups (`fixup_samples`, `float_values`) and the block CRC: in the 16.
+- A block of a set that never completes is charged when it is decoded, as any other block.
+
+**Monkey's Audio** (FFmpeg 6.1.1 `apedec.c`, Monkey's Audio SDK 13.42):
+
+- 16 per sample of each channel.
+- 16 per byte of the frame: the range decoder from 3.90 on (`apedec.c` 340-478), the bit reader of 3.80 to 3.89 (`ape_decode_value_3860` and `decode_array_0000`, 504-535 and 617-673). The parser does not walk this data (see [Who owns the bits](#who-owns-the-bits)).
+- The prediction stage, its taps per sample of each channel: 5 from 3.80 to 3.92 (`filter_3800`, 902-945), 4 for 3.93 and 3.94 (`predictor_update_3930`, 1108-1136), 9 from 3.95 on (`predictor_update_filter`, 1188-1241; SDK `NewPredictor.cpp` 258-266). FFmpeg runs the stage twice where it does not know the interim mode (1243-1262); a decoder that does the same charges both.
+- The NN filters from 3.93 on, 1 per tap: none at fast, 16 at normal, 64 at high, 256 + 32 at extra high, 1,280 + 256 + 16 at insane (`apedec.c` 81-87; SDK `NewPredictor.cpp` 162-182). **Unverified:** with `System.Numerics.Vector` a tap over 16-bit history may cost much less than FLAC's scalar tap; the Monkey's Audio pull request measures it and may count these taps in groups.
+- From 3.80 to 3.92, the long filters instead: 16 taps at high, 128 (before 3.83) or 256 + 8 (from 3.83 on) at extra high (`long_filter_high_3800`, `long_filter_ehigh_3830`, 947-1032).
+- Before 3.80, which only the SDK decodes (FFmpeg's `ape.c` 31 takes 3.80 and later): extra high runs pairs of offset passes whose count the frame states, up to 16 pairs before 3.32 and up to 8 later (`Old/APEDecompressCoreOld.cpp` 110-150). A decoder that takes these files charges 1 per pass per sample.
+- In chunks: the decoder charges each chunk of 4,096 samples per channel before it decodes it, and checks its token inside the frame. A frame of the size the SDK accepts at most (10,000,000 samples of 32 channels at insane) is 5 × 10^11 units, so a whole-frame charge would let one frame run for minutes.
+
+**TrueHD and MLP** (FFmpeg 6.1.1 `mlpdec.c`, `mlpdsp.c`, `mlp.h`):
+
+- 16 per sample of each channel of every substream decoded (substreams 0 to 2, decision 6), at most 160 samples an access unit (`mlp.h` 59).
+- Coded data: none where the parser's walk stored the Huffman-coded residuals (the lending variant, see [The second entropy pass](#the-second-entropy-pass)), else 16 per byte.
+- The channel filters: the FIR order (up to 8) plus the IIR order (up to 4) per sample of each channel (`mlpdsp.c` 38-47, `mlp.h` 67-68).
+- The matrices: per primitive matrix, its input channels per sample, the substream's channels plus the two noise channels where it has them (`mlpdsp.c` 74-78, `mlpdec.c` 1112-1131); up to 8 matrices (`mlp.h` 45), so up to 80 units a sample.
+- So an access unit is charged at most about 5 × 10^4 units per substream. The weights are **unverified** until the TrueHD pull request measures them.
+
+### How the host counts and bounds it
+
+- `DecodeContext.AddWork(long units)` adds to the analysis's count, one count for all sessions as now, saturating at `long.MaxValue`. Negative units throw `ArgumentOutOfRangeException`, which reaches the host as `decode.failed`, like a negative return from `Decode`.
+- A decoder charges a stage before it runs it. A frame of at most 2^27 units may be charged once; a decoder whose frames can be charged more charges per chunk and checks its token after each charge.
+- Past the budget, the host cancels the decoding's token, which `DecodeContext.CancellationToken` is linked to:
+  - a decoder that checks inside the frame throws `OperationCanceledException` at its next check;
+  - the host tells that from a canceled analysis by the analysis's own token, counts the frame as not decoded and ends the session with `decode.limit`;
+  - the other sessions stop at their next frame, as now.
+- The same token carries `DecodeOptions.Stop`, so a front end's Stop also takes effect inside a long frame.
+- After a frame the stop interrupted, the host calls `Finish` with `IsComplete` false; a decoder's `Finish` must not assume its last frame completed. The front end's sink may have received blocks of that frame beyond the samples `End` reports, as a stopped stream's PCM is incomplete anyway.
+- Work charged inside a frame that then fails (`decode.frame-invalid`) counts.
+- **The floor of the charge:** after each `Decode`, a session whose decoder has charged less than 16 units per sample of each channel it returned (`Setup.Channels` times the samples) ends with `decode.failed`: a decoder that forgets to charge is a bug, and no fixture passes with it.
+
+The contract in code:
+
+```csharp
+// In Encspect.Core: the work units every decoder charges, besides the units its stages state.
+public static class DecodeWork
+{
+    // Per sample of each channel a decoder outputs, decoded or muted.
+    public const long PerSample = 16;
+
+    // Per byte of entropy-coded data a decoder reads itself (not a frame its parser walked into lent buffers).
+    public const long PerCodedByte = 16;
+
+    // Per tap of a predictor or filter, per sample of each channel: the unit itself.
+    public const long PerTap = 1;
+}
+
+// In Encspect.Host.
+public sealed class DecodeOptions
+{
+    // The default work budget is the larger of this and WorkPerInputByte times the size of the file.
+    public const long MinimumWork = 1L << 35;
+
+    public const long WorkPerInputByte = 2048;
+
+    // The analysis's work budget in work units; null for the default.
+    public long? MaxWork { get; init; }
+}
+```
+
+`IFrameDecoder.Decode` keeps returning samples: the work goes through the context, so work done before an exception counts, a long frame can be charged in chunks, and the many tests that script `Decode` keep their meaning.
+
+### The default bound
+
+- **The bound:** the larger of 2^35 units and 2,048 units per byte of the file. They meet at 16 MiB.
+- **What a unit takes**, from the existing measurements:
+
+| Measurement | Units per sample of a channel | Time per sample of a channel | Time per unit |
+| --- | --- | --- | --- |
+| WavPack worst case, 1,000 complete sets (18.7 s) | 144 (16 + 16 passes of 8) | 95 ns | 0.66 ns |
+| WavPack worst case, sets that never complete (1,365 blocks decoded, 22.4 s) | 144 | 83 ns | 0.58 ns |
+| FLAC, music 1, level 8 (B - A of step 2) | at most 28 (order at most 12) | 17.3 ns | at least 0.62 ns |
+| FLAC, music 1, level 5 | at most 24 (order at most 8) | 14.3 ns | at least 0.60 ns |
+| FLAC, music 2, level 5 | at most 24 | 15.7 ns | at least 0.65 ns |
+| FLAC, noise 0.05, level 0 | at most 20 (fixed, order at most 4) | 10.5 ns | at least 0.53 ns |
+| FLAC, noise 0.3, level 5 | at most 24 | 9.0 ns | at least 0.37 ns |
+
+- **Reading the table:**
+  - The WavPack figures are exact in units, since the passes are known; both include the process and the structure pass (`encspect --verify`), on Linux x64 with one core, a machine step 3 does not name further.
+  - The FLAC figures take the highest order each `flac` level allows, so they are lower bounds; the synthetic file at 0.37 ns most likely uses lower orders than 8. They were measured on the Intel Xeon at 2.80 GHz of step 2, with the MD5 and the walk's stores.
+  - So a unit takes about 0.6 ns on these machines. A measurement per decoder and per worst case, on one machine, is still to be done: the work tests below record it.
+- **In time**, at 0.6 ns a unit:
+  - the floor, 2^35 units, is about 21 s;
+  - 2,048 units a byte is about 1.2 s per MB of the file: a crafted file of 100 MB stops after about 2 minutes, whichever decoder it aims at;
+  - a decoder at the edge its work test allows (twice the reference's time per unit) takes twice that.
+- **Legitimate files that verify in full:**
+  - An hour of CD audio in FLAC at level 8 is at most 8.9 × 10^9 units (about 5 s), under the floor whatever the file's size.
+  - An hour of 8 channels at 24 bits and 192 kHz in FLAC with order 32 throughout is 2.65 × 10^11 units (about 2.7 minutes); the bound reaches it from a file of 130 MB on, and such a file holds 16.59 GB of PCM, so it is several GB.
+  - WavPack at 16 passes needs about 0.07 bytes of coded data per sample of a channel to fit, FLAC at order 32 about 0.02: every file but near silence.
+  - Monkey's Audio at insane, at the weights above (about 1,580 units a sample), needs about 0.78 bytes per sample of a channel; whether its quietest legitimate files have that is **unverified**, and its pull request measures it. If they do not, it raises `WorkPerInputByte` or proposes a factor per coding.
+- **Crafted files measured so far:**
+  - WavPack's worst-case blocks charge 2.83 × 10^7 units each. Step 3 gives 2.2 MB for 30,000 of them and 3.2 MB for 43,690, about 73 bytes a block, so about 390,000 units per byte; it also gives 3.2 MB for the 1,000 complete sets it timed, which does not agree with the other two and is taken here as a slip.
+  - A file of them stops after about 1,214 blocks, about 22 s at the measured 18.7 ms a block, at any size up to 16 MiB. The approved bound let a 3.2 MB file of 43,690 such blocks run in full, about 13 minutes. The timed run of 1,000 blocks (2.83 × 10^10 units, under the floor) still decodes in full.
+  - WavPack's 2.2 MB file of sets that never complete stops after about 1,214 blocks, about 20 s; `MaxWastedSamples` stops it after 1,365 blocks, in 22.4 s.
+  - FLAC's constant frames of 8 channels at 32 bits (`ComplexityTests.FlacFramesThatCodeMegabytesEach`) charge about 150,000 units per byte of the frames; a 20 MB file of them stops after about 5,100 frames, at 2,048 units per byte of the file.
+- **Digital silence** is where legitimate and crafted files look alike: few bytes, the full work of the stage. A long silent stream in a small file (an hour of 8-channel silence at 192 kHz in FLAC, in frames of 4,096 samples, charges 8.8 × 10^10 units in about 7 MB) stops with `decode.limit` and stays unverified.
+
+### `MaxPcmBytes`
+
+- Renamed to `DecodeOptions.MaxWork`, in work units, and kept for tests and the fuzzer; `MinimumBudget` and `BudgetPerInputByte` become `MinimumWork` and `WorkPerInputByte`.
+- No alias: the option came with the contract pull request (#118), after release 0.1.0, so no released library has it.
+- A negative `MaxWork` stays an `ArgumentOutOfRangeException` from `Analyze`, refused before anything is read.
+- `DecodeSetup.BitsPerSample` no longer feeds the budget; it still sets the PCM format and the canonical layout.
+
+### How `decode.limit` and the verdict read
+
+- `decode.limit` stays an info on the stream, once per session: "Decoding stopped after 1,214 frames: its work passed the budget of 34,359,738,368 work units that the file's size allows." The message names units and frames, not time, which depends on the machine.
+- The verdict is as now: the stream's decoding is `Stopped`, a checksum compared before the stop that failed stays failed (`IsVerified` false), and otherwise `IsVerified` is null, "Verified: unknown (STREAMINFO MD5 not compared: decoding was stopped)". JSON, CSV and the GUI need no change.
+
+### How a decoder that under-reports is caught
+
+- **At run time:** the floor of the charge above catches a decoder that charges nothing or less than its samples, in every fixture, the fuzzer and `DecodeRouteTests`.
+- **By its work test:** `DecoderWorkTests`, in the `ComplexityTests` collection so that it runs alone, holds each decoder to its time per unit:
+  - Each case is built in memory and analyzed with decoding on and no budget, through a test decoder that wraps the real one and sums what it charges (`DecodeContext`'s constructor is public, so the wrapper passes `AddWork` on and counts it). The report is not changed for this.
+  - The reference case is FLAC frames of 4,096 samples of 16-bit stereo with linear predictors of order 8, the shape of `flac` level 5.
+  - Each case runs for at least a second, best of three, and the test asserts that its time per unit is at most twice the reference's, measured in the same process, so that the bound does not depend on the machine's speed. Each case also stays under the suite's 30 s.
+  - A case that fails means a weight is too low; the fix is the weight, not the factor.
+- **FLAC's cases:** constant subframes of 8 channels at 32 bits (the most bytes of MD5 per unit); verbatim subframes at 32 bits; order 32 in the 64-bit path (the 33-bit side channel); fixed order 4; frames not walked (`FlacParser.LendsBuffers = false`) with escaped partitions and long unary codes.
+- **WavPack's cases:** 16 passes of term 17, of term 18, of terms 1 to 8, and of terms -1 to -3 in stereo; a hybrid block whose error limit makes the search read many bits a sample; floats and 32-bit integers with an extra bitstream; DSD in the fast mode with 5 history bits and in the high mode; blocks muted because their bitstream ends; sets that never complete.
+- **Monkey's Audio and TrueHD** bring theirs: each level and each version range of Monkey's Audio, insane with the largest frames; TrueHD at 192 kHz with 8 matrices and filters of orders 8 and 4.
+- **The fuzzer** analyzes with a lowered `MaxWork` and fails on `decode.failed`, so the floor check runs on its mutations too.
+
+### Per-decoder caps
+
+- **`StreamDecoder.MaxWastedSamples` is removed.** The blocks of sets that never complete are charged as they are decoded, so the work budget bounds them, with about the same result on the measured file (1,214 blocks against 1,365). The work the cap bounded was what the PCM budget could not see.
+- **Kept, since they bound memory and not time:** `StreamDecoder.MaxSetSamples` (2^24 samples of a WavPack set, `wavpack.md5-set-too-large`), the session's lending ceiling (`DecodeSession.MaxLentSamples`), FLAC's frame ceiling (`decode.frame-too-large`), Monkey's Audio's chunks of 4,096 samples.
+- **Kept, since they are the parsers':** the search and resync budgets, which bound the structure pass by the bytes.
+
+### Compatibility and rollout
+
+- **One pull request** changes the contract, FLAC and WavPack together, after the WavPack decoder and before Monkey's Audio and TrueHD:
+  - `Core.Abstractions`: `DecodeContext.AddWork` and its constructor's new delegate, `DecodeWork`, the comments of `DecodeContext.CancellationToken`, `IFrameDecoder.Decode` and `DecodeSetup.BitsPerSample`;
+  - the host: `DecodeRun` counts work and owns the linked token, `DecodeSession` catches the stop inside a frame and checks the floor of the charge, `DecodeOptions` as above;
+  - FLAC: `FrameDecoder` charges per frame (its samples, each subframe's order, and the bytes of a frame it walks itself);
+  - WavPack: `StreamDecoder`, `PcmBlockDecoder` and `DsdBlockDecoder` charge per block, before the passes; `MaxWastedSamples` goes.
+- **Tests that change:**
+  - `DecodeRouteTests`: `TheBudgetCountsCanonicalBytesAndStopsEverySessionWithAnInfo` counts charged work; `TheBudgetCountsWholeBytesOfTheSampleWidth` goes; `AGroupsBlocksCountOnceAgainstTheBudget` becomes the work of every block counting, the final block's samples once in `DecodedSamples`; `ABudgetOfZeroStopsAfterTheFirstFrameAndANegativeOneIsRefused`, `TheBudgetIsSharedByTheSessionsOfOneAnalysis`, `ANegativeBudgetIsRefusedWhateverTheFile` and `TheBudgetSaturatesInsteadOfWrappingForAbsurdFigures` move to `MaxWork` and `AddWork`; `ScriptedDecoder` charges 16 units per sample of each channel it returns unless a test scripts otherwise.
+  - `DecodeRouteTests`, new: work charged in a frame that then fails counts; a budget crossed inside a frame stops at the decoder's next check with `decode.limit`, while a canceled analysis still throws from `Analyze`; `DecodeOptions.Stop` inside a frame; a decoder that charges less than the floor, or negative units, is `decode.failed`.
+  - `ComplexityTests`: `FlacFramesThatCodeMegabytesEach` sets `MaxWork` (2^30); `WavPackBlocksThatStateMoreSamplesThanTheyCode` asserts `decode.limit` and the time bound instead of the 1,365 blocks of the cap; the comment of `FlacPredictorsOfTheHighestOrderAtTheLargestBlock` ("which the budget does not count") changes, since the budget now counts them.
+  - `CorruptFiles` (`AnalyzeAndCheck`) sets `MaxWork` (2^30) and the fuzzer (`Encspect.Fuzz`) `MaxWork` (2^24) in place of their PCM bytes.
+  - New: `DecoderWorkTests` with the FLAC and WavPack cases above.
+- **Documentation** in the same pull request: the `--verify` cost in `docs/cli.md`, `DecodeRouteTests` and `DecoderWorkTests` in `docs/development.md`, the cap in `docs/formats/wavpack.md` ("Decoding"), the docstring of `scripts/fixtures/wavpack_decode.py` that names `MaxWastedSamples`, and the "As built" notes of this design.
+- **`CLAUDE.md`**, a line proposed for Architecture rules, after the one on cancellation: "A decoder charges its work through `DecodeContext.AddWork` before it does it, in the work units of `docs/design/decoders.md`, and `DecoderWorkTests` holds each decoder's time per unit."
+- **Monkey's Audio and TrueHD and MLP** are built on the new contract: each charges its work from its first commit, brings its cases to `DecoderWorkTests`, and records its weights' measurement in its "As built" section.
 
 ## The PCM path
 
@@ -940,7 +1139,7 @@ public interface IPcmSink
 - Planar, because waveform and spectrogram read one channel at a time; one span with a stride, because a ref struct cannot hold a variable number of spans.
 - 32-bit integers, because every lossless coding in phase 3 outputs samples of at most 32 bits; FLAC's 33-bit side channel stays inside the decoder (64-bit buffers, `ReadSignedLong`).
 - Gapless trimming (TrueHD's samples to drop, an MP4 edit list) is the report's business, not the PCM's: positions are untrimmed, and a later feature trims with what the stream reports.
-- `Core.Abstractions` also gets the canonical byte layout as one function: interleaved, signed, little-endian, `ceil(bits / 8)` bytes a sample. FLAC's MD5 uses it, and so do the tests' hashing sink, the manifests' `decoded_pcm_md5` and the budget's count. Monkey's Audio and WavPack compute their checksums over their own layouts.
+- `Core.Abstractions` also gets the canonical byte layout as one function: interleaved, signed, little-endian, `ceil(bits / 8)` bytes a sample. FLAC's MD5 uses it, and so do the tests' hashing sink and the manifests' `decoded_pcm_md5`. Monkey's Audio and WavPack compute their checksums over their own layouts.
 
 ### Host-side PCM analyses, later
 
@@ -990,16 +1189,16 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
 - **Contract:** `DecodeRouteTests` with a scripted parser and decoder, as `FormatDetectionTests` scripts parsers:
   - the boundary for each exception, from `Open`, `Decode` and `Finish`;
   - a sink and an `Output` that throw: no `parse.failed`, the exception rethrown from `Analyze`;
-  - the stop token, the budget through `MaxPcmBytes`, and `decode.frame-too-large`;
+  - the stop token, the work budget through `MaxWork` and `AddWork` (inside a frame too, and the floor of the charge), and `decode.frame-too-large`;
   - findings counted once per stream, sessions inside nested routes, sessions ended when a route returns with their findings merged;
   - `IsVerified` for each case of the rule, tallies with nothing stored included, and a per-frame tally whose stream has a gap or fewer samples than it states (not verified, though every value holds);
-  - `Decode` returns of 0 for all but a set's final block, counted once in `DecodedSamples` and the budget;
+  - `Decode` returns of 0 for all but a set's final block, counted once in `DecodedSamples`, while the work of every block counts;
   - results that name no declared checksum, or compare more values than are stored (`decode.failed`, results dropped).
 - **Bit cursor, MD5 and CRC-32:** `BitCursorTests` against `BitReader` on random data and at every end; `Md5Tests` with RFC 1321's vectors and against `System.Security.Cryptography.MD5`, in the test only; `Crc32Tests` against the existing copies.
 - **Boundary:** `DecodingBoundaryTests` (above), with its negative control.
-- **Fuzzing:** `Encspect.Fuzz` analyzes the lossless fixtures' mutations with decoding on as well, with a lowered `MaxPcmBytes`, and fails on `decode.failed`; its finds join `tests/fixtures/fuzz`.
+- **Fuzzing:** `Encspect.Fuzz` analyzes the lossless fixtures' mutations with decoding on as well, with a lowered `MaxWork`, and fails on `decode.failed`; its finds join `tests/fixtures/fuzz`.
 - **Memory:** `MemoryTests` analyzes a long stream of each decoded coding with decoding on and reads the live heap from inside the sink's `Write` of the last frame, where everything a session keeps per frame is still alive; the growth of that reading above the heap the analysis ends with, between two stream lengths, is bounded per further frame, so a session that keeps something per frame fails (see "Memory tests" in `docs/development.md`).
-- **Complexity:** `ComplexityTests`, with a lowered `MaxPcmBytes` so the budget stops them in seconds:
+- **Complexity:** `ComplexityTests`, with a lowered `MaxWork` so the budget stops them in seconds, and `DecoderWorkTests`, which hold each decoder's time per work unit (see [How a decoder that under-reports is caught](#how-a-decoder-that-under-reports-is-caught)):
   - FLAC frames of 65,535-sample constant subframes in 8 channels at 32 bits;
   - Rice codes that run to the end of each frame;
   - predictor order 32 at the largest block;
@@ -1029,8 +1228,9 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
    - A milestone review of the contract and FLAC follows, which also walks the WavPack and TrueHD data flows (above) through the contract as built: which `CodedFrame`s, which state, which tallies, which findings. Its findings are fixed before step 3 starts.
 3. **In parallel, each in its own pull request, with its decoder in its format project's `Decoding` namespace and its format's "Decoding" section:**
    - the WavPack decoder (its parser exists), and a "wavpack" codec parser for Matroska's blocks, which carry a reduced header that FFmpeg rebuilds into the 32-byte one (`matroskadec.c` 3608-3670);
-   - Monkey's Audio, parser and decoder;
-   - TrueHD and MLP, parser and decoder, raw files first;
+   - **the work budget** (decision 8 as changed on 2026-10-23), one pull request after the WavPack decoder and before the decoders below: the contract, FLAC and WavPack together, with `DecoderWorkTests` (see [Compatibility and rollout](#compatibility-and-rollout));
+   - Monkey's Audio, parser and decoder, on the work contract, with its cases in `DecoderWorkTests`;
+   - TrueHD and MLP, parser and decoder, raw files first, on the work contract, with its cases in `DecoderWorkTests`;
    - TTA as a format parser and a "tta" codec parser for Matroska's frames, which carry no header (FFmpeg builds it from the track, `matroskadec.c` 2700 and on), without a decoder;
    - WAV and AIFF parsers, without decoders;
    - ALAC's codec parser and WMA Lossless's frames, without decoders if the scope decision moves them.
@@ -1059,7 +1259,7 @@ What the contract pull request implements, and where it differs from the signatu
 - **Results:** a decoder's results are accepted for the tallies the parser declared over decoded audio only; a result that names another tally (a header or coded-data checksum, whose values the parser compared), names one twice, or has `Failed` above `Checked` or `Checked` above `Stored` is `decode.failed`. The host sets `Checked` and `Failed` of every tally over decoded audio from the results, 0 where there is none. Two tallies of one name make `Finish` throw `ArgumentException`.
 - **Completeness:** `DecodeEnd.IsComplete` is true when the session was not ended early (stop, budget or sink failure), no frame followed a gap, no frame failed, and `DecodeSetup.Samples`, where set, equals the samples decoded. `FramesNotDecoded` counts the frames the decoder was handed and could not decode.
 - **Findings:** the host's `decode.stopped` and `decode.limit` are added once per session; `decode.no-decoder` is added only where decoding was asked for. A finding without a node points to the stream.
-- **Budget:** the default is the larger of 16 GiB and 256 times the size of the whole file (`DecodeOptions.MinimumBudget`, `BudgetPerInputByte`); a session that passes it stops at once, and the others at their next frame. A negative `MaxPcmBytes` is an `ArgumentOutOfRangeException` from `Analyze`.
+- **Budget:** the default is the larger of 16 GiB and 256 times the size of the whole file (`DecodeOptions.MinimumBudget`, `BudgetPerInputByte`); a session that passes it stops at once, and the others at their next frame. A negative `MaxPcmBytes` is an `ArgumentOutOfRangeException` from `Analyze`. The work budget replaces this (see [Work instead of samples](#work-instead-of-samples)).
 - **Byte layout:** `CanonicalPcm` (`BytesPerSample`, `ByteCount`, `Write`) is the canonical layout; floats are written as their IEEE 754 bytes.
 - **`Crc32`:** `Update` works on the register, as the copies the formats keep; `Initial`, `Finish` and `Of` are added. `Md5` has `HashLength`.
 - **Output:** `VerificationText.Describe` is the text of the verification for the text tree and for a front end; the text tree prints "Verified: …" under the stream's first node, one level deeper. `ReportSummary.IsVerified` holds the verdict of the audio streams, and the GUI's summary cache stores it (format 6); the detail window shows it from step 2.
@@ -1129,7 +1329,7 @@ What the WavPack pull request implements: the decoder (`Encspect.Formats.WavPack
   - A block is muted whole (zeros, 0x55 for DSD) and fails its CRC when it has fewer samples than the first block of its set states or its bitstream runs out before its samples do. The first case is libwavpack's (`unpack.c` 89; the block's index plays no part, `open_utils.c` 357). In the second libwavpack reads its bitstream again from the start (`open_utils.c` 842-846) and mutes only on its end-of-data code or its mute limit, so the audio differs and the CRC fails in both. A block that fails its CRC is not zeroed, as `unpack_utils.c` 377-386 does.
   - The work on blocks of sets that never complete reaches neither the sink nor the host's PCM budget, so the decoder limits it itself: `StreamDecoder.MaxWastedSamples` (2^28 samples over all channels), past which it refuses blocks (`decode.frame-invalid`). With it the bound on crafted input holds in samples, which decision 8 counts; what that is in time depends on the coding, and WavPack's worst case is far slower per sample than the 600 MB/s the design estimates for the MD5 (below).
   - **Measured worst case (Linux x64, one core, `encspect --verify`):** mono blocks of 196,607 samples whose bitstream codes one zero run (8 bytes), with 16 decorrelation passes (term 17), nothing muted. 1,000 such blocks as complete sets (3.2 MB, 196.6 million samples) took 18.7 s: about 18 ms a block, 10.9 million samples a second, about 22 MB/s of 16-bit PCM (the reviewer measured about 25 MB/s), against 600 MB/s. The same blocks as sets that never complete (2.2 MB, 30,000 blocks) take 22.4 s with the limit at 2^28 (1,365 blocks decoded, the rest refused); with the limit at 2^32 they took 331 s (the reviewer's measurement). Without `--verify` both files take under 2 s.
-  - **What the host's budget allows for complete sets:** the default 16 GiB of PCM is 4.3 billion 16-bit samples, about 43,690 such blocks (a 3.2 MB file) and about 13 minutes at this speed. The budget (decision 8) is left as approved; it is a number for the project lead to tune per coding once WavPack's cost is known (a factor per coding, or counting decorrelation passes). An analysis can be canceled.
+  - **What the host's budget allows for complete sets:** the default 16 GiB of PCM is 4.3 billion 16-bit samples, about 43,690 such blocks (a 3.2 MB file) and about 13 minutes at this speed. The budget (decision 8) is left as approved; it is a number for the project lead to tune per coding once WavPack's cost is known (a factor per coding, or counting decorrelation passes). An analysis can be canceled. The lead chose on 2026-10-23 to count work (see [Work instead of samples](#work-instead-of-samples)), which also removes `MaxWastedSamples`.
   - **Cost of the refusal probe:** the feed reads every block's sub-block metadata with `BlockContents.Read` in every analysis, decoding or not, to decide whether libwavpack refuses the block. On 20 MB of 9,600 blocks (the largest fixture's small-block variant repeated 400 times; the fixtures themselves are too small to time) the analysis took 1.43 s of user CPU without the probe and 1.57 s with it, with run-to-run noise of about 0.15 s: at most about 15 microseconds a block, and no difference beyond the noise.
   - The Matroska codec parser declares no block checksum: `WavpackVerifySingleBlock` sums the block's header, which Matroska drops, so it cannot be computed from a packet. The checksum tally is declared by the file parser only.
   - Blocks the codec parser cannot rebuild (a header libwavpack would not take, a packet too short or with no block) are handed on as unreadable, not dropped.
@@ -1155,7 +1355,7 @@ Smaller decisions of the same review: a parser that offers an unlisted node (a b
 
 ## Decisions
 
-The project lead decided all nine on 2026-10-22: decision 1 as below, in place of the separate decoder projects this design had recommended; decisions 2 to 9 approved as written.
+The project lead decided all nine on 2026-10-22: decision 1 as below, in place of the separate decoder projects this design had recommended; decisions 2 to 9 approved as written. The lead changed decision 8 on 2026-10-23, after the WavPack decoder; its numbers are a draft for the lead's review.
 
 1. **Layout (the lead's choice):** each decoder lives in its format project, in the namespace `<project>.Decoding`; parser code never references it, which `DecodingBoundaryTests` checks in the compiled assembly, and the host registers the decoders; `CLAUDE.md` then says "no third-party decoders". It works because the decoder reads the bits with the parser's own code, a change that breaks one fails the same build, and the only coupling that could harm, the parser's on its decoder, is checked. The alternative it replaces: a decoder project per format that references its format project.
 2. **Data flow (approved):** the parser hands each frame to a decode session while it reads it, in the one pass over the file; a prototype in the contract step measured the second entropy pass at 31 % of decoding time (median of 12 files), so the session lends the parser its buffers. Alternative: a second pass the host drives.
@@ -1164,7 +1364,10 @@ The project lead decided all nine on 2026-10-22: decision 1 as below, in place o
 5. **Scope (approved):** Gate 3 decoders for FLAC, Monkey's Audio, WavPack, and TrueHD and MLP, the codings with a checksum over decoded audio; ALAC, TTA and WMA Lossless decoders move to "Later", which leaves their waveform and lowpass without a decoder until then (costs listed under "What the table means"). A WavPack hybrid file is verified as its lossy stream by its header CRCs; one with an MD5 stays unverified until companion-file access finds its `.wvc`. Alternative: all seven decoders, and `.wvc` access, now.
 6. **TrueHD (approved):** compare the lossless check of every presentation up to substream 2, one tally each, not the Atmos substream. The check never counts as covering all audio, since the last interval of each segment is never checked; a stream is verified only where substream CRC-8s in every access unit cover it and every lossless check holds. Alternatives: compare the top presentation only, as FFmpeg does, or count the check as covering and report the samples it leaves out.
 7. **PCM analyses (approved):** lowpass and similar analyses run in the host on the decoded PCM and add figures to the stream, never nodes; the hook is fixed now, the figures come with the first feature. Alternative: a later change to the contract.
-8. **Budget (approved):** decoding stops with an info past the larger of 16 GiB of PCM in the canonical layout and 256 times the file's size, which `DecodeOptions.MaxPcmBytes` overrides for tests. Alternative: no bound in the library.
+8. **Budget (changed by the lead on 2026-10-23):** the budget counts decoding work, not PCM. Each decoder charges the work of a frame before it does it (`DecodeContext.AddWork`), in work units of one predictor or filter tap on one sample of one channel: 16 per sample of each channel, 16 per byte of coded data it reads itself, and its stages' units (FLAC its order, WavPack 8 a decorrelation pass). Decoding stops with an info past the larger of 2^35 units and 2,048 units per byte of the file, about 21 s and 1.2 s per MB at the 0.6 ns a unit measured so far, which `DecodeOptions.MaxWork` overrides for tests. A decoder that charges less than 16 per sample is `decode.failed`, and `DecoderWorkTests` holds each decoder's time per unit within twice a FLAC reference's. `StreamDecoder.MaxWastedSamples` goes. Details in [Work instead of samples](#work-instead-of-samples). Alternatives:
+   - **Previous (approved 2026-10-22):** decoding stops with an info past the larger of 16 GiB of PCM in the canonical layout and 256 times the file's size, which `DecodeOptions.MaxPcmBytes` overrides for tests. WavPack's crafted worst case runs about 13 minutes under it on a 3.2 MB file.
+   - A factor per coding on the PCM bound, or on the work bound for the per-byte allowance (Monkey's Audio may need more than FLAC and WavPack).
+   - No bound in the library.
 9. **Tools (approved):** build Monkey's Audio SDK 13.42 (3-clause BSD) and libtta-c 2.3 (LGPLv3) from pinned source for the cross-checks, since no Ubuntu series packages them; no `ffmpeg` fallback for decoding (the plan's open question), FFmpeg stays a cross-check tool. Alternative: FFmpeg as the only second decoder, which cannot decode Monkey's Audio beyond 2 channels and 24 bits.
 
 ## Open risks and unverified claims
@@ -1172,4 +1375,8 @@ The project lead decided all nine on 2026-10-22: decision 1 as below, in place o
 - **Unverified:** whether WMA Lossless holds a checksum that FFmpeg skips; no specification is public.
 - **TrueHD presentations:** what decoding the lower presentations costs beyond their matrices and output, and whether FFmpeg's `-downmix` output gives each presentation's check, is settled by the TrueHD work; decision 6 only says what is compared.
 - **Cost not measured:** Monkey's Audio's filters in managed code are an estimate until its decoder measures them. The second entropy pass is measured for FLAC (step 1); the MD5 throughput of `Md5` is measured as part of the prototype's decoder, not alone.
+- **Work weights (decision 8):** the unit's time, about 0.6 ns, comes from WavPack's term 17 worst case and FLAC's step 2 table, where the orders are bounded but not known. **Unverified** until `DecoderWorkTests` measures them: FLAC's 64-bit path, WavPack's other terms, hybrid, float and DSD weights, the 16 units per coded byte, Monkey's Audio's NN taps and TrueHD's filters and matrices.
+- **Per-byte allowance:** 2,048 units per byte covers FLAC and WavPack at their highest settings for all but near-silent audio; whether it covers the quietest legitimate Monkey's Audio files at insane (about 0.78 bytes per sample of a channel at the weights proposed) is **unverified**. Long digital silence in a small file stops with `decode.limit` in any coding, since it looks like a crafted file.
+- **WavPack's crafted file sizes:** step 3 gives 3.2 MB both for 1,000 timed blocks and for 43,690 blocks; the second agrees with its 2.2 MB for 30,000 blocks. The work budget's figures take about 73 bytes a block; the work tests rebuild the file and settle it.
+- **Timing test noise:** `DecoderWorkTests` compares times on shared CI runners; it compares ratios within one process, best of three, against a factor of 2, but a noisy runner may still fail it. If it does, the cases move to the nightly run rather than the factor going up.
 - **Shared syntax:** a parser refactor now has to keep its decoder building; that is the point of the layout, but it couples their changes within one project.
