@@ -326,7 +326,8 @@ def stereo_coding_reserved():
         "Channel pairs with ms_mask_present 3, which is reserved: with and without intensity stereo bands, which it takes precedence over, and one "
         "pair of left and right.", data, rows, [stream("AAC LC", RATE, 2, "Stereo", len(cases) * 1024)], fields,
         [["aac.ms-mask-reserved", "ms_mask_present 3"]],
-        skip={"decode": "ffmpeg rejects ms_mask_present 3 (aacdec_template.c, decode_cpe: Invalid mask mode)."}, trace_skip={0: "faad2 rejects ms_mask_present 3 (syntax.c, error 32).", 1: "faad2 rejects ms_mask_present 3 (syntax.c, error 32)."})
+        skip={"decode": "ffmpeg rejects ms_mask_present 3 (aacdec_template.c, decode_cpe: ms_present = 3 is reserved).",
+              "faad_trace": "faad2 rejects ms_mask_present 3 (syntax.c, error 32) and stops at the first frame it rejects."})
 
 
 SBR_HEADER = {"amp_res": 1, "start": 5, "stop": 9, "xover": 0}

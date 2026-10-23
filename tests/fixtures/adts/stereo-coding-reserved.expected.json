@@ -57,16 +57,13 @@
  "crosscheck": {
   "ffprobe": true,
   "decode": false,
-  "faad_trace_skip": {
-   "0": "faad2 rejects ms_mask_present 3 (syntax.c, error 32).",
-   "1": "faad2 rejects ms_mask_present 3 (syntax.c, error 32)."
-  },
   "faad": {
    "seconds": "0.070",
    "rate": 44100
   },
   "skip": {
-   "decode": "ffmpeg rejects ms_mask_present 3 (aacdec_template.c, decode_cpe: Invalid mask mode)."
+   "decode": "ffmpeg rejects ms_mask_present 3 (aacdec_template.c, decode_cpe: ms_present = 3 is reserved).",
+   "faad_trace": "faad2 rejects ms_mask_present 3 (syntax.c, error 32) and stops at the first frame it rejects."
   }
  }
 }
