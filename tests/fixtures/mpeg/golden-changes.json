@@ -1,0 +1,154 @@
+{
+  "note": "The MPEG step adds categorySeries, the series Coded Bandwidth and Channel Bit Share, concept and quantity on the bitrate and reservoir series and the statistics nodes Stereo Coding, Block Sizes, Coded Bandwidth and Channel Bit Share. A stream gets a Joint Stereo Modes or Intensity Stereo Bounds series only if it has a joint stereo frame of its own, so the two streams of a region in vbr/lame-after-joined-frames and lame-before-joined-frames differ in their categorySeries, which is one added key either way.",
+  "goldens": [
+    "tests/fixtures/aac/ffmpeg-mp3.report.json",
+    "tests/fixtures/adts/adts-inside-mp3.report.json",
+    "tests/fixtures/layer2/",
+    "tests/fixtures/layer3/",
+    "tests/fixtures/mp4/mp3-in-mp4.report.json",
+    "tests/fixtures/mpeg/",
+    "tests/fixtures/ogg/oggs-in-mp3.report.json",
+    "tests/fixtures/stats/",
+    "tests/fixtures/tags/",
+    "tests/fixtures/vbr/"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "categorySeries"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Channel Bit Share"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Channel Bit Share Over Time"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate",
+      "key": "concept"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate",
+      "key": "quantity"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate Over Time",
+      "key": "concept"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate Over Time",
+      "key": "quantity"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Reservoir Fill",
+      "key": "concept"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Reservoir Fill",
+      "key": "quantity"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Reservoir Fill Over Time",
+      "key": "concept"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Reservoir Fill Over Time",
+      "key": "quantity"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Block Sizes"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Channel Bit Share"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Stereo Coding"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Block Sizes"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Channel Bit Share"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Stereo Coding"
+    }
+  ]
+}

@@ -41,6 +41,16 @@ Layer II and III fixtures are checked whatever their "crosscheck" value:
   with an emulation of how it reads the file (encspot_frames). Its encoder for encoder-written
   fixtures must be the analyzer's or one ENCSPOT_ENCODER_DIFFERENCES lists with the reason. Its
   quality rating is not read: the analyzer gives no verdicts on quality.
+- "Stereo Coding" and "Block Sizes" over all frames, which are EncSpot's and mp3guessenc's counts: mp3guessenc
+  prints the mode extension counts of joint stereo frames and puts every other frame in its sum, so its
+  intensity stereo, mid/side and both counts equal the entries of that name, its sum less those three the
+  entries left/right stereo, dual channel and mono together (EncSpot's mode 0), and its long and switch
+  granules the long, start and stop and reserved ones together. EncSpot's console port prints neither
+  its mode counts nor its block counts, so encspot_counts applies the rule of its source
+  (CMp3File::ProcessNextFrame) to the frames it reads: modes of joint stereo frames by mode extension,
+  every other frame mode 0, blocks of type 2 short or mixed and all others long. Its block of each granule is
+  checked against minimp3's block type of the same frames, frame by frame, and where it reads the frames the
+  statistics count, both against "Stereo Coding" and "Block Sizes".
 
 - "vbr_header": the raw values of the first frame's Xing, Info, LAME or VBRI header (vbr_tags.py).
   mp3guessenc must report the same header fields, LAME tag fields, tag CRC verdict and music CRC
@@ -734,7 +744,10 @@ def guessenc_coding(path):
             continue
         key, _, value = (part.strip() for part in line.partition(":"))
         share = re.match(r"(\d+)\s*\(\s*([\d.]+)%\)", value)
-        if key in GUESSENC_STEREO and share:
+        if key == "sum" and "blocks" in report and not report["blocks"] and "stereo_sum" not in report and report["stereo"]:
+            # The stereo mode table's sum is of every frame, the joint stereo frames' mode extension counts and the others in one.
+            report["stereo_sum"] = int(value)
+        elif key in GUESSENC_STEREO and share:
             report["stereo"][GUESSENC_STEREO[key]] = (int(share[1]), share[2])
         elif key.endswith(" block granules") and share:
             report["blocks"][key.split()[0]] = (int(share[1]), share[2])
@@ -837,8 +850,24 @@ def guessenc_coding_problems(path, manifest):
     for name in GUESSENC_STEREO.values():
         compare(name, count_of(fields.get(f"Statistics/Joint Stereo Modes/{name}")), actual["stereo"].get(name, (0, None)),
                 joint if joint == frames else None)
+    # Stereo Coding counts every frame. mp3guessenc prints the mode extension counts of joint stereo frames and, in its sum, every
+    # frame: EncSpot's mode 0 (left/right stereo, dual channel and mono together) is the sum less the three joint tools.
+    coding = {name: count_of(fields.get(f"Statistics/Stereo Coding/{name}")) for name in stream_stats.STEREO_CODINGS}
+    if "stereo_sum" in actual:
+        for name in ("Intensity stereo", "Mid/side stereo", "Mid/side and intensity stereo"):
+            compare(f"{name} frames", coding[name], actual["stereo"].get(name, (0, None)), frames)
+        tools = sum(actual["stereo"].get(name, (0, None))[0] for name in ("Intensity stereo", "Mid/side stereo", "Mid/side and intensity stereo"))
+        compare("frames of EncSpot's mode 0 (sum less the three tools)", coding["Left/right stereo"] + coding["Dual channel"] + coding["Mono"], actual["stereo_sum"] - tools)
+        compare("sum of the stereo modes", frames, actual["stereo_sum"])
     granules = count_of(fields.get("Statistics/Block Usage"))
     blocks = {kind: count_of(fields.get(f"Statistics/Block Usage/{kind}")) for kind in stream_stats.BLOCK_KINDS}
+    sizes = {name: count_of(fields.get(f"Statistics/Block Sizes/{name}")) for name in stream_stats.BLOCK_SIZES}
+    # Block Sizes groups as EncSpot counts: long with start and stop; mp3guessenc's long and switch granules (start, stop and
+    # reserved) are those and the reserved ones together.
+    compare("long and switch block granules", sizes["Long, start and stop"] + sizes["Reserved"],
+            actual["blocks"].get("Long", (0, None))[0] + actual["blocks"].get("Switch", (0, None))[0])
+    compare("short block granules in Block Sizes", sizes["Short"], actual["blocks"].get("Short", (0, None)), granules)
+    compare("mixed block granules in Block Sizes", sizes["Mixed"], actual["blocks"].get("Mixed", (0, None)), granules)
     # mp3guessenc's "switch" granules are start, stop and reserved ones.
     ours = {"Long": blocks["Long"], "Switch": blocks["Start"] + blocks["Stop"] + blocks["Reserved"], "Short": blocks["Short"], "Mixed": blocks["Mixed"]}
     for kind, count in ours.items():
@@ -995,6 +1024,26 @@ def encspot_expected(data, skipped, frames):
     }
 
 
+def encspot_counts(data, frames):
+    """EncSpot's mode and block counts over the frames it reads, as ProcessNextFrame counts them (Mp3File.cpp): the mode extension of
+    a joint stereo frame is its mode (1 intensity stereo, 2 mid/side stereo, 3 both), and every other frame, stereo, dual channel
+    or mono, counts as mode 0; each granule and channel is long, short or mixed, and a block of type 0, 1 or 3 with window
+    switching counts as long, so start, stop and reserved blocks are long ones. The console port does not print them (the Windows
+    program drew them from its per-frame lists), so the counts follow the source."""
+    padded = data + bytes(64)  # readBits reads zeros past the end
+    modes, blocks, kinds = [0] * 4, {"long": 0, "short": 0, "mixed": 0}, {}
+    for offset in frames:
+        header = encspot_header(data, offset)
+        coding = stream_stats.read_frame(padded, offset, header[0])
+        modes[coding["mode_ext"] if coding["mode"] == 1 else 0] += 1
+        kinds[offset] = []
+        for granule in coding["side_info"]["granules"]:
+            kind = {"Short": "short", "Mixed": "mixed"}.get(granule["block"], "long")
+            blocks[kind] += 1
+            kinds[offset].append(kind)
+    return modes, blocks, kinds
+
+
 def fixture_frames(manifest):
     """The offsets of a fixture's frames the statistics count: complete, without a VBR header. An
     encoder-written fixture lists the packets ffprobe found, all frames but the VBR header frame;
@@ -1106,6 +1155,23 @@ def encspot_problems(path, manifest):
     if actual.get("Sync Errors") != "none":
         problems.append(f"EncSpot reports sync errors: {actual.get('Sync Errors')}")
 
+    # EncSpot's block of each granule and channel over the frames it reads, against minimp3's block type and mixed_block_flag, which is a reader
+    # of its own: a block of type 2 is short or mixed, every other is long. Compared frame by frame and granule by granule, in the order the
+    # granules are coded; a fixture without minimp3's rows (the hand-built ones, whose side information the manifest's frames hold and
+    # check_side_info compares with minimp3) or with a frame it rejects is counted with its reason.
+    modes, blocks, kinds = encspot_counts(data, frames)
+    rows = {row["offset"]: row for row in manifest.get("minimp3_side_info", []) if row.get("granules")}
+    if not manifest.get("minimp3_side_info"):
+        COMPARED["EncSpot block types, per granule"]["skipped: no minimp3 rows in the manifest (hand-built: the manifest's frames are checked in check_side_info)"] += 1
+    elif not all(offset in rows for offset in frames):
+        COMPARED["EncSpot block types, per granule"]["skipped: minimp3 rejects a frame EncSpot reads"] += 1
+    else:
+        COMPARED["EncSpot block types, per granule"]["compared with minimp3"] += 1
+        for offset in frames:
+            theirs = ["long" if g["block_type"] != 2 else "mixed" if g.get("mixed_block_flag") else "short" for g in rows[offset]["granules"]]
+            if theirs != kinds[offset]:
+                problems.append(f"EncSpot's block types of the frame at 0x{offset:X}, from minimp3: {theirs}, the emulation {kinds[offset]}")
+                break
     direct = frames == fixture_frames(manifest)
     if direct:
         frames_count = statistics_frames(fields)
@@ -1128,6 +1194,16 @@ def encspot_problems(path, manifest):
                 share = actual["bitrates"].get(int(parts[2].split()[0]))
                 if share is None or not stream_stats.agrees(share, stream_stats.Fraction(count * 100, frames_count), stream_stats.Fraction(1, 10)):
                     problems.append(f"EncSpot: {parts[2]} share {share}%, the manifest {value}")
+        coding = {name: count_of(fields.get(f"Statistics/Stereo Coding/{name}")) for name in stream_stats.STEREO_CODINGS}
+        sizes = {name: count_of(fields.get(f"Statistics/Block Sizes/{name}")) for name in stream_stats.BLOCK_SIZES}
+        # EncSpot's mode 0 is three entries of Stereo Coding; its long blocks are Block Sizes' long, start and stop with the reserved ones.
+        counted = [coding["Left/right stereo"] + coding["Dual channel"] + coding["Mono"], coding["Intensity stereo"], coding["Mid/side stereo"],
+                   coding["Mid/side and intensity stereo"]]
+        if modes != counted:
+            problems.append(f"EncSpot counts the modes {modes} (its mode 0 and the mode extensions 1 to 3), the manifest's Stereo Coding {counted}")
+        counted_blocks = {"long": sizes["Long, start and stop"] + sizes["Reserved"], "short": sizes["Short"], "mixed": sizes["Mixed"]}
+        if blocks != counted_blocks:
+            problems.append(f"EncSpot counts the blocks {blocks}, the manifest's Block Sizes {counted_blocks}")
         # Its mode is the skipped frame's, which ffmpeg's VBR header frame gives as stereo in a joint stereo stream.
         modes = [k.split("/")[-1] for k in fields if k.startswith("Statistics/Channel Modes/")]
         if len(modes) == 1 and ENCSPOT_MODES[encspot_header(data, skipped)[6]] == modes[0].lower() and actual["Mode"] != modes[0].lower():
@@ -1384,10 +1460,10 @@ def check_mediainfo(path, tally):
     and album."""
     problems = tally.start(f"{path.parent.name}/{path.stem}")
     if mi.golden_hides(path):
-        # The streams-limited fixture: MediaInfo's frame count and last header depend on where it resynchronizes after each of 65 changes of the sample rate
-        # (File_Mpega.cpp reads 128 frames and then the last 16 KiB; measured with 24.01: 44100 Hz and 207 frames for 198), and the comparison needs the
-        # frames' headers, which its golden report leaves out.
-        tally.skip("all fields", "the sample rate changes every three frames, and the golden report has no frames (golden_hides)")
+        # The comparison needs the frames' headers, which the golden report leaves out. For the streams-limited fixture MediaInfo's frame count and last
+        # header also depend on where it resynchronizes after each of 65 changes of the sample rate (File_Mpega.cpp reads 128 frames and then the last
+        # 16 KiB; measured with 24.01: 44100 Hz and 207 frames for 198).
+        tally.skip("all fields", "the golden report has no frames (golden_hides)")
         return problems
     report = mi.golden(path)
     info = tally.read(path)
@@ -1537,7 +1613,7 @@ def check_mediainfo(path, tally):
 
 
 # How each fixture's coding statistics were compared with mp3guessenc and EncSpot, or why not.
-COMPARED = {"mp3guessenc": collections.Counter(), "EncSpot": collections.Counter()}
+COMPARED = {"mp3guessenc": collections.Counter(), "EncSpot": collections.Counter(), "EncSpot block types, per granule": collections.Counter()}
 
 
 def main():

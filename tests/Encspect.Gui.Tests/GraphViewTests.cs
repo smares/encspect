@@ -27,6 +27,9 @@ public class GraphViewTests
         Assert.False(window.FindingList.IsEffectivelyVisible);
         Assert.True(window.DecoderNote.IsEffectivelyVisible);
         Assert.Equal("Waveform and spectrogram need a decoder, which MPEG Audio does not have yet.", window.DecoderNote.Text);
+        window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == "Bitrate");
+        UiPump.Until(() => true);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick();
         var line = (LineGraph)window.Graph.Graph!;
 
         window.MouseMove(ScreenshotTests.PointOver(window, 40));

@@ -112,6 +112,21 @@
                   ]
                 },
                 {
+                  "name": "Stereo Coding",
+                  "value": 8,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 3072,
+                  "children": [
+                    {
+                      "name": "Intensity stereo",
+                      "value": "8 frames (100.0%)",
+                      "offset": 0,
+                      "length": 3072
+                    }
+                  ]
+                },
+                {
                   "name": "Intensity Stereo Bounds",
                   "value": 8,
                   "unit": "frames",
@@ -139,6 +154,62 @@
                     {
                       "name": "Bands 16 to 31",
                       "value": "2 frames (25.0%)",
+                      "offset": 0,
+                      "length": 3072
+                    }
+                  ]
+                },
+                {
+                  "name": "Coded Bandwidth",
+                  "offset": 0,
+                  "length": 3072,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 6750,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 6750,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 7500,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 3072
+                    }
+                  ]
+                },
+                {
+                  "name": "Channel Bit Share",
+                  "offset": 0,
+                  "length": 3072,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 46.6,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "Overall",
+                      "value": 65.2,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 80.9,
+                      "unit": "%",
                       "offset": 0,
                       "length": 3072
                     }
@@ -9610,6 +9681,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0,
               384,
@@ -9635,11 +9708,232 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0
             ],
             "values": [
               64
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              384,
+              768,
+              1152,
+              1536,
+              1920,
+              2304,
+              2688
+            ],
+            "values": [
+              7125,
+              6750,
+              7500,
+              7125,
+              6750,
+              7500,
+              7125,
+              6750
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              7500
+            ]
+          },
+          {
+            "name": "Channel Bit Share",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Channel Bit Share",
+            "x": [
+              0,
+              384,
+              768,
+              1152,
+              1536,
+              1920,
+              2304,
+              2688
+            ],
+            "values": [
+              80.9,
+              60.6,
+              68.4,
+              65,
+              46.6,
+              71.1,
+              59.8,
+              57.4
+            ]
+          },
+          {
+            "name": "Channel Bit Share Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Channel Bit Share",
+            "x": [
+              0
+            ],
+            "values": [
+              65.2
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Channel Modes",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 0
+              },
+              {
+                "name": "Joint stereo",
+                "count": 8
+              },
+              {
+                "name": "Dual channel",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                8
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 8
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Dual channel",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                2,
+                8
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Intensity Stereo Bounds",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Bands 4 to 31",
+                "count": 2
+              },
+              {
+                "name": "Bands 8 to 31",
+                "count": 2
+              },
+              {
+                "name": "Bands 12 to 31",
+                "count": 2
+              },
+              {
+                "name": "Bands 16 to 31",
+                "count": 2
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                3,
+                1
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

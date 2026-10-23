@@ -238,7 +238,7 @@ public sealed class GraphsViewModel : ObservableObject
                 GraphForm.OverTime => "The share of each category in every second of the stream",
                 GraphForm.Frames => "The category of every frame, one cell each",
                 _ => "The count and share of each category over the whole stream",
-            }, new CategoryGraph(series, f)))];
+            }, new CategoryGraph(series, f) { Duration = stream.Duration }))];
             entries.Add(new GraphChoice(series.Name, GraphHeadings.Of(series.Concept), series.Description, forms));
         }
 

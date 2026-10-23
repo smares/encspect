@@ -139,15 +139,19 @@ public class GraphTests
 
         Assert.True(graphs.HasGraphs);
         Assert.False(graphs.HasStreamChoice);
-        Assert.Equal(["Bitrate", "Reservoir Fill"], graphs.Choices.Select(c => c.Title));
-        Assert.Equal(["Per Frame", "Over Time", "Distribution"], graphs.Choices[0].Forms.Select(f => f.Title));
-        Assert.Equal(["Per Frame", "Over Time"], graphs.Choices[1].Forms.Select(f => f.Title));
+        // MPEG audio's coding series come first, under the headings of their concepts, then the bitrate and the bit reservoir fill.
+        Assert.Equal(["Coding Summary", "Stereo Coding", "Joint Stereo Modes", "Block Usage", "Block Sizes", "Bitrate", "Reservoir Fill", "Channel Modes"],
+            graphs.Choices.Select(c => c.Title));
+        GraphChoice bitrate = graphs.Choices.Single(c => c.Title == "Bitrate");
+        GraphChoice reservoir = graphs.Choices.Single(c => c.Title == "Reservoir Fill");
+        Assert.Equal(["Per Frame", "Over Time", "Distribution"], bitrate.Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time"], reservoir.Forms.Select(f => f.Title));
         Assert.Same(graphs.Choices[0], graphs.Selected);
         Assert.True(graphs.Choices[0].IsSelected);
         Assert.Equal("Waveform and spectrogram need a decoder, which MPEG Audio does not have yet.", graphs.DecoderNote);
 
         // The choice holds for the next file that has a graph of that title.
-        graphs.Selected = graphs.Choices[1];
+        graphs.Selected = reservoir;
         graphs.Load(Analyzer.CreateDefault().AnalyzeFile(Fixtures.Mpeg("external-lame-vbr-v2.mp3")));
         Assert.Equal("Reservoir Fill", graphs.Selected!.Title);
 
@@ -165,6 +169,7 @@ public class GraphTests
         using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
         Task load = model.LoadAsync(Fixtures.Stats("vbr-seconds.mp3"));
         ui.Until(() => load.IsCompleted);
+        model.Graphs.Selected = model.Graphs.Choices.Single(c => c.Title == "Bitrate");
         var line = (LineGraph)model.Graphs.Graph!;
 
         model.Graphs.Activate(77);
@@ -223,13 +228,13 @@ public class GraphTests
         Assert.Equal(2, graphs.Streams.Count);
         Assert.Equal("Stream 2: 48 kHz · 0:00.5", graphs.Streams[1].Text);
 
-        graphs.Selected = graphs.Choices[1];
+        graphs.Selected = graphs.Choices.Single(c => c.Title == "Reservoir Fill");
         graphs.SelectedStream = graphs.Streams[1];
-        Assert.Equal(graphs.Choices[1].Title, graphs.Selected!.Title);
-        var line = (LineGraph)graphs.Choices[0].Graph;
+        Assert.Equal("Reservoir Fill", graphs.Selected!.Title);
+        var line = (LineGraph)graphs.Choices.Single(c => c.Title == "Bitrate").Graph;
         Assert.Same(model.Report!.Streams[1].Series[0], line.Series);
 
-        graphs.Selected = graphs.Choices[0];
+        graphs.Selected = graphs.Choices.Single(c => c.Title == "Bitrate");
         graphs.Activate(line.Count - 1);
         Assert.Equal(NodeKind.Frame, model.SelectedNode!.Kind);
         Assert.Equal((long)line.Series.X.Span[^1], model.SelectedNode.Node.Offset);

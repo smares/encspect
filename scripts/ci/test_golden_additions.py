@@ -131,7 +131,10 @@ class CheckTests(unittest.TestCase):
     def test_a_real_golden_with_a_node_a_key_and_a_shifted_finding(self):
         old = json.loads(REAL.read_text())
         self.assertIsInstance(old, list)
-        new = json.loads(REAL.read_text())
+        # The committed golden has the category series its format produces since the MPEG step; the test adds one of its own, so
+        # it starts from the report without.
+        old[0]["streams"][0].pop("categorySeries", None)
+        new = json.loads(json.dumps(old))
         new[0]["root"]["children"][0]["children"].insert(0, node("Added", value=1))
         shifted = 0
         for finding in new[0]["findings"]:
@@ -213,11 +216,12 @@ class RepositoryTests(unittest.TestCase):
 
     def test_a_copy_of_a_real_golden_goes_through_git(self):
         real = json.loads(REAL.read_text())
+        real[0]["streams"][0].pop("categorySeries", None)
         self.write("tests/fixtures/mpeg/real.report.json", real)
         self.git("add", "-A")
         self.git("commit", "-qm", "real")
         self.git("checkout", "-qb", "pr2")
-        changed = json.loads(REAL.read_text())
+        changed = json.loads(json.dumps(real))
         changed[0]["streams"][0]["categorySeries"] = []
         self.write("tests/fixtures/mpeg/real.report.json", changed)
         self.write("tests/fixtures/mpeg/golden-changes.json", {"goldens": ["tests/fixtures/mpeg/real.report.json"], "added": [{"scope": "stream", "key": "categorySeries"}]})

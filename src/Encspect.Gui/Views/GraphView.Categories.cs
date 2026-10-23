@@ -184,7 +184,7 @@ public sealed partial class GraphView
     {
         string legend = graph switch
         {
-            CategoryGraph { View: not GraphForm.Summary } category => "Legend: " + string.Join(", ", category.Series.Categories.Select((c, i) => $"{c.Name} {CategoryGraph.SharePercent(category.Series.Counts[i], category.Series.Total)}")),
+            CategoryGraph { View: not GraphForm.Summary } category => "Legend: " + string.Join(", ", category.Series.Categories.Select((c, i) => (c, i)).Where(t => category.Series.Counts[t.i] > 0).Select(t => $"{t.c.Name} {CategoryGraph.SharePercent(category.Series.Counts[t.i], category.Series.Total)}")),
             ShareSplitGraph split => $"Legend: first channel, second channel",
             _ => string.Empty,
         };
@@ -250,9 +250,9 @@ public sealed partial class GraphView
     private static string Capitalize(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
 
     // The legend's entries as text with their shares, and the category each stands for.
-    private static List<(string Label, int Category)> LegendEntries(Graph graph) => graph switch
+    internal static List<(string Label, int Category)> LegendEntries(Graph graph) => graph switch
     {
-        CategoryGraph category => [.. Enumerable.Range(0, category.Series.Categories.Count).Select(c => ($"{category.Series.Categories[c].Name} {CategoryGraph.SharePercent(category.Series.Counts[c], category.Series.Total)}", c))],
+        CategoryGraph category => [.. Enumerable.Range(0, category.Series.Categories.Count).Where(c => category.Series.Counts[c] > 0).Select(c => ($"{category.Series.Categories[c].Name} {CategoryGraph.SharePercent(category.Series.Counts[c], category.Series.Total)}", c))],
         ShareSplitGraph split => [("First channel", 0), ("Second channel", 1)],
         _ => [],
     };
@@ -392,8 +392,7 @@ public sealed partial class GraphView
             }
 
             SplitColumns columns = SplitColumnsOf(split, width);
-            int column = Math.Clamp((int)((point.X - plot.Left) * columns.Count / plot.Width), 0, columns.Count - 1);
-            return SplitHit(split, columns, column, plot, withText);
+            return SplitHit(split, columns, SlotsOf(plot, split, columns).At(point.X), plot, withText);
         }
 
         var category = (CategoryGraph)graph;
@@ -405,8 +404,7 @@ public sealed partial class GraphView
             }
 
             CategoryColumns columns = ColumnsFor(category, width, -1);
-            int column = Math.Clamp((int)((point.X - plot.Left) * columns.Count / plot.Width), 0, columns.Count - 1);
-            return OverTimeHit(category, columns, column, plot, withText);
+            return OverTimeHit(category, columns, SlotsOf(plot, category, columns).At(point.X), plot, withText);
         }
 
         for (int row = 0; row < layout.Rows; row++)
@@ -428,8 +426,8 @@ public sealed partial class GraphView
 
     private static CategoryHit OverTimeHit(CategoryGraph graph, CategoryColumns columns, int column, Rect plot, bool withText = true)
     {
-        double colW = plot.Width / columns.Count;
-        var area = new Rect(plot.Left + (column * colW), plot.Top, Math.Max(1, colW), plot.Height);
+        Slots slots = SlotsOf(plot, graph, columns);
+        var area = new Rect(slots.X(column), plot.Top, Math.Max(1, slots.W(column)), plot.Height);
         int first = columns.First(column);
         int end = columns.End(column);
         int filled = graph.FirstFilledInterval(first, end);
@@ -447,8 +445,8 @@ public sealed partial class GraphView
 
     private static CategoryHit SplitHit(ShareSplitGraph graph, SplitColumns columns, int column, Rect plot, bool withText = true)
     {
-        double colW = plot.Width / columns.Count;
-        var area = new Rect(plot.Left + (column * colW), plot.Top, Math.Max(1, colW), plot.Height);
+        Slots slots = SlotsOf(plot, graph, columns);
+        var area = new Rect(slots.X(column), plot.Top, Math.Max(1, slots.W(column)), plot.Height);
         int first = columns.First(column);
         int end = columns.First(column + 1);
         string text = string.Empty;
@@ -616,7 +614,7 @@ public sealed partial class GraphView
             context.DrawText(Text("Share of the values in each interval", TextSize, secondary), new Point(4, 2));
             DrawPercentTicks(context, plot, grid, secondary);
             CategoryColumns columns = ColumnsFor(category, width, -1);
-            double colW = plot.Width / columns.Count;
+            Slots slots = SlotsOf(plot, category, columns);
             for (int column = 0; column < columns.Count; column++)
             {
                 if (columns.Total(column) == 0)
@@ -624,13 +622,13 @@ public sealed partial class GraphView
                     continue;
                 }
 
-                DrawStack(context, columns.Counts(column), plot.Left + (column * colW), colW, plot.Top, plot.Height, styles, brushes, heights, surface, highContrast, series);
+                DrawStack(context, columns.Counts(column), slots.X(column), slots.W(column), plot.Top, plot.Height, styles, brushes, heights, surface, highContrast, series);
             }
 
-            DrawTimeAxis(context, series.Time!.Starts.Span, columns.Count, columns.First, plot, secondary);
+            DrawTimeAxis(context, series.Time!.Starts.Span, slots, columns.First, secondary, plot);
             if (MarkedIndex is { } marked && marked < category.Count)
             {
-                double x = Math.Round(plot.Left + ((ColumnOf(columns, marked) + 0.5) * colW)) + 0.5;
+                double x = Math.Round(slots.Center(ColumnOf(columns, marked))) + 0.5;
                 context.DrawLine(new Pen(foreground, 1.5), new Point(x, plot.Top), new Point(x, plot.Bottom));
             }
         }
@@ -725,7 +723,7 @@ public sealed partial class GraphView
         context.DrawText(Text("Share of the audio bits of the two channels in each interval", TextSize, secondary), new Point(4, 2));
         DrawPercentTicks(context, plot, new Pen(Palette.Grid(this), 1), secondary);
         SplitColumns columns = SplitColumnsOf(graph, Math.Max(1, (int)plot.Width));
-        double colW = plot.Width / columns.Count;
+        Slots slots = SlotsOf(plot, graph, columns);
         IBrush first = new ImmutableSolidColorBrush(hues[0]);
         IBrush second = new ImmutableSolidColorBrush(hues[1]);
         IBrush gap = new ImmutableSolidColorBrush(surface);
@@ -737,7 +735,8 @@ public sealed partial class GraphView
                 continue;
             }
 
-            double x = plot.Left + (column * colW);
+            double x = slots.X(column);
+            double colW = slots.W(column);
             double width = colW >= 4 ? colW - 1 : colW;
             double low = plot.Height * share / 100;
             context.FillRectangle(first, new Rect(x, plot.Bottom - low, width, low));
@@ -751,10 +750,10 @@ public sealed partial class GraphView
         // The 50% line.
         double mid = Math.Round(plot.Bottom - (plot.Height / 2)) + 0.5;
         context.DrawLine(new Pen(foreground, 1, dashStyle: DashStyle.Dash), new Point(plot.Left, mid), new Point(plot.Right, mid));
-        DrawTimeAxis(context, graph.Series.X.Span, columns.Count, columns.First, plot, secondary);
+        DrawTimeAxis(context, graph.Series.X.Span, slots, columns.First, secondary, plot);
         if (MarkedIndex is { } marked && marked < graph.Count)
         {
-            double x = Math.Round(plot.Left + ((ColumnOf(columns.Firsts, marked) + 0.5) * colW)) + 0.5;
+            double x = Math.Round(slots.Center(ColumnOf(columns.Firsts, marked))) + 0.5;
             context.DrawLine(new Pen(foreground, 1.5), new Point(x, plot.Top), new Point(x, plot.Bottom));
         }
 
@@ -844,24 +843,24 @@ public sealed partial class GraphView
             context.DrawText(text, new Point(rect.X + 16, rect.Y + ((rect.Height - text.Height) / 2)));
         }
 
-        if (layout.Legend.Count < series.Categories.Count && layout.Legend.Count > 0)
+        if (layout.Legend.Count < series.Counts.Count(c => c > 0) && layout.Legend.Count > 0)
         {
             Rect last = layout.Legend[^1].Rect;
-            string more = $"+{series.Categories.Count - layout.Legend.Count} more in the Summary";
+            string more = $"+{series.Counts.Count(c => c > 0) - layout.Legend.Count} more in the Summary";
             context.DrawText(Text(more, TextSize, secondary), new Point(last.Right, last.Y + 2));
         }
     }
 
     // Time labels about every 90 pixels under the columns, from the start of each column's first interval.
-    private void DrawTimeAxis(DrawingContext context, ReadOnlySpan<double> starts, int columns, Func<int, int> firstOf, Rect plot, IBrush secondary)
+    private void DrawTimeAxis(DrawingContext context, ReadOnlySpan<double> starts, Slots slots, Func<int, int> firstOf, IBrush secondary, Rect plot)
     {
-        double colW = plot.Width / columns;
+        int columns = slots.Count;
         double lastEnd = double.NegativeInfinity;
-        int step = Math.Max(1, (int)Math.Ceiling(90 / colW));
+        int step = Math.Max(1, (int)Math.Ceiling(90 / (plot.Width / columns)));
         for (int column = 0; column < columns; column += step)
         {
             FormattedText label = Text(Format.Clock(starts[firstOf(column)]), AxisSize, secondary);
-            double x = plot.Left + (column * colW);
+            double x = slots.X(column);
             double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12)
             {
@@ -945,6 +944,7 @@ public sealed partial class GraphView
         using (context.PushTransform(Matrix.CreateTranslation(0, 24 - _scroll)))
         {
             CategoryStyle[][] styles = [.. summary.Tables.Select(t => CategoryColors.For(t, isDark, surface))];
+            (double, double) columns = SummaryColumns(summary.Tables.SelectMany(t => t.Counts), TextSize);
             foreach (SummaryTable header in layout.Tables)
             {
                 CategorySeries series = summary.Tables[header.Table];
@@ -982,8 +982,7 @@ public sealed partial class GraphView
                 long count = series.Counts[row.Category];
                 double share = series.Total > 0 ? (double)count / series.Total : 0;
                 const double barWidth = 96;
-                const double shareWidth = 52;
-                const double countWidth = 88;
+                (double shareWidth, double countWidth) = columns;
                 double right = rect.Right;
                 var track = new Rect(right - barWidth, rect.Y + ((rect.Height - 8) / 2), barWidth, 8);
                 context.FillRectangle(trackBrush, track, 2f);
@@ -1002,6 +1001,48 @@ public sealed partial class GraphView
             }
         }
     }
+
+    // The widths of the share column and the count column of a summary table, each measured from its widest text plus a gap, so
+    // that the two right-aligned numbers never run together: the share column holds "100.0%", the count column the largest count.
+    internal const double SummaryGap = 12;
+
+    internal static (double Share, double Count) SummaryColumns(IEnumerable<long> counts, double size)
+    {
+        double share = Text("100.0%", size, Brushes.Black).Width + SummaryGap;
+        double count = Text(counts.DefaultIfEmpty(0).Max().ToString("N0", CultureInfo.InvariantCulture), size, Brushes.Black).Width + SummaryGap;
+        return (share, count);
+    }
+
+    // The columns of an over-time chart: equal slots, but a last interval that lasts less than the others takes its share of one.
+    internal readonly record struct Slots(double Left, double Width, int Count, double LastFraction)
+    {
+        private double Unit => Width / (Count - 1 + LastFraction);
+
+        public double X(int column) => Left + (column * Unit);
+
+        public double W(int column) => column == Count - 1 ? LastFraction * Unit : Unit;
+
+        public double Center(int column) => X(column) + (W(column) / 2);
+
+        public int At(double x) => Math.Clamp((int)((x - Left) / Unit), 0, Count - 1);
+    }
+
+    // Where the columns of an over-time chart are: one column for each interval, the last as wide as its length against the
+    // others' when the stream ends inside it; columns that merge intervals are equal.
+    internal static Slots SlotsOf(Rect plot, int columns, ReadOnlySpan<double> starts, double duration)
+    {
+        double fraction = 1;
+        if (columns == starts.Length && columns >= 2 && duration > starts[^1] && starts[1] > starts[0])
+        {
+            fraction = Math.Clamp((duration - starts[^1]) / (starts[1] - starts[0]), 0.02, 1);
+        }
+
+        return new Slots(plot.Left, plot.Width, columns, fraction);
+    }
+
+    private static Slots SlotsOf(Rect plot, CategoryGraph graph, CategoryColumns columns) => SlotsOf(plot, columns.Count, graph.Series.Time!.Starts.Span, graph.Duration);
+
+    private static Slots SlotsOf(Rect plot, ShareSplitGraph graph, SplitColumns columns) => SlotsOf(plot, columns.Count, graph.Series.X.Span, graph.Duration);
 
     private static FormattedText Fit(string text, double size, IBrush brush, double maxWidth)
     {
