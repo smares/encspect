@@ -14,6 +14,9 @@ internal static class Topics
     public const string MidSideStereo = "mid-side-stereo";
     public const string Crc = "crc";
     public const string EncoderDetection = "encoder-detection";
+    public const string Matroska = "wavpack-in-matroska";
+    public const string AudioChecksums = "wavpack-audio-checksums";
+    public const string EntropyCoding = "wavpack-entropy-coding";
 }
 
 // What each WavPack node is, in the words the report shows next to it. Constants only: the blocks
@@ -25,6 +28,13 @@ internal static class Topics
 internal static class Explain
 {
     public const string Stream = "The blocks of a WavPack file, one after another: each has a 32-byte header and metadata sub-blocks, the last of which is normally the compressed audio (WavPack 4 and 5 binary file/block format, section 1.0).";
+    public const string MatroskaPacket = "One Matroska packet: the samples of its blocks in 4 bytes, then the blocks, each with its flags, its CRC and, unless it is the only block of its set, its size, but without the header the container leaves out (as FFmpeg's matroskadec.c, matroska_parse_wavpack, takes them apart).";
+    public const string PacketSamples = "How many samples each of the packet's blocks counts, which a rebuilt block header takes as its block samples (matroskadec.c matroska_parse_wavpack).";
+    public const string MatroskaBlock = "One block as the container stores it: its flags, its CRC and size and its sub-blocks, without the 32-byte header, which a reader rebuilds with the stream version from the CodecPrivate, a block index and a total of 0 (matroskadec.c matroska_parse_wavpack).";
+    public const string MatroskaBlockSize = "The size of the block's sub-blocks in bytes; a block that has both the initial and the final flag is the only one of its packet and has no size, since it runs to the packet's end.";
+    public const string SubBlocksOfBlock = "The block's sub-blocks, listed without their fields.";
+    public const string StatPackets = "How many packets the stream holds.";
+    public const string StreamVersionOfCodecPrivate = "The stream version the CodecPrivate states, which rebuilt block headers take (0x410 where it states none, as FFmpeg assumes).";
     public const string Block = "One block: a header and the sub-blocks that follow it up to the size the header states. Every block decodes by itself to mono or stereo audio; a multichannel file repeats a set of blocks, one for each stereo pair or single channel (format document, sections 1.0 to 3.0).";
     public const string MetadataBlock = "A block that counts no sample: it carries metadata only, such as a wrapper or a checksum of the audio, and no audio (format document, section 2.0, \"block_samples\").";
     public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies between the WavPack blocks, which the tag breaks; the analyzer does not read them as blocks.";
@@ -44,7 +54,7 @@ internal static class Explain
     public const string BlockIndex = "The index of the block's first sample counted from the start of the file, 40 bits in two fields; 0 in the first block (format document, section 2.0, block_index).";
     public const string BlockSamples = "The number of samples in the block, all channels of the block counting as one (format document, section 2.0, block_samples). Blocks hold up to 131,072.";
     public const string BlockSamplesZero = "0 marks a block with no audio, one that carries metadata only (format document, section 2.0, block_samples).";
-    public const string BlockCrc = "A CRC of the block's decoded audio, which only decoding can check. Block checksums, which cover the block's bytes, are the checksum sub-blocks (format document, section 2.0, crc).";
+    public const string BlockCrc = "A CRC of the block's decoded audio, which only decoding can check: the analyzer compares it when asked to verify the audio, not in a default analysis. Block checksums, which cover the block's bytes and which every analysis compares, are the checksum sub-blocks (format document, section 2.0, crc; unpack.c).";
     public const string Flags = "The flags that tell how to decode the block and some general facts about it: sample size and format, hybrid or lossless, mono or stereo and the sample rate (format document, section 2.0, flags).";
 
     public const string BytesPerSample = "How many bytes each sample takes in the decoded data, 1 to 4, stored less 1 in two bits. With the left shift, it gives the sample's bit depth (format document, section 2.0).";
@@ -99,10 +109,10 @@ internal static class Explain
     private const string AltHeader = "The header of a source file that is not a WAVE file, such as AIFF, CAF, DSF or DSDIFF, added with version 5.0 (ID_ALT_HEADER; format document, section 3.0).";
     private const string AltTrailer = "The bytes after the audio in a source file that is not a WAVE file, added with version 5.0 (ID_ALT_TRAILER; format document, section 3.0).";
     private const string ConfigBlock = "Some of the encoder's settings, for information only: the flags of its configuration from bit 8 up and, with extra processing, its level (ID_CONFIG_BLOCK; pack.c write_config_info).";
-    private const string Md5Checksum = "The MD5 digest of the raw audio data of the source, 16 bytes, to compare with the decoded audio (ID_MD5_CHECKSUM; format document, section 3.0).";
+    private const string Md5Checksum = "The MD5 digest of the raw audio data of the source, 16 bytes, to compare with the decoded audio, which the analyzer does when asked to verify the audio (ID_MD5_CHECKSUM; format document, section 3.0).";
     private const string SampleRate = "The sample rate, where it is not one of the 15 the flags can name, in three bytes, or four with the top bit reserved (ID_SAMPLE_RATE; open_utils.c read_sample_rate).";
     private const string AltExtension = "The extension of the file to decode to, such as \"wav\" or \"dsf\", added with version 5.0 (ID_ALT_EXTENSION; format document, section 3.0).";
-    private const string AltMd5Checksum = "The MD5 digest of the raw audio data of a source that is not a WAVE file, with a byte order or sample format other than WAVE's, added with version 5.0 (ID_ALT_MD5_CHECKSUM; format document, section 3.0).";
+    private const string AltMd5Checksum = "The MD5 digest of the raw audio data of a source that is not a WAVE file, with a byte order or sample format other than WAVE's, added with version 5.0 and compared with the decoded audio when the analyzer is asked to verify it (ID_ALT_MD5_CHECKSUM; format document, section 3.0).";
     private const string NewConfigBlock = "The source file's format, the flags of how its samples are stored and a Core Audio channel layout, added with version 5.0 (ID_NEW_CONFIG_BLOCK; open_utils.c read_new_config_info).";
     private const string ChannelIdentities = "Which speaker each channel feeds that the channel mask cannot name, one byte each; 0xFF stands for none (ID_CHANNEL_IDENTITIES; open_utils.c read_channel_identities).";
     private const string BlockChecksum = "A checksum of the block's bytes before it: each 16-bit little-endian word is added to three times the sum so far, from -1. Two bytes keep the sum folded onto itself, four keep it whole; added with version 5.0 (ID_BLOCK_CHECKSUM; open_utils.c WavpackVerifySingleBlock).";
@@ -187,8 +197,8 @@ internal static class Explain
     public const string Int32Zeros = "How many low bits are always zero, restored by a shift.";
     public const string Int32Ones = "How many low bits are always one.";
     public const string Int32Dups = "How many low bits repeat the bit above them.";
-    public const string WvxCrc = "A CRC of the extra bits, which only decoding can check (open_utils.c init_wvx_bitstream).";
-    public const string Bitstream = "The coded bits, which the analyzer does not decode.";
+    public const string WvxCrc = "A CRC of the extra bits, which only decoding can check: the analyzer compares it when asked to verify the audio, not in a default analysis (open_utils.c init_wvx_bitstream; unpack_floats.c).";
+    public const string Bitstream = "The coded bits, which the analyzer decodes only when asked to verify the audio.";
     public const string ChannelCount = "How many channels the file holds, over all its blocks (open_utils.c read_channel_info). The newer form, in six or seven bytes, takes twelve bits for it.";
     public const string StreamCount = "How many blocks, stereo or mono, make up one set that holds all channels (open_utils.c read_channel_info).";
     public const string ChannelMask = "The speakers the channels feed, one bit each, as in the WAVE channel mask; the channels follow the order of the bits (format document, section 1.0).";
@@ -196,9 +206,9 @@ internal static class Explain
     public const string DsdMultiplier = "The factor of two by which the stored sample rate is multiplied for DSD; the audio's bit rate is that times 8 (unpack_dsd.c init_dsd_block; common_utils.c WavpackGetNativeSampleRate).";
     public const string DsdMode = "How the DSD bytes are coded: stored as they are (0), fast (1) or high (3) (unpack_dsd.c init_dsd_block).";
     public const string DsdHistoryBits = "How many previous bits the fast mode's probability model looks at, up to 5 (unpack_dsd.c init_dsd_block_fast).";
-    public const string DsdData = "The coded DSD bytes, which the analyzer does not decode.";
+    public const string DsdData = "The coded DSD bytes, which the analyzer decodes only when asked to verify the audio.";
     public const string DummyBytes = "Bytes that fill the sub-block.";
-    public const string Md5Digest = "The digest as 32 hexadecimal digits. The analyzer does not decode the audio, so it does not check it.";
+    public const string Md5Digest = "The digest as 32 hexadecimal digits. The analyzer compares it with the decoded audio when asked to verify the audio, not in a default analysis, and not for a hybrid file without its correction file, whose digest is of the lossless audio (cli/wvunpack.c).";
     public const string SampleRateField = "The sample rate in Hz (open_utils.c read_sample_rate).";
     public const string Extension = "The extension of the file to decode to.";
     public const string FileFormat = "The format of the source file: 0 WAVE, 1 Wave64, 2 CAF, 3 DSDIFF, 4 DSF, 5 AIFF (wavpack.h WP_FORMAT_*).";
@@ -215,7 +225,7 @@ internal static class Explain
     public const string Reordering = "The order of the source's channels, where it was not the Microsoft order, as indexes into the channels.";
     public const string Identity = "The speaker this channel feeds, by its position in the WAVE channel mask, or unassigned (open_utils.c read_channel_identities).";
     public const string FurtherItems = "More entries, which the report does not list one by one.";
-    public const string StoredChecksum = "The checksum as the sub-block stores it.";
+    public const string StoredChecksum = "The checksum as the sub-block stores it, which every analysis compares.";
     public const string ComputedChecksum = "The checksum worked out over the block's bytes before this sub-block, in the size the sub-block stores (open_utils.c WavpackVerifySingleBlock).";
     public const string ChecksumIsValid = "Whether the stored checksum equals the one worked out.";
 
@@ -291,7 +301,7 @@ internal static class Explain
     public const string StatMidSide = "The stereo blocks coded as mid and side instead of left and right.";
     public const string StatChecksums = "The blocks whose checksum sub-block equals the checksum worked out over the block's bytes.";
     public const string StatChecksumsFailed = "The blocks whose checksum differs from the one worked out, or that say they have one and hold none.";
-    public const string StatMd5 = "The MD5 digest of the source audio that the first MD5 sub-block stores. The analyzer does not decode the audio, so it does not check it.";
+    public const string StatMd5 = "The MD5 digest of the source audio that the first MD5 sub-block or alternate MD5 sub-block stores. The analyzer compares it with the decoded audio when asked to verify the audio, not in a default analysis, and not for a hybrid file without its correction file.";
     public const string StatSourceFormat = "The format of the file the audio was encoded from, from the new config block (an empty one stands for WAVE).";
     public const string StatSourceExtension = "The extension of the file to decode to, from the extension sub-block.";
     public const string AverageBitrate = "The bits of the audio blocks, less the wrapper sub-blocks (the source file's header and trailer) they hold, over the time their samples last.";

@@ -1,0 +1,41 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "block checksum",
+        "stored": 4,
+        "checked": 4,
+        "failed": 0
+      },
+      {
+        "name": "block header CRC",
+        "stored": 3,
+        "checked": 3,
+        "failed": 0
+      },
+      {
+        "name": "extended CRC",
+        "stored": 2,
+        "checked": 2,
+        "failed": 1
+      },
+      {
+        "name": "MD5",
+        "stored": 1,
+        "checked": 1,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "wavpack.audio-crc-mismatch",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The extra bits of the block at 0x0 do not have the CRC their bitstream stores."
+    }
+  ]
+}

@@ -44,11 +44,11 @@ internal static partial class Nodes
                 data.Add(Field(at + 3, 1, "Duplicated Bits", NodeValue.Integer(kept[3], "bits", "bit"), Explain.Int32Dups, Topics.FloatAndLargeIntegers));
                 break;
             case SubBlockIds.WvxBitstream when kept.Length >= 4:
-                data.Add(Field(at, 4, "CRC", NodeValue.Hex(BinaryPrimitives.ReadUInt32LittleEndian(kept), 8), Explain.WvxCrc, Topics.Crc));
+                data.Add(Field(at, 4, "CRC", NodeValue.Hex(BinaryPrimitives.ReadUInt32LittleEndian(kept), 8), Explain.WvxCrc, Topics.AudioChecksums));
                 data.Add(Field(at + 4, sb.DataLength - 4, "Bitstream", NodeValue.Integer(sb.DataLength - 4, "bytes", "byte"), Explain.Bitstream, Topics.FloatAndLargeIntegers));
                 break;
             case SubBlockIds.WvBitstream or SubBlockIds.WvcBitstream:
-                data.Add(Field(at, sb.DataLength, "Bitstream", NodeValue.Integer(sb.DataLength, "bytes", "byte"), Explain.Bitstream, Topics.Decorrelation));
+                data.Add(Field(at, sb.DataLength, "Bitstream", NodeValue.Integer(sb.DataLength, "bytes", "byte"), Explain.Bitstream, Topics.EntropyCoding));
                 break;
             case SubBlockIds.ChannelInfo:
                 ChannelInfo(kept, at, data);
@@ -69,7 +69,7 @@ internal static partial class Nodes
                 Config(kept, sb.DataLength, at, data);
                 break;
             case SubBlockIds.Md5Checksum or SubBlockIds.AltMd5Checksum when kept.Length == 16:
-                data.Add(Field(at, 16, "Digest", Decode.Hex(kept), Explain.Md5Digest, Topics.Wrapper));
+                data.Add(Field(at, 16, "Digest", Decode.Hex(kept), Explain.Md5Digest, Topics.AudioChecksums));
                 break;
             case SubBlockIds.SampleRate when Decode.SampleRate(kept) is { } rate:
                 data.Add(Field(at, kept.Length, "Sample Rate", NodeValue.Integer(rate, "Hz"), Explain.SampleRateField));

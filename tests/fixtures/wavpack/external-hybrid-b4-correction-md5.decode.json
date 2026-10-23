@@ -1,0 +1,42 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": null,
+    "isLossy": true,
+    "checksums": [
+      {
+        "name": "block checksum",
+        "stored": 6,
+        "checked": 6,
+        "failed": 0
+      },
+      {
+        "name": "block header CRC",
+        "stored": 5,
+        "checked": 5,
+        "failed": 0
+      },
+      {
+        "name": "extended CRC",
+        "stored": 0,
+        "checked": 0,
+        "failed": 0
+      },
+      {
+        "name": "MD5",
+        "stored": 1,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "wavpack.md5-needs-correction-file",
+      "severity": "Info",
+      "count": 1,
+      "message": "The file stores the MD5 of the lossless audio, which this stream does not decode to (a hybrid file without its correction file (.wvc), or blocks that drop bits), so it is not compared."
+    }
+  ]
+}

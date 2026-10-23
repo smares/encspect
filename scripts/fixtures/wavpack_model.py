@@ -311,5 +311,29 @@ def manifest(data, start, end, extra=None):
         result["stream_infos"] = []
     else:
         result["stream_infos"] = [info]
+    expected = decoding(data, start, end) if info is not None else None
+    if expected is not None:
+        result.update(expected)
     result.update(extra or {})
+    return result
+
+
+def decoding(data, start, end):
+    """The decoded samples, the MD5 of the canonical layout, the verification with and without decoding and the findings decoding adds,
+    from wavpack_decode.py (the decoder worked out apart from the analyzer)."""
+    import wavpack_decode
+
+    expected = wavpack_decode.expectation(data, start, end)
+    if expected is None:
+        return None
+    result = {}
+    if expected["verify"]["decoding"] == "decoded":
+        result["decoded_samples"] = expected["decoded_samples"]
+        result["pcm_samples"] = expected["pcm_samples"]
+        if expected["decoded_pcm_md5"] is not None:
+            result["decoded_pcm_md5"] = expected["decoded_pcm_md5"]
+        if expected["decoded_dsd_md5"] is not None:
+            result["decoded_dsd_md5"] = expected["decoded_dsd_md5"]
+    result["verification"] = {"default": expected["default"], "verify": expected["verify"]}
+    result["decode_findings"] = expected["decode_findings"]
     return result
