@@ -43,6 +43,12 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/
   band, the extension payloads' types, the SBR headers' start, stop and crossover fields, the parametric stereo extension, and the
   block's length in bits. It runs on every fixture whose report holds read raw data blocks.
   Blocks that "faad_trace_skip" lists, by index, are not compared, each for the reason given.
+- the same trace, per unit, against the coding series of the golden report (check_series): the window sequence of every channel stream, the
+  stereo coding of every channel pair (intensity stereo where the second channel has a band of codebook 14 or 15, whether or not the pair has a
+  common window; mid/side stereo where a band that is no intensity stereo band has its ms_used flag set, ms_mask_present 2 setting every band; computed from the
+  trace's flags and codebooks by the rule of ISO/IEC 14496-3 4.6.8, not read from the analyzer) and the coded bandwidth (the top of band max_sfb of the highest
+  channel stream, in whole hertz from the band tables of aac_tables.py), for the units of a file with one stream. A unit holds the raw data blocks of
+  an ADTS frame, and a block of "faad_trace_skip" or one the analyzer could not read leaves its unit out.
 - "decode": ffmpeg must decode every access unit without printing an error (ffmpeg -v error ... -f null -).
 - "skip": the tools that are not run on the fixture, each with the reason.
 - MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
@@ -59,6 +65,7 @@ The analyzer's agreement with the manifests is checked by the tests (Mp4FixtureT
 when anything disagrees. Needs ffmpeg, gpac, faad and mediainfo.
 """
 
+import bisect
 import json
 import math
 import pathlib
@@ -67,6 +74,7 @@ import subprocess
 import sys
 import tempfile
 
+import aac_tables
 import channel_layouts
 import faad_trace_tool
 import mediainfo_tool as mi
@@ -375,12 +383,143 @@ def decode_messages(path):
     return result.stderr.decode("utf-8", "replace").strip()
 
 
+WINDOW_SEQUENCES = ["Only Long", "Long Start", "Eight Short", "Long Stop"]
+STEREO_CODINGS = ["Left/right stereo", "Mid/side stereo", "Intensity stereo", "Mid/side and intensity stereo", "Reserved"]
+BLOCK_SIZES = ["Long, start and stop", "Short"]
+
+
+def core_rate(report):
+    """The core's sample rate from the golden: the AudioSpecificConfig's, an ADTS header's or ADIF's program config element's."""
+    for node in mi.walk(report["root"]):
+        if node["name"] in ("AudioSpecificConfig", "Frame", "Program Config Element"):
+            for child in node.get("children") or []:
+                if child["name"] == "Sample Rate" and isinstance(child.get("value"), int):
+                    return child["value"]
+    return None
+
+
+def trace_unit(blocks, rate):
+    """The coding values of a unit that faad2's trace states for its raw data blocks: the window sequence of each channel stream, the stereo
+    coding of each channel pair and the highest top of a band, in whole hertz (None for a unit without a channel stream)."""
+    index = aac_tables_index(rate)
+    windows, pairs, top = [], [], None
+    for block in blocks:
+        records = block["records"]
+        skip = 0
+        i = 0
+        while i < len(records):
+            record = records[i]
+            if record[0] == "EL" and record[1] == "2":
+                skip = 1                                    # the coupling channel element's stream is no channel stream of the tally
+            elif record[0] in ("CPE", "ICS"):
+                streams = []
+                common = mask = 0
+                flags = ""
+                if record[0] == "CPE":
+                    common, mask = int(record[1]), int(record[2])
+                    flags = record[3] if len(record) > 3 else ""
+                    streams = [r for r in records[i + 1:i + 3] if r[0] == "ICS"]
+                    i += len(streams)
+                elif skip:
+                    skip -= 1
+                else:
+                    streams = [record]
+                for stream in streams:
+                    windows.append(int(stream[1]))
+                    short = int(stream[1]) == 2
+                    table = (aac_tables.SWB_SHORT if short else aac_tables.SWB_LONG)[index]
+                    hertz = round_half_even(table[int(stream[3])] * rate, 2 * (128 if short else 1024))
+                    top = hertz if top is None else max(top, hertz)
+                if record[0] == "CPE" and len(streams) == 2:
+                    pairs.append(trace_pair(common, mask, flags, streams[1][11]))
+            i += 1
+    return windows, pairs, top
+
+
+def trace_pair(common, mask, flags, books):
+    """The stereo coding of a channel pair from what faad2 reads (ISO/IEC 14496-3 4.6.8): the codebooks of the second channel's bands, in
+    groups of max_sfb, and the ms_used flags of the pair (where ms_mask_present is 1; mask 2 sets every band)."""
+    intensity = any(book in "ef" for book in books)
+    midside = common and mask in (1, 2) and any(book not in "ef" and (mask == 2 or flags[band] == "1") for band, book in enumerate(books))
+    return 3 if intensity and midside else 2 if intensity else 1 if midside else 0
+
+
+def round_half_even(numerator, denominator):
+    quotient, rest = divmod(numerator, denominator)
+    return quotient + (1 if rest * 2 > denominator or (rest * 2 == denominator and quotient % 2) else 0)
+
+
+# The sampling frequency index of a rate: the first whose lower limit the rate reaches, the ranges ffmpeg and faad2 both use.
+RATE_LIMITS = [92017, 75132, 55426, 46009, 37566, 27713, 23004, 18783, 13856, 11502, 9391]
+
+
+def aac_tables_index(rate):
+    return next((index for index, limit in enumerate(RATE_LIMITS) if rate >= limit), 11)
+
+
+def series_units(series, count):
+    """The values of each unit of a category series of the report, from its run-length codes."""
+    flat = [code for code, length in series["runs"] for _ in range(length)]
+    counts = [c for c, units in series["valueCounts"] for _ in range(units)] if "valueCounts" in series else [series.get("valuesPerUnit", 1)] * count
+    out, at = [], 0
+    for c in counts:
+        out.append(flat[at:at + c])
+        at += c
+    return out
+
+
+def check_series(ours, theirs, report, problems, skipped=()):
+    """Holds the coding series of the golden report to faad2's trace, unit by unit (see the module's documentation)."""
+    streams = [s for s in report["streams"] if any(c["name"] == "Window Sequences" for c in s.get("categorySeries", []))]
+    rate = core_rate(report)
+    if len(streams) != 1 or rate is None or len(ours) != len(theirs):
+        return 0
+    stream = streams[0]
+    by_name = {c["name"]: c for c in stream["categorySeries"]}
+    windows, pairs, sizes = by_name["Window Sequences"], by_name.get("Stereo Coding"), by_name["Block Sizes"]
+    if [c["name"] for c in windows["categories"]] != WINDOW_SEQUENCES or (pairs and [c["name"] for c in pairs["categories"]] != STEREO_CODINGS):
+        problems.append("the coding series' categories are not the window sequences and stereo codings the check expects")
+        return 0
+    if [c["name"] for c in sizes["categories"]] != BLOCK_SIZES or sizes.get("groupOf") != "Window Sequences" or sizes.get("map") != [0, 0, 1, 0]:
+        problems.append("Block Sizes is not the grouping of Window Sequences into long (with start and stop) and short windows")
+    xs = next((s["x"] for s in stream["series"] if s["name"] == windows.get("xSeries", "Bitrate")), None)
+    if xs is None or len(xs) != len(series_units(windows, len(xs))):
+        return 0
+    bandwidth = next((s for s in stream["series"] if s["name"] == "Coded Bandwidth"), None)
+    points = dict(zip(bandwidth["x"], bandwidth["values"])) if bandwidth else {}
+    expected_windows, expected_pairs, expected_top = [[] for _ in xs], [[] for _ in xs], [None] * len(xs)
+    damaged = set()
+    blocks = [[] for _ in xs]
+    for index, (mine, faad) in enumerate(zip(ours, theirs)):
+        unit = max(0, bisect.bisect_right(xs, mine["offset"]) - 1)
+        if analyzer_records(mine)[0] is None or str(index) in skipped:
+            damaged.add(unit)
+        blocks[unit].append(faad)
+    unit_windows, unit_pairs = series_units(windows, len(xs)), series_units(pairs, len(xs)) if pairs else [[] for _ in xs]
+    compared = 0
+    for unit, group in enumerate(blocks):
+        if unit in damaged or not group:
+            continue
+        expected_windows[unit], expected_pairs[unit], expected_top[unit] = trace_unit(group, rate)
+        compared += 1
+        if unit_windows[unit] != expected_windows[unit]:
+            problems.append(f"unit {unit}: window sequences {unit_windows[unit]}, faad2 reads {expected_windows[unit]}")
+        if unit_pairs[unit] != expected_pairs[unit]:
+            problems.append(f"unit {unit}: stereo codings {unit_pairs[unit]}, faad2's flags and codebooks give {expected_pairs[unit]}")
+        if points.get(xs[unit]) != expected_top[unit]:
+            problems.append(f"unit {unit}: coded bandwidth {points.get(xs[unit])} Hz, faad2's max_sfb gives {expected_top[unit]} Hz")
+        if len(problems) > 5:
+            break
+    return compared
+
+
 def check_trace(path, report, problems, skipped=()):
     """Compares the raw data blocks of the golden report with faad2's trace; returns how many blocks were compared."""
     ours = analyzer_blocks(report)
     if not ours:
         return 0
     theirs = faad_trace_tool.trace(path)
+    check_series(ours, theirs, report, problems, skipped)
     if len(theirs) != len(ours):
         problems.append(f"faad2 reads {len(theirs)} raw data blocks, the analyzer {len(ours)}")
     for index, (mine, faad) in enumerate(zip(ours, theirs)):
