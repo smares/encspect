@@ -119,6 +119,37 @@ public sealed class CapitalizationTests
         window.Close();
     }
 
+    // The entries and forms of an AAC file's graphs (Window Sequences, Block Sizes, Stereo Coding, Coded Bandwidth), each selected in turn.
+    [AvaloniaFact]
+    public void Labels_of_the_graphs_of_an_aac_file_are_in_title_case()
+    {
+        var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1100, Height = 760 };
+        window.Show();
+        Task load = window.Model.LoadAsync(Fixtures.Aac("ffmpeg-adts.aac"));
+        UiPump.Until(() => load.IsCompleted);
+        window.Model.IsGraphsShown = true;
+        UiPump.Until(() => true);
+
+        List<string> labels = [.. ControlLabels(window)];
+        labels.AddRange(window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("heading")).Select(t => t.Text!));
+        foreach (GraphChoice choice in window.Model.Graphs.Choices)
+        {
+            window.Model.Graphs.Selected = choice;
+            foreach (GraphFormChoice form in choice.Forms)
+            {
+                window.Model.Graphs.SelectForm(form.Kind);
+                UiPump.Until(() => true);
+                labels.AddRange(ControlLabels(window));
+            }
+        }
+
+        Assert.Contains("Window Sequences", labels);
+        Assert.Contains("Coded Bandwidth", labels);
+        Assert.Contains("Stereo Coding", labels);
+        AssertTitleCase(labels);
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void Labels_in_the_main_window_with_a_cache_and_in_the_application_menu_are_in_title_case()
     {

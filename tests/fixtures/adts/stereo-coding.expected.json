@@ -1,0 +1,128 @@
+{
+ "description": "Sixteen channel pairs: left/right (mask 0, and mask 1 with no flag set), mid/side (mask 1 with flags, mask 2), intensity stereo with the mid/side flag set only on intensity stereo bands, in every band of a mask 2 pair, and in pairs without a common window (long and short windows), both coding tools at once (mask 1 and mask 2 with intensity stereo bands), and the mid/side flag on noise substitution bands of either channel, which codes no mid/side, alone, beside a flag on an ordinary band and beside intensity stereo bands.",
+ "length": 5249,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 16384,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   372
+  ],
+  [
+   372,
+   377
+  ],
+  [
+   749,
+   377
+  ],
+  [
+   1126,
+   372
+  ],
+  [
+   1498,
+   287
+  ],
+  [
+   1785,
+   287
+  ],
+  [
+   2072,
+   212
+  ],
+  [
+   2284,
+   282
+  ],
+  [
+   2566,
+   283
+  ],
+  [
+   2849,
+   374
+  ],
+  [
+   3223,
+   468
+  ],
+  [
+   3691,
+   320
+  ],
+  [
+   4011,
+   346
+  ],
+  [
+   4357,
+   320
+  ],
+  [
+   4677,
+   289
+  ],
+  [
+   4966,
+   283
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Channel Pairs/Common Window": "13 elements (81.2%)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo": "7 elements (43.8%)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo Bands": "19.7 %",
+  "ADTS/Statistics/Channel Pairs/Out of Phase": "28 bands (22.6%)",
+  "ADTS/Statistics/Stereo Coding/Left/right stereo": "5 channel pairs (31.2%)",
+  "ADTS/Statistics/Stereo Coding/Mid/side stereo": "4 channel pairs (25.0%)",
+  "ADTS/Statistics/Stereo Coding/Intensity stereo": "5 channel pairs (31.2%)",
+  "ADTS/Statistics/Stereo Coding/Mid/side and intensity stereo": "2 channel pairs (12.5%)",
+  "ADTS/Statistics/Window Sequences/Only Long": "31 channel streams (96.9%)",
+  "ADTS/Statistics/Window Sequences/Eight Short": "1 channel stream (3.1%)",
+  "ADTS/Statistics/Window Shapes/Sine": "1 channel stream (3.1%)",
+  "ADTS/Statistics/Window Shapes/KBD": "31 channel streams (96.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "173 bands (13.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "396 bands (31.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "202 bands (16.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "130 bands (10.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "84 bands (6.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 11": "94 bands (7.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 13": "55 bands (4.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 14": "24 bands (1.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 15": "100 bands (7.9%)",
+  "ADTS/Statistics/Block Sizes/Long, start and stop": "31 channel streams (96.9%)",
+  "ADTS/Statistics/Block Sizes/Short": "1 channel stream (3.1%)",
+  "ADTS/Statistics/Coded Bandwidth/Lowest": "14470 Hz",
+  "ADTS/Statistics/Coded Bandwidth/Most Common": "14470 Hz",
+  "ADTS/Statistics/Coded Bandwidth/Highest": "22050 Hz"
+ },
+ "findings": [
+  [
+   "aac.intensity-without-common-window",
+   "without a common window"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.372",
+   "rate": 44100
+  }
+ }
+}

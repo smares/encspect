@@ -1,0 +1,74 @@
+{
+ "description": "Channel pairs with ms_mask_present 3, which is reserved: with and without intensity stereo bands, which it takes precedence over, and one pair of left and right.",
+ "length": 1026,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   372
+  ],
+  [
+   372,
+   282
+  ],
+  [
+   654,
+   372
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Channel Pairs/Common Window": "3 elements (100.0%)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo": "1 element (33.3%)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo Bands": "11.7 %",
+  "ADTS/Statistics/Channel Pairs/Out of Phase": "4 bands (28.6%)",
+  "ADTS/Statistics/Stereo Coding/Left/right stereo": "1 channel pair (33.3%)",
+  "ADTS/Statistics/Stereo Coding/Reserved": "2 channel pairs (66.7%)",
+  "ADTS/Statistics/Window Sequences/Only Long": "6 channel streams (100.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "6 channel streams (100.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "36 bands (15.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "88 bands (36.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "42 bands (17.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "30 bands (12.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "18 bands (7.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 11": "12 bands (5.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 14": "4 bands (1.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 15": "10 bands (4.2%)",
+  "ADTS/Statistics/Block Sizes/Long, start and stop": "6 channel streams (100.0%)",
+  "ADTS/Statistics/Coded Bandwidth/Lowest": "14470 Hz",
+  "ADTS/Statistics/Coded Bandwidth/Most Common": "14470 Hz",
+  "ADTS/Statistics/Coded Bandwidth/Highest": "14470 Hz"
+ },
+ "findings": [
+  [
+   "aac.ms-mask-reserved",
+   "ms_mask_present 3"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": {
+   "seconds": "0.070",
+   "rate": 44100
+  },
+  "skip": {
+   "decode": "ffmpeg rejects ms_mask_present 3 (aacdec_template.c, decode_cpe: ms_present = 3 is reserved).",
+   "faad_trace": "faad2 rejects ms_mask_present 3 (syntax.c, error 32) and stops at the first frame it rejects."
+  }
+ }
+}

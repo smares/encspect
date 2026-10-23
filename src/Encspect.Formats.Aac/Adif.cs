@@ -152,12 +152,19 @@ internal static class Adif
         ClaimRoles.CompleteVersion(encoder, claims, AacEncoder.WriterName);
 
         Node statistics = figures.Statistics((name, value, kind, description) => Cover(name, value, kind, description), "Block", "Blocks", out Node bitrate);
-        CodingStatistics.Add(statistics, log.Tally, log.Setup, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
+        CodingNodes nodes = CodingStatistics.Add(statistics, log, (name, value, description, topic) => Cover(name, value, NodeKind.Detail, description, topic));
         leading.Add(statistics);
         findings.Flush(context);
 
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
+        List<Series> series = figures.Series(bitrate, context.CancellationToken);
+
+        // A block that cannot be read ends the stream and is no point of the bitrate series, but its channel streams are in the
+        // tally, so the coding series have it as a unit of their own: their x values are then the blocks' offsets.
+        Series? shared = series.Count > 0 && series[0].X.Length == log.Recorder.Count ? series[0] : null;
+        ReadOnlyMemory<double> offsets = shared?.X ?? Enumerable.Range(0, log.Recorder.Count).Select(i => (double)blocks[i].Offset).ToArray();
+        IReadOnlyList<CategorySeries> categories = log.Recorder.Build(offsets, shared, figures.Time, nodes, series, context.CancellationToken);
         context.AddStream(new StreamInfo
         {
             Nodes = [region],
@@ -174,7 +181,8 @@ internal static class Adif
             EncoderConfidence = encoderConfidence,
             Writer = writerName,
             WriterConfidence = writerConfidence,
-            Series = figures.Series(bitrate, context.CancellationToken),
+            Series = series,
+            CategorySeries = categories,
         });
     }
 
@@ -229,6 +237,7 @@ internal static class Adif
             (long skeleton, BlockResult read) = log.Read(data, 0, available * 8, where,
                 () => new Node("Raw Data Block", blockStart, available) { Kind = NodeKind.Frame, Description = Explain.RawDataBlock, Topic = Topics.RawDataBlocks });
             log.AddEvidence(read, log.Count - 1);
+            log.EndUnit();
             if (!read.Ok)
             {
                 // The block that breaks reaches as far as a block can, where its finding places it.

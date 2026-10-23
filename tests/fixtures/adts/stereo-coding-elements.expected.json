@@ -1,0 +1,75 @@
+{
+ "description": "Three frames of a 5.1 stream, each holding a single channel element, two channel pair elements and an LFE element: six channel streams and two pairs in every unit, with mid/side, intensity stereo, left/right, mid/side in long start windows, eight short windows and a pair without a common window.",
+ "length": 3306,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 6,
+   "channel_mode": "5.1",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 3072,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   949
+  ],
+  [
+   949,
+   952
+  ],
+  [
+   1901,
+   1405
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Channel Pairs/Common Window": "5 elements (83.3%)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo": "1 element (16.7%)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo Bands": "7.1 %",
+  "ADTS/Statistics/Channel Pairs/Out of Phase": "4 bands (28.6%)",
+  "ADTS/Statistics/Stereo Coding/Left/right stereo": "2 channel pairs (33.3%)",
+  "ADTS/Statistics/Stereo Coding/Mid/side stereo": "3 channel pairs (50.0%)",
+  "ADTS/Statistics/Stereo Coding/Intensity stereo": "1 channel pair (16.7%)",
+  "ADTS/Statistics/Window Sequences/Only Long": "14 channel streams (77.8%)",
+  "ADTS/Statistics/Window Sequences/Long Start": "2 channel streams (11.1%)",
+  "ADTS/Statistics/Window Sequences/Eight Short": "2 channel streams (11.1%)",
+  "ADTS/Statistics/Window Shapes/Sine": "4 channel streams (22.2%)",
+  "ADTS/Statistics/Window Shapes/KBD": "14 channel streams (77.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "48 bands (9.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "146 bands (28.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "96 bands (18.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "112 bands (21.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "34 bands (6.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 11": "62 bands (12.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 14": "4 bands (0.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 15": "10 bands (2.0%)",
+  "ADTS/Statistics/Block Sizes/Long, start and stop": "16 channel streams (88.9%)",
+  "ADTS/Statistics/Block Sizes/Short": "2 channel streams (11.1%)",
+  "ADTS/Statistics/Coded Bandwidth/Lowest": "14470 Hz",
+  "ADTS/Statistics/Coded Bandwidth/Most Common": "14470 Hz",
+  "ADTS/Statistics/Coded Bandwidth/Highest": "14470 Hz",
+  "ADTS/Statistics/Window Sequences": "18 channel streams"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.070",
+   "rate": 44100
+  }
+ }
+}

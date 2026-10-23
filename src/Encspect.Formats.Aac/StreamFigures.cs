@@ -10,6 +10,9 @@ internal sealed class StreamFigures(int sampleRate)
     private readonly ChunkedList<Point> _points = new();
     private readonly List<(long Bits, long Samples)> _seconds = [];
 
+    // The first unit that starts in each of the intervals of _seconds (the point index, nondecreasing).
+    private readonly List<int> _firstUnits = [];
+
     // The graph of bitrate over time keeps at most this many entries, whatever the sample rate and the
     // length: when a stream outgrows it, neighboring entries merge and each covers twice the time. A
     // stated rate of 1 Hz would otherwise add a thousand entries for every access unit.
@@ -57,6 +60,7 @@ internal sealed class StreamFigures(int sampleRate)
             while (_seconds.Count <= second)
             {
                 _seconds.Add(default);
+                _firstUnits.Add(_points.Count - 1);
             }
 
             (long bits, long counted) = _seconds[(int)second];
@@ -83,11 +87,19 @@ internal sealed class StreamFigures(int sampleRate)
             }
 
             _seconds[i] = (bits, samples);
+            _firstUnits[i] = _firstUnits[i * 2];
         }
 
         _seconds.RemoveRange((_seconds.Count + 1) / 2, _seconds.Count - ((_seconds.Count + 1) / 2));
+        _firstUnits.RemoveRange((_firstUnits.Count + 1) / 2, _firstUnits.Count - ((_firstUnits.Count + 1) / 2));
         _spanSeconds *= 2;
     }
+
+    private double[] Starts() => Enumerable.Range(0, _seconds.Count).Select(s => (double)s * _spanSeconds).ToArray();
+
+    // The intervals "Bitrate Over Time" is counted over, with the first unit that starts in each, for the category series; null
+    // without them (a stream stated at a sample rate of 0).
+    public TimeIndex? Time => _seconds.Count == 0 ? null : new TimeIndex(Starts(), _firstUnits.ToArray());
 
     // Units of a stream's end that are only counted: past the limit on records, the bytes, samples and bitrate extremes of a run of count
     // units join the figures, but the graphs do not cover them. Call it after the last Add.
@@ -125,12 +137,17 @@ internal sealed class StreamFigures(int sampleRate)
             bitrates[i] = _points[i].Bitrate;
         }
 
-        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries } };
+        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" } };
         if (_seconds.Count > 0)
         {
-            double[] starts = Enumerable.Range(0, _seconds.Count).Select(s => (double)s * _spanSeconds).ToArray();
+            double[] starts = Starts();
             double[] values = _seconds.Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)sampleRate / s.Samples / 1000, MidpointRounding.ToEven) : 0).ToArray();
-            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
+            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor)
+            {
+                Description = Explain.BitrateOverTimeSeries,
+                Concept = GraphConcept.BitDistribution,
+                Quantity = "Bitrate",
+            });
         }
 
         return series;

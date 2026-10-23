@@ -8,6 +8,8 @@ after the fields they print are read; each line starts with "@@" on standard err
 - "@@CPE <common_window> <ms_mask_present> <ms_used flags>": a channel pair's shared information;
 - "@@ICS <window_sequence> <window_shape> <max_sfb> <groups> <global_gain> <pulse> <tns> <gain control> <predictor> <TNS filters>
   <codebooks>": a channel stream, read to the end of its spectral data;
+- "@@MS <ms_mask_present> <bands>": faad2's own decision of ms_decode, after the channel pair's two "@@ICS" lines: for each band of each window group, 1
+  where it applies mid/side decoding (ms_used set or mask 2, and neither intensity stereo in the second channel nor noise substitution in the first);
 - "@@EXT <type>": an extension payload; "@@SBRHDR <start> <stop> <xover>": an SBR header; "@@SBREXT <id>": an SBR extension.
 
 Bit positions count from the start of what the decoder was handed, so only differences between them are compared. The build lives in
@@ -16,6 +18,7 @@ Bit positions count from the start of what the decoder was handed, so only diffe
     python3 scripts/fixtures/faad_trace_tool.py file.m4a
 """
 
+import hashlib
 import pathlib
 import subprocess
 import sys
@@ -53,6 +56,15 @@ PATCHES = {
          "        bs_extension_type = (uint8_t)faad_showbits(ld, 4);\n        if (bs_extension_type == EXT_SBR_DATA || bs_extension_type == EXT_SBR_DATA_CRC)\n"
          "            fprintf(stderr, \"@@EXT %u\\n\", bs_extension_type);\n"),
     ],
+    "libfaad/ms.c": [
+        ("    if (ics->ms_mask_present >= 1)\n    {\n        for (g = 0;",
+         "    if (ics->ms_mask_present >= 1)\n    {\n        fprintf(stderr, \"@@MS %u \", ics->ms_mask_present);\n        for (g = 0;"),
+        ("                    if ((ics->ms_used[g][sfb] || ics->ms_mask_present == 2) &&\n",
+         "                    if (b == 0)\n                        fprintf(stderr, \"%u\", (ics->ms_used[g][sfb] || ics->ms_mask_present == 2) && !is_intensity(icsr, g, sfb) && !is_noise(ics, g, sfb));\n"
+         "                    if ((ics->ms_used[g][sfb] || ics->ms_mask_present == 2) &&\n"),
+        ("                group++;\n            }\n        }\n    }\n",
+         "                group++;\n            }\n        }\n        fprintf(stderr, \"\\n\");\n    }\n"),
+    ],
     "libfaad/sbr_syntax.c": [
         ("            sbr->bs_extension_id = (uint8_t)faad_getbits(ld, 2\n                DEBUGVAR(1,227,\"sbr_single_channel_element(): bs_extension_id\"));\n",
          "            sbr->bs_extension_id = (uint8_t)faad_getbits(ld, 2\n                DEBUGVAR(1,227,\"sbr_single_channel_element(): bs_extension_id\"));\n"
@@ -67,7 +79,10 @@ PATCHES = {
 def build():
     """Returns the faad binary with the trace, building it once."""
     binary = ROOT / "build" / "faad"
-    if binary.exists():
+    stamp = ROOT / "build" / "patches.sha256"
+    # The binary is rebuilt when the patches or the pinned commit changed, not only when it is missing.
+    wanted = hashlib.sha256(repr((COMMIT, sorted(PATCHES.items()))).encode()).hexdigest()
+    if binary.exists() and stamp.exists() and stamp.read_text() == wanted:
         return binary
     if not ROOT.exists():
         ROOT.parent.mkdir(parents=True, exist_ok=True)
@@ -86,6 +101,7 @@ def build():
         path.write_text(text, encoding="latin-1")
     subprocess.run(["cmake", "-S", str(ROOT), "-B", str(ROOT / "build"), "-DCMAKE_BUILD_TYPE=Release"], check=True, capture_output=True)
     subprocess.run(["cmake", "--build", str(ROOT / "build"), "-j8"], check=True, capture_output=True)
+    stamp.write_text(wanted)
     return binary
 
 

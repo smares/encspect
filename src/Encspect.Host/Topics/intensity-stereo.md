@@ -2,7 +2,7 @@
 id: intensity-stereo
 title: Intensity stereo
 related: joint-stereo, mid-side-stereo, subband-coding, musepack-sv7-stream
-references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decoding); ISO/IEC 13818-3; ISO/IEC 14496-3 4.6.8.2
+references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decoding); ISO/IEC 13818-3; ISO/IEC 14496-3 4.6.8.2; ffmpeg libavcodec/aacdec_template.c
 ---
 
 **The problem.** At low bitrates there are not enough bits to code two full channels.
@@ -13,7 +13,7 @@ references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decodin
 
 **In MPEG audio.** In Layers I and II the Mode Extension field gives a bound: subbands from 4, 8, 12 or 16 upward are coded once with a scalefactor for each channel. In Layer III intensity stereo starts at the first scalefactor band above the highest nonzero frequency line of the right channel, and that channel's scalefactors there carry the direction instead of a level. It can be combined with mid/side stereo for the bands below.
 
-**In AAC.** The second channel of a pair marks intensity bands with codebook 15, in phase, or 14, out of phase, where ms_used inverts the sign, and codes a position instead of a scalefactor (ISO/IEC 14496-3 4.6.8.2).
+**In AAC.** The second channel of a pair marks intensity bands with codebook 15, in phase, or 14, out of phase, where ms_used inverts the sign (only with ms_mask_present 1 in faad2 and fdk-aac, where fdk-aac clears the mid/side flags before applying intensity stereo; FFmpeg inverts with ms_mask_present 2 too, and Encspect counts as faad2 and fdk-aac do), and codes a position instead of a scalefactor (ISO/IEC 14496-3 4.6.8.2). Those codebooks count in any pair, as FFmpeg 6.1.1 (`decode_cpe`) and faad2 decode them, though fdk-aac applies intensity stereo only with a common window, where its source quotes the specification as allowing them; a pair without one is reported with a warning, and Stereo Coding counts it as intensity stereo.
 
 **What you see.** Mode Extension shows "Intensity stereo" or a band range, and AAC pairs their Intensity Stereo Bands; the statistics count both.
 

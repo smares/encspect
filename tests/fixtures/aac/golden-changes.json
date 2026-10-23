@@ -1,0 +1,1588 @@
+{
+  "note": "The AAC step adds categorySeries, the series Coded Bandwidth and Coded Bandwidth Over Time and concept and quantity on the bitrate series of every AAC stream, and to the statistics of a stream whose raw data blocks are read the nodes Block Sizes and Stereo Coding. The node Bandwidth is renamed Coded Bandwidth, takes no value of its own and gets the children Lowest, Most Common and Highest. The values of Intensity Stereo and Intensity Stereo Bands of Channel Pairs may change: the denominator of the first is all channel pairs and of the second the bands of the second channel of all pairs, and a pair without a common window counts too.",
+  "goldens": [
+    "tests/fixtures/aac/",
+    "tests/fixtures/adts/",
+    "tests/fixtures/matroska/",
+    "tests/fixtures/mp4/"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "categorySeries"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate",
+      "key": "concept"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate",
+      "key": "quantity"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate Over Time",
+      "key": "concept"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate Over Time",
+      "key": "quantity"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics"
+      ],
+      "name": "Block Sizes"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics"
+      ],
+      "name": "Stereo Coding"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Channel Pairs"
+      ],
+      "name": "Intensity Stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Long, start and stop"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Short"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side and intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADIF",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Reserved"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics"
+      ],
+      "name": "Block Sizes"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics"
+      ],
+      "name": "Stereo Coding"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Channel Pairs"
+      ],
+      "name": "Intensity Stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Long, start and stop"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Short"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side and intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Reserved"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Block Sizes"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Stereo Coding"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs"
+      ],
+      "name": "Intensity Stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Long, start and stop"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Short"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side and intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Reserved"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Block Sizes"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Stereo Coding"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs"
+      ],
+      "name": "Intensity Stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Long, start and stop"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Short"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side and intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Reserved"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Block Sizes"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Stereo Coding"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs"
+      ],
+      "name": "Intensity Stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Long, start and stop"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Short"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side and intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Reserved"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Block Sizes"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Stereo Coding"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs"
+      ],
+      "name": "Intensity Stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Long, start and stop"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Short"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side and intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Reserved"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Block Sizes"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Stereo Coding"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs"
+      ],
+      "name": "Intensity Stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Long, start and stop"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Short"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side and intensity stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Reserved"
+    }
+  ],
+  "renamed": [
+    {
+      "parent": [
+        "ADIF",
+        "Statistics"
+      ],
+      "from": "Bandwidth",
+      "to": "Coded Bandwidth"
+    },
+    {
+      "parent": [
+        "ADTS",
+        "Statistics"
+      ],
+      "from": "Bandwidth",
+      "to": "Coded Bandwidth"
+    },
+    {
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "from": "Bandwidth",
+      "to": "Coded Bandwidth"
+    },
+    {
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "from": "Bandwidth",
+      "to": "Coded Bandwidth"
+    },
+    {
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "from": "Bandwidth",
+      "to": "Coded Bandwidth"
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "from": "Bandwidth",
+      "to": "Coded Bandwidth"
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "from": "Bandwidth",
+      "to": "Coded Bandwidth"
+    }
+  ],
+  "changed": [
+    {
+      "path": [
+        "ADIF",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "ADIF",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "ADIF",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "ADIF",
+        "Statistics",
+        "Channel Pairs",
+        "Mid/Side Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "ADIF",
+        "Statistics",
+        "Channel Pairs",
+        "Out of Phase"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "Channel Pairs",
+        "Mid/Side Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "Channel Pairs",
+        "Out of Phase"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Mid/Side Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Out of Phase"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Mid/Side Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Out of Phase"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Mid/Side Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Out of Phase"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Mid/Side Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Out of Phase"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Intensity Stereo Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Mid/Side Bands"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Channel Pairs",
+        "Out of Phase"
+      ],
+      "fields": [
+        "value"
+      ]
+    }
+  ]
+}

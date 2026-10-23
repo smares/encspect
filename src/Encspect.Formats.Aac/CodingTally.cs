@@ -61,12 +61,18 @@ internal sealed class CodingTally
     public long[] MidSideMasks { get; } = new long[4];
 
     // The bands of common window pairs, those coded as mid/side (not intensity stereo bands), and
-    // the intensity stereo bands of the second channel, of which those out of phase.
+    // the intensity stereo bands of the second channel, of which those out of phase; ChannelBands
+    // counts the bands of the second channel of every pair, which the intensity stereo bands are shares of.
     public long PairBands { get; set; }
+
+    public long ChannelBands { get; set; }
 
     public long MidSideBands { get; set; }
 
     public long IntensityPairs { get; set; }
+
+    // Channel pairs by stereo coding (CodingCategories.StereoCodings), whether or not they have a common window.
+    public long[] StereoCodings { get; } = new long[5];
 
     public long IntensityBands { get; set; }
 

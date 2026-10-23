@@ -32,7 +32,42 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF.
 
 ## Statistics
 
-Window sequences, mid/side masks and bands, intensity stereo, noise substitution, TNS per window sequence, codebook use, max_sfb and the bandwidth it reaches, global gain per channel, SBR's frequencies and the fill payloads.
+Each stream whose raw data blocks are read (AAC Main, LC, SSR and LTP) reports, counted while the blocks are read:
+
+- window sequences and shapes per channel stream, and **Block Sizes**, the window sequences grouped as long (only long, long start and long stop) and short (eight short);
+- channel pairs with a common window, mid/side masks and bands, intensity stereo, and **Stereo Coding**, how every channel pair codes its channels (below);
+- noise substitution, TNS per window sequence, pulse data, codebook use, max_sfb and global gain per channel;
+- **Coded Bandwidth**: the lowest, most common and highest coded bandwidth of the stream's access units or frames, in whole hertz (below);
+- SBR's frequencies and the fill payloads.
+
+The classification of a channel pair, per pair and independent of its window:
+
+- **Intensity stereo:** some band of the second channel uses codebook 14 or 15, in any channel pair. A pair without a common window can code it as FFmpeg 6.1.1 (`aacdec_template.c`, `decode_cpe`, which calls `apply_intensity_stereo` outside its common window case) and faad2 decode it, and the hand-built fixtures `stereo-coding` and `stereo-coding-reserved` hold the rule. fdk-aac applies intensity stereo only with a common window (`channel.cpp` lines 228-231) and its `stereo.cpp` comment quotes ISO/IEC 14496-3 4.6.8.2.3 as allowing the codebooks only there, so such a pair gets the warning `aac.intensity-without-common-window` (worded as what fdk-aac's source says, the specification text not having been read) and is still counted.
+- **Mid/side stereo:** at least one band has its ms_used flag set, ms_mask_present 2 counting as all bands set, and is neither an intensity stereo band nor a band where either channel uses noise substitution (codebook 13, 14 or 15): FFmpeg's `apply_mid_side_stereo` skips such a band, which is the rule counted. faad2's `ms_decode` skips the noise bands of the first channel and the intensity stereo bands of the second only, and fdk-aac's `MapMidSideMaskToPnsCorrelation` skips only bands where both channels use noise substitution. It needs a common window. In an intensity stereo band ms_used inverts the sign (ISO/IEC 14496-3 4.6.8.2.3), so it is no mid/side coding there.
+- **Both** where both hold, **left/right stereo** where neither does, and **Reserved** for ms_mask_present 3, which the specification reserves and which takes precedence over intensity stereo. FFmpeg rejects ms_mask_present 3 as an error.
+- "Channel Pairs" keeps its entries. Its "Intensity Stereo" is the share of all channel pairs with an intensity stereo band, and its "Intensity Stereo Bands" the share of the second channels' bands in intensity stereo, so a pair without a common window counts; its mid/side entries keep the pairs with a common window as their denominator. "Intensity Stereo" is listed for every stream with channel pairs, "Intensity Stereo Bands" and "Out of Phase" only where a band exists.
+- **Out of Phase** counts an intensity stereo band as out of phase when its codebook is 14, and with ms_mask_present 1 also when it is 15 and its ms_used flag is set, as faad2 and fdk-aac decode it (`stereo.cpp` lines 1154-1160 clear the mid/side flags before intensity stereo is applied, so mask 2 inverts nothing). FFmpeg inverts with ms_mask_present 2 too; the specification text was not available to settle it.
+
+**Coded Bandwidth** (renamed from "Bandwidth", which was the most common max_sfb of long windows as text):
+
+- The value of an access unit or ADTS frame is the top of the highest band that any of its channel streams codes: band max_sfb of its window's table, long (1,024 or 960 lines) or short, at the core's sample rate, in whole hertz rounded half to even.
+- It is a bound the stream states. Bands below it may be coded as zero, as noise substitution or as intensity stereo, SBR adds content above the core, and it is not the encoder's lowpass. A channel stream with max_sfb 0 gives 0 Hz; a unit without a channel stream has no value.
+
+## Graphs
+
+Each stream whose blocks are read reports category series and numeric series for the Graphs tab:
+
+- **Recorded while reading,** not derived at the end as MPEG audio's are: the parser keeps the bits of each block and rebuilds its nodes by walking the syntax again, so a field has no fixed place to read back, and recording it costs a byte in the pass that counts it already.
+- **A unit** is what the bitrate series has a point for: an access unit (MP4, Matroska), an ADTS frame or an ADIF block. It holds as many values as it has (a variable layout, with a count byte per unit); a unit codes at most 254 values and counts the rest without a code, so a series still equals its tally.
+- **Category series,** each anchored to its Statistics node, with the names of the node's entries and a time index of the seconds "Bitrate Over Time" uses:
+  - "Window Sequences" (concept `blockSwitching`): the sequence of every channel stream of every raw data block of the unit, as the tally counts them (coupling channel elements have none); and its grouping "Block Sizes";
+  - "Stereo Coding" (concept `stereoCoding`): the coding of every channel pair of the unit, with the category "Reserved" for ms_mask_present 3.
+- **Numeric series** "Coded Bandwidth" (Hz, concept `codedBandwidth`) per unit, and "Coded Bandwidth Over Time", each second's highest, anchored to the Statistics node. A unit without a channel stream has no point, and the series then has its own x values; "Bitrate" and "Bitrate Over Time" get the concept `bitDistribution` and the quantity "Bitrate", as MPEG audio's.
+- A stream without a channel pair has no "Stereo Coding" (a mono stream keeps nothing for it), and the series stop at the unit where `aac.frames-limit` or `aac.blocks-limit` stops the statistics.
+- An ADIF stream whose last block cannot be read to its end has that block as a unit of the series (its channel streams are in the tally) though it is no point of the bitrate graph, and the series then have the blocks' own offsets for x.
+- Memory: a stereo unit adds 5 bytes of codes and count bytes (the two channel streams' window sequences and the pair's coding, with a count byte for each series), and the coded bandwidth's 8 bytes. Measured on linux-x64, an ADTS frame of ffmpeg's encoder keeps 10 more bytes (126 against 116) and an MP4 sample 14 more (74 against 60), against bounds that stay as they were (`MemoryTests`, which also bounds the growth per further unit between two counts).
+
+Cross-checks: `crosscheck_mp4_fixtures.py` holds the series of every golden report to faad2's trace per unit (window sequences, the pair classification computed from its flags and codebooks, and the bandwidth from its max_sfb), and `AacCodingSeriesTests` holds them to the nodes of the units' own raw data blocks.
 
 ## Channel layout
 

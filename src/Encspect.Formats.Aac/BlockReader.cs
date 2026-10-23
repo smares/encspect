@@ -18,6 +18,7 @@ internal sealed partial class BlockReader
 
     private readonly StreamSetup _setup;
     private readonly CodingTally? _tally;
+    private readonly CodingRecorder? _recorder;
     private readonly Dictionary<int, SbrHeader> _sbr = [];
     private readonly Dictionary<int, int> _sbrHeaderBlock = [];
     private readonly List<BlockCut> _cuts = [];
@@ -39,10 +40,11 @@ internal sealed partial class BlockReader
     private bool _hasSbrEvidence;
     private bool _hasPs;
 
-    public BlockReader(StreamSetup setup, CodingTally? tally)
+    public BlockReader(StreamSetup setup, CodingTally? tally, CodingRecorder? recorder = null)
     {
         _setup = setup;
         _tally = tally;
+        _recorder = recorder;
     }
 
     // What the last block's skeleton leaves out, in order.
@@ -323,9 +325,17 @@ internal sealed partial class BlockReader
             ChannelStream(ref bits, n, first, common, 0, "Channel 0", bits.Original);
             int secondStart = bits.Original;
             ChannelStream(ref bits, n, second, common, 1, "Channel 1", secondStart);
+            if (!common && HasBand(second, b => b is 14 or 15))
+            {
+                // fdk-aac applies intensity stereo only with a common window (channel.cpp) and its stereo.cpp quotes 4.6.8.2.3 as allowing the
+                // codebooks only there; FFmpeg and faad2 apply it anyway, and so is it counted.
+                Soft("aac.intensity-without-common-window", "intensity stereo bands in a channel pair without a common window, outside what ISO/IEC 14496-3 4.6.8.2.3 allows as fdk-aac's source quotes it, though FFmpeg and faad2 decode them",
+                    second.SectionStart, second.SectionEnd, "Intensity Stereo Bands");
+            }
+
             if (n is not null)
             {
-                IntensityNode(n, second, common && mask != 0);
+                IntensityNode(n, second, common && mask == 1);
             }
 
             _elements.Add(new ElementSpan(1, start, bits.Original, secondStart));
@@ -346,46 +356,60 @@ internal sealed partial class BlockReader
         }
     }
 
+    // The pair's stereo coding (ISO/IEC 14496-3 4.6.8), whether or not it has a common window: intensity stereo is in any band of the
+    // second channel with codebook 14 or 15, and mid/side stereo in any band whose ms_used flag is set (ms_mask_present 2 sets every
+    // band, and the flags need a common window) where neither channel codes noise substitution (codebook 13) or intensity stereo:
+    // on such a band ms_used says something else, and decoders apply no mid/side there (FFmpeg 6.1.1 apply_mid_side_stereo requires
+    // both band types below NOISE_BT; faad2's ms_decode checks the first channel's noise and the second's intensity stereo, and
+    // fdk-aac's MapMidSideMaskToPnsCorrelation skips only bands where both channels code noise, so they differ on a band where only
+    // one channel does, and FFmpeg's rule is followed). ms_mask_present 3 is reserved
+    // and takes precedence.
     private void TallyPair(Ics first, Ics second, bool common, int mask)
     {
         CodingTally tally = _tally!;
         tally.Pairs++;
-        if (!common)
+        if (common)
         {
-            return;
+            tally.CommonWindow++;
+            tally.MidSideMasks[mask]++;
         }
 
-        tally.CommonWindow++;
-        tally.MidSideMasks[mask]++;
         bool intensity = false;
-        for (int g = 0; g < first.Groups; g++)
+        bool midSide = false;
+        for (int g = 0; g < second.Groups; g++)
         {
-            for (int sfb = 0; sfb < first.MaxSfb; sfb++)
+            for (int sfb = 0; sfb < second.MaxSfb; sfb++)
             {
-                int book = second.Codebooks[(g * MaxBands) + sfb];
-                bool ms = mask != 0 && mask != 3 && _midSide[(g * MaxBands) + sfb];
-                tally.PairBands++;
+                int band = (g * MaxBands) + sfb;
+                int book = second.Codebooks[band];
+                bool flagged = common && mask != 0 && mask != 3 && _midSide[band];
+                tally.ChannelBands++;
+                tally.PairBands += common ? 1 : 0;
                 if (book is 14 or 15)
                 {
                     intensity = true;
                     tally.IntensityBands++;
-                    // 4.6.8.2.3: INTENSITY_HCB2 (14) codes out of phase; ms_used inverts the sign.
-                    if ((book == 14) != ms)
+                    // 4.6.8.2.3: INTENSITY_HCB2 (14) codes out of phase; ms_used inverts the sign, with ms_mask_present 1 only: faad2 and
+                    // fdk-aac (stereo.cpp clears the mid/side flags before intensity stereo) leave mask 2 alone, FFmpeg inverts for it too.
+                    if ((book == 14) != (flagged && mask == 1))
                     {
                         tally.IntensityOutOfPhase++;
                     }
                 }
-                else if (ms)
+                else if (flagged && book != 13 && first.Codebooks[band] < 13)
                 {
+                    midSide = true;
                     tally.MidSideBands++;
                 }
             }
         }
 
-        if (intensity)
-        {
-            tally.IntensityPairs++;
-        }
+        tally.IntensityPairs += intensity ? 1 : 0;
+        byte code = mask == 3 && common ? CodingCategories.CodeReserved
+            : intensity ? (midSide ? CodingCategories.CodeMidSideAndIntensity : CodingCategories.CodeIntensity)
+            : midSide ? CodingCategories.CodeMidSide : CodingCategories.CodeLeftRight;
+        tally.StereoCodings[code]++;
+        _recorder?.Pair(code);
     }
 
     // individual_channel_stream (ISO/IEC 14496-3 4.4.2): global_gain, ics_info unless the pair shares
@@ -463,6 +487,7 @@ internal sealed partial class BlockReader
         CodingTally tally = _tally!;
         tally.ChannelStreams++;
         tally.WindowSequences[ics.WindowSequence]++;
+        _recorder?.Stream(ics.WindowSequence, ics.Offsets[ics.MaxSfb]);
         tally.WindowShapes[ics.WindowShape]++;
         if (tns)
         {

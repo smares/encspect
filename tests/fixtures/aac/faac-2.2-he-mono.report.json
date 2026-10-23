@@ -317,6 +317,27 @@
                               ]
                             },
                             {
+                              "name": "Block Sizes",
+                              "value": 38,
+                              "unit": "channel streams",
+                              "offset": 44,
+                              "length": 6200,
+                              "children": [
+                                {
+                                  "name": "Long, start and stop",
+                                  "value": "35 channel streams (92.1%)",
+                                  "offset": 44,
+                                  "length": 6200
+                                },
+                                {
+                                  "name": "Short",
+                                  "value": "3 channel streams (7.9%)",
+                                  "offset": 44,
+                                  "length": 6200
+                                }
+                              ]
+                            },
+                            {
                               "name": "Window Shapes",
                               "value": 38,
                               "unit": "channel streams",
@@ -484,10 +505,32 @@
                               ]
                             },
                             {
-                              "name": "Bandwidth",
-                              "value": "highest coded band ends at about 12000 Hz (max_sfb 47)",
+                              "name": "Coded Bandwidth",
                               "offset": 44,
-                              "length": 6200
+                              "length": 6200,
+                              "children": [
+                                {
+                                  "name": "Lowest",
+                                  "value": 12000,
+                                  "unit": "Hz",
+                                  "offset": 44,
+                                  "length": 6200
+                                },
+                                {
+                                  "name": "Most Common",
+                                  "value": 12000,
+                                  "unit": "Hz",
+                                  "offset": 44,
+                                  "length": 6200
+                                },
+                                {
+                                  "name": "Highest",
+                                  "value": 12000,
+                                  "unit": "Hz",
+                                  "offset": 44,
+                                  "length": 6200
+                                }
+                              ]
                             },
                             {
                               "name": "Global Gain",
@@ -14481,6 +14524,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               44,
               226,
@@ -14566,6 +14611,8 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0,
               1
@@ -14573,6 +14620,199 @@
             "values": [
               31,
               30
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              44,
+              226,
+              352,
+              458,
+              588,
+              713,
+              896,
+              1037,
+              1251,
+              1398,
+              1591,
+              1752,
+              1921,
+              2096,
+              2254,
+              2440,
+              2592,
+              2803,
+              2957,
+              3174,
+              3327,
+              3509,
+              3670,
+              3835,
+              4010,
+              4167,
+              4353,
+              4503,
+              4710,
+              4863,
+              5056,
+              5212,
+              5391,
+              5559,
+              5722,
+              5921,
+              6214,
+              6229
+            ],
+            "values": [
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000,
+              12000
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              12000,
+              12000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Window Sequences",
+            "concept": "blockSwitching",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Only Long",
+                "count": 32
+              },
+              {
+                "name": "Long Start",
+                "count": 1
+              },
+              {
+                "name": "Eight Short",
+                "count": 3
+              },
+              {
+                "name": "Long Stop",
+                "count": 2
+              }
+            ],
+            "total": 38,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                38
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                0,
+                32
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                3,
+                1
+              ]
+            ],
+            "seconds": [
+              0,
+              24
+            ]
+          },
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Long, start and stop",
+                "count": 35
+              },
+              {
+                "name": "Short",
+                "count": 3
+              }
+            ],
+            "total": 38,
+            "xSeries": "Bitrate",
+            "groupOf": "Window Sequences",
+            "map": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "seconds": [
+              0,
+              24
             ]
           }
         ]
