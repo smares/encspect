@@ -107,6 +107,43 @@ public class ScreenshotTests
         Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
     }
 
+    // The over-time forms of a category chart of a stream longer than 30 seconds, scripted: the stepped area and its smoothed
+    // variant, a gap of two empty seconds and a last interval of a few frames hatched.
+    [AvaloniaTheory]
+    [InlineData("light")]
+    [InlineData("dark")]
+    public void RendersTheOverTimeForms(string variant)
+    {
+        Application.Current!.RequestedThemeVariant = variant == "dark" ? ThemeVariant.Dark : ThemeVariant.Light;
+        IReadOnlyList<Core.Category> categories = [new("Left/right stereo", "a."), new("Mid/side stereo", "b."), new("Intensity stereo", "c.")];
+        var builder = new Core.CategorySeriesBuilder("Stereo Coding", categories, "frame", 1);
+        const int seconds = 90;
+        int[] first = new int[seconds];
+        int units = 0;
+        for (int second = 0; second < seconds; second++)
+        {
+            first[second] = units;
+            int count = second == seconds - 1 ? 3 : second is 40 or 41 ? 0 : 20;
+            for (int unit = 0; unit < count; unit++)
+            {
+                builder.Add((byte)(second < 25 ? 1 : second < 60 ? (unit < 3 + (second % 10) ? 0 : 1) : (unit < 2 ? 2 : unit < 8 ? 0 : 1)));
+                units++;
+            }
+        }
+
+        Core.CategorySeries series = builder.Build(Enumerable.Range(0, units).Select(i => i * 100.0).ToArray(), null, null, "Scripted.", null, new Core.TimeIndex(Enumerable.Range(0, seconds).Select(s => (double)s).ToArray(), first));
+        foreach ((GraphForm form, string name) in new[] { (GraphForm.OverTime, "area"), (GraphForm.Smoothed, "area-smoothed") })
+        {
+            var view = new GraphView { Graph = new CategoryGraph(series, form) { Duration = seconds - 1 + 0.075 } };
+            var window = new Avalonia.Controls.Window { Width = 1180, Height = 420, Content = view };
+            window.Show();
+            Save(window, $"over-time-{name}-{variant}.png");
+            window.Close();
+        }
+
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
+    }
+
     // A point in the window over the chart's point or bar at index, at the height of its value.
     internal static Point PointOver(DetailWindow window, int index)
     {

@@ -189,12 +189,16 @@
   <!-- The list of graphs: headings and entries are the app's one size, a heading set apart by weight and the secondary color. -->
   <Style Selector="TextBlock.heading">
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Margin" Value="8,10,0,2" />
+    <Setter Property="Margin" Value="8,6,0,1" />
+  </Style>
+  <!-- The first heading of the list sits at its top, without the space the others have above them. -->
+  <Style Selector="ItemsControl#GraphChoices > ContentPresenter:nth-child(1) TextBlock.heading">
+    <Setter Property="Margin" Value="8,0,0,1" />
   </Style>
   <Style Selector="Button.entry">
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
-    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="Padding" Value="8,3" />
     <Setter Property="CornerRadius" Value="4" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Background" Value="Transparent" />
