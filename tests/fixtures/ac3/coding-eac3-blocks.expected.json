@@ -1,0 +1,260 @@
+{
+ "description": "Six 2/0 frames of 6, 6, 3, 2, 1 and 6 blocks with block switching, rematrixing flags and spectral extension that starts and stops.",
+ "length": 3072,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ],
+  [
+   2048,
+   512
+  ],
+  [
+   2560,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields; the coding fixtures' blocks would need nothing new from it."
+  }
+ },
+ "block_ends": {
+  "0": [
+   321,
+   329,
+   448,
+   454,
+   660,
+   668
+  ],
+  "512": [
+   234,
+   240,
+   246,
+   252,
+   258,
+   268
+  ],
+  "1024": [
+   209,
+   415,
+   423
+  ],
+  "1536": [
+   291,
+   406
+  ],
+  "2048": [
+   285
+  ],
+  "2560": [
+   321,
+   341,
+   361,
+   381,
+   401,
+   421
+  ]
+ },
+ "coding": [
+  [
+   {
+    "switching": [
+     false,
+     true,
+     true,
+     true,
+     false,
+     true
+    ],
+    "coupling": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     true,
+     true,
+     false,
+     false,
+     true,
+     true
+    ],
+    "spectral": [
+     true,
+     true,
+     false,
+     false,
+     true,
+     true
+    ],
+    "bandwidth": 7969
+   },
+   {
+    "switching": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "coupling": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     true
+    ],
+    "spectral": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "bandwidth": 6844
+   },
+   {
+    "switching": [
+     true,
+     false,
+     true
+    ],
+    "coupling": [
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     true,
+     false,
+     false
+    ],
+    "spectral": [
+     false,
+     true,
+     true
+    ],
+    "bandwidth": 7969
+   },
+   {
+    "switching": [
+     true,
+     true
+    ],
+    "coupling": [
+     false,
+     false
+    ],
+    "rematrixing": [
+     true,
+     true
+    ],
+    "spectral": [
+     true,
+     false
+    ],
+    "bandwidth": 7969
+   },
+   {
+    "switching": [
+     true
+    ],
+    "coupling": [
+     false
+    ],
+    "rematrixing": [
+     true
+    ],
+    "spectral": [
+     true
+    ],
+    "bandwidth": 7969
+   },
+   {
+    "switching": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "coupling": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "spectral": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "bandwidth": 7969
+   }
+  ]
+ ]
+}

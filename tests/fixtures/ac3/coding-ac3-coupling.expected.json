@@ -1,0 +1,233 @@
+{
+ "description": "Five 2/0 frames with coupling that starts, stops, changes its range and starts again within a frame, rematrixing flags for the number of bands each range gives, and one frame with no coupling.",
+ "length": 3840,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   768
+  ],
+  [
+   1536,
+   768
+  ],
+  [
+   2304,
+   768
+  ],
+  [
+   3072,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 7680,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields; the coding fixtures' blocks would need nothing new from it."
+  }
+ },
+ "block_ends": {
+  "0": [
+   490,
+   510,
+   534,
+   658,
+   674,
+   1082
+  ],
+  "768": [
+   422,
+   442,
+   767,
+   787,
+   915,
+   1202
+  ],
+  "1536": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "2304": [
+   490,
+   510,
+   530,
+   550,
+   570,
+   590
+  ],
+  "3072": [
+   422,
+   442,
+   462,
+   482,
+   502,
+   742
+  ]
+ },
+ "coding": [
+  [
+   {
+    "switching": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "coupling": [
+     true,
+     true,
+     true,
+     false,
+     false,
+     true
+    ],
+    "rematrixing": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "bandwidth": 18094
+   },
+   {
+    "switching": [
+     false,
+     true,
+     true,
+     true,
+     false,
+     true
+    ],
+    "coupling": [
+     true,
+     true,
+     true,
+     true,
+     false,
+     true
+    ],
+    "rematrixing": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "bandwidth": 13594
+   },
+   {
+    "switching": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "coupling": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "bandwidth": 6844
+   },
+   {
+    "switching": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "coupling": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "rematrixing": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "bandwidth": 18094
+   },
+   {
+    "switching": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "coupling": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     false
+    ],
+    "rematrixing": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     true
+    ],
+    "bandwidth": 15844
+   }
+  ]
+ ]
+}

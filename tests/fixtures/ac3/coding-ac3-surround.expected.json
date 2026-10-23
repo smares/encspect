@@ -1,0 +1,120 @@
+{
+ "description": "Two 3/2 frames with an LFE channel, coupling of all five channels in some blocks and block switching in single channels.",
+ "length": 1536,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "3/2",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "back left",
+    "back right",
+    "LFE"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields; the coding fixtures' blocks would need nothing new from it."
+  }
+ },
+ "block_ends": {
+  "0": [
+   906,
+   941,
+   1239,
+   1266,
+   2074,
+   2109
+  ],
+  "768": [
+   724,
+   751,
+   778,
+   805,
+   832,
+   859
+  ]
+ },
+ "coding": [
+  [
+   {
+    "switching": [
+     false,
+     true,
+     false,
+     true,
+     false,
+     true
+    ],
+    "coupling": [
+     true,
+     true,
+     false,
+     false,
+     true,
+     true
+    ],
+    "rematrixing": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "bandwidth": 16969
+   },
+   {
+    "switching": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "coupling": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "bandwidth": 18094
+   }
+  ]
+ ]
+}

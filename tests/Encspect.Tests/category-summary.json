@@ -7,6 +7,10 @@
     "Intensity Stereo Bounds": { "form": "entries", "anchor": "Intensity Stereo Bounds", "denominator": "Intensity Stereo Bounds", "findings": ["mpeg.streams-limited"] },
     "Block Usage": { "form": "entries", "anchor": "Block Usage", "denominator": "Block Usage", "findings": ["mpeg.streams-limited"] },
     "Block Sizes": { "form": "entries", "anchor": "Block Sizes", "denominator": ["Block Usage", "Window Sequences"], "findings": ["mpeg.streams-limited"] },
-    "Window Sequences": { "form": "entries", "anchor": "Window Sequences", "denominator": "Window Sequences" }
+    "Window Sequences": { "form": "entries", "anchor": "Window Sequences", "denominator": "Window Sequences" },
+    "Blocks With Block Switching": { "form": "flag", "anchor": "Blocks With Block Switching", "denominator": "Audio Blocks Read" },
+    "Blocks With Coupling": { "form": "flag", "anchor": "Blocks With Coupling", "denominator": "Audio Blocks Read" },
+    "Blocks With Rematrixing": { "form": "flag", "anchor": "Blocks With Rematrixing", "denominator": "Audio Blocks Read" },
+    "Blocks With Spectral Extension": { "form": "flag", "anchor": "Blocks With Spectral Extension", "denominator": "Audio Blocks Read" }
   }
 }
