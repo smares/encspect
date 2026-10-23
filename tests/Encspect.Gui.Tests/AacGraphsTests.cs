@@ -161,6 +161,18 @@ public class AacGraphsTests
         Choose(reserved, "Stereo Coding", GraphForm.Frames);
         ScreenshotTests.Save(reserved, $"aac-hand-built-reserved-frames-{variant}.png");
         reserved.Close();
+        DetailWindow elements = Open(Path.Combine(Fixtures.Directory, "adts", "stereo-coding-elements.aac"));
+        Choose(elements, "Stereo Coding", GraphForm.Frames);
+        ScreenshotTests.Save(elements, $"aac-hand-built-elements-stereo-coding-frames-{variant}.png");
+        elements.Close();
+
+        // FAAC's HE-AAC file, where ms_used sits on noise substitution bands, which the mid/side count leaves out.
+        DetailWindow faac = Open(Fixtures.Aac("faac-2.0-he-24k.m4a"));
+        Choose(faac, "Stereo Coding", GraphForm.Summary);
+        ScreenshotTests.Save(faac, $"aac-faac-stereo-coding-summary-{variant}.png");
+        Choose(faac, "Stereo Coding", GraphForm.Frames);
+        ScreenshotTests.Save(faac, $"aac-faac-stereo-coding-frames-{variant}.png");
+        faac.Close();
         Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
     }
 
