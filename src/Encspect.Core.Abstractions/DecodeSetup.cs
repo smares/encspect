@@ -43,6 +43,11 @@ public readonly record struct CodedFrame(MappedBytes Bytes, string NodeName, lon
     // decoder does not read them again: it takes them from DecodeContext.LentBuffers.
     public bool IsWalked { get; init; }
 
+    // The parser could not read the unit at all (its syntax breaks) and reported that itself. The host counts it as not decoded, so the
+    // stream is incomplete, and reports nothing more; the decoder is not called for it, and the next unit it is given has FollowsGap set, so a
+    // decoder that carries state from unit to unit does not decode on stale state.
+    public bool IsUnreadable { get; init; }
+
     // Frames the parser counted in the stream were lost before this one (a gap, a resync), so the decoder resets
     // what it carries from frame to frame and the whole-stream checksums cannot be compared.
     public bool FollowsGap { get; init; }

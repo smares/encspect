@@ -46,7 +46,7 @@ internal static class CorruptFiles
             yield return name;
         }
 
-        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack" })
+        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack", "flac" })
         {
             foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, family), "*", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal)
                 .Where(p => !p.EndsWith(".json", StringComparison.Ordinal)))
@@ -71,7 +71,7 @@ internal static class CorruptFiles
                 Task work = Task.Run(() =>
                 {
                     started.SetResult();
-                    AnalyzeAndCheck(variant);
+                    AnalyzeAndCheck(variant, name.StartsWith("flac/", StringComparison.Ordinal));
                 });
                 await started.Task;
                 await work.WaitAsync(VariantLimit);
@@ -166,8 +166,17 @@ internal static class CorruptFiles
         }
     }
 
-    private static void AnalyzeAndCheck(byte[] data)
+    private static void AnalyzeAndCheck(byte[] data, bool alsoDecodes = false)
     {
+        if (alsoDecodes)
+        {
+            // The decoder works on what the parser hands it, damaged frames included: it must give a report as well, and never fail.
+            var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 64L << 20 } };
+            Report decoded = Analyzer.CreateDefault().Analyze("variant", new MemoryStream(data), options);
+            Assert.DoesNotContain(decoded.Findings, f => f.Code is "parse.failed" or "decode.failed");
+            Assert.All(decoded.Findings, f => Assert.True(f.Path is not null, $"The node of {f.Code} is not in the tree."));
+        }
+
         Report report = Analyzer.CreateDefault().Analyze("variant", new MemoryStream(data));
 
         Assert.Equal(data.Length, report.Root.Length);

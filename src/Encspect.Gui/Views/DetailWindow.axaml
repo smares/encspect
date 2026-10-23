@@ -14,6 +14,9 @@
           <TextBlock Name="TitleText" Text="{Binding Title}" Classes="title" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
           <TextBlock Name="StreamsText" Text="{Binding StreamsText}" Classes="secondary" TextWrapping="Wrap"
                      ToolTip.Tip="Each line is one audio stream: its codec, sample rate, channel mode, channel layout with the speakers in the stream's channel order, playing time, average bitrate with CBR or VBR, object audio with its object count where the stream carries it, the encoder with how sure the analysis is, and the software that wrote the file, which need not be the encoder, with how sure the analysis is." />
+          <TextBlock Name="VerificationText" Text="{Binding VerificationText}" Classes="secondary" TextWrapping="Wrap"
+                     IsVisible="{Binding HasVerificationText}"
+                     ToolTip.Tip="Whether the checksums the stream stores hold. A checksum over the decoded audio is compared only when the audio is decoded: choose Verify Audio." />
           <StackPanel Name="DetectionRow" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasDetectionText}">
             <TextBlock Name="DetectionText" Text="{Binding DetectionText}" Classes="secondary" VerticalAlignment="Center"
                        ToolTip.Tip="Besides the format the analysis ran, other formats have real evidence in the data: a chain of frames, or frames that pass their checksum. Choose one to analyze the file as that format." />
@@ -35,9 +38,9 @@
           <TextBlock Name="FileChangedText" Text="Changed on disk since it was analyzed" Classes="secondary" Margin="0,0,6,0"
                      VerticalAlignment="Center" ToolTip.Tip="Refresh or open the file again to analyze it as it is now."
                      IsVisible="{Binding HasFileChanged}" />
-          <TextBlock Name="ExportErrorText" Text="{Binding ExportError}" Classes="error" MaxWidth="320" Margin="0,0,6,0"
-                     VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ExportError}"
-                     IsVisible="{Binding ExportError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+          <TextBlock Name="CommandErrorText" Text="{Binding CommandError}" Classes="error" MaxWidth="320" Margin="0,0,6,0"
+                     VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding CommandError}"
+                     IsVisible="{Binding CommandError, Converter={x:Static ObjectConverters.IsNotNull}}" />
           <Button Name="PreviousButton" Click="OnPrevious" IsEnabled="{Binding CanGoPrevious}" Padding="8,6">
             <PathIcon Width="12" Height="12" Data="{x:Static views:Icons.Up}" />
           </Button>
@@ -45,6 +48,10 @@
             <PathIcon Width="12" Height="12" Data="{x:Static views:Icons.Down}" />
           </Button>
           <Button Name="TopicsButton" Content="Topics" Classes.active="{Binding IsTopicOpen}" Click="OnTopics" Margin="6,0,0,0" />
+          <Button Name="VerifyAudioButton" Content="Verify Audio" Click="OnVerifyAudio" IsEnabled="{Binding CanVerifyAudio}" IsVisible="{Binding !IsVerifying}"
+                  ToolTip.Tip="Decode the audio to compare the checksums over it, such as FLAC's MD5 of the samples. It reads the whole file again and takes longer than the analysis." />
+          <Button Name="StopVerifyingButton" Content="Stop" Click="OnStopVerifying" IsVisible="{Binding IsVerifying}"
+                  ToolTip.Tip="Stop decoding; the analysis stays as it is." />
           <Button Name="AnalyzeAsButton" Content="Analyze as…" IsEnabled="{Binding HasReport}"
                   ToolTip.Tip="Analyze the file as a format of your choice, for a file whose format is not detected or is detected wrongly." />
           <Button Name="ExportButton" Content="Export…" Click="OnExport" IsEnabled="{Binding HasReport}" />
@@ -52,7 +59,7 @@
       </Grid>
     </Border>
 
-    <ProgressBar Grid.Row="1" Height="2" MinHeight="2" Maximum="1" Value="{Binding Progress}" IsVisible="{Binding IsLoading}" />
+    <ProgressBar Grid.Row="1" Height="2" MinHeight="2" Maximum="1" Value="{Binding Progress}" IsVisible="{Binding IsProgressShown}" />
 
     <Grid Grid.Row="2" Name="Body" ColumnDefinitions="*,Auto,0">
       <Grid Name="Panes" ColumnDefinitions="5*,1,6*">

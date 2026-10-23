@@ -196,7 +196,8 @@ public class FormatDetectionTests
         Assert.Equal(["MP4"], analyzer.MatchFormats("m4a"));
         Assert.Equal(["AC-3"], analyzer.MatchFormats("eac3"));
         Assert.Equal(["Ogg"], analyzer.MatchFormats("opus"));
-        Assert.Empty(analyzer.MatchFormats("flac"));
+        Assert.Equal(["FLAC"], analyzer.MatchFormats("flac"));
+        Assert.Empty(analyzer.MatchFormats("xyz"));
         Assert.Empty(analyzer.MatchFormats(" "));
         Assert.Equal(DefaultParsers.Formats.Select(p => p.Name), analyzer.FormatNames);
     }
@@ -223,7 +224,7 @@ public class FormatDetectionTests
     [Fact]
     public void ARefusedFormatNamesTheOptionsParameter()
     {
-        var error = Assert.Throws<ArgumentException>(() => Analyzer.CreateDefault().Analyze("sample.bin", new MemoryStream(new byte[64]), new AnalysisOptions { ForcedFormat = "flac" }));
+        var error = Assert.Throws<ArgumentException>(() => Analyzer.CreateDefault().Analyze("sample.bin", new MemoryStream(new byte[64]), new AnalysisOptions { ForcedFormat = "xyz" }));
         Assert.Equal("options", error.ParamName);
     }
 
@@ -267,7 +268,7 @@ public class FormatDetectionTests
     }
 
     [Theory]
-    [InlineData("flac")]
+    [InlineData("xyz")]
     [InlineData("a")]
     public void AnUnknownOrAmbiguousFormatIsRefused(string name)
     {

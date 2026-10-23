@@ -1,0 +1,35 @@
+{
+  "verification": {
+    "decoding": "NotPossible",
+    "decodedSamples": 0,
+    "isVerified": true,
+    "checksums": [
+      {
+        "name": "frame header CRC-8",
+        "stored": 6,
+        "checked": 6,
+        "failed": 0
+      },
+      {
+        "name": "frame CRC-16",
+        "stored": 6,
+        "checked": 6,
+        "failed": 0
+      },
+      {
+        "name": "STREAMINFO MD5",
+        "stored": 0,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.not-possible",
+      "severity": "Info",
+      "count": 1,
+      "message": "The stream was not decoded: The stream has no STREAMINFO block, so the sample rate, channels and bit depth of its frames are not known."
+    }
+  ]
+}

@@ -154,6 +154,7 @@ public partial class DetailWindow : Window
         Shortcuts.Submenu(
             "File",
             Shortcuts.Item(this, "Export Report…", Shortcuts.WithCommand(Key.S), () => _ = ExportAsync()),
+            Shortcuts.Item(this, "Verify Audio", null, () => _ = Model.VerifyAudioAsync()),
             Shortcuts.Submenu("Analyze as", [Shortcuts.Item(this, "Detect Automatically", null, () => _ = Model.AnalyzeAsAsync(null)), new NativeMenuItemSeparator(), .. Model.FormatNames.Select(name => Shortcuts.Item(this, name, null, () => _ = Model.AnalyzeAsAsync(name)))]),
             new NativeMenuItemSeparator(),
             Shortcuts.Item(this, "Close", Shortcuts.WithCommand(Key.W), Close)),
@@ -218,6 +219,10 @@ public partial class DetailWindow : Window
     }
 
     private void OnTopics(object? sender, RoutedEventArgs e) => Model.ToggleTopics();
+
+    private void OnVerifyAudio(object? sender, RoutedEventArgs e) => _ = Model.VerifyAudioAsync();
+
+    private void OnStopVerifying(object? sender, RoutedEventArgs e) => Model.StopVerifying();
 
     private void OnCloseTopic(object? sender, RoutedEventArgs e) => Model.IsTopicOpen = false;
 

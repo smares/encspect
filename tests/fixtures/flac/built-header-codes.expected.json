@@ -1,0 +1,232 @@
+{
+ "length": 1325,
+ "metadata": [
+  {
+   "offset": 4,
+   "length": 38,
+   "type": "STREAMINFO",
+   "is_last": true,
+   "body_length": 34
+  }
+ ],
+ "frames": [
+  {
+   "offset": 42,
+   "length": 196,
+   "variable": false,
+   "block_size": 256,
+   "sample_rate": 44100,
+   "channel_code": 0,
+   "bits": 12,
+   "number": 0,
+   "crc8": "ef",
+   "status": [],
+   "crc16": "2631",
+   "subframes": [
+    [
+     "fixed",
+     1,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 238,
+   "length": 202,
+   "variable": false,
+   "block_size": 256,
+   "sample_rate": 44100,
+   "channel_code": 0,
+   "bits": 12,
+   "number": 1,
+   "crc8": "86",
+   "status": [],
+   "crc16": "f0dd",
+   "subframes": [
+    [
+     "fixed",
+     1,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 440,
+   "length": 206,
+   "variable": false,
+   "block_size": 256,
+   "sample_rate": 44100,
+   "channel_code": 0,
+   "bits": 12,
+   "number": 2,
+   "crc8": "be",
+   "status": [],
+   "crc16": "8105",
+   "subframes": [
+    [
+     "fixed",
+     1,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 646,
+   "length": 330,
+   "variable": false,
+   "block_size": 256,
+   "sample_rate": 44000,
+   "channel_code": 0,
+   "bits": 12,
+   "number": 3,
+   "crc8": "36",
+   "status": [],
+   "crc16": "183b",
+   "subframes": [
+    [
+     "fixed",
+     1,
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "offset": 976,
+   "length": 349,
+   "variable": false,
+   "block_size": 256,
+   "sample_rate": 64000,
+   "channel_code": 0,
+   "bits": 12,
+   "number": 4,
+   "crc8": "e8",
+   "status": [],
+   "crc16": "4913",
+   "subframes": [
+    [
+     "fixed",
+     1,
+     0,
+     0
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_info": {
+  "min_block": 256,
+  "max_block": 256,
+  "min_frame": 196,
+  "max_frame": 349,
+  "sample_rate": 44100,
+  "channels": 1,
+  "bits": 12,
+  "total": 1280,
+  "md5": "6883cee779a70d91d486b4d9ad5a3167"
+ },
+ "stream_infos": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "samples": 1280,
+   "duration": 0.029024943310657598,
+   "bits_per_sample": 12,
+   "average_bitrate": 353.626875,
+   "layout": [
+    "front center"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "code": "flac.frame-differs-from-streaminfo",
+   "problem": "sample rate"
+  },
+  {
+   "code": "flac.frame-differs-from-streaminfo",
+   "problem": "sample rate"
+  }
+ ],
+ "decoded_samples": 1280,
+ "decoded_pcm_md5": "6883cee779a70d91d486b4d9ad5a3167",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 5,
+     "checked": 5,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 5,
+     "checked": 5,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 5,
+     "checked": 5,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 5,
+     "checked": 5,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "regions": [
+  {
+   "name": "FLAC",
+   "offset": 0,
+   "length": 1325
+  }
+ ],
+ "description": "12-bit mono frames whose headers name the sample rate by a table code, leave it to STREAMINFO, state it in Hz, in kHz and in tens of Hz, and name or leave the sample size.",
+ "crosscheck": {
+  "flac_test": null,
+  "decodes": true,
+  "ffmpeg": true
+ }
+}

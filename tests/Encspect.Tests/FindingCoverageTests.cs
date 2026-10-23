@@ -63,6 +63,32 @@ public partial class FindingCoverageTests
     [GeneratedRegex("\"(matroska\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex MatroskaCode();
 
+    [GeneratedRegex("\"(flac\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex FlacCode();
+
+    // Every code the FLAC parsers and the decoder emit is listed by a fixture's manifest or decode golden, or raised by a crafted file of FlacFindingTests.
+    [Fact]
+    public void EveryFlacCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Formats.Flac"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => FlacCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 40, $"Found only {emitted.Count} codes.");
+
+        var asserted = FlacCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "FlacFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "flac"), "*.json"))
+        {
+            foreach (Match m in FlacCode().Matches(File.ReadAllText(path)))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted file, manifest or golden raises: {string.Join(", ", missing)}");
+    }
+
     [GeneratedRegex("\\[\"(matroska\\.[a-z0-9-]+)\"\\] =")]
     private static partial Regex MatroskaTable();
 

@@ -1,0 +1,35 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "frame header CRC-8",
+        "stored": 6,
+        "checked": 6,
+        "failed": 0
+      },
+      {
+        "name": "frame CRC-16",
+        "stored": 6,
+        "checked": 6,
+        "failed": 0
+      },
+      {
+        "name": "STREAMINFO MD5",
+        "stored": 1,
+        "checked": 1,
+        "failed": 1
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "flac.md5-mismatch",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The MD5 of the decoded audio is 6339e0d8d1e5dc3bc3b480ecfe393edb, but STREAMINFO stores 6239e0d8d1e5dc3bc3b480ecfe393edb: the audio differs from what the encoder read."
+    }
+  ]
+}

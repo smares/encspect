@@ -26,6 +26,8 @@ public class ParallelAnalysisTests
     [InlineData("musepack/external-mpc2sv8.mpc")]
     [InlineData("musepack/external-mpcenc-standard.mpc")]
     [InlineData("wavpack/external-lossless-16-mono.wv")]
+    [InlineData("flac/external-16-stereo-l5.flac")]
+    [InlineData("flac/external-16-stereo-cuesheet-picture.flac")]
     [InlineData("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma")]
     [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-64.wma")]
     [InlineData("asf/external-windows-wma92lossless-stereo-44k-16.wma")]

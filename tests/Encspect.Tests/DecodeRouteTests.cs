@@ -28,6 +28,8 @@ public class DecodeRouteTests
 
         public List<long> FirstSamples { get; } = [];
 
+        public List<bool> Gaps { get; } = [];
+
         public int Opens { get; private set; }
 
         public string Id => id;
@@ -44,6 +46,7 @@ public class DecodeRouteTests
             public int Decode(in CodedFrame frame)
             {
                 owner.FirstSamples.Add(frame.FirstSample);
+                owner.Gaps.Add(frame.FollowsGap);
                 return owner.OnDecode is { } decode ? decode(frame) : frame.Samples;
             }
 
@@ -446,6 +449,24 @@ public class DecodeRouteTests
         Assert.Contains("predictor order is 33", finding.Message);
         Assert.Equal(("Frame", FrameBytes, FrameBytes), (finding.Node!.Name, (int)finding.Node.Offset, (int)finding.Node.Length));
         Assert.Equal([0, 1], finding.Path);
+    }
+
+    // A unit the parser could not read is its own finding; the host counts it as not decoded, makes the stream incomplete and reports nothing more.
+    [Fact]
+    public void AnUnreadableUnitIsCountedAsNotDecodedAndReportedByNoOneButTheParser()
+    {
+        var decoder = new ScriptedDecoder { OnFinish = end => end.IsComplete ? Md5() : [] };
+        var parser = new FrameParser { Shape = (i, frame) => i == 2 ? frame with { IsUnreadable = true } : frame };
+
+        Report report = Analyze(parser, [decoder], Verify);
+
+        Assert.Equal([0, 100, 300], decoder.FirstSamples);
+        Assert.Equal([false, false, true], decoder.Gaps);
+        Assert.Equal(new DecodeEnd(false, 1), Assert.Single(decoder.Ends));
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal));
+        StreamVerification verification = Assert.Single(report.Streams).Verification!;
+        Assert.Equal(300, verification.DecodedSamples);
+        Assert.NotEqual(true, verification.IsVerified);
     }
 
     [Fact]
@@ -1286,9 +1307,9 @@ public class DecodeRouteTests
     }
 
     [Fact]
-    public void ADefaultAnalyzerHasNoDecodersYetAndSaysSoWhenDecodingIsAskedFor()
+    public void ADefaultAnalyzerSaysSoWhenDecodingIsAskedForAndNoDecoderHasTheCodec()
     {
-        Assert.Empty(DefaultParsers.Decoders);
+        Assert.Equal(["flac"], DefaultParsers.Decoders.Select(d => d.Id));
         Report report = Analyze(new FrameParser(), DefaultParsers.Decoders, Verify);
         Assert.Contains(report.Findings, f => f.Code == "decode.no-decoder");
     }

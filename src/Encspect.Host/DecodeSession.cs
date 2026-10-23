@@ -28,6 +28,7 @@ internal sealed class DecodeSession : IDecodeSession
     private bool _isLentWide;
     private long _framesDecoded;
     private long _framesNotDecoded;
+    private bool _isAfterUnreadable;
     private long _decodedSamples;
     private StreamVerification? _verification;
 
@@ -118,8 +119,9 @@ internal sealed class DecodeSession : IDecodeSession
         ? default
         : new SampleBuffers(_narrow.AsSpan(0, _lentChannels * _lentStride), _isLentWide ? _wide.AsSpan(0, _lentChannels * _lentStride) : default, _lentChannels, _lentStride);
 
-    public bool Decode(in CodedFrame frame)
+    public bool Decode(in CodedFrame incoming)
     {
+        CodedFrame frame = incoming;
         if (frame.Bytes is null)
         {
             throw new ArgumentException("A coded frame needs its bytes.", nameof(frame));
@@ -137,7 +139,20 @@ internal sealed class DecodeSession : IDecodeSession
             return false;
         }
 
+        if (_isAfterUnreadable)
+        {
+            frame = frame with { FollowsGap = true };
+            _isAfterUnreadable = false;
+        }
+
         _sawGap |= frame.FollowsGap;
+        if (frame.IsUnreadable)
+        {
+            _framesNotDecoded++;
+            _isAfterUnreadable = true;
+            return IsDecoding;
+        }
+
         try
         {
             _isFrameWalked = frame.IsWalked;

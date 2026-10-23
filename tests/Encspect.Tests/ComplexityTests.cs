@@ -698,4 +698,204 @@ public class ComplexityTests
 
         return crc;
     }
+
+    // Frames of 65,535 samples of eight 32-bit channels that are all constant: 55 bytes code 2 MB of PCM each (RFC 9639, section 11), so 20 MB of
+    // them code 750 GB. The budget of the decoding stops the decoder in seconds, and the parser, which only walks the constants, goes on to the end.
+    [Fact]
+    public void FlacFramesThatCodeMegabytesEach()
+    {
+        byte[] frame = FlacBuilder.ConstantFrame(0, 65535, 44100, 8, 32, 7);
+        int count = (20 << 20) / frame.Length;
+        byte[] data = [.. FlacBuilder.Marker, .. FlacBuilder.Block(0, FlacBuilder.StreamInfo(65535, 44100, 8, 32, 65535L * count), isLast: true),
+            .. Enumerable.Range(0, count).SelectMany(i => FlacBuilder.ConstantFrame(i, 65535, 44100, 8, 32, 7))];
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 256L << 20 } };
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("megabytes.flac", new MemoryStream(data), options);
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.Contains(report.Findings, f => f.Code == "decode.limit");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Equal(count, report.Streams.Single().Samples / 65535);
+        Assert.Equal(DecodeStatus.Stopped, report.Streams.Single().Verification!.Decoding);
+    }
+
+    // A frame header that reads, a fixed predictor and a Rice code of parameter 0 that is followed by nothing but zero bits: the unary code runs to
+    // the end of the data. 24 MB of zeros hold such a header every 4 KB; each is a candidate whose walk reads on as far as a frame may be long.
+    // The searches are limited in proportion to the data, so the time stays linear.
+    [Fact]
+    public void RiceCodesThatRunToTheEndOfTheData()
+    {
+        byte[] head = FlacBuilder.Frame(0, 4096, 44100, 1, 16, false, body =>
+        {
+            FlacBuilder.Bits(body, 0, 1);
+            FlacBuilder.Bits(body, 9, 6);
+            FlacBuilder.Bits(body, 0, 1);
+            FlacBuilder.Bits(body, 0, 16);
+            FlacBuilder.Bits(body, 0, 2);
+            FlacBuilder.Bits(body, 0, 4);
+            FlacBuilder.Bits(body, 0, 4);
+        })[..14];
+        var data = new byte[24 << 20];
+        FlacBuilder.Marker.CopyTo(data, 0);
+        FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 44100, 1, 16, 4096), isLast: true).CopyTo(data, 4);
+        for (int at = 42; at + head.Length < data.Length; at += 4096)
+        {
+            head.CopyTo(data, at);
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("zeros.flac", new MemoryStream(data));
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    // A 12-byte unit repeated: a frame header of 65,535 samples (a fixed order 0 subframe whose Rice code of parameter 0 would run on for 65,535
+    // residuals) followed by the subframe, so that every 12th byte starts a candidate. The review's input: before every walk counted against the
+    // search budget, a candidate with a wrong CRC-8 or one that disagrees with STREAMINFO cost a full walk each and the budget never ran out.
+    private static byte[] DenseCandidates(int size, bool isCrc8Right, int channels, bool hasMarker)
+    {
+        byte[] header = [0xFF, 0xF8, 0x70, (byte)(((channels - 1) << 4) | 0x08), 0x00, 0xFF, 0xFE];
+        byte crc = FlacBuilder.Crc8(header);
+        byte[] unit = [.. header, isCrc8Right ? crc : (byte)(crc ^ 1), 0x10, 0x00, 0x0F, 0xFF];
+        var data = new List<byte>(size);
+        if (hasMarker)
+        {
+            data.AddRange(FlacBuilder.Marker);
+            data.AddRange(FlacBuilder.Block(0, FlacBuilder.StreamInfo(16, 44100, 1, 16, 0), isLast: true));
+        }
+
+        while (data.Count < size)
+        {
+            data.AddRange(unit);
+        }
+
+        return [.. data.Take(size)];
+    }
+
+    [Theory]
+    [InlineData(false, 1, true)]
+    [InlineData(true, 2, true)]
+    [InlineData(false, 1, false)]
+    [InlineData(true, 1, false)]
+    public void FlacCandidatesThatAreDenseButDoNotHold(bool isCrc8Right, int channels, bool hasMarker)
+    {
+        byte[] data = DenseCandidates(8 << 20, isCrc8Right, channels, hasMarker);
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("dense.bin", new MemoryStream(data));
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    // Ogg packets of about 16 bytes whose frame headers claim 65,535 samples: a fixed predictor and a Rice code of parameter 0 that the data ends in.
+    // The walk of a packet costs what the packet holds, not the 65,535 residuals it declares (the loops are skipped where the data cannot hold them).
+    [Fact]
+    public void TinyOggFlacPacketsThatClaimLargeBlocks()
+    {
+        byte[] packet = FlacBuilder.Frame(0, 65535, 44100, 1, 16, false, body =>
+        {
+            FlacBuilder.Bits(body, 0, 1);
+            FlacBuilder.Bits(body, 9, 6);
+            FlacBuilder.Bits(body, 0, 1);
+            FlacBuilder.Bits(body, 0, 16);
+            FlacBuilder.Bits(body, 0, 2);
+            FlacBuilder.Bits(body, 0, 4);
+            FlacBuilder.Bits(body, 0, 4);
+        });
+        byte[] first = [0x7F, .. "FLAC"u8, 1, 0, 0, 0, .. "fLaC"u8, .. FlacBuilder.Block(0, FlacBuilder.StreamInfo(16, 44100, 1, 16, 0), isLast: true)];
+        var ogg = new OggBuilder();
+        ogg.Page(7, 0, 2, first);
+        for (int page = 0; page < 400; page++)
+        {
+            ogg.Page(7, 0, 0, [.. Enumerable.Repeat(packet, 250)]);
+        }
+
+        byte[] data = ogg.Bytes;
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("tiny.ogg", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(8), $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
+    // Only the detection: the sniffers of every format run over a file that is no FLAC, whose first megabyte is dense in sync codes.
+    [Fact]
+    public void SniffingDenseSyncCodesWithoutTheMarker()
+    {
+        byte[] data = DenseCandidates(4 << 20, isCrc8Right: false, channels: 1, hasMarker: false);
+        var parser = new Encspect.Formats.Flac.FlacParser();
+
+        var watch = Stopwatch.StartNew();
+        for (int i = 0; i < 20; i++)
+        {
+            parser.Sniff(new SniffContext(new ByteReader(new MemoryStream(data))));
+        }
+
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+    }
+
+    // Linear predictors of order 32 in frames of 65,535 samples, decoded: 2 million multiplications per frame, which the budget does not count.
+    [Fact]
+    public void FlacPredictorsOfTheHighestOrderAtTheLargestBlock()
+    {
+        const int block = 65535;
+        byte[] frame = FlacBuilder.Frame(0, block, 44100, 1, 16, false, body =>
+        {
+            FlacBuilder.Bits(body, 0, 1);
+            FlacBuilder.Bits(body, 63, 6);
+            FlacBuilder.Bits(body, 0, 1);
+            for (int i = 0; i < 32; i++)
+            {
+                FlacBuilder.Bits(body, 0, 16);
+            }
+
+            FlacBuilder.Bits(body, 14, 4);
+            FlacBuilder.Bits(body, 0, 5);
+            for (int i = 0; i < 32; i++)
+            {
+                FlacBuilder.Bits(body, (uint)(i == 0 ? 1 : 0), 15);
+            }
+
+            FlacBuilder.Bits(body, 0, 2);
+            FlacBuilder.Bits(body, 0, 4);
+            FlacBuilder.Bits(body, 0, 4);
+            for (int i = 32; i < block; i++)
+            {
+                body.Add(true);
+            }
+        });
+        const int count = 300;
+        bool[] bits = [.. SubframeBits(frame)];
+        byte[] data = [.. FlacBuilder.Marker, .. FlacBuilder.Block(0, FlacBuilder.StreamInfo(block, 44100, 1, 16, (long)block * count), isLast: true),
+            .. Enumerable.Range(0, count).SelectMany(i => FlacBuilder.Frame(i, block, 44100, 1, 16, false, body => body.AddRange(bits)))];
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("order32.flac", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Equal((long)block * count, report.Streams.Single().Verification!.DecodedSamples);
+    }
+
+    // The bits of a frame's subframes: the bytes after its 10-byte header (frame number 0, block size and sample rate in 16 bits each), up to its CRC-16.
+    private static IEnumerable<bool> SubframeBits(byte[] frame)
+    {
+        foreach (byte b in frame[10..^2])
+        {
+            for (int bit = 7; bit >= 0; bit--)
+            {
+                yield return ((b >> bit) & 1) != 0;
+            }
+        }
+    }
 }

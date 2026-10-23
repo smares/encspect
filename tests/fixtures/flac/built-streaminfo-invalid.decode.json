@@ -1,0 +1,35 @@
+{
+  "verification": {
+    "decoding": "NotPossible",
+    "decodedSamples": 0,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "frame header CRC-8",
+        "stored": 2,
+        "checked": 2,
+        "failed": 0
+      },
+      {
+        "name": "frame CRC-16",
+        "stored": 2,
+        "checked": 2,
+        "failed": 0
+      },
+      {
+        "name": "STREAMINFO MD5",
+        "stored": 1,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.not-possible",
+      "severity": "Info",
+      "count": 1,
+      "message": "The stream was not decoded: STREAMINFO states 3 bits per sample; the specification allows 4 to 32."
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+ "length": 66,
+ "metadata": [
+  {
+   "offset": 4,
+   "length": 38,
+   "type": "STREAMINFO",
+   "is_last": false,
+   "body_length": 34
+  },
+  {
+   "offset": 42,
+   "length": 24,
+   "type": "APPLICATION",
+   "is_last": false,
+   "body_length": 1000
+  }
+ ],
+ "frames": [],
+ "skipped": [],
+ "stream_info": {
+  "min_block": 256,
+  "max_block": 256,
+  "min_frame": 324,
+  "max_frame": 461,
+  "sample_rate": 44100,
+  "channels": 1,
+  "bits": 16,
+  "total": 512,
+  "md5": "709bd22edf565da04de6aec16783d03e"
+ },
+ "stream_infos": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "samples": 0,
+   "duration": 0.0,
+   "bits_per_sample": 16,
+   "average_bitrate": null,
+   "layout": [
+    "front center"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "code": "flac.metadata-truncated"
+  },
+  {
+   "code": "flac.no-frames"
+  }
+ ],
+ "decoded_samples": 0,
+ "decoded_pcm_md5": "d41d8cd98f00b204e9800998ecf8427e",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": null,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "regions": [
+  {
+   "name": "FLAC",
+   "offset": 0,
+   "length": 66
+  }
+ ],
+ "description": "A block states 1,000 bytes and the file ends after 20.",
+ "crosscheck": {
+  "flac_test": null,
+  "decodes": true,
+  "ffmpeg": true
+ }
+}

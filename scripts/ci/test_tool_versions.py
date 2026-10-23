@@ -40,6 +40,8 @@ class ProgramTests(unittest.TestCase):
             "php": "8.5.1",
             "oggz": "oggz version 1.1.3\n",
             "ogginfo": "ogginfo from vorbis-tools 1.4.3\n",
+            "flac": "flac 1.5.0\n",
+            "metaflac": "metaflac 1.5.0\n",
         }
         self.assertEqual(set(outputs), set(tool_versions.PROGRAMS))
         for name, output in outputs.items():

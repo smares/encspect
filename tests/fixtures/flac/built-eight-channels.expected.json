@@ -1,0 +1,180 @@
+{
+ "length": 1083,
+ "metadata": [
+  {
+   "offset": 4,
+   "length": 38,
+   "type": "STREAMINFO",
+   "is_last": true,
+   "body_length": 34
+  }
+ ],
+ "frames": [
+  {
+   "offset": 42,
+   "length": 1041,
+   "variable": false,
+   "block_size": 128,
+   "sample_rate": 48000,
+   "channel_code": 7,
+   "bits": 8,
+   "number": 0,
+   "crc8": "bd",
+   "status": [],
+   "crc16": "e997",
+   "subframes": [
+    [
+     "verbatim",
+     0,
+     0
+    ],
+    [
+     "verbatim",
+     0,
+     0
+    ],
+    [
+     "verbatim",
+     0,
+     0
+    ],
+    [
+     "verbatim",
+     0,
+     0
+    ],
+    [
+     "verbatim",
+     0,
+     0
+    ],
+    [
+     "verbatim",
+     0,
+     0
+    ],
+    [
+     "verbatim",
+     0,
+     0
+    ],
+    [
+     "verbatim",
+     0,
+     0
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_info": {
+  "min_block": 128,
+  "max_block": 128,
+  "min_frame": 1041,
+  "max_frame": 1041,
+  "sample_rate": 48000,
+  "channels": 8,
+  "bits": 8,
+  "total": 128,
+  "md5": "d37931a169cacc2fed271a88255821f6"
+ },
+ "stream_infos": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 48000,
+   "channels": 8,
+   "samples": 128,
+   "duration": 0.0026666666666666666,
+   "bits_per_sample": 8,
+   "average_bitrate": 3123.0,
+   "layout": [
+    "front left",
+    "front right",
+    "front center",
+    "LFE",
+    "back left",
+    "back right",
+    "side left",
+    "side right"
+   ]
+  }
+ ],
+ "findings": [],
+ "decoded_samples": 128,
+ "decoded_pcm_md5": "d37931a169cacc2fed271a88255821f6",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "frame header CRC-8",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-16",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "STREAMINFO MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "regions": [
+  {
+   "name": "FLAC",
+   "offset": 0,
+   "length": 1083
+  }
+ ],
+ "description": "One frame of eight verbatim channels of 8 bits.",
+ "crosscheck": {
+  "flac_test": true,
+  "decodes": true,
+  "ffmpeg": true
+ }
+}

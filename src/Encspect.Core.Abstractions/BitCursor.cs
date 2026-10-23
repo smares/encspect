@@ -26,6 +26,9 @@ public ref struct BitCursor
 
     public readonly bool IsOverrun => _position > Length;
 
+    // The bits left to read; 0 once the cursor ran past the data.
+    public readonly long BitsLeft => Math.Max(0, Length - _position);
+
     // 0 to 32 bits.
     public uint Read(int count)
     {
