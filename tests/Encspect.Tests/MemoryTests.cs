@@ -967,9 +967,9 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] warmUp = FlacFrames(100);
         Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(warmUp), new AnalysisOptions { Decoding = new DecodeOptions() });
 
-        (long fewerHeld, long fewerKept) = LastFrameReading(FlacFrames(fewer), fewer);
-        (long held, long kept) = LastFrameReading(FlacFrames(frames), frames);
-        (_, long plainKept) = LastFrameReading(FlacFrames(frames), frames, isDecoding: false);
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.flac", FlacFrames(fewer), fewer, 4096);
+        (long held, long kept) = LastFrameReading("frames.flac", FlacFrames(frames), frames, 4096);
+        (_, long plainKept) = LastFrameReading("frames.flac", FlacFrames(frames), frames, 4096, isDecoding: false);
 
         double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
         output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
@@ -979,13 +979,13 @@ public class MemoryTests(ITestOutputHelper output)
 
     // The live heap read inside the sink's Write of the last frame less the live heap with the report alive after the analysis, and
     // what the report keeps (alive less dropped); each the smaller of two analyses, as for Measure.
-    private static (long Held, long Kept) LastFrameReading(byte[] data, int frames, bool isDecoding = true)
+    private static (long Held, long Kept) LastFrameReading(string name, byte[] data, int frames, long samplesPerFrame, bool isDecoding = true)
     {
         long held = long.MaxValue;
         long kept = long.MaxValue;
         for (int pass = 0; pass < 2; pass++)
         {
-            (long reading, long withReport) = AnalyzeReadingAtLastFrame(data, frames, isDecoding);
+            (long reading, long withReport) = AnalyzeReadingAtLastFrame(name, data, frames, samplesPerFrame, isDecoding);
             long withoutReport = Live();
             held = Math.Min(held, reading - withReport);
             kept = Math.Min(kept, withReport - withoutReport);
@@ -996,15 +996,15 @@ public class MemoryTests(ITestOutputHelper output)
     }
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private static (long Reading, long WithReport) AnalyzeReadingAtLastFrame(byte[] data, int frames, bool isDecoding)
+    private static (long Reading, long WithReport) AnalyzeReadingAtLastFrame(string name, byte[] data, int frames, long samplesPerFrame, bool isDecoding)
     {
         var probe = new LastFrameSink(frames);
         var options = new AnalysisOptions { Decoding = isDecoding ? new DecodeOptions { Output = _ => probe } : null };
         Live();
-        Report report = Analyzer.CreateDefault().Analyze("frames.flac", new MemoryStream(data), options);
+        Report report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(data), options);
         if (isDecoding)
         {
-            Assert.Equal(frames * 4096L, report.Streams.Single().Verification!.DecodedSamples);
+            Assert.Equal(frames * samplesPerFrame, report.Streams.Single().Verification!.DecodedSamples);
             Assert.True(probe.Reading > 0, "The sink was not written the last frame.");
         }
 
@@ -1051,6 +1051,28 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(kept < blocks * WavPackKeptBound, $"The report keeps {kept / blocks} bytes per block.");
         Assert.True(peak < blocks * WavPackPeakBound, $"The live heap grew by {peak / blocks} bytes per block.");
         GC.KeepAlive(report);
+    }
+
+    // The decoding of a WavPack file holds its decorrelation and entropy state for the block at hand, the planes of the set, the MD5's state
+    // and the findings it counts, so what it holds does not grow with the blocks. Measured as the FLAC test above does: a reading of the live
+    // heap inside the sink's Write of the last set, at 50,000 and 200,000 blocks, less the heap the analysis ends with. The blocks are
+    // WavPackDecodedBlocks: 128 samples each that are decoded in full, with a CRC that holds. A List<long> that keeps one value per block in
+    // StreamDecoder reads 10.30 bytes per further block and fails it (bound DecodingFrameBound, 8).
+    [Fact]
+    public void DecodingManyWavPackBlocksHoldsNothingPerBlock()
+    {
+        const int fewer = 50_000;
+        const int blocks = 200_000;
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(WavPackDecodedBlocks(100)), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("blocks.wv", WavPackDecodedBlocks(fewer), fewer, 128);
+        (long held, long kept) = LastFrameReading("blocks.wv", WavPackDecodedBlocks(blocks), blocks, 128);
+        (_, long plainKept) = LastFrameReading("blocks.wv", WavPackDecodedBlocks(blocks), blocks, 128, isDecoding: false);
+
+        double heldPerBlock = (held - fewerHeld) / (double)(blocks - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last block: {fewerHeld} at {fewer} blocks and {held} at {blocks} ({Hundredths(heldPerBlock)} per further block)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)blocks:F2} bytes more per block.");
+        Assert.True(heldPerBlock < DecodingFrameBound, $"Decoding held {heldPerBlock:F2} more bytes per further block at the last block than the analysis ends with. {RuntimeSettings()}");
     }
 
     // A block of up to 1 MiB with a sub-block for every two bytes lists the first 1,024 and counts the rest.
@@ -1123,6 +1145,34 @@ public class MemoryTests(ITestOutputHelper output)
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(24), 1 | 4 | 0x800 | 0x1000 | (9u << 23) | 0x10000000);
         byte[][] parts = [WavPackBuilder.Sub(0x0A, new byte[4]), WavPackBuilder.Sub(0x2F, new byte[4])];
         var data = new List<byte>(count * 44);
+        for (int i = 0; i < count; i++)
+        {
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(12), (uint)(count * 128L));
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(16), (uint)(i * 128L));
+            data.AddRange(WavPackBuilder.Join(header, parts));
+        }
+
+        return [.. data];
+    }
+
+    // Mono 16-bit blocks of 128 samples, one set each, whose bitstream of 40 zero bytes decodes to 128 samples of 0 (so no block is muted) and
+    // whose header CRC is the one those samples give.
+    private static byte[] WavPackDecodedBlocks(int count)
+    {
+        uint crc = uint.MaxValue;
+        for (int i = 0; i < 128; i++)
+        {
+            crc = unchecked(crc * 3);
+        }
+
+        byte[] header = new byte[32];
+        "wvpk"u8.CopyTo(header);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(8), 0x410);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(20), 128);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(24), 1 | 4 | 0x800 | 0x1000 | (9u << 23) | 0x10000000);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(28), crc);
+        byte[][] parts = [WavPackBuilder.Sub(0x0A, new byte[40]), WavPackBuilder.Sub(0x2F, new byte[4])];
+        var data = new List<byte>(count * 80);
         for (int i = 0; i < count; i++)
         {
             System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(12), (uint)(count * 128L));

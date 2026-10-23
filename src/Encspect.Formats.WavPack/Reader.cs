@@ -44,7 +44,7 @@ internal static class Reader
             }
 
             source.Cache.Read(position, buffer.AsSpan(0, (int)length));
-            Block(s, position, header, buffer.AsSpan(0, (int)length), status);
+            Block(s, position, header, buffer.AsMemory(0, (int)length), status);
             position += length;
         }
 
@@ -108,10 +108,19 @@ internal static class Reader
         }
     }
 
-    private static void Block(State s, long offset, in BlockHeader header, Span<byte> block, BlockStatus status)
+    private static void Block(State s, long offset, in BlockHeader header, Memory<byte> memory, BlockStatus status)
     {
+        Span<byte> block = memory.Span;
         int entry = s.Entries.Count;
         Detail? detail = s.Details.Count < State.MaxDetailedBlocks ? new Detail() : null;
+
+        // A block without audio that holds sub-blocks may hold the MD5 of the audio, which comes last in a file and which the decoder's
+        // findings point to, so a few of these are detailed whatever their place.
+        if (detail is null && !header.HasAudio && block.Length > BlockHeader.Length && s.ExtraDetailedBlocks < State.MaxExtraDetailedBlocks)
+        {
+            s.ExtraDetailedBlocks++;
+            detail = new Detail();
+        }
 
         // Past the detailed blocks, blocks that are a header and nothing else join a run, so a file of
         // millions of them costs one entry.
@@ -191,6 +200,8 @@ internal static class Reader
         {
             TrackSet(s, entry, header, offset, block.Length - wrapper);
         }
+
+        s.Feed.Offer(s, offset, header, memory, status);
     }
 
     private static void HeaderChecks(State s, int entry, long offset, in BlockHeader header, BlockStatus status, int length)
@@ -564,8 +575,10 @@ internal static class Reader
                 {
                     Size("MD5", "16 bytes");
                 }
-                else if (s.Md5 is null && function == SubBlockIds.Md5Checksum)
+                else
                 {
+                    s.Md5Count++;
+                    // libwavpack keeps the last digest it reads (open_utils.c 785-793), as the decoder compares.
                     s.Md5 = new Located<string>(Decode.Hex(data), entry, index);
                 }
 
@@ -662,7 +675,7 @@ internal static class Reader
             if (channelInfo is null)
             {
                 s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                    $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes, no more channels than twice the streams, no more speakers in the mask than channels and, in its long form, at least as many channels as streams{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "info");
+                $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes, no more channels than twice the streams, no more speakers in the mask than channels and, in its long form, at least as many channels as streams{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "info");
             }
 
             return;
@@ -767,6 +780,11 @@ internal static class Reader
         BlockStatus result = BlockStatus.None;
         if (found.ChecksumSubBlocks > 0)
         {
+            if (header.HasAudio)
+            {
+                s.AudioChecksummed++;
+            }
+
             if (found.ChecksumFailed)
             {
                 result |= BlockStatus.ChecksumInvalid;
@@ -940,6 +958,7 @@ internal static class Reader
             CloseSet(s);
             if (!header.IsInitial)
             {
+                s.BrokenSets++;
                 bool followsCap = s.Sets > 0 && s.SetCapped;
                 bool isFirst = s.Sets == 0;
                 s.Findings.Add(Severity.Warning, "wavpack.block-set-broken", () => Nodes.HeaderField(s.Records, entry, "Flags"), count =>
@@ -972,6 +991,8 @@ internal static class Reader
             if (s.NextIndex >= 0 && index != s.NextIndex)
             {
                 long expected = s.NextIndex;
+                s.HasGap = true;
+                s.FollowsGap = true;
                 if (index > expected)
                 {
                     s.Findings.Add(Severity.Warning, "wavpack.block-index-gap", () => Nodes.HeaderField(s.Records, entry, "Block Index"), count =>
@@ -986,6 +1007,7 @@ internal static class Reader
         }
         else if (index != s.SetIndex || header.Samples != s.SetSamples)
         {
+            s.BrokenSets++;
             long setIndex = s.SetIndex;
             uint setSamples = s.SetSamples;
             uint blockSamples = header.Samples;
@@ -1027,6 +1049,7 @@ internal static class Reader
         int first = s.SetFirstEntry;
         if (!s.SetSawFinal)
         {
+            s.BrokenSets++;
             long offset = s.SetOffset;
             int blocks = s.SetBlocks;
             bool isCapped = s.SetCapped;
@@ -1042,6 +1065,7 @@ internal static class Reader
 
         if (s.SetChannels != s.FirstSetChannels)
         {
+            s.BrokenSets++;
             int expected = s.FirstSetChannels;
             int actual = s.SetChannels;
             long setOffset = s.SetOffset;

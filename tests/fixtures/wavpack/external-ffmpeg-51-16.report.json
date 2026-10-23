@@ -1,0 +1,2953 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-ffmpeg-51-16.wv",
+    "root": {
+      "name": "File",
+      "value": "WavPack",
+      "offset": 0,
+      "length": 154817,
+      "children": [
+        {
+          "name": "WavPack",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 154724,
+          "children": [
+            {
+              "name": "Encoder",
+              "value": "WavPack 4 stream, no WavPack 5 features",
+              "offset": 0,
+              "length": 154724,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The blocks have stream version 0x410 and neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a file, and another encoder, such as FFmpeg, may have written it",
+                  "offset": 0,
+                  "length": 154724
+                }
+              ]
+            },
+            {
+              "name": "Writer",
+              "value": "FFmpeg (Lavf60.16.100)",
+              "offset": 0,
+              "length": 154724,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Evidence",
+                  "value": "APE Encoder item at 0x25C84 names \"Lavf60.16.100\"",
+                  "offset": 0,
+                  "length": 154724
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 154724,
+              "children": [
+                {
+                  "name": "Blocks",
+                  "value": 3,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Audio Blocks",
+                  "value": 3,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Block Sets",
+                  "value": 1,
+                  "unit": "sets",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Samples",
+                  "value": 24000,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.5,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Channels",
+                  "value": 6,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "5.1 (front left, front right, front center, LFE, back left, back right)",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "IsLossless",
+                  "value": true,
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "IsHybrid",
+                  "value": false,
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "IsCorrectionFileCreated",
+                  "value": false,
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "IsCorrectionFile",
+                  "value": false,
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "IsFloatingPoint",
+                  "value": false,
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "IsDsd",
+                  "value": false,
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Decorrelation Passes",
+                  "value": 2,
+                  "unit": "passes",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Mid/Side Blocks",
+                  "value": "1 block of 3 stereo blocks (33.3%)",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Verified Block Checksums",
+                  "value": 0,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 2475.584,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "unknown",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Smallest Block Set",
+                  "value": 154724,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Largest Block Set",
+                  "value": 154724,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 2475.584,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 2475.584,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 154724
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 154724,
+                  "children": [
+                    {
+                      "name": "2464 to 2495 kbps",
+                      "value": "1 block set (100.0%)",
+                      "offset": 0,
+                      "length": 154724
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Block",
+              "kind": "Frame",
+              "value": 24000,
+              "unit": "samples",
+              "offset": 0,
+              "length": 46464,
+              "children": [
+                {
+                  "name": "Block Header",
+                  "offset": 0,
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Signature",
+                      "value": "wvpk",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block Size",
+                      "value": 46464,
+                      "unit": "bytes",
+                      "offset": 4,
+                      "length": 4
+                    },
+                    {
+                      "name": "Stream Version",
+                      "value": 1040,
+                      "offset": 8,
+                      "length": 2
+                    },
+                    {
+                      "name": "Total Samples",
+                      "value": 24000,
+                      "unit": "samples",
+                      "offset": 11,
+                      "length": 5
+                    },
+                    {
+                      "name": "Block Index",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 10,
+                      "length": 10,
+                      "ranges": [
+                        {
+                          "offset": 10,
+                          "length": 1
+                        },
+                        {
+                          "offset": 16,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Block Samples",
+                      "value": 24000,
+                      "unit": "samples",
+                      "offset": 20,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 87820337,
+                      "offset": 24,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Bytes Per Sample",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 24,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsMono",
+                          "value": false,
+                          "offset": 24,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsHybrid",
+                          "value": false,
+                          "offset": 24,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesJointStereo",
+                          "value": true,
+                          "offset": 24,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesCrossChannelDecorrelation",
+                          "value": true,
+                          "offset": 24,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesHybridNoiseShaping",
+                          "value": false,
+                          "offset": 24,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsFloatingPoint",
+                          "value": false,
+                          "offset": 24,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasExtendedIntegers",
+                          "value": false,
+                          "offset": 25,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesHybridBitrateControl",
+                          "value": false,
+                          "offset": 25,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesHybridBalance",
+                          "value": false,
+                          "offset": 25,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsInitialBlock",
+                          "value": true,
+                          "offset": 25,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsFinalBlock",
+                          "value": false,
+                          "offset": 25,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Left Shift",
+                          "value": 0,
+                          "unit": "bits",
+                          "offset": 25,
+                          "length": 2,
+                          "bitOffset": 5,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Maximum Magnitude",
+                          "value": 15,
+                          "unit": "bits",
+                          "offset": 26,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 48000,
+                          "unit": "Hz",
+                          "offset": 26,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasReservedFlag",
+                          "value": false,
+                          "offset": 27,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasBlockChecksum",
+                          "value": false,
+                          "offset": 27,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesIirNoiseShaping",
+                          "value": false,
+                          "offset": 27,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsFalseStereo",
+                          "value": false,
+                          "offset": 27,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsDsd",
+                          "value": false,
+                          "offset": 27,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 1657810458,
+                      "offset": 28,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Channel Info",
+                  "value": 5,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 77,
+                      "offset": 32,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 13,
+                          "offset": 32,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 32,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": true,
+                          "offset": 32,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 32,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 3,
+                      "unit": "words",
+                      "offset": 33,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 5,
+                      "unit": "bytes",
+                      "offset": 34,
+                      "length": 5,
+                      "children": [
+                        {
+                          "name": "Channel Count",
+                          "value": 6,
+                          "unit": "channels",
+                          "offset": 34,
+                          "length": 1
+                        },
+                        {
+                          "name": "Channel Mask",
+                          "value": 63,
+                          "offset": 35,
+                          "length": 4
+                        },
+                        {
+                          "name": "Channel Layout",
+                          "value": "5.1 (front left, front right, front center, LFE, back left, back right)",
+                          "offset": 34,
+                          "length": 5
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Padding",
+                      "value": 1,
+                      "unit": "bytes",
+                      "offset": 39,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Decorrelation Terms",
+                  "value": 2,
+                  "unit": "bytes",
+                  "offset": 40,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 2,
+                      "offset": 40,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 2,
+                          "offset": 40,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 40,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 40,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 40,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 1,
+                      "unit": "words",
+                      "offset": 41,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 2,
+                      "unit": "bytes",
+                      "offset": 42,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": "term 18, delta 2",
+                          "offset": 42,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Term",
+                              "value": 18,
+                              "offset": 42,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Delta",
+                              "value": 2,
+                              "offset": 42,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Pass 2",
+                          "value": "term 17, delta 2",
+                          "offset": 43,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Term",
+                              "value": 17,
+                              "offset": 43,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Delta",
+                              "value": 2,
+                              "offset": 43,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Decorrelation Weights",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 44,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 3,
+                      "offset": 44,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 3,
+                          "offset": 44,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 44,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 44,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 44,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 2,
+                      "unit": "words",
+                      "offset": 45,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 46,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "offset": 46,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Side Weight",
+                              "value": 976,
+                              "offset": 46,
+                              "length": 1
+                            },
+                            {
+                              "name": "Mid Weight",
+                              "value": 1008,
+                              "offset": 47,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Pass 2",
+                          "offset": 48,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Side Weight",
+                              "value": 976,
+                              "offset": 48,
+                              "length": 1
+                            },
+                            {
+                              "name": "Mid Weight",
+                              "value": 976,
+                              "offset": 49,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Decorrelation Samples",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 50,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 4,
+                      "offset": 50,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 4,
+                          "offset": 50,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 50,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 50,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 50,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 4,
+                      "unit": "words",
+                      "offset": 51,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 8,
+                      "unit": "bytes",
+                      "offset": 52,
+                      "length": 8,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": 4,
+                          "unit": "values",
+                          "offset": 52,
+                          "length": 8
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Entropy Variables",
+                  "value": 12,
+                  "unit": "bytes",
+                  "offset": 60,
+                  "length": 14,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 5,
+                      "offset": 60,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 5,
+                          "offset": 60,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 60,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 60,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 60,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 6,
+                      "unit": "words",
+                      "offset": 61,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 12,
+                      "unit": "bytes",
+                      "offset": 62,
+                      "length": 12,
+                      "children": [
+                        {
+                          "name": "Side Medians",
+                          "offset": 62,
+                          "length": 6,
+                          "children": [
+                            {
+                              "name": "Median 1",
+                              "value": 2076,
+                              "offset": 62,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 2",
+                              "value": 1756,
+                              "offset": 64,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 3",
+                              "value": 1879,
+                              "offset": 66,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Mid Medians",
+                          "offset": 68,
+                          "length": 6,
+                          "children": [
+                            {
+                              "name": "Median 1",
+                              "value": 1851,
+                              "offset": 68,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 2",
+                              "value": 1949,
+                              "offset": 70,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 3",
+                              "value": 2051,
+                              "offset": 72,
+                              "length": 2
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "WavPack Bitstream",
+                  "value": 46386,
+                  "unit": "bytes",
+                  "offset": 74,
+                  "length": 46390,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 138,
+                      "offset": 74,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 10,
+                          "offset": 74,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 74,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 74,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": true,
+                          "offset": 74,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 23193,
+                      "unit": "words",
+                      "offset": 75,
+                      "length": 3
+                    },
+                    {
+                      "name": "Data",
+                      "value": 46386,
+                      "unit": "bytes",
+                      "offset": 78,
+                      "length": 46386,
+                      "children": [
+                        {
+                          "name": "Bitstream",
+                          "value": 46386,
+                          "unit": "bytes",
+                          "offset": 78,
+                          "length": 46386
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Block",
+              "kind": "Frame",
+              "value": 24000,
+              "unit": "samples",
+              "offset": 46464,
+              "length": 51430,
+              "children": [
+                {
+                  "name": "Block Header",
+                  "offset": 46464,
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Signature",
+                      "value": "wvpk",
+                      "offset": 46464,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block Size",
+                      "value": 51430,
+                      "unit": "bytes",
+                      "offset": 46468,
+                      "length": 4
+                    },
+                    {
+                      "name": "Stream Version",
+                      "value": 1040,
+                      "offset": 46472,
+                      "length": 2
+                    },
+                    {
+                      "name": "Total Samples",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 46475,
+                      "length": 5
+                    },
+                    {
+                      "name": "Block Index",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 46474,
+                      "length": 10,
+                      "ranges": [
+                        {
+                          "offset": 46474,
+                          "length": 1
+                        },
+                        {
+                          "offset": 46480,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Block Samples",
+                      "value": 24000,
+                      "unit": "samples",
+                      "offset": 46484,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 87818273,
+                      "offset": 46488,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Bytes Per Sample",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 46488,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsMono",
+                          "value": false,
+                          "offset": 46488,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsHybrid",
+                          "value": false,
+                          "offset": 46488,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesJointStereo",
+                          "value": false,
+                          "offset": 46488,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesCrossChannelDecorrelation",
+                          "value": true,
+                          "offset": 46488,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesHybridNoiseShaping",
+                          "value": false,
+                          "offset": 46488,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsFloatingPoint",
+                          "value": false,
+                          "offset": 46488,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasExtendedIntegers",
+                          "value": false,
+                          "offset": 46489,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesHybridBitrateControl",
+                          "value": false,
+                          "offset": 46489,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesHybridBalance",
+                          "value": false,
+                          "offset": 46489,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsInitialBlock",
+                          "value": false,
+                          "offset": 46489,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsFinalBlock",
+                          "value": false,
+                          "offset": 46489,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Left Shift",
+                          "value": 0,
+                          "unit": "bits",
+                          "offset": 46489,
+                          "length": 2,
+                          "bitOffset": 5,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Maximum Magnitude",
+                          "value": 15,
+                          "unit": "bits",
+                          "offset": 46490,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 48000,
+                          "unit": "Hz",
+                          "offset": 46490,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasReservedFlag",
+                          "value": false,
+                          "offset": 46491,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasBlockChecksum",
+                          "value": false,
+                          "offset": 46491,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesIirNoiseShaping",
+                          "value": false,
+                          "offset": 46491,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsFalseStereo",
+                          "value": false,
+                          "offset": 46491,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsDsd",
+                          "value": false,
+                          "offset": 46491,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 3370608167,
+                      "offset": 46492,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Decorrelation Terms",
+                  "value": 2,
+                  "unit": "bytes",
+                  "offset": 46496,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 2,
+                      "offset": 46496,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 2,
+                          "offset": 46496,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 46496,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 46496,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 46496,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 1,
+                      "unit": "words",
+                      "offset": 46497,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 2,
+                      "unit": "bytes",
+                      "offset": 46498,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": "term 18, delta 2",
+                          "offset": 46498,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Term",
+                              "value": 18,
+                              "offset": 46498,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Delta",
+                              "value": 2,
+                              "offset": 46498,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Pass 2",
+                          "value": "term 17, delta 2",
+                          "offset": 46499,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Term",
+                              "value": 17,
+                              "offset": 46499,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Delta",
+                              "value": 2,
+                              "offset": 46499,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Decorrelation Weights",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 46500,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 3,
+                      "offset": 46500,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 3,
+                          "offset": 46500,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 46500,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 46500,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 46500,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 2,
+                      "unit": "words",
+                      "offset": 46501,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 46502,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "offset": 46502,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Left Weight",
+                              "value": -64,
+                              "offset": 46502,
+                              "length": 1
+                            },
+                            {
+                              "name": "Right Weight",
+                              "value": -16,
+                              "offset": 46503,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Pass 2",
+                          "offset": 46504,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Left Weight",
+                              "value": -24,
+                              "offset": 46504,
+                              "length": 1
+                            },
+                            {
+                              "name": "Right Weight",
+                              "value": -24,
+                              "offset": 46505,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Decorrelation Samples",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 46506,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 4,
+                      "offset": 46506,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 4,
+                          "offset": 46506,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 46506,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 46506,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 46506,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 4,
+                      "unit": "words",
+                      "offset": 46507,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 8,
+                      "unit": "bytes",
+                      "offset": 46508,
+                      "length": 8,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": 4,
+                          "unit": "values",
+                          "offset": 46508,
+                          "length": 8
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Entropy Variables",
+                  "value": 12,
+                  "unit": "bytes",
+                  "offset": 46516,
+                  "length": 14,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 5,
+                      "offset": 46516,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 5,
+                          "offset": 46516,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 46516,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 46516,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 46516,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 6,
+                      "unit": "words",
+                      "offset": 46517,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 12,
+                      "unit": "bytes",
+                      "offset": 46518,
+                      "length": 12,
+                      "children": [
+                        {
+                          "name": "Left Medians",
+                          "offset": 46518,
+                          "length": 6,
+                          "children": [
+                            {
+                              "name": "Median 1",
+                              "value": 4442,
+                              "offset": 46518,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 2",
+                              "value": 4051,
+                              "offset": 46520,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 3",
+                              "value": 3827,
+                              "offset": 46522,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Right Medians",
+                          "offset": 46524,
+                          "length": 6,
+                          "children": [
+                            {
+                              "name": "Median 1",
+                              "value": 4396,
+                              "offset": 46524,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 2",
+                              "value": 4077,
+                              "offset": 46526,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 3",
+                              "value": 3653,
+                              "offset": 46528,
+                              "length": 2
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "WavPack Bitstream",
+                  "value": 51360,
+                  "unit": "bytes",
+                  "offset": 46530,
+                  "length": 51364,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 138,
+                      "offset": 46530,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 10,
+                          "offset": 46530,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 46530,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 46530,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": true,
+                          "offset": 46530,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 25680,
+                      "unit": "words",
+                      "offset": 46531,
+                      "length": 3
+                    },
+                    {
+                      "name": "Data",
+                      "value": 51360,
+                      "unit": "bytes",
+                      "offset": 46534,
+                      "length": 51360,
+                      "children": [
+                        {
+                          "name": "Bitstream",
+                          "value": 51360,
+                          "unit": "bytes",
+                          "offset": 46534,
+                          "length": 51360
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Block",
+              "kind": "Frame",
+              "value": 24000,
+              "unit": "samples",
+              "offset": 97894,
+              "length": 56830,
+              "children": [
+                {
+                  "name": "Block Header",
+                  "offset": 97894,
+                  "length": 32,
+                  "children": [
+                    {
+                      "name": "Signature",
+                      "value": "wvpk",
+                      "offset": 97894,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block Size",
+                      "value": 56830,
+                      "unit": "bytes",
+                      "offset": 97898,
+                      "length": 4
+                    },
+                    {
+                      "name": "Stream Version",
+                      "value": 1040,
+                      "offset": 97902,
+                      "length": 2
+                    },
+                    {
+                      "name": "Total Samples",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 97905,
+                      "length": 5
+                    },
+                    {
+                      "name": "Block Index",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 97904,
+                      "length": 10,
+                      "ranges": [
+                        {
+                          "offset": 97904,
+                          "length": 1
+                        },
+                        {
+                          "offset": 97910,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Block Samples",
+                      "value": 24000,
+                      "unit": "samples",
+                      "offset": 97914,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 87822369,
+                      "offset": 97918,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Bytes Per Sample",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 97918,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsMono",
+                          "value": false,
+                          "offset": 97918,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsHybrid",
+                          "value": false,
+                          "offset": 97918,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesJointStereo",
+                          "value": false,
+                          "offset": 97918,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesCrossChannelDecorrelation",
+                          "value": true,
+                          "offset": 97918,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesHybridNoiseShaping",
+                          "value": false,
+                          "offset": 97918,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsFloatingPoint",
+                          "value": false,
+                          "offset": 97918,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasExtendedIntegers",
+                          "value": false,
+                          "offset": 97919,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesHybridBitrateControl",
+                          "value": false,
+                          "offset": 97919,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesHybridBalance",
+                          "value": false,
+                          "offset": 97919,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsInitialBlock",
+                          "value": false,
+                          "offset": 97919,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsFinalBlock",
+                          "value": true,
+                          "offset": 97919,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Left Shift",
+                          "value": 0,
+                          "unit": "bits",
+                          "offset": 97919,
+                          "length": 2,
+                          "bitOffset": 5,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Maximum Magnitude",
+                          "value": 15,
+                          "unit": "bits",
+                          "offset": 97920,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 48000,
+                          "unit": "Hz",
+                          "offset": 97920,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasReservedFlag",
+                          "value": false,
+                          "offset": 97921,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasBlockChecksum",
+                          "value": false,
+                          "offset": 97921,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "UsesIirNoiseShaping",
+                          "value": false,
+                          "offset": 97921,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsFalseStereo",
+                          "value": false,
+                          "offset": 97921,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsDsd",
+                          "value": false,
+                          "offset": 97921,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 6614254,
+                      "offset": 97922,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Decorrelation Terms",
+                  "value": 2,
+                  "unit": "bytes",
+                  "offset": 97926,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 2,
+                      "offset": 97926,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 2,
+                          "offset": 97926,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 97926,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 97926,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 97926,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 1,
+                      "unit": "words",
+                      "offset": 97927,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 2,
+                      "unit": "bytes",
+                      "offset": 97928,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": "term 18, delta 2",
+                          "offset": 97928,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Term",
+                              "value": 18,
+                              "offset": 97928,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Delta",
+                              "value": 2,
+                              "offset": 97928,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Pass 2",
+                          "value": "term 17, delta 2",
+                          "offset": 97929,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Term",
+                              "value": 17,
+                              "offset": 97929,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Delta",
+                              "value": 2,
+                              "offset": 97929,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Decorrelation Weights",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 97930,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 3,
+                      "offset": 97930,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 3,
+                          "offset": 97930,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 97930,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 97930,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 97930,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 2,
+                      "unit": "words",
+                      "offset": 97931,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 97932,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "offset": 97932,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Left Weight",
+                              "value": -8,
+                              "offset": 97932,
+                              "length": 1
+                            },
+                            {
+                              "name": "Right Weight",
+                              "value": -40,
+                              "offset": 97933,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Pass 2",
+                          "offset": 97934,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Left Weight",
+                              "value": -8,
+                              "offset": 97934,
+                              "length": 1
+                            },
+                            {
+                              "name": "Right Weight",
+                              "value": -24,
+                              "offset": 97935,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Decorrelation Samples",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 97936,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 4,
+                      "offset": 97936,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 4,
+                          "offset": 97936,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 97936,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 97936,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 97936,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 4,
+                      "unit": "words",
+                      "offset": 97937,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 8,
+                      "unit": "bytes",
+                      "offset": 97938,
+                      "length": 8,
+                      "children": [
+                        {
+                          "name": "Pass 1",
+                          "value": 4,
+                          "unit": "values",
+                          "offset": 97938,
+                          "length": 8
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Entropy Variables",
+                  "value": 12,
+                  "unit": "bytes",
+                  "offset": 97946,
+                  "length": 14,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 5,
+                      "offset": 97946,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 5,
+                          "offset": 97946,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 97946,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 97946,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": false,
+                          "offset": 97946,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 6,
+                      "unit": "words",
+                      "offset": 97947,
+                      "length": 1
+                    },
+                    {
+                      "name": "Data",
+                      "value": 12,
+                      "unit": "bytes",
+                      "offset": 97948,
+                      "length": 12,
+                      "children": [
+                        {
+                          "name": "Left Medians",
+                          "offset": 97948,
+                          "length": 6,
+                          "children": [
+                            {
+                              "name": "Median 1",
+                              "value": 4423,
+                              "offset": 97948,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 2",
+                              "value": 4080,
+                              "offset": 97950,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 3",
+                              "value": 3651,
+                              "offset": 97952,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Right Medians",
+                          "offset": 97954,
+                          "length": 6,
+                          "children": [
+                            {
+                              "name": "Median 1",
+                              "value": 4449,
+                              "offset": 97954,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 2",
+                              "value": 4142,
+                              "offset": 97956,
+                              "length": 2
+                            },
+                            {
+                              "name": "Median 3",
+                              "value": 3731,
+                              "offset": 97958,
+                              "length": 2
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "WavPack Bitstream",
+                  "value": 56760,
+                  "unit": "bytes",
+                  "offset": 97960,
+                  "length": 56764,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": 138,
+                      "offset": 97960,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Function",
+                          "value": 10,
+                          "offset": 97960,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsOptional",
+                          "value": false,
+                          "offset": 97960,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasOddSize",
+                          "value": false,
+                          "offset": 97960,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "IsLarge",
+                          "value": true,
+                          "offset": 97960,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Size",
+                      "value": 28380,
+                      "unit": "words",
+                      "offset": 97961,
+                      "length": 3
+                    },
+                    {
+                      "name": "Data",
+                      "value": 56760,
+                      "unit": "bytes",
+                      "offset": 97964,
+                      "length": 56760,
+                      "children": [
+                        {
+                          "name": "Bitstream",
+                          "value": 56760,
+                          "unit": "bytes",
+                          "offset": 97964,
+                          "length": 56760
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "APE",
+          "kind": "Tag",
+          "value": "2.0",
+          "offset": 154724,
+          "length": 93,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 154724,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 154724,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": 2000,
+                  "offset": 154732,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": 61,
+                  "offset": 154736,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": 1,
+                  "offset": 154740,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": 2684354560,
+                  "offset": 154744,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": true,
+                      "offset": 154744,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": true,
+                      "offset": 154744,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": true,
+                      "offset": 154744,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": false,
+                      "offset": 154744,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 154748,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Items",
+              "value": 1,
+              "unit": "items",
+              "offset": 154756,
+              "length": 29,
+              "children": [
+                {
+                  "name": "encoder",
+                  "value": "Lavf60.16.100",
+                  "offset": 154756,
+                  "length": 29,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 13,
+                      "offset": 154756,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 154760,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": false,
+                          "offset": 154760,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 154760,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "encoder",
+                      "offset": 154764,
+                      "length": 7
+                    },
+                    {
+                      "name": "Value",
+                      "value": "Lavf60.16.100",
+                      "offset": 154772,
+                      "length": 13
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 154785,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 154785,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": 2000,
+                  "offset": 154793,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": 61,
+                  "offset": 154797,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": 1,
+                  "offset": 154801,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": 2147483648,
+                  "offset": 154805,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": true,
+                      "offset": 154805,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": true,
+                      "offset": 154805,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": false,
+                      "offset": 154805,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": false,
+                      "offset": 154805,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 154809,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 154724,
+              "length": 93,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\"APETAGEX\" footer with version 2000 and a size that fits the file",
+                  "offset": 154785,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Header agrees with the footer",
+                  "offset": 154724,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "1 item ends exactly where the size says",
+                  "offset": 154756,
+                  "length": 29
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "WavPack lossless",
+        "sampleRate": 48000,
+        "channels": 6,
+        "channelMode": "Multichannel",
+        "channelLayout": [
+          "front left",
+          "front right",
+          "front center",
+          "LFE",
+          "back left",
+          "back right"
+        ],
+        "channelLayoutName": "5.1",
+        "bitsPerSample": 16,
+        "samples": 24000,
+        "duration": 0.5,
+        "averageBitrate": 2475.584,
+        "isVbr": false,
+        "verification": {
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "block checksum",
+              "covers": "codedData",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "block header CRC",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 3,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "extended CRC",
+              "covers": "decodedAudio",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "MD5",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "encoder": "WavPack 4 stream, no WavPack 5 features",
+        "encoderConfidence": "Low",
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              0
+            ],
+            "values": [
+              2475.584
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              2476
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": []
+  }
+]

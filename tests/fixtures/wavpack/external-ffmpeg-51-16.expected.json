@@ -1,0 +1,274 @@
+{
+ "length": 154817,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 46464,
+   "index": 0,
+   "samples": 24000,
+   "flags": "053c0831",
+   "version": "410",
+   "total": 24000,
+   "crc": "62d02e1a",
+   "verifies": true,
+   "checksum": null,
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     77,
+     6
+    ],
+    [
+     40,
+     2,
+     2
+    ],
+    [
+     44,
+     3,
+     4
+    ],
+    [
+     50,
+     4,
+     8
+    ],
+    [
+     60,
+     5,
+     12
+    ],
+    [
+     74,
+     138,
+     46386
+    ]
+   ]
+  },
+  {
+   "offset": 46464,
+   "length": 51430,
+   "index": 0,
+   "samples": 24000,
+   "flags": "053c0021",
+   "version": "410",
+   "total": 0,
+   "crc": "c8e76627",
+   "verifies": true,
+   "checksum": null,
+   "status": [],
+   "sub_blocks": [
+    [
+     46496,
+     2,
+     2
+    ],
+    [
+     46500,
+     3,
+     4
+    ],
+    [
+     46506,
+     4,
+     8
+    ],
+    [
+     46516,
+     5,
+     12
+    ],
+    [
+     46530,
+     138,
+     51360
+    ]
+   ]
+  },
+  {
+   "offset": 97894,
+   "length": 56830,
+   "index": 0,
+   "samples": 24000,
+   "flags": "053c1021",
+   "version": "410",
+   "total": 0,
+   "crc": "0064ecee",
+   "verifies": true,
+   "checksum": null,
+   "status": [],
+   "sub_blocks": [
+    [
+     97926,
+     2,
+     2
+    ],
+    [
+     97930,
+     3,
+     4
+    ],
+    [
+     97936,
+     4,
+     8
+    ],
+    [
+     97946,
+     5,
+     12
+    ],
+    [
+     97960,
+     138,
+     56760
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right",
+    "front center",
+    "LFE",
+    "back left",
+    "back right"
+   ],
+   "sample_rate": 48000,
+   "channels": 6,
+   "samples": 24000,
+   "duration": 0.5,
+   "bits_per_sample": 16,
+   "average_bitrate": 2475.584,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 1,
+   "declared": 24000
+  }
+ ],
+ "decoded_samples": 24000,
+ "pcm_samples": 24000,
+ "decoded_pcm_md5": "7cac99e50ffc78a1aee091c0be5d02ea",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 3,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 154724
+  },
+  {
+   "name": "APE",
+   "offset": 154724,
+   "length": 93
+  }
+ ],
+ "encoder": {
+  "tool": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers (ffmpeg package of Ubuntu 24.04)",
+  "arguments": [
+   "-c:a",
+   "wavpack"
+  ],
+  "input": {
+   "kind": "wav",
+   "rate": 48000,
+   "channels": 6,
+   "bits": 16,
+   "samples": 24000,
+   "channel_mask": 63
+  },
+  "file": "main file"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true,
+  "decode": {
+   "opens": true,
+   "samples": 24000,
+   "errors": 0
+  }
+ }
+}

@@ -1,0 +1,233 @@
+{
+ "length": 93797,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 86740,
+   "index": 0,
+   "samples": 22050,
+   "flags": "04dc18b3",
+   "version": "410",
+   "total": 24000,
+   "crc": "553db29d",
+   "verifies": true,
+   "checksum": null,
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     2,
+     2
+    ],
+    [
+     36,
+     3,
+     4
+    ],
+    [
+     42,
+     4,
+     8
+    ],
+    [
+     52,
+     5,
+     12
+    ],
+    [
+     66,
+     8,
+     4
+    ],
+    [
+     72,
+     138,
+     86664
+    ]
+   ]
+  },
+  {
+   "offset": 86740,
+   "length": 6964,
+   "index": 22050,
+   "samples": 1950,
+   "flags": "04b418b3",
+   "version": "410",
+   "total": 0,
+   "crc": "bd7ca494",
+   "verifies": true,
+   "checksum": null,
+   "status": [],
+   "sub_blocks": [
+    [
+     86772,
+     2,
+     2
+    ],
+    [
+     86776,
+     3,
+     4
+    ],
+    [
+     86782,
+     4,
+     8
+    ],
+    [
+     86792,
+     5,
+     12
+    ],
+    [
+     86806,
+     8,
+     4
+    ],
+    [
+     86812,
+     138,
+     6888
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 32,
+   "average_bitrate": 1377.4488000000001,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 2,
+   "declared": 24000
+  }
+ ],
+ "decoded_samples": 24000,
+ "pcm_samples": 24000,
+ "decoded_pcm_md5": "d8ae4198be890cd37cbdf30599744939",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 93704
+  },
+  {
+   "name": "APE",
+   "offset": 93704,
+   "length": 93
+  }
+ ],
+ "encoder": {
+  "tool": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers (ffmpeg package of Ubuntu 24.04)",
+  "arguments": [
+   "-c:a",
+   "wavpack"
+  ],
+  "input": {
+   "kind": "float",
+   "rate": 44100,
+   "channels": 2,
+   "samples": 24000
+  },
+  "file": "main file"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true,
+  "decode": {
+   "opens": true,
+   "samples": 24000,
+   "errors": 0
+  }
+ }
+}

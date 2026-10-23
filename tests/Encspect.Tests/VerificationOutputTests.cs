@@ -117,6 +117,58 @@ public class VerificationOutputTests
     }
 
     [Fact]
+    public void ALossyStreamWhoseDigestIsOfTheLosslessAudioSaysWhy()
+    {
+        var hybrid = new StreamVerification
+        {
+            Decoding = DecodeStatus.Decoded,
+            IsLossy = true,
+            Checksums = [Tally("block header CRC", ChecksumCoverage.DecodedAudio, 120, 120, all: true), Tally("MD5", ChecksumCoverage.DecodedAudio, 1, 0, all: true)],
+        };
+
+        Assert.Equal("unknown (block header CRC 120 of 120, MD5 not compared: the stream decodes to lossy audio, and the checksum is of the lossless audio)", VerificationText.Describe(hybrid));
+    }
+
+    [Fact]
+    public void AHybridWavPackFileWithAnMd5SaysItNeedsTheCorrectionFile()
+    {
+        Report report = Analyzer.CreateDefault().Analyze("hybrid.wv", File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "external-hybrid-b4-md5.wv")), new AnalysisOptions { Decoding = new DecodeOptions() });
+        string text = VerificationText.Describe(report.Streams.Single().Verification!);
+        Assert.Contains("MD5 not compared: the stream decodes to lossy audio, and the checksum is of the lossless audio", text);
+        Assert.DoesNotContain("incomplete", text);
+    }
+
+    // Nothing decoded, so the block CRC and the digest are both uncompared for that reason, not because the digest is of lossless audio.
+    [Fact]
+    public void ALossyStreamThatDecodedNothingDoesNotBlameTheLosslessDigest()
+    {
+        var refused = new StreamVerification
+        {
+            Decoding = DecodeStatus.Decoded,
+            IsLossy = true,
+            Checksums = [Tally("block header CRC", ChecksumCoverage.DecodedAudio, 120, 0, all: true), Tally("MD5", ChecksumCoverage.DecodedAudio, 1, 0, all: true)],
+        };
+
+        string text = VerificationText.Describe(refused);
+        Assert.DoesNotContain("lossy audio", text);
+        Assert.Contains("block header CRC not compared: the decoded stream is incomplete", text);
+        Assert.Contains("MD5 not compared: the decoded stream is incomplete", text);
+    }
+
+    [Fact]
+    public void AHybridWavPackFileWhoseBlocksAreAllRefusedDoesNotBlameTheLosslessDigest()
+    {
+        List<byte[]> blocks = WavPackBuilder.Blocks("external-hybrid-b4-md5.wv");
+        byte[] first = WavPackBuilder.Join(blocks[0], [WavPackBuilder.Sub(0x0D, [1]), .. WavPackBuilder.Parts(blocks[0])]);
+        byte[] data = WavPackBuilder.Concat([first, .. blocks.Skip(1)]);
+
+        Report report = Analyzer.CreateDefault().Analyze("refused.wv", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+        string text = VerificationText.Describe(report.Streams.Single().Verification!);
+
+        Assert.DoesNotContain("decodes to lossy audio", text);
+    }
+
+    [Fact]
     public void AStreamWithoutVerificationGetsNoLine()
     {
         Assert.DoesNotContain("Verified", Text(ReportWith((StreamVerification?)null)));

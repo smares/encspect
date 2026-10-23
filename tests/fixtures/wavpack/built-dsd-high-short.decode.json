@@ -1,0 +1,41 @@
+{
+  "verification": {
+    "decoding": "NotPossible",
+    "decodedSamples": 0,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "block checksum",
+        "stored": 8,
+        "checked": 8,
+        "failed": 0
+      },
+      {
+        "name": "block header CRC",
+        "stored": 8,
+        "checked": 0,
+        "failed": 0
+      },
+      {
+        "name": "extended CRC",
+        "stored": 0,
+        "checked": 0,
+        "failed": 0
+      },
+      {
+        "name": "MD5",
+        "stored": 0,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.not-possible",
+      "severity": "Info",
+      "count": 1,
+      "message": "The stream was not decoded: The first block with audio cannot be decoded: the DSD block in the high mode is shorter than its tables or has a rate step other than 20."
+    }
+  ]
+}

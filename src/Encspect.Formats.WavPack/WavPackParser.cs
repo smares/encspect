@@ -86,7 +86,8 @@ public sealed class WavPackParser : IFormatParser
         ByteReader window = context.Reader;
         List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
         ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
-        var state = new State(new Source(reader), context.CancellationToken);
+        var state = new State(new Source(reader), context.CancellationToken, context);
+        state.Stream = Summary.StreamNode(state);
         Reader.Run(state);
         Summary.Finish(state, context);
 

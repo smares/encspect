@@ -1,7 +1,7 @@
 ---
 id: verification
 title: Verified streams and stored checksums
-related: crc, flac-streaminfo, flac-frames
+related: crc, flac-streaminfo, flac-frames, wavpack-audio-checksums
 references: RFC 9639 (FLAC), sections 8.2, 9.1.8 and 9.3
 ---
 
@@ -11,4 +11,4 @@ references: RFC 9639 (FLAC), sections 8.2, 9.1.8 and 9.3
 
 **What verified means here.** A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio. A checksum that every frame carries covers all of the audio only where no frame is missing: a file cut after a whole frame, or with frames removed, can pass every frame checksum and still be incomplete. A checksum that differs makes the stream not verified; one that was not compared leaves it unknown.
 
-**What you see.** A "Verified" line under the stream, with the checksums and how many values were compared of those stored, and in JSON a verification record. Decoding is off unless you ask for it (the --verify option of the command line), so a checksum over decoded audio then reads "not compared: decoding was not asked for" and the verdict "unknown". Where a stream is verified but its audio is a lossy coding's output, the line says so.
+**What you see.** A "Verified" line under the stream, with the checksums and how many values were compared of those stored, and in JSON a verification record. Decoding is off unless you ask for it (the --verify option of the command line), so a checksum over decoded audio then reads "not compared: decoding was not asked for" and the verdict "unknown". Where a stream is verified but its audio is a lossy coding's output, the line says so: a WavPack hybrid file without its correction file is verified by the CRCs of its blocks as the lossy audio it decodes to ([WavPack](wavpack-audio-checksums)).

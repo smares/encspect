@@ -19,6 +19,9 @@ make_wavpack_fixtures.py):
   process_metadata, decorr_utils.c, unpack_dsd.c) and the block reader does not.
 - wvunpack -ss (wavpack 5.9.0 of Ubuntu 26.04), on the main file alone: channels, source, duration,
   modalities, encoder version, digest, source format and the wrapper.
+- wvunpack --raw and FFmpeg (check_audio): the decoded audio of every fixture libwavpack decodes without errors, against the manifest's decoded_pcm_md5
+  (and, for DSD, decoded_dsd_md5, against the bytes wvunpack --raw writes), which wavpack_decode.py works out; the verdict against wvunpack -v -m
+  (check_verdict) and against libwavpack's own pass, damaged files included (check_libwavpack_verdict).
 - wvunpack -v: the file decodes and its block CRCs hold, with its correction file where it has one
   (lossless then), and with -m its digest equals the one stored. Damaged fixtures are decoded too, and
   those listed in REJECTED must fail.
@@ -28,8 +31,8 @@ make_wavpack_fixtures.py):
 - MediaInfo 26.01 (mediainfo_tool.py), against the golden report: the format, the profile (the stream
   version), the compression mode (lossy only for a hybrid file without the sub-block that a correction file needs),
   the DSD setting, the channels and layout, the sample rate, the bit depth, the duration from the first to the
-  last block with samples, the stream size and the settings it spells from the config block. MediaInfo accepts
-  a stream after two blocks with audio and reads a file under 1 MiB to its end; the fixtures on which it reads
+  last block with samples, the stream size and the settings it spells from the config block. MediaInfo starts at a
+  block that another header follows, accepts the stream at the second block or at the block that ends the file (MEDIAINFO_NO_FILL), and reads a file under 1 MiB to its end; the fixtures on which it reads
   otherwise name their evidence.
 
 Fixtures that are damaged say why the others do not apply; every skipped check prints its reason.
@@ -38,6 +41,7 @@ Disagreements fail the run (exit status 1).
     python3 scripts/fixtures/crosscheck_wavpack_fixtures.py [name ...]
 """
 
+import hashlib
 import json
 import os
 import pathlib
@@ -72,6 +76,8 @@ READER_DEPARTURES = {
     "built-version-unsupported": "the blocks have stream version 0x411; read_next_header refuses a header of a version above 0x410 (MAX_STREAM_VERS), so libwavpack finds "
                                  "no block, while the analyzer relaxes the minor version and reports it (wavpack.version-unsupported)",
 }
+READER_DEPARTURES["built-md5-file-cut"] = ("the last block with audio is cut 1,500 bytes before its end; libwavpack lists it with the size it states (23058 bytes), "
+                                            "the analyzer with the bytes that are there (21558, wavpack.block-truncated)")
 # Fixtures libwavpack's decoder must refuse, with the evidence.
 REJECTED = {
     "built-bad-checksum": "a block whose checksum fails is counted as a CRC error",
@@ -93,12 +99,38 @@ FIGURES_DIFFER = {
     "built-dsd-rate-overflow": "WavpackGetNativeSampleRate multiplies the sample rate and the DSD multiplier in 32 bits (common_utils.c), so 2,147,483,647 Hz times 2^31 wraps; "
                                "the analyzer holds the bit rate to 2,147,483,647 Hz and reports wavpack.sample-rate-implausible",
 }
+# What FFmpeg's decoder does not give for the samples the manifest holds, and why (libavformat/wvdec.c, libavcodec/wavpack.c; the fixtures read are the ones above that
+# ffprobe refuses or counts differently, plus the stream that ends at the bytes that are no block). The run fails if FFmpeg gives the samples after all.
+FFMPEG_AUDIO_DIFFERS = {
+    "built-channel-identities": "wavpack.c refuses a channel mask that names fewer speakers than the channel count: \"Channel mask does not match the channel count\"",
+    "built-channel-info-ignored": "the same, for the 6 channels of the first block's channel info that name 8 speakers' mask",
+    "built-channel-info-no-count": "wavpack.c refuses a channel info of one byte, a count with no mask: \"Insufficient channel information\"",
+    "built-garbage-between-blocks": "wvdec.c ends the stream at the bytes that are no block header (\"Invalid block header\"), so it gives the audio of the first block only",
+    "built-garbage-prefix": "wv_probe looks for the header at the first byte of the file, so ffmpeg does not open the file",
+    "built-sample-rate-missing": "wv_read_block_header cannot take a rate from the header's index 15 without a sample rate sub-block: \"Cannot determine custom sampling rate\"",
+    "built-sample-rate-zero-custom": "the sample rate sub-block of 0 Hz leaves the index 15 with no rate: \"Custom sample rate missing\"",
+    "built-seek-tag-between-blocks": "wvdec.c ends the stream at the tag between the blocks (wv_read_block_header fails), so it does not open the file as the analyzer reads it",
+    "external-from-caf": "wv_read_block_header refuses a channel info of one byte, a count with no mask: \"Insufficient channel information\"",
+    "external-from-caf-md5": "the same: the CAF's stereo layout tag leaves a channel info of the count alone",
+    "external-lossless-3ch-unassigned": "the same: \"Insufficient channel information\"",
+    "external-lossless-4ch-two-unassigned": "wavpack.c refuses a channel mask that names fewer speakers than the channel count: \"Channel mask does not match the channel count\"",
+}
+# What FFmpeg does with these files was observed with 6.1.1 only and is not asserted: the audio is not compared.
+FFMPEG_AUDIO_NOT_COMPARED = {
+    "built-set-without-final": "observed (FFmpeg 6.1.1): the block set that has no final flag makes the decoder fail (\"get_buffer() failed\")",
+    "built-shift-too-large": "observed (FFmpeg 6.1.1): ffmpeg finds no sample format for the stream (\"Could not find codec parameters\") and decodes nothing",
+}
+# What wvunpack --raw gives differently from the analyzer's decoded audio, and why: libwavpack's reader skips the tag between the blocks and decodes all three.
+WVUNPACK_AUDIO_DIFFERS = {
+    "built-seek-tag-between-blocks": "libwavpack's reader skips the ID3v2.4 tag's bytes and decodes all 3 blocks, the analyzer ends the stream at the tag (wavpack.data-after-tag) and decodes the block before it",
+}
 # What ffprobe cannot read, and why (FFmpeg 8.0.1, libavformat/wvdec.c, which differs from the 6.1.1 that ffmpeg_sources.py pins by API renames only).
 FFPROBE_REFUSES = {
     "external-lossless-3ch-unassigned": "wv_read_block_header refuses a channel info of one byte, a count with no mask: \"Insufficient channel information\"",
     "external-from-caf": "the same: the CAF's stereo layout tag leaves a channel info of the count alone",
     "built-garbage-prefix": "wv_probe looks for the header at the first byte of the file",
     "built-sample-rate-missing": "wv_read_block_header cannot take a rate from the header's index 15 without a sample rate sub-block: \"Cannot determine custom sampling rate\"",
+    "external-from-caf-md5": "the same: the CAF's stereo layout tag leaves a channel info of the count alone",
 }
 # What ffprobe reads with a sample rate of 0: wvdec.c leaves the custom rate unset when its sub-block gives 0 ("Custom sample rate missing"),
 # where libwavpack falls back to 44100 (open_utils.c 229-234).
@@ -112,7 +144,11 @@ FFPROBE_COUNTS_THE_MASK = {"external-lossless-4ch-two-unassigned", "built-channe
 # ffprobe's packets end at the first bytes that are no block header (wv_read_block_header: ff_wv_parse_header fails).
 MEDIAINFO_DSD = ("MediaInfo 26.01 reads DSD: the sample rate is the header's index rate shifted by the frame rate multiplier of sub-block 0x0E and by 3 for the DSD flag, "
                  "and it fills no bit depth for a DSD file (File_Wvpk.cpp, Data_Parse_Fill, id_0E)")
-MEDIAINFO_ONE_BLOCK = ("MediaInfo 26.01 accepts a stream after two blocks with audio (Frame_Count_Valid=2, File_Wvpk.cpp) and fills nothing from a file that has one (observed)")
+MEDIAINFO_NO_FILL = ("MediaInfo 26.01 starts at a block only where another header follows it at once (Synchronize, File_Wvpk.cpp), so a file whose blocks do not chain "
+                     "(a single block, the last one included) is not synchronized and fills nothing; once synchronized it parses every block that begins with a header, the last "
+                     "one too (Synched_Test), and accepts the stream, filling it, in the block where the count of blocks reaches Frame_Count_Valid (2; a 4.x block without "
+                     "samples is taken back out of the count) or where the block ends the file (Data_Parse, \"Filling\"); observed on a file of one block of audio, which "
+                     "fills nothing, and of one block of audio and one of metadata, which does)")
 MEDIAINFO_ID3V2 = ("observed: MediaInfo 26.01 counts the leading ID3v2 tag in the General stream size (26 bytes) and fills none of its fields for a WavPack file")
 MEDIAINFO_READS_OTHERWISE = {
     "built-leading-id3v2": {"tag title": MEDIAINFO_ID3V2, "tag track": MEDIAINFO_ID3V2},
@@ -325,10 +361,122 @@ def check_wvunpack_verify(name, manifest, path, report, work, problems):
         return
     if valid and not ok:
         problems.append(f"wvunpack -v fails: {(result.stdout + result.stderr).strip().splitlines()[-1]}")
-    if valid and digest:
+    if valid and digest and manifest["stream_infos"][0].get("hybrid"):
+        skip(name, "wvunpack's digest", "a hybrid file without its correction file decodes to lossy audio: the digest is of the lossless audio (wavpack.md5-needs-correction-file)")
+    elif valid and digest:
         mine = re.findall(r"unpacked md5:\s+([0-9a-f]{32})", result.stdout)
         if mine != [digest]:
             problems.append(f"wvunpack's unpacked digest {mine} differs from the stored {digest}")
+
+
+def raw_samples(path, work, facts, is_dsd=False):
+    """What wvunpack --raw writes for the main file alone (a hybrid file decodes to its lossy audio), as signed little-endian samples of the container's width."""
+    copy = pathlib.Path(work) / "audio.wv"
+    shutil.copy(path, copy)
+    out = pathlib.Path(work) / "audio.raw"
+    result = run(["wvunpack", "-y", "-q", "--raw", "-o", str(out), str(copy)], timeout=120)
+    if not out.exists() or result.returncode != 0 and "missing" not in result.stderr:
+        return None, (result.stdout + result.stderr).strip().splitlines()[-1:] or ["no output"]
+    raw = out.read_bytes()
+    if int(facts["bytes_per_sample"]) == 1 and not is_dsd:
+        # wvunpack writes 8-bit samples unsigned (WAVE); the canonical layout of docs/design/decoders.md is signed.
+        raw = bytes(b ^ 0x80 for b in raw)
+    return raw, None
+
+
+def check_audio(name, manifest, path, facts, work, problems):
+    """The decoded audio against wvunpack --raw and FFmpeg, and the verdict of the checksums against wvunpack -v -m."""
+    if "decoded_pcm_md5" not in manifest and "decoded_dsd_md5" not in manifest:
+        skip(name, "decoded audio", "the manifest has no decoded audio (the decoding is not possible)")
+        return
+    expected = manifest["crosscheck"]["decode"]
+    if not expected["opens"] or expected["errors"] != 0:
+        skip(name, "decoded audio", "libwavpack counts errors or refuses the file: the audio it leaves behind after a damaged block is its own")
+        return
+    if "decoded_dsd_md5" in manifest:
+        # DSD has no PCM and no sink; wvunpack --raw writes the channels' bytes interleaved, which the model (wavpack_decode.py) works out too.
+        raw, why = raw_samples(path, work, facts, is_dsd=True)
+        if raw is None:
+            problems.append(f"wvunpack --raw fails: {why[0]}")
+        elif hashlib.md5(raw).hexdigest() != manifest["decoded_dsd_md5"]:
+            problems.append(f"wvunpack --raw writes DSD bytes with the MD5 {hashlib.md5(raw).hexdigest()}, the manifest says {manifest['decoded_dsd_md5']}")
+        skip(name, "ffmpeg's audio", "FFmpeg converts DSD to PCM, which the manifest does not hold")
+        return
+    raw, why = raw_samples(path, work, facts)
+    if raw is None:
+        problems.append(f"wvunpack --raw fails: {why[0]}")
+        return
+    digest = hashlib.md5(raw).hexdigest()
+    if name in WVUNPACK_AUDIO_DIFFERS:
+        if digest == manifest["decoded_pcm_md5"]:
+            problems.append(f"wvunpack --raw gives the manifest's audio, which it must not: {WVUNPACK_AUDIO_DIFFERS[name]}")
+    elif digest != manifest["decoded_pcm_md5"]:
+        problems.append(f"wvunpack --raw decodes to {digest}, the manifest says {manifest['decoded_pcm_md5']}")
+    check_ffmpeg_audio(name, path, raw, facts, problems)
+
+
+def check_ffmpeg_audio(name, path, raw, facts, problems):
+    """FFmpeg's wavpack decoder (libavcodec/wavpack.c) gives the same samples, left-aligned in 32 bits for integers and as floats for float."""
+    width = int(facts["bytes_per_sample"])
+    if facts["float"] == "1":
+        fmt, expected = "f32le", raw
+    elif width == 4:
+        fmt, expected = "s32le", raw
+    else:
+        fmt = "s32le"
+        expected = b"".join((int.from_bytes(raw[i:i + width], "little", signed=True) << (32 - 8 * width)).to_bytes(4, "little", signed=True) for i in range(0, len(raw), width))
+    result = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a:0", "-f", fmt, "-"], capture_output=True, timeout=120)
+    if name in FFMPEG_AUDIO_NOT_COMPARED:
+        skip(name, "ffmpeg's audio", FFMPEG_AUDIO_NOT_COMPARED[name])
+    elif name in FFMPEG_AUDIO_DIFFERS:
+        if result.returncode == 0 and result.stdout == expected:
+            problems.append(f"ffmpeg gives the manifest's audio, which it must not: {FFMPEG_AUDIO_DIFFERS[name]}")
+    elif result.returncode != 0:
+        problems.append(f"ffmpeg fails: {result.stderr.decode(errors='replace').strip()[:200]}")
+    elif result.stdout != expected:
+        problems.append(f"ffmpeg decodes {len(result.stdout)} bytes that differ from the manifest's audio ({len(expected)} bytes)")
+
+
+def check_verdict(name, manifest, path, work, problems):
+    """Whether the checks over the decoded audio hold, against wvunpack -v -m: the block CRCs, and the digest where the analyzer compares it."""
+    if "verification" not in manifest:
+        skip(name, "verdict", "the file has no stream to verify")
+        return
+    verify = manifest["verification"]["verify"]
+    if verify["decoding"] != "decoded" or manifest["crosscheck"]["decode"]["errors"] != 0 and verify["isVerified"] is not False:
+        skip(name, "verdict", "the analyzer does not decode the file, or libwavpack's errors are its own")
+        return
+    copy = pathlib.Path(work) / "verdict.wv"
+    shutil.copy(path, copy)
+    result = run(["wvunpack", "-y", "-v", "-m", str(copy)], timeout=120)
+    ok = result.returncode == 0
+    if verify["isVerified"] is False and ok and manifest["crosscheck"]["decode"]["errors"] == 0:
+        md5 = next((t for t in verify["checksums"] if t["name"] == "MD5"), None)
+        if md5 and md5["failed"]:
+            problems.append("wvunpack -v -m accepts the file, whose digest the analyzer finds different")
+    if verify["isVerified"] is True and not ok:
+        problems.append(f"wvunpack -v -m refuses the file the analyzer verifies: {(result.stdout + result.stderr).strip().splitlines()[-1:]}")
+
+
+def check_libwavpack_verdict(name, manifest, problems):
+    """The verdict against libwavpack's own pass, for the damaged files too: it never verifies a file libwavpack counts errors on, and a CRC that fails
+    is one error of its pass (the MD5 is not part of that pass: wvunpack -m checks it, check_verdict)."""
+    if "verification" not in manifest or manifest["verification"]["verify"]["decoding"] != "decoded":
+        return
+    expected = manifest["crosscheck"]["decode"]
+    if not expected["opens"]:
+        return
+    verify = manifest["verification"]["verify"]
+    failed = sum(t["failed"] for t in verify["checksums"] if t["name"] in ("block header CRC", "extended CRC"))
+    if expected["errors"] > 0 and verify["isVerified"] is True:
+        problems.append(f"libwavpack counts {expected['errors']} errors, and the analyzer verifies the file")
+    if failed and failed != expected["errors"]:
+        problems.append(f"the analyzer counts {failed} block CRCs that fail, libwavpack {expected['errors']} errors")
+    names = {t["name"] for t in verify["checksums"] if t["failed"]}
+    if "block checksum" in names and expected["errors"] == 0:
+        problems.append("the block checksum of a block fails, and libwavpack, which makes the same check on every block it reads (WavpackVerifySingleBlock), counts no error")
+    if names == {"MD5"} and expected["errors"] != 0:
+        problems.append(f"only the MD5 differs, and libwavpack counts {expected['errors']} errors, which are not the MD5's (its pass does not compare it)")
 
 
 def check_pair(name, path, work, problems):
@@ -440,11 +588,15 @@ def check_mediainfo(name, manifest, path, report, tally):
     every = manifest["blocks"]
     chained = [b for i, b in enumerate(every) if i + 1 == len(every) or every[i + 1]["offset"] == b["offset"] + b["length"]]
     blocks = [b for b in chained if b["samples"]]
-    if len(blocks) < 2:
-        tally.compare("format of a file with one block of audio (" + MEDIAINFO_ONE_BLOCK + ")", audio.get("Format"), None)
+    if len(chained) < 2 or fill_block(chained, path.stat().st_size) is None:
+        tally.compare("format of a file that fills nothing (" + MEDIAINFO_NO_FILL + ")", audio.get("Format"), None)
         return problems
     tally.compare("format", audio.get("Format"), "WavPack")
-    first, second = blocks[0], blocks[1]
+    if not blocks:
+        tally.skip("fields", "MediaInfo accepts the file at its last block, which has no samples, so there is no block with audio to compare the fields with")
+        return problems
+    first = blocks[0]
+    second = blocks[1] if len(blocks) > 1 else blocks[0]
     version = int(first["version"], 16)
     tally.compare("profile", audio.get("Format_Profile"), f"{version >> 8}.{version & 0xFF:02d}")
     hybrid = statistic(report, "IsHybrid")
@@ -510,6 +662,10 @@ def main():
         with tempfile.TemporaryDirectory() as work:
             facts = check_libwavpack(name, manifest, path, report, tool, problems)
             check_decode(name, manifest, facts, problems)
+            check_libwavpack_verdict(name, manifest, problems)
+            if not is_wvc:
+                check_audio(name, manifest, path, facts, pathlib.Path(work), problems)
+                check_verdict(name, manifest, path, work, problems)
             if not valid:
                 skip(name, "ffprobe and MediaInfo", manifest.get("description", "the fixture is damaged on purpose") + ": the tools read it in ways of their own")
             if is_wvc:

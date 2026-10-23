@@ -54,6 +54,11 @@ public class WavPackFixtureTests
             manifest.GetProperty("skipped").EnumerateArray().Select(r => $"{r[0].GetInt64()}+{r[1].GetInt64()}"),
             stream.Children.Where(c => c.Name == "Skipped Data").Select(c => $"{c.Offset}+{c.Length}"));
         CheckStreamInfos(manifest.GetProperty("stream_infos"), report.Streams);
+        if (report.Streams.Count > 0)
+        {
+            WavPackDecoderFixtureTests.CheckVerification(manifest.GetProperty("verification").GetProperty("default"), report.Streams.Single().Verification, DecodeStatus.NotRequested);
+        }
+
         CheckFindings(manifest.GetProperty("findings"), report.Findings);
     }
 
