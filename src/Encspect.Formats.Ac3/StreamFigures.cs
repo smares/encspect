@@ -11,6 +11,9 @@ internal sealed class StreamFigures(int sampleRate)
     private readonly ChunkedList<ulong> _points = new();
     private readonly List<(long Bits, long Samples)> _seconds = [];
 
+    // The first unit that starts in each of the intervals of _seconds, for the time index of the category series.
+    private readonly List<int> _firstUnits = [];
+
     public int SampleRate => sampleRate;
 
     public int Count => _points.Count;
@@ -49,6 +52,7 @@ internal sealed class StreamFigures(int sampleRate)
             while (_seconds.Count <= second)
             {
                 _seconds.Add(default);
+                _firstUnits.Add(_points.Count - 1);
             }
 
             (long bits, long counted) = _seconds[second];
@@ -62,6 +66,9 @@ internal sealed class StreamFigures(int sampleRate)
         MinimumBitrate = Math.Min(MinimumBitrate, bitrate);
         MaximumBitrate = Math.Max(MaximumBitrate, bitrate);
     }
+
+    // The intervals "Bitrate Over Time" is counted over, with the first unit that starts in each; null without them.
+    public TimeIndex? Time => _seconds.Count == 0 ? null : new TimeIndex(Enumerable.Range(0, _seconds.Count).Select(s => (double)s).ToArray(), _firstUnits.ToArray());
 
     // Per unit, its bitrate at its offset; per second of audio, the bits of the units that start in
     // it over their duration, rounded half to even. Only these arrays grow with the number of units.
@@ -86,12 +93,17 @@ internal sealed class StreamFigures(int sampleRate)
             bitrates[i] = Bitrate((int)((point >> 3) & 0x1FFFF), (int)(point & 7) * 256);
         }
 
-        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries } };
+        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" } };
         if (_seconds.Count > 0)
         {
             double[] starts = Enumerable.Range(0, _seconds.Count).Select(s => (double)s).ToArray();
             double[] values = _seconds.Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)sampleRate / s.Samples / 1000, MidpointRounding.ToEven) : 0).ToArray();
-            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
+            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor)
+            {
+                Description = Explain.BitrateOverTimeSeries,
+                Concept = GraphConcept.BitDistribution,
+                Quantity = "Bitrate",
+            });
         }
 
         return series;

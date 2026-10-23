@@ -30,6 +30,9 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
     public StreamFigures Figures { get; } = new(key.SampleRate);
 
+    // The coding series, recorded while the frames are read.
+    public CodingRecorder Recorder { get; } = new(key);
+
     public int LayoutChanges { get; private set; }
 
     public bool HasEac3 { get; private set; } = key.IsEac3;
@@ -172,6 +175,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             MaxComplexity = Math.Max(MaxComplexity, result.ComplexityIndex);
         }
 
+        Recorder.Frame(result);
         CrcErrors += crcError ? 1 : 0;
         Blocks += result.Blocks;
         BlocksRead += result.BlocksRead;
@@ -210,6 +214,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
         }
 
         Figures.Add(_pendingOffset, _pendingBytes, _pendingSamples);
+        Recorder.EndUnit();
         _sizes.Add(_pendingBytes);
         if (_firstProgramFrame)
         {
@@ -346,12 +351,13 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
         return speakers;
     }
 
-    public Node Statistics(Func<string, NodeValue?, NodeKind, string, string?, Node> cover, out Node bitrate)
+    public Node Statistics(Func<string, NodeValue?, NodeKind, string, string?, Node> cover, out Node bitrate, out CodingNodes coding)
     {
         Node statistics = Figures.Statistics((name, value, kind, description) => cover(name, value, kind, description, null), "Frame", "Frames", out bitrate);
         Node Add(string name, NodeValue value, string description, string? topic = null) =>
             statistics.Add(cover(name, value, NodeKind.Detail, description, topic));
         NodeValue Blocked(int count) => NodeValue.Integer(count, "blocks", "block");
+        Node? switching = null, coupling = null, rematrixing = null, spectral = null, bandwidth = null;
 
         if (DependentFrames > 0)
         {
@@ -381,22 +387,22 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
         Add("Audio Blocks Read", Blocked(BlocksRead), Explain.StatBlocksRead, Topics.AudioBlocks);
         if (BlocksRead > 0)
         {
-            Add("Blocks With Block Switching", Blocked(BlockSwitching), Explain.StatBlockSwitching, Topics.AudioBlocks);
+            switching = Add("Blocks With Block Switching", Blocked(BlockSwitching), Explain.StatBlockSwitching, Topics.AudioBlocks);
             Add("Blocks With Dynamic Range Gain", Blocked(DynamicRange), Explain.StatDynamicRange, Topics.DialogueNormalization);
             if (key.Acmod >= 2)
             {
-                Add("Blocks With Coupling", Blocked(Coupling), Explain.StatCoupling, Topics.Coupling);
+                coupling = Add("Blocks With Coupling", Blocked(Coupling), Explain.StatCoupling, Topics.Coupling);
             }
 
             if (key.Acmod == 2)
             {
-                Add("Blocks With Rematrixing", Blocked(Rematrixing), Explain.StatRematrixing, Topics.Rematrixing);
+                rematrixing = Add("Blocks With Rematrixing", Blocked(Rematrixing), Explain.StatRematrixing, Topics.Rematrixing);
                 Add("Bands Coded as Sum/Difference", $"{RematrixedBands} of {RematrixingBands}", Explain.StatRematrixedBands, Topics.Rematrixing);
             }
 
             if (key.IsEac3)
             {
-                Add("Blocks With Spectral Extension", Blocked(SpectralExtension), Explain.StatSpectralExtension, Topics.SpectralExtension);
+                spectral = Add("Blocks With Spectral Extension", Blocked(SpectralExtension), Explain.StatSpectralExtension, Topics.SpectralExtension);
             }
 
             Add("Blocks With Delta Bit Allocation", Blocked(DeltaBitAllocation), Explain.StatDeltaBitAllocation, Topics.AudioBlocks);
@@ -409,6 +415,14 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
             Add("Skip Field Bytes", NodeValue.Integer(SkipBytes, "bytes"), Explain.StatSkipBytes);
             Add("Auxiliary Data", NodeValue.Integer(AuxiliaryBits, "bits"), Explain.StatAuxiliary);
+            if (Recorder.Bandwidths.Count > 0)
+            {
+                SortedDictionary<int, long> hertz = Recorder.Bandwidths;
+                bandwidth = Add("Coded Bandwidth", null!, Explain.StatCodedBandwidth, Topics.CodedBandwidth);
+                bandwidth.Add(cover("Lowest", NodeValue.Integer(hertz.Keys.First(), "Hz"), NodeKind.Detail, Explain.BandwidthLowest, null));
+                bandwidth.Add(cover("Most Common", NodeValue.Integer(hertz.MaxBy(b => b.Value).Key, "Hz"), NodeKind.Detail, Explain.BandwidthMostCommon, null));
+                bandwidth.Add(cover("Highest", NodeValue.Integer(hertz.Keys.Last(), "Hz"), NodeKind.Detail, Explain.BandwidthHighest, null));
+            }
         }
 
         if (EmdfContainers > 0 || ExtensionFrames > 0)
@@ -427,6 +441,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             }
         }
 
+        coding = new CodingNodes(switching, coupling, rematrixing, spectral, bandwidth);
         return statistics;
     }
 

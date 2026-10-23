@@ -18,6 +18,14 @@ internal sealed partial class FrameSyntax
     private int _rematflg;
     private bool _allocationStarted;
 
+    // What the block being read chose; Blocks counts it with the frame's tallies and records it for the coding series only once
+    // the block is read, so that every tally is over the blocks read and equals its series.
+    private bool _blockSwitched;
+    private int _blockRematrixedBands;
+    private int _blockRematrixingBands;
+    private bool _blockRematrixed;
+    private int _blockEnd;
+
     private void Blocks()
     {
         _cplInUse = false;
@@ -56,6 +64,11 @@ internal sealed partial class FrameSyntax
         for (int block = 0; block < _blocks; block++)
         {
             _t?.Open("Audio Block", _b.Position, Explain.AudioBlock, Topics.AudioBlocks, NodeKind.SideInfo);
+            _blockSwitched = false;
+            _blockRematrixed = false;
+            _blockRematrixedBands = 0;
+            _blockRematrixingBands = 0;
+            _blockEnd = 255;
             bool read = Block(block);
             _t?.Close(_b.Position, NodeValue.Integer(block));
             if (!read)
@@ -63,7 +76,25 @@ internal sealed partial class FrameSyntax
                 return;
             }
 
+            CommitBlock();
             _r.BlocksRead++;
+        }
+    }
+
+    private void CommitBlock()
+    {
+        int at = _r.BlocksRead;
+        _r.BlockSwitchBlocks += _blockSwitched ? 1 : 0;
+        _r.CouplingBlocks += _cplInUse ? 1 : 0;
+        _r.SpectralExtensionBlocks += _spxinu ? 1 : 0;
+        _r.RematrixingBands += _blockRematrixingBands;
+        _r.RematrixedBands += _blockRematrixedBands;
+        _r.RematrixingBlocks += _blockRematrixed ? 1 : 0;
+        if (at < _r.BlockFlags.Length)
+        {
+            _r.BlockFlags[at] = (byte)((_blockSwitched ? FrameResult.BlockSwitched : 0) | (_cplInUse ? FrameResult.BlockCoupled : 0)
+                | (_spxinu ? FrameResult.BlockSpectralExtension : 0) | (_blockRematrixed ? FrameResult.BlockRematrixed : 0));
+            _r.BlockEnds[at] = (byte)_blockEnd;
         }
     }
 
@@ -79,7 +110,7 @@ internal sealed partial class FrameSyntax
             }
         }
 
-        _r.BlockSwitchBlocks += switched ? 1 : 0;
+        _blockSwitched = switched;
         if (!_eac3 || _dithflage)
         {
             for (int ch = 0; ch < _nfchans; ch++)
@@ -110,8 +141,6 @@ internal sealed partial class FrameSyntax
             return false;
         }
 
-        _r.CouplingBlocks += _cplInUse ? 1 : 0;
-        _r.SpectralExtensionBlocks += _spxinu ? 1 : 0;
         Rematrixing(blk);
 
         // Exponent strategies (5.4.3.21 to 5.4.3.23; in E-AC-3 from the audio frame).
@@ -207,6 +236,15 @@ internal sealed partial class FrameSyntax
 
         _startMant[Lfe] = 0;
         _endMant[Lfe] = 7;
+
+        // The highest bin any full bandwidth channel or the coupling channel codes; the LFE channel is left out.
+        int top = 0;
+        for (int ch = 0; ch < _nfchans; ch++)
+        {
+            top = Math.Max(top, _endMant[ch]);
+        }
+
+        _blockEnd = Math.Min(254, Math.Max(top, _cplInUse ? _endMant[Cpl] : 0));
 
         // Exponents (5.4.3.25 to 5.4.3.29, 7.1.3).
         if (_cplInUse && strategy[Cpl] != 0 && !Exponents(Cpl, strategy[Cpl], "Coupling Exponents", Explain.CouplingExponents))
@@ -557,9 +595,9 @@ internal sealed partial class FrameSyntax
 
         _nrematbd = bands;
         int set = System.Numerics.BitOperations.PopCount((uint)_rematflg);
-        _r.RematrixingBands += bands;
-        _r.RematrixedBands += set;
-        _r.RematrixingBlocks += set > 0 ? 1 : 0;
+        _blockRematrixingBands = bands;
+        _blockRematrixedBands = set;
+        _blockRematrixed = set > 0;
     }
 
     // An exponent set (7.1.3): the absolute exponent, the groups, and for a full bandwidth

@@ -15,12 +15,13 @@ internal static class Topics
     public const string BitrateModes = "bitrate-modes";
     public const string EncoderDetection = "encoder-detection";
     public const string ObjectAudio = "eac3-object-audio";
+    public const string CodedBandwidth = "coded-bandwidth";
 }
 
 // What each AC-3 and E-AC-3 node is, in the words the report shows next to it, citing ATSC
 // A/52:2018 (sections of its body, Annex D and Annex E) and ETSI TS 102 366 Annex F. Constants only:
 // frames are built by the hundred thousand, so a description is one of these and never allocated.
-internal static class Explain
+internal static partial class Explain
 {
     public const string Stream = "AC-3 or E-AC-3 data: syncframes one after another, each with its own sync word, header and audio blocks (A/52 5.1, Annex E 2.2).";
     public const string Ac3Frame = "An AC-3 syncframe: sync information, bit stream information, six audio blocks of 256 samples per channel, auxiliary data and a CRC (A/52 5.1).";

@@ -44,6 +44,17 @@ internal sealed class FrameResult
     // Statistics of the blocks read.
     public int BlockSwitchBlocks { get; set; }
 
+    // What each block read chose, for the coding series: the flags below, and the end bin of the block's coded bandwidth
+    // (255 where it has none). A frame has at most 6 blocks.
+    public const byte BlockSwitched = 1;
+    public const byte BlockCoupled = 2;
+    public const byte BlockRematrixed = 4;
+    public const byte BlockSpectralExtension = 8;
+
+    public byte[] BlockFlags { get; } = new byte[6];
+
+    public byte[] BlockEnds { get; } = new byte[6];
+
     public int DynamicRangeBlocks { get; set; }
 
     public int CouplingBlocks { get; set; }
@@ -116,6 +127,8 @@ internal sealed class FrameResult
         BlocksRead = 0;
         Blocks = blocks;
         BlockSwitchBlocks = 0;
+        Array.Clear(BlockFlags);
+        Array.Fill(BlockEnds, (byte)255);
         DynamicRangeBlocks = 0;
         CouplingBlocks = 0;
         RematrixingBlocks = 0;
