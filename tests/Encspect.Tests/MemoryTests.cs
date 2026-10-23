@@ -1032,35 +1032,92 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // The bound is on the growth of what decoding holds above the heap the analysis starts and ends with, from 50,000 to 200,000 frames
-    // (MeasureExcess: live objects only, read at fixed places in the input), less the same growth without decoding, so the session's
-    // buffers, the MD5's state and what the collector's allocation budgets add to a reading cancel. The first version compared the peaks
-    // Measure reads at one count, with 4 MB of room: that is a difference of two readings that each vary by megabytes with the
-    // platform's allocation budgets, and it read 8.2 MB on windows-latest where linux-x64 reads 0.01 to 1.3 MB at 25,000 to 200,000
-    // frames (0.6 MB at 200,000, so not growing with the count). Here linux-x64 reads 0 without decoding and 0.6, 0.7, 0.7, 1.0 and 1.2 MB
-    // with it at 25,000, 50,000, 100,000, 200,000 and 400,000 frames: 0.5 to 2.2 bytes per further frame. The bound is 8, half of what
-    // keeping the smallest reference or length per frame would cost.
+    // The bound is on the growth, from 50,000 to 200,000 frames, of the live heap that one reading inside the decoding of the last frame
+    // sees above the heap the analysis ends with (report alive), so whatever decoding holds per frame for the length of the stream shows,
+    // and nothing the analysis does after its last frame can. The reading is taken from the sink's Write of the last frame, on the
+    // analysis thread, at the same point of every run, so it needs no sampler and no luck. The first two versions sampled the heap
+    // while the analysis ran and compared that with the same measurement of the analysis without decoding; both failed on windows-latest
+    // (8.2 MB at 100,000 frames, then 8.04 bytes per further frame). Nothing in the decoding grows: read at fixed points of the
+    // analysis (a temporary hook in the parser, linux-x64), decoding adds 83 KB at 25,000, 100,000 and 400,000 frames alike. What
+    // grows is the parser's own end, which an analysis without decoding has too: while it builds the stream's series from the figures
+    // it read, the figures and the new arrays are alive together (+8.00 bytes per frame once the offsets array exists, +16 with
+    // the bitrates', +21 when the series of seconds are in, over the end state at 400,000 frames), and the figures of seconds are
+    // larger than their series (+0.8 bytes per frame at the start of the stream's end). A sampler that reads the heap during the
+    // analysis finds those only if a reading falls in them: decoding takes seconds after the last read, so the sampler read the
+    // stretch before the end state's build-up about every 300 ms, where the analysis alone ends within one reading. The difference of
+    // two such samplers is a difference of what they happened to see. Here the parser's own end adds 1.3 MB at every count,
+    // growing by about 0.8 bytes per further frame, and a session that keeps one 8-byte value per frame adds 1.2 MB to the growth.
     [Fact]
     public void DecodingManyFlacFramesHoldsNothingPerFrame()
     {
         const int fewer = 50_000;
         const int frames = 200_000;
-        var options = new AnalysisOptions { Decoding = new DecodeOptions() };
         byte[] warmUp = FlacFrames(100);
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(warmUp), new AnalysisOptions { Decoding = new DecodeOptions() });
 
-        (_, long fewerKept, long fewerExcess, string fewerWhere) = MeasureExcess("frames.flac", FlacFrames(fewer), warmUp, options);
-        (Report decoded, long kept, long excess, string where) = MeasureExcess("frames.flac", FlacFrames(frames), warmUp, options);
-        (_, _, long plainFewerExcess, string plainFewerWhere) = MeasureExcess("frames.flac", FlacFrames(fewer), warmUp);
-        (Report plain, long plainKept, long plainExcess, string plainWhere) = MeasureExcess("frames.flac", FlacFrames(frames), warmUp);
+        (long fewerHeld, long fewerKept) = LastFrameReading(FlacFrames(fewer), fewer);
+        (long held, long kept) = LastFrameReading(FlacFrames(frames), frames);
+        (_, long plainKept) = LastFrameReading(FlacFrames(frames), frames, isDecoding: false);
 
-        Assert.Equal(frames * 4096L, decoded.Streams.Single().Verification!.DecodedSamples);
-        double excessPerFrame = (excess - fewerExcess) / (double)(frames - fewer);
-        double plainPerFrame = (plainExcess - plainFewerExcess) / (double)(frames - fewer);
-        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the start and end: {fewerExcess} and {excess} with decoding ({Hundredths(excessPerFrame)} per further frame), {plainFewerExcess} and {plainExcess} without ({Hundredths(plainPerFrame)}); {fewerWhere} {where} {plainFewerWhere} {plainWhere}");
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
         Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
-        Assert.True(excessPerFrame - plainPerFrame < DecodingFrameBound, $"Decoding held {excessPerFrame - plainPerFrame:F2} more bytes per further frame than the analysis starts and ends with. {RuntimeSettings()}");
-        GC.KeepAlive(plain);
-        GC.KeepAlive(decoded);
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
+    // The live heap read inside the sink's Write of the last frame less the live heap with the report alive after the analysis, and
+    // what the report keeps (alive less dropped); each the smaller of two analyses, as for Measure.
+    private static (long Held, long Kept) LastFrameReading(byte[] data, int frames, bool isDecoding = true)
+    {
+        long held = long.MaxValue;
+        long kept = long.MaxValue;
+        for (int pass = 0; pass < 2; pass++)
+        {
+            (long reading, long withReport) = AnalyzeReadingAtLastFrame(data, frames, isDecoding);
+            long withoutReport = Live();
+            held = Math.Min(held, reading - withReport);
+            kept = Math.Min(kept, withReport - withoutReport);
+        }
+
+        GC.KeepAlive(data);
+        return (held, kept);
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static (long Reading, long WithReport) AnalyzeReadingAtLastFrame(byte[] data, int frames, bool isDecoding)
+    {
+        var probe = new LastFrameSink(frames);
+        var options = new AnalysisOptions { Decoding = isDecoding ? new DecodeOptions { Output = _ => probe } : null };
+        Live();
+        Report report = Analyzer.CreateDefault().Analyze("frames.flac", new MemoryStream(data), options);
+        if (isDecoding)
+        {
+            Assert.Equal(frames * 4096L, report.Streams.Single().Verification!.DecodedSamples);
+            Assert.True(probe.Reading > 0, "The sink was not written the last frame.");
+        }
+
+        long withReport = Live();
+        GC.KeepAlive(report);
+        return (probe.Reading, withReport);
+    }
+
+    private sealed class LastFrameSink(int frames) : IPcmSink
+    {
+        private int _written;
+
+        public long Reading { get; private set; }
+
+        public void Write(PcmBlock block)
+        {
+            if (++_written == frames)
+            {
+                Reading = Live();
+            }
+        }
+
+        public void End(long samples)
+        {
+        }
     }
 
     // Frames of constant subframes, the smallest there are: 4,096 samples of two channels in 14 bytes.
