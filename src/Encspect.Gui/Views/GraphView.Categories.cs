@@ -25,6 +25,10 @@ public sealed partial class GraphView
     private const double CaptionHeight = 20;
     private const double AxisHeight = 24;
     private const double DimmedLastOpacity = 0.6;
+    private const double MinSeparated = 3;
+    internal const double MinLastWidth = 3;
+    private const double LabelMarginX = 6;
+    private const double LabelMarginY = 2;
 
     // The plot is never lower than this: a view with less room scrolls instead of squeezing the chart.
     private const double MinOverTimeHeight = 110;
@@ -232,7 +236,7 @@ public sealed partial class GraphView
                 _categoryColumns.Clear();
             }
 
-            columns = graph.IsOverTime ? CategoryColumns.OverTime(graph.Series, width, graph.View == GraphForm.Smoothed ? graph.SmoothedCounts : null) : CategoryColumns.Frames(graph.Series, width, lane);
+            columns = graph.IsOverTime ? CategoryColumns.OverTime(graph.Series, width, graph.View == GraphForm.Smoothed ? graph.SmoothedCounts : graph.IntervalCounts) : CategoryColumns.Frames(graph.Series, width, lane);
             _categoryColumns[key] = columns;
         }
 
@@ -253,12 +257,12 @@ public sealed partial class GraphView
 
     private static string Capitalize(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
 
-    // The legend of the over-time chart lists the layers bottom to top, which is largest share first (CategoryColumns.StackOrder):
+    // The legend of the over-time chart lists the layers bottom to top, which is largest share first (CategoryGraph.StackOrder):
     // the legend runs left to right and wraps downward, so the baseline layer comes first as the stack's first row would, and the
     // entries then fall in the order of the shares in the file. The strip of frames and the summary tables keep the order of
     // the categories.
     private static IEnumerable<int> LegendOrder(CategoryGraph graph) => graph.IsOverTime
-        ? CategoryColumns.StackOrder(graph.Series)
+        ? graph.StackOrder
         : Enumerable.Range(0, graph.Series.Categories.Count);
 
     // The legend's entries as text with their shares, and the category each stands for.
@@ -613,13 +617,12 @@ public sealed partial class GraphView
     private void DrawChart(DrawingContext context, CategoryGraph category, ChartLayout layout, bool isDark, Color surface, IBrush secondary, IBrush foreground)
     {
         CategorySeries series = category.Series;
-        CategoryStyle[] styles = CategoryColors.For(series, isDark, surface);
+        CategoryStyle[] styles = category.IsOverTime ? CategoryColors.ForStack(series, isDark, surface) : CategoryColors.For(series, isDark, surface);
         IBrush[] brushes = [.. styles.Select(s => (IBrush)new ImmutableSolidColorBrush(s.Color))];
         bool highContrast = HasHighContrast();
         Rect plot = layout.Plot;
         IPen grid = new Pen(Palette.Grid(this), 1);
         int width = Math.Max(1, (int)plot.Width);
-        var heights = new double[series.Categories.Count];
 
         if (category.IsOverTime)
         {
@@ -640,6 +643,7 @@ public sealed partial class GraphView
         }
         else
         {
+            var heights = new double[series.Categories.Count];
             string caption = layout.Rows > 1 ? $"One row for each of the {series.ValuesPerUnit} values of a frame" : Capitalize($"{series.ValueLabel} values of each frame");
             context.DrawText(Text(caption, TextSize, secondary), new Point(4, 2));
             for (int row = 0; row < layout.Rows; row++)
@@ -813,13 +817,16 @@ public sealed partial class GraphView
 
     // The share of each category over time as a stacked area with stepped edges: each interval is a level that lasts exactly
     // as long as the interval does, with a vertical step at each boundary and no slope between them. The category with the
-    // largest share is the bottom layer, the one with a flat baseline. Heights are as in a column (a category that occurs
-    // is at least a pixel high); a thin line of the surface separates the layers.
+    // largest share is the bottom layer, the one with a flat baseline, in the muted color (CategoryColors.ForStack). Levels are
+    // whole pixels, and a category that occurs is at least a pixel high. A 1-pixel line of the surface separates two layers
+    // where both are at least MinSeparated pixels high, as the strip separates its segments, so a rare layer keeps its color and
+    // a full switch shows no stripe at its step. Where a stretch of a layer is wide and tall enough for its name, the name
+    // is written in it. An interval of no values is a gap.
     private void DrawArea(DrawingContext context, CategoryGraph graph, CategoryColumns columns, Slots slots, Rect plot, CategoryStyle[] styles, IBrush[] brushes, Color surface, bool highContrast)
     {
         CategorySeries series = graph.Series;
         int categories = series.Categories.Count;
-        int[] order = CategoryColumns.StackOrder(series);
+        int[] order = graph.StackOrder;
         var tops = new double[columns.Count * categories];
         var bottoms = new double[columns.Count * categories];
         var heights = new double[categories];
@@ -831,27 +838,46 @@ public sealed partial class GraphView
             }
 
             CategoryColumns.StackHeights(columns.Counts(column), plot.Height, heights);
-            double level = plot.Bottom;
+            double used = 0;
             foreach (int category in order)
             {
-                bottoms[(column * categories) + category] = level;
-                level -= heights[category];
-                tops[(column * categories) + category] = level;
+                bottoms[(column * categories) + category] = Math.Round(plot.Bottom - used);
+                used += heights[category];
+                tops[(column * categories) + category] = Math.Round(plot.Bottom - used);
             }
         }
 
         (double[] start, double[] end) = ColumnEdges(slots);
-        IPen separator = new ImmutablePen(new ImmutableSolidColorBrush(surface), 1);
         List<(int From, int To)> runs = FilledRuns(columns);
-        for (int rank = 0; rank < order.Length; rank++)
+        foreach (int category in order)
         {
-            int category = order[rank];
             foreach ((int from, int to) in runs)
             {
+                var fill = new StreamGeometry();
                 bool present = false;
-                for (int column = from; column < to && !present; column++)
+                using (StreamGeometryContext g = fill.Open())
                 {
-                    present = columns.Counts(column)[category] > 0;
+                    g.BeginFigure(new Point(start[from], tops[(from * categories) + category]), true);
+                    for (int column = from; column < to; column++)
+                    {
+                        double top = tops[(column * categories) + category];
+                        present |= bottoms[(column * categories) + category] > top;
+                        if (column > from)
+                        {
+                            g.LineTo(new Point(start[column], top));
+                        }
+
+                        g.LineTo(new Point(end[column], top));
+                    }
+
+                    for (int column = to - 1; column >= from; column--)
+                    {
+                        double bottom = bottoms[(column * categories) + category];
+                        g.LineTo(new Point(end[column], bottom));
+                        g.LineTo(new Point(start[column], bottom));
+                    }
+
+                    g.EndFigure(true);
                 }
 
                 if (!present)
@@ -859,58 +885,149 @@ public sealed partial class GraphView
                     continue;
                 }
 
-                var area = new StreamGeometry();
-                var edge = new StreamGeometry();
-                using (StreamGeometryContext fill = area.Open())
-                using (StreamGeometryContext line = edge.Open())
-                {
-                    fill.BeginFigure(new Point(start[from], tops[(from * categories) + category]), true);
-                    line.BeginFigure(new Point(start[from], tops[(from * categories) + category]), false);
-                    for (int column = from; column < to; column++)
-                    {
-                        double top = tops[(column * categories) + category];
-                        if (column > from)
-                        {
-                            fill.LineTo(new Point(start[column], top));
-                            line.LineTo(new Point(start[column], top));
-                        }
-
-                        fill.LineTo(new Point(end[column], top));
-                        line.LineTo(new Point(end[column], top));
-                    }
-
-                    for (int column = to - 1; column >= from; column--)
-                    {
-                        double bottom = bottoms[(column * categories) + category];
-                        fill.LineTo(new Point(end[column], bottom));
-                        fill.LineTo(new Point(start[column], bottom));
-                    }
-
-                    fill.EndFigure(true);
-                    line.EndFigure(false);
-                }
-
-                context.DrawGeometry(brushes[category], null, area);
+                context.DrawGeometry(brushes[category], null, fill);
                 if (styles[category].IsHatched || (highContrast && category % 2 == 1))
                 {
-                    using (context.PushGeometryClip(area))
+                    using (context.PushGeometryClip(fill))
                     {
-                        DrawHatch(context, area.Bounds, surface);
+                        DrawHatch(context, fill.Bounds, surface);
                     }
-                }
-
-                if (rank > 0 || order.Length > 1)
-                {
-                    context.DrawGeometry(null, separator, edge);
                 }
             }
         }
 
-        // A last interval of only a few frames is dimmed, as the hover text says (CategoryGraph.LastInterval).
+        DrawSeparators(context, columns, start, end, tops, bottoms, order, surface);
+        DrawLayerNames(context, graph, columns, start, end, tops, bottoms, styles);
+
+        // A partial last interval of only a few frames is dimmed, as the hover text says (CategoryGraph.LastInterval): in the
+        // area, not in the average, whose last level is not a share of those frames, and not in a column that merges intervals.
         int last = columns.Count - 1;
-        if (graph.LastInterval is { IsFew: true } && columns.End(last) - columns.First(last) == 1 && columns.Total(last) > 0)
+        if (graph.View == GraphForm.OverTime && IsDimmed(graph, columns))
         {
             context.FillRectangle(new ImmutableSolidColorBrush(surface, DimmedLastOpacity), new Rect(start[last], plot.Top, end[last] - start[last], plot.Height));
+        }
+    }
+
+    // Whether the last column of an over-time chart is the one partial last interval of few frames.
+    private static bool IsDimmed(CategoryGraph graph, CategoryColumns columns)
+    {
+        int last = columns.Count - 1;
+        return graph.LastInterval is { IsFew: true } && columns.End(last) - columns.First(last) == 1 && columns.Total(last) > 0;
+    }
+
+    // The surface line between a layer and the layer above it, as level segments (a run of columns at one height is one
+    // segment) and only where both are at least MinSeparated pixels high.
+    private static void DrawSeparators(DrawingContext context, CategoryColumns columns, double[] start, double[] end, double[] tops, double[] bottoms, int[] order, Color surface)
+    {
+        IBrush brush = new ImmutableSolidColorBrush(surface);
+        foreach (int category in order)
+        {
+            double from = double.NaN;
+            double to = 0;
+            double y = 0;
+            for (int column = 0; column <= columns.Count; column++)
+            {
+                double separator = column < columns.Count ? SeparatorAt(columns, tops, bottoms, order, category, column) : double.NaN;
+                if (!double.IsNaN(from) && (double.IsNaN(separator) || separator != y))
+                {
+                    context.FillRectangle(brush, new Rect(from, y, to - from, 1));
+                    from = double.NaN;
+                }
+
+                if (!double.IsNaN(separator))
+                {
+                    if (double.IsNaN(from))
+                    {
+                        from = start[column];
+                        y = separator;
+                    }
+
+                    to = end[column];
+                }
+            }
+        }
+    }
+
+    // The row of the line over a layer in a column, or NaN where there is none: the layer and the next one above that has
+    // any height both have to be at least MinSeparated pixels.
+    private static double SeparatorAt(CategoryColumns columns, double[] tops, double[] bottoms, int[] order, int category, int column)
+    {
+        int categories = order.Length;
+        if (columns.Total(column) == 0 || bottoms[(column * categories) + category] - tops[(column * categories) + category] < MinSeparated)
+        {
+            return double.NaN;
+        }
+
+        for (int rank = Array.IndexOf(order, category) + 1; rank < order.Length; rank++)
+        {
+            int above = order[rank];
+            double height = bottoms[(column * categories) + above] - tops[(column * categories) + above];
+            if (height > 0)
+            {
+                return height >= MinSeparated ? tops[(column * categories) + category] : double.NaN;
+            }
+        }
+
+        return double.NaN;
+    }
+
+    // The name of a category inside its layer, once for each stretch of columns where the layer is tall enough for the text,
+    // where the stretch is wide enough for it and the text fits between the layer's edges over the whole of its width. The
+    // size of the text is the font's (the width and height of the formatted name), with a margin of 6 pixels at each side and 2
+    // above and below; the color is black or white, whichever contrasts more with the layer's. Hatched layers are not named,
+    // since the hatching would run through the text, and neither is the dimmed last interval.
+    private void DrawLayerNames(DrawingContext context, CategoryGraph graph, CategoryColumns columns, double[] start, double[] end, double[] tops, double[] bottoms, CategoryStyle[] styles)
+    {
+        CategorySeries series = graph.Series;
+        int categories = series.Categories.Count;
+        int usable = IsDimmed(graph, columns) && graph.View == GraphForm.OverTime ? columns.Count - 1 : columns.Count;
+        foreach (int category in graph.StackOrder)
+        {
+            if (series.Counts[category] == 0 || styles[category].IsHatched)
+            {
+                continue;
+            }
+
+            FormattedText name = Text(series.Categories[category].Name, TextSize, new ImmutableSolidColorBrush(CategoryColors.Readable(styles[category].Color)));
+            double neededWidth = name.Width + (2 * LabelMarginX);
+            double neededHeight = name.Height + (2 * LabelMarginY);
+            int column = 0;
+            while (column < usable)
+            {
+                if (columns.Total(column) == 0 || bottoms[(column * categories) + category] - tops[(column * categories) + category] < neededHeight)
+                {
+                    column++;
+                    continue;
+                }
+
+                int from = column;
+                while (column < usable && columns.Total(column) > 0 && bottoms[(column * categories) + category] - tops[(column * categories) + category] >= neededHeight)
+                {
+                    column++;
+                }
+
+                if (end[column - 1] - start[from] < neededWidth)
+                {
+                    continue;
+                }
+
+                double x = ((start[from] + end[column - 1]) / 2) - (name.Width / 2);
+                double top = double.NegativeInfinity;
+                double bottom = double.PositiveInfinity;
+                for (int k = from; k < column; k++)
+                {
+                    if (end[k] > x && start[k] < x + name.Width)
+                    {
+                        top = Math.Max(top, tops[(k * categories) + category]);
+                        bottom = Math.Min(bottom, bottoms[(k * categories) + category]);
+                    }
+                }
+
+                if (bottom - top >= neededHeight)
+                {
+                    context.DrawText(name, new Point(x, ((top + bottom) / 2) - (name.Height / 2)));
+                }
+            }
         }
     }
 
@@ -946,18 +1063,12 @@ public sealed partial class GraphView
 
             if (label && h >= 14)
             {
-                FormattedText name = Fit(series.Categories[category].Name, TextSize, new ImmutableSolidColorBrush(Readable(styles[category].Color)), width - 8);
+                FormattedText name = Fit(series.Categories[category].Name, TextSize, new ImmutableSolidColorBrush(CategoryColors.Readable(styles[category].Color)), width - 8);
                 context.DrawText(name, new Point(x + 4, y + ((h - name.Height) / 2)));
             }
 
             previous = h;
         }
-    }
-
-    private static Color Readable(Color background)
-    {
-        double luminance = ((0.299 * background.R) + (0.587 * background.G) + (0.114 * background.B)) / 255;
-        return luminance > 0.6 ? Colors.Black : Colors.White;
     }
 
     private static void DrawHatch(DrawingContext context, Rect rect, Color lines)
@@ -1181,6 +1292,13 @@ public sealed partial class GraphView
         if (columns == starts.Length && columns >= 2 && duration > starts[^1] && starts[1] > starts[0])
         {
             fraction = Math.Clamp((duration - starts[^1]) / (starts[1] - starts[0]), 0.02, 1);
+
+            // A last interval of a long stream would be a fraction of a pixel, which can be neither seen nor pointed at: it
+            // takes MinLastWidth pixels from the one before it (a few pixels of time on a stream of minutes).
+            if (fraction < 1 && plot.Width > 2 * MinLastWidth)
+            {
+                fraction = Math.Max(fraction, Math.Min(1, MinLastWidth * (columns - 1) / (plot.Width - MinLastWidth)));
+            }
         }
 
         return new Slots(plot.Left, plot.Width, columns, fraction);

@@ -63,10 +63,13 @@ public sealed class GraphChoice : ObservableObject
         internal set => Set(ref _isSelected, value);
     }
 
-    // Draws the entry in the form of that kind, or keeps the one it has where it has none; returns whether it changed.
+    // Draws the entry in the form of that kind, or keeps the one it has where it has none; returns whether it changed. An entry
+    // that has no smoothed form takes the form it smooths, Over Time, so that the choice carries from a long series to a short
+    // one or to a quantity.
     internal bool SelectForm(GraphForm kind)
     {
-        GraphFormChoice? choice = Forms.FirstOrDefault(f => f.Kind == kind);
+        GraphFormChoice? choice = Forms.FirstOrDefault(f => f.Kind == kind)
+            ?? (kind == GraphForm.Smoothed ? Forms.FirstOrDefault(f => f.Kind == GraphForm.OverTime) : null);
         if (choice is null || choice == _form)
         {
             return false;
@@ -374,6 +377,7 @@ public sealed class GraphsViewModel : ObservableObject
         {
             return;
         }
+
 
         _preferredForm = kind;
         if (entry.SelectForm(kind))

@@ -157,9 +157,9 @@ public class MpegGraphLayoutTests
         window.Close();
     }
 
-    // The list of graphs shows its last entry whole: where the entries fit the list does not scroll (the dual channel file's nine
-    // headings and entries at 1180 by 800, the header wrapped or not), and where they do not, the end of the scroll is the end of
-    // the last entry.
+    // The list of graphs shows its last entry whole: where the entries fit the list does not scroll (the dual channel file's, at
+    // 1180 by 800), whichever entry is selected, with the view switcher shown or not, and where they do not, the end of the
+    // scroll is the end of the last entry. The view switcher's row has one height, so the list does not change size between entries.
     [AvaloniaTheory]
     [InlineData("external-lame-dual-music.mp3", false)]
     [InlineData("external-lame-joint-music.mp3", true)]
@@ -168,16 +168,31 @@ public class MpegGraphLayoutTests
     {
         DetailWindow window = Open(Fixtures.Mpeg(fixture), 1180, 800);
         ScrollViewer list = window.GraphList;
-        bool scrolls = list.Extent.Height > list.Viewport.Height + 0.5;
-        Assert.True(mayScroll || !scrolls, $"The list of {list.Extent.Height} scrolls in {list.Viewport.Height}.");
+        double viewport = list.Viewport.Height;
+        foreach (string title in new[] { "Coding Summary", "Stereo Coding", "Bitrate", "Block Usage" })
+        {
+            window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == title);
+            UiPump.Until(() => true);
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+            Assert.Equal(viewport, list.Viewport.Height, 0.5);
+            bool scrolls = list.Extent.Height > list.Viewport.Height + 0.5;
+            Assert.True(mayScroll || !scrolls, $"The list of {list.Extent.Height} scrolls in {list.Viewport.Height} with {title} selected.");
 
-        list.ScrollToEnd();
+            list.ScrollToEnd();
+            UiPump.Until(() => true);
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+            Button last = window.GraphChoices.GetVisualDescendants().OfType<Button>().Last();
+            double bottom = last.TranslatePoint(new Point(0, last.Bounds.Height), list)!.Value.Y;
+            Assert.InRange(bottom, 0, list.Viewport.Height + 0.5);
+            Assert.True(!scrolls || bottom >= list.Viewport.Height - 8, $"The last entry ends at {bottom} in {list.Viewport.Height}, short of the end.");
+        }
+
+        // The first heading is at the top of the list, and the decoder note is under the chart, not under the list.
+        TextBlock first = window.GraphChoices.GetVisualDescendants().OfType<TextBlock>().First(t => t.Classes.Contains("heading"));
+        list.ScrollToHome();
         UiPump.Until(() => true);
-        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
-        Button last = window.GraphChoices.GetVisualDescendants().OfType<Button>().Last();
-        double bottom = last.TranslatePoint(new Point(0, last.Bounds.Height), list)!.Value.Y;
-        Assert.InRange(bottom, 0, list.Viewport.Height + 0.5);
-        Assert.True(bottom >= list.Viewport.Height - 8, $"The last entry ends at {bottom} in {list.Viewport.Height}, short of the end.");
+        Assert.InRange(first.TranslatePoint(new Point(0, 0), list)!.Value.Y, 0, 2);
+        Assert.True(window.GraphList.Bounds.Bottom >= window.Graph.TranslatePoint(new Point(0, window.Graph.Bounds.Height), window.GraphList)!.Value.Y);
         window.Close();
     }
 
