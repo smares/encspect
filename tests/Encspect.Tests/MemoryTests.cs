@@ -94,7 +94,7 @@ public class MemoryTests(ITestOutputHelper output)
     // An MP4 file keeps a compact record per access unit, the arrays of its graphs and each raw data
     // block without its Huffman-coded data, and reads its sample tables into arrays of the entries
     // the boxes hold, never the samples' bytes at once (plan, "Large inputs"): 60 bytes kept per
-    // sample on linux-x64 and a peak of 100. The bounds leave room for a platform that measures
+    // sample on linux-x64 and a peak of 100, and with the coding series (13 bytes a stereo sample) 74 and 113. The bounds leave room for a platform that measures
     // nearly twice that, as macOS on arm64 did for the Ogg records, and stay below what keeping a
     // sample's node or bytes would cost.
     [Fact]
@@ -239,7 +239,8 @@ public class MemoryTests(ITestOutputHelper output)
     // An ADTS stream keeps a record per frame and, per raw data block, what its nodes are rebuilt
     // from: the side information without the Huffman-coded scalefactors and spectral data
     // (UnitStore). Measured over the frames of ffmpeg's encoder at 96 kbit/s, repeated: 116 bytes
-    // kept per frame on linux-x64 and a peak of 133, of the 281 a frame holds. The bounds leave room
+    // kept per frame on linux-x64 and a peak of 133, of the 281 a frame holds; the coding series (13 bytes a stereo frame) make it 126
+    // and 140. The bounds leave room
     // for a platform that measures nearly twice that and stay below what keeping the frames' bytes
     // would cost.
     [Fact]
@@ -265,6 +266,93 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(kept < frames * 220L, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * 250L, $"The live heap grew by {peak / frames} bytes per frame.");
         GC.KeepAlive(report);
+    }
+
+    // The coding series of an AAC stream (docs/design/coding-graphs.md, "Memory budget") are recorded while the raw data blocks are read:
+    // for a stereo access unit the window sequences of its two channel streams and a count byte, the stereo coding of its pair and a count
+    // byte (5 bytes), and the coded bandwidth, which the report keeps as a value of 8 bytes (13 in all). The bound is on the growth between
+    // two counts of frames, so that what is kept whatever the count (pools, the records of the first frames) does not count: the series'
+    // own bytes grow by at most their budget, and the whole report and the heap the analysis holds above it by less than the bounds of
+    // ManyAdtsFramesStayCompact, which stay as they were.
+    [Fact]
+    public void TheCodingSeriesOfFurtherAdtsFramesStayWithinTheirBudget()
+    {
+        const int fewer = 50_000;
+        const int frames = 100_000;
+        byte[] warmUp = AdtsFrames(1_000);
+
+        (Report few, long fewerKept, long fewerExcess, string fewerWhere) = MeasureExcess("few.aac", AdtsFrames(fewer), warmUp);
+        (Report many, long kept, long excess, string where) = MeasureExcess("many.aac", AdtsFrames(frames), warmUp);
+
+        CheckCodingGrowth(few, many, fewer, frames, categoryBytes: 5, numericBytes: 8);
+        double keptPerFrame = (kept - fewerKept) / (double)(frames - fewer);
+        double excessPerFrame = (excess - fewerExcess) / (double)(frames - fewer);
+        output.WriteLine($"{Hundredths(keptPerFrame)} bytes kept and {Hundredths(excessPerFrame)} held per further frame; {fewerWhere} {where}");
+        Assert.True(keptPerFrame < 220, $"The report keeps {keptPerFrame:F2} bytes per further frame.");
+        Assert.True(excessPerFrame < 250, $"The analysis held {excessPerFrame:F2} more bytes per further frame than it starts and ends with. {RuntimeSettings()}");
+        GC.KeepAlive(few);
+        GC.KeepAlive(many);
+    }
+
+    // The same for the access units of an MP4 file, whose bounds are the lower ones of ManySamplesStayCompact.
+    [Fact]
+    public void TheCodingSeriesOfFurtherMp4SamplesStayWithinTheirBudget()
+    {
+        const int fewer = 50_000;
+        const int samples = 100_000;
+        byte[] warmUp = Mp4Samples(1_000);
+
+        (Report few, long fewerKept, long fewerExcess, string fewerWhere) = MeasureExcess("few.m4a", Mp4Samples(fewer), warmUp);
+        (Report many, long kept, long excess, string where) = MeasureExcess("many.m4a", Mp4Samples(samples), warmUp);
+
+        CheckCodingGrowth(few, many, fewer, samples, categoryBytes: 5, numericBytes: 8);
+        double keptPerSample = (kept - fewerKept) / (double)(samples - fewer);
+        double excessPerSample = (excess - fewerExcess) / (double)(samples - fewer);
+        output.WriteLine($"{Hundredths(keptPerSample)} bytes kept and {Hundredths(excessPerSample)} held per further sample; {fewerWhere} {where}");
+        Assert.True(keptPerSample < 110, $"The report keeps {keptPerSample:F2} bytes per further sample.");
+        Assert.True(excessPerSample < 180, $"The analysis held {excessPerSample:F2} more bytes per further sample than it starts and ends with. {RuntimeSettings()}");
+        GC.KeepAlive(few);
+        GC.KeepAlive(many);
+    }
+
+    // What the further units add to the coding series, from the series' own sizes: the codes and count bytes of the category series and 8 bytes
+    // for each point of the numeric series, which shares the bitrate series' x values.
+    private static void CheckCodingGrowth(Report few, Report many, int fewer, int units, int categoryBytes, int numericBytes)
+    {
+        StreamInfo small = Assert.Single(few.Streams);
+        StreamInfo large = Assert.Single(many.Streams);
+        Assert.Equal(["Window Sequences", "Block Sizes", "Stereo Coding"], large.CategorySeries.Select(c => c.Name));
+        long grown = large.CategorySeries.Sum(c => c.StorageBytes) - small.CategorySeries.Sum(c => c.StorageBytes);
+        long index = large.CategorySeries.Count * 4L * ((units - fewer) / 1024 + 1);
+        Assert.True(grown <= (units - fewer) * (long)categoryBytes + index, $"The category series grow by {grown / (double)(units - fewer):F3} bytes per further unit.");
+
+        Series bandwidth = large.Series.Single(s => s.Name == "Coded Bandwidth");
+        Assert.Equal(units, bandwidth.Values.Length);
+        long numeric = (bandwidth.Values.Length - small.Series.Single(s => s.Name == "Coded Bandwidth").Values.Length) * 8L;
+        Assert.True(numeric <= (units - fewer) * (long)numericBytes, $"The coded bandwidth grows by {numeric / (double)(units - fewer):F2} bytes per further unit.");
+        Series bitrate = large.Series.Single(s => s.Name == "Bitrate");
+        Assert.True(System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bandwidth.X, out ArraySegment<double> own)
+            && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
+            "The coded bandwidth copies the bitrate series' x values although every unit has a value.");
+    }
+
+    // Frames of ffmpeg's encoder at 96 kbit/s, repeated.
+    private static byte[] AdtsFrames(int count)
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "ffmpeg-adts.aac"));
+        var stream = new MemoryStream();
+        int frames = 0;
+        while (frames < count)
+        {
+            for (int at = 0; at + 7 <= source.Length && frames < count; frames++)
+            {
+                int length = ((source[at + 3] & 3) << 11) | (source[at + 4] << 3) | (source[at + 5] >> 5);
+                stream.Write(source, at, length);
+                at += length;
+            }
+        }
+
+        return stream.ToArray();
     }
 
     // An Ogg stream of a codec no parser reads keeps a record and a segment table per page, and the
