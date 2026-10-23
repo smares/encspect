@@ -1,7 +1,6 @@
 # Coding graphs: per-frame coding choices and stream summaries
 
-Status: approved by the project lead on 2026-10-22, after two independent reviews, with four changes: dual channel is its own entry of "Stereo Coding" (decision 4), a "Channel Bit Share" series for MPEG (decision 6), the same concepts graphed in every format under the same headings (decision 8), and the real reason AAC and AC-3 record while reading (decision 3). The contract step (rollout step 1) is built, as [As built](#as-built-the-contract-step) says, and so are MPEG audio, the reference (step 2: [As built](#as-built-the-mpeg-step)), and AAC (step 3: [As built](#as-built-aac)); the other formats are not. The decisions are collected under [Decisions](#decisions), and claims that no source read for this design confirms are marked **unverified**.
-
+Status: approved by the project lead on 2026-10-22, after two independent reviews, with four changes: dual channel is its own entry of "Stereo Coding" (decision 4), a "Channel Bit Share" series for MPEG (decision 6), the same concepts graphed in every format under the same headings (decision 8), and the real reason AAC and AC-3 record while reading (decision 3). The contract step (rollout step 1) is built, as [As built](#as-built-the-contract-step) says, and so are MPEG audio, the reference (step 2: [As built](#as-built-the-mpeg-step)), and AAC (step 3: [As built](#as-built-aac)); the other formats are not. On 2026-10-23 the lead added FLAC, Monkey's Audio, TTA and WAV and AIFF to wave 2 (decision 11); their survey is under [FLAC](#flac), [Monkey's Audio](#monkeys-audio), [TTA](#tta) and [WAV and AIFF](#wav-and-aiff), and the lead approved the "Prediction" heading they bring and "side/right" as FLAC's name everywhere (decision 12). The decisions are collected under [Decisions](#decisions), and claims that no source read for this design confirms are marked **unverified**.
 ## As built: the contract step
 
 Where the contract step differs from, or adds to, what is written below:
@@ -105,6 +104,13 @@ Sources read for this design:
 - Sources the independent review read, whose statements this design cites where it relies on them: FFmpeg 6.1.1 (`aacdec_template.c` `decode_cpe`, `ac3dec.c`), liba52 0.7.4 (`a52.h`, `parse.c`).
 - The decoder contract under way on `feature/decoder-contract` (its working tree, read only), for the fields it adds to `StreamInfo`, the writers and `ReportSummary`.
 - The specification sections the parsers cite in their code and descriptions; where this design cites a section no parser cites, it says so.
+- For the lossless formats of wave 2 (decision 11), read at f9b67fb:
+  - the FLAC parser (`Model.cs`, `State.cs`, `Summary.cs`, `StreamFigures.cs`, `SubframeSyntax.cs`, `Nodes.cs`), `MemoryTests.ManyFlacFramesStayCompact`, `crosscheck_flac_fixtures.py` and the FLAC goldens;
+  - RFC 9639, sections 4.1, 4.2, 9.1.1, 9.1.3, 9.1.6, 9.2.1, 9.2.2, 9.2.5, 9.2.6 and 9.2.7;
+  - FFmpeg 6.1.1 from the archive `ffmpeg_sources.py` pins: `apedec.c`, `libavformat/ape.c`, `tta.c` (6.1.1 has no `ttadec.c`; the TTA decoder is `libavcodec/tta.c`) and `libavformat/tta.c` from its list, and `adpcm.c`, `adpcm_data.c`, `riff.c` and `aiffdec.c` extracted from the same archive, which its list does not hold;
+  - Monkey's Audio SDK 13.42 (the archive the decoder design pins, SHA-256 0a763b35…): `Prepare.h`, `Prepare.cpp`, `APECompressCore.cpp`, `APECompressCreate.cpp`, `APEDecompressCore.cpp`, `APEHeader.cpp`, `APEInfo.h`, `Old/UnMACOld.cpp`;
+  - libtta-c 2.3 (SHA-256 68ba6db2…): `libtta.c`, `libtta.h`;
+  - `flac -a` of flac 1.4.3, run for this design on three committed fixtures; CI pins flac 1.5.0, whose output was not run here.
 
 ## The design in short
 
@@ -122,8 +128,8 @@ What each parser reads per frame, packet or block today that is worth a graph or
 
 - **Read** says whether the parser reads the field now; **Tallied** whether its Statistics node counts it now.
 - **Kept per unit** is what the design adds per frame, packet or block to what the parser keeps now: one byte per value of a category series (plus a count byte per unit where the number of values varies, and a weight byte per value where a weight is used), 8 bytes per value of a numeric series. "Derived" means the codes are computed at the end from the kept records; "recorded" means the parser adds them while reading. The x values (frame offsets) are shared with the stream's per-frame bitrate series and cost nothing more.
-- **Status:** "code" is verified from the parser's code at 2310aa3, "spec" from a specification or reference source cited there, **unverified** otherwise.
-- **Wave:** 1 is the first rollout, 2 the second wave, "later" waits for the entropy pass or a parser change.
+- **Status:** "code" is verified from the parser's code at 2310aa3 (FLAC's at f9b67fb), "spec" from a specification or reference source cited there, **unverified** otherwise. Monkey's Audio, TTA and WAV have no parser yet, so their rows are "spec" at most, and "planned" in **Read** and **Tallied** means what the parser of the decoder design's rollout step 3 is to read.
+- **Wave:** 1 is the first rollout, 2 the second wave, "later" waits for the entropy pass or a parser change; "not a series" is a fact of the whole stream or nothing a parser can split per frame.
 
 ### MPEG audio, all layers
 
@@ -283,11 +289,121 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 - A WavPack block holds a whole number of samples chosen by the encoder, so these graphs have as many points as the file has blocks; their cost is the bytes in the table.
 
+### FLAC
+
+Native FLAC and FLAC in Ogg, one parser (`src/Encspect.Formats.Flac`, merged). Section numbers are RFC 9639's.
+
+| Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
+| --- | --- | --- | --- | --- | --- | --- |
+| Stereo coding, two-channel frames | the channel bits: 0b0001 left and right each coded by itself, 0b1000 left/side, 0b1001 side/right, 0b1010 mid/side (9.1.3, Table 16; 4.2) | yes, `Entry.ChannelCode` of every frame (`Model.cs` 92) | "Independent Frames", "Left/Side Frames", "Right/Side Frames", "Mid/Side Frames": four sibling nodes over every two-channel frame (`Summary.cs` 256-269); a parent "Stereo Coding" replaces them (below) | 1 byte per frame, derived from the kept entry; `None` for a frame of other than two channels | code | 2 |
+| Block size, variable block-size streams | the block size bits and the uncommon block size (9.1.1, Table 14; 9.1.6) | yes, `Entry.BlockSize` (`Model.cs` 83) | "Smallest Block Size", "Largest Block Size", "Blocking Strategy", value nodes | 8 bytes per frame as a numeric series "Block Size" in samples, derived; only in a stream whose frames have more than one size apart from a shorter last frame | code | 2 |
+| Subframe types | the subframe type bits: constant, verbatim, fixed predictor, linear predictor (9.2.1, Table 19) | yes, every subframe of a walked frame (`SubframeFacts.Type`); kept per subframe only for the first 4,096 frames (`State.MaxDetailedFrames`) | "Subframe Types" with "Constant", "Verbatim", "Fixed Predictor", "Linear Predictor" | variable: 1 byte per subframe and a count byte, recorded while reading | code | 2 |
+| Fixed predictor orders | the order, 0 to 4, of a fixed predictor subframe (9.2.1, 9.2.5) | yes | counted (`State.FixedOrders`, `State.cs` 511) but not reported; a node "Fixed Predictor Orders" with "Order 0" to "Order 4" is added | variable, as above; `None` for a subframe that has no fixed predictor; ordered | code | 2 |
+| Linear predictor order | the order, 1 to 32, of a linear predictor subframe (9.2.1, 9.2.6) | yes | "Average Predictor Order", "Highest Predictor Order" | 8 bytes per frame as a numeric series, the highest order of the frame's linear predictor subframes, recorded while reading; its own x (8 more) where a frame has none | code | 2 |
+| Coefficient precision | the predictor coefficient precision, 1 to 15 bits (9.2.6, Table 22) | yes | "Coefficient Precision", the range over the stream | 8 bytes per frame as a numeric series, the highest of the frame's linear predictor subframes; it lacks the same frames as the order series and shares its x | code | 2 |
+| Residual coding method | partitioned Rice code with 4-bit or 5-bit parameters (9.2.7, Table 23) | yes, `SubframeFacts.ResidualMethod` | "Rice With 5-Bit Parameters", a value node over the subframes with a residual | variable, as above; a flag series, `None` for constant and verbatim subframes | code | 2 |
+| Partition orders | the 4-bit partition order of the residual (9.2.7) | yes | "Partition Orders" with "Order 0" to "Order 15" | variable, as above; ordered; `None` for constant and verbatim subframes | code | 2 |
+| Wasted bits | the wasted bits flag and its unary count (9.2.1, 9.2.2) | yes | "Subframes With Wasted Bits", a value node | variable, as above; a flag series | code | 2 |
+| Compression ratio (new) | the frame's coded bits over its PCM size, block size × channels × bits per sample (9.1.1, 9.1.3, 9.1.4), in percent | yes: the frame's bits are those of its bitrate point (`StreamFigures`), its channels and bit depth are in the entry | no; a node "Compression Ratio" (lowest, overall, highest) is added | 8 bytes per frame, derived at the end from the bitrate points and the entries | code | 2 |
+| Channel bit share | the first subframe's share of the bits of the frame's two subframes | yes: each subframe's start and end bit (`SubframeFacts.StartBit`, `EndBit`, `SubframeSyntax.cs` 112) | no | 16 bytes per two-channel frame | code | later |
+
+- **The unit** is a frame with a bitrate point: every frame that is not cut (`State.cs` 342). The series share x with "Bitrate". A frame of FLAC in Ogg is one packet and the same unit.
+- **When the codes are made:**
+  - The stereo coding, block size and compression ratio are derived at the end from the 56-byte `Entry` every frame keeps (`Model.cs` 70) and the bitrate points, in the pass that builds the numeric series.
+  - The subframe series are recorded while reading, in `State.Count` (`State.cs` 491), where their tallies are counted. The parser keeps subframe records (`FrameDetail`) only for the first 4,096 frames (`State.cs` 18); past them a frame is its entry alone, so nothing is left to derive from. FLAC holds one stream per parse (`State`), so a builder per stream exists while the frames are read.
+- **Layout of the subframe series:** variable, a count byte per frame. A frame's channel count can differ from STREAMINFO's (`flac.frame-differs-from-streaminfo`), which is known only when the frame is read; a stream whose frames agree pays only the count byte. The strip then draws one row of stacked shares, not a row per subframe.
+- **Equal to the tally:**
+  - The new "Stereo Coding" node counts the complete two-channel frames, as MPEG's counts all complete frames, while the four nodes count every frame, a cut one included (`State.cs` 350).
+  - The subframe tallies count the walked frames (`isWalked`, `State.cs` 209 and 356). That can include a frame whose walk completes but whose CRC-16 is cut off: the cut is found after the walk (`State.cs` 290) and the frame has no bitrate point. The FLAC pull request counts the subframe tallies over the frames that have a bitrate point, so [the list of legitimate differences](#the-summary-over-the-stream) stays as it is.
+- **The "Stereo Coding" node** replaces the four sibling nodes, as Vorbis gets a parent "Block Sizes". Its entries are "Left/right stereo" (the two channels each coded by itself, MPEG's and AAC's entry of that name), "Left/side stereo", "Side/right stereo" and "Mid/side stereo". It anchors the series. The four nodes' figures are not kept twice under other names.
+- **Side/right, not right/side:**
+  - RFC 9639 names the assignments left-side, side-right and mid-side (4.2, Table 16), in the order their subframes are coded.
+  - The parser's header value, `docs/formats/flac.md` and the `flac-channel-assignment` article write "side/right".
+  - The tally node "Right/Side Frames", one sentence of the decoder design, libFLAC (`RIGHT_SIDE` in `flac -a`) and FFmpeg (`FLAC_CHMODE_RIGHT_SIDE`, `flac.h` 41) say right/side.
+  - The category follows the project's "side/right", and the cross-check maps libFLAC's names.
+- **Block size as a number:** a variable block-size stream may hold any size from 16 to 65,535 samples (4.1), more than a category series' 255 categories, and "Block Sizes" names long against short elsewhere. A fixed block-size stream has one size but for a shorter last frame (4.1), so it gets no series.
+- **Predictor orders in two forms:** the five fixed orders are categories, ordered. The 32 linear predictor orders and 15 precisions are numbers, since a ramp has eight steps (see [Palette](#palette)). Both numeric series have a per-second form ("Over Time", each second's highest) anchored to "Highest Predictor Order" and "Coefficient Precision".
+- **Compression ratio:** the frame's coded bits over block size × channels × bits per sample. It equals the bitrate over the PCM bitrate, so in a stream whose channels and bit depth do not change it draws the bitrate's shape on another scale. Its per-second form is the bits over the PCM bits of the frames that start in the second. The lead asked for it; the alternative is the node alone.
+- **Channel bit share** is later: the lead did not ask for it, and the first subframe is the left channel, the side channel or the mid channel depending on the assignment, which the description would have to carry frame by frame.
+- **No coded bandwidth:** FLAC predicts samples in the time domain (4.3) and codes no frequency bands.
+- **Fixtures,** found by a script over the goldens at f9b67fb (one count per golden):
+  - left/side frames in 13 fixtures, side/right in 6, mid/side in 67, two channels each coded by itself in 64;
+  - constant subframes in 3, verbatim in 6, fixed predictors in 95, linear predictors in 84; wasted bits in 5; 5-bit Rice parameters in 14;
+  - a variable blocking strategy only in the hand-built `built-variable-block-sizes` and `built-variable-block-strategy`, and a mixed one in `built-blocking-strategy-changes`.
+  - The longest holds 24 frames, so no committed fixture passes the 4,096 detailed frames. The FLAC pull request adds a stream past them, where the subframe series continue from what was recorded while reading.
+- **Cross-check:** `crosscheck_flac_fixtures.py` already runs `flac -a -F` and reads only each frame's offset. Run for this design with flac 1.4.3 on `external-16-wasted-bits.flac`, `external-24-stereo.flac` and `built-subframe-types.flac`, its output gives per frame `bits`, `blocksize` and `channel_assignment` (`INDEPENDENT`, `LEFT_SIDE`, `RIGHT_SIDE`, `MID_SIDE`), and per subframe `wasted_bits`, `type` (`CONSTANT`, `VERBATIM`, `FIXED`, `LPC`), `order`, `qlp_coeff_precision`, `residual_type` (`RICE`, `RICE2`) and `partition_order`. Comparing them unit by unit makes libFLAC an independent reader of every FLAC series. Whether flac 1.5.0, which CI pins, prints the same subframe lines is **unverified**.
+
+### Monkey's Audio
+
+No parser yet: it comes with its decoder in step 3 of the [decoder design's rollout](decoders.md#rollout), reading the headers, the seek table and the start of each frame, and leaving the range-coded data to the decoder. These graphs follow that parser.
+
+| Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
+| --- | --- | --- | --- | --- | --- | --- |
+| Stereo coding, two-channel streams | the frame start: a 32-bit CRC word whose bit 31 says that a 32-bit word of special codes follows, from version 3.83 (above 3820: SDK `APEInfo.h` 64, `APEDecompressCore.cpp` 381-397; FFmpeg `apedec.c` 766-783). Codes 1 and 2 mark one silent channel each, 4 pseudo-stereo (`Prepare.h` 6-9; `apedec.c` 46-48). With both channels silent nothing is coded; with pseudo-stereo only the first coded channel, X (`APECompressCore.cpp` 104-140; `APEDecompressCore.cpp` 290-311; `apedec.c` 1509-1512, 1657-1658) | planned: the frame starts | planned: a node "Stereo Coding" with "Mid/side stereo", "Pseudo-stereo" and "Silence" | 1 byte per frame, derived from the frame record, which keeps the codes | spec | 2, after the parser |
+| Silent frames, mono streams | code 1: nothing is coded (`APECompressCore.cpp` 142-150; `APEDecompressCore.cpp` 344-353; `apedec.c` 1482-1488) | planned | planned: a node "Silent Frames" | 1 byte per frame; a flag series | spec | 2, after the parser |
+| Bitrate per frame | the frame's size: the next frame's position in the seek table minus its own, the last frame's to the end of the data before the WAV tail (`ape.c` 269-294); its blocks, the header's blocks per frame or, for the last frame, its own count (`ape.c` 225-230, 284) | planned: the seek table | planned | the format's bitrate series | spec | 2, after the parser |
+| Compression ratio (new) | the frame's bytes over blocks × channels × bytes per sample, in percent | planned | planned: a node "Compression Ratio" | 8 bytes per frame | spec | 2, after the parser |
+| Compression level | the header's level, one per file (`ape.c` 185, 197); it chooses the filters (`apedec.c` 81-87, 274-286) | planned | | | spec | not a series |
+| Blocks per frame | one per file: 73,728, × 4 at extra high and × 16 at insane in SDK 13.42 (`APECompressCreate.cpp` 77-81); 9,216 or 73,728 by version before 3.95 (`ape.c` 225-230) | planned | | | spec | not a series |
+| Channel bit share | X and Y are decoded value by value from one range-coded stream (`APEDecompressCore.cpp` 314-323), so their bits cannot be told apart without the decoder, and decoding never changes the parser's nodes | no | | | spec | not a series |
+
+- **What can and cannot vary per frame:**
+  - A stereo frame always codes X, close to the average of the two channels, and Y, their difference (`Prepare.cpp` 415-416 for 16 bits, the same conversion in the 8-, 24- and 32-bit branches), and the decoder undoes it in every coded stereo frame (`apedec.c` 1522-1530). The SDK's comment on the same conversion of a multichannel file's front pair calls it mid-side (`Prepare.cpp` 110). So the coding is mid/side in every coded frame, and no frame chooses left/right.
+  - What a frame can choose is to code nothing (silence) or only X (pseudo-stereo: the two channels are equal in every sample, `Prepare.cpp` 422-430).
+  - Silence takes precedence over pseudo-stereo: both decoders test it first (`APEDecompressCore.cpp` 292-303; `apedec.c` 1484 and 1509, a pseudo-stereo frame taking the mono path at 1657).
+  - One silent channel alone (code 1 or 2) changes nothing in decoding (`APEDecompressCore.cpp` 292-303), so such a frame counts as "Mid/side stereo". The series does not name that channel: the SDK's variables call the first sample of each pair R (`Prepare.cpp` 405-406), so its "left silence" flag is about the second channel of the WAV data.
+- **Who writes the codes:** SDK 13.42's encoder sets them only in its 16-bit branches (`Prepare.cpp` 299-449); its 8-, 24- and 32-bit branches set none, so its stereo files of those depths are "Mid/side stereo" in every frame. Whether other encoders or earlier SDK versions set them at other depths is **unverified**. Both decoders honor them at any depth for one and two channels.
+- **More than two channels:** the decoder ignores the codes (`APEDecompressCore.cpp` 276-289), and a multichannel file's channels are paired, or coded each by itself, by its channel count and bit depth alone (`Prepare.cpp` 104-245 for 24 bits, 303-397 for 16): no series.
+- **Older files:** version 3.82 and earlier have no special codes (`APEInfo.h` 64); without the CRC format flag a Rice-coded value of 0 marks a silent frame instead (`Old/UnMACOld.cpp` 125-132). Wave 2 covers files above version 3820; how the planned parser reads the older frame starts is left to its pull request.
+- **Time:** a frame of 73,728 samples lasts 1.67 s at 44,100 Hz, 6.7 s at extra high and 26.8 s at insane, so a file has few units and most seconds start no frame. The over-time view prints "-" for those; the frames view is the useful one.
+- **No block switching and no coded bandwidth:** the frame length is fixed per file, and the coding is time-domain prediction without frequency bands.
+- **Cross-check:** FFmpeg's debug log names a silent frame ("pure silence mono", "pure silence stereo", `apedec.c` 1486, 1511) but not pseudo-stereo, and the SDK keeps its codes in a private member (`APEDecompressCore.h` 59). Pseudo-stereo therefore has no per-frame reference among the tools read; the hand-built fixtures' model carries it. ffprobe's packet sizes are the frame sizes rounded up to 4 bytes plus the 8 bytes `ape.c` puts before each packet (`ape.c` 303, 399-404), which the script maps.
+
+### TTA
+
+No parser yet: step 3 of the [decoder design's rollout](decoders.md#rollout) brings a format parser and a "tta" codec parser for Matroska, without a decoder. It reads every frame to compare the frame CRC.
+
+| Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
+| --- | --- | --- | --- | --- | --- | --- |
+| Bitrate per frame | the frame sizes of the seek table (`libavformat/tta.c` 119-127); every frame 256 × sample rate / 245 samples (`tta.c` 202; `libavformat/tta.c` 87; `libtta.c` 274), the last frame the rest (`libavformat/tta.c` 88-90; `libtta.c` 515-517) | planned: every frame | planned | the format's bitrate series | spec | 2, after the parser |
+| Compression ratio (new) | the frame's bytes over samples × channels × bytes per sample, in percent | planned | planned: a node "Compression Ratio" | 8 bytes per frame | spec | 2, after the parser |
+| Stereo coding | the same decorrelation of every frame with more than one channel (`tta.c` 341-346; `libtta.c` 719-733) | | | | spec | not a series |
+| Frame length | fixed by the sample rate, as above | | | | spec | not a series |
+| Format | 1 simple, 2 encrypted, one per file (`libtta.h` 113-114; `tta.c` 145-155) | planned | | | spec | not a series |
+
+- **Nothing in a frame states a choice.** A frame has no header: it is the Rice-coded values of every channel, sample by sample, then its CRC-32 (`tta.c` 271-362). Each frame starts the filters and the adaptive Rice coder from the same values (`tta.c` 257-268; `libtta.c` 519-524), the prediction is fixed by the bit depth (`tta.c` 327-334), and the encrypted format changes only the filters' starting coefficients, from the password (`tta.c` 262-266).
+- **Only the size varies,** so the bitrate and the compression ratio are TTA's graphs. A frame lasts 256 / 245 s, about 1.045 s, at any sample rate, so the per-frame and per-second forms are close to each other.
+- **Channel bit share** would need the Rice codes walked, since the channels' values alternate in one bit stream; the parser compares the CRC over the bytes and walks none.
+- In Matroska the frames carry no header either, and give the same series.
+- **Cross-check:** ffprobe's packet sizes are the seek table's frame sizes (`libavformat/tta.c` 119-127).
+
+### WAV and AIFF
+
+No parser yet: step 3 of the [decoder design's rollout](decoders.md#rollout) brings WAV and AIFF parsers without decoders.
+
+- **PCM has nothing to graph.** Uncompressed and floating-point PCM in WAV, AIFF and AIFF-C stores every sample as it is: there are no frames and no coding choices, and the bitrate is the sample rate × channels × bits, the same everywhere. WAV and AIFF of PCM therefore add no series in wave 2.
+- **What the samples show** (levels, peaks, clipping, DC offset) needs no parser but the samples, and belongs to the decoder design's host-side PCM analyses, not to this design.
+- **A data chunk routed to a codec parser** (MPEG audio in WAV, the plan's example of a route) gets that codec's series.
+- **Compressed data in WAV and AIFF-C** that the syntax shows without decoding:
+
+| Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
+| --- | --- | --- | --- | --- | --- | --- |
+| Block predictors, Microsoft ADPCM (format tag 2, `riff.c` 524) | 1 byte per channel at the start of each block: the index of the predictor coefficient pair the block uses, followed by its starting delta and two samples (FFmpeg 6.1.1 `adpcm.c` 1234-1285, which accepts indices 0 to 6, the seven pairs of `adpcm_data.c` 60-62) | no: no WAV parser exists, and the decoder design's step 3 does not plan one that walks the blocks of a compressed data chunk | no | 1 byte per block and channel, a fixed layout | spec | later |
+| IMA ADPCM block headers (WAV format tag 0x11, `riff.c` 532; AIFF-C `ima4`) | per channel and block the first sample and the step index (`adpcm.c` 1148-1160); AIFF-C packs 34 bytes per channel with a 9-bit predictor and a 7-bit step index (`aiffdec.c` 156-157; `adpcm.c` 1116-1119) | no | no | | spec | not a series |
+
+- The Microsoft ADPCM predictor index is a choice the encoder makes per block, readable at a fixed position of each block. It waits for a WAV parser that walks the blocks, and no Microsoft ADPCM fixture is committed; the lead can move it to wave 2 when the WAV parser's scope is set. Which pairs a file's format chunk lists, and whether it may list more than the seven, is **unverified**: no description of the format chunk's extension was read.
+- The IMA step index is the adaptive quantizer's state, which the decoder loads (`adpcm.c` 1151-1153), not a choice among codings. It follows the signal's level, which is the PCM analyses' figure.
+
 ### What goes in the first rollout
 
 - **Wave 1**, one series per tally the lead named, in the formats that read them per frame today: MPEG (channel modes, stereo coding, joint stereo modes, intensity stereo bounds, block usage, block sizes, coded bandwidth of Layers I and II, channel bit share of Layers I to III), AAC (window sequences, block sizes, stereo coding, coded bandwidth), AC-3 and E-AC-3 (block switching, coupling, rematrixing, spectral extension, coded bandwidth), Vorbis (block sizes, modes), Opus (modes, bandwidths, frame sizes, channel counts), Speex (submodes), Musepack SV4 to SV7 (coded bandwidth, mid/side stereo).
 - **Wave 2:** the further tallies of MPEG and AAC, DTS (coded bandwidth, sum/difference, joint intensity), WMA standard (block sizes, mid/side stereo, coded bandwidth) and Voice, WavPack (mid/side stereo).
-- **Later:** what needs the entropy pass (Layer III's big_values region end and intensity stereo bound, DTS transient modes, which need the core subframe side information, Opus CELT's transient, intensity, dual stereo and mid/side coding, which need the range decoder, Musepack SV8), WMA Pro's subframes and transforms, AC-3's exponent strategies and per-channel block switching.
+- **Wave 2, the lossless formats (decision 11):**
+  - FLAC: stereo coding (with the "Stereo Coding" node over the complete two-channel frames), block size in variable block-size streams, subframe types, fixed predictor orders, linear predictor order, coefficient precision, residual coding method, partition orders, wasted bits, compression ratio;
+  - Monkey's Audio: stereo coding of two-channel streams (mid/side stereo, pseudo-stereo, silence), silent frames of mono streams, compression ratio; after its parser and decoder, step 3 of the [decoder design's rollout](decoders.md#rollout);
+  - TTA: compression ratio, the only figure a TTA frame varies in besides its bitrate; after its parser, from the same step;
+  - WAV and AIFF: nothing. PCM has no coding choice per frame, and what its samples show belongs to the host-side PCM analyses.
+- **Later:** what needs the entropy pass (Layer III's big_values region end and intensity stereo bound, DTS transient modes, which need the core subframe side information, Opus CELT's transient, intensity, dual stereo and mid/side coding, which need the range decoder, Musepack SV8), WMA Pro's subframes and transforms, AC-3's exponent strategies and per-channel block switching, FLAC's channel bit share, the block predictors of Microsoft ADPCM in WAV (once a WAV parser walks the blocks of its data chunk).
 
 ## The model
 
@@ -475,6 +591,8 @@ public sealed record StreamInfo
   - Their syntax is variable-length: the position of a field depends on the fields before it (an AAC channel stream's section data, an AC-3 block's exponent strategies and coupling). Reading a field back therefore means walking the syntax over every frame, which is the work of the parse itself; recording the code in the pass that already walks it costs one byte.
   - MPEG's side information has a fixed layout, so its fields are read straight from the kept bits at known positions (and the Layer I and II allocation is walked from the header's table, with no entropy code). Vorbis, Opus, Speex, Musepack, WMA and WavPack keep decoded fields in their records.
   - Their builders belong to the stream the parser is reading. This settles the earlier "unverified: what AC-3's frame record keeps".
+- **FLAC both ways, for a reason checked in the code at f9b67fb** (decision 11): its header series (stereo coding, block size, compression ratio) are derived from the entry every frame keeps, and its subframe series are recorded while reading, since subframe records are kept only for the first 4,096 frames (see [FLAC](#flac)).
+- **Monkey's Audio and TTA** derive at the end from the frame records their parsers will keep: the special codes (1 byte) and each frame's size.
 - The cost of deriving is one more pass over the records, which every other series already makes; it allocates nothing per frame.
 
 ### The summary over the stream
@@ -512,21 +630,26 @@ One concept, one name, checked across the tally nodes, series, JSON and docs:
 | Long against short transforms | "Block Sizes" | new in MPEG and AAC; new parent in Vorbis; WMA's own node is a second form, whose entries are lengths in samples. Each format's node and series descriptions say which form it is | Vorbis: "Long Blocks" and "Short Blocks" move under the parent; every Vorbis golden |
 | Highest frequency the coded data reaches | "Coded Bandwidth" | new in the formats of the survey | AAC "Bandwidth" renamed; every AAC golden |
 | The bandwidth a packet states | "Bandwidths" | Opus | none |
+| FLAC's channel assignment of two-channel frames: left/right, left/side, side/right, mid/side | "Stereo Coding" | new parent in FLAC, over the complete two-channel frames | "Independent Frames", "Left/Side Frames", "Right/Side Frames" and "Mid/Side Frames" move under it as "Left/right stereo", "Left/side stereo", "Side/right stereo" and "Mid/side stereo"; every FLAC golden of a two-channel stream |
+| Monkey's Audio frames: mid/side stereo, pseudo-stereo, silence | "Stereo Coding" | new in the Monkey's Audio parser | none: the parser is new |
+| The length of a frame in samples, where it varies | "Block Size", a numeric series | FLAC | none; a third form of block switching beside "Block Sizes" (long against short) and WMA's lengths in samples |
+| A frame's coded size against its PCM size | "Compression Ratio" | new in FLAC, Monkey's Audio and TTA | none |
 
 - The word "plain stereo" is not used. EncSpot's mode 0 is two entries of "Stereo Coding", as above.
 - AAC's pair categories are the four codings of `JointStereoModes`, named alike, plus "Reserved". There is no "Separate windows" category: it hid intensity stereo.
 - Block types keep their format's names: Layer III's "Long", "Start", "Short", "Mixed", "Stop", "Reserved"; AAC's "Only Long", "Long Start", "Eight Short", "Long Stop"; AC-3's blocks with and without block switching; Vorbis's long and short blocks. They are different mechanisms, and the articles say how they correspond.
 - Series names are their anchors' names; the Opus series is "Bandwidths", not "Bandwidth".
+- FLAC's entries are written as MPEG's and AAC's are ("Left/right stereo", "Mid/side stereo"), with the format's own "Left/side stereo" and "Side/right stereo", as MPEG has "Dual channel" and AC-3 "1+1". Monkey's Audio's "Pseudo-stereo" is the SDK's name (`APE_SPECIAL_FRAME_PSEUDO_STEREO`), as AC-3 keeps its specification's names.
 
 ### The same concepts in every format
 
 The lead asked that where other formats have concepts like MP3's, they are graphed too, under the same headings, so a user compares an MP3 and an AAC file the same way. Three headings, each a `GraphConcept`:
 
-| Concept (heading) | MPEG audio | AAC | AC-3, E-AC-3 | Vorbis | Opus | Musepack | WMA standard | WavPack | DTS |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Stereo Coding** | "Stereo Coding", "Joint Stereo Modes", "Intensity Stereo Bounds" (wave 1) | "Stereo Coding" of channel pairs (wave 1) | "Blocks With Rematrixing", "Blocks With Coupling" (wave 1) | none: coupling is fixed per mapping | CELT's intensity, dual stereo and mid/side: inside the range-coded data (later) | "Frames With Mid/Side" (wave 1) | "Mid/Side Blocks" (wave 2) | "Mid/Side Blocks" (wave 2) | SUMF and SUMS, JOINX (wave 2) |
-| **Block Switching** | "Block Usage", "Block Sizes" (wave 1) | "Window Sequences", "Block Sizes" (wave 1) | "Blocks With Block Switching" (wave 1) | "Block Sizes" (wave 1) | CELT's transient flag: range-coded (later) | none | "Block Sizes" (wave 2) | none | TMODE: core subframe data (later) |
-| **Coded Bandwidth** | "Coded Bandwidth", Layers I and II (wave 1) | "Coded Bandwidth" (wave 1) | "Coded Bandwidth" (wave 1) | not a series (residue_end is fixed per residue) | the signaled "Bandwidths", a different figure | "Coded Bandwidth" (wave 1) | "Coded Bandwidth" (wave 2) | none | "Coded Bandwidth" of the core (wave 2) |
+| Concept (heading) | MPEG audio | AAC | AC-3, E-AC-3 | Vorbis | Opus | Musepack | WMA standard | WavPack | DTS | FLAC | Monkey's Audio | TTA | WAV and AIFF |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **Stereo Coding** | "Stereo Coding", "Joint Stereo Modes", "Intensity Stereo Bounds" (wave 1) | "Stereo Coding" of channel pairs (wave 1) | "Blocks With Rematrixing", "Blocks With Coupling" (wave 1) | none: coupling is fixed per mapping | CELT's intensity, dual stereo and mid/side: inside the range-coded data (later) | "Frames With Mid/Side" (wave 1) | "Mid/Side Blocks" (wave 2) | "Mid/Side Blocks" (wave 2) | SUMF and SUMS, JOINX (wave 2) | "Stereo Coding" of two-channel frames (wave 2) | "Stereo Coding": mid/side stereo, pseudo-stereo, silence (wave 2, after its parser) | none: the same decorrelation in every frame | none: PCM makes no choice |
+| **Block Switching** | "Block Usage", "Block Sizes" (wave 1) | "Window Sequences", "Block Sizes" (wave 1) | "Blocks With Block Switching" (wave 1) | "Block Sizes" (wave 1) | CELT's transient flag: range-coded (later) | none | "Block Sizes" (wave 2) | none | TMODE: core subframe data (later) | "Block Size" in samples, variable block-size streams (wave 2) | none: the blocks per frame are fixed per file | none: 256 × sample rate / 245 samples per frame | none |
+| **Coded Bandwidth** | "Coded Bandwidth", Layers I and II (wave 1) | "Coded Bandwidth" (wave 1) | "Coded Bandwidth" (wave 1) | not a series (residue_end is fixed per residue) | the signaled "Bandwidths", a different figure | "Coded Bandwidth" (wave 1) | "Coded Bandwidth" (wave 2) | none | "Coded Bandwidth" of the core (wave 2) | none: time-domain prediction, no frequency bands | none: as FLAC | none: as FLAC | none: PCM |
 
 - **Not yet read, and what each needs:**
   - **DTS.** SUMF and SUMS are read and kept in `Facts`; JOINX and SUBS are read (the audio coding header, code at 2310aa3) but live only in the syntax walker's arrays (`_joinx`, `_subs`). Keeping them costs a few bytes per frame in the kept record (`UnitRecord`: 1 byte per channel for JOINX, and the coded bandwidth's 8-byte value is built from SUBS), or they are recorded while reading; either way no new per-frame state beyond that. They are wave 2. The transient modes (TMODE) sit in the core subframes, behind side information of variable length (prediction modes, bit allocation, transition modes; ETSI TS 102 114 clause 5, section number **unverified** here). They need a subframe side information reader, which the plan puts under "Later"; they are a later wave.
@@ -536,6 +659,18 @@ The lead asked that where other formats have concepts like MP3's, they are graph
   - **AC-3's coupling is grouped under "Stereo Coding" with intensity stereo and keeps its name,** since both replace high-frequency detail of several channels by one shared signal with per-channel scaling (the `intensity-stereo` and `coupling` articles say so; the claim is only that they are alike, not equal). Coupling applies to more than two channels, so the heading is the user's comparison, not a claim of identity.
   - **Written out:** the abbreviations for mid/side and intensity stereo never appear; "mid/side", "intensity stereo" and "sum/difference" are written out wherever they appear.
 - **In the GUI** the Graphs tab lists a stream's series under these headings, "Stereo Coding", "Block Switching", "Coded Bandwidth" and "Bit Distribution" (the bitrate series, "Channel Bit Share"), and then "Other" for the rest (modes, frame sizes, submodes). The same heading in an MP3 and an AAC file holds that file's own series, so a user finds the same question in the same place. The bitrate series ("Bitrate", "Bitrate Over Time", "Reservoir Fill") get no `Concept` in the contract pull request, since setting it would add `concept` to every golden that has series; the GUI places them under "Bit Distribution" by their unit: kbps for the bitrate series, as `GraphsViewModel.For` already recognizes them, and bytes for "Reservoir Fill", which `For` learns in the contract pull request. A format's pull request may set the concept on them later, together with its golden changes. A heading with no series for the file is not shown.
+
+#### The lossless formats under these headings
+
+FLAC, Monkey's Audio, TTA and WAV and AIFF (decision 11), beyond the three rows of the table:
+
+- **Bit Distribution:** "Bitrate", "Bitrate Over Time" and the new "Compression Ratio" with its per-second form, in FLAC, Monkey's Audio and TTA, with the concept `bitDistribution` and their quantities set in each format's pull request, as MPEG set them. PCM in WAV and AIFF has a constant bitrate and no series.
+- **Prediction (new, decision 12):** a fifth `GraphConcept`, `Prediction` (JSON `prediction`), for the predictor a lossless coder chooses per frame or block. No shared heading fits it: it is neither stereo coding nor block switching nor bandwidth nor bits. It holds:
+  - FLAC: "Subframe Types", "Fixed Predictor Orders", "Linear Predictor Order" and "Coefficient Precision" (wave 2);
+  - WavPack: its "Decorrelation passes" (wave 2), which would otherwise sit under "Other";
+  - Monkey's Audio and TTA: none, since their filters are fixed per file (the compression level) or per bit depth.
+  - The GUI lists it after "Bit Distribution" and before "Other". Adding it changes `Core.Abstractions` (the enum), the JSON writer and the GUI's headings, so it is a small pull request of its own before FLAC's, as [the rollout](#rollout) asks of a change to the contract. If the lead rejects it, these series have no concept and sit under "Other".
+- **Other:** FLAC's "Rice With 5-Bit Parameters", "Partition Orders" and "Subframes With Wasted Bits", which only FLAC chooses per frame among the formats surveyed, and Monkey's Audio's "Silent Frames" of mono streams.
 
 ### Channel bit share
 
@@ -569,6 +704,7 @@ A numeric `Series` "Channel Bit Share" for MPEG Layers I to III (wave 1, with MP
 - What it leaves out, per format: SBR, spectral extension and DTS joint intensity coding add content above or within it; noise substitution and intensity stereo are coded within it (Musepack's noise subbands count as coded, as above; AAC's and WMA's noise-substituted bands are not removed).
 - A numeric `Series` "Coded Bandwidth", unit "Hz", per frame, at the frame offsets the bitrate series uses (WMA's own, per block), with `Concept` `CodedBandwidth`. `Series` keeps its meaning; it gains only the optional `Concept`.
 - Per frame, the highest over the frame's channels and blocks: a graph of the stream's reach, which a lowpass shapes. Per-channel values are left for later.
+- FLAC, Monkey's Audio and TTA predict samples in the time domain, and PCM stores them, with no subbands, bands or coefficients, so the lossless formats of wave 2 have no coded bandwidth. A lowpass in their audio is a figure of the PCM analyses.
 - A Statistics node "Coded Bandwidth" with the lowest, most common and highest value, and a per-second series "Coded Bandwidth Over Time" (each second's highest), anchored to it, so the text tree shows it as it shows "Bitrate Over Time".
 - It is not the lowpass:
   - The LAME tag's "Lowpass" is the encoder's setting.
@@ -594,8 +730,12 @@ Bytes added per unit to what the report keeps now, against the bounds `MemoryTes
 | Vorbis | 1 byte per packet (modes; block sizes is a grouping) | 26 bytes per packet | about twice that |
 | Musepack SV7 | 9 bytes: mid/side flag 1, coded bandwidth 8 | 42 bytes, peak 59 | about twice that |
 | WMA standard | 19 bytes per block: block sizes 1, mid/side flag 1, noise substitution 1, coded bandwidth with its own x 16 | not measured | not yet set |
+| FLAC stereo | 48 bytes: stereo coding 1; subframe types, fixed predictor orders, residual coding method, partition orders and wasted bits 3 each (2 subframes and a count byte); linear predictor order 8 and its own x 8; coefficient precision 8 (the same x); compression ratio 8. A variable block-size stream adds block size 8 | a 56-byte entry and 16 bytes of the bitrate graph per frame, and the subframe records of the first 4,096 frames (`ManyFlacFramesStayCompact`) | 200, 260 |
+| Monkey's Audio | 9 bytes per frame: stereo coding or silent frames 1, compression ratio 8; a frame lasts 1.67 s or more at 44,100 Hz | parser not built | not yet set |
+| TTA | 8 bytes per frame: compression ratio; a frame lasts about 1.045 s | parser not built | not yet set |
 
 - Every addition fits the bounds as they are, with two things to measure, not assume: AAC in MP4 (13 added to the plan's 91 bytes per access unit, measured on a 195 MB M4A, against a bound of 110 per sample; `MemoryTests`' own MP4 test measures about 60 per sample on linux-x64, so the margin there is larger, and the AAC pull request states which of the two figures it measures against) and E-AC-3 with dependent frames, for which the AC-3 pull request adds a memory test whose bound is its measured figure plus this addition. No existing bound is raised. If AAC in MP4 reaches 110, the AAC pull request says so and the lead decides; nothing is raised silently.
+- FLAC adds the most of the lossless formats, and records its subframe series and two numeric series while reading, so its peak grows by them, and by the copy of the numeric values into arrays at the end that the memory test's comment describes for the bitrate. The FLAC pull request measures both figures against 200 and 260 rather than assuming them.
 - The earlier draft's AC-3 figure added stereo series to a baseline measured on mono, and left out the E-AC-3 dependent frames and WMA's own x; the table above does not.
 - The peak grows by the codes only for the series recorded while reading (AAC, AC-3); the series derived at the end are built in the pass that builds the numeric series, and their chunks are not copied when built.
 - Each format's pull request adds a check that the report keeps at most the bytes above per unit per series, from `CategorySeries`' own size, so a regression that keeps more fails there and not only in the total.
@@ -788,6 +928,9 @@ The tools CI already builds or installs give per-frame references for some serie
 | Speex | speexdec's per-frame bitrates, which the submodes give | the tally |
 | WavPack | libwavpack's block headers (`wavpack_blocks.c`) | the tally |
 | WMA, DTS | the hand-built fixtures' models (`asf_model.py`, `dts_model.py`); `dca_frames.c` prints no audio coding header fields | the tally |
+| FLAC | `flac -a`, which `crosscheck_flac_fixtures.py` runs already: channel assignment, block size and bits per frame, and per subframe its type, order, coefficient precision, wasted bits, residual coding method and partition order (see [FLAC](#flac)) | the tally |
+| Monkey's Audio | FFmpeg's debug log names silent frames; pseudo-stereo has none, so the hand-built fixtures' model carries it; ffprobe's packet sizes for the bitrate | the tally |
+| TTA | ffprobe's packet sizes, the seek table's | the tally |
 
 - The cross-check scripts compare unit by unit, so a series that is right in sum but wrong in order fails.
 - ffprobe and libavcodec's debug output have no per-frame block type or stereo mode for these codecs that the scripts read today; this design does not add one.
@@ -843,7 +986,11 @@ The decoder contract, being built on `feature/decoder-contract`, adds to `Stream
    - the articles `coded-bandwidth`, `block-switching`, `joint-stereo`, `lowpass`; `docs/formats/mpeg-audio.md`, `docs/development.md` for the cross-checks.
    - A milestone review of the contract and MPEG follows, on Opus with high effort; its findings are fixed before step 3.
 3. **Wave 1, in parallel, a pull request each:** AAC (with the "Stereo Coding" and "Block Sizes" nodes, the pair classification and the rename to "Coded Bandwidth"), AC-3 and E-AC-3, Vorbis (with the "Block Sizes" parent), Opus (with the rename to "Channel Counts"), Speex, Musepack. Each with its cross-check, fixtures, golden commit and change file, format page, `docs/development.md` lines and article paragraph.
-4. **Wave 2,** the same way: the further MPEG and AAC tallies, DTS, WMA standard and Voice, WavPack.
+4. **Wave 2,** the same way: the further MPEG and AAC tallies, DTS, WMA standard and Voice, WavPack, and the lossless formats of decision 11:
+   - the "Prediction" heading, if the lead approves decision 12, in a small contract pull request before FLAC's;
+   - FLAC, with the "Stereo Coding" node and its moves and renames, the "Fixed Predictor Orders" and "Compression Ratio" nodes, the `flac -a` comparison in `crosscheck_flac_fixtures.py`, and a fixture past 4,096 frames;
+   - Monkey's Audio and TTA, each after its parser from step 3 of the [decoder design's rollout](decoders.md#rollout), in that parser's pull request or the one after it;
+   - WAV and AIFF add no series.
 5. **Later:** the series that wait for the entropy pass, WMA Pro, a CSV column if wanted.
 
 What is serial:
@@ -854,7 +1001,7 @@ What is serial:
 
 ## Decisions
 
-All ten were approved by the project lead on 2026-10-22; 3, 4, 6 and 8 changed at approval, as marked.
+Decisions 1 to 10 were approved by the project lead on 2026-10-22; 3, 4, 6 and 8 changed at approval, as marked. Decisions 11 and 12 are the lead's of 2026-10-23.
 
 1. **Model:** a `CategorySeries` beside `Series`: one byte per value, units with a variable number of values (a count byte, a sparse index), caps that count values without coding them, optional weights, groupings that cost nothing per value, its own JSON array; `schemaVersion` stays 1. Alternative: a fixed slot count per series, which cannot hold AAC or E-AC-3 dependent frames; or one `Series` with a kind (version 2).
 2. **Summary:** the parsers' tally nodes stay the summary in the tree; each series uses the same category names, is anchored to its node, and its counts are held equal to the tally by a data-driven test, with flag series for value-only tallies. Alternative: the host builds summary nodes from the series and the parsers drop their tallies.
@@ -866,6 +1013,8 @@ All ten were approved by the project lead on 2026-10-22; 3, 4, 6 and 8 changed a
 8. **GUI (changed: shared headings):** per series an over-time view, a per-frame strip that keeps rare categories visible, and an EncSpot-like summary table, plus a Coding Summary of all series, with a stream's series listed under the same headings in every format ("Stereo Coding", "Block Switching", "Coded Bandwidth"); AC-3's rematrixing and coupling sit under "Stereo Coding" and keep their specification names; a fixed six-hue palette with a flat gray "Other" past the sixth category and ramps for ordered series, always with names and shares in text. Its tritan separation is 5.8 in light mode, below the method's 6, accepted because of the text. Alternative: the summary and over-time views only, without the strip.
 9. **Rollout and goldens:** contract after the decoder contract (no golden changes), MPEG as the reference with a milestone review, then the wave-1 formats in parallel; goldens regenerated in a commit of their own per format, checked by comparing parsed trees with a per-format change file (additions, renames, moves, changed values, path shifts). Alternative: every format in the first wave; or hiding category series from the goldens and relying on manifests.
 10. **CI step (changes the workflow):** an opt-in step that runs the golden-additions check only on pull requests that add or change a change file, leaving other golden changes to review as today. Recommended. Alternative: require a change file on every pull request that touches a golden, which gates unrelated parser fixes, or no CI step and a local script for reviewers only.
+11. **Lossless formats (the project lead, 2026-10-23):** "graphs for FLAC, Monkey's Audio, TTA and WAV/AIFF in wave 2". From the survey: FLAC graphs its stereo coding, block size, subframe types, predictor orders, coefficient precision, residual coding method, partition orders, wasted bits and compression ratio, recording its subframe series while reading because it keeps subframe records only for the first 4,096 frames; Monkey's Audio graphs its pseudo-stereo and silent frames and its compression ratio, and TTA its compression ratio, each after its parser; WAV and AIFF of PCM have nothing to graph, and Microsoft ADPCM's block predictors wait for a WAV parser that walks the blocks.
+12. **A "Prediction" heading and FLAC's "Stereo Coding" node (approved by the project lead, 2026-10-23, with "side/right" as the name everywhere, the tally node "Right/Side Frames" and the sentence in `decoders.md` included).** A fifth `GraphConcept`, `Prediction`, for FLAC's subframe types, predictor orders and coefficient precision and WavPack's decorrelation passes, added in a small contract pull request before FLAC's. FLAC's four stereo nodes move under a new "Stereo Coding" node over the complete two-channel frames, renamed "Left/right stereo", "Left/side stereo", "Side/right stereo" and "Mid/side stereo" after the project's and RFC 9639's side/right, which changes every FLAC golden of a two-channel stream. Alternative: no new concept, the series under "Other"; and a new "Stereo Coding" node beside the four, which would show each figure twice under two names.
 
 ## Open risks and unverified claims
 
@@ -873,4 +1022,6 @@ All ten were approved by the project lead on 2026-10-22; 3, 4, 6 and 8 changed a
 - **Unverified:** the palette against Fluent's `SystemRegionBrush` in light and dark; the graph surfaces sampled from screenshots are `#ffffff` and `#000000`, and the implementation records the theme's.
 - **Not measured:** the GUI's drawing time at 100,000 frames and the parsers' added time; the estimates above are reasoning, not runs. The AAC in MP4 bound (13 added bytes against 19 of margin) and E-AC-3 with dependent frames are the memory figures to measure first.
 - **Scope of MPEG summaries:** a stream split by an embedded tag has its series over the stream and its tally per region, so the JSON counts and the tree's differ there, as the bitrate figures already do. The equality test sums the series of a region's streams.
+- **Unverified, lossless formats:** whether flac 1.5.0's `flac -a` prints the subframe lines flac 1.4.3 prints; whether encoders other than SDK 13.42 set Monkey's Audio's special codes at depths other than 16 bits; how the Monkey's Audio parser reads the frame starts of files before version 3.90; which coefficient pairs a Microsoft ADPCM format chunk may list.
+- **Not measured:** FLAC's added bytes and peak against `ManyFlacFramesStayCompact`'s bounds (48 to 56 bytes added per stereo frame by the table above).
 - **Run-length codes** make goldens short for steady streams; a stream that switches every frame (block types of some encoders) gives about one run per frame and value, which the golden commit's size will show per format.
