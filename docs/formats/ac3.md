@@ -23,6 +23,20 @@ Dolby Digital and Dolby Digital Plus, as raw files and in [MP4](mp4.md).
 
 - **dmixmod 3:** A/52:2018 Annex D Table D2.2 reserves it (E-AC-3's mixing metadata has the same field and Annex E gives no table of its own), and the decoder should still reproduce audio. Dolby's own test files write it, and ffmpeg's `ac3defs.h` notes that encoders use it to indicate Dolby Pro Logic II. It is an info finding (`ac3.dmixmod-reserved`), not a warning. The other reserved values of the shared tables (the surround mix levels 0 to 2, dheadphonmod and roomtyp 3) stay warnings; no real file the project has uses them.
 
+## What is graphed
+
+A program frame is the unit of every series: an AC-3 syncframe, or an E-AC-3 independent frame with the dependent frames of its program frame. The series are recorded while the audio blocks are read, so each equals its statistics node, and they share the stream's time index and the x values of "Bitrate".
+
+- **Flag series**, one value for each audio block read, in the order of the blocks (the independent frame's, then each dependent frame's). A stream has the series whose statistics node it has:
+  - "Blocks With Block Switching" (concept Block Switching): whether any full bandwidth channel of the block has blksw set (A/52 5.4.3.1); in E-AC-3 a block of a frame whose blkswe is 0 has no flags and counts as without.
+  - "Blocks With Coupling" (Stereo Coding): cplinu, which the last cplstre sets and a block keeps (5.4.3.7, 5.4.3.8); not for streams of fewer than two full bandwidth channels.
+  - "Blocks With Rematrixing" (Stereo Coding): whether the flags in force have a band coded as sum and difference, mid/side (sum/difference) coding of the band (5.4.3.19, 5.4.3.20); 2/0 streams only, and a block of another audio coding mode in a program frame of a 2/0 program (a dependent frame) counts as without.
+  - "Blocks With Spectral Extension" (Coded Bandwidth, since it states where coding stops): spxinu (Annex E 2.3.3.2), E-AC-3 only.
+  - Each has two categories, "With ..." (the count of its statistics node) and "Without ..." (the other blocks read). An AC-3 stream's units have six values (a fixed layout, a block the frame has no value for is empty); an E-AC-3 stream's units as many as their blocks make (a variable layout, up to 54).
+- **Coded Bandwidth** (Hz, per program frame and per second, with the node "Coded Bandwidth": lowest, most common and highest in whole hertz): the highest end bin of any block read, over its full bandwidth channels and the coupling channel, times the sample rate over 512, rounded half to even. A channel's end is 37 + 3 × (chbwcod + 12) where it codes its own exponents, 37 + 12 × cplbegf where it is coupled, 25 + 12 × its begin sub-band in spectral extension (A/52 7.2.2.1; Annex E 3.3.3), and the coupling channel's 37 + 12 × (cplendf + 3). The LFE channel is left out. It is a bound the stream states, not the encoder's lowpass.
+- **The tallies count blocks read to their end.** A block that breaks (an invalid field, mantissas past the frame, the adaptive hybrid transform or enhanced coupling) is in "Audio Blocks" but in none of the "Blocks With" counts, nor in a series, nor in "Bands Coded as Sum/Difference", whose denominator follows. Earlier reports counted the flags of the block that broke.
+- **Not graphed:** per-channel block switching, exponent strategies, dynamic range gain and delta bit allocation (design: later).
+
 ## Channel layout
 
 From the audio coding mode and the LFE flag. E-AC-3's dependent substreams add their channels to their program's layout.
