@@ -172,7 +172,7 @@ internal static class SubframeSyntax
 }
 ```
 
-- The decoder adds what the structure report never needs: restoring samples from the predictor, undoing left/side, right/side and mid/side coding, wasted bits, and the MD5. It never reads a field with code of its own.
+- The decoder adds what the structure report never needs: restoring samples from the predictor, undoing left/side, side/right and mid/side coding, wasted bits, and the MD5. It never reads a field with code of its own.
 - A coding whose entropy-coded data the parser does not walk (Monkey's Audio's range coder, whose frames the seek table delimits) keeps its entropy decoder in its `Decoding` namespace. The parser still owns the header, seek table and frame start fields, which the decoder reads with the parser's code.
 - The configuration reaches the decoder as the bytes the parser read it from (`DecodeSetup.Configuration`), and the decoder reads them with the parser's own reader: a few dozen bytes read twice by one piece of code, not two readings.
 - Guards against drift beyond the shared code: the fixture tests check that the decoder ends every frame at the bit where the parser's walk ends, and the bit-exact cross-checks (below) catch a misreading the two would share.
@@ -204,7 +204,7 @@ With decoding on, a coding whose parser walks its entropy-coded data (FLAC, ALAC
 **The measurement.**
 
 - **Machine:** Intel Xeon at 2.80 GHz, 4 vCPUs, 15 GB, Linux 6.18, .NET 10.0.401 (Release, tiered compilation with PGO as the default; a run with `DOTNET_TieredCompilation=0` agreed within the noise), one thread.
-- **Prototype:** a FLAC frame reader on `BitCursor` (headers with CRC-8, every subframe type, Rice partitions with escapes, wasted bits, CRC-16), a decoder (fixed and LPC prediction, with `System.Numerics.Vector` when the sum fits 32 bits and scalar 64-bit otherwise, undoing left/side, right/side and mid/side coding, `CanonicalPcm.Write` into `Md5`), and a driver. The whole file is in memory and the frames are located before timing. The MD5 of every variant equals the STREAMINFO MD5 of every file.
+- **Prototype:** a FLAC frame reader on `BitCursor` (headers with CRC-8, every subframe type, Rice partitions with escapes, wasted bits, CRC-16), a decoder (fixed and LPC prediction, with `System.Numerics.Vector` when the sum fits 32 bits and scalar 64-bit otherwise, undoing left/side, side/right and mid/side coding, `CanonicalPcm.Write` into `Md5`), and a driver. The whole file is in memory and the frames are located before timing. The MD5 of every variant equals the STREAMINFO MD5 of every file.
 - **Files:** made with FFmpeg 6.1.1's FLAC encoder (`flac` is not installed in the container) from synthetic signals (three sines with a tremolo, plus uniform noise at 0.002, 0.05 and 0.3 of full scale), so they are not music; they differ in noise and encoder setting, which is what moves the entropy read. 16-bit 44.1 kHz stereo at compression levels 0, 5, 8 and 12 (10 minutes), 5 and 8 (one hour), noise levels 0.002 and 0.3 (10 minutes, level 5), mono, LPC precision 12 (which takes the 32-bit vector path), and 24-bit 96 kHz stereo (10 minutes).
 - **Variants** (each run over all frames, the fastest of 7 runs after a warm-up, 3 for the hour files):
   - `walk`: the parser's pass alone, with CRCs, storing nothing;
