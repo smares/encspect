@@ -904,6 +904,11 @@ def main():
             if not {"faad_trace", "all"} & set(check.get("skip", {})) and (directory / (path.stem + ".report.json")).exists():
                 report = json.loads((directory / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0]
                 traced += check_trace(path, report, problems, check.get("faad_trace_skip", {}))
+            elif (directory / (path.stem + ".report.json")).exists():
+                skips = check.get("skip", {})
+                reason = skips.get("faad_trace") or skips.get("all")
+                if any(s.get("categorySeries") for s in json.loads((directory / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0].get("streams", [])):
+                    SERIES_SKIPPED.append((path.name, f"the manifest skips the faad2 trace: {reason}"))
             if check.get("decode"):
                 messages = decode_messages(path)
                 if messages:

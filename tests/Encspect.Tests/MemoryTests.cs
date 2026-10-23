@@ -281,15 +281,13 @@ public class MemoryTests(ITestOutputHelper output)
         const int frames = 100_000;
         byte[] warmUp = AdtsFrames(1_000);
 
-        (Report few, long fewerKept, long fewerExcess, string fewerWhere) = MeasureExcess("few.aac", AdtsFrames(fewer), warmUp);
-        (Report many, long kept, long excess, string where) = MeasureExcess("many.aac", AdtsFrames(frames), warmUp);
+        (Report few, long fewerKept) = MeasureKept("few.aac", AdtsFrames(fewer), warmUp);
+        (Report many, long kept) = MeasureKept("many.aac", AdtsFrames(frames), warmUp);
 
         CheckCodingGrowth(few, many, fewer, frames, categoryBytes: 5, numericBytes: 8);
         double keptPerFrame = (kept - fewerKept) / (double)(frames - fewer);
-        double excessPerFrame = (excess - fewerExcess) / (double)(frames - fewer);
-        output.WriteLine($"{Hundredths(keptPerFrame)} bytes kept and {Hundredths(excessPerFrame)} held per further frame; {fewerWhere} {where}");
+        output.WriteLine($"{Hundredths(keptPerFrame)} bytes kept per further frame");
         Assert.True(keptPerFrame < 220, $"The report keeps {keptPerFrame:F2} bytes per further frame.");
-        Assert.True(excessPerFrame < 250, $"The analysis held {excessPerFrame:F2} more bytes per further frame than it starts and ends with. {RuntimeSettings()}");
         GC.KeepAlive(few);
         GC.KeepAlive(many);
     }
@@ -302,15 +300,13 @@ public class MemoryTests(ITestOutputHelper output)
         const int samples = 100_000;
         byte[] warmUp = Mp4Samples(1_000);
 
-        (Report few, long fewerKept, long fewerExcess, string fewerWhere) = MeasureExcess("few.m4a", Mp4Samples(fewer), warmUp);
-        (Report many, long kept, long excess, string where) = MeasureExcess("many.m4a", Mp4Samples(samples), warmUp);
+        (Report few, long fewerKept) = MeasureKept("few.m4a", Mp4Samples(fewer), warmUp);
+        (Report many, long kept) = MeasureKept("many.m4a", Mp4Samples(samples), warmUp);
 
         CheckCodingGrowth(few, many, fewer, samples, categoryBytes: 5, numericBytes: 8);
         double keptPerSample = (kept - fewerKept) / (double)(samples - fewer);
-        double excessPerSample = (excess - fewerExcess) / (double)(samples - fewer);
-        output.WriteLine($"{Hundredths(keptPerSample)} bytes kept and {Hundredths(excessPerSample)} held per further sample; {fewerWhere} {where}");
+        output.WriteLine($"{Hundredths(keptPerSample)} bytes kept per further sample");
         Assert.True(keptPerSample < 110, $"The report keeps {keptPerSample:F2} bytes per further sample.");
-        Assert.True(excessPerSample < 180, $"The analysis held {excessPerSample:F2} more bytes per further sample than it starts and ends with. {RuntimeSettings()}");
         GC.KeepAlive(few);
         GC.KeepAlive(many);
     }
@@ -328,13 +324,17 @@ public class MemoryTests(ITestOutputHelper output)
 
         Series bandwidth = large.Series.Single(s => s.Name == "Coded Bandwidth");
         Assert.Equal(units, bandwidth.Values.Length);
-        long numeric = (bandwidth.Values.Length - small.Series.Single(s => s.Name == "Coded Bandwidth").Values.Length) * 8L;
+        long numeric = BackingBytes(bandwidth.Values) - BackingBytes(small.Series.Single(s => s.Name == "Coded Bandwidth").Values);
         Assert.True(numeric <= (units - fewer) * (long)numericBytes, $"The coded bandwidth grows by {numeric / (double)(units - fewer):F2} bytes per further unit.");
         Series bitrate = large.Series.Single(s => s.Name == "Bitrate");
         Assert.True(System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bandwidth.X, out ArraySegment<double> own)
             && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
             "The coded bandwidth copies the bitrate series' x values although every unit has a value.");
     }
+
+    // The bytes of the array behind a series, not only of the part it shows, so a slack kept at the end counts.
+    private static long BackingBytes(ReadOnlyMemory<double> values) =>
+        System.Runtime.InteropServices.MemoryMarshal.TryGetArray(values, out ArraySegment<double> segment) ? segment.Array!.Length * 8L : values.Length * 8L;
 
     // Frames of ffmpeg's encoder at 96 kbit/s, repeated.
     private static byte[] AdtsFrames(int count)
@@ -1406,6 +1406,15 @@ public class MemoryTests(ITestOutputHelper output)
     // higher of the heap before the analysis and the heap at its end, so memory that earlier work
     // releases during the analysis lowers the reading instead of raising it. As with kept, two
     // analyses are taken and the smaller excess counts.
+    // The report's size, from two analyses with the heap counted after each. The peak while the series are recorded is not asserted here: the
+    // sampler sees every 300 ms and the transient lies below the final heap, so it read 0 for any count and could not fail. The recording
+    // buffer's 12 bytes per unit at peak are documented in the design.
+    private static (Report Report, long Kept) MeasureKept(string name, byte[] data, byte[]? warmUp = null)
+    {
+        (Report report, long kept, _, _) = MeasureExcess(name, data, warmUp);
+        return (report, kept);
+    }
+
     private static (Report Report, long Kept, long Excess, string Where) MeasureExcess(string name, byte[] data, byte[]? warmUp = null, AnalysisOptions? options = null)
     {
         var analyzer = Analyzer.CreateDefault();
