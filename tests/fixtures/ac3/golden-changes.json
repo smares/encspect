@@ -1,0 +1,274 @@
+{
+  "note": "The AC-3 step adds categorySeries, the series Coded Bandwidth and Coded Bandwidth Over Time and concept and quantity on the bitrate series of every AC-3 and E-AC-3 stream whose audio blocks are read, and to the statistics of such a stream the node Coded Bandwidth with the children Lowest, Most Common and Highest. The block tallies count blocks read to their end (a block that breaks is in neither the tally nor the series), which changes the value of Bands Coded as Sum/Difference where a block breaks. The goldens of the six hand-built coding fixtures are new and not listed.",
+  "goldens": [
+    "tests/fixtures/ac3/",
+    "tests/fixtures/matroska/"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "categorySeries"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate",
+      "key": "concept"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate",
+      "key": "quantity"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate Over Time",
+      "key": "concept"
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate Over Time",
+      "key": "quantity"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AC-3",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "E-AC-3",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "E-AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "E-AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "E-AC-3",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common"
+    }
+  ],
+  "changed": [
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Bands Coded as Sum/Difference"
+      ],
+      "fields": [
+        "value"
+      ]
+    }
+  ]
+}

@@ -219,6 +219,34 @@
                   "unit": "bits",
                   "offset": 0,
                   "length": 4180
+                },
+                {
+                  "name": "Coded Bandwidth",
+                  "offset": 0,
+                  "length": 4180,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 6288,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 4180
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 6288,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 4180
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 6288,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 4180
+                    }
+                  ]
                 }
               ]
             },
@@ -29863,6 +29891,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0,
               278,
@@ -29902,11 +29932,182 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0
             ],
             "values": [
               64
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              278,
+              558,
+              836,
+              1114,
+              1394,
+              1672,
+              1950,
+              2230,
+              2508,
+              2786,
+              3066,
+              3344,
+              3622,
+              3902
+            ],
+            "values": [
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288,
+              6288
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              6288
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Blocks With Block Switching",
+            "concept": "blockSwitching",
+            "valueLabel": "block",
+            "valuesPerUnit": 6,
+            "categories": [
+              {
+                "name": "With block switching",
+                "count": 0
+              },
+              {
+                "name": "Without block switching",
+                "count": 90
+              }
+            ],
+            "total": 90,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                90
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Blocks With Coupling",
+            "concept": "stereoCoding",
+            "valueLabel": "block",
+            "valuesPerUnit": 6,
+            "categories": [
+              {
+                "name": "With coupling",
+                "count": 90
+              },
+              {
+                "name": "Without coupling",
+                "count": 0
+              }
+            ],
+            "total": 90,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                90
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Blocks With Rematrixing",
+            "concept": "stereoCoding",
+            "valueLabel": "block",
+            "valuesPerUnit": 6,
+            "categories": [
+              {
+                "name": "With rematrixing",
+                "count": 6
+              },
+              {
+                "name": "Without rematrixing",
+                "count": 84
+              }
+            ],
+            "total": 90,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                12
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                11
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                17
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                42
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]
