@@ -240,7 +240,7 @@ public sealed class CapitalizationTests
 
         GraphChoice choice = GraphsViewModel.For(stream).Single(c => c.Title == "Stereo Coding");
 
-        Assert.Equal(["Over Time", "Smoothed", "Lines", "Columns", "Frames", "Summary"], choice.Forms.Select(f => f.Title));
+        Assert.Equal(["Over Time", "Smoothed", "Frames", "Summary"], choice.Forms.Select(f => f.Title));
         AssertTitleCase(choice.Forms.Select(f => f.Title));
     }
 

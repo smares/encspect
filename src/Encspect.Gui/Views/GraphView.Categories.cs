@@ -24,6 +24,7 @@ public sealed partial class GraphView
     private const double StripGap = 6;
     private const double CaptionHeight = 20;
     private const double AxisHeight = 24;
+    private const double DimmedLastOpacity = 0.6;
 
     // The plot is never lower than this: a view with less room scrolls instead of squeezing the chart.
     private const double MinOverTimeHeight = 110;
@@ -187,7 +188,7 @@ public sealed partial class GraphView
     {
         string legend = graph switch
         {
-            CategoryGraph { View: not GraphForm.Summary } category => "Legend: " + string.Join(", ", category.Series.Categories.Select((c, i) => (c, i)).Where(t => category.Series.Counts[t.i] > 0).Select(t => $"{t.c.Name} {CategoryGraph.SharePercent(category.Series.Counts[t.i], category.Series.Total)}")),
+            CategoryGraph { View: not GraphForm.Summary } category => "Legend: " + string.Join(", ", LegendEntries(category).Select(e => e.Label)),
             ShareSplitGraph split => $"Legend: first channel, second channel",
             _ => string.Empty,
         };
@@ -231,7 +232,7 @@ public sealed partial class GraphView
                 _categoryColumns.Clear();
             }
 
-            columns = graph.IsOverTime ? CategoryColumns.OverTime(graph.Series, width, graph.View == GraphForm.Smoothed ? CategoryGraph.SmoothingWindow : 0) : CategoryColumns.Frames(graph.Series, width, lane);
+            columns = graph.IsOverTime ? CategoryColumns.OverTime(graph.Series, width, graph.View == GraphForm.Smoothed ? graph.SmoothedCounts : null) : CategoryColumns.Frames(graph.Series, width, lane);
             _categoryColumns[key] = columns;
         }
 
@@ -252,10 +253,18 @@ public sealed partial class GraphView
 
     private static string Capitalize(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
 
+    // The legend of the over-time chart lists the layers bottom to top, which is largest share first (CategoryColumns.StackOrder):
+    // the legend runs left to right and wraps downward, so the baseline layer comes first as the stack's first row would, and the
+    // entries then fall in the order of the shares in the file. The strip of frames and the summary tables keep the order of
+    // the categories.
+    private static IEnumerable<int> LegendOrder(CategoryGraph graph) => graph.IsOverTime
+        ? CategoryColumns.StackOrder(graph.Series)
+        : Enumerable.Range(0, graph.Series.Categories.Count);
+
     // The legend's entries as text with their shares, and the category each stands for.
     internal static List<(string Label, int Category)> LegendEntries(Graph graph) => graph switch
     {
-        CategoryGraph category => [.. Enumerable.Range(0, category.Series.Categories.Count).Where(c => category.Series.Counts[c] > 0).Select(c => ($"{category.Series.Categories[c].Name} {CategoryGraph.SharePercent(category.Series.Counts[c], category.Series.Total)}", c))],
+        CategoryGraph category => [.. LegendOrder(category).Where(c => category.Series.Counts[c] > 0).Select(c => ($"{category.Series.Categories[c].Name} {CategoryGraph.SharePercent(category.Series.Counts[c], category.Series.Total)}", c))],
         ShareSplitGraph split => [("First channel", 0), ("Second channel", 1)],
         _ => [],
     };
@@ -621,27 +630,7 @@ public sealed partial class GraphView
             DrawPercentTicks(context, plot, grid, secondary);
             CategoryColumns columns = ColumnsFor(category, width, -1);
             Slots slots = SlotsOf(plot, category, columns);
-            if (category.View == GraphForm.Columns)
-            {
-                for (int column = 0; column < columns.Count; column++)
-                {
-                    if (columns.Total(column) == 0)
-                    {
-                        continue;
-                    }
-
-                    DrawStack(context, columns.Counts(column), slots.X(column), slots.W(column), plot.Top, plot.Height, styles, brushes, heights, surface, highContrast, series);
-                }
-            }
-            else if (category.View == GraphForm.Lines)
-            {
-                DrawLines(context, series, columns, slots, plot, styles, brushes);
-            }
-            else
-            {
-                DrawArea(context, series, columns, slots, plot, styles, brushes, surface, highContrast);
-            }
-
+            DrawArea(context, category, columns, slots, plot, styles, brushes, surface, highContrast);
             DrawTimeAxis(context, series.Time!.Starts.Span, slots, columns.First, secondary, plot);
             if (MarkedIndex is { } marked && marked < category.Count)
             {
@@ -826,8 +815,9 @@ public sealed partial class GraphView
     // as long as the interval does, with a vertical step at each boundary and no slope between them. The category with the
     // largest share is the bottom layer, the one with a flat baseline. Heights are as in a column (a category that occurs
     // is at least a pixel high); a thin line of the surface separates the layers.
-    private void DrawArea(DrawingContext context, CategorySeries series, CategoryColumns columns, Slots slots, Rect plot, CategoryStyle[] styles, IBrush[] brushes, Color surface, bool highContrast)
+    private void DrawArea(DrawingContext context, CategoryGraph graph, CategoryColumns columns, Slots slots, Rect plot, CategoryStyle[] styles, IBrush[] brushes, Color surface, bool highContrast)
     {
+        CategorySeries series = graph.Series;
         int categories = series.Categories.Count;
         int[] order = CategoryColumns.StackOrder(series);
         var tops = new double[columns.Count * categories];
@@ -915,48 +905,12 @@ public sealed partial class GraphView
                 }
             }
         }
-    }
 
-    // The share of each category over time as a stepped line: one level for each interval, at the share it has there, on the
-    // plot's 0 to 100% scale. The largest category is drawn first and the others over it; a reserved category's line is dashed.
-    private static void DrawLines(DrawingContext context, CategorySeries series, CategoryColumns columns, Slots slots, Rect plot, CategoryStyle[] styles, IBrush[] brushes)
-    {
-        (double[] start, double[] end) = ColumnEdges(slots);
-        double bottom = plot.Bottom - 1;
-        double span = plot.Height - 2;
-        foreach (int category in CategoryColumns.StackOrder(series))
+        // A last interval of only a few frames is dimmed, as the hover text says (CategoryGraph.LastInterval).
+        int last = columns.Count - 1;
+        if (graph.LastInterval is { IsFew: true } && columns.End(last) - columns.First(last) == 1 && columns.Total(last) > 0)
         {
-            if (series.Counts[category] == 0)
-            {
-                continue;
-            }
-
-            var pen = new Pen(brushes[category], 2, styles[category].IsHatched ? new DashStyle([4, 3], 0) : null, PenLineCap.Flat, PenLineJoin.Miter);
-            foreach ((int from, int to) in FilledRuns(columns))
-            {
-                var line = new StreamGeometry();
-                using (StreamGeometryContext g = line.Open())
-                {
-                    for (int column = from; column < to; column++)
-                    {
-                        double y = bottom - (span * columns.Counts(column)[category] / columns.Total(column));
-                        if (column == from)
-                        {
-                            g.BeginFigure(new Point(start[column], y), false);
-                        }
-                        else
-                        {
-                            g.LineTo(new Point(start[column], y));
-                        }
-
-                        g.LineTo(new Point(end[column], y));
-                    }
-
-                    g.EndFigure(false);
-                }
-
-                context.DrawGeometry(null, pen, line);
-            }
+            context.FillRectangle(new ImmutableSolidColorBrush(surface, DimmedLastOpacity), new Rect(start[last], plot.Top, end[last] - start[last], plot.Height));
         }
     }
 

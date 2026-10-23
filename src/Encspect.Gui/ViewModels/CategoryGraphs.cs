@@ -11,7 +11,7 @@ public enum GraphForm
     // One point or cell per frame.
     Frames,
 
-    // One point or column per interval of audio time.
+    // One point or stepped-area level per interval of audio time.
     OverTime,
 
     // Over the whole stream: a table of counts and shares, or the distribution of the values.
@@ -20,15 +20,8 @@ public enum GraphForm
     // The first and second part of a quantity that divides in two, per interval of audio time.
     Split,
 
-    // A category series' share over time as one stacked column per interval, with gaps between them (the form before the
-    // stepped area took over OverTime).
-    Columns,
-
-    // A category series' share over time as a stepped stacked area, each interval averaged with its neighbors.
+    // A category series' share over time as a stepped stacked area (OverTime) with each interval averaged with its neighbors.
     Smoothed,
-
-    // A category series' share over time as one stepped line for each category.
-    Lines,
 }
 
 // A graph that draws tables of categories with counts and shares.
@@ -80,7 +73,7 @@ public sealed class CategoryColumns
     public bool IsRare(int column, int category) => _rare[(column * Categories) + category];
 
     // The intervals of the series' time index, merged into at most the given number of columns.
-    public static CategoryColumns OverTime(CategorySeries series, int columns, int smoothing = 0)
+    public static CategoryColumns OverTime(CategorySeries series, int columns, long[]? smoothed = null)
     {
         ReadOnlySpan<int> firstUnits = series.Time!.FirstUnits.Span;
         int intervals = firstUnits.Length;
@@ -88,7 +81,6 @@ public sealed class CategoryColumns
         int categories = series.Categories.Count;
         var first = new int[used + 1];
         var counts = new long[used * categories];
-        long[]? smoothed = smoothing > 1 ? SmoothedCounts(series, smoothing) : null;
         for (int column = 0; column < used; column++)
         {
             int from = (int)((long)column * intervals / used);
@@ -318,6 +310,29 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
 
     public CategorySeries Series { get; }
 
+    private long[]? _smoothed;
+
+    // The counts of every interval averaged over SmoothingWindow intervals (CategoryColumns.SmoothedCounts), made once: the
+    // hover text of the smoothed form asks for them at every pointer move.
+    public long[] SmoothedCounts => _smoothed ??= CategoryColumns.SmoothedCounts(Series, SmoothingWindow);
+
+    // Whether the last interval of the time index holds fewer than FewFrames frames, which the chart draws dimmed; with how
+    // many frames and, where the duration is known, how many seconds it lasts.
+    public (bool IsFew, int Frames, double Seconds)? LastInterval
+    {
+        get
+        {
+            if (Series.Time is not { FirstUnits.Length: > 1 } time)
+            {
+                return null;
+            }
+
+            int frames = Series.Count - time.FirstUnits.Span[^1];
+            double seconds = Duration > time.Starts.Span[^1] ? Duration - time.Starts.Span[^1] : 0;
+            return (frames < FewFrames, frames, seconds);
+        }
+    }
+
     // The stream's duration in seconds, which gives the last interval its length (0 where unknown): a stream that ends a few
     // frames into a second has a last interval that is drawn as long as it lasts.
     public double Duration { get; init; }
@@ -331,7 +346,11 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
 
     public const int SmoothingThreshold = 30;
 
-    public static bool IsOverTimeForm(GraphForm form) => form is GraphForm.OverTime or GraphForm.Columns or GraphForm.Smoothed or GraphForm.Lines;
+    public static bool IsOverTimeForm(GraphForm form) => form is GraphForm.OverTime or GraphForm.Smoothed;
+
+    // The last interval of a time index is drawn dimmed and named in its hover text when it holds fewer frames than this
+    // (and is not the only interval): a stream rarely ends on a second boundary, and a few frames say little about a share.
+    public const int FewFrames = 8;
 
     // Whether this graph is a chart of the share over time, in whichever of its forms.
     public bool IsOverTime => IsOverTimeForm(View);
@@ -350,8 +369,6 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
                 forms.Add(GraphForm.Smoothed);
             }
 
-            forms.Add(GraphForm.Lines);
-            forms.Add(GraphForm.Columns);
         }
 
         if (series.Count > 0)
@@ -422,14 +439,21 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
         Series.CountRange(units[first], end < units.Length ? units[end] : Series.Count, counts);
         string from = Format.Clock(starts[first]);
         string range = end < starts.Length ? $"{from} to {Format.Clock(starts[end])}" : $"{from} to the end";
-        return $"{range} · {Shares(Series, counts)}";
+        string text = $"{range} · {Shares(Series, counts)}";
+        return end == units.Length && end - first == 1 && LastInterval is { IsFew: true } last ? $"{DescribeLast(last)} · {text}" : text;
     }
+
+    // "Last 0.03 s, 1 frame", or "Last 1 frame" where the duration is not known.
+    private static string DescribeLast((bool IsFew, int Frames, double Seconds) last) =>
+        last.Seconds > 0
+            ? $"Last {(last.Seconds < 0.01 ? "under 0.01" : last.Seconds.ToString("0.00", CultureInfo.InvariantCulture))} s, {Format.Count(last.Frames, "frame", "frames")}"
+            : $"Last {Format.Count(last.Frames, "frame", "frames")}";
 
     // Hover text of the smoothed form: the intervals' own shares and the average the chart draws, as the same categories'
     // shares: "0:12 to 0:13 · Short 12.5% (24 values) · Long 87.5% (168 values) · average of 5 seconds: Short 14.0% · Long 86.0%".
     public string DescribeSmoothed(int first, int end)
     {
-        long[] smoothed = CategoryColumns.SmoothedCounts(Series, SmoothingWindow);
+        long[] smoothed = SmoothedCounts;
         int categories = Series.Categories.Count;
         var counts = new long[categories];
         for (int interval = first; interval < end; interval++)

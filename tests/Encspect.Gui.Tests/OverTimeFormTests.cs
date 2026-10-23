@@ -13,28 +13,27 @@ using Encspect.Gui.Views;
 
 namespace Encspect.Gui.Tests;
 
-// The over-time forms of a category chart: the stepped stacked area (the default), its smoothed variant, the lines and the
-// columns the area replaced. Each second keeps its own shares, with a vertical step at its boundary and no gap between
+// The over-time forms of a category chart: the stepped stacked area (the default) and its smoothed variant. Each second keeps its own shares, with a vertical step at its boundary and no gap between
 // seconds; a stream that ends inside a second gives the last one only the width it lasts.
 public class OverTimeFormTests
 {
     private const int UnitsPerSecond = 40;
 
     // A series of two categories whose seconds hold the share of the second category the function gives, in 40ths.
-    private static CategorySeries Series(int seconds, Func<int, int> secondShare)
+    private static CategorySeries Series(int seconds, Func<int, int> secondShare, int lastUnits = UnitsPerSecond)
     {
         IReadOnlyList<Category> categories = [new Category("Left/right stereo", "a."), new Category("Mid/side stereo", "b.")];
         var builder = new CategorySeriesBuilder("Stereo Coding", categories, "frame", 1);
         for (int second = 0; second < seconds; second++)
         {
-            for (int unit = 0; unit < UnitsPerSecond; unit++)
+            for (int unit = 0; unit < (second == seconds - 1 ? lastUnits : UnitsPerSecond); unit++)
             {
                 builder.Add((byte)(unit < secondShare(second) ? 1 : 0));
             }
         }
 
         var time = new TimeIndex(Enumerable.Range(0, seconds).Select(s => (double)s).ToArray(), Enumerable.Range(0, seconds).Select(s => s * UnitsPerSecond).ToArray());
-        return builder.Build(Enumerable.Range(0, seconds * UnitsPerSecond).Select(i => i * 100.0).ToArray(), null, null, "d.", null, time);
+        return builder.Build(Enumerable.Range(0, ((seconds - 1) * UnitsPerSecond) + lastUnits).Select(i => i * 100.0).ToArray(), null, null, "d.", null, time);
     }
 
     private static (Window Window, GraphView View) Show(CategoryGraph graph, string variant = "light")
@@ -66,8 +65,8 @@ public class OverTimeFormTests
     [Fact]
     public void The_area_is_the_default_and_the_smoothed_form_is_offered_only_above_30_seconds()
     {
-        Assert.Equal([GraphForm.OverTime, GraphForm.Lines, GraphForm.Columns, GraphForm.Frames, GraphForm.Summary], CategoryGraph.FormsOf(Series(30, s => 0)));
-        Assert.Equal([GraphForm.OverTime, GraphForm.Smoothed, GraphForm.Lines, GraphForm.Columns, GraphForm.Frames, GraphForm.Summary], CategoryGraph.FormsOf(Series(31, s => 0)));
+        Assert.Equal([GraphForm.OverTime, GraphForm.Frames, GraphForm.Summary], CategoryGraph.FormsOf(Series(30, s => 0)));
+        Assert.Equal([GraphForm.OverTime, GraphForm.Smoothed, GraphForm.Frames, GraphForm.Summary], CategoryGraph.FormsOf(Series(31, s => 0)));
     }
 
     [Fact]
@@ -105,7 +104,7 @@ public class OverTimeFormTests
         Assert.Equal(0, smoothed[7]);
 
         // The columns of the smoothed form hold these counts, and the unsmoothed ones the seconds' own.
-        Assert.Equal(40, CategoryColumns.OverTime(edge, 10, CategoryGraph.SmoothingWindow).Counts(1)[1]);
+        Assert.Equal(40, CategoryColumns.OverTime(edge, 10, smoothed).Counts(1)[1]);
         Assert.Equal(0, CategoryColumns.OverTime(edge, 10).Counts(1)[1]);
         Assert.Equal(40, CategoryColumns.OverTime(edge, 10).Counts(0)[1]);
     }
@@ -162,7 +161,7 @@ public class OverTimeFormTests
     // The bottom layer of the area is the category with the largest share, whichever its number: the first second is mostly the
     // first category, the stream mostly the second.
     [AvaloniaFact]
-    public void The_area_puts_the_dominant_category_at_the_bottom_and_the_columns_keep_the_order_of_the_categories()
+    public void The_area_puts_the_dominant_category_at_the_bottom_and_the_legend_lists_it_first()
     {
         CategorySeries series = Series(10, s => s == 0 ? 10 : 36);
         CategoryStyle[] styles = CategoryColors.For(series, false, Colors.White);
@@ -175,18 +174,12 @@ public class OverTimeFormTests
         Assert.True(Near(styles[0].Color, Pixel(frame, x, plot.Top + 3)));
         area.Close();
 
-        (Window columns, GraphView columnsView) = Show(new CategoryGraph(series, GraphForm.Columns));
-        frame = columns.CaptureRenderedFrame()!;
-        Assert.True(Near(styles[0].Color, Pixel(frame, x, plot.Bottom - 3)), "The columns stack the first category at the bottom.");
-        columns.Close();
         Reset();
     }
 
     [AvaloniaTheory]
     [InlineData(GraphForm.OverTime)]
     [InlineData(GraphForm.Smoothed)]
-    [InlineData(GraphForm.Lines)]
-    [InlineData(GraphForm.Columns)]
     public void The_pointer_answers_with_the_second_it_is_over_and_the_last_second_is_narrow(GraphForm form)
     {
         CategorySeries series = Series(40, s => s % 3 * 10);
@@ -210,46 +203,6 @@ public class OverTimeFormTests
         Assert.Contains(form == GraphForm.Smoothed ? "average of 5 seconds" : "Mid/side stereo 25.0% (10 values)", help, StringComparison.Ordinal);
         window.MouseMove(view.TranslatePoint(new Point(plot.Right - 2, y), window)!.Value);
         Assert.Contains("0:39 to the end", AutomationProperties.GetHelpText(view), StringComparison.Ordinal);
-        window.Close();
-        Reset();
-    }
-
-    // One stepped line for each category on a 0 to 100% scale: at the middle of each second the line of each category is at that
-    // second's share, and between two seconds it climbs or falls vertically at the boundary.
-    [AvaloniaTheory]
-    [InlineData("light")]
-    [InlineData("dark")]
-    public void The_lines_form_draws_each_category_at_its_share_with_a_vertical_step_at_the_boundary(string variant)
-    {
-        // Even seconds are 25% mid/side stereo and odd ones 75%.
-        Func<int, int> share = s => s % 2 == 0 ? 10 : 30;
-        CategorySeries series = Series(10, share);
-        (Window window, GraphView view) = Show(new CategoryGraph(series, GraphForm.Lines), variant);
-        Rect plot = view.PlotArea()!.Value;
-        CategoryStyle[] styles = CategoryColors.For(series, variant == "dark", variant == "dark" ? Colors.Black : Colors.White);
-        WriteableBitmap frame = window.CaptureRenderedFrame()!;
-        GraphView.Slots slots = GraphView.SlotsOf(plot, 10, Enumerable.Range(0, 10).Select(s => (double)s).ToArray(), 0);
-
-        double Level(double percent) => plot.Bottom - 1 - ((plot.Height - 2) * percent / 100);
-        bool HasColor(double x, double y, Color color) => Enumerable.Range(-2, 5).Any(d => Near(color, Pixel(frame, x, y + d), 24));
-
-        for (int second = 0; second < 10; second++)
-        {
-            double mid = slots.Center(second);
-            double second1 = second % 2 == 0 ? 25 : 75;
-            Assert.True(HasColor(mid, Level(second1), styles[1].Color), $"The mid/side stereo line is not at {second1}% in second {second}.");
-            Assert.True(HasColor(mid, Level(100 - second1), styles[0].Color), $"The left/right stereo line is not at {100 - second1}% in second {second}.");
-        }
-
-        // The vertical step between the first two seconds, over the whole climb of the mid/side stereo line.
-        double boundary = slots.X(1);
-        for (double percent = 30; percent <= 70; percent += 10)
-        {
-            Assert.True(Enumerable.Range(-1, 3).Any(d => Near(styles[1].Color, Pixel(frame, boundary + d, Level(percent)), 24)), $"No step at {percent}%.");
-        }
-
-        // A stepped line has no slope: between the boundaries of a second it is level.
-        Assert.False(HasColor(slots.X(2) + 6, Level(50), styles[1].Color));
         window.Close();
         Reset();
     }
@@ -280,5 +233,60 @@ public class OverTimeFormTests
         Assert.False(Near(styles[1].Color, Pixel(frame, slots.Center(17), plot.Bottom - 3)) || Near(styles[1].Color, Pixel(frame, slots.Center(17), top)));
         window.Close();
         Reset();
+    }
+
+    [Fact]
+    public void A_last_second_of_fewer_than_eight_frames_is_few_and_one_of_eight_is_not()
+    {
+        (bool isFew, int frames, double seconds) = new CategoryGraph(Series(10, s => 0, 3), GraphForm.OverTime) { Duration = 9.075 }.LastInterval!.Value;
+        Assert.True(isFew);
+        Assert.Equal(3, frames);
+        Assert.Equal(0.075, seconds, 1e-9);
+        Assert.Equal((true, 7, 0), new CategoryGraph(Series(10, s => 0, 7), GraphForm.OverTime).LastInterval);
+        Assert.False(new CategoryGraph(Series(10, s => 0, CategoryGraph.FewFrames), GraphForm.OverTime).LastInterval!.Value.IsFew);
+        Assert.False(new CategoryGraph(Series(10, s => 0), GraphForm.OverTime).LastInterval!.Value.IsFew);
+        Assert.Null(new CategoryGraph(Series(1, s => 0), GraphForm.OverTime).LastInterval);
+    }
+
+    [Fact]
+    public void The_hover_text_names_a_last_second_of_few_frames_and_only_that()
+    {
+        var few = new CategoryGraph(Series(10, s => 0, 1), GraphForm.OverTime) { Duration = 9.03 };
+
+        Assert.StartsWith("Last 0.03 s, 1 frame · 0:09 to the end · ", few.Describe(9), StringComparison.Ordinal);
+        Assert.DoesNotContain("Last", few.Describe(8), StringComparison.Ordinal);
+        Assert.StartsWith("Last 1 frame · ", new CategoryGraph(Series(10, s => 0, 1), GraphForm.OverTime).Describe(9), StringComparison.Ordinal);
+        Assert.StartsWith("Last 0.03 s, 1 frame · 0:09 to the end · ", new CategoryGraph(Series(10, s => 0, 1), GraphForm.Smoothed) { Duration = 9.03 }.Describe(9), StringComparison.Ordinal);
+        Assert.DoesNotContain("Last", new CategoryGraph(Series(10, s => 0, 20), GraphForm.OverTime) { Duration = 9.5 }.Describe(9), StringComparison.Ordinal);
+    }
+
+    [AvaloniaFact]
+    public void A_last_second_of_few_frames_is_drawn_dimmed_and_a_longer_one_is_not()
+    {
+        foreach ((int lastUnits, bool dimmed) in new[] { (3, true), (20, false) })
+        {
+            CategorySeries series = Series(10, s => 0, lastUnits);
+            (Window window, GraphView view) = Show(new CategoryGraph(series, GraphForm.OverTime) { Duration = 9 + (lastUnits / 40.0) });
+            Rect plot = view.PlotArea()!.Value;
+            GraphView.Slots slots = GraphView.SlotsOf(plot, 10, Enumerable.Range(0, 10).Select(s => (double)s).ToArray(), 9 + (lastUnits / 40.0));
+            WriteableBitmap frame = window.CaptureRenderedFrame()!;
+            Color color = CategoryColors.For(series, false, Colors.White)[0].Color;
+            double y = plot.Top + (plot.Height * 0.6);
+
+            Assert.True(Near(color, Pixel(frame, slots.Center(8), y)));
+            Assert.Equal(!dimmed, Near(color, Pixel(frame, slots.Center(9), y)));
+            window.Close();
+        }
+
+        Reset();
+    }
+
+    [Fact]
+    public void The_smoothed_counts_are_made_once_for_the_hover_text()
+    {
+        var graph = new CategoryGraph(Series(40, s => s % 7), GraphForm.Smoothed);
+
+        Assert.Same(graph.SmoothedCounts, graph.SmoothedCounts);
+        Assert.Equal(CategoryColumns.SmoothedCounts(graph.Series, CategoryGraph.SmoothingWindow), graph.SmoothedCounts);
     }
 }

@@ -66,5 +66,5 @@ public class AreaFormShots
         Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
     }
 
-    private static (string, GraphForm)[] Forms() => [("columns", GraphForm.Columns), ("area", GraphForm.OverTime), ("area-smoothed", GraphForm.Smoothed), ("lines", GraphForm.Lines)];
+    private static (string, GraphForm)[] Forms() => [("area", GraphForm.OverTime), ("area-smoothed", GraphForm.Smoothed)];
 }

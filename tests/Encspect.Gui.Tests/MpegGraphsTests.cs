@@ -59,7 +59,7 @@ public class MpegGraphsTests
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
         Assert.Equal(["Per Frame", "Over Time", "First and Second"], window.Model.Graphs.Choices.Single(c => c.Title == "Channel Bit Share").Forms.Select(f => f.Title));
-        Assert.Equal(["Over Time", "Lines", "Columns", "Frames", "Summary"], window.Model.Graphs.Choices.Single(c => c.Title == "Block Usage").Forms.Select(f => f.Title));
+        Assert.Equal(["Over Time", "Frames", "Summary"], window.Model.Graphs.Choices.Single(c => c.Title == "Block Usage").Forms.Select(f => f.Title));
         window.Close();
     }
 
@@ -151,8 +151,33 @@ public class MpegGraphLayoutTests
 
         List<(string Label, int Category)> entries = GraphView.LegendEntries(window.Model.Graphs.Graph!);
 
-        Assert.Equal([0, 1], entries.Select(e => e.Category));
+        // Largest share first: the stack's bottom layer.
+        Assert.Equal([1, 0], entries.Select(e => e.Category));
         Assert.All(entries, e => Assert.DoesNotContain("0.0%", e.Label, StringComparison.Ordinal));
+        window.Close();
+    }
+
+    // The list of graphs shows its last entry whole: where the entries fit the list does not scroll (the dual channel file's nine
+    // headings and entries at 1180 by 800, the header wrapped or not), and where they do not, the end of the scroll is the end of
+    // the last entry.
+    [AvaloniaTheory]
+    [InlineData("external-lame-dual-music.mp3", false)]
+    [InlineData("external-lame-joint-music.mp3", true)]
+    [InlineData("external-lame-cbr128-joint.mp3", true)]
+    public void The_list_of_graphs_ends_with_its_last_entry_whole(string fixture, bool mayScroll)
+    {
+        DetailWindow window = Open(Fixtures.Mpeg(fixture), 1180, 800);
+        ScrollViewer list = window.GraphList;
+        bool scrolls = list.Extent.Height > list.Viewport.Height + 0.5;
+        Assert.True(mayScroll || !scrolls, $"The list of {list.Extent.Height} scrolls in {list.Viewport.Height}.");
+
+        list.ScrollToEnd();
+        UiPump.Until(() => true);
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
+        Button last = window.GraphChoices.GetVisualDescendants().OfType<Button>().Last();
+        double bottom = last.TranslatePoint(new Point(0, last.Bounds.Height), list)!.Value.Y;
+        Assert.InRange(bottom, 0, list.Viewport.Height + 0.5);
+        Assert.True(bottom >= list.Viewport.Height - 8, $"The last entry ends at {bottom} in {list.Viewport.Height}, short of the end.");
         window.Close();
     }
 

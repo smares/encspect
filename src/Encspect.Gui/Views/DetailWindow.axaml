@@ -192,7 +192,7 @@
                        Margin="14,0,12,8" TextTrimming="CharacterEllipsis" IsVisible="{Binding Graphs.DecoderNote, Converter={x:Static ObjectConverters.IsNotNull}}" />
             <Grid ColumnDefinitions="Auto,1,*">
               <ScrollViewer Name="GraphList" Width="210" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" AllowAutoHide="False">
-                <ItemsControl Name="GraphChoices" ItemsSource="{Binding Graphs.ChoiceGroups}" Margin="6,0,6,6">
+                <ItemsControl Name="GraphChoices" ItemsSource="{Binding Graphs.ChoiceGroups}" Margin="6,-8,6,4">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="vm:GraphChoiceGroup">
                       <StackPanel>

@@ -232,16 +232,12 @@ public sealed class GraphsViewModel : ObservableObject
             {
                 GraphForm.OverTime => "Over Time",
                 GraphForm.Smoothed => "Smoothed",
-                GraphForm.Lines => "Lines",
-                GraphForm.Columns => "Columns",
                 GraphForm.Frames => "Frames",
                 _ => "Summary",
             }, f switch
             {
                 GraphForm.OverTime => "The share of each category in every second of the stream, as a stacked area with the largest category at the bottom",
                 GraphForm.Smoothed => "The same area with each second averaged with the two seconds on either side",
-                GraphForm.Lines => "The share of each category in every second of the stream, one line for each category",
-                GraphForm.Columns => "The share of each category in every second of the stream, one stacked column for each second",
                 GraphForm.Frames => "The category of every frame, one cell each",
                 _ => "The count and share of each category over the whole stream",
             }, new CategoryGraph(series, f) { Duration = stream.Duration }))];
