@@ -252,6 +252,9 @@ public sealed class CapitalizationTests
                 case ContentControl { Content: string text } and (Button or CheckBox or RadioButton or ToggleButton):
                     yield return text;
                     break;
+                case Button { Content: TextBlock { Text: string wrapped } }:
+                    yield return wrapped;
+                    break;
                 case MenuItem { Header: string header }:
                     yield return header;
                     break;

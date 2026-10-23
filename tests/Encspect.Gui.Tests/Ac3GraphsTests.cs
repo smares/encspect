@@ -2,7 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.VisualTree;
 using Encspect.Core;
 using Encspect.Gui.ViewModels;
 using Encspect.Gui.Views;
@@ -30,6 +32,26 @@ public class Ac3GraphsTests
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
         Assert.Equal(["Over Time", "Frames", "Summary"], window.Model.Graphs.Choices.Single(c => c.Title == "Blocks With Coupling").Forms.Select(f => f.Title));
+        window.Close();
+    }
+
+    // A name wider than the list wraps to a second line, so it is shown whole and never cut mid-word; the tooltip names the entry and then says what it shows.
+    [AvaloniaFact]
+    public void A_long_entry_name_wraps_in_the_list_and_the_tooltip_names_it_before_its_description()
+    {
+        DetailWindow window = AacGraphsTests.Open(Fixtures.Ac3("coding-eac3-blocks.eac3"));
+        List<(GraphChoice Choice, Button Button, TextBlock Text)> entries = [.. window.GraphChoices.GetVisualDescendants().OfType<Button>()
+            .Where(b => b.DataContext is GraphChoice).Select(b => ((GraphChoice)b.DataContext!, b, (TextBlock)b.Content!))];
+
+        Assert.All(entries, e => Assert.Equal(TextWrapping.Wrap, e.Text.TextWrapping));
+        Assert.All(entries, e => Assert.Equal(TextTrimming.None, e.Text.TextTrimming));
+        Assert.All(entries, e => Assert.True(e.Text.Bounds.Right <= window.GraphList.Bounds.Width, $"{e.Choice.Title} reaches past the list."));
+        (GraphChoice Choice, Button Button, TextBlock Text) shortOne = entries.Single(e => e.Choice.Title == "Bitrate");
+        (GraphChoice Choice, Button Button, TextBlock Text) longOne = entries.Single(e => e.Choice.Title == "Blocks With Spectral Extension");
+        Assert.True(longOne.Text.Bounds.Height > shortOne.Text.Bounds.Height * 1.5, "The long name stays on one line.");
+        string tip = Assert.IsType<string>(ToolTip.GetTip(longOne.Button));
+        Assert.StartsWith("Blocks With Spectral Extension\n", tip, StringComparison.Ordinal);
+        Assert.Contains(longOne.Choice.Description!, tip, StringComparison.Ordinal);
         window.Close();
     }
 
