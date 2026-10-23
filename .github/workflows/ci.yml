@@ -2,7 +2,8 @@ name: CI
 
 # Pull requests run what the change needs, on four platforms; a push to main, the nightly schedule and a
 # manual run run everything, on six. The nightly run and a manual one also write every long input with all
-# three writers on more threads, and fuzz for half an hour. Every Linux job is pinned to ubuntu-26.04. The
+# three writers on more threads, time the decoders against a reference (DecoderWorkTests, the trait Category=Nightly,
+# which the filters of the other events exclude: scripts/ci/changes.py), and fuzz for half an hour. Every Linux job is pinned to ubuntu-26.04. The
 # cross-check jobs run that image's packaged tools (GPAC's MP4Box, which it lacks, is built from source) and fail
 # when a tool's version differs from the one their scripts expect (scripts/fixtures/tool_versions.py). See "CI" in
 # docs/development.md.
