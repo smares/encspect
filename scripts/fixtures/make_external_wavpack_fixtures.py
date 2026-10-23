@@ -82,6 +82,8 @@ FIXTURES = {
     "hybrid-b2": (("wav", 44100, 2, 16, SHORT), ["-b2"], ["wv"]),
     "hybrid-false-stereo-b2": (("wav-identical", 44100, 16, SHORT), ["-b2"], ["wv"]),
     "hybrid-false-stereo-b4": (("wav-identical", 44100, 16, SHORT), ["-b4"], ["wv"]),
+    "hybrid-clip-16": (("wav-extremes", 44100, 2, 16, SHORT), ["-b2"], ["wv"]),
+    "hybrid-clip-24": (("wav-extremes", 44100, 2, 24, SHORT), ["-b2"], ["wv"]),
     "hybrid-b22": (("wav", 44100, 2, 16, SHORT), ["-b2.2"], ["wv"]),
     "hybrid-b4-flat-noise": (("wav", 44100, 2, 16, SHORT), ["-b4", "-s0"], ["wv"]),
     "hybrid-b4-left-right": (("wav", 44100, 2, 16, SHORT), ["-b4", "-j0", "-c"], ["wv", "wvc"]),
@@ -141,6 +143,12 @@ def make_input(spec, work):
         chunks = b"fmt " + struct.pack("<I", len(fmt)) + fmt + b"data" + struct.pack("<I", len(body)) + body
         data = b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
         name = "in.wav"
+    elif kind == "wav-extremes":
+        # Samples at the lowest or highest value only: the quantization error of a hybrid file at a low bitrate takes decoded samples
+        # past the range of the sample size, which fixup_samples clips (unpack.c 764-787).
+        rate, channels, bits, count = p
+        data = sig.wav_extremes(rate, channels, count, bits)
+        name = "in.wav"
     elif kind == "float":
         rate, channels, count = p
         data = sig.wav(rate, channels, count, 32, None, True)
@@ -199,7 +207,7 @@ def encode_ffmpeg(name, spec, work):
 
 def describe(spec):
     kind, *p = spec
-    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "wav-identical": ["rate", "bits", "samples"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
+    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "wav-identical": ["rate", "bits", "samples"], "wav-extremes": ["rate", "channels", "bits", "samples"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
              "caf": ["rate", "channels", "samples", "bits", "layout_tag"], "dsf": ["rate", "channels", "bytes_per_channel"]}[kind]
     result = {"kind": kind}
     for key, value in zip(names, p):

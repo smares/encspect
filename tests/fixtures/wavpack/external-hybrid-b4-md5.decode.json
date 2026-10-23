@@ -36,7 +36,7 @@
       "code": "wavpack.md5-needs-correction-file",
       "severity": "Info",
       "count": 1,
-      "message": "The file stores the MD5 of the lossless audio, which a hybrid file without its correction file (.wvc) does not decode to, so it is not compared."
+      "message": "The file stores the MD5 of the lossless audio, which this stream does not decode to (a hybrid file without its correction file (.wvc), or blocks that drop bits), so it is not compared."
     }
   ]
 }

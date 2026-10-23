@@ -261,6 +261,7 @@ DECODES = {
     "cut-after-block": (17512, 0),
     "dsd-md5-changed": (65536, 0),
     "extra-crc-changed": (24000, 1),
+    "inner-block-index-md5": (24000, 0),
     "md5-digest-changed": (24000, 0),
     "md5-file-cut": (17512, 0),
     "md5-layout-differs": (24000, 0),
@@ -514,6 +515,8 @@ def build():
     b["set-channels-missing"] = ("The second block of the first set of a 5.1 file left out, so the set holds five channels where the stream has six.",
                                  aa([sixteen[0], *sixteen[2:]]),
                                  [("wavpack.channel-count-mismatch", "first set of blocks holds 5 channels"), ("wavpack.format-changes", "holds 6 channels, but the first holds 5 channels")], False)
+    b["inner-block-index-md5"] = ("The block index of the second block of the first set of a 5.1 file with an MD5 changed from 0 to 5, its checksum worked out again: libwavpack takes the index of each block of a set from the block itself (open_utils.c 357) and decodes the audio, whose MD5 holds.",
+                                  aa([sixteen[0], patch(sixteen[1], index=5), *sixteen[2:]]), [("wavpack.block-set-broken", "begins at sample 5")], False)
     return b
 
 

@@ -19,7 +19,7 @@ HYBRID_BITRATE, HYBRID_BALANCE, FALSE_STEREO = 0x200, 0x400, 0x40000000
 MONO_DATA = MONO_FLAG | FALSE_STEREO
 MASK32 = 0xFFFFFFFF
 MAX_TERM = 8
-MAX_GROUP_SAMPLES = 1 << 24
+MAX_SET_SAMPLES = 1 << 24
 LIMIT_ONES = 16
 SLS, SLO = 8, 128
 
@@ -1243,7 +1243,7 @@ def expectation(data, start, end):
     outcome = run_decoder(data, fx, info, [dict(t) for t in tallies], declared, is_lossy)
     verify = verification(outcome["decoding"], outcome["tallies"], is_lossy)
     result = {"default": default, "verify": verify, "decode_findings": outcome["findings"], "decoded_samples": outcome["decoded"], "pcm_samples": outcome["pcm_samples"],
-              "decoded_pcm_md5": outcome["pcm_md5"]}
+              "decoded_pcm_md5": outcome["pcm_md5"], "decoded_dsd_md5": outcome["dsd_md5"]}
     return result
 
 
@@ -1265,7 +1265,7 @@ def verification(decoding, tallies, is_lossy):
 
 def run_decoder(data, fx, info, tallies, declared, is_lossy):
     blocks, configured = fx["blocks"], fx["configured"]
-    out = {"decoding": "notPossible", "tallies": tallies, "decoded": 0, "pcm_samples": 0, "pcm_md5": None, "findings": [{"code": "decode.not-possible", "count": 1}]}
+    out = {"decoding": "notPossible", "tallies": tallies, "decoded": 0, "pcm_samples": 0, "pcm_md5": None, "dsd_md5": None, "findings": [{"code": "decode.not-possible", "count": 1}]}
     if configured is None:
         return out
     h0 = configured["header"]
@@ -1288,7 +1288,9 @@ def run_decoder(data, fx, info, tallies, declared, is_lossy):
 
 
 class Run:
-    """The session of the decode route and the decoder's stream state (DecodeSession.cs, DecodeFeed.cs, StreamDecoder.cs)."""
+    """What the analyzer reports of a stream it decodes, worked out from libwavpack's WavpackUnpackSamples (unpack_utils.c), unpack.c and open_utils.c.
+
+    The decoder's work limit on blocks of sets that never complete (StreamDecoder.MaxWastedSamples) is not modeled: no fixture reaches it."""
 
     def __init__(self, data, fx, info, channels, h0, declared, is_lossy):
         self.data, self.fx, self.channels, self.declared, self.is_lossy = data, fx, channels, declared, is_lossy
@@ -1306,7 +1308,7 @@ class Run:
         self.crc = [0, 0]
         self.extra = [0, 0]
         self.digest_incomplete = False
-        self.group = None
+        self.streams = None
         self.digest = None
         self.findings = {}
         self.decoded = 0
@@ -1314,6 +1316,7 @@ class Run:
         self.saw_gap = False
         self.after_unreadable = False
         self.pcm = bytearray()
+        self.dsd = bytearray()
         self.pcm_samples = 0
         self.oversize = False
         self.has_audio = False
@@ -1347,7 +1350,7 @@ class Run:
             self.hand(e, follows_gap, False)
 
     def hand(self, e, follows_gap, is_held):
-        unreadable = e["unreadable"] and not is_held
+        unreadable = e["unreadable"]
         if self.after_unreadable:
             follows_gap = True
             self.after_unreadable = False
@@ -1363,8 +1366,10 @@ class Run:
             self.add("decode.frame-invalid")
 
     def abandon(self):
-        if self.group is not None:
-            self.group = None
+        # A set whose final block never comes is read on past by WavpackUnpackSamples (unpack_utils.c 132-133 loop to the next
+        # block that starts a set); its samples are missing.
+        if self.streams is not None:
+            self.streams = None
             self.digest_incomplete = True
 
     def decode(self, e, follows_gap):
@@ -1393,38 +1398,53 @@ class Run:
         if not h["samples"]:
             return
         self.frozen = True
+
+        # WavpackUnpackSamples (unpack_utils.c 132-133) goes on to the next block when this one does not start a set; a block
+        # that does (INITIAL_BLOCK) starts one whose samples_to_unpack is its own block_samples (unpack_utils.c 164).
         if flags & m.INITIAL:
             self.abandon()
-            self.group = {"index": h["index"], "samples": h["samples"], "channels": 0, "blocks": 0, "oversized": False, "failed": False, "planes": []}
-        elif self.group is None:
+            self.streams = {"index": h["index"], "samples_to_unpack": h["samples"], "offset": 0, "current_stream": 0, "failed": False,
+                            "too_large": False, "planes": []}
+        elif self.streams is None:
             return
-        g = self.group
+        wpc = self.streams
+        num_channels = self.channels
+        wpc["current_stream"] += 1
         block_channels = 1 if flags & MONO_FLAG else 2
-        g["blocks"] += 1
-        if bool(flags & m.DSD) != self.is_dsd or g["channels"] + block_channels > self.channels:
-            g["failed"] = True
+
+        # A block of another kind than the first one, or a stereo block that leaves no room for two channels: libwavpack copies one
+        # channel and counts a crc_errors (unpack_utils.c 293-301) or unpacks DSD as PCM; this decoder refuses the block.
+        if bool(flags & m.DSD) != self.is_dsd or wpc["offset"] + block_channels > num_channels:
+            wpc["failed"] = True
             raise FrameInvalid
-        samples = g["samples"]
-        muted = h["index"] > g["index"] or h["samples"] < samples
-        if (g["channels"] + block_channels) * samples > MAX_GROUP_SAMPLES:
-            g["oversized"] = True
+        sample_count = wpc["samples_to_unpack"]
+
+        # unpack.c 89 and unpack_dsd.c 74 mute the block when GET_BLOCK_INDEX (wphdr) > sample_index || block_samples < sample_count.
+        # unpack_init sets sample_index from every block's own header (open_utils.c 357), so for a block of a set the first term never
+        # holds, and a block is muted when it has fewer samples than the set's first.
+        mute_error = h["samples"] < sample_count
+        if (wpc["offset"] + block_channels) * sample_count > MAX_SET_SAMPLES:
+            wpc["too_large"] = True
         width = 1 if flags & MONO_DATA else 2
         has_extra, extra_ok = False, True
         try:
-            if muted:
+            if mute_error:
+                # unpack.c 91-100: the buffer is zeroed (0x55 for DSD, unpack_dsd.c 77-85) and sample_index advanced; check_crc_error
+                # then compares the CRC the muted block was left with (0xffffffff, unpack.c 51-52 initial value) with the header's.
                 crc_ok = MASK32 == h["crc"]
-                decoded = [0x55 if self.is_dsd else 0] * (samples * width)
+                decoded = [0x55 if self.is_dsd else 0] * (sample_count * width)
             elif self.is_dsd:
-                decoded, _, crc = unpack_dsd(h, c, samples)
+                decoded, _, crc = unpack_dsd(h, c, sample_count)
                 crc_ok = crc == h["crc"]
             else:
-                decoded, muted_now, crc, extra_crc = unpack_pcm(block, h, c, samples)
+                decoded, muted_now, crc, extra_crc = unpack_pcm(block, h, c, sample_count)
                 crc_ok = crc == h["crc"]
                 has_extra = c.extra is not None and not muted_now
                 extra_ok = extra_crc == c.extra_crc if has_extra else True
         except Refused:
-            g["failed"] = True
+            wpc["failed"] = True
             raise FrameInvalid
+        # check_crc_error (unpack_utils.c 376-399) at the end of every block; libwavpack then zeroes the block, this decoder does not.
         self.crc[0] += 1
         if not crc_ok:
             self.crc[1] += 1
@@ -1434,44 +1454,49 @@ class Run:
             if not extra_ok:
                 self.extra[1] += 1
                 self.add("wavpack.audio-crc-mismatch")
-        if not g["oversized"]:
+        if not wpc["too_large"]:
             if width == 1:
-                g["planes"].append(list(decoded[:samples]))
+                wpc["planes"].append(list(decoded[:sample_count]))
                 if block_channels == 2:
-                    g["planes"].append(list(decoded[:samples]))
+                    wpc["planes"].append(list(decoded[:sample_count]))
             else:
-                g["planes"].append(decoded[0::2][:samples])
-                g["planes"].append(decoded[1::2][:samples])
-        g["channels"] += block_channels
-        if not flags & m.FINAL and g["blocks"] < self.max_streams and g["channels"] < self.channels:
+                wpc["planes"].append(decoded[0::2][:sample_count])
+                wpc["planes"].append(decoded[1::2][:sample_count])
+        wpc["offset"] += block_channels
+        # unpack_utils.c 318: the set ends at a FINAL_BLOCK, at the last stream max_streams allows, or when the channels are all there.
+        if not flags & m.FINAL and wpc["current_stream"] != self.max_streams and wpc["offset"] != num_channels:
             return
         self.complete()
 
     def complete(self):
-        g = self.group
-        self.group = None
-        samples = g["samples"]
-        if g["failed"]:
+        wpc = self.streams
+        self.streams = None
+        samples = wpc["samples_to_unpack"]
+        if wpc["failed"]:
             self.digest_incomplete = True
             return
-        if g["channels"] != self.channels:
+        # unpack_utils.c 326-337: the channels did not add up, so the buffer is muted and an error counted.
+        if wpc["offset"] != self.channels:
             self.digest_incomplete = True
             raise FrameInvalid
-        if g["oversized"]:
+        if wpc["too_large"]:
             self.digest_incomplete = True
-            if not self.oversize:
-                self.oversize = True
-                self.add("wavpack.md5-group-too-large")
+            self.oversize = True
             self.decoded += samples
             return
-        if not self.is_dsd:
+        if self.is_dsd:
+            # The bytes wvunpack --raw writes for DSD: the channels' bytes interleaved.
+            for i in range(samples):
+                for plane in wpc["planes"]:
+                    self.dsd.append(plane[i] & 0xFF)
+        else:
             self.pcm_samples += samples
-            self.pcm += self.canonical(g["planes"], samples)
+            self.pcm += self.canonical(wpc["planes"], samples)
         if not self.is_lossy and not self.saw_hybrid:
             if self.digest is None:
                 order = self.reordering if self.qmode & 8 and self.reordering and self.layout_channels <= self.channels else None
                 self.digest = Digest(self.channels, self.bps, self.qmode, self.is_dsd, order)
-            self.digest.append(g["planes"], samples)
+            self.digest.append(wpc["planes"], samples)
         self.decoded += samples
 
     def canonical(self, planes, samples):
@@ -1493,6 +1518,8 @@ class Run:
         self.abandon()
         complete = not self.not_decoded and not self.saw_gap and (self.declared is None or self.declared == self.decoded)
         if self.md5 is not None:
+            if self.oversize:
+                self.add("wavpack.md5-set-too-large")
             if self.is_lossy or self.saw_hybrid:
                 if complete:
                     self.add("wavpack.md5-needs-correction-file")
@@ -1505,5 +1532,6 @@ class Run:
                 if computed != self.md5[0]:
                     self.add("wavpack.md5-mismatch")
         pcm_md5 = None if self.is_dsd else hashlib.md5(bytes(self.pcm)).hexdigest()
-        return {"decoding": "decoded", "tallies": tallies, "decoded": self.decoded, "pcm_samples": 0 if self.is_dsd else self.pcm_samples, "pcm_md5": pcm_md5,
+        dsd_md5 = hashlib.md5(bytes(self.dsd)).hexdigest() if self.is_dsd and self.dsd else None
+        return {"decoding": "decoded", "tallies": tallies, "decoded": self.decoded, "pcm_samples": 0 if self.is_dsd else self.pcm_samples, "pcm_md5": pcm_md5, "dsd_md5": dsd_md5,
                 "findings": [{"code": code, "count": count} for code, count in sorted(self.findings.items())]}

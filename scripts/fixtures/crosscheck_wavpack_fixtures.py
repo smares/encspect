@@ -19,6 +19,9 @@ make_wavpack_fixtures.py):
   process_metadata, decorr_utils.c, unpack_dsd.c) and the block reader does not.
 - wvunpack -ss (wavpack 5.9.0 of Ubuntu 26.04), on the main file alone: channels, source, duration,
   modalities, encoder version, digest, source format and the wrapper.
+- wvunpack --raw and FFmpeg (check_audio): the decoded audio of every fixture libwavpack decodes without errors, against the manifest's decoded_pcm_md5
+  (and, for DSD, decoded_dsd_md5, against the bytes wvunpack --raw writes), which wavpack_decode.py works out; the verdict against wvunpack -v -m
+  (check_verdict) and against libwavpack's own pass, damaged files included (check_libwavpack_verdict).
 - wvunpack -v: the file decodes and its block CRCs hold, with its correction file where it has one
   (lossless then), and with -m its digest equals the one stored. Damaged fixtures are decoded too, and
   those listed in REJECTED must fail.
@@ -362,7 +365,7 @@ def check_wvunpack_verify(name, manifest, path, report, work, problems):
             problems.append(f"wvunpack's unpacked digest {mine} differs from the stored {digest}")
 
 
-def raw_samples(path, work, facts):
+def raw_samples(path, work, facts, is_dsd=False):
     """What wvunpack --raw writes for the main file alone (a hybrid file decodes to its lossy audio), as signed little-endian samples of the container's width."""
     copy = pathlib.Path(work) / "audio.wv"
     shutil.copy(path, copy)
@@ -371,7 +374,7 @@ def raw_samples(path, work, facts):
     if not out.exists() or result.returncode != 0 and "missing" not in result.stderr:
         return None, (result.stdout + result.stderr).strip().splitlines()[-1:] or ["no output"]
     raw = out.read_bytes()
-    if int(facts["bytes_per_sample"]) == 1:
+    if int(facts["bytes_per_sample"]) == 1 and not is_dsd:
         # wvunpack writes 8-bit samples unsigned (WAVE); the canonical layout of docs/design/decoders.md is signed.
         raw = bytes(b ^ 0x80 for b in raw)
     return raw, None
@@ -379,12 +382,21 @@ def raw_samples(path, work, facts):
 
 def check_audio(name, manifest, path, facts, work, problems):
     """The decoded audio against wvunpack --raw and FFmpeg, and the verdict of the checksums against wvunpack -v -m."""
-    if "decoded_pcm_md5" not in manifest:
-        skip(name, "decoded audio", "the manifest has no decoded audio (DSD is not decoded to PCM, or the decoding is not possible)")
+    if "decoded_pcm_md5" not in manifest and "decoded_dsd_md5" not in manifest:
+        skip(name, "decoded audio", "the manifest has no decoded audio (the decoding is not possible)")
         return
     expected = manifest["crosscheck"]["decode"]
     if not expected["opens"] or expected["errors"] != 0:
         skip(name, "decoded audio", "libwavpack counts errors or refuses the file: the audio it leaves behind after a damaged block is its own")
+        return
+    if "decoded_dsd_md5" in manifest:
+        # DSD has no PCM and no sink; wvunpack --raw writes the channels' bytes interleaved, which the model (wavpack_decode.py) works out too.
+        raw, why = raw_samples(path, work, facts, is_dsd=True)
+        if raw is None:
+            problems.append(f"wvunpack --raw fails: {why[0]}")
+        elif hashlib.md5(raw).hexdigest() != manifest["decoded_dsd_md5"]:
+            problems.append(f"wvunpack --raw writes DSD bytes with the MD5 {hashlib.md5(raw).hexdigest()}, the manifest says {manifest['decoded_dsd_md5']}")
+        skip(name, "ffmpeg's audio", "FFmpeg converts DSD to PCM, which the manifest does not hold")
         return
     raw, why = raw_samples(path, work, facts)
     if raw is None:
@@ -440,6 +452,27 @@ def check_verdict(name, manifest, path, work, problems):
             problems.append("wvunpack -v -m accepts the file, whose digest the analyzer finds different")
     if verify["isVerified"] is True and not ok:
         problems.append(f"wvunpack -v -m refuses the file the analyzer verifies: {(result.stdout + result.stderr).strip().splitlines()[-1:]}")
+
+
+def check_libwavpack_verdict(name, manifest, problems):
+    """The verdict against libwavpack's own pass, for the damaged files too: it never verifies a file libwavpack counts errors on, and a CRC that fails
+    is one error of its pass (the MD5 is not part of that pass: wvunpack -m checks it, check_verdict)."""
+    if "verification" not in manifest or manifest["verification"]["verify"]["decoding"] != "decoded":
+        return
+    expected = manifest["crosscheck"]["decode"]
+    if not expected["opens"]:
+        return
+    verify = manifest["verification"]["verify"]
+    failed = sum(t["failed"] for t in verify["checksums"] if t["name"] in ("block header CRC", "extended CRC"))
+    if expected["errors"] > 0 and verify["isVerified"] is True:
+        problems.append(f"libwavpack counts {expected['errors']} errors, and the analyzer verifies the file")
+    if failed and failed != expected["errors"]:
+        problems.append(f"the analyzer counts {failed} block CRCs that fail, libwavpack {expected['errors']} errors")
+    names = {t["name"] for t in verify["checksums"] if t["failed"]}
+    if "block checksum" in names and expected["errors"] == 0:
+        problems.append("the block checksum of a block fails, and libwavpack, which makes the same check on every block it reads (WavpackVerifySingleBlock), counts no error")
+    if names == {"MD5"} and expected["errors"] != 0:
+        problems.append(f"only the MD5 differs, and libwavpack counts {expected['errors']} errors, which are not the MD5's (its pass does not compare it)")
 
 
 def check_pair(name, path, work, problems):
@@ -621,6 +654,7 @@ def main():
         with tempfile.TemporaryDirectory() as work:
             facts = check_libwavpack(name, manifest, path, report, tool, problems)
             check_decode(name, manifest, facts, problems)
+            check_libwavpack_verdict(name, manifest, problems)
             if not is_wvc:
                 check_audio(name, manifest, path, facts, pathlib.Path(work), problems)
                 check_verdict(name, manifest, path, work, problems)

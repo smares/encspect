@@ -332,6 +332,8 @@ def decoding(data, start, end):
         result["pcm_samples"] = expected["pcm_samples"]
         if expected["decoded_pcm_md5"] is not None:
             result["decoded_pcm_md5"] = expected["decoded_pcm_md5"]
+        if expected["decoded_dsd_md5"] is not None:
+            result["decoded_dsd_md5"] = expected["decoded_dsd_md5"]
     result["verification"] = {"default": expected["default"], "verify": expected["verify"]}
     result["decode_findings"] = expected["decode_findings"]
     return result
