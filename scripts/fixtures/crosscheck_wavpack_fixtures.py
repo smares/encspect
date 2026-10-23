@@ -31,8 +31,8 @@ make_wavpack_fixtures.py):
 - MediaInfo 26.01 (mediainfo_tool.py), against the golden report: the format, the profile (the stream
   version), the compression mode (lossy only for a hybrid file without the sub-block that a correction file needs),
   the DSD setting, the channels and layout, the sample rate, the bit depth, the duration from the first to the
-  last block with samples, the stream size and the settings it spells from the config block. MediaInfo accepts
-  a stream after two blocks with audio and reads a file under 1 MiB to its end; the fixtures on which it reads
+  last block with samples, the stream size and the settings it spells from the config block. MediaInfo starts at a
+  block that another header follows, accepts the stream at the second block or at the block that ends the file (MEDIAINFO_NO_FILL), and reads a file under 1 MiB to its end; the fixtures on which it reads
   otherwise name their evidence.
 
 Fixtures that are damaged say why the others do not apply; every skipped check prints its reason.
@@ -144,7 +144,11 @@ FFPROBE_COUNTS_THE_MASK = {"external-lossless-4ch-two-unassigned", "built-channe
 # ffprobe's packets end at the first bytes that are no block header (wv_read_block_header: ff_wv_parse_header fails).
 MEDIAINFO_DSD = ("MediaInfo 26.01 reads DSD: the sample rate is the header's index rate shifted by the frame rate multiplier of sub-block 0x0E and by 3 for the DSD flag, "
                  "and it fills no bit depth for a DSD file (File_Wvpk.cpp, Data_Parse_Fill, id_0E)")
-MEDIAINFO_ONE_BLOCK = ("MediaInfo 26.01 accepts a stream after two blocks with audio (Frame_Count_Valid=2, File_Wvpk.cpp) and fills nothing from a file that has one (observed)")
+MEDIAINFO_NO_FILL = ("MediaInfo 26.01 starts at a block only where another header follows it at once (Synchronize, File_Wvpk.cpp), so a file whose blocks do not chain "
+                     "(a single block, the last one included) is not synchronized and fills nothing; once synchronized it parses every block that begins with a header, the last "
+                     "one too (Synched_Test), and accepts the stream, filling it, in the block where the count of blocks reaches Frame_Count_Valid (2; a 4.x block without "
+                     "samples is taken back out of the count) or where the block ends the file (Data_Parse, \"Filling\"); observed on a file of one block of audio, which "
+                     "fills nothing, and of one block of audio and one of metadata, which does)")
 MEDIAINFO_ID3V2 = ("observed: MediaInfo 26.01 counts the leading ID3v2 tag in the General stream size (26 bytes) and fills none of its fields for a WavPack file")
 MEDIAINFO_READS_OTHERWISE = {
     "built-leading-id3v2": {"tag title": MEDIAINFO_ID3V2, "tag track": MEDIAINFO_ID3V2},
@@ -584,11 +588,15 @@ def check_mediainfo(name, manifest, path, report, tally):
     every = manifest["blocks"]
     chained = [b for i, b in enumerate(every) if i + 1 == len(every) or every[i + 1]["offset"] == b["offset"] + b["length"]]
     blocks = [b for b in chained if b["samples"]]
-    if len(blocks) < 2:
-        tally.compare("format of a file with one block of audio (" + MEDIAINFO_ONE_BLOCK + ")", audio.get("Format"), None)
+    if len(chained) < 2 or fill_block(chained, path.stat().st_size) is None:
+        tally.compare("format of a file that fills nothing (" + MEDIAINFO_NO_FILL + ")", audio.get("Format"), None)
         return problems
     tally.compare("format", audio.get("Format"), "WavPack")
-    first, second = blocks[0], blocks[1]
+    if not blocks:
+        tally.skip("fields", "MediaInfo accepts the file at its last block, which has no samples, so there is no block with audio to compare the fields with")
+        return problems
+    first = blocks[0]
+    second = blocks[1] if len(blocks) > 1 else blocks[0]
     version = int(first["version"], 16)
     tally.compare("profile", audio.get("Format_Profile"), f"{version >> 8}.{version & 0xFF:02d}")
     hybrid = statistic(report, "IsHybrid")
