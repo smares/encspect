@@ -158,15 +158,20 @@ public class MpegGraphLayoutTests
     }
 
     // The list of graphs shows whole items only: at any scroll position every heading and entry is entirely in its viewport or
-    // entirely out of it, and the viewport ends where an item does (the room under it stays empty). The dual channel file's list
-    // fits at 1180 by 800 and does not scroll, whichever entry is selected, with the view switcher shown or not.
+    // entirely out of it, and the viewport ends where an item does (the room under it stays empty). Whether a list fits is not
+    // asserted where it depends on the fonts of the platform (a nine-entry list at 1180 by 800 is some 310 pixels in 325 on Linux
+    // and 328 in 324 on Windows): a window tall enough that it fits with room to spare on any font has no scrollbar, one too short
+    // for it scrolls, and a list that fits, wherever it does, has no scrollbar.
     [AvaloniaTheory]
-    [InlineData("external-lame-dual-music.mp3", 800, false)]
-    [InlineData("external-lame-joint-music.mp3", 800, true)]
-    [InlineData("external-lame-joint-music.mp3", 640, true)]
-    [InlineData("external-lame-cbr128-joint.mp3", 640, true)]
-    [InlineData("external-lame-cbr128-joint.mp3", 800, true)]
-    public void The_list_of_graphs_shows_whole_items_only(string fixture, double height, bool mayScroll)
+    [InlineData("external-lame-dual-music.mp3", 1500, "fits")]
+    [InlineData("external-lame-dual-music.mp3", 800, "either")]
+    [InlineData("external-lame-dual-music.mp3", 560, "either")]
+    [InlineData("external-lame-joint-music.mp3", 800, "either")]
+    [InlineData("external-lame-joint-music.mp3", 640, "either")]
+    [InlineData("external-lame-joint-music.mp3", 520, "scrolls")]
+    [InlineData("external-lame-cbr128-joint.mp3", 640, "either")]
+    [InlineData("external-lame-cbr128-joint.mp3", 800, "either")]
+    public void The_list_of_graphs_shows_whole_items_only(string fixture, double height, string expected)
     {
         DetailWindow window = Open(Fixtures.Mpeg(fixture), 1180, height);
         ScrollViewer list = window.GraphList;
@@ -175,7 +180,9 @@ public class MpegGraphLayoutTests
             window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == title);
             Settle();
             bool scrolls = list.Extent.Height > list.Viewport.Height + 0.5;
-            Assert.True(mayScroll || !scrolls, $"The list of {list.Extent.Height} scrolls in {list.Viewport.Height} with {title} selected.");
+            Assert.True(expected != "fits" || !scrolls, $"The list of {list.Extent.Height} scrolls in {list.Viewport.Height} with {title} selected.");
+            Assert.True(expected != "scrolls" || scrolls, $"The list of {list.Extent.Height} fits in {list.Viewport.Height} with {title} selected.");
+            Assert.Equal(scrolls, list.GetVisualDescendants().OfType<Avalonia.Controls.Primitives.ScrollBar>().First(b => b.Orientation == Avalonia.Layout.Orientation.Vertical).IsVisible);
             Assert.True(list.Bounds.Height <= ((Control)list.Parent!).Bounds.Height + 0.5);
 
             double max = list.Extent.Height - list.Viewport.Height;
