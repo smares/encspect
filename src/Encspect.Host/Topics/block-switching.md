@@ -16,3 +16,5 @@ references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4
 **What you see.** Each granule's Block Type, and the Block Usage statistics, which count granules per type as mp3guessenc and EncSpot do. Encoders differ in how often they switch, which helps tell them apart.
 
 **The graphs.** Block Usage shows the type of every granule and channel, the share of each type per second and a strip with one cell per granule and channel. Block Sizes groups the same granules by the size of the transform, as EncSpot counts them: long (normal, start and stop blocks), short, mixed, and the reserved type apart, which EncSpot counts as long. mp3guessenc counts start, stop and reserved granules together as switch blocks.
+
+**In AAC.** The four window sequences of [AAC](aac-windows-and-blocks) correspond to Layer III's: only long to normal, long start to start, eight short to short, long stop to stop. AAC has no mixed blocks. Window Sequences counts every channel stream, as Block Usage counts every granule and channel, and Block Sizes groups them the same way.

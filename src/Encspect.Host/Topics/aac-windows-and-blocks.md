@@ -1,7 +1,7 @@
 ---
 id: aac-windows-and-blocks
 title: AAC windows, block switching and grouping
-related: block-switching, tns, aac-section-data-and-codebooks, aac-raw-data-blocks
+related: block-switching, coded-bandwidth, tns, aac-section-data-and-codebooks, aac-raw-data-blocks
 references: ISO/IEC 14496-3 4.4.2, 4.5.2, 4.6.11; ffmpeg libavcodec/aacdec_template.c
 ---
 
@@ -18,6 +18,8 @@ references: ISO/IEC 14496-3 4.4.2, 4.5.2, 4.6.11; ffmpeg libavcodec/aacdec_templ
 
 **Grouping.** Eight short windows code their spectra one after another, and scale_factor_grouping joins neighboring windows into groups that share one set of sections and scalefactors, which saves bits where the windows are alike.
 
-**max_sfb.** Only the lowest max_sfb scalefactor bands are coded; the bands above are zero. Encoders set it from the bandwidth they keep, so the most common max_sfb of long windows tells how high the core codes.
+**max_sfb.** Only the lowest max_sfb scalefactor bands are coded; the bands above are zero. The top of the highest of them is the [coded bandwidth](coded-bandwidth).
 
-**What you see.** Each channel's ICS Info with its window sequence, shape, max_sfb and grouping; in the statistics the window sequences and shapes per channel stream, the max_sfb distributions and the bandwidth they give.
+**What you see.** Each channel's ICS Info with its window sequence, shape, max_sfb and grouping; in the statistics the window sequences and shapes per channel stream, the max_sfb distributions and the coded bandwidth.
+
+**The graphs.** Window Sequences shows the sequence of every channel stream of every access unit or frame, and Block Sizes groups them as long, with the start and stop windows, and short: the share of each per second, and a strip with a cell per unit.
