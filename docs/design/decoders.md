@@ -261,7 +261,7 @@ public interface IFrameDecoder
 {
     // Decodes one frame, checks what the frame stores about its decoded audio (a Monkey's Audio frame CRC), and returns
     // the samples per channel by which the stream's decoded output advanced: 0 for a frame it could not decode, 0 for
-    // the blocks of a WavPack group before its final block and the group's samples on that block, and for a WMA Lossless
+    // the blocks of a WavPack set before its final block and the set's samples on that block, and for a WMA Lossless
     // packet the samples of the frames that end in it. The frame's bytes are valid only during the call.
     int Decode(in CodedFrame frame);
 
@@ -533,16 +533,16 @@ FLAC exercises the simplest flow. The flows of WavPack and TrueHD, walked throug
 
 WavPack:
 
-- **Units:** one `CodedFrame` per block. The blocks of one group, from the block with the initial flag to the one with the final flag, carry the channels of the same samples; the decoder reads the flags with the parser's code and keeps the group's samples until its final block, then writes one `PcmBlock`.
-- **Samples:** `Decode` returns 0 for the blocks before a group's final block and the group's samples on the final one, so `DecodedSamples` and the budget count each sample once, not once per block.
-- **State:** none from group to group beyond the decoder's configuration.
+- **Units:** one `CodedFrame` per block. The blocks of one set, from the block with the initial flag to the one with the final flag, carry the channels of the same samples; the decoder reads the flags with the parser's code and keeps the set's samples until its final block, then writes one `PcmBlock`.
+- **Samples:** `Decode` returns 0 for the blocks before a set's final block and the set's samples on the final one, so `DecodedSamples` and the budget count each sample once, not once per block.
+- **State:** none from set to set beyond the decoder's configuration.
 - **Declared checksums:**
   - the block checksum sub-block (coded data, every block that has one; the parser compares it today);
   - the block header CRC (decoded audio, one per audio block, `CoversAllAudio` where the stream has no gap and its samples equal the total the first block states);
   - the extended CRC (decoded audio, one per block with an extra bitstream);
   - the MD5 (decoded audio, 0 or 1 stored, `ID_MD5_CHECKSUM` or `ID_ALT_MD5_CHECKSUM`).
 - **DSD:** the decoder never calls `DeclareOutput`; `Decode` returns the DSD bytes per channel, which count toward the budget at 8 bits.
-- **A group past the ceiling** (below): its blocks are decoded one at a time and their CRCs compared, and the MD5 is not, with `wavpack.md5-group-too-large`.
+- **A set past the ceiling** (below): its blocks are decoded one at a time and their CRCs compared, and the MD5 is not, with `wavpack.md5-set-too-large`.
 - **Hybrid files:**
   - The main file decodes to the lossy samples, the stream the report describes, and their header CRCs are compared; the CRC covers all of that lossy stream (`CoversAllAudio` as above).
   - A hybrid file without an MD5 (the encoder stores one only with `-m`) is therefore verified as its lossy stream. The parser, which reads the hybrid flag, sets `DecodeSetup.IsLossy`, and the host copies it into `StreamVerification.IsLossy`: where the stream is verified, the text output and the GUI say "verified (lossy stream)", and JSON writes `isLossy` next to `isVerified`.
@@ -731,7 +731,7 @@ Every code follows the plan's severity rules: a stored checksum that differs is 
 | `wavpack.audio-crc-mismatch` | Warning | the block header's CRC field | a block's decoded audio does not have its header CRC (the extended CRC included); once per stream |
 | `wavpack.md5-mismatch` | Warning | the MD5 sub-block | lossless decoding gives another MD5 |
 | `wavpack.md5-needs-correction-file` | Info | the MD5 sub-block | a hybrid file decoded without its `.wvc`, whose MD5 is of the lossless audio |
-| `wavpack.md5-group-too-large` | Info | the MD5 sub-block | a group of blocks holds more than the ceiling's 2^24 samples, so its blocks were decoded one at a time and the MD5, which needs them interleaved, was not compared |
+| `wavpack.md5-set-too-large` | Info | the MD5 sub-block | a set of blocks holds more than the ceiling's 2^24 samples, so its blocks were decoded one at a time and the MD5, which needs them interleaved, was not compared |
 | `truehd.lossless-check-failed` | Warning | the restart header's lossless check byte | a presentation's output since the previous restart header does not give it; once per stream and presentation |
 | `<format>.decoded-samples-differ` | Warning | the frame | a frame decodes to another number of samples than its header gives |
 | `decode.frame-invalid` | Warning | the frame | the decoder could not decode a frame (`InvalidDataException`, or data that ends inside its coded audio); once per stream with a count; decoding carries on with the next frame |
@@ -836,7 +836,7 @@ public sealed record DecodedStream(string CodecId, Node Stream, PcmFormat Format
 | --- | --- | --- |
 | FLAC | 65,535 samples, 8 channels, 32 bits (RFC 9639, 8.2) | about 2.6 MB, with 64-bit buffers for the side channel of 32-bit streams |
 | Monkey's Audio | 73,728 samples per channel, × 4 at extra high and × 16 (1,179,648) at insane (`APECompressCreate.cpp` 77-81); the SDK accepts up to 10,000,000 at level 5000 and above and 1,000,000 below (`APEHeader.cpp` 305-317), with up to 32 channels (`All.h` 398) | none per frame from 3.93 on: the decoder decodes a frame in chunks of 4,096 samples per channel, with its CRC updated as it goes, so the frame's length bounds time, not memory; the SDK's limits are accepted as they are. Before 3.93 a frame's coefficients are not interleaved, so it is decoded whole (`apedec.c` 1619-1622), and its length is fixed by the version at 9,216 or 73,728 samples per channel (`ape.c` 224-229), at most 2 channels, which bounds the memory |
-| WavPack | under 196,608 samples a block (`read_next_header`); up to 4,096 channels across the blocks of one group | 2^24 samples for the blocks of one group, which the MD5 needs interleaved; past it the blocks are decoded one at a time, their CRCs compared, and the MD5 is not (`wavpack.md5-group-too-large`) |
+| WavPack | under 196,608 samples a block (`read_next_header`); up to 4,096 channels across the blocks of one set | 2^24 samples for the blocks of one set, which the MD5 needs interleaved; past it the blocks are decoded one at a time, their CRCs compared, and the MD5 is not (`wavpack.md5-set-too-large`) |
 | TrueHD, MLP | 160 samples, 8 channels (`mlp.h`) | negligible |
 | ALAC, later | the configuration's frame length, which FFmpeg accepts up to 4096 × 4096 (`alac.c` 530-532) | 2^20 samples per channel |
 
@@ -993,7 +993,7 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
   - the stop token, the budget through `MaxPcmBytes`, and `decode.frame-too-large`;
   - findings counted once per stream, sessions inside nested routes, sessions ended when a route returns with their findings merged;
   - `IsVerified` for each case of the rule, tallies with nothing stored included, and a per-frame tally whose stream has a gap or fewer samples than it states (not verified, though every value holds);
-  - `Decode` returns of 0 for all but a group's final block, counted once in `DecodedSamples` and the budget;
+  - `Decode` returns of 0 for all but a set's final block, counted once in `DecodedSamples` and the budget;
   - results that name no declared checksum, or compare more values than are stored (`decode.failed`, results dropped).
 - **Bit cursor, MD5 and CRC-32:** `BitCursorTests` against `BitReader` on random data and at every end; `Md5Tests` with RFC 1321's vectors and against `System.Security.Cryptography.MD5`, in the test only; `Crc32Tests` against the existing copies.
 - **Boundary:** `DecodingBoundaryTests` (above), with its negative control.
@@ -1123,10 +1123,15 @@ What the WavPack pull request implements: the decoder (`Encspect.Formats.WavPack
 - **Configuration:** `DecodeSetup.Configuration` is a copy of the first block that libwavpack opens a file with (the first audio block that verifies), and `Open` refuses what libwavpack refuses there (`NotPossible`). Up to 16 leading blocks without audio (at most 64 KiB) are held and handed first.
 - **Unreadable blocks:** `BlockStatus.Refused` marks a block libwavpack's decoder refuses (a decorrelation term of 0, a sub-block of the wrong size, a DSD block too short); with truncated and malformed blocks it becomes `CodedFrame.IsUnreadable`. `FollowsGap` comes from the block indexes.
 - **Checksums:** four tallies, declared by the parser: "block checksum" (coded data), "block header CRC", "extended CRC" and "MD5" (decoded audio, `CoversAllAudio` true). A block that says it has a checksum and has none counts as failed in the first.
-- **Groups:** a block group is decoded into planes for all its channels; over 2^24 samples (all channels) the blocks are decoded one at a time and the MD5 is not compared (`wavpack.md5-group-too-large`).
+- **Sets:** a block set is decoded into planes for all its channels; over 2^24 samples (all channels) the blocks are decoded one at a time and the MD5 is not compared (`wavpack.md5-set-too-large`).
 - **PCM format:** the bits per sample of the PCM format and of `Setup.BitsPerSample` are the container's width (`bytes * 8`, 32 for floats), 8 for DSD, whose unit of `DecodeSetup.Samples` is the bytes the decoder returns.
 - **Deviations from this document:**
-  - A muted block (the data ends before the samples do) follows libwavpack: the samples after it are zeros and the block fails its CRC. A block that fails its CRC is not zeroed.
+  - A block is muted whole (zeros, 0x55 for DSD) and fails its CRC when it has fewer samples than the first block of its set states or its bitstream runs out before its samples do. The first case is libwavpack's (`unpack.c` 89; the block's index plays no part, `open_utils.c` 357). In the second libwavpack reads its bitstream again from the start (`open_utils.c` 842-846) and mutes only on its end-of-data code or its mute limit, so the audio differs and the CRC fails in both. A block that fails its CRC is not zeroed, as `unpack_utils.c` 377-386 does.
+  - The work on blocks of sets that never complete reaches neither the sink nor the host's PCM budget, so the decoder limits it itself: `StreamDecoder.MaxWastedSamples` (2^32 samples over all channels), past which it refuses blocks (`decode.frame-invalid`). The design's bound on crafted input holds through it.
+  - The Matroska codec parser declares no block checksum: `WavpackVerifySingleBlock` sums the block's header, which Matroska drops, so it cannot be computed from a packet. The checksum tally is declared by the file parser only.
+  - Blocks the codec parser cannot rebuild (a header libwavpack would not take, a packet too short or with no block) are handed on as unreadable, not dropped.
+  - `wavpack.md5-set-too-large` is reported only when the file stores an MD5, and points to its sub-block.
+  - The refusal of a block is one reading: the feed asks `BlockContents` (the decoder's own sub-block reading) whether libwavpack refuses a block, and the parser's findings only explain it. The values of a fast mode's probability tables are checked as the DSD decoder reads them, so a table that is not valid is a `decode.frame-invalid` and not a parser finding.
   - The nodes of a block with no audio are listed beyond the 4,096-block cap (at most 64 more) so that the MD5 sub-block, which comes last, has a node for its findings.
   - The codec parser lists only the first 256 packets, so a decode finding for a later one has no node to point to.
 - **Not verified:** the MediaInfo checks of the new fixtures (the local MediaInfo is 24.01, the cross-check asserts 26.01).
