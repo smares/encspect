@@ -314,7 +314,7 @@ def ac3_frame(acmod=2, lfeon=0, fscod=0, frmsizecod=20, bsid=8, bsmod=0, dialnor
 
 def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, fscod2=0, bsid=16, dialnorm=27, chanmap=None, bsmod=None, words=256,
                expstre=1, ahte=0, aht_channel=0, spx=False, cplinu=False, ecpl=False, ends=None, addbsi=None, aux=None, skips=None, tail=None,
-               blksw=None, remat=None, spx_blocks=None, spx_range=(2, 2)):
+               blksw=None, remat=None, spx_blocks=None, spx_range=(2, 2), spx_structure=False):
     nf = NFCHANS[acmod]
     blocks = 6 if fscod == 3 else [1, 2, 3, 6][numblkscod]
     b = Bits()
@@ -362,7 +362,7 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
         if spx_blocks is not None:
             use.append(use[-1] if spx_blocks[block] is None else spx_blocks[block])
         else:
-            use.append(bool(spx) if block == 0 else bool(spx))
+            use.append(bool(spx))
     refreshed = [block == 0 or (spx_blocks is not None and use[block] != use[block - 1]) for block in range(blocks)]
     if expstre:
         for block in range(blocks):
@@ -396,7 +396,10 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
     cplbegf, cplendf = 3, 10
     begin_band = spx_range[0] + 2 if spx_range[0] < 6 else spx_range[0] * 2 - 3
     end_band = spx_range[1] + 5 if spx_range[1] < 3 else spx_range[1] * 2 + 3
-    spx_bands = end_band - begin_band - sum(DEFAULT_SPX_BANDS[begin_band + 1:end_band])
+    # The band structure: the default of Table E2.15 where the strategy does not send one (E.1.3.3.7: "the default spectral extension band structure
+    # shall be used" in the first block that uses spectral extension without one), or an explicit one (spxbndstrce 1) that merges every third band.
+    structure = [int(i % 3 == 1) for i in range(end_band - begin_band - 1)] if spx_structure else DEFAULT_SPX_BANDS[begin_band + 1:end_band]
+    spx_bands = end_band - begin_band - sum(structure)
     for block in range(blocks):
         if blksw is not None:
             for bit in blksw[block]:
@@ -416,7 +419,10 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
         if sends:
             if acmod != 1:
                 b.put((1 << nf) - 1, nf)
-            b.put(0, 2).put(spx_range[0], 3).put(spx_range[1], 3).put(0, 1)
+            b.put(0, 2).put(spx_range[0], 3).put(spx_range[1], 3).put(spx_structure, 1)
+            if spx_structure:
+                for bit in structure:
+                    b.put(bit, 1)
         if use[block]:
             for _ in range(nf):
                 if block == 0 or not use[block - 1]:

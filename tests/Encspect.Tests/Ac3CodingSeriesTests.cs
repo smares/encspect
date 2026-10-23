@@ -122,7 +122,15 @@ public class Ac3CodingSeriesTests
                 Assert.Equal(CountOf(read!), series.Total);
                 Assert.Equal("Bitrate", series.XSeries!.Name);
                 Assert.NotNull(series.Time);
-                Assert.Equal(stream.Codec == "AC-3" ? 6 : 0, series.ValuesPerUnit);
+                // An AC-3 stream is a fixed layout of six; an E-AC-3 one is variable, unless it is an AC-3 core whose units all have six blocks or fewer.
+                if (stream.Codec == "AC-3")
+                {
+                    Assert.Equal(6, series.ValuesPerUnit);
+                }
+                else
+                {
+                    Assert.True(series.ValuesPerUnit == 0 || Enumerable.Range(0, series.Count).All(u => series.ValueCount(u) <= 6), $"{name}: a fixed layout of {series.ValuesPerUnit}");
+                }
             }
         }
     }
@@ -226,6 +234,36 @@ public class Ac3CodingSeriesTests
         Assert.Equal([12, 6, 1, 12], Enumerable.Range(0, 4).Select(rematrixing.ValueCount));
         Assert.Equal(31, rematrixing.Total);
         Assert.Equal([1, 1, 1], Enumerable.Range(0, 3).Select(v => (int)rematrixing[1, 3 + v]));
+    }
+
+    // An AC-3 core with E-AC-3 dependent frames (ETSI TS 102 366 J.1.5.2.2) has the blocks of both in a program frame, 12 values, which no fixed layout of
+    // six holds: the layout is variable, the series equal their tallies, and a program frame without a dependent frame has its six.
+    [Fact]
+    public void An_ac3_core_with_dependent_frames_has_a_variable_layout_and_series_equal_to_their_tallies()
+    {
+        Report report = Fixtures.AnalyzeMpeg("ac3/coding-ac3-core-dependent.ac3");
+        StreamInfo stream = Assert.Single(report.Streams);
+        Node statistics = StatisticsOf(report, stream);
+
+        Assert.Equal("E-AC-3", stream.Codec);
+        Assert.Equal(["Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing"], stream.CategorySeries.Select(s => s.Name));
+        Assert.All(stream.CategorySeries, s => Assert.Equal(0, s.ValuesPerUnit));
+        Assert.All(stream.CategorySeries, s => Assert.Equal([12, 6, 12, 12], Enumerable.Range(0, 4).Select(s.ValueCount)));
+        Assert.All(stream.CategorySeries, s => Assert.Equal(CountOf(Child(statistics, "Audio Blocks Read")!), s.Total));
+        Assert.Equal(CountOf(Child(statistics, "Blocks With Block Switching")!), stream.CategorySeries[0].Counts[0]);
+        Assert.Equal(20, stream.CategorySeries[0].Counts[0]);
+    }
+
+    // The largest program frame: an independent frame and eight dependent frames of six blocks, 54 values in each series.
+    [Fact]
+    public void A_program_frame_of_nine_frames_has_54_values()
+    {
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("ac3/coding-eac3-nine-frames.eac3").Streams);
+
+        Assert.All(stream.CategorySeries, s => Assert.Equal([54, 54, 15, 9], Enumerable.Range(0, 4).Select(s.ValueCount)));
+        Assert.All(stream.CategorySeries, s => Assert.Equal(132, s.Total));
+        Assert.Equal([123L, 9L], stream.CategorySeries[0].Counts);
+        Assert.Equal(54, Enumerable.Range(0, 54).Count(v => stream.CategorySeries[0][0, v] != CategorySeries.None));
     }
 
     // A frame that stops before its end reports the blocks read to their end only, in the tally and in the series alike.

@@ -724,19 +724,19 @@ def build_coding():
 
     # E-AC-3: frames of 6, 3, 2 and 1 blocks in one stream, with block switching, rematrixing and spectral extension that starts and stops.
     def eac3_frame(**o):
-        keep = {k: o.pop(k) for k in ("blksw", "remat", "spx_blocks", "spx_range") if k in o}
+        keep = {k: o.pop(k) for k in ("blksw", "remat", "spx_blocks", "spx_range", "spx_structure") if k in o}
         blocks = [1, 2, 3, 6][o.get("numblkscod", 3)]
         spx = keep.get("spx_blocks")
         rows = coding_blocks(o.get("acmod", 2), blocks=blocks, blksw=keep.get("blksw"), remat=keep.get("remat"), spx=spx, spx_range=keep.get("spx_range", (2, 2)))
         return eac3(**o, **keep), rows
 
     six = [
-        dict(numblkscod=3, blksw=sw, remat=[0b0110, None, 0, None, 0b1000, None], spx_blocks=[True, None, False, None, True, None], spx_range=(3, 5)),
+        dict(numblkscod=3, blksw=sw, remat=[0b0110, None, 0, None, 0b1000, None], spx_blocks=[True, None, False, None, True, None], spx_range=(3, 5), spx_structure=True),
         dict(numblkscod=3, blksw=quiet, remat=[0, None, None, None, None, 0b0001], spx_blocks=[False] + [None] * 5),
-        dict(numblkscod=2, blksw=[(1, 1), (0, 0), (0, 1)], remat=[0b1111, 0, None], spx_blocks=[False, True, None], spx_range=(1, 3)),
-        dict(numblkscod=1, blksw=[(0, 1), (1, 0)], remat=[0b0011, None], spx_blocks=[True, False], spx_range=(3, 5)),
-        dict(numblkscod=0, blksw=[(1, 1)], remat=[0b0100], spx_blocks=[True], spx_range=(3, 5)),
-        dict(numblkscod=3, blksw=quiet, remat=[0b1111, None, None, None, None, None], spx_blocks=[True] * 6, spx_range=(3, 5)),
+        dict(numblkscod=2, blksw=[(1, 1), (0, 0), (0, 1)], remat=[0b1111, 0, None], spx_blocks=[False, True, None], spx_range=(1, 3), spx_structure=True),
+        dict(numblkscod=1, blksw=[(0, 1), (1, 0)], remat=[0b0011, None], spx_blocks=[True, False], spx_range=(3, 5), spx_structure=True),
+        dict(numblkscod=0, blksw=[(1, 1)], remat=[0b0100], spx_blocks=[True], spx_range=(3, 5), spx_structure=True),
+        dict(numblkscod=3, blksw=quiet, remat=[0b1111, None, None, None, None, None], spx_blocks=[True] * 6, spx_range=(3, 5), spx_structure=True),
     ]
     built = [eac3_frame(acmod=2, words=256, **o) for o in six]
     data = b"".join(f for f, _ in built)
@@ -749,11 +749,11 @@ def build_coding():
     # frame that adds the center channel has no rematrixing, and the number of blocks changes between program frames.
     program = [
         (dict(numblkscod=3, blksw=sw, remat=[0b0110, None, 0, None, 0b1000, None], spx_blocks=[False] * 6),
-         dict(acmod=2, numblkscod=3, blksw=quiet, remat=[0b0001, None, None, None, None, None], spx_blocks=[True] * 6, spx_range=(3, 5), words=160)),
+         dict(acmod=2, numblkscod=3, blksw=quiet, remat=[0b0001, None, None, None, None, None], spx_blocks=[True] * 6, spx_range=(3, 5), spx_structure=True, words=160)),
         (dict(numblkscod=2, blksw=[(0, 0), (1, 0), (0, 0)], remat=[0, None, 0b0011], spx_blocks=[False] * 3),
          dict(acmod=1, numblkscod=2, blksw=[(1,), (0,), (1,)], spx_blocks=[False] * 3, words=160)),
-        (dict(numblkscod=0, blksw=[(1, 1)], remat=[0b1111], spx_blocks=[True], spx_range=(3, 5)), None),
-        (dict(numblkscod=3, blksw=quiet, remat=[0b1000] + [None] * 5, spx_blocks=[True, None, False, None, None, None], spx_range=(3, 5)),
+        (dict(numblkscod=0, blksw=[(1, 1)], remat=[0b1111], spx_blocks=[True], spx_range=(3, 5), spx_structure=True), None),
+        (dict(numblkscod=3, blksw=quiet, remat=[0b1000] + [None] * 5, spx_blocks=[True, None, False, None, None, None], spx_range=(3, 5), spx_structure=True),
          dict(acmod=2, numblkscod=3, blksw=sw, remat=[0, None, 0b0100, None, None, None], spx_blocks=[False] * 6, words=160)),
     ]
     chunks, units = [], []
@@ -771,10 +771,87 @@ def build_coding():
             "channel, alone with one block, and with a dependent frame again, the number of blocks changing between them.", data, frames_of(data),
             [stream("E-AC-3", 48000, 2, 0, sum(256 * [1, 2, 3, 6][p[0]["numblkscod"]] for p in program), layout=[m.FL, m.FR, m.BL, m.BR], vbr=True)],
             [("ac3.dependent-layout-changed", "add other channels in 2 of its frames than in its first")],
-            crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
+            crosscheck={"ffprobe": False, "decode": True, "skip_insertion": False,
                         "skip": {"ffprobe": "Dependent substreams of different layouts make what ffmpeg's parser reports of the channels differ from the analyzer's first-frame layout.",
-                                 "decode": "The check decodes each packet alone; the program frames with a mono dependent frame change the channel count between packets.",
-                                 "skip_insertion": ok["skip"]["skip_insertion"]}}, coding=[units])
+                                 "skip_insertion": "The check rewrites the frames of one stream; ffmpeg decodes the independent substream and mixes in the dependent frames only as it likes, so a "
+                                                    "moved skip field in a dependent frame is not guaranteed to change the samples."}}, coding=[units])
+
+    # An AC-3 core with E-AC-3 dependent frames, the form ETSI TS 102 366 J.1.5.2.2 gives a program of more than 5.1 channels (the AC-3 bit stream is
+    # independent substream 0 of the Enhanced AC-3 bit stream): the program frame has the core's six blocks and the dependent frame's, 12 values in each
+    # series, which no fixed layout of six holds; a program frame with no dependent frame has six.
+    core_program = [
+        (dict(blksw=quiet, remat=[0b1111, None, None, None, None, None], cpl=[(3, 10), None, False, None, None, None]),
+         dict(numblkscod=3, blksw=sw, remat=[0b0001] + [None] * 5, spx_blocks=[False] * 6, words=160)),
+        (dict(blksw=sw, remat=[0, None, 0b0101, None, None, None], cpl=[False] + [None] * 5), None),
+        (dict(blksw=[(1, 1)] * 6, remat=[0b0011] + [None] * 5, cpl=[(2, 9), None, None, None, None, None]),
+         dict(numblkscod=3, blksw=quiet, remat=[0b1000, None, None, 0, None, None], spx_blocks=[True] * 6, spx_range=(3, 5), spx_structure=True, words=160)),
+        (dict(blksw=quiet, remat=[0b1010, None, None, None, None, None], cpl=[False] + [None] * 5),
+         dict(numblkscod=3, blksw=[(1, 0)] * 6, remat=[0] + [None] * 5, spx_blocks=[False] * 6, words=160)),
+    ]
+    chunks, units = [], []
+    for core_options, dependent in core_program:
+        frame, rows = ac3_frame(**core_options)
+        frames = [rows]
+        if dependent is not None:
+            more, dependent_rows = eac3_frame(strmtyp=1, acmod=2, chanmap=LRS_RRS, **dependent)
+            frame += more
+            frames.append(dependent_rows)
+        chunks.append(frame)
+        units.append(coding_unit(48000, frames, False))
+    data = b"".join(chunks)
+    fixture("coding-ac3-core-dependent", ".ac3", "Four program frames of an AC-3 2/0 frame, three of them followed by an E-AC-3 dependent frame that adds the rear pair: 12 values in each "
+            "series where there is a dependent frame, 6 where there is none.", data, frames_of(data),
+            [stream("E-AC-3", 48000, 2, 0, 4 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True)],
+            [("ac3.dependent-layout-changed", "add other channels in 1 of its frames than in its first")],
+            crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
+                        "skip": {"ffprobe": "ffmpeg's parser takes the AC-3 core and the E-AC-3 frames as two codecs; what it reports of the stream is no reference for the analyzer's.",
+                                 "decode": "The check decodes each packet alone as one codec, and a packet that joins an AC-3 frame and a dependent E-AC-3 frame is neither.",
+                                 "skip_insertion": "The core is AC-3, whose frames the check does not rewrite."}}, coding=[units])
+
+    # Spectral extension that starts after a block without it, with the default band structure the specification loads at the first block that
+    # uses spectral extension (ETSI TS 102 366 E.1.3.3.7), which ffmpeg loads only in block 0 (libavcodec/ac3dec.c, decode_band_structure:
+    # "if (!blk) memcpy(...default...)", called from spx_strategy only): a frame decoded alone reads sub-bands 5 to 13 with the zeros of a fresh
+    # context, 8 bands of coordinates where the default merges three, and fails. The frame that starts in block 0 decodes.
+    defaults = [
+        dict(numblkscod=3, blksw=quiet, remat=[0b0110, None, None, None, None, None], spx_blocks=[True, None, False, None, None, None], spx_range=(3, 5)),
+        dict(numblkscod=3, blksw=sw, remat=[0, None, 0b1111, None, None, None], spx_blocks=[False, True, None, None, False, None], spx_range=(3, 5)),
+        dict(numblkscod=3, blksw=quiet, remat=[0b1000, None, None, None, None, None], spx_blocks=[False, None, None, True, None, None], spx_range=(3, 5)),
+    ]
+    built = [eac3_frame(acmod=2, words=256, **o) for o in defaults]
+    data = b"".join(f for f, _ in built)
+    fixture("coding-eac3-spx-default", ".eac3", "Three 2/0 frames of six blocks: spectral extension from block 0 and, in the other two, starting in block 1 and in block 3 after blocks without "
+            "it, all with the default band structure; the frames that start late are the ones ffmpeg rejects.", data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 3 * 1536)], [],
+            crosscheck={"ffprobe": True, "decode": True, "damaged": [512, 1024], "skip_insertion": False,
+                        "skip": {"skip_insertion": "ffmpeg rejects two of the frames (an ffmpeg bug, see the fixture's description), so the samples are no reference.",
+                                 "damaged": "Expected failures, not damage: ffmpeg 6.1.1 loads the default spectral extension band structure only in block 0 of a frame that has it there, where "
+                                            "ETSI TS 102 366 E.1.3.3.7 loads it whenever spectral extension starts without a structure of its own."}},
+            coding=[[coding_unit(48000, [r], True) for _, r in built]])
+
+    # The largest program frame: an independent frame and eight dependent frames of six blocks, 54 values in each series (Annex E 2.3.1.2 allows one
+    # dependent frame for each of the substream IDs 0 to 7), then smaller ones.
+    def nine(blocks, dependents, flavor):
+        pieces, frames = [], []
+        code = {1: 0, 2: 1, 3: 2, 6: 3}[blocks]
+        independent, rows = eac3_frame(acmod=2, words=256, numblkscod=code, blksw=[(flavor % 2, 0)] * blocks, remat=[0b0101] + [None] * (blocks - 1),
+                                       spx_blocks=[False] * blocks)
+        pieces.append(independent)
+        frames.append(rows)
+        for ident in range(dependents):
+            frame, rows = eac3_frame(strmtyp=1, substream=ident, acmod=2, words=160, numblkscod=code, blksw=[((ident + flavor) % 2, 1)] * blocks,
+                                     remat=[(ident + 1) & 15] + [None] * (blocks - 1), spx_blocks=[False] * blocks)
+            pieces.append(frame)
+            frames.append(rows)
+        return b"".join(pieces), coding_unit(48000, frames, True)
+
+    shapes = [nine(6, 8, 0), nine(6, 8, 1), nine(3, 4, 0), nine(1, 8, 1)]
+    data = b"".join(f for f, _ in shapes)
+    fixture("coding-eac3-nine-frames", ".eac3", "Four E-AC-3 program frames of an independent 2/0 frame and 8, 8, 4 and 8 dependent 2/0 frames of 6, 6, 3 and 1 blocks: 54, 54, 15 and 9 "
+            "values in each series.", data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 256 * (6 + 6 + 3 + 1), vbr=True)],
+            [("ac3.dependent-layout-changed", "add other channels in 1 of its frames than in its first")],
+            crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
+                        "skip": {"ffprobe": "ffmpeg's parser joins the dependent frames to their independent frame and reports the channels of the stream it decodes, which the check does not compare for a program of nine frames.",
+                                 "decode": "ffmpeg decodes the independent substream only and the check decodes each packet; the dependent frames' content is no reference here.",
+                                 "skip_insertion": "The dependent frames are not decoded by ffmpeg, so a moved skip field there changes no sample."}}, coding=[[u for _, u in shapes]])
 
 
 def sample_rows(track, chunks, split=False):

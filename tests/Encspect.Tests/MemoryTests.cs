@@ -471,11 +471,17 @@ public class MemoryTests(ITestOutputHelper output)
         (Report few, long fewerKept) = MeasureKept("few.eac3", Repeated(source, fewer / perCopy), source);
         (Report many, long kept) = MeasureKept("many.eac3", Repeated(source, units / perCopy), source);
 
+        // The budget of this stream, from its own units: for each of the four series the values of every unit and its count byte (a fixed copy of the
+        // fixture's 31 blocks in 4 units is 35 bytes a unit), not the worst case of 12 values, which would let 17 bytes a unit of regression pass.
+        CategorySeries first = Assert.Single(few.Streams).CategorySeries[0];
+        double perUnit = 4.0 * (Enumerable.Range(0, first.Count).Sum(u => first.ValueCount(u)) + first.Count) / first.Count;
         CheckAc3CodingGrowth(few, many, fewer, units, ["Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing", "Blocks With Spectral Extension"],
-            categoryBytes: 4 * (12 + 1), numericBytes: 8);
+            categoryBytes: (int)Math.Ceiling(perUnit) + 1, numericBytes: 8);
         double keptPerUnit = (kept - fewerKept) / (double)(units - fewer);
         output.WriteLine($"{Hundredths(keptPerUnit)} bytes kept per further program frame");
-        Assert.True(keptPerUnit < 250, $"The report keeps {keptPerUnit:F2} bytes per further program frame.");
+        // 151 bytes measured on linux-x64 (a 16-byte record, the kept bits, the bitrate series' two points and 35 bytes of series for each program frame); the
+        // bound leaves a quarter for the other platforms.
+        Assert.True(keptPerUnit < 190, $"The report keeps {keptPerUnit:F2} bytes per further program frame.");
         GC.KeepAlive(few);
         GC.KeepAlive(many);
     }

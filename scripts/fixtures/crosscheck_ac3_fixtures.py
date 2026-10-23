@@ -352,8 +352,11 @@ def check_coding_series(path, problems):
             for name, codes in expected.items():
                 if name in units and units[name][unit] != codes:
                     problems.append(f"unit {unit} at {int(x)}: {name} {units[name][unit]}, liba52 decides {codes}")
-            if "Blocks With Coupling" in units and channels == 1:
-                problems.append(f"unit {unit} at {int(x)}: a mono frame has a coupling series")
+            # A series exists where its tally node does: coupling from acmod 2, rematrixing at acmod 2 only.
+            acmod = blocks[0]["acmod"]
+            for name, wanted in (("Blocks With Coupling", acmod >= 2), ("Blocks With Rematrixing", acmod == 2)):
+                if (name in units) != wanted:
+                    problems.append(f"unit {unit} at {int(x)}: acmod {acmod} {'has' if name in units else 'lacks'} the series {name}")
             top = max(max(b["endmant"] + ([b["cplendmant"]] if b["chincpl"] else [])) for b in blocks)
             if hertz.get(x) != round_half_even(top * stream["sampleRate"], 512):
                 problems.append(f"unit {unit} at {int(x)}: coded bandwidth {hertz.get(x)} Hz, liba52's end bins give {round_half_even(top * stream['sampleRate'], 512)} Hz")

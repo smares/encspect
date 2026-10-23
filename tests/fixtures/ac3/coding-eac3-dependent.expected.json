@@ -58,12 +58,11 @@
  ],
  "crosscheck": {
   "ffprobe": false,
-  "decode": false,
+  "decode": true,
   "skip_insertion": false,
   "skip": {
    "ffprobe": "Dependent substreams of different layouts make what ffmpeg's parser reports of the channels differ from the analyzer's first-frame layout.",
-   "decode": "The check decodes each packet alone; the program frames with a mono dependent frame change the channel count between packets.",
-   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields; the coding fixtures' blocks would need nothing new from it."
+   "skip_insertion": "The check rewrites the frames of one stream; ffmpeg decodes the independent substream and mixes in the dependent frames only as it likes, so a moved skip field in a dependent frame is not guaranteed to change the samples."
   }
  },
  "block_ends": {
@@ -76,12 +75,12 @@
    277
   ],
   "512": [
-   327,
    346,
-   365,
-   384,
-   403,
-   422
+   372,
+   398,
+   424,
+   450,
+   476
   ],
   "832": [
    209,
@@ -94,15 +93,15 @@
    163
   ],
   "1664": [
-   285
+   304
   ],
   "2176": [
-   321,
-   329,
-   444,
-   450,
-   456,
-   462
+   340,
+   348,
+   463,
+   469,
+   475,
+   481
   ],
   "2688": [
    240,
