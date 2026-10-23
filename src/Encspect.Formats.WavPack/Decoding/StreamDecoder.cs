@@ -19,7 +19,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     // not add up, a block it refused) before it refuses further blocks. Such work reaches neither the sink nor the host's PCM budget, so
     // this bounds it: a crafted file of small blocks that each state 196,607 samples would otherwise cost time by the samples it states and
     // not by its bytes. A file whose sets all complete never reaches it.
-    internal const long MaxWastedSamples = 1L << 32;
+    internal const long MaxWastedSamples = 1L << 28;
 
     private const int DefaultMaxStreams = Syntax.OldMaxStreams;
 

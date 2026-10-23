@@ -1400,7 +1400,7 @@ class Run:
         self.frozen = True
 
         # WavpackUnpackSamples (unpack_utils.c 132-133) goes on to the next block when this one does not start a set; a block
-        # that does (INITIAL_BLOCK) starts one whose samples_to_unpack is its own block_samples (unpack_utils.c 164).
+        # that does (INITIAL_BLOCK) starts one whose samples_to_unpack is its own block_samples (unpack_utils.c 169).
         if flags & m.INITIAL:
             self.abandon()
             self.streams = {"index": h["index"], "samples_to_unpack": h["samples"], "offset": 0, "current_stream": 0, "failed": False,
@@ -1429,8 +1429,8 @@ class Run:
         has_extra, extra_ok = False, True
         try:
             if mute_error:
-                # unpack.c 91-100: the buffer is zeroed (0x55 for DSD, unpack_dsd.c 77-85) and sample_index advanced; check_crc_error
-                # then compares the CRC the muted block was left with (0xffffffff, unpack.c 51-52 initial value) with the header's.
+                # unpack.c 91-100: the buffer is zeroed (0x55 for DSD, unpack_dsd.c 93-104) and sample_index advanced; check_crc_error
+                # then compares the CRC the muted block was left with (0xffffffff, open_utils.c 301 initial value) with the header's.
                 crc_ok = MASK32 == h["crc"]
                 decoded = [0x55 if self.is_dsd else 0] * (sample_count * width)
             elif self.is_dsd:

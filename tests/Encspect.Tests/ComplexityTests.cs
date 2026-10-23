@@ -261,7 +261,7 @@ public class ComplexityTests
     // Mono blocks of 196,607 samples (the most a block may state) whose bitstream is 16 bytes, each a set of its own that states 100 channels
     // of a stream that has one: no set completes, so none reaches the sink or the host's PCM budget. 60,000 blocks (3.4 MB) state 11.8
     // billion samples; the decoder's own limit on the work spent on sets that never complete (StreamDecoder.MaxWastedSamples) refuses the
-    // blocks past 2^32 samples, so the analysis costs by that limit and the bytes, not by the samples the blocks state.
+    // blocks past 2^28 samples, so the analysis costs by that limit and the bytes, not by the samples the blocks state.
     [Fact]
     public void WavPackBlocksThatStateMoreSamplesThanTheyCode()
     {
@@ -287,9 +287,9 @@ public class ComplexityTests
         Assert.Equal(0, report.Streams.Single().Verification!.DecodedSamples);
         Assert.Contains(report.Findings, f => f.Code == "decode.frame-invalid");
 
-        // Each block decoded before the limit fails its CRC (it ends before its samples do), the ones past it are refused unread: 2^32 / 196,607 = 21,845.
+        // Each block decoded before the limit fails its CRC (it ends before its samples do), the ones past it are refused unread: 2^28 / 196,607 = 1,365.
         Finding crc = Assert.Single(report.Findings, f => f.Code == "wavpack.audio-crc-mismatch");
-        Assert.InRange(crc.Count, 21_000, 22_500);
+        Assert.InRange(crc.Count, 1_300, 1_450);
     }
 
     // Core frame headers every 96 bytes (the smallest frame) that state 16 KiB frames: each is a candidate whose chain the

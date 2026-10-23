@@ -55,6 +55,7 @@ public static class VerificationText
 
     private static string Reason(StreamVerification verification, ChecksumTally tally) =>
         verification is { Decoding: DecodeStatus.Decoded, IsLossy: true } && tally.Checked == 0
+        && verification.Checksums.Where(t => t.Stored > 0 && t.Covers == ChecksumCoverage.DecodedAudio && t != tally).All(t => t.NotChecked == 0)
             ? "the stream decodes to lossy audio, and the checksum is of the lossless audio"
             : Reason(verification.Decoding);
 
