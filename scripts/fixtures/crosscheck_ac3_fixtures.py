@@ -12,6 +12,13 @@ For every fixture, its manifest's "crosscheck" says what to confirm:
   joins dependent frames to the one before ("ffprobe_packets": "substream 0" where it starts one only at an independent
   frame of substream 0, and "ffprobe_fields": false where it then reads no sample rate or channels, "channels" where it reads only no channels). For raw files, ffprobe's bitrate must be the first
   packet's, unless "ffprobe_bitrate" is false (ffmpeg gives none for frames it cannot decode).
+- "liba52" also holds the golden report's coding series to the audio blocks liba52 decodes, frame by frame (check_coding_series): a patched
+  build of liba52 0.7.4's original source (a52_trace_tool.py) prints blksw of every channel, chincpl, rematflg and the end bins of each block, from
+  which the checker computes, by the rules of ATSC A/52:2018 5.4.3.1, 5.4.3.8, 5.4.3.20 and 7.2.2.1, whether the block switches, couples and
+  rematrixes, and the highest end bin; the series "Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing" and "Coded
+  Bandwidth" must hold exactly those, for every frame of a raw AC-3 file that liba52 decodes to its sixth block. E-AC-3 has no such reference,
+  liba52 not decoding it; the coding fixtures' manifests carry the expected values ("coding"), computed by make_ac3_fixtures.py's model and held
+  to the series by Ac3CodingSeriesTests.
 - "decode": ffmpeg with CRC checking must decode each packet alone without an error, unless the
   packet holds a frame the manifest lists as one decoders reject ("damaged": cut or failing a CRC,
   or a dependent frame without its independent one), which it must reject, as it rejects the frames
@@ -70,6 +77,7 @@ import subprocess
 import sys
 import tempfile
 
+import a52_trace_tool
 import ac3_model as m
 import channel_layouts
 import mediainfo_tool as mi
@@ -293,6 +301,66 @@ def check_liba52(tool, path, manifest, problems):
     for offset, ends in manifest.get("block_ends", {}).items():
         if found.get(offset) != [str(e) for e in ends]:
             problems.append(f"liba52 ends the blocks of the frame at {offset} at {found.get(offset)}, the manifest at {ends}")
+
+
+def series_units(series, count):
+    """The values of each unit of a category series of the report, from its run-length codes (None for a block without a value)."""
+    flat = [code for code, length in series["runs"] for _ in range(length)]
+    counts = [c for c, units in series["valueCounts"] for _ in range(units)] if "valueCounts" in series else [series.get("valuesPerUnit", 1)] * count
+    out, at = [], 0
+    for c in counts:
+        out.append(flat[at:at + c])
+        at += c
+    return out
+
+
+def round_half_even(numerator, denominator):
+    quotient, rest = divmod(numerator, denominator)
+    return quotient + (1 if rest * 2 > denominator or (rest * 2 == denominator and quotient % 2) else 0)
+
+
+# What check_coding_series compared, and the units it left out: printed at the end of a run.
+CODING_COMPARED = []
+
+
+def check_coding_series(path, problems):
+    """Holds the coding series of an AC-3 file's golden report to liba52's decisions, unit by unit (see the module's documentation). Every
+    frame is a unit of an AC-3 stream; a frame liba52 rejects or stops inside is left out, and so is a unit whose stream is E-AC-3."""
+    report = mi.golden(path)
+    frames = {f["offset"]: f for f in a52_trace_tool.trace(path)}
+    compared = left_out = 0
+    for stream in report["streams"]:
+        by_name = {c["name"]: c for c in stream.get("categorySeries", [])}
+        if stream["codec"] != "AC-3" or "Blocks With Block Switching" not in by_name:
+            continue
+        xs = next(s for s in stream["series"] if s["name"] == "Bitrate")["x"]
+        units = {name: series_units(series, len(xs)) for name, series in by_name.items()}
+        bandwidth = next(s for s in stream["series"] if s["name"] == "Coded Bandwidth")
+        hertz = dict(zip(bandwidth["x"], bandwidth["values"]))
+        for unit, x in enumerate(xs):
+            frame = frames.get(int(x))
+            if frame is None or frame["rejected"] or frame["error"] or len(frame["blocks"]) != 6:
+                left_out += 1
+                continue
+            blocks = frame["blocks"]
+            channels = len(blocks[0]["blksw"])
+            expected = {
+                "Blocks With Block Switching": [0 if any(b["blksw"]) else 1 for b in blocks],
+                "Blocks With Coupling": [0 if b["chincpl"] else 1 for b in blocks] if channels > 1 else None,
+                "Blocks With Rematrixing": [0 if b["acmod"] == 2 and b["rematflg"] else 1 for b in blocks],
+            }
+            for name, codes in expected.items():
+                if name in units and units[name][unit] != codes:
+                    problems.append(f"unit {unit} at {int(x)}: {name} {units[name][unit]}, liba52 decides {codes}")
+            if "Blocks With Coupling" in units and channels == 1:
+                problems.append(f"unit {unit} at {int(x)}: a mono frame has a coupling series")
+            top = max(max(b["endmant"] + ([b["cplendmant"]] if b["chincpl"] else [])) for b in blocks)
+            if hertz.get(x) != round_half_even(top * stream["sampleRate"], 512):
+                problems.append(f"unit {unit} at {int(x)}: coded bandwidth {hertz.get(x)} Hz, liba52's end bins give {round_half_even(top * stream['sampleRate'], 512)} Hz")
+            compared += 1
+            if len(problems) > 5:
+                return
+    CODING_COMPARED.append((path.name, compared, left_out))
 
 
 def bits_of(data):
@@ -549,6 +617,8 @@ def main():
                 check_decode(path, data, manifest, problems, work)
             if check.get("liba52"):
                 check_liba52(tool, path, manifest, problems)
+                if path.suffix == ".ac3":
+                    check_coding_series(path, problems)
             if check.get("skip_insertion"):
                 if analyzer is None:
                     print(f"{path.name}: the skip insertion check needs --analyzer; not run")
@@ -563,6 +633,8 @@ def main():
         print(problem)
         failures += 1
     tally.print()
+    print(f"The coding series agree with liba52's decisions on {sum(c for _, c, _ in CODING_COMPARED)} frames of {len(CODING_COMPARED)} fixtures; "
+          f"{sum(o for _, _, o in CODING_COMPARED)} frames it rejects or stops in are left out.")
     print(f"{checked} fixtures checked, {failures} disagree.")
     return 1 if failures else 0
 
