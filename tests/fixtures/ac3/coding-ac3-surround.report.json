@@ -151,7 +151,7 @@
                 },
                 {
                   "name": "Blocks With Delta Bit Allocation",
-                  "value": 0,
+                  "value": 1,
                   "unit": "blocks",
                   "offset": 0,
                   "length": 1536
@@ -202,7 +202,7 @@
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 9284,
+                  "value": 9272,
                   "unit": "bits",
                   "offset": 0,
                   "length": 1536
@@ -257,7 +257,7 @@
                     },
                     {
                       "name": "CRC1",
-                      "value": 56476,
+                      "value": 16454,
                       "offset": 2,
                       "length": 2,
                       "children": [
@@ -2934,9 +2934,9 @@
                   "kind": "SideInfo",
                   "value": 4,
                   "offset": 158,
-                  "length": 102,
+                  "length": 103,
                   "bitOffset": 2,
-                  "bitLength": 808,
+                  "bitLength": 820,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
@@ -4470,27 +4470,84 @@
                     },
                     {
                       "name": "HasDeltaBitAllocation",
-                      "value": false,
+                      "value": true,
                       "offset": 259,
                       "length": 1,
                       "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
+                      "name": "Delta Bit Allocation",
+                      "offset": 259,
+                      "length": 2,
+                      "bitOffset": 1,
+                      "bitLength": 12,
+                      "children": [
+                        {
+                          "name": "Delta Bit Allocation Mode (coupling)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 259,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Delta Bit Allocation Mode (left)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 259,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Delta Bit Allocation Mode (center)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 259,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Delta Bit Allocation Mode (right)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 259,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Delta Bit Allocation Mode (left surround)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 260,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Delta Bit Allocation Mode (right surround)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 260,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
                       "name": "HasSkipField",
                       "value": false,
-                      "offset": 259,
+                      "offset": 260,
                       "length": 1,
-                      "bitOffset": 1,
+                      "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 259,
+                      "offset": 260,
                       "length": 1,
-                      "bitOffset": 2,
+                      "bitOffset": 6,
                       "bitLength": 0
                     }
                   ]
@@ -4499,262 +4556,262 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 5,
-                  "offset": 259,
-                  "length": 5,
-                  "bitOffset": 2,
+                  "offset": 260,
+                  "length": 6,
+                  "bitOffset": 6,
                   "bitLength": 35,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": true,
-                      "offset": 259,
+                      "offset": 260,
                       "length": 1,
-                      "bitOffset": 2,
+                      "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
                       "name": "IsBlockSwitched (center)",
                       "value": true,
-                      "offset": 259,
+                      "offset": 260,
                       "length": 1,
-                      "bitOffset": 3,
+                      "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
                       "name": "IsBlockSwitched (right)",
                       "value": true,
-                      "offset": 259,
+                      "offset": 261,
                       "length": 1,
-                      "bitOffset": 4,
+                      "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
                       "name": "IsBlockSwitched (left surround)",
                       "value": true,
-                      "offset": 259,
+                      "offset": 261,
                       "length": 1,
-                      "bitOffset": 5,
+                      "bitOffset": 1,
                       "bitLength": 1
                     },
                     {
                       "name": "IsBlockSwitched (right surround)",
                       "value": true,
-                      "offset": 259,
+                      "offset": 261,
                       "length": 1,
-                      "bitOffset": 6,
+                      "bitOffset": 2,
                       "bitLength": 1
                     },
                     {
                       "name": "IsDithered (left)",
                       "value": false,
-                      "offset": 259,
+                      "offset": 261,
                       "length": 1,
-                      "bitOffset": 7,
+                      "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
                       "name": "IsDithered (center)",
                       "value": false,
-                      "offset": 260,
+                      "offset": 261,
                       "length": 1,
-                      "bitOffset": 0,
+                      "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
                       "name": "IsDithered (right)",
                       "value": false,
-                      "offset": 260,
+                      "offset": 261,
                       "length": 1,
-                      "bitOffset": 1,
+                      "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
                       "name": "IsDithered (left surround)",
                       "value": false,
-                      "offset": 260,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsDithered (right surround)",
-                      "value": false,
-                      "offset": 260,
-                      "length": 1,
-                      "bitOffset": 3,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 260,
-                      "length": 1,
-                      "bitOffset": 4,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasCouplingStrategy",
-                      "value": false,
-                      "offset": 260,
-                      "length": 1,
-                      "bitOffset": 5,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasCouplingCoordinates (left)",
-                      "value": false,
-                      "offset": 260,
+                      "offset": 261,
                       "length": 1,
                       "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasCouplingCoordinates (center)",
+                      "name": "IsDithered (right surround)",
                       "value": false,
-                      "offset": 260,
+                      "offset": 261,
                       "length": 1,
                       "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasDynamicRange",
+                      "value": false,
+                      "offset": 262,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingStrategy",
+                      "value": false,
+                      "offset": 262,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingCoordinates (left)",
+                      "value": false,
+                      "offset": 262,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingCoordinates (center)",
+                      "value": false,
+                      "offset": 262,
+                      "length": 1,
+                      "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
                       "name": "HasCouplingCoordinates (right)",
                       "value": false,
-                      "offset": 261,
+                      "offset": 262,
                       "length": 1,
-                      "bitOffset": 0,
+                      "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
                       "name": "HasCouplingCoordinates (left surround)",
                       "value": false,
-                      "offset": 261,
+                      "offset": 262,
                       "length": 1,
-                      "bitOffset": 1,
+                      "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
                       "name": "HasCouplingCoordinates (right surround)",
                       "value": false,
-                      "offset": 261,
+                      "offset": 262,
                       "length": 1,
-                      "bitOffset": 2,
+                      "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
                       "name": "Coupling Exponent Strategy",
                       "value": "reuse",
-                      "offset": 261,
-                      "length": 1,
-                      "bitOffset": 3,
-                      "bitLength": 2
-                    },
-                    {
-                      "name": "Exponent Strategy (left)",
-                      "value": "reuse",
-                      "offset": 261,
-                      "length": 1,
-                      "bitOffset": 5,
-                      "bitLength": 2
-                    },
-                    {
-                      "name": "Exponent Strategy (center)",
-                      "value": "reuse",
-                      "offset": 261,
+                      "offset": 262,
                       "length": 2,
                       "bitOffset": 7,
                       "bitLength": 2
                     },
                     {
-                      "name": "Exponent Strategy (right)",
+                      "name": "Exponent Strategy (left)",
                       "value": "reuse",
-                      "offset": 262,
+                      "offset": 263,
                       "length": 1,
                       "bitOffset": 1,
                       "bitLength": 2
                     },
                     {
-                      "name": "Exponent Strategy (left surround)",
+                      "name": "Exponent Strategy (center)",
                       "value": "reuse",
-                      "offset": 262,
+                      "offset": 263,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 2
                     },
                     {
-                      "name": "Exponent Strategy (right surround)",
+                      "name": "Exponent Strategy (right)",
                       "value": "reuse",
-                      "offset": 262,
+                      "offset": 263,
                       "length": 1,
                       "bitOffset": 5,
                       "bitLength": 2
                     },
                     {
-                      "name": "LFE Exponent Strategy",
+                      "name": "Exponent Strategy (left surround)",
                       "value": "reuse",
-                      "offset": 262,
-                      "length": 1,
+                      "offset": 263,
+                      "length": 2,
                       "bitOffset": 7,
-                      "bitLength": 1
+                      "bitLength": 2
                     },
                     {
-                      "name": "HasBitAllocationParameters",
-                      "value": false,
-                      "offset": 263,
-                      "length": 1,
-                      "bitOffset": 0,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSnrOffsets",
-                      "value": false,
-                      "offset": 263,
+                      "name": "Exponent Strategy (right surround)",
+                      "value": "reuse",
+                      "offset": 264,
                       "length": 1,
                       "bitOffset": 1,
-                      "bitLength": 1
+                      "bitLength": 2
                     },
                     {
-                      "name": "HasCouplingLeak",
-                      "value": false,
-                      "offset": 263,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDeltaBitAllocation",
-                      "value": false,
-                      "offset": 263,
+                      "name": "LFE Exponent Strategy",
+                      "value": "reuse",
+                      "offset": 264,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSkipField",
+                      "name": "HasBitAllocationParameters",
                       "value": false,
-                      "offset": 263,
+                      "offset": 264,
                       "length": 1,
                       "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSnrOffsets",
+                      "value": false,
+                      "offset": 264,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasCouplingLeak",
+                      "value": false,
+                      "offset": 264,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasDeltaBitAllocation",
+                      "value": false,
+                      "offset": 264,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSkipField",
+                      "value": false,
+                      "offset": 265,
+                      "length": 1,
+                      "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 263,
+                      "offset": 265,
                       "length": 1,
-                      "bitOffset": 5,
+                      "bitOffset": 1,
                       "bitLength": 0
                     }
                   ]
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 4017,
+                  "value": 4005,
                   "unit": "bits",
-                  "offset": 263,
-                  "length": 503,
-                  "bitOffset": 5,
-                  "bitLength": 4017
+                  "offset": 265,
+                  "length": 501,
+                  "bitOffset": 1,
+                  "bitLength": 4005
                 },
                 {
                   "name": "HasAuxiliaryLength",
@@ -6796,21 +6853,6 @@
         ]
       }
     ],
-    "findings": [
-      {
-        "severity": "Warning",
-        "code": "ac3.block-inconsistent",
-        "message": "An audio block breaks a rule that A/52 7.10.2 lists among the errors a decoder may check for: coupling starts without its delta bit allocation (check 26). First in the frame at 0x0 (once).",
-        "offset": 259,
-        "length": 1,
-        "path": [
-          0,
-          1,
-          6,
-          50
-        ],
-        "count": 1
-      }
-    ]
+    "findings": []
   }
 ]

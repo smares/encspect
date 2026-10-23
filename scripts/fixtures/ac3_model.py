@@ -298,7 +298,15 @@ def ac3_frame(acmod=2, lfeon=0, fscod=0, frmsizecod=20, bsid=8, bsmod=0, dialnor
             b.put(refresh, 1)
             if refresh:
                 b.put(0, 3).put(0, 3)
-        b.put(0, 1).put(0, 1)
+        if state and previous is None and block > 0:
+            # Coupling that starts after a block without it sends delta bit allocation information with a mode for the coupling channel
+            # other than reuse (A/52 7.10.2, check 26): 2, no delta bit allocation, for it and every channel.
+            b.put(1, 1).put(2, 2)
+            for _ in range(nf):
+                b.put(2, 2)
+        else:
+            b.put(0, 1)
+        b.put(0, 1)
         if ends is not None:
             ends.append(b.count)
     return finish(b, WORDS[fscod][frmsizecod], crc1=True)

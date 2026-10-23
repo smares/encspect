@@ -769,7 +769,8 @@ def build_coding():
     data = b"".join(chunks)
     fixture("coding-eac3-dependent", ".eac3", "Four E-AC-3 program frames: an independent 2/0 frame with a dependent 2/0 frame, with a dependent mono frame that adds the center "
             "channel, alone with one block, and with a dependent frame again, the number of blocks changing between them.", data, frames_of(data),
-            [stream("E-AC-3", 48000, 2, 0, sum(256 * [1, 2, 3, 6][p[0]["numblkscod"]] for p in program), layout=[m.FL, m.FR, m.BL, m.BR])], [],
+            [stream("E-AC-3", 48000, 2, 0, sum(256 * [1, 2, 3, 6][p[0]["numblkscod"]] for p in program), layout=[m.FL, m.FR, m.BL, m.BR], vbr=True)],
+            [("ac3.dependent-layout-changed", "add other channels in 2 of its frames than in its first")],
             crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
                         "skip": {"ffprobe": "Dependent substreams of different layouts make what ffmpeg's parser reports of the channels differ from the analyzer's first-frame layout.",
                                  "decode": "The check decodes each packet alone; the program frames with a mono dependent frame change the channel count between packets.",

@@ -46,11 +46,16 @@
     "back right"
    ],
    "samples": 4096,
-   "is_vbr": false
+   "is_vbr": true
   }
  ],
  "fields": {},
- "findings": [],
+ "findings": [
+  [
+   "ac3.dependent-layout-changed",
+   "add other channels in 2 of its frames than in its first"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": false,
   "decode": false,

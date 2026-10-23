@@ -164,7 +164,7 @@
                 },
                 {
                   "name": "Blocks With Delta Bit Allocation",
-                  "value": 0,
+                  "value": 2,
                   "unit": "blocks",
                   "offset": 0,
                   "length": 3840
@@ -215,7 +215,7 @@
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 26713,
+                  "value": 26701,
                   "unit": "bits",
                   "offset": 0,
                   "length": 3840
@@ -270,7 +270,7 @@
                     },
                     {
                       "name": "CRC1",
-                      "value": 25141,
+                      "value": 370,
                       "offset": 2,
                       "length": 2,
                       "children": [
@@ -1905,7 +1905,7 @@
                   "offset": 84,
                   "length": 52,
                   "bitOffset": 2,
-                  "bitLength": 408,
+                  "bitLength": 414,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
@@ -2621,39 +2621,70 @@
                     },
                     {
                       "name": "HasDeltaBitAllocation",
-                      "value": false,
+                      "value": true,
                       "offset": 135,
                       "length": 1,
                       "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
+                      "name": "Delta Bit Allocation",
+                      "offset": 135,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 6,
+                      "children": [
+                        {
+                          "name": "Delta Bit Allocation Mode (coupling)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 135,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Delta Bit Allocation Mode (left)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 135,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Delta Bit Allocation Mode (right)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 135,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
                       "name": "HasSkipField",
                       "value": false,
                       "offset": 135,
                       "length": 1,
-                      "bitOffset": 1,
+                      "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 135,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 0
+                      "offset": 136,
+                      "length": 0
                     }
                   ]
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 5044,
+                  "value": 5038,
                   "unit": "bits",
-                  "offset": 135,
-                  "length": 631,
-                  "bitOffset": 2,
-                  "bitLength": 5044
+                  "offset": 136,
+                  "length": 630,
+                  "bitOffset": 0,
+                  "bitLength": 5038
                 },
                 {
                   "name": "HasAuxiliaryLength",
@@ -2716,7 +2747,7 @@
                     },
                     {
                       "name": "CRC1",
-                      "value": 2379,
+                      "value": 1316,
                       "offset": 770,
                       "length": 2,
                       "children": [
@@ -4847,7 +4878,7 @@
                   "offset": 882,
                   "length": 37,
                   "bitOffset": 3,
-                  "bitLength": 287,
+                  "bitLength": 293,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
@@ -5443,39 +5474,70 @@
                     },
                     {
                       "name": "HasDeltaBitAllocation",
-                      "value": false,
+                      "value": true,
                       "offset": 918,
                       "length": 1,
                       "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
+                      "name": "Delta Bit Allocation",
+                      "offset": 918,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 6,
+                      "children": [
+                        {
+                          "name": "Delta Bit Allocation Mode (coupling)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 918,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Delta Bit Allocation Mode (left)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 918,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Delta Bit Allocation Mode (right)",
+                          "value": "2 (perform no delta allocation)",
+                          "offset": 918,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
                       "name": "HasSkipField",
                       "value": false,
                       "offset": 918,
                       "length": 1,
-                      "bitOffset": 1,
+                      "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 918,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 0
+                      "offset": 919,
+                      "length": 0
                     }
                   ]
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 4924,
+                  "value": 4918,
                   "unit": "bits",
-                  "offset": 918,
-                  "length": 616,
-                  "bitOffset": 2,
-                  "bitLength": 4924
+                  "offset": 919,
+                  "length": 615,
+                  "bitOffset": 0,
+                  "bitLength": 4918
                 },
                 {
                   "name": "HasAuxiliaryLength",
@@ -10488,21 +10550,6 @@
         ]
       }
     ],
-    "findings": [
-      {
-        "severity": "Warning",
-        "code": "ac3.block-inconsistent",
-        "message": "An audio block breaks a rule that A/52 7.10.2 lists among the errors a decoder may check for: coupling starts without its delta bit allocation (check 26). First in the frame at 0x0 (2 times).",
-        "offset": 135,
-        "length": 1,
-        "path": [
-          0,
-          1,
-          7,
-          30
-        ],
-        "count": 2
-      }
-    ]
+    "findings": []
   }
 ]
