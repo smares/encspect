@@ -25,6 +25,9 @@ internal sealed partial class FrameSyntax
     private int _blockRematrixingBands;
     private bool _blockRematrixed;
     private int _blockEnd;
+    private bool _blockDynamic;
+    private bool _blockDelta;
+    private readonly int[] _blockStrategies = new int[4];
 
     private void Blocks()
     {
@@ -69,6 +72,9 @@ internal sealed partial class FrameSyntax
             _blockRematrixedBands = 0;
             _blockRematrixingBands = 0;
             _blockEnd = 255;
+            _blockDynamic = false;
+            _blockDelta = false;
+            Array.Clear(_blockStrategies);
             bool read = Block(block);
             _t?.Close(_b.Position, NodeValue.Integer(block));
             if (!read)
@@ -90,6 +96,12 @@ internal sealed partial class FrameSyntax
         _r.RematrixingBands += _blockRematrixingBands;
         _r.RematrixedBands += _blockRematrixedBands;
         _r.RematrixingBlocks += _blockRematrixed ? 1 : 0;
+        _r.DynamicRangeBlocks += _blockDynamic ? 1 : 0;
+        _r.DeltaBitAllocationBlocks += _blockDelta ? 1 : 0;
+        for (int i = 0; i < _blockStrategies.Length; i++)
+        {
+            _r.ExponentStrategies[i] += _blockStrategies[i];
+        }
         if (at < _r.BlockFlags.Length)
         {
             _r.BlockFlags[at] = (byte)((_blockSwitched ? FrameResult.BlockSwitched : 0) | (_cplInUse ? FrameResult.BlockCoupled : 0)
@@ -130,7 +142,7 @@ internal sealed partial class FrameSyntax
             }
         }
 
-        _r.DynamicRangeBlocks += dynamic ? 1 : 0;
+        _blockDynamic = dynamic;
         if (_eac3 && !SpectralExtension(blk))
         {
             return false;
@@ -270,7 +282,7 @@ internal sealed partial class FrameSyntax
             bool used = ch < _nfchans || (ch == Cpl && _cplInUse) || (ch == Lfe && _lfeon);
             if (used)
             {
-                _r.ExponentStrategies[strategy[ch] == 0 ? 3 : strategy[ch] - 1]++;
+                _blockStrategies[strategy[ch] == 0 ? 3 : strategy[ch] - 1]++;
             }
         }
 
@@ -878,7 +890,7 @@ internal sealed partial class FrameSyntax
             }
 
             Close();
-            _r.DeltaBitAllocationBlocks++;
+            _blockDelta = true;
             reallocAll = true;
         }
 

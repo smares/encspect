@@ -4,7 +4,7 @@ namespace Encspect.Formats.Ac3;
 internal static partial class Explain
 {
     public const string CategoryBlockSwitched = "A block in which at least one full bandwidth channel has blksw set: its transform of 512 points is split into two of 256 points (A/52 5.4.3.1, 7.9).";
-    public const string CategoryBlockLong = "A block in which no channel has blksw set, or an E-AC-3 block of a frame whose blkswe is 0, which codes no block switch flags: every channel has one transform of 512 points (A/52 5.4.3.1; Annex E 2.3.2.5).";
+    public const string CategoryBlockLong = "A block in which no channel has blksw set, or an E-AC-3 block of a frame whose blkswe is 0, which codes no block switch flags: every channel has one transform of 512 points (A/52 5.4.3.1; Annex E 2.2.4, whose audblk syntax sets blksw to 0 where blkswe is 0).";
     public const string CategoryCoupled = "A block with cplinu set: the high frequencies of the coupled channels are coded once, as a coupling channel with a coordinate for each channel and band (A/52 5.4.3.8, 7.4).";
     public const string CategoryNotCoupled = "A block with cplinu 0, or without the field, as in a program of fewer than two full bandwidth channels: every channel codes its own spectrum (A/52 5.4.3.8).";
     public const string CategoryRematrixed = "A block of a 2/0 program in which at least one rematrixing band carries the sum and the difference of left and right instead of left and right: mid/side (sum/difference) coding of the band (A/52 5.4.3.19, 5.4.3.20, 7.5).";

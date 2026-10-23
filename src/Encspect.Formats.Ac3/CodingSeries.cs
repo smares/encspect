@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.Ac3;
@@ -35,24 +34,24 @@ internal static class CodingCategories
 // The statistics nodes the coding series are anchored to; null where the program has none.
 internal sealed record CodingNodes(Node? BlockSwitching, Node? Coupling, Node? Rematrixing, Node? SpectralExtension, Node? CodedBandwidth);
 
-// Records the coding series of a program while its frames are read: one value per audio block read of each program frame (the
-// independent frame's blocks, then each dependent frame's), and the coded bandwidth of the program frame. The block reader
-// decides every flag in the place that counts the same thing for the tally, so a series equals its tally; Frame is called for
-// each frame that joins the program frame and EndUnit when the program frame is complete. A recorder belongs to one program
-// (docs/design/coding-graphs.md, "When the codes are made").
+// Records the coding series of a program while its frames are read: the flags of every audio block read of each program frame (the
+// independent frame's blocks, then each dependent frame's, one byte each), and the coded bandwidth of the program frame. The block
+// reader decides every flag in the place that counts the same thing for the tally, so a series equals its tally; Frame is called for
+// each frame that joins the program frame and EndUnit when the program frame is complete. The series are made from the flags when
+// the stream's figures are built, so the layout can follow what the units hold: an AC-3 program whose frames all have six blocks or
+// fewer is a fixed layout of six values (no count byte), anything else, E-AC-3 and an AC-3 core with dependent frames (ETSI TS 102 366
+// J.1.5.2.2) among it, a variable one. A recorder belongs to one program (docs/design/coding-graphs.md, "When the codes are made").
 internal sealed class CodingRecorder
 {
     private const int BlocksPerFrame = 6;
 
-    private readonly int _sampleRate;
-    private readonly bool _isFixed;
-    private readonly CategorySeriesBuilder _switching;
-    private readonly CategorySeriesBuilder? _coupling;
-    private readonly CategorySeriesBuilder? _rematrixing;
-    private readonly CategorySeriesBuilder? _spectral;
+    private readonly Ac3Analysis.ProgramKey _key;
+    private readonly ChunkedList<byte> _blocks = new();
+    private readonly ChunkedList<byte> _lengths = new();
     private readonly ChunkedList<byte> _ends = new();
-    private readonly List<byte> _flags = [];
+    private int _unitBlocks;
     private int _unitEnd = 255;
+    private int _longest;
 
     // Units ended so far.
     public int Count { get; private set; }
@@ -60,29 +59,8 @@ internal sealed class CodingRecorder
     // Units by coded bandwidth in whole hertz, for the statistics node.
     public SortedDictionary<int, long> Bandwidths { get; } = [];
 
-    // acmod is the independent frame's: the tallies of rematrixing and coupling exist from it, and an AC-3 program has six blocks in
-    // every frame (a fixed layout), where an E-AC-3 program frame has as many as its frames hold.
-    public CodingRecorder(Ac3Analysis.ProgramKey key)
-    {
-        _sampleRate = key.SampleRate;
-        _isFixed = !key.IsEac3;
-        int perUnit = _isFixed ? BlocksPerFrame : 0;
-        _switching = new("Blocks With Block Switching", CodingCategories.BlockSwitching, "block", perUnit, concept: GraphConcept.BlockSwitching);
-        if (key.Acmod >= 2)
-        {
-            _coupling = new("Blocks With Coupling", CodingCategories.Coupling, "block", perUnit, concept: GraphConcept.StereoCoding);
-        }
-
-        if (key.Acmod == 2)
-        {
-            _rematrixing = new("Blocks With Rematrixing", CodingCategories.Rematrixing, "block", perUnit, concept: GraphConcept.StereoCoding);
-        }
-
-        if (key.IsEac3)
-        {
-            _spectral = new("Blocks With Spectral Extension", CodingCategories.SpectralExtension, "block", perUnit, concept: GraphConcept.CodedBandwidth);
-        }
-    }
+    // The key is the independent frame's: the tallies of coupling and rematrixing exist from its acmod, spectral extension in E-AC-3.
+    public CodingRecorder(Ac3Analysis.ProgramKey key) => _key = key;
 
     // A frame that joins the program frame: its blocks read, in order.
     public void Frame(FrameResult result)
@@ -90,7 +68,8 @@ internal sealed class CodingRecorder
         int read = Math.Min(result.BlocksRead, result.BlockFlags.Length);
         for (int block = 0; block < read; block++)
         {
-            _flags.Add(result.BlockFlags[block]);
+            _blocks.Add(result.BlockFlags[block]);
+            _unitBlocks++;
             if (result.BlockEnds[block] != 255)
             {
                 _unitEnd = _unitEnd == 255 ? result.BlockEnds[block] : Math.Max(_unitEnd, result.BlockEnds[block]);
@@ -100,25 +79,9 @@ internal sealed class CodingRecorder
 
     public void EndUnit()
     {
-        ReadOnlySpan<byte> flags = CollectionsMarshal.AsSpan(_flags);
-        int count = _isFixed ? BlocksPerFrame : flags.Length;
-        Span<byte> codes = stackalloc byte[Math.Max(count, 1)];
-        Add(_switching, flags, FrameResult.BlockSwitched, codes[..count]);
-        if (_coupling is not null)
-        {
-            Add(_coupling, flags, FrameResult.BlockCoupled, codes[..count]);
-        }
-
-        if (_rematrixing is not null)
-        {
-            Add(_rematrixing, flags, FrameResult.BlockRematrixed, codes[..count]);
-        }
-
-        if (_spectral is not null)
-        {
-            Add(_spectral, flags, FrameResult.BlockSpectralExtension, codes[..count]);
-        }
-
+        // At most 9 frames of 6 blocks.
+        _lengths.Add((byte)Math.Min(_unitBlocks, 254));
+        _longest = Math.Max(_longest, _unitBlocks);
         _ends.Add((byte)_unitEnd);
         if (_unitEnd != 255)
         {
@@ -126,25 +89,43 @@ internal sealed class CodingRecorder
             Bandwidths[hertz] = Bandwidths.GetValueOrDefault(hertz) + 1;
         }
 
-        _flags.Clear();
+        _unitBlocks = 0;
         _unitEnd = 255;
         Count++;
     }
 
-    // One unit of a flag series: the first category where the block has the flag, else the second. Blocks a fixed unit lacks are
-    // None. A block that is not 2/0 is "without rematrixing": the tally counts it in the blocks read, which the series total equals.
-    private static void Add(CategorySeriesBuilder builder, ReadOnlySpan<byte> flags, byte flag, Span<byte> codes)
+    // One series of the program: a value for each block read of each unit, the first category where the block has the flag. Blocks a
+    // fixed unit lacks are None. A block that is not 2/0 is "without rematrixing": the tally counts it in the blocks read, which the
+    // series total equals.
+    private CategorySeries Make(string name, IReadOnlyList<Category> categories, GraphConcept concept, byte flag, bool isFixed, ReadOnlyMemory<double> offsets,
+        Series? shared, Node anchor, string description, string topic, TimeIndex? time, CancellationToken cancellation)
     {
-        for (int i = 0; i < codes.Length; i++)
+        var builder = new CategorySeriesBuilder(name, categories, "block", isFixed ? BlocksPerFrame : 0, concept: concept);
+        Span<byte> codes = stackalloc byte[Math.Max(BlocksPerFrame, 254)];
+        long at = 0;
+        for (int unit = 0; unit < Count; unit++)
         {
-            codes[i] = i >= flags.Length ? CategorySeries.None : (byte)((flags[i] & flag) != 0 ? 0 : 1);
+            if (unit % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            int length = _lengths[unit];
+            int count = isFixed ? BlocksPerFrame : length;
+            for (int i = 0; i < count; i++)
+            {
+                codes[i] = i >= length ? CategorySeries.None : (byte)((_blocks[(int)(at + i)] & flag) != 0 ? 0 : 1);
+            }
+
+            builder.Add(codes[..count]);
+            at += length;
         }
 
-        builder.Add(codes);
+        return builder.Build(offsets, shared, anchor, description, topic, time);
     }
 
     // The top of bin k in Hz: a block's bins are spaced by the sample rate over 512 (A/52 7.1.3), rounded half to even.
-    private int Hertz(int bin) => (int)RoundHalfEven((long)bin * _sampleRate, 512);
+    private int Hertz(int bin) => (int)RoundHalfEven((long)bin * _key.SampleRate, 512);
 
     private static long RoundHalfEven(long numerator, long denominator)
     {
@@ -167,24 +148,29 @@ internal sealed class CodingRecorder
             throw new ArgumentException("Every unit of the coding series has an x value.", nameof(offsets));
         }
 
+        bool isFixed = !_key.IsEac3 && _longest <= BlocksPerFrame;
         if (nodes.BlockSwitching is { } switching)
         {
-            categories.Add(_switching.Build(offsets, shared, switching, Explain.BlockSwitchingSeries, Topics.AudioBlocks, time));
+            categories.Add(Make("Blocks With Block Switching", CodingCategories.BlockSwitching, GraphConcept.BlockSwitching, FrameResult.BlockSwitched, isFixed, offsets, shared,
+                switching, Explain.BlockSwitchingSeries, Topics.AudioBlocks, time, cancellation));
         }
 
-        if (_coupling is not null && nodes.Coupling is { } coupling)
+        if (_key.Acmod >= 2 && nodes.Coupling is { } coupling)
         {
-            categories.Add(_coupling.Build(offsets, shared, coupling, Explain.CouplingSeries, Topics.Coupling, time));
+            categories.Add(Make("Blocks With Coupling", CodingCategories.Coupling, GraphConcept.StereoCoding, FrameResult.BlockCoupled, isFixed, offsets, shared,
+                coupling, Explain.CouplingSeries, Topics.Coupling, time, cancellation));
         }
 
-        if (_rematrixing is not null && nodes.Rematrixing is { } rematrixing)
+        if (_key.Acmod == 2 && nodes.Rematrixing is { } rematrixing)
         {
-            categories.Add(_rematrixing.Build(offsets, shared, rematrixing, Explain.RematrixingSeries, Topics.Rematrixing, time));
+            categories.Add(Make("Blocks With Rematrixing", CodingCategories.Rematrixing, GraphConcept.StereoCoding, FrameResult.BlockRematrixed, isFixed, offsets, shared,
+                rematrixing, Explain.RematrixingSeries, Topics.Rematrixing, time, cancellation));
         }
 
-        if (_spectral is not null && nodes.SpectralExtension is { } spectral)
+        if (_key.IsEac3 && nodes.SpectralExtension is { } spectral)
         {
-            categories.Add(_spectral.Build(offsets, shared, spectral, Explain.SpectralExtensionSeries, Topics.SpectralExtension, time));
+            categories.Add(Make("Blocks With Spectral Extension", CodingCategories.SpectralExtension, GraphConcept.CodedBandwidth, FrameResult.BlockSpectralExtension, isFixed, offsets,
+                shared, spectral, Explain.SpectralExtensionSeries, Topics.SpectralExtension, time, cancellation));
         }
 
         AddBandwidth(offsets, nodes.CodedBandwidth, time, series, cancellation);
