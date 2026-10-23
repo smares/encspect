@@ -92,14 +92,11 @@ internal static class CodingStatistics
                 pairs.Add(cover("Mid/Side Bands", Percent(tally.MidSideBands, tally.PairBands), Explain.StatMidSideBands, Topics.MidSide));
             }
 
-            if (tally.CommonWindow > 0 || tally.IntensityPairs > 0)
+            pairs.Add(cover("Intensity Stereo", Share(tally.IntensityPairs, tally.Pairs, "element"), Explain.StatIntensityPairs, Topics.Intensity));
+            if (tally.IntensityBands > 0)
             {
-                pairs.Add(cover("Intensity Stereo", Share(tally.IntensityPairs, tally.Pairs, "element"), Explain.StatIntensityPairs, Topics.Intensity));
-                if (tally.IntensityBands > 0)
-                {
-                    pairs.Add(cover("Intensity Stereo Bands", Percent(tally.IntensityBands, tally.ChannelBands), Explain.StatIntensityBands, Topics.Intensity));
-                    pairs.Add(cover("Out of Phase", Share(tally.IntensityOutOfPhase, tally.IntensityBands, "band"), Explain.StatOutOfPhase, Topics.Intensity));
-                }
+                pairs.Add(cover("Intensity Stereo Bands", Percent(tally.IntensityBands, tally.ChannelBands), Explain.StatIntensityBands, Topics.Intensity));
+                pairs.Add(cover("Out of Phase", Share(tally.IntensityOutOfPhase, tally.IntensityBands, "band"), Explain.StatOutOfPhase, Topics.Intensity));
             }
 
             stereo = statistics.Add(cover("Stereo Coding", NodeValue.Integer(tally.Pairs, "channel pairs", "channel pair"), Explain.StatStereoCoding, Topics.MidSide));

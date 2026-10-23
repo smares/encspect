@@ -27,6 +27,7 @@ public class AacCodingSeriesTests
             Assert.Equal(units.Length, windows.Count);
             Assert.Equal(units.Length, pairs?.Count ?? units.Length);
             int core = CoreRate(report, units);
+            bool is960 = FrameLength(report) == 960;
             int point = 0;
             for (int unit = 0; unit < units.Length; unit++)
             {
@@ -51,7 +52,7 @@ public class AacCodingSeriesTests
                         Node info = channel.Children.FirstOrDefault(c => c.Name == "ICS Info") ?? shared!;
                         int sequence = LeadingNumber(Value(info, "Window Sequence"));
                         expectedWindows.Add(sequence);
-                        highest = Math.Max(highest, Hertz(core, sequence == 2, LeadingNumber(Value(info, "Max SFB"))));
+                        highest = Math.Max(highest, Hertz(core, is960, sequence == 2, LeadingNumber(Value(info, "Max SFB"))));
                     }
 
                     if (element.Name == "CPE")
@@ -72,6 +73,14 @@ public class AacCodingSeriesTests
             }
 
             Assert.Equal(point, bandwidth?.Values.Length ?? 0);
+            if (bandwidth is not null)
+            {
+                // The node's lowest, most common (the lowest of equally common) and highest come from another accumulator than the series.
+                double[] values = bandwidth.Values.ToArray();
+                Node node = stream.Series.Single(s => s.Name == "Coded Bandwidth Over Time").Anchor!;
+                double common = values.GroupBy(v => v).OrderByDescending(g => g.Count()).ThenBy(g => g.Key).First().Key;
+                Assert.Equal([$"{values.Min():0} Hz", $"{common:0} Hz", $"{values.Max():0} Hz"], node.Children.Select(c => c.Value!.ToString()!));
+            }
         }
     }
 
@@ -94,15 +103,21 @@ public class AacCodingSeriesTests
     }
 
     // The top of the max_sfb-th band of a window in Hz: the lines are spaced by half the sample rate over the lines of the window.
-    private static int Hertz(int rate, bool isShort, int maxSfb)
+    private static int Hertz(int rate, bool is960, bool isShort, int maxSfb)
     {
-        ushort[] table = isShort ? BandTables.Short[StreamSetup.SampleRateIndex(rate)] : BandTables.Long[StreamSetup.SampleRateIndex(rate)];
-        return (int)Math.Round(table[maxSfb] * (double)rate / (2 * (isShort ? 128 : 1024)), MidpointRounding.ToEven);
+        int index = StreamSetup.SampleRateIndex(rate);
+        ushort[] table = isShort ? (is960 ? BandTables.Short120 : BandTables.Short)[index] : (is960 ? BandTables.Long960 : BandTables.Long)[index];
+        int lines = isShort ? (is960 ? 120 : 128) : (is960 ? 960 : 1024);
+        return (int)Math.Round(table[maxSfb] * (double)rate / (2 * lines), MidpointRounding.ToEven);
     }
 
+    // The frame length the AudioSpecificConfig states, 1,024 where there is none (ADTS).
+    private static int FrameLength(Report report) =>
+        Find(report.Root, n => n.Name == "AudioSpecificConfig")?.Children.FirstOrDefault(c => c.Name == "Frame Length")?.Value?.AsInteger() is { } length ? (int)length : 1024;
+
     // The code of a channel pair from its nodes alone (ISO/IEC 14496-3 4.6.8): intensity stereo where the second channel names intensity
-    // stereo bands, mid/side stereo where a band that is no intensity stereo band has its ms_used flag set (ms_mask_present 2 sets
-    // every band of the pair), and the reserved ms_mask_present 3 before either.
+    // stereo bands, mid/side stereo where a band that is no intensity stereo and no noise substitution band has its ms_used flag set
+    // (ms_mask_present 2 sets every band of the pair), and the reserved ms_mask_present 3 before either.
     private static int PairCode(Node pair, Node? shared)
     {
         bool common = Value(pair, "HasCommonWindow") == "true";
@@ -117,6 +132,10 @@ public class AacCodingSeriesTests
         int maxSfb = LeadingNumber(Value(info, "Max SFB"));
         int groups = Value(info, "Scale Factor Grouping") is { } text && text.Contains(" groups", StringComparison.Ordinal) ? int.Parse(text.Split('(')[1].Split(' ')[0], CultureInfo.InvariantCulture) : 1;
         HashSet<(int, int)> intensity = Bands(Value(second, "Intensity Stereo Bands") ?? "none");
+
+        // Where either channel codes noise substitution, ms_used signals something else and no decoder applies mid/side (FFmpeg's
+        // apply_mid_side_stereo requires both band types below noise substitution).
+        HashSet<(int, int)> noise = [.. Bands(Value(second, "Noise Substitution Bands") ?? "none"), .. Bands(Value(pair.Children.Single(c => c.Name == "Channel 0"), "Noise Substitution Bands") ?? "none")];
         HashSet<(int, int)> bands = [.. Enumerable.Range(0, groups).SelectMany(g => Enumerable.Range(0, maxSfb).Select(b => (g, b)))];
         HashSet<(int, int)> flagged = mask switch
         {
@@ -124,7 +143,7 @@ public class AacCodingSeriesTests
             2 => bands,
             _ => [],
         };
-        bool midSide = flagged.Any(b => !intensity.Contains(b));
+        bool midSide = flagged.Any(b => !intensity.Contains(b) && !noise.Contains(b));
         return intensity.Count > 0 ? (midSide ? 3 : 2) : (midSide ? 1 : 0);
     }
 
@@ -225,9 +244,11 @@ public class AacCodingSeriesTests
         CategorySeries pairs = Series(stream, "Stereo Coding")!;
 
         // Left/right (mask 0, and mask 1 with no flag), mid/side (mask 1 with flags, mask 2), intensity stereo (flags only on intensity stereo
-        // bands, mask 2 over a pair of intensity stereo bands only, and two pairs without a common window), both (mask 1 and mask 2).
-        Assert.Equal([0, 0, 1, 1, 2, 3, 2, 3, 2, 0, 2], Enumerable.Range(0, pairs.Count).Select(unit => (int)pairs[unit, 0]));
-        Assert.Equal([3L, 2L, 4L, 2L, 0L], pairs.Counts);
+        // bands, mask 2 over a pair of intensity stereo bands only, and two pairs without a common window), both (mask 1 and mask 2), and
+        // the pairs whose ms_used flags sit on noise substitution bands: of the second or the first channel only (left/right), beside an
+        // ordinary flagged band (mid/side), beside intensity stereo bands (intensity stereo), and in every band under mask 2 (mid/side).
+        Assert.Equal([0, 0, 1, 1, 2, 3, 2, 3, 2, 0, 2, 0, 0, 1, 2, 1], Enumerable.Range(0, pairs.Count).Select(unit => (int)pairs[unit, 0]));
+        Assert.Equal([5L, 4L, 5L, 2L, 0L], pairs.Counts);
     }
 
     [Fact]
@@ -238,6 +259,18 @@ public class AacCodingSeriesTests
 
         Assert.Equal([4, 4, 0], Enumerable.Range(0, pairs.Count).Select(unit => (int)pairs[unit, 0]));
         Assert.Equal([1L, 0L, 0L, 0L, 2L], pairs.Counts);
+    }
+
+    // A unit of six channel streams holds two pairs, whose values come in the order of the elements.
+    [Fact]
+    public void A_unit_with_two_pairs_has_a_value_for_each_in_element_order()
+    {
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("adts/stereo-coding-elements.aac").Streams);
+        CategorySeries pairs = Series(stream, "Stereo Coding")!;
+        CategorySeries windows = Series(stream, "Window Sequences")!;
+
+        Assert.Equal([[1, 2], [0, 1], [1, 0]], Enumerable.Range(0, 3).Select(unit => Values(pairs, unit).ToArray()));
+        Assert.Equal([[0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 1, 0], [0, 2, 2, 0, 0, 0]], Enumerable.Range(0, 3).Select(unit => Values(windows, unit).ToArray()));
     }
 
     // An ADTS frame of several raw data blocks gives one unit with the channel streams of every block, in order.
@@ -329,6 +362,84 @@ public class AacCodingSeriesTests
         Assert.Equal(bitrate.X.Length + 1, windows.Count);
         Assert.Null(windows.XSeries);
         Assert.Empty(CategorySummary.Load().Check(cut));
+    }
+
+    // A configuration with frameLengthFlag 1 has 960 lines in a long window and 120 in a short one, and its own band tables: the coded
+    // bandwidth of a long window with max_sfb 30 and of eight short windows with max_sfb 10 at 44,100 Hz.
+    [Fact]
+    public void A_960_sample_frame_gives_its_coded_bandwidth_from_the_960_line_tables()
+    {
+        var bits = new List<bool>();
+        void Put(int value, int count)
+        {
+            for (int i = count - 1; i >= 0; i--)
+            {
+                bits.Add(((value >> i) & 1) != 0);
+            }
+        }
+
+        // A single channel element of one long window, all 30 of its bands coded with the zero codebook (no scalefactors, no spectrum).
+        Put(0, 3);
+        Put(0, 4);
+        Put(100, 8);
+        Put(0, 1);
+        Put(0, 2);
+        Put(0, 1);
+        Put(30, 6);
+        Put(0, 1);
+        Put(0, 4);
+        Put(30, 5);
+        Put(0, 3);
+
+        // One of eight short windows, each its own group, max_sfb 10 (a section length of 10 is the escape value 7 and 3 in 3 bits).
+        Put(0, 3);
+        Put(1, 4);
+        Put(100, 8);
+        Put(0, 1);
+        Put(2, 2);
+        Put(0, 1);
+        Put(10, 4);
+        Put(0, 7);
+        for (int group = 0; group < 8; group++)
+        {
+            Put(0, 4);
+            Put(7, 3);
+            Put(3, 3);
+        }
+
+        Put(0, 3);
+        Put(7, 3);
+        while (bits.Count % 8 != 0)
+        {
+            bits.Add(false);
+        }
+
+        byte[] unit = new byte[bits.Count / 8];
+        for (int i = 0; i < bits.Count; i++)
+        {
+            unit[i / 8] |= (byte)(bits[i] ? 0x80 >> (i % 8) : 0);
+        }
+
+        byte[] entry = Mp4Builder.AacEntry();
+        int config = entry.AsSpan().IndexOf<byte>([0x05, 2, 0x12, 0x10]);
+        entry[config + 3] = 0x14;
+        const int count = 6;
+        byte[] data = Mp4Builder.FileWithMoov(at => Mp4Builder.Trak(1, entry, Mp4Builder.Stts(count, 960), Mp4Builder.Stsc(count), Mp4Builder.ConstantSizes(unit.Length, count),
+            Mp4Builder.ChunkOffsets([at])), [.. Enumerable.Repeat(unit, count).SelectMany(u => u)]);
+
+        Report report = Analyzer.CreateDefault().Analyze("960.m4a", new MemoryStream(data));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Series bandwidth = stream.Series.Single(s => s.Name == "Coded Bandwidth");
+
+        Assert.Equal(960, FrameLength(report));
+        Assert.Equal(count * 960L, stream.Samples);
+        Assert.Equal([0, 2], Values(Series(stream, "Window Sequences")!, 0));
+        int expected = (int)Math.Max(Math.Round(BandTables.Long960[4][30] * 44100.0 / (2 * 960), MidpointRounding.ToEven), Math.Round(BandTables.Short120[4][10] * 44100.0 / (2 * 120), MidpointRounding.ToEven));
+        Assert.All(bandwidth.Values.ToArray(), v => Assert.Equal(expected, v));
+        Assert.Equal(count, bandwidth.Values.Length);
+
+        // With the 1,024 line tables the same bands end elsewhere, so the test tells the tables apart.
+        Assert.NotEqual(expected, (int)Math.Max(Math.Round(BandTables.Long[4][30] * 44100.0 / 2048, MidpointRounding.ToEven), Math.Round(BandTables.Short[4][10] * 44100.0 / 256, MidpointRounding.ToEven)));
     }
 
     // A unit of the stream: where it starts and the raw data blocks it holds (an access unit is its own block).

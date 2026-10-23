@@ -349,8 +349,12 @@ internal sealed partial class BlockReader
     }
 
     // The pair's stereo coding (ISO/IEC 14496-3 4.6.8), whether or not it has a common window: intensity stereo is in any band of the
-    // second channel with codebook 14 or 15, and mid/side stereo in any other band whose ms_used flag is set, which needs a common
-    // window (ms_mask_present 2 sets every band). ms_mask_present 3 is reserved and takes precedence.
+    // second channel with codebook 14 or 15, and mid/side stereo in any band whose ms_used flag is set (ms_mask_present 2 sets every
+    // band, and the flags need a common window) where neither channel codes noise substitution (codebook 13) or intensity stereo:
+    // on such a band ms_used says something else, and decoders apply no mid/side there (FFmpeg 6.1.1 apply_mid_side_stereo requires
+    // both band types below NOISE_BT; faad2's ms_decode checks the first channel's noise and the second's intensity stereo, so the
+    // two differ on a band where only the second channel codes noise, and FFmpeg's rule is followed). ms_mask_present 3 is reserved
+    // and takes precedence.
     private void TallyPair(Ics first, Ics second, bool common, int mask)
     {
         CodingTally tally = _tally!;
@@ -367,8 +371,9 @@ internal sealed partial class BlockReader
         {
             for (int sfb = 0; sfb < second.MaxSfb; sfb++)
             {
-                int book = second.Codebooks[(g * MaxBands) + sfb];
-                bool ms = common && mask != 0 && mask != 3 && _midSide[(g * MaxBands) + sfb];
+                int band = (g * MaxBands) + sfb;
+                int book = second.Codebooks[band];
+                bool flagged = common && mask != 0 && mask != 3 && _midSide[band];
                 tally.ChannelBands++;
                 tally.PairBands += common ? 1 : 0;
                 if (book is 14 or 15)
@@ -376,12 +381,12 @@ internal sealed partial class BlockReader
                     intensity = true;
                     tally.IntensityBands++;
                     // 4.6.8.2.3: INTENSITY_HCB2 (14) codes out of phase; ms_used inverts the sign.
-                    if ((book == 14) != ms)
+                    if ((book == 14) != flagged)
                     {
                         tally.IntensityOutOfPhase++;
                     }
                 }
-                else if (ms)
+                else if (flagged && book != 13 && first.Codebooks[band] < 13)
                 {
                     midSide = true;
                     tally.MidSideBands++;

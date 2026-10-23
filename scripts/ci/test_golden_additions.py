@@ -110,6 +110,39 @@ class CheckTests(unittest.TestCase):
         self.assertTrue(self.check(report(OLD_STATS), renamed, {"renamed": change["renamed"]}))
         self.assertTrue(self.check(report(OLD_STATS), renamed, {"added": change["added"][:1]}))
 
+    def test_a_renamed_node_with_a_changed_value_is_listed_once_under_its_new_name(self):
+        change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],
+                  "changed": [{"path": ["MPEG Audio", "Statistics", "Coded Bandwidth"], "fields": ["value"]}]}
+        new = report([OLD_STATS[0], node("Coded Bandwidth", value="none"), *OLD_STATS[2:]])
+        self.assertEqual(self.check(report(OLD_STATS), new, change), [])
+
+    def test_a_rename_that_did_not_happen_fails_whatever_the_value(self):
+        change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],
+                  "added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Coded Bandwidth"}],
+                  "changed": [{"path": ["MPEG Audio", "Statistics", "Coded Bandwidth"], "fields": ["value"]}]}
+        # The node kept its name and changed its value.
+        stale = report([OLD_STATS[0], node("Bandwidth", value=99999), *OLD_STATS[2:]])
+        self.assertTrue(self.check(report(OLD_STATS), stale, change))
+        # The old node is kept beside the new one.
+        both = report([OLD_STATS[0], node("Bandwidth", value=16000), node("Coded Bandwidth"), *OLD_STATS[2:]])
+        self.assertTrue(self.check(report(OLD_STATS), both, change))
+
+    def test_an_added_node_takes_out_only_the_children_the_change_lists(self):
+        change = {"added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Block Sizes"},
+                            {"scope": "node", "parent": ["MPEG Audio", "Statistics", "Block Sizes"], "name": "Short"}]}
+        listed = report([*OLD_STATS, node("Block Sizes", [node("Short", value=1)])])
+        self.assertEqual(self.check(report(OLD_STATS), listed, change), [])
+        unlisted = report([*OLD_STATS, node("Block Sizes", [node("Short", value=1), node("Bogus", value=2)])])
+        self.assertTrue(self.check(report(OLD_STATS), unlisted, change))
+
+    def test_an_added_node_that_the_old_report_has_is_not_an_addition(self):
+        change = {"added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"}],
+                  "changed": [{"path": ["MPEG Audio", "Statistics", "Stereo Coding"], "fields": ["value"]}]}
+        new = report([OLD_STATS[0], OLD_STATS[1], node("Stereo Coding", value=4), OLD_STATS[3]])
+        self.assertEqual(self.check(report(OLD_STATS), new, change), [])
+        other = report([OLD_STATS[0], OLD_STATS[1], node("Stereo Coding", value=4), node("Long Blocks", value=8)])
+        self.assertTrue(self.check(report(OLD_STATS), other, change))
+
     def test_a_move_is_reversed_with_the_path_shift(self):
         old = report(OLD_STATS, findings=[{"code": "x", "path": [1, 1, 3]}])
         new = report([*OLD_STATS[:3], node("Block Sizes", [node("Long Blocks", value=7)])], findings=[{"code": "x", "path": [1, 1, 3, 0]}])
