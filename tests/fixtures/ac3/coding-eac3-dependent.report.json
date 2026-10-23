@@ -218,7 +218,7 @@
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 21828,
+                  "value": 21736,
                   "unit": "bits",
                   "offset": 0,
                   "length": 3008
@@ -1694,9 +1694,9 @@
                   "kind": "SideInfo",
                   "value": 0,
                   "offset": 527,
-                  "length": 26,
+                  "length": 29,
                   "bitOffset": 4,
-                  "bitLength": 203,
+                  "bitLength": 222,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
@@ -1772,51 +1772,43 @@
                     },
                     {
                       "name": "HasSpectralExtensionBandStructure",
-                      "value": false,
+                      "value": true,
                       "offset": 529,
                       "length": 1,
                       "bitOffset": 2,
                       "bitLength": 1
                     },
                     {
-                      "name": "Spectral Extension Coordinates (left)",
-                      "value": 5,
-                      "unit": "bands",
+                      "name": "Spectral Extension Band Structure",
+                      "value": "0100100",
                       "offset": 529,
-                      "length": 5,
+                      "length": 2,
                       "bitOffset": 3,
-                      "bitLength": 37,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "Spectral Extension Coordinates (left)",
+                      "value": 6,
+                      "unit": "bands",
+                      "offset": 530,
+                      "length": 6,
+                      "bitOffset": 2,
+                      "bitLength": 43,
                       "children": [
                         {
                           "name": "Spectral Extension Blend",
                           "value": 0,
-                          "offset": 529,
+                          "offset": 530,
                           "length": 1,
-                          "bitOffset": 3,
+                          "bitOffset": 2,
                           "bitLength": 5
                         },
                         {
                           "name": "Master Spectral Extension Coordinate",
                           "value": 0,
                           "offset": 530,
-                          "length": 1,
-                          "bitOffset": 0,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 530,
-                          "length": 1,
-                          "bitOffset": 2,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
-                          "offset": 530,
-                          "length": 1,
-                          "bitOffset": 6,
+                          "length": 2,
+                          "bitOffset": 7,
                           "bitLength": 2
                         },
                         {
@@ -1824,7 +1816,7 @@
                           "value": 0,
                           "offset": 531,
                           "length": 1,
-                          "bitOffset": 0,
+                          "bitOffset": 1,
                           "bitLength": 4
                         },
                         {
@@ -1832,7 +1824,7 @@
                           "value": 0,
                           "offset": 531,
                           "length": 1,
-                          "bitOffset": 4,
+                          "bitOffset": 5,
                           "bitLength": 2
                         },
                         {
@@ -1840,7 +1832,7 @@
                           "value": 0,
                           "offset": 531,
                           "length": 2,
-                          "bitOffset": 6,
+                          "bitOffset": 7,
                           "bitLength": 4
                         },
                         {
@@ -1848,15 +1840,15 @@
                           "value": 0,
                           "offset": 532,
                           "length": 1,
-                          "bitOffset": 2,
+                          "bitOffset": 3,
                           "bitLength": 2
                         },
                         {
                           "name": "Spectral Extension Coordinate Exponent",
                           "value": 0,
                           "offset": 532,
-                          "length": 1,
-                          "bitOffset": 4,
+                          "length": 2,
+                          "bitOffset": 5,
                           "bitLength": 4
                         },
                         {
@@ -1864,7 +1856,7 @@
                           "value": 0,
                           "offset": 533,
                           "length": 1,
-                          "bitOffset": 0,
+                          "bitOffset": 1,
                           "bitLength": 2
                         },
                         {
@@ -1872,74 +1864,74 @@
                           "value": 0,
                           "offset": 533,
                           "length": 1,
-                          "bitOffset": 2,
+                          "bitOffset": 3,
                           "bitLength": 4
                         },
                         {
                           "name": "Spectral Extension Coordinate Mantissa",
                           "value": 0,
                           "offset": 533,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 534,
                           "length": 1,
-                          "bitOffset": 6,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 534,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 534,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 535,
+                          "length": 1,
+                          "bitOffset": 3,
                           "bitLength": 2
                         }
                       ]
                     },
                     {
                       "name": "Spectral Extension Coordinates (right)",
-                      "value": 5,
+                      "value": 6,
                       "unit": "bands",
-                      "offset": 534,
-                      "length": 5,
-                      "bitOffset": 0,
-                      "bitLength": 37,
+                      "offset": 535,
+                      "length": 6,
+                      "bitOffset": 5,
+                      "bitLength": 43,
                       "children": [
                         {
                           "name": "Spectral Extension Blend",
                           "value": 0,
-                          "offset": 534,
-                          "length": 1,
-                          "bitOffset": 0,
+                          "offset": 535,
+                          "length": 2,
+                          "bitOffset": 5,
                           "bitLength": 5
                         },
                         {
                           "name": "Master Spectral Extension Coordinate",
                           "value": 0,
-                          "offset": 534,
-                          "length": 1,
-                          "bitOffset": 5,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 534,
-                          "length": 2,
-                          "bitOffset": 7,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
-                          "offset": 535,
-                          "length": 1,
-                          "bitOffset": 3,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 535,
-                          "length": 2,
-                          "bitOffset": 5,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
                           "offset": 536,
                           "length": 1,
-                          "bitOffset": 1,
+                          "bitOffset": 2,
                           "bitLength": 2
                         },
                         {
@@ -1947,23 +1939,7 @@
                           "value": 0,
                           "offset": 536,
                           "length": 1,
-                          "bitOffset": 3,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
-                          "offset": 536,
-                          "length": 2,
-                          "bitOffset": 7,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 537,
-                          "length": 1,
-                          "bitOffset": 1,
+                          "bitOffset": 4,
                           "bitLength": 4
                         },
                         {
@@ -1971,15 +1947,31 @@
                           "value": 0,
                           "offset": 537,
                           "length": 1,
-                          "bitOffset": 5,
+                          "bitOffset": 0,
                           "bitLength": 2
                         },
                         {
                           "name": "Spectral Extension Coordinate Exponent",
                           "value": 0,
                           "offset": 537,
-                          "length": 2,
-                          "bitOffset": 7,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 537,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 538,
+                          "length": 1,
+                          "bitOffset": 0,
                           "bitLength": 4
                         },
                         {
@@ -1987,48 +1979,53 @@
                           "value": 0,
                           "offset": 538,
                           "length": 1,
-                          "bitOffset": 3,
+                          "bitOffset": 4,
                           "bitLength": 2
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Rematrixing Flags",
-                      "value": "left/right, left/right, left/right, sum/difference",
-                      "offset": 538,
-                      "length": 2,
-                      "bitOffset": 5,
-                      "bitLength": 4
-                    },
-                    {
-                      "name": "Exponents (left)",
-                      "value": "D45",
-                      "offset": 539,
-                      "length": 7,
-                      "bitOffset": 1,
-                      "bitLength": 55,
-                      "children": [
+                        },
                         {
-                          "name": "First Exponent",
-                          "value": 15,
-                          "offset": 539,
-                          "length": 1,
-                          "bitOffset": 1,
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 538,
+                          "length": 2,
+                          "bitOffset": 6,
                           "bitLength": 4
                         },
                         {
-                          "name": "Exponent Groups",
-                          "value": 7,
-                          "unit": "groups",
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
                           "offset": 539,
-                          "length": 7,
-                          "bitOffset": 5,
-                          "bitLength": 49
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
                         },
                         {
-                          "name": "Gain Range Code",
+                          "name": "Spectral Extension Coordinate Exponent",
                           "value": 0,
-                          "offset": 545,
+                          "offset": 539,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 540,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 540,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 540,
                           "length": 1,
                           "bitOffset": 6,
                           "bitLength": 2
@@ -2036,36 +2033,79 @@
                       ]
                     },
                     {
-                      "name": "Exponents (right)",
-                      "value": "D45",
-                      "offset": 546,
-                      "length": 7,
+                      "name": "Rematrixing Flags",
+                      "value": "left/right, left/right, left/right, sum/difference",
+                      "offset": 541,
+                      "length": 1,
                       "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Exponents (left)",
+                      "value": "D45",
+                      "offset": 541,
+                      "length": 8,
+                      "bitOffset": 4,
                       "bitLength": 55,
                       "children": [
                         {
                           "name": "First Exponent",
                           "value": 15,
-                          "offset": 546,
+                          "offset": 541,
                           "length": 1,
-                          "bitOffset": 0,
+                          "bitOffset": 4,
                           "bitLength": 4
                         },
                         {
                           "name": "Exponent Groups",
                           "value": 7,
                           "unit": "groups",
-                          "offset": 546,
+                          "offset": 542,
                           "length": 7,
-                          "bitOffset": 4,
+                          "bitOffset": 0,
                           "bitLength": 49
                         },
                         {
                           "name": "Gain Range Code",
                           "value": 0,
-                          "offset": 552,
+                          "offset": 548,
                           "length": 1,
-                          "bitOffset": 5,
+                          "bitOffset": 1,
+                          "bitLength": 2
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Exponents (right)",
+                      "value": "D45",
+                      "offset": 548,
+                      "length": 8,
+                      "bitOffset": 3,
+                      "bitLength": 55,
+                      "children": [
+                        {
+                          "name": "First Exponent",
+                          "value": 15,
+                          "offset": 548,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Exponent Groups",
+                          "value": 7,
+                          "unit": "groups",
+                          "offset": 548,
+                          "length": 7,
+                          "bitOffset": 7,
+                          "bitLength": 49
+                        },
+                        {
+                          "name": "Gain Range Code",
+                          "value": 0,
+                          "offset": 555,
+                          "length": 1,
+                          "bitOffset": 0,
                           "bitLength": 2
                         }
                       ]
@@ -2074,9 +2114,9 @@
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 552,
+                      "offset": 555,
                       "length": 1,
-                      "bitOffset": 7,
+                      "bitOffset": 2,
                       "bitLength": 0
                     }
                   ]
@@ -2085,130 +2125,138 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 1,
-                  "offset": 552,
+                  "offset": 555,
                   "length": 4,
-                  "bitOffset": 7,
-                  "bitLength": 19,
+                  "bitOffset": 2,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 552,
-                      "length": 1,
-                      "bitOffset": 7,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsBlockSwitched (right)",
-                      "value": false,
-                      "offset": 553,
-                      "length": 1,
-                      "bitOffset": 0,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 553,
-                      "length": 1,
-                      "bitOffset": 1,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": true,
-                      "offset": 553,
+                      "offset": 555,
                       "length": 1,
                       "bitOffset": 2,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsSpectralExtensionInUse",
-                      "value": true,
-                      "offset": 553,
+                      "name": "IsBlockSwitched (right)",
+                      "value": false,
+                      "offset": 555,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsInSpectralExtension (left)",
-                      "value": true,
-                      "offset": 553,
+                      "name": "HasDynamicRange",
+                      "value": false,
+                      "offset": 555,
                       "length": 1,
                       "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsInSpectralExtension (right)",
+                      "name": "HasSpectralExtensionStrategy",
                       "value": true,
-                      "offset": 553,
+                      "offset": 555,
                       "length": 1,
                       "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
-                      "name": "Spectral Extension Copy Start Code",
-                      "value": "0 (from bin 25)",
-                      "offset": 553,
-                      "length": 1,
-                      "bitOffset": 6,
-                      "bitLength": 2
-                    },
-                    {
-                      "name": "Spectral Extension Begin Code",
-                      "value": "3 (sub-band 5)",
-                      "offset": 554,
-                      "length": 1,
-                      "bitOffset": 0,
-                      "bitLength": 3
-                    },
-                    {
-                      "name": "Spectral Extension End Code",
-                      "value": "5 (to sub-band 13)",
-                      "offset": 554,
-                      "length": 1,
-                      "bitOffset": 3,
-                      "bitLength": 3
-                    },
-                    {
-                      "name": "HasSpectralExtensionBandStructure",
-                      "value": false,
-                      "offset": 554,
+                      "name": "IsSpectralExtensionInUse",
+                      "value": true,
+                      "offset": 555,
                       "length": 1,
                       "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (left)",
-                      "value": false,
-                      "offset": 554,
+                      "name": "IsInSpectralExtension (left)",
+                      "value": true,
+                      "offset": 555,
                       "length": 1,
                       "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (right)",
-                      "value": false,
-                      "offset": 555,
+                      "name": "IsInSpectralExtension (right)",
+                      "value": true,
+                      "offset": 556,
                       "length": 1,
                       "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasRematrixing",
-                      "value": false,
-                      "offset": 555,
+                      "name": "Spectral Extension Copy Start Code",
+                      "value": "0 (from bin 25)",
+                      "offset": 556,
                       "length": 1,
                       "bitOffset": 1,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Spectral Extension Begin Code",
+                      "value": "3 (sub-band 5)",
+                      "offset": 556,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Spectral Extension End Code",
+                      "value": "5 (to sub-band 13)",
+                      "offset": 556,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "HasSpectralExtensionBandStructure",
+                      "value": true,
+                      "offset": 557,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Spectral Extension Band Structure",
+                      "value": "0100100",
+                      "offset": 557,
+                      "length": 2,
+                      "bitOffset": 2,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "HasSpectralExtensionCoordinates (left)",
+                      "value": false,
+                      "offset": 558,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionCoordinates (right)",
+                      "value": false,
+                      "offset": 558,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasRematrixing",
+                      "value": false,
+                      "offset": 558,
+                      "length": 1,
+                      "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 555,
+                      "offset": 558,
                       "length": 1,
-                      "bitOffset": 2,
+                      "bitOffset": 4,
                       "bitLength": 0
                     }
                   ]
@@ -2217,130 +2265,138 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 2,
-                  "offset": 555,
-                  "length": 3,
-                  "bitOffset": 2,
-                  "bitLength": 19,
+                  "offset": 558,
+                  "length": 4,
+                  "bitOffset": 4,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 555,
+                      "offset": 558,
                       "length": 1,
-                      "bitOffset": 2,
+                      "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
                       "name": "IsBlockSwitched (right)",
                       "value": false,
-                      "offset": 555,
-                      "length": 1,
-                      "bitOffset": 3,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 555,
-                      "length": 1,
-                      "bitOffset": 4,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": true,
-                      "offset": 555,
+                      "offset": 558,
                       "length": 1,
                       "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsSpectralExtensionInUse",
-                      "value": true,
-                      "offset": 555,
+                      "name": "HasDynamicRange",
+                      "value": false,
+                      "offset": 558,
                       "length": 1,
                       "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsInSpectralExtension (left)",
+                      "name": "HasSpectralExtensionStrategy",
                       "value": true,
-                      "offset": 555,
+                      "offset": 558,
                       "length": 1,
                       "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsInSpectralExtension (right)",
+                      "name": "IsSpectralExtensionInUse",
                       "value": true,
-                      "offset": 556,
+                      "offset": 559,
                       "length": 1,
                       "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
-                      "name": "Spectral Extension Copy Start Code",
-                      "value": "0 (from bin 25)",
-                      "offset": 556,
-                      "length": 1,
-                      "bitOffset": 1,
-                      "bitLength": 2
-                    },
-                    {
-                      "name": "Spectral Extension Begin Code",
-                      "value": "3 (sub-band 5)",
-                      "offset": 556,
-                      "length": 1,
-                      "bitOffset": 3,
-                      "bitLength": 3
-                    },
-                    {
-                      "name": "Spectral Extension End Code",
-                      "value": "5 (to sub-band 13)",
-                      "offset": 556,
-                      "length": 2,
-                      "bitOffset": 6,
-                      "bitLength": 3
-                    },
-                    {
-                      "name": "HasSpectralExtensionBandStructure",
-                      "value": false,
-                      "offset": 557,
+                      "name": "IsInSpectralExtension (left)",
+                      "value": true,
+                      "offset": 559,
                       "length": 1,
                       "bitOffset": 1,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (left)",
-                      "value": false,
-                      "offset": 557,
+                      "name": "IsInSpectralExtension (right)",
+                      "value": true,
+                      "offset": 559,
                       "length": 1,
                       "bitOffset": 2,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (right)",
-                      "value": false,
-                      "offset": 557,
+                      "name": "Spectral Extension Copy Start Code",
+                      "value": "0 (from bin 25)",
+                      "offset": 559,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Spectral Extension Begin Code",
+                      "value": "3 (sub-band 5)",
+                      "offset": 559,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Spectral Extension End Code",
+                      "value": "5 (to sub-band 13)",
+                      "offset": 560,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "HasSpectralExtensionBandStructure",
+                      "value": true,
+                      "offset": 560,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasRematrixing",
+                      "name": "Spectral Extension Band Structure",
+                      "value": "0100100",
+                      "offset": 560,
+                      "length": 2,
+                      "bitOffset": 4,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "HasSpectralExtensionCoordinates (left)",
                       "value": false,
-                      "offset": 557,
+                      "offset": 561,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionCoordinates (right)",
+                      "value": false,
+                      "offset": 561,
                       "length": 1,
                       "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasRematrixing",
+                      "value": false,
+                      "offset": 561,
+                      "length": 1,
+                      "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 557,
+                      "offset": 561,
                       "length": 1,
-                      "bitOffset": 5,
+                      "bitOffset": 6,
                       "bitLength": 0
                     }
                   ]
@@ -2349,103 +2405,111 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 3,
-                  "offset": 557,
-                  "length": 3,
-                  "bitOffset": 5,
-                  "bitLength": 19,
+                  "offset": 561,
+                  "length": 4,
+                  "bitOffset": 6,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 557,
+                      "offset": 561,
                       "length": 1,
-                      "bitOffset": 5,
+                      "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
                       "name": "IsBlockSwitched (right)",
                       "value": false,
-                      "offset": 557,
-                      "length": 1,
-                      "bitOffset": 6,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 557,
+                      "offset": 561,
                       "length": 1,
                       "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": true,
-                      "offset": 558,
+                      "name": "HasDynamicRange",
+                      "value": false,
+                      "offset": 562,
                       "length": 1,
                       "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsSpectralExtensionInUse",
+                      "name": "HasSpectralExtensionStrategy",
                       "value": true,
-                      "offset": 558,
+                      "offset": 562,
                       "length": 1,
                       "bitOffset": 1,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsInSpectralExtension (left)",
+                      "name": "IsSpectralExtensionInUse",
                       "value": true,
-                      "offset": 558,
+                      "offset": 562,
                       "length": 1,
                       "bitOffset": 2,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsInSpectralExtension (right)",
+                      "name": "IsInSpectralExtension (left)",
                       "value": true,
-                      "offset": 558,
+                      "offset": 562,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
-                      "name": "Spectral Extension Copy Start Code",
-                      "value": "0 (from bin 25)",
-                      "offset": 558,
-                      "length": 1,
-                      "bitOffset": 4,
-                      "bitLength": 2
-                    },
-                    {
-                      "name": "Spectral Extension Begin Code",
-                      "value": "3 (sub-band 5)",
-                      "offset": 558,
-                      "length": 2,
-                      "bitOffset": 6,
-                      "bitLength": 3
-                    },
-                    {
-                      "name": "Spectral Extension End Code",
-                      "value": "5 (to sub-band 13)",
-                      "offset": 559,
-                      "length": 1,
-                      "bitOffset": 1,
-                      "bitLength": 3
-                    },
-                    {
-                      "name": "HasSpectralExtensionBandStructure",
-                      "value": false,
-                      "offset": 559,
+                      "name": "IsInSpectralExtension (right)",
+                      "value": true,
+                      "offset": 562,
                       "length": 1,
                       "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
+                      "name": "Spectral Extension Copy Start Code",
+                      "value": "0 (from bin 25)",
+                      "offset": 562,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Spectral Extension Begin Code",
+                      "value": "3 (sub-band 5)",
+                      "offset": 562,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Spectral Extension End Code",
+                      "value": "5 (to sub-band 13)",
+                      "offset": 563,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "HasSpectralExtensionBandStructure",
+                      "value": true,
+                      "offset": 563,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Spectral Extension Band Structure",
+                      "value": "0100100",
+                      "offset": 563,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 7
+                    },
+                    {
                       "name": "HasSpectralExtensionCoordinates (left)",
                       "value": false,
-                      "offset": 559,
+                      "offset": 564,
                       "length": 1,
                       "bitOffset": 5,
                       "bitLength": 1
@@ -2453,7 +2517,7 @@
                     {
                       "name": "HasSpectralExtensionCoordinates (right)",
                       "value": false,
-                      "offset": 559,
+                      "offset": 564,
                       "length": 1,
                       "bitOffset": 6,
                       "bitLength": 1
@@ -2461,7 +2525,7 @@
                     {
                       "name": "HasRematrixing",
                       "value": false,
-                      "offset": 559,
+                      "offset": 564,
                       "length": 1,
                       "bitOffset": 7,
                       "bitLength": 1
@@ -2470,7 +2534,7 @@
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 560,
+                      "offset": 565,
                       "length": 0
                     }
                   ]
@@ -2479,15 +2543,15 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 4,
-                  "offset": 560,
-                  "length": 3,
+                  "offset": 565,
+                  "length": 4,
                   "bitOffset": 0,
-                  "bitLength": 19,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 560,
+                      "offset": 565,
                       "length": 1,
                       "bitOffset": 0,
                       "bitLength": 1
@@ -2495,7 +2559,7 @@
                     {
                       "name": "IsBlockSwitched (right)",
                       "value": false,
-                      "offset": 560,
+                      "offset": 565,
                       "length": 1,
                       "bitOffset": 1,
                       "bitLength": 1
@@ -2503,7 +2567,7 @@
                     {
                       "name": "HasDynamicRange",
                       "value": false,
-                      "offset": 560,
+                      "offset": 565,
                       "length": 1,
                       "bitOffset": 2,
                       "bitLength": 1
@@ -2511,7 +2575,7 @@
                     {
                       "name": "HasSpectralExtensionStrategy",
                       "value": true,
-                      "offset": 560,
+                      "offset": 565,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 1
@@ -2519,7 +2583,7 @@
                     {
                       "name": "IsSpectralExtensionInUse",
                       "value": true,
-                      "offset": 560,
+                      "offset": 565,
                       "length": 1,
                       "bitOffset": 4,
                       "bitLength": 1
@@ -2527,7 +2591,7 @@
                     {
                       "name": "IsInSpectralExtension (left)",
                       "value": true,
-                      "offset": 560,
+                      "offset": 565,
                       "length": 1,
                       "bitOffset": 5,
                       "bitLength": 1
@@ -2535,7 +2599,7 @@
                     {
                       "name": "IsInSpectralExtension (right)",
                       "value": true,
-                      "offset": 560,
+                      "offset": 565,
                       "length": 1,
                       "bitOffset": 6,
                       "bitLength": 1
@@ -2543,7 +2607,7 @@
                     {
                       "name": "Spectral Extension Copy Start Code",
                       "value": "0 (from bin 25)",
-                      "offset": 560,
+                      "offset": 565,
                       "length": 2,
                       "bitOffset": 7,
                       "bitLength": 2
@@ -2551,7 +2615,7 @@
                     {
                       "name": "Spectral Extension Begin Code",
                       "value": "3 (sub-band 5)",
-                      "offset": 561,
+                      "offset": 566,
                       "length": 1,
                       "bitOffset": 1,
                       "bitLength": 3
@@ -2559,50 +2623,58 @@
                     {
                       "name": "Spectral Extension End Code",
                       "value": "5 (to sub-band 13)",
-                      "offset": 561,
+                      "offset": 566,
                       "length": 1,
                       "bitOffset": 4,
                       "bitLength": 3
                     },
                     {
                       "name": "HasSpectralExtensionBandStructure",
-                      "value": false,
-                      "offset": 561,
+                      "value": true,
+                      "offset": 566,
                       "length": 1,
                       "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (left)",
-                      "value": false,
-                      "offset": 562,
+                      "name": "Spectral Extension Band Structure",
+                      "value": "0100100",
+                      "offset": 567,
                       "length": 1,
                       "bitOffset": 0,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "HasSpectralExtensionCoordinates (left)",
+                      "value": false,
+                      "offset": 567,
+                      "length": 1,
+                      "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
                       "name": "HasSpectralExtensionCoordinates (right)",
                       "value": false,
-                      "offset": 562,
+                      "offset": 568,
                       "length": 1,
-                      "bitOffset": 1,
+                      "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
                       "name": "HasRematrixing",
                       "value": false,
-                      "offset": 562,
+                      "offset": 568,
                       "length": 1,
-                      "bitOffset": 2,
+                      "bitOffset": 1,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 562,
+                      "offset": 568,
                       "length": 1,
-                      "bitOffset": 3,
+                      "bitOffset": 2,
                       "bitLength": 0
                     }
                   ]
@@ -2611,142 +2683,150 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 5,
-                  "offset": 562,
-                  "length": 3,
-                  "bitOffset": 3,
-                  "bitLength": 19,
+                  "offset": 568,
+                  "length": 4,
+                  "bitOffset": 2,
+                  "bitLength": 26,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 562,
+                      "offset": 568,
                       "length": 1,
-                      "bitOffset": 3,
+                      "bitOffset": 2,
                       "bitLength": 1
                     },
                     {
                       "name": "IsBlockSwitched (right)",
                       "value": false,
-                      "offset": 562,
-                      "length": 1,
-                      "bitOffset": 4,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 562,
-                      "length": 1,
-                      "bitOffset": 5,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": true,
-                      "offset": 562,
-                      "length": 1,
-                      "bitOffset": 6,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsSpectralExtensionInUse",
-                      "value": true,
-                      "offset": 562,
-                      "length": 1,
-                      "bitOffset": 7,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsInSpectralExtension (left)",
-                      "value": true,
-                      "offset": 563,
-                      "length": 1,
-                      "bitOffset": 0,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsInSpectralExtension (right)",
-                      "value": true,
-                      "offset": 563,
-                      "length": 1,
-                      "bitOffset": 1,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "Spectral Extension Copy Start Code",
-                      "value": "0 (from bin 25)",
-                      "offset": 563,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 2
-                    },
-                    {
-                      "name": "Spectral Extension Begin Code",
-                      "value": "3 (sub-band 5)",
-                      "offset": 563,
-                      "length": 1,
-                      "bitOffset": 4,
-                      "bitLength": 3
-                    },
-                    {
-                      "name": "Spectral Extension End Code",
-                      "value": "5 (to sub-band 13)",
-                      "offset": 563,
-                      "length": 2,
-                      "bitOffset": 7,
-                      "bitLength": 3
-                    },
-                    {
-                      "name": "HasSpectralExtensionBandStructure",
-                      "value": false,
-                      "offset": 564,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionCoordinates (left)",
-                      "value": false,
-                      "offset": 564,
+                      "offset": 568,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (right)",
+                      "name": "HasDynamicRange",
                       "value": false,
-                      "offset": 564,
+                      "offset": 568,
                       "length": 1,
                       "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasRematrixing",
-                      "value": false,
-                      "offset": 564,
+                      "name": "HasSpectralExtensionStrategy",
+                      "value": true,
+                      "offset": 568,
                       "length": 1,
                       "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsSpectralExtensionInUse",
+                      "value": true,
+                      "offset": 568,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsInSpectralExtension (left)",
+                      "value": true,
+                      "offset": 568,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsInSpectralExtension (right)",
+                      "value": true,
+                      "offset": 569,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Spectral Extension Copy Start Code",
+                      "value": "0 (from bin 25)",
+                      "offset": 569,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Spectral Extension Begin Code",
+                      "value": "3 (sub-band 5)",
+                      "offset": 569,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "Spectral Extension End Code",
+                      "value": "5 (to sub-band 13)",
+                      "offset": 569,
+                      "length": 2,
+                      "bitOffset": 6,
+                      "bitLength": 3
+                    },
+                    {
+                      "name": "HasSpectralExtensionBandStructure",
+                      "value": true,
+                      "offset": 570,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Spectral Extension Band Structure",
+                      "value": "0100100",
+                      "offset": 570,
+                      "length": 2,
+                      "bitOffset": 2,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "HasSpectralExtensionCoordinates (left)",
+                      "value": false,
+                      "offset": 571,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionCoordinates (right)",
+                      "value": false,
+                      "offset": 571,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasRematrixing",
+                      "value": false,
+                      "offset": 571,
+                      "length": 1,
+                      "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 564,
+                      "offset": 571,
                       "length": 1,
-                      "bitOffset": 6,
+                      "bitOffset": 4,
                       "bitLength": 0
                     }
                   ]
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 2120,
+                  "value": 2066,
                   "unit": "bits",
-                  "offset": 564,
-                  "length": 266,
-                  "bitOffset": 6,
-                  "bitLength": 2120
+                  "offset": 571,
+                  "length": 259,
+                  "bitOffset": 4,
+                  "bitLength": 2066
                 },
                 {
                   "name": "HasAuxiliaryLength",
@@ -2773,7 +2853,7 @@
                     },
                     {
                       "name": "CRC2",
-                      "value": 35029,
+                      "value": 65519,
                       "offset": 830,
                       "length": 2,
                       "children": [
@@ -4279,9 +4359,9 @@
                   "kind": "SideInfo",
                   "value": 0,
                   "offset": 1674,
-                  "length": 26,
+                  "length": 28,
                   "bitOffset": 1,
-                  "bitLength": 204,
+                  "bitLength": 223,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
@@ -4357,51 +4437,43 @@
                     },
                     {
                       "name": "HasSpectralExtensionBandStructure",
-                      "value": false,
+                      "value": true,
                       "offset": 1675,
                       "length": 1,
                       "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
+                      "name": "Spectral Extension Band Structure",
+                      "value": "0100100",
+                      "offset": 1676,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 7
+                    },
+                    {
                       "name": "Spectral Extension Coordinates (left)",
-                      "value": 5,
+                      "value": 6,
                       "unit": "bands",
                       "offset": 1676,
-                      "length": 5,
-                      "bitOffset": 0,
-                      "bitLength": 37,
+                      "length": 7,
+                      "bitOffset": 7,
+                      "bitLength": 43,
                       "children": [
                         {
                           "name": "Spectral Extension Blend",
                           "value": 0,
                           "offset": 1676,
-                          "length": 1,
-                          "bitOffset": 0,
+                          "length": 2,
+                          "bitOffset": 7,
                           "bitLength": 5
                         },
                         {
                           "name": "Master Spectral Extension Coordinate",
                           "value": 0,
-                          "offset": 1676,
-                          "length": 1,
-                          "bitOffset": 5,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 1676,
-                          "length": 2,
-                          "bitOffset": 7,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
                           "offset": 1677,
                           "length": 1,
-                          "bitOffset": 3,
+                          "bitOffset": 4,
                           "bitLength": 2
                         },
                         {
@@ -4409,7 +4481,7 @@
                           "value": 0,
                           "offset": 1677,
                           "length": 2,
-                          "bitOffset": 5,
+                          "bitOffset": 6,
                           "bitLength": 4
                         },
                         {
@@ -4417,7 +4489,7 @@
                           "value": 0,
                           "offset": 1678,
                           "length": 1,
-                          "bitOffset": 1,
+                          "bitOffset": 2,
                           "bitLength": 2
                         },
                         {
@@ -4425,23 +4497,7 @@
                           "value": 0,
                           "offset": 1678,
                           "length": 1,
-                          "bitOffset": 3,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
-                          "offset": 1678,
-                          "length": 2,
-                          "bitOffset": 7,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 1679,
-                          "length": 1,
-                          "bitOffset": 1,
+                          "bitOffset": 4,
                           "bitLength": 4
                         },
                         {
@@ -4449,15 +4505,31 @@
                           "value": 0,
                           "offset": 1679,
                           "length": 1,
-                          "bitOffset": 5,
+                          "bitOffset": 0,
                           "bitLength": 2
                         },
                         {
                           "name": "Spectral Extension Coordinate Exponent",
                           "value": 0,
                           "offset": 1679,
-                          "length": 2,
-                          "bitOffset": 7,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 1679,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 1680,
+                          "length": 1,
+                          "bitOffset": 0,
                           "bitLength": 4
                         },
                         {
@@ -4465,66 +4537,66 @@
                           "value": 0,
                           "offset": 1680,
                           "length": 1,
-                          "bitOffset": 3,
+                          "bitOffset": 4,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 1680,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 1681,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 1681,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 1682,
+                          "length": 1,
+                          "bitOffset": 0,
                           "bitLength": 2
                         }
                       ]
                     },
                     {
                       "name": "Spectral Extension Coordinates (right)",
-                      "value": 5,
+                      "value": 6,
                       "unit": "bands",
-                      "offset": 1680,
+                      "offset": 1682,
                       "length": 6,
-                      "bitOffset": 5,
-                      "bitLength": 37,
+                      "bitOffset": 2,
+                      "bitLength": 43,
                       "children": [
                         {
                           "name": "Spectral Extension Blend",
                           "value": 0,
-                          "offset": 1680,
-                          "length": 2,
-                          "bitOffset": 5,
+                          "offset": 1682,
+                          "length": 1,
+                          "bitOffset": 2,
                           "bitLength": 5
                         },
                         {
                           "name": "Master Spectral Extension Coordinate",
                           "value": 0,
-                          "offset": 1681,
-                          "length": 1,
-                          "bitOffset": 2,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 1681,
-                          "length": 1,
-                          "bitOffset": 4,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
                           "offset": 1682,
-                          "length": 1,
-                          "bitOffset": 0,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 1682,
-                          "length": 1,
-                          "bitOffset": 2,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
-                          "offset": 1682,
-                          "length": 1,
-                          "bitOffset": 6,
+                          "length": 2,
+                          "bitOffset": 7,
                           "bitLength": 2
                         },
                         {
@@ -4532,7 +4604,7 @@
                           "value": 0,
                           "offset": 1683,
                           "length": 1,
-                          "bitOffset": 0,
+                          "bitOffset": 1,
                           "bitLength": 4
                         },
                         {
@@ -4540,7 +4612,7 @@
                           "value": 0,
                           "offset": 1683,
                           "length": 1,
-                          "bitOffset": 4,
+                          "bitOffset": 5,
                           "bitLength": 2
                         },
                         {
@@ -4548,7 +4620,7 @@
                           "value": 0,
                           "offset": 1683,
                           "length": 2,
-                          "bitOffset": 6,
+                          "bitOffset": 7,
                           "bitLength": 4
                         },
                         {
@@ -4556,15 +4628,15 @@
                           "value": 0,
                           "offset": 1684,
                           "length": 1,
-                          "bitOffset": 2,
+                          "bitOffset": 3,
                           "bitLength": 2
                         },
                         {
                           "name": "Spectral Extension Coordinate Exponent",
                           "value": 0,
                           "offset": 1684,
-                          "length": 1,
-                          "bitOffset": 4,
+                          "length": 2,
+                          "bitOffset": 5,
                           "bitLength": 4
                         },
                         {
@@ -4572,7 +4644,55 @@
                           "value": 0,
                           "offset": 1685,
                           "length": 1,
-                          "bitOffset": 0,
+                          "bitOffset": 1,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 1685,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 1685,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 1686,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 1686,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 1686,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 1687,
+                          "length": 1,
+                          "bitOffset": 3,
                           "bitLength": 2
                         }
                       ]
@@ -4580,42 +4700,42 @@
                     {
                       "name": "Rematrixing Flags",
                       "value": "sum/difference, sum/difference, sum/difference, sum/difference",
-                      "offset": 1685,
-                      "length": 1,
-                      "bitOffset": 2,
+                      "offset": 1687,
+                      "length": 2,
+                      "bitOffset": 5,
                       "bitLength": 4
                     },
                     {
                       "name": "Exponents (left)",
                       "value": "D45",
-                      "offset": 1685,
-                      "length": 8,
-                      "bitOffset": 6,
+                      "offset": 1688,
+                      "length": 7,
+                      "bitOffset": 1,
                       "bitLength": 55,
                       "children": [
                         {
                           "name": "First Exponent",
                           "value": 15,
-                          "offset": 1685,
-                          "length": 2,
-                          "bitOffset": 6,
+                          "offset": 1688,
+                          "length": 1,
+                          "bitOffset": 1,
                           "bitLength": 4
                         },
                         {
                           "name": "Exponent Groups",
                           "value": 7,
                           "unit": "groups",
-                          "offset": 1686,
+                          "offset": 1688,
                           "length": 7,
-                          "bitOffset": 2,
+                          "bitOffset": 5,
                           "bitLength": 49
                         },
                         {
                           "name": "Gain Range Code",
                           "value": 0,
-                          "offset": 1692,
+                          "offset": 1694,
                           "length": 1,
-                          "bitOffset": 3,
+                          "bitOffset": 6,
                           "bitLength": 2
                         }
                       ]
@@ -4623,34 +4743,34 @@
                     {
                       "name": "Exponents (right)",
                       "value": "D45",
-                      "offset": 1692,
-                      "length": 8,
-                      "bitOffset": 5,
+                      "offset": 1695,
+                      "length": 7,
+                      "bitOffset": 0,
                       "bitLength": 55,
                       "children": [
                         {
                           "name": "First Exponent",
                           "value": 15,
-                          "offset": 1692,
-                          "length": 2,
-                          "bitOffset": 5,
+                          "offset": 1695,
+                          "length": 1,
+                          "bitOffset": 0,
                           "bitLength": 4
                         },
                         {
                           "name": "Exponent Groups",
                           "value": 7,
                           "unit": "groups",
-                          "offset": 1693,
+                          "offset": 1695,
                           "length": 7,
-                          "bitOffset": 1,
+                          "bitOffset": 4,
                           "bitLength": 49
                         },
                         {
                           "name": "Gain Range Code",
                           "value": 0,
-                          "offset": 1699,
+                          "offset": 1701,
                           "length": 1,
-                          "bitOffset": 2,
+                          "bitOffset": 5,
                           "bitLength": 2
                         }
                       ]
@@ -4658,30 +4778,28 @@
                     {
                       "name": "HasConverterSnrOffset",
                       "value": false,
-                      "offset": 1699,
+                      "offset": 1701,
                       "length": 1,
-                      "bitOffset": 4,
+                      "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 1699,
-                      "length": 1,
-                      "bitOffset": 5,
-                      "bitLength": 0
+                      "offset": 1702,
+                      "length": 0
                     }
                   ]
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 3793,
+                  "value": 3774,
                   "unit": "bits",
-                  "offset": 1699,
-                  "length": 475,
-                  "bitOffset": 5,
-                  "bitLength": 3793
+                  "offset": 1702,
+                  "length": 472,
+                  "bitOffset": 0,
+                  "bitLength": 3774
                 },
                 {
                   "name": "HasAuxiliaryLength",
@@ -4708,7 +4826,7 @@
                     },
                     {
                       "name": "CRC2",
-                      "value": 9068,
+                      "value": 53400,
                       "offset": 2174,
                       "length": 2,
                       "children": [
@@ -5147,9 +5265,9 @@
                   "kind": "SideInfo",
                   "value": 0,
                   "offset": 2190,
-                  "length": 27,
+                  "length": 29,
                   "bitOffset": 5,
-                  "bitLength": 204,
+                  "bitLength": 223,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
@@ -5225,51 +5343,43 @@
                     },
                     {
                       "name": "HasSpectralExtensionBandStructure",
-                      "value": false,
+                      "value": true,
                       "offset": 2192,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
-                      "name": "Spectral Extension Coordinates (left)",
-                      "value": 5,
-                      "unit": "bands",
+                      "name": "Spectral Extension Band Structure",
+                      "value": "0100100",
                       "offset": 2192,
-                      "length": 6,
+                      "length": 2,
                       "bitOffset": 4,
-                      "bitLength": 37,
+                      "bitLength": 7
+                    },
+                    {
+                      "name": "Spectral Extension Coordinates (left)",
+                      "value": 6,
+                      "unit": "bands",
+                      "offset": 2193,
+                      "length": 6,
+                      "bitOffset": 3,
+                      "bitLength": 43,
                       "children": [
                         {
                           "name": "Spectral Extension Blend",
                           "value": 0,
-                          "offset": 2192,
-                          "length": 2,
-                          "bitOffset": 4,
+                          "offset": 2193,
+                          "length": 1,
+                          "bitOffset": 3,
                           "bitLength": 5
                         },
                         {
                           "name": "Master Spectral Extension Coordinate",
                           "value": 0,
-                          "offset": 2193,
+                          "offset": 2194,
                           "length": 1,
-                          "bitOffset": 1,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 2193,
-                          "length": 1,
-                          "bitOffset": 3,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
-                          "offset": 2193,
-                          "length": 2,
-                          "bitOffset": 7,
+                          "bitOffset": 0,
                           "bitLength": 2
                         },
                         {
@@ -5277,7 +5387,7 @@
                           "value": 0,
                           "offset": 2194,
                           "length": 1,
-                          "bitOffset": 1,
+                          "bitOffset": 2,
                           "bitLength": 4
                         },
                         {
@@ -5285,15 +5395,15 @@
                           "value": 0,
                           "offset": 2194,
                           "length": 1,
-                          "bitOffset": 5,
+                          "bitOffset": 6,
                           "bitLength": 2
                         },
                         {
                           "name": "Spectral Extension Coordinate Exponent",
                           "value": 0,
-                          "offset": 2194,
-                          "length": 2,
-                          "bitOffset": 7,
+                          "offset": 2195,
+                          "length": 1,
+                          "bitOffset": 0,
                           "bitLength": 4
                         },
                         {
@@ -5301,7 +5411,7 @@
                           "value": 0,
                           "offset": 2195,
                           "length": 1,
-                          "bitOffset": 3,
+                          "bitOffset": 4,
                           "bitLength": 2
                         },
                         {
@@ -5309,7 +5419,7 @@
                           "value": 0,
                           "offset": 2195,
                           "length": 2,
-                          "bitOffset": 5,
+                          "bitOffset": 6,
                           "bitLength": 4
                         },
                         {
@@ -5317,7 +5427,7 @@
                           "value": 0,
                           "offset": 2196,
                           "length": 1,
-                          "bitOffset": 1,
+                          "bitOffset": 2,
                           "bitLength": 2
                         },
                         {
@@ -5325,82 +5435,82 @@
                           "value": 0,
                           "offset": 2196,
                           "length": 1,
-                          "bitOffset": 3,
+                          "bitOffset": 4,
                           "bitLength": 4
                         },
                         {
                           "name": "Spectral Extension Coordinate Mantissa",
                           "value": 0,
-                          "offset": 2196,
-                          "length": 2,
-                          "bitOffset": 7,
+                          "offset": 2197,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 2197,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 2197,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 2198,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 2198,
+                          "length": 1,
+                          "bitOffset": 4,
                           "bitLength": 2
                         }
                       ]
                     },
                     {
                       "name": "Spectral Extension Coordinates (right)",
-                      "value": 5,
+                      "value": 6,
                       "unit": "bands",
-                      "offset": 2197,
-                      "length": 5,
-                      "bitOffset": 1,
-                      "bitLength": 37,
+                      "offset": 2198,
+                      "length": 7,
+                      "bitOffset": 6,
+                      "bitLength": 43,
                       "children": [
                         {
                           "name": "Spectral Extension Blend",
                           "value": 0,
-                          "offset": 2197,
-                          "length": 1,
-                          "bitOffset": 1,
+                          "offset": 2198,
+                          "length": 2,
+                          "bitOffset": 6,
                           "bitLength": 5
                         },
                         {
                           "name": "Master Spectral Extension Coordinate",
                           "value": 0,
-                          "offset": 2197,
+                          "offset": 2199,
                           "length": 1,
-                          "bitOffset": 6,
+                          "bitOffset": 3,
                           "bitLength": 2
                         },
                         {
                           "name": "Spectral Extension Coordinate Exponent",
                           "value": 0,
-                          "offset": 2198,
-                          "length": 1,
-                          "bitOffset": 0,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
-                          "offset": 2198,
-                          "length": 1,
-                          "bitOffset": 4,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 2198,
+                          "offset": 2199,
                           "length": 2,
-                          "bitOffset": 6,
-                          "bitLength": 4
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Mantissa",
-                          "value": 0,
-                          "offset": 2199,
-                          "length": 1,
-                          "bitOffset": 2,
-                          "bitLength": 2
-                        },
-                        {
-                          "name": "Spectral Extension Coordinate Exponent",
-                          "value": 0,
-                          "offset": 2199,
-                          "length": 1,
-                          "bitOffset": 4,
+                          "bitOffset": 5,
                           "bitLength": 4
                         },
                         {
@@ -5408,7 +5518,7 @@
                           "value": 0,
                           "offset": 2200,
                           "length": 1,
-                          "bitOffset": 0,
+                          "bitOffset": 1,
                           "bitLength": 2
                         },
                         {
@@ -5416,15 +5526,15 @@
                           "value": 0,
                           "offset": 2200,
                           "length": 1,
-                          "bitOffset": 2,
+                          "bitOffset": 3,
                           "bitLength": 4
                         },
                         {
                           "name": "Spectral Extension Coordinate Mantissa",
                           "value": 0,
                           "offset": 2200,
-                          "length": 1,
-                          "bitOffset": 6,
+                          "length": 2,
+                          "bitOffset": 7,
                           "bitLength": 2
                         },
                         {
@@ -5432,7 +5542,7 @@
                           "value": 0,
                           "offset": 2201,
                           "length": 1,
-                          "bitOffset": 0,
+                          "bitOffset": 1,
                           "bitLength": 4
                         },
                         {
@@ -5440,7 +5550,55 @@
                           "value": 0,
                           "offset": 2201,
                           "length": 1,
-                          "bitOffset": 4,
+                          "bitOffset": 5,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 2201,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 2202,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 2202,
+                          "length": 2,
+                          "bitOffset": 5,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 2203,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 2
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Exponent",
+                          "value": 0,
+                          "offset": 2203,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Spectral Extension Coordinate Mantissa",
+                          "value": 0,
+                          "offset": 2203,
+                          "length": 2,
+                          "bitOffset": 7,
                           "bitLength": 2
                         }
                       ]
@@ -5448,42 +5606,42 @@
                     {
                       "name": "Rematrixing Flags",
                       "value": "sum/difference, left/right, left/right, left/right",
-                      "offset": 2201,
-                      "length": 2,
-                      "bitOffset": 6,
+                      "offset": 2204,
+                      "length": 1,
+                      "bitOffset": 1,
                       "bitLength": 4
                     },
                     {
                       "name": "Exponents (left)",
                       "value": "D45",
-                      "offset": 2202,
+                      "offset": 2204,
                       "length": 8,
-                      "bitOffset": 2,
+                      "bitOffset": 5,
                       "bitLength": 55,
                       "children": [
                         {
                           "name": "First Exponent",
                           "value": 15,
-                          "offset": 2202,
-                          "length": 1,
-                          "bitOffset": 2,
+                          "offset": 2204,
+                          "length": 2,
+                          "bitOffset": 5,
                           "bitLength": 4
                         },
                         {
                           "name": "Exponent Groups",
                           "value": 7,
                           "unit": "groups",
-                          "offset": 2202,
+                          "offset": 2205,
                           "length": 7,
-                          "bitOffset": 6,
+                          "bitOffset": 1,
                           "bitLength": 49
                         },
                         {
                           "name": "Gain Range Code",
                           "value": 0,
-                          "offset": 2208,
-                          "length": 2,
-                          "bitOffset": 7,
+                          "offset": 2211,
+                          "length": 1,
+                          "bitOffset": 2,
                           "bitLength": 2
                         }
                       ]
@@ -5491,34 +5649,34 @@
                     {
                       "name": "Exponents (right)",
                       "value": "D45",
-                      "offset": 2209,
-                      "length": 7,
-                      "bitOffset": 1,
+                      "offset": 2211,
+                      "length": 8,
+                      "bitOffset": 4,
                       "bitLength": 55,
                       "children": [
                         {
                           "name": "First Exponent",
                           "value": 15,
-                          "offset": 2209,
+                          "offset": 2211,
                           "length": 1,
-                          "bitOffset": 1,
+                          "bitOffset": 4,
                           "bitLength": 4
                         },
                         {
                           "name": "Exponent Groups",
                           "value": 7,
                           "unit": "groups",
-                          "offset": 2209,
+                          "offset": 2212,
                           "length": 7,
-                          "bitOffset": 5,
+                          "bitOffset": 0,
                           "bitLength": 49
                         },
                         {
                           "name": "Gain Range Code",
                           "value": 0,
-                          "offset": 2215,
+                          "offset": 2218,
                           "length": 1,
-                          "bitOffset": 6,
+                          "bitOffset": 1,
                           "bitLength": 2
                         }
                       ]
@@ -5526,18 +5684,18 @@
                     {
                       "name": "HasConverterSnrOffset",
                       "value": false,
-                      "offset": 2216,
+                      "offset": 2218,
                       "length": 1,
-                      "bitOffset": 0,
+                      "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 2216,
+                      "offset": 2218,
                       "length": 1,
-                      "bitOffset": 1,
+                      "bitOffset": 4,
                       "bitLength": 0
                     }
                   ]
@@ -5546,82 +5704,82 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 1,
-                  "offset": 2216,
+                  "offset": 2218,
                   "length": 2,
-                  "bitOffset": 1,
+                  "bitOffset": 4,
                   "bitLength": 8,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 2216,
-                      "length": 1,
-                      "bitOffset": 1,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsBlockSwitched (right)",
-                      "value": false,
-                      "offset": 2216,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 2216,
-                      "length": 1,
-                      "bitOffset": 3,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": false,
-                      "offset": 2216,
+                      "offset": 2218,
                       "length": 1,
                       "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (left)",
+                      "name": "IsBlockSwitched (right)",
                       "value": false,
-                      "offset": 2216,
+                      "offset": 2218,
                       "length": 1,
                       "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasSpectralExtensionCoordinates (right)",
+                      "name": "HasDynamicRange",
                       "value": false,
-                      "offset": 2216,
+                      "offset": 2218,
                       "length": 1,
                       "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasRematrixing",
+                      "name": "HasSpectralExtensionStrategy",
                       "value": false,
-                      "offset": 2216,
+                      "offset": 2218,
                       "length": 1,
                       "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasConverterSnrOffset",
+                      "name": "HasSpectralExtensionCoordinates (left)",
                       "value": false,
-                      "offset": 2217,
+                      "offset": 2219,
                       "length": 1,
                       "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionCoordinates (right)",
+                      "value": false,
+                      "offset": 2219,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasRematrixing",
+                      "value": false,
+                      "offset": 2219,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasConverterSnrOffset",
+                      "value": false,
+                      "offset": 2219,
+                      "length": 1,
+                      "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 2217,
+                      "offset": 2219,
                       "length": 1,
-                      "bitOffset": 1,
+                      "bitOffset": 4,
                       "bitLength": 0
                     }
                   ]
@@ -5630,106 +5788,106 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 2,
-                  "offset": 2217,
+                  "offset": 2219,
                   "length": 15,
-                  "bitOffset": 1,
+                  "bitOffset": 4,
                   "bitLength": 115,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 2217,
-                      "length": 1,
-                      "bitOffset": 1,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsBlockSwitched (right)",
-                      "value": false,
-                      "offset": 2217,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 2217,
-                      "length": 1,
-                      "bitOffset": 3,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": true,
-                      "offset": 2217,
+                      "offset": 2219,
                       "length": 1,
                       "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
-                      "name": "IsSpectralExtensionInUse",
+                      "name": "IsBlockSwitched (right)",
                       "value": false,
-                      "offset": 2217,
+                      "offset": 2219,
                       "length": 1,
                       "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasRematrixing",
+                      "name": "HasDynamicRange",
                       "value": false,
-                      "offset": 2217,
+                      "offset": 2219,
                       "length": 1,
                       "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
+                      "name": "HasSpectralExtensionStrategy",
+                      "value": true,
+                      "offset": 2219,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsSpectralExtensionInUse",
+                      "value": false,
+                      "offset": 2220,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasRematrixing",
+                      "value": false,
+                      "offset": 2220,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
                       "name": "Bandwidth Code (left)",
                       "value": "0 (to bin 73)",
-                      "offset": 2217,
-                      "length": 2,
-                      "bitOffset": 7,
+                      "offset": 2220,
+                      "length": 1,
+                      "bitOffset": 2,
                       "bitLength": 6
                     },
                     {
                       "name": "Bandwidth Code (right)",
                       "value": "0 (to bin 73)",
-                      "offset": 2218,
-                      "length": 2,
-                      "bitOffset": 5,
+                      "offset": 2221,
+                      "length": 1,
+                      "bitOffset": 0,
                       "bitLength": 6
                     },
                     {
                       "name": "Exponents (left)",
                       "value": "D45",
-                      "offset": 2219,
+                      "offset": 2221,
                       "length": 7,
-                      "bitOffset": 3,
+                      "bitOffset": 6,
                       "bitLength": 48,
                       "children": [
                         {
                           "name": "First Exponent",
                           "value": 15,
-                          "offset": 2219,
-                          "length": 1,
-                          "bitOffset": 3,
+                          "offset": 2221,
+                          "length": 2,
+                          "bitOffset": 6,
                           "bitLength": 4
                         },
                         {
                           "name": "Exponent Groups",
                           "value": 6,
                           "unit": "groups",
-                          "offset": 2219,
-                          "length": 7,
-                          "bitOffset": 7,
+                          "offset": 2222,
+                          "length": 6,
+                          "bitOffset": 2,
                           "bitLength": 42
                         },
                         {
                           "name": "Gain Range Code",
                           "value": 0,
-                          "offset": 2225,
+                          "offset": 2227,
                           "length": 1,
-                          "bitOffset": 1,
+                          "bitOffset": 4,
                           "bitLength": 2
                         }
                       ]
@@ -5737,34 +5895,34 @@
                     {
                       "name": "Exponents (right)",
                       "value": "D45",
-                      "offset": 2225,
+                      "offset": 2227,
                       "length": 7,
-                      "bitOffset": 3,
+                      "bitOffset": 6,
                       "bitLength": 48,
                       "children": [
                         {
                           "name": "First Exponent",
                           "value": 15,
-                          "offset": 2225,
-                          "length": 1,
-                          "bitOffset": 3,
+                          "offset": 2227,
+                          "length": 2,
+                          "bitOffset": 6,
                           "bitLength": 4
                         },
                         {
                           "name": "Exponent Groups",
                           "value": 6,
                           "unit": "groups",
-                          "offset": 2225,
-                          "length": 7,
-                          "bitOffset": 7,
+                          "offset": 2228,
+                          "length": 6,
+                          "bitOffset": 2,
                           "bitLength": 42
                         },
                         {
                           "name": "Gain Range Code",
                           "value": 0,
-                          "offset": 2231,
+                          "offset": 2233,
                           "length": 1,
-                          "bitOffset": 1,
+                          "bitOffset": 4,
                           "bitLength": 2
                         }
                       ]
@@ -5772,18 +5930,18 @@
                     {
                       "name": "HasConverterSnrOffset",
                       "value": false,
-                      "offset": 2231,
+                      "offset": 2233,
                       "length": 1,
-                      "bitOffset": 3,
+                      "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 2231,
+                      "offset": 2233,
                       "length": 1,
-                      "bitOffset": 4,
+                      "bitOffset": 7,
                       "bitLength": 0
                     }
                   ]
@@ -5792,66 +5950,66 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 3,
-                  "offset": 2231,
+                  "offset": 2233,
                   "length": 2,
-                  "bitOffset": 4,
+                  "bitOffset": 7,
                   "bitLength": 6,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 2231,
-                      "length": 1,
-                      "bitOffset": 4,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsBlockSwitched (right)",
-                      "value": false,
-                      "offset": 2231,
-                      "length": 1,
-                      "bitOffset": 5,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 2231,
-                      "length": 1,
-                      "bitOffset": 6,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": false,
-                      "offset": 2231,
+                      "offset": 2233,
                       "length": 1,
                       "bitOffset": 7,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasRematrixing",
+                      "name": "IsBlockSwitched (right)",
                       "value": false,
-                      "offset": 2232,
+                      "offset": 2234,
                       "length": 1,
                       "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasConverterSnrOffset",
+                      "name": "HasDynamicRange",
                       "value": false,
-                      "offset": 2232,
+                      "offset": 2234,
                       "length": 1,
                       "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionStrategy",
+                      "value": false,
+                      "offset": 2234,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasRematrixing",
+                      "value": false,
+                      "offset": 2234,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasConverterSnrOffset",
+                      "value": false,
+                      "offset": 2234,
+                      "length": 1,
+                      "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 2232,
+                      "offset": 2234,
                       "length": 1,
-                      "bitOffset": 2,
+                      "bitOffset": 5,
                       "bitLength": 0
                     }
                   ]
@@ -5860,65 +6018,67 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 4,
-                  "offset": 2232,
-                  "length": 1,
-                  "bitOffset": 2,
+                  "offset": 2234,
+                  "length": 2,
+                  "bitOffset": 5,
                   "bitLength": 6,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 2232,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsBlockSwitched (right)",
-                      "value": false,
-                      "offset": 2232,
-                      "length": 1,
-                      "bitOffset": 3,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 2232,
-                      "length": 1,
-                      "bitOffset": 4,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": false,
-                      "offset": 2232,
+                      "offset": 2234,
                       "length": 1,
                       "bitOffset": 5,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasRematrixing",
+                      "name": "IsBlockSwitched (right)",
                       "value": false,
-                      "offset": 2232,
+                      "offset": 2234,
                       "length": 1,
                       "bitOffset": 6,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasConverterSnrOffset",
+                      "name": "HasDynamicRange",
                       "value": false,
-                      "offset": 2232,
+                      "offset": 2234,
                       "length": 1,
                       "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionStrategy",
+                      "value": false,
+                      "offset": 2235,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasRematrixing",
+                      "value": false,
+                      "offset": 2235,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasConverterSnrOffset",
+                      "value": false,
+                      "offset": 2235,
+                      "length": 1,
+                      "bitOffset": 2,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 2233,
-                      "length": 0
+                      "offset": 2235,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 0
                     }
                   ]
                 },
@@ -5926,78 +6086,78 @@
                   "name": "Audio Block",
                   "kind": "SideInfo",
                   "value": 5,
-                  "offset": 2233,
-                  "length": 1,
-                  "bitOffset": 0,
+                  "offset": 2235,
+                  "length": 2,
+                  "bitOffset": 3,
                   "bitLength": 6,
                   "children": [
                     {
                       "name": "IsBlockSwitched (left)",
                       "value": false,
-                      "offset": 2233,
-                      "length": 1,
-                      "bitOffset": 0,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "IsBlockSwitched (right)",
-                      "value": false,
-                      "offset": 2233,
-                      "length": 1,
-                      "bitOffset": 1,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasDynamicRange",
-                      "value": false,
-                      "offset": 2233,
-                      "length": 1,
-                      "bitOffset": 2,
-                      "bitLength": 1
-                    },
-                    {
-                      "name": "HasSpectralExtensionStrategy",
-                      "value": false,
-                      "offset": 2233,
+                      "offset": 2235,
                       "length": 1,
                       "bitOffset": 3,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasRematrixing",
+                      "name": "IsBlockSwitched (right)",
                       "value": false,
-                      "offset": 2233,
+                      "offset": 2235,
                       "length": 1,
                       "bitOffset": 4,
                       "bitLength": 1
                     },
                     {
-                      "name": "HasConverterSnrOffset",
+                      "name": "HasDynamicRange",
                       "value": false,
-                      "offset": 2233,
+                      "offset": 2235,
                       "length": 1,
                       "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasSpectralExtensionStrategy",
+                      "value": false,
+                      "offset": 2235,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasRematrixing",
+                      "value": false,
+                      "offset": 2235,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "HasConverterSnrOffset",
+                      "value": false,
+                      "offset": 2236,
+                      "length": 1,
+                      "bitOffset": 0,
                       "bitLength": 1
                     },
                     {
                       "name": "Mantissas",
                       "value": 0,
                       "unit": "bits",
-                      "offset": 2233,
+                      "offset": 2236,
                       "length": 1,
-                      "bitOffset": 6,
+                      "bitOffset": 1,
                       "bitLength": 0
                     }
                   ]
                 },
                 {
                   "name": "Auxiliary Data",
-                  "value": 3616,
+                  "value": 3597,
                   "unit": "bits",
-                  "offset": 2233,
-                  "length": 453,
-                  "bitOffset": 6,
-                  "bitLength": 3616
+                  "offset": 2236,
+                  "length": 450,
+                  "bitOffset": 1,
+                  "bitLength": 3597
                 },
                 {
                   "name": "HasAuxiliaryLength",
@@ -6024,7 +6184,7 @@
                     },
                     {
                       "name": "CRC2",
-                      "value": 6542,
+                      "value": 12153,
                       "offset": 2686,
                       "length": 2,
                       "children": [

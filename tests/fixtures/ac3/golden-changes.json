@@ -1,5 +1,5 @@
 {
-  "note": "The AC-3 step adds categorySeries, the series Coded Bandwidth and Coded Bandwidth Over Time and concept and quantity on the bitrate series of every AC-3 and E-AC-3 stream whose audio blocks are read, and to the statistics of such a stream the node Coded Bandwidth with the children Lowest, Most Common and Highest. The block tallies count blocks read to their end (a block that breaks is in neither the tally nor the series), which changes the value of Bands Coded as Sum/Difference where a block breaks. The goldens of the six hand-built coding fixtures are new and not listed.",
+  "note": "The AC-3 step adds categorySeries, the series Coded Bandwidth and Coded Bandwidth Over Time and concept and quantity on the bitrate series of every AC-3 and E-AC-3 stream whose audio blocks are read, and to the statistics of such a stream the node Coded Bandwidth with the children Lowest, Most Common and Highest. The block tallies (the Blocks With nodes, Bands Coded as Sum/Difference and Exponent Strategies) count blocks read to their end, so a block that breaks is in none of them: that changes Bands Coded as Sum/Difference of bad-blocks and Exponent Strategies of truncated-in-skip, each listed for its file alone. The goldens of the coding fixtures are new and not listed.",
   "goldens": [
     "tests/fixtures/ac3/",
     "tests/fixtures/matroska/"
@@ -268,6 +268,36 @@
       ],
       "fields": [
         "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/bad-blocks.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/truncated-in-skip.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies",
+        "Reuse"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/truncated-in-skip.report.json"
       ]
     }
   ]
