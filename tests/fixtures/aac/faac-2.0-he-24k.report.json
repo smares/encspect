@@ -361,7 +361,7 @@
                                 },
                                 {
                                   "name": "Mid/Side Bands",
-                                  "value": 2.1,
+                                  "value": 0.1,
                                   "unit": "%",
                                   "offset": 36,
                                   "length": 4527
@@ -396,25 +396,19 @@
                               "children": [
                                 {
                                   "name": "Left/right stereo",
-                                  "value": "20 channel pairs (58.8%)",
-                                  "offset": 36,
-                                  "length": 4527
-                                },
-                                {
-                                  "name": "Mid/side stereo",
-                                  "value": "1 channel pair (2.9%)",
+                                  "value": "21 channel pairs (61.8%)",
                                   "offset": 36,
                                   "length": 4527
                                 },
                                 {
                                   "name": "Intensity stereo",
-                                  "value": "7 channel pairs (20.6%)",
+                                  "value": "12 channel pairs (35.3%)",
                                   "offset": 36,
                                   "length": 4527
                                 },
                                 {
                                   "name": "Mid/side and intensity stereo",
-                                  "value": "6 channel pairs (17.6%)",
+                                  "value": "1 channel pair (2.9%)",
                                   "offset": 36,
                                   "length": 4527
                                 }
@@ -20967,19 +20961,19 @@
             "categories": [
               {
                 "name": "Left/right stereo",
-                "count": 20
+                "count": 21
               },
               {
                 "name": "Mid/side stereo",
-                "count": 1
+                "count": 0
               },
               {
                 "name": "Intensity stereo",
-                "count": 7
+                "count": 12
               },
               {
                 "name": "Mid/side and intensity stereo",
-                "count": 6
+                "count": 1
               },
               {
                 "name": "Reserved",
@@ -20997,12 +20991,16 @@
             ],
             "runs": [
               [
+                2,
+                1
+              ],
+              [
                 3,
-                6
+                1
               ],
               [
                 2,
-                1
+                5
               ],
               [
                 0,
@@ -21030,15 +21028,7 @@
               ],
               [
                 0,
-                2
-              ],
-              [
-                1,
-                1
-              ],
-              [
-                0,
-                12
+                15
               ],
               [
                 2,
