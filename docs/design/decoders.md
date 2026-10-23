@@ -998,7 +998,7 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
 - **Bit cursor, MD5 and CRC-32:** `BitCursorTests` against `BitReader` on random data and at every end; `Md5Tests` with RFC 1321's vectors and against `System.Security.Cryptography.MD5`, in the test only; `Crc32Tests` against the existing copies.
 - **Boundary:** `DecodingBoundaryTests` (above), with its negative control.
 - **Fuzzing:** `Encspect.Fuzz` analyzes the lossless fixtures' mutations with decoding on as well, with a lowered `MaxPcmBytes`, and fails on `decode.failed`; its finds join `tests/fixtures/fuzz`.
-- **Memory:** `MemoryTests` analyzes a long stream of each decoded coding with decoding on and bounds the peak to that of the analysis without it plus a constant, so a session that keeps something per frame fails.
+- **Memory:** `MemoryTests` analyzes a long stream of each decoded coding with decoding on and reads the live heap from inside the sink's `Write` of the last frame, where everything a session keeps per frame is still alive; the growth of that reading above the heap the analysis ends with, between two stream lengths, is bounded per further frame, so a session that keeps something per frame fails (see "Memory tests" in `docs/development.md`).
 - **Complexity:** `ComplexityTests`, with a lowered `MaxPcmBytes` so the budget stops them in seconds:
   - FLAC frames of 65,535-sample constant subframes in 8 channels at 32 bits;
   - Rice codes that run to the end of each frame;
