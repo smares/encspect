@@ -119,6 +119,21 @@
                   ]
                 },
                 {
+                  "name": "Block Sizes",
+                  "value": 4,
+                  "unit": "channel streams",
+                  "offset": 0,
+                  "length": 974,
+                  "children": [
+                    {
+                      "name": "Long, start and stop",
+                      "value": "4 channel streams (100.0%)",
+                      "offset": 0,
+                      "length": 974
+                    }
+                  ]
+                },
+                {
                   "name": "Window Shapes",
                   "value": 4,
                   "unit": "channel streams",
@@ -220,10 +235,32 @@
                   ]
                 },
                 {
-                  "name": "Bandwidth",
-                  "value": "highest coded band ends at about 7580 Hz (max_sfb 30)",
+                  "name": "Coded Bandwidth",
                   "offset": 0,
-                  "length": 974
+                  "length": 974,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 7580,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 974
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 7580,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 974
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 7580,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 974
+                    }
+                  ]
                 },
                 {
                   "name": "Global Gain",
@@ -1689,6 +1726,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0,
               244,
@@ -1706,11 +1745,114 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0
             ],
             "values": [
               84
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              244,
+              487,
+              731
+            ],
+            "values": [
+              7580,
+              7580,
+              7580,
+              7580
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              7580
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Window Sequences",
+            "concept": "blockSwitching",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Only Long",
+                "count": 4
+              },
+              {
+                "name": "Long Start",
+                "count": 0
+              },
+              {
+                "name": "Eight Short",
+                "count": 0
+              },
+              {
+                "name": "Long Stop",
+                "count": 0
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                4
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Long, start and stop",
+                "count": 4
+              },
+              {
+                "name": "Short",
+                "count": 0
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "groupOf": "Window Sequences",
+            "map": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "seconds": [
+              0
             ]
           }
         ]
