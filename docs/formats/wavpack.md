@@ -63,6 +63,35 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
   - the 8 `.wvc` correction files hold a block checksum and neither of the others.
 - That is one file of FFmpeg's encoder and none of a libwavpack older than 5.0, so the absence of a config block is not a rule: the analyzer keeps the low-confidence "WavPack 4 stream" and says in its evidence that another encoder may have written it.
 
+## Decoding
+
+- The decoder (`Encspect.Formats.WavPack.Decoding`, ID `wavpack`) runs when the front end asks for it: `--verify` on the command line, "Verify Audio" in the detail window. The tree is the same either way.
+- It decodes lossless and hybrid streams (integers of 1 to 32 bits, floats, up to the channels a stream may have) and DSD (stored, fast and high modes). The syntax of the sub-blocks is read by the parser's code (`BlockContents`); the decoder adds the entropy decoding, the decorrelation passes, joint stereo, the shift and the sent, zero, one and duplicate bits, the restoring of floats, and the checksums.
+- A hybrid file is decoded without its `.wvc` to the lossy audio the main file holds; the analyzer does not look for the correction file.
+- Four checksums are declared and tallied:
+
+| Checksum | Covers | Counts as covering all of the audio when |
+|---|---|---|
+| block checksum | the coded data | the rule of the next row holds and every audio block has one (a block that says it has one and has none counts as failed) |
+| block header CRC | the decoded audio | no gap in the block indexes, no block the parser could not read, no broken set and the samples of the blocks match the total the stream states |
+| extended CRC | the decoded audio of floats and of integers above 24 bits | never (it covers the extra bits of the blocks that have them only) |
+| MD5 | the decoded audio | always; it is compared only when the decoder decoded every block, nothing is missing, the stream is lossless and no set is over the ceiling |
+
+- A stream is verified when every stored checksum was compared, none failed, and at least one compared checksum covers all the audio. A hybrid file without its `.wvc` is verified as its lossy stream by the CRCs of its blocks (`IsLossy`); its MD5 is of the lossless audio and is not compared (`wavpack.md5-needs-correction-file`).
+- The MD5 is over the samples in the layout of the source (the new config block's qmode): little-endian by default, big-endian for AIFF and CAF sources, signed bytes, unsigned words, reordered channels, and for DSD the bytes in blocks and the bit order of the source. The alternate MD5 sub-block is used when the qmode's low byte is not 0. The layouts are libwavpack's (`pack_utils.c`, `wvunpack.c`).
+- Findings from the decoder: `wavpack.audio-crc-mismatch` (the CRC of the decoded audio of a block differs from the stored one), `wavpack.md5-mismatch`, `wavpack.md5-needs-correction-file`, `wavpack.md5-group-too-large`, and the host's `decode.*` findings. A block the parser could not read, or that libwavpack's decoder refuses, is handed as unreadable and counts as not decoded.
+- Decoding starts at the first audio block that verifies, as libwavpack opens a file. A stream whose first configured block libwavpack refuses (a decorrelation term of 0, a sub-block of the wrong size, a DSD high block that is too short) cannot be decoded: its decoding is `NotPossible`.
+- A set of blocks is decoded into planes for all its channels; a set over 2^24 samples (all channels together) is decoded block by block with only the CRCs compared (`wavpack.md5-group-too-large`).
+- A muted block (a stream that ends inside a block) follows libwavpack: the samples after the data are zeros, and the block fails its CRC.
+- A block whose CRC fails is not zeroed; the samples are kept as decoded.
+- Everything is bounded: the cancellation token is checked in the long loops, and work follows the bytes present and not the samples a header declares. The decoder holds one block's state and the sets' planes, nothing per block.
+
+## Matroska
+
+- The `wavpack` codec parser reads the packets of an `A_WAVPACK4` track: a packet is the sample count, and for each block its flags, CRC and size (the size is left out when the block holds the initial and the final flag), then the block's data without the 32-byte header (FFmpeg, `matroskadec.c`, `matroska_parse_wavpack`). It rebuilds the headers (the version from the two bytes of CodecPrivate, 0x410 if there are none; block index and total samples 0) and analyzes and decodes the blocks as a file's.
+- The packet nodes list the first 256 packets; later decode findings have no node of their own to point to.
+- Findings: `wavpack.matroska-packet-invalid`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed` (a container handed the whole payload). The Matroska route that calls the parser is not part of this step.
+
 ## Tags
 
 - APEv2 and ID3v1 tags after the last block are the host's, as are ID3v2 tags in front. An ID3v2.4 SEEK frame that points between blocks ends the stream there, whether or not the data starts with a block, and the bytes after the tag are reported as data (`wavpack.data-after-tag` where the stream declares no end).
@@ -74,10 +103,12 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - Blocks: `wavpack.version-unsupported`, `wavpack.flags-invalid` (the mono and false stereo flags both set, a left shift not less than the sample size), `wavpack.reserved-flag`, `wavpack.block-size-mismatch`, `wavpack.block-truncated`, `wavpack.block-trailing-byte`, `wavpack.block-checksum-mismatch`, `wavpack.block-checksum-missing`, `wavpack.data-skipped`.
 - Sub-blocks: `wavpack.subblock-overrun`, `wavpack.subblock-size` (including decorrelation weights or samples before any decorrelation terms, and a new config block that reorders more channels than its layout has), `wavpack.subblock-unknown`, `wavpack.optional-subblock-unknown`, `wavpack.decorr-terms-invalid`, `wavpack.channel-info-invalid`, `wavpack.channel-info-ignored`, `wavpack.dsd-invalid` (including a stored mode whose audio is not exactly the bytes the block counts, a fast mode that ends right after the history bits, and a high mode with fewer than 13 (mono) or 20 (stereo) bytes after the mode or a rate step other than 20), `wavpack.dsd-flag-mismatch`, `wavpack.sample-rate-missing`, `wavpack.sample-rate-zero`, `wavpack.sample-rate-implausible` (a DSD bit rate over 2,147,483,647 Hz), `wavpack.audio-without-bitstream`.
 - Stream: `wavpack.no-blocks`, `wavpack.no-audio`, `wavpack.first-block-index`, `wavpack.block-index-gap`, `wavpack.block-index-overlap`, `wavpack.block-set-broken`, `wavpack.total-samples-mismatch`, `wavpack.total-samples-unknown`, `wavpack.format-changes`, `wavpack.mixed-streams`, `wavpack.channel-count-mismatch`, `wavpack.correction-file`, `wavpack.encoder-claim-differs`, `wavpack.writer-claim-differs`, `wavpack.writer-other-format`.
+- Decoding: `wavpack.audio-crc-mismatch`, `wavpack.md5-mismatch`, `wavpack.md5-needs-correction-file`, `wavpack.md5-group-too-large`.
+- Matroska: `wavpack.matroska-packet-invalid`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed`.
 
 ## Not covered
 
-- The coded samples (planned: entropy pass, and phase 3's checksum-verifying decoders): no entropy decoding, no decorrelation, no DSD decoding. A file whose bitstream is damaged but whose blocks are intact shows no finding unless the checksums or the MD5 are checked by a decoder.
-- The MD5 checksum is shown, not verified, since that needs the decoded samples (planned in phase 3).
+- Playback and any output other than the checksum comparison (the PCM sink is for tests and a later export). DSD is decoded to its 1-bit samples for the CRC and the MD5, not to PCM.
+- Zeroing or concealing a block that fails its CRC.
 - The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned: later, a separate item).
 - Finding the `.wvc` that belongs to a `.wv` (planned: later, needs host access to a companion file).

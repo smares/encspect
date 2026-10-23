@@ -1,6 +1,6 @@
 # Decoders: the contract for phase 3
 
-Status: approved by the project lead on 2026-10-22, after two independent reviews, with decoders inside their format projects (decision 1). Step 1 of the [rollout](#rollout), the contract, is implemented (see [As built in step 1](#as-built-in-step-1)); no decoder is yet. The decisions are collected under [Decisions](#decisions), and the few claims that no source read for this design confirms are marked **unverified**.
+Status: approved by the project lead on 2026-10-22, after two independent reviews, with decoders inside their format projects (decision 1). Step 1 of the [rollout](#rollout), the contract, is implemented (see [As built in step 1](#as-built-in-step-1)); the FLAC decoder (step 2) and the WavPack decoder (step 3) are built (see [step 2](#as-built-in-step-2) and [step 3](#as-built-in-step-3-wavpack)). The decisions are collected under [Decisions](#decisions), and the few claims that no source read for this design confirms are marked **unverified**.
 
 ## Scope
 
@@ -1114,6 +1114,22 @@ The step 1 prototype used FFmpeg's encoder on synthetic signals. This run uses t
 - **End to end:** lending saves (C - B) / C of the time of an analysis with decoding, 13.5 % to 19.6 % (median 16 %), in line with the 19 % to 34 % that step 1's differential form gave for S / (walk + decoder).
 - **Speed:** the decoding added to the analysis (B - A: prediction, reconstruction, undoing the channel assignment and the MD5, with the walk's stores) runs at 650 to 1,270 times real time, which is faster than step 1's decoder alone (340 to 610 times) since the read is no longer part of it. The analysis without decoding (A) runs at 480 to 740 times real time for the files at levels 5 and 8.
 - **Not measured:** 24-bit and multichannel files, the hour-long files of step 1, and level 0 on music.
+
+## As built in step 3: WavPack
+
+What the WavPack pull request implements: the decoder (`Encspect.Formats.WavPack.Decoding`, ID `wavpack`, registered in `DefaultParsers.Decoders`), the `wavpack` codec parser for Matroska's reduced-header blocks (the Matroska route itself is step 4), and the `wavpack-crosscheck` job's decoded-audio checks. [wavpack.md](../formats/wavpack.md) describes it from the user's side.
+
+- **Lending:** the parser lends nothing; the decoder reads each block's sub-blocks with the parser's `BlockContents` and decodes the bitstream itself, which the format needs since a block's entropy and decorrelation state is the block's own. `DecodingBoundaryTests` stay green.
+- **Configuration:** `DecodeSetup.Configuration` is a copy of the first block that libwavpack opens a file with (the first audio block that verifies), and `Open` refuses what libwavpack refuses there (`NotPossible`). Up to 16 leading blocks without audio (at most 64 KiB) are held and handed first.
+- **Unreadable blocks:** `BlockStatus.Refused` marks a block libwavpack's decoder refuses (a decorrelation term of 0, a sub-block of the wrong size, a DSD block too short); with truncated and malformed blocks it becomes `CodedFrame.IsUnreadable`. `FollowsGap` comes from the block indexes.
+- **Checksums:** four tallies, declared by the parser: "block checksum" (coded data), "block header CRC", "extended CRC" and "MD5" (decoded audio, `CoversAllAudio` true). A block that says it has a checksum and has none counts as failed in the first.
+- **Groups:** a block group is decoded into planes for all its channels; over 2^24 samples (all channels) the blocks are decoded one at a time and the MD5 is not compared (`wavpack.md5-group-too-large`).
+- **PCM format:** the bits per sample of the PCM format and of `Setup.BitsPerSample` are the container's width (`bytes * 8`, 32 for floats), 8 for DSD, whose unit of `DecodeSetup.Samples` is the bytes the decoder returns.
+- **Deviations from this document:**
+  - A muted block (the data ends before the samples do) follows libwavpack: the samples after it are zeros and the block fails its CRC. A block that fails its CRC is not zeroed.
+  - The nodes of a block with no audio are listed beyond the 4,096-block cap (at most 64 more) so that the MD5 sub-block, which comes last, has a node for its findings.
+  - The codec parser lists only the first 256 packets, so a decode finding for a later one has no node to point to.
+- **Not verified:** the MediaInfo checks of the new fixtures (the local MediaInfo is 24.01, the cross-check asserts 26.01).
 
 ## After the milestone review
 
