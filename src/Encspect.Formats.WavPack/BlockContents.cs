@@ -603,7 +603,8 @@ internal sealed class BlockContents
         }
     }
 
-    // dsd: init_dsd_block of unpack_dsd.c checks the block's size and mode; the modes' own tables are read by the DSD decoder.
+    // dsd: init_dsd_block of unpack_dsd.c checks the block's size and mode and the lengths the fast and high modes need; the values
+    // of the fast mode's probability tables are checked as the DSD decoder reads them (a table that is not valid is a block it refuses).
     private void ReadDsd(in BlockHeader header, in SubBlockSpan sub, ReadOnlySpan<byte> data, bool isMono)
     {
         if (data.Length < 2 || data[0] > 31)
@@ -622,6 +623,14 @@ internal sealed class BlockContents
         else if (!Decode.IsDsdModeValid(mode))
         {
             throw new InvalidDataException($"The DSD block has the mode {mode}, which is not 0, 1 or 3");
+        }
+        else if (mode == 1 && (data.Length < 3 || data[2] > 5 || data.Length == 3))
+        {
+            throw new InvalidDataException("The DSD block in the fast mode has no history bits, more than 5 of them, or no probabilities");
+        }
+        else if (mode == 3 && (data.Length - 2 < (isMono ? 13 : 20) || data[3] != 20))
+        {
+            throw new InvalidDataException("The DSD block in the high mode is shorter than its tables or has a rate step other than 20");
         }
 
         Dsd = (sub.DataStart, data.Length);

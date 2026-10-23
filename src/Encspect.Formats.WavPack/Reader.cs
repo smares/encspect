@@ -141,11 +141,6 @@ internal static class Reader
 
         Declare(s, entry, header);
         HeaderChecks(s, entry, offset, header, status, block.Length);
-        if (header.Version is < BlockHeader.MinVersion or > BlockHeader.MaxVersion || (header.IsMono && header.IsFalseStereo))
-        {
-            status |= BlockStatus.Refused;
-        }
-
         BlockStatus found = Walk(s, entry, offset, header, block, detail, status, out int count, out int wrapper);
         status |= found;
         if (header.HasAudio)
@@ -445,13 +440,8 @@ internal static class Reader
         long at = offset + position;
         bool isMono = header.IsMonoData;
         int dataLength = data.Length;
-        void Size(string what, string expected, bool refuses = true)
+        void Size(string what, string expected)
         {
-            if (refuses)
-            {
-                found.Status |= BlockStatus.Refused;
-            }
-
             int length = dataLength;
             s.Findings.Add(Severity.Warning, "wavpack.subblock-size", () => Nodes.SubBlock(s.Records, entry, index), count =>
                 $"The {what} sub-block at 0x{at:X} holds {Bytes(length)}, but libwavpack takes {expected}{(count > 1 ? $" ({count} sub-blocks)" : string.Empty)}.", what);
@@ -466,7 +456,6 @@ internal static class Reader
                 found.Terms = Decode.Terms(data, isMono);
                 if (found.Terms is null)
                 {
-                    found.Status |= BlockStatus.Refused;
                     int length = data.Length;
                     s.Findings.Add(Severity.Warning, "wavpack.decorr-terms-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
                         $"The decorrelation terms at 0x{at:X} are {(length > Decode.MaxTerms ? $"{length} passes, more than the {Decode.MaxTerms} libwavpack takes" : "not all valid (1 to 8, 17, 18 and, for stereo, -1 to -3)")}{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}; libwavpack refuses the block.");
@@ -571,7 +560,6 @@ internal static class Reader
             case SubBlockIds.ChannelIdentities:
                 if (data.Length == 0 || data.Contains((byte)0))
                 {
-                    found.Status |= BlockStatus.Refused;
                     s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
                         $"The channel identities at 0x{at:X} are empty or hold a 0, which libwavpack refuses{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "identities");
                 }
@@ -585,15 +573,13 @@ internal static class Reader
             case SubBlockIds.Md5Checksum or SubBlockIds.AltMd5Checksum:
                 if (data.Length != 16)
                 {
-                    Size("MD5", "16 bytes", refuses: false);
+                    Size("MD5", "16 bytes");
                 }
                 else
                 {
                     s.Md5Count++;
-                    if (s.Md5 is null)
-                    {
-                        s.Md5 = new Located<string>(Decode.Hex(data), entry, index);
-                    }
+                    // libwavpack keeps the last digest it reads (open_utils.c 785-793), as the decoder compares.
+                    s.Md5 = new Located<string>(Decode.Hex(data), entry, index);
                 }
 
                 break;
@@ -613,7 +599,7 @@ internal static class Reader
                 }
                 else
                 {
-                    Size("sample rate", "3 or 4 bytes", refuses: false);
+                    Size("sample rate", "3 or 4 bytes");
                 }
 
                 break;
@@ -659,7 +645,6 @@ internal static class Reader
                 }
                 else
                 {
-                    found.Status |= BlockStatus.Refused;
                     s.Findings.Add(Severity.Warning, "wavpack.subblock-unknown", () => Nodes.SubBlock(s.Records, entry, index), count =>
                         $"The sub-block with function 0x{number:X2} at 0x{at:X} is {(number == SubBlockIds.EncoderInfo ? "named in wavpack.h but never read" : "not one WavPack defines")}, and it is not optional, so libwavpack refuses the block{(count > 1 ? $" ({count} sub-blocks)" : string.Empty)}.");
                 }
@@ -689,9 +674,8 @@ internal static class Reader
             found.ChannelInfo = channelInfo is { Channels: > 0 } info ? new Located<ChannelInfoValue>(info, entry, index) : null;
             if (channelInfo is null)
             {
-                found.Status |= BlockStatus.Refused;
                 s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
-                    $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes, no more channels than twice the streams, no more speakers in the mask than channels and, in its long form, at least as many channels as streams{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "info");
+                $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes, no more channels than twice the streams, no more speakers in the mask than channels and, in its long form, at least as many channels as streams{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "info");
             }
 
             return;
@@ -702,7 +686,6 @@ internal static class Reader
         string source = first is null ? "the flags of the first audio block that verifies gave" : "an earlier one gave";
         if (Decode.ChannelInfoFields(data) is not { } later)
         {
-            found.Status |= BlockStatus.Refused;
             s.Findings.Add(Severity.Warning, "wavpack.channel-info-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
                 $"The channel info at 0x{at:X} ({Bytes(length)}) is one libwavpack refuses: it needs 1 to 7 bytes{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "length");
         }
@@ -760,7 +743,6 @@ internal static class Reader
 
         if (problem is not null)
         {
-            found.Status |= BlockStatus.Refused;
             s.Findings.Add(Severity.Warning, "wavpack.dsd-invalid", () => Nodes.SubBlock(s.Records, entry, index), count =>
                 $"The DSD block at 0x{at:X} is one libwavpack refuses: {problem}{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", kind);
         }
@@ -845,11 +827,6 @@ internal static class Reader
                 s.Findings.Add(Severity.Warning, "wavpack.audio-without-bitstream", () => Nodes.Block(s.Records, entry), count =>
                     $"The block at 0x{offset:X} counts {Counts.Of(blockSamples, "sample", "samples")}, but holds no bitstream; it cannot be decoded{(count > 1 ? $" ({Counts.Of(count, "block", "blocks")})" : string.Empty)}.", "none");
             }
-        }
-
-        if (header.HasAudio && (header.IsDsd ? (found.Status & BlockStatus.HasDsd) == 0 : (found.Status & BlockStatus.HasWv) == 0))
-        {
-            result |= BlockStatus.Refused;
         }
 
         if (header.IsDsd && header.HasAudio && (found.Status & BlockStatus.HasDsd) == 0 || !header.IsDsd && (found.Status & BlockStatus.HasDsd) != 0)

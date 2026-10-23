@@ -29,7 +29,7 @@ public static class VerificationText
             else if (tally.NotChecked > 0)
             {
                 anyProblem = true;
-                string reason = tally.Covers == ChecksumCoverage.DecodedAudio ? $": {Reason(verification.Decoding)}" : string.Empty;
+                string reason = tally.Covers == ChecksumCoverage.DecodedAudio ? $": {Reason(verification, tally)}" : string.Empty;
                 parts.Add(tally.Checked == 0 ? $"{tally.Name} not compared{reason}" : $"{tally.Name} {tally.Checked} of {tally.Stored} compared{reason}");
             }
             else
@@ -52,6 +52,11 @@ public static class VerificationText
         string verdict = verification.IsVerified switch { true => "yes", false => "no", null => "unknown" };
         return details.Length == 0 ? verdict : $"{verdict} ({details})";
     }
+
+    private static string Reason(StreamVerification verification, ChecksumTally tally) =>
+        verification is { Decoding: DecodeStatus.Decoded, IsLossy: true } && tally.Checked == 0
+            ? "the stream decodes to lossy audio, and the checksum is of the lossless audio"
+            : Reason(verification.Decoding);
 
     private static string Reason(DecodeStatus status) => status switch
     {

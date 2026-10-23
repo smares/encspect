@@ -44,7 +44,7 @@ internal sealed class AudioDigest
         }
     }
 
-    // The channels of a group, planar with a stride of samples; channel c of the output is plane Source(c).
+    // The channels of a set, planar with a stride of samples; channel c of the output is plane Source(c).
     public void Append(ReadOnlySpan<int> planes, int samples)
     {
         if (_isDsd)

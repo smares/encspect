@@ -88,6 +88,7 @@ public sealed class WavPackCodecParser : ICodecParser
             if (data.Length < 12)
             {
                 Invalid(packet, node, $"is {Counts.Of(data.Length, "byte", "bytes")} long, too short for the samples and one block's flags and CRC");
+                HandUnreadable(packet);
                 return;
             }
 
@@ -137,6 +138,7 @@ public sealed class WavPackCodecParser : ICodecParser
             if (blocks.Count == 0)
             {
                 Invalid(packet, node, fault ?? "holds no block");
+                HandUnreadable(packet);
                 return;
             }
 
@@ -162,6 +164,19 @@ public sealed class WavPackCodecParser : ICodecParser
             var node = new Node("Packet", packet.FileStart, packet.FileEnd - packet.FileStart, NodeValue.Integer(index + 1)) { Description = Explain.MatroskaPacket, Topic = Topics.Matroska };
             context.Parent.Add(node);
             return node;
+        }
+
+        // A packet that holds no block: a unit the decoder cannot get anything from.
+        private void HandUnreadable(MappedBytes packet)
+        {
+            if (_session is { IsDecoding: true } session)
+            {
+                session.Decode(new CodedFrame(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, packet.FileStart, packet.FileEnd), "Packet", _samples, 0)
+                {
+                    FollowsGap = packet.FollowsGap,
+                    IsUnreadable = true,
+                });
+            }
         }
 
         private void Invalid(MappedBytes packet, Node? node, string reason)
@@ -227,6 +242,16 @@ public sealed class WavPackCodecParser : ICodecParser
 
             if (!isPlausible)
             {
+                // A block the session cannot read is handed on as unreadable, so the host counts it as not decoded and the unit after it follows a gap.
+                if (_session is { IsDecoding: true } unreadable)
+                {
+                    unreadable.Decode(new CodedFrame(MappedBytes.Opaque(_rebuilt.AsMemory(0, total), fileStart, fileEnd), "Block", _samples, (int)Math.Min(samples, int.MaxValue))
+                    {
+                        FollowsGap = packet.FollowsGap && blockStart == 4,
+                        IsUnreadable = true,
+                    });
+                }
+
                 return;
             }
 

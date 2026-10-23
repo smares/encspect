@@ -5,15 +5,21 @@ namespace Encspect.Formats.WavPack.Decoding;
 
 // The decoding of one WavPack stream: the blocks the parser hands over, one by one in file order. The blocks from one with
 // the initial flag to one with the final flag carry the channels of the same samples, so a block is decoded where it comes,
-// its samples are kept in planes until the group's final block, and that block gives the group's samples to the sink and the
-// MD5. The group is the unit the contract counts: Decode returns 0 for the blocks before the final one and the group's
+// its samples are kept in planes until the set's final block, and that block gives the set's samples to the sink and the
+// MD5. The set is the unit the contract counts: Decode returns 0 for the blocks before the final one and the set's
 // samples on it. libwavpack 5.6.0 (unpack_utils.c WavpackUnpackSamples, unpack.c, open_utils.c) is the reference; where it
 // mutes a block and goes on, this decoder also does, and where it would read a stream it cannot make sense of it refuses the block.
 internal sealed class StreamDecoder : IFrameDecoder
 {
-    // The samples of all the channels of one group a decoder holds: 2^24, 64 MiB of 32-bit values. A group past it is
+    // The samples of all the channels of one set a decoder holds: 2^24, 64 MiB of 32-bit values. A set past it is
     // decoded block by block, its CRCs compared, and its audio neither output nor hashed.
-    internal const long MaxGroupSamples = 1 << 24;
+    internal const long MaxSetSamples = 1 << 24;
+
+    // The samples, over all channels, the decoder spends on blocks of sets that never complete (no final block, a channel count that does
+    // not add up, a block it refused) before it refuses further blocks. Such work reaches neither the sink nor the host's PCM budget, so
+    // this bounds it: a crafted file of small blocks that each state 196,607 samples would otherwise cost time by the samples it states and
+    // not by its bytes. A file whose sets all complete never reaches it.
+    internal const long MaxWastedSamples = 1L << 32;
 
     private const int DefaultMaxStreams = Syntax.OldMaxStreams;
 
@@ -43,15 +49,15 @@ internal sealed class StreamDecoder : IFrameDecoder
     private AudioDigest? _digest;
     private IPcmSink? _sink;
 
-    // The group being gathered.
-    private bool _inGroup;
-    private long _groupPosition;
-    private long _groupBlockIndex;
-    private int _groupSamples;
-    private int _groupChannels;
-    private int _groupBlocks;
-    private bool _isGroupOversized;
-    private bool _isGroupFailed;
+    // The set being gathered.
+    private bool _inSet;
+    private long _setPosition;
+    private long _setBlockIndex;
+    private int _setSamples;
+    private int _setChannels;
+    private int _setBlocks;
+    private bool _isSetOversized;
+    private bool _isSetFailed;
     private int[] _planes = [];
 
     private long _crcChecked;
@@ -59,7 +65,10 @@ internal sealed class StreamDecoder : IFrameDecoder
     private long _extraChecked;
     private long _extraFailed;
     private bool _isDigestIncomplete;
-    private bool _wasOversizeReported;
+    private bool _isOversizeSeen;
+    private long _oversizeIndex;
+    private long _wastedSamples;
+    private long _setWork;
 
     public StreamDecoder(DecodeContext context)
     {
@@ -155,42 +164,53 @@ internal sealed class StreamDecoder : IFrameDecoder
         if (header.IsInitial)
         {
             Abandon();
-            _inGroup = true;
-            _groupPosition = Math.Max(0, frame.FirstSample);
-            _groupBlockIndex = header.BlockIndex;
-            _groupSamples = (int)header.Samples;
-            _groupChannels = 0;
-            _groupBlocks = 0;
-            _isGroupOversized = false;
-            _isGroupFailed = false;
+            _inSet = true;
+            _setPosition = Math.Max(0, frame.FirstSample);
+            _setBlockIndex = header.BlockIndex;
+            _setSamples = (int)header.Samples;
+            _setChannels = 0;
+            _setBlocks = 0;
+            _isSetOversized = false;
+            _isSetFailed = false;
+            _setWork = 0;
         }
-        else if (!_inGroup)
+        else if (!_inSet)
         {
-            // libwavpack reads on to the next block that starts a group.
+            // libwavpack reads on to the next block that starts a set.
             return 0;
         }
 
-        _groupBlocks++;
+        _setBlocks++;
         bool isMono = (header.Flags & BlockHeader.MonoFlag) != 0;
         int blockChannels = isMono ? 1 : 2;
         if (header.IsDsd != _isDsd)
         {
-            _isGroupFailed = true;
+            _isSetFailed = true;
             throw new InvalidDataException("The block is DSD where the first block of the stream is not, or is not where it is");
         }
 
-        if (_groupChannels + blockChannels > _channels)
+        if (_setChannels + blockChannels > _channels)
         {
-            _isGroupFailed = true;
-            throw new InvalidDataException($"The blocks of the group hold more than the {Counts.Of(_channels, "channel", "channels")} of the stream");
+            _isSetFailed = true;
+            throw new InvalidDataException($"The blocks of the set hold more than the {Counts.Of(_channels, "channel", "channels")} of the stream");
         }
 
-        int samples = _groupSamples;
-        bool isMuted = header.BlockIndex > _groupBlockIndex || header.Samples < samples;
-        long needed = (long)(_groupChannels + blockChannels) * samples;
-        if (needed > MaxGroupSamples)
+        int samples = _setSamples;
+
+        // unpack_samples (unpack.c 89, unpack_dsd.c 74) also tests the block's index against the sample index, but unpack_init
+        // (open_utils.c 357) sets that index from every block's own header, so only the sample count mutes a block.
+        bool isMuted = header.Samples < samples;
+        long needed = (long)(_setChannels + blockChannels) * samples;
+        if (_wastedSamples + _setWork + (long)blockChannels * samples > MaxWastedSamples)
         {
-            _isGroupOversized = true;
+            _isSetFailed = true;
+            throw new InvalidDataException("The decoder has spent more work on blocks of sets that never complete than it allows");
+        }
+
+        _setWork += (long)blockChannels * samples;
+        if (needed > MaxSetSamples)
+        {
+            _isSetOversized = true;
         }
 
         uint blockCrc = header.Crc;
@@ -225,7 +245,7 @@ internal sealed class StreamDecoder : IFrameDecoder
         }
         catch (InvalidDataException)
         {
-            _isGroupFailed = true;
+            _isSetFailed = true;
             throw;
         }
 
@@ -250,14 +270,14 @@ internal sealed class StreamDecoder : IFrameDecoder
             }
         }
 
-        if (!_isGroupOversized)
+        if (!_isSetOversized)
         {
             Keep(decoded, width, blockChannels, samples, header);
         }
 
-        _groupChannels += blockChannels;
+        _setChannels += blockChannels;
         int maxStreams = _channelInfo?.Streams ?? DefaultMaxStreams;
-        if (!header.IsFinal && _groupBlocks < maxStreams && _groupChannels < _channels)
+        if (!header.IsFinal && _setBlocks < maxStreams && _setChannels < _channels)
         {
             return 0;
         }
@@ -278,30 +298,30 @@ internal sealed class StreamDecoder : IFrameDecoder
         return _muted.AsSpan(0, count);
     }
 
-    // Puts the block's channels into the group's planes.
+    // Puts the block's channels into the set's planes.
     private void Keep(ReadOnlySpan<int> decoded, int width, int blockChannels, int samples, in BlockHeader header)
     {
-        int needed = (_groupChannels + blockChannels) * samples;
+        int needed = (_setChannels + blockChannels) * samples;
         if (_planes.Length < needed)
         {
             int[] grown = new int[needed];
-            _planes.AsSpan(0, _groupChannels * samples).CopyTo(grown);
+            _planes.AsSpan(0, _setChannels * samples).CopyTo(grown);
             _planes = grown;
         }
 
-        Span<int> first = _planes.AsSpan(_groupChannels * samples, samples);
+        Span<int> first = _planes.AsSpan(_setChannels * samples, samples);
         if (width == 1)
         {
             decoded[..samples].CopyTo(first);
             if (blockChannels == 2)
             {
-                decoded[..samples].CopyTo(_planes.AsSpan((_groupChannels + 1) * samples, samples));
+                decoded[..samples].CopyTo(_planes.AsSpan((_setChannels + 1) * samples, samples));
             }
 
             return;
         }
 
-        Span<int> second = _planes.AsSpan((_groupChannels + 1) * samples, samples);
+        Span<int> second = _planes.AsSpan((_setChannels + 1) * samples, samples);
         for (int i = 0; i < samples; i++)
         {
             first[i] = decoded[2 * i];
@@ -309,32 +329,32 @@ internal sealed class StreamDecoder : IFrameDecoder
         }
     }
 
-    // The group's final block: the samples go to the sink and the MD5.
+    // The set's final block: the samples go to the sink and the MD5.
     private int Complete(in CodedFrame frame)
     {
-        _inGroup = false;
-        int samples = _groupSamples;
-        if (_isGroupFailed)
+        _inSet = false;
+        int samples = _setSamples;
+        if (_isSetFailed)
         {
             _isDigestIncomplete = true;
+            _wastedSamples += _setWork;
             return 0;
         }
 
-        if (_groupChannels != _channels)
+        if (_setChannels != _channels)
         {
             _isDigestIncomplete = true;
-            throw new InvalidDataException($"The blocks of the group hold {Counts.Of(_groupChannels, "channel", "channels")}, but the stream has {_channels}");
+            _wastedSamples += _setWork;
+            throw new InvalidDataException($"The blocks of the set hold {Counts.Of(_setChannels, "channel", "channels")}, but the stream has {_channels}");
         }
 
-        if (_isGroupOversized)
+        if (_isSetOversized)
         {
             _isDigestIncomplete = true;
-            if (!_wasOversizeReported)
+            if (!_isOversizeSeen)
             {
-                _wasOversizeReported = true;
-                _context.AddFinding(Severity.Info, "wavpack.md5-group-too-large",
-                    $"The group of blocks at sample {_groupBlockIndex} holds more samples over all its channels than the {MaxGroupSamples} the decoder keeps at once, so its blocks were decoded one at a time and their CRCs compared, and the MD5 of the audio is not compared.",
-                    _md5Node);
+                _isOversizeSeen = true;
+                _oversizeIndex = _setBlockIndex;
             }
 
             return samples;
@@ -352,11 +372,11 @@ internal sealed class StreamDecoder : IFrameDecoder
             }
 
             _sink.Write(_isFloat
-                ? new PcmBlock(_groupPosition, samples, _channels, samples, System.Runtime.InteropServices.MemoryMarshal.Cast<int, float>(planes))
-                : new PcmBlock(_groupPosition, samples, _channels, samples, planes));
+                ? new PcmBlock(_setPosition, samples, _channels, samples, System.Runtime.InteropServices.MemoryMarshal.Cast<int, float>(planes))
+                : new PcmBlock(_setPosition, samples, _channels, samples, planes));
         }
 
-        // The MD5 sits in the last block, so every group is hashed as it comes; a lossy stream has no MD5 to compare.
+        // The MD5 sits in the last block, so every set is hashed as it comes; a lossy stream has no MD5 to compare.
         if (!_context.Setup.IsLossy && !_sawHybrid)
         {
             _digest ??= new AudioDigest(_channels, _bytesPerSample, _qmode, _isDsd, UsesReordering() ? _reordering : null);
@@ -368,13 +388,14 @@ internal sealed class StreamDecoder : IFrameDecoder
 
     private bool UsesReordering() => (_qmode & AudioDigest.QmodeReorderedChannels) != 0 && _reordering is not null && _layoutChannels <= _channels;
 
-    // A group that does not end: its samples are missing from the stream.
+    // A set that does not end: its samples are missing from the stream.
     private void Abandon()
     {
-        if (_inGroup)
+        if (_inSet)
         {
-            _inGroup = false;
+            _inSet = false;
             _isDigestIncomplete = true;
+            _wastedSamples += _setWork;
         }
     }
 
@@ -392,12 +413,19 @@ internal sealed class StreamDecoder : IFrameDecoder
             return results;
         }
 
+        if (_isOversizeSeen)
+        {
+            _context.AddFinding(Severity.Info, "wavpack.md5-set-too-large",
+                $"The set of blocks at sample {_oversizeIndex} holds more samples over all its channels than the {MaxSetSamples} the decoder keeps at once, so its blocks were decoded one at a time and their CRCs compared, and the MD5 of the audio is not compared.",
+                _md5Node);
+        }
+
         if (_context.Setup.IsLossy || _sawHybrid)
         {
             if (end.IsComplete)
             {
                 _context.AddFinding(Severity.Info, "wavpack.md5-needs-correction-file",
-                    "The file stores the MD5 of the lossless audio, which a hybrid file without its correction file (.wvc) does not decode to, so it is not compared.", _md5Node);
+                    "The file stores the MD5 of the lossless audio, which this stream does not decode to (a hybrid file without its correction file (.wvc), or blocks that drop bits), so it is not compared.", _md5Node);
             }
 
             return results;

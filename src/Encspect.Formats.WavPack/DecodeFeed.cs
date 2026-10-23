@@ -12,7 +12,9 @@ internal sealed class DecodeFeed
     private const int MaxHeld = 16;
     private const int MaxHeldBytes = 1 << 16;
 
-    private readonly List<(long Offset, byte[] Bytes, BlockHeader Header)> _held = [];
+    private readonly List<(long Offset, byte[] Bytes, BlockHeader Header, bool IsRefused)> _held = [];
+    private readonly BlockContents _probe = new();
+    private bool _channelsAreKnown;
     private int _heldBytes;
     private long _firstPosition = -1;
 
@@ -20,6 +22,13 @@ internal sealed class DecodeFeed
 
     public void Offer(State s, long offset, in BlockHeader header, ReadOnlyMemory<byte> bytes, BlockStatus status)
     {
+        // The decoder's own reading of the block says whether libwavpack refuses it, so the parser and the decoder cannot differ.
+        bool isRefused = (status & (BlockStatus.Truncated | BlockStatus.Malformed)) == 0 && Refuses(header, bytes.Span, Session is not null || !header.HasAudio || s.IsConfigured);
+        if (isRefused)
+        {
+            status |= BlockStatus.Refused;
+        }
+
         bool isUnreadable = (status & (BlockStatus.Truncated | BlockStatus.Malformed | BlockStatus.Refused)) != 0;
         if (header.HasAudio && isUnreadable)
         {
@@ -36,7 +45,7 @@ internal sealed class DecodeFeed
         {
             if (!header.HasAudio)
             {
-                Hold(offset, bytes, header);
+                Hold(offset, bytes, header, isRefused);
                 return;
             }
 
@@ -48,9 +57,9 @@ internal sealed class DecodeFeed
             }
 
             Session = Start(s, header, offset, bytes);
-            foreach ((long heldOffset, byte[] heldBytes, BlockHeader heldHeader) in _held)
+            foreach ((long heldOffset, byte[] heldBytes, BlockHeader heldHeader, bool isHeldRefused) in _held)
             {
-                Hand(s, heldOffset, heldHeader, heldBytes, BlockStatus.None, false);
+                Hand(s, heldOffset, heldHeader, heldBytes, isHeldRefused ? BlockStatus.Refused : BlockStatus.None, false);
             }
 
             _held.Clear();
@@ -60,13 +69,35 @@ internal sealed class DecodeFeed
         Hand(s, offset, header, bytes, status, followsGap);
     }
 
-    private void Hold(long offset, ReadOnlyMemory<byte> bytes, in BlockHeader header)
+    private void Hold(long offset, ReadOnlyMemory<byte> bytes, in BlockHeader header, bool isRefused)
     {
         if (_held.Count < MaxHeld && _heldBytes + bytes.Length <= MaxHeldBytes)
         {
-            _held.Add((offset, bytes.ToArray(), header));
+            _held.Add((offset, bytes.ToArray(), header, isRefused));
             _heldBytes += bytes.Length;
         }
+    }
+
+    // Whether libwavpack refuses the block (its version, and the sub-blocks the decoder reads). A block the decoder gets settles the
+    // stream's channel info for the ones after it, as the decoder does, so the same blocks are read the same way.
+    private bool Refuses(in BlockHeader header, ReadOnlySpan<byte> bytes, bool reachesDecoder)
+    {
+        if (header.Version is < BlockHeader.MinVersion or > BlockHeader.MaxVersion)
+        {
+            return true;
+        }
+
+        try
+        {
+            _probe.Read(bytes, header, _channelsAreKnown);
+        }
+        catch (InvalidDataException)
+        {
+            return true;
+        }
+
+        _channelsAreKnown |= reachesDecoder && _probe.ChannelInfo is not null;
+        return false;
     }
 
     // The stream's figures as the first block that settles them gives them, and that block's bytes for the decoder to open with.
