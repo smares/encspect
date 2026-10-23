@@ -189,7 +189,7 @@
   <!-- The list of graphs: headings and entries are the app's one size, a heading set apart by weight and the secondary color. -->
   <Style Selector="TextBlock.heading">
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Margin" Value="8,8,0,1" />
+    <Setter Property="Margin" Value="8,6,0,1" />
   </Style>
   <!-- The first heading of the list sits at its top, without the space the others have above them. -->
   <Style Selector="ItemsControl#GraphChoices > ContentPresenter:nth-child(1) TextBlock.heading">
