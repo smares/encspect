@@ -411,8 +411,8 @@ public class MemoryTests(ITestOutputHelper output)
 
     // An AC-3 stream keeps a 16-byte record per frame (offset, store position, kept bits and CRC
     // verdicts), the fields its nodes are built from without the exponent groups and mantissas,
-    // and its per-frame series: the frames repeat a committed mono fixture of 384-byte frames at
-    // 96 kbps, 70 bytes kept per frame on linux-x64 and a peak of 64. The bounds leave room and
+    // and its per-frame series, with the coding series (14 bytes for a mono frame): the frames repeat a committed mono fixture of 384-byte frames at
+    // 96 kbps, 85 bytes kept per frame on linux-x64 and a peak of 89. The bounds leave room and
     // stay far below what keeping each frame's bytes would cost.
     [Fact]
     public void ManyAc3FramesStayCompact()

@@ -11,4 +11,4 @@ references: ATSC A/52:2018 Annex E 2.3.3.1 to 2.3.3.13, 3.3, 3.6
 
 **Its effect on the bit stream.** A channel in spectral extension ends its coefficients where the extension begins, so its exponents and mantissas stop there, and coupling, where also in use, ends there too. The number of rematrixing bands follows from it in 2/0.
 
-**What you see.** In each block that uses it, the channels in spectral extension, the copy start, begin and end codes, the band structure and each channel's coordinates; the statistics count the blocks with spectral extension.
+**What you see.** In each block that uses it, the channels in spectral extension, the copy start, begin and end codes, the band structure and each channel's coordinates; the statistics count the blocks with spectral extension, and the graph Blocks With Spectral Extension shows them under Coded Bandwidth, since the band above its begin frequency is rebuilt, not coded.

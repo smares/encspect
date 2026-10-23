@@ -45,7 +45,7 @@ internal sealed class CodingRecorder
     private const int BlocksPerFrame = 6;
 
     private readonly int _sampleRate;
-        private readonly bool _isFixed;
+    private readonly bool _isFixed;
     private readonly CategorySeriesBuilder _switching;
     private readonly CategorySeriesBuilder? _coupling;
     private readonly CategorySeriesBuilder? _rematrixing;
