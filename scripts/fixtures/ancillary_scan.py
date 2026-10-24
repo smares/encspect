@@ -1,5 +1,6 @@
-"""What the analyzer finds in the ancillary data of a Layer III region: mp3PRO, MP3 Surround and an
-Original File Length (OFL) block, computed from the region's ancillary segments.
+"""What the analyzer finds in the ancillary data of a Layer III stream: mp3PRO, MP3 Surround and an
+Original File Length (OFL) block, computed from the stream's ancillary segments (scan is called once per
+stream).
 
 This is the second implementation the analyzer is checked against; mp3guessenc 0.27.6, whose rules
 it follows, confirms both (crosscheck_mpeg_fixtures.py). The definitions:

@@ -254,6 +254,7 @@ public sealed partial class MpegAudioParser
             }
             else if (header.Layer != 3 && audioEnd <= length * 8)
             {
+                // The padding slot is left out by convention (L1); ISO/IEC 11172-3 counts it as ancillary data.
                 int bytes = (length * 8 - audioEnd) / 8 - (header.Padding == 1 ? (header.Layer == 1 ? 4 : 1) : 0);
                 if (bytes > 0)
                 {

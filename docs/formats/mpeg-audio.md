@@ -64,10 +64,12 @@ The rules by which the analyzer finds the ancillary data of each frame, counts i
 ### Terms
 
 - **Stream:** consecutive Layer III frames with the same MPEG version, sample rate and free-format state.
+  - Everything the rules keep (reservoir, first frame, signature, segment count, Original File Length block, audio frames and samples) belongs to one stream, and each stream starts afresh.
+  - A stream also ends where R1 closes the scan, and at an embedded tag: the statistics are per region, between tags, and sum the counts of the streams in it (R5); detection (R4) and the block (R3) are reported for each stream.
 - **Frame data:** in each frame, the bytes after the header, the CRC if present, and the side information.
 - **Reservoir:** the frame data of the stream's frames, joined in file order into one numbered byte sequence that starts at 0 for each stream.
   - A Xing, Info or VBRI header frame adds its frame data to the reservoir but has no main data of its own.
-  - A frame cut off by the end of the file adds whatever frame data it has.
+  - A truncated frame adds whatever frame data it has. A frame is truncated when it has fewer bytes than its header gives: the file, an embedded tag or the start of another stream ends it early, or a frame header of its own stream begins inside it.
 - **A frame's main data:**
   - It starts main_data_begin bytes before the position where that frame's own frame data begins.
   - Its length is the sum of part2_3_length over its granules and channels, in bits, rounded up to whole bytes.
@@ -82,6 +84,7 @@ The rules by which the analyzer finds the ancillary data of each frame, counts i
   - P has no segment if P's main data would start before position 0 or would end past the reservoir as it stands after P.
   - The segment between P and N is skipped if N's main data would start before position 0 or before P's main data ends.
 - **An empty segment** (start equal to end) is still a segment.
+- **Gaps:** junk between two frames of one stream does not close the scan. The reservoir continues across it without the junk's bytes, so a segment can join bytes from both sides of the gap.
 
 ### R2. Signature
 
@@ -89,7 +92,7 @@ The rules by which the analyzer finds the ancillary data of each frame, counts i
 - **An empty segment** sets both to 0x00.
 - **Any other segment** ANDs its byte 0 into signature byte 0 and, if it has at least two bytes, its byte 1 into signature byte 1. R3 gives the exceptions for the first frame's segment.
 
-### R3. Original File Length block, first frame's segment only
+### R3. Original File Length block, each stream's first frame's segment only
 
 - **mp3PRO** (MPEG-2 or 2.5): the segment is longer than 20 bytes and starts 0xE0 0xBA.
   - The delay is a big-endian 16-bit value at bytes 14-15; the original length is a big-endian 32-bit value at bytes 16-19, in samples.
@@ -102,26 +105,27 @@ The rules by which the analyzer finds the ancillary data of each frame, counts i
   - **Byte 1 is 0x04:** the segment changes the signature not at all.
 - **Report as:**
   - the block's file offset;
-  - the bytes it spans: 20 for mp3PRO and 7 for MPEG-1, mapped through the reservoir to file positions;
+  - the bytes it spans: 20 for mp3PRO and 7 for MPEG-1, mapped through the reservoir to file positions, as ranges where the bytes are not contiguous in the file (a block that continues into the next frame skips that frame's header and side information);
   - a warning where the delay plus the length exceed the stream's samples, counted at the block's rate.
 
 ### R4. Detection
 
-- **The test applies only when** the stream has at least 8 segments and their bytes total more than zero.
+- **The test applies to each stream, and only when** the stream has at least 8 segments and their bytes total more than zero.
 - **mp3PRO:** the stream is not MPEG-1, signature byte 0 has all of the bits 0xC0 set, and byte 1 has the bit 0x08 set.
 - **MP3 Surround:** the stream is MPEG-1 at 44100 or 48000 Hz, byte 0 has all of the bits 0xCF set, and byte 1 has all of the bits 0x30 set.
 - **Report:** the total segment bytes and their data rate over the stream's audio frames.
 
 ### R5. Layer III statistics
 
-- **Total:** the bytes of all segments, except the segment of a truncated last frame.
-- **Smallest and largest:** the smallest and largest of those segments that are not empty; 0 when there is none.
+- **Total:** the bytes of all segments of all streams of the region, except the segments of truncated frames. The statistics set the total against the bytes and the time of the complete audio frames, which leave a truncated frame out; counting its segment would let the share exceed 100 percent.
+- **Smallest and largest:** the smallest and largest of the segments counted in the total that are not empty; 0 when there is none.
 - **Kept separately:** the bytes of the last segment, for the BladeEnc trait.
 
 ### L1. Layers I and II
 
 - **Which frames count:** each complete audio frame whose audio data, meaning header, CRC, allocation, scfsi, scalefactors and samples as ISO/IEC 11172-3 defines them, fits within the frame.
 - **Ancillary bytes of a frame:** take the bits from the end of the audio data to the end of the frame, divided by 8 and rounded down. Then subtract the padding slot when the padding bit is set: 4 bytes in Layer I, 1 in Layer II.
+- **Padding is Encspect's convention:** ISO/IEC 11172-3 counts the padding slot inside ancillary_data(), so the per-frame "Ancillary Data" node includes it; leaving it out of these statistics matches the cross-check tool. A padded Layer II frame with 5 bytes after the samples shows 5 bytes in its node and counts 4.
 - **Count only results greater than zero.** These go into the same total, smallest and largest as R5.
 
 ## Channel layout
