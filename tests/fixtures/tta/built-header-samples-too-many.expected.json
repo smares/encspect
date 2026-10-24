@@ -1,0 +1,148 @@
+{
+ "length": 950,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 950
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 300000,
+  "crc": "02c8fbbe",
+  "crc_ok": true
+ },
+ "frame_length": 46080,
+ "table": {
+  "offset": 22,
+  "expected": 7,
+  "entries": [
+   204,
+   304,
+   404,
+   1042356211,
+   280368994,
+   1938254208,
+   3258897505
+  ],
+  "crc": "c3274b93",
+  "crc_ok": false
+ },
+ "frames": [
+  {
+   "offset": 54,
+   "size": 204,
+   "status": [
+    "crc"
+   ],
+   "crc": "cd4aee14"
+  },
+  {
+   "offset": 258,
+   "size": 304,
+   "status": [
+    "crc"
+   ],
+   "crc": "d66d9195"
+  },
+  {
+   "offset": 562,
+   "size": 404,
+   "status": [
+    "cut"
+   ]
+  },
+  {
+   "offset": 966,
+   "size": 1042356211,
+   "status": [
+    "missing"
+   ]
+  },
+  {
+   "offset": 1042357177,
+   "size": 280368994,
+   "status": [
+    "missing"
+   ]
+  },
+  {
+   "offset": 1322726171,
+   "size": 1938254208,
+   "status": [
+    "missing"
+   ]
+  },
+  {
+   "offset": 3260980379,
+   "size": 3258897505,
+   "status": [
+    "missing"
+   ]
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 92160,
+   "duration": 2.089795918367347,
+   "bits_per_sample": 16,
+   "average_bitrate": 1.9446875,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": false,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 1
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 3,
+     "checked": 2,
+     "failed": 2
+    }
+   ]
+  }
+ },
+ "findings": [
+  {
+   "code": "tta.seek-table-crc-mismatch"
+  },
+  {
+   "code": "tta.frame-crc-mismatch",
+   "count": 2
+  },
+  {
+   "code": "tta.frame-cut"
+  },
+  {
+   "code": "tta.frames-missing"
+  }
+ ],
+ "description": "The header counts 300,000 samples, with its CRC-32 right: the seek table is read as seven entries, which take bytes of the first frames, and the data ends before the frames they give."
+}

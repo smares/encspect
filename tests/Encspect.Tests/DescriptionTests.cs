@@ -32,7 +32,7 @@ public partial class DescriptionTests
 
     public static IEnumerable<string> FixtureNames()
     {
-        string[] extensions = [".mp1", ".mp2", ".mp3", ".m4a", ".mp4", ".mov", ".aac", ".ogg", ".spx", ".opus", ".mpc", ".ac3", ".eac3", ".wma", ".asf", ".wv", ".wvc", ".flac", ".dts", ".dtshd", ".mka", ".mkv", ".webm", ".bin"];
+        string[] extensions = [".mp1", ".mp2", ".mp3", ".m4a", ".mp4", ".mov", ".aac", ".ogg", ".spx", ".opus", ".mpc", ".ac3", ".eac3", ".wma", ".asf", ".wv", ".wvc", ".flac", ".tta", ".dts", ".dtshd", ".mka", ".mkv", ".webm", ".bin"];
         foreach (string path in Directory.EnumerateFiles(Fixtures.FixtureDirectory, "*", SearchOption.AllDirectories)
             .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
         {

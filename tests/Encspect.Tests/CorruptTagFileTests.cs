@@ -136,6 +136,26 @@ public class CorruptFlacFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
+// The TTA fixtures written by FFmpeg.
+public class CorruptTtaFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("tta/external-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The hand-built TTA fixtures.
+public class CorruptTtaBuiltFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("tta/built-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
 // The hand-built FLAC fixtures, each analyzed with and without decoding.
 public class CorruptFlacBuiltFileTests
 {

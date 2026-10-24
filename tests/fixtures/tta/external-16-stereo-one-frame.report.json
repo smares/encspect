@@ -1,0 +1,609 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-16-stereo-one-frame.tta",
+    "root": {
+      "name": "File",
+      "value": "TTA",
+      "offset": 0,
+      "length": 13204,
+      "children": [
+        {
+          "name": "TTA",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 13111,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 22,
+              "children": [
+                {
+                  "name": "Signature",
+                  "value": "TTA1",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "Audio Format",
+                  "value": 1,
+                  "offset": 4,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 6,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 8,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 10,
+                  "length": 4
+                },
+                {
+                  "name": "Samples",
+                  "value": 5000,
+                  "unit": "samples",
+                  "offset": 14,
+                  "length": 4
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 2030303958,
+                  "offset": 18,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 2030303958,
+                  "offset": 18,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 18,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Seek Table",
+              "value": 1,
+              "unit": "entries",
+              "offset": 22,
+              "length": 8,
+              "children": [
+                {
+                  "name": "Seek Points",
+                  "value": 1,
+                  "unit": "entries",
+                  "offset": 22,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Seek Point",
+                      "value": 13081,
+                      "unit": "bytes",
+                      "offset": 22,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 712547520,
+                  "offset": 26,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 712547520,
+                  "offset": 26,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 26,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Writer",
+              "value": "FFmpeg (Lavf60.16.100)",
+              "offset": 0,
+              "length": 13111,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Evidence",
+                  "value": "APE Encoder item at 0x3357 names \"Lavf60.16.100\"",
+                  "offset": 0,
+                  "length": 13111
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 13111,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 1,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Samples",
+                  "value": 5000,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.11337868480725624,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 46080,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Verified Frame Checksums",
+                  "value": 1,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 922.99536,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "unknown",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 13081,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 13081,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 922.99536,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 922.99536,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 13111
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 13111,
+                  "children": [
+                    {
+                      "name": "896 to 927 kbps",
+                      "value": "1 frame (100.0%)",
+                      "offset": 0,
+                      "length": 13111
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 5000,
+              "unit": "samples",
+              "offset": 30,
+              "length": 13081,
+              "children": [
+                {
+                  "name": "Frame Data",
+                  "value": 13077,
+                  "unit": "bytes",
+                  "offset": 30,
+                  "length": 13077
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 1968208931,
+                  "offset": 13107,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 1968208931,
+                  "offset": 13107,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 13107,
+                  "length": 4
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "APE",
+          "kind": "Tag",
+          "value": "2.0",
+          "offset": 13111,
+          "length": 93,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 13111,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 13111,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": 2000,
+                  "offset": 13119,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": 61,
+                  "offset": 13123,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": 1,
+                  "offset": 13127,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": 2684354560,
+                  "offset": 13131,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": true,
+                      "offset": 13131,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": true,
+                      "offset": 13131,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": true,
+                      "offset": 13131,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": false,
+                      "offset": 13131,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 13135,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Items",
+              "value": 1,
+              "unit": "items",
+              "offset": 13143,
+              "length": 29,
+              "children": [
+                {
+                  "name": "encoder",
+                  "value": "Lavf60.16.100",
+                  "offset": 13143,
+                  "length": 29,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 13,
+                      "offset": 13143,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 13147,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": false,
+                          "offset": 13147,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 13147,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "encoder",
+                      "offset": 13151,
+                      "length": 7
+                    },
+                    {
+                      "name": "Value",
+                      "value": "Lavf60.16.100",
+                      "offset": 13159,
+                      "length": 13
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 13172,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 13172,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": 2000,
+                  "offset": 13180,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": 61,
+                  "offset": 13184,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": 1,
+                  "offset": 13188,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": 2147483648,
+                  "offset": 13192,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": true,
+                      "offset": 13192,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": true,
+                      "offset": 13192,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": false,
+                      "offset": 13192,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": false,
+                      "offset": 13192,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 13196,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 13111,
+              "length": 93,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\"APETAGEX\" footer with version 2000 and a size that fits the file",
+                  "offset": 13172,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Header agrees with the footer",
+                  "offset": 13111,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "1 item ends exactly where the size says",
+                  "offset": 13143,
+                  "length": 29
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "TTA",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "bitsPerSample": 16,
+        "samples": 5000,
+        "duration": 0.11337868480725624,
+        "averageBitrate": 922.99536,
+        "isVbr": false,
+        "verification": {
+          "isVerified": true,
+          "decoding": "noDecoder",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "header CRC-32",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "seek table CRC-32",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "frame CRC-32",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            }
+          ]
+        },
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              30
+            ],
+            "values": [
+              922.99536
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              923
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": []
+  }
+]
