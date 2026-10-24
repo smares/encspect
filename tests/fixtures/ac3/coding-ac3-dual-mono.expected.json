@@ -1,0 +1,118 @@
+{
+ "description": "Two 1+1 frames with block switching in one or both channels of some blocks and different bandwidths.",
+ "length": 1536,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   768
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "1+1",
+   "channel_layout": [
+    "discrete",
+    "discrete"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_channels": 2,
+  "decode": true,
+  "liba52": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields; the coding fixtures' blocks would need nothing new from it."
+  }
+ },
+ "block_ends": {
+  "0": [
+   319,
+   334,
+   349,
+   364,
+   379,
+   394
+  ],
+  "768": [
+   333,
+   348,
+   363,
+   378,
+   393,
+   408
+  ]
+ },
+ "coding": [
+  [
+   {
+    "switching": [
+     false,
+     true,
+     true,
+     true,
+     false,
+     false
+    ],
+    "coupling": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "bandwidth": 18094
+   },
+   {
+    "switching": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "coupling": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "bandwidth": 20906
+   }
+  ]
+ ]
+}

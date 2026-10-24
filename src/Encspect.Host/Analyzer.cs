@@ -170,7 +170,7 @@ public sealed class Analyzer
     // exception from any parser becomes a parse.failed error (decode.failed, for a decoder). Only cancellation, running out of
     // memory and an exception from a front end's PCM sink or DecodeOptions.Output, which is rethrown once the format parser
     // has returned and leaves no report, escape. Throws ArgumentException (paramName "options") when options.ForcedFormat names
-    // no format or several, and ArgumentOutOfRangeException when options.Decoding.MaxPcmBytes is negative.
+    // no format or several, and ArgumentOutOfRangeException when options.Decoding.MaxWork is negative.
     public Report Analyze(string source, Stream stream, AnalysisOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -178,7 +178,7 @@ public sealed class Analyzer
         options ??= AnalysisOptions.Default;
         options.CancellationToken.ThrowIfCancellationRequested();
         IFormatParser? forced = options.ForcedFormat is { } wanted ? ForcedParser(wanted) : null;
-        ArgumentOutOfRangeException.ThrowIfNegative(options.Decoding?.MaxPcmBytes ?? 0, "options");
+        ArgumentOutOfRangeException.ThrowIfNegative(options.Decoding?.MaxWork ?? 0, "options");
 
         if (!stream.CanRead)
         {
@@ -193,6 +193,10 @@ public sealed class Analyzer
 
         var reader = new ByteReader(stream, options.CancellationToken);
         var root = new Node("File", 0, reader.Length) { Description = HostText.File };
+
+        // The decoding's token is linked to the analysis's and to the front end's stop: disposed with the analysis, also when
+        // Analyze throws, so that a caller's long-lived token keeps none of them registered.
+        using DecodeRun? decodeRun = options.Decoding is { } decoding ? new DecodeRun(decoding, reader.Length, options.CancellationToken) : null;
         Increasing? progress = options.BytesRead is { } report ? new Increasing(report) : null;
         var findings = new List<Finding>();
         var pending = new List<PendingFinding>();
@@ -240,7 +244,7 @@ public sealed class Analyzer
             ByteReader window = new ByteReader(stream, options.CancellationToken, progress).Slice(dataStart, formatEnd - dataStart);
             List<Node> inWindow = embedded.Where(c => c.Tag.Offset < formatEnd).Select(c => shown[c.Tag]).ToList();
             var sniff = new SniffContext(window, Path.GetExtension(source)) { FirstEmbeddedTag = inWindow.Count > 0 ? inWindow.Min(t => t.Offset) : null };
-            (streams, detection) = ParseData(sniff, root, inWindow, claims, findings, failures, forced, options.Decoding is { } decoding ? new DecodeRun(decoding, reader.Length) : null);
+            (streams, detection) = ParseData(sniff, root, inWindow, claims, findings, failures, forced, decodeRun);
             AddDataBetweenTags(root, embedded.Where(c => c.Tag.Offset >= formatEnd), dataEnd, findings);
         }
         else

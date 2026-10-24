@@ -23,6 +23,7 @@ WORDS = {
 }
 NFCHANS = [2, 1, 2, 3, 3, 4, 4, 5]
 DEFAULT_CPL_BANDS = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1]
+DEFAULT_SPX_BANDS = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
 
 
 def crc16(data):
@@ -170,7 +171,7 @@ def finish(bits, words, crc1, aux=None, tail=None):
 
 def ac3_frame(acmod=2, lfeon=0, fscod=0, frmsizecod=20, bsid=8, bsmod=0, dialnorm=27, cmixlev=0, surmixlev=0, dsurmod=0, compr=None, langcod=None,
               audprod=None, timecod1=None, timecod2=None, xbsi1=None, xbsi2=None, addbsi=None, rematstr0=1, chbwcod=0, origbs=1, copyright=0, dynrng=None,
-              ends=None):
+              ends=None, blksw=None, remat=None, cpl=None):
     b = Bits()
     b.put(SYNC, 16).put(0, 16).put(fscod, 2).put(frmsizecod, 6)
     b.put(bsid, 5).put(bsmod, 3).put(acmod, 3)
@@ -211,46 +212,109 @@ def ac3_frame(acmod=2, lfeon=0, fscod=0, frmsizecod=20, bsid=8, bsmod=0, dialnor
         for byte in addbsi:
             b.put(byte, 8)
     nf = NFCHANS[acmod]
-    end = (chbwcod + 12) * 3 + 37
+    bandwidth = [chbwcod] * nf if isinstance(chbwcod, int) else list(chbwcod)
+    state = None  # the coupling range (cplbegf, cplendf) in use, or None
+    bands = None  # the number of rematrixing bands the last flags were sent for
     for block in range(6):
-        b.put(0, nf).put(0, nf)
+        previous = state
+        for bit in (blksw[block] if blksw else (0,) * nf):
+            b.put(bit, 1)
+        b.put(0, nf)
         for _ in range(2 if acmod == 0 else 1):
             b.put(dynrng is not None and block == 0, 1)
             if dynrng is not None and block == 0:
                 b.put(dynrng, 8)
-        b.put(block == 0, 1)
-        if block == 0:
-            b.put(0, 1)
+        if cpl is None:
+            b.put(block == 0, 1)
+            if block == 0:
+                b.put(0, 1)
+        else:
+            spec = cpl[block]
+            b.put(spec is not None, 1)
+            if spec is not None:
+                b.put(spec is not False, 1)
+                if spec is False:
+                    state = None
+                else:
+                    b.put((1 << nf) - 1, nf)
+                    if acmod == 2:
+                        b.put(0, 1)
+                    b.put(spec[0], 4).put(spec[1], 4)
+                    b.put(0, 3 + spec[1] - spec[0] - 1)
+                    state = tuple(spec)
+        changed = state != previous
+        if state:
+            for _ in range(nf):
+                b.put(changed or block == 0, 1)
+                if changed or block == 0:
+                    b.put(0, 2)
+                    for _ in range(3 + state[1] - state[0]):
+                        b.put(0, 4).put(0, 4)
         if acmod == 2:
-            strategy = rematstr0 if block == 0 else 0
-            b.put(strategy, 1)
-            if strategy:
-                b.put(0, 4)
+            width = 4 if not state else (2 if state[0] == 0 else 3 if state[0] < 3 else 4)
+            if remat is None:
+                strategy = rematstr0 if block == 0 else 0
+                b.put(strategy, 1)
+                if strategy:
+                    b.put(0, 4)
+            else:
+                flags = remat[block]
+                assert flags is not None or (block > 0 and bands == width), "rematrixing flags are needed in block 0 and where their number changes"
+                b.put(flags is not None, 1)
+                if flags is not None:
+                    b.put(flags, width)
+                    bands = width
+        refresh = block == 0 or changed
+        if state:
+            b.put(3 if refresh else 0, 2)
         for _ in range(nf):
-            b.put(3 if block == 0 else 0, 2)
+            b.put(3 if refresh else 0, 2)
         if lfeon:
             b.put(block == 0, 1)
-        if block == 0:
-            for _ in range(nf):
-                b.put(chbwcod, 6)
-            for _ in range(nf):
-                exponents(b, end)
-            if lfeon:
+        if refresh:
+            for ch in range(nf):
+                if not state:
+                    b.put(bandwidth[ch], 6)
+            if state:
+                b.put(0, 4)
+                for _ in range((12 * (state[1] + 3 - state[0])) // 12):
+                    b.put(62, 7)
+            for ch in range(nf):
+                exponents(b, 37 + 12 * state[0] if state else (bandwidth[ch] + 12) * 3 + 37)
+            if block == 0 and lfeon:
                 b.put(15, 4).put(62, 7).put(62, 7)
-            b.put(1, 1).put(2, 2).put(1, 2).put(1, 2).put(2, 2).put(7, 3)
-            b.put(1, 1).put(0, 6)
-            for _ in range(nf + lfeon):
-                b.put(0, 4).put(4, 3)
+            b.put(block == 0, 1)
+            if block == 0:
+                b.put(2, 2).put(1, 2).put(1, 2).put(2, 2).put(7, 3)
+            snr = block == 0 or bool(state)
+            b.put(snr, 1)
+            if snr:
+                b.put(0, 6)
+                for _ in range((1 if state else 0) + nf + lfeon):
+                    b.put(0, 4).put(4, 3)
         else:
             b.put(0, 1).put(0, 1)
-        b.put(0, 1).put(0, 1)
+        if state:
+            b.put(refresh, 1)
+            if refresh:
+                b.put(0, 3).put(0, 3)
+        if state and previous is None and block > 0:
+            # Coupling that starts after a block without it sends delta bit allocation information with a mode for the coupling channel
+            # other than reuse (A/52 7.10.2, check 26): 2, no delta bit allocation, for it and every channel.
+            b.put(1, 1).put(2, 2)
+            for _ in range(nf):
+                b.put(2, 2)
+        else:
+            b.put(0, 1)
+        b.put(0, 1)
         if ends is not None:
             ends.append(b.count)
     return finish(b, WORDS[fscod][frmsizecod], crc1=True)
 
 
 def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, fscod2=0, bsid=16, dialnorm=27, chanmap=None, bsmod=None, words=256,
-               expstre=1, ahte=0, aht_channel=0, spx=False, cplinu=False, ecpl=False, ends=None, addbsi=None, aux=None, skips=None, tail=None):
+               expstre=1, ahte=0, aht_channel=0, spx=False, cplinu=False, ecpl=False, ends=None, addbsi=None, aux=None, skips=None, tail=None,
+               blksw=None, remat=None, spx_blocks=None, spx_range=(2, 2), spx_structure=False):
     nf = NFCHANS[acmod]
     blocks = 6 if fscod == 3 else [1, 2, 3, 6][numblkscod]
     b = Bits()
@@ -286,17 +350,26 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
     # audfrm (Annex E 2.2.3): frame-wide SNR offsets of 0, no optional syntax.
     if blocks == 6:
         b.put(expstre, 1).put(ahte, 1)
-    b.put(0, 2).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(skips is not None, 1).put(0, 1)
+    b.put(0, 2).put(0, 1).put(blksw is not None, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(skips is not None, 1).put(0, 1)
     if acmod > 1:
         b.put(cplinu, 1)
         for _ in range(1, blocks):
             b.put(0, 1)
+    # Spectral extension per block (spx_blocks: True or False for a block that sends its strategy, None to keep the last; block 0
+    # sends it always), and the blocks where a channel's bandwidth changes, which resend their exponents.
+    use = []
+    for block in range(blocks):
+        if spx_blocks is not None:
+            use.append(use[-1] if spx_blocks[block] is None else spx_blocks[block])
+        else:
+            use.append(bool(spx))
+    refreshed = [block == 0 or (spx_blocks is not None and use[block] != use[block - 1]) for block in range(blocks)]
     if expstre:
         for block in range(blocks):
             if cplinu:
-                b.put(3 if block == 0 else 0, 2)
+                b.put(3 if refreshed[block] else 0, 2)
             for _ in range(nf):
-                b.put(3 if block == 0 else 0, 2)
+                b.put(3 if refreshed[block] else 0, 2)
     else:
         if acmod > 1 and cplinu:
             b.put(0, 5)
@@ -321,20 +394,40 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
         b.put(0, 1)
     strategy = 3 if expstre else 1
     cplbegf, cplendf = 3, 10
+    begin_band = spx_range[0] + 2 if spx_range[0] < 6 else spx_range[0] * 2 - 3
+    end_band = spx_range[1] + 5 if spx_range[1] < 3 else spx_range[1] * 2 + 3
+    # The band structure: the default of Table E2.11 (TS 102 366 E.1.10) where the strategy does not send one (E.1.3.3.7: "the default spectral extension band structure
+    # shall be used" in the first block that uses spectral extension without one), or an explicit one (spxbndstrce 1) that merges every third band.
+    structure = [int(i % 3 == 1) for i in range(end_band - begin_band - 1)] if spx_structure else DEFAULT_SPX_BANDS[begin_band + 1:end_band]
+    spx_bands = end_band - begin_band - sum(structure)
     for block in range(blocks):
+        if blksw is not None:
+            for bit in blksw[block]:
+                b.put(bit, 1)
         b.put(0, 1)
         if acmod == 0:
             b.put(0, 1)
-        b.put(spx if block == 0 else 0, 1)
-        if spx and block == 0:
+        if block == 0:
+            b.put(use[0], 1)
+            sends = use[0]
+        else:
+            requested = spx_blocks[block] if spx_blocks is not None else None
+            b.put(requested is not None, 1)
+            if requested is not None:
+                b.put(requested, 1)
+            sends = bool(requested)
+        if sends:
             if acmod != 1:
                 b.put((1 << nf) - 1, nf)
-            b.put(0, 2).put(2, 3).put(2, 3).put(0, 1)
-        if spx:
+            b.put(0, 2).put(spx_range[0], 3).put(spx_range[1], 3).put(spx_structure, 1)
+            if spx_structure:
+                for bit in structure:
+                    b.put(bit, 1)
+        if use[block]:
             for _ in range(nf):
-                if block == 0:
+                if block == 0 or not use[block - 1]:
                     b.put(0, 5).put(0, 2)
-                    for _ in range(3):
+                    for _ in range(spx_bands):
                         b.put(0, 4).put(0, 2)
                 else:
                     b.put(0, 1)
@@ -360,22 +453,26 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
                 for _ in range(nf):
                     b.put(0, 1)
         if acmod == 2:
+            width = (2 if cplbegf == 0 else 3 if cplbegf < 3 else 4) if cplinu else (3 if spx_range[0] < 2 else 4) if use[block] else 4
+            flags = remat[block] if remat is not None else (0 if block == 0 else None)
             if block == 0:
-                b.put(0, 4 if not cplinu else (2 if cplbegf == 0 else 3 if cplbegf < 3 else 4))
+                b.put(flags, width)
             else:
-                b.put(0, 1)
-        if block == 0:
-            if not cplinu and not spx:
+                b.put(flags is not None, 1)
+                if flags is not None:
+                    b.put(flags, width)
+        if refreshed[block]:
+            if not cplinu and not use[block]:
                 for _ in range(nf):
                     b.put(0, 6)
-            end = 37 + 12 * cplbegf if cplinu else 25 + 12 * 4 if spx else 73
+            end = 37 + 12 * cplbegf if cplinu else 25 + 12 * begin_band if use[block] else 73
             if cplinu:
                 b.put(0, 4)
                 for _ in range((37 + 12 * (cplendf + 3) - end) // ((3, 6, 12)[strategy - 1])):
                     b.put(62, 7)
             for _ in range(nf):
                 exponents(b, end, strategy=strategy)
-            if lfeon:
+            if lfeon and block == 0:
                 b.put(15, 4).put(62, 7).put(62, 7)
         if strmtyp == 0:
             b.put(0, 1)

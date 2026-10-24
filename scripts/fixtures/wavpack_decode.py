@@ -1290,7 +1290,7 @@ def run_decoder(data, fx, info, tallies, declared, is_lossy):
 class Run:
     """What the analyzer reports of a stream it decodes, worked out from libwavpack's WavpackUnpackSamples (unpack_utils.c), unpack.c and open_utils.c.
 
-    The decoder's work limit on blocks of sets that never complete (StreamDecoder.MaxWastedSamples) is not modeled: no fixture reaches it."""
+    The host's work budget, which ends the decoding of a crafted file of blocks that never complete, is not modeled: no fixture reaches it."""
 
     def __init__(self, data, fx, info, channels, h0, declared, is_lossy):
         self.data, self.fx, self.channels, self.declared, self.is_lossy = data, fx, channels, declared, is_lossy

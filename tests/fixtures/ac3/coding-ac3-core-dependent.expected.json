@@ -1,0 +1,292 @@
+{
+ "description": "Four program frames of an AC-3 2/0 frame, three of them followed by an E-AC-3 dependent frame that adds the rear pair: 12 values in each series where there is a dependent frame, 6 where there is none.",
+ "length": 4032,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   768
+  ],
+  [
+   768,
+   320
+  ],
+  [
+   1088,
+   768
+  ],
+  [
+   1856,
+   768
+  ],
+  [
+   2624,
+   320
+  ],
+  [
+   2944,
+   768
+  ],
+  [
+   3712,
+   320
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 4,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "samples": 6144,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.dependent-layout-changed",
+   "add other channels in 1 of its frames than in its first"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "skip_insertion": false,
+  "skip": {
+   "ffprobe": "ffmpeg's parser takes the AC-3 core and the E-AC-3 frames as two codecs; what it reports of the stream is no reference for the analyzer's.",
+   "skip_insertion": "The core is AC-3, whose frames the check does not rewrite."
+  }
+ },
+ "block_ends": {
+  "0": [
+   490,
+   510,
+   634,
+   649,
+   664,
+   679
+  ],
+  "768": [
+   240,
+   246,
+   252,
+   258,
+   264,
+   270
+  ],
+  "1088": [
+   226,
+   241,
+   260,
+   275,
+   290,
+   305
+  ],
+  "1856": [
+   475,
+   495,
+   515,
+   535,
+   555,
+   575
+  ],
+  "2624": [
+   346,
+   372,
+   398,
+   428,
+   454,
+   480
+  ],
+  "2944": [
+   226,
+   241,
+   256,
+   271,
+   286,
+   301
+  ],
+  "3712": [
+   240,
+   246,
+   252,
+   258,
+   264,
+   270
+  ]
+ },
+ "coding": [
+  [
+   {
+    "switching": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     true,
+     true,
+     true,
+     false,
+     true
+    ],
+    "coupling": [
+     true,
+     true,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "bandwidth": 18094
+   },
+   {
+    "switching": [
+     false,
+     true,
+     true,
+     true,
+     false,
+     true
+    ],
+    "coupling": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     false,
+     false,
+     true,
+     true,
+     true,
+     true
+    ],
+    "bandwidth": 6844
+   },
+   {
+    "switching": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "coupling": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     false,
+     false
+    ],
+    "bandwidth": 16969
+   },
+   {
+    "switching": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "coupling": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "rematrixing": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "bandwidth": 6844
+   }
+  ]
+ ]
+}

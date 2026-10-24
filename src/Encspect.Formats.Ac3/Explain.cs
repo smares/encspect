@@ -15,12 +15,13 @@ internal static class Topics
     public const string BitrateModes = "bitrate-modes";
     public const string EncoderDetection = "encoder-detection";
     public const string ObjectAudio = "eac3-object-audio";
+    public const string CodedBandwidth = "coded-bandwidth";
 }
 
 // What each AC-3 and E-AC-3 node is, in the words the report shows next to it, citing ATSC
 // A/52:2018 (sections of its body, Annex D and Annex E) and ETSI TS 102 366 Annex F. Constants only:
 // frames are built by the hundred thousand, so a description is one of these and never allocated.
-internal static class Explain
+internal static partial class Explain
 {
     public const string Stream = "AC-3 or E-AC-3 data: syncframes one after another, each with its own sync word, header and audio blocks (A/52 5.1, Annex E 2.2).";
     public const string Ac3Frame = "An AC-3 syncframe: sync information, bit stream information, six audio blocks of 256 samples per channel, auxiliary data and a CRC (A/52 5.1).";
@@ -274,13 +275,13 @@ internal static class Explain
     public const string StatCrcErrors = "Frames whose crc1 or crc2 fails.";
     public const string StatBlocks = "The audio blocks the frames hold.";
     public const string StatBlocksRead = "The audio blocks read to their end; the rest stopped at damage or at a coding tool the analyzer does not step over.";
-    public const string StatBlockSwitching = "Blocks in which a channel switches to two short transforms (A/52 5.4.3.1).";
-    public const string StatDynamicRange = "Blocks that carry a dynamic range gain word (A/52 5.4.3.4).";
-    public const string StatCoupling = "Blocks with coupling in use (A/52 5.4.3.8).";
-    public const string StatRematrixing = "Blocks of a 2/0 program in which a band is coded as sum and difference (A/52 5.4.3.20).";
+    public const string StatBlockSwitching = "Blocks read to their end in which a channel switches to two short transforms (A/52 5.4.3.1).";
+    public const string StatDynamicRange = "Blocks read to their end that carry a dynamic range gain word (A/52 5.4.3.4).";
+    public const string StatCoupling = "Blocks read to their end with coupling in use (A/52 5.4.3.8).";
+    public const string StatRematrixing = "Blocks read to their end, of a 2/0 program, in which a band is coded as sum and difference (A/52 5.4.3.20).";
     public const string StatRematrixedBands = "Rematrixing bands coded as sum and difference, of all rematrixing bands of the blocks read (A/52 7.5).";
-    public const string StatSpectralExtension = "Blocks with spectral extension in use (A/52 Annex E 2.3.3.2).";
-    public const string StatDeltaBitAllocation = "Blocks that carry delta bit allocation information (A/52 5.4.3.47).";
+    public const string StatSpectralExtension = "Blocks read to their end with spectral extension in use (A/52 Annex E 2.3.3.2).";
+    public const string StatDeltaBitAllocation = "Blocks read to their end that carry delta bit allocation information (A/52 5.4.3.47).";
     public const string StatExponentStrategies = "Exponent sets of the blocks read, by strategy (A/52 7.1.2).";
     public const string StatExponentStrategy = "Exponent sets coded with this strategy, or reused from the block before.";
     public const string StatSkipBytes = "Bytes of skip fields in the blocks read (A/52 5.4.3.60).";

@@ -113,8 +113,9 @@ public sealed partial class Mp4Parser
     };
 
     // ISO/IEC 23091-3's ChannelConfiguration values 1 to 14 as speaker positions (the indexes of
-    // Positions), in the configuration's channel order, as ffmpeg lists them (iso_ch_layout_map in
-    // libavformat/mov_chan.c); 8 is two independent mono channels, -1 a channel without a position.
+    // Positions), in the configuration's channel order; 8 is two independent mono channels, -1 a channel without a position.
+    // The specification is not freely available: the speaker sets are checked against MediaInfo's and GPAC's tables and the order of
+    // 1 to 7, 11, 12, 13 and 14 against FFmpeg's aac_channel_layout_map (docs/development.md, "Tables").
     private static readonly int[]?[] Configurations =
     [
         null,
@@ -134,7 +135,8 @@ public sealed partial class Mp4Parser
         [2, 0, 1, 4, 5, 3, 17, 18],
     ];
 
-    // ISO/IEC 23091-3's speaker positions by index, as ffmpeg names them (iso_channel_position).
+    // ISO/IEC 23091-3's speaker positions by index. The names are checked against the comments of FFmpeg's iso_channel_position and
+    // MediaInfo's abbreviations (docs/development.md, "Tables").
     private static readonly string[] Positions =
     [
         "left front", "right front", "center front", "low frequency enhancement", "left surround", "right surround", "left front center",
@@ -261,7 +263,7 @@ public sealed partial class Mp4Parser
                 ulong omitted = f.Field(node, "Omitted Channels", 8, Explain.ChnlOmittedChannels, v => NodeValue.Hex(v, 16));
                 if (defined < Configurations.Length && Configurations[defined] is { } configuration)
                 {
-                    // The lowest bit stands for the configuration's first channel, as ffmpeg reads it.
+                    // The lowest bit stands for the configuration's first channel.
                     layout = FromPositions([.. configuration.Where((_, i) => i >= 64 || (omitted & (1UL << i)) == 0)]);
                 }
             }

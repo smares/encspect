@@ -198,8 +198,11 @@
                         <ItemsControl ItemsSource="{Binding Choices}">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:GraphChoice">
-                              <Button Content="{Binding Title}" Classes="entry" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" ToolTip.Tip="{Binding Description}"
-                                      AutomationProperties.Name="{Binding Title}" />
+                              <!-- A long name wraps at the list's width, never cut; the tooltip names the entry first, then says what it shows. -->
+                              <Button Classes="entry" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" ToolTip.Tip="{Binding ToolTipText}"
+                                      AutomationProperties.Name="{Binding Title}">
+                                <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
+                              </Button>
                             </DataTemplate>
                           </ItemsControl.ItemTemplate>
                         </ItemsControl>

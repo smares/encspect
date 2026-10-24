@@ -4,6 +4,10 @@ namespace Encspect.Formats.Flac.Decoding;
 
 internal sealed class FrameDecoder : IFrameDecoder
 {
+    // Units a tap costs in 64-bit sums, and a sample of a verbatim subframe on top of the sample's fixed work.
+    internal const long WideTapUnits = 2;
+    internal const long VerbatimSampleUnits = 8;
+
     private readonly DecodeContext _context;
     private readonly StreamInfoBlock _info;
     private readonly MappedBytes _configuration;
@@ -58,6 +62,15 @@ internal sealed class FrameDecoder : IFrameDecoder
             return 0;
         }
 
+        // The work is charged before it is done (docs/design/decoders.md, "Work instead of samples"): the fixed work of each sample
+        // of each channel, and 16 a byte for a frame this decoder reads itself (a walked frame's reading is the parser's).
+        long perSample = DecodeWork.ForSample(_bytesPerSample);
+        _context.AddWork(checked(perSample * channels * n));
+        if (!frame.IsWalked)
+        {
+            _context.AddWork(DecodeWork.PerCodedByte * data.Length);
+        }
+
         int stride = n + SubframeLayout.MetaSlots;
         SampleBuffers lent = frame.IsWalked ? _context.LentBuffers : default;
         bool needsWide = header.BitsPerSample == 32 && header.Assignment != ChannelAssignment.Independent;
@@ -80,6 +93,28 @@ internal sealed class FrameDecoder : IFrameDecoder
             _output = new int[channels * n];
         }
 
+        // Each predictor's order is one tap a sample (RFC 9639, sections 9.2.5 and 9.2.6), two in the 64-bit sums, which measured about twice as
+        // slow a tap (docs/design/decoders.md, "As built: the work budget"); a verbatim sample is charged the walk's store of it.
+        long taps = 0;
+        long verbatim = 0;
+        for (int c = 0; c < channels; c++)
+        {
+            Span<int> meta = narrow.Slice((c * stride) + n, SubframeLayout.MetaSlots);
+            var type = (SubframeType)meta[SubframeLayout.Type];
+            if (type == SubframeType.Verbatim)
+            {
+                verbatim++;
+            }
+            else if (type is SubframeType.Fixed or SubframeType.Lpc)
+            {
+                int order = meta[SubframeLayout.Order];
+                int bits = header.BitsPerSample + (header.IsSide(c) ? 1 : 0) - meta[SubframeLayout.WastedBits];
+                bool isWide = meta[SubframeLayout.IsWide] != 0 || (type == SubframeType.Lpc && !Prediction.FitsInt(bits, meta[SubframeLayout.Precision], order));
+                taps += isWide ? WideTapUnits * order : order;
+            }
+        }
+
+        _context.AddWork(checked(((DecodeWork.PerTap * taps) + (VerbatimSampleUnits * verbatim)) * n));
         for (int c = 0; c < channels; c++)
         {
             Restore(narrow.Slice(c * stride, stride), needsWide ? wide.Slice(c * stride, stride) : default, n, header.BitsPerSample + (header.IsSide(c) ? 1 : 0));

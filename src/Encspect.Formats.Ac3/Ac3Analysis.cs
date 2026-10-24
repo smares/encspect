@@ -534,7 +534,7 @@ internal sealed class Ac3Analysis
 
         ClaimRoles.CompleteVersion(encoder, claims);
 
-        Node statistics = program.Statistics(Cover, out Node bitrate);
+        Node statistics = program.Statistics(Cover, out Node bitrate, out CodingNodes coding);
         if (named)
         {
             statistics.Value = program.Key.IsEac3 ? $"independent substream {program.Key.Id}" : "AC-3";
@@ -549,6 +549,9 @@ internal sealed class Ac3Analysis
 
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
+        List<Series> series = program.Figures.Series(bitrate, Cancellation);
+        IReadOnlyList<CategorySeries> categories = program.Recorder.Build(series.Count > 0 ? series[0].X : Array.Empty<double>(), series.Count > 0 ? series[0] : null,
+            program.Figures.Time, coding, series, Cancellation);
         _context.AddStream(new StreamInfo
         {
             Nodes = [.. Regions.Where(r => program.Regions.Contains(r)).Select(r => r.Node!)],
@@ -567,7 +570,8 @@ internal sealed class Ac3Analysis
             EncoderConfidence = encoderConfidence,
             Writer = writerName,
             WriterConfidence = writerConfidence,
-            Series = program.Figures.Series(bitrate, Cancellation),
+            Series = series,
+            CategorySeries = categories,
             PlaybackGroup = group,
         });
     }

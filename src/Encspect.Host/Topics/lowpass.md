@@ -11,4 +11,4 @@ references: LAME documentation; LAME tag specification (Gabriel Bouvigne)
 
 **What you see.** LAME records its cutoff in the LAME tag's Lowpass field, in steps of 100 Hz. The analyzer does not decode the audio, so it cannot measure the cutoff of other files; a spectrum view of decoded audio would show it as an edge above which the spectrum is empty. A low cutoff at a high bitrate can point to audio that was encoded more than once, but it can also be a deliberate setting.
 
-**Coded bandwidth.** For Layer I and II files, from the bit allocation, and for AAC files, from max_sfb, the analyzer also shows where the coded data of each frame reaches, without decoding. That is a third figure, not the lowpass: see [coded bandwidth](coded-bandwidth).
+**Coded bandwidth.** For Layer I and II files, from the bit allocation, for AAC files, from max_sfb, and for AC-3 and E-AC-3 files, from chbwcod, the coupling range and spectral extension, the analyzer also shows where the coded data of each frame reaches, without decoding. That is a third figure, not the lowpass: see [coded bandwidth](coded-bandwidth).

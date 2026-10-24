@@ -5,8 +5,12 @@ shards.json names the classes of each shard but the last, whose classes are null
 other shard lists, so a new test class lands in a shard by itself. A class is matched by its dotted name
 inside the fully qualified one (".Name."), so a class whose name starts with another's is not caught by it.
 
-    shards.py names             # one shard name per line
-    shards.py filter <name>     # the --filter expression of a shard
+    shards.py names                  # one shard name per line
+    shards.py filter <name>          # the --filter expression of a shard, every test of it
+    shards.py filter <name> --skip-nightly   # the same without the tests of the nightly run only
+
+A test of the nightly run only (DecoderWorkTests, which times the decoders) carries the trait Category=Nightly; the pull request and the push
+to main add NIGHTLY_EXCLUSION to every shard's filter, the nightly schedule and a manual run do not (changes.py).
 """
 
 import json
@@ -14,6 +18,9 @@ import pathlib
 import sys
 
 CONFIG = pathlib.Path(__file__).resolve().with_name("shards.json")
+
+NIGHTLY_TRAIT = "Category=Nightly"
+NIGHTLY_EXCLUSION = "Category!=Nightly"
 
 
 def load(path=CONFIG):
@@ -29,14 +36,16 @@ def load(path=CONFIG):
     return shards
 
 
-def filter_for(shards, name):
+def filter_for(shards, name, include_nightly=True):
     listed = [s for s in shards if s["name"] == name]
     if len(listed) != 1:
         raise SystemExit(f"no shard named {name}")
     if listed[0]["classes"] is not None:
-        return "|".join(f"FullyQualifiedName~.{c}." for c in listed[0]["classes"])
+        expression = "|".join(f"FullyQualifiedName~.{c}." for c in listed[0]["classes"])
+        return expression if include_nightly else f"({expression})&{NIGHTLY_EXCLUSION}"
     others = [c for s in shards[:-1] for c in s["classes"]]
-    return "&".join(f"FullyQualifiedName!~.{c}." for c in others)
+    expression = "&".join(f"FullyQualifiedName!~.{c}." for c in others)
+    return expression if include_nightly else f"{expression}&{NIGHTLY_EXCLUSION}"
 
 
 def main(argv):
@@ -45,6 +54,8 @@ def main(argv):
         print("\n".join(s["name"] for s in shards))
     elif argv[:1] == ["filter"] and len(argv) == 2:
         print(filter_for(shards, argv[1]))
+    elif argv[:1] == ["filter"] and len(argv) == 3 and argv[2] == "--skip-nightly":
+        print(filter_for(shards, argv[1], include_nightly=False))
     else:
         raise SystemExit(__doc__)
 

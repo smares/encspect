@@ -1,3 +1,6 @@
+// Derived from libwavpack 5.6.0 (open_utils.c, decorr_utils.c, entropy_utils.c and unpack_dsd.c), Copyright (c) 1998 - 2022 David Bryant, under the BSD 3-clause license.
+// The license text is in THIRD-PARTY-NOTICES.md.
+
 using Encspect.Core;
 
 namespace Encspect.Formats.WavPack;

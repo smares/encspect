@@ -197,6 +197,24 @@ class ChangesTests(unittest.TestCase):
             self.assertIn("ubuntu-26.04-arm", labels(event), event)
             self.assertEqual(len(set(labels(event))), 6, event)
 
+    def test_only_the_nightly_run_and_a_manual_run_include_the_tests_of_the_nightly_run(self):
+        shards = changes.shard_config.load()
+        for event in ("pull_request", "push", "schedule", "workflow_dispatch"):
+            include = event in changes.NIGHTLY_EVENTS
+            for shard in shards:
+                expression = changes.shard_config.filter_for(shards, shard["name"], include)
+                self.assertEqual("Category!=Nightly" in expression, not include, (event, shard["name"]))
+        self.assertEqual(changes.NIGHTLY_EVENTS, ("schedule", "workflow_dispatch"))
+
+    def test_a_shard_filter_without_the_nightly_tests_keeps_its_own_clauses(self):
+        shards = changes.shard_config.load()
+        first = shards[0]["name"]
+        full = changes.shard_config.filter_for(shards, first)
+        skipped = changes.shard_config.filter_for(shards, first, include_nightly=False)
+        self.assertEqual(skipped, f"({full})&Category!=Nightly")
+        rest = changes.shard_config.filter_for(shards, shards[-1]["name"])
+        self.assertEqual(changes.shard_config.filter_for(shards, shards[-1]["name"], include_nightly=False), f"{rest}&Category!=Nightly")
+
 
 if __name__ == "__main__":
     unittest.main()

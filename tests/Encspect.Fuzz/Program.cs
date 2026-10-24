@@ -144,8 +144,8 @@ internal static class Program
 
     private static string? Check(Analyzer analyzer, byte[] input, bool checksCollection)
     {
-        // Decoding runs on the same input with the PCM budget lowered, so a stream that codes a lot of audio stops early; a decoder that fails is a bug.
-        if (Run(analyzer, input, new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 1 << 20 } }, out Report? decoded) is { } decodeFailure)
+        // Decoding runs on the same input with the work budget lowered, so a stream that asks for a lot of work stops early; a decoder that fails is a bug.
+        if (Run(analyzer, input, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1 << 24 } }, out Report? decoded) is { } decodeFailure)
         {
             return "decoding: " + decodeFailure;
         }

@@ -259,9 +259,9 @@ public class ComplexityTests
     }
 
     // Mono blocks of 196,607 samples (the most a block may state) whose bitstream is 16 bytes, each a set of its own that states 100 channels
-    // of a stream that has one: no set completes, so none reaches the sink or the host's PCM budget. 60,000 blocks (3.4 MB) state 11.8
-    // billion samples; the decoder's own limit on the work spent on sets that never complete (StreamDecoder.MaxWastedSamples) refuses the
-    // blocks past 2^28 samples, so the analysis costs by that limit and the bytes, not by the samples the blocks state.
+    // of a stream that has one: no set completes, so none reaches the sink. 60,000 blocks (3.4 MB) state 11.8 billion samples; every block is
+    // charged when it is decoded (32 units for each of its samples), so the work budget ends the decoding after the 2^35 units of the floor
+    // and the analysis costs by that and the bytes, not by the samples the blocks state.
     [Fact]
     public void WavPackBlocksThatStateMoreSamplesThanTheyCode()
     {
@@ -286,10 +286,13 @@ public class ComplexityTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
         Assert.Equal(0, report.Streams.Single().Verification!.DecodedSamples);
         Assert.Contains(report.Findings, f => f.Code == "decode.frame-invalid");
+        Assert.Contains(report.Findings, f => f.Code == "decode.limit");
 
-        // Each block decoded before the limit fails its CRC (it ends before its samples do), the ones past it are refused unread: 2^28 / 196,607 = 1,365.
+        // Each block decoded before the limit fails its CRC (it ends before its samples do), and is charged 32 units for each of its samples (the
+        // 16 of the sample's fixed work and the 16 WavPack's entropy decoder and copies cost) and 16 for each byte of its bitstream:
+        // 2^35 / (32 * 196,607 + 16 * 16) = 5,461 blocks.
         Finding crc = Assert.Single(report.Findings, f => f.Code == "wavpack.audio-crc-mismatch");
-        Assert.InRange(crc.Count, 1_300, 1_450);
+        Assert.InRange(crc.Count, 5_000, 5_900);
     }
 
     // Core frame headers every 96 bytes (the smallest frame) that state 16 KiB frames: each is a candidate whose chain the
@@ -733,16 +736,19 @@ public class ComplexityTests
         return crc;
     }
 
-    // Frames of 65,535 samples of eight 32-bit channels that are all constant: 55 bytes code 2 MB of PCM each (RFC 9639, section 11), so 20 MB of
-    // them code 750 GB. The budget of the decoding stops the decoder in seconds, and the parser, which only walks the constants, goes on to the end.
+    // Frames of 65,535 samples of eight 32-bit channels that are all constant: 55 bytes code 2 MB of PCM each (RFC 9639, section 11), so 4 MB of
+    // them code 150 GB. The budget of the decoding stops the decoder after about 90 frames, and the parser, which only walks the constants, goes on to
+    // the end. The size is what the time allows: the structure pass costs about 25 to 55 microseconds a frame (about 4 for each subframe and 20 for the frame:
+    // the walk and the nodes the stream's path is looked up through), the same with decoding off, not GC (1.3 KB a frame, no pause), so 20 MB of them,
+    // 400,000 frames, took 25 to 27 s against the 30 s bound on this machine and on main; 4 MB is a fifth of that and still thousands of times the budget.
     [Fact]
     public void FlacFramesThatCodeMegabytesEach()
     {
         byte[] frame = FlacBuilder.ConstantFrame(0, 65535, 44100, 8, 32, 7);
-        int count = (20 << 20) / frame.Length;
+        int count = (4 << 20) / frame.Length;
         byte[] data = [.. FlacBuilder.Marker, .. FlacBuilder.Block(0, FlacBuilder.StreamInfo(65535, 44100, 8, 32, 65535L * count), isLast: true),
             .. Enumerable.Range(0, count).SelectMany(i => FlacBuilder.ConstantFrame(i, 65535, 44100, 8, 32, 7))];
-        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 256L << 20 } };
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 30 } };
 
         var watch = Stopwatch.StartNew();
         Report report = Analyzer.CreateDefault().Analyze("megabytes.flac", new MemoryStream(data), options);
@@ -877,7 +883,8 @@ public class ComplexityTests
         Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
     }
 
-    // Linear predictors of order 32 in frames of 65,535 samples, decoded: 2 million multiplications per frame, which the budget does not count.
+    // Linear predictors of order 32 in frames of 65,535 samples, decoded: 2 million multiplications per frame, which the budget counts (32 units
+    // a sample on top of the 16 of its fixed work).
     [Fact]
     public void FlacPredictorsOfTheHighestOrderAtTheLargestBlock()
     {

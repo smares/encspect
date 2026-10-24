@@ -15,4 +15,6 @@ references: ISO/IEC 11172-3 2.4.2.3
 
 **The graphs.** Stereo Coding counts every frame, whatever its channel mode, and shows the share of each coding per second and for each frame. Joint Stereo Modes keeps to the joint stereo frames of Layer III. AAC has no stereo modes: its Stereo Coding counts every channel pair in the same four codings, by the bands each codes ([mid/side](mid-side-stereo) and [intensity](intensity-stereo) stereo), and a pair with the reserved ms_mask_present 3 apart. EncSpot's mode 0 holds every frame that is not joint stereo and the joint stereo frames without a tool, so its share is the Left/right stereo, Dual channel and Mono entries together.
 
+AC-3's Blocks With Rematrixing and Blocks With Coupling are under the same Stereo Coding heading, but count blocks of a frame: [rematrixing](ac3-rematrixing) codes bands as sum and difference, [coupling](ac3-coupling) the high frequencies of several channels once.
+
 **Channel Bit Share** shows how a stereo, joint stereo or dual channel frame divides its audio bits between the two channels: the first channel's share, left or mid, per frame and per second.
