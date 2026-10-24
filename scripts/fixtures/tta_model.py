@@ -10,9 +10,11 @@ What the description says, and what the files add:
   samples over the samples in a frame, rounded up. An entry is the length of its frame in bytes with the frame's CRC-32 (the entries add up to
   the length of the data in encoder-written files).
 - A frame is its coded bytes and a CRC-32 over them. The "frame time" is 1.04489795918367346939 seconds (= 256/245), so a frame holds that
-  many times the sample rate in samples, truncated: encoder-written files at 32,000 Hz (33,436.7 samples) have frames of 33,436, which fixes
-  the rounding. Every frame holds as many samples but the last, which holds the rest.
-- Audio format 1 is what encoders write; FFmpeg 6.1.1 calls 2 an encrypted stream that needs a password ("Missing password for encrypted
+  many times the sample rate in samples, truncated: the files of FFmpeg 6.1.1 and libtta-c 2.3 at 32,000 Hz (33,436.7 samples) have frames of
+  33,436, and libtta-c's at 24,000 Hz (25,077.55) frames of 25,077, which fixes the rounding. Every frame holds as many samples but the last,
+  which holds the rest.
+- Audio format 1 is what both encoders write; libtta-c 2.3 writes 2 for a stream encoded with a password (the frame CRC-32s of that file are
+  those of the stored bytes, like the others), FFmpeg 6.1.1 calls 2 an encrypted stream that needs a password ("Missing password for encrypted
   stream") and refuses 3. The description defines neither.
 """
 

@@ -34,6 +34,7 @@ import gpac_tool
 import helix_tool
 import lame_win_tool
 import libdca_source
+import libtta_tool
 import matroska_specs
 import mctoolamed_tool
 import musepack_tool
@@ -84,6 +85,7 @@ def sources():
         yield archive, digest, aotuv_tool.windows_addresses(archive)
     yield from musepack_tool.sources()
     yield from wavpack_tool.sources()
+    yield from libtta_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
     for name, digest, addresses in matroska_specs.SPECS:
         yield name, digest, addresses
