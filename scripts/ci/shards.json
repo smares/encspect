@@ -1,8 +1,9 @@
 {
-  "note": "Balanced by measured duration. The classes of a shard run in parallel, except the non-parallel 'Thread hammers' collection, which runs alone at the end of the shard that has it (rest). MemoryTests and CategorySeriesMemoryTests ride with the second corrupt shard. Measured on one loaded 4-core machine on 2026-10-24 (the sum of the test times, and the shard's wall time): corrupt-a 9,800 s in 48 minutes, of which the two TTA classes are 940 s; corrupt-b 9,900 s in 71 minutes, since its memory tests do not run in parallel. So the TTA classes stay in corrupt-a, which finishes first.",
+  "note": "Balanced by measured duration. The classes of a shard run in parallel, except the non-parallel 'Thread hammers' collection, which runs alone at the end of the shard that has it (rest). MemoryTests and CategorySeriesMemoryTests ride with the second corrupt shard. Measured on one loaded 4-core machine on 2026-10-24 (the sum of the test times, and the shard's wall time): corrupt-a 9,800 s in 48 minutes, of which the two TTA classes are 940 s; corrupt-b 9,900 s in 71 minutes, since its memory tests do not run in parallel. So the TTA classes stay in corrupt-a, which finishes first. The Monkey's Audio damaged-input classes have a shard of their own, corrupt-c: they decode some of their variants, and measured about 15 minutes of CPU on a loaded four-core machine, which run side by side in four classes.",
   "shards": [
     {"name": "corrupt-a", "classes": ["CorruptMpegFileTests", "CorruptLameFileTests", "CorruptOggFileTests", "CorruptTagFileTests", "CorruptMatroskaFileTests", "CorruptFlacFileTests", "CorruptTtaFileTests", "CorruptTtaBuiltFileTests"]},
     {"name": "corrupt-b", "classes": ["CorruptMp4FileTests", "CorruptAdtsFileTests", "CorruptLayerFileTests", "CorruptVbrFileTests", "CorruptDtsFileTests", "CorruptAc3FileTests", "MemoryTests", "CategorySeriesMemoryTests"]},
+    {"name": "corrupt-c", "classes": ["CorruptMonkeysAudioFileTests", "CorruptMonkeysAudioHeavyFileTests", "CorruptMonkeysAudioLegacyFileTests", "CorruptMonkeysAudioBuiltFileTests"]},
     {"name": "rest", "classes": null}
   ]
 }

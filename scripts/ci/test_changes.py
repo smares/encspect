@@ -52,6 +52,17 @@ class ChangesTests(unittest.TestCase):
             self.assertIn("flac-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/crosscheck_flac_fixtures.py"), {"flac-crosscheck", "fixtures"})
 
+    def test_monkeys_audio_parser_decoder_scripts_and_fixtures_belong_to_the_monkeys_audio_job(self):
+        for path in ("src/Encspect.Formats.MonkeysAudio/MonkeysAudioParser.cs", "src/Encspect.Formats.MonkeysAudio/Decoding/RangeDecoder.cs",
+                     "tests/fixtures/monkeys-audio/a.ape", "scripts/fixtures/monkeys_audio_model.py", "scripts/fixtures/make_monkeys_audio_fixtures.py",
+                     "scripts/fixtures/make_external_monkeys_audio_fixtures.py", "scripts/fixtures/make_legacy_monkeys_audio_fixtures.py",
+                     "scripts/fixtures/make_interim_monkeys_audio_fixture.py", "scripts/fixtures/monkeys_audio_legacy.py",
+                     "scripts/fixtures/check_monkeys_audio_samples.py", "tests/conformance/monkeys-audio-samples.json"):
+            self.assertIn("monkeys-audio-crosscheck", run(path), path)
+        self.assertEqual(run("scripts/fixtures/crosscheck_monkeys_audio_fixtures.py"), {"monkeys-audio-crosscheck", "fixtures"})
+        self.assertEqual(run("scripts/fixtures/check_monkeys_audio_samples.py"), {"monkeys-audio-crosscheck", "fixtures"})
+        self.assertNotIn("monkeys-audio-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
+
     def test_tta_parser_scripts_and_fixtures_belong_to_the_tta_job(self):
         for path in ("src/Encspect.Formats.Tta/TtaParser.cs", "tests/fixtures/tta/a.tta", "scripts/fixtures/tta_model.py", "scripts/fixtures/make_tta_fixtures.py",
                      "scripts/fixtures/make_external_tta_fixtures.py"):

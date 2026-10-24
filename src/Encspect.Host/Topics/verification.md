@@ -1,7 +1,7 @@
 ---
 id: verification
 title: Verified streams and stored checksums
-related: crc, flac-streaminfo, flac-frames, wavpack-audio-checksums, tta-stream
+related: crc, flac-streaminfo, flac-frames, wavpack-audio-checksums, monkeys-audio-frames, monkeys-audio-descriptor-md5, tta-stream
 references: RFC 9639 (FLAC), sections 8.2, 9.1.8 and 9.3; TTA format description
 ---
 

@@ -1,0 +1,29 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 160000,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "descriptor MD5",
+        "stored": 1,
+        "checked": 1,
+        "failed": 0
+      },
+      {
+        "name": "frame CRC-32",
+        "stored": 3,
+        "checked": 3,
+        "failed": 1
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "monkeys-audio.frame-crc-mismatch",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The CRC of the decoded audio of the frame at 0x6B1C is 0x02CE59F0, but the frame stores 0x02CE59F1: the decoded samples differ from what the encoder read."
+    }
+  ]
+}

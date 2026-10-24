@@ -1298,6 +1298,45 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(heldPerBlock < DecodingFrameBound, $"Decoding held {heldPerBlock:F2} more bytes per further block at the last block than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // A Monkey's Audio file keeps a record of a few words for each of the first 1,048,576 frames, and a frame is its record alone: its nodes are built when
+    // read. The frames are MonkeysAudioBuilder.Silence's, 8 bytes each. The bounds are about twice what linux-x64 measures.
+    [Fact]
+    public void ManyMonkeysAudioFramesStayCompact()
+    {
+        const int frames = 100_000;
+
+        (Report report, long kept, long peak) = Measure("frames.ape", MonkeysAudioBuilder.Silence(frames), MonkeysAudioBuilder.Silence(100));
+
+        Assert.Equal(frames * 64L, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * MonkeysAudioKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * MonkeysAudioPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    // The decoding of a Monkey's Audio file holds one frame's bytes and the state of its predictors and filters, so what it holds does not grow with the
+    // frames. Measured as the WavPack test above does, at 50,000 and 200,000 frames of 64 samples of silence.
+    [Fact]
+    public void DecodingManyMonkeysAudioFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 50_000;
+        const int frames = 200_000;
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(MonkeysAudioBuilder.Silence(100)), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.ape", MonkeysAudioBuilder.Silence(fewer), fewer, 64);
+        (long held, long kept) = LastFrameReading("frames.ape", MonkeysAudioBuilder.Silence(frames), frames, 64);
+        (_, long plainKept) = LastFrameReading("frames.ape", MonkeysAudioBuilder.Silence(frames), frames, 64, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
+    private const long MonkeysAudioKeptBound = 140;
+
+    private const long MonkeysAudioPeakBound = 140;
+
     // A block of up to 1 MiB with a sub-block for every two bytes lists the first 1,024 and counts the rest.
     [Fact]
     public void ManyWavPackSubBlocksAreBounded()

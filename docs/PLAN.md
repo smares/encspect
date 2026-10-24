@@ -386,6 +386,20 @@ DTS Coherent Acoustics is a format parser of its own (`src/Encspect.Formats.Dts`
 
 Not covered: the subframes and the extensions' audio data, the XLL band data and the parameters of its bands, DTS:X beyond its sync word, and the core's optional information beyond its flags.
 
+## Phase 3: Monkey's Audio
+
+Monkey's Audio is a format parser of its own (`src/Encspect.Formats.MonkeysAudio`, "Monkey's Audio") for `.ape` files with a decoder in `Encspect.Formats.MonkeysAudio.Decoding` (ID `monkeys-audio`). The source is the Monkey's Audio SDK 13.42 (3-clause BSD; `MAC_1342_SDK.zip`, pinned by SHA-256 in `monkeys_audio_tool.py` and checked by `check_sources.py`), with its notice in the derived files, in `THIRD-PARTY-NOTICES.md` and in `scripts/release/licenses`. FFmpeg's `apedec.c` and `ape.c` were not read: FFmpeg and the SDK's `mac` tool are black boxes of the cross-check. [monkeys-audio.md](formats/monkeys-audio.md) describes it from the user's side.
+
+- **Container:** descriptor (52 bytes) and header (24 bytes) of version 3.98 and later, the older single header of 3.80 to 3.97, the seek table with 64-bit entries, the WAV header data, the frames and the terminating data. A file of version 3.98 and later declares its end (`DeclaredEnd`). Frames are word-aligned nodes with `Ranges`, since the file stores the audio in words with their bytes reversed.
+- **Frames:** the stored CRC (31 bits) and the special frame codes (silent channels, pseudo stereo); the descriptor MD5 is compared in every analysis.
+- **Decoder:** versions 3.93 to 3.99 and 4.11, every level the version has, 8, 16, 24 and 32 bits, floating point, 1 to 32 channels, compared by the frame CRC. The references for the versions before 3.99, which the SDK 13.42 decodes and does not write, are a real file of 3.97 from the FFmpeg sample archive (pinned download) and fixtures from an encoder written as the inverse of the SDK's decoder that `mac -V` verifies. Versions before 3.93 are parsed and not decoded; their decoder (the SDK's `Old/UnMACOld.cpp`) is the next change.
+- **Work:** 16 per sample (by width), and for each coded channel 192 for the range decoder, 48 for the predictor and one unit for every two filter taps, and 40 for each channel of a silent frame; 8,192 units for each byte of the file.
+- **Fixtures and checks:** 49 files written by mac 13.42 (one by a mac whose encoder is changed in one line, for the 24-bit interim coding), 17 of versions 3.93 to 3.98 from `monkeys_audio_legacy.py` and 46 hand-built ones (`make_external_monkeys_audio_fixtures.py`, `make_interim_monkeys_audio_fixture.py`, `make_legacy_monkeys_audio_fixtures.py`, `make_monkeys_audio_fixtures.py`, `monkeys_audio_model.py`, reproducible in CI); `crosscheck_monkeys_audio_fixtures.py` confirms them with `mac -V` and `mac -d`, FFmpeg and MediaInfo; `check_monkeys_audio_samples.py` checks a real file of 3.97.
+
+Articles: `monkeys-audio-file`, `monkeys-audio-seek-table`, `monkeys-audio-frames`, `monkeys-audio-range-coding`, `monkeys-audio-prediction` and `monkeys-audio-descriptor-md5`.
+
+Not covered: decoding before version 3.93 (the next change), channel positions beyond two channels, Monkey's Audio inside other containers.
+
 ## Phase 3: Dolby TrueHD and MLP
 
 Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).

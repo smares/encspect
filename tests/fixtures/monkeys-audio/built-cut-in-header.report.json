@@ -1,0 +1,28 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-cut-in-header.ape",
+    "root": {
+      "name": "File",
+      "value": "Monkey's Audio",
+      "offset": 0,
+      "length": 62
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Error",
+        "code": "monkeys-audio.header-cut",
+        "message": "The data ends inside the descriptor or header at 0x0, so nothing of the file can be read.",
+        "offset": 0,
+        "length": 62,
+        "path": [],
+        "count": 1
+      }
+    ]
+  }
+]

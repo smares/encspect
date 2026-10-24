@@ -295,6 +295,62 @@ public class ComplexityTests
         Assert.InRange(crc.Count, 5_000, 5_900);
     }
 
+    // The signature of a descriptor every four bytes: each is a candidate the scan for the descriptor passes over, and the time must stay linear in the data.
+    [Fact]
+    public void ManyMonkeysAudioSignatures()
+    {
+        var data = new byte[24 << 20];
+        for (int at = 0; at + 4 <= data.Length; at += 4)
+        {
+            "MAC "u8.CopyTo(data.AsSpan(at));
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = new Encspect.Host.Analyzer([new ForcedMonkeysAudio()]).Analyze("flood.ape", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    // A seek table of four million entries that all point to the start of the frame data: each frame is empty, the first 1,048,576 are listed and the
+    // rest read and counted, and decoding finds nothing to decode. The time stays linear in the table.
+    [Fact]
+    public void ManyEmptyMonkeysAudioFrames()
+    {
+        (byte[] header, byte[] headerData, _) = MonkeysAudioBuilder.Take("external-level-normal-16-stereo.ape");
+        byte[] data = MonkeysAudioBuilder.Build(header, headerData, [.. Enumerable.Repeat(Array.Empty<byte>(), 4_000_000)], 64, 64);
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("empty.ape", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Contains(report.Findings, f => f.Code == "monkeys-audio.frames-not-listed");
+        Assert.Contains(report.Findings, f => f.Code == "monkeys-audio.frame-too-short");
+    }
+
+    // Frames of 10,000,000 samples (the most the SDK accepts at level 5000) that are flagged silent: eight bytes each state 20 million samples to write.
+    // Each is charged 56 units for each sample of each channel before it is decoded, so the work budget ends the decoding: here at 2^32 units, 4
+    // frames (the default floor of 2^35 would take 31 and about half a minute), and the analysis costs by that and the bytes, not by the samples the
+    // frames state.
+    [Fact]
+    public void MonkeysAudioFramesThatStateMoreSamplesThanTheyCode()
+    {
+        (byte[] header, byte[] headerData, _) = MonkeysAudioBuilder.Take("external-level-insane-16-stereo.ape");
+        byte[] frame = MonkeysAudioBuilder.SilentFrame(10_000_000);
+        byte[] data = MonkeysAudioBuilder.Build(header, headerData, [.. Enumerable.Repeat(frame, 200)], 10_000_000, 10_000_000);
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("states.ape", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 32 } });
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Contains(report.Findings, f => f.Code == "decode.limit");
+        Assert.InRange(report.Streams.Single().Verification!.DecodedSamples, 3 * 10_000_000L, 5 * 10_000_000L);
+    }
+
     // Core frame headers every 96 bytes (the smallest frame) that state 16 KiB frames: each is a candidate whose chain the
     // scan looks for 16 KiB on, and finds none; the time must stay linear in the data.
     [Fact]
@@ -561,6 +617,17 @@ public class ComplexityTests
     private sealed class ForcedDts : IFormatParser
     {
         private readonly Encspect.Formats.Dts.DtsParser _parser = new();
+
+        public string Name => _parser.Name;
+
+        public SniffResult Sniff(SniffContext context) => new(100);
+
+        public void Parse(ParseContext context) => _parser.Parse(context);
+    }
+
+    private sealed class ForcedMonkeysAudio : IFormatParser
+    {
+        private readonly Encspect.Formats.MonkeysAudio.MonkeysAudioParser _parser = new();
 
         public string Name => _parser.Name;
 

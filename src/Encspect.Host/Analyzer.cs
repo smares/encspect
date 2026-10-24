@@ -127,11 +127,12 @@ public sealed class Analyzer
         ["webm"] = "Matroska",
         ["mpc"] = "Musepack",
         ["wv"] = "WavPack",
+        ["ape"] = "Monkey's Audio",
     };
 
-    // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg", "AC-3" and "ac3" as "ac3".
+    // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg", "AC-3" and "ac3" as "ac3", "Monkey's Audio" and "monkeys-audio" as "monkeysaudio".
     public static string NormalizeFormat(string name) => name.Replace(" ", string.Empty, StringComparison.Ordinal).Replace("-", string.Empty, StringComparison.Ordinal)
-        .Replace("_", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
+        .Replace("_", string.Empty, StringComparison.Ordinal).Replace("'", string.Empty, StringComparison.Ordinal).ToLowerInvariant();
 
     // The format parser that would analyze the file, or null: the same tag scan and sniffing as
     // Analyze, without parsing the data, so a batch can skip files of other formats cheaply. It

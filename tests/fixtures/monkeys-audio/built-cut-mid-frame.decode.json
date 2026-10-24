@@ -1,0 +1,29 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 73728,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "descriptor MD5",
+        "stored": 1,
+        "checked": 0,
+        "failed": 0
+      },
+      {
+        "name": "frame CRC-32",
+        "stored": 2,
+        "checked": 1,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The monkeys-audio decoder could not decode the frame at 0x6B1C: The coded data ends before the samples do."
+    }
+  ]
+}
