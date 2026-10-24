@@ -1,8 +1,8 @@
 ---
 id: bitrate-modes
 title: CBR, VBR and ABR
-related: dts-extension-substream, wavpack-hybrid-mode, bit-reservoir, xing-header, lame-tag, padding, adts, musepack-subband-coding
-references: ISO/IEC 11172-3 2.4.2.3; LAME documentation; ISO/IEC 14496-3 1.A.3.2.1; ISO/IEC 14496-1 7.2.6.6; ETSI TS 102 114 5.4.2 Table 5-7
+related: tta-stream, dts-extension-substream, wavpack-hybrid-mode, bit-reservoir, xing-header, lame-tag, padding, adts, musepack-subband-coding
+references: ISO/IEC 11172-3 2.4.2.3; LAME documentation; ISO/IEC 14496-3 1.A.3.2.1; ISO/IEC 14496-1 7.2.6.6; ETSI TS 102 114 5.4.2 Table 5-7; TTA format description
 ---
 
 Every MPEG audio frame states its own bitrate, so a stream can use one bitrate throughout or change it from frame to frame.
@@ -19,4 +19,4 @@ Every MPEG audio frame states its own bitrate, so a stream can use one bitrate t
 
 **What you see.** IsVbr in the statistics says whether the frames use more than one bitrate, from the frames themselves. A VBR header alone does not make a file VBR: LAME writes an "Info" header into CBR files too. The LAME tag's VBR Method says which mode the encoder was set to, and the bitrate distribution shows how many frames use each bitrate.
 
-**In WavPack** hybrid blocks aim at one bitrate ([hybrid mode](wavpack-hybrid-mode)). **In Musepack** SV7 and SV8 frames are as long as their data, so the bitrate always varies ([Musepack subband coding](musepack-subband-coding)).
+**In TTA** every frame is as long as its audio needs, so the bitrate varies from frame to frame ([TTA](tta-stream)). **In WavPack** hybrid blocks aim at one bitrate ([hybrid mode](wavpack-hybrid-mode)). **In Musepack** SV7 and SV8 frames are as long as their data, so the bitrate always varies ([Musepack subband coding](musepack-subband-coding)).
