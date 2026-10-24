@@ -103,7 +103,7 @@ internal static class Explain
     public const string MainData = "This frame's main data: the scalefactors and Huffman-coded spectrum of its granules. Where main_data_begin is above 0, part of it lies in earlier frames.";
     public const string ReservoirBytes = "Bytes here that hold main data of a later frame, which reaches back into this frame through the bit reservoir.";
     public const string Layer3Ancillary = "Bytes that no frame's main data uses. Encoders may fill them with their own data, such as their name or an extension like mp3PRO; decoders skip them.";
-    public const string Layer12Ancillary = "Bytes after the samples that the audio does not use. Encoders may fill them with their own data; decoders skip them.";
+    public const string Layer12Ancillary = "Bytes after the samples that the audio does not use, including the padding slot of a padded frame, which ISO/IEC 11172-3 counts as ancillary data and the statistics leave out. Encoders may fill them with their own data; decoders skip them.";
     public const string FrameData = "The frame's bytes after its header and CRC, which the analyzer does not break down further here.";
     public const string HeaderFrameUnused = "Bytes of the VBR header frame after the header, which hold no audio.";
 
