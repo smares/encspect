@@ -197,6 +197,7 @@ public class FormatDetectionTests
         Assert.Equal(["AC-3"], analyzer.MatchFormats("eac3"));
         Assert.Equal(["Ogg"], analyzer.MatchFormats("opus"));
         Assert.Equal(["FLAC"], analyzer.MatchFormats("flac"));
+        Assert.Equal(["TTA"], analyzer.MatchFormats("tta"));
         Assert.Empty(analyzer.MatchFormats("xyz"));
         Assert.Empty(analyzer.MatchFormats(" "));
         Assert.Equal(DefaultParsers.Formats.Select(p => p.Name), analyzer.FormatNames);

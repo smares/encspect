@@ -1,0 +1,257 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-no-samples.tta",
+    "root": {
+      "name": "File",
+      "value": "TTA",
+      "offset": 0,
+      "length": 26,
+      "children": [
+        {
+          "name": "TTA",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 26,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 22,
+              "children": [
+                {
+                  "name": "Signature",
+                  "value": "TTA1",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "Audio Format",
+                  "value": 1,
+                  "offset": 4,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 6,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 8,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 10,
+                  "length": 4
+                },
+                {
+                  "name": "Samples",
+                  "value": 0,
+                  "unit": "samples",
+                  "offset": 14,
+                  "length": 4
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 1334737195,
+                  "offset": 18,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 1334737195,
+                  "offset": 18,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 18,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Seek Table",
+              "value": 0,
+              "unit": "entries",
+              "offset": 22,
+              "length": 4,
+              "children": [
+                {
+                  "name": "Seek Points",
+                  "value": 0,
+                  "unit": "entries",
+                  "offset": 22,
+                  "length": 0
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 0,
+                  "offset": 22,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 0,
+                  "offset": 22,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 22,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 26
+                },
+                {
+                  "name": "Samples",
+                  "value": 0,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 26
+                },
+                {
+                  "name": "Duration",
+                  "value": 0,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 26
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 26
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 46080,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 26
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 26
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 26
+                },
+                {
+                  "name": "Verified Frame Checksums",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 26
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": "none",
+                  "offset": 0,
+                  "length": 26
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "TTA",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "bitsPerSample": 16,
+        "samples": 0,
+        "duration": 0,
+        "isVbr": false,
+        "verification": {
+          "decoding": "noDecoder",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "header CRC-32",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "seek table CRC-32",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "frame CRC-32",
+              "covers": "codedData",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "tta.no-samples",
+        "message": "The header counts no samples, so it calls for no frame.",
+        "offset": 0,
+        "length": 22,
+        "path": [
+          0,
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-cut-in-header.tta",
+    "root": {
+      "name": "File",
+      "value": "TTA",
+      "offset": 0,
+      "length": 10,
+      "children": [
+        {
+          "name": "TTA",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 10,
+          "children": [
+            {
+              "name": "Header",
+              "value": 10,
+              "unit": "bytes",
+              "offset": 0,
+              "length": 10
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "tta.header-truncated",
+        "message": "The data ends 10 bytes into the header, which has 22.",
+        "offset": 0,
+        "length": 10,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

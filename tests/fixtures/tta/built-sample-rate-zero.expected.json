@@ -1,0 +1,64 @@
+{
+ "length": 950,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 950
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 0,
+  "samples": 100000,
+  "crc": "d39a4350",
+  "crc_ok": true
+ },
+ "frame_length": 0,
+ "table": null,
+ "frames": [],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 0,
+   "channels": 2,
+   "samples": 0,
+   "duration": 0,
+   "bits_per_sample": 16,
+   "average_bitrate": null,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [
+  {
+   "code": "tta.sample-rate-zero"
+  }
+ ],
+ "description": "A sample rate of 0: the length of a frame, and so the size of the seek table, is undefined; the rest is not read."
+}

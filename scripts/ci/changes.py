@@ -72,6 +72,12 @@ AREAS = {
         "scripts": ["crosscheck_flac_fixtures.py"],
         "globs": ["scripts/fixtures/make_*flac*", "scripts/fixtures/flac_*"],
     },
+    "tta-crosscheck": {
+        "projects": ["Encspect.Formats.Tta", "Encspect.Tags.Ape"],
+        "fixtures": ["tta"],
+        "scripts": ["crosscheck_tta_fixtures.py"],
+        "globs": ["scripts/fixtures/make_*tta*", "scripts/fixtures/tta_*"],
+    },
     "asf-crosscheck": {
         "projects": ["Encspect.Formats.Asf", "Encspect.Formats.Wma"],
         "fixtures": ["asf"],

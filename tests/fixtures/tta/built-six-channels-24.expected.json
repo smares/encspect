@@ -1,0 +1,90 @@
+{
+ "length": 542,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 542
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 6,
+  "bits": 24,
+  "rate": 48000,
+  "samples": 100000,
+  "crc": "b202a65b",
+  "crc_ok": true
+ },
+ "frame_length": 50155,
+ "table": {
+  "offset": 22,
+  "expected": 2,
+  "entries": [
+   204,
+   304
+  ],
+  "crc": "b9c21f87",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 34,
+   "size": 204,
+   "status": [],
+   "crc": "fdd1e9fc"
+  },
+  {
+   "offset": 238,
+   "size": 304,
+   "status": [],
+   "crc": "7a580714"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 48000,
+   "channels": 6,
+   "samples": 100000,
+   "duration": 2.0833333333333335,
+   "bits_per_sample": 24,
+   "average_bitrate": 1.95072,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": true,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [],
+ "description": "24-bit audio in six channels at 48,000 Hz, two frames."
+}

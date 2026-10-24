@@ -761,6 +761,53 @@ public class ComplexityTests
         Assert.Equal(DecodeStatus.Stopped, report.Streams.Single().Verification!.Decoding);
     }
 
+    // A header of sample rate 1 and 4,294,967,295 samples calls for 4,294,967,295 frames of one sample, a seek table of 16 GB: the file holds 8 MB of it, so
+    // the entries read are those the data holds (2 million) and every frame lies past the end.
+    [Fact]
+    public void ATtaSeekTableOfBillionsOfEntriesOverASmallFile()
+    {
+        byte[] data = [.. TtaBuilder.Header(1, 1, 16, uint.MaxValue), .. new byte[8 << 20]];
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("table.tta", new MemoryStream(data));
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.Contains(report.Findings, f => f.Code == "tta.seek-table-truncated");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed");
+    }
+
+    // Entries of 4 GB each: the first frame is cut by the end of the data and the rest lie past it, however many the table lists.
+    [Fact]
+    public void ATtaSeekTableOfFramesFourGigabytesLong()
+    {
+        const int frames = 200_000;
+        byte[] data = [.. TtaBuilder.Header(8000, 1, 16, TtaBuilder.FrameLength(8000) * frames), .. TtaBuilder.Table(Enumerable.Repeat(uint.MaxValue, frames)), .. new byte[1000]];
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("long.tta", new MemoryStream(data));
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.Contains(report.Findings, f => f.Code == "tta.frame-cut");
+        Assert.Contains(report.Findings, f => f.Code == "tta.frames-missing");
+    }
+
+    // One frame of 48 MB with its CRC-32: the file is read in chunks, once.
+    [Fact]
+    public void ATtaFrameOfManyMegabytes()
+    {
+        byte[] data = TtaBuilder.Stream(44100, 2, 16, 46080, [48 << 20]);
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("big.tta", new MemoryStream(data));
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.Empty(report.Findings);
+        Assert.Equal(true, report.Streams.Single().Verification!.IsVerified);
+    }
+
     // A frame header that reads, a fixed predictor and a Rice code of parameter 0 that is followed by nothing but zero bits: the unary code runs to
     // the end of the data. 24 MB of zeros hold such a header every 4 KB; each is a candidate whose walk reads on as far as a frame may be long.
     // The searches are limited in proportion to the data, so the time stays linear.
