@@ -1102,7 +1102,9 @@ def ofl_in_each_stream():
         guessenc=False,
     )
     f.add_frames(enhanced_chain(first, **MP3PRO) + enhanced_chain(second, **SURROUND))
-    f.extra = {"detected_encoder": {"name": "mp3PRO encoder", "confidence": "Medium"}}
+    # mp3guessenc reads only the first stream's block.
+    f.extra = {"detected_encoder": {"name": "mp3PRO encoder", "confidence": "Medium"},
+               "mp3guessenc_ofl": {"delay": 1500, "length": 6000}}
     return f.finding("mpeg.stream-changed", "44100 Hz")
 
 
