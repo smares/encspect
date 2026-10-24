@@ -412,7 +412,7 @@ public class MemoryTests(ITestOutputHelper output)
     // An AC-3 stream keeps a 16-byte record per frame (offset, store position, kept bits and CRC
     // verdicts), the fields its nodes are built from without the exponent groups and mantissas,
     // and its per-frame series, with the coding series (14 bytes for a mono frame): the frames repeat a committed mono fixture of 384-byte frames at
-    // 96 kbps, 85 bytes kept per frame on linux-x64 and a peak of 89. The bounds leave room and
+    // 96 kbps, 85 bytes kept per frame on linux-x64 and a peak of 89 to 102. The bounds leave room and
     // stay far below what keeping each frame's bytes would cost.
     [Fact]
     public void ManyAc3FramesStayCompact()
@@ -479,7 +479,7 @@ public class MemoryTests(ITestOutputHelper output)
             categoryBytes: (int)Math.Ceiling(perUnit) + 1, numericBytes: 8);
         double keptPerUnit = (kept - fewerKept) / (double)(units - fewer);
         output.WriteLine($"{Hundredths(keptPerUnit)} bytes kept per further program frame");
-        // 151 bytes measured on linux-x64 (a 16-byte record, the kept bits, the bitrate series' two points and 35 bytes of series for each program frame); the
+        // 158 bytes measured on linux-x64 (a 16-byte record, the kept bits, the bitrate series' two points and 35 bytes of series for each program frame); the
         // bound leaves a quarter for the other platforms.
         Assert.True(keptPerUnit < 190, $"The report keeps {keptPerUnit:F2} bytes per further program frame.");
         GC.KeepAlive(few);
