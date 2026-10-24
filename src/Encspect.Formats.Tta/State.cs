@@ -76,9 +76,6 @@ internal sealed class State
 
     public long Samples { get; private set; }
 
-    // The number of frames that have nodes: every entry but those past the end of the data.
-    public int FrameNodes { get; private set; }
-
     public void AddEntry(in Entry entry)
     {
         Records.Entries.Add(entry);
@@ -88,7 +85,7 @@ internal sealed class State
             return;
         }
 
-        FrameNodes++;
+        Records.FrameNodes++;
         if ((entry.Status & EntryStatus.Cut) != 0)
         {
             CutFrames++;

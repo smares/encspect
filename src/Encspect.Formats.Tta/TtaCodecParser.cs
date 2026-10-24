@@ -45,10 +45,10 @@ public sealed class TtaCodecParser : ICodecParser
             Add(state, packet, index++);
         }
 
-        if (state.Header is { SampleRate: > 0 } header && header.FrameCount != state.FrameNodes)
+        if (state.Header is { SampleRate: > 0 } header && header.FrameCount != state.Records.FrameNodes)
         {
             long expected = header.FrameCount;
-            long found = state.FrameNodes;
+            long found = state.Records.FrameNodes;
             state.Findings.Add(Severity.Warning, "tta.frame-count-differs", state.Stream, _ =>
                 $"The header's {Counts.Of(header.Samples, "sample", "samples")} at {header.SampleRate} Hz call for {Counts.Of(expected, "frame", "frames")}, but the container holds {found}.");
         }

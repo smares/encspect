@@ -158,16 +158,7 @@ public sealed class TtaParser : IFormatParser
         long length = reader.Length;
         if (!TtaHeader.HasSignature(bytes))
         {
-            s.Stream = new Node(Summary.CodecName, start, length, null, () =>
-            [
-                new Node("Signature", start, 4, "TTA2") { Description = Explain.SignatureV2, Topic = Topics.Stream },
-                new Node("Data", start + 4, length - 4, NodeValue.Integer(length - 4, "bytes", "byte")) { Description = Explain.UnreadData },
-            ])
-            {
-                Kind = NodeKind.Stream,
-                Description = Explain.Stream,
-                Topic = Topics.Stream,
-            };
+            s.Stream = SignatureOnly(start, length);
             root.Add(s.Stream);
             s.Findings.AddNow(Severity.Info, "tta.version-2", "The stream begins with \"TTA2\", the second version of the format, which the format description lists as in development; the analyzer reads TTA1 only.", s.Stream);
             return reader.End;
@@ -175,12 +166,7 @@ public sealed class TtaParser : IFormatParser
 
         if (available < TtaHeader.Length)
         {
-            s.Stream = new Node(Summary.CodecName, start, length, null, () => [new Node("Header", start, length, NodeValue.Integer(length, "bytes", "byte")) { Description = Explain.UnreadData }])
-            {
-                Kind = NodeKind.Stream,
-                Description = Explain.Stream,
-                Topic = Topics.Stream,
-            };
+            s.Stream = CutHeader(start, length);
             root.Add(s.Stream);
             s.Findings.AddNow(Severity.Warning, "tta.header-truncated", $"The data ends {Counts.Of(length, "byte", "bytes")} into the header, which has {TtaHeader.Length}.", s.Stream);
             return reader.End;
@@ -288,7 +274,7 @@ public sealed class TtaParser : IFormatParser
         s.TableNode = Nodes.SeekTable(records);
         s.Leading.Add(s.TableNode);
         long end = Math.Min(Math.Max(position, tableEnd), reader.End);
-        s.Stream = Summary.StreamNode(start, end - start, s);
+        s.Stream = Summary.StreamNode(start, end - start, s.Leading, records);
         root.Add(s.Stream);
         if (position < reader.End)
         {
@@ -300,11 +286,34 @@ public sealed class TtaParser : IFormatParser
         return end;
     }
 
+    // The stream nodes of data that holds no readable header. They are built apart from Walk so that their builders capture values only: a closure
+    // shared with the state would keep the context, and so the input, alive as long as the report.
+    private static Node SignatureOnly(long start, long length) =>
+        new(Summary.CodecName, start, length, null, () =>
+        [
+            new Node("Signature", start, 4, "TTA2") { Description = Explain.SignatureV2, Topic = Topics.Stream },
+            new Node("Data", start + 4, length - 4, NodeValue.Integer(length - 4, "bytes", "byte")) { Description = Explain.UnreadData },
+        ])
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Stream,
+            Topic = Topics.Stream,
+        };
+
+    private static Node CutHeader(long start, long length) =>
+        new(Summary.CodecName, start, length, null, () => [new Node("Header", start, length, NodeValue.Integer(length, "bytes", "byte")) { Description = Explain.UnreadData }])
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Stream,
+            Topic = Topics.Stream,
+        };
+
     // The rest of a stream whose header leaves the length of a frame undefined, as bytes the analyzer does not read.
     private static long Unread(State s, Node root, ByteReader reader, long from)
     {
         long rest = reader.End - from;
-        s.Stream = new Node(Summary.CodecName, reader.Start, reader.Length, null, () => [.. s.Leading, new Node("Data", from, rest, NodeValue.Integer(rest, "bytes", "byte")) { Description = Explain.UnreadData }])
+        List<Node> leading = s.Leading;
+        s.Stream = new Node(Summary.CodecName, reader.Start, reader.Length, null, () => [.. leading, new Node("Data", from, rest, NodeValue.Integer(rest, "bytes", "byte")) { Description = Explain.UnreadData }])
         {
             Kind = NodeKind.Stream,
             Description = Explain.Stream,

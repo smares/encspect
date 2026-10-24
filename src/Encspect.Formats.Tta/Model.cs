@@ -90,6 +90,9 @@ internal sealed class Records
 
     public TtaHeader? Header { get; set; }
 
+    // The number of entries that have a frame node: every one but those past the end of the data.
+    public int FrameNodes { get; set; }
+
     public long HeaderOffset { get; set; }
 
     // The seek table: where it starts, how many entries it holds in the file, and its CRC-32 as stored and as computed (null when the data

@@ -7,8 +7,9 @@ internal static class Summary
 {
     public const string CodecName = "TTA";
 
-    public static Node StreamNode(long start, long length, State s) =>
-        new(CodecName, start, length, null, () => new BlockedChildren(s.Leading, s.FrameNodes, i => Nodes.Frame(s.Records, i)))
+    // The builders capture the leading nodes and the records, never the state, which holds the context and so the input.
+    public static Node StreamNode(long start, long length, List<Node> leading, Records records) =>
+        new(CodecName, start, length, null, () => new BlockedChildren(leading, records.FrameNodes, i => Nodes.Frame(records, i)))
         {
             Kind = NodeKind.Stream,
             Description = Explain.Stream,
@@ -44,7 +45,7 @@ internal static class Summary
         if (s.IsContained)
         {
             Records records = s.Records;
-            stream.Add(new Node("Frames", start, end - start, NodeValue.Integer(s.FrameNodes, "frames", "frame"), () => new BlockedChildren([], s.FrameNodes, i => Nodes.Frame(records, i)))
+            stream.Add(new Node("Frames", start, end - start, NodeValue.Integer(records.FrameNodes, "frames", "frame"), () => new BlockedChildren([], records.FrameNodes, i => Nodes.Frame(records, i)))
             {
                 Kind = NodeKind.Stream,
                 Description = Explain.Stream,
@@ -87,7 +88,7 @@ internal static class Summary
             for (long i = 0; i < s.CrcFailures; i++)
             {
                 s.Findings.Add(Severity.Warning, "tta.frame-crc-mismatch", () => Nodes.CrcField(records, first), count =>
-                    $"The CRC-32 of frame {first} is {stored:x8}, but its bytes give {computed:x8}{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} differ" : string.Empty)}.");
+                    $"The CRC-32 of frame {first} is {stored:x8}, but its bytes give {computed:x8}{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.");
             }
         }
 
