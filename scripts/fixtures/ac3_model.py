@@ -396,7 +396,7 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
     cplbegf, cplendf = 3, 10
     begin_band = spx_range[0] + 2 if spx_range[0] < 6 else spx_range[0] * 2 - 3
     end_band = spx_range[1] + 5 if spx_range[1] < 3 else spx_range[1] * 2 + 3
-    # The band structure: the default of Table E2.15 where the strategy does not send one (E.1.3.3.7: "the default spectral extension band structure
+    # The band structure: the default of Table E2.11 (TS 102 366 E.1.10) where the strategy does not send one (E.1.3.3.7: "the default spectral extension band structure
     # shall be used" in the first block that uses spectral extension without one), or an explicit one (spxbndstrce 1) that merges every third band.
     structure = [int(i % 3 == 1) for i in range(end_band - begin_band - 1)] if spx_structure else DEFAULT_SPX_BANDS[begin_band + 1:end_band]
     spx_bands = end_band - begin_band - sum(structure)

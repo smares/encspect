@@ -771,10 +771,9 @@ def build_coding():
             "channel, alone with one block, and with a dependent frame again, the number of blocks changing between them.", data, frames_of(data),
             [stream("E-AC-3", 48000, 2, 0, sum(256 * [1, 2, 3, 6][p[0]["numblkscod"]] for p in program), layout=[m.FL, m.FR, m.BL, m.BR], vbr=True)],
             [("ac3.dependent-layout-changed", "add other channels in 2 of its frames than in its first")],
-            crosscheck={"ffprobe": False, "decode": True, "skip_insertion": False,
+            crosscheck={"ffprobe": False, "decode": True, "skip_insertion": True, "skip_control": False,
                         "skip": {"ffprobe": "Dependent substreams of different layouts make what ffmpeg's parser reports of the channels differ from the analyzer's first-frame layout.",
-                                 "skip_insertion": "The check rewrites the frames of one stream; ffmpeg decodes the independent substream and mixes in the dependent frames only as it likes, so a "
-                                                    "moved skip field in a dependent frame is not guaranteed to change the samples."}}, coding=[units])
+                                 "skip_control": "The last block's mantissas take no bits (SNR offsets 0), so moving its skip field changes no sample."}}, coding=[units])
 
     # An AC-3 core with E-AC-3 dependent frames, the form ETSI TS 102 366 J.1.5.2.2 gives a program of more than 5.1 channels (the AC-3 bit stream is
     # independent substream 0 of the Enhanced AC-3 bit stream): the program frame has the core's six blocks and the dependent frame's, 12 values in each
@@ -803,9 +802,8 @@ def build_coding():
             "series where there is a dependent frame, 6 where there is none.", data, frames_of(data),
             [stream("E-AC-3", 48000, 2, 0, 4 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True)],
             [("ac3.dependent-layout-changed", "add other channels in 1 of its frames than in its first")],
-            crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
+            crosscheck={"ffprobe": False, "decode": True, "skip_insertion": False,
                         "skip": {"ffprobe": "ffmpeg's parser takes the AC-3 core and the E-AC-3 frames as two codecs; what it reports of the stream is no reference for the analyzer's.",
-                                 "decode": "The check decodes each packet alone as one codec, and a packet that joins an AC-3 frame and a dependent E-AC-3 frame is neither.",
                                  "skip_insertion": "The core is AC-3, whose frames the check does not rewrite."}}, coding=[units])
 
     # Spectral extension that starts after a block without it, with the default band structure the specification loads at the first block that

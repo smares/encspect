@@ -58,11 +58,10 @@
  ],
  "crosscheck": {
   "ffprobe": false,
-  "decode": false,
+  "decode": true,
   "skip_insertion": false,
   "skip": {
    "ffprobe": "ffmpeg's parser takes the AC-3 core and the E-AC-3 frames as two codecs; what it reports of the stream is no reference for the analyzer's.",
-   "decode": "The check decodes each packet alone as one codec, and a packet that joins an AC-3 frame and a dependent E-AC-3 frame is neither.",
    "skip_insertion": "The core is AC-3, whose frames the check does not rewrite."
   }
  },

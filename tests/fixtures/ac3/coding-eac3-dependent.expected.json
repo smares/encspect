@@ -59,10 +59,11 @@
  "crosscheck": {
   "ffprobe": false,
   "decode": true,
-  "skip_insertion": false,
+  "skip_insertion": true,
+  "skip_control": false,
   "skip": {
    "ffprobe": "Dependent substreams of different layouts make what ffmpeg's parser reports of the channels differ from the analyzer's first-frame layout.",
-   "skip_insertion": "The check rewrites the frames of one stream; ffmpeg decodes the independent substream and mixes in the dependent frames only as it likes, so a moved skip field in a dependent frame is not guaranteed to change the samples."
+   "skip_control": "The last block's mantissas take no bits (SNR offsets 0), so moving its skip field changes no sample."
   }
  },
  "block_ends": {

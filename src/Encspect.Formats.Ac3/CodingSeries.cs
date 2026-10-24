@@ -46,9 +46,9 @@ internal sealed class CodingRecorder
     private const int BlocksPerFrame = 6;
 
     private readonly Ac3Analysis.ProgramKey _key;
-    private readonly ChunkedList<byte> _blocks = new();
-    private readonly ChunkedList<byte> _lengths = new();
-    private readonly ChunkedList<byte> _ends = new();
+    private ChunkedList<byte> _blocks = new();
+    private ChunkedList<byte> _lengths = new();
+    private ChunkedList<byte> _ends = new();
     private int _unitBlocks;
     private int _unitEnd = 255;
     private int _longest;
@@ -174,6 +174,11 @@ internal sealed class CodingRecorder
         }
 
         AddBandwidth(offsets, nodes.CodedBandwidth, time, series, cancellation);
+
+        // The flags are only needed to make the series; the recorder lives with the program, so they are let go.
+        _blocks = new();
+        _lengths = new();
+        _ends = new();
         return categories;
     }
 
