@@ -480,6 +480,8 @@ jobs:
         run: |
           python3 scripts/fixtures/make_monkeys_audio_fixtures.py
           python3 scripts/fixtures/make_external_monkeys_audio_fixtures.py --manifests-only
+          python3 scripts/fixtures/make_interim_monkeys_audio_fixture.py --manifests-only
+          python3 scripts/fixtures/make_legacy_monkeys_audio_fixtures.py --manifests-only
 
       - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
         run: |
@@ -862,6 +864,22 @@ jobs:
 
       - name: Cross-check the Monkey's Audio fixtures
         run: python3 scripts/fixtures/crosscheck_monkeys_audio_fixtures.py
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # The real-sample check below runs the analyzer on the downloaded file.
+      - name: Build the CLI
+        run: dotnet build --configuration Release src/Encspect.Cli
+
+      # A real file of version 3.97 from the FFmpeg sample archive, which allows downloading and states no license for redistribution, so it is
+      # fetched and checked against its SHA-256 rather than committed (the SDK decodes the versions before 3.99 and no longer writes them).
+      - name: Check the real Monkey's Audio sample with mac, ffmpeg, ffprobe and MediaInfo
+        run: python3 scripts/fixtures/check_monkeys_audio_samples.py .cache/monkeys-audio
+
+      - name: Check the analyzer against the real Monkey's Audio sample
+        run: python3 scripts/fixtures/check_monkeys_audio_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/monkeys-audio
 
   flac-crosscheck:
     name: FLAC fixtures agree with flac, metaflac, FFmpeg and MediaInfo, and the decoder with flac -d and FFmpeg

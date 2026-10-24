@@ -50,6 +50,8 @@ FIXTURES = {
     "normal-8-mono": (("wav", "music", 44100, 1, 8, SHORT), ["-c2000"]),
     "normal-16-mono": (("wav", "music", 44100, 1, 16, SHORT), ["-c2000"]),
     "normal-24-stereo": (("wav", "music", 44100, 2, 24, SHORT), ["-c2000"]),
+    "loud-24-stereo": (("wav", "loud-sine-noise", 44100, 2, 24, 8000), ["-c2000"]),
+    "full-frame-insane-24-mono": (("wav", "quiet", 44100, 1, 24, 1179648), ["-c5000"]),
     "normal-32-stereo": (("wav", "music", 44100, 2, 32, SHORT), ["-c2000"]),
     "normal-float-stereo": (("float", "music", 44100, 2, 32, SHORT), ["-c2000"]),
     "extra-high-32-stereo": (("wav", "music", 44100, 2, 32, SHORT), ["-c4000"]),

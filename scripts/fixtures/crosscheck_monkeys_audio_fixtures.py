@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Checks the Monkey's Audio fixtures' manifests against independent tools.
 
-For every manifest in tests/fixtures/monkeys-audio (make_external_monkeys_audio_fixtures.py, make_monkeys_audio_fixtures.py):
+For every manifest in tests/fixtures/monkeys-audio (make_external_monkeys_audio_fixtures.py, make_interim_monkeys_audio_fixture.py,
+make_legacy_monkeys_audio_fixtures.py, make_monkeys_audio_fixtures.py):
 
 - mac -V (the console tool of the Monkey's Audio SDK 13.42, built from the pinned source by monkeys_audio_tool.py): verifies the file, decoding every frame and
   comparing its CRC. It succeeds or fails as the manifest's crosscheck.mac_verify says; a null there means the fixture's fault is none that mac -V reports
@@ -9,8 +10,8 @@ For every manifest in tests/fixtures/monkeys-audio (make_external_monkeys_audio_
   The SDK's own decoder skips the seventh channel of a seven-channel file, so mac -V fails for it, as the analyzer's decoder does.
 - mac -d, on the fixtures mac -V accepts: the decoded samples, in the layout of the manifest's decoded_pcm_md5 (little-endian signed integers of as many whole
   bytes as the bit depth needs; the unsigned bytes of an 8-bit WAV file made signed), have that MD5, which the signal that went into the encoder gives.
-- FFmpeg 8.0.1: the same fixtures decode to the same samples where FFmpeg reads them (mono and stereo of 8, 16 and 24 bits, files of version 3.99 that start with
-  their descriptor); ffprobe gives the codec, the sample rate, the channels and the duration.
+- FFmpeg 8.0.1: the same fixtures decode to the same samples where FFmpeg reads them (mono and stereo of 8, 16 and 24 bits, files of versions 3.93 to 3.99 that
+  start with their descriptor or, before 3.98, with the old header); ffprobe gives the codec, the sample rate, the channels and the duration.
 - MediaInfo 26.01 (mediainfo_tool.py): the audio stream's format, sample rate, channels, bit depth and duration, where it reads the file.
 - The descriptor MD5 is worked out again here with hashlib in the SDK's order (MACLib.cpp, VerifyFileW2) and compared with the manifest's.
 
@@ -138,11 +139,12 @@ def ffmpeg_reads(manifest, data):
         return "FFmpeg decodes 8, 16 and 24 bits only"
     if manifest["header"]["flags"] & 4096 or data[:4] == b"MACF":
         return "FFmpeg does not read floating-point files"
-    if manifest["descriptor"]["version"] != 3990:
-        return "FFmpeg decodes files of version 3.99 (and 3.80 to 3.98) and refuses the others it is given"
+    version = manifest["descriptor"]["version"] if "descriptor" in manifest else manifest["file_version"]
+    if version < 3930 or 3990 < version:
+        return "FFmpeg decodes files of versions 3.93 to 3.99 (the versions the decoder reads) and refuses the others it is given, or decodes other audio than the SDK"
     if info["sample_rate"] == 0:
         return "FFmpeg refuses a file with no sample rate"
-    if manifest["descriptor"]["descriptor_bytes"] != 52 or manifest["descriptor"]["header_bytes"] != 24:
+    if "descriptor" in manifest and (manifest["descriptor"]["descriptor_bytes"] != 52 or manifest["descriptor"]["header_bytes"] != 24):
         return "FFmpeg decodes other audio than the SDK from a file whose descriptor states a size for itself or the header that the format does not define (seen with FFmpeg 6.1.1 on two of the three such fixtures; not examined further)"
     if manifest["regions"][0]["name"] == "Junk":
         return "FFmpeg does not look for the descriptor past bytes in front of it"

@@ -35,7 +35,9 @@ MONO, MONO_A, MONO_FRAMES = load("frames-normal-16-mono")
 STEREO, STEREO_A, STEREO_FRAMES = load("level-normal-16-stereo")
 SILENT, SILENT_A, SILENT_FRAMES = load("silent-then-tone-stereo")
 CHUNKS, CHUNKS_A, CHUNKS_FRAMES = load("wav-chunks")
+LOUD24, LOUD24_A, LOUD24_FRAMES = load("loud-24-stereo")
 MONO_PCM = sig.canonical("music", 44100, 1, 160000, 16)
+LOUD24_PCM = sig.canonical("loud-sine-noise", 44100, 2, 8000, 24) * 4
 STEREO_PCM = sig.canonical("music", 44100, 2, 24000, 16)
 SILENT_PCM = sig.canonical("silent-then-tone", 44100, 2, 160000, 16)
 MONO_BLOCKS = [73728, 73728, 12544]
@@ -136,7 +138,6 @@ add("frame-data-bytes-too-large", rebuild(MONO, MONO_A, frames, frame_data_bytes
 add("frame-data-bytes-too-small", rebuild(MONO, MONO_A, frames, frame_data_bytes=len(MONO_FRAMES[0]) + len(MONO_FRAMES[1])))
 add("terminating-bytes-too-large", rebuild(CHUNKS, CHUNKS_A, CHUNKS_FRAMES, terminating_bytes=10 << 20))
 add("program-version-zero", rebuild(MONO, MONO_A, frames, program=0))
-add("version-3980", rebuild(MONO, MONO_A, frames, version=3980))
 add("version-4110", rebuild(MONO, MONO_A, frames, version=4110))
 add("version-4000", rebuild(MONO, MONO_A, frames, version=4000))
 add("signature-float", rebuild(MONO, MONO_A, frames, signature=b"MACF"))
@@ -166,10 +167,19 @@ tiny[2] = b"\x01\x02\x03"
 add("frame-too-short-for-crc", rebuild(MONO, MONO_A, tiny))
 
 # --- the format before version 3.98
-add("old-version-3970", m.build_old(frames, 3970, 2000, 2, 1, 44100, 12544, header_data=MONO_A.header_data))
-add("old-version-3970-peak-level", m.build_old(frames, 3970, 2000, 2 | 4, 1, 44100, 12544, header_data=MONO_A.header_data, peak=12345))
+# These carry the frames of a 3.99 file under an older header, which is all the parser reads of them: versions up to 3.92 are not decoded, and the files
+# of 3.93 to 3.98 that are decoded are the legacy-* fixtures (make_legacy_monkeys_audio_fixtures.py).
 add("old-version-3900", m.build_old(frames, 3900, 2000, 2, 1, 44100, 12544, header_data=MONO_A.header_data))
+add("old-version-3850", m.build_old(frames, 3850, 2000, 0, 1, 44100, 12544, header_data=MONO_A.header_data))
+add("old-version-3820-crc", m.build_old(frames, 3820, 2000, 2, 1, 44100, 12544, header_data=MONO_A.header_data))
 add("old-version-3800", m.build_old(frames, 3800, 2000, 0, 1, 44100, 12544, header_data=MONO_A.header_data))
+
+# --- a damaged frame of 24-bit audio among good ones: the frames after it must verify. The audio is loud enough that the first stage of the predictor
+# overflows 32 bits, so a decoder that stayed in the interim mode after the damaged frame would fail the frames that follow it.
+loud_frames = [LOUD24_FRAMES[0]] * 4
+damaged_24 = list(loud_frames)
+damaged_24[1] = flip(loud_frames[1], 3)
+add("24-bit-frame-crc-changed", rebuild(LOUD24, LOUD24_A, damaged_24, blocks_per_frame=8000, final_blocks=8000))
 
 
 # What each case must give: the findings of the analysis (codes), what decoding does (status, frames whose CRC was compared, frames whose CRC differs,
@@ -208,7 +218,6 @@ EXPECT = {
     "terminating-bytes-too-large": {"findings": ["monkeys-audio.data-cut", "monkeys-audio.terminating-data-size", "monkeys-audio.md5-not-compared"],
                                     "decode": ("decoded", 1, 0, 24000, []), "pcm": "chunks", "complete": True},
     "program-version-zero": {},
-    "version-3980": {"decode": ("notPossible", 0, 0, 0, ["decode.not-possible"])},
     "version-4110": {},
     "version-4000": {"findings": ["monkeys-audio.version"], "decode": ("notPossible", 0, 0, 0, ["decode.not-possible"])},
     "signature-float": {},
@@ -227,19 +236,21 @@ EXPECT = {
     "trailing-bytes-after-terminating": {"findings": ["monkeys-audio.trailing-data"], "pcm": "chunks", "decode": ("decoded", 1, 0, 24000, [])},
     "frame-too-short-for-special-codes": {"findings": ["monkeys-audio.frame-too-short"], "decode": ("decoded", 2, 0, 147456, []), "complete": False},
     "frame-too-short-for-crc": {"findings": ["monkeys-audio.frame-too-short"], "decode": ("decoded", 2, 0, 147456, []), "complete": False, "crcs": 2},
+    "24-bit-frame-crc-changed": {"mac": False, "decode": ("decoded", 4, 1, 32000, ["monkeys-audio.frame-crc-mismatch"]), "pcm": "loud24", "prefix": True},
 }
-OLD = {  # version: (samples, stored CRCs)
-    "old-version-3970": (3970, 602368, 3, ["monkeys-audio.old-format"]),
-    "old-version-3970-peak-level": (3970, 602368, 3, ["monkeys-audio.old-format"]),
-    "old-version-3900": (3900, FULL, 3, ["monkeys-audio.old-format"]),
-    "old-version-3800": (3800, 30976, 0, ["monkeys-audio.old-format", "monkeys-audio.final-frame-blocks"]),
+OLD = {  # name: whether the frames store a CRC (the flag, or version 3.93 and later)
+    "old-version-3900": True,
+    "old-version-3850": False,
+    "old-version-3820-crc": True,
+    "old-version-3800": False,
 }
-PCM = {"mono": MONO_PCM, "chunks": STEREO_PCM}
+PCM = {"mono": MONO_PCM, "chunks": STEREO_PCM, "loud24": LOUD24_PCM}
+TOTAL = {"mono": FULL, "chunks": 24000, "loud24": 32000}
 
 
 def prefix_md5(kind, samples):
     pcm = PCM[kind]
-    width = len(pcm) // (FULL if kind == "mono" else 24000)
+    width = len(pcm) // TOTAL[kind]
     return {"md5": hashlib.md5(pcm[:samples * width]).hexdigest()}
 
 
@@ -255,7 +266,7 @@ def manifest_of(name, data):
     decode = {"status": status, "checked": checked, "failed": failed, "samples": samples, "pcm_samples": samples,
               "findings": [{"code": c, "count": 1} for c in found]}
     # The audio is a prefix of the signal whenever decoding stopped at a frame boundary after whole frames.
-    total = FULL if kind == "mono" else 24000
+    total = TOTAL[kind]
     written = case.get("written", samples)
     decode["pcm_samples"] = written
     pcm = prefix_md5(kind, written) if status == "decoded" and case.get("prefix", written in (73728, 114688, 147456, 159744, total)) else None
@@ -268,22 +279,22 @@ def manifest_of(name, data):
 
 
 def old_manifest(name, data):
-    version, samples, crcs, findings = OLD[name]
-    peak = "peak" in name
-    n = 3
-    fixed = 32 + (4 if peak else 0) + len(MONO_A.header_data) + 4 * n + (n if version <= 3800 else 0)
-    body = len(data) - fixed
-    rate = 44100
-    checks = [{"name": "frame CRC-32", "covers": "decodedAudio", "coversAllAudio": crcs == 3, "stored": crcs, "checked": 0, "failed": 0}]
-    info = {"codec": "Monkey's Audio", "layout": ["front center"], "sample_rate": rate, "channels": 1, "channel_mode": "Mono", "samples": samples,
-            "duration": samples / rate, "bits_per_sample": 16, "average_bitrate": body * 8 * rate / samples / 1000,
-            "encoder": f"Monkey's Audio (file version {version // 1000}.{version % 1000 // 10:02d})"}
-    return {"length": len(data), "regions": [{"name": "Monkey's Audio", "offset": 0, "length": len(data)}], "frames": [], "stream_infos": [info],
-            "decoded_samples": 0, "pcm_samples": 0,
+    """A file with the old header whose frames the decoder does not read: versions before 3.93, where the frames are 3.99's under another header."""
+    a = m.parse_old(data)
+    has_crc = OLD[name]
+    samples = (a.total_frames - 1) * a.blocks_per_frame + a.final_blocks
+    frames = m.old_frame_entries(data, a)
+    bits = sum((f["end"] - f["start"]) * 8 for f in a.frames)
+    n = len(a.frames)
+    # Without the CRC flag a frame starts with a checksum of 30 bits, Rice-coded, that is no CRC: it is declared under its own name and never compared.
+    checks = [{"name": "frame CRC-32" if has_crc else "frame checksum", "covers": "decodedAudio", "coversAllAudio": has_crc, "stored": n, "checked": 0, "failed": 0}]
+    findings = ["monkeys-audio.old-format"] + (["monkeys-audio.final-frame-blocks"] if a.final_blocks > a.blocks_per_frame else [])
+    return {"length": len(data), "file_version": a.version, "seek_entries": a.seek_entries, "regions": [{"name": "Monkey's Audio", "offset": 0, "length": len(data)}],
+            "frames": frames, "stream_infos": [m.old_stream_info(a, bits, samples)], "decoded_samples": 0, "pcm_samples": 0,
             "verification": {"default": {"isVerified": None, "decoding": "notRequested", "checksums": checks},
                              "verify": {"isVerified": None, "decoding": "notPossible", "checksums": checks}},
             "decode_findings": [{"code": "decode.not-possible", "count": 1}], "findings": [finding(c) for c in findings], "encoder": {"tool": TOOL},
-            "crosscheck": {"mac_verify": None}}
+            "crosscheck": {"mac_verify": None}, "header": {"flags": a.flags}}
 
 
 def main():

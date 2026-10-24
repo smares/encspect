@@ -39,6 +39,10 @@ def samples(kind, rate, channels, count, bits):
                 value = tone if channel == 0 else None
             elif kind == "left-silent":
                 value = 0 if channel == 0 else tone
+            elif kind == "loud-sine-noise":
+                # A sine and a full-rate square wave at three tenths of full scale each, with a little noise: the first stage of the predictor sums
+                # products of values the high-pass filter makes large with coefficients of hundreds, which at 24 bits overflow 32 bits.
+                value = 0.3 * math.sin(2 * math.pi * (220 + 110 * channel) * t) + (0.3 if (i + channel) % 2 else -0.3) + noise * 0.1
             elif kind == "loud":
                 value = (state >> 3 & 0xFFFF) / 32768 - 1
             else:

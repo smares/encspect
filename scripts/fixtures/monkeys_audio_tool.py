@@ -8,8 +8,11 @@
 - mac, the SDK's console tool (Source/Console, built by the SDK's own CMakeLists.txt as a static library and an executable
   that is named mac on Linux), writes the encoder-made fixtures and decodes them again: `mac in.wav out.ape -c2000`, `mac in.ape
   out.wav -d`, `mac in.ape -v` (quick verify with the descriptor MD5) and `-V` (full verify, which decodes and compares every frame CRC).
-- The encoder writes the current format only (file version 3.99, descriptor and header), so no fixture of an older version can
-  be made with it (docs/formats/monkeys-audio.md, "Not covered").
+- The encoder writes the current format only (file version 3.99, descriptor and header), so the fixtures of older versions come from
+  monkeys_audio_legacy.py, whose files `mac -V` verifies (docs/formats/monkeys-audio.md, "Decoding").
+- build_interim_mac builds a second mac from the same source with one line of the encoder changed, so that it writes 24-bit files the way the encoders
+  of Monkey's Audio 5.01 to 8.51 did (their predictor summed the first stage in 64 bits, which the decoder's "interim mode" undoes,
+  Interim.cpp). The unchanged mac verifies and decodes those files through that mode; no unchanged encoder can write one.
 
 Usage: python3 scripts/fixtures/monkeys_audio_tool.py [directory]    builds mac in the directory and prints its path.
 """
@@ -68,6 +71,34 @@ def build_mac(directory=None):
     if binary.exists():
         return binary
     source = extract(directory)
+    build = directory / "build"
+    subprocess.run(["cmake", "-S", str(source), "-B", str(build), "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED=OFF"], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(["cmake", "--build", str(build), "--parallel", "4"], check=True, stdout=subprocess.DEVNULL)
+    return binary
+
+
+# The one line of the encoder (NewPredictor.cpp, CPredictorCompress::CompressValue, the branch for samples over 16 bits) that differs: the 2019-2022
+# encoders did not cut the two sums to 32 bits before the shift, and the decoder of that period (Interim.cpp, CPredictorDecompressInterim) adds them in 64
+# bits. The source file has CRLF line ends; the line is matched without its end.
+INTERIM_LINE = "nOutput = nA - static_cast<INTTYPE>((static_cast<int>(nPredictionA) + (static_cast<int>(nPredictionB) >> 1)) >> 10);"
+INTERIM_PATCHED = "nOutput = nA - static_cast<INTTYPE>((nPredictionA + (nPredictionB >> 1)) >> 10);"
+
+
+def build_interim_mac(directory=None):
+    """The path of a mac whose encoder writes 24-bit files in the 64-bit first stage of the 2019-2022 encoders, built in directory from a copy of the SDK
+    with INTERIM_LINE replaced."""
+    directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="mac-interim-"))
+    directory.mkdir(parents=True, exist_ok=True)
+    binary = directory / "build" / "mac"
+    if binary.exists():
+        return binary
+    source = directory / "sdk"
+    shutil.copytree(extract(directory / "original"), source, dirs_exist_ok=True)
+    path = source / "Source" / "MACLib" / "NewPredictor.cpp"
+    text = path.read_bytes().decode("utf-8")
+    if text.count(INTERIM_LINE) != 1:
+        raise RuntimeError("the line of the encoder to change is not in the SDK source exactly once")
+    path.write_bytes(text.replace(INTERIM_LINE, INTERIM_PATCHED).encode("utf-8"))
     build = directory / "build"
     subprocess.run(["cmake", "-S", str(source), "-B", str(build), "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED=OFF"], check=True, stdout=subprocess.DEVNULL)
     subprocess.run(["cmake", "--build", str(build), "--parallel", "4"], check=True, stdout=subprocess.DEVNULL)

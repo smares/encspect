@@ -273,6 +273,86 @@ def dump(manifest_dict):
     return json.dumps(manifest_dict, indent=1, ensure_ascii=False) + "\n"
 
 
+def old_blocks_per_frame(version, level):
+    """The blocks in a frame of a file with the old header (APEHeader.cpp, AnalyzeOld)."""
+    return 73728 * 4 if version >= 3950 else 73728 if version >= 3900 or (version >= 3800 and level == 4000) else 9216
+
+
+class OldApe:
+    """What parse_old found."""
+
+
+def parse_old(data):
+    """Reads a file of the format before version 3.98 (one header of 32 bytes, optional fields, WAV header data, seek table, frames, terminating data)."""
+    a = OldApe()
+    a.junk = 0
+    a.version = u16(data, 4)
+    a.level = u16(data, 6)
+    a.flags = u16(data, 8)
+    a.channels = u16(data, 10)
+    a.rate = u32(data, 12)
+    a.header_data_bytes = u32(data, 16)
+    a.terminating_bytes = u32(data, 20)
+    a.total_frames = u32(data, 24)
+    a.final_blocks = u32(data, 28)
+    at = 32
+    a.peak = None
+    if a.flags & 4:
+        a.peak = u32(data, at)
+        at += 4
+    elements = a.total_frames
+    if a.flags & 16:
+        elements = u32(data, at)
+        at += 4
+    a.header_bytes = at
+    a.bits = 8 if a.flags & 1 else 24 if a.flags & 8 else 16
+    a.blocks_per_frame = old_blocks_per_frame(a.version, a.level)
+    a.seek_at = at + a.header_data_bytes
+    a.data_start = a.seek_at + 4 * elements + (elements if a.version <= 3800 else 0)
+    a.data_end = len(data) - a.terminating_bytes
+    a.seek_entries = elements
+    a.has_crc = bool(a.flags & 2) or a.version >= 3930
+    a.has_special = a.has_crc and a.version > 3820
+    seek = [u32(data, a.seek_at + 4 * i) for i in range(elements)]
+    a.frames = []
+    for f in range(a.total_frames):
+        start = seek[f] - a.data_start
+        end = seek[f + 1] - a.data_start if f + 1 < a.total_frames else a.data_end - a.data_start
+        a.frames.append({"start": start, "end": end, "blocks": a.final_blocks if f == a.total_frames - 1 else a.blocks_per_frame})
+    return a
+
+
+def old_frame_entries(data, a):
+    """The manifest's entry for each frame of a file with the old header: where it lies, its stored CRC and special codes where the version has them (all
+    32 bits are the CRC up to version 3.82, and a file without the CRC flag has a Rice-coded checksum instead, which the analyzer does not read)."""
+    entries = []
+    for index, frame in enumerate(a.frames):
+        rs = ranges(a.data_start, frame["start"], frame["end"])
+        offset, length = extent(rs)
+        crc = special = None
+        first = stream_bytes(data, a.data_start, frame["start"], frame["start"] + 8)
+        if a.has_crc and len(first) >= 4:
+            word = struct.unpack(">I", first[:4])[0]
+            if not a.has_special:
+                crc = word
+            else:
+                crc = word & 0x7FFFFFFF
+                if word & 0x80000000 and len(first) >= 8:
+                    special = struct.unpack(">I", first[4:8])[0]
+        entries.append({"index": index, "offset": offset, "length": length, "samples": frame["blocks"], "crc": None if crc is None else f"0x{crc:08X}",
+                        "special": None if special is None else f"0x{special:08X}", "start": frame["start"], "end": frame["end"]})
+    return entries
+
+
+def old_stream_info(a, entries_bits, samples):
+    layout = {1: ["front center"], 2: ["front left", "front right"]}.get(a.channels)
+    return {"codec": "Monkey's Audio", "layout": layout, "sample_rate": a.rate, "channels": a.channels,
+            "channel_mode": {0: None, 1: "Mono", 2: "Mid/side stereo"}.get(a.channels, "Multichannel"), "samples": samples,
+            "duration": samples / a.rate if a.rate else 0, "bits_per_sample": a.bits,
+            "average_bitrate": entries_bits * a.rate / samples / 1000 if samples and a.rate else None,
+            "encoder": f"Monkey's Audio (file version {a.version // 1000}.{a.version % 1000 // 10:02d})"}
+
+
 def build_old(frames, version, level, flags, channels, rate, final_blocks, header_data=b"", terminating=b"", total_frames=None, peak=None):
     """A file of the format before version 3.98: one header of 32 bytes, an optional peak level and seek element count, the WAV header data, the seek table
     (offsets from the start of the file) and the frames (APEHeader.cpp, AnalyzeOld). It has no MD5."""
