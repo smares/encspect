@@ -12,9 +12,9 @@ internal sealed class FrameDecoder : IFrameDecoder
     internal const int Chunk = 4096;
 
     // Units a sample of one coded channel costs besides its fixed work: the range decoder, and the predictor's stages (docs/design/decoders.md,
-    // "As built: Monkey's Audio"). A neural network filter costs a unit a tap.
-    internal const long RangeUnits = 48;
-    internal const long PredictorUnits = 9;
+    // "As built: Monkey's Audio"). The neural network filters cost a unit for every two taps: they run in vector registers.
+    internal const long RangeUnits = 192;
+    internal const long PredictorUnits = 48;
 
     // The most samples over all channels that a frame of 24-bit audio may hold for the decoder to keep them until the CRC has passed, in case it has to
     // decode the frame again in interim mode (APEDecompressCore.cpp, DecodeFrame).
@@ -64,7 +64,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         _values = new int[_channels];
         _samples = new int[_channels * Chunk];
         _pcm = new byte[_channels * Chunk * (_bits / 8)];
-        _taps = Levels.Taps(header.CompressionLevel);
+        _taps = (Levels.Taps(header.CompressionLevel) + 1) / 2;
         CreatePredictors();
     }
 

@@ -8,9 +8,9 @@ namespace Encspect.Formats.MonkeysAudio.Decoding;
 // earlier versions use other coding of the samples and are not decoded (docs/formats/monkeys-audio.md, "Decoding").
 public sealed class MonkeysAudioDecoder : IDecoder
 {
-    // Units of work a byte of the file may take. A sample of the highest level costs 1,625 units a channel (16 for the sample, 48 for the range
-    // decoder, 9 for the predictor and 1,552 for the filters) and the cheapest symbol of the range coder takes 1.74 bits, so a legitimate file
-    // takes at most 1,625 / 0.2175 = 7,471 units a byte, rounded up to 8,192 (docs/design/decoders.md, "The default bound").
+    // Units of work a byte of the file may take. A sample of the highest level costs 1,032 units a channel (16 for the sample, 192 for the range
+    // decoder, 48 for the predictor and 776 for the filters) and the cheapest symbol of the range coder takes 1.74 bits, so a legitimate file
+    // takes at most 1,032 / 0.2175 = 4,745 units a byte, rounded up to 8,192 (docs/design/decoders.md, "The default bound").
     public const long PerInputByte = 8192;
 
     public string Id => MonkeysAudioCodec.Id;
