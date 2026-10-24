@@ -42,7 +42,8 @@ internal static class Summary
             return null;
         }
 
-        int read = Math.Min(a.SubstreamCount, Analysis.ParsedSubstreams);
+        // The substreams the decoder was opened for, those of the first major sync: it does not follow a stream that changes.
+        int read = Math.Min(sync.SubstreamCount, Analysis.ParsedSubstreams);
         var tallies = new List<ChecksumTally>
         {
             new() { Name = ChecksumNames.MajorSyncCrc, Covers = ChecksumCoverage.Header, Stored = a.SyncUnits, Checked = a.SyncUnits, Failed = a.SyncCrcFailures },
@@ -51,24 +52,20 @@ internal static class Summary
             new() { Name = ChecksumNames.SubstreamParity, Covers = ChecksumCoverage.CodedData, CoversAllAudio = CoversAllAudio(a), Stored = a.SubstreamChecked, Checked = a.SubstreamChecked, Failed = a.SubstreamParityFailures },
             new() { Name = ChecksumNames.SubstreamCrc, Covers = ChecksumCoverage.CodedData, CoversAllAudio = CoversAllAudio(a), Stored = a.SubstreamChecked, Checked = a.SubstreamChecked, Failed = a.SubstreamCrcFailures },
         };
-        tallies.AddRange(LosslessTallies(a.PresentationChannels, a.LosslessStored, read));
+        tallies.AddRange(LosslessTallies(a.LosslessStored, read));
         int top = a.PresentationChannels.Take(read).LastOrDefault(c => c > 0);
         IDecodeSession session = a.Session ?? context.StartDecoding(sync.IsTrueHd ? TrueHdCodecParser.TrueHdId : TrueHdCodecParser.MlpId,
             new DecodeSetup { Stream = a.Stream, Channels = Math.Max(1, top), BitsPerSample = sync.BitDepth });
         return session.Finish(tallies);
     }
 
-    // The lossless checks, one tally for each presentation whose substream was read.
-    internal static IEnumerable<ChecksumTally> LosslessTallies(IReadOnlyList<int> channels, IReadOnlyList<long> stored, int read)
+    // The lossless checks, one tally for each substream the stream's first major sync gives, whether or not it was read: a tally with nothing stored
+    // counts for nothing.
+    internal static IEnumerable<ChecksumTally> LosslessTallies(IReadOnlyList<long> stored, int read)
     {
         for (int k = 0; k < read; k++)
         {
-            if (channels[k] == 0)
-            {
-                continue;
-            }
-
-            yield return new ChecksumTally { Name = ChecksumNames.LosslessCheck(channels[k], k), Covers = ChecksumCoverage.DecodedAudio, Stored = stored[k] };
+            yield return new ChecksumTally { Name = ChecksumNames.LosslessCheck(k), Covers = ChecksumCoverage.DecodedAudio, Stored = stored[k] };
         }
     }
 

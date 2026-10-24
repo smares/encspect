@@ -486,7 +486,7 @@ internal sealed class StreamDecoder : IFrameDecoder
         {
             if (_presentationChannels[k] > 0)
             {
-                results.Add(new ChecksumResult(ChecksumNames.LosslessCheck(_presentationChannels[k], k), _checked[k], _failed[k]));
+                results.Add(new ChecksumResult(ChecksumNames.LosslessCheck(k), _checked[k], _failed[k]));
             }
         }
 

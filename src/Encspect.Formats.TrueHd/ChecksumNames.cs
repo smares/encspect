@@ -9,6 +9,7 @@ internal static class ChecksumNames
     public const string SubstreamParity = "substream parity byte";
     public const string SubstreamCrc = "substream CRC-8";
 
-    // The lossless check of the presentation a substream outputs, named by the substream and its channel count.
-    public static string LosslessCheck(int channels, int substream) => $"lossless check, substream {substream} ({channels}-channel presentation)";
+    // The lossless check of the presentation a substream outputs, named by the substream: the name does not depend on what the parser or the decoder
+    // learned of the presentation, so that their declarations and results always match.
+    public static string LosslessCheck(int substream) => $"lossless check, substream {substream}";
 }

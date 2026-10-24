@@ -444,8 +444,10 @@ def verification(t, decoded):
         ["substream parity byte", "codedData", covers_all, t["substream_checked"], t["substream_checked"], t["substream_parity_failures"]],
         ["substream CRC-8", "codedData", covers_all, t["substream_checked"], t["substream_checked"], t["substream_crc_failures"]],
     ]
-    for k in sorted(t["channels"]):
-        tallies.append([f"lossless check, substream {k} ({t['channels'][k]}-channel presentation)", "decodedAudio", False, t["lossless_stored"][k],
+    # One tally for each substream the first usable major sync gives, up to the third, whether or not it was read.
+    first = next((s for s in t["syncs"] if s["usable"]), None)
+    for k in range(min(first["substreams"], 3) if first else 0):
+        tallies.append([f"lossless check, substream {k}", "decodedAudio", False, t["lossless_stored"][k],
                         t["lossless_checked"][k] if decoded else 0, t["lossless_failed"][k] if decoded else 0])
     if any(c[5] > 0 for c in tallies):
         verdict = False
