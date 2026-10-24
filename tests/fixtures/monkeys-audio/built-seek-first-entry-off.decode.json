@@ -1,0 +1,29 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 86272,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "descriptor MD5",
+        "stored": 1,
+        "checked": 1,
+        "failed": 0
+      },
+      {
+        "name": "frame CRC-32",
+        "stored": 3,
+        "checked": 2,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The monkeys-audio decoder could not decode the frame at 0x88: The coded data holds a value the model cannot code."
+    }
+  ]
+}

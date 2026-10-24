@@ -1,0 +1,123 @@
+{
+ "length": 1000,
+ "regions": [
+  {
+   "name": "ID3v2",
+   "offset": 0,
+   "length": 24
+  },
+  {
+   "name": "TTA",
+   "offset": 24,
+   "length": 546
+  },
+  {
+   "name": "ID3v2",
+   "offset": 570,
+   "length": 26
+  },
+  {
+   "name": "Data",
+   "offset": 596,
+   "length": 404
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 100000,
+  "crc": "fe46365d",
+  "crc_ok": true
+ },
+ "frame_length": 46080,
+ "table": {
+  "offset": 46,
+  "expected": 3,
+  "entries": [
+   204,
+   304,
+   404
+  ],
+  "crc": "3e2117f2",
+  "crc_ok": false
+ },
+ "frames": [
+  {
+   "offset": 62,
+   "size": 204,
+   "status": [],
+   "crc": "fdd1e9fc"
+  },
+  {
+   "offset": 266,
+   "size": 304,
+   "status": [],
+   "crc": "7a580714"
+  },
+  {
+   "offset": 570,
+   "size": 404,
+   "status": [
+    "missing"
+   ]
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 92160,
+   "duration": 2.089795918367347,
+   "bits_per_sample": 16,
+   "average_bitrate": 1.9446875,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": false,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 1
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [
+  {
+   "code": "tta.seek-table-crc-mismatch"
+  },
+  {
+   "code": "tta.frames-missing"
+  },
+  {
+   "code": "tta.data-after-tag"
+  }
+ ],
+ "description": "As seek-tag-inside-stream, with the seek table's CRC-32 damaged, so the stream states no end: the second tag is found and the stream is read up to it, and the bytes after it are not read."
+}

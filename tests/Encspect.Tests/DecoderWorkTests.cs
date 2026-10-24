@@ -3,10 +3,11 @@ using System.Diagnostics;
 using Encspect.Core;
 using Encspect.Formats.Flac;
 using Encspect.Formats.Flac.Decoding;
-using TrueHdDecoder = Encspect.Formats.TrueHd.Decoding.TrueHdDecoder;
+using Encspect.Formats.MonkeysAudio.Decoding;
 using Encspect.Formats.WavPack.Decoding;
 using Encspect.Host;
 using Xunit.Abstractions;
+using TrueHdDecoder = Encspect.Formats.TrueHd.Decoding.TrueHdDecoder;
 
 namespace Encspect.Tests;
 
@@ -128,6 +129,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     private static IDecoder DecoderOf(string name) => name switch
     {
         _ when name.StartsWith("flac", StringComparison.Ordinal) => new FlacDecoder(),
+        _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => new MonkeysAudioDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -136,6 +138,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     private static string ExtensionOf(string name) => name switch
     {
         _ when name.StartsWith("flac", StringComparison.Ordinal) => ".flac",
+        _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => ".ape",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ => ".wv",
@@ -210,6 +213,32 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Add("flac-order-32-in-64-bits", () => new Case("flac-order-32-in-64-bits", FlacCases.Order32In64Bits()));
         Add("flac-fixed-order-4", () => new Case("flac-fixed-order-4", FlacCases.FixedOrder4()));
         Add("flac-not-walked-escapes-and-long-unary-codes", () => new Case("flac-not-walked-escapes-and-long-unary-codes", FlacCases.EscapesAndLongUnaryCodes(), LendsBuffers: false));
+
+        // Monkey's Audio: every level, the widest samples, the flagged frames, and the cheapest symbol. Each case repeats the frames an encoder wrote.
+        foreach ((string label, string file) in new[]
+        {
+            ("fast", "external-level-fast-16-stereo.ape"),
+            ("normal", "external-level-normal-16-stereo.ape"),
+            ("high", "external-level-high-16-stereo.ape"),
+            ("extra-high", "external-level-extra-high-16-stereo.ape"),
+            ("insane", "external-level-insane-16-stereo.ape"),
+            ("insane-mono-8-bit", "external-insane-8-mono.ape"),
+            ("insane-24-bit", "external-insane-24-stereo.ape"),
+            // A frame of the full 1,179,648 samples that the highest level uses: the frame of 24-bit audio is held in memory until its CRC has passed.
+            ("insane-24-bit-full-frames", "external-full-frame-insane-24-mono.ape"),
+            ("insane-32-bit", "external-insane-32-stereo.ape"),
+            ("insane-pseudo-stereo", "external-pseudo-stereo-insane.ape"),
+            ("insane-cheapest-symbol", "external-quiet-insane.ape"),
+            ("normal-6-channels", "external-normal-16-5.1.ape"),
+            ("normal-24-bit-8-channels", "external-normal-24-7.1.ape"),
+            ("normal-float", "external-normal-float-stereo.ape"),
+        })
+        {
+            Add("monkeys-audio-" + label, () => new Case("monkeys-audio-" + label, MonkeysAudioCases.Repeated(file)));
+        }
+
+        // Frames flagged silent charge the fixed work of their samples and no more, at the level whose coded frames cost the most.
+        Add("monkeys-audio-insane-silent-frames", () => new Case("monkeys-audio-insane-silent-frames", MonkeysAudioCases.Repeated("external-silent-stereo.ape", level: 5000)));
 
         // WavPack: the crafted worst cases, all 16 decorrelation passes.
         Add("wavpack-term-17-zero-run", () => new Case("wavpack-term-17-zero-run", WavPackCases.ZeroRuns(terms: [17], channels: 1)));
@@ -502,6 +531,29 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             long unitsPerFrame = (block * 2 * (16 + 1)) + (16L * (subframes.Length + 14));
             int frames = (int)(target / unitsPerFrame);
             return Stream(block, 2, 16, (long)frames * block, Enumerable.Range(0, frames).Select(number => FlacBuilder.FrameOf(number, block, Rate, 1, 16, subframes)));
+        }
+    }
+
+    // Files of copies of one frame of a fixture, sized to charge about Target units: a frame decodes by itself, so the copies are a file of as much audio.
+    internal static class MonkeysAudioCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target, int frame = 0, ushort? level = null)
+        {
+            (byte[] header, byte[] headerData, List<byte[]> frames) = MonkeysAudioBuilder.Take(fixture);
+            uint blocks = MonkeysAudioBuilder.BlocksOf(fixture, frame);
+            byte[] probe = MonkeysAudioBuilder.Build(header, headerData, [frames[frame], frames[frame]], blocks, blocks, level);
+            long perCopy = Math.Max(1, Units(probe) / 2);
+            int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
+            return MonkeysAudioBuilder.Build(header, headerData, [.. Enumerable.Repeat(frames[frame], copies)], blocks, blocks, level);
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new MonkeysAudioDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            Report report = analyzer.Analyze("probe.ape", new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue } });
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "decode.limit");
+            return counting.Units;
         }
     }
 

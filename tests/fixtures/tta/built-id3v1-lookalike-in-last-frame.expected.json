@@ -1,0 +1,101 @@
+{
+ "length": 850,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 850
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 100000,
+  "crc": "fe46365d",
+  "crc_ok": true
+ },
+ "frame_length": 46080,
+ "table": {
+  "offset": 22,
+  "expected": 3,
+  "entries": [
+   204,
+   304,
+   304
+  ],
+  "crc": "fc2899a1",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 38,
+   "size": 204,
+   "status": [],
+   "crc": "fdd1e9fc"
+  },
+  {
+   "offset": 242,
+   "size": 304,
+   "status": [],
+   "crc": "7a580714"
+  },
+  {
+   "offset": 546,
+   "size": 304,
+   "status": [],
+   "crc": "0245b319"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 100000,
+   "duration": 2.2675736961451247,
+   "bits_per_sample": 16,
+   "average_bitrate": 2.8647359999999997,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": true,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 3,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [
+  {
+   "code": "tag.near-miss"
+  }
+ ],
+ "description": "The bytes 128 from the end, inside the last frame, are \"TAG\" and 125 more: the seek table says the frame holds them, so they are no ID3v1 tag."
+}

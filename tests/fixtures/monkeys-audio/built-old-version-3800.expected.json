@@ -1,0 +1,117 @@
+{
+ "length": 136227,
+ "file_version": 3800,
+ "seek_entries": 3,
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 136227
+  }
+ ],
+ "frames": [
+  {
+   "index": 0,
+   "offset": 91,
+   "length": 27292,
+   "samples": 9216,
+   "crc": null,
+   "special": null,
+   "start": 0,
+   "end": 27290
+  },
+  {
+   "index": 1,
+   "offset": 27379,
+   "length": 86212,
+   "samples": 9216,
+   "crc": null,
+   "special": null,
+   "start": 27290,
+   "end": 113497
+  },
+  {
+   "index": 2,
+   "offset": 113587,
+   "length": 22640,
+   "samples": 12544,
+   "crc": null,
+   "special": null,
+   "start": 113497,
+   "end": 136136
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front center"
+   ],
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 30976,
+   "duration": 0.7024036281179138,
+   "bits_per_sample": 16,
+   "average_bitrate": 1550.5159090909092,
+   "encoder": "Monkey's Audio (file version 3.80)"
+  }
+ ],
+ "decoded_samples": 0,
+ "pcm_samples": 0,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame checksum",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 3,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": null,
+   "decoding": "notPossible",
+   "checksums": [
+    {
+     "name": "frame checksum",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 3,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [
+  {
+   "code": "decode.not-possible",
+   "count": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "monkeys-audio.old-format",
+   "contains": ""
+  },
+  {
+   "code": "monkeys-audio.final-frame-blocks",
+   "contains": ""
+  }
+ ],
+ "encoder": {
+  "tool": "monkeys_audio_model.py, from the frames of a file mac wrote"
+ },
+ "crosscheck": {
+  "mac_verify": null
+ },
+ "header": {
+  "flags": 0
+ }
+}

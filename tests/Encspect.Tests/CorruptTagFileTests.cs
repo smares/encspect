@@ -136,6 +136,26 @@ public class CorruptFlacFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
+// The TTA fixtures written by FFmpeg and libtta-c.
+public class CorruptTtaFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("tta/external-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The hand-built TTA fixtures.
+public class CorruptTtaBuiltFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("tta/built-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
 // The hand-built FLAC fixtures, each analyzed with and without decoding.
 public class CorruptFlacBuiltFileTests
 {
@@ -146,10 +166,53 @@ public class CorruptFlacBuiltFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
+// The Monkey's Audio fixtures written by mac, each analyzed with and without decoding: the files of the highest levels and of several frames in one class
+// (a frame there costs the decoder the most), the rest in another, so that the two run side by side.
+public class CorruptMonkeysAudioFileTests
+{
+    internal static bool IsHeavy(string name) => name.Contains("insane", StringComparison.Ordinal) || name.Contains("extra-high", StringComparison.Ordinal) || name.Contains("frames-", StringComparison.Ordinal);
+
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) && !IsHeavy(n));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
 // The TrueHD and MLP fixtures written by FFmpeg, each analyzed with and without decoding.
 public class CorruptTrueHdFileTests
 {
     public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("truehd/external-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The Monkey's Audio fixtures of the highest levels and of several frames.
+public class CorruptMonkeysAudioHeavyFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) && CorruptMonkeysAudioFileTests.IsHeavy(n));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The Monkey's Audio fixtures of versions 3.93 to 3.98 (monkeys_audio_legacy.py), each analyzed with and without decoding.
+public class CorruptMonkeysAudioLegacyFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/legacy-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The hand-built Monkey's Audio fixtures, each analyzed (the decoder is held to the files mac wrote above: a built file is three frames of 160,000 samples).
+public class CorruptMonkeysAudioBuiltFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/built-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]

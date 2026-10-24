@@ -7,7 +7,7 @@ namespace Encspect.Tests;
 // frames.
 public class CancellationTests
 {
-    public static TheoryData<string> Sources => ["mpeg/external-blade-flags.mp3", "ac3/external-ffmpeg-5.1-448k.ac3", "wavpack/external-lossless-16-stereo-small-blocks.wv", "dts/external-ffmpeg-5.1-48k-768k.dts", "flac/external-16-stereo-l5.flac", "truehd/external-truehd-51-48k-24.thd"];
+    public static TheoryData<string> Sources => ["mpeg/external-blade-flags.mp3", "ac3/external-ffmpeg-5.1-448k.ac3", "wavpack/external-lossless-16-stereo-small-blocks.wv", "dts/external-ffmpeg-5.1-48k-768k.dts", "flac/external-16-stereo-l5.flac", "monkeys-audio/external-level-normal-16-stereo.ape", "truehd/external-truehd-51-48k-24.thd"];
 
     private static byte[] MakeFrames(string source)
     {

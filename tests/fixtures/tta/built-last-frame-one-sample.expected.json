@@ -1,0 +1,97 @@
+{
+ "length": 950,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 950
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 32000,
+  "samples": 66873,
+  "crc": "7d1ef94c",
+  "crc_ok": true
+ },
+ "frame_length": 33436,
+ "table": {
+  "offset": 22,
+  "expected": 3,
+  "entries": [
+   204,
+   304,
+   404
+  ],
+  "crc": "3e2117f3",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 38,
+   "size": 204,
+   "status": [],
+   "crc": "fdd1e9fc"
+  },
+  {
+   "offset": 242,
+   "size": 304,
+   "status": [],
+   "crc": "7a580714"
+  },
+  {
+   "offset": 546,
+   "size": 404,
+   "status": [],
+   "crc": "bc49e1a0"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 32000,
+   "channels": 2,
+   "samples": 66873,
+   "duration": 2.08978125,
+   "bits_per_sample": 16,
+   "average_bitrate": 3.491274505405769,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": true,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 3,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [],
+ "description": "At 32,000 Hz a frame holds 33,436 samples (33,436.7 truncated): 66,873 samples are two whole frames and one sample."
+}

@@ -46,7 +46,7 @@ internal static class CorruptFiles
             yield return name;
         }
 
-        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack", "flac", "truehd" })
+        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack", "flac", "monkeys-audio", "tta", "truehd" })
         {
             foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, family), "*", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal)
                 .Where(p => !p.EndsWith(".json", StringComparison.Ordinal)))
@@ -56,12 +56,36 @@ internal static class CorruptFiles
         }
     }
 
+    private enum VariantKind
+    {
+        Truncation,
+        Change,
+        Prefix,
+    }
+
+    // The fixtures of these families are also decoded. FLAC decodes every variant. A Monkey's Audio frame costs a thousand times what a FLAC frame does, so
+    // only some variants are decoded: every third of the byte changes (the damage the decoder meets), the prefixed ones, and one truncation in 64.
+    // Each is decoded for up to 2^28 units of work: the fixtures of the lower levels are decoded to their last frame, so damage in a later frame is
+    // decoded too, and at the highest levels the budget ends the decoding of a variant early.
+    private const long MonkeysAudioBudget = 1L << 28;
+
+    private static bool IsDecoded(string name) =>
+        name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/legacy-", StringComparison.Ordinal);
+
+    private static bool IsDecoded(string name, VariantKind kind, int number) =>
+        IsDecoded(name) && (!name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || kind switch
+        {
+            VariantKind.Change => number % 3 == 0,
+            VariantKind.Prefix => true,
+            _ => number % 64 == 0,
+        });
+
     public static async Task MutatedFixturesProduceReports(string name)
     {
         byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.TagDirectory, "..", name));
 
         int index = 0;
-        foreach (byte[] variant in Variants(original, name))
+        foreach ((byte[] variant, VariantKind kind, int number) in Variants(original, name))
         {
             try
             {
@@ -71,7 +95,7 @@ internal static class CorruptFiles
                 Task work = Task.Run(() =>
                 {
                     started.SetResult();
-                    AnalyzeAndCheck(variant, name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("truehd/", StringComparison.Ordinal));
+                    AnalyzeAndCheck(variant, IsDecoded(name, kind, number), name.StartsWith("monkeys-audio/", StringComparison.Ordinal) ? MonkeysAudioBudget : 1L << 30);
                 });
                 await started.Task;
                 await work.WaitAsync(VariantLimit);
@@ -109,7 +133,7 @@ internal static class CorruptFiles
         return (int)hash;
     }
 
-    private static IEnumerable<byte[]> Variants(byte[] original, string name)
+    private static IEnumerable<(byte[] Data, VariantKind Kind, int Number)> Variants(byte[] original, string name)
     {
         var random = new Random(StableSeed(name));
 
@@ -126,9 +150,10 @@ internal static class CorruptFiles
             lengths.Add(random.Next(0, original.Length + 1));
         }
 
+        int number = 0;
         foreach (int length in lengths)
         {
-            yield return original[..length];
+            yield return (original[..length], VariantKind.Truncation, number++);
         }
 
         // Single and multiple byte changes, biased toward the tag regions at both ends.
@@ -154,7 +179,7 @@ internal static class CorruptFiles
                 };
             }
 
-            yield return copy;
+            yield return (copy, VariantKind.Change, i);
         }
 
         // Garbage before the first byte shifts every leading anchor.
@@ -162,16 +187,16 @@ internal static class CorruptFiles
         {
             byte[] shifted = new byte[original.Length + prefix];
             original.CopyTo(shifted, prefix);
-            yield return shifted;
+            yield return (shifted, VariantKind.Prefix, prefix);
         }
     }
 
-    private static void AnalyzeAndCheck(byte[] data, bool alsoDecodes = false)
+    private static void AnalyzeAndCheck(byte[] data, bool alsoDecodes = false, long maxWork = 1L << 30)
     {
         if (alsoDecodes)
         {
             // The decoder works on what the parser hands it, damaged frames included: it must give a report as well, and never fail.
-            var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 30 } };
+            var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = maxWork } };
             Report decoded = Analyzer.CreateDefault().Analyze("variant", new MemoryStream(data), options);
             Assert.DoesNotContain(decoded.Findings, f => f.Code is "parse.failed" or "decode.failed");
             Assert.All(decoded.Findings, f => Assert.True(f.Path is not null, $"The node of {f.Code} is not in the tree."));

@@ -1,0 +1,509 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-old-version-3800.ape",
+    "root": {
+      "name": "File",
+      "value": "Monkey's Audio",
+      "offset": 0,
+      "length": 136227,
+      "children": [
+        {
+          "name": "Monkey's Audio",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 136227,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Signature",
+                  "value": "MAC ",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "File Version",
+                  "value": "3.80",
+                  "offset": 4,
+                  "length": 2
+                },
+                {
+                  "name": "Compression Level",
+                  "value": "normal (2000)",
+                  "offset": 6,
+                  "length": 2
+                },
+                {
+                  "name": "Format Flags",
+                  "value": 0,
+                  "offset": 8,
+                  "length": 2
+                },
+                {
+                  "name": "Format Flags Set",
+                  "value": "none",
+                  "offset": 8,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 10,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "WAV Header Data Bytes",
+                  "value": 44,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "WAV Terminating Data Bytes",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 20,
+                  "length": 4
+                },
+                {
+                  "name": "Total Frames",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Final Frame Blocks",
+                  "value": 12544,
+                  "unit": "samples",
+                  "offset": 28,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "WAV Header Data",
+              "value": "44 bytes, a RIFF WAVE header",
+              "offset": 32,
+              "length": 44
+            },
+            {
+              "name": "Seek Table",
+              "value": 3,
+              "unit": "entries",
+              "offset": 76,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Frame Offset",
+                  "value": 91,
+                  "unit": "bytes",
+                  "offset": 76,
+                  "length": 4
+                },
+                {
+                  "name": "Frame Offset",
+                  "value": 27381,
+                  "unit": "bytes",
+                  "offset": 80,
+                  "length": 4
+                },
+                {
+                  "name": "Frame Offset",
+                  "value": 113588,
+                  "unit": "bytes",
+                  "offset": 84,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Encoder",
+              "value": "Monkey's Audio (file version 3.80)",
+              "offset": 0,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Medium",
+                  "offset": 0,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The file is in the format of Monkey's Audio 3.80; the file does not state which program wrote it",
+                  "offset": 0,
+                  "length": 32
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 136227,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Samples",
+                  "value": 30976,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.7024036281179138,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "mono (front center)",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Compression Level",
+                  "value": "normal (2000)",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Stored Frame Checksums",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 1550.5159090909092,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 22639,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 86207,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 636.721875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 3300.11171875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 136227
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 136227,
+                  "children": [
+                    {
+                      "name": "608 to 639 kbps",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 136227
+                    },
+                    {
+                      "name": "1024 to 1055 kbps",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 136227
+                    },
+                    {
+                      "name": "3296 to 3327 kbps",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 136227
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 9216,
+              "unit": "samples",
+              "offset": 91,
+              "length": 27292,
+              "ranges": [
+                {
+                  "offset": 91,
+                  "length": 27288
+                },
+                {
+                  "offset": 27381,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Coded Data",
+                  "value": 27290,
+                  "unit": "bytes",
+                  "offset": 91,
+                  "length": 27292,
+                  "ranges": [
+                    {
+                      "offset": 91,
+                      "length": 27288
+                    },
+                    {
+                      "offset": 27381,
+                      "length": 2
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 9216,
+              "unit": "samples",
+              "offset": 27379,
+              "length": 86212,
+              "ranges": [
+                {
+                  "offset": 27379,
+                  "length": 2
+                },
+                {
+                  "offset": 27383,
+                  "length": 86204
+                },
+                {
+                  "offset": 113590,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Coded Data",
+                  "value": 86207,
+                  "unit": "bytes",
+                  "offset": 27379,
+                  "length": 86212,
+                  "ranges": [
+                    {
+                      "offset": 27379,
+                      "length": 2
+                    },
+                    {
+                      "offset": 27383,
+                      "length": 86204
+                    },
+                    {
+                      "offset": 113590,
+                      "length": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 12544,
+              "unit": "samples",
+              "offset": 113587,
+              "length": 22640,
+              "ranges": [
+                {
+                  "offset": 113587,
+                  "length": 3
+                },
+                {
+                  "offset": 113591,
+                  "length": 22636
+                }
+              ],
+              "children": [
+                {
+                  "name": "Coded Data",
+                  "value": 22639,
+                  "unit": "bytes",
+                  "offset": 113587,
+                  "length": 22640,
+                  "ranges": [
+                    {
+                      "offset": 113587,
+                      "length": 3
+                    },
+                    {
+                      "offset": 113591,
+                      "length": 22636
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "Monkey's Audio",
+        "sampleRate": 44100,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 16,
+        "samples": 30976,
+        "duration": 0.7024036281179138,
+        "averageBitrate": 1550.5159090909092,
+        "isVbr": true,
+        "verification": {
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame checksum",
+              "covers": "decodedAudio",
+              "coversAllAudio": false,
+              "stored": 3,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "encoder": "Monkey's Audio (file version 3.80)",
+        "encoderConfidence": "Medium",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              91,
+              27381,
+              113588
+            ],
+            "values": [
+              1044.6953125,
+              3300.11171875,
+              636.721875
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              1551
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "monkeys-audio.old-format",
+        "message": "Version 3.80 files start with one header and have no descriptor, so they store no MD5 of the coded data.",
+        "offset": 4,
+        "length": 2,
+        "path": [
+          0,
+          0,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "monkeys-audio.final-frame-blocks",
+        "message": "The header states 12544 samples in the final frame, more than the 9216 of a frame; the SDK refuses such a file.",
+        "offset": 28,
+        "length": 4,
+        "path": [
+          0,
+          0,
+          10
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

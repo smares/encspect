@@ -1,0 +1,23 @@
+{
+  "verification": {
+    "decoding": "NotPossible",
+    "decodedSamples": 0,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "frame checksum",
+        "stored": 3,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.not-possible",
+      "severity": "Info",
+      "count": 1,
+      "message": "The stream was not decoded: The file is of version 3.80, whose frames are not decoded; the decoder takes versions 3.93 to 3.99 and 4.11"
+    }
+  ]
+}

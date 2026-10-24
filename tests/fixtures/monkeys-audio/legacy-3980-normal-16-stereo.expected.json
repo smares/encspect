@@ -1,0 +1,120 @@
+{
+ "length": 8164,
+ "descriptor": {
+  "version": 3980,
+  "program": 0,
+  "descriptor_bytes": 52,
+  "header_bytes": 24,
+  "seek_table_bytes": 4,
+  "header_data_bytes": 0,
+  "frame_data_bytes": 8084,
+  "terminating_bytes": 0,
+  "md5": "5f67f81ce63481f4561709945c5f5156",
+  "md5_computed": "5f67f81ce63481f4561709945c5f5156"
+ },
+ "header": {
+  "level": 2000,
+  "flags": 34,
+  "blocks_per_frame": 294912,
+  "final_frame_blocks": 4000,
+  "total_frames": 1,
+  "bits_per_sample": 16,
+  "channels": 2,
+  "sample_rate": 44100
+ },
+ "seek_entries": 1,
+ "frames": [
+  {
+   "index": 0,
+   "offset": 80,
+   "length": 8084,
+   "samples": 4000,
+   "crc": "0x6F039932",
+   "special": null,
+   "start": 0,
+   "end": 8084
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Mid/side stereo",
+   "samples": 4000,
+   "duration": 0.09070294784580499,
+   "bits_per_sample": 16,
+   "average_bitrate": 713.0088000000001,
+   "encoder": "Monkey's Audio (file version 3.98)"
+  }
+ ],
+ "decoded_samples": 4000,
+ "pcm_samples": 4000,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 8164
+  }
+ ],
+ "encoder": {
+  "tool": "monkeys_audio_legacy.py, an encoder of the coding of versions 3.93 to 3.98 that mac -V verifies"
+ },
+ "findings": [],
+ "decoded_pcm_md5": "2cff81428193e6051655b692613e9a0e",
+ "crosscheck": {
+  "mac_verify": true,
+  "samples": 4000
+ }
+}

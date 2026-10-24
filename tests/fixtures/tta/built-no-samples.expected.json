@@ -1,0 +1,78 @@
+{
+ "length": 26,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 26
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 0,
+  "crc": "4f8e792b",
+  "crc_ok": true
+ },
+ "frame_length": 46080,
+ "table": {
+  "offset": 22,
+  "expected": 0,
+  "entries": [],
+  "crc": "00000000",
+  "crc_ok": true
+ },
+ "frames": [],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 0,
+   "duration": 0.0,
+   "bits_per_sample": 16,
+   "average_bitrate": null,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [
+  {
+   "code": "tta.no-samples"
+  }
+ ],
+ "description": "A header that counts no samples, and a seek table of its CRC-32 alone."
+}

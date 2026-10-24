@@ -1,0 +1,150 @@
+{
+ "length": 172,
+ "descriptor": {
+  "version": 3990,
+  "program": 13420,
+  "descriptor_bytes": 52,
+  "header_bytes": 24,
+  "seek_table_bytes": 12,
+  "header_data_bytes": 44,
+  "frame_data_bytes": 40,
+  "terminating_bytes": 0,
+  "md5": "c61d13549e94e23c30eed8109bc6b137",
+  "md5_computed": "c61d13549e94e23c30eed8109bc6b137"
+ },
+ "header": {
+  "level": 2000,
+  "flags": 0,
+  "blocks_per_frame": 73728,
+  "final_frame_blocks": 12544,
+  "total_frames": 3,
+  "bits_per_sample": 16,
+  "channels": 1,
+  "sample_rate": 44100
+ },
+ "seek_entries": 3,
+ "frames": [
+  {
+   "index": 0,
+   "offset": 132,
+   "length": 16,
+   "samples": 73728,
+   "crc": "0x4FDC5D8F",
+   "special": "0x00000001",
+   "start": 0,
+   "end": 13
+  },
+  {
+   "index": 1,
+   "offset": 144,
+   "length": 16,
+   "samples": 73728,
+   "crc": "0x4FDC5D8F",
+   "special": "0x00000001",
+   "start": 13,
+   "end": 26
+  },
+  {
+   "index": 2,
+   "offset": 156,
+   "length": 16,
+   "samples": 12544,
+   "crc": "0x71670F05",
+   "special": "0x00000001",
+   "start": 26,
+   "end": 40
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front center"
+   ],
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 160000,
+   "duration": 3.6281179138321997,
+   "bits_per_sample": 16,
+   "average_bitrate": 0.0882,
+   "encoder": "Monkey's Audio 13.42"
+  }
+ ],
+ "decoded_samples": 160000,
+ "pcm_samples": 160000,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 3,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 172
+  }
+ ],
+ "encoder": {
+  "tool": "mac, the console tool of the Monkey's Audio SDK 13.42, built from MAC_1342_SDK.zip",
+  "arguments": [
+   "-c2000"
+  ],
+  "input": {
+   "kind": "wav",
+   "signal": "silent",
+   "rate": 44100,
+   "channels": 1,
+   "bits": 16,
+   "samples": 160000
+  }
+ },
+ "findings": [],
+ "decoded_pcm_md5": "e291ac3471883e055ad057db9c840739",
+ "crosscheck": {
+  "mac_verify": true,
+  "samples": 160000
+ }
+}

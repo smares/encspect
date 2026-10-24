@@ -104,7 +104,7 @@ internal static class Reader
         else
         {
             s.Findings.Add(Severity.Warning, "wavpack.data-skipped", () => Nodes.Skipped(s.Records, index), count =>
-                $"{Bytes(to - start)} at 0x{start:X} {(to - start == 1 ? "holds" : "hold")} no block header{(count > 1 ? $", and {count - 1} more such stretches do" : string.Empty)}; blocks are found again after them.");
+                $"{Bytes(to - start)} at 0x{start:X} {(to - start == 1 ? "holds" : "hold")} no block header{(count > 1 ? $", and {Counts.Of(count - 1, "more such stretch", "more such stretches")} {Counts.Agree(count - 1, "does", "do")}" : string.Empty)}; blocks are found again after them.");
         }
     }
 

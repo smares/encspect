@@ -60,6 +60,32 @@ public partial class FindingCoverageTests
         Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
     }
 
+    [GeneratedRegex("\"(monkeys-audio\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex MonkeysAudioCode();
+
+    // Every code the Monkey's Audio parser and decoder emit is listed by a fixture's manifest or raised by a crafted file of MonkeysAudioFindingTests.
+    [Fact]
+    public void EveryMonkeysAudioCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Formats.MonkeysAudio"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => MonkeysAudioCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 25, $"Found only {emitted.Count} codes.");
+
+        var asserted = MonkeysAudioCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "MonkeysAudioFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "monkeys-audio"), "*.json"))
+        {
+            foreach (Match m in MonkeysAudioCode().Matches(File.ReadAllText(path)))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
+    }
+
     [GeneratedRegex("\"(truehd\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex TrueHdCode();
 
@@ -113,6 +139,34 @@ public partial class FindingCoverageTests
 
         string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
         Assert.True(missing.Length == 0, $"No crafted file, manifest or golden raises: {string.Join(", ", missing)}");
+    }
+
+    [GeneratedRegex("\"(tta\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex TtaCode();
+
+    // Every code the TTA parsers emit is listed by a fixture's manifest or raised by a crafted file of TtaFindingTests or TtaCodecParserTests.
+    [Fact]
+    public void EveryTtaCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Formats.Tta"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => TtaCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 15, $"Found only {emitted.Count} codes.");
+
+        var asserted = new HashSet<string>();
+        foreach (string file in new[] { "TtaFindingTests.cs", "TtaCodecParserTests.cs" })
+        {
+            asserted.UnionWith(TtaCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", file))).Select(m => m.Groups[1].Value));
+        }
+
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "tta"), "*.expected.json"))
+        {
+            asserted.UnionWith(TtaCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value));
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
     }
 
     [GeneratedRegex("\\[\"(matroska\\.[a-z0-9-]+)\"\\] =")]

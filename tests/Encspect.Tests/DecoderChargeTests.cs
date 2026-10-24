@@ -4,6 +4,8 @@ using Encspect.Formats.Flac.Decoding;
 using Encspect.Formats.TrueHd;
 using Encspect.Formats.WavPack.Decoding;
 using Encspect.Host;
+using MonkeysAudioDecoder = Encspect.Formats.MonkeysAudio.Decoding.MonkeysAudioDecoder;
+using MonkeysAudioFrameDecoder = Encspect.Formats.MonkeysAudio.Decoding.FrameDecoder;
 
 namespace Encspect.Tests;
 
@@ -165,5 +167,65 @@ public class DecoderChargeTests
     public void TheDsdSetupWorkIsWhatTheTablesTake(byte[] data, long expected)
     {
         Assert.Equal(expected, DsdBlockDecoder.SetupWork(data));
+    }
+
+    // Monkey's Audio.
+
+    private static long MonkeysAudioFrames(byte[] file) => System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(file.AsSpan(MonkeysAudioBuilder.DescriptorLength + 12));
+
+    [Theory]
+    [InlineData("external-level-fast-16-stereo.ape", 2, 2, 0)]
+    [InlineData("external-level-normal-16-stereo.ape", 2, 2, 16)]
+    [InlineData("external-level-high-16-stereo.ape", 2, 2, 64)]
+    [InlineData("external-level-extra-high-16-stereo.ape", 2, 2, 288)]
+    [InlineData("external-level-insane-16-stereo.ape", 2, 2, 1552)]
+    [InlineData("external-insane-8-mono.ape", 1, 1, 1552)]
+    [InlineData("external-insane-24-stereo.ape", 3, 2, 1552)]
+    [InlineData("external-insane-32-stereo.ape", 4, 2, 1552)]
+    public void MonkeysAudioChargesTheFixedWorkOfASampleAndTheRangeDecoderThePredictorAndATapForEachCodedChannel(string fixture, int bytes, int channels, int taps)
+    {
+        // The frames of 24,000 samples of the fixture, charged by chunks of 4,096 samples, each sample for the width of its bytes in each channel and, in
+        // each channel, 192 for the range decoder, 48 for the predictor and a unit for every two taps.
+        byte[] file = DecoderWorkTests.MonkeysAudioCases.Repeated(fixture, 1L << 24);
+
+        long units = DecoderWorkTests.MonkeysAudioCases.Units(file);
+
+        long perSample = (DecodeWork.ForSample(bytes) * channels) + (channels * (MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + ((taps + 1) / 2)));
+        Assert.Equal(0, units % (24000 * perSample));
+        Assert.Equal(MonkeysAudioFrames(file) * 24000 * perSample, units);
+    }
+
+    [Fact]
+    public void MonkeysAudioChargesAFlaggedSilentFrameItsSamplesAndTheirZeroFillAndNothingElse()
+    {
+        // 73,728 samples of 2 channels at 16 units and 40 for the zero fill, whatever the level the header states.
+        byte[] file = DecoderWorkTests.MonkeysAudioCases.Repeated("external-silent-stereo.ape", 1L << 24, level: 5000);
+
+        long units = DecoderWorkTests.MonkeysAudioCases.Units(file);
+
+        Assert.Equal(MonkeysAudioFrames(file) * 73728 * 2 * (16 + MonkeysAudioFrameDecoder.SilentUnits), units);
+    }
+
+    [Fact]
+    public void MonkeysAudioChargesAPseudoStereoFrameOneCodedChannelAndBothChannelsTheirFixedWork()
+    {
+        byte[] file = DecoderWorkTests.MonkeysAudioCases.Repeated("external-pseudo-stereo-insane.ape", 1L << 24);
+
+        long units = DecoderWorkTests.MonkeysAudioCases.Units(file);
+
+        long perSample = (16 * 2) + MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + 776;
+        Assert.Equal(MonkeysAudioFrames(file) * 24000 * perSample, units);
+    }
+
+    [Fact]
+    public void AnInsaneFileOfTheCheapestSymbolStaysUnderTheDefaultAllowanceForItsBytes()
+    {
+        // Samples the predictors follow exactly cost the range coder about 1.8 bits each (the cheapest symbol is 1.74), so a file of them is the legitimate
+        // file that costs the most units for a byte; its charge must stay under what a file of that size is allowed (docs/design/decoders.md, "The default bound").
+        byte[] file = DecoderWorkTests.MonkeysAudioCases.Repeated("external-quiet-insane.ape", 1L << 26);
+
+        long units = DecoderWorkTests.MonkeysAudioCases.Units(file);
+
+        Assert.True(units < file.Length * MonkeysAudioDecoder.PerInputByte, $"{units / (double)file.Length:F0} units a byte against {MonkeysAudioDecoder.PerInputByte}.");
     }
 }

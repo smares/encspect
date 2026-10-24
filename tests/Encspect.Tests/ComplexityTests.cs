@@ -342,6 +342,62 @@ public class ComplexityTests
         Assert.InRange(crc.Count, 5_000, 5_900);
     }
 
+    // The signature of a descriptor every four bytes: each is a candidate the scan for the descriptor passes over, and the time must stay linear in the data.
+    [Fact]
+    public void ManyMonkeysAudioSignatures()
+    {
+        var data = new byte[24 << 20];
+        for (int at = 0; at + 4 <= data.Length; at += 4)
+        {
+            "MAC "u8.CopyTo(data.AsSpan(at));
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = new Encspect.Host.Analyzer([new ForcedMonkeysAudio()]).Analyze("flood.ape", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    // A seek table of four million entries that all point to the start of the frame data: each frame is empty, the first 1,048,576 are listed and the
+    // rest read and counted, and decoding finds nothing to decode. The time stays linear in the table.
+    [Fact]
+    public void ManyEmptyMonkeysAudioFrames()
+    {
+        (byte[] header, byte[] headerData, _) = MonkeysAudioBuilder.Take("external-level-normal-16-stereo.ape");
+        byte[] data = MonkeysAudioBuilder.Build(header, headerData, [.. Enumerable.Repeat(Array.Empty<byte>(), 4_000_000)], 64, 64);
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("empty.ape", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Contains(report.Findings, f => f.Code == "monkeys-audio.frames-not-listed");
+        Assert.Contains(report.Findings, f => f.Code == "monkeys-audio.frame-too-short");
+    }
+
+    // Frames of 10,000,000 samples (the most the SDK accepts at level 5000) that are flagged silent: eight bytes each state 20 million samples to write.
+    // Each is charged 56 units for each sample of each channel before it is decoded, so the work budget ends the decoding: here at 2^32 units, 4
+    // frames (the default floor of 2^35 would take 31 and about half a minute), and the analysis costs by that and the bytes, not by the samples the
+    // frames state.
+    [Fact]
+    public void MonkeysAudioFramesThatStateMoreSamplesThanTheyCode()
+    {
+        (byte[] header, byte[] headerData, _) = MonkeysAudioBuilder.Take("external-level-insane-16-stereo.ape");
+        byte[] frame = MonkeysAudioBuilder.SilentFrame(10_000_000);
+        byte[] data = MonkeysAudioBuilder.Build(header, headerData, [.. Enumerable.Repeat(frame, 200)], 10_000_000, 10_000_000);
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("states.ape", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 32 } });
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Contains(report.Findings, f => f.Code == "decode.limit");
+        Assert.InRange(report.Streams.Single().Verification!.DecodedSamples, 3 * 10_000_000L, 5 * 10_000_000L);
+    }
+
     // Core frame headers every 96 bytes (the smallest frame) that state 16 KiB frames: each is a candidate whose chain the
     // scan looks for 16 KiB on, and finds none; the time must stay linear in the data.
     [Fact]
@@ -616,6 +672,17 @@ public class ComplexityTests
         public void Parse(ParseContext context) => _parser.Parse(context);
     }
 
+    private sealed class ForcedMonkeysAudio : IFormatParser
+    {
+        private readonly Encspect.Formats.MonkeysAudio.MonkeysAudioParser _parser = new();
+
+        public string Name => _parser.Name;
+
+        public SniffResult Sniff(SniffContext context) => new(100);
+
+        public void Parse(ParseContext context) => _parser.Parse(context);
+    }
+
     private sealed class ForcedWavPack : IFormatParser
     {
         private readonly Encspect.Formats.WavPack.WavPackParser _parser = new();
@@ -806,6 +873,53 @@ public class ComplexityTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
         Assert.Equal(count, report.Streams.Single().Samples / 65535);
         Assert.Equal(DecodeStatus.Stopped, report.Streams.Single().Verification!.Decoding);
+    }
+
+    // A header of sample rate 1 and 4,294,967,295 samples calls for 4,294,967,295 frames of one sample, a seek table of 16 GB: the file holds 8 MB of it, so
+    // the entries read are those the data holds (2 million) and every frame lies past the end.
+    [Fact]
+    public void ATtaSeekTableOfBillionsOfEntriesOverASmallFile()
+    {
+        byte[] data = [.. TtaBuilder.Header(1, 1, 16, uint.MaxValue), .. new byte[8 << 20]];
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("table.tta", new MemoryStream(data));
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.Contains(report.Findings, f => f.Code == "tta.seek-table-truncated");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed");
+    }
+
+    // Entries of 4 GB each: the first frame is cut by the end of the data and the rest lie past it, however many the table lists.
+    [Fact]
+    public void ATtaSeekTableOfFramesFourGigabytesLong()
+    {
+        const int frames = 200_000;
+        byte[] data = [.. TtaBuilder.Header(8000, 1, 16, TtaBuilder.FrameLength(8000) * frames), .. TtaBuilder.Table(Enumerable.Repeat(uint.MaxValue, frames)), .. new byte[1000]];
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("long.tta", new MemoryStream(data));
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.Contains(report.Findings, f => f.Code == "tta.frame-cut");
+        Assert.Contains(report.Findings, f => f.Code == "tta.frames-missing");
+    }
+
+    // One frame of 48 MB with its CRC-32: the file is read in chunks, once.
+    [Fact]
+    public void ATtaFrameOfManyMegabytes()
+    {
+        byte[] data = TtaBuilder.Stream(44100, 2, 16, 46080, [48 << 20]);
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("big.tta", new MemoryStream(data));
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.Empty(report.Findings);
+        Assert.Equal(true, report.Streams.Single().Verification!.IsVerified);
     }
 
     // A frame header that reads, a fixed predictor and a Rice code of parameter 0 that is followed by nothing but zero bits: the unary code runs to

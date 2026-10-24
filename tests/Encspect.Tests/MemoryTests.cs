@@ -1210,6 +1210,55 @@ public class MemoryTests(ITestOutputHelper output)
     // Frames of constant subframes, the smallest there are: 4,096 samples of two channels in 14 bytes.
     private static byte[] FlacFrames(int count) => FlacBuilder.Stream(count);
 
+    // A TTA stream keeps a 24-byte entry per frame and 16 bytes of its bitrate graph (and its per-second figures while they are built); its
+    // nodes are built in blocks of 1,024 when read. The frames here are 4 bytes each, the CRC-32 alone, the fewest a file can hold per frame.
+    // linux-x64 measures 56 bytes kept and 80 at the peak per frame; the bounds are about twice that.
+    [Fact]
+    public void ManyTtaFramesStayCompact()
+    {
+        const int frames = 200_000;
+        byte[] data = TtaBuilder.SmallFrames(frames);
+
+        (Report report, long kept, long peak) = Measure("frames.tta", data, TtaBuilder.SmallFrames(100));
+
+        Assert.Equal(frames * TtaBuilder.FrameLength(8000), report.Streams.Single().Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * 100L, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * 140L, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    // A header of sample rate 1 and 4,294,967,295 samples calls for a seek table of 16 GB: the file holds 8 MB of it, 2,097,152 entries, and every
+    // frame lies past the end of the data. Such an entry keeps its 4-byte length for the seek point node and nothing else; a record of 24 bytes
+    // for each of them (with the length list beside it) once made the report 7 times the file.
+    [Fact]
+    public void ATtaSeekTableOfEntriesPastTheEndStaysTheSizeOfTheFile()
+    {
+        byte[] data = [.. TtaBuilder.Header(1, 1, 16, uint.MaxValue), .. new byte[8 << 20]];
+
+        (Report report, long kept, long peak) = Measure("table.tta", data, data[..4096]);
+
+        Assert.Contains(report.Findings, f => f.Code == "tta.seek-table-truncated");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        output.WriteLine($"{kept / (double)data.Length:F2} times the file kept, {peak / (double)data.Length:F2} at the peak");
+        Assert.True(kept < data.Length * 1.5, $"The report keeps {kept / (double)data.Length:F2} times the file.");
+        Assert.True(peak < data.Length * 2.5, $"The live heap grew by {peak / (double)data.Length:F2} times the file.");
+        GC.KeepAlive(report);
+    }
+
+    // Frames of a CRC-32 alone, more than the records keep: the rest are counted, their CRC-32s compared, and the heap stays near the cap's.
+    [Fact]
+    public void TtaFramesPastTheCapStayBounded()
+    {
+        int count = Encspect.Formats.Tta.Records.MaxEntries + 1_000;
+        byte[] data = TtaBuilder.Stream(100, 1, 16, count, payload: 0);
+
+        Report report = Bounded("capped.tta", data, 450_000_000, "tta.entries-limit");
+
+        Assert.Equal(count * TtaBuilder.FrameLength(100), Assert.Single(report.Streams).Samples);
+        Assert.Equal(true, report.Streams.Single().Verification!.IsVerified);
+    }
+
     // A WavPack file keeps a 64-byte entry per block and 16 bytes per set for its graph, and the
     // sub-blocks of the first 4,096 blocks; past them a block is its entry alone, and its nodes are
     // built in blocks of 1,024 when read. The bounds are about twice what linux-x64 measures and below
@@ -1316,6 +1365,45 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)units:F2} bytes more per unit.");
         Assert.True(heldPerUnit < DecodingFrameBound, $"Decoding held {heldPerUnit:F2} more bytes per further unit at the last unit than the analysis ends with. {RuntimeSettings()}");
     }
+
+    // A Monkey's Audio file keeps a record of a few words for each of the first 1,048,576 frames, and a frame is its record alone: its nodes are built when
+    // read. The frames are MonkeysAudioBuilder.Silence's, 8 bytes each. The bounds are about twice what linux-x64 measures.
+    [Fact]
+    public void ManyMonkeysAudioFramesStayCompact()
+    {
+        const int frames = 100_000;
+
+        (Report report, long kept, long peak) = Measure("frames.ape", MonkeysAudioBuilder.Silence(frames), MonkeysAudioBuilder.Silence(100));
+
+        Assert.Equal(frames * 64L, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * MonkeysAudioKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * MonkeysAudioPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    // The decoding of a Monkey's Audio file holds one frame's bytes and the state of its predictors and filters, so what it holds does not grow with the
+    // frames. Measured as the WavPack test above does, at 50,000 and 200,000 frames of 64 samples of silence.
+    [Fact]
+    public void DecodingManyMonkeysAudioFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 50_000;
+        const int frames = 200_000;
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(MonkeysAudioBuilder.Silence(100)), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.ape", MonkeysAudioBuilder.Silence(fewer), fewer, 64);
+        (long held, long kept) = LastFrameReading("frames.ape", MonkeysAudioBuilder.Silence(frames), frames, 64);
+        (_, long plainKept) = LastFrameReading("frames.ape", MonkeysAudioBuilder.Silence(frames), frames, 64, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
+    private const long MonkeysAudioKeptBound = 140;
+
+    private const long MonkeysAudioPeakBound = 140;
 
     // A block of up to 1 MiB with a sub-block for every two bytes lists the first 1,024 and counts the rest.
     [Fact]

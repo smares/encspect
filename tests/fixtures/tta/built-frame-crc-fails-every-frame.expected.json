@@ -1,0 +1,108 @@
+{
+ "length": 950,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 950
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 100000,
+  "crc": "fe46365d",
+  "crc_ok": true
+ },
+ "frame_length": 46080,
+ "table": {
+  "offset": 22,
+  "expected": 3,
+  "entries": [
+   204,
+   304,
+   404
+  ],
+  "crc": "3e2117f3",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 38,
+   "size": 204,
+   "status": [
+    "crc"
+   ],
+   "crc": "fcd1e9fc"
+  },
+  {
+   "offset": 242,
+   "size": 304,
+   "status": [
+    "crc"
+   ],
+   "crc": "7b580714"
+  },
+  {
+   "offset": 546,
+   "size": 404,
+   "status": [
+    "crc"
+   ],
+   "crc": "bd49e1a0"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 100000,
+   "duration": 2.2675736961451247,
+   "bits_per_sample": 16,
+   "average_bitrate": 3.217536,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": false,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 3,
+     "failed": 3
+    }
+   ]
+  }
+ },
+ "findings": [
+  {
+   "code": "tta.frame-crc-mismatch",
+   "count": 3
+  }
+ ],
+ "description": "The stored CRC-32 of every frame differs by one bit."
+}
