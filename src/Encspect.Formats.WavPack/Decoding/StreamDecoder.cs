@@ -18,16 +18,20 @@ internal sealed class StreamDecoder : IFrameDecoder
     // decoded block by block, its CRCs compared, and its audio neither output nor hashed.
     internal const long MaxSetSamples = 1 << 24;
 
-    // The samples, over all channels, the decoder spends on blocks of sets that never complete (no final block, a channel count that does
-    // not add up, a block it refused) before it refuses further blocks. Such work reaches neither the sink nor the host's PCM budget, so
-    // this bounds it: a crafted file of small blocks that each state 196,607 samples would otherwise cost time by the samples it states and
-    // not by its bytes. A file whose sets all complete never reaches it.
-    internal const long MaxWastedSamples = 1L << 28;
-
     private const int DefaultMaxStreams = Syntax.OldMaxStreams;
+
+    // The work of one decorrelation pass on one sample of one channel (libwavpack's decorr_mono_pass and decorr_stereo_pass).
+    internal const long WorkPerPass = 8;
+
+    // Measured, not designed (docs/design/decoders.md, "As built: the work budget"): a PCM sample of a channel costs about 25 ns beyond its
+    // passes whatever its width, 2.5 times what DecodeWork.ForSample says, so the entropy decoder's word, the mute check, the CRC and the copy
+    // into the set's planes are charged on top of it; restoring the bits of a float costs about 7 ns more.
+    internal const long WorkPerPcmSample = 16;
+    internal const long WorkPerFloatSample = 16;
 
     private readonly DecodeContext _context;
     private readonly int _channels;
+    private readonly long _workPerSample;
     private readonly BlockContents _contents = new();
     private readonly PcmBlockDecoder _pcm = new();
     private readonly DsdBlockDecoder _dsd = new();
@@ -70,13 +74,12 @@ internal sealed class StreamDecoder : IFrameDecoder
     private bool _isDigestIncomplete;
     private bool _isOversizeSeen;
     private long _oversizeIndex;
-    private long _wastedSamples;
-    private long _setWork;
 
     public StreamDecoder(DecodeContext context)
     {
         _context = context;
         _channels = context.Setup.Channels;
+        _workPerSample = DecodeWork.ForSample(CanonicalPcm.BytesPerSample(context.Setup.BitsPerSample));
     }
 
     public int Decode(in CodedFrame frame)
@@ -175,7 +178,6 @@ internal sealed class StreamDecoder : IFrameDecoder
             _setBlocks = 0;
             _isSetOversized = false;
             _isSetFailed = false;
-            _setWork = 0;
         }
         else if (!_inSet)
         {
@@ -204,13 +206,6 @@ internal sealed class StreamDecoder : IFrameDecoder
         // (open_utils.c 357) sets that index from every block's own header, so only the sample count mutes a block.
         bool isMuted = header.Samples < samples;
         long needed = (long)(_setChannels + blockChannels) * samples;
-        if (_wastedSamples + _setWork + (long)blockChannels * samples > MaxWastedSamples)
-        {
-            _isSetFailed = true;
-            throw new InvalidDataException("The decoder has spent more work on blocks of sets that never complete than it allows");
-        }
-
-        _setWork += (long)blockChannels * samples;
         if (needed > MaxSetSamples)
         {
             _isSetOversized = true;
@@ -224,6 +219,7 @@ internal sealed class StreamDecoder : IFrameDecoder
         int width = (header.Flags & (BlockHeader.MonoFlag | BlockHeader.FalseStereoFlag)) != 0 ? 1 : 2;
         try
         {
+            Charge(data, header, isMuted, blockChannels, width, samples);
             if (isMuted)
             {
                 isCrcValid = uint.MaxValue == blockCrc;
@@ -288,6 +284,34 @@ internal sealed class StreamDecoder : IFrameDecoder
         return Complete(frame);
     }
 
+    // The work of one block, charged before it is decoded (docs/design/decoders.md, "Work instead of samples"). Every block is charged
+    // as it is decoded, the blocks of a set that never completes included, so the budget bounds them.
+    //   - the fixed work of each sample of each channel the block outputs, a muted block's too;
+    //   - 16 a byte of the bitstream sub-blocks it reads (the main one, the extra one of floats and of integers above 24 bits, the DSD data);
+    //   - 8 a decorrelation pass for each sample of each channel the passes run on;
+    //   - DSD: 16 more a byte of each channel in the fast mode and 64 in the high mode, and the setup of the block's tables.
+    private void Charge(ReadOnlySpan<byte> data, in BlockHeader header, bool isMuted, int blockChannels, int width, int samples)
+    {
+        long perSample = _workPerSample + (_isDsd ? 0 : WorkPerPcmSample + (header.IsFloat ? WorkPerFloatSample : 0));
+        _context.AddWork(checked(perSample * blockChannels * samples));
+        if (isMuted)
+        {
+            return;
+        }
+
+        if (_isDsd)
+        {
+            ReadOnlySpan<byte> dsd = data.Slice(_contents.Dsd.Start, _contents.Dsd.Length);
+            _context.AddWork(checked(DecodeWork.PerCodedByte * dsd.Length));
+            _context.AddWork(DsdBlockDecoder.SetupWork(dsd));
+            _context.AddWork(checked(DsdBlockDecoder.WorkPerByte(dsd) * width * samples));
+            return;
+        }
+
+        _context.AddWork(checked(DecodeWork.PerCodedByte * (_contents.Bitstream.Length + _contents.ExtraBitstream.Length)));
+        _context.AddWork(checked(WorkPerPass * _contents.Passes * width * samples));
+    }
+
     private int[] _muted = [];
 
     private ReadOnlySpan<int> MutedSamples(int count)
@@ -340,14 +364,12 @@ internal sealed class StreamDecoder : IFrameDecoder
         if (_isSetFailed)
         {
             _isDigestIncomplete = true;
-            _wastedSamples += _setWork;
             return 0;
         }
 
         if (_setChannels != _channels)
         {
             _isDigestIncomplete = true;
-            _wastedSamples += _setWork;
             throw new InvalidDataException($"The blocks of the set hold {Counts.Of(_setChannels, "channel", "channels")}, but the stream has {_channels}");
         }
 
@@ -398,7 +420,6 @@ internal sealed class StreamDecoder : IFrameDecoder
         {
             _inSet = false;
             _isDigestIncomplete = true;
-            _wastedSamples += _setWork;
         }
     }
 

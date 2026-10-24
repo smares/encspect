@@ -80,6 +80,22 @@ internal static class FlacBuilder
         return Finish([.. header], body);
     }
 
+    // A frame whose subframes are already packed into bytes (DecoderWorkTests builds millions of samples, where a list of bits is too
+    // slow). assignment is the channel assignment code of the header: channels - 1 for independent channels, 8 to 10 for left/side,
+    // side/right and mid/side.
+    public static byte[] FrameOf(long number, int blockSize, int rate, int assignment, int bits, byte[] subframes)
+    {
+        var header = new List<byte> { 0xFF, 0xF8, 0x7D, (byte)((assignment << 4) | (SizeCode(bits) << 1)) };
+        header.AddRange(Number(number));
+        header.AddRange(Short(blockSize - 1));
+        header.AddRange(Short(rate));
+        header.Add(Crc8([.. header]));
+        byte[] data = [.. header, .. subframes];
+        byte[] crc = new byte[2];
+        BinaryPrimitives.WriteUInt16BigEndian(crc, Crc16(data));
+        return [.. data, .. crc];
+    }
+
     private static byte[] Finish(byte[] header, List<bool> bits)
     {
         while (bits.Count % 8 != 0)

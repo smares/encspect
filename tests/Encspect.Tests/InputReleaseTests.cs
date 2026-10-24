@@ -54,6 +54,32 @@ public class InputReleaseTests
         GC.KeepAlive(report);
     }
 
+    // The token a decoder gets is linked to the analysis's and the front end's stop; a caller that reuses one token for many
+    // analyses must not keep a linked source registered for each, so the host disposes it when the analysis ends, also when it throws.
+    [Fact]
+    public void TheDecodingTokenOfEveryAnalysisIsDisposedWhenItEnds()
+    {
+        using var long_lived = new CancellationTokenSource();
+        using var stop = new CancellationTokenSource();
+        var tokens = new List<CancellationToken>();
+        var decoder = new DecodeRouteTests.ScriptedDecoder { OnOpened = c => tokens.Add(c.CancellationToken) };
+        var analyzer = new Analyzer([], [new DecodeRouteTests.FrameParser()], [], [decoder]);
+        var options = new AnalysisOptions { CancellationToken = long_lived.Token, Decoding = new DecodeOptions { Stop = stop.Token } };
+
+        for (int i = 0; i < 50; i++)
+        {
+            analyzer.Analyze("sample.bin", new MemoryStream(new byte[64]), options);
+        }
+
+        // An analysis that throws (the front end's sink failed) disposes it too.
+        var failing = new AnalysisOptions { CancellationToken = long_lived.Token, Decoding = new DecodeOptions { Output = _ => throw new InvalidOperationException("sink") } };
+        var withSink = new DecodeRouteTests.ScriptedDecoder { OnOpened = c => { tokens.Add(c.CancellationToken); c.DeclareOutput(new PcmFormat(44100, 2, 16, SampleFormat.Integer)); } };
+        Assert.Throws<InvalidOperationException>(() => new Analyzer([], [new DecodeRouteTests.FrameParser()], [], [withSink]).Analyze("sample.bin", new MemoryStream(new byte[64]), failing));
+
+        Assert.Equal(51, tokens.Count);
+        Assert.All(tokens, token => Assert.Throws<ObjectDisposedException>(() => token.WaitHandle));
+    }
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static (WeakReference Input, Report Report) Analyze(string name, byte[] data, bool expand)
     {

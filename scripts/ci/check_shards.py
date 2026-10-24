@@ -47,6 +47,19 @@ def main():
         for test, count in members.items():
             owners[test].append((shard["name"], count))
 
+    # The tests of the nightly run only (the trait Category=Nightly) are the ones a pull request and a push to main leave out, and
+    # nothing else: every shard's filter without them lists the shard's tests less those, and there are some, or the exclusion is idle.
+    nightly = listed(shard_config.NIGHTLY_TRAIT)
+    if not nightly:
+        problems.append("no test carries the trait Category=Nightly, so the exclusion of the pull request run excludes nothing")
+    skipped = collections.Counter()
+    for shard in shards:
+        skipped.update(listed(shard_config.filter_for(shards, shard["name"], include_nightly=False)))
+    for test in everything:
+        if (skipped[test] != 0) == (test in nightly):
+            problems.append(f"{test} {'is' if test in nightly else 'is not'} a test of the nightly run only, and the shards without those tests run it {skipped[test]} times")
+    print(f"{sum(nightly.values())} tests of the nightly run only, {sum(skipped.values())} in the shards of a pull request")
+
     for test, count in everything.items():
         found = owners.get(test, [])
         if len(found) == 0:

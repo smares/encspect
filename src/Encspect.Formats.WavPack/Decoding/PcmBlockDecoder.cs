@@ -495,12 +495,7 @@ internal sealed class PcmBlockDecoder
                     }
                     else if (exponent != 0)
                     {
-                        while ((value & 0x800000) == 0 && --exponent != 0)
-                        {
-                            shiftCount++;
-                            value = unchecked((int)((uint)value << 1));
-                        }
-
+                        Normalize(ref value, ref exponent, ref shiftCount);
                         if ((shiftCount &= 0x1F) != 0 && (floatFlags & 1) != 0)
                         {
                             value |= unchecked((int)((1u << shiftCount) - 1));
@@ -557,11 +552,7 @@ internal sealed class PcmBlockDecoder
                 {
                     if (exponent != 0)
                     {
-                        while ((value & 0x800000) == 0 && --exponent != 0)
-                        {
-                            shiftCount++;
-                            value = unchecked((int)((uint)value << 1));
-                        }
+                        Normalize(ref value, ref exponent, ref shiftCount);
                     }
 
                     if ((shiftCount &= 0x1F) != 0)
@@ -587,6 +578,41 @@ internal sealed class PcmBlockDecoder
         }
 
         extraCrc = crc;
+    }
+
+    // libwavpack's loop `while ((value & 0x800000) == 0 && --exponent != 0) { shiftCount++; value <<= 1; }` (unpack_floats.c 70-71 and
+    // 118-119), for an exponent of at least 1, without iterating. The loop shifts the value up until its bit 23 is set, one step for each
+    // decrement of the exponent, and stops when the exponent reaches 0. A value that is 0 (at the start, or after a shift, as the 0 that
+    // int.MinValue becomes) or whose bits all lie above bit 23 never gets the bit, so the loop would count the exponent down to 0 one
+    // step at a time: up to 254 steps a sample from a few bytes of a crafted file, and up to 23 for a small value. In closed form, with k
+    // the shifts the highest set bit at or below bit 23 needs: k shifts and an exponent of exponent - k where k <= exponent - 1, else
+    // exponent - 1 shifts and an exponent of 0, as the loop leaves them; so the result, shiftCount and its mask, the only use of it, are
+    // the same, and so is the CRC over the floats. WavPackFloatTests compare it with the loop over the edge cases.
+    internal static void Normalize(ref int value, ref int exponent, ref int shiftCount)
+    {
+        uint bits = (uint)value;
+        if ((bits & 0x800000) != 0)
+        {
+            return;
+        }
+
+        uint low = bits & 0xFFFFFF;
+        if (low != 0)
+        {
+            int shifts = 23 - (31 - System.Numerics.BitOperations.LeadingZeroCount(low));
+            if (shifts <= exponent - 1)
+            {
+                shiftCount += shifts;
+                exponent -= shifts;
+                value = unchecked((int)(bits << shifts));
+                return;
+            }
+        }
+
+        int last = exponent - 1;
+        shiftCount += last;
+        exponent = 0;
+        value = last >= 32 ? 0 : unchecked((int)(bits << last));
     }
 
     private static uint SetMantissa(uint f, uint v) => f ^ ((f ^ v) & 0x7FFFFF);

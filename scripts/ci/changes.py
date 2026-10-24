@@ -305,6 +305,10 @@ def decide(event, files, root=ROOT, removed=()):
     return flags, reason
 
 
+# The events that run the tests of the nightly run only too (Category=Nightly, see shards.py): the schedule and a manual run.
+NIGHTLY_EVENTS = ("schedule", "workflow_dispatch")
+
+
 def platforms(event):
     return PULL_REQUEST_PLATFORMS if event == "pull_request" else FULL_PLATFORMS
 
@@ -350,7 +354,8 @@ def main():
     outputs = {job: "true" if on else "false" for job, on in flags.items()}
     outputs["reason"] = reason
     outputs["build-matrix"] = json.dumps(os_list, separators=(",", ":"))
-    outputs["test-matrix"] = json.dumps([{**p, "shard": s["name"], "filter": shard_config.filter_for(shards, s["name"])} for p in os_list for s in shards], separators=(",", ":"))
+    include_nightly = args.event in NIGHTLY_EVENTS
+    outputs["test-matrix"] = json.dumps([{**p, "shard": s["name"], "filter": shard_config.filter_for(shards, s["name"], include_nightly)} for p in os_list for s in shards], separators=(",", ":"))
     lines = [f"{k}={v}" for k, v in outputs.items()]
     if args.print or "GITHUB_OUTPUT" not in os.environ:
         print("\n".join(lines))

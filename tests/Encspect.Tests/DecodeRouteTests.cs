@@ -13,9 +13,16 @@ public class DecodeRouteTests
     private const int FrameSamples = 100;
 
     // A decoder whose behavior the test scripts. One instance serves one test, but keeps its per-stream state in the
-    // IFrameDecoder it opens, as the contract asks.
+    // IFrameDecoder it opens, as the contract asks. It charges DecodeWork.ForSample for each sample of each channel it
+    // returns, after the frame is decoded, unless ChargesNothing says otherwise or a test charges through the context itself.
     internal sealed class ScriptedDecoder(string id = "test") : IDecoder
     {
+        public bool ChargesNothing { get; init; }
+
+        public long? WorkPerByte { get; init; }
+
+        public long WorkPerInputByte => WorkPerByte ?? DecodeWork.DefaultPerInputByte;
+
         public Func<DecodeContext, IFrameDecoder>? OnOpen { get; init; }
 
         public Func<CodedFrame, int>? OnDecode { get; init; }
@@ -38,16 +45,22 @@ public class DecodeRouteTests
         {
             Opens++;
             OnOpened?.Invoke(context);
-            return OnOpen?.Invoke(context) ?? new Frames(this);
+            return OnOpen?.Invoke(context) ?? new Frames(this, context);
         }
 
-        private sealed class Frames(ScriptedDecoder owner) : IFrameDecoder
+        private sealed class Frames(ScriptedDecoder owner, DecodeContext context) : IFrameDecoder
         {
             public int Decode(in CodedFrame frame)
             {
                 owner.FirstSamples.Add(frame.FirstSample);
                 owner.Gaps.Add(frame.FollowsGap);
-                return owner.OnDecode is { } decode ? decode(frame) : frame.Samples;
+                int samples = owner.OnDecode is { } decode ? decode(frame) : frame.Samples;
+                if (!owner.ChargesNothing)
+                {
+                    context.AddWork(Charge(context.Setup, samples));
+                }
+
+                return samples;
             }
 
             public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end)
@@ -56,6 +69,13 @@ public class DecodeRouteTests
                 return owner.OnFinish?.Invoke(end) ?? [];
             }
         }
+    }
+
+    // DecodeWork.ForSample for each sample of each channel, saturating at a long as a decoder must.
+    internal static long Charge(DecodeSetup setup, long samples)
+    {
+        UInt128 units = (UInt128)(ulong)DecodeWork.ForSample(CanonicalPcm.BytesPerSample(setup.BitsPerSample)) * (ulong)setup.Channels * (ulong)samples;
+        return units > long.MaxValue ? long.MaxValue : (long)units;
     }
 
     // A format parser over 64 bytes that reads four frames of 16 bytes and decodes them, as the design's FLAC outline does.
@@ -323,15 +343,19 @@ public class DecodeRouteTests
 
     // The budget.
 
+    // 100 samples of 2 channels at 16 bits are charged 3,200 units a frame (16 a sample of each channel).
+    private const long FrameWork = 3200;
+
+    private static AnalysisOptions WithMaxWork(long maxWork) => new() { Decoding = new DecodeOptions { MaxWork = maxWork } };
+
     [Fact]
-    public void TheBudgetCountsCanonicalBytesAndStopsEverySessionWithAnInfo()
+    public void TheBudgetCountsChargedWorkAndStopsEverySessionWithAnInfo()
     {
-        // 100 samples of 2 channels at 16 bits are 400 bytes a frame: the third frame passes 800.
+        // The third frame passes 6,400 units.
         var decoder = new ScriptedDecoder { OnFinish = end => end.IsComplete ? Md5() : [] };
         var parser = new FrameParser();
-        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 800 } };
 
-        Report report = Analyze(parser, [decoder], options);
+        Report report = Analyze(parser, [decoder], WithMaxWork(2 * FrameWork));
 
         StreamVerification verification = Assert.Single(report.Streams).Verification!;
         Assert.Equal(DecodeStatus.Stopped, verification.Decoding);
@@ -343,41 +367,59 @@ public class DecodeRouteTests
         Assert.Null(verification.IsVerified);
         Finding finding = Assert.Single(report.Findings);
         Assert.Equal(("decode.limit", Severity.Info), (finding.Code, finding.Severity));
+        Assert.Equal("Decoding stopped after 3 frames: its work passed the budget of 6,400 work units.", finding.Message);
     }
 
     [Fact]
-    public void TheBudgetCountsWholeBytesOfTheSampleWidth()
+    public void TheFixedChargeOfASampleFollowsTheBytesTheChecksumsHash()
     {
-        // 8-bit mono: 100 bytes a frame; 12-bit counts 2 bytes a sample.
-        Report narrow = Analyze(new FrameParser { Channels = 1, BitsPerSample = 8 }, [new ScriptedDecoder()], new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 399 } });
-        Assert.Equal(400, Assert.Single(narrow.Streams).Verification!.DecodedSamples);
+        Assert.Equal([13L, 16, 19, 22], Enumerable.Range(1, 4).Select(DecodeWork.ForSample));
+        Assert.Equal(1, DecodeWork.PerTap);
+        Assert.Equal(16, DecodeWork.PerCodedByte);
+        Assert.Equal(2048, DecodeWork.DefaultPerInputByte);
+        Assert.Equal(1L << 35, DecodeOptions.MinimumWork);
 
-        Report twelve = Analyze(new FrameParser { Channels = 1, BitsPerSample = 12 }, [new ScriptedDecoder()], new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 399 } });
-        Assert.Equal(DecodeStatus.Stopped, Assert.Single(twelve.Streams).Verification!.Decoding);
-        Assert.Equal(200, twelve.Streams[0].Verification!.DecodedSamples);
+        // 8-bit mono is 13 units a sample, 12-bit mono 16 (two bytes), 32-bit stereo 44 a pair of samples.
+        Assert.Equal(1300, Charge(new DecodeSetup { Stream = new Node("S", 0, 1), Channels = 1, BitsPerSample = 8 }, 100));
+        Assert.Equal(1600, Charge(new DecodeSetup { Stream = new Node("S", 0, 1), Channels = 1, BitsPerSample = 12 }, 100));
+        Assert.Equal(4400, Charge(new DecodeSetup { Stream = new Node("S", 0, 1), Channels = 2, BitsPerSample = 32 }, 100));
     }
 
     [Fact]
-    public void AGroupsBlocksCountOnceAgainstTheBudget()
+    public void EveryBlocksWorkCountsAndTheFinalBlocksSamplesOnceInDecodedSamples()
     {
+        // A group: the work of every block is charged when it is decoded, the samples come back on the final block.
         int[] returns = [0, 0, 300, 100];
         int call = 0;
-        var decoder = new ScriptedDecoder { OnDecode = _ => returns[call++] };
-        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 1600 } };
+        DecodeContext? context = null;
+        var decoder = new ScriptedDecoder
+        {
+            ChargesNothing = true,
+            OnOpened = c => context = c,
+            OnDecode = f =>
+            {
+                context!.AddWork(FrameWork);
+                return returns[call++];
+            },
+        };
 
-        StreamVerification verification = Assert.Single(Analyze(new FrameParser(), [decoder], options).Streams).Verification!;
-
+        StreamVerification verification = Assert.Single(Analyze(new FrameParser(), [decoder], WithMaxWork(4 * FrameWork)).Streams).Verification!;
         Assert.Equal(DecodeStatus.Decoded, verification.Decoding);
         Assert.Equal(400, verification.DecodedSamples);
+
+        call = 0;
+        verification = Assert.Single(Analyze(new FrameParser(), [decoder], WithMaxWork((3 * FrameWork) - 1)).Streams).Verification!;
+        Assert.Equal(DecodeStatus.Stopped, verification.Decoding);
+        Assert.Equal(300, verification.DecodedSamples);
     }
 
     [Fact]
     public void ABudgetOfZeroStopsAfterTheFirstFrameAndANegativeOneIsRefused()
     {
-        Report report = Analyze(new FrameParser(), [new ScriptedDecoder()], new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 0 } });
+        Report report = Analyze(new FrameParser(), [new ScriptedDecoder()], WithMaxWork(0));
         Assert.Equal(100, Assert.Single(report.Streams).Verification!.DecodedSamples);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => Analyze(new FrameParser(), [new ScriptedDecoder()], new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = -1 } }));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Analyze(new FrameParser(), [new ScriptedDecoder()], WithMaxWork(-1)));
     }
 
     [Fact]
@@ -385,14 +427,258 @@ public class DecodeRouteTests
     {
         var second = new SecondStreamParser();
         var decoder = new ScriptedDecoder();
-        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 1000 } };
 
-        Report report = new Analyzer([], [second], [], [decoder]).Analyze("sample.bin", new MemoryStream(new byte[64]), options);
+        Report report = new Analyzer([], [second], [], [decoder]).Analyze("sample.bin", new MemoryStream(new byte[64]), WithMaxWork(2 * FrameWork + 1600));
 
         Assert.Equal(2, report.Streams.Count);
         Assert.All(report.Streams, s => Assert.Equal(DecodeStatus.Stopped, s.Verification!.Decoding));
         Assert.Equal(2, report.Findings.Count(f => f.Code == "decode.limit"));
         Assert.Equal(3, decoder.FirstSamples.Count);
+    }
+
+    [Fact]
+    public void WorkChargedInAFrameThatThenFailsCounts()
+    {
+        DecodeContext? context = null;
+        var decoder = new ScriptedDecoder
+        {
+            ChargesNothing = true,
+            OnOpened = c => context = c,
+            OnDecode = _ =>
+            {
+                context!.AddWork(5000);
+                throw new InvalidDataException("the residual is broken");
+            },
+        };
+        var parser = new FrameParser();
+
+        Report report = Analyze(parser, [decoder], WithMaxWork(4000));
+
+        Assert.Single(decoder.FirstSamples);
+        Assert.False(parser.Session!.IsDecoding);
+        Assert.Contains(report.Findings, f => f.Code == "decode.frame-invalid");
+        Assert.Contains(report.Findings, f => f.Code == "decode.limit");
+        Assert.Equal(1, decoder.Ends[0].FramesNotDecoded);
+    }
+
+    [Fact]
+    public void ABudgetCrossedInsideAFrameStopsAtTheDecodersNextCheckAndTheFrameIsNotDecoded()
+    {
+        DecodeContext? context = null;
+        var decoder = new ScriptedDecoder
+        {
+            ChargesNothing = true,
+            OnOpened = c => context = c,
+            OnDecode = f =>
+            {
+                context!.AddWork(2 * FrameWork);
+                context.CancellationToken.ThrowIfCancellationRequested();
+                return f.Samples;
+            },
+        };
+        var parser = new FrameParser();
+
+        Report report = Analyze(parser, [decoder], WithMaxWork(FrameWork));
+
+        StreamVerification verification = Assert.Single(report.Streams).Verification!;
+        Assert.Equal(DecodeStatus.Stopped, verification.Decoding);
+        Assert.Equal(0, verification.DecodedSamples);
+        Assert.Equal(new DecodeEnd(false, 1), Assert.Single(decoder.Ends));
+        Assert.Equal("decode.limit", Assert.Single(report.Findings).Code);
+        Assert.Single(decoder.FirstSamples);
+    }
+
+    [Fact]
+    public void AFrameThatFinishesAfterTheBudgetWasCrossedCountsAsDecoded()
+    {
+        // FLAC's way: the token is checked between frames only, so the frame that was charged past the budget completes.
+        var decoder = new ScriptedDecoder();
+
+        Report report = Analyze(new FrameParser(), [decoder], WithMaxWork(FrameWork - 1));
+
+        StreamVerification verification = Assert.Single(report.Streams).Verification!;
+        Assert.Equal(100, verification.DecodedSamples);
+        Assert.Equal(new DecodeEnd(false, 0), Assert.Single(decoder.Ends));
+        Assert.Equal("decode.limit", Assert.Single(report.Findings).Code);
+    }
+
+    [Fact]
+    public void ACanceledAnalysisStillThrowsFromAnalyzeWhereTheBudgetAndTheStopOnlyEndTheDecoding()
+    {
+        using var cts = new CancellationTokenSource();
+        DecodeContext? context = null;
+        var decoder = new ScriptedDecoder
+        {
+            OnOpened = c => context = c,
+            OnDecode = f =>
+            {
+                cts.Cancel();
+                context!.CancellationToken.ThrowIfCancellationRequested();
+                return f.Samples;
+            },
+        };
+        var analyzer = new Analyzer([], [new FrameParser()], [], [decoder]);
+
+        Assert.Throws<OperationCanceledException>(() => analyzer.Analyze("sample.bin", new MemoryStream(new byte[64]), new AnalysisOptions { CancellationToken = cts.Token, Decoding = new DecodeOptions() }));
+    }
+
+    [Fact]
+    public void TheFrontEndsStopInsideAFrameEndsTheDecodingWithTheStopFinding()
+    {
+        using var stop = new CancellationTokenSource();
+        DecodeContext? context = null;
+        var decoder = new ScriptedDecoder
+        {
+            OnOpened = c => context = c,
+            OnDecode = f =>
+            {
+                stop.Cancel();
+                context!.CancellationToken.ThrowIfCancellationRequested();
+                return f.Samples;
+            },
+        };
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Stop = stop.Token } };
+
+        Report report = Analyze(new FrameParser(), [decoder], options);
+
+        StreamVerification verification = Assert.Single(report.Streams).Verification!;
+        Assert.Equal(DecodeStatus.Stopped, verification.Decoding);
+        Assert.Equal(0, verification.DecodedSamples);
+        Assert.Equal(1, decoder.Ends[0].FramesNotDecoded);
+        Assert.Equal("decode.stopped", Assert.Single(report.Findings).Code);
+    }
+
+    [Fact]
+    public void AFrameThatBothAStopAndTheBudgetInterruptedReportsTheStop()
+    {
+        using var stop = new CancellationTokenSource();
+        DecodeContext? context = null;
+        var decoder = new ScriptedDecoder
+        {
+            ChargesNothing = true,
+            OnOpened = c => context = c,
+            OnDecode = f =>
+            {
+                context!.AddWork(2 * FrameWork);
+                stop.Cancel();
+                context.CancellationToken.ThrowIfCancellationRequested();
+                return f.Samples;
+            },
+        };
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Stop = stop.Token, MaxWork = FrameWork } };
+
+        Report report = Analyze(new FrameParser(), [decoder], options);
+
+        Assert.Equal("decode.stopped", Assert.Single(report.Findings).Code);
+    }
+
+    [Fact]
+    public void ADecoderThatChargesLessThanTheFloorOrNothingIsDecodeFailed()
+    {
+        foreach (ScriptedDecoder decoder in new[] { new ScriptedDecoder { ChargesNothing = true }, ScriptedDecoderChargingOneUnit() })
+        {
+            Report report = Analyze(new FrameParser(), [decoder], Verify);
+
+            Assert.Equal(DecodeStatus.Failed, Assert.Single(report.Streams).Verification!.Decoding);
+            Finding finding = Assert.Single(report.Findings, f => f.Code == "decode.failed");
+            Assert.Equal(Severity.Error, finding.Severity);
+            Assert.Contains("fewer than the 3200", finding.Message);
+            Assert.Single(decoder.FirstSamples);
+        }
+    }
+
+    private static ScriptedDecoder ScriptedDecoderChargingOneUnit()
+    {
+        DecodeContext? context = null;
+        return new ScriptedDecoder { ChargesNothing = true, OnOpened = c => context = c, OnDecode = f => { context!.AddWork(1); return f.Samples; } };
+    }
+
+    [Fact]
+    public void TheFloorIsComparedOnTotalsNotPerCall()
+    {
+        // A group of blocks: the first block charges the work of all its channels and returns 0, the final one returns the samples
+        // of the set and charges only its own: the totals meet the floor from the second block on, not the per-call figures.
+        int[] returns = [0, 400];
+        int call = 0;
+        DecodeContext? context = null;
+        var decoder = new ScriptedDecoder
+        {
+            ChargesNothing = true,
+            OnOpened = c => context = c,
+            OnDecode = _ =>
+            {
+                context!.AddWork(call == 0 ? 3 * FrameWork : FrameWork);
+                return returns[call++];
+            },
+        };
+
+        Report report = Analyze(new FrameParser { Frames = 2 }, [decoder], Verify);
+
+        Assert.Equal(400, Assert.Single(report.Streams).Verification!.DecodedSamples);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "decode.failed");
+    }
+
+    [Fact]
+    public void NegativeWorkIsDecodeFailed()
+    {
+        DecodeContext? context = null;
+        var decoder = new ScriptedDecoder { OnOpened = c => context = c, OnDecode = _ => { context!.AddWork(-1); return 100; } };
+
+        Report report = Analyze(new FrameParser(), [decoder], Verify);
+
+        Assert.Equal(DecodeStatus.Failed, Assert.Single(report.Streams).Verification!.Decoding);
+        Assert.Contains("ArgumentOutOfRangeException", Assert.Single(report.Findings, f => f.Code == "decode.failed").Message);
+    }
+
+    [Fact]
+    public void TheDefaultBudgetUsesTheLargestAllowancePerInputByteAmongTheDecodersThatStartedASession()
+    {
+        // The file is 64 bytes, so the floor of 2^35 units is the bound unless a decoder allows more per byte: 2^36 units in
+        // one frame pass the floor but not 64 bytes at 2^40.
+        DecodeContext? context = null;
+        ScriptedDecoder Heavy(long? perByte) => new()
+        {
+            WorkPerByte = perByte,
+            ChargesNothing = true,
+            OnOpened = c => context = c,
+            OnDecode = f =>
+            {
+                context!.AddWork(1L << 36);
+                return f.Samples;
+            },
+        };
+
+        Assert.Contains(Analyze(new FrameParser { Frames = 1 }, [Heavy(null)], Verify).Findings, f => f.Code == "decode.limit");
+        Assert.DoesNotContain(Analyze(new FrameParser { Frames = 1 }, [Heavy(1L << 40)], Verify).Findings, f => f.Code == "decode.limit");
+
+        // The message names the file's size only where the file's size set the budget, and writes both numbers alike.
+        Finding limit = Assert.Single(Analyze(new FrameParser { Frames = 1 }, [Heavy(null)], Verify).Findings, f => f.Code == "decode.limit");
+        Assert.Equal("Decoding stopped after 1 frame: its work passed the budget of 34,359,738,368 work units that the file's size allows.", limit.Message);
+    }
+
+    [Fact]
+    public void WorkSaturatesInsteadOfWrapping()
+    {
+        // Two charges of a long's maximum would wrap; a crafted file's absurd channel count makes the floor pass a long, too.
+        DecodeContext? context = null;
+        var decoder = new ScriptedDecoder
+        {
+            ChargesNothing = true,
+            OnOpened = c => context = c,
+            OnDecode = _ =>
+            {
+                context!.AddWork(long.MaxValue);
+                context.AddWork(long.MaxValue);
+                return int.MaxValue;
+            },
+        };
+        var parser = new FrameParser { Channels = int.MaxValue, BitsPerSample = 64, Samples = null };
+
+        Report report = Analyze(parser, [decoder], Verify);
+
+        Assert.Equal(DecodeStatus.Stopped, Assert.Single(report.Streams).Verification!.Decoding);
+        Assert.Single(decoder.FirstSamples);
+        Assert.Equal("decode.limit", Assert.Single(report.Findings).Code);
     }
 
     // Two streams in one file: the second session is stopped by the budget the first one spent.
@@ -590,11 +876,126 @@ public class DecodeRouteTests
     }
 
     [Fact]
-    public void AnOperationCanceledExceptionFromTheDecoderIsNotADecodeFailure()
+    public void AnOperationCanceledExceptionTheHostDoesNotExplainIsDecodeFailed()
     {
+        // No stop, no budget and no sink failure: the decoder's own bug, which the host reports (the lead's decision of 2026-10-23) and does not
+        // let out of Analyze as a canceled analysis.
         var decoder = new ScriptedDecoder { OnDecode = _ => throw new OperationCanceledException() };
 
-        Assert.Throws<OperationCanceledException>(() => Analyze(new FrameParser(), [decoder], Verify));
+        Report report = Analyze(new FrameParser(), [decoder], Verify);
+
+        Assert.Equal(DecodeStatus.Failed, Assert.Single(report.Streams).Verification!.Decoding);
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "decode.failed");
+        Assert.Contains("OperationCanceledException", finding.Message);
+    }
+
+    [Fact]
+    public void AnOperationCanceledExceptionTheHostDoesNotExplainFromOpenOrFinishIsDecodeFailedToo()
+    {
+        Report opened = Analyze(new FrameParser(), [new ScriptedDecoder { OnOpen = _ => throw new OperationCanceledException() }], Verify);
+        Assert.Equal(DecodeStatus.Failed, Assert.Single(opened.Streams).Verification!.Decoding);
+        Assert.Contains(opened.Findings, f => f.Code == "decode.failed");
+
+        Report finished = Analyze(new FrameParser(), [new ScriptedDecoder { OnFinish = _ => throw new OperationCanceledException() }], Verify);
+        Assert.Equal(DecodeStatus.Failed, Assert.Single(finished.Streams).Verification!.Decoding);
+        Assert.Contains(finished.Findings, f => f.Code == "decode.failed");
+    }
+
+    [Fact]
+    public void ADecoderOpenedAfterTheStopGetsACanceledTokenAndTheHostReportsTheStop()
+    {
+        using var stop = new CancellationTokenSource();
+        stop.Cancel();
+        var decoder = new ScriptedDecoder { OnOpen = c => { c.CancellationToken.ThrowIfCancellationRequested(); throw new InvalidOperationException("not reached"); } };
+
+        Report report = Analyze(new FrameParser(), [decoder], new AnalysisOptions { Decoding = new DecodeOptions { Stop = stop.Token } });
+
+        Assert.Equal(DecodeStatus.Stopped, Assert.Single(report.Streams).Verification!.Decoding);
+        Assert.Equal("decode.stopped", Assert.Single(report.Findings).Code);
+    }
+
+    // Two streams of two codings: the first crosses the budget, then a session of a decoder with a larger allowance starts and raises the budget
+    // above the count. The decoding's token stays canceled, so the crossing is final: both streams stop with decode.limit and Analyze does not throw.
+    private sealed class TwoCodecParser : IFormatParser
+    {
+        public string Name => "TwoCodec";
+
+        public SniffResult Sniff(SniffContext context) => new(100);
+
+        public void Parse(ParseContext context)
+        {
+            Node a = context.Root.Add("Stream A", 0, 32);
+            Node b = context.Root.Add("Stream B", 32, 32);
+            byte[] data = new byte[64];
+            var frame = new CodedFrame(new MappedBytes(data.AsMemory(0, 16), 0), "Frame", 0, 100);
+            IDecodeSession one = context.StartDecoding("a", new DecodeSetup { Stream = a, Channels = 2, BitsPerSample = 16 });
+            one.Decode(frame);
+            IDecodeSession two = context.StartDecoding("b", new DecodeSetup { Stream = b, Channels = 2, BitsPerSample = 16 });
+            two.Decode(frame);
+            one.Decode(frame with { FirstSample = 100 });
+            context.AddStream(new StreamInfo { Nodes = [a], Codec = "Test", Verification = one.Finish([]) });
+            context.AddStream(new StreamInfo { Nodes = [b], Codec = "Test", Verification = two.Finish([]) });
+        }
+    }
+
+    [Fact]
+    public void ABudgetThatWouldGrowAfterItWasCrossedStaysCrossed()
+    {
+        DecodeContext? ca = null;
+        DecodeContext? cb = null;
+        var a = new ScriptedDecoder("a")
+        {
+            ChargesNothing = true,
+            OnOpened = c => ca = c,
+            OnDecode = f =>
+            {
+                ca!.AddWork(1L << 36);
+                ca.CancellationToken.ThrowIfCancellationRequested();
+                return f.Samples;
+            },
+        };
+        var b = new ScriptedDecoder("b")
+        {
+            ChargesNothing = true,
+            WorkPerByte = 1L << 40,
+            OnOpened = c => cb = c,
+            OnDecode = f =>
+            {
+                cb!.AddWork(Charge(cb.Setup, f.Samples));
+                cb.CancellationToken.ThrowIfCancellationRequested();
+                return f.Samples;
+            },
+        };
+
+        Report report = new Analyzer([], [new TwoCodecParser()], [], [a, b]).Analyze("two.bin", new MemoryStream(new byte[64]), Verify);
+
+        Assert.Equal(2, report.Findings.Count(f => f.Code == "decode.limit"));
+        Assert.DoesNotContain(report.Findings, f => f.Code == "decode.failed");
+    }
+
+    [Fact]
+    public void AStreamTheDecoderRefusesDoesNotRaiseTheAllowance()
+    {
+        // The refused stream's decoder allows 2^40 units a byte; it never opened a stream, so the other decoder's 2,048 bound the work.
+        DecodeContext? context = null;
+        var refused = new ScriptedDecoder("b") { WorkPerByte = 1L << 40, OnOpen = _ => throw new InvalidDataException("no") };
+        var heavy = new ScriptedDecoder("a")
+        {
+            OnOpened = c => context = c,
+            OnDecode = f =>
+            {
+                if (f.FirstSample >= 100)
+                {
+                    context!.AddWork(1L << 36);
+                }
+
+                return f.Samples;
+            },
+        };
+
+        Report report = new Analyzer([], [new TwoCodecParser()], [], [heavy, refused]).Analyze("two.bin", new MemoryStream(new byte[64]), Verify);
+
+        Assert.Contains(report.Findings, f => f.Code == "decode.limit");
     }
 
     // The front end's stop and sink.
@@ -1150,7 +1551,7 @@ public class DecodeRouteTests
     [Fact]
     public void ANegativeBudgetIsRefusedWhateverTheFile()
     {
-        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = -1 } };
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = -1 } };
         var analyzer = new Analyzer([], [new FrameParser()], [], [new ScriptedDecoder()]);
 
         Assert.Throws<ArgumentOutOfRangeException>(() => analyzer.Analyze("empty.bin", new MemoryStream(), options));
@@ -1199,20 +1600,6 @@ public class DecodeRouteTests
 
         var context = new ParseContext(new ByteReader(new MemoryStream(new byte[8]), CancellationToken.None), new Node("File", 0, 8));
         Assert.False(context.StartDecoding("test", new DecodeSetup { Stream = context.Root, Channels = 0, BitsPerSample = 99 }).IsDecoding);
-    }
-
-    [Fact]
-    public void TheBudgetSaturatesInsteadOfWrappingForAbsurdFigures()
-    {
-        // 2^31 samples of 2^31 channels of 8 bytes would wrap a long.
-        var decoder = new ScriptedDecoder { OnDecode = _ => int.MaxValue };
-        var parser = new FrameParser { Channels = int.MaxValue, BitsPerSample = 64, Samples = null };
-
-        Report report = Analyze(parser, [decoder], Verify);
-
-        Assert.Equal(DecodeStatus.Stopped, Assert.Single(report.Streams).Verification!.Decoding);
-        Assert.Single(decoder.FirstSamples);
-        Assert.Equal("decode.limit", Assert.Single(report.Findings).Code);
     }
 
     [Fact]

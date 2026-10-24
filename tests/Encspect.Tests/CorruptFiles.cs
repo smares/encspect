@@ -171,7 +171,7 @@ internal static class CorruptFiles
         if (alsoDecodes)
         {
             // The decoder works on what the parser hands it, damaged frames included: it must give a report as well, and never fail.
-            var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxPcmBytes = 64L << 20 } };
+            var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 30 } };
             Report decoded = Analyzer.CreateDefault().Analyze("variant", new MemoryStream(data), options);
             Assert.DoesNotContain(decoded.Findings, f => f.Code is "parse.failed" or "decode.failed");
             Assert.All(decoded.Findings, f => Assert.True(f.Path is not null, $"The node of {f.Code} is not in the tree."));
