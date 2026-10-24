@@ -71,7 +71,7 @@ Six checksums are declared: three cover headers, two the coded data and one, for
 ## Memory
 
 - Units are kept as a 16-byte entry each, with a compact record for a unit with a major sync past the first 512; the figures of the series cost a few bytes more: about 50 bytes a unit on linux-x64 (`MemoryTests`).
-- A TrueHD stream has 1,200 units a second at 48 kHz and up to 4,800 at 192 kHz, so a feature-length file has millions: past 2,097,152 entries (about 29 minutes at 48 kHz) a unit has no entry and costs about one byte, the share of the graphs' series (`truehd.units-limit`, info). A 2-hour stream projects to about 110 MB at 48 kHz and 140 MB at 192 kHz in all (`TrueHdUnitsPastTheLimitOfRecordsCostOnlyTheirFigures`).
+- A TrueHD stream has 1,200 units a second at 48 kHz and up to 4,800 at 192 kHz, so a feature-length file has millions: past 2,097,152 entries (about 29 minutes at 48 kHz) a unit has no entry and costs about one byte, the share of the graphs' series (`truehd.units-limit`, info). A 2-hour stream projects to about 110 MB at 48 kHz and 140 MB at 192 kHz in all (`TrueHdUnitsPastTheLimitOfRecordsCostOnlyTheirFigures`). Measured with `encspect --csv` on files of a repeated 12-unit stream: 268 MB resident at 2.5 million units (35 minutes of 48 kHz, 270 MB with `--verify`) and 274 MB at 5.2 million units (72 minutes), against about 94 MB at 600,000 units before the limit and a projected 0.8 GB for a feature-length file.
 - The decoder holds one unit's planes and the filter histories of three substreams, nothing per unit.
 
 ## Dolby Atmos
