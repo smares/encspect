@@ -25,7 +25,6 @@ internal sealed class State(ParseContext context)
 
     public SoundChunk? Sound { get; set; }
 
-    public int SoundChunks { get; set; }
 
     public int VersionChunks { get; set; }
 
@@ -44,9 +43,11 @@ internal sealed class State(ParseContext context)
 
     public HashSet<int>? MarkerIds { get; set; }
 
+    // The marker IDs that loops and comments refer to, up to Chunks.MaxMarkerReferences of them.
     public List<(int Marker, Node Chunk)> MarkerReferences { get; } = [];
 
-    public int ChunkCount { get; set; }
+    // The nodes the walk has built, counted against Walker.MaxNodes.
+    public int Nodes { get; set; }
 
-    public List<Node> TagNodes { get; } = [];
+
 }

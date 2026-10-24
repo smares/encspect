@@ -75,6 +75,23 @@ public class AiffFixtureTests
         Assert.Equal(byteOrder, order.SingleOrDefault()?.Value?.ToString());
     }
 
+    // Appendix C of the AIFF-C draft: the sample frame of a compressed coding is 2 bytes for MACE 3:1 (6 samples), 1 byte for MACE 6:1 (6), 1 byte
+    // for ACE 2:1 (2) and 3 bytes for ACE 8:3 (8), for each channel; the Common Chunk counts those frames.
+    [Theory]
+    [InlineData("aiff/built-aifc-mac3.aifc", 20 * 6)]
+    [InlineData("aiff/built-aifc-mac6.aifc", 20 * 6)]
+    [InlineData("aiff/built-aifc-ace2.aifc", 20 * 2)]
+    [InlineData("aiff/built-aifc-ace8.aifc", 20 * 8)]
+    [InlineData("aiff/built-aifc-mac3-short.aifc", 30 * 6)]
+    public void ACompressedSampleFrameHoldsTheSamplesAppendixCGives(string name, int samples)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(samples, stream.Samples);
+        Assert.True(stream.Duration > 0);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "aiff.length-unknown");
+    }
+
     [Fact]
     public void AFloatingPointTypeHasItsWidthAsTheSampleBits()
     {

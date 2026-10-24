@@ -2,7 +2,7 @@ namespace Encspect.Formats.Aiff;
 
 // What each AIFF node is, in the words the report shows next to it. Constants only. The sources are Apple's "Audio Interchange File Format AIFF-C"
 // draft of 8/26/91 (the AIFF-C specification, cited by section) and "Audio Interchange File Format: AIFF, version 1.3", and for the compression
-// types it does not list, the tables of FFmpeg's libavformat/aiff.c.
+// types it does not list, Apple's QuickTime File Format Specification and Core Audio Format Specification (see AifcType).
 internal static class Explain
 {
     public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies inside the FORM chunk, which breaks the chain of chunks; the analyzer does not read them as chunks.";
@@ -19,6 +19,8 @@ internal static class Explain
     public const string ChunkId = "The ID of the chunk: four ASCII characters from the space to the tilde (AIFF-C, section 1.0).";
     public const string ChunkSize = "The size of the chunk's data in bytes, not counting the ID or this field or the pad byte (AIFF-C, section 2.0).";
     public const string PadByte = "A byte of zero after a chunk whose size is odd, which keeps every chunk at an even offset (AIFF-C, section 2.0).";
+    public const string StringPad = "The pad byte that makes a Pascal-style string, with its count byte, an even number of bytes, shown as the file has it; the specification has it zero (AIFF-C, \"pstring\").";
+    public const string ChunksNotShown = "More chunks, which the report reads no further: its tree holds at most 250,000 nodes.";
     public const string UnknownChunk = "A chunk the analyzer does not read. A reader skips the chunks it does not know (AIFF-C, section 2.0).";
 
     public const string FverChunk = "The Format Version Chunk: the date of the AIFF-C rules the file follows. An AIFC file holds exactly one (AIFF-C, section 3.0).";

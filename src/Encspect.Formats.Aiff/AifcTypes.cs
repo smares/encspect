@@ -3,8 +3,13 @@ using Encspect.Core;
 namespace Encspect.Formats.Aiff;
 
 // What the compression type of the Common Chunk says about the sound data: the name of the coding, and for the codings that store samples one
-// after another, how a sample is laid out. NONE, ACE2, ACE8, MAC3 and MAC6 are the types of the AIFF-C draft (section 4.0); the others are the
-// ones FFmpeg's libavformat/aiff.c reads and writes, which its aiffenc.c produces and ffprobe cross-checks.
+// after another, how a sample is laid out. Sources of the types:
+// - NONE, ACE2, ACE8, MAC3 and MAC6: the AIFF-C draft of 8/26/91, section 4.0, with the sample frames of the compressed codings in its appendix C
+//   (a frame of 2 bytes for 6 samples of MACE 3:1, 1 byte for 6 of MACE 6:1, 1 byte for 2 of ACE 2:1, 3 bytes for 8 of ACE 8:3, for each channel);
+// - raw, twos, sowt, in24, in32, fl32, fl64, ulaw, alaw and ima4: Apple's QuickTime File Format Specification (2001-03-01), "Sound Codec Formats
+//   Supported" (Table 3-3), whose sound sample description codes AIFF-C files use; ima4's packet of 64 samples in 34 bytes for each channel:
+//   Apple's Core Audio Format Specification, "Audio Description Chunk";
+// - GSM : no Apple document read lists it; it is a code FFmpeg 6.1.1's aiff.c reads, and the size of its blocks is not stated by a source read.
 internal sealed record AifcType(string Id, string Codec, bool IsLinear = false, int? FixedBits = null, int? BytesPerSample = null, bool IsFloat = false, bool IsLittleEndian = false, bool IsUnsigned = false,
     int PacketBytesPerChannel = 0, int PacketSamples = 0)
 {
@@ -22,10 +27,10 @@ internal sealed record AifcType(string Id, string Codec, bool IsLinear = false, 
         new("ulaw", CodecNames.MuLaw, BytesPerSample: 1),
         new("ima4", "IMA ADPCM", PacketBytesPerChannel: 34, PacketSamples: 64),
         new("GSM ", "GSM 6.10"),
-        new("ACE2", "ACE 2-to-1"),
-        new("ACE8", "ACE 8-to-3"),
-        new("MAC3", "MACE 3-to-1"),
-        new("MAC6", "MACE 6-to-1"),
+        new("ACE2", "ACE 2-to-1", PacketBytesPerChannel: 1, PacketSamples: 2),
+        new("ACE8", "ACE 8-to-3", PacketBytesPerChannel: 3, PacketSamples: 8),
+        new("MAC3", "MACE 3-to-1", PacketBytesPerChannel: 2, PacketSamples: 6),
+        new("MAC6", "MACE 6-to-1", PacketBytesPerChannel: 1, PacketSamples: 6),
     ];
 
     private static readonly Dictionary<string, AifcType> ById = All.ToDictionary(t => t.Id, StringComparer.Ordinal);

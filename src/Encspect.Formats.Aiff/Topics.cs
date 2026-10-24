@@ -12,5 +12,4 @@ internal static class Topics
     public const string PcmSamples = "pcm-samples";
     public const string ChannelLayouts = "channel-layouts";
     public const string Id3InChunks = "id3v2-in-chunks";
-    public const string EncoderDetection = "encoder-detection";
 }

@@ -108,8 +108,11 @@ fixture("built-aifc-fl64", aifc([chunk("COMM", comm(1, 30, 64, 48000, "fl64", "6
 fixture("built-aifc-alaw", aifc([chunk("COMM", comm(1, 80, 16, 8000, "alaw", "ALaw 2:1")), chunk("SSND", ssnd(b"\xd5" * 80))]), extension="aifc")
 fixture("built-aifc-ulaw", aifc([chunk("COMM", comm(1, 80, 16, 8000, "ulaw", "ULaw 2:1")), chunk("SSND", ssnd(b"\xff" * 80))]), extension="aifc")
 fixture("built-aifc-ima4", aifc([chunk("COMM", comm(2, 4, 16, 22050, "ima4", "IMA 4:1")), chunk("SSND", ssnd(b"\0" * 272))]), extension="aifc")
-for kind, name in (("GSM ", "GSM"), ("MAC3", "MACE 3-to-1"), ("MAC6", "MACE 6-to-1"), ("ACE2", "ACE 2-to-1"), ("ACE8", "ACE 8-to-3")):
-    fixture(f"built-aifc-{kind.strip().lower()}", aifc([chunk("COMM", comm(2, 128, 16, 22050, kind, name)), chunk("SSND", ssnd(b"\0" * 68))]), ["aiff.length-unknown"], extension="aifc")
+fixture("built-aifc-gsm", aifc([chunk("COMM", comm(2, 128, 16, 22050, "GSM ", "GSM")), chunk("SSND", ssnd(b"\0" * 68))]), ["aiff.length-unknown"], extension="aifc")
+# The compressed sample frames of appendix C of the AIFF-C draft: bytes of one channel's frame (MACE 3:1 2, MACE 6:1 1, ACE 2:1 1, ACE 8:3 3), 20 frames of two channels.
+for kind, name, size in (("MAC3", "MACE 3-to-1", 2), ("MAC6", "MACE 6-to-1", 1), ("ACE2", "ACE 2-to-1", 1), ("ACE8", "ACE 8-to-3", 3)):
+    fixture(f"built-aifc-{kind.strip().lower()}", aifc([chunk("COMM", comm(2, 20, 16, 22050, kind, name)), chunk("SSND", ssnd(b"\0" * (20 * 2 * size)))]), extension="aifc")
+fixture("built-aifc-mac3-short", aifc([chunk("COMM", comm(1, 100, 8, 22050, "MAC3", "MACE 3-to-1")), chunk("SSND", ssnd(b"\0" * 60))]), extension="aifc")
 fixture("built-aifc-unknown-type", aifc([chunk("COMM", comm(2, 50, 16, 44100, "ABCD", "Something new")), chunk("SSND", ssnd(b"\0" * 100))]), ["aiff.compression-unknown"], extension="aifc")
 
 # Faults.

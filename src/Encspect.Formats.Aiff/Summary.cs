@@ -9,7 +9,7 @@ internal static class Summary
     {
         if (s.CommonChunks == 0)
         {
-            s.Findings.Add(Severity.Error, "aiff.no-common-chunk", s.Container, _ => "The file has no Common Chunk, so the parameters of the sound are not known.");
+            s.Findings.Add(Severity.Warning, "aiff.no-common-chunk", s.Container, _ => "The file has no Common Chunk, so the parameters of the sound are not known.");
         }
 
         if (s.IsAifc)
@@ -70,7 +70,7 @@ internal static class Summary
             if (dataBytes < 0)
             {
                 dataBytes = 0;
-                s.Findings.Add(Severity.Error, "aiff.sound-offset-past-end", sound.Node, _ =>
+                s.Findings.Add(Severity.Warning, "aiff.sound-offset-past-end", sound.Node, _ =>
                     $"The sound data's offset of {sound.Offset} bytes is more than the {Counts.Of(sound.Length - 8, "byte", "bytes")} that follow the offset and block size fields.");
             }
 
@@ -100,8 +100,9 @@ internal static class Summary
             }
         }
 
-        // A coding that packs samples in blocks counts its blocks in the Common Chunk, not sample frames (FFmpeg's aiffdec.c multiplies by the duration of a
-        // block); only the IMA block is known (34 bytes of each channel for 64 samples), so the length of the others is not stated.
+        // A coding that packs samples in blocks counts its compressed sample frames in the Common Chunk: "the number of sample frames in the Sound Data
+        // Chunk" (AIFF-C, section 4.0), where a compressed sample frame is the unit of appendix C. The packed codings whose frame is known
+        // (ima4, ACE and MACE, AifcType) give their length as frames times the samples of one; the others state none.
         if (frameBytes is null)
         {
             if (type is { PacketSamples: > 0 } packed)
@@ -117,7 +118,7 @@ internal static class Summary
                 {
                     string coding = type.Codec;
                     s.Findings.Add(Severity.Info, "aiff.length-unknown", common.Node, _ =>
-                        $"The coding is {coding}, which packs samples in blocks; the Common Chunk's count of frames is not taken for a number of sample frames, so the stream has no length.");
+                        $"The coding is {coding}, which packs samples in blocks of a size no source read gives; the Common Chunk's count of frames is not taken for a number of sample frames, so the stream has no length.");
                 }
             }
         }

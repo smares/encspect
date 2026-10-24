@@ -10,13 +10,13 @@
       "name": "File",
       "value": "AIFF",
       "offset": 0,
-      "length": 150,
+      "length": 122,
       "children": [
         {
           "name": "FORM",
           "value": "AIFC",
           "offset": 0,
-          "length": 150,
+          "length": 122,
           "children": [
             {
               "name": "Chunk ID",
@@ -26,7 +26,7 @@
             },
             {
               "name": "Chunk Size",
-              "value": 142,
+              "value": 114,
               "unit": "bytes",
               "offset": 4,
               "length": 4
@@ -92,7 +92,7 @@
                 },
                 {
                   "name": "Sample Frames",
-                  "value": 128,
+                  "value": 20,
                   "unit": "sample frames",
                   "offset": 34,
                   "length": 4
@@ -154,10 +154,10 @@
             {
               "name": "Sound Data Chunk",
               "kind": "Stream",
-              "value": 76,
+              "value": 48,
               "unit": "bytes",
               "offset": 66,
-              "length": 84,
+              "length": 56,
               "children": [
                 {
                   "name": "Chunk ID",
@@ -167,7 +167,7 @@
                 },
                 {
                   "name": "Chunk Size",
-                  "value": 76,
+                  "value": 48,
                   "unit": "bytes",
                   "offset": 70,
                   "length": 4
@@ -188,62 +188,69 @@
                 },
                 {
                   "name": "Sound Data",
-                  "value": 68,
+                  "value": 40,
                   "unit": "bytes",
                   "offset": 82,
-                  "length": 68
+                  "length": 40
                 },
                 {
                   "name": "Statistics",
                   "kind": "Statistics",
                   "offset": 66,
-                  "length": 84,
+                  "length": 56,
                   "children": [
                     {
                       "name": "Codec",
                       "value": "ACE 2-to-1",
                       "offset": 66,
-                      "length": 84
+                      "length": 56
                     },
                     {
                       "name": "Compression Type",
                       "value": "ACE2",
                       "offset": 66,
-                      "length": 84
+                      "length": 56
                     },
                     {
                       "name": "Sample Frames",
-                      "value": 0,
+                      "value": 40,
                       "unit": "sample frames",
                       "offset": 66,
-                      "length": 84
+                      "length": 56
                     },
                     {
                       "name": "Duration",
-                      "value": 0,
+                      "value": 0.0018140589569160999,
                       "unit": "s",
                       "offset": 66,
-                      "length": 84
+                      "length": 56
                     },
                     {
                       "name": "Sample Rate",
                       "value": 22050,
                       "unit": "Hz",
                       "offset": 66,
-                      "length": 84
+                      "length": 56
                     },
                     {
                       "name": "Channels",
                       "value": 2,
                       "unit": "channels",
                       "offset": 66,
-                      "length": 84
+                      "length": 56
                     },
                     {
                       "name": "Channel Layout",
                       "value": "stereo (front left, front right)",
                       "offset": 66,
-                      "length": 84
+                      "length": 56
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 176.4,
+                      "unit": "kbps",
+                      "offset": 66,
+                      "length": 56
                     }
                   ]
                 }
@@ -270,25 +277,13 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 0,
-        "duration": 0,
+        "samples": 40,
+        "duration": 0.0018140589569160999,
+        "averageBitrate": 176.4,
         "isVbr": false,
         "series": []
       }
     ],
-    "findings": [
-      {
-        "severity": "Info",
-        "code": "aiff.length-unknown",
-        "message": "The coding is ACE 2-to-1, which packs samples in blocks; the Common Chunk's count of frames is not taken for a number of sample frames, so the stream has no length.",
-        "offset": 24,
-        "length": 42,
-        "path": [
-          0,
-          4
-        ],
-        "count": 1
-      }
-    ]
+    "findings": []
   }
 ]

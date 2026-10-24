@@ -1,9 +1,10 @@
 """An independent reading of AIFF and AIFF-C files, for the manifests of the AIFF fixtures and their cross-check.
 
 Written from Apple's "Audio Interchange File Format AIFF-C" draft of 8/26/91 and "Audio Interchange File Format: AIFF, version 1.3" (chunks,
-Common Chunk, Sound Data Chunk, markers, comments, instrument, text chunks), and for the compression types they do not list FFmpeg 6.1.1's
-libavformat/aiff.c, apart from the analyzer: the chunk tree and the stream a manifest states come from here. The byte builders of the fixture scripts
-live here too.
+Common Chunk, Sound Data Chunk, markers, comments, instrument, text chunks, and in the AIFF-C draft's appendix C the sample frames of ACE and MACE),
+for the compression types they do not list Apple's QuickTime File Format Specification (2001-03-01, "Sound Codec Formats Supported") and, for the
+packet of ima4, Apple's Core Audio Format Specification ("Audio Description Chunk"), and for "GSM " FFmpeg 6.1.1's libavformat/aiff.c, apart from the
+analyzer: the chunk tree and the stream a manifest states come from here. The byte builders of the fixture scripts live here too.
 
     read(data)          the chunk tree of a file
     manifest(data)      the length, the chunks and the stream the analyzer must report
@@ -25,13 +26,17 @@ TYPES = {
     "fl64": ("PCM (floating-point)", 8, True, 64),
     "alaw": ("A-law", 1, False, None),
     "ulaw": ("Mu-law", 1, False, None),
-    "ima4": ("IMA ADPCM", None, False, None),  # packets of 34 bytes of each channel hold 64 samples
+    "ima4": ("IMA ADPCM", None, False, None),
     "GSM ": ("GSM 6.10", None, False, None),
     "ACE2": ("ACE 2-to-1", None, False, None),
     "ACE8": ("ACE 8-to-3", None, False, None),
     "MAC3": ("MACE 3-to-1", None, False, None),
     "MAC6": ("MACE 6-to-1", None, False, None),
 }
+
+# compression type: (bytes of one compressed sample frame of one channel, samples of one channel it holds), for the codings that count compressed
+# sample frames in the Common Chunk (AIFF-C draft, section 4.0 and appendix C; Core Audio Format Specification for ima4).
+PACKETS = {"ima4": (34, 64), "ACE2": (1, 2), "ACE8": (3, 8), "MAC3": (2, 6), "MAC6": (1, 6)}
 
 LAYOUTS = {1: ["front center"], 2: ["front left", "front right"], 3: ["front left", "front right", "front center"]}
 
@@ -45,7 +50,8 @@ def u32(data, at):
 
 
 def is_id(raw):
-    return len(raw) == 4 and raw[0] != 0x20 and all(0x20 <= b <= 0x7E for b in raw)
+    """Four printable characters, no space before a printing character (AIFF-C draft, section 1.0), and the first is not a space."""
+    return len(raw) == 4 and raw[0] != 0x20 and all(0x20 <= b <= 0x7E for b in raw) and b" " not in raw.rstrip(b" ")
 
 
 def extended(raw):
@@ -155,9 +161,10 @@ def manifest(data, base=0):
                 frames = held
     length_known = True
     if frame is None:
-        if comm["type"] == "ima4":
-            held = frames if ssnd is None else data_bytes // (34 * comm["channels"])
-            frames = min(frames, held) * 64
+        if comm["type"] in PACKETS:
+            size, samples = PACKETS[comm["type"]]
+            held = frames if ssnd is None else data_bytes // (size * comm["channels"])
+            frames = min(frames, held) * samples
         else:
             frames = 0
             length_known = False

@@ -35,6 +35,9 @@ internal static class Chunks
     // At most this many records of a table are listed as nodes, whatever count the chunk states.
     public const int MaxListed = 1024;
 
+    // The references of loops and comments to markers kept to find one the Marker Chunk does not hold; past them the references are not checked.
+    public const int MaxMarkerReferences = 65_536;
+
     // The time stamp of the format version of AIFF-C (section 3.0).
     public const uint AifcVersion1 = 0xA2805140;
 
@@ -90,14 +93,14 @@ internal static class Chunks
                 f.Node.Add("Compression Name", textAt, count, name, Explain.CommName, Topics.Compression);
                 if (count % 2 == 0 && f.Remaining > 0)
                 {
-                    f.Reader.Skip(1);
-                    f.Node.Add("Pad Byte", textAt + count, 1, NodeValue.Hex(0, 2), Explain.PadByte);
+                    long padAt = f.Position;
+                    f.Node.Add("Pad Byte", padAt, 1, NodeValue.Hex(f.Reader.ReadByte(), 2), Explain.StringPad);
                 }
             }
             else
             {
                 Node at = chunk.Children[1];
-                s.Findings.Add(Severity.Error, "aiff.compression-type-missing", at, _ =>
+                s.Findings.Add(Severity.Warning, "aiff.compression-type-missing", at, _ =>
                     "The FORM is of type AIFC, whose Common Chunk holds a compression type and name after the sample rate, but this one ends with the sample rate; the samples are taken to be uncompressed.");
             }
         }
@@ -130,12 +133,12 @@ internal static class Chunks
         Node At(string name) => chunk.Children.FirstOrDefault(c => c.Name == name) ?? chunk;
         if (common.Channels == 0)
         {
-            s.Findings.Add(Severity.Error, "aiff.channels-zero", At("Channels"), _ => "The Common Chunk states 0 channels.");
+            s.Findings.Add(Severity.Warning, "aiff.channels-zero", At("Channels"), _ => "The Common Chunk states 0 channels.");
         }
 
         if (!common.IsRateValid)
         {
-            s.Findings.Add(Severity.Error, "aiff.sample-rate-invalid", rateNode, _ => "The sample rate in the Common Chunk is not a positive finite number that fits 32 bits; the rate is taken to be 0.");
+            s.Findings.Add(Severity.Warning, "aiff.sample-rate-invalid", rateNode, _ => "The sample rate in the Common Chunk is not a positive finite number that fits 32 bits; the rate is taken to be 0.");
         }
 
         AifcType? type = AifcType.Of(common.Type);
@@ -154,7 +157,6 @@ internal static class Chunks
 
     public static void SoundData(State s, Fields f, Node chunk, long length)
     {
-        s.SoundChunks++;
         uint offset = f.Dword("Offset", Explain.SsndOffset, "bytes", Topics.SoundData);
         uint blockSize = f.Dword("Block Size", Explain.SsndBlockSize, "bytes", Topics.SoundData);
         long dataLength = f.Remaining;
@@ -263,8 +265,16 @@ internal static class Chunks
         f.Node.Add(loop);
         if (mode != 0)
         {
-            s.MarkerReferences.Add((begin, loop));
-            s.MarkerReferences.Add((end, loop));
+            AddReference(s, begin, loop);
+            AddReference(s, end, loop);
+        }
+    }
+
+    private static void AddReference(State s, int marker, Node node)
+    {
+        if (s.MarkerReferences.Count < MaxMarkerReferences)
+        {
+            s.MarkerReferences.Add((marker, node));
         }
     }
 
@@ -291,7 +301,7 @@ internal static class Chunks
             listed++;
             if (marker > 0)
             {
-                s.MarkerReferences.Add((marker, table!));
+                AddReference(s, marker, table!);
             }
 
             if (i < MaxListed)
@@ -356,6 +366,11 @@ internal static class Chunks
             string app = Fields.Clean(Encoding.Latin1.GetString(f.Reader.ReadBytes(count)));
             f.Node.Add("Application Name", at, 1 + count, app, Explain.ApplName, Topics.Container);
             chunk.Value = $"{signature}, {app}";
+            if (count % 2 == 0 && f.Remaining > 0)
+            {
+                long padAt = f.Position;
+                f.Node.Add("Pad Byte", padAt, 1, NodeValue.Hex(f.Reader.ReadByte(), 2), Explain.StringPad);
+            }
         }
 
         if (f.Remaining > 0)
@@ -392,7 +407,6 @@ internal static class Chunks
         Node? tag = s.Context.ParseTag("ID3v2", f.Reader.Slice(f.Reader.Start, length), chunk);
         if (tag is not null)
         {
-            s.TagNodes.Add(tag);
             chunk.Value = NodeValue.Text("ID3v2 tag");
         }
     }

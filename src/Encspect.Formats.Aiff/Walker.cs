@@ -15,7 +15,13 @@ internal static class Walker
     // The chunks of which at most one may appear in a FORM (sections 3.0 to 13.0).
     private static readonly HashSet<string> Single = new(StringComparer.Ordinal) { "FVER", "COMM", "SSND", "MARK", "COMT", "INST", "AESD", "NAME", "AUTH", "(c) " };
 
-    // An ID is four printable ASCII characters, from the space to the tilde, where no space precedes a printing character (section 1.0).
+    // The nodes the tree of the chunks holds in all (as MP4 and Matroska budget theirs): the caps on the chunks and on a table multiply when a
+    // chunk is repeated, so a file of a few megabytes could otherwise ask for millions. Past it the rest of the FORM is one node and is not
+    // read. A chunk that crosses the budget is read whole, which adds at most the nodes of one table.
+    public const int MaxNodes = 250_000;
+
+    // An ID is four printable ASCII characters, from the space to the tilde, where no space precedes a printing character (section 1.0). One that
+    // starts with a space is taken as none: blanks are padding.
     public static bool IsId(ReadOnlySpan<byte> bytes)
     {
         if (bytes.Length < 4 || bytes[0] == 0x20)
@@ -23,15 +29,40 @@ internal static class Walker
             return false;
         }
 
+        bool isTrailing = false;
         for (int i = 0; i < 4; i++)
         {
-            if (bytes[i] is < 0x20 or > 0x7E)
+            if (bytes[i] is < 0x20 or > 0x7E || (isTrailing && bytes[i] != 0x20))
             {
                 return false;
             }
+
+            isTrailing |= bytes[i] == 0x20;
         }
 
         return true;
+    }
+
+    // The nodes of the subtree under node, itself included; children built on demand (a tag parser's frames) are one node, so counting builds none.
+    private static int Count(Node node)
+    {
+        int count = 0;
+        var pending = new Stack<Node>();
+        pending.Push(node);
+        while (pending.Count > 0)
+        {
+            Node current = pending.Pop();
+            count++;
+            if (!current.AreChildrenBuiltOnDemand)
+            {
+                foreach (Node child in current.Children)
+                {
+                    pending.Push(child);
+                }
+            }
+        }
+
+        return count;
     }
 
     private static bool IsChunkHeaderAt(State s, long position, long end) => position + 8 <= end && IsId(s.Reader.ReadBytesAt(position, 4));
@@ -43,6 +74,15 @@ internal static class Walker
         int listed = 0;
         while (position + 8 <= end)
         {
+            if (s.Nodes >= MaxNodes)
+            {
+                Node rest = parent.Add(new Node("Chunks Not Shown", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.ChunksNotShown, Topic = Topics.Container });
+                long from = position;
+                s.Findings.Add(Severity.Warning, "aiff.node-limit", rest, _ =>
+                    $"The tree holds {MaxNodes} nodes, the most the report builds; the chunks from 0x{from:X} on are not read.");
+                return end;
+            }
+
             if (listed >= MaxListed)
             {
                 Node more = parent.Add(new Node("Further Chunks", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.FurtherChunks, Topic = Topics.Container });
@@ -114,7 +154,6 @@ internal static class Walker
             };
             parent.Add(chunk);
             listed++;
-            s.ChunkCount++;
             chunk.Add("Chunk ID", position, 4, id, Explain.ChunkId, Topics.Container);
             chunk.Add("Chunk Size", position + 4, 4, NodeValue.Integer(size32, "bytes", "byte"), Explain.ChunkSize, Topics.Container);
 
@@ -157,10 +196,12 @@ internal static class Walker
                 }
             }
 
+            s.Nodes += Count(chunk);
             if (hasPad)
             {
                 byte pad = reader.ReadBytesAt(bodyEnd, 1)[0];
                 Node padNode = chunk.Add("Pad Byte", bodyEnd, 1, NodeValue.Hex(pad, 2), Explain.PadByte, Topics.Container);
+                s.Nodes++;
                 if (pad != 0)
                 {
                     s.Findings.Add(Severity.Info, "aiff.pad-byte-not-zero", padNode, _ => "The pad byte after a chunk of odd size should be zero.");
