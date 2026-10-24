@@ -19,12 +19,6 @@ internal enum EntryStatus : byte
 
     // The frame is too short to hold the fields the format starts it with.
     NoStartFields = 8,
-
-    // The frame has no stored CRC: the version predates it.
-    NoCrc = 16,
-
-    // The frame is past the size the analyzer reads into memory to decode.
-    TooLarge = 32,
 }
 
 // A frame in 32 bytes. Start and End count bytes of the stream the frames make, from the first frame's first byte (see WordOrder).
@@ -66,7 +60,10 @@ internal sealed class Records
 
     public int SeekEntries { get; set; }
 
+    // Whether frames start with a CRC word (ApeHeader.HasStoredCrc).
     public bool HasFrameFields { get; set; }
+
+    public int Channels { get; set; }
 
     // Whether the frames' coded data is range-coded (3.91 and later) and not Rice-coded.
     public bool HasRangeCoder { get; set; }

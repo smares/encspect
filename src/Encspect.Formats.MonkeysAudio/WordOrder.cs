@@ -1,3 +1,5 @@
+// Follows the Monkey's Audio SDK 13.42 (BitArray.cpp, APECompressCreate.cpp, APEDecompress.cpp), 3-clause BSD license:
+// Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 using Encspect.Core;
 
 namespace Encspect.Formats.MonkeysAudio;

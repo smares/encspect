@@ -1,3 +1,5 @@
+// Follows the Monkey's Audio SDK 13.42 (APEHeader.cpp, APEInfo.cpp, MACLib.cpp, APEDecompress.cpp, APEDecompressCore.cpp), 3-clause BSD license:
+// Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 using System.Buffers.Binary;
 using System.Globalization;
 using Encspect.Core;
@@ -96,7 +98,8 @@ internal static class Reader
         records.DataStart = s.DataStart;
         records.DataLimit = Math.Min(reader.End, s.FrameDataEnd);
         records.SeekTableAt = s.SeekTableAt;
-        records.HasFrameFields = h.HasStoredCrc || h.HasSpecialFrames;
+        records.HasFrameFields = h.HasStoredCrc;
+        records.Channels = h.Channels;
         records.HasSpecialFrames = h.HasSpecialFrames;
         records.HasRangeCoder = h.FileVersion >= 3891;
         if (junk > reader.Start)
@@ -133,8 +136,7 @@ internal static class Reader
             s.HeaderAt = junk;
             s.HeaderDataAt = junk + h.OldHeaderBytes;
             s.SeekTableAt = s.HeaderDataAt + h.HeaderDataBytes;
-            long elements = h.SeekElements ?? h.TotalFrames;
-            s.DataStart = s.SeekTableAt + (4 * elements) + (h.FileVersion <= 3800 ? elements : 0);
+            s.DataStart = h.OldDataOffset(junk);
             s.TerminatingEnd = reader.End;
             s.FrameDataEnd = Math.Max(s.DataStart, reader.End - h.TerminatingBytes);
         }
@@ -184,14 +186,14 @@ internal static class Reader
         if (h.FileVersion > 3990 && h.FileVersion != 4110 || h.FileVersion < 3000)
         {
             int version = h.FileVersion;
-            f.Add(Severity.Warning, "monkeys-audio.version", () => h.HasDescriptor ? Descriptor("Encoder Version") : Field("Encoder Version"), _ =>
-                $"The file states version {ApeHeader.VersionText(version)}, which is not one the SDK 13.42 reads (3.00 to 3.99); the fields are read as the newest layout defines them.");
+            f.Add(Severity.Warning, "monkeys-audio.version", () => h.HasDescriptor ? Descriptor("File Version") : Field("File Version"), _ =>
+                $"The file states version {ApeHeader.VersionText(version)}, which is not one the SDK 13.42 reads (3.00 to 3.99 and 4.11); the fields are read as the newest layout defines them.");
         }
 
         if (!h.HasDescriptor)
         {
             int version = h.FileVersion;
-            f.Add(Severity.Info, "monkeys-audio.old-format", () => Field("Encoder Version"), _ =>
+            f.Add(Severity.Info, "monkeys-audio.old-format", () => Field("File Version"), _ =>
                 $"Version {ApeHeader.VersionText(version)} files start with one header and have no descriptor, so they store no MD5 of the coded data.");
         }
         else
@@ -379,8 +381,9 @@ internal static class Reader
                         {
                             status |= EntryStatus.HasSpecialCodes;
                             s.SpecialFrames++;
-                            s.SilentFrames += (special & 3) == 3 ? 1 : 0;
-                            s.PseudoStereoFrames += (special & 4) != 0 && (special & 3) != 3 ? 1 : 0;
+                            bool isSilent = h.Channels == 1 ? (special & 1) != 0 : h.Channels == 2 && (special & 3) == 3;
+                            s.SilentFrames += isSilent ? 1 : 0;
+                            s.PseudoStereoFrames += h.Channels == 2 && (special & 4) != 0 && !isSilent ? 1 : 0;
                             if (usable - start < 8)
                             {
                                 status |= EntryStatus.NoStartFields;
@@ -471,7 +474,7 @@ internal static class Reader
         uint word = Word(words, firstWord, start);
         if (!hasSpecialFrames)
         {
-            return (word & 0x7FFFFFFF, 0, false);
+            return (word, 0, false);
         }
 
         if ((word & 0x80000000) == 0)
@@ -501,10 +504,13 @@ internal static class Reader
     {
         Records records = s.Records;
         long first = frame * s.Header.BlocksPerFrame;
-        bool isUnreadable = (e.Status & (EntryStatus.Misplaced | EntryStatus.NoStartFields)) != 0 || e.Length > State.MaxDecodedFrameBytes || e.End <= e.Start;
-        if (e.Length > State.MaxDecodedFrameBytes && (e.Status & EntryStatus.Misplaced) == 0)
+        long held = Math.Min(e.End, Nodes.Available(records)) - e.Start;
+        bool isTooLarge = held > State.MaxDecodedFrameBytes;
+        bool isUnreadable = (e.Status & (EntryStatus.Misplaced | EntryStatus.NoStartFields)) != 0 || isTooLarge || e.End <= e.Start;
+        if (isTooLarge && (e.Status & EntryStatus.Misplaced) == 0)
         {
-            long length = e.Length;
+            s.UnreadableFrames++;
+            long length = held;
             s.Findings.Add(Severity.Info, "monkeys-audio.frame-not-decoded", () => index >= 0 ? Nodes.Frame(records, index) : s.Stream, count =>
                 $"Frame {frame} holds {Counts.Of(length, "byte", "bytes")}, more than the 64 MiB the analyzer reads into memory to decode a frame, so it is not decoded{(count > 1 ? $"; {Counts.Of(count - 1, "more frame is", "more frames are")} not either" : string.Empty)}.");
         }

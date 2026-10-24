@@ -1,3 +1,5 @@
+// Follows the Monkey's Audio SDK 13.42 (MACLib.h, APEHeader.cpp, APEInfo.h), 3-clause BSD license:
+// Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 using System.Buffers.Binary;
 
 namespace Encspect.Formats.MonkeysAudio;
@@ -99,13 +101,24 @@ internal readonly struct ApeHeader
     public long DataOffset(long descriptorAt) =>
         descriptorAt + Math.Max(DescriptorLength, (long)DescriptorBytes) + Math.Max(HeaderLength, (long)HeaderBytes) + SeekTableBytes + HeaderDataBytes;
 
-    public bool HasStoredCrc => FileVersion >= 3930 || (FileVersion >= 3900 && (Flags & FormatFlags.HasCrc) != 0);
+    // Whether each frame starts with a 32-bit CRC word: where the CRC flag is set, and in every file of version 3.93 and later, whose core reads the
+    // word whatever the flag says (APEDecompressCore.cpp, StartFrame; Old/UnMACOld.cpp, DecompressFrame). An older file without the flag starts each
+    // frame with a checksum of 30 bits, Rice-coded, that is no CRC and has no special frame codes.
+    // Where the first frame's first byte lies for an old file whose header starts at headerAt: after the header and its optional fields, the WAV header
+    // data and the seek table, which has a bit table beside it up to version 3.80 (APEHeader.cpp, AnalyzeOld).
+    public long OldDataOffset(long headerAt)
+    {
+        long elements = SeekElements ?? TotalFrames;
+        return headerAt + OldHeaderBytes + HeaderDataBytes + (4 * elements) + (FileVersion <= 3800 ? elements : 0);
+    }
 
-    // Frames start on byte boundaries from 3.81, and special frames exist from 3.83 (APEInfo.h APE_GET_FRAMES_START_ON_BYTES_BOUNDARIES and
-    // APE_GET_USES_SPECIAL_FRAMES).
+    public bool HasStoredCrc => (Flags & FormatFlags.HasCrc) != 0 || FileVersion >= 3930;
+
+    // Frames start on byte boundaries from 3.81, and special frame codes follow the CRC word from 3.83 (APEInfo.h
+    // APE_GET_FRAMES_START_ON_BYTES_BOUNDARIES and APE_GET_USES_SPECIAL_FRAMES). In files up to 3.82 all 32 bits of the word are the CRC.
     public bool FramesStartOnBytes => FileVersion > 3800;
 
-    public bool HasSpecialFrames => FileVersion > 3820;
+    public bool HasSpecialFrames => HasStoredCrc && FileVersion > 3820;
 
     public static string VersionText(int version) => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{version / 1000}.{version % 1000 / 10:D2}");
 

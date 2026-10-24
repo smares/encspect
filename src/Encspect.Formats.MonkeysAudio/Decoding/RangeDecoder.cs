@@ -1,4 +1,4 @@
-// Follows the Monkey's Audio SDK 13.42 (UnBitArray.cpp, UnBitArrayBase.h, UnBitArrayBase.cpp), 3-clause BSD license:
+// Follows the Monkey's Audio SDK 13.42 (UnBitArray.cpp, UnBitArrayBase.h, UnBitArrayBase.cpp, Old/UnBitArrayOld.cpp), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 namespace Encspect.Formats.MonkeysAudio.Decoding;
 
@@ -15,8 +15,9 @@ internal struct ChannelState
     }
 }
 
-// The range decoder of file versions 3.99 and later, reading the bytes of a frame in stream order (WordOrder). A value is coded as an overflow, a
-// symbol of a fixed 64-symbol model, and a base below a pivot that follows the average size of the values of its channel.
+// The range decoder, reading the bytes of a frame in stream order (WordOrder). Files of version 3.99 and later code a value as an overflow, a symbol
+// of a fixed 64-symbol model, and a base below a pivot that follows the average size of the values of its channel. Files from 3.91 to 3.98 use the
+// same range coder with another model and code the value as the symbol and the bits of a width that follows the average (CUnBitArray3891To3989).
 internal sealed class RangeDecoder
 {
     private const uint TopValue = 1u << 31;
@@ -40,6 +41,19 @@ internal sealed class RangeDecoder
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     ];
 
+    private static readonly uint[] LegacyRangeTotal =
+    [
+        0, 14824, 28224, 39348, 47855, 53994, 58171, 60926, 62682, 63786, 64463, 64878, 65126, 65276, 65365, 65419, 65450, 65469, 65480, 65487, 65491, 65493, 65494, 65495,
+        65496, 65497, 65498, 65499, 65500, 65501, 65502, 65503, 65504, 65505, 65506, 65507, 65508, 65509, 65510, 65511, 65512, 65513, 65514, 65515, 65516, 65517, 65518, 65519,
+        65520, 65521, 65522, 65523, 65524, 65525, 65526, 65527, 65528, 65529, 65530, 65531, 65532, 65533, 65534, 65535, 65536,
+    ];
+
+    private static readonly uint[] LegacyRangeWidth =
+    [
+        14824, 13400, 11124, 8507, 6139, 4177, 2755, 1756, 1104, 677, 415, 248, 150, 89, 54, 31, 19, 11, 7, 4, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    ];
+
     private static readonly uint[] KSumMinimum =
     [
         0, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864,
@@ -47,8 +61,10 @@ internal sealed class RangeDecoder
     ];
 
     // For every 16-bit value, the symbol whose slot of the model holds it (RangeOverflowTable).
-    private static readonly byte[] OverflowSymbol = BuildOverflowTable();
+    private static readonly byte[] OverflowSymbol = BuildOverflowTable(RangeTotal);
+    private static readonly byte[] LegacyOverflowSymbol = BuildOverflowTable(LegacyRangeTotal);
 
+    private readonly int _version;
     private byte[] _data = [];
     private int _length;
     private int _position;
@@ -56,13 +72,18 @@ internal sealed class RangeDecoder
     private uint _range;
     private uint _buffer;
 
-    private static byte[] BuildOverflowTable()
+    // version is the file version times 1000; from 3.99 on, the current coding.
+    public RangeDecoder(int version) => _version = version;
+
+    private bool IsLegacy => _version < 3990;
+
+    private static byte[] BuildOverflowTable(uint[] total)
     {
         var table = new byte[65536];
         byte symbol = 0;
         for (int z = 0; z < 65536; z++)
         {
-            if (z >= RangeTotal[symbol + 1])
+            if (z >= total[symbol + 1])
             {
                 symbol++;
             }
@@ -179,7 +200,59 @@ internal sealed class RangeDecoder
     }
 
     // One value of a channel, signed (UnBitArray.cpp, DecodeValueRange).
-    public long DecodeValue(ref ChannelState state)
+    public long DecodeValue(ref ChannelState state) => IsLegacy ? DecodeLegacyValue(ref state) : DecodeCurrentValue(ref state);
+
+    // One value of a file from 3.91 to 3.98 (Old/UnBitArrayOld.cpp, CUnBitArray3891To3989::DecodeValueRange): the model's symbol is the overflow, or
+    // for its last symbol the width of the bits that follow, and the working width k follows the average.
+    private long DecodeLegacyValue(ref ChannelState state)
+    {
+        uint total = DecodeFast(OverflowShift);
+        if (total >= 65536)
+        {
+            throw new InvalidDataException("The coded data holds a value the model cannot code");
+        }
+
+        uint overflow = LegacyOverflowSymbol[total];
+        _low -= _range * LegacyRangeTotal[overflow];
+        _range *= LegacyRangeWidth[overflow];
+        uint width;
+        if (overflow == ModelElements - 1)
+        {
+            width = DecodeWithUpdate(5);
+            overflow = 0;
+        }
+        else
+        {
+            width = state.K < 1 ? 0 : state.K - 1;
+        }
+
+        long value;
+        if (width <= 16 || _version < 3910)
+        {
+            value = DecodeWithUpdate((int)width);
+        }
+        else
+        {
+            uint low = DecodeWithUpdate(16);
+            uint high = DecodeWithUpdate((int)(width - 16));
+            value = low | ((long)high << 16);
+        }
+
+        value += (long)overflow << (int)width;
+        state.KSum += (uint)((value + 1) / 2) - ((state.KSum + 16) >> 5);
+        if (state.KSum < KSumMinimum[state.K])
+        {
+            state.K--;
+        }
+        else if (KSumMinimum[state.K + 1] != 0 && state.KSum >= KSumMinimum[state.K + 1])
+        {
+            state.K++;
+        }
+
+        return (value & 1) != 0 ? (value >> 1) + 1 : -(value >> 1);
+    }
+
+    private long DecodeCurrentValue(ref ChannelState state)
     {
         uint pivot = Math.Max(state.KSum / 32, 1u);
         uint overflow = DecodeOverflow(ref pivot);

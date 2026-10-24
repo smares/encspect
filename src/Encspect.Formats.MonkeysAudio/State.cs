@@ -94,7 +94,5 @@ internal sealed class State
     // The digest of the coded data, or null where the file does not hold all of it.
     public byte[]? ComputedMd5 { get; set; }
 
-    public long ProbedBytes { get; set; }
-
     public void AddLeading(Node node) => Leading.Add(node);
 }

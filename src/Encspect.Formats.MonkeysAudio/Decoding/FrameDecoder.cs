@@ -1,4 +1,4 @@
-// Follows the Monkey's Audio SDK 13.42 (APEDecompressCore.cpp, UnBitArray.cpp, NewPredictor.cpp, Prepare.cpp), 3-clause BSD license:
+// Follows the Monkey's Audio SDK 13.42 (APEDecompressCore.cpp, UnBitArray.cpp, NewPredictor.cpp, Prepare.cpp, Old/NewPredictorOld.cpp, Old/UnBitArrayOld.cpp), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 using System.Buffers.Binary;
 using Encspect.Core;
@@ -15,6 +15,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     // "As built: Monkey's Audio"). The neural network filters cost a unit for every two taps: they run in vector registers.
     internal const long RangeUnits = 192;
     internal const long PredictorUnits = 48;
+
+    // Units a sample of a channel costs in a frame flagged silent, which codes nothing: the zero values still go through the channel pairing, the byte
+    // conversion, the CRC and the sink one sample at a time, which took 2.5 times the FLAC reference's time per unit at 16 units a sample.
+    internal const long SilentUnits = 40;
 
     // The most samples over all channels that a frame of 24-bit audio may hold for the decoder to keep them until the CRC has passed, in case it has to
     // decode the frame again in interim mode (APEDecompressCore.cpp, DecodeFrame).
@@ -34,7 +38,8 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly int _bits;
     private readonly bool _isFloat;
     private readonly Unprepare _unprepare;
-    private readonly RangeDecoder _range = new();
+    private readonly int _version;
+    private readonly RangeDecoder _range;
     private readonly ChannelState[] _states;
     private readonly int[] _values;
     private readonly int[] _samples;
@@ -42,6 +47,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly long _taps;
     private Predictor32[]? _narrow;
     private Predictor64[]? _wide;
+    private Predictor3930[]? _legacy;
     private bool _isInterim;
     private IPcmSink? _sink;
     private byte[] _stream = [];
@@ -55,6 +61,8 @@ internal sealed class FrameDecoder : IFrameDecoder
     {
         _context = context;
         _header = header;
+        _version = header.FileVersion;
+        _range = new RangeDecoder(_version);
         _dataStart = dataStart;
         _channels = header.Channels;
         _bits = header.BitsPerSample;
@@ -70,13 +78,22 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     private void CreatePredictors()
     {
+        _narrow = null;
+        _wide = null;
+        _legacy = null;
         if (_bits == 32)
         {
             _wide = [.. Enumerable.Range(0, _channels).Select(_ => new Predictor64(_header.CompressionLevel))];
         }
+        else if (_version < 3950 && !_isInterim)
+        {
+            _legacy = [.. Enumerable.Range(0, _channels).Select(_ => new Predictor3930(_header.CompressionLevel))];
+        }
         else
         {
-            _narrow = [.. Enumerable.Range(0, _channels).Select(_ => new Predictor32(_header.CompressionLevel, _isInterim))];
+            // The interim predictors always update the filters' deltas the new way (Interim.cpp).
+            bool isNewDelta = _isInterim || _version >= 3980;
+            _narrow = [.. Enumerable.Range(0, _channels).Select(_ => new Predictor32(_header.CompressionLevel, _isInterim, _bits, isNewDelta))];
         }
     }
 
@@ -143,7 +160,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // A frame of 24-bit audio in the normal mode: the samples are held until their CRC has passed, and if it does not (or the coded data does not read),
-    // the SDK decodes the frame once more with the predictors of interim mode, which it then keeps for the rest of the file (APEDecompressCore.cpp).
+    // the SDK decodes the frame once more with the predictors of interim mode (APEDecompressCore.cpp). The SDK keeps that mode for the rest of the file
+    // and its tools stop at the first bad frame; the analyzer goes on, so it keeps interim mode only when the frame's CRC passes in it. Otherwise the
+    // frame is damaged, and the next one is decoded in the normal mode again, so that one damaged frame does not damage the frames after it; the samples
+    // it gives are those of the normal mode, which a damaged CRC word leaves right, where it could decode them.
     private uint DecodeHeld(in CodedFrame frame, int blocks, Mode mode, int at, int length, uint stored)
     {
         _heldStride = blocks;
@@ -152,29 +172,56 @@ internal sealed class FrameDecoder : IFrameDecoder
             _held = new int[_channels * blocks];
         }
 
-        uint computed;
+        uint normal = 0;
+        bool isRead = true;
         try
         {
-            computed = DecodeBody(frame, blocks, mode, at, length, true);
+            normal = DecodeBody(frame, blocks, mode, at, length, true);
         }
         catch (InvalidDataException)
         {
-            _isInterim = true;
-            CreatePredictors();
-            computed = DecodeBody(frame, blocks, mode, at, length, true);
-            Release(frame.FirstSample, blocks);
-            return computed;
+            isRead = false;
         }
 
-        if (computed != stored)
+        if (isRead && normal == stored)
         {
-            _isInterim = true;
-            CreatePredictors();
-            computed = DecodeBody(frame, blocks, mode, at, length, true);
+            Release(frame.FirstSample, blocks);
+            return normal;
+        }
+
+        _isInterim = true;
+        CreatePredictors();
+        uint interim;
+        try
+        {
+            interim = DecodeBody(frame, blocks, mode, at, length, true);
+        }
+        catch (InvalidDataException)
+        {
+            LeaveInterim();
+            throw;
+        }
+
+        if (interim == stored)
+        {
+            Release(frame.FirstSample, blocks);
+            return interim;
+        }
+
+        LeaveInterim();
+        if (isRead)
+        {
+            DecodeBody(frame, blocks, mode, at, length, true);
         }
 
         Release(frame.FirstSample, blocks);
-        return computed;
+        return isRead ? normal : interim;
+    }
+
+    private void LeaveInterim()
+    {
+        _isInterim = false;
+        CreatePredictors();
     }
 
     // Gives the held samples to the sink.
@@ -195,19 +242,19 @@ internal sealed class FrameDecoder : IFrameDecoder
     // Decodes the coded samples chunk by chunk and returns the CRC the decoded audio has (APEDecompressCore.cpp, StartFrame and EndFrame).
     private uint DecodeBody(in CodedFrame frame, int blocks, Mode mode, int at, int length, bool isHeld)
     {
-        if (_narrow is not null)
+        foreach (Predictor32 predictor in _narrow ?? [])
         {
-            foreach (Predictor32 predictor in _narrow)
-            {
-                predictor.Flush();
-            }
+            predictor.Flush();
         }
-        else
+
+        foreach (Predictor64 predictor in _wide ?? [])
         {
-            foreach (Predictor64 predictor in _wide!)
-            {
-                predictor.Flush();
-            }
+            predictor.Flush();
+        }
+
+        foreach (Predictor3930 predictor in _legacy ?? [])
+        {
+            predictor.Flush();
         }
 
         foreach (ref ChannelState state in _states.AsSpan())
@@ -221,7 +268,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         int codedChannels = mode == Mode.BothSilent ? 0 : mode == Mode.PseudoStereo ? 1 : _channels;
-        long perSample = (DecodeWork.ForSample(_bits / 8) * _channels) + (codedChannels * (RangeUnits + PredictorUnits + _taps));
+        long perSample = (DecodeWork.ForSample(_bits / 8) * _channels) + (codedChannels * (RangeUnits + PredictorUnits + _taps)) + (mode == Mode.BothSilent ? _channels * SilentUnits : 0);
         uint crc = Crc32.Initial;
         int lastX = 0;
         for (int done = 0; done < blocks; done += Chunk)
@@ -307,6 +354,12 @@ internal sealed class FrameDecoder : IFrameDecoder
                             values[c] = Predict(c, _range.DecodeValue(ref _states[c]), 0);
                         }
                     }
+                    else if (_version < 3950)
+                    {
+                        // Before 3.95 the channels are predicted on their own, the first one's value coded first.
+                        values[0] = Predict(0, _range.DecodeValue(ref _states[0]), 0);
+                        values[1] = Predict(1, _range.DecodeValue(ref _states[1]), 0);
+                    }
                     else
                     {
                         long y = _range.DecodeValue(ref _states[1]);
@@ -327,7 +380,8 @@ internal sealed class FrameDecoder : IFrameDecoder
         return lastX;
     }
 
-    private int Predict(int channel, long a, long b) => _narrow is not null ? _narrow[channel].Decompress(a, b) : _wide![channel].Decompress(a, b);
+    private int Predict(int channel, long a, long b) =>
+        _narrow is not null ? _narrow[channel].Decompress(a, b) : _wide is not null ? _wide[channel].Decompress(a, b) : _legacy![channel].Decompress(a);
 
     public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end) => _checked == 0 ? [] : [new ChecksumResult(ChecksumNames.FrameCrc, _checked, _failed)];
 }

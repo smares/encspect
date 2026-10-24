@@ -60,10 +60,10 @@ internal static class Summary
 
         tallies.Add(new ChecksumTally
         {
-            Name = ChecksumNames.FrameCrc,
+            Name = h.HasStoredCrc ? ChecksumNames.FrameCrc : ChecksumNames.FrameChecksum,
             Covers = ChecksumCoverage.DecodedAudio,
-            CoversAllAudio = framesComplete && s.StoredCrcs == s.Frames,
-            Stored = s.StoredCrcs,
+            CoversAllAudio = h.HasStoredCrc && framesComplete && s.StoredCrcs == s.Frames,
+            Stored = h.HasStoredCrc ? s.StoredCrcs : s.Frames,
         });
         return session.Finish(tallies);
     }
@@ -132,7 +132,9 @@ internal static class Summary
             statistics.Add(Cover("Pseudo-Stereo Frames", NodeValue.Integer(s.PseudoStereoFrames, "frames", "frame"), Explain.StatPseudoStereoFrames, Topics.Frames));
         }
 
-        statistics.Add(Cover("Stored Frame CRCs", NodeValue.Integer(s.StoredCrcs, "frames", "frame"), Explain.StatStoredCrcs, Topics.Crc));
+        statistics.Add(h.HasStoredCrc
+            ? Cover("Stored Frame CRCs", NodeValue.Integer(s.StoredCrcs, "frames", "frame"), Explain.StatStoredCrcs, Topics.Crc)
+            : Cover("Stored Frame Checksums", NodeValue.Integer(s.Frames, "frames", "frame"), Explain.StatStoredChecksums, Topics.Crc));
         if (h.HasDescriptor)
         {
             string md5 = s.ComputedMd5 is null ? "not compared" : h.Md5.Span.SequenceEqual(s.ComputedMd5) ? "matches" : "differs";

@@ -80,22 +80,34 @@ internal static class Nodes
             at += 4;
             if ((e.Status & EntryStatus.HasSpecialCodes) != 0 && at + 4 <= end)
             {
-                children.Add(Field("Special Frame Codes", r.DataStart, at, at + 4, SpecialCodes(e.Special), Explain.SpecialCodes, Topics.Frames));
+                children.Add(Field("Special Frame Codes", r.DataStart, at, at + 4, SpecialCodes(e.Special, r.Channels), Explain.SpecialCodes, Topics.Frames));
                 at += 4;
             }
         }
 
         if (end > at)
         {
-            bool isRange = r.HasRangeCoder;
+            bool isRange = r.HasRangeCoder && r.HasFrameFields;
             children.Add(Field(isRange ? "Range-Coded Data" : "Coded Data", r.DataStart, at, end, NodeValue.Integer(end - at, "bytes"), isRange ? Explain.RangeCodedData : Explain.CodedData, isRange ? Topics.RangeCoding : Topics.Frames));
         }
 
         return children;
     }
 
-    public static string SpecialCodes(uint codes)
+    // The codes a decoder acts on: bit 0 alone for one channel (APE_SPECIAL_FRAME_MONO_SILENCE), all three for two, none for more
+    // (APEDecompressCore.cpp, DecodeBlocksToFrameBuffer).
+    public static string SpecialCodes(uint codes, int channels)
     {
+        if (channels == 1)
+        {
+            return (codes & 1) != 0 ? "silent" : "none";
+        }
+
+        if (channels != 2)
+        {
+            return codes == 0 ? "none" : "not used with more than two channels";
+        }
+
         var names = new List<string>();
         if ((codes & 1) != 0)
         {
@@ -109,7 +121,7 @@ internal static class Nodes
 
         if ((codes & 4) != 0)
         {
-            names.Add("pseudo stereo");
+            names.Add("pseudo-stereo");
         }
 
         return names.Count == 0 ? "none" : string.Join(", ", names);
@@ -169,7 +181,7 @@ internal static class Nodes
     {
         var node = new Node("Descriptor", at, ApeHeader.DescriptorLength) { Description = Explain.Descriptor, Topic = Topics.File };
         node.Add("Signature", at, 4, h.IsFloat ? "MACF" : "MAC ", Explain.Signature, Topics.File);
-        node.Add("Encoder Version", at + 4, 2, ApeHeader.VersionText(h.FileVersion), Explain.EncoderVersion, Topics.File);
+        node.Add("File Version", at + 4, 2, ApeHeader.VersionText(h.FileVersion), Explain.FileVersion, Topics.File);
         node.Add("Program Version", at + 6, 2, h.ProgramVersion == 0 ? "not stored" : ApeHeader.VersionText(h.ProgramVersion), Explain.ProgramVersion, Topics.File);
         node.Add("Descriptor Bytes", at + 8, 4, NodeValue.Integer(h.DescriptorBytes, "bytes", "byte"), Explain.DescriptorBytes, Topics.File);
         node.Add("Header Bytes", at + 12, 4, NodeValue.Integer(h.HeaderBytes, "bytes", "byte"), Explain.HeaderBytes, Topics.File);
@@ -206,7 +218,7 @@ internal static class Nodes
     {
         var node = new Node("Header", at, h.OldHeaderBytes) { Description = Explain.OldHeader, Topic = Topics.File };
         node.Add("Signature", at, 4, "MAC ", Explain.Signature, Topics.File);
-        node.Add("Encoder Version", at + 4, 2, ApeHeader.VersionText(h.FileVersion), Explain.EncoderVersion, Topics.File);
+        node.Add("File Version", at + 4, 2, ApeHeader.VersionText(h.FileVersion), Explain.FileVersion, Topics.File);
         node.Add("Compression Level", at + 6, 2, $"{ApeHeader.LevelName(h.CompressionLevel)} ({h.CompressionLevel})", Explain.CompressionLevel, Topics.Prediction);
         node.Add("Format Flags", at + 8, 2, NodeValue.Hex((long)h.Flags, 4), Explain.FormatFlags, Topics.File);
         node.Add("Format Flags Set", at + 8, 2, FlagNames(h.Flags), Explain.FormatFlagNames, Topics.File);

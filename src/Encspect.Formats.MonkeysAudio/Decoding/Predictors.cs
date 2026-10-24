@@ -1,4 +1,4 @@
-// Follows the Monkey's Audio SDK 13.42 (NewPredictor.cpp, ScaledFirstOrderFilter.h, RollBuffer.h, Interim.cpp), 3-clause BSD license:
+// Follows the Monkey's Audio SDK 13.42 (NewPredictor.cpp, Old/NewPredictorOld.cpp, ScaledFirstOrderFilter.h, RollBuffer.h, Interim.cpp), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 namespace Encspect.Formats.MonkeysAudio.Decoding;
 
@@ -31,13 +31,16 @@ internal static class Levels
 
 // The predictor of one channel of samples up to 24 bits (CPredictorDecompress3950toCurrent<int, short>): the neural network filters, then a first
 // order adaptive filter over the value, a second over the other channel's, and a fixed first-order filter. isInterim is the mode for 24-bit files
-// from 2019 to 2022 (Interim.h).
+// from 2019 to 2022 (Interim.h): the neural network filters round differently, and the first stage sums its products in 64 bits for samples of more
+// than 16 bits (CPredictorDecompressInterim::DecompressValue, Interim.cpp).
 internal sealed class Predictor32
 {
     private const int Window = 256;
     private const int History = 8;
 
     private readonly NnFilter16[] _filters;
+    private readonly bool _isWideFirstStage;
+    private readonly bool _isNewDelta;
     private readonly int[] _predictionA = new int[Window + History];
     private readonly int[] _predictionB = new int[Window + History];
     private readonly int[] _adaptA = new int[Window + History];
@@ -50,8 +53,10 @@ internal sealed class Predictor32
     private int _stageA;
     private int _stageB;
 
-    public Predictor32(int level, bool isInterim)
+    public Predictor32(int level, bool isInterim, int bitsPerSample, bool isNewDelta)
     {
+        _isNewDelta = isNewDelta;
+        _isWideFirstStage = isInterim && bitsPerSample > 16;
         (int Order, int Shift)[] filters = Levels.Filters(level);
         _filters = new NnFilter16[filters.Length];
         for (int i = 0; i < filters.Length; i++)
@@ -102,7 +107,7 @@ internal sealed class Predictor32
         int b = (int)inputB;
         for (int i = _filters.Length - 1; i >= 0; i--)
         {
-            a = _filters[i].Decompress(a, true);
+            a = _filters[i].Decompress(a, _isNewDelta);
         }
 
         int c = _current;
@@ -114,9 +119,19 @@ internal sealed class Predictor32
         _stageB = b;
         pb[c - 1] = pb[c] - pb[c - 1];
 
-        int predictionA = (pa[c] * _ma[0]) + (pa[c - 1] * _ma[1]) + (pa[c - 2] * _ma[2]) + (pa[c - 3] * _ma[3]);
-        int predictionB = (pb[c] * _mb[0]) + (pb[c - 1] * _mb[1]) + (pb[c - 2] * _mb[2]) + (pb[c - 3] * _mb[3]) + (pb[c - 4] * _mb[4]);
-        int currentA = a + ((predictionA + (predictionB >> 1)) >> 10);
+        int currentA;
+        if (_isWideFirstStage)
+        {
+            long wideA = ((long)pa[c] * _ma[0]) + ((long)pa[c - 1] * _ma[1]) + ((long)pa[c - 2] * _ma[2]) + ((long)pa[c - 3] * _ma[3]);
+            long wideB = ((long)pb[c] * _mb[0]) + ((long)pb[c - 1] * _mb[1]) + ((long)pb[c - 2] * _mb[2]) + ((long)pb[c - 3] * _mb[3]) + ((long)pb[c - 4] * _mb[4]);
+            currentA = a + (int)((wideA + (wideB >> 1)) >> 10);
+        }
+        else
+        {
+            int predictionA = (pa[c] * _ma[0]) + (pa[c - 1] * _ma[1]) + (pa[c - 2] * _ma[2]) + (pa[c - 3] * _ma[3]);
+            int predictionB = (pb[c] * _mb[0]) + (pb[c - 1] * _mb[1]) + (pb[c - 2] * _mb[2]) + (pb[c - 3] * _mb[3]) + (pb[c - 4] * _mb[4]);
+            currentA = a + ((predictionA + (predictionB >> 1)) >> 10);
+        }
 
         _adaptA[c] = pa[c] != 0 ? ((pa[c] >> 30) & 2) - 1 : 0;
         _adaptA[c - 1] = pa[c - 1] != 0 ? ((pa[c - 1] >> 30) & 2) - 1 : 0;
@@ -254,5 +269,92 @@ internal sealed class Predictor64
         _current++;
         _index++;
         return _stageA;
+    }
+}
+
+// The predictor of files from 3.93 to 3.94 (CPredictorDecompress3930to3950): the neural network filters, then one adaptive filter of four taps over
+// the last values, without the other channel's values and the first-order filters of later versions.
+internal sealed class Predictor3930
+{
+    private const int Window = 256;
+    private const int History = 8;
+
+    private readonly NnFilter16[] _filters;
+    private readonly int[] _buffer = new int[Window + History];
+    private readonly int[] _m = new int[8];
+    private int _at;
+    private int _index;
+    private int _lastValue;
+
+    public Predictor3930(int level)
+    {
+        // Extra high is the highest level the encoders of these versions had (NewPredictorOld.cpp: anything above throws).
+        if (level > 4000)
+        {
+            throw new InvalidDataException($"The compression level {level} did not exist in files of version 3.93 and 3.94");
+        }
+
+        (int Order, int Shift)[] filters = Levels.Filters(level);
+        _filters = new NnFilter16[filters.Length];
+        for (int i = 0; i < filters.Length; i++)
+        {
+            _filters[i] = new NnFilter16(filters[i].Order, filters[i].Shift, false);
+        }
+
+        Flush();
+    }
+
+    public void Flush()
+    {
+        foreach (NnFilter16 filter in _filters)
+        {
+            filter.Flush();
+        }
+
+        Array.Clear(_buffer, 0, History + 1);
+        Array.Clear(_m);
+        _m[0] = 360;
+        _m[1] = 317;
+        _m[2] = -109;
+        _m[3] = 98;
+        _at = History;
+        _lastValue = 0;
+        _index = 0;
+    }
+
+    public int Decompress(long input)
+    {
+        if (_index == Window)
+        {
+            Array.Copy(_buffer, Window, _buffer, 0, History);
+            _at = History;
+            _index = 0;
+        }
+
+        int value = (int)input;
+        for (int i = _filters.Length - 1; i >= 0; i--)
+        {
+            value = _filters[i].Decompress(value, false);
+        }
+
+        int[] b = _buffer;
+        int at = _at;
+        int p1 = b[at - 1];
+        int p2 = b[at - 1] - b[at - 2];
+        int p3 = b[at - 2] - b[at - 3];
+        int p4 = b[at - 3] - b[at - 4];
+        b[at] = value + (((p1 * _m[0]) + (p2 * _m[1]) + (p3 * _m[2]) + (p4 * _m[3])) >> 9);
+
+        int direction = (value < 0 ? 1 : 0) - (value > 0 ? 1 : 0);
+        _m[0] += (((p1 >> 30) & 2) - 1) * direction;
+        _m[1] += (((p2 >> 30) & 2) - 1) * direction;
+        _m[2] += (((p3 >> 30) & 2) - 1) * direction;
+        _m[3] += (((p4 >> 30) & 2) - 1) * direction;
+
+        int result = b[at] + ((_lastValue * 31) >> 5);
+        _lastValue = result;
+        _index++;
+        _at++;
+        return result;
     }
 }

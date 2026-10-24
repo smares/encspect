@@ -12,6 +12,9 @@ internal sealed class Unprepare
         PairFirst,
         PairSecond,
 
+        // The center and subwoofer channels of a file of six channels or more, which are plain samples that the SDK checks for 16 bits like a pair's.
+        RawChecked,
+
         // The seventh channel of a seven-channel file, which the SDK's code neither writes nor reads (Prepare.cpp: nStartChannel is 7 for 7 channels).
         Skipped,
     }
@@ -47,6 +50,8 @@ internal sealed class Unprepare
                 }
                 else if (channels >= 6)
                 {
+                    _kinds[2] = Kind.RawChecked;
+                    _kinds[3] = Kind.RawChecked;
                     Pair(0);
                     Pair(4);
                     if (channels >= 8)

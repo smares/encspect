@@ -6,4 +6,5 @@ internal static class ChecksumNames
 {
     public const string DescriptorMd5 = "descriptor MD5";
     public const string FrameCrc = "frame CRC-32";
+    public const string FrameChecksum = "frame checksum";
 }
