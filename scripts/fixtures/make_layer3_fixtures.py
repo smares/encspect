@@ -537,40 +537,50 @@ class Layer3Fixture(Fixture):
         return result
 
     def ancillary(self):
-        """Adds what each region's ancillary data holds (ancillary_scan.py) and its findings."""
+        """Adds what each stream's ancillary data holds (ancillary_scan.py) and its findings. A region
+        that holds several streams gets each one's Enhancement and Original File Length nodes, the
+        later ones as "Enhancement[1]" and so on."""
         segments = self.segments()
         for region in self.regions:
             if region["name"] != "MPEG Audio":
                 continue
             inside = [(frame, entry) for frame, entry in self.layer3
                       if region["offset"] <= entry["offset"] < region["offset"] + region["length"] and entry["offset"] in segments]
-            if not inside:
-                continue
-            first = inside[0][0]
-            version = mpeg.VERSION_NAMES[first.version]
-            enhancement, total, block = ancillary_scan.scan([segments[entry["offset"]] for _, entry in inside], version, first.rate)
-            audio = [frame for frame, entry in self.layer3
-                     if region["offset"] <= entry["offset"] < region["offset"] + region["length"] and not entry.get("truncated")
-                     and not is_header(frame)]
-            ticks = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") * (stream_stats.CLOCK // f.rate) for f in audio)
             fields = {}
-            if enhancement:
-                fields["Enhancement"] = enhancement
-                fields["Enhancement/Ancillary Data"] = bytes_text(total)
-                fields["Enhancement/Data Rate"] = stream_stats.kbps_tenths_text(total * 8, ticks)
-                code = "mpeg.mp3pro" if enhancement == ancillary_scan.MP3PRO else "mpeg.mp3-surround"
-                self.finding(code, f"{total} bytes")
-            if block:
-                delay, length, kind = block
-                rate = first.rate * (2 if kind == ancillary_scan.MP3PRO_OFL else 1)
-                fields["Original File Length"] = f"{length} samples"
-                fields["Original File Length/Delay"] = f"{delay} samples"
-                fields["Original File Length/Original Length"] = f"{length} samples"
-                fields["Original File Length/Sample Rate"] = f"{rate} Hz"
-                fields["Original File Length/Duration"] = stream_stats.duration_text(length * (stream_stats.CLOCK // rate))
-                samples = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") for f in audio) * (rate // first.rate)
-                if delay + length > samples:
-                    self.finding("mpeg.ofl-exceeds-stream", f"{delay + length} samples")
+            counts = {"Enhancement": 0, "Original File Length": 0}
+            for group in streams_of(inside):
+                first = group[0][0]
+                version = mpeg.VERSION_NAMES[first.version]
+                enhancement, total, block = ancillary_scan.scan([segments[entry["offset"]] for _, entry in group], version, first.rate)
+                offsets = {entry["offset"] for _, entry in group}
+                audio = [frame for frame, entry in self.layer3
+                         if entry["offset"] in offsets and not entry.get("truncated") and not is_header(frame)]
+                ticks = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") * (stream_stats.CLOCK // f.rate) for f in audio)
+
+                def label(name):
+                    index = counts[name]
+                    counts[name] += 1
+                    return name if index == 0 else f"{name}[{index}]"
+
+                if enhancement:
+                    name = label("Enhancement")
+                    fields[name] = enhancement
+                    fields[f"{name}/Ancillary Data"] = bytes_text(total)
+                    fields[f"{name}/Data Rate"] = stream_stats.kbps_tenths_text(total * 8, ticks)
+                    code = "mpeg.mp3pro" if enhancement == ancillary_scan.MP3PRO else "mpeg.mp3-surround"
+                    self.finding(code, f"{total} bytes")
+                if block:
+                    delay, length, kind = block
+                    rate = first.rate * (2 if kind == ancillary_scan.MP3PRO_OFL else 1)
+                    name = label("Original File Length")
+                    fields[name] = f"{length} samples"
+                    fields[f"{name}/Delay"] = f"{delay} samples"
+                    fields[f"{name}/Original Length"] = f"{length} samples"
+                    fields[f"{name}/Sample Rate"] = f"{rate} Hz"
+                    fields[f"{name}/Duration"] = stream_stats.duration_text(length * (stream_stats.CLOCK // rate))
+                    samples = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") for f in audio) * (rate // first.rate)
+                    if delay + length > samples:
+                        self.finding("mpeg.ofl-exceeds-stream", f"{delay + length} samples")
             if fields:
                 region["ancillary"] = fields
 
@@ -590,6 +600,17 @@ class Layer3Fixture(Fixture):
 def stream_key(frame):
     """The analyzer's stream identity (IsSameStream) among Layer III frames."""
     return frame.version, frame.rate, frame.bitrate is None
+
+
+def streams_of(frames):
+    """The runs of consecutive (frame, entry) pairs of one stream."""
+    groups = []
+    for pair in frames:
+        if groups and stream_key(groups[-1][0][0]) == stream_key(pair[0]):
+            groups[-1].append(pair)
+        else:
+            groups.append([pair])
+    return groups
 
 
 def same_stream(a, b):
@@ -1036,6 +1057,55 @@ def free_format_no_main_data():
                                   granules=[[Granule(global_gain=i), Granule()], [Granule(), Granule()]]))
     f.add_frames(pack(frames, b"\x00"))
     return f.finding("mpeg.free-format", "36 bytes")
+
+
+@fixture
+def ancillary_streams_apart():
+    f = Layer3Fixture(
+        "ancillary-streams-apart",
+        "Five MPEG-2 Layer III frames at 22050 Hz and then five MPEG-1 frames at 44100 Hz, every ancillary segment "
+        "starting 0xFF 0xFF. Each stream has fewer than the eight segments that detection needs, so neither is mp3PRO, "
+        "though together they have ten.",
+        silent=False,
+        guessenc=False,
+    )
+    f.add_frames(enhanced_chain([b"\xff\xff"] * 5, **MP3PRO) + enhanced_chain([b"\xff\xff"] * 5, **SURROUND))
+    return f.finding("mpeg.stream-changed", "44100 Hz")
+
+
+@fixture
+def mp3pro_then_mpeg1():
+    f = Layer3Fixture(
+        "mp3pro-then-mpeg1",
+        "Twelve MPEG-2 frames at 22050 Hz with the mp3PRO signature, then six MPEG-1 frames at 44100 Hz whose ancillary "
+        "segments start 0x00 0x00. The signature is kept for each stream, so the first stream is still mp3PRO.",
+        silent=False,
+        guessenc=False,
+    )
+    f.add_frames(enhanced_chain(signatures(12, 0xC0, 0x08), **MP3PRO) + enhanced_chain([b"\x00\x00"] * 6, **SURROUND))
+    f.extra = {"detected_encoder": {"name": "mp3PRO encoder", "confidence": "Medium"}}
+    return f.finding("mpeg.stream-changed", "44100 Hz")
+
+
+@fixture
+def ofl_in_each_stream():
+    first = signatures(8, 0xC0, 0x08)
+    first[0] = mp3pro_ofl_block(1500, 6000)
+    second = [b"\xff\xff"] * 6
+    second[0] = ofl_block(1201, 5000, b"\x00\x00\x00")
+    f = Layer3Fixture(
+        "ofl-in-each-stream",
+        "Eight MPEG-2 frames at 22050 Hz with an mp3PRO Original File Length block in the first frame's ancillary data, "
+        "then six MPEG-1 frames at 44100 Hz with a plain Original File Length block in their first frame's: each stream's "
+        "first frame carries its own block.",
+        silent=False,
+        guessenc=False,
+    )
+    f.add_frames(enhanced_chain(first, **MP3PRO) + enhanced_chain(second, **SURROUND))
+    # mp3guessenc reads only the first stream's block.
+    f.extra = {"detected_encoder": {"name": "mp3PRO encoder", "confidence": "Medium"},
+               "mp3guessenc_ofl": {"delay": 1500, "length": 6000}}
+    return f.finding("mpeg.stream-changed", "44100 Hz")
 
 
 # --- mp3PRO, MP3 Surround and OFL -------------------------------------------------------------------

@@ -526,6 +526,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             nodes.Add(ofl);
         }
 
+        nodes.AddRange(region.MoreAncillary);
         if (region.Statistics is { } statistics)
         {
             nodes.Add(statistics);
@@ -1478,6 +1479,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         public Node? Enhancement { get; set; }
 
         public Node? Ofl { get; set; }
+
+        // The enhancement and OFL nodes of the region's later streams.
+        public List<Node> MoreAncillary { get; } = [];
 
         public AncillaryScan? Ancillary { get; set; }
 

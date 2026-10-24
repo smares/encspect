@@ -106,8 +106,8 @@ public sealed partial class MpegAudioParser
             region.Nodes.ChannelBitShare = share;
         }
 
-        // Layer III's ancillary segments follow mp3guessenc's scan (AncillaryScan); Layers I and II
-        // count what mp3guessenc counts after the audio data.
+        // Layer III's ancillary segments are counted by AncillaryScan (R1, R5), Layers I and II by
+        // the bytes after the audio data (L1); both match mp3guessenc's output.
         AncillaryScan? scan = region.Ancillary;
         long ancillary = (scan?.AudioBytes ?? 0) + tally.Layer12Ancillary;
         Node data = node.Add("Ancillary Data", start, length, Bytes(ancillary), Explain.AncillaryTotal, Topics.AncillaryData);
@@ -227,7 +227,7 @@ public sealed partial class MpegAudioParser
 
         public int[] MaximumGain { get; } = [-1, -1];
 
-        // Layers I and II: the ancillary bytes mp3guessenc counts, and the smallest and largest
+        // Layers I and II: the ancillary bytes after the audio data (L1), and the smallest and largest
         // amount of a frame that has any.
         public long Layer12Ancillary { get; private set; }
 
@@ -254,9 +254,8 @@ public sealed partial class MpegAudioParser
             }
             else if (header.Layer != 3 && audioEnd <= length * 8)
             {
-                // mp3guessenc (scan_layer__I, scan_layer_II): the whole bytes after the audio data,
-                // without the padding slot, in a frame whose audio data fits.
-                int bytes = ((length * 8) - audioEnd) / 8 - (header.Padding * header.SlotSize);
+                // The padding slot is left out by convention (L1); ISO/IEC 11172-3 counts it as ancillary data.
+                int bytes = (length * 8 - audioEnd) / 8 - (header.Padding == 1 ? (header.Layer == 1 ? 4 : 1) : 0);
                 if (bytes > 0)
                 {
                     Layer12Ancillary += bytes;
