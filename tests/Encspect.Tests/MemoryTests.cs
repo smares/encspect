@@ -1118,23 +1118,44 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    // A WAVE file's samples are never read: the report of a file with 40 MiB of them is as large as that of one with 4 KiB, and what the analysis
-    // holds while it runs (the buffer the host reads the ends of the file with) is the same for 8 MiB and for 40 MiB.
+    // A WAVE file's samples are never read: the report of a file with 40 MiB of them is as large as that of one with 4 KiB, nothing the analysis
+    // allocates depends on their size, and what it holds while it runs (the blocks the format sniffs of MPEG audio and DTS read from the start
+    // of the data, about 1 MiB) stays below a bound far under the 40 MiB.
+    // The growth from 8 MiB to 40 MiB is read from the bytes allocated, not from the peak: the sniffed blocks are alive for a few milliseconds
+    // at the start of an analysis, so whether a sampler's collection falls into them decides if a peak reads 0.26 or 1.05 MB (ubuntu-26.04 read
+    // 263,368 for 8 MiB and 1,049,720 for 40 MiB, and 1,058,752 and 1,050,808 locally), while the allocation of both is the same to a few KB.
+    // A per-block cost of 24 bytes per KiB of samples would add 786 KB.
     [Fact]
     public void TheSamplesOfAWaveFileCostNothing()
     {
         (Report small, long smallKept, _) = Measure("small.wav", LongInputs.WavWithSamples(4096), LongInputs.WavWithSamples(4096));
-        (Report medium, _, long mediumPeak) = Measure("medium.wav", LongInputs.WavWithSamples(8 << 20), LongInputs.WavWithSamples(4096));
         (Report large, long largeKept, long largePeak) = Measure("large.wav", LongInputs.WavWithSamples(40 << 20), LongInputs.WavWithSamples(4096));
 
         Assert.Equal(40 << 20 >> 2, large.Streams.Single().Samples);
-        output.WriteLine($"{smallKept} bytes kept for 4 KiB of samples, {largeKept} for 40 MiB, {mediumPeak} and {largePeak} bytes peak for 8 and 40 MiB");
+        long mediumAllocated = Allocated("medium.wav", LongInputs.WavWithSamples(8 << 20));
+        long largeAllocated = Allocated("large.wav", LongInputs.WavWithSamples(40 << 20));
+        output.WriteLine($"{smallKept} bytes kept for 4 KiB of samples, {largeKept} for 40 MiB, {largePeak} bytes peak for 40 MiB, {mediumAllocated} and {largeAllocated} bytes allocated for 8 and 40 MiB");
         Assert.True(largeKept < smallKept + 2_000, $"The report keeps {largeKept - smallKept} bytes more for 40 MiB of samples.");
-        Assert.True(largePeak < mediumPeak + 100_000, $"The live heap grew by {largePeak - mediumPeak} bytes more for 40 MiB of samples than for 8 MiB.");
+        Assert.True(largeAllocated < mediumAllocated + 20_000, $"The analysis allocated {largeAllocated - mediumAllocated} bytes more for 40 MiB of samples than for 8 MiB.");
         Assert.True(largePeak < 4_000_000, $"The live heap grew by {largePeak} bytes while the samples were skipped.");
         GC.KeepAlive(small);
-        GC.KeepAlive(medium);
         GC.KeepAlive(large);
+    }
+
+    // The bytes the process allocated during one analysis, after a first one that has run everything once; the smaller of two.
+    private static long Allocated(string name, byte[] data)
+    {
+        var analyzer = Analyzer.CreateDefault();
+        analyzer.Analyze(name, new MemoryStream(data));
+        long least = long.MaxValue;
+        for (int pass = 0; pass < 2; pass++)
+        {
+            long before = GC.GetTotalAllocatedBytes(precise: true);
+            GC.KeepAlive(analyzer.Analyze(name, new MemoryStream(data)));
+            least = Math.Min(least, GC.GetTotalAllocatedBytes(precise: true) - before);
+        }
+
+        return least;
     }
 
     // Lists inside lists multiply the caps on one level (2,048 chunks) into millions of nodes: this file, of 600 lists of 600 empty chunks, asks
