@@ -145,3 +145,23 @@ public class CorruptFlacBuiltFileTests
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
+
+// The Monkey's Audio fixtures written by mac, each analyzed with and without decoding.
+public class CorruptMonkeysAudioFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/external-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The hand-built Monkey's Audio fixtures, each analyzed (the decoder is held to the files mac wrote above: a built file is three frames of 160,000 samples).
+public class CorruptMonkeysAudioBuiltFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/built-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}

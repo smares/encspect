@@ -75,6 +75,7 @@ FIXTURES = {
     "silent-then-tone-insane": (("wav", "silent-then-tone", 44100, 2, 16, 160000), ["-c5000"]),
     "pseudo-stereo": (("wav", "pseudo", 44100, 2, 16, SHORT), ["-c2000"]),
     "pseudo-stereo-insane": (("wav", "pseudo", 44100, 2, 16, SHORT), ["-c5000"]),
+    "quiet-insane": (("wav", "quiet", 44100, 2, 16, SHORT), ["-c5000"]),
     "left-silent": (("wav", "left-silent", 44100, 2, 16, SHORT), ["-c2000"]),
     "loud-noise": (("wav", "loud", 44100, 2, 16, SHORT), ["-c2000"]),
     "wav-chunks": (("wav", "music", 44100, 2, 16, SHORT, None, LIST_BEFORE, LIST_AFTER), ["-c2000"]),
@@ -159,7 +160,7 @@ def build_manifest(path, encoder, spec, findings):
     channels = spec[3]
     pcm = None if channels == 7 else {"md5": hashlib.md5(pcm_of(spec)).hexdigest()}
     result = m.manifest(data, a, regions, encoder, findings, pcm, decode_outcome(a, data, spec), stored_crcs=len(a.frames))
-    result["crosscheck"] = {"valid": channels != 7, "samples": spec[5]}
+    result["crosscheck"] = {"mac_verify": channels != 7, "samples": spec[5]}
     return result
 
 

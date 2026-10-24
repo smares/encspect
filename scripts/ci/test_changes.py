@@ -52,6 +52,14 @@ class ChangesTests(unittest.TestCase):
             self.assertIn("flac-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/crosscheck_flac_fixtures.py"), {"flac-crosscheck", "fixtures"})
 
+    def test_monkeys_audio_parser_decoder_scripts_and_fixtures_belong_to_the_monkeys_audio_job(self):
+        for path in ("src/Encspect.Formats.MonkeysAudio/MonkeysAudioParser.cs", "src/Encspect.Formats.MonkeysAudio/Decoding/RangeDecoder.cs",
+                     "tests/fixtures/monkeys-audio/a.ape", "scripts/fixtures/monkeys_audio_model.py", "scripts/fixtures/make_monkeys_audio_fixtures.py",
+                     "scripts/fixtures/make_external_monkeys_audio_fixtures.py"):
+            self.assertIn("monkeys-audio-crosscheck", run(path), path)
+        self.assertEqual(run("scripts/fixtures/crosscheck_monkeys_audio_fixtures.py"), {"monkeys-audio-crosscheck", "fixtures"})
+        self.assertNotIn("monkeys-audio-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
+
     def test_cross_check_script_runs_only_its_job(self):
         self.assertEqual(run("scripts/fixtures/crosscheck_asf_fixtures.py"), {"asf-crosscheck", "fixtures"})
 

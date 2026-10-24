@@ -178,10 +178,10 @@ add("old-version-3800", m.build_old(frames, 3800, 2000, 0, 1, 44100, 12544, head
 FULL = 160000
 DEFAULT = {"findings": [], "decode": ("decoded", 3, 0, FULL, [])}
 EXPECT = {
-    "frame-crc-changed": {"decode": ("decoded", 3, 1, FULL, ["monkeys-audio.frame-crc-mismatch"])},
+    "frame-crc-changed": {"mac": False, "decode": ("decoded", 3, 1, FULL, ["monkeys-audio.frame-crc-mismatch"])},
     "residual-bit-flipped": {"decode": ("decoded", 2, 0, 86272, ["decode.frame-invalid"]), "written": 123136, "prefix": False},
     "md5-changed": {"findings": ["monkeys-audio.md5-mismatch"]},
-    "audio-byte-flipped": {"findings": ["monkeys-audio.md5-mismatch"], "decode": ("decoded", 2, 0, 86272, ["decode.frame-invalid"]), "written": 94464, "prefix": False},
+    "audio-byte-flipped": {"mac": False, "findings": ["monkeys-audio.md5-mismatch"], "decode": ("decoded", 2, 0, 86272, ["decode.frame-invalid"]), "written": 94464, "prefix": False},
     "cut-mid-frame": {"findings": ["monkeys-audio.data-cut", "monkeys-audio.md5-not-compared", "monkeys-audio.frame-too-short", "monkeys-audio.frame-cut"],
                       "decode": ("decoded", 1, 0, 73728, ["decode.frame-invalid"]), "written": 114688, "complete": False, "crcs": 2, "listed": 2},
     "cut-after-first-frame": {"findings": ["monkeys-audio.data-cut", "monkeys-audio.md5-not-compared", "monkeys-audio.frame-cut", "monkeys-audio.frame-too-short"],
@@ -248,7 +248,8 @@ def manifest_of(name, data):
     kind = case.get("pcm", "mono")
     if case.get("bare"):
         return {"length": len(data), "regions": [], "frames": [], "stream_infos": [],
-                "decoded_samples": 0, "pcm_samples": 0, "decode_findings": [], "findings": [finding(c) for c in case["findings"]], "encoder": {"tool": TOOL}}
+                "decoded_samples": 0, "pcm_samples": 0, "decode_findings": [], "findings": [finding(c) for c in case["findings"]], "encoder": {"tool": TOOL},
+                "crosscheck": {"mac_verify": None}}
     a = m.parse(data)
     status, checked, failed, samples, found = case["decode"]
     decode = {"status": status, "checked": checked, "failed": failed, "samples": samples, "pcm_samples": samples,
@@ -261,6 +262,8 @@ def manifest_of(name, data):
     regions = m.regions_of(data, a)
     result = m.manifest(data, a, regions, {"tool": TOOL}, [finding(c) for c in case["findings"]], pcm, decode, frames_complete=case.get("complete"),
                         stored_crcs=case.get("crcs"), frame_limit=case.get("listed", 64), placed=case.get("listed"), rated=case.get("rated"))
+    verified = result["verification"]["verify"]["isVerified"]
+    result["crosscheck"] = {"mac_verify": case.get("mac", True if verified is True else None)}
     return result
 
 
@@ -279,7 +282,8 @@ def old_manifest(name, data):
             "decoded_samples": 0, "pcm_samples": 0,
             "verification": {"default": {"isVerified": None, "decoding": "notRequested", "checksums": checks},
                              "verify": {"isVerified": None, "decoding": "notPossible", "checksums": checks}},
-            "decode_findings": [{"code": "decode.not-possible", "count": 1}], "findings": [finding(c) for c in findings], "encoder": {"tool": TOOL}}
+            "decode_findings": [{"code": "decode.not-possible", "count": 1}], "findings": [finding(c) for c in findings], "encoder": {"tool": TOOL},
+            "crosscheck": {"mac_verify": None}}
 
 
 def main():

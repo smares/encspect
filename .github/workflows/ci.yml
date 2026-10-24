@@ -60,6 +60,7 @@ jobs:
       musepack-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.musepack-crosscheck }}
       wavpack-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.wavpack-crosscheck }}
       flac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.flac-crosscheck }}
+      monkeys-audio-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.monkeys-audio-crosscheck }}
       asf-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.asf-crosscheck }}
       ac3-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ac3-crosscheck }}
       dts-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.dts-crosscheck }}
@@ -475,6 +476,11 @@ jobs:
           python3 scripts/fixtures/make_flac_fixtures.py
           python3 scripts/fixtures/make_external_flac_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built Monkey's Audio fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_monkeys_audio_fixtures.py
+          python3 scripts/fixtures/make_external_monkeys_audio_fixtures.py --manifests-only
+
       - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ac3_fixtures.py
@@ -820,6 +826,43 @@ jobs:
       - name: Cross-check the WavPack fixtures
         run: python3 scripts/fixtures/crosscheck_wavpack_fixtures.py
 
+  monkeys-audio-crosscheck:
+    name: Monkey's Audio fixtures and decoded audio agree with mac, FFmpeg and MediaInfo
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.monkeys-audio-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # The SDK's source archive is a pinned download (see the WavPack job above for how the cache is kept).
+      - name: Cache the pinned downloads
+        uses: actions/cache@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
+
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
+
+      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts (the manifests were checked with 6.1.1 and 26.01);
+      # mac is built from the pinned Monkey's Audio SDK 13.42 source with CMake and the runner's compiler.
+      - name: Install ffmpeg, mediainfo and the build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo build-essential cmake
+
+      - name: Cross-check the Monkey's Audio fixtures
+        run: python3 scripts/fixtures/crosscheck_monkeys_audio_fixtures.py
+
   flac-crosscheck:
     name: FLAC fixtures agree with flac, metaflac, FFmpeg and MediaInfo, and the decoder with flac -d and FFmpeg
     runs-on: ubuntu-26.04
@@ -1101,6 +1144,7 @@ jobs:
       - musepack-crosscheck
       - wavpack-crosscheck
       - flac-crosscheck
+      - monkeys-audio-crosscheck
       - asf-crosscheck
       - ac3-crosscheck
       - dts-crosscheck
