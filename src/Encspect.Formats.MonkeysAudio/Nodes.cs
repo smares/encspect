@@ -130,7 +130,7 @@ internal static class Nodes
     }
 
     public static Node SeekTable(Records r, long length, int entries) =>
-        new("Seek Table", r.SeekTableAt, length, NodeValue.Integer(entries, "entries", "entry"), () => new BlockedChildren([], Math.Min(entries, r.Entries.Count), i => SeekEntry(r, i)))
+        new("Seek Table", Math.Min(r.SeekTableAt, r.DataLimit), length, NodeValue.Integer(entries, "entries", "entry"), () => new BlockedChildren([], Math.Min(entries, r.Entries.Count), i => SeekEntry(r, i)))
         {
             Description = Explain.SeekTable,
             Topic = Topics.SeekTable,

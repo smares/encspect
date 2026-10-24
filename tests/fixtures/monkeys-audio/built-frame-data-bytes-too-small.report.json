@@ -416,7 +416,7 @@
               "value": 73728,
               "unit": "samples",
               "offset": 27420,
-              "length": 86212,
+              "length": 86208,
               "ranges": [
                 {
                   "offset": 27420,
@@ -425,10 +425,6 @@
                 {
                   "offset": 27424,
                   "length": 86204
-                },
-                {
-                  "offset": 113631,
-                  "length": 1
                 }
               ],
               "children": [
@@ -450,10 +446,10 @@
                 },
                 {
                   "name": "Range-Coded Data",
-                  "value": 86203,
+                  "value": 86202,
                   "unit": "bytes",
                   "offset": 27424,
-                  "length": 86208,
+                  "length": 86204,
                   "ranges": [
                     {
                       "offset": 27424,
@@ -462,10 +458,6 @@
                     {
                       "offset": 27428,
                       "length": 86200
-                    },
-                    {
-                      "offset": 113631,
-                      "length": 1
                     }
                   ]
                 }
@@ -594,6 +586,18 @@
           8
         ],
         "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "monkeys-audio.frame-cut",
+        "message": "The frame data ends inside frame 1, and 1 more frame lies past its end; a frame is read only as far as the file holds whole words of it.",
+        "offset": 27420,
+        "length": 86208,
+        "path": [
+          0,
+          7
+        ],
+        "count": 2
       },
       {
         "severity": "Info",

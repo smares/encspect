@@ -203,7 +203,7 @@ EXPECT = {
     "header-data-too-large": {"findings": ["monkeys-audio.data-cut", "monkeys-audio.header-data-size", "monkeys-audio.md5-not-compared", "monkeys-audio.seek-table-start",
                                            "monkeys-audio.frame-misplaced"], "decode": ("decoded", 0, 0, 0, []), "complete": False, "crcs": 0, "listed": 0, "rated": 0},
     "frame-data-bytes-too-large": {"findings": ["monkeys-audio.data-cut", "monkeys-audio.md5-not-compared", "monkeys-audio.frame-cut"], "complete": False},
-    "frame-data-bytes-too-small": {"findings": ["monkeys-audio.md5-mismatch", "monkeys-audio.frame-too-short", "monkeys-audio.trailing-data"],
+    "frame-data-bytes-too-small": {"findings": ["monkeys-audio.md5-mismatch", "monkeys-audio.frame-cut", "monkeys-audio.frame-too-short", "monkeys-audio.trailing-data"],
                                    "decode": ("decoded", 2, 0, 147456, []), "complete": False, "crcs": 2, "listed": 2},
     "terminating-bytes-too-large": {"findings": ["monkeys-audio.data-cut", "monkeys-audio.terminating-data-size", "monkeys-audio.md5-not-compared"],
                                     "decode": ("decoded", 1, 0, 24000, []), "pcm": "chunks", "complete": True},

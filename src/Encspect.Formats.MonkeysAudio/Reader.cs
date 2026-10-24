@@ -94,7 +94,7 @@ internal static class Reader
         Records records = s.Records;
         records.Junk = junk;
         records.DataStart = s.DataStart;
-        records.DataLimit = reader.End;
+        records.DataLimit = Math.Min(reader.End, s.FrameDataEnd);
         records.SeekTableAt = s.SeekTableAt;
         records.HasFrameFields = h.HasStoredCrc || h.HasSpecialFrames;
         records.HasSpecialFrames = h.HasSpecialFrames;
@@ -452,7 +452,7 @@ internal static class Reader
         if ((status & EntryStatus.Cut) != 0)
         {
             s.Findings.Add(Severity.Warning, "monkeys-audio.frame-cut", () => Nodes.Frame(records, index), count =>
-                $"The file ends inside frame {index}{(count > 1 ? $", and {Counts.Of(count - 1, "more frame lies", "more frames lie")} past its end" : string.Empty)}; a frame is read only as far as the file holds whole words of it.");
+                $"The frame data ends inside frame {index}{(count > 1 ? $", and {Counts.Of(count - 1, "more frame lies", "more frames lie")} past its end" : string.Empty)}; a frame is read only as far as the file holds whole words of it.");
         }
 
         if ((status & EntryStatus.NoStartFields) != 0)

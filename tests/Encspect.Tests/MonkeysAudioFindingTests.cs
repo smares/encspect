@@ -98,7 +98,7 @@ public class MonkeysAudioFindingTests
         Report report = Analyzer.CreateDefault().Analyze("named.bin", new MemoryStream(file), new AnalysisOptions { ForcedFormat = name });
 
         Assert.Equal("Monkey's Audio", report.Root.Value?.ToString());
-        Assert.Empty(report.Findings);
+        Assert.Equal("format.forced", Assert.Single(report.Findings).Code);
     }
 
     private sealed class ForcedMonkeysAudio : IFormatParser

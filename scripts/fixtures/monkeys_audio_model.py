@@ -214,7 +214,7 @@ def manifest(data, a, regions, encoder, findings, pcm, decode, frame_limit=64, f
     if stored_crcs is None:
         stored_crcs = n
     placed = len(a.frames) if placed is None else placed
-    avail = max(0, len(data) - a.data_start) // 4 * 4
+    avail = max(0, min(len(data), a.data_end) - a.data_start) // 4 * 4
     entries = []
     for index, frame in enumerate(a.frames[:min(frame_limit, placed)]):
         end = min(frame["end"], avail)
