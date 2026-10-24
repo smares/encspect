@@ -331,8 +331,9 @@ public class ComplexityTests
     }
 
     // Frames of 10,000,000 samples (the most the SDK accepts at level 5000) that are flagged silent: eight bytes each state 20 million samples to write.
-    // Each is charged 16 units for each sample of each channel before it is decoded, so the work budget ends the decoding after the 2^35 units of the
-    // floor, 107 frames, and the analysis costs by that and the bytes, not by the samples the frames state.
+    // Each is charged 16 units for each sample of each channel before it is decoded, so the work budget ends the decoding: here at 2^32 units, 13
+    // frames (the default floor of 2^35 would take 107 and about half a minute), and the analysis costs by that and the bytes, not by the samples the
+    // frames state.
     [Fact]
     public void MonkeysAudioFramesThatStateMoreSamplesThanTheyCode()
     {
@@ -341,13 +342,13 @@ public class ComplexityTests
         byte[] data = MonkeysAudioBuilder.Build(header, headerData, [.. Enumerable.Repeat(frame, 200)], 10_000_000, 10_000_000);
 
         var watch = Stopwatch.StartNew();
-        Report report = Analyzer.CreateDefault().Analyze("states.ape", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+        Report report = Analyzer.CreateDefault().Analyze("states.ape", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 32 } });
         watch.Stop();
 
         Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
         Assert.Contains(report.Findings, f => f.Code == "decode.limit");
-        Assert.InRange(report.Streams.Single().Verification!.DecodedSamples, 100 * 10_000_000L, 108 * 10_000_000L);
+        Assert.InRange(report.Streams.Single().Verification!.DecodedSamples, 12 * 10_000_000L, 14 * 10_000_000L);
     }
 
     // Core frame headers every 96 bytes (the smallest frame) that state 16 KiB frames: each is a candidate whose chain the

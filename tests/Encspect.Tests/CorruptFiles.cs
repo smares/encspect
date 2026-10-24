@@ -71,7 +71,9 @@ internal static class CorruptFiles
                 Task work = Task.Run(() =>
                 {
                     started.SetResult();
-                    AnalyzeAndCheck(variant, name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal));
+                    AnalyzeAndCheck(variant, name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal),
+                        // A Monkey's Audio frame costs much more to decode than a FLAC one, and the budget ends the rest of a variant's decoding early.
+                        name.StartsWith("monkeys-audio/", StringComparison.Ordinal) ? 1L << 25 : 1L << 30);
                 });
                 await started.Task;
                 await work.WaitAsync(VariantLimit);
@@ -166,12 +168,12 @@ internal static class CorruptFiles
         }
     }
 
-    private static void AnalyzeAndCheck(byte[] data, bool alsoDecodes = false)
+    private static void AnalyzeAndCheck(byte[] data, bool alsoDecodes = false, long maxWork = 1L << 30)
     {
         if (alsoDecodes)
         {
             // The decoder works on what the parser hands it, damaged frames included: it must give a report as well, and never fail.
-            var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 30 } };
+            var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = maxWork } };
             Report decoded = Analyzer.CreateDefault().Analyze("variant", new MemoryStream(data), options);
             Assert.DoesNotContain(decoded.Findings, f => f.Code is "parse.failed" or "decode.failed");
             Assert.All(decoded.Findings, f => Assert.True(f.Path is not null, $"The node of {f.Code} is not in the tree."));

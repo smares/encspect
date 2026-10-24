@@ -146,8 +146,9 @@ internal static class Reader
         long end = Math.Min(s.FrameDataEnd, reader.End);
         end = Math.Max(end, Math.Min(s.DataStart, reader.End));
         Records records = s.Records;
+        List<Node> leading = s.Leading;
         s.Stream = new Node("Monkey's Audio", s.Junk, Math.Max(0, end - s.Junk), null,
-            () => new BlockedChildren(s.Leading, records.Entries.Count + (records.UnlistedFrames > 0 ? 1 : 0), i => i < records.Entries.Count ? Nodes.Entry(records, i) : Nodes.Unlisted(records)))
+            () => new BlockedChildren(leading, records.Entries.Count + (records.UnlistedFrames > 0 ? 1 : 0), i => i < records.Entries.Count ? Nodes.Entry(records, i) : Nodes.Unlisted(records)))
         {
             Kind = NodeKind.Stream,
             Description = Explain.Stream,
