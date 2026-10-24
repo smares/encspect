@@ -63,7 +63,7 @@ FIXTURES = {
     "mp3-in-wav-stereo": (("sine", 44100, 2, SHORT, "s16le"), ["-c:a", "libmp3lame", "-b:a", "128k"], None, [], None),
     "mp3-in-wav-mono": (("sine", 22050, 1, SHORT, "s16le"), ["-c:a", "libmp3lame", "-b:a", "48k"], None, [], None),
     "ac3-in-wav": (("sine", 48000, 2, SHORT, "s16le"), ["-c:a", "ac3", "-b:a", "192k"], None, [], None),
-    "eac3-in-wav": (("sine", 48000, 2, SHORT, "s16le"), ["-c:a", "eac3", "-b:a", "192k"], None, ["wav.coding-unknown"], "Other"),
+    "eac3-in-wav": (("sine", 48000, 2, SHORT, "s16le"), ["-c:a", "eac3", "-b:a", "192k"], None, [], None),
     "dts-in-wav": (("sine", 48000, 2, SHORT, "s16le"), ["-c:a", "dca", "-strict", "-2", "-b:a", "768k"], None, [], None),
     "adpcm-ms": (("sine", 44100, 2, SHORT, "s16le"), ["-c:a", "adpcm_ms"], None, ["wav.coding-not-analyzed"], "Microsoft ADPCM"),
     "adpcm-ima": (("sine", 44100, 2, SHORT, "s16le"), ["-c:a", "adpcm_ima_wav"], None, ["wav.coding-not-analyzed"], "IMA ADPCM"),

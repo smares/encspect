@@ -131,8 +131,9 @@ internal static class ChunkFixtureChecks
         Assert.Null(stream.Verification);
     }
 
-    // The findings of the analyzer's own codes and of the host's routes must be exactly the manifest's; a codec parser reached through a route adds
-    // findings of its own, which its fixtures check.
+    // The findings of the analyzer's own codes and of the host's routes must be exactly the manifest's. A codec parser reached through a route adds
+    // findings of its own, which its fixtures check in detail; here every one of them that is a Warning or an Error must be listed too, so that a
+    // route that makes the codec parser complain (a configuration it should not have been given) cannot pass as a clean file.
     private static void CheckFindings(JsonElement expected, Report report, bool isRouted)
     {
         var wanted = new SortedDictionary<string, int>(StringComparer.Ordinal);
@@ -143,7 +144,7 @@ internal static class ChunkFixtureChecks
         }
 
         var found = new SortedDictionary<string, int>(StringComparer.Ordinal);
-        foreach (Finding finding in report.Findings.Where(f => !isRouted || f.Code.StartsWith("wav.", StringComparison.Ordinal) || f.Code.StartsWith("parse.", StringComparison.Ordinal) || f.Code.StartsWith("tag.", StringComparison.Ordinal)))
+        foreach (Finding finding in report.Findings.Where(f => !isRouted || f.Severity >= Severity.Warning || f.Code.StartsWith("wav.", StringComparison.Ordinal) || f.Code.StartsWith("parse.", StringComparison.Ordinal) || f.Code.StartsWith("tag.", StringComparison.Ordinal)))
         {
             found[finding.Code] = found.GetValueOrDefault(finding.Code) + finding.Count;
         }

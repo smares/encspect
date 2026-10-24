@@ -229,6 +229,11 @@ public class WavFixtureTests
     [InlineData("wav/external-mp3-in-wav-mono.wav", "MPEG-2 Layer III")]
     [InlineData("wav/external-ac3-in-wav.wav", "AC-3")]
     [InlineData("wav/external-dts-in-wav.wav", "DTS")]
+    [InlineData("wav/external-eac3-in-wav.wav", "E-AC-3")]
+    [InlineData("wav/built-extensible-dolby-ac3.wav", "AC-3")]
+    [InlineData("wav/built-extensible-dolby-digital-plus.wav", "E-AC-3")]
+    [InlineData("wav/built-extensible-mpeg2-audio.wav", "MPEG-1 Layer II")]
+    [InlineData("wav/built-dts-format-tag-0008.wav", "DTS")]
     public void TheDataChunkOfAnotherCodingGoesToItsParser(string name, string codec)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -238,6 +243,81 @@ public class WavFixtureTests
         Assert.Equal(NodeKind.Detail, data.Kind);
         Assert.Contains(data.Children, c => c.Name is "MPEG Audio" or "AC-3" or "DTS" or "Audio" || c.Kind == NodeKind.Stream);
         Assert.All(stream.NodePaths, p => Assert.NotNull(p));
+    }
+
+    // DTS music CDs and the WAVE files made from them hold the DTS stream in the 16-bit samples of a stereo PCM file; the merge base's DTS parser found
+    // the chain behind the header and reported a DTS file of 48 kHz, which the PCM format chunk must not hide. The format chunk describes the carrier.
+    [Theory]
+    [InlineData("wav/built-dts-in-pcm-14le.wav")]
+    [InlineData("wav/built-dts-in-pcm-16be.wav")]
+    [InlineData("wav/built-dts-in-pcm-after-silence.wav")]
+    public void ADtsStreamInPcmSamplesIsReadAsDts(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("DTS", stream.Codec);
+        Assert.Equal(48000, stream.SampleRate);
+        Assert.Equal(0.064, stream.Duration, 3);
+        Assert.Equal("WAV", report.Root.Value?.ToString());
+        Assert.Single(report.Findings, f => f.Code == "wav.dts-in-pcm" && f.Severity == Severity.Info);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "wav.format-differs-from-stream");
+        Node data = report.Root.Children.Single().Children.Single(c => c.Name == "Data Chunk");
+        Assert.Equal(NodeKind.Detail, data.Kind);
+        Assert.Contains(data.Children, c => c.Name == "DTS" && c.Kind == NodeKind.Stream);
+    }
+
+    // The sync rule: a sync word alone is no stream.
+    [Fact]
+    public void PcmThatOnlyStartsWithADtsSyncWordStaysPcm()
+    {
+        Report report = Fixtures.AnalyzeMpeg("wav/built-pcm-with-dts-sync-word.wav");
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("PCM", stream.Codec);
+        Assert.Equal(2, stream.Channels);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "wav.dts-in-pcm");
+    }
+
+    [Fact]
+    public void AMaskOfFewerSpeakersLeavesTheOtherChannelsWithoutAPositionAndOneOfMoreIgnoresItsExtraBits()
+    {
+        StreamInfo fewer = Assert.Single(Fixtures.AnalyzeMpeg("wav/built-extensible-mask-fewer.wav").Streams);
+        Assert.Equal([Speaker.FrontLeft, Speaker.FrontRight, Speaker.Discrete], fewer.ChannelLayout);
+        StreamInfo more = Assert.Single(Fixtures.AnalyzeMpeg("wav/built-extensible-mask-mismatch.wav").Streams);
+        Assert.Equal([Speaker.FrontLeft, Speaker.FrontRight], more.ChannelLayout);
+        Assert.Equal("stereo", more.ChannelLayoutName);
+        Finding finding = Assert.Single(Fixtures.AnalyzeMpeg("wav/built-extensible-mask-fewer.wav").Findings, f => f.Code == "wav.channel-mask-mismatch");
+        Assert.Equal(Severity.Info, finding.Severity);
+    }
+
+    [Fact]
+    public void AFormatChunkOf14BytesStillHasItsStream()
+    {
+        Report pcm = Fixtures.AnalyzeMpeg("wav/built-format-14-bytes-pcm.wav");
+        StreamInfo stream = Assert.Single(pcm.Streams);
+        Assert.Equal("PCM", stream.Codec);
+        Assert.Equal(44100, stream.SampleRate);
+        Assert.Equal(50, stream.Samples);
+        Assert.Null(stream.BitsPerSample);
+        Assert.Equal("wav.format-short", Assert.Single(pcm.Findings).Code);
+        Assert.Equal("A-law", Assert.Single(Fixtures.AnalyzeMpeg("wav/built-format-14-bytes-alaw.wav").Streams).Codec);
+    }
+
+    [Fact]
+    public void ADs64ChunkWithoutATableLengthStillGivesItsSizes()
+    {
+        Report report = Fixtures.AnalyzeMpeg("wav/built-rf64-ds64-too-short.wav");
+        Assert.Equal("wav.ds64-too-short", Assert.Single(report.Findings).Code);
+        Assert.Equal(30, Assert.Single(report.Streams).Samples);
+        Assert.Equal(report.Root.Length, report.Root.Children.Single().Length);
+    }
+
+    [Fact]
+    public void TheMicrosoftSubFormatsOfAc3AndMpegAudioAreNamedInTheFormatChunk()
+    {
+        Assert.Equal("e06d802c-db46-11cf-b4d1-00805f6cbbea (AC-3)", Text("wav/built-extensible-dolby-ac3.wav", "RIFF/Format Chunk/Sub-Format"));
+        Assert.Equal("a7fb87af-2d02-42fb-a4d4-05cd93843bdd (E-AC-3)", Text("wav/built-extensible-dolby-digital-plus.wav", "RIFF/Format Chunk/Sub-Format"));
+        Assert.Equal("e06d802b-db46-11cf-b4d1-00805f6cbbea (MPEG-2 audio)", Text("wav/built-extensible-mpeg2-audio.wav", "RIFF/Format Chunk/Sub-Format"));
+        Assert.Equal("Samples Per Block", Field("wav/built-extensible-samples-per-block.wav", "RIFF/Format Chunk/Samples Per Block").Name);
     }
 
     [Fact]

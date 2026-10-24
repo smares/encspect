@@ -7,7 +7,6 @@ internal static class DataChunks
 {
     public static void Read(State s, Fields f, Node chunk, long length)
     {
-        s.DataChunks++;
         if (s.Data is not null && s.ListType == "wavl" && ReferenceEquals(s.WavlList, s.CurrentList))
         {
             s.WavlExtraBytes += length;
@@ -37,12 +36,18 @@ internal static class DataChunks
         ParseContext context = s.Context;
         if (s.FormatChunks == 0)
         {
-            s.Findings.Add(Severity.Error, "wav.no-format-chunk", s.Container, _ => "The file has no fmt chunk, so the format of the audio is not known.");
+            if (!s.IsNodeLimitReached)
+            {
+                s.Findings.Add(Severity.Warning, "wav.no-format-chunk", s.Container, _ => "The file has no fmt chunk, so the format of the audio is not known.");
+            }
         }
 
         if (s.Data is null)
         {
-            s.Findings.Add(Severity.Warning, "wav.no-data-chunk", s.Container, _ => "The file has no data chunk, so it holds no audio.");
+            if (!s.IsNodeLimitReached)
+            {
+                s.Findings.Add(Severity.Warning, "wav.no-data-chunk", s.Container, _ => "The file has no data chunk, so it holds no audio.");
+            }
         }
         else if (s.IsDataBeforeFormat && s.FormatChunks > 0)
         {
@@ -55,9 +60,10 @@ internal static class DataChunks
         }
 
         int coding = format.CodingTag;
-        if (!FormatTags.IsPcm(coding) && !FormatTags.IsFloat(coding) && s.FactNode is null)
+        if (s.FactNode is null && ((!FormatTags.IsPcm(coding) && !FormatTags.IsFloat(coding)) || s.WavlList is not null))
         {
-            s.Findings.Add(Severity.Info, "wav.fact-missing", s.FormatChunkNode ?? s.Container, _ => "The format is not PCM, and the specification requires a fact chunk with the number of samples for such formats; the file has none.");
+            // RIFF 1.0, "FACT Chunk": required if the waveform data is in a wavl list and for all compressed audio formats.
+            s.Findings.Add(Severity.Info, "wav.fact-missing", s.FormatChunkNode ?? s.Container, _ => "The data is in a wavl list or the format is neither PCM nor floating point, and the specification requires a fact chunk with the number of samples for such files; the file has none.");
         }
 
         long stored = data.Available + s.WavlExtraBytes;
@@ -71,20 +77,22 @@ internal static class DataChunks
         }
 
         long samples = isLinear && blockAlign > 0 ? (stored / blockAlign) + s.SilentSamples : s.FactNode is not null ? (long)Math.Min(s.FactSamples64, long.MaxValue) : 0;
-        if (isLinear && s.FactNode is not null && s.FactSamples64 != (ulong)(stored / Math.Max(1, blockAlign)) && !data.IsSizeUnknown)
+        if (isLinear && s.FactNode is not null && s.FactSamples64 != (ulong)samples && !data.IsSizeUnknown)
         {
             ulong fact = s.FactSamples64;
-            long counted = stored / Math.Max(1, blockAlign);
+            long counted = samples;
             s.Findings.Add(Severity.Warning, "wav.fact-samples-mismatch", s.FactNode, _ =>
-                $"The fact chunk states {fact} samples, but the data chunk holds {Counts.Of(counted, "sample frame", "sample frames")}.");
+                $"The fact chunk states {fact} samples, but the audio holds {Counts.Of(counted, "sample frame", "sample frames")}.");
         }
 
-        string? codec = FormatTags.CodecId(coding);
+        // None of the routed codec parsers takes anything from the fmt chunk: AC-3 would read the extra bytes of the WAVEFORMATEX as a dac3 or dec3 box.
+        string? codec = format.CodecId ?? s.CarriedCodec;
+        bool isCarried = format.CodecId is null && s.CarriedCodec is not null;
         int streamsBefore = context.Streams.Count;
         bool isRouted = false;
         if (codec is not null && data.Available > 0)
         {
-            isRouted = context.ParseStream(codec, data.Node, context.Reader.Slice(data.Start, data.Available), Configuration(s, format, samples));
+            isRouted = context.ParseStream(codec, data.Node, context.Reader.Slice(data.Start, data.Available));
         }
         else if (codec is not null)
         {
@@ -93,15 +101,30 @@ internal static class DataChunks
 
         if (isRouted && context.Streams.Count > streamsBefore)
         {
-            CompareWithStream(s, format, context.Streams[streamsBefore]);
+            if (isCarried)
+            {
+                int bits = format.Bits;
+                long rate = format.SampleRate;
+                s.Findings.Add(Severity.Info, "wav.dts-in-pcm", data.Node, _ =>
+                    $"The samples of the {bits}-bit stereo PCM data at {rate} Hz hold a DTS stream, as on a DTS music CD; the fmt chunk describes the carrier, and the stream is read as DTS.");
+            }
+            else
+            {
+                CompareWithStream(s, format, context.Streams[streamsBefore]);
+            }
+
             return;
         }
 
         if (!isLinear && codec is null)
         {
-            if (FormatTags.NameOf(coding) is { } name && name is not ("unknown" or "extensible"))
+            if (format.CodingName is { } name && name is not ("unknown" or "extensible"))
             {
                 s.Findings.Add(Severity.Info, "wav.coding-not-analyzed", data.Node, _ => $"The coding is {name}, which the analyzer has no parser for; the audio is reported by the figures the file states.");
+            }
+            else if (format.IsExtensible && format.SubFormat is null)
+            {
+                s.Findings.Add(Severity.Info, "wav.coding-unknown", s.FormatChunkNode ?? data.Node, _ => "The extensible format tag 0xFFFE has no sub-format, because its header is incomplete, so the coding is not known; the audio is reported by the figures the file states.");
             }
             else if (format.IsExtensible && format.SubFormat is { } guid)
             {
@@ -118,28 +141,16 @@ internal static class DataChunks
         AddStream(s, format, data, samples, stored, blockAlign);
     }
 
-    private static CodecConfiguration Configuration(State s, WaveFormat format, long samples)
+    // The codec parser whose stream the samples of a PCM file carry, or null: a DTS stream in the 16-bit stereo samples, as on a DTS music CD,
+    // where the format tag says PCM. The codec parser decides by a chain of consistent frames at the start of the data, after any silence.
+    public static string? CarriedCodec(State s, WaveFormat format, Node parent, ByteReader data)
     {
-        MappedBytes extra;
-        if (format.CodecData is { } node && node.Length > 0)
+        if (format.CodingTag != FormatTags.Pcm || format.Bits != 16 || format.Channels != 2 || s.IsBigEndian || data.Length == 0)
         {
-            extra = MappedBytes.Read(s.Reader, [new ByteRange(node.Offset, node.Length)]);
-        }
-        else
-        {
-            extra = new MappedBytes(ReadOnlyMemory<byte>.Empty, s.Data!.Start);
+            return null;
         }
 
-        var audio = new AudioFormat(format.Tag, format.Channels, (int)Math.Min(format.SampleRate, int.MaxValue), (int)Math.Min(format.BytesPerSecond, int.MaxValue), format.BlockAlign, format.Bits)
-        {
-            ChannelMask = format.ChannelMask,
-            ValidBitsPerSample = format.ValidBits,
-        };
-        return new CodecConfiguration(extra, s.FormatChunkNode ?? s.Data!.Node)
-        {
-            Format = audio,
-            Duration = s.FactNode is not null && format.SampleRate > 0 ? s.FactSamples64 / (double)format.SampleRate : null,
-        };
+        return s.Context.Recognizes("dts", parent, data) ? "dts" : null;
     }
 
     // What the container states against what the codec parser found in the audio: the channels and, where the stream has one rate, the rate.
@@ -177,7 +188,7 @@ internal static class DataChunks
             new(name, node.Offset, node.Length, value) { Description = description, Topic = topic };
 
         var statistics = new Node("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
-        statistics.Add(Cover("Codec", FormatTags.CodecName(coding), Explain.StatCodec, Topics.WaveFormat));
+        statistics.Add(Cover("Codec", CodecName(format), Explain.StatCodec, Topics.WaveFormat));
         if (isLinear)
         {
             statistics.Add(Cover("Sample Frames", NodeValue.Integer(samples, "sample frames", "sample frame"), Explain.StatSampleFrames, Topics.PcmSamples));
@@ -228,7 +239,7 @@ internal static class DataChunks
         context.AddStream(new StreamInfo
         {
             Nodes = [node],
-            Codec = FormatTags.CodecName(coding),
+            Codec = CodecName(format),
             SampleRate = (int)Math.Min(rate, int.MaxValue),
             Channels = channels,
             ChannelMode = channels switch { 1 => "Mono", 2 => "Stereo", > 2 => "Multichannel", _ => null },
@@ -242,6 +253,9 @@ internal static class DataChunks
         });
     }
 
+    // The name the stream reports for a coding no codec parser read: the coding's, or "Other" for one that has none.
+    private static string CodecName(WaveFormat format) => format.CodingName is { } name && name is not ("unknown" or "extensible") ? name : CodecNames.Other;
+
     private static string SampleFormat(int coding, int bits) => coding switch
     {
         FormatTags.IeeeFloat => "IEEE 754 floating point",
@@ -249,8 +263,9 @@ internal static class DataChunks
         _ => bits <= 8 ? "unsigned integer" : "signed integer",
     };
 
-    // The speakers of a stream's channels: the assignment of the channel mask where it names as many speakers as there are channels, else, for
-    // the plain WAVEFORMATEX, front left and right for two channels and the front center for one (ksmedia.h, KSAUDIO_SPEAKER_MONO).
+    // The speakers of a stream's channels: the assignment of the channel mask (a mask that names fewer speakers than there are channels leaves the
+    // rest without a position, one that names more has its extra bits ignored), else, for the plain WAVEFORMATEX, front left and right for two
+    // channels and the front center for one (ksmedia.h, KSAUDIO_SPEAKER_MONO).
     public static IReadOnlyList<Speaker>? StreamLayout(WaveFormat format)
     {
         if (format.Channels is < 1 or > 64)
@@ -260,8 +275,7 @@ internal static class DataChunks
 
         if (format.IsExtensible && format.ChannelMask is { } mask && mask != 0)
         {
-            IReadOnlyList<Speaker> speakers = FormatChunk.Layout(mask, format.Channels);
-            return speakers.Count == format.Channels ? speakers : null;
+            return FormatChunk.Layout(mask, format.Channels);
         }
 
         return format.Channels switch { 1 => ChannelLayouts.Mono, 2 => ChannelLayouts.Stereo, _ => null };

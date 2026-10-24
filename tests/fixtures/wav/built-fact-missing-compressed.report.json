@@ -215,7 +215,7 @@
       {
         "severity": "Info",
         "code": "wav.fact-missing",
-        "message": "The format is not PCM, and the specification requires a fact chunk with the number of samples for such formats; the file has none.",
+        "message": "The data is in a wavl list or the format is neither PCM nor floating point, and the specification requires a fact chunk with the number of samples for such files; the file has none.",
         "offset": 12,
         "length": 28,
         "path": [

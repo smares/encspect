@@ -209,7 +209,7 @@
       {
         "severity": "Info",
         "code": "wav.fact-missing",
-        "message": "The format is not PCM, and the specification requires a fact chunk with the number of samples for such formats; the file has none.",
+        "message": "The data is in a wavl list or the format is neither PCM nor floating point, and the specification requires a fact chunk with the number of samples for such files; the file has none.",
         "offset": 12,
         "length": 26,
         "path": [
@@ -221,7 +221,7 @@
       {
         "severity": "Info",
         "code": "wav.coding-unknown",
-        "message": "The format tag 0xFFFE is not one the analyzer lists, so the audio is reported by the figures the file states.",
+        "message": "The extensible format tag 0xFFFE has no sub-format, because its header is incomplete, so the coding is not known; the audio is reported by the figures the file states.",
         "offset": 12,
         "length": 26,
         "path": [

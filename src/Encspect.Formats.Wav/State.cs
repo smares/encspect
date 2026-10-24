@@ -29,13 +29,9 @@ internal sealed class State(ParseContext context)
 
     public WaveFormat? Format { get; set; }
 
-    public Node? FormatNode { get; set; }
-
     public int FormatChunks { get; set; }
 
     public Node? FormatChunkNode { get; set; }
-
-    public uint? FactSamples { get; set; }
 
     public ulong FactSamples64 { get; set; }
 
@@ -43,18 +39,22 @@ internal sealed class State(ParseContext context)
 
     public DataChunk? Data { get; set; }
 
-    public int DataChunks { get; set; }
-
     public Node? FirstDataNode { get; set; }
+
+    // The codec of a stream the samples of the first data chunk carry although the fmt chunk says PCM, found when the chunk was reached.
+    public string? CarriedCodec { get; set; }
+
+    // The nodes the walk has built, counted against Walker.MaxNodes, and whether the walk stopped at the budget.
+    public int Nodes { get; set; }
+
+    public bool IsNodeLimitReached { get; set; }
 
     public bool IsDataBeforeFormat { get; set; }
 
     // The samples of silence ('slnt' chunks of a wavl list), which the stream counts besides its data.
     public long SilentSamples { get; set; }
 
-    public int ChunkCount { get; set; }
 
-    public int ListedChunks { get; set; }
 
     public int Nesting { get; set; }
 
@@ -69,20 +69,14 @@ internal sealed class State(ParseContext context)
     // The bytes of the data chunks that follow the first one in the same wavl list.
     public long WavlExtraBytes { get; set; }
 
-    public List<Node> TagNodes { get; } = [];
 
-    public bool HasBext { get; set; }
 
-    // The chunks that need the whole file read before they can be told: work done after the walk.
-    public List<Action> AfterWalk { get; } = [];
 
-    public int CueCount { get; set; }
 
-    public int CueChunks { get; set; }
-
-    public int SmplChunks { get; set; }
-
+    // The names of the cue points of the file's cue chunks, up to Chunks.MaxCueNames of them; IsCueNamesComplete says whether that was all.
     public HashSet<uint>? CueIdentifiers { get; set; }
+
+    public bool IsCueNamesIncomplete { get; set; }
 
     // The cue point names the labels, notes, labeled texts and embedded files of 'adtl' lists refer to.
     public List<(uint Name, Node Chunk)> LabelReferences { get; } = [];
@@ -97,5 +91,4 @@ internal sealed class State(ParseContext context)
 
     public uint? DataSize32 { get; set; }
 
-    public bool HasId3 { get; set; }
 }

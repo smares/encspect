@@ -1,0 +1,256 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-format-14-bytes-alaw.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 62,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 62,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 54,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "A-law, 1 channel, 8000 Hz",
+              "offset": 12,
+              "length": 22,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 14,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0006 (A-law)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 8000,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 8000,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 1,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Fact Chunk",
+              "value": 8,
+              "unit": "samples",
+              "offset": 34,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fact",
+                  "offset": 34,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 38,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Length",
+                  "value": 8,
+                  "unit": "samples",
+                  "offset": 42,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 8,
+              "unit": "bytes",
+              "offset": 46,
+              "length": 16,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 46,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 46,
+                  "length": 16,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "A-law",
+                      "offset": 46,
+                      "length": 16
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 8,
+                      "unit": "sample frames",
+                      "offset": 46,
+                      "length": 16
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.001,
+                      "unit": "s",
+                      "offset": 46,
+                      "length": 16
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 8000,
+                      "unit": "Hz",
+                      "offset": 46,
+                      "length": 16
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 46,
+                      "length": 16
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 46,
+                      "length": 16
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "companded",
+                      "offset": 46,
+                      "length": 16
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 46,
+                      "length": 16
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 64,
+                      "unit": "kbps",
+                      "offset": 46,
+                      "length": 16
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "A-law",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "samples": 8,
+        "duration": 0.001,
+        "averageBitrate": 64,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "wav.format-short",
+        "message": "The fmt chunk holds 14 bytes, fewer than the 16 of a PCMWAVEFORMAT: wBitsPerSample, which PCM and the formats that follow WAVEFORMATEX add after the 14 bytes of common fields, is missing, so the bits per sample are not known.",
+        "offset": 12,
+        "length": 22,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

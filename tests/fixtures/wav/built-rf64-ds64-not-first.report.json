@@ -308,7 +308,7 @@
       {
         "severity": "Warning",
         "code": "wav.riff-size-placeholder",
-        "message": "The RIFF chunk's size is 0xFFFFFFFF and the ds64 chunk does not give a size, which is no size a RIFF chunk can have; a writer leaves it when it cannot go back and fill it in. The file is read to its end, 208 bytes after the size field.",
+        "message": "The RF64 chunk's size is 0xFFFFFFFF and the ds64 chunk does not give a size, which is no size a RF64 chunk can have; a writer leaves it when it cannot go back and fill it in. The file is read to its end, 208 bytes after the size field.",
         "offset": 4,
         "length": 4,
         "path": [
@@ -320,7 +320,7 @@
       {
         "severity": "Warning",
         "code": "wav.ds64-not-first",
-        "message": "The ds64 chunk is not the first chunk after the RF64 header, where Tech 3306 puts it.",
+        "message": "The ds64 chunk is not the first chunk after the RF64 header, where Tech 3306-2009 puts it.",
         "offset": 28,
         "length": 36,
         "path": [

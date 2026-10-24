@@ -2,7 +2,7 @@
 id: wave-cue-points
 title: Cue points, labels and loops in WAV
 related: riff-chunks, riff-info, bwf-broadcast-extension
-references: Microsoft, Multimedia Programming Interface and Data Specifications 1.0, chapter 3 (Cue-Points, Playlist and Associated Data chunks); Microsoft, Multimedia Data Standards Update, April 1994 (inst and smpl chunks); EBU Tech 3306, annex A.3 and A.4
+references: Microsoft, Multimedia Programming Interface and Data Specifications 1.0, chapter 3 (Cue-Points, Playlist and Associated Data chunks); Microsoft, Multimedia Data Standards Update, April 1994 (inst and smpl chunks); EBU Tech 3306-2009, annex A.3 and A.4
 ---
 
 **The problem.** Editors and samplers need to mark places in the audio, name them, play sections in an order and loop a stretch of a note, and the format has to carry all of it.

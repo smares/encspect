@@ -14,6 +14,11 @@ internal static class Walker
     // How many LIST chunks may nest, so that a crafted file cannot grow the tree without bound.
     public const int MaxNesting = 8;
 
+    // The nodes the tree of the chunks holds in all (as MP4 and Matroska budget theirs): the caps on one level and on one table multiply
+    // through nested lists and repeated table chunks, so a file of a few megabytes could otherwise ask for millions. Past it the rest of the
+    // level is one node and is not read. A chunk that crosses the budget is read whole, which adds at most the nodes of one table.
+    public const int MaxNodes = 250_000;
+
     public delegate void ChunkReader(State s, Fields f, Node chunk, long length);
 
     // An ID is four printable ASCII characters, padded on the right with blanks: the first is not a blank. (The specification limits IDs
@@ -36,6 +41,28 @@ internal static class Walker
         return true;
     }
 
+    // The nodes of the subtree under node, itself included; children built on demand (a tag parser's frames) are one node, so counting builds none.
+    private static int Count(Node node)
+    {
+        int count = 0;
+        var pending = new Stack<Node>();
+        pending.Push(node);
+        while (pending.Count > 0)
+        {
+            Node current = pending.Pop();
+            count++;
+            if (!current.AreChildrenBuiltOnDemand)
+            {
+                foreach (Node child in current.Children)
+                {
+                    pending.Push(child);
+                }
+            }
+        }
+
+        return count;
+    }
+
     private static bool IsChunkHeaderAt(State s, long position, long end)
     {
         if (position + 8 > end)
@@ -54,6 +81,16 @@ internal static class Walker
         int listed = 0;
         while (position + 8 <= end)
         {
+            if (s.Nodes >= MaxNodes)
+            {
+                Node rest = parent.Add(new Node("Chunks Not Shown", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.ChunksNotShown, Topic = Topics.RiffChunks });
+                s.IsNodeLimitReached = true;
+                long from = position;
+                s.Findings.Add(Severity.Warning, "wav.node-limit", rest, _ =>
+                    $"The tree holds {MaxNodes} nodes, the most the report builds; the chunks from 0x{from:X} on are not read.");
+                return end;
+            }
+
             if (listed >= MaxListed)
             {
                 Node more = parent.Add(new Node("Further Chunks", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.FurtherChunks, Topic = Topics.RiffChunks });
@@ -139,24 +176,30 @@ internal static class Walker
 
             ChunkSpec spec = ChunkSpec.Of(id, listType);
             string name = spec.Name ?? $"'{id}' Chunk";
+            bool isFirstData = isData && s.FirstDataNode is null && s.Format is not null;
+            string? carried = isFirstData ? DataChunks.CarriedCodec(s, s.Format!, parent, reader.Slice(bodyStart, length)) : null;
             var chunk = new Node(name, position, next - position, NodeValue.Integer(length, "bytes", "byte"))
             {
                 Description = spec.Description,
                 Topic = spec.Topic,
-                Kind = isData && s.FirstDataNode is null && s.Format is { } known && FormatTags.CodecId(known.CodingTag) is null ? NodeKind.Stream : NodeKind.Detail,
+                Kind = isFirstData && s.Format!.CodecId is null && carried is null ? NodeKind.Stream : NodeKind.Detail,
             };
+            if (isFirstData)
+            {
+                s.CarriedCodec = carried;
+            }
 
             parent.Add(chunk);
             listed++;
-            s.ChunkCount++;
+            s.Nodes += 3;
             chunk.Add("Chunk ID", position, 4, id, Explain.ChunkId, Topics.RiffChunks);
             chunk.Add("Chunk Size", position + 4, 4, NodeValue.Integer(size32, "bytes", "byte"), isTop && s.IsRf64 ? Explain.ChunkSizeRf64 : Explain.ChunkSize, Topics.RiffChunks);
 
             if (isUnresolved)
             {
                 Node at = chunk.Children[1];
-                s.Findings.Add(Severity.Error, "wav.chunk-size-unresolved", at, _ =>
-                    $"The {id.TrimEnd()} chunk's size is 0xFFFFFFFF, which in an RF64 file stands for a size in the ds64 chunk, but the ds64 chunk {(s.Ds64 is null ? "is missing" : "does not list this chunk")}; the chunk is read to the end of the RIFF chunk.");
+                s.Findings.Add(Severity.Warning, "wav.chunk-size-unresolved", at, _ =>
+                    $"The {id.TrimEnd()} chunk's size is 0xFFFFFFFF, which in an RF64 file stands for a size in the ds64 chunk, but the ds64 chunk {(s.Ds64 is null ? "is missing or too short" : "does not list this chunk")}; the chunk is read to the end of the RIFF chunk.");
             }
 
             if (isPlaceholder)
@@ -192,14 +235,17 @@ internal static class Walker
                 {
                     Node target = chunk;
                     s.Findings.Add(Severity.Warning, "wav.chunk-too-short", target, _ =>
-                        $"The {name.Replace(" Chunk", string.Empty, StringComparison.Ordinal)} chunk at 0x{chunkStart:X} holds {Counts.Of(length, "byte", "bytes")}, too few for its fields.");
+                        $"The {id.TrimEnd()} chunk at 0x{chunkStart:X} holds {Counts.Of(length, "byte", "bytes")}, too few for its fields.");
                 }
             }
+
+            s.Nodes += id == "LIST" ? 1 : Count(chunk) - 3;
 
             if (hasPad)
             {
                 byte pad = reader.ReadBytesAt(bodyEnd, 1)[0];
                 Node padNode = chunk.Add("Pad Byte", bodyEnd, 1, NodeValue.Hex(pad, 2), Explain.PadByte, Topics.RiffChunks);
+                s.Nodes++;
                 if (pad != 0)
                 {
                     s.Findings.Add(Severity.Info, "wav.pad-byte-not-zero", padNode, _ => "The pad byte after a chunk of odd size should be zero.");

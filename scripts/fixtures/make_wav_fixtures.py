@@ -21,11 +21,27 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "wav"
 
 FIXTURES = {}
+FIXTURE_DIRECTORY = ROOT / "tests" / "fixtures"
 
 
-def fixture(name, data, findings=(), stream=True, codec=None, note="", base=0):
-    """Registers a fixture: findings is a list of codes (or (code, count)) the analyzer must raise, all of them; stream False for none."""
-    FIXTURES[name] = (data, [(f, 1) if isinstance(f, str) else f for f in findings], stream, codec, note, base)
+def fixture(name, data, findings=(), stream=True, codec=None, note="", base=0, carried=None):
+    """Registers a fixture: findings is a list of codes (or (code, count)) the analyzer must raise, all of them; stream False for none; carried the
+    (codec, rate, channels) of a stream the PCM samples hold."""
+    FIXTURES[name] = (data, [(f, 1) if isinstance(f, str) else f for f in findings], stream, codec, note, base, carried)
+
+
+def payload(relative):
+    """The bytes of the data chunk of a committed WAVE file, or the whole of another committed file: audio of a codec the analyzer routes to."""
+    data = (FIXTURE_DIRECTORY / relative).read_bytes()
+    if relative.endswith(".wav"):
+        chunk_ = m.read(data)["data"]
+        return data[chunk_["offset"] + 8:chunk_["offset"] + 8 + chunk_["length"]]
+    return data
+
+
+def extensible_guid(guid, channels=2, rate=48000, bits=0, align=1, average=0, mask=3):
+    """A fmt body of the extensible form whose sub-format is a GUID that is no format tag."""
+    return fmt_body(0xFFFE, channels, rate, bits, align, average, struct.pack("<HI", 0, mask) + guid)
 
 
 def audio(frames=50, channels=2, bits=16, rate=44100):
@@ -34,6 +50,11 @@ def audio(frames=50, channels=2, bits=16, rate=44100):
 
 def basic(frames=50, **kw):
     return [chunk("fmt ", fmt_body(**kw)), chunk("data", audio(frames, kw.get("channels", 2), kw.get("bits", 16), kw.get("rate", 44100)))]
+
+
+def basic_data(data, **kw):
+    """A PCM fmt chunk of 16-bit stereo at 44100 Hz and the given bytes as its samples."""
+    return [chunk("fmt ", fmt_body(**kw)), chunk("data", data)]
 
 
 def text(value, size):
@@ -58,11 +79,11 @@ def id3v1(title="Title"):
     return b"TAG" + text(title, 30) + text("Artist", 30) + text("Album", 30) + b"2026" + text("", 28) + b"\x00\x01" + b"\x11"
 
 
-def bext(version=1, loudness=None, reserved=b"\0" * 180, history="A=PCM,F=44100,W=16,M=stereo,T=Fixture\r\n"):
+def bext(version=1, loudness=None, reserved=b"\0" * 180, history="A=PCM,F=44100,W=16,M=stereo,T=Fixture\r\n", umid=None, loudness_area=b"\0" * 10):
     body = text("A description", 256) + text("Fixture originator", 32) + text("REF-0001", 32) + text("2026-10-24", 10) + text("12:34:56", 8)
     body += struct.pack("<II", 44100, 0) + struct.pack("<H", version)
-    body += (bytes(range(1, 33)) + b"\0" * 32) if version >= 1 else b"\0" * 64
-    body += struct.pack("<hhhhh", *(loudness or (0x7FFF,) * 5)) if version >= 2 else b"\0" * 10
+    body += umid if umid is not None else (bytes(range(1, 33)) + b"\0" * 32) if version >= 1 else b"\0" * 64
+    body += struct.pack("<hhhhh", *(loudness or (0x7FFF,) * 5)) if version >= 2 else loudness_area
     body += reserved + history.encode("latin1")
     return body
 
@@ -103,6 +124,8 @@ fixture("built-bext-v2-loudness", riff([chunk("bext", bext(2, (-2300, 800, -100,
 fixture("built-bext-v2-out-of-range", riff([chunk("bext", bext(2, (12000, -1, 10000, 0x7FFF, -10000))), *basic()]))
 fixture("built-bext-reserved-not-zero", riff([chunk("bext", bext(1, reserved=b"\0" * 179 + b"\x01")), *basic()]), ["wav.bext-reserved-not-zero"])
 fixture("built-bext-version-unknown", riff([chunk("bext", bext(3)), *basic()]), ["wav.bext-version-unknown"])
+fixture("built-bext-v0-reserved-not-zero", riff([chunk("bext", bext(0, umid=b"\0" * 63 + b"\x01")), *basic()]), ["wav.bext-reserved-not-zero"])
+fixture("built-bext-v1-loudness-area-not-zero", riff([chunk("bext", bext(1, loudness_area=b"\0" * 9 + b"\x01")), *basic()]), ["wav.bext-reserved-not-zero"])
 
 # Cue points, labels, playlists, loops, instruments.
 fixture("built-cue-labels", riff([
@@ -133,7 +156,8 @@ nested = b"INFO" + chunk("INAM", zstr("Deepest"))
 for _ in range(10):
     nested = b"zzzz" + chunk("LIST", nested)
 fixture("built-list-nesting", riff([*basic(), chunk("LIST", nested)]), ["wav.list-nesting"])
-fixture("built-wavl-list", riff([chunk("fmt ", fmt_body()), chunk("LIST", b"wavl" + chunk("data", audio(20)) + chunk("slnt", struct.pack("<I", 30)) + chunk("data", audio(20)))]))
+fixture("built-wavl-list", riff([chunk("fmt ", fmt_body()), chunk("fact", struct.pack("<I", 70)), chunk("LIST", b"wavl" + chunk("data", audio(20)) + chunk("slnt", struct.pack("<I", 30)) + chunk("data", audio(20)))]))
+fixture("built-wavl-list-without-fact", riff([chunk("fmt ", fmt_body()), chunk("LIST", b"wavl" + chunk("data", audio(20)) + chunk("slnt", struct.pack("<I", 30)) + chunk("data", audio(20)))]), ["wav.fact-missing"])
 
 # ID3v2 in chunks and tags around the RIFF chunk.
 tag = id3v2([("TIT2", "Fixture title"), ("TPE1", "Fixture artist"), ("TSSE", "Fixture Encoder 2.0")])
@@ -167,9 +191,14 @@ fixture("built-float-16-bits", riff([chunk("fmt ", fmt_body(3, 2, 44100, 16)), c
 fixture("built-alaw-16-bits", riff([chunk("fmt ", fmt_body(6, 2, 8000, 16)), chunk("fact", struct.pack("<I", 50)), chunk("data", audio(50))]), ["wav.companded-bits"])
 fixture("built-format-repeated", riff([chunk("fmt ", fmt_body()), chunk("fmt ", fmt_body(channels=1)), chunk("data", audio(50))]), ["wav.format-repeated"])
 fixture("built-format-extra-size", riff([chunk("fmt ", fmt_body(0x11, 1, 11025, 4, 256, 5612) + struct.pack("<H", 100) + b"\1\2"), chunk("fact", struct.pack("<I", 505)), chunk("data", b"\0" * 256)]), ["wav.format-extra-size", "wav.coding-not-analyzed"], codec="IMA ADPCM")
-fixture("built-format-too-short", riff([chunk("fmt ", fmt_body()[:14]), chunk("data", audio(50))]), ["wav.chunk-too-short"], stream=False)
+fixture("built-format-too-short", riff([chunk("fmt ", fmt_body()[:10]), chunk("data", audio(50))]), ["wav.chunk-too-short"], stream=False)
+fixture("built-format-14-bytes-pcm", riff([chunk("fmt ", fmt_body()[:14]), chunk("data", audio(50))]), ["wav.format-short"])
+fixture("built-format-14-bytes-alaw", riff([chunk("fmt ", fmt_body(6, 1, 8000, 8)[:14]), chunk("fact", struct.pack("<I", 8)), chunk("data", b"\x55" * 8)]), ["wav.format-short"])
 fixture("built-extensible-incomplete", riff([chunk("fmt ", fmt_body(0xFFFE, 2, 44100, 16, extra=b"")), chunk("data", audio(50))]), ["wav.extensible-incomplete", "wav.fact-missing", "wav.coding-unknown"], codec="Other")
 fixture("built-extensible-mask-mismatch", riff([chunk("fmt ", extensible(2, 48000, 16, mask=0x3F)), chunk("data", audio(10))]), ["wav.channel-mask-mismatch"])
+fixture("built-extensible-mask-fewer", riff([chunk("fmt ", extensible(3, 48000, 16, mask=3)), chunk("data", audio(10, 3))]), ["wav.channel-mask-mismatch"])
+fixture("built-extensible-container-bits", riff([chunk("fmt ", extensible(2, 48000, 12, mask=3, align=4)), chunk("data", audio(10))]), ["wav.extensible-container-bits"])
+fixture("built-extensible-samples-per-block", riff([chunk("fmt ", fmt_body(0xFFFE, 1, 11025, 0, 256, 5612, struct.pack("<HI", 505, 4) + struct.pack("<I", 0x11) + m.BASE_GUID)), chunk("fact", struct.pack("<I", 505)), chunk("data", b"\0" * 256)]), ["wav.coding-not-analyzed"], codec="IMA ADPCM")
 fixture("built-extensible-valid-bits-exceed", riff([chunk("fmt ", extensible(2, 48000, 16, valid=20, mask=3)), chunk("data", audio(10))]), ["wav.valid-bits-exceed-container"])
 foreign = b"\x11\x22\x33\x44" + bytes(range(12))
 fixture("built-extensible-unknown-sub-format", riff([chunk("fmt ", fmt_body(0xFFFE, 2, 48000, 16, extra=struct.pack("<HI", 16, 3) + foreign)), chunk("fact", struct.pack("<I", 10)), chunk("data", audio(10))]), ["wav.coding-unknown"], codec="Other")
@@ -195,6 +224,25 @@ fixture("built-data-size-zero", riff([chunk("fmt ", fmt_body()), chunk("data", a
 fixture("built-data-size-ffffffff", riff([chunk("fmt ", fmt_body()), chunk("data", audio(50), size=0xFFFFFFFF)]), ["wav.data-size-placeholder"])
 fixture("built-chunk-limit", riff([chunk("fmt ", fmt_body()), *[chunk("JUNK", b"\0\0") for _ in range(2100)], chunk("data", audio(10))]), ["wav.chunk-limit", "wav.no-data-chunk"], stream=False)
 
+# Routed codings: the sub-format GUIDs Microsoft's headers name and the format tags 0x0008 and the PCM samples that carry a DTS stream.
+AC3 = payload("wav/external-ac3-in-wav.wav")
+EAC3 = payload("wav/external-eac3-in-wav.wav")
+MP2 = payload("wav/external-mp2-in-wav.wav")
+DTS_14LE = payload("dts/core-14le.dts")
+DTS_16BE = payload("dts/core-16be.dts")
+GUID_AC3 = bytes.fromhex("2c806de046dbcf11b4d100805f6cbbea")  # MEDIASUBTYPE_DOLBY_AC3 e06d802c-db46-11cf-b4d1-00805f6cbbea
+GUID_MPEG2 = bytes.fromhex("2b806de046dbcf11b4d100805f6cbbea")  # MEDIASUBTYPE_MPEG2_AUDIO e06d802b-...
+GUID_DDPLUS = bytes.fromhex("af87fba7022dfb42a4d405cd93843bdd")  # MFAudioFormat_Dolby_DDPlus a7fb87af-2d02-42fb-a4d4-05cd93843bdd
+fixture("built-extensible-dolby-ac3", riff([chunk("fmt ", extensible_guid(GUID_AC3)), chunk("fact", struct.pack("<I", 1536)), chunk("data", AC3)]))
+fixture("built-extensible-dolby-digital-plus", riff([chunk("fmt ", extensible_guid(GUID_DDPLUS)), chunk("fact", struct.pack("<I", 1536)), chunk("data", EAC3)]))
+fixture("built-extensible-mpeg2-audio", riff([chunk("fmt ", extensible_guid(GUID_MPEG2)), chunk("fact", struct.pack("<I", 1152)), chunk("data", MP2)]))
+fixture("built-dts-format-tag-0008", riff([chunk("fmt ", fmt_body(0x0008, 2, 48000, 0, 1, 48000)), chunk("fact", struct.pack("<I", 3072)), chunk("data", DTS_14LE)]))
+silence = b"\0" * 4000
+fixture("built-dts-in-pcm-14le", riff(basic_data(DTS_14LE)), ["wav.dts-in-pcm"], carried=("dts", 48000, 2))
+fixture("built-dts-in-pcm-16be", riff(basic_data(DTS_16BE)), ["wav.dts-in-pcm"], carried=("dts", 48000, 2))
+fixture("built-dts-in-pcm-after-silence", riff(basic_data(silence + DTS_14LE)), ["wav.dts-in-pcm", "dts.leading-junk"], carried=("dts", 48000, 2))
+fixture("built-pcm-with-dts-sync-word", riff(basic_data(DTS_14LE[:6] + audio(100)[6:])))
+
 # RF64.
 real = audio(30)
 FMT = chunk("fmt ", fmt_body())
@@ -216,6 +264,10 @@ fixture("built-rf64-data-size-mismatch", rf64([FMT, chunk("data", real)], data_s
 short_table = [FMT, chunk("data", real, size=0xFFFFFFFF)]
 short_total = 4 + len(chunk("ds64", b"\0" * 28 + b"junk" + b"\0" * 8)) + sum(len(c) for c in short_table)
 fixture("built-rf64-table-length", riff([chunk("ds64", struct.pack("<QQQI", short_total, len(real), 30, 5) + b"junk" + struct.pack("<Q", 5)), *short_table], magic=b"RF64", size=0xFFFFFFFF), ["wav.ds64-table-length"])
+short_sizes = struct.pack("<QQQ", 4 + len(chunk("ds64", b"\0" * 24)) + len(FMT) + len(chunk("data", real, size=0xFFFFFFFF)), len(real), 30)
+fixture("built-rf64-ds64-too-short", riff([chunk("ds64", short_sizes), FMT, chunk("data", real, size=0xFFFFFFFF)], magic=b"RF64", size=0xFFFFFFFF), ["wav.ds64-too-short"])
+fixture("built-rf64-ds64-truncated", riff([chunk("ds64", short_sizes[:20]), FMT, chunk("data", real, size=0xFFFFFFFF)], magic=b"RF64", size=0xFFFFFFFF), ["wav.riff-size-placeholder", "wav.chunk-too-short", "wav.chunk-size-unresolved"])
+fixture("built-rf64-table-invalid-ids", rf64([FMT, chunk("data", real, size=0xFFFFFFFF)], table=[(b"\x01\x02\x03\x04", 77), (b"bext", 12)]))
 fixture("built-rf64-chunk-size-unresolved", rf64([FMT, chunk("bext", bext(0), size=0xFFFFFFFF), chunk("data", real)]), ["wav.chunk-size-unresolved", "wav.no-data-chunk"], stream=False)
 
 
@@ -223,10 +275,10 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for old in OUT.glob("built-*.wav"):
         old.unlink()
-    for name, (data, findings, stream, codec, note, base) in sorted(FIXTURES.items()):
+    for name, (data, findings, stream, codec, note, base, carried) in sorted(FIXTURES.items()):
         (OUT / f"{name}.wav").write_bytes(data)
         try:
-            manifest = m.manifest(data, codec, base)
+            manifest = m.manifest(data, codec, base, carried)
         except ValueError:
             manifest = {"length": len(data), "container": None, "chunks": [], "stream": None}
         if not stream:

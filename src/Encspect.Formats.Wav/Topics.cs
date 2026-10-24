@@ -14,6 +14,4 @@ internal static class Topics
     public const string Bext = "bwf-broadcast-extension";
     public const string Rf64 = "rf64";
     public const string Id3InChunks = "id3v2-in-chunks";
-    public const string EncoderDetection = "encoder-detection";
-    public const string WriterDetection = "writer-detection";
 }

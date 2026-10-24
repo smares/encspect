@@ -10,13 +10,13 @@
       "name": "File",
       "value": "WAV",
       "offset": 0,
-      "length": 242,
+      "length": 238,
       "children": [
         {
           "name": "RIFF",
           "value": "WAVE",
           "offset": 0,
-          "length": 242,
+          "length": 238,
           "children": [
             {
               "name": "Chunk ID",
@@ -26,7 +26,7 @@
             },
             {
               "name": "Chunk Size",
-              "value": 234,
+              "value": 230,
               "unit": "bytes",
               "offset": 4,
               "length": 4
@@ -39,10 +39,10 @@
             },
             {
               "name": "Format Chunk",
-              "value": 14,
+              "value": 10,
               "unit": "bytes",
               "offset": 12,
-              "length": 22,
+              "length": 18,
               "children": [
                 {
                   "name": "Chunk ID",
@@ -52,7 +52,7 @@
                 },
                 {
                   "name": "Chunk Size",
-                  "value": 14,
+                  "value": 10,
                   "unit": "bytes",
                   "offset": 16,
                   "length": 4
@@ -76,20 +76,6 @@
                   "unit": "Hz",
                   "offset": 24,
                   "length": 4
-                },
-                {
-                  "name": "Average Bytes Per Second",
-                  "value": 176400,
-                  "unit": "bytes/s",
-                  "offset": 28,
-                  "length": 4
-                },
-                {
-                  "name": "Block Alignment",
-                  "value": 4,
-                  "unit": "bytes",
-                  "offset": 32,
-                  "length": 2
                 }
               ]
             },
@@ -97,20 +83,20 @@
               "name": "Data Chunk",
               "value": 200,
               "unit": "bytes",
-              "offset": 34,
+              "offset": 30,
               "length": 208,
               "children": [
                 {
                   "name": "Chunk ID",
                   "value": "data",
-                  "offset": 34,
+                  "offset": 30,
                   "length": 4
                 },
                 {
                   "name": "Chunk Size",
                   "value": 200,
                   "unit": "bytes",
-                  "offset": 38,
+                  "offset": 34,
                   "length": 4
                 }
               ]
@@ -124,9 +110,9 @@
       {
         "severity": "Warning",
         "code": "wav.chunk-too-short",
-        "message": "The Format chunk at 0xC holds 14 bytes, too few for its fields.",
+        "message": "The fmt chunk at 0xC holds 10 bytes, too few for its fields.",
         "offset": 12,
-        "length": 22,
+        "length": 18,
         "path": [
           0,
           3

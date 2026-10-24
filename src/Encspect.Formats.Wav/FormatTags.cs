@@ -3,7 +3,9 @@ using Encspect.Core;
 namespace Encspect.Formats.Wav;
 
 // What the WAVE format tag (wFormatTag of the fmt chunk) says about the coding: its name, the byte order of its samples, and where the
-// data chunk goes. The names are the identifiers of Microsoft's mmreg.h, written out; the tags a codec parser exists for are routed.
+// data chunk goes. The names are the identifiers of Microsoft's mmreg.h, written out, and for 0x0101 to 0x0103 those of the RIFF specification;
+// the tags a codec parser exists for are routed. AC-3 under 0x2000 (mmreg.h calls the tag WAVE_FORMAT_DVM) is the convention of the files
+// FFmpeg's muxer writes, not a definition of the header.
 internal static class FormatTags
 {
     public const int Pcm = 0x0001;
@@ -18,9 +20,20 @@ internal static class FormatTags
     public const int Extensible = 0xFFFE;
     public const int Ac3 = 0x2000;
     public const int Dts = 0x2001;
+    public const int DtsMicrosoft = 0x0008;
+
+    // Sub-format GUIDs of the codings that have no format tag, with the codec parser each goes to. The values are those of Microsoft's headers:
+    // MEDIASUBTYPE_DOLBY_AC3 and MEDIASUBTYPE_MPEG2_AUDIO (ksuuids.h, named as SubFormat values by "Multiple channel audio data and WAVE
+    // files") and MFAudioFormat_Dolby_DDPlus (mfapi.h, "Audio Subtype GUIDs").
+    private static readonly (Guid Id, string Name, string CodecId)[] NamedSubFormats =
+    [
+        (new Guid("e06d802c-db46-11cf-b4d1-00805f6cbbea"), "AC-3", "ac-3"),
+        (new Guid("a7fb87af-2d02-42fb-a4d4-05cd93843bdd"), "E-AC-3", "e-ac-3"),
+        (new Guid("e06d802b-db46-11cf-b4d1-00805f6cbbea"), "MPEG-2 audio", "mpeg-audio"),
+    ];
 
     // The base of every sub-format GUID: the format tag in the first 32 bits and these twelve bytes after them (ksmedia.h, and the
-    // WAVEFORMATEXTENSIBLE sub-format of EBU Tech 3306 Annex A.2).
+    // WAVEFORMATEXTENSIBLE sub-format of EBU Tech 3306-2009 Annex A.2).
     private static readonly byte[] SubFormatBase = [0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71];
 
     // Whether the GUID is a format tag in a sub-format GUID's clothes, and which tag.
@@ -28,7 +41,21 @@ internal static class FormatTags
     {
         Span<byte> bytes = stackalloc byte[16];
         guid.TryWriteBytes(bytes);
-        return bytes[4..].SequenceEqual(SubFormatBase) ? (int)BitConverter.ToUInt32(bytes[..4]) : null;
+        return bytes[4..].SequenceEqual(SubFormatBase) ? (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(bytes[..4]) : null;
+    }
+
+    // The name and codec parser of a sub-format GUID that is no format tag but is one Microsoft's headers name, or null.
+    public static (string Name, string CodecId)? NamedSubFormat(Guid guid)
+    {
+        foreach ((Guid id, string name, string codecId) in NamedSubFormats)
+        {
+            if (id == guid)
+            {
+                return (name, codecId);
+            }
+        }
+
+        return null;
     }
 
     // The name of a coding in the form every container uses for it (CodecNames); null for a tag the table does not list.
@@ -42,7 +69,7 @@ internal static class FormatTags
         0x0005 => "IBM CVSD",
         ALaw => CodecNames.ALaw,
         MuLaw => CodecNames.MuLaw,
-        0x0008 => "DTS (Microsoft)",
+        DtsMicrosoft => "DTS",
         0x0009 => "DRM",
         0x000A or 0x000B => "Windows Media Audio Voice",
         0x0010 => "OKI ADPCM",
@@ -79,6 +106,9 @@ internal static class FormatTags
         0x0065 => "G.722 ADPCM",
         0x0092 => "Dolby AC-3 over S/PDIF",
         0x00FF => "AAC (raw)",
+        0x0101 => "IBM mu-law",
+        0x0102 => "IBM A-law",
+        0x0103 => "IBM ADPCM",
         0x0160 => "Windows Media Audio 1",
         0x0161 => "Windows Media Audio 2",
         0x0162 => "Windows Media Audio Professional",
@@ -105,9 +135,6 @@ internal static class FormatTags
         _ => null,
     };
 
-    // The name the stream reports for a coding no codec parser read: the tag's name, or "Other" for one that has none.
-    public static string CodecName(int tag) => NameOf(tag) is { } name && name is not ("unknown" or "extensible") ? name : CodecNames.Other;
-
     public static bool IsPcm(int tag) => tag == Pcm;
 
     public static bool IsFloat(int tag) => tag == IeeeFloat;
@@ -120,12 +147,9 @@ internal static class FormatTags
     {
         Mpeg or MpegLayer3 => "mpeg-audio",
         Ac3 => "ac-3",
-        Dts => "dts",
+        Dts or DtsMicrosoft => "dts",
         _ => null,
     };
-
-    // The WAVE format tags whose WAVEFORMATEX is followed by figures of a structure the specifications give.
-    public static bool HasKnownExtra(int tag) => tag is MicrosoftAdpcm or ImaAdpcm or Gsm610 or Mpeg or MpegLayer3;
 
     public static string Show(int tag) => $"0x{tag:X4} ({NameOf(tag) ?? "unlisted"})";
 }

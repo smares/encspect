@@ -20,6 +20,15 @@ internal sealed record WaveFormat(int Tag, int Channels, long SampleRate, long B
     // The coding: the tag, or, for the extensible form, the format tag in its sub-format GUID.
     public int CodingTag => IsExtensible && SubFormat is { } guid && FormatTags.TagOfSubFormat(guid) is { } sub ? sub : Tag;
 
+    // The sub-format GUID when it is no format tag but one Microsoft's headers name (E-AC-3, and AC-3 and MPEG-2 audio under their DirectShow subtypes).
+    public (string Name, string CodecId)? NamedSubFormat => IsExtensible && SubFormat is { } guid ? FormatTags.NamedSubFormat(guid) : null;
+
+    // The codec parser the audio goes to, or null where Encspect has none for the coding.
+    public string? CodecId => FormatTags.CodecId(CodingTag) ?? NamedSubFormat?.CodecId;
+
+    // The name of the coding: the tag's, or the named sub-format's, or null for a tag the table does not list.
+    public string? CodingName => NamedSubFormat?.Name ?? FormatTags.NameOf(CodingTag);
+
     // The bytes one sample of one channel takes in the data chunk, rounded up to whole bytes (the container size).
     public int BytesPerSample => (Bits + 7) / 8;
 
@@ -27,7 +36,7 @@ internal sealed record WaveFormat(int Tag, int Channels, long SampleRate, long B
     public int AudioBits => IsExtensible && ValidBits is > 0 && ValidBits <= Bits ? ValidBits.Value : Bits;
 }
 
-// The ds64 chunk of an RF64 file (EBU Tech 3306 section 3.4): the three sizes whose 32-bit fields hold 0xFFFFFFFF, and the sizes of other
+// The ds64 chunk of an RF64 file (EBU Tech 3306-2009 section 3.4): the three sizes whose 32-bit fields hold 0xFFFFFFFF, and the sizes of other
 // chunks that need more than 32 bits.
 internal sealed record Ds64(ulong RiffSize, ulong DataSize, ulong SampleCount, Dictionary<string, ulong> Table);
 

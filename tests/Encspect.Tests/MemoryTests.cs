@@ -1137,6 +1137,79 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(large);
     }
 
+    // Lists inside lists multiply the caps on one level (2,048 chunks) into millions of nodes: this file, of 600 lists of 600 empty chunks, asks
+    // for 360,000 chunk nodes and a million with their fields. The tree is held to its node budget whatever the file asks (the file of 1,500
+    // lists of 1,500 chunks that showed it took 12 s and 1.9 GB before the budget), and the analysis takes a bounded time.
+    [Fact]
+    public void NestedListsOfManyChunksStayWithinTheNodeBudget()
+    {
+        byte[] data = LongInputs.WavNestedLists(600, 600);
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        (Report report, long kept, long peak) = Measure("nested.wav", data, LongInputs.WavNestedLists(2, 2));
+        watch.Stop();
+
+        int nodes = CountNodes(report.Root);
+        output.WriteLine($"{nodes} nodes, {kept / nodes} bytes kept and {peak / nodes} bytes peak per node, {watch.Elapsed.TotalSeconds:F1} s for three analyses");
+        Assert.Contains(report.Findings, f => f.Code == "wav.node-limit");
+        Assert.InRange(nodes, 250_000, 260_000);
+        Assert.True(kept < nodes * 500L, $"The report keeps {kept / nodes} bytes per node.");
+        Assert.True(peak < nodes * 700L, $"The live heap grew by {peak / nodes} bytes per node.");
+        GC.KeepAlive(report);
+    }
+
+    [Theory]
+    [InlineData("cue")]
+    [InlineData("aiff")]
+    public void RepeatedTableChunksStayWithinTheNodeBudget(string kind)
+    {
+        byte[] data = kind == "cue" ? LongInputs.WavCueChunks(300, 1024) : LongInputs.AiffMarkerChunks(300, 1024);
+        byte[] warm = kind == "cue" ? LongInputs.WavCueChunks(2, 4) : LongInputs.AiffMarkerChunks(2, 4);
+        (Report report, long kept, long peak) = Measure($"tables.{kind}", data, warm);
+
+        int nodes = CountNodes(report.Root);
+        output.WriteLine($"{nodes} nodes, {kept / nodes} bytes kept and {peak / nodes} bytes peak per node");
+        Assert.Contains(report.Findings, f => f.Code is "wav.node-limit" or "aiff.node-limit");
+        Assert.InRange(nodes, 250_000, 270_000);
+        Assert.True(kept < nodes * 500L, $"The report keeps {kept / nodes} bytes per node.");
+        Assert.True(peak < nodes * 700L, $"The live heap grew by {peak / nodes} bytes per node.");
+        GC.KeepAlive(report);
+    }
+
+    // A ds64 table of a million entries with distinct IDs (12 MB) and a cue chunk of 2 million cue points (48 MB) cost the names they keep, which
+    // are capped: the live heap does not grow with them (431 MB and 180 MB of resident memory before the caps). The report keeps the 1,024 entries it lists.
+    [Theory]
+    [InlineData("ds64")]
+    [InlineData("cue")]
+    public void BigTablesCostNoMoreThanTheirCaps(string kind)
+    {
+        byte[] data = kind == "ds64" ? LongInputs.WavDs64Table(1_000_000) : LongInputs.WavCueChunks(1, 2_000_000);
+        byte[] warm = kind == "ds64" ? LongInputs.WavDs64Table(10) : LongInputs.WavCueChunks(1, 10);
+        (Report report, long kept, long peak) = Measure($"big.{kind}", data, warm);
+
+        output.WriteLine($"{kept} bytes kept and {peak} bytes peak for {data.Length} bytes of file");
+        Assert.True(kept < 3_000_000, $"The report keeps {kept} bytes.");
+        Assert.True(peak < 12_000_000, $"The live heap grew by {peak} bytes.");
+        GC.KeepAlive(report);
+    }
+
+    private static int CountNodes(Node root)
+    {
+        int count = 0;
+        var pending = new Stack<Node>();
+        pending.Push(root);
+        while (pending.Count > 0)
+        {
+            Node node = pending.Pop();
+            count++;
+            foreach (Node child in node.Children)
+            {
+                pending.Push(child);
+            }
+        }
+
+        return count;
+    }
+
     [Theory]
     [InlineData("wav")]
     [InlineData("aiff")]

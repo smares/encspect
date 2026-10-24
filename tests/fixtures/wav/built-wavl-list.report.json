@@ -10,13 +10,13 @@
       "name": "File",
       "value": "WAV",
       "offset": 0,
-      "length": 236,
+      "length": 248,
       "children": [
         {
           "name": "RIFF",
           "value": "WAVE",
           "offset": 0,
-          "length": 236,
+          "length": 248,
           "children": [
             {
               "name": "Chunk ID",
@@ -26,7 +26,7 @@
             },
             {
               "name": "Chunk Size",
-              "value": 228,
+              "value": 240,
               "unit": "bytes",
               "offset": 4,
               "length": 4
@@ -100,28 +100,57 @@
               ]
             },
             {
+              "name": "Fact Chunk",
+              "value": 70,
+              "unit": "samples",
+              "offset": 36,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fact",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Length",
+                  "value": 70,
+                  "unit": "samples",
+                  "offset": 44,
+                  "length": 4
+                }
+              ]
+            },
+            {
               "name": "List Chunk",
               "value": "wavl",
-              "offset": 36,
+              "offset": 48,
               "length": 200,
               "children": [
                 {
                   "name": "Chunk ID",
                   "value": "LIST",
-                  "offset": 36,
+                  "offset": 48,
                   "length": 4
                 },
                 {
                   "name": "Chunk Size",
                   "value": 192,
                   "unit": "bytes",
-                  "offset": 40,
+                  "offset": 52,
                   "length": 4
                 },
                 {
                   "name": "List Type",
                   "value": "wavl",
-                  "offset": 44,
+                  "offset": 56,
                   "length": 4
                 },
                 {
@@ -129,92 +158,92 @@
                   "kind": "Stream",
                   "value": 80,
                   "unit": "bytes",
-                  "offset": 48,
+                  "offset": 60,
                   "length": 88,
                   "children": [
                     {
                       "name": "Chunk ID",
                       "value": "data",
-                      "offset": 48,
+                      "offset": 60,
                       "length": 4
                     },
                     {
                       "name": "Chunk Size",
                       "value": 80,
                       "unit": "bytes",
-                      "offset": 52,
+                      "offset": 64,
                       "length": 4
                     },
                     {
                       "name": "Statistics",
                       "kind": "Statistics",
-                      "offset": 48,
+                      "offset": 60,
                       "length": 88,
                       "children": [
                         {
                           "name": "Codec",
                           "value": "PCM",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         },
                         {
                           "name": "Sample Frames",
                           "value": 70,
                           "unit": "sample frames",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         },
                         {
                           "name": "Duration",
                           "value": 0.0015873015873015873,
                           "unit": "s",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         },
                         {
                           "name": "Sample Rate",
                           "value": 44100,
                           "unit": "Hz",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         },
                         {
                           "name": "Channels",
                           "value": 2,
                           "unit": "channels",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         },
                         {
                           "name": "Channel Layout",
                           "value": "stereo (front left, front right)",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         },
                         {
                           "name": "Bits Per Sample",
                           "value": 16,
                           "unit": "bits",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         },
                         {
                           "name": "Sample Format",
                           "value": "signed integer",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         },
                         {
                           "name": "Byte Order",
                           "value": "little-endian",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         },
                         {
                           "name": "Average Bitrate",
                           "value": 806.4,
                           "unit": "kbps",
-                          "offset": 48,
+                          "offset": 60,
                           "length": 88
                         }
                       ]
@@ -225,27 +254,27 @@
                   "name": "Silence Chunk",
                   "value": 30,
                   "unit": "samples",
-                  "offset": 136,
+                  "offset": 148,
                   "length": 12,
                   "children": [
                     {
                       "name": "Chunk ID",
                       "value": "slnt",
-                      "offset": 136,
+                      "offset": 148,
                       "length": 4
                     },
                     {
                       "name": "Chunk Size",
                       "value": 4,
                       "unit": "bytes",
-                      "offset": 140,
+                      "offset": 152,
                       "length": 4
                     },
                     {
                       "name": "Sample Count",
                       "value": 30,
                       "unit": "samples",
-                      "offset": 144,
+                      "offset": 156,
                       "length": 4
                     }
                   ]
@@ -254,20 +283,20 @@
                   "name": "Data Chunk",
                   "value": 80,
                   "unit": "bytes",
-                  "offset": 148,
+                  "offset": 160,
                   "length": 88,
                   "children": [
                     {
                       "name": "Chunk ID",
                       "value": "data",
-                      "offset": 148,
+                      "offset": 160,
                       "length": 4
                     },
                     {
                       "name": "Chunk Size",
                       "value": 80,
                       "unit": "bytes",
-                      "offset": 152,
+                      "offset": 164,
                       "length": 4
                     }
                   ]
@@ -283,7 +312,7 @@
         "nodes": [
           [
             0,
-            4,
+            5,
             3
           ]
         ],

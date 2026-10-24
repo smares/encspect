@@ -2,19 +2,20 @@ namespace Encspect.Formats.Wav;
 
 // What each WAV node is, in the words the report shows next to it. Constants only. The sources are Microsoft's "Multimedia Programming
 // Interface and Data Specifications 1.0" (the RIFF specification), its "Multimedia Data Standards Update" of April 1994 (the multimedia
-// update), the WAVEFORMATEX documentation and mmreg.h, and the EBU's Tech 3285 with its supplements and Tech 3306.
+// update), the WAVEFORMATEX documentation and mmreg.h, and the EBU's Tech 3285 with its supplements and Tech 3306-2009.
 internal static class Explain
 {
     public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies inside the RIFF chunk, which breaks the chain of chunks; the analyzer does not read them as chunks.";
     public const string TrailingData = "Bytes after the end of the RIFF chunk that no tag parser recognized.";
     public const string UnreadData = "Bytes where a chunk should start but no chunk header does: its ID is not four printable characters. The analyzer does not read them.";
     public const string FurtherChunks = "More chunks, which the report reads no further: it lists at most 2,048 chunks at one level.";
+    public const string ChunksNotShown = "More chunks, which the report reads no further: its tree holds at most 250,000 nodes.";
     public const string ExtraData = "Bytes after the fields of the chunk, which the specification does not use.";
 
     public static string RiffChunk(string magic) => magic switch
     {
         "RIFX" => "The RIFX chunk that holds the whole file: the big-endian counterpart of RIFF, with the integers in Motorola byte order (RIFF specification, \"About the RIFF Tagged File Format\"). Its form type WAVE makes it a waveform audio file.",
-        "RF64" => "The RF64 chunk that holds the whole file: RIFF with 64-bit sizes, which the ds64 chunk gives (EBU Tech 3306). Its form type WAVE makes it a waveform audio file.",
+        "RF64" => "The RF64 chunk that holds the whole file: RIFF with 64-bit sizes, which the ds64 chunk gives (EBU Tech 3306-2009). Its form type WAVE makes it a waveform audio file.",
         _ => "The RIFF chunk that holds the whole file: a chunk ID, a size and a form type, followed by the chunks (RIFF specification, \"RIFF Forms\"). Its form type WAVE makes it a waveform audio file.",
     };
 
@@ -23,7 +24,7 @@ internal static class Explain
     public const string FormType = "The form type of the RIFF chunk. WAVE makes the file a waveform audio file (RIFF specification, \"Waveform Audio File Format\").";
     public const string ChunkId = "The ID of the chunk: four ASCII characters, padded on the right with blanks (RIFF specification, \"Chunks\").";
     public const string ChunkSize = "The size of the chunk's data in bytes, not counting the ID, this field or the pad byte (RIFF specification, \"Chunks\").";
-    public const string ChunkSizeRf64 = "The size of the chunk's data in bytes. In an RF64 file 0xFFFFFFFF means the size is in the ds64 chunk (EBU Tech 3306, section 3.4).";
+    public const string ChunkSizeRf64 = "The size of the chunk's data in bytes. In an RF64 file 0xFFFFFFFF means the size is in the ds64 chunk (EBU Tech 3306-2009, section 3.4).";
     public const string PadByte = "A byte of zero after a chunk whose size is odd, which keeps every chunk at an even offset (RIFF specification, \"Chunks\").";
     public const string UnknownChunk = "A chunk the analyzer does not read. A reader skips the chunks it does not know (RIFF specification, \"Waveform Audio File Format\").";
 
@@ -34,12 +35,13 @@ internal static class Explain
     public const string AverageBytesPerSecond = "The average number of bytes per second of the data, nAvgBytesPerSec of the WAVEFORMATEX. For PCM it equals the sample rate times the block alignment.";
     public const string BlockAlignment = "The block alignment in bytes, nBlockAlign of the WAVEFORMATEX: the size of one sample frame for PCM, and the unit a player processes for other formats.";
     public const string BitsPerSample = "The bits per sample of one channel, wBitsPerSample of the WAVEFORMATEX; the container size for PCM, and 0 for codings that have no such size.";
+    public const string ExtensibleSamplesPerBlock = "The number of samples in one compressed block of the audio, wSamplesPerBlock of the WAVEFORMATEXTENSIBLE; 0 if it varies. The word is a union with the valid bits, and with a container size of 0 there are no bits for it to count (Microsoft, WAVEFORMATEXTENSIBLE).";
     public const string CodecSpecificDataSize = "The number of bytes of format-specific data after the WAVEFORMATEX, cbSize.";
     public const string CodecSpecificData = "Bytes the format defines, which follow the WAVEFORMATEX; the analyzer shows their size only.";
     public const string ValidBitsPerSample = "The number of bits of each sample that hold audio, wValidBitsPerSample of the WAVEFORMATEXTENSIBLE; the rest of the container is zero (ksmedia.h documentation).";
     public const string ChannelMask = "Which speakers the channels feed: a bit for each speaker position, dwChannelMask of the WAVEFORMATEXTENSIBLE. The channels are in the order of the bits.";
     public const string MaskSpeakers = "The speakers the set bits stand for, in the order of the channels in the data.";
-    public const string SubFormat = "A GUID whose first 32 bits are the format tag of the coding when the other twelve bytes are Microsoft's base GUID, SubFormat of the WAVEFORMATEXTENSIBLE.";
+    public const string SubFormat = "A GUID whose first 32 bits are the format tag of the coding when the other twelve bytes are Microsoft's base GUID, SubFormat of the WAVEFORMATEXTENSIBLE; AC-3, E-AC-3 and MPEG-2 audio have GUIDs of their own.";
     public const string SamplesPerBlock = "The number of samples of each channel in one block of the data (Microsoft ADPCM, IMA ADPCM and GSM 6.10).";
     public const string CoefficientSets = "The number of pairs of prediction coefficients that follow, wNumCoef (Microsoft ADPCM); the standard seven come first.";
     public const string Coefficients = "The prediction coefficients, fixed-point numbers with 8 fractional bits, in pairs (Microsoft ADPCM).";
@@ -76,13 +78,13 @@ internal static class Explain
     public const string StatByteOrder = "The order of the bytes of a sample: little-endian in RIFF and RF64 files, big-endian in RIFX files.";
     public const string StatBitrate = "The average bitrate of the data chunk: its bytes times 8 over the length of the audio.";
 
-    public const string Ds64Chunk = "The ds64 chunk of an RF64 file: the 64-bit sizes of the RIFF chunk, of the data chunk and of the fact chunk's sample count, and the sizes of other large chunks. It comes first after the RF64 header (EBU Tech 3306, section 3.4).";
+    public const string Ds64Chunk = "The ds64 chunk of an RF64 file: the 64-bit sizes of the RIFF chunk, of the data chunk and of the fact chunk's sample count, and the sizes of other large chunks. It comes first after the RF64 header (EBU Tech 3306-2009, section 3.4).";
     public const string Ds64RiffSize = "The size of the RF64 chunk in bytes, replacing the 32-bit size field of the header.";
     public const string Ds64DataSize = "The size of the data chunk in bytes, replacing its 32-bit size field.";
     public const string Ds64SampleCount = "The number of samples of each channel, replacing the sample length of the fact chunk.";
     public const string Ds64TableLength = "The number of entries in the table of other chunks' sizes.";
     public const string Ds64Table = "The sizes of chunks other than the data chunk whose 32-bit size field holds 0xFFFFFFFF, each with its chunk ID.";
-    public const string Ds64Entry = "A chunk ID and a 64-bit size, ChunkSize64 in Tech 3306.";
+    public const string Ds64Entry = "A chunk ID and a 64-bit size, ChunkSize64 in Tech 3306-2009.";
 
     public const string BextChunk = "The Broadcast Audio Extension chunk of the Broadcast Wave Format: the origin of the recording, its time reference, and in newer versions a UMID and loudness values (EBU Tech 3285, section 2.3).";
     public const string BextDescription = "A free description of the sound, up to 256 characters (EBU Tech 3285, section 2.3).";
@@ -108,9 +110,9 @@ internal static class Explain
     public const string CueName = "The name of the cue point, dwName; unique in the file, and what labels and playlist segments refer to.";
     public const string CuePosition = "The sample position of the cue point in the play order, dwPosition.";
     public const string CueChunkId = "The ID of the chunk that holds the cue point, fccChunk: data for a file with one data chunk.";
-    public const string CueChunkStart = "The offset of the start of the chunk that holds the cue point, dwChunkStart: 0 for a single data chunk.";
-    public const string CueBlockStart = "The offset of the block that holds the cue point, dwBlockStart: 0 for PCM; a decoder of compressed data starts here.";
-    public const string CueSampleOffset = "The sample offset of the cue point, dwSampleOffset: from the start of the data chunk for PCM, from the start of the block otherwise.";
+    public const string CueChunkStart = "The offset of the start of the chunk that holds the cue point, dwChunkStart: used for wave lists, 0 for a single data chunk (RIFF specification, \"Examples of File Position Values\").";
+    public const string CueBlockStart = "The start of the compressed block that holds the cue point, dwBlockStart: not used for PCM (EBU Tech 3306-2009, annex A.3); a decoder of compressed data starts here. RIFF 1.0 gives a cue point in the PCM data of a wavl list its file position here.";
+    public const string CueSampleOffset = "The sample offset of the cue point, dwSampleOffset: absolute from the start of the data chunk for PCM, relative to the start of the block for compressed data (EBU Tech 3306-2009, annex A.3). RIFF 1.0 gives 0 for PCM in a wavl list.";
     public const string PlaylistChunk = "The playlist chunk: the order in which sections between cue points are played (RIFF specification, \"Playlist Chunk\").";
     public const string PlaylistCount = "The number of play segments in the chunk.";
     public const string PlaylistTable = "The play segments: records of 12 bytes.";
@@ -185,6 +187,7 @@ internal static class Explain
     public const string ChnaUids = "The number of track UIDs used in the file; a track may have several, for different stretches of time.";
     public const string ChnaTable = "The ID structures: records of 40 bytes, of which unused ones are zero.";
     public const string ChnaEntry = "One ID structure: a track and the IDs of its audioTrackUID, audioTrackFormat and audioPackFormat.";
+    public const string ChnaPad = "A single byte that makes the record an even number of bytes, shown as the file has it; the examples of the specification have it zero (EBU Tech 3285 supplement 7).";
     public const string ChnaIndex = "The index of the track in the file, from 1; 0 for an unused structure.";
     public const string ChnaUid = "The audioTrackUID, the characters ATU_ and eight hexadecimal digits.";
     public const string ChnaTrackRef = "The reference to the audioTrackFormatID, AT_ and hexadecimal digits.";
@@ -193,5 +196,5 @@ internal static class Explain
     public const string LinkChunk = "The link chunk: XML that links the files of a recording split over several (EBU Tech 3285 supplement 4). The analyzer does not read it.";
     public const string DbmdChunk = "The Dolby metadata chunk (EBU Tech 3285 supplement 6). The analyzer does not read it.";
     public const string QltyChunk = "The quality chunk of the capturing report: the events that affected the quality of the capture, and a cue sheet (EBU Tech 3285 supplement 2). The analyzer does not read it.";
-    public const string R64mChunk = "The marker chunk of RF64: markers with 64-bit positions and labels (EBU Tech 3306, annex A.4). The analyzer does not read it.";
+    public const string R64mChunk = "The marker chunk of RF64: markers with 64-bit positions and labels (EBU Tech 3306-2009, annex A.4). The analyzer does not read it.";
 }

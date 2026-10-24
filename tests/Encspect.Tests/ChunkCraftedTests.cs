@@ -132,6 +132,93 @@ public class ChunkCraftedTests
         Assert.Single(Analyze(data, "rate.wav").Findings, f => f.Code == "wav.format-differs-from-stream");
     }
 
+    private static int CountNodes(Node root)
+    {
+        int count = 0;
+        var pending = new Stack<Node>();
+        pending.Push(root);
+        while (pending.Count > 0)
+        {
+            Node node = pending.Pop();
+            count++;
+            foreach (Node child in node.Children)
+            {
+                pending.Push(child);
+            }
+        }
+
+        return count;
+    }
+
+    // The tree of a WAVE or AIFF file holds at most 250,000 nodes, as the trees of MP4 and Matroska do; the rest of the level is one node and one
+    // finding says so, without the findings about the chunks that were not read.
+    [Fact]
+    public void AWaveFileOfNestedListsIsCutAtTheNodeBudget()
+    {
+        Report report = Analyze(LongInputs.WavNestedLists(300, 600), "nested.wav");
+
+        Assert.InRange(CountNodes(report.Root), 250_000, 260_000);
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wav.node-limit");
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Contains(Fixtures.Resolve(report.Root, "RIFF/List Chunk"), l => l.Children.Any(c => c.Name == "Chunks Not Shown"));
+        Assert.DoesNotContain(report.Findings, f => f.Code is "wav.no-data-chunk" or "wav.no-format-chunk" or "parse.failed");
+    }
+
+    [Fact]
+    public void AnAiffFileOfRepeatedMarkerChunksIsCutAtTheNodeBudget()
+    {
+        Report report = Analyze(LongInputs.AiffMarkerChunks(200, 1024), "markers.aiff");
+
+        Assert.InRange(CountNodes(report.Root), 250_000, 270_000);
+        Assert.Equal(Severity.Warning, Assert.Single(report.Findings, f => f.Code == "aiff.node-limit").Severity);
+        Assert.Contains(report.Root.Children.Single().Children, c => c.Name == "Chunks Not Shown");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    // The names of the cue points are kept to find a name twice and a label for a cue point the file does not hold, up to 65,536 of them; a file with
+    // more is not checked, so a label of a cue point beyond them is not called a label without one.
+    [Fact]
+    public void LabelsAreNotCheckedAgainstCuePointsBeyondTheNamesKept()
+    {
+        byte[] label = Chunk("LIST", [.. "adtl"u8, .. Chunk("labl", [0x60, 0x11, 0x01, 0, .. "x "u8])]);
+        byte[] many = [.. Riff(0, Format(), LongInputs.WavCueChunk(70_000), label, Chunk("data", new byte[16]))];
+        BitConverter.GetBytes(many.Length - 8).CopyTo(many, 4);
+        Assert.DoesNotContain(Analyze(many, "many.wav").Findings, f => f.Code == "wav.label-without-cue");
+
+        byte[] few = [.. Riff(0, Format(), LongInputs.WavCueChunk(100), label, Chunk("data", new byte[16]))];
+        BitConverter.GetBytes(few.Length - 8).CopyTo(few, 4);
+        Assert.Single(Analyze(few, "few.wav").Findings, f => f.Code == "wav.label-without-cue");
+    }
+
+    // The DTS stream of a DTS music CD is in the 16-bit stereo samples of a little-endian file; the same bytes behind another format chunk (mono,
+    // 24 bits, a RIFX file's big-endian samples) are samples of that format.
+    [Theory]
+    [InlineData(1, 16, false)]
+    [InlineData(2, 24, false)]
+    [InlineData(2, 16, true)]
+    public void ADtsStreamIsOnlyLookedForInSixteenBitStereoPcm(int channels, int bits, bool isBigEndian)
+    {
+        byte[] dts = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts/core-14le.dts"));
+        byte[] format = isBigEndian
+            ? Chunk("fmt ", [0, 1, 0, (byte)channels, 0, 0, 0xAC, 0x44, 0, 0x02, 0xB1, 0x10, 0, (byte)(channels * bits / 8), 0, (byte)bits], true)
+            : Chunk("fmt ", [.. Le(1, channels), 0x44, 0xAC, 0, 0, 0x10, 0xB1, 0x02, 0, .. Le(channels * bits / 8, bits)]);
+        byte[] data = Riff(0, format, Chunk("data", dts, isBigEndian));
+        if (isBigEndian)
+        {
+            data[3] = (byte)'X';
+            BinaryPrimitives.WriteUInt32BigEndian(data.AsSpan(4), (uint)(data.Length - 8));
+        }
+        else
+        {
+            BitConverter.GetBytes(data.Length - 8).CopyTo(data, 4);
+        }
+
+        Report report = Analyze(data, "carrier.wav");
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "wav.dts-in-pcm");
+        Assert.Equal("PCM", Assert.Single(report.Streams).Codec);
+    }
+
     // A RIFF file that is not a WAVE file, and a FORM chunk that is not AIFF, belong to no parser here.
     [Fact]
     public void OtherRiffAndFormTypesAreNotClaimed()

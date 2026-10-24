@@ -75,6 +75,10 @@ internal sealed record ChunkSpec(string? Name, string Description, string? Topic
         ["ITCH"] = "Technician",
     };
 
+    private static readonly Dictionary<string, ChunkSpec> Info = InfoNames.ToDictionary(n => n.Key, n => new ChunkSpec($"{n.Value} Chunk", Explain.InfoListed, Topics.RiffInfo, Chunks.InfoText), StringComparer.Ordinal);
+
+    private static readonly ChunkSpec UnlistedInfo = new(null, Explain.InfoUnlisted, Topics.RiffInfo, Chunks.InfoText);
+
     public static ChunkSpec Of(string id, string? listType)
     {
         if (listType is not null && id == "LIST")
@@ -85,7 +89,7 @@ internal sealed record ChunkSpec(string? Name, string Description, string? Topic
         switch (listType)
         {
             case "INFO":
-                return new ChunkSpec(InfoNames.TryGetValue(id, out string? name) ? $"{name} Chunk" : null, InfoNames.ContainsKey(id) ? Explain.InfoListed : Explain.InfoUnlisted, Topics.RiffInfo, Chunks.InfoText);
+                return Info.TryGetValue(id, out ChunkSpec? info) ? info : UnlistedInfo;
             case "adtl" when Adtl.TryGetValue(id, out ChunkSpec? spec):
                 return spec;
             case "wavl" when Wavl.TryGetValue(id, out ChunkSpec? silence):
@@ -104,9 +108,11 @@ internal static class Chunks
     // At most this many records of a table are listed as nodes, whatever count the chunk states.
     public const int MaxListed = 1024;
 
+    // The cue point names kept to find a name twice and a label that names no cue point; past them those two checks are not made.
+    public const int MaxCueNames = 65_536;
+
     public static void Fact(State s, Fields f, Node chunk, long length)
     {
-        long at = f.Position;
         uint samples = f.Dword("Sample Length", Explain.FactSamples, v => NodeValue.Integer(v, "samples"), Topics.WaveCompressed);
         ulong value = samples;
         if (s.IsRf64 && samples == uint.MaxValue && s.Ds64 is { } ds64)
@@ -117,7 +123,6 @@ internal static class Chunks
 
         if (s.FactNode is null)
         {
-            s.FactSamples = value > uint.MaxValue ? null : (uint)value;
             s.FactNode = chunk.Children[^1];
             s.FactSamples64 = value;
         }
@@ -127,8 +132,6 @@ internal static class Chunks
         {
             f.Bytes("Further Fields", f.Remaining, Explain.FactFurther);
         }
-
-        _ = at;
     }
 
     public static void Ds64(State s, Fields f, Node chunk, long length)
@@ -136,26 +139,49 @@ internal static class Chunks
         ulong riff = f.Qword("RIFF Size", Explain.Ds64RiffSize, "bytes", Topics.Rf64);
         ulong data = f.Qword("Data Size", Explain.Ds64DataSize, "bytes", Topics.Rf64);
         ulong samples = f.Qword("Sample Count", Explain.Ds64SampleCount, "samples", Topics.Rf64);
-        uint count = f.Dword("Table Length", Explain.Ds64TableLength, "entries", Topics.Rf64);
+
+        // The three sizes are what the RF64 header and the data chunk need, so the first ds64 chunk that holds them counts even if it ends there.
         var table = new Dictionary<string, ulong>(StringComparer.Ordinal);
-        Node? entries = null;
-        long fit = f.Remaining / 12;
-        if (count > 0)
+        if (s.Ds64 is null)
         {
-            entries = f.Node.Add(new Node("Table", f.Position, Math.Min(count, fit) * 12, NodeValue.Integer(count, "entries", "entry")) { Description = Explain.Ds64Table, Topic = Topics.Rf64 });
+            s.Ds64 = new Ds64(riff, data, samples, table);
         }
 
-        for (long i = 0; i < Math.Min(count, fit); i++)
+        if (f.Remaining < 4)
+        {
+            long held = length;
+            s.Findings.Add(Severity.Warning, "wav.ds64-too-short", chunk, _ =>
+                $"The ds64 chunk holds {Counts.Of(held, "byte", "bytes")}, but Tech 3306-2009 gives it the three 64-bit sizes and a 32-bit table length, 28 bytes at least; the table is taken to list no chunk.");
+            return;
+        }
+
+        uint count = f.Dword("Table Length", Explain.Ds64TableLength, "entries", Topics.Rf64);
+        Node? entries = null;
+        long fit = f.Remaining / 12;
+        long read = Math.Min(count, fit);
+        if (count > 0)
+        {
+            entries = f.Node.Add(new Node("Table", f.Position, read * 12, NodeValue.Integer(count, "entries", "entry")) { Description = Explain.Ds64Table, Topic = Topics.Rf64 });
+        }
+
+        // Only a top-level chunk can use an entry, by its ID; an entry whose ID is no ID, or past the first MaxListed, can name no chunk the
+        // walk reads, so a table of millions of entries costs no more than one of a thousand.
+        for (long i = 0; i < read; i++)
         {
             long at = f.Position;
-            string id = System.Text.Encoding.Latin1.GetString(f.Reader.ReadBytes(4));
+            byte[] idBytes = f.Reader.ReadBytes(4);
             uint low = f.ReadDword();
             uint high = f.ReadDword();
             ulong size = ((ulong)high << 32) | low;
-            table.TryAdd(id, size);
+            bool isId = Walker.IsFourCc(idBytes);
             if (i < MaxListed)
             {
-                entries!.Add(new Node($"Entry {i}", at, 12, $"{id}, {size.ToString(CultureInfo.InvariantCulture)} bytes") { Description = Explain.Ds64Entry, Topic = Topics.Rf64 });
+                string id = System.Text.Encoding.Latin1.GetString(idBytes);
+                entries!.Add(new Node($"Entry {i}", at, 12, $"{Fields.Clean(id)}, {size.ToString(CultureInfo.InvariantCulture)} bytes") { Description = Explain.Ds64Entry, Topic = Topics.Rf64 });
+                if (isId)
+                {
+                    table.TryAdd(id, size);
+                }
             }
         }
 
@@ -172,16 +198,10 @@ internal static class Chunks
         {
             f.Bytes("Extra Data", f.Remaining, Explain.ExtraData);
         }
-
-        if (s.Ds64 is null)
-        {
-            s.Ds64 = new Ds64(riff, data, samples, table);
-        }
     }
 
     public static void Bext(State s, Fields f, Node chunk, long length)
     {
-        s.HasBext = true;
         string description = f.Text("Description", 256, Explain.BextDescription, Topics.Bext);
         f.Text("Originator", 32, Explain.BextOriginator, Topics.Bext);
         f.Text("Originator Reference", 32, Explain.BextOriginatorReference, Topics.Bext);
@@ -195,18 +215,26 @@ internal static class Chunks
         int version = f.Word("Version", Explain.BextVersion, (string?)null, Topics.Bext);
         long umidAt = f.Position;
         byte[] umid = f.Reader.ReadBytes(64);
-        f.Node.Add("UMID", umidAt, 64, version >= 1 && umid.Any(b => b != 0) ? Convert.ToHexStringLower(umid) : "not set", Explain.BextUmid, Topics.Bext);
-        Loudness(f, "Integrated Loudness", Explain.BextLoudnessValue, "LUFS", false, version);
-        Loudness(f, "Loudness Range", Explain.BextLoudnessRange, "LU", true, version);
-        Loudness(f, "Maximum True Peak Level", Explain.BextMaxTruePeak, "dBTP", false, version);
-        Loudness(f, "Maximum Momentary Loudness", Explain.BextMaxMomentary, "LUFS", false, version);
-        Loudness(f, "Maximum Short-Term Loudness", Explain.BextMaxShortTerm, "LUFS", false, version);
+        Node umidNode = f.Node.Add("UMID", umidAt, 64, umid.Any(x => x != 0) ? Convert.ToHexStringLower(umid) : "not set", Explain.BextUmid, Topics.Bext);
+
+        // Version 1 reserves 190 bytes, the room of the loudness values and the 180 below, and version 0 the 254 that include the UMID (Tech 3285
+        // section 1.1); the finding points to the first of them that is not zero.
+        Node? used = version < 1 && umid.Any(x => x != 0) ? umidNode : null;
+        used ??= Loudness(f, "Integrated Loudness", Explain.BextLoudnessValue, "LUFS", false, version);
+        used ??= Loudness(f, "Loudness Range", Explain.BextLoudnessRange, "LU", true, version);
+        used ??= Loudness(f, "Maximum True Peak Level", Explain.BextMaxTruePeak, "dBTP", false, version);
+        used ??= Loudness(f, "Maximum Momentary Loudness", Explain.BextMaxMomentary, "LUFS", false, version);
+        used ??= Loudness(f, "Maximum Short-Term Loudness", Explain.BextMaxShortTerm, "LUFS", false, version);
         long reservedAt = f.Position;
         byte[] reserved = f.Reader.ReadBytes(180);
         Node reservedNode = f.Node.Add("Reserved", reservedAt, 180, NodeValue.Integer(180, "bytes"), Explain.BextReserved, Topics.Bext);
-        if (version is 1 or 2 && reserved.Any(b => b != 0))
+        used ??= reserved.Any(x => x != 0) ? reservedNode : null;
+        if (version <= 2 && used is not null)
         {
-            s.Findings.Add(Severity.Info, "wav.bext-reserved-not-zero", reservedNode, _ => "The 180 reserved bytes of the bext chunk should be zero in versions 1 and 2.");
+            int reservedBytes = version switch { 0 => 254, 1 => 190, _ => 180 };
+            int stated = version;
+            s.Findings.Add(Severity.Info, "wav.bext-reserved-not-zero", used, _ =>
+                $"The {reservedBytes} bytes of a version {stated} bext chunk that are reserved for extension should be zero (EBU Tech 3285, section 1.1 and the Reserved field), but not all are.");
         }
 
         if (version > 2)
@@ -224,8 +252,8 @@ internal static class Chunks
     }
 
     // A loudness field of the bext chunk (EBU Tech 3285 section 2.4): the value times 100 in a 16-bit integer, 0x7FFF where unused, and
-    // ignored when outside the valid range.
-    private static void Loudness(Fields f, string name, string description, string unit, bool isRange, int version)
+    // ignored when outside the valid range. Returns the node when the bytes are reserved in this version (before version 2) and not zero.
+    private static Node? Loudness(Fields f, string name, string description, string unit, bool isRange, int version)
     {
         long at = f.Position;
         short raw = unchecked((short)f.ReadWord());
@@ -247,12 +275,12 @@ internal static class Chunks
             value = NodeValue.Decimal(raw / 100.0, 2, unit);
         }
 
-        f.Node.Add(name, at, 2, value, description, Topics.Bext);
+        Node field = f.Node.Add(name, at, 2, value, description, Topics.Bext);
+        return version < 2 && raw != 0 ? field : null;
     }
 
     public static void Cue(State s, Fields f, Node chunk, long length)
     {
-        s.CueChunks++;
         uint count = f.Dword("Cue Point Count", Explain.CueCount, "cue points", Topics.CuePoints);
         long fit = f.Remaining / 24;
         var names = new HashSet<uint>();
@@ -268,8 +296,24 @@ internal static class Chunks
             uint chunkStart = f.ReadDword();
             uint blockStart = f.ReadDword();
             uint sampleOffset = f.ReadDword();
-            isDuplicate |= !names.Add(name);
-            s.CueIdentifiers.Add(name);
+            if (names.Count < MaxCueNames)
+            {
+                isDuplicate |= !names.Add(name);
+            }
+            else
+            {
+                s.IsCueNamesIncomplete = true;
+            }
+
+            if (s.CueIdentifiers.Count < MaxCueNames)
+            {
+                s.CueIdentifiers.Add(name);
+            }
+            else
+            {
+                s.IsCueNamesIncomplete = true;
+            }
+
             if (i < MaxListed)
             {
                 var cue = new Node($"Cue Point {i}", at, 24, NodeValue.Integer(sampleOffset, "samples")) { Description = Explain.CuePoint, Topic = Topics.CuePoints };
@@ -283,7 +327,6 @@ internal static class Chunks
             }
         }
 
-        s.CueCount += (int)Math.Min(count, int.MaxValue - s.CueCount);
         if (count > fit)
         {
             Node target = table ?? chunk;
@@ -342,7 +385,6 @@ internal static class Chunks
 
     public static void Sample(State s, Fields f, Node chunk, long length)
     {
-        s.SmplChunks++;
         f.Dword("Manufacturer", Explain.SmplManufacturer, v => NodeValue.Hex(v, 8), Topics.CuePoints);
         f.Dword("Product", Explain.SmplProduct, (string?)null, Topics.CuePoints);
         f.Dword("Sample Period", Explain.SmplPeriod, "ns", Topics.CuePoints);
@@ -407,7 +449,7 @@ internal static class Chunks
 
     public static void Chna(State s, Fields f, Node chunk, long length)
     {
-        int tracks = f.Word("Track Count", Explain.ChnaTracks, "tracks", Topics.Bext);
+        f.Word("Track Count", Explain.ChnaTracks, "tracks", Topics.Bext);
         int uids = f.Word("UID Count", Explain.ChnaUids, "UIDs", Topics.Bext);
         long fit = f.Remaining / 40;
         Node? table = fit > 0 ? f.Node.Add(new Node("Track UIDs", f.Position, fit * 40, NodeValue.Integer(fit, "entries", "entry")) { Description = Explain.ChnaTable, Topic = Topics.Bext }) : null;
@@ -418,7 +460,7 @@ internal static class Chunks
             string uid = AsciiField(f.Reader.ReadBytes(12));
             string trackRef = AsciiField(f.Reader.ReadBytes(14));
             string packRef = AsciiField(f.Reader.ReadBytes(11));
-            f.Reader.Skip(1);
+            byte pad = f.Reader.ReadByte();
             if (i < MaxListed)
             {
                 var entry = new Node($"Track UID {i}", at, 40, index == 0 && uid.Length == 0 ? "unused" : uid) { Description = Explain.ChnaEntry, Topic = Topics.Bext };
@@ -426,7 +468,7 @@ internal static class Chunks
                 entry.Add("UID", at + 2, 12, uid, Explain.ChnaUid, Topics.Bext);
                 entry.Add("Track Format Reference", at + 14, 14, trackRef, Explain.ChnaTrackRef, Topics.Bext);
                 entry.Add("Pack Format Reference", at + 28, 11, packRef, Explain.ChnaPackRef, Topics.Bext);
-                entry.Add("Pad", at + 39, 1, NodeValue.Integer(0), Explain.PadByte);
+                entry.Add("Pad", at + 39, 1, NodeValue.Hex(pad, 2), Explain.ChnaPad);
                 table!.Add(entry);
             }
         }
@@ -442,8 +484,6 @@ internal static class Chunks
                 f.Bytes("Extra Data", f.Remaining, Explain.ExtraData);
             }
         }
-
-        _ = tracks;
     }
 
     private static string AsciiField(byte[] bytes)
@@ -462,7 +502,6 @@ internal static class Chunks
 
     public static void Id3(State s, Fields f, Node chunk, long length)
     {
-        s.HasId3 = true;
         if (length == 0)
         {
             return;
@@ -472,7 +511,6 @@ internal static class Chunks
         Node? tag = s.Context.ParseTag("ID3v2", f.Reader.Slice(f.Reader.Start, length), chunk);
         if (tag is not null)
         {
-            s.TagNodes.Add(tag);
             chunk.Value = NodeValue.Text("ID3v2 tag");
         }
     }

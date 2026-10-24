@@ -348,7 +348,7 @@
       {
         "severity": "Info",
         "code": "wav.bext-reserved-not-zero",
-        "message": "The 180 reserved bytes of the bext chunk should be zero in versions 1 and 2.",
+        "message": "The 190 bytes of a version 1 bext chunk that are reserved for extension should be zero (EBU Tech 3285, section 1.1 and the Reserved field), but not all are.",
         "offset": 442,
         "length": 180,
         "path": [

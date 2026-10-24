@@ -261,9 +261,9 @@
     ],
     "findings": [
       {
-        "severity": "Warning",
+        "severity": "Info",
         "code": "wav.channel-mask-mismatch",
-        "message": "The channel mask assigns 6 speakers, but the file has 2 channels.",
+        "message": "The channel mask names 6 speakers, but the file has 2 channels; the extra bits, the most significant, are ignored.",
         "offset": 40,
         "length": 4,
         "path": [

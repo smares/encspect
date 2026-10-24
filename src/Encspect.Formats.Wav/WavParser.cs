@@ -114,7 +114,7 @@ public sealed class WavParser : IFormatParser
             long held = reader.End - reader.Start - 8;
             string stated = header.IsRf64 ? "0xFFFFFFFF and the ds64 chunk does not give a size" : header.Size == 0 ? "0" : header.Size == uint.MaxValue ? "0xFFFFFFFF" : $"{header.Size}, too small to hold the form type";
             state.Findings.Add(Severity.Warning, "wav.riff-size-placeholder", size, _ =>
-                $"The RIFF chunk's size is {stated}, which is no size a RIFF chunk can have; a writer leaves it when it cannot go back and fill it in. The file is read to its end, {Counts.Of(held, "byte", "bytes")} after the size field.");
+                $"The {header.Magic} chunk's size is {stated}, which is no size a {header.Magic} chunk can have; a writer leaves it when it cannot go back and fill it in. The file is read to its end, {Counts.Of(held, "byte", "bytes")} after the size field.");
         }
         else if (declared > reader.End)
         {
@@ -151,7 +151,11 @@ public sealed class WavParser : IFormatParser
         {
             if (state.Ds64 is not { } ds64)
             {
-                state.Findings.Add(Severity.Error, "wav.ds64-missing", state.Container, _ => "The file is an RF64 file, but it holds no ds64 chunk, which Tech 3306 requires first after the RF64 header.");
+                // A ds64 chunk too short for its sizes is reported as the chunk that is too short.
+                if (!state.Container.Children.Any(c => c.Name == "Data Size 64 Chunk"))
+                {
+                    state.Findings.Add(Severity.Warning, "wav.ds64-missing", state.Container, _ => "The file is an RF64 file, but it holds no ds64 chunk, which Tech 3306-2009 requires first after the RF64 header.");
+                }
             }
             else
             {
@@ -161,7 +165,7 @@ public sealed class WavParser : IFormatParser
 
         foreach ((uint name, Node chunk) in state.LabelReferences)
         {
-            if (state.CueIdentifiers?.Contains(name) != true)
+            if (state.CueIdentifiers?.Contains(name) != true && !state.IsCueNamesIncomplete)
             {
                 state.Findings.Add(Severity.Warning, "wav.label-without-cue", chunk, n =>
                     $"{Counts.Of(n, "label, note, text or file chunk", "label, note, text or file chunks")} of an associated data list name{(n == 1 ? "s" : string.Empty)} a cue point that the cue chunk does not list.");
@@ -177,7 +181,7 @@ public sealed class WavParser : IFormatParser
         if (first is not null && first.Name != "Data Size 64 Chunk")
         {
             Node at = state.Container.Children.First(c => c.Name == "Data Size 64 Chunk");
-            state.Findings.Add(Severity.Warning, "wav.ds64-not-first", at, _ => "The ds64 chunk is not the first chunk after the RF64 header, where Tech 3306 puts it.");
+            state.Findings.Add(Severity.Warning, "wav.ds64-not-first", at, _ => "The ds64 chunk is not the first chunk after the RF64 header, where Tech 3306-2009 puts it.");
         }
 
         if (header.Size != uint.MaxValue && ds64.RiffSize != header.Size)
@@ -201,6 +205,9 @@ public sealed class WavParser : IFormatParser
 internal readonly record struct RiffHeader(string Magic, uint Size)
 {
     public const int Length = 12;
+
+    // The three sizes of the ds64 chunk, the least of it that gives the RF64 chunk its size (the chunk reader sets the sizes at the same point).
+    private const int Ds64Sizes = 24;
 
     public bool IsBigEndian => Magic == "RIFX";
 
@@ -238,7 +245,7 @@ internal readonly record struct RiffHeader(string Magic, uint Size)
             }
 
             byte[] chunk = reader.ReadBytesAt(at, 8);
-            if (!chunk.AsSpan(0, 4).SequenceEqual("ds64"u8) || Fields.Dword(chunk.AsSpan(4), false) < 8 || at + 16 > reader.End)
+            if (!chunk.AsSpan(0, 4).SequenceEqual("ds64"u8) || Fields.Dword(chunk.AsSpan(4), false) < Ds64Sizes || at + 8 + Ds64Sizes > reader.End)
             {
                 return null;
             }

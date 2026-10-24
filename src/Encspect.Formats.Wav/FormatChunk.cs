@@ -29,7 +29,7 @@ internal static class FormatChunk
 
     private static string Summary(WaveFormat format)
     {
-        string name = FormatTags.NameOf(format.CodingTag) ?? "unlisted coding";
+        string name = format.CodingName ?? "unlisted coding";
         string bits = format.Bits > 0 ? $", {Counts.Of(format.AudioBits, "bit", "bits")}" : string.Empty;
         return $"{name}, {Counts.Of(format.Channels, "channel", "channels")}, {format.SampleRate} Hz{bits}";
     }
@@ -41,7 +41,19 @@ internal static class FormatChunk
         uint rate = f.Dword("Samples Per Second", Explain.SamplesPerSecond, "Hz");
         uint average = f.Dword("Average Bytes Per Second", Explain.AverageBytesPerSecond, "bytes/s");
         int align = f.Word("Block Alignment", Explain.BlockAlignment, "bytes");
-        int bits = f.Word("Bits Per Sample", Explain.BitsPerSample, "bits");
+
+        // The common fields of WAVEFORMAT are 14 bytes; wBitsPerSample, which PCM and the formats that follow WAVEFORMATEX add, is the 15th and 16th.
+        int bits = 0;
+        if (f.Remaining >= 2)
+        {
+            bits = f.Word("Bits Per Sample", Explain.BitsPerSample, "bits");
+        }
+        else
+        {
+            s.Findings.Add(Severity.Warning, "wav.format-short", chunk, _ =>
+                $"The fmt chunk holds {Counts.Of(length, "byte", "bytes")}, fewer than the 16 of a PCMWAVEFORMAT: wBitsPerSample, which PCM and the formats that follow WAVEFORMATEX add after the 14 bytes of common fields, is missing, so the bits per sample are not known.");
+        }
+
         int extra = 0;
         int? valid = null;
         uint? mask = null;
@@ -66,16 +78,20 @@ internal static class FormatChunk
             {
                 if (extra >= 22)
                 {
-                    valid = f.Word("Valid Bits Per Sample", Explain.ValidBitsPerSample, "bits", Topics.Extensible);
+                    // The union of wValidBitsPerSample, wSamplesPerBlock and wReserved: valid bits cannot exceed the container, so without a
+                    // container size the word is the samples per block of a compressed format.
+                    valid = bits == 0
+                        ? f.Word("Samples Per Block", Explain.ExtensibleSamplesPerBlock, "samples", Topics.Extensible)
+                        : f.Word("Valid Bits Per Sample", Explain.ValidBitsPerSample, "bits", Topics.Extensible);
                     mask = f.Dword("Channel Mask", Explain.ChannelMask, v => NodeValue.Hex(v, 8), Topics.Extensible);
                     if (mask != 0)
                     {
                         long maskAt = f.Position - 4;
-                        string speakers = ChannelLayouts.Speakers(Layout(mask.Value, int.MaxValue));
+                        string speakers = ChannelLayouts.Speakers(MaskSpeakers(mask.Value));
                         chunk.Children[^1].Add("Speakers", maskAt, 4, speakers, Explain.MaskSpeakers, Topics.ChannelLayouts);
                     }
 
-                    sub = f.Guid("Sub-Format", Explain.SubFormat, g => FormatTags.TagOfSubFormat(g) is { } t ? FormatTags.NameOf(t) ?? "unlisted coding" : null);
+                    sub = f.Guid("Sub-Format", Explain.SubFormat, g => FormatTags.TagOfSubFormat(g) is { } t ? FormatTags.NameOf(t) ?? "unlisted coding" : FormatTags.NamedSubFormat(g)?.Name);
                     if (extra > 22)
                     {
                         data = f.Bytes("Codec Specific Data", extra - 22, Explain.CodecSpecificData, Topics.WaveCompressed);
@@ -223,16 +239,34 @@ internal static class FormatChunk
     };
 
     // The speakers of a channel mask in the order of its bits, which is the order of the channels in the data. The bits past the eighteen
-    // positions of the WAVE channel mask are the EBU's additions (Tech 3306 section 3) and SPEAKER_ALL; they feed no position of the list.
-    public static IReadOnlyList<Speaker> Layout(uint mask, int channels)
+    // positions of the WAVE channel mask are the EBU's additions (Tech 3306-2009 section 3) and SPEAKER_ALL; they stand for channels without a position.
+    public static List<Speaker> MaskSpeakers(uint mask)
     {
         var speakers = new List<Speaker>();
-        for (int bit = 0; bit < 32 && speakers.Count < channels; bit++)
+        for (int bit = 0; bit < 32; bit++)
         {
             if ((mask & (1u << bit)) != 0)
             {
                 speakers.Add(bit < 18 ? (Speaker)(bit + 1) : Speaker.Discrete);
             }
+        }
+
+        return speakers;
+    }
+
+    // The speakers of the channels of a stream: with fewer channels than the mask has bits the extra, most significant bits are ignored, and with
+    // more the remaining channels are assigned to no speaker (Microsoft, "Multiple channel audio data and WAVE files", "Details about dwChannelMask").
+    public static IReadOnlyList<Speaker> Layout(uint mask, int channels)
+    {
+        List<Speaker> speakers = MaskSpeakers(mask);
+        if (speakers.Count > channels)
+        {
+            speakers.RemoveRange(channels, speakers.Count - channels);
+        }
+
+        while (speakers.Count < channels)
+        {
+            speakers.Add(Speaker.Discrete);
         }
 
         return speakers;
@@ -244,17 +278,17 @@ internal static class FormatChunk
         int coding = format.CodingTag;
         if (format.Channels == 0)
         {
-            s.Findings.Add(Severity.Error, "wav.channels-zero", At("Channels"), _ => "The fmt chunk states 0 channels.");
+            s.Findings.Add(Severity.Warning, "wav.channels-zero", At("Channels"), _ => "The fmt chunk states 0 channels.");
         }
 
         if (format.SampleRate == 0)
         {
-            s.Findings.Add(Severity.Error, "wav.sample-rate-zero", At("Samples Per Second"), _ => "The fmt chunk states a sample rate of 0.");
+            s.Findings.Add(Severity.Warning, "wav.sample-rate-zero", At("Samples Per Second"), _ => "The fmt chunk states a sample rate of 0.");
         }
 
-        if (FormatTags.IsLinear(coding) && format.Bits == 0)
+        if (FormatTags.IsLinear(coding) && format.Bits == 0 && format.FormatSize >= 16)
         {
-            s.Findings.Add(Severity.Error, "wav.bits-per-sample-zero", At("Bits Per Sample"), _ => "The fmt chunk states 0 bits per sample for a coding that stores its samples as they are.");
+            s.Findings.Add(Severity.Warning, "wav.bits-per-sample-zero", At("Bits Per Sample"), _ => "The fmt chunk states 0 bits per sample for a coding that stores its samples as they are.");
         }
 
         if (coding == FormatTags.IeeeFloat && format.Bits is not (32 or 64) && format.Bits != 0)
@@ -276,7 +310,7 @@ internal static class FormatChunk
             {
                 int stated = format.BlockAlign;
                 s.Findings.Add(Severity.Warning, "wav.block-align-mismatch", At("Block Alignment"), _ =>
-                    $"The block alignment is {Counts.Of(stated, "byte", "bytes")}, but {Counts.Of(expectedAlign, "channel", "channels")} of {Counts.Of(format.Bits, "bit", "bits")} take {Counts.Of(expectedAlign, "byte", "bytes")} per sample frame.");
+                    $"The block alignment is {Counts.Of(stated, "byte", "bytes")}, but {Counts.Of(format.Channels, "channel", "channels")} of {Counts.Of(format.Bits, "bit", "bits")} take {Counts.Of(expectedAlign, "byte", "bytes")} per sample frame.");
             }
 
             long expectedRate = format.SampleRate * format.Channels * format.Bits / 8;
@@ -288,7 +322,14 @@ internal static class FormatChunk
             }
         }
 
-        if (format.IsExtensible && format.ValidBits is { } valid && FormatTags.IsLinear(coding) && valid > format.Bits)
+        if (format.IsExtensible && format.Bits > 0 && format.Bits % 8 != 0)
+        {
+            int bits = format.Bits;
+            s.Findings.Add(Severity.Warning, "wav.extensible-container-bits", At("Bits Per Sample"), _ =>
+                $"The container size of an extensible format is {Counts.Of(bits, "bit", "bits")}, but WAVEFORMATEXTENSIBLE wants a whole number of bytes: its containers are byte-aligned.");
+        }
+
+        if (format.IsExtensible && format.Bits > 0 && format.ValidBits is { } valid && FormatTags.IsLinear(coding) && valid > format.Bits)
         {
             int bits = format.Bits;
             s.Findings.Add(Severity.Warning, "wav.valid-bits-exceed-container", At("Valid Bits Per Sample"), _ =>
@@ -299,8 +340,10 @@ internal static class FormatChunk
         {
             int positions = BitOperations.PopCount(mask);
             int channels = format.Channels;
-            s.Findings.Add(Severity.Warning, "wav.channel-mask-mismatch", At("Channel Mask"), _ =>
-                $"The channel mask assigns {Counts.Of(positions, "speaker", "speakers")}, but the file has {Counts.Of(channels, "channel", "channels")}.");
+            bool isMore = positions > channels;
+            s.Findings.Add(Severity.Info, "wav.channel-mask-mismatch", At("Channel Mask"), _ => isMore
+                ? $"The channel mask names {Counts.Of(positions, "speaker", "speakers")}, but the file has {Counts.Of(channels, "channel", "channels")}; the extra bits, the most significant, are ignored."
+                : $"The channel mask names {Counts.Of(positions, "speaker", "speakers")}, but the file has {Counts.Of(channels, "channel", "channels")}; the remaining channels are assigned to no speaker.", isMore ? "more" : "fewer");
         }
     }
 }

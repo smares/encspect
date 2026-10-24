@@ -2,7 +2,8 @@
 
 Written from Microsoft's "Multimedia Programming Interface and Data Specifications 1.0" (RIFF, WAVE, LIST/INFO, cue, plst, adtl), the
 "Multimedia Data Standards Update" of April 1994 (fact, inst, smpl, the extra fields of the WAVE types), mmreg.h and ksmedia.h (format tags,
-sub-format GUIDs and the channel mask), EBU Tech 3285 (bext) and Tech 3306 (RF64, ds64), apart from the analyzer: the chunk tree, the fmt
+sub-format GUIDs and the channel mask), the sub-format GUIDs of ksuuids.h and mfapi.h that Microsoft's "Multiple channel audio data and WAVE files" and
+"Audio Subtype GUIDs" name, EBU Tech 3285 (bext) and Tech 3306-2009 (RF64, ds64), apart from the analyzer: the chunk tree, the fmt
 fields and the figures of the stream that a manifest states come from here. The signal generators and the byte builders the fixture scripts use
 live here too.
 
@@ -12,6 +13,7 @@ live here too.
 
 import math
 import struct
+import uuid
 
 SPEAKERS = [
     "front left", "front right", "front center", "LFE", "back left", "back right", "front left of center", "front right of center", "back center",
@@ -21,7 +23,14 @@ SPEAKERS = [
 BASE_GUID = bytes.fromhex("00001000" "800000aa00389b71")  # the twelve bytes after the format tag in a sub-format GUID (ksmedia.h)
 
 LINEAR = (0x0001, 0x0003, 0x0006, 0x0007)
-ROUTED = {0x0050: "mpeg-audio", 0x0055: "mpeg-audio", 0x2000: "ac-3", 0x2001: "dts"}
+ROUTED = {0x0050: "mpeg-audio", 0x0055: "mpeg-audio", 0x0008: "dts", 0x2000: "ac-3", 0x2001: "dts"}
+# Sub-format GUIDs that are no format tag but are named in Microsoft's headers (as stored in the file: the first three groups little-endian):
+# MEDIASUBTYPE_DOLBY_AC3 and MEDIASUBTYPE_MPEG2_AUDIO (ksuuids.h), MFAudioFormat_Dolby_DDPlus (mfapi.h).
+NAMED_GUIDS = {
+    uuid.UUID("e06d802c-db46-11cf-b4d1-00805f6cbbea").bytes_le: "ac-3",
+    uuid.UUID("a7fb87af-2d02-42fb-a4d4-05cd93843bdd").bytes_le: "e-ac-3",
+    uuid.UUID("e06d802b-db46-11cf-b4d1-00805f6cbbea").bytes_le: "mpeg-audio",
+}
 LIST_TYPES = (b"INFO", b"adtl", b"wavl")
 
 
@@ -92,12 +101,13 @@ def read(data):
     big = magic == "RIFX"
     size = u32(data, 4, big)
     ds64 = None
-    if magic == "RF64" and data[12:16] == b"ds64" and u32(data, 16) >= 28:
+    if magic == "RF64" and data[12:16] == b"ds64" and u32(data, 16) >= 24:
         table = {}
-        count = u32(data, 12 + 8 + 24)
-        for i in range(min(count, (u32(data, 16) - 28) // 12)):
+        count = u32(data, 12 + 8 + 24) if u32(data, 16) >= 28 else 0
+        for i in range(min(count, (u32(data, 16) - 28) // 12, 1024)):
             entry = 12 + 8 + 28 + 12 * i
-            table[data[entry:entry + 4].decode("latin1")] = u32(data, entry + 4) | (u32(data, entry + 8) << 32)
+            if is_id(data[entry:entry + 4]):
+                table.setdefault(data[entry:entry + 4].decode("latin1"), u32(data, entry + 4) | (u32(data, entry + 8) << 32))
         ds64 = {"riff_size": u64(data, 20), "data_size": u64(data, 28), "sample_count": u64(data, 36), "table": table}
     placeholder = False
     if magic == "RF64" and size == 0xFFFFFFFF:
@@ -127,10 +137,12 @@ def read(data):
 def parse_fmt(data, chunk, big):
     at = chunk["offset"] + 8
     length = chunk["length"]
-    if length < 16:
+    if length < 14:
         return None
+    # The common fields of WAVEFORMAT are 14 bytes; wBitsPerSample follows them in a chunk of 16.
     fmt = {"tag": u16(data, at, big), "channels": u16(data, at + 2, big), "rate": u32(data, at + 4, big), "average": u32(data, at + 8, big),
-           "align": u16(data, at + 12, big), "bits": u16(data, at + 14, big), "valid": None, "mask": None, "coding": None}
+           "align": u16(data, at + 12, big), "bits": u16(data, at + 14, big) if length >= 16 else 0, "short": length < 16, "valid": None, "mask": None,
+           "coding": None, "named": None}
     fmt["coding"] = fmt["tag"]
     if length >= 18:
         fmt["cb"] = u16(data, at + 16, big)
@@ -140,6 +152,8 @@ def parse_fmt(data, chunk, big):
             guid = data[at + 24:at + 40]
             if guid[4:] == BASE_GUID:
                 fmt["coding"] = struct.unpack("<I", guid[:4])[0]
+            else:
+                fmt["named"] = NAMED_GUIDS.get(guid)
     return fmt
 
 
@@ -147,12 +161,12 @@ def layout(fmt):
     """The speakers the stream's channels feed, as the analyzer words them."""
     channels = fmt["channels"]
     mask = fmt["mask"]
+    if not 1 <= channels <= 64:
+        return []
     if fmt["tag"] == 0xFFFE and mask:
-        names = []
-        for bit in range(32):
-            if mask >> bit & 1 and len(names) < channels:
-                names.append(SPEAKERS[bit] if bit < 18 else "discrete")
-        return names if len(names) == channels else []
+        # Microsoft, "Multiple channel audio data and WAVE files": bits past the channels are ignored, channels past the bits have no speaker.
+        names = [SPEAKERS[bit] if bit < 18 else "discrete" for bit in range(32) if mask >> bit & 1][:channels]
+        return names + ["discrete"] * (channels - len(names))
     return {1: ["front center"], 2: ["front left", "front right"]}.get(channels, [])
 
 
@@ -189,9 +203,10 @@ def shift(items, base):
             shift(item["children"], base)
 
 
-def manifest(data, extra_codec=None, base=0):
+def manifest(data, extra_codec=None, base=0, carried=None):
     """The manifest of a file with a stream: the chunks and, for the codings that store samples one after another (and others with a fact chunk), the
-    figures of the stream."""
+    figures of the stream. carried is (codec, sample rate, channels) of a stream the PCM samples hold (a DTS stream, as on a DTS music CD), whose
+    figures are the codec parser's and are stated by the script that built the file."""
     riff = read(data[base:])
     riff["_data"] = data[base:]
     result = {"length": len(data), "container": {"id": riff["magic"], "size": riff["size"], "end": riff["end"] + base}, "chunks": tree(riff["chunks"]), "stream": None}
@@ -201,9 +216,13 @@ def manifest(data, extra_codec=None, base=0):
     if fmt is None or chunk is None or not fmt["channels"] or not fmt["rate"]:
         return result
     coding = fmt["coding"]
-    if coding in ROUTED:
+    routed = fmt["named"] or ROUTED.get(coding)
+    if carried is not None:
+        result["stream"] = {"routed": carried[0], "carried": True, "sample_rate": carried[1], "channels": carried[2]}
+        return result
+    if routed:
         # The codec parser describes the audio (its samples include the padding of the last frame), so only what the fmt chunk states is expected.
-        result["stream"] = {"routed": ROUTED[coding], "sample_rate": fmt["rate"], "channels": fmt["channels"]}
+        result["stream"] = {"routed": routed, "sample_rate": fmt["rate"], "channels": fmt["channels"]}
         return result
     if coding in LINEAR:
         align = fmt["align"] or fmt["channels"] * ((fmt["bits"] + 7) // 8)
