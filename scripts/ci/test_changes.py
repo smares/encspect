@@ -187,6 +187,16 @@ class ChangesTests(unittest.TestCase):
         self.assertIn("dts-crosscheck", run("tests/fixtures/dts/dtshd-all-chunks.dtshd"))
         self.assertIn("dts-crosscheck", run("src/Encspect.Formats.DtsHd/DtsHdParser.cs"))
 
+    def test_the_truehd_parser_decoder_scripts_manifests_and_fixtures_belong_to_the_truehd_job(self):
+        for path in ("src/Encspect.Formats.TrueHd/TrueHdParser.cs", "src/Encspect.Formats.TrueHd/Decoding/StreamDecoder.cs", "tests/fixtures/truehd/a.thd",
+                     "scripts/fixtures/truehd_model.py", "scripts/fixtures/make_truehd_fixtures.py", "scripts/fixtures/make_external_truehd_fixtures.py"):
+            self.assertIn("truehd-crosscheck", run(path), path)
+        for path in ("scripts/fixtures/crosscheck_truehd_fixtures.py", "scripts/fixtures/check_truehd_samples.py"):
+            self.assertEqual(run(path), {"fixtures", "truehd-crosscheck"}, path)
+        manifest = run("tests/conformance/truehd-samples.json")
+        self.assertIn("truehd-crosscheck", manifest)
+        self.assertFalse(manifest & {"mpeg-crosscheck", "dts-crosscheck", "flac-crosscheck"})
+
     def test_the_wma_voice_scripts_manifests_and_samples_belong_to_the_asf_job(self):
         for path in ("scripts/fixtures/voice_model.py", "scripts/fixtures/make_voice_fixtures.py", "scripts/fixtures/check_wmavoice_samples.py",
                      "scripts/fixtures/wma_tables.py", "scripts/fixtures/crosscheck_asf_fixtures.py"):

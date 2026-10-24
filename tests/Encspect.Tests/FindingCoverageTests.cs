@@ -86,6 +86,32 @@ public partial class FindingCoverageTests
         Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
     }
 
+    [GeneratedRegex("\"(truehd\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex TrueHdCode();
+
+    // Every code the TrueHD parser and the decoder emit is listed by a fixture's manifest or decode golden, or raised by a crafted file of TrueHdFindingTests.
+    [Fact]
+    public void EveryTrueHdCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Formats.TrueHd"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => TrueHdCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 20, $"Found only {emitted.Count} codes.");
+
+        var asserted = TrueHdCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "TrueHdFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "truehd"), "*.json"))
+        {
+            foreach (Match m in TrueHdCode().Matches(File.ReadAllText(path)))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted file, manifest or golden raises: {string.Join(", ", missing)}");
+    }
+
     [GeneratedRegex("\"(matroska\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex MatroskaCode();
 

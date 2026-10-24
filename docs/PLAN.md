@@ -418,7 +418,7 @@ Not covered: decoding, BW64, IEC 61937 bursts in PCM (a DTS core stream written 
 
 ## Phase 3: Dolby TrueHD and MLP
 
-Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).
+Raw files and the decoder: done (October 2026; [truehd.md](formats/truehd.md)). The codec parser (`truehd` and `mlp`) is registered, and the MP4 and Matroska routes are step 4 of the decoder rollout. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).
 
 **Sources**
 
@@ -505,7 +505,7 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
 - The analyzer reports:
   - The flag, the substream count and the extended substream info bits.
   - The major sync extension words as bytes.
-  - The fourth substream's length, and its parity and CRC where the directory flags them.
+  - The fourth substream's length and, where the directory flags check data, its last two bytes as the stored parity byte and CRC-8; they are not compared, since nothing says that substream follows the rules of the others.
 - What the fourth substream and the extension words hold is not described by any source read so far, so `HasObjectAudio` and an object count stay unset, unlike for E-AC-3.
 
 **Containers**
@@ -675,6 +675,8 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
 | 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF, Monkey's Audio, TTA; Dolby TrueHD and MLP frame by frame, from FFmpeg's `mlpdec.c` (raw `.thd` and `.mlp`, MP4 `mlpa`, Matroska `A_TRUEHD` and `A_MLP`; see "Phase 3: Dolby TrueHD and MLP"), including whether an Atmos substream is present; lossless decoders that verify the checksums stored over decoded audio (FLAC, Monkey's Audio, WavPack and Dolby TrueHD and MLP; ALAC, TTA and WMA Lossless store none over decoded audio, so their decoders wait under "Later"; see [docs/design/decoders.md](design/decoders.md)) |
 | Gate 3 | Pipeline green everywhere, review findings fixed |
 | 4 | TAK and OptimFROG at header level only |
+| 5 | More formats, in the order listed under "More formats" below: the better a format is documented, the sooner it comes |
+| 6 | Sequenced formats: MIDI, tracker modules and chiptunes, as listed under "Sequenced formats" below |
 | Later, order not fixed | The items listed under "Later" below |
 
 **Phase 2, continued.** In this order:
@@ -748,6 +750,30 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
   - MPEG audio as packets (MP4 and Matroska), which the MPEG parser reads only as one contiguous payload.
   - `A_MS/ACM` routing by the WAVEFORMATEX format tag.
   - Matroska header stripping for AAC, AC-3, DTS and MPEG audio: a two-range `MappedBytes` whose prefix maps to the ContentCompSettings bytes.
+
+
+**More formats.** Phase 5, in this order; each is its own pull request with fixtures, cross-checks and a review, and a container's routes to these codecs follow as in phase 3's step 4. The order follows how well a format is documented, so the most exotic come last:
+
+1. **CAF** (Apple Core Audio Format): the container of ALAC, AAC and PCM on Apple systems, from Apple's public Core Audio Format specification; its chunks, the packet table, and routes to the codec parsers that exist.
+2. **DSF and DSDIFF** (`.dsf`, `.dff`): the DSD files of SACD rips and downloads, from Sony's DSF specification and Philips' DSDIFF specification; headers, chunks, the DST-compressed form of DSDIFF named and measured.
+3. **Sun AU, VOC, IRCAM and NIST SPHERE** (`.au`/`.snd`, Creative's `.voc`, `.sf`, `.sph`): small headers of their own and the encodings they name.
+4. **AC-4**: raw AC-4 and its TOC, presentations and substreams, from ETSI TS 103 190-1 and -2 (free); MP4's `ac-4` sample entry with `dac4` in the MP4 routes.
+5. **AAC in LATM and LOAS**: the transport of broadcast AAC (ISO/IEC 14496-3, 1.7), handed to the AAC codec parser.
+6. **AMR and AMR-WB**: the `.amr` storage format of RFC 4867 and the frames of 3GPP TS 26.101 and 26.201 (free); 3GP's `samr` and `sawb` entries in the MP4 routes.
+7. **MPEG transport and program streams** (`.ts`, `.m2ts`, `.mpg`, `.vob`) as audio containers: the packets and PES headers of ITU-T H.222.0 (free), with their audio streams (MPEG audio, AAC, AC-3, E-AC-3, DTS, TrueHD, LPCM) handed to the codec parsers; video streams are named, not read.
+8. **MPEG-H 3D Audio**: MHAS packets and the configuration, from ISO/IEC 23008-3; MP4's `mha1` and `mhm1` entries.
+9. **MPEG-4 ALS**: the ALS configuration and frames, from ISO/IEC 14496-3 subpart 11 and the reference software where its license allows (decision 10 in docs/design/decoders.md).
+10. **Shorten** (`.shn`): from Tony Robinson's technical report (CUED/F-INFENG/TR.156); its reference code is not freely licensed, so it is not followed.
+11. **Proprietary formats whose only detailed public source is FFmpeg (LGPL)**, at header and frame level, each built clean-room as TrueHD was: a format description from FFmpeg first, then an implementation by an agent that has not read it. In this order: OSQ (WaveLab's lossless format); ATRAC, ATRAC3 and ATRAC3plus (`.oma`/`.aa3`, `.at3` and ATRAC in WAV); RealAudio (the RealMedia container with Cook, RealAudio 14.4 and 28.8, and RealAudio Lossless); TwinVQ (`.vqf`); QDesign Music (in QuickTime); Nellymoser (in FLV).
+
+
+**Not planned.** Game and console middleware (ADX, HCA, BRSTM, VAG, FSB, Bink), which is reverse-engineered with no public specification; the ancient lossless compressors and obsolete vocoders; each of the many ADPCM and PCM variants as a format of its own (WAV and the containers name their codings); MXF; AVI, which is mostly video.
+
+**Sequenced formats.** Phase 6, in this order. These files hold instructions for making sound, not coded audio, so they are analyzed at the structure level and never rendered; the result model gains node kinds for their patterns, instruments and samples where the existing kinds do not fit:
+
+1. **MIDI**: Standard MIDI Files (`.mid`, formats 0 to 2) and RMID, from the MIDI 1.0 specification: the header, tracks and events, tempo and time-signature maps, programs, text and lyric events, the duration worked out from the tempo map, and which extensions (General MIDI, GS, XG) the SysEx messages name.
+2. **Tracker modules**: MOD, S3M, XM, IT and OpenMPT's MPTM, from the formats' own documentation, and then MO3 and UMX: the header, order list, patterns, instruments and samples (bit depth, loops, compression), the song length from a walk of the order list with its jumps and loops, and which tracker wrote the file (the version fields and the habits OpenMPT documents). libopenmpt (BSD) may be followed with its notice where the documentation stops, as for MO3.
+3. **Chiptunes**: the headers and metadata of SID (PSID and RSID), NSF, SPC, VGM and GBS; the music itself is code for an emulated chip and is not read.
 
 A gate means the pipeline is green on every platform and the review agent's findings are resolved; the first gate also requires the shared contract to have settled. Gate 1 passed in October 2026: six independent reviews (ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI) found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract); the contract review's 12 gaps closed in four steps (#32 to #35): exception boundary, cancellation and parser contexts; typed data with node kinds, streams, series and linked findings; routes from containers to codec and tag parsers; compact MPEG frame records. TAK and OptimFROG are poorly documented, so they stay at header level. The entropy pass and the decoders are not tied to a phase yet. The GUI's first slice is built (October 2026): the main window with the folder tree, the file list and its background analysis, and the detail window with the structure tree, hex view, bits, findings and export. The second slice adds the graphs, linked to the tree, and the summary cache for folder views. HE-AAC and HE-AAC v2 may be signaled only inside the frames, in a fill element after the coded spectra, so the AAC parser reads each raw data block's Huffman-coded data far enough to reach it, without dequantizing or transforming; the same pass gives AAC's coding statistics (window sequences, mid/side and intensity stereo, TNS, noise substitution). For the other codecs, and for MP3 first, that depth stays the later entropy pass. Phase 2 began with the Ogg container and Speex (October 2026, see "Phase 2: Ogg, Speex, Vorbis and Opus"); Vorbis and Opus followed on the same container, as codec parsers without changes to it. Musepack SV7 and SV8 followed (see "Phase 2: Musepack"). AC-3 and E-AC-3 followed (see "Phase 2: AC-3 and E-AC-3"), then ASF with WMA (see "Phase 2: ASF and WMA"), WavPack (see "Phase 2: WavPack") and DTS core (see "Phase 2: DTS"). Phase 2 then continues in the order listed under "Phase 2, continued" (FAAC and Apple detection, Dolby Atmos, DTS-HD, WMA Voice, Matroska and WebM, protection reporting) before Gate 2; the lossless formats of phase 3 come after it. Gate 2 passed on 2026-10-18 at fa4e0c5: ten independent reviews (ASF and WMA; WavPack; AAC; Ogg, Speex, Vorbis and Opus; AC-3 and E-AC-3; Musepack; MP4; DTS; Matroska and WebM; the host, contract and front ends), each followed by a review of its fixes and a verification, with every finding fixed (#98 to #110: one pull request per area, plus the shared record containers, QuickTime user data as tags, one stream-change rule for the raw stream formats with the APE item budget, and the host's contract and naming); the push run and the nightly on fa4e0c5 were green on every platform. Release 0.1.0 follows it (step 8 of the pipeline above), and Gate 3 work starts after that.
 

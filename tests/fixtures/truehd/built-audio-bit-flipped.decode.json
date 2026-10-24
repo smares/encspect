@@ -1,0 +1,53 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 3200,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "major sync CRC-16",
+        "stored": 5,
+        "checked": 5,
+        "failed": 0
+      },
+      {
+        "name": "unit parity nibble",
+        "stored": 80,
+        "checked": 80,
+        "failed": 0
+      },
+      {
+        "name": "restart header CRC-8",
+        "stored": 5,
+        "checked": 5,
+        "failed": 0
+      },
+      {
+        "name": "substream parity byte",
+        "stored": 80,
+        "checked": 80,
+        "failed": 0
+      },
+      {
+        "name": "substream CRC-8",
+        "stored": 80,
+        "checked": 80,
+        "failed": 0
+      },
+      {
+        "name": "lossless check, substream 0",
+        "stored": 4,
+        "checked": 4,
+        "failed": 1
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "truehd.lossless-check-failed",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The output of the 2-channel presentation of substream 0 since the previous restart header folds to 0x05, but the lossless check of the restart header at 0xD78 stores 0xEE: the decoded audio differs from what the encoder read."
+    }
+  ]
+}

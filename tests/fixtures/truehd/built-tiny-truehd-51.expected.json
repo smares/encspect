@@ -1,0 +1,37 @@
+{
+ "description": "Twelve units of a 5.1 stream of two substreams, for a golden report that lists every node.",
+ "length": 3192,
+ "format": "Dolby TrueHD",
+ "entries": [
+  ["unit", 0, 490, 1, "read"],
+  ["unit", 490, 252, 0, "read"],
+  ["unit", 742, 240, 0, "read"],
+  ["unit", 982, 248, 0, "read"],
+  ["unit", 1230, 240, 0, "read"],
+  ["unit", 1470, 248, 0, "read"],
+  ["unit", 1718, 242, 0, "read"],
+  ["unit", 1960, 242, 0, "read"],
+  ["unit", 2202, 248, 0, "read"],
+  ["unit", 2450, 240, 0, "read"],
+  ["unit", 2690, 250, 0, "read"],
+  ["unit", 2940, 252, 0, "read"]
+ ],
+ "syncs": [
+  {"unit": 0, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 2, "mlp": false, "signature": 46930, "info": 60, "assign6": 15, "assign8": 15, "arrangement": null, "bits": 24}
+ ],
+ "restarts": [
+  {"unit": 0, "sub": 0, "bit": 2, "crc_ok": true, "lossless": 0},
+  {"unit": 0, "sub": 1, "bit": 2, "crc_ok": true, "lossless": 0}
+ ],
+ "failures": [],
+ "no_check_data": [],
+ "stream_infos": [{"codec": "Dolby TrueHD", "sample_rate": 48000, "channels": 6, "layout": ["front left", "front right", "front center", "LFE", "back left", "back right"], "bits_per_sample": 24, "samples": 480, "duration": 0.01}],
+ "decoded_samples": 480,
+ "verification": {"default": {"isVerified": true, "decoding": "notRequested", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 1, "checked": 1, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 12, "checked": 12, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 2, "checked": 2, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 24, "checked": 24, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 24, "checked": 24, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 0, "checked": 0, "failed": 0}, {"name": "lossless check, substream 1", "covers": "decodedAudio", "coversAllAudio": false, "stored": 0, "checked": 0, "failed": 0}]}, "verify": {"isVerified": true, "decoding": "decoded", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 1, "checked": 1, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 12, "checked": 12, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 2, "checked": 2, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 24, "checked": 24, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 24, "checked": 24, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 0, "checked": 0, "failed": 0}, {"name": "lossless check, substream 1", "covers": "decodedAudio", "coversAllAudio": false, "stored": 0, "checked": 0, "failed": 0}]}},
+ "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
+ "findings": [],
+ "decode_findings": [],
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 3192}],
+ "crosscheck": {"ffmpeg": true},
+ "decoded_pcm_md5": "4a623ae5e2cf77fe37d7cf5261edbd6f"
+}

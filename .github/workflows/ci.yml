@@ -67,6 +67,7 @@ jobs:
       dts-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.dts-crosscheck }}
       matroska-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.matroska-crosscheck }}
       wav-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.wav-crosscheck }}
+      truehd-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.truehd-crosscheck }}
     steps:
       # Two commits deep: on a pull request the checkout is the merge commit, and its first parent is the base.
       # Only the scripts are needed in the working tree; the diff reads names, not contents.
@@ -506,6 +507,11 @@ jobs:
         run: |
           python3 scripts/fixtures/make_dts_fixtures.py
           python3 scripts/fixtures/make_external_dts_fixtures.py --manifests-only
+
+      - name: Regenerate the hand-built TrueHD and MLP fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_truehd_fixtures.py
+          python3 scripts/fixtures/make_external_truehd_fixtures.py --manifests-only
 
       - name: Regenerate the hand-built ASF and WMA Voice fixtures and the encoder-made WMA ones' manifests
         run: |
@@ -1197,6 +1203,64 @@ jobs:
       - name: Check the analyzer against the real DTS-HD Master Audio samples
         run: python3 scripts/fixtures/check_dts_hd_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/dts-hd
 
+  truehd-crosscheck:
+    name: TrueHD and MLP fixtures agree with ffprobe, ffmpeg and MediaInfo, and the decoder with ffmpeg
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.truehd-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Name the week
+        id: week
+        run: echo "name=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      # Pinned downloads a public address served are kept between runs. The cache is addressed by the files' SHA-256 and every entry is
+      # checked against its pin before use (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can
+      # hide one. The key changes with the ISO week and with the manifests; restore-keys finds the last week's.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+          restore-keys: downloads-${{ github.job }}-
+
+      # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
+      # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
+      - name: Drop downloads nobody has used for a month
+        run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
+
+      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts assert (the manifests were checked with 6.1.1; the
+      # decoded audio of 8.0.1 must match them, which the cross-check compares). The cross-check stops on another MediaInfo.
+      - name: Install ffmpeg and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # The real-sample check below runs the analyzer, with decoding, on the downloaded files.
+      - name: Build the CLI
+        run: dotnet build --configuration Release src/Encspect.Cli
+
+      - name: Cross-check the TrueHD and MLP fixtures
+        run: python3 scripts/fixtures/crosscheck_truehd_fixtures.py
+
+      # Real Dolby TrueHD and MLP files (a commercial 5.1 stream of two substreams and two MLP stereo files) from the FFmpeg sample archive,
+      # which allows downloading and states no license for redistribution, so they are fetched and checked against their SHA-256 rather than
+      # committed. The download cache keeps them; every address is public.
+      - name: Check the real TrueHD and MLP samples with ffprobe and MediaInfo
+        run: python3 scripts/fixtures/check_truehd_samples.py .cache/truehd
+
+      - name: Check the analyzer, with decoding, against the real TrueHD and MLP samples
+        run: python3 scripts/fixtures/check_truehd_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/truehd
+
   # The one check the ruleset requires, so it never lists job names. Every other job must be in needs
   # (CiWorkflowTests enforces it). always() keeps it running when a needed job fails or is canceled. Only
   # success passes, and a job may be skipped only when the changes job decided it is not needed
@@ -1227,6 +1291,7 @@ jobs:
       - dts-crosscheck
       - matroska-crosscheck
       - wav-crosscheck
+      - truehd-crosscheck
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v5

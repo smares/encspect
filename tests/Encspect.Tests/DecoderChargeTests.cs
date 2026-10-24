@@ -1,10 +1,11 @@
 using Encspect.Core;
 using Encspect.Formats.Flac;
 using Encspect.Formats.Flac.Decoding;
-using MonkeysAudioDecoder = Encspect.Formats.MonkeysAudio.Decoding.MonkeysAudioDecoder;
-using MonkeysAudioFrameDecoder = Encspect.Formats.MonkeysAudio.Decoding.FrameDecoder;
+using Encspect.Formats.TrueHd;
 using Encspect.Formats.WavPack.Decoding;
 using Encspect.Host;
+using MonkeysAudioDecoder = Encspect.Formats.MonkeysAudio.Decoding.MonkeysAudioDecoder;
+using MonkeysAudioFrameDecoder = Encspect.Formats.MonkeysAudio.Decoding.FrameDecoder;
 
 namespace Encspect.Tests;
 
@@ -14,8 +15,10 @@ public class DecoderChargeTests
 {
     private static long Units(byte[] data, string name, bool lends = true)
     {
-        var counting = new CountingDecoder(name.EndsWith(".flac", StringComparison.Ordinal) ? new FlacDecoder() : new WavPackDecoder());
-        IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(p => p is FlacParser && !lends ? new FlacParser { LendsBuffers = false } : p);
+        IDecoder inner = name.EndsWith(".flac", StringComparison.Ordinal) ? new FlacDecoder()
+            : name.EndsWith(".thd", StringComparison.Ordinal) ? Formats.TrueHd.Decoding.TrueHdDecoder.TrueHd : new WavPackDecoder();
+        var counting = new CountingDecoder(inner);
+        IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(p => !lends && p is FlacParser ? new FlacParser { LendsBuffers = false } : !lends && p is TrueHdParser ? new TrueHdParser { LendsBuffers = false } : p);
         var analyzer = new Analyzer(DefaultParsers.Tags, formats, DefaultParsers.Codecs, [counting]);
 
         Report report = analyzer.Analyze(name, new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue } });
@@ -69,6 +72,43 @@ public class DecoderChargeTests
 
         // Every byte of the frames: the frame header, the subframes and the CRC-16.
         Assert.Equal(DecodeWork.PerCodedByte * (data.Length - FlacHeaderBytes), read - walked);
+    }
+
+    // TrueHD and MLP.
+
+    // The units of the crafted stereo stream at 192 kHz: 160 samples a unit.
+    private static (long Units, long Count, int UnitBytes) TrueHdCrafted(int fir, int iir, int matrices, bool lends = true)
+    {
+        byte[] data = DecoderWorkTests.TrueHdCases.Crafted(fir, iir, matrices);
+        int unitBytes = (((data[0] & 0xF) << 8) | data[1]) * 2;
+        return (Units(data, "crafted.thd", lends), data.Length / unitBytes, unitBytes);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 0)]
+    [InlineData(8, 0, 0)]
+    [InlineData(4, 4, 0)]
+    [InlineData(0, 0, 8)]
+    [InlineData(4, 4, 8)]
+    public void TrueHdChargesTheFixedWorkOfEverySampleTheTapsAndTheMatrixInputs(int fir, int iir, int matrices)
+    {
+        (long units, long count, int unitBytes) = TrueHdCrafted(fir, iir, matrices);
+
+        // Per sample period: 19 units for each of the 2 channels, the period's own units, one unit for each of the 8 taps of a FIR filter and 4 of an IIR filter, of both channels, and for each
+        // matrix its 2 channels and the 2 noise channels as inputs.
+        long period = (DecodeWork.ForSample(3) * 2) + Formats.TrueHd.Decoding.StreamDecoder.PeriodUnits + (Formats.TrueHd.Decoding.StreamDecoder.FilterTapUnits * 2 * ((fir > 0 ? 8 : 0) + (iir > 0 ? 4 : 0))) + (Formats.TrueHd.Decoding.StreamDecoder.MatrixTapUnits * matrices * 4);
+        // The first unit is the one that starts the decoding session, so its walk has nothing to lend and the decoder reads its 16 units a byte itself.
+        Assert.Equal((count * 160 * period) + (DecodeWork.PerCodedByte * unitBytes), units);
+    }
+
+    [Fact]
+    public void TrueHdChargesSixteenUnitsAByteForAUnitItReadsItself()
+    {
+        (long walked, long count, int unitBytes) = TrueHdCrafted(4, 4, 8);
+        (long read, _, _) = TrueHdCrafted(4, 4, 8, lends: false);
+
+        // The units but the first, which the decoder reads itself in both runs.
+        Assert.Equal(DecodeWork.PerCodedByte * (count - 1) * unitBytes, read - walked);
     }
 
     // WavPack.

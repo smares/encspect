@@ -16,7 +16,7 @@ internal static class ThreadTestScope
     // left to the nightly run where a test writes or rebuilds long reports; the hammer and the input release
     // tests read all of them on every run, and writing the costly ones on several threads takes minutes.
     private static readonly string[] PullRequestLongInputs =
-        ["mpeg-layer3-frames", "adts", "ac3", "ogg-vorbis", "asf-wma-pro", "wavpack", "flac", "monkeys-audio", "musepack-sv8", "mp4-aac", "adif", "dts", "eac3", "matroska", "wav", "aiff"];
+        ["mpeg-layer3-frames", "adts", "ac3", "ogg-vorbis", "asf-wma-pro", "wavpack", "flac", "monkeys-audio", "musepack-sv8", "mp4-aac", "adif", "dts", "eac3", "matroska", "truehd", "wav", "aiff"];
 
     // The AC-3 input has the most nodes by far (about 450,000), and writing it on several threads while
     // collections run takes over half a minute; its fixtures are written that way by ParallelAnalysisTests.

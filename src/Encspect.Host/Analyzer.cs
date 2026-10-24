@@ -132,6 +132,9 @@ public sealed class Analyzer
         ["aifc"] = "AIFF",
         ["aif"] = "AIFF",
         ["ape"] = "Monkey's Audio",
+        ["thd"] = "TrueHD",
+        ["mlp"] = "TrueHD",
+        ["dolbytruehd"] = "TrueHD",
     };
 
     // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg", "AC-3" and "ac3" as "ac3", "Monkey's Audio" and "monkeys-audio" as "monkeysaudio".
