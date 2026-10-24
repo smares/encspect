@@ -873,3 +873,18 @@ Observed behavior of the encoders behind Encspect's test files, not rules; none 
 - Whether a restart header may start at a bit other than 2 of its substream; the advice under [Restart header CRC](#restart-header-crc) to use the actual first bit is unverified, as every header in the test files starts at bit 2.
 - What a later major sync that changes stream parameters (substream count, rate, assignments) means for the state. FFmpeg takes the new parameters and keeps its accumulators.
 - The format rule behind FFmpeg's limit of two matrix or filter reads per unit.
+
+### How the implementation treats the open points
+
+Written when the parser and decoder were built (rollout step 3, by an agent that had not read FFmpeg's source). Every point is treated by a finding, not by a guess, and none has evidence beyond the test files. See [truehd.md](../formats/truehd.md) for the findings.
+
+- **Restart header CRC start:** the CRC is computed over the header from its actual first bit, which is bit 2 in every test file; a header at another bit would be checked from there. Unverified.
+- **Changes inside a unit:** a block after the first that changes the matrices, output shifts or quantizer step sizes is `truehd.parameters-change-within-unit` (info); the matrices and shifts in force at the end of the unit apply to all its samples, as the description says FFmpeg does. The fixture `built-parameters-change-within-unit` exercises the finding; its audio is not compared with any tool.
+- **Block size check data:** read as described (16 bits before, 8 bits after each block, the position compared), and reported as `truehd.block-size-check` (info), so a file that sets it is visible. `built-block-size-check` is built from this text, and the decoder gives the audio of the same units without the check; no real file sets the flag.
+- **Negative output shift, matrices with more than 5 channels together with noise type 0, MLP channel groups at different rates:** `truehd.unsupported` (info), the substream or unit is not read. They are as unsupported in FFmpeg.
+- **Dolby Atmos:** a fourth substream is not read; the stream is reported as signaling Atmos where bit 7 of the substream info is set with four substreams, and nothing more.
+- **Presentations:** the highest substream read is the output. The channel list of the major sync that has as many channels as the substream outputs gives the speakers; where none has, or the restart header's assignments do not take each position once, the channels follow the matrix channels (`truehd.channel-assignment`, info).
+- **Restart headers in a unit without a major sync:** read like any other, and their lossless check compared; no file has one.
+- **Padding bits, the signature and the reserved directory bit:** the padding bits that are not 0 and a signature other than 0xB752 are `truehd.unexpected-value` (info); the reserved bit is ignored.
+- **Filter histories at a restart header:** kept, as FFmpeg keeps them (the description reads either way on the test files).
+- **End of stream:** after a unit with an end of stream marker the units need a new major sync (`truehd.units-after-end-of-stream`), and a marker that drops more samples than the unit holds is `truehd.unit-short`.

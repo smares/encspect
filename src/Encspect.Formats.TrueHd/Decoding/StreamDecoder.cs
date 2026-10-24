@@ -11,8 +11,15 @@ internal sealed class StreamDecoder : IFrameDecoder
     private const int History = Filters.History;
     private const int Row = History + MaxUnit;
 
-    // Units a multiply-accumulate of a matrix costs.
-    internal const long MatrixTapUnits = 1;
+    // Units a multiply-accumulate of a matrix costs: its sum is 64 bits and its inputs are rows of the presentation.
+    internal const long MatrixTapUnits = 2;
+
+    // Units each sample period of a substream costs besides the work of its channels: the noise generator, the history moves and the lossless check.
+    internal const long PeriodUnits = 32;
+
+    // Units a filter tap costs: a 64-bit multiply-accumulate. A channel with a FIR filter is charged for 8 taps and one with an IIR filter for 4,
+    // whatever their orders, since the sums run over all of them.
+    internal const long FilterTapUnits = 1;
 
     private readonly DecodeContext _context;
     private readonly int _channels;
@@ -38,6 +45,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     // The matrix channels of the presentation being built, one row of MaxUnit samples each, and after them the two noise channels.
     private readonly int[] _samples = new int[10 * MaxUnit];
     private readonly int[] _noiseTable = new int[256];
+    private readonly long[] _sums = new long[MaxUnit];
     private int[] _ownPlanes = [];
     private int[] _pcm = [];
     private MajorSync? _sync;
@@ -141,7 +149,7 @@ internal sealed class StreamDecoder : IFrameDecoder
             long matrices = 0;
             int inputs = state.LastMatrixChannel + 1 + (state.NoiseType == 0 ? 2 : 0);
             matrices += (long)state.MatrixCount * inputs;
-            _context.AddWork(checked(((DecodeWork.ForSample(3) * (state.LastMatrixChannel + 1)) + (MatrixTapUnits * matrices)) * output));
+            _context.AddWork(checked(((DecodeWork.ForSample(3) * (state.LastMatrixChannel + 1)) + PeriodUnits + (MatrixTapUnits * matrices)) * output));
             Rematrix(k, state, output, n, planes);
             if (k == top)
             {
@@ -280,10 +288,10 @@ internal sealed class StreamDecoder : IFrameDecoder
         for (int c = state.FirstChannel; c <= state.LastChannel; c++)
         {
             ChannelState channel = state.Coded[c];
-            taps += channel.FirOrder + channel.IirOrder;
+            taps += (channel.FirOrder > 0 ? ChannelState.MaxFirOrder : 0) + (channel.IirOrder > 0 ? ChannelState.MaxIirOrder : 0);
         }
 
-        _context.AddWork(checked(DecodeWork.PerTap * taps * size));
+        _context.AddWork(checked(FilterTapUnits * taps * size));
         for (int c = state.FirstChannel; c <= state.LastChannel; c++)
         {
             ChannelState channel = state.Coded[c];
@@ -361,32 +369,54 @@ internal sealed class StreamDecoder : IFrameDecoder
         _noiseRegister[k] = register;
         int matrixCount = state.MatrixCount;
         int inputs = m + (state.NoiseType == 0 ? 2 : 0);
+        Span<long> sums = _sums.AsSpan(0, count);
         for (int j = 0; j < matrixCount; j++)
         {
             MatrixState matrix = state.Matrices[j];
             int d = matrix.OutChannel;
             int mask = ~((1 << state.Quantizer[d]) - 1);
-            ReadOnlySpan<int> bypass = matrix.HasLsbBypass
-                ? planes.Slice(((k * SubstreamReader.PlanesPerSubstream) + SubstreamReader.BypassPlane + j) * n, n)
-                : default;
             int distance = matrixCount - j;
             int[] coefficients = matrix.Coefficients;
-            for (int i = 0; i < count; i++)
+            sums.Clear();
+            for (int c = 0; c < inputs; c++)
             {
-                long sum = 0;
-                for (int c = 0; c < inputs; c++)
+                long coefficient = coefficients[c];
+                if (coefficient == 0)
                 {
-                    sum += (long)coefficients[c] * _samples[(c * MaxUnit) + i];
+                    continue;
                 }
 
-                if (state.NoiseType == 1 && matrix.NoiseShift > 0)
+                ReadOnlySpan<int> input = _samples.AsSpan(c * MaxUnit, count);
+                for (int i = 0; i < input.Length && i < sums.Length; i++)
+                {
+                    sums[i] += coefficient * input[i];
+                }
+            }
+
+            Span<int> target = _samples.AsSpan(d * MaxUnit, count);
+            if (state.NoiseType == 1 && matrix.NoiseShift > 0)
+            {
+                for (int i = 0; i < count; i++)
                 {
                     int index = (distance + (i * ((2 * distance) + 1))) & (bufferSize - 1);
-                    sum += (long)_noiseTable[index] << (matrix.NoiseShift + 7);
+                    sums[i] += (long)_noiseTable[index] << (matrix.NoiseShift + 7);
                 }
+            }
 
-                int value = (int)(sum >> 14) & mask;
-                _samples[(d * MaxUnit) + i] = unchecked(value + (matrix.HasLsbBypass ? bypass[i] : 0));
+            if (matrix.HasLsbBypass)
+            {
+                ReadOnlySpan<int> bypass = planes.Slice(((k * SubstreamReader.PlanesPerSubstream) + SubstreamReader.BypassPlane + j) * n, n);
+                for (int i = 0; i < count; i++)
+                {
+                    target[i] = unchecked(((int)(sums[i] >> 14) & mask) + bypass[i]);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    target[i] = (int)(sums[i] >> 14) & mask;
+                }
             }
         }
 

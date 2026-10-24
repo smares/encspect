@@ -93,7 +93,7 @@ internal static class Explain
     public const string FirFilter = "The channel's FIR filter, which predicts a sample from up to 8 earlier ones of the same channel: its order, shift, coefficients and the bits they take.";
     public const string IirFilter = "The channel's IIR filter, which predicts a sample from up to 4 earlier errors of the same channel; it may carry the starting values of its state.";
     public const string HuffmanOffset = "A value added to every residual of the channel.";
-    public const string Codebook = "Which Huffman code the channel's residuals use: 0 for none, 1 to 3 for the codes that differ in how many values the codeword 1 and its neighbors cover.";
+    public const string Codebook = "Which Huffman code the channel's residuals use: 0 for none, 1 to 3 for the three codebooks, which differ in the codewords that start with 1: they carry four values in codebook 1, two in codebook 2 and only 0 in codebook 3.";
     public const string LsbCount = "How many low bits of each residual are stored apart from the Huffman code, the quantizer step size's bits included.";
     public const string BlockData = "The residuals of the block: for each sample period, the bits that matrices with a bypassed least significant bit take, then one residual for each coded channel.";
     public const string EndOfStream = "Marks the end of the stream: 0xD234 and a second word. In Dolby TrueHD the second word can state how many samples at the end of the unit are not output; in MLP it is 0xD234 again.";

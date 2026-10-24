@@ -133,18 +133,26 @@ def canonical(values, channels, ff_layout, ours, bits):
     return len(values) // channels, hashlib.md5(bytes(out)).hexdigest()
 
 
-def manifest_for(path, encoder):
+def manifest_for(path, encoder, previous=None):
+    """The manifest of a fixture. With the previous manifest (--manifests-only) FFmpeg is not run again: the samples and their digest are the ones
+    FFmpeg 6.1.1 gave when the file was made, which crosscheck_truehd_fixtures.py confirms with the FFmpeg of the cross-check job."""
     data = path.read_bytes()
     units = m.split_units(data)
     assert sum(l for _, l in units) == len(data), f"{path.name}: the units do not end at the end of the file"
-    values, channels, ff_layout = ffmpeg_pcm(path)
     first = m.Unit(data, units[0][0], units[0][1])
     n = first.sync.unit_samples
-    total = len(values) // channels
+    if previous is not None and previous.get("length") == len(data):
+        total, digest = previous["decoded_samples"], previous["decoded_pcm_md5"]
+        values = channels = ff_layout = None
+    else:
+        values, channels, ff_layout = ffmpeg_pcm(path)
+        total = len(values) // channels
     counts = [n] * (len(units) - 1) + [total - n * (len(units) - 1)]
     result = m.manifest(data, [("unit", o, l) for o, l in units], counts, average=True)
     info = result["stream_infos"][0]
-    samples, digest = canonical(values, channels, ff_layout, info["layout"], info["bits_per_sample"])
+    samples = total
+    if values is not None:
+        samples, digest = canonical(values, channels, ff_layout, info["layout"], info["bits_per_sample"])
     assert samples == total == result["decoded_samples"], f"{path.name}: the model counts {result['decoded_samples']} samples, FFmpeg {total}"
     return {**result, "encoder": encoder, "decoded_pcm_md5": digest, "regions": [{"name": result["format"], "offset": 0, "length": len(data)}], "findings": [],
             "sampling": {"unit_samples": n}, "crosscheck": {"ffmpeg": True}, "golden_hides": ["frames"]}
@@ -185,10 +193,12 @@ def main():
             if only_manifests or (chosen and name not in chosen):
                 if not path.exists() or not manifest_path(path).exists():
                     raise SystemExit(f"No fixture or manifest for {name} to take the encoder from; run the script without --manifests-only.")
-                encoder = json.loads(manifest_path(path).read_text(encoding="utf-8"))["encoder"]
+                previous = json.loads(manifest_path(path).read_text(encoding="utf-8"))
+                encoder = previous["encoder"]
             else:
                 path, encoder = encode(name, spec, pathlib.Path(work))
-            write_manifest(path, manifest_for(path, encoder))
+                previous = None
+            write_manifest(path, manifest_for(path, encoder, previous if only_manifests else None))
             count += 1
     print(f"Wrote {count} {'manifests' if only_manifests else 'fixtures'} to {OUT}")
 

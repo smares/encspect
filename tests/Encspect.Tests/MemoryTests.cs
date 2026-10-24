@@ -1249,6 +1249,42 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(heldPerBlock < DecodingFrameBound, $"Decoding held {heldPerBlock:F2} more bytes per further block at the last block than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // A TrueHD file keeps a 16-byte entry per access unit and the figures of its graphs, 60 bytes a unit in all on linux-x64 (69 at peak). The bounds are
+    // about twice that.
+    [Fact]
+    public void ManyTrueHdUnitsStayCompact()
+    {
+        const int repeats = 4_000;
+
+        (Report report, long kept, long peak) = Measure("units.thd", TrueHdUnits(repeats), TrueHdUnits(10));
+
+        int units = repeats * 12;
+        Assert.Equal(units * 40L, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / units} bytes kept and {peak / units} bytes peak per unit");
+        Assert.True(kept < units * TrueHdKeptBound, $"The report keeps {kept / units} bytes per unit.");
+        Assert.True(peak < units * TrueHdPeakBound, $"The live heap grew by {peak / units} bytes per unit.");
+        GC.KeepAlive(report);
+    }
+
+    // The decoding of a TrueHD file holds the filter histories and planes of the unit at hand, so what it holds does not grow with the units.
+    [Fact]
+    public void DecodingManyTrueHdUnitsHoldsNothingPerUnit()
+    {
+        const int fewer = 4_000;
+        const int more = 16_000;
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(TrueHdUnits(10)), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        (long fewerHeld, _) = LastFrameReading("units.thd", TrueHdUnits(fewer / 12), fewer / 12 * 12, 40);
+        (long held, long kept) = LastFrameReading("units.thd", TrueHdUnits(more / 12), more / 12 * 12, 40);
+        (_, long plainKept) = LastFrameReading("units.thd", TrueHdUnits(more / 12), more / 12 * 12, 40, isDecoding: false);
+
+        int units = more / 12 * 12;
+        double heldPerUnit = (held - fewerHeld) / (double)(units - (fewer / 12 * 12));
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; {fewerHeld} held at {fewer / 12 * 12} units and {held} at {units} ({Hundredths(heldPerUnit)} per further unit)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)units:F2} bytes more per unit.");
+        Assert.True(heldPerUnit < DecodingFrameBound, $"Decoding held {heldPerUnit:F2} more bytes per further unit at the last unit than the analysis ends with. {RuntimeSettings()}");
+    }
+
     // A block of up to 1 MiB with a sub-block for every two bytes lists the first 1,024 and counts the rest.
     [Fact]
     public void ManyWavPackSubBlocksAreBounded()
@@ -1303,6 +1339,13 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] data = [.. Enumerable.Repeat(header, 2_000_000).SelectMany(b => b)];
         Bounded("empty.wv", data, 100_000_000, "wavpack.no-audio");
     }
+
+    private const long TrueHdKeptBound = 120;
+
+    private const long TrueHdPeakBound = 140;
+
+    // The 12 units of the tiny stereo fixture, repeated: each repetition starts with a major sync that restarts the substream.
+    private static byte[] TrueHdUnits(int repeats) => LongInputs.Repeat("truehd/built-tiny-truehd-stereo.thd", repeats);
 
     private const long WavPackKeptBound = 240;
 

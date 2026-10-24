@@ -379,38 +379,10 @@ def block_size_invalid():
 
 # --- units written again with bits inserted --------------------------------------------------------------------------------------------------
 
-CLI = ROOT / "src" / "Encspect.Cli" / "bin" / "Release" / "net10.0" / "encspect"
-
-
-def block_map(units, extension):
-    """Where the blocks of each substream-0 unit lie, read from the analyzer's tree of the units (the CLI built in Release): per unit, the blocks as
-    (start bit, end bit of the decoding parameters, end bit of the block's last flag), all counted from the substream's first bit."""
-    import tempfile
-    with tempfile.TemporaryDirectory() as folder:
-        path = pathlib.Path(folder) / f"units{extension}"
-        path.write_bytes(b"".join(bytes(u) for u in units))
-        report = json.loads(subprocess.run([str(CLI), "--json", str(path)], capture_output=True, check=True, text=True).stdout)[0]
-
-    def bit(node):
-        return node["offset"] * 8 + (node.get("bitOffset") or 0)
-
-    def end(node):
-        return bit(node) + (node["bitLength"] if "bitLength" in node else node["length"] * 8)
-
-    def find(node, name):
-        return [c for c in node.get("children", []) if c["name"] == name or c["name"].startswith(name)]
-
-    stream = report["root"]["children"][0]
-    result = []
-    for unit in find(stream, "Access Unit"):
-        substream = find(unit, "Substream 0")[0]
-        origin = bit(substream)
-        blocks = []
-        for block in find(substream, "Block "):
-            parameters = find(block, "Decoding Parameters")[0]
-            blocks.append((bit(block) - origin, end(parameters) - origin, end(block) - origin))
-        result.append((blocks, [c["name"] for c in block.get("children", [])]))
-    return result
+# Where the blocks of the first three units of external-truehd-stereo-48k-24.thd lie, as (start bit, end bit of the decoding parameters, end bit of the
+# block's last flag) counted from the first bit of the substream, one list for each unit. Read once from the analyzer's tree of the file (the "Block"
+# nodes and their "Decoding Parameters"); a wrong entry makes the fixtures below fail TrueHdFixtureTests, which reads the result.
+BLOCKS = [[(0, 224, 561), (561, 888, 1401)], [(0, 38, 759)], [(0, 29, 685)]]
 
 
 def bits_of_unit(data, start, stop):
@@ -455,10 +427,9 @@ def rewrite_substream(unit, count, blocks, inserts, replaces=()):
 def block_size_check():
     base = Base("truehd-stereo-48k-24", 3)
     b = Built(base, "The restart header of the first unit states the block size check, so every block carries the 16-bit size field before its residuals and the check byte after them: the three units are written again that way, and their blocks are read.")
-    layout = block_map(base.units, base.extension)
     units = []
     for index, unit in enumerate(base.units):
-        blocks, _ = layout[index]
+        blocks = BLOCKS[index]
         inserts = {}
         replaces = []
         for start, parameters_end, block_end in blocks:
@@ -488,7 +459,7 @@ def block_size_check():
 def parameters_change_within_unit():
     base = Base("truehd-stereo-48k-24", 3)
     b = Built(base, "The second block of the first unit states output shifts, which the first block's parameters do not: the unit changes them within itself.")
-    blocks, _ = block_map(base.units, base.extension)[0]
+    blocks = BLOCKS[0]
     assert len(blocks) == 2
     start, parameters_end, block_end = blocks[1]
     unit = base.units[0]

@@ -145,3 +145,23 @@ public class CorruptFlacBuiltFileTests
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
+
+// The TrueHD and MLP fixtures written by FFmpeg, each analyzed with and without decoding.
+public class CorruptTrueHdFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("truehd/external-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The hand-built TrueHD and MLP fixtures, each analyzed with and without decoding.
+public class CorruptTrueHdBuiltFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("truehd/built-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}

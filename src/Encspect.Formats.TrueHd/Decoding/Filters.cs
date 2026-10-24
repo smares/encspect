@@ -29,20 +29,39 @@ internal static class Filters
         }
 
         int shift = channel.FilterShift;
-        int[] fir = channel.FirCoefficients;
-        int[] iir = channel.IirCoefficients;
+
+        // The coefficients of both filters, zero past their orders and the oldest sample first, so that a sample's sum is one fixed run of
+        // multiplications over the 8 outputs and 4 errors before it.
+        Span<long> fir = stackalloc long[ChannelState.MaxFirOrder];
+        Span<long> iir = stackalloc long[ChannelState.MaxIirOrder];
+        for (int k = 0; k < firOrder; k++)
+        {
+            fir[ChannelState.MaxFirOrder - 1 - k] = channel.FirCoefficients[k];
+        }
+
+        for (int k = 0; k < iirOrder; k++)
+        {
+            iir[ChannelState.MaxIirOrder - 1 - k] = channel.IirCoefficients[k];
+        }
+
+        long f0 = fir[0], f1 = fir[1], f2 = fir[2], f3 = fir[3], f4 = fir[4], f5 = fir[5], f6 = fir[6], f7 = fir[7];
+        long i0 = iir[0], i1 = iir[1], i2 = iir[2], i3 = iir[3];
+        bool hasFir = firOrder > 0;
+        bool hasIir = iirOrder > 0;
         for (int i = 0; i < count; i++)
         {
             int position = at + i;
             long sum = 0;
-            for (int k = 0; k < firOrder; k++)
+            if (hasFir)
             {
-                sum += (long)fir[k] * y[position - 1 - k];
+                ReadOnlySpan<int> past = y.Slice(position - ChannelState.MaxFirOrder, ChannelState.MaxFirOrder);
+                sum = (f0 * past[0]) + (f1 * past[1]) + (f2 * past[2]) + (f3 * past[3]) + (f4 * past[4]) + (f5 * past[5]) + (f6 * past[6]) + (f7 * past[7]);
             }
 
-            for (int k = 0; k < iirOrder; k++)
+            if (hasIir)
             {
-                sum += (long)iir[k] * e[position - 1 - k];
+                ReadOnlySpan<int> errors = e.Slice(position - ChannelState.MaxIirOrder, ChannelState.MaxIirOrder);
+                sum += (i0 * errors[0]) + (i1 * errors[1]) + (i2 * errors[2]) + (i3 * errors[3]);
             }
 
             int prediction = (int)(sum >> shift);

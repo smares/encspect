@@ -97,6 +97,12 @@ AREAS = {
         "scripts": ["crosscheck_dts_fixtures.py", "check_dts_hd_samples.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*dts*", "scripts/fixtures/dts_*", "tests/conformance/dts-hd-samples.json"],
     },
+    "truehd-crosscheck": {
+        "projects": ["Encspect.Formats.TrueHd"],
+        "fixtures": ["truehd"],
+        "scripts": ["crosscheck_truehd_fixtures.py", "check_truehd_samples.py"],
+        "globs": ["scripts/fixtures/make_*truehd*", "scripts/fixtures/truehd_*", "tests/conformance/truehd-samples.json"],
+    },
 }
 
 # A change here concerns every job: the analysis every format goes through, the front end the

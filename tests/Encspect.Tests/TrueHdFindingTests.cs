@@ -104,7 +104,7 @@ public class TrueHdFindingTests
     }
 
     // Works out the major sync CRC, the substream parity byte and CRC-8, and the parity nibble of a unit of one substream with check data.
-    private static void Refresh(byte[] data, int offset, int length, bool hasSync)
+    internal static void Refresh(byte[] data, int offset, int length, bool hasSync)
     {
         int syncLength = hasSync ? 28 : 0;
         if (hasSync)

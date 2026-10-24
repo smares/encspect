@@ -388,7 +388,7 @@ Not covered: the subframes and the extensions' audio data, the XLL band data and
 
 ## Phase 3: Dolby TrueHD and MLP
 
-Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).
+Raw files and the decoder: done (October 2026; [truehd.md](formats/truehd.md)). The codec parser (`truehd` and `mlp`) is registered, and the MP4 and Matroska routes are step 4 of the decoder rollout. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).
 
 **Sources**
 
