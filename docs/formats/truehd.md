@@ -59,9 +59,9 @@ Six checksums are declared: three cover headers, two the coded data and one, for
 - The lossless check of each presentation is compared at its next restart header. `truehd.lossless-check-failed` (a warning on the restart header) names the substream. The first restart header and the first after an end of stream marker have nothing to compare, and the output after the last restart header is never compared, so the checks together cover the output between a substream's first and last restart header.
 - A unit the decoder cannot read, or that follows damage, is `decode.frame-invalid`; the substream's histories and checks start again at the next major sync.
 - **The work a unit is charged** to the host's work budget, before the decoder does it (see "As built in step 3: TrueHD and MLP" in [the decoder design](../design/decoders.md)):
-  - for each output sample of each substream decoded, the fixed work of a 24-bit sample for each matrix channel (19 units) and 32 units for the sample period of the substream (the noise generator, the history moves and the lossless check);
+  - for each output sample of each substream decoded, the fixed work of a 24-bit sample for each matrix channel (19 units) and 48 units for the sample period of the substream (the noise generator, the history moves and the lossless check);
   - for each sample of a block, one unit for each tap of the filters of the coded channels, counted as 8 for a channel with a FIR filter and 4 for one with an IIR filter whatever their orders;
-  - for each output sample, 2 units for each input of each primitive matrix (the matrix channels, and the two noise channels where the noise type is 0);
+  - for each output sample, 3 units for each input of each primitive matrix (the matrix channels, and the two noise channels where the noise type is 0);
   - for a unit the walk did not store, which the decoder reads itself (the first unit of a stream, and every unit where the structure pass lends nothing), 16 units for each byte.
 - The first unit of a stream is read by the decoder itself: the decoding session starts when its major sync has been read, so its walk had nothing to lend.
 - A lossless check that differs is reported once for each substream (`truehd.lossless-check-failed`, on the restart header whose check differs); the verification counts every one that differs.
