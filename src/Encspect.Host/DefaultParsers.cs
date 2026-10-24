@@ -6,6 +6,7 @@ using Encspect.Formats.Dts;
 using Encspect.Formats.DtsHd;
 using Encspect.Formats.Flac;
 using Encspect.Formats.Matroska;
+using Encspect.Formats.MonkeysAudio;
 using Encspect.Formats.Mp4;
 using Encspect.Formats.Mpeg;
 using Encspect.Formats.Musepack;
@@ -48,7 +49,7 @@ public static class DefaultParsers
     // consistent frames (SniffResult.Compare; plan, "Format detection"). The order of this list only
     // breaks a tie in all four, which the report names as format.ambiguous, so no format depends on
     // its place here.
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser(), new DtsParser(), new DtsHdParser(), new FlacParser(), new MatroskaParser()];
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser(), new DtsParser(), new DtsHdParser(), new FlacParser(), new MonkeysAudioParser(), new MatroskaParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4,
     // Speex, Vorbis and Opus in Ogg and Matroska, AC-3, E-AC-3 and DTS in MP4 and Matroska, AAC in Matroska, FLAC in Ogg, WavPack in Matroska, Windows Media Audio in ASF.
@@ -57,5 +58,5 @@ public static class DefaultParsers
 
     // The decoders of the codecs the formats above read, by the same IDs the parsers start their sessions with. Each
     // lives in its format's project; a format without one is not listed, and its streams report that no decoder exists.
-    public static IReadOnlyList<IDecoder> Decoders { get; } = [new Encspect.Formats.Flac.Decoding.FlacDecoder(), new Encspect.Formats.WavPack.Decoding.WavPackDecoder()];
+    public static IReadOnlyList<IDecoder> Decoders { get; } = [new Encspect.Formats.Flac.Decoding.FlacDecoder(), new Encspect.Formats.WavPack.Decoding.WavPackDecoder(), new Encspect.Formats.MonkeysAudio.Decoding.MonkeysAudioDecoder()];
 }
