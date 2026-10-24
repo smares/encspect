@@ -14,7 +14,7 @@ internal static class LongInputs
     public static IReadOnlyList<string> Names { get; } =
     [
         "mpeg-layer3-lame", "mpeg-layer3-frames", "adts", "ac3", "eac3", "dts", "ogg-pages", "ogg-speex", "ogg-vorbis", "ogg-opus",
-        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "flac", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts", "matroska", "wav", "aiff",
+        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "flac", "monkeys-audio", "tta", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts", "matroska", "wav", "aiff",
     ];
 
     public static byte[] Build(string name) => name switch
@@ -34,6 +34,8 @@ internal static class LongInputs
         "asf-pcm" => AsfBuilder.Build(PcmStreamProperties(), new byte[160], 2060, 10),
         "wavpack" => WavPackTinyBlocks(2060),
         "flac" => FlacBuilder.Stream(2060),
+        "monkeys-audio" => MonkeysAudioBuilder.Silence(2060),
+        "tta" => TtaBuilder.SmallFrames(2060),
         "musepack-sv8" => Sv8Packets(2060),
         "musepack-sv7" => Sv7Frames(2060),
         "musepack-sv5" => Sv5Frames(2060),

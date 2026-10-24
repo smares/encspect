@@ -1,0 +1,611 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-frame-crc-changed.ape",
+    "root": {
+      "name": "File",
+      "value": "Monkey's Audio",
+      "offset": 0,
+      "length": 136268,
+      "children": [
+        {
+          "name": "Monkey's Audio",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 136268,
+          "children": [
+            {
+              "name": "Descriptor",
+              "offset": 0,
+              "length": 52,
+              "children": [
+                {
+                  "name": "Signature",
+                  "value": "MAC ",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "File Version",
+                  "value": "3.99",
+                  "offset": 4,
+                  "length": 2
+                },
+                {
+                  "name": "Program Version",
+                  "value": "13.42",
+                  "offset": 6,
+                  "length": 2
+                },
+                {
+                  "name": "Descriptor Bytes",
+                  "value": 52,
+                  "unit": "bytes",
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Header Bytes",
+                  "value": 24,
+                  "unit": "bytes",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Seek Table Bytes",
+                  "value": 12,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "WAV Header Data Bytes",
+                  "value": 44,
+                  "unit": "bytes",
+                  "offset": 20,
+                  "length": 4
+                },
+                {
+                  "name": "Frame Data Bytes",
+                  "value": 136136,
+                  "unit": "bytes",
+                  "offset": 24,
+                  "length": 8
+                },
+                {
+                  "name": "WAV Terminating Data Bytes",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 4
+                },
+                {
+                  "name": "MD5",
+                  "value": "b7732cc0258e14a3592a88a2ff66af2f",
+                  "offset": 36,
+                  "length": 16
+                },
+                {
+                  "name": "Computed MD5",
+                  "value": "b7732cc0258e14a3592a88a2ff66af2f",
+                  "offset": 36,
+                  "length": 16
+                },
+                {
+                  "name": "IsMd5Valid",
+                  "value": true,
+                  "offset": 36,
+                  "length": 16
+                }
+              ]
+            },
+            {
+              "name": "Header",
+              "offset": 52,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Compression Level",
+                  "value": "normal (2000)",
+                  "offset": 52,
+                  "length": 2
+                },
+                {
+                  "name": "Format Flags",
+                  "value": 0,
+                  "offset": 54,
+                  "length": 2
+                },
+                {
+                  "name": "Format Flags Set",
+                  "value": "none",
+                  "offset": 54,
+                  "length": 2
+                },
+                {
+                  "name": "Blocks Per Frame",
+                  "value": 73728,
+                  "unit": "samples",
+                  "offset": 56,
+                  "length": 4
+                },
+                {
+                  "name": "Final Frame Blocks",
+                  "value": 12544,
+                  "unit": "samples",
+                  "offset": 60,
+                  "length": 4
+                },
+                {
+                  "name": "Total Frames",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 64,
+                  "length": 4
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 68,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 70,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 72,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Seek Table",
+              "value": 3,
+              "unit": "entries",
+              "offset": 76,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Frame Offset",
+                  "value": 132,
+                  "unit": "bytes",
+                  "offset": 76,
+                  "length": 4
+                },
+                {
+                  "name": "Frame Offset",
+                  "value": 27422,
+                  "unit": "bytes",
+                  "offset": 80,
+                  "length": 4
+                },
+                {
+                  "name": "Frame Offset",
+                  "value": 113629,
+                  "unit": "bytes",
+                  "offset": 84,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "WAV Header Data",
+              "value": "44 bytes, a RIFF WAVE header",
+              "offset": 88,
+              "length": 44
+            },
+            {
+              "name": "Encoder",
+              "value": "Monkey's Audio 13.42",
+              "offset": 0,
+              "length": 52,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "High",
+                  "offset": 0,
+                  "length": 52
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The descriptor's program version field states 13.42, the version of the program that wrote the file",
+                  "offset": 0,
+                  "length": 52
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 136268,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Samples",
+                  "value": 160000,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Duration",
+                  "value": 3.6281179138321997,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "mono (front center)",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Compression Level",
+                  "value": "normal (2000)",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Stored Frame CRCs",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Descriptor MD5",
+                  "value": "matches",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 300.17988,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 22639,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 86207,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 130.5869140625,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 636.721875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 136268,
+                  "children": [
+                    {
+                      "name": "128 to 159 kbps",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 136268
+                    },
+                    {
+                      "name": "384 to 415 kbps",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 136268
+                    },
+                    {
+                      "name": "608 to 639 kbps",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 136268
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 73728,
+              "unit": "samples",
+              "offset": 132,
+              "length": 27292,
+              "ranges": [
+                {
+                  "offset": 132,
+                  "length": 27288
+                },
+                {
+                  "offset": 27422,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame CRC",
+                  "value": 150738619,
+                  "offset": 132,
+                  "length": 4
+                },
+                {
+                  "name": "Range-Coded Data",
+                  "value": 27286,
+                  "unit": "bytes",
+                  "offset": 136,
+                  "length": 27288,
+                  "ranges": [
+                    {
+                      "offset": 136,
+                      "length": 27284
+                    },
+                    {
+                      "offset": 27422,
+                      "length": 2
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 73728,
+              "unit": "samples",
+              "offset": 27420,
+              "length": 86212,
+              "ranges": [
+                {
+                  "offset": 27420,
+                  "length": 2
+                },
+                {
+                  "offset": 27424,
+                  "length": 86204
+                },
+                {
+                  "offset": 113631,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame CRC",
+                  "value": 47077873,
+                  "offset": 27420,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 27420,
+                      "length": 2
+                    },
+                    {
+                      "offset": 27426,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Range-Coded Data",
+                  "value": 86203,
+                  "unit": "bytes",
+                  "offset": 27424,
+                  "length": 86208,
+                  "ranges": [
+                    {
+                      "offset": 27424,
+                      "length": 2
+                    },
+                    {
+                      "offset": 27428,
+                      "length": 86200
+                    },
+                    {
+                      "offset": 113631,
+                      "length": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 12544,
+              "unit": "samples",
+              "offset": 113628,
+              "length": 22640,
+              "ranges": [
+                {
+                  "offset": 113628,
+                  "length": 3
+                },
+                {
+                  "offset": 113632,
+                  "length": 22636
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame CRC",
+                  "value": 2077290378,
+                  "offset": 113628,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 113628,
+                      "length": 3
+                    },
+                    {
+                      "offset": 113635,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Range-Coded Data",
+                  "value": 22635,
+                  "unit": "bytes",
+                  "offset": 113632,
+                  "length": 22636,
+                  "ranges": [
+                    {
+                      "offset": 113632,
+                      "length": 3
+                    },
+                    {
+                      "offset": 113636,
+                      "length": 22632
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "Monkey's Audio",
+        "sampleRate": 44100,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 16,
+        "samples": 160000,
+        "duration": 3.6281179138321997,
+        "averageBitrate": 300.17988,
+        "isVbr": true,
+        "verification": {
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "descriptor MD5",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "frame CRC-32",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 3,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "encoder": "Monkey's Audio 13.42",
+        "encoderConfidence": "High",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              132,
+              27422,
+              113629
+            ],
+            "values": [
+              130.5869140625,
+              412.51396484375,
+              636.721875
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0,
+              1,
+              3
+            ],
+            "values": [
+              131,
+              413,
+              637
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": []
+  }
+]

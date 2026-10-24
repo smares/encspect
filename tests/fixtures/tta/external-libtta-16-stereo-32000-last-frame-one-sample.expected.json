@@ -1,0 +1,109 @@
+{
+ "length": 119669,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 119669
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 32000,
+  "samples": 66873,
+  "crc": "7d1ef94c",
+  "crc_ok": true
+ },
+ "frame_length": 33436,
+ "table": {
+  "offset": 22,
+  "expected": 3,
+  "entries": [
+   30798,
+   88825,
+   8
+  ],
+  "crc": "8f0f53e5",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 38,
+   "size": 30798,
+   "status": [],
+   "crc": "0d171ebf"
+  },
+  {
+   "offset": 30836,
+   "size": 88825,
+   "status": [],
+   "crc": "9e77f484"
+  },
+  {
+   "offset": 119661,
+   "size": 8,
+   "status": [],
+   "crc": "cd69a689"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 32000,
+   "channels": 2,
+   "samples": 66873,
+   "duration": 2.08978125,
+   "bits_per_sample": 16,
+   "average_bitrate": 457.9656363554798,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": true,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 3,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [],
+ "encoder": {
+  "tool": "libtta-c 2.3 (tta console program built from libtta-c-2.3.tar.gz, SHA-256 68ba6db2d494dcd4aa6832a40952b88a3d50ca1174ab0ef1e091db16992303c7)",
+  "arguments": [
+   "-e"
+  ],
+  "input": {
+   "kind": "music",
+   "rate": 32000,
+   "channels": 2,
+   "bits": 16,
+   "samples": 66873
+  }
+ }
+}

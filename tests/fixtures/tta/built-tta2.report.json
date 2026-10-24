@@ -1,0 +1,53 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-tta2.tta",
+    "root": {
+      "name": "File",
+      "value": "TTA",
+      "offset": 0,
+      "length": 964,
+      "children": [
+        {
+          "name": "TTA",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 964,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TTA2",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Data",
+              "value": 960,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 960
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "tta.version-2",
+        "message": "The stream begins with \"TTA2\", the second version of the format, which the format description lists as in development; the analyzer reads TTA1 only.",
+        "offset": 0,
+        "length": 964,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

@@ -66,11 +66,23 @@ AREAS = {
         "scripts": ["crosscheck_wavpack_fixtures.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*wavpack*", "scripts/fixtures/wavpack_*"],
     },
+    "monkeys-audio-crosscheck": {
+        "projects": ["Encspect.Formats.MonkeysAudio", "Encspect.Tags.Ape"],
+        "fixtures": ["monkeys-audio"],
+        "scripts": ["crosscheck_monkeys_audio_fixtures.py", "check_monkeys_audio_samples.py"],
+        "globs": ["scripts/fixtures/make_*monkeys_audio*", "scripts/fixtures/monkeys_audio_*", "tests/conformance/monkeys-audio-samples.json"],
+    },
     "flac-crosscheck": {
         "projects": ["Encspect.Formats.Flac", "Encspect.Tags.VorbisComment"],
         "fixtures": ["flac"],
         "scripts": ["crosscheck_flac_fixtures.py"],
         "globs": ["scripts/fixtures/make_*flac*", "scripts/fixtures/flac_*"],
+    },
+    "tta-crosscheck": {
+        "projects": ["Encspect.Formats.Tta", "Encspect.Tags.Ape"],
+        "fixtures": ["tta"],
+        "scripts": ["crosscheck_tta_fixtures.py"],
+        "globs": ["scripts/fixtures/make_*tta*", "scripts/fixtures/tta_*"],
     },
     "wav-crosscheck": {
         "projects": ["Encspect.Formats.Wav", "Encspect.Formats.Aiff"],

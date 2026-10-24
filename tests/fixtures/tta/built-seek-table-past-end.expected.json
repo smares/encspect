@@ -1,0 +1,107 @@
+{
+ "length": 950,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 950
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 100000,
+  "crc": "fe46365d",
+  "crc_ok": true
+ },
+ "frame_length": 46080,
+ "table": {
+  "offset": 22,
+  "expected": 3,
+  "entries": [
+   1000000,
+   1000000,
+   1000000
+  ],
+  "crc": "50548308",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 38,
+   "size": 1000000,
+   "status": [
+    "cut"
+   ]
+  },
+  {
+   "offset": 1000038,
+   "size": 1000000,
+   "status": [
+    "missing"
+   ]
+  },
+  {
+   "offset": 2000038,
+   "size": 1000000,
+   "status": [
+    "missing"
+   ]
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 0,
+   "duration": 0.0,
+   "bits_per_sample": 16,
+   "average_bitrate": null,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [
+  {
+   "code": "tta.frame-cut"
+  },
+  {
+   "code": "tta.frames-missing"
+  }
+ ],
+ "description": "Every entry of the seek table is 1,000,000 bytes, with the table's CRC-32 right: the first frame is cut and the others lie past the end."
+}

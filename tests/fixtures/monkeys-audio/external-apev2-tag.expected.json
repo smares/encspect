@@ -1,0 +1,143 @@
+{
+ "length": 43207,
+ "descriptor": {
+  "version": 3990,
+  "program": 13420,
+  "descriptor_bytes": 52,
+  "header_bytes": 24,
+  "seek_table_bytes": 4,
+  "header_data_bytes": 44,
+  "frame_data_bytes": 42968,
+  "terminating_bytes": 0,
+  "md5": "8abe0d101af645299e1bfdb6934e7593",
+  "md5_computed": "8abe0d101af645299e1bfdb6934e7593"
+ },
+ "header": {
+  "level": 2000,
+  "flags": 0,
+  "blocks_per_frame": 73728,
+  "final_frame_blocks": 24000,
+  "total_frames": 1,
+  "bits_per_sample": 16,
+  "channels": 2,
+  "sample_rate": 44100
+ },
+ "seek_entries": 1,
+ "frames": [
+  {
+   "index": 0,
+   "offset": 124,
+   "length": 42968,
+   "samples": 24000,
+   "crc": "0x50E93FBE",
+   "special": null,
+   "start": 0,
+   "end": 42968
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Mid/side stereo",
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 631.6296,
+   "encoder": "Monkey's Audio 13.42"
+  }
+ ],
+ "decoded_samples": 24000,
+ "pcm_samples": 24000,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 43092
+  },
+  {
+   "name": "APE",
+   "offset": 43092,
+   "length": 115
+  }
+ ],
+ "encoder": {
+  "tool": "mac, the console tool of the Monkey's Audio SDK 13.42, built from MAC_1342_SDK.zip",
+  "arguments": [
+   "-c2000",
+   "-t",
+   "Artist=Fixture artist|Title=Fixture title|Album=Fixture album"
+  ],
+  "input": {
+   "kind": "wav",
+   "signal": "music",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 24000
+  }
+ },
+ "findings": [
+  {
+   "code": "ape.footer-flags",
+   "contains": "contains-no-footer"
+  }
+ ],
+ "decoded_pcm_md5": "1f2aa13a39b4d886d35336b9c6debe68",
+ "crosscheck": {
+  "mac_verify": true,
+  "samples": 24000
+ }
+}

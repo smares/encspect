@@ -21,6 +21,7 @@ public static class KnownWriters
     public const string Ac3 = "ac3";
     public const string Dts = "dts";
     public const string WindowsMedia = "wma";
+    public const string Tta = "tta";
 
     private static readonly Dictionary<string, (string Kind, string Label)> Rows = new(StringComparer.OrdinalIgnoreCase)
     {

@@ -1,0 +1,83 @@
+{
+ "length": 84,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 84
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 1,
+  "bits": 8,
+  "rate": 8000,
+  "samples": 8359,
+  "crc": "714f565c",
+  "crc_ok": true
+ },
+ "frame_length": 8359,
+ "table": {
+  "offset": 22,
+  "expected": 1,
+  "entries": [
+   54
+  ],
+  "crc": "f4047861",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 30,
+   "size": 54,
+   "status": [],
+   "crc": "a6c45957"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 8000,
+   "channels": 1,
+   "samples": 8359,
+   "duration": 1.044875,
+   "bits_per_sample": 8,
+   "average_bitrate": 0.4134465845196794,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": true,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [],
+ "description": "One frame of 8-bit mono at 8,000 Hz: 8,359 samples, a whole frame."
+}

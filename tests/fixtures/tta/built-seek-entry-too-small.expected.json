@@ -1,0 +1,115 @@
+{
+ "length": 950,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 649
+  },
+  {
+   "name": "Trailing Data",
+   "offset": 649,
+   "length": 301
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 100000,
+  "crc": "fe46365d",
+  "crc_ok": true
+ },
+ "frame_length": 46080,
+ "table": {
+  "offset": 22,
+  "expected": 3,
+  "entries": [
+   204,
+   3,
+   404
+  ],
+  "crc": "931448d9",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 38,
+   "size": 204,
+   "status": [],
+   "crc": "fdd1e9fc"
+  },
+  {
+   "offset": 242,
+   "size": 3,
+   "status": [
+    "small"
+   ]
+  },
+  {
+   "offset": 245,
+   "size": 404,
+   "status": [
+    "crc"
+   ],
+   "crc": "57623a1f"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 53920,
+   "duration": 1.2226757369614512,
+   "bits_per_sample": 16,
+   "average_bitrate": 3.978160237388724,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": false,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 3,
+     "checked": 3,
+     "failed": 2
+    }
+   ]
+  }
+ },
+ "findings": [
+  {
+   "code": "tta.frame-crc-mismatch"
+  },
+  {
+   "code": "tta.frame-too-small"
+  },
+  {
+   "code": "tta.data-after-frames"
+  }
+ ],
+ "description": "The second entry of the seek table is 3 bytes, less than a frame's CRC-32, with the table's CRC-32 right."
+}

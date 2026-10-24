@@ -18,6 +18,7 @@ import aotuv_tool
 import asf_specs
 import blade_tool
 import check_eac3_samples
+import check_monkeys_audio_samples
 import check_mp3pro_samples
 import check_sbr_samples
 import check_usac_samples
@@ -34,8 +35,10 @@ import gpac_tool
 import helix_tool
 import lame_win_tool
 import libdca_source
+import libtta_tool
 import matroska_specs
 import mctoolamed_tool
+import monkeys_audio_tool
 import musepack_tool
 import old_lame_tool
 import wavpack_tool
@@ -66,6 +69,9 @@ def sources():
     wmavoice = json.loads((ROOT / "tests" / "conformance" / "wmavoice-samples.json").read_text(encoding="utf-8"))
     for sample in wmavoice["samples"]:
         yield sample["file"], sample["sha256"], check_wmavoice_samples.addresses(sample)
+    monkeys = json.loads((ROOT / "tests" / "conformance" / "monkeys-audio-samples.json").read_text(encoding="utf-8"))
+    for sample in monkeys["samples"]:
+        yield sample["file"], sample["sha256"], check_monkeys_audio_samples.addresses(sample)
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
     yield a52_trace_tool.ARCHIVE, a52_trace_tool.SHA256, a52_trace_tool.ADDRESSES
     yield "mp3sconsv15.zip", fhg_tool.SHA256, fhg_tool.ADDRESSES
@@ -84,6 +90,8 @@ def sources():
         yield archive, digest, aotuv_tool.windows_addresses(archive)
     yield from musepack_tool.sources()
     yield from wavpack_tool.sources()
+    yield from monkeys_audio_tool.sources()
+    yield from libtta_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
     for name, digest, addresses in matroska_specs.SPECS:
         yield name, digest, addresses

@@ -1,0 +1,130 @@
+{
+ "length": 10696,
+ "descriptor": {
+  "version": 3990,
+  "program": 13420,
+  "descriptor_bytes": 52,
+  "header_bytes": 24,
+  "seek_table_bytes": 4,
+  "header_data_bytes": 44,
+  "frame_data_bytes": 10572,
+  "terminating_bytes": 0,
+  "md5": "b3daa753139230fa1f53e71a2de0a253",
+  "md5_computed": "b3daa753139230fa1f53e71a2de0a253"
+ },
+ "header": {
+  "level": 2000,
+  "flags": 0,
+  "blocks_per_frame": 73728,
+  "final_frame_blocks": 24000,
+  "total_frames": 1,
+  "bits_per_sample": 8,
+  "channels": 1,
+  "sample_rate": 44100
+ },
+ "seek_entries": 1,
+ "frames": [
+  {
+   "index": 0,
+   "offset": 124,
+   "length": 10572,
+   "samples": 24000,
+   "crc": "0x2F38FEF6",
+   "special": null,
+   "start": 0,
+   "end": 10572
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front center"
+   ],
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 24000,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 8,
+   "average_bitrate": 155.4084,
+   "encoder": "Monkey's Audio 13.42"
+  }
+ ],
+ "decoded_samples": 24000,
+ "pcm_samples": 24000,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 10696
+  }
+ ],
+ "encoder": {
+  "tool": "mac, the console tool of the Monkey's Audio SDK 13.42, built from MAC_1342_SDK.zip",
+  "arguments": [
+   "-c2000"
+  ],
+  "input": {
+   "kind": "wav",
+   "signal": "music",
+   "rate": 44100,
+   "channels": 1,
+   "bits": 8,
+   "samples": 24000
+  }
+ },
+ "findings": [],
+ "decoded_pcm_md5": "28f2b3b13c8329424d1dc02a3bb37cbb",
+ "crosscheck": {
+  "mac_verify": true,
+  "samples": 24000
+ }
+}

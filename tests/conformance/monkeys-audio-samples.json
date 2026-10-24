@@ -1,0 +1,41 @@
+{
+ "description": "Real Monkey's Audio files of versions before 3.99 from the FFmpeg sample archive, which the SDK 13.42 can decode and not write, so they are the only encoder-made reference for the coding of those versions (the legacy-* fixtures are written by monkeys_audio_legacy.py and held to the SDK's decoder instead). None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what mac 13.42 (mac -V verifies every frame CRC, mac -d gives the samples), ffmpeg, ffprobe and MediaInfo must report, and what the analyzer must report with --verify. The archive holds one more file of 3.97 (archive/audio/ape, 244 MB, level high), too large to download on every run, and the rest of its Monkey's Audio files are version 3.99.",
+ "sources": {
+  "ffmpeg": {
+   "page": "https://samples.ffmpeg.org/monkeyaudio/",
+   "terms": "The FFmpeg sample archive's 00-README: \"You are free to download any samples you want\". They are downloaded and checked, not committed."
+  }
+ },
+ "samples": [
+  {
+   "file": "sh3.ape",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/monkeyaudio/sh3.ape",
+   "sha256": "9b8e89b81a87001648d58dc9ef440a5b9b8c214a4df07bd22776da1ff6e32004",
+   "md5": "cd96f76b291e24ca9d0967df1357b953",
+   "size": 1477277,
+   "archived": false,
+   "version": 3970,
+   "level": 2000,
+   "flags": 22,
+   "channels": 2,
+   "rate": 44100,
+   "bits": 16,
+   "frames": 3,
+   "samples": 690843,
+   "decoded_pcm_md5": "2a89424a9abea373c15f8a1ccb78d892",
+   "findings": ["ape.v1-not-ascii", "ape.v1-zero-byte"],
+   "info_findings": ["ape.items-unsorted", "monkeys-audio.old-format"],
+   "mediainfo": {
+    "Format": "Monkey's Audio",
+    "Format_Version": "3.970",
+    "Channels": "2",
+    "SamplingRate": "44100",
+    "BitDepth": "16",
+    "Compression_Mode": "Lossless",
+    "Encoded_Library_Settings": "Normal"
+   },
+   "mediainfo_sampling_count": 690826
+  }
+ ]
+}
