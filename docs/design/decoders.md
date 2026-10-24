@@ -1278,7 +1278,7 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
    - the WavPack decoder (its parser exists), and a "wavpack" codec parser for Matroska's blocks, which carry a reduced header that FFmpeg rebuilds into the 32-byte one (`matroskadec.c` 3608-3670);
    - **the work budget** (decision 8 as changed on 2026-10-23), one pull request after the WavPack decoder and before the decoders below: the contract, FLAC and WavPack together, with `DecoderWorkTests` (see [Compatibility and rollout](#compatibility-and-rollout));
    - Monkey's Audio, parser and decoder, on the work contract, with its cases in `DecoderWorkTests`;
-   - TrueHD and MLP, parser and decoder, raw files first, on the work contract, with its cases in `DecoderWorkTests`;
+   - TrueHD and MLP, parser and decoder, raw files first, on the work contract, with its cases in `DecoderWorkTests`, built clean-room (decision 10): the format description `docs/design/truehd-format.md` comes first, written by an agent that reads FFmpeg's `mlpdec.c`, `mlp.c`, `mlp_parse.c` and `mlpdsp.c` and includes no code, and the parser and decoder are written by an agent that has not read them, from that description, the plan and the test vectors, with FFmpeg only as a black-box cross-check;
    - TTA as a format parser and a "tta" codec parser for Matroska's frames, which carry no header (FFmpeg builds it from the track, `matroskadec.c` 2700 and on), without a decoder;
    - WAV and AIFF parsers, without decoders;
    - ALAC's codec parser and WMA Lossless's frames, without decoders if the scope decision moves them.
@@ -1403,7 +1403,7 @@ Smaller decisions of the same review: a parser that offers an unlisted node (a b
 
 ## Decisions
 
-The project lead decided all nine on 2026-10-22: decision 1 as below, in place of the separate decoder projects this design had recommended; decisions 2 to 9 approved as written. The lead changed decision 8 on 2026-10-23, after the WavPack decoder; its numbers are a draft for the lead's review.
+The project lead decided all nine on 2026-10-22: decision 1 as below, in place of the separate decoder projects this design had recommended; decisions 2 to 9 approved as written. The lead changed decision 8 on 2026-10-23, after the WavPack decoder; its numbers are a draft for the lead's review. The lead added decision 10 on 2026-10-24.
 
 1. **Layout (the lead's choice):** each decoder lives in its format project, in the namespace `<project>.Decoding`; parser code never references it, which `DecodingBoundaryTests` checks in the compiled assembly, and the host registers the decoders; `CLAUDE.md` then says "no third-party decoders". It works because the decoder reads the bits with the parser's own code, a change that breaks one fails the same build, and the only coupling that could harm, the parser's on its decoder, is checked. The alternative it replaces: a decoder project per format that references its format project.
 2. **Data flow (approved):** the parser hands each frame to a decode session while it reads it, in the one pass over the file; a prototype in the contract step measured the second entropy pass at 31 % of decoding time (median of 12 files), so the session lends the parser its buffers. Alternative: a second pass the host drives.
@@ -1418,7 +1418,16 @@ The project lead decided all nine on 2026-10-22: decision 1 as below, in place o
    - No bound in the library.
 9. **Tools (approved):** build Monkey's Audio SDK 13.42 (3-clause BSD) and libtta-c 2.3 (LGPLv3) from pinned source for the cross-checks, since no Ubuntu series packages them; no `ffmpeg` fallback for decoding (the plan's open question), FFmpeg stays a cross-check tool. Alternative: FFmpeg as the only second decoder, which cannot decode Monkey's Audio beyond 2 channels and 24 bits.
 
+10. **Licensed sources (decided by the project lead on 2026-10-24):** decoders follow specifications and permissively licensed reference code, with notices (libwavpack now listed); TrueHD and MLP are built clean-room: an agent reads FFmpeg's LGPL `mlpdec.c`, `mlp.c`, `mlp_parse.c` and `mlpdsp.c` and writes a format description with no code in `docs/design/truehd-format.md`, and an implementing agent who never reads FFmpeg's source builds the parser and decoder from that description, the plan and test vectors, using FFmpeg only as a black-box cross-check. The Monkey's Audio decoder follows the BSD-licensed SDK 13.42, not FFmpeg's `apedec.c`.
+    - **libwavpack:** the WavPack decoder follows libwavpack 5.6.0 (BSD 3-clause) closely, and parts are ported from it. Its `COPYING` is in `THIRD-PARTY-NOTICES.md` (taken from the pinned archive, see `scripts/release/make_notices.py`), and the source files that derive from it carry a short notice: `WordDecoder.cs`, `PcmBlockDecoder.cs`, `DsdBlockDecoder.cs` and `StreamDecoder.cs` in `Decoding`, and `BlockContents.cs` and `Decode.cs`, the sub-block reading, whose `wp_exp2s` table is libwavpack's.
+    - **Deferred decoders (decision 5):** ALAC, TTA and WMA Lossless decoders are moved to "Later", not dropped; the PCM analyses wait for them. When they come, ALAC follows Apple's Apache 2.0 source and carries its notice; TTA follows the clean-room split of TrueHD, because libtta-c is LGPLv3 (decision 9 builds it only as a cross-check tool); WMA Lossless follows the clean-room split too, because FFmpeg's `wmalosslessdec.c` is the only detailed source (reverse-engineered, LGPL).
+    - **Audit of the shipped code (2026-10-24):** only the WavPack decoder follows a licensed source closely enough to carry a notice; the FLAC decoder is written from RFC 9639. `third_party/` holds test tools only, in neither build. Other places cite FFmpeg, mp3guessenc, libdca, libvorbis, libspeex or libmpcdec for behavior, limits or constants; the Musepack parser's Huffman and resolution tables are transcribed from libmpcdec (BSD), and the AAC Huffman tables from FFmpeg's `aactab.c`, which also reproduces ISO/IEC 14496-3. Those are listed for the lead in the audit report, not changed here.
+    - The rule is in `CLAUDE.md` and the plan.
+
 ## Open risks and unverified claims
+
+- **Unverified:** whether Dolby patents cover TrueHD (decision 10). No legal conclusion is drawn here.
+- **Unverified:** whether Microsoft patents cover WMA Lossless (decision 10). No legal conclusion is drawn here.
 
 - **Unverified:** whether WMA Lossless holds a checksum that FFmpeg skips; no specification is public.
 - **TrueHD presentations:** what decoding the lower presentations costs beyond their matrices and output, and whether FFmpeg's `-downmix` output gives each presentation's check, is settled by the TrueHD work; decision 6 only says what is compared.
