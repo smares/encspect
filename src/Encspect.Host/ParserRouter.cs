@@ -19,6 +19,29 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
     public bool ParseStream(AnalysisContext caller, string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration, IReadOnlyList<EncoderClaim>? claims) =>
         RunCodec(caller, codecId, parent, () => new CodecContext(parent, payload, ClaimsFor(caller, configuration, claims), this, configuration));
 
+    public bool Recognizes(AnalysisContext caller, string codecId, Node parent, ByteReader payload)
+    {
+        ICodecParser? codec = codecs.FirstOrDefault(c => c.Id == codecId);
+        if (codec is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            return codec.Recognizes(payload);
+        }
+        catch (Exception ex) when (ex is EndOfStreamException or InvalidDataException)
+        {
+            return false;
+        }
+        catch (Exception ex) when (Analyzer.IsParserBug(ex))
+        {
+            caller.AddFinding(Severity.Error, "parse.failed", $"The {codecId} codec parser failed recognizing the data at 0x{parent.Offset:X}: {ex.GetType().Name}: {ex.Message}", parent);
+            return false;
+        }
+    }
+
     public bool ParsePackets(AnalysisContext caller, string codecId, Node parent, IEnumerable<MappedBytes> packets, CodecConfiguration? configuration, IReadOnlyList<EncoderClaim>? claims) =>
         RunCodec(caller, codecId, parent, () => new CodecContext(parent, packets, caller.CancellationToken, ClaimsFor(caller, configuration, claims), this, configuration));
 
