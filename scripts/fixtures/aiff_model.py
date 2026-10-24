@@ -139,7 +139,7 @@ def manifest(data, base=0):
     if comm is None or not comm["channels"]:
         return result
     rate = comm["rate"]
-    valid_rate = rate is not None and 0 < rate <= 2**31 - 1
+    valid_rate = rate is not None and 1 <= rate <= 2**31 - 1
     kind = TYPES.get(comm["type"])
     codec = kind[0] if kind else "Other"
     frame = None

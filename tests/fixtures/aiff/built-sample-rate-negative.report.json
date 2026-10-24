@@ -235,7 +235,7 @@
       {
         "severity": "Warning",
         "code": "aiff.sample-rate-invalid",
-        "message": "The sample rate in the Common Chunk is not a positive finite number that fits 32 bits; the rate is taken to be 0.",
+        "message": "The sample rate in the Common Chunk is not a finite number from 1 to 2,147,483,647 (a rate under one sample frame a second makes durations that overflow); the rate is taken to be 0.",
         "offset": 28,
         "length": 10,
         "path": [

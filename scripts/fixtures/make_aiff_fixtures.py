@@ -124,6 +124,7 @@ fixture("built-aifc-version-unknown", form([chunk("FVER", struct.pack(">I", 1234
 fixture("built-aifc-common-without-type", aifc([chunk("COMM", comm(2, 50, 16, 44100)), chunk("SSND", ssnd(sound()))]), ["aiff.compression-type-missing"], extension="aifc")
 fixture("built-zero-channels", form([chunk("COMM", comm(0, 50, 16, 44100)), chunk("SSND", ssnd(sound()))]), ["aiff.channels-zero"], stream=False)
 fixture("built-sample-rate-zero", form([chunk("COMM", comm(2, 50, 16, 0)), chunk("SSND", ssnd(sound()))]), ["aiff.sample-rate-invalid"])
+fixture("built-sample-rate-below-one", form([chunk("COMM", comm(2, 50, 16, 0.5)), chunk("SSND", ssnd(sound()))]), ["aiff.sample-rate-invalid"])
 fixture("built-sample-rate-infinite", form([chunk("COMM", comm(2, 50, 16, b"\x7f\xff\x80\x00\x00\x00\x00\x00\x00\x00")), chunk("SSND", ssnd(sound()))]), ["aiff.sample-rate-invalid"])
 fixture("built-sample-rate-negative", form([chunk("COMM", comm(2, 50, 16, b"\xc0\x0e\xac\x44\x00\x00\x00\x00\x00\x00")), chunk("SSND", ssnd(sound()))]), ["aiff.sample-rate-invalid"])
 fixture("built-sample-size-zero", form([chunk("COMM", comm(2, 50, 0, 44100)), chunk("SSND", ssnd(sound()))]), ["aiff.sample-size-invalid"])

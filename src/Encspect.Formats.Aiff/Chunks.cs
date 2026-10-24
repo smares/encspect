@@ -67,7 +67,7 @@ internal static class Chunks
         long rateAt = f.Position;
         byte[] ten = f.Reader.ReadBytes(10);
         double? rate = Extended.Decode(ten);
-        bool isRateValid = rate is > 0 and <= int.MaxValue;
+        bool isRateValid = rate is >= 1 and <= int.MaxValue;
         NodeValue shown = rate is null ? NodeValue.Text("not a finite number")
             : !isRateValid ? NodeValue.Text($"{rate.Value.ToString("R", CultureInfo.InvariantCulture)} (not a possible sample rate)")
             : rate == Math.Floor(rate.Value) ? NodeValue.Integer((long)rate.Value, "Hz") : NodeValue.Decimal(rate.Value, 4, "Hz");
@@ -138,7 +138,7 @@ internal static class Chunks
 
         if (!common.IsRateValid)
         {
-            s.Findings.Add(Severity.Warning, "aiff.sample-rate-invalid", rateNode, _ => "The sample rate in the Common Chunk is not a positive finite number that fits 32 bits; the rate is taken to be 0.");
+            s.Findings.Add(Severity.Warning, "aiff.sample-rate-invalid", rateNode, _ => "The sample rate in the Common Chunk is not a finite number from 1 to 2,147,483,647 (a rate under one sample frame a second makes durations that overflow); the rate is taken to be 0.");
         }
 
         AifcType? type = AifcType.Of(common.Type);
