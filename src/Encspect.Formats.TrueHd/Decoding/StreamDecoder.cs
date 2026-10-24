@@ -12,10 +12,10 @@ internal sealed class StreamDecoder : IFrameDecoder
     private const int Row = History + MaxUnit;
 
     // Units a multiply-accumulate of a matrix costs: its sum is 64 bits and its inputs are rows of the presentation.
-    internal const long MatrixTapUnits = 2;
+    internal const long MatrixTapUnits = 3;
 
     // Units each sample period of a substream costs besides the work of its channels: the noise generator, the history moves and the lossless check.
-    internal const long PeriodUnits = 32;
+    internal const long PeriodUnits = 48;
 
     // Units a filter tap costs: a 64-bit multiply-accumulate. A channel with a FIR filter is charged for 8 taps and one with an IIR filter for 4,
     // whatever their orders, since the sums run over all of them.
