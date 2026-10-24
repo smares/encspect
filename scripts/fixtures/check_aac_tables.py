@@ -15,9 +15,13 @@ With --sources (or when .cache/tools holds them), against independent implementa
   its two-step and binary-search methods, simulated here), to the values its index stands for and with its length; and every SBR codeword
   through faad2's SBR trees (libfaad/sbr_huff.c);
 - the scalefactor band offsets and counts for 1024, 128, 960 and 120 lines match fdk-aac 2.0.2's sfbOffsetTables (libAACdec/src/aac_rom.cpp),
-  and PRED_SFB_MAX for AAC Main matches faad2's pred_sfb_max (libfaad/common.c).
+  and PRED_SFB_MAX for AAC Main matches faad2's pred_sfb_max (libfaad/common.c);
+- every spectral, scalefactor and SBR codebook (codewords and lengths), the band counts, PRED_SFB_MAX and the SBR offsets match FFmpeg 6.1.1's
+  (libavcodec/aactab.c, aacsbrdata.h), the release scripts/fixtures/ffmpeg_sources.py pins by SHA-256. FFmpeg is one cross-check next to
+  faad2, not the source of the tables: the specification is.
 
-faad2 is under the GPL and fdk-aac under its own license; their sources are read here, at check time, and nothing of them is copied.
+faad2 is under the GPL, FFmpeg's files under the LGPL and fdk-aac under its own license; their sources are read here, at check time, and
+nothing of them is copied.
 
     python3 scripts/fixtures/check_aac_tables.py [--sources]
 """
@@ -28,6 +32,7 @@ import subprocess
 import sys
 
 import aac_tables as T
+import ffmpeg_sources
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CS = ROOT / "src" / "Encspect.Formats.Aac" / "HuffmanData.cs"
@@ -241,6 +246,38 @@ def fdk_bands(fdk, problems):
     _ = groups
 
 
+def ffmpeg_tables(ffmpeg, problems):
+    """Codewords, lengths, band counts and offsets as FFmpeg 6.1.1 prints them."""
+    aactab = (ffmpeg / "libavcodec" / "aactab.c").read_text(encoding="latin-1")
+    sbr = (ffmpeg / "libavcodec" / "aacsbrdata.h").read_text(encoding="latin-1")
+
+    def array(text, name):
+        match = re.search(r"\b" + re.escape(name) + r"\s*\[[^\]]*\](?:\[[^\]]*\])?\s*=\s*\{(.*?)\};", text, re.S)
+        if not match:
+            raise SystemExit(f"no {name} in FFmpeg's sources")
+        body = re.sub(r"//[^\n]*", "", re.sub(r"/\*.*?\*/", "", match.group(1), flags=re.S))
+        return [int(v, 0) for v in re.findall(r"-?0[xX][0-9a-fA-F]+|-?\d+", body)]
+
+    def compare(label, ours, theirs):
+        if list(ours) != theirs:
+            problems.append(f"{label} differs from FFmpeg 6.1.1's")
+
+    for n, (codes, bits) in enumerate(T.SPECTRAL, 1):
+        compare(f"spectral codebook {n} codewords", codes, array(aactab, f"codes{n}"))
+        compare(f"spectral codebook {n} lengths", bits, array(aactab, f"bits{n}"))
+    compare("scalefactor codewords", T.SCALEFACTOR[0], array(aactab, "ff_aac_scalefactor_code"))
+    compare("scalefactor lengths", T.SCALEFACTOR[1], array(aactab, "ff_aac_scalefactor_bits"))
+    for name in SBR_NAMES:
+        compare(f"{name} codewords", T.SBR_HUFFMAN[name][0], array(sbr, name + "_codes"))
+        compare(f"{name} lengths", T.SBR_HUFFMAN[name][1], array(sbr, name + "_bits"))
+    compare("long band counts", T.NUM_SWB_LONG, array(aactab, "ff_aac_num_swb_1024"))
+    compare("long band counts for 960 lines", T.NUM_SWB_LONG_960, array(aactab, "ff_aac_num_swb_960"))
+    compare("short band counts", T.NUM_SWB_SHORT, array(aactab, "ff_aac_num_swb_128"))
+    compare("short band counts for 120 lines", T.NUM_SWB_SHORT_120, array(aactab, "ff_aac_num_swb_120"))
+    compare("PRED_SFB_MAX", T.PRED_SFB_MAX, array(aactab, "ff_aac_pred_sfb_max"))
+    compare("SBR offsets", [v for row in T.SBR_OFFSET for v in row], array(sbr, "sbr_offset"))
+
+
 def faad_prediction(faad, problems):
     text = (faad / "libfaad" / "common.c").read_text(encoding="latin-1")
     match = re.search(r"pred_sfb_max\[\]\s*=\s*\{(.*?)\};", text, re.S)
@@ -262,7 +299,9 @@ def main(arguments):
         faad_sbr(faad, problems)
         faad_prediction(faad, problems)
         fdk_bands(fdk, problems)
-        checked += "; every codeword through faad2 2.11.1's decoding tables, the band tables against fdk-aac 2.0.2"
+        ffmpeg_tables(ffmpeg_sources.fetch(TOOLS / "ffmpeg-sources"), problems)
+        checked += ("; every codeword through faad2 2.11.1's decoding tables, the band tables against fdk-aac 2.0.2, "
+                    "the codebooks, band counts and SBR offsets against FFmpeg 6.1.1")
     for problem in problems:
         print(problem)
     print(f"Checked {checked}: {len(problems)} problems.")

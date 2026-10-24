@@ -8,7 +8,10 @@ Every text comes from a file, never from memory:
 - scripts/release/licenses/*.txt: the licensors' own license files for the packages that carry only a license expression,
   fetched by --fetch from the repository commit the package's nuspec names, and committed so a run needs no network;
 - scripts/release/licenses/libwavpack.txt: the COPYING of libwavpack 5.6.0, whose code the WavPack decoder is derived from. --fetch extracts it
-  from the archive scripts/fixtures/wavpack_tool.py pins by SHA-256, so the text is libwavpack's own and the hash is checked.
+  from the archive scripts/fixtures/wavpack_tool.py pins by SHA-256, so the text is libwavpack's own and the hash is checked;
+- scripts/release/licenses/libmpcdec.txt and libmpcdec-r495-header.txt: the COPYING of libmpcdec 1.2.6 (identical to that of musepack_src r495,
+  which --fetch checks) and the license comment of r495's huffman.c, which carries another copyright line. --fetch extracts them from the two
+  archives scripts/fixtures/musepack_tool.py pins by SHA-256.
 
 Versions of the packages come from src/Encspect.Gui/obj/project.assets.json (run dotnet restore first).
 
@@ -29,6 +32,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 LICENSES = ROOT / "scripts" / "release" / "licenses"
 OUTPUT = ROOT / "THIRD-PARTY-NOTICES.md"
 LIBWAVPACK_COPYING = LICENSES / "libwavpack.txt"
+LIBMPCDEC_COPYING = LICENSES / "libmpcdec.txt"
+LIBMPCDEC_HEADER = LICENSES / "libmpcdec-r495-header.txt"
 
 # Package whose nuspec names the repository commit, the license file in that repository, and the committed copy.
 FETCHED = [
@@ -125,9 +130,30 @@ def fetch_libwavpack():
     print(f"libwavpack: wavpack-5.6.0/COPYING of {wavpack_tool.WAVPACK[0]} (SHA-256 {wavpack_tool.WAVPACK[1]})")
 
 
+def fetch_libmpcdec():
+    """COPYING of libmpcdec 1.2.6 and the license comment of r495's huffman.c; musepack_tool.fetch checks both archives' SHA-256."""
+    import tarfile
+    import tempfile
+    import textwrap
+    sys.path.insert(0, str(ROOT / "scripts" / "fixtures"))
+    import musepack_tool
+    with tempfile.TemporaryDirectory(prefix="libmpcdec-") as directory:
+        old = tarfile.open(musepack_tool.fetch(musepack_tool.LIBMPCDEC_126, pathlib.Path(directory)))
+        new = tarfile.open(musepack_tool.fetch(musepack_tool.LIBMPC, pathlib.Path(directory)))
+        copying = old.extractfile("libmpcdec-1.2.6/COPYING").read()
+        if new.extractfile("musepack_src_r495/libmpcdec/COPYING").read() != copying:
+            raise SystemExit("The COPYING of libmpcdec r495 differs from that of 1.2.6; the notices need both.")
+        LIBMPCDEC_COPYING.write_bytes(copying)
+        source = new.extractfile("musepack_src_r495/libmpcdec/huffman.c").read().decode("utf-8", "replace")
+        comment = source[source.index("/*") + 2:source.index("*/")]
+        LIBMPCDEC_HEADER.write_text(textwrap.dedent(comment).strip("\n") + "\n", encoding="utf-8", newline="\n")
+    print(f"libmpcdec: COPYING of {musepack_tool.LIBMPCDEC_126[0]} and the license comment of huffman.c in {musepack_tool.LIBMPC[0]}")
+
+
 def fetch(packages, version_of):
     LICENSES.mkdir(parents=True, exist_ok=True)
     fetch_libwavpack()
+    fetch_libmpcdec()
     for name, package, source in FETCHED:
         url, commit = nuspec_commit(nuspec(packages, package, version_of[package]))
         base = url.rstrip("/")
@@ -151,6 +177,8 @@ def build(packages, version_of, runtime_deps):
     angle = read(packages / "avalonia.angle.windows.natives" / v["Avalonia.Angle.Windows.Natives"] / "LICENSE")
     licenses = {name: read(LICENSES / f"{name}.txt") for name, _, _ in FETCHED}
     libwavpack = read(LIBWAVPACK_COPYING)
+    libmpcdec = read(LIBMPCDEC_COPYING)
+    libmpcdec_header = read(LIBMPCDEC_HEADER)
     def copyright_line(package):
         line = nuspec_field(nuspec(packages, package, v[package]), "copyright")
         return f"Package copyright line: {line}\n\n" if line else ""
@@ -167,6 +195,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 
 - **Licensors' own license files:** for the packages that carry only a license expression (`MIT`), the license file of the licensor's repository at the commit the package's nuspec names: Avalonia and Avalonia.Controls.DataGrid (`licence.md`), NWayland (`licence.md`), Tmds.DBus (`COPYING`) and MicroCom (`LICENSE`). The copyright line of the package's nuspec is given as well where the package has one.
 - **libwavpack:** the `COPYING` of libwavpack 5.6.0, extracted from `wavpack-5.6.0.tar.bz2`, the archive `scripts/fixtures/wavpack_tool.py` pins by SHA-256 (`8cbfa15927d29bcf953db35c0cfca7424344ff43ebe4083daf161577fb839cc1`); `scripts/release/make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libwavpack.txt`.
+- **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
 - **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version {runtime_version}.
 
@@ -187,6 +216,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 | SkiaSharp, with the Skia native library | {v["SkiaSharp"]} | MIT (SkiaSharp); Skia is BSD 3-Clause, see the notices of SkiaSharp below | GUI |
 | HarfBuzzSharp, with the HarfBuzz native library | {v["HarfBuzzSharp"]} | MIT (HarfBuzzSharp); HarfBuzz is "Old MIT", see the notices of HarfBuzzSharp below | GUI |
 | libwavpack 5.6.0: the code of Encspect's WavPack decoder derived from it (the entropy decoder, the decorrelation passes, the float restore, the DSD decoders, the sub-block reading) | 5.6.0 | BSD 3-Clause | both builds, all platforms |
+| libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
 
 The command line tool contains the .NET runtime and Encspect's own code only.
 
@@ -252,6 +282,18 @@ Encspect's WavPack decoder is written in C#; the parts derived from libwavpack 5
 
 ```
 {libwavpack}```
+
+## libmpcdec
+
+The tables of Encspect's Musepack parser (`src/Encspect.Formats.Musepack`: the Huffman code tables and resolution tables of stream versions 4 to 7) are taken from libmpcdec 1.2.6 and from `musepack_src` r495, whose files carry two copyright lines. The `COPYING` of libmpcdec 1.2.6 (the file of r495 is the same):
+
+```
+{libmpcdec}```
+
+The license comment at the top of the source files of r495:
+
+```
+{libmpcdec_header}```
 
 ## .NET runtime
 
