@@ -76,6 +76,23 @@ public class TrueHdFindingTests
         TestFiles.CheckInsideParents(report.Root);
     }
 
+    // A unit that waits for a major sync after damage and is cut by the end of the data is a cut unit as well: its node ends where the data does.
+    [Fact]
+    public void ACutUnitAfterDamageEndsWhereTheDataDoes()
+    {
+        byte[] data = Flip(Tiny, 0, 34);
+        List<(int Offset, int Length)> units = Units(data);
+        byte[] cut = data[..(units[^1].Offset + 20)];
+
+        Report report = Analyzer.CreateDefault().Analyze("cut.thd", new MemoryStream(cut));
+
+        Assert.Contains(report.Findings, f => f.Code == "truehd.unit-cut");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        TestFiles.CheckInsideParents(report.Root);
+        Node last = report.Root.Children.Single(c => c.Kind == NodeKind.Stream).Children[^1];
+        Assert.Equal(cut.Length, last.End);
+    }
+
     private static byte[] Fixture(string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "truehd", name));
 
     private static List<(int Offset, int Length)> Units(byte[] data)

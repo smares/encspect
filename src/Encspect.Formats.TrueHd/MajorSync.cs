@@ -183,7 +183,7 @@ internal readonly struct MajorSync
             problem = SyncProblem.Rate;
         }
 
-        if (problem == SyncProblem.None && (count == 0 || (!isTrueHd && count > 2)))
+        if (problem == SyncProblem.None && (count == 0 || count > (isTrueHd ? UnitLayout.MaxSubstreams : 2)))
         {
             problem = SyncProblem.SubstreamCount;
         }

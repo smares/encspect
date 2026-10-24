@@ -61,7 +61,9 @@ internal static class Nodes
         Entry e = r.Entries[index];
         int length = UnitLength(r, index);
         var layout = new UnitLayout();
-        layout.Read(UnitBytes(r, detail, length), detail.KnownCount, detail.KnownIsMlp);
+        byte[] unitBytes = UnitBytes(r, detail, length);
+        layout.Read(unitBytes, detail.KnownCount, detail.KnownIsMlp);
+        layout.ClampTo(unitBytes.Length);
         if (!layout.IsDirectoryRead)
         {
             return Unit(r, index);
@@ -125,6 +127,7 @@ internal static class Nodes
         byte[] bytes = UnitBytes(r, detail, length);
         var layout = new UnitLayout();
         layout.Read(bytes, detail.KnownCount, detail.KnownIsMlp);
+        layout.ClampTo(bytes.Length);
         if (layout.HasSync && layout.Sync is { } sync)
         {
             children.Add(SyncNode(offset + 4, sync));
@@ -264,7 +267,7 @@ internal static class Nodes
             if (detail.IsFull && detail.States is { } states && k < states.Length)
             {
                 SubstreamState state = states[k].Clone();
-                var log = new ParameterLog(start);
+                var log = new ParameterLog(start) { EndBit = content.Length * 8 };
                 MajorSync? sync = detail.InForce ?? layout.Sync;
                 WalkResult walk = SubstreamWalk.Run(state, content, entry.HasCheckData, detail.KnownIsMlp, unitSamples, sync is { } s ? Presentation.MaxListSize(s, k, detail.KnownCount) : 8, default, unitSamples, log);
                 children.AddRange(log.Roots);

@@ -180,6 +180,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     {
         if (_sync is { } before && (before.RateCode != sync.RateCode || before.SubstreamCount != sync.SubstreamCount || before.IsTrueHd != sync.IsTrueHd))
         {
+            Reset();
             throw new InvalidDataException("The stream's format, sampling rate or substream count changes at this major sync, which the decoder does not follow");
         }
 

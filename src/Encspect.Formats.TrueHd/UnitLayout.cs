@@ -224,6 +224,16 @@ internal sealed class UnitLayout
         TrailingBytes = Math.Max(0, Length - (DataStart + (2 * previous)));
     }
 
+    // Moves the substreams' places inside the bytes a unit has, for the nodes of a unit the data cuts short: a place reaches only as far as they do.
+    public void ClampTo(int available)
+    {
+        for (int i = 0; i < SubstreamCount; i++)
+        {
+            Entries[i].Start = Math.Min(Entries[i].Start, available);
+            Entries[i].Stop = Math.Min(Entries[i].Stop, available);
+        }
+    }
+
     // Whether the unit's own bytes are all in data (a unit the data cuts short has fewer).
     public bool IsComplete(int available) => Length >= 4 && available >= Length;
 }

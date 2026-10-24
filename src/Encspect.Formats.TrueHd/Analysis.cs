@@ -196,6 +196,14 @@ internal sealed class Analysis
         Array.Clear(_isIntervalOpen);
     }
 
+    private void ReportCut(int index, long offset, int available, int declared)
+    {
+        CutUnits++;
+        Records records = R;
+        Findings.Add(Severity.Warning, "truehd.unit-cut", () => Nodes.Unit(records, index), _ =>
+            $"The data ends inside the access unit at 0x{offset:X}, after {Counts.Of(available, "byte", "bytes")} of its {Counts.Of(declared, "byte", "bytes")}.");
+    }
+
     // Reads one access unit, whose bytes are all there (or, with isCut, as far as the data goes) and starts at offset, and adds it to the stream.
     // followsLoss: bytes before it were skipped.
     public void AddUnit(ReadOnlyMemory<byte> memory, long offset, bool isCut, bool followsLoss)
@@ -219,6 +227,13 @@ internal sealed class Analysis
         if (!layout.HasSync && !_isSynced)
         {
             status |= UnitStatus.Unsynchronized;
+            if (isCut)
+            {
+                status |= UnitStatus.Cut;
+                R.CutLengths[index] = bytes.Length;
+                ReportCut(index, offset, bytes.Length, length);
+            }
+
             R.Entries.Add(new Entry { Kind = EntryKind.Unit, Status = status, Offset = offset, Header = header });
             Units++;
             if (_hasSynced && _isAfterEndOfStream)
@@ -289,12 +304,8 @@ internal sealed class Analysis
         if (isCut)
         {
             status |= UnitStatus.Cut;
-            CutUnits++;
             isUnreadable = true;
-            long available = bytes.Length;
-            int declared = length;
-            Findings.Add(Severity.Warning, "truehd.unit-cut", () => Nodes.Unit(records, index), _ =>
-                $"The data ends inside the access unit at 0x{offset:X}, after {Counts.Of(available, "byte", "bytes")} of its {Counts.Of(declared, "byte", "bytes")}.");
+            ReportCut(index, offset, bytes.Length, length);
         }
         else if (!isUnreadable)
         {

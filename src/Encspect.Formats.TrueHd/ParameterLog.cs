@@ -13,12 +13,16 @@ internal sealed class ParameterLog(long substreamOffset)
 
     public IReadOnlyList<Node> Roots => _roots;
 
+    // The bit past the last one the substream's content holds: a field a read that overran the data logs ends there at the latest.
+    public int EndBit { get; init; } = int.MaxValue;
+
     public void Open(string name, int startBit, string description, string? topic) => _stack.Push(new Scope(name, startBit, description, topic, []));
 
     public void Close(int endBit, NodeValue? value)
     {
         Scope open = _stack.Pop();
-        Node node = Node.FromBits(open.Name, substreamOffset, open.StartBit, endBit, value, NodeKind.Detail, open.Description, open.Topic);
+        endBit = Math.Min(endBit, EndBit);
+        Node node = Node.FromBits(open.Name, substreamOffset, Math.Min(open.StartBit, endBit), endBit, value, NodeKind.Detail, open.Description, open.Topic);
         foreach (Node child in open.Children)
         {
             node.Add(child);
@@ -27,8 +31,11 @@ internal sealed class ParameterLog(long substreamOffset)
         Add(node);
     }
 
-    public void Field(string name, int startBit, int endBit, NodeValue? value, string description, string? topic = null) =>
-        Add(Node.FromBits(name, substreamOffset, startBit, endBit, value, NodeKind.Detail, description, topic));
+    public void Field(string name, int startBit, int endBit, NodeValue? value, string description, string? topic = null)
+    {
+        endBit = Math.Min(endBit, EndBit);
+        Add(Node.FromBits(name, substreamOffset, Math.Min(startBit, endBit), endBit, value, NodeKind.Detail, description, topic));
+    }
 
     // Closes every scope still open, as a read that failed leaves them.
     public void Unwind(int endBit)

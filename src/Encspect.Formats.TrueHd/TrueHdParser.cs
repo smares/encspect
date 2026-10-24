@@ -219,7 +219,8 @@ public sealed class TrueHdParser : IFormatParser
             }
 
             skipFrom = skipFrom < 0 ? position : skipFrom;
-            long next = Locator.FindSyncUnit(source, position + 1, end, out _);
+            // A unit starts four bytes before its sync word, so a sync word from position + 5 on gives a unit after this one.
+            long next = Locator.FindSyncUnit(source, position + 5, end, out _);
             position = next < 0 ? end : next;
         }
 
