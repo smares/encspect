@@ -475,7 +475,7 @@ Raw files and the decoder: done (October 2026; [truehd.md](formats/truehd.md)). 
 - The analyzer reports:
   - The flag, the substream count and the extended substream info bits.
   - The major sync extension words as bytes.
-  - The fourth substream's length, and its parity and CRC where the directory flags them.
+  - The fourth substream's length and, where the directory flags check data, its last two bytes as the stored parity byte and CRC-8; they are not compared, since nothing says that substream follows the rules of the others.
 - What the fourth substream and the extension words hold is not described by any source read so far, so `HasObjectAudio` and an object count stay unset, unlike for E-AC-3.
 
 **Containers**
