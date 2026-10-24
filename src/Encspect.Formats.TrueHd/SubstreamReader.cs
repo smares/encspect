@@ -189,15 +189,15 @@ internal ref struct SubstreamReader
         }
 
         info.DataEndBit = _bits.Position;
+        if (!_planes.IsEmpty && !_isReplay && _blockIndex < _stride)
+        {
+            _planes[(MetaPlane * _stride) + _blockIndex] = _bits.Position;
+        }
+
         if (s.HasBlockSizeCheck)
         {
             info.HasBlockSizeCheckMismatch = expectedEnd != _bits.Position;
             _bits.Skip(8);
-        }
-
-        if (!_planes.IsEmpty && !_isReplay && _blockIndex < _stride)
-        {
-            _planes[(MetaPlane * _stride) + _blockIndex] = _bits.Position;
         }
 
         _blockIndex++;

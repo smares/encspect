@@ -45,11 +45,13 @@ public class TrueHdDecoderFixtureTests
         public string Hash() => Convert.ToHexStringLower(_hash.GetHashAndReset());
     }
 
-    private static (Report Report, HashingSink Sink) Decode(string name, bool lends = true)
+    private static (Report Report, HashingSink Sink) Decode(string name, bool lends = true) => Decode(name, File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name)), lends);
+
+    private static (Report Report, HashingSink Sink) Decode(string name, byte[] data, bool lends = true)
     {
         var sink = new HashingSink();
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = stream => { sink.Declare(stream.Format); return sink; } } };
-        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        using var stream = new MemoryStream(data);
         Analyzer analyzer = lends ? Analyzer.CreateDefault()
             : new Analyzer(DefaultParsers.Tags, [.. DefaultParsers.Formats.Select(f => f is TrueHdParser ? new TrueHdParser { LendsBuffers = false } : f)], DefaultParsers.Codecs, DefaultParsers.Decoders);
         return (analyzer.Analyze(Path.GetFileName(name), stream, options), sink);
@@ -76,6 +78,25 @@ public class TrueHdDecoderFixtureTests
         Assert.Equal(report.Streams.Single().SampleRate, sink.Format.SampleRate);
         Assert.Equal(report.Streams.Single().Channels, sink.Format.Channels);
         Assert.Equal(report.Streams.Single().BitsPerSample, sink.Format.BitsPerSample);
+    }
+
+    // The block size check adds a size field and a check byte to every block and nothing to the audio: the stream written with them decodes to the audio of
+    // the stream written without, which is the first three units of the encoder's file the fixture is made from.
+    [Fact]
+    public void TheBlockSizeCheckLeavesTheAudioAsItWas()
+    {
+        byte[] plain = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "truehd", "external-truehd-stereo-48k-24.thd"));
+        int length = 0;
+        for (int unit = 0; unit < 3; unit++)
+        {
+            length += (((plain[length] & 0xF) << 8) | plain[length + 1]) * 2;
+        }
+
+        (_, HashingSink expected) = Decode("plain.thd", plain[..length], true);
+        (_, HashingSink actual) = Decode("truehd/built-block-size-check.thd");
+        Assert.Equal(120, expected.Samples);
+        Assert.Equal(expected.Samples, actual.Samples);
+        Assert.Equal(expected.Hash(), actual.Hash());
     }
 
     // The walk that stores nothing makes the decoder read every unit's blocks itself: the same samples and the same verdict come out.

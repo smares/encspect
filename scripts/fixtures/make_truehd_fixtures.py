@@ -377,6 +377,137 @@ def block_size_invalid():
     return b
 
 
+# --- units written again with bits inserted --------------------------------------------------------------------------------------------------
+
+CLI = ROOT / "src" / "Encspect.Cli" / "bin" / "Release" / "net10.0" / "encspect"
+
+
+def block_map(units, extension):
+    """Where the blocks of each substream-0 unit lie, read from the analyzer's tree of the units (the CLI built in Release): per unit, the blocks as
+    (start bit, end bit of the decoding parameters, end bit of the block's last flag), all counted from the substream's first bit."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as folder:
+        path = pathlib.Path(folder) / f"units{extension}"
+        path.write_bytes(b"".join(bytes(u) for u in units))
+        report = json.loads(subprocess.run([str(CLI), "--json", str(path)], capture_output=True, check=True, text=True).stdout)[0]
+
+    def bit(node):
+        return node["offset"] * 8 + (node.get("bitOffset") or 0)
+
+    def end(node):
+        return bit(node) + (node["bitLength"] if "bitLength" in node else node["length"] * 8)
+
+    def find(node, name):
+        return [c for c in node.get("children", []) if c["name"] == name or c["name"].startswith(name)]
+
+    stream = report["root"]["children"][0]
+    result = []
+    for unit in find(stream, "Access Unit"):
+        substream = find(unit, "Substream 0")[0]
+        origin = bit(substream)
+        blocks = []
+        for block in find(substream, "Block "):
+            parameters = find(block, "Decoding Parameters")[0]
+            blocks.append((bit(block) - origin, end(parameters) - origin, end(block) - origin))
+        result.append((blocks, [c["name"] for c in block.get("children", [])]))
+    return result
+
+
+def bits_of_unit(data, start, stop):
+    return [(data[i >> 3] >> (7 - (i & 7))) & 1 for i in range(start, stop)]
+
+
+def rewrite_substream(unit, count, blocks, inserts, replaces=()):
+    """The unit (a bytearray) with bits inserted into its first substream and its lengths, padding, parity byte, CRC-8 and parity nibble worked
+    out again. inserts maps a bit of the substream to the bits (a list) inserted before it; replaces maps a bit to a bit that replaces it."""
+    parsed = m.Unit(bytes(unit), 0, len(unit), count)
+    sub = parsed.substreams[0]
+    body = bits_of_unit(unit[sub["start"]:sub["end"]], 0, (sub["end"] - sub["start"]) * 8)
+    content_end = blocks[-1][2]
+    tail = body[content_end:]
+    assert not any(tail[:(-content_end) % 16 or 0]), "padding bits are used"
+    padding = (-content_end) % 16
+    assert len(tail) == padding + 16, "the unit has an end of stream marker"
+    bits = body[:content_end]
+    for at, value in dict(replaces).items():
+        bits[at] = value
+    out = []
+    for i, value in enumerate(bits):
+        out += inserts.get(i, [])
+        out.append(value)
+    out += [0] * ((-len(out)) % 16)
+    data = bytearray(int("".join(map(str, out[i:i + 8])), 2) for i in range(0, len(out), 8))
+    data += b"\0\0"
+    sync_length = parsed.sync.length if parsed.sync else 0
+    head = bytearray(unit[:parsed.dir_end])
+    end_words = len(data) // 2
+    word = int.from_bytes(head[parsed.dir_start:parsed.dir_start + 2], "big")
+    head[parsed.dir_start:parsed.dir_start + 2] = ((word & 0xF000) | end_words).to_bytes(2, "big")
+    result = head + data
+    words = len(result) // 2
+    result[0] = (result[0] & 0xF0) | (words >> 8)
+    result[1] = words & 0xFF
+    m.refresh(result, count=count)
+    return result
+
+
+@builder("block-size-check")
+def block_size_check():
+    base = Base("truehd-stereo-48k-24", 3)
+    b = Built(base, "The restart header of the first unit states the block size check, so every block carries the 16-bit size field before its residuals and the check byte after them: the three units are written again that way, and their blocks are read.")
+    layout = block_map(base.units, base.extension)
+    units = []
+    for index, unit in enumerate(base.units):
+        blocks, _ = layout[index]
+        inserts = {}
+        replaces = []
+        for start, parameters_end, block_end in blocks:
+            data_end = block_end - 1
+            inserts[parameters_end] = [int(c) for c in format(16 + data_end - parameters_end, "016b")]
+            inserts[data_end] = [0] * 8
+        if index == 0:
+            parsed = m.Unit(bytes(unit), 0, len(unit), 1)
+            sub = parsed.substreams[0]
+            header = sub["restart"]
+            replaces = [(header["bit"] + 88, 1)]
+        new = rewrite_substream(unit, 1, blocks, inserts, replaces)
+        if index == 0:
+            parsed = m.Unit(bytes(new), 0, len(new), 1)
+            sub = parsed.substreams[0]
+            body = bytearray(new[sub["start"]:sub["end"]])
+            m.set_restart_crc(body, m.restart_header(body, 2))
+            new[sub["start"]:sub["end"]] = body
+            m.refresh(new, count=1)
+        units.append(new)
+    b.pieces = [["unit", u] for u in units]
+    b.findings = [finding("truehd.block-size-check", "carries the check data")]
+    return b
+
+
+@builder("parameters-change-within-unit")
+def parameters_change_within_unit():
+    base = Base("truehd-stereo-48k-24", 3)
+    b = Built(base, "The second block of the first unit states output shifts, which the first block's parameters do not: the unit changes them within itself.")
+    blocks, _ = block_map(base.units, base.extension)[0]
+    assert len(blocks) == 2
+    start, parameters_end, block_end = blocks[1]
+    unit = base.units[0]
+    parsed = m.Unit(bytes(unit), 0, len(unit), 1)
+    sub = parsed.substreams[0]
+    body = bits_of_unit(unit[sub["start"]:sub["end"]], 0, (sub["end"] - sub["start"]) * 8)
+    # The parameters begin with the presence flags' present bit, the block size's present bit and its nine bits, then the matrices' present bit and
+    # the output shifts' present bit.
+    at = start + 2
+    assert body[at] == 0 and body[at + 1] == 1, "block size present"
+    at += 11
+    assert body[at] == 0 and body[at + 1] == 0, "no matrices, no output shifts"
+    channels = sub["restart"]["matrix_last"] + 1
+    new = rewrite_substream(unit, 1, blocks, {at + 2: [0, 0, 0, 1] * channels}, [(at + 1, 1)])
+    b.pieces = [["unit", new]] + [["unit", u] for u in base.units[1:]]
+    b.findings = [finding("truehd.parameters-change-within-unit", "changes the matrices")]
+    return b
+
+
 # --- the manifests --------------------------------------------------------------------------------------------------------------------------
 
 def framing_of(pieces):

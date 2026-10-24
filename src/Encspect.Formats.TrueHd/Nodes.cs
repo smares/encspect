@@ -47,6 +47,7 @@ internal static class Nodes
     private static int MajorSyncLengthOf(Records r, int index) => MajorSync28;
 
     private const int MajorSync28 = 28;
+    private const int UnitHeaderLength = 4;
 
     // The node of substream k of a unit: the node findings about it point to. A unit whose substreams the tree does not list gives the unit's own.
     public static Node SubstreamOf(Records r, int index, int k)
@@ -139,6 +140,14 @@ internal static class Nodes
         }
 
         children.Add(DirectoryNode(offset, layout, bytes));
+
+        // The parity covers the unit header and the directory, not the major sync between them.
+        children.Add(new Node("IsParityValid", offset, layout.DataStart, NodeValue.Boolean((layout.Problems & UnitProblems.Parity) == 0))
+        {
+            Description = Explain.IsParityValid,
+            Topic = Topics.AccessUnits,
+            Ranges = [new ByteRange(offset, UnitHeaderLength), new ByteRange(offset + layout.DirectoryStart, layout.DirectoryLength)],
+        });
         int samples = detail.InForce?.UnitSamples ?? layout.Sync?.UnitSamples ?? 0;
         for (int k = 0; k < layout.SubstreamCount; k++)
         {
@@ -225,7 +234,6 @@ internal static class Nodes
             at += size;
         }
 
-        node.Add(new Node("IsParityValid", offset, layout.DataStart, NodeValue.Boolean((layout.Problems & UnitProblems.Parity) == 0)) { Description = Explain.IsParityValid, Topic = Topics.AccessUnits });
         return node;
     }
 

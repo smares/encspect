@@ -1,0 +1,330 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-parameters-change-within-unit.thd",
+    "root": {
+      "name": "File",
+      "value": "TrueHD",
+      "offset": 0,
+      "length": 412,
+      "children": [
+        {
+          "name": "Dolby TrueHD",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 412,
+          "children": [
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 412,
+              "children": [
+                {
+                  "name": "Access Units",
+                  "value": 3,
+                  "unit": "units",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Major Syncs",
+                  "value": 1,
+                  "unit": "syncs",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Samples",
+                  "value": 120,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.0025,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Sampling Rate",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "stereo (front left, front right)",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 24,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Substreams",
+                  "value": 1,
+                  "unit": "substreams",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Presentations",
+                  "value": "2 channels",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "SignalsAtmos",
+                  "value": false,
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Restart Headers",
+                  "value": 1,
+                  "unit": "headers",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Verified Parity Nibbles",
+                  "value": 3,
+                  "unit": "units",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Verified Major Sync Checksums",
+                  "value": 1,
+                  "unit": "syncs",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Verified Restart Header Checksums",
+                  "value": 1,
+                  "unit": "headers",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Verified Substream Checksums",
+                  "value": 3,
+                  "unit": "substreams",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Stored Lossless Checks",
+                  "value": 0,
+                  "unit": "checks",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Shortest Access Unit",
+                  "value": 94,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Longest Access Unit",
+                  "value": 214,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 1318.4,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "unknown",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Smallest Run",
+                  "value": 412,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Largest Run",
+                  "value": 412,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 1318.4,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 1318.4,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 412
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 412,
+                  "children": [
+                    {
+                      "name": "1312 to 1343 kbps",
+                      "value": "1 run (100.0%)",
+                      "offset": 0,
+                      "length": 412
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "Dolby TrueHD",
+        "sampleRate": 48000,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 24,
+        "samples": 120,
+        "duration": 0.0025,
+        "averageBitrate": 1318.4,
+        "isVbr": false,
+        "verification": {
+          "isVerified": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "major sync CRC-16",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "unit parity nibble",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 3,
+              "checked": 3,
+              "failed": 0
+            },
+            {
+              "name": "restart header CRC-8",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "substream parity byte",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 3,
+              "checked": 3,
+              "failed": 0
+            },
+            {
+              "name": "substream CRC-8",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 3,
+              "checked": 3,
+              "failed": 0
+            },
+            {
+              "name": "lossless check, substream 0 (2-channel presentation)",
+              "covers": "decodedAudio",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              0
+            ],
+            "values": [
+              1318.4
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              1318
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "truehd.parameters-change-within-unit",
+        "message": "A block after the first of substream 0 in the access unit at 0x0 changes the matrices, output shifts or quantizer step sizes. The analyzer applies the ones in force at the end of the unit to all its samples, as FFmpeg does; no file it was tested on changes them inside a unit, so this is unconfirmed.",
+        "offset": 34,
+        "length": 180,
+        "count": 1
+      }
+    ]
+  }
+]
