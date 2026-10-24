@@ -116,6 +116,9 @@ internal sealed class Analysis
 
     public int SubstreamCount => _count;
 
+    // The substreams the decoding session was opened for, those of the sync of the first unit that could be read; 0 where none was opened.
+    public int SessionSubstreams { get; private set; }
+
     public bool IsMlp => _isMlp;
 
     public int[] PresentationChannels => _presentationChannels;
@@ -800,6 +803,7 @@ internal sealed class Analysis
             return;
         }
 
+        SessionSubstreams = read;
         Session = _context.StartDecoding(sync.IsTrueHd ? TrueHdCodecParser.TrueHdId : TrueHdCodecParser.MlpId, new DecodeSetup
         {
             Stream = Stream,

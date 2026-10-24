@@ -93,12 +93,14 @@ public class TrueHdFindingTests
         Assert.Equal(cut.Length, last.End);
     }
 
-    // The lossless checks a decoder reports are the ones the parser declared, also for a stream whose later major syncs change the substreams it has:
-    // the decoder opens with the first sync and does not follow the change, and the parser declares for the first sync's substreams.
-    [Fact]
-    public void ADecodedStreamThatChangesItsSubstreamsDeclaresWhatTheDecoderReports()
+    // The lossless checks a decoder reports are the ones the parser declared: for the substreams of the sync the decoder was opened with, which is
+    // not the stream's first sync where its first units cannot be read, and not a later one, which the decoder does not follow.
+    [Theory]
+    [InlineData("truehd-lossless-checks-of-a-stream-that-adds-a-substream.bin")]
+    [InlineData("truehd-lossless-checks-of-a-stream-whose-first-unit-is-not-readable.bin")]
+    public void TheLosslessChecksADecoderReportsAreTheOnesTheParserDeclared(string name)
     {
-        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", "truehd-lossless-checks-of-a-stream-that-adds-a-substream.bin"));
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", name));
 
         Report report = Analyzer.CreateDefault().Analyze("changes.thd", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
 

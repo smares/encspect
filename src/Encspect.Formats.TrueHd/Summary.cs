@@ -42,8 +42,8 @@ internal static class Summary
             return null;
         }
 
-        // The substreams the decoder was opened for, those of the first major sync: it does not follow a stream that changes.
-        int read = Math.Min(sync.SubstreamCount, Analysis.ParsedSubstreams);
+        // The substreams the decoder was opened for, those of the sync of the first unit that could be read: it does not follow a stream that changes.
+        int read = a.SessionSubstreams > 0 ? a.SessionSubstreams : Math.Min(sync.SubstreamCount, Analysis.ParsedSubstreams);
         var tallies = new List<ChecksumTally>
         {
             new() { Name = ChecksumNames.MajorSyncCrc, Covers = ChecksumCoverage.Header, Stored = a.SyncUnits, Checked = a.SyncUnits, Failed = a.SyncCrcFailures },
