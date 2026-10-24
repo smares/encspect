@@ -27,6 +27,10 @@ lossless codings the decoder design cites):
   pssh, senc, saiz, saio, and the adrm box of Audible's files, mov_read_adrm) and the Common Encryption writer that makes the project's encrypted
   fixtures; the encryption info header says what the pattern's crypt and skip block counts are (16-byte blocks).
 
+- libavcodec/mlp.c, mlp.h, mlp_parse.c, mlp_parse.h, mlpdec.c, mlpdsp.c, mlpenc.c, mlp_parser.c, truehd_core_bsf.c and profiles.c, and
+  libavformat/mlpdec.c, movenc.c, isom_tags.c and matroska.c (with mov.c and matroskadec.c above): the TrueHD and MLP decoder, encoder,
+  parser, bitstream filter and container handling that docs/design/truehd-format.md is written from.
+
 The release is the one Ubuntu 24.04's ffmpeg 6.1.1 is built from, which the cross-checks run.
 """
 
@@ -57,7 +61,8 @@ FILES = [
     "libavcodec/apedec.c", "libavformat/ape.c",
     "libavcodec/tta.c", "libavcodec/ttadata.c", "libavcodec/ttadata.h", "libavcodec/ttaenc.c", "libavformat/tta.c",
     "libavcodec/mlp.c", "libavcodec/mlp.h", "libavcodec/mlp_parse.c", "libavcodec/mlp_parse.h", "libavcodec/mlpdec.c",
-    "libavcodec/mlpdsp.c", "libavcodec/mlpenc.c", "libavcodec/mlp_parser.c",
+    "libavcodec/mlpdsp.c", "libavcodec/mlpenc.c", "libavcodec/mlp_parser.c", "libavcodec/truehd_core_bsf.c", "libavcodec/profiles.c",
+    "libavformat/mlpdec.c", "libavformat/movenc.c", "libavformat/isom_tags.c", "libavformat/matroska.c",
     "libavcodec/alac.c", "libavcodec/alac_data.c", "libavcodec/alac_data.h",
     "libavformat/matroskadec.c",
 ]
