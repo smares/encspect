@@ -1421,7 +1421,7 @@ What the pull request for decision 8 implements: the contract, the host's count 
 - **The DSD setup in the fast mode is counted from the history bits** (`DsdBlockDecoder.SetupWork`): 1,792 units for each of the 2^bits bins (256 cleared, 256 summed, at most 1,280 looked up), 57,344 at the 5 bits the draft counts, instead of a flat 57,000. The high mode charges 4,096.
 - **An `OperationCanceledException` no cancellation explains is `decode.failed`** (the lead's decision, above), where the contract step had it pass through.
 - **A muted block is charged its passes.** The charge comes before the decode, and a block whose bitstream ends is only found muted by decoding it, so the 16-pass muted block of `DecoderWorkTests` is charged 160 units a sample for work that costs about 8 ns (0.12 of the reference). This over-charges and cannot under-bound.
-- **Run time:** the nightly run of `DecoderWorkTests` takes 5.2 to 5.5 minutes on the machine below (the draft estimated 3 to 4), and its 29 tests are one test for each case and the reference's own charge.
+- **Run time:** the nightly run of `DecoderWorkTests` takes 5.2 to 5.5 minutes on the machine below (the draft estimated 3 to 4), and its 35 tests are one test for each case and the reference's own charge. Six of the cases are zero runs with 0 or 1 pass at 1, 2 and 4 bytes a sample, added after the review: a planted `WorkPerPcmSample = 0` fails four of them (2.08 to 2.81 times) and two more read 1.95 and 1.97, where only one fixture had held that weight; a run on the final code reads their ratios 1.2 to 1.43.
 
 ### The measurements
 
@@ -1475,6 +1475,7 @@ What the pull request for decision 8 implements: the contract, the host's count 
 
 ### What a planted bug does
 
+- **WavPack stops charging 16 units a PCM sample** (`WorkPerPcmSample = 0`): four of the six few-pass cases fail (see above); before them one fixture held it.
 - **WavPack stops charging its passes** (the `AddWork` of the passes removed): `wavpack-term-17`, `-term-18`, `-terms-1-to-8` and `-term-17-zero-run` fail with 3.2, 3.3, 4.2 and 4.3 times the reference. The floor of the charge does not see it, and the fixtures still pass, as the draft says.
 - **FLAC stops charging its taps:** the case of order 32 in 64-bit sums fails (2.16 times, with the draft's 1 unit a tap; the reference loses its taps too, which hides most of it), and `DecoderChargeTests` and `TheReferenceChargesWhatItsFramesSay` fail at once, since they hold the counting to the unit.
 - **FLAC stops charging its samples:** the floor catches it in every fixture: `decode.failed`, "The decoder charged 40960 work units for 4096 samples of 2 channels, fewer than the 131072 that 16 units for each of them make."
