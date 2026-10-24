@@ -190,8 +190,10 @@ def directory_end_past_unit():
 def data_skipped():
     b = Built(Base("truehd-stereo-48k-24", 80), "37 bytes of junk lie between units 20 and 21: the stream is found again at the next major sync, in unit 32.")
     junk = bytes((0xA5 ^ (7 * i)) & 0xFF for i in range(37))
-    b.pieces.insert(21, ["junk", junk])
-    b.counts.insert(21, None)
+    # The junk and the units up to the next major sync are one stretch the analyzer skips.
+    stretch = junk + b"".join(bytes(p[1]) for p in b.pieces[21:32])
+    b.pieces[21:32] = [["junk", stretch]]
+    b.counts[21:32] = [None]
     b.findings = [finding("truehd.data-skipped", "no access unit that checks out")]
     return b
 
@@ -224,6 +226,31 @@ def parameters_change():
     b.counts += other.counts
     b.findings = [finding("truehd.stream-parameters-change", "changes the stream's format")]
     b.parameters_change_from = 40
+    b.decode_findings = ["decode.frame-invalid"]
+    return b
+
+
+@builder("tiny-truehd-stereo")
+def tiny_truehd_stereo():
+    b = Built(Base("truehd-stereo-48k-24", 12), "Twelve units of a stereo stream, a major sync and eleven units, for a golden report that lists every node.")
+    b.golden_full = True
+    b.ffmpeg = True
+    return b
+
+
+@builder("tiny-truehd-51")
+def tiny_truehd_51():
+    b = Built(Base("truehd-51-48k-24-cholesky", 12), "Twelve units of a 5.1 stream of two substreams, for a golden report that lists every node.")
+    b.golden_full = True
+    b.ffmpeg = True
+    return b
+
+
+@builder("tiny-mlp-stereo")
+def tiny_mlp_stereo():
+    b = Built(Base("mlp-stereo-48k-24", 12), "Twelve units of an MLP stream, for a golden report that lists every node.")
+    b.golden_full = True
+    b.ffmpeg = True
     return b
 
 
@@ -364,8 +391,10 @@ def framing_of(pieces):
 def manifest_of(b, path, data, framing, previous):
     """The manifest of a built fixture: what the model reads and the analyzer must report."""
     result = m.manifest(data, framing, b.counts, b.unreadable, b.lossless_failures, getattr(b, "parameters_change_from", None))
-    manifest = {"description": b.description, **result, "findings": b.findings, "decode_findings": b.decode_findings, "regions": [{"name": "TrueHD", "offset": 0, "length": len(data)}],
+    manifest = {"description": b.description, **result, "findings": b.findings, "decode_findings": b.decode_findings, "regions": [{"name": result["format"], "offset": 0, "length": len(data)}],
                 "crosscheck": {"ffmpeg": b.ffmpeg}}
+    if not getattr(b, "golden_full", False):
+        manifest["golden_hides"] = ["frames"]
     if b.ffmpeg:
         if previous is not None and "decoded_pcm_md5" in previous and previous.get("length") == len(data):
             manifest["decoded_pcm_md5"] = previous["decoded_pcm_md5"]

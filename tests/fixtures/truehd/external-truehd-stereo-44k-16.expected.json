@@ -202,8 +202,9 @@
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "encoder": {"tool": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers (ffmpeg package of Ubuntu 24.04)", "codec": "truehd", "arguments": [], "input": {"kind": "music", "rate": 44100, "layout": "stereo", "bits": 16, "samples": 6600}},
  "decoded_pcm_md5": "3eab9719a1f0e16483a40a2c0300feee",
- "regions": [{"name": "TrueHD", "offset": 0, "length": 15204}],
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 15204}],
  "findings": [],
  "sampling": {"unit_samples": 40},
- "crosscheck": {"ffmpeg": true}
+ "crosscheck": {"ffmpeg": true},
+ "golden_hides": ["frames"]
 }

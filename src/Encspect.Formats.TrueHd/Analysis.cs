@@ -51,6 +51,9 @@ internal sealed class Analysis
     // The stream's node, which the nodes of the units are children of; set before the first unit.
     public Node Stream { get; set; } = null!;
 
+    // Whether the walk stores the residuals in the buffers the session lends.
+    public bool LendsBuffers { get; init; } = true;
+
     // The nodes before the units.
     public List<Node> Leading { get; } = [];
 
@@ -486,7 +489,7 @@ internal sealed class Analysis
         }
 
         SampleBuffers lent = default;
-        if (Session is { IsDecoding: true } session)
+        if (LendsBuffers && Session is { IsDecoding: true } session)
         {
             lent = session.Lend(n, ParsedSubstreams * SubstreamReader.PlanesPerSubstream);
             for (int k = 0; k < read && !lent.IsEmpty; k++)

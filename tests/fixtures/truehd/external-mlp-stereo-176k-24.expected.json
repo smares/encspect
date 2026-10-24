@@ -78,8 +78,9 @@
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "encoder": {"tool": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers (ffmpeg package of Ubuntu 24.04)", "codec": "mlp", "arguments": [], "input": {"kind": "music", "rate": 176400, "layout": "stereo", "bits": 24, "samples": 8800}},
  "decoded_pcm_md5": "26461b1786ea7e5b1332875a5a4b345e",
- "regions": [{"name": "TrueHD", "offset": 0, "length": 29680}],
+ "regions": [{"name": "MLP", "offset": 0, "length": 29680}],
  "findings": [],
  "sampling": {"unit_samples": 160},
- "crosscheck": {"ffmpeg": true}
+ "crosscheck": {"ffmpeg": true},
+ "golden_hides": ["frames"]
 }

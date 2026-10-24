@@ -146,8 +146,8 @@ def manifest_for(path, encoder):
     info = result["stream_infos"][0]
     samples, digest = canonical(values, channels, ff_layout, info["layout"], info["bits_per_sample"])
     assert samples == total == result["decoded_samples"], f"{path.name}: the model counts {result['decoded_samples']} samples, FFmpeg {total}"
-    return {**result, "encoder": encoder, "decoded_pcm_md5": digest, "regions": [{"name": "TrueHD", "offset": 0, "length": len(data)}], "findings": [],
-            "sampling": {"unit_samples": n}, "crosscheck": {"ffmpeg": True}}
+    return {**result, "encoder": encoder, "decoded_pcm_md5": digest, "regions": [{"name": result["format"], "offset": 0, "length": len(data)}], "findings": [],
+            "sampling": {"unit_samples": n}, "crosscheck": {"ffmpeg": True}, "golden_hides": ["frames"]}
 
 
 def manifest_path(path):

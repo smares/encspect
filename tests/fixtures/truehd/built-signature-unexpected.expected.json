@@ -70,7 +70,8 @@
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "findings": [{"code": "truehd.unexpected-value", "contains": "signature"}],
  "decode_findings": [],
- "regions": [{"name": "TrueHD", "offset": 0, "length": 5310}],
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 5310}],
  "crosscheck": {"ffmpeg": true},
+ "golden_hides": ["frames"],
  "decoded_pcm_md5": "a934960d868d484233f897ffe322c125"
 }

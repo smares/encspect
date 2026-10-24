@@ -110,8 +110,9 @@
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "encoder": {"tool": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers (ffmpeg package of Ubuntu 24.04)", "codec": "mlp", "arguments": [], "input": {"kind": "loud", "rate": 44100, "layout": "5.1", "bits": 16, "samples": 3300}},
  "decoded_pcm_md5": "aafa6f593dd799ee024e9602180c577d",
- "regions": [{"name": "TrueHD", "offset": 0, "length": 42930}],
+ "regions": [{"name": "MLP", "offset": 0, "length": 42930}],
  "findings": [],
  "sampling": {"unit_samples": 40},
- "crosscheck": {"ffmpeg": true}
+ "crosscheck": {"ffmpeg": true},
+ "golden_hides": ["frames"]
 }

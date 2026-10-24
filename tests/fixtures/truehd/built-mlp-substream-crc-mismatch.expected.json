@@ -90,7 +90,8 @@
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "findings": [{"code": "truehd.substream-crc-mismatch", "contains": "differs from the one computed"}],
  "decode_findings": [],
- "regions": [{"name": "TrueHD", "offset": 0, "length": 7090}],
+ "regions": [{"name": "MLP", "offset": 0, "length": 7090}],
  "crosscheck": {"ffmpeg": true},
+ "golden_hides": ["frames"],
  "decoded_pcm_md5": "8096fa3948050f934eea5a264975338a"
 }

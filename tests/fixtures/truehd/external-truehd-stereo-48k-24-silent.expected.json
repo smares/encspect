@@ -285,8 +285,9 @@
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "encoder": {"tool": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers (ffmpeg package of Ubuntu 24.04)", "codec": "truehd", "arguments": [], "input": {"kind": "silent", "rate": 48000, "layout": "stereo", "bits": 24, "samples": 9600}},
  "decoded_pcm_md5": "059351b2ad6298fb2f5cac95cf0e4dd4",
- "regions": [{"name": "TrueHD", "offset": 0, "length": 11584}],
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 11584}],
  "findings": [],
  "sampling": {"unit_samples": 40},
- "crosscheck": {"ffmpeg": true}
+ "crosscheck": {"ffmpeg": true},
+ "golden_hides": ["frames"]
 }

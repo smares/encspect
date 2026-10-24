@@ -13,6 +13,10 @@ public sealed class TrueHdParser : IFormatParser
 
     public string Name => FormatName;
 
+    // False makes the walk store nothing, so the decoder reads every unit's blocks itself: the contract as first drafted, which the tests compare the
+    // lending walk with (docs/design/decoders.md, "The second entropy pass").
+    internal bool LendsBuffers { get; init; } = true;
+
     // A usable major sync (its CRC holds) followed by units that fit: class 94 where the chain of units reaches it from the start of the data
     // (the units before the first sync have no sync of their own, so only their length words chain), 60 further in. Verified units are those
     // whose major sync CRC holds or whose substreams' parity bytes and CRC-8 all hold.
@@ -120,7 +124,7 @@ public sealed class TrueHdParser : IFormatParser
         List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
         ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
         var source = new Source(reader);
-        var analysis = new Analysis(context);
+        var analysis = new Analysis(context) { LendsBuffers = LendsBuffers };
         long first = Locator.FindSyncUnit(source, reader.Start, Math.Min(reader.End, reader.Start + Locator.SearchLimit), out MajorSync sync);
         bool isMlp = first >= 0 && !sync.IsTrueHd;
         Records records = analysis.Records;

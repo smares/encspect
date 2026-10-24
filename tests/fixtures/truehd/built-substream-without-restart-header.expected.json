@@ -71,6 +71,7 @@
  "counts": {"leading": 0, "after_damage": 15, "unreadable": 1, "cut": 0, "skipped_bytes": 0},
  "findings": [{"code": "truehd.substream-without-restart-header", "contains": "no restart header"}, {"code": "truehd.units-after-damage", "contains": "follow damage"}],
  "decode_findings": [],
- "regions": [{"name": "TrueHD", "offset": 0, "length": 12946}],
- "crosscheck": {"ffmpeg": false}
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 12946}],
+ "crosscheck": {"ffmpeg": false},
+ "golden_hides": ["frames"]
 }

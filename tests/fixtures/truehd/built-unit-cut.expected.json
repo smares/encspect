@@ -106,6 +106,7 @@
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 1, "cut": 1, "skipped_bytes": 0},
  "findings": [{"code": "truehd.unit-cut", "contains": "ends inside the access unit"}],
  "decode_findings": [],
- "regions": [{"name": "TrueHD", "offset": 0, "length": 8826}],
- "crosscheck": {"ffmpeg": false}
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 8826}],
+ "crosscheck": {"ffmpeg": false},
+ "golden_hides": ["frames"]
 }

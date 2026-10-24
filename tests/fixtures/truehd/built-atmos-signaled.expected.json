@@ -76,7 +76,8 @@
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "findings": [{"code": "truehd.atmos-signaled", "contains": "Dolby Atmos"}],
  "decode_findings": [],
- "regions": [{"name": "TrueHD", "offset": 0, "length": 23080}],
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 23080}],
  "crosscheck": {"ffmpeg": true},
+ "golden_hides": ["frames"],
  "decoded_pcm_md5": "13ae51ca84db2c91b3e51989db178bbb"
 }

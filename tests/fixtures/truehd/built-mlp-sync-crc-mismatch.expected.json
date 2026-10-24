@@ -87,6 +87,7 @@
  "counts": {"leading": 0, "after_damage": 15, "unreadable": 1, "cut": 0, "skipped_bytes": 0},
  "findings": [{"code": "truehd.major-sync-crc-mismatch", "contains": "is computed over it"}, {"code": "truehd.units-after-damage", "contains": "follow damage"}],
  "decode_findings": [],
- "regions": [{"name": "TrueHD", "offset": 0, "length": 7090}],
- "crosscheck": {"ffmpeg": false}
+ "regions": [{"name": "MLP", "offset": 0, "length": 7090}],
+ "crosscheck": {"ffmpeg": false},
+ "golden_hides": ["frames"]
 }

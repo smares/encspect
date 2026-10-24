@@ -106,6 +106,7 @@
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "findings": [],
  "decode_findings": ["truehd.lossless-check-failed"],
- "regions": [{"name": "TrueHD", "offset": 0, "length": 8880}],
- "crosscheck": {"ffmpeg": false}
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 8880}],
+ "crosscheck": {"ffmpeg": false},
+ "golden_hides": ["frames"]
 }

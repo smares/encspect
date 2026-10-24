@@ -96,7 +96,8 @@
  "counts": {"leading": 8, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "findings": [{"code": "truehd.units-before-major-sync", "contains": "before the first major sync"}],
  "decode_findings": [],
- "regions": [{"name": "TrueHD", "offset": 0, "length": 7982}],
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 7982}],
  "crosscheck": {"ffmpeg": true},
+ "golden_hides": ["frames"],
  "decoded_pcm_md5": "6aff05f678cdafc4ea7c4945776bebbc"
 }
