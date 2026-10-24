@@ -1,0 +1,59 @@
+{
+ "length": 11836,
+ "container": {
+  "id": "FORM",
+  "form": "AIFC",
+  "size": 11828,
+  "end": 11836
+ },
+ "chunks": [
+  {
+   "id": "FVER",
+   "offset": 12,
+   "end": 24,
+   "size": 4,
+   "length": 4
+  },
+  {
+   "id": "COMM",
+   "offset": 24,
+   "end": 56,
+   "size": 24,
+   "length": 24
+  },
+  {
+   "id": "SSND",
+   "offset": 56,
+   "end": 11836,
+   "size": 11772,
+   "length": 11772
+  }
+ ],
+ "stream": {
+  "codec": "IMA ADPCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": null,
+  "samples": 11072,
+  "duration": 0.2510657596371882,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 374.85,
+  "type": "ima4"
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "adpcm_ima_qt"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 44100,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

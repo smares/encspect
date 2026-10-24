@@ -1,0 +1,51 @@
+{
+ "length": 316,
+ "container": {
+  "id": "RIFF",
+  "size": 308,
+  "end": 316
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 40,
+   "size": 20,
+   "length": 20
+  },
+  {
+   "id": "fact",
+   "offset": 40,
+   "end": 52,
+   "size": 4,
+   "length": 4
+  },
+  {
+   "id": "data",
+   "offset": 52,
+   "end": 316,
+   "size": 256,
+   "length": 256
+  }
+ ],
+ "stream": {
+  "codec": "IMA ADPCM",
+  "sample_rate": 11025,
+  "channels": 1,
+  "bits": null,
+  "samples": 505,
+  "duration": 0.04580498866213152,
+  "layout": [
+   "front center"
+  ],
+  "average_bitrate": 44.711287128712875
+ },
+ "findings": [
+  {
+   "code": "wav.format-extra-size"
+  },
+  {
+   "code": "wav.coding-not-analyzed"
+  }
+ ]
+}

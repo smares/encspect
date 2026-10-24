@@ -1,0 +1,43 @@
+{
+ "length": 155,
+ "container": {
+  "id": "FORM",
+  "form": "AIFF",
+  "size": 147,
+  "end": 155
+ },
+ "chunks": [
+  {
+   "id": "COMM",
+   "offset": 12,
+   "end": 38,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "SSND",
+   "offset": 38,
+   "end": 155,
+   "size": 109,
+   "length": 109
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 8000,
+  "channels": 1,
+  "bits": 8,
+  "samples": 101,
+  "duration": 0.012625,
+  "layout": [
+   "front center"
+  ],
+  "average_bitrate": 63.99999999999999,
+  "type": "NONE"
+ },
+ "findings": [
+  {
+   "code": "aiff.pad-byte-missing"
+  }
+ ]
+}

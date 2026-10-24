@@ -1,0 +1,510 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-leading-id3v2.aiff",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 313,
+      "children": [
+        {
+          "name": "ID3v2",
+          "kind": "Tag",
+          "value": "2.3.0",
+          "offset": 0,
+          "length": 59,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 10,
+              "children": [
+                {
+                  "name": "Identifier",
+                  "value": "ID3",
+                  "offset": 0,
+                  "length": 3
+                },
+                {
+                  "name": "Version",
+                  "value": "2.3.0",
+                  "offset": 3,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": 0,
+                  "offset": 5,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "IsUnsynchronized",
+                      "value": false,
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "HasExtendedHeader",
+                      "value": false,
+                      "offset": 5,
+                      "length": 1
+                    },
+                    {
+                      "name": "IsExperimental",
+                      "value": false,
+                      "offset": 5,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Size",
+                  "value": 49,
+                  "offset": 6,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "TIT2",
+              "value": "Fixture title",
+              "offset": 10,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 10,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TIT2",
+                      "offset": 10,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 14,
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 18,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": false,
+                          "offset": 18,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 20,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Fixture title",
+                  "offset": 21,
+                  "length": 13
+                }
+              ]
+            },
+            {
+              "name": "TPE1",
+              "value": "Fixture artist",
+              "offset": 34,
+              "length": 25,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 34,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "TPE1",
+                      "offset": 34,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 15,
+                      "offset": 38,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 42,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "IsDiscardedOnTagAlter",
+                          "value": false,
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsDiscardedOnFileAlter",
+                          "value": false,
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsReadOnly",
+                          "value": false,
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsCompressed",
+                          "value": false,
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "IsEncrypted",
+                          "value": false,
+                          "offset": 42,
+                          "length": 2
+                        },
+                        {
+                          "name": "HasGroupId",
+                          "value": false,
+                          "offset": 42,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoding",
+                  "value": "ISO-8859-1",
+                  "offset": 44,
+                  "length": 1
+                },
+                {
+                  "name": "Text",
+                  "value": "Fixture artist",
+                  "offset": 45,
+                  "length": 14
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 0,
+              "length": 59,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \"ID3\" with version 2.3.0",
+                  "offset": 0,
+                  "length": 5
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Syncsafe size of 49 bytes",
+                  "offset": 6,
+                  "length": 4
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Only defined header flags are set",
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Frames fill the tag exactly",
+                  "offset": 10,
+                  "length": 49
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "FORM",
+          "value": "AIFF",
+          "offset": 59,
+          "length": 254,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 59,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 246,
+              "unit": "bytes",
+              "offset": 63,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFF",
+              "offset": 67,
+              "length": 4
+            },
+            {
+              "name": "Common Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 71,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 71,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 18,
+                  "unit": "bytes",
+                  "offset": 75,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 79,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 50,
+                  "unit": "sample frames",
+                  "offset": 81,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 85,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 87,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16398,
+                      "offset": 87,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 12413046472939929600,
+                      "offset": 89,
+                      "length": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 208,
+              "unit": "bytes",
+              "offset": 97,
+              "length": 216,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 97,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 208,
+                  "unit": "bytes",
+                  "offset": 101,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 105,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 109,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 113,
+                  "length": 200
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 97,
+                  "length": 216,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 97,
+                      "length": 216
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 50,
+                      "unit": "sample frames",
+                      "offset": 97,
+                      "length": 216
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0011337868480725624,
+                      "unit": "s",
+                      "offset": 97,
+                      "length": 216
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 97,
+                      "length": 216
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 97,
+                      "length": 216
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 97,
+                      "length": 216
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 97,
+                      "length": 216
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 97,
+                      "length": 216
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "big-endian",
+                      "offset": 97,
+                      "length": 216
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1411.2,
+                      "unit": "kbps",
+                      "offset": 97,
+                      "length": 216
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            1,
+            4
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 50,
+        "duration": 0.0011337868480725624,
+        "averageBitrate": 1411.2,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

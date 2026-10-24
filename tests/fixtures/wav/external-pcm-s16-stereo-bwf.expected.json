@@ -1,0 +1,162 @@
+{
+ "length": 48872,
+ "container": {
+  "id": "RIFF",
+  "size": 48864,
+  "end": 48872
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "bext",
+   "offset": 36,
+   "end": 684,
+   "size": 640,
+   "length": 640
+  },
+  {
+   "id": "LIST",
+   "offset": 684,
+   "end": 864,
+   "size": 172,
+   "length": 172,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "IART",
+     "offset": 696,
+     "end": 720,
+     "size": 15,
+     "length": 15
+    },
+    {
+     "id": "ICMT",
+     "offset": 720,
+     "end": 738,
+     "size": 10,
+     "length": 10
+    },
+    {
+     "id": "ICOP",
+     "offset": 738,
+     "end": 760,
+     "size": 14,
+     "length": 14
+    },
+    {
+     "id": "ICRD",
+     "offset": 760,
+     "end": 774,
+     "size": 5,
+     "length": 5
+    },
+    {
+     "id": "IGNR",
+     "offset": 774,
+     "end": 788,
+     "size": 5,
+     "length": 5
+    },
+    {
+     "id": "INAM",
+     "offset": 788,
+     "end": 810,
+     "size": 14,
+     "length": 14
+    },
+    {
+     "id": "IPRD",
+     "offset": 810,
+     "end": 832,
+     "size": 14,
+     "length": 14
+    },
+    {
+     "id": "IPRT",
+     "offset": 832,
+     "end": 842,
+     "size": 2,
+     "length": 2
+    },
+    {
+     "id": "ISFT",
+     "offset": 842,
+     "end": 864,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 864,
+   "end": 48872,
+   "size": 48000,
+   "length": 48000
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 48000,
+  "channels": 2,
+  "bits": 16,
+  "samples": 12000,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1536.0
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_s16le",
+  "-write_bext",
+  "1",
+  "-metadata",
+  "description=A description of the sound",
+  "-metadata",
+  "originator=Fixture originator",
+  "-metadata",
+  "originator_reference=REF-0001",
+  "-metadata",
+  "origination_date=2026-10-24",
+  "-metadata",
+  "origination_time=12:34:56",
+  "-metadata",
+  "time_reference=48000",
+  "-metadata",
+  "coding_history=A=PCM,F=48000,W=16,M=stereo,T=Fixture",
+  "-metadata",
+  "title=Fixture title",
+  "-metadata",
+  "artist=Fixture artist",
+  "-metadata",
+  "album=Fixture album",
+  "-metadata",
+  "date=2026",
+  "-metadata",
+  "comment=A comment",
+  "-metadata",
+  "genre=Test",
+  "-metadata",
+  "track=3",
+  "-metadata",
+  "copyright=Public domain"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 48000,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

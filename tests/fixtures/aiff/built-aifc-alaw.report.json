@@ -1,0 +1,288 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-aifc-alaw.aifc",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 160,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFC",
+          "offset": 0,
+          "length": 160,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 152,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFC",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Version Chunk",
+              "value": "AIFF-C version 1",
+              "offset": 12,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "FVER",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Timestamp",
+                  "value": "2726318400 (version 1 of AIFF-C)",
+                  "offset": 20,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Common Chunk",
+              "value": "A-law, 1 channel, 8000 Hz, 16 bits",
+              "offset": 24,
+              "length": 40,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 32,
+                  "unit": "bytes",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 80,
+                  "unit": "sample frames",
+                  "offset": 34,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 38,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 8000,
+                  "unit": "Hz",
+                  "offset": 40,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16395,
+                      "offset": 40,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 18014398509481984000,
+                      "offset": 42,
+                      "length": 8
+                    }
+                  ]
+                },
+                {
+                  "name": "Compression Type",
+                  "value": "alaw",
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Compression Name Length",
+                  "value": 8,
+                  "offset": 54,
+                  "length": 1
+                },
+                {
+                  "name": "Compression Name",
+                  "value": "ALaw 2:1",
+                  "offset": 55,
+                  "length": 8
+                },
+                {
+                  "name": "Pad Byte",
+                  "value": 0,
+                  "offset": 63,
+                  "length": 1
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 88,
+              "unit": "bytes",
+              "offset": 64,
+              "length": 96,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 64,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 88,
+                  "unit": "bytes",
+                  "offset": 68,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 72,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 76,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 80,
+                  "unit": "bytes",
+                  "offset": 80,
+                  "length": 80
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 64,
+                  "length": 96,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "A-law",
+                      "offset": 64,
+                      "length": 96
+                    },
+                    {
+                      "name": "Compression Type",
+                      "value": "alaw",
+                      "offset": 64,
+                      "length": 96
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 80,
+                      "unit": "sample frames",
+                      "offset": 64,
+                      "length": 96
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.01,
+                      "unit": "s",
+                      "offset": 64,
+                      "length": 96
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 8000,
+                      "unit": "Hz",
+                      "offset": 64,
+                      "length": 96
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 64,
+                      "length": 96
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 64,
+                      "length": 96
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 64,
+                      "unit": "kbps",
+                      "offset": 64,
+                      "length": 96
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "A-law",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "samples": 80,
+        "duration": 0.01,
+        "averageBitrate": 64,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

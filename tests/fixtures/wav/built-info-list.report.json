@@ -1,0 +1,481 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-info-list.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 380,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 380,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 372,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 12,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 176400,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "List Chunk",
+              "value": "INFO",
+              "offset": 36,
+              "length": 136,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "LIST",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 128,
+                  "unit": "bytes",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "List Type",
+                  "value": "INFO",
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Name Chunk",
+                  "value": "Fixture title",
+                  "offset": 48,
+                  "length": 22,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "INAM",
+                      "offset": 48,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 14,
+                      "unit": "bytes",
+                      "offset": 52,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "Fixture title",
+                      "offset": 56,
+                      "length": 14
+                    }
+                  ]
+                },
+                {
+                  "name": "Artist Chunk",
+                  "value": "Fixture artist",
+                  "offset": 70,
+                  "length": 24,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "IART",
+                      "offset": 70,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 15,
+                      "unit": "bytes",
+                      "offset": 74,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "Fixture artist",
+                      "offset": 78,
+                      "length": 15
+                    },
+                    {
+                      "name": "Pad Byte",
+                      "value": 0,
+                      "offset": 93,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Creation Date Chunk",
+                  "value": "2026-10-24",
+                  "offset": 94,
+                  "length": 20,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "ICRD",
+                      "offset": 94,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 11,
+                      "unit": "bytes",
+                      "offset": 98,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "2026-10-24",
+                      "offset": 102,
+                      "length": 11
+                    },
+                    {
+                      "name": "Pad Byte",
+                      "value": 0,
+                      "offset": 113,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Software Chunk",
+                  "value": "Fixture Tagger 1.2",
+                  "offset": 114,
+                  "length": 28,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "ISFT",
+                      "offset": 114,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 19,
+                      "unit": "bytes",
+                      "offset": 118,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "Fixture Tagger 1.2",
+                      "offset": 122,
+                      "length": 19
+                    },
+                    {
+                      "name": "Pad Byte",
+                      "value": 0,
+                      "offset": 141,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "'ITRK' Chunk",
+                  "value": "3",
+                  "offset": 142,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "ITRK",
+                      "offset": 142,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 2,
+                      "unit": "bytes",
+                      "offset": 146,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "3",
+                      "offset": 150,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Comments Chunk",
+                  "value": "odd",
+                  "offset": 152,
+                  "length": 12,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "ICMT",
+                      "offset": 152,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 156,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "odd",
+                      "offset": 160,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Keywords Chunk",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 164,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "IKEY",
+                      "offset": 164,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 168,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 200,
+              "unit": "bytes",
+              "offset": 172,
+              "length": 208,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 172,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 176,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 172,
+                  "length": 208,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 50,
+                      "unit": "sample frames",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0011337868480725624,
+                      "unit": "s",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1411.2,
+                      "unit": "kbps",
+                      "offset": 172,
+                      "length": 208
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "Fixture Tagger 1.2",
+                  "offset": 172,
+                  "length": 208,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 172,
+                      "length": 208
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "LIST INFO chunk ISFT (Software) at 0x7A names \"Fixture Tagger 1.2\"",
+                      "offset": 172,
+                      "length": 208
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 50,
+        "duration": 0.0011337868480725624,
+        "averageBitrate": 1411.2,
+        "isVbr": false,
+        "writer": "Fixture Tagger 1.2",
+        "writerConfidence": "Low",
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

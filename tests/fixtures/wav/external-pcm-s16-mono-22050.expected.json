@@ -1,0 +1,66 @@
+{
+ "length": 11102,
+ "container": {
+  "id": "RIFF",
+  "size": 11094,
+  "end": 11102
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "LIST",
+   "offset": 36,
+   "end": 70,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 48,
+     "end": 70,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 70,
+   "end": 11102,
+   "size": 11024,
+   "length": 11024
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 22050,
+  "channels": 1,
+  "bits": 16,
+  "samples": 5512,
+  "duration": 0.24997732426303854,
+  "layout": [
+   "front center"
+  ],
+  "average_bitrate": 352.8
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_s16le"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 22050,
+  "channels": 1,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

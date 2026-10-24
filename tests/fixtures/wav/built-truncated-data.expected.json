@@ -1,0 +1,45 @@
+{
+ "length": 204,
+ "container": {
+  "id": "RIFF",
+  "size": 236,
+  "end": 204
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 204,
+   "size": 200,
+   "length": 160
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 40,
+  "duration": 0.0009070294784580499,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2
+ },
+ "findings": [
+  {
+   "code": "wav.truncated"
+  },
+  {
+   "code": "wav.chunk-past-end"
+  }
+ ]
+}

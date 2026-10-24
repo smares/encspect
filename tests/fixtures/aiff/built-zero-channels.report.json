@@ -1,0 +1,168 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-zero-channels.aiff",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 254,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFF",
+          "offset": 0,
+          "length": 254,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 246,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFF",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Common Chunk",
+              "value": "PCM, 0 channels, 44100 Hz, 16 bits",
+              "offset": 12,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 18,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 0,
+                  "unit": "channels",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 50,
+                  "unit": "sample frames",
+                  "offset": 22,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 26,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 28,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16398,
+                      "offset": 28,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 12413046472939929600,
+                      "offset": 30,
+                      "length": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 208,
+              "unit": "bytes",
+              "offset": 38,
+              "length": 216,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 38,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 208,
+                  "unit": "bytes",
+                  "offset": 42,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 46,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 54,
+                  "length": 200
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Error",
+        "code": "aiff.channels-zero",
+        "message": "The Common Chunk states 0 channels.",
+        "offset": 20,
+        "length": 2,
+        "path": [
+          0,
+          3,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

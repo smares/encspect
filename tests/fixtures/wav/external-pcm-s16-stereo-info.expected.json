@@ -1,0 +1,139 @@
+{
+ "length": 44324,
+ "container": {
+  "id": "RIFF",
+  "size": 44316,
+  "end": 44324
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "LIST",
+   "offset": 36,
+   "end": 216,
+   "size": 172,
+   "length": 172,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "IART",
+     "offset": 48,
+     "end": 72,
+     "size": 15,
+     "length": 15
+    },
+    {
+     "id": "ICMT",
+     "offset": 72,
+     "end": 90,
+     "size": 10,
+     "length": 10
+    },
+    {
+     "id": "ICOP",
+     "offset": 90,
+     "end": 112,
+     "size": 14,
+     "length": 14
+    },
+    {
+     "id": "ICRD",
+     "offset": 112,
+     "end": 126,
+     "size": 5,
+     "length": 5
+    },
+    {
+     "id": "IGNR",
+     "offset": 126,
+     "end": 140,
+     "size": 5,
+     "length": 5
+    },
+    {
+     "id": "INAM",
+     "offset": 140,
+     "end": 162,
+     "size": 14,
+     "length": 14
+    },
+    {
+     "id": "IPRD",
+     "offset": 162,
+     "end": 184,
+     "size": 14,
+     "length": 14
+    },
+    {
+     "id": "IPRT",
+     "offset": 184,
+     "end": 194,
+     "size": 2,
+     "length": 2
+    },
+    {
+     "id": "ISFT",
+     "offset": 194,
+     "end": 216,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 216,
+   "end": 44324,
+   "size": 44100,
+   "length": 44100
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 11025,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_s16le",
+  "-metadata",
+  "title=Fixture title",
+  "-metadata",
+  "artist=Fixture artist",
+  "-metadata",
+  "album=Fixture album",
+  "-metadata",
+  "date=2026",
+  "-metadata",
+  "comment=A comment",
+  "-metadata",
+  "genre=Test",
+  "-metadata",
+  "track=3",
+  "-metadata",
+  "copyright=Public domain"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 44100,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

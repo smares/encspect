@@ -1,0 +1,76 @@
+{
+ "length": 72138,
+ "container": {
+  "id": "RF64",
+  "size": 4294967295,
+  "end": 72138
+ },
+ "chunks": [
+  {
+   "id": "ds64",
+   "offset": 12,
+   "end": 48,
+   "size": 28,
+   "length": 28
+  },
+  {
+   "id": "fmt ",
+   "offset": 48,
+   "end": 96,
+   "size": 40,
+   "length": 40
+  },
+  {
+   "id": "LIST",
+   "offset": 96,
+   "end": 130,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 108,
+     "end": 130,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 130,
+   "end": 72138,
+   "size": 72000,
+   "length": 72000
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 48000,
+  "channels": 2,
+  "bits": 24,
+  "samples": 12000,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 2304.0
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_s24le",
+  "-rf64",
+  "always"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 48000,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s24le"
+ }
+}

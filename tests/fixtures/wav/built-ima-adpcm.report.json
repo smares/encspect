@@ -1,0 +1,265 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-ima-adpcm.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 316,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 316,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 308,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "IMA ADPCM, 1 channel, 11025 Hz, 4 bits",
+              "offset": 12,
+              "length": 28,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 20,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0011 (IMA ADPCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 11025,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 5612,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 256,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 4,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                },
+                {
+                  "name": "Codec Specific Data Size",
+                  "value": 2,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Block",
+                  "value": 505,
+                  "unit": "samples",
+                  "offset": 38,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Fact Chunk",
+              "value": 505,
+              "unit": "samples",
+              "offset": 40,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fact",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Length",
+                  "value": 505,
+                  "unit": "samples",
+                  "offset": 48,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 256,
+              "unit": "bytes",
+              "offset": 52,
+              "length": 264,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 52,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 256,
+                  "unit": "bytes",
+                  "offset": 56,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 52,
+                  "length": 264,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "IMA ADPCM",
+                      "offset": 52,
+                      "length": 264
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 505,
+                      "unit": "samples",
+                      "offset": 52,
+                      "length": 264
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.04580498866213152,
+                      "unit": "s",
+                      "offset": 52,
+                      "length": 264
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 11025,
+                      "unit": "Hz",
+                      "offset": 52,
+                      "length": 264
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 52,
+                      "length": 264
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 52,
+                      "length": 264
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 44.711287128712875,
+                      "unit": "kbps",
+                      "offset": 52,
+                      "length": 264
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "IMA ADPCM",
+        "sampleRate": 11025,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "samples": 505,
+        "duration": 0.04580498866213152,
+        "averageBitrate": 44.711287128712875,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "wav.coding-not-analyzed",
+        "message": "The coding is IMA ADPCM, which the analyzer has no parser for; the audio is reported by the figures the file states.",
+        "offset": 52,
+        "length": 264,
+        "path": [
+          0,
+          5
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

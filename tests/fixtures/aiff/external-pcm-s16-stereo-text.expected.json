@@ -1,0 +1,88 @@
+{
+ "length": 44238,
+ "container": {
+  "id": "FORM",
+  "form": "AIFF",
+  "size": 44230,
+  "end": 44238
+ },
+ "chunks": [
+  {
+   "id": "NAME",
+   "offset": 12,
+   "end": 34,
+   "size": 14,
+   "length": 14
+  },
+  {
+   "id": "AUTH",
+   "offset": 34,
+   "end": 56,
+   "size": 14,
+   "length": 14
+  },
+  {
+   "id": "(c) ",
+   "offset": 56,
+   "end": 78,
+   "size": 14,
+   "length": 14
+  },
+  {
+   "id": "ANNO",
+   "offset": 78,
+   "end": 96,
+   "size": 10,
+   "length": 10
+  },
+  {
+   "id": "COMM",
+   "offset": 96,
+   "end": 122,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "SSND",
+   "offset": 122,
+   "end": 44238,
+   "size": 44108,
+   "length": 44108
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 11025,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2,
+  "type": "NONE"
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_s16be",
+  "-metadata",
+  "title=Fixture title",
+  "-metadata",
+  "author=Fixture author",
+  "-metadata",
+  "copyright=Public domain",
+  "-metadata",
+  "comment=A comment"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 44100,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

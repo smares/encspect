@@ -1,0 +1,329 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-id3v1-after-form.aiff",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 382,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFF",
+          "offset": 0,
+          "length": 254,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 246,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFF",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Common Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 12,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 18,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 50,
+                  "unit": "sample frames",
+                  "offset": 22,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 26,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 28,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16398,
+                      "offset": 28,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 12413046472939929600,
+                      "offset": 30,
+                      "length": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 208,
+              "unit": "bytes",
+              "offset": 38,
+              "length": 216,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 38,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 208,
+                  "unit": "bytes",
+                  "offset": 42,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 46,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 54,
+                  "length": 200
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 38,
+                  "length": 216,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 50,
+                      "unit": "sample frames",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0011337868480725624,
+                      "unit": "s",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "big-endian",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1411.2,
+                      "unit": "kbps",
+                      "offset": 38,
+                      "length": 216
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ID3v1",
+          "kind": "Tag",
+          "value": "1.1",
+          "offset": 254,
+          "length": 128,
+          "children": [
+            {
+              "name": "Signature",
+              "value": "TAG",
+              "offset": 254,
+              "length": 3
+            },
+            {
+              "name": "Title",
+              "value": "Title",
+              "offset": 257,
+              "length": 30
+            },
+            {
+              "name": "Artist",
+              "value": "Artist",
+              "offset": 287,
+              "length": 30
+            },
+            {
+              "name": "Album",
+              "value": "Album",
+              "offset": 317,
+              "length": 30
+            },
+            {
+              "name": "Year",
+              "value": "2026",
+              "offset": 347,
+              "length": 4
+            },
+            {
+              "name": "Comment",
+              "value": "",
+              "offset": 351,
+              "length": 28
+            },
+            {
+              "name": "Track",
+              "value": 1,
+              "offset": 380,
+              "length": 1
+            },
+            {
+              "name": "Genre",
+              "value": "17 (Rock)",
+              "offset": 381,
+              "length": 1
+            },
+            {
+              "name": "Detection",
+              "value": "Medium",
+              "offset": 254,
+              "length": 128,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "Signature \"TAG\" 128 bytes before the anchor",
+                  "offset": 254,
+                  "length": 3
+                },
+                {
+                  "name": "Evidence",
+                  "value": "All text fields hold printable text",
+                  "offset": 257,
+                  "length": 124
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            4
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 50,
+        "duration": 0.0011337868480725624,
+        "averageBitrate": 1411.2,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

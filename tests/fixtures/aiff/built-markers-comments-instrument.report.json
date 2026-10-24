@@ -1,0 +1,594 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-markers-comments-instrument.aiff",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 372,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFF",
+          "offset": 0,
+          "length": 372,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 364,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFF",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Common Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 12,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 18,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 50,
+                  "unit": "sample frames",
+                  "offset": 22,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 26,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 28,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16398,
+                      "offset": 28,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 12413046472939929600,
+                      "offset": 30,
+                      "length": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 208,
+              "unit": "bytes",
+              "offset": 38,
+              "length": 216,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 38,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 208,
+                  "unit": "bytes",
+                  "offset": 42,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 46,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 54,
+                  "length": 200
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 38,
+                  "length": 216,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 50,
+                      "unit": "sample frames",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0011337868480725624,
+                      "unit": "s",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "big-endian",
+                      "offset": 38,
+                      "length": 216
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1411.2,
+                      "unit": "kbps",
+                      "offset": 38,
+                      "length": 216
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Marker Chunk",
+              "value": 36,
+              "unit": "bytes",
+              "offset": 254,
+              "length": 44,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "MARK",
+                  "offset": 254,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 36,
+                  "unit": "bytes",
+                  "offset": 258,
+                  "length": 4
+                },
+                {
+                  "name": "Marker Count",
+                  "value": 3,
+                  "unit": "markers",
+                  "offset": 262,
+                  "length": 2
+                },
+                {
+                  "name": "Markers",
+                  "value": 3,
+                  "unit": "markers",
+                  "offset": 264,
+                  "length": 34,
+                  "children": [
+                    {
+                      "name": "Marker 0",
+                      "value": "Start",
+                      "offset": 264,
+                      "length": 12,
+                      "children": [
+                        {
+                          "name": "Marker ID",
+                          "value": 1,
+                          "offset": 264,
+                          "length": 2
+                        },
+                        {
+                          "name": "Position",
+                          "value": 0,
+                          "unit": "sample frames",
+                          "offset": 266,
+                          "length": 4
+                        },
+                        {
+                          "name": "Name",
+                          "value": "Start",
+                          "offset": 270,
+                          "length": 6
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Marker 1",
+                      "value": "Middle",
+                      "offset": 276,
+                      "length": 14,
+                      "children": [
+                        {
+                          "name": "Marker ID",
+                          "value": 2,
+                          "offset": 276,
+                          "length": 2
+                        },
+                        {
+                          "name": "Position",
+                          "value": 30,
+                          "unit": "sample frames",
+                          "offset": 278,
+                          "length": 4
+                        },
+                        {
+                          "name": "Name",
+                          "value": "Middle",
+                          "offset": 282,
+                          "length": 8
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Marker 2",
+                      "value": 49,
+                      "unit": "sample frames",
+                      "offset": 290,
+                      "length": 8,
+                      "children": [
+                        {
+                          "name": "Marker ID",
+                          "value": 3,
+                          "offset": 290,
+                          "length": 2
+                        },
+                        {
+                          "name": "Position",
+                          "value": 49,
+                          "unit": "sample frames",
+                          "offset": 292,
+                          "length": 4
+                        },
+                        {
+                          "name": "Name",
+                          "value": "",
+                          "offset": 296,
+                          "length": 2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Comments Chunk",
+              "value": 38,
+              "unit": "bytes",
+              "offset": 298,
+              "length": 46,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMT",
+                  "offset": 298,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 38,
+                  "unit": "bytes",
+                  "offset": 302,
+                  "length": 4
+                },
+                {
+                  "name": "Comment Count",
+                  "value": 2,
+                  "unit": "comments",
+                  "offset": 306,
+                  "length": 2
+                },
+                {
+                  "name": "Comments",
+                  "value": 2,
+                  "unit": "comments",
+                  "offset": 308,
+                  "length": 36,
+                  "children": [
+                    {
+                      "name": "Comment 0",
+                      "value": "About start",
+                      "offset": 308,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Time Stamp",
+                          "value": "1990-05-23 14:40:00 UTC",
+                          "offset": 308,
+                          "length": 4
+                        },
+                        {
+                          "name": "Marker ID",
+                          "value": 1,
+                          "offset": 312,
+                          "length": 2
+                        },
+                        {
+                          "name": "Text Length",
+                          "value": 11,
+                          "unit": "bytes",
+                          "offset": 314,
+                          "length": 2
+                        },
+                        {
+                          "name": "Text",
+                          "value": "About start",
+                          "offset": 316,
+                          "length": 12
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Comment 1",
+                      "value": "General",
+                      "offset": 328,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Time Stamp",
+                          "value": "0 (not set)",
+                          "offset": 328,
+                          "length": 4
+                        },
+                        {
+                          "name": "Marker ID",
+                          "value": "0 (no marker)",
+                          "offset": 332,
+                          "length": 2
+                        },
+                        {
+                          "name": "Text Length",
+                          "value": 7,
+                          "unit": "bytes",
+                          "offset": 334,
+                          "length": 2
+                        },
+                        {
+                          "name": "Text",
+                          "value": "General",
+                          "offset": 336,
+                          "length": 8
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Instrument Chunk",
+              "value": 20,
+              "unit": "bytes",
+              "offset": 344,
+              "length": 28,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "INST",
+                  "offset": 344,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 20,
+                  "unit": "bytes",
+                  "offset": 348,
+                  "length": 4
+                },
+                {
+                  "name": "Base Note",
+                  "value": 60,
+                  "offset": 352,
+                  "length": 1
+                },
+                {
+                  "name": "Detune",
+                  "value": -6,
+                  "unit": "cents",
+                  "offset": 353,
+                  "length": 1
+                },
+                {
+                  "name": "Low Note",
+                  "value": 24,
+                  "offset": 354,
+                  "length": 1
+                },
+                {
+                  "name": "High Note",
+                  "value": 96,
+                  "offset": 355,
+                  "length": 1
+                },
+                {
+                  "name": "Low Velocity",
+                  "value": 1,
+                  "offset": 356,
+                  "length": 1
+                },
+                {
+                  "name": "High Velocity",
+                  "value": 127,
+                  "offset": 357,
+                  "length": 1
+                },
+                {
+                  "name": "Gain",
+                  "value": -6,
+                  "unit": "dB",
+                  "offset": 358,
+                  "length": 2
+                },
+                {
+                  "name": "Sustain Loop",
+                  "value": "forward looping",
+                  "offset": 360,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "Play Mode",
+                      "value": "1 (forward looping)",
+                      "offset": 360,
+                      "length": 2
+                    },
+                    {
+                      "name": "Begin Marker",
+                      "value": 1,
+                      "offset": 362,
+                      "length": 2
+                    },
+                    {
+                      "name": "End Marker",
+                      "value": 2,
+                      "offset": 364,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Release Loop",
+                  "value": "no looping",
+                  "offset": 366,
+                  "length": 6,
+                  "children": [
+                    {
+                      "name": "Play Mode",
+                      "value": "0 (no looping)",
+                      "offset": 366,
+                      "length": 2
+                    },
+                    {
+                      "name": "Begin Marker",
+                      "value": 0,
+                      "offset": 368,
+                      "length": 2
+                    },
+                    {
+                      "name": "End Marker",
+                      "value": 0,
+                      "offset": 370,
+                      "length": 2
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            4
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 50,
+        "duration": 0.0011337868480725624,
+        "averageBitrate": 1411.2,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

@@ -1,0 +1,68 @@
+{
+ "length": 6236,
+ "container": {
+  "id": "RIFF",
+  "size": 6228,
+  "end": 6236
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 38,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "fact",
+   "offset": 38,
+   "end": 50,
+   "size": 4,
+   "length": 4
+  },
+  {
+   "id": "LIST",
+   "offset": 50,
+   "end": 84,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 62,
+     "end": 84,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 84,
+   "end": 6236,
+   "size": 6144,
+   "length": 6144
+  }
+ ],
+ "stream": {
+  "routed": "ac-3",
+  "sample_rate": 48000,
+  "channels": 2
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "ac3",
+  "-b:a",
+  "192k"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 48000,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

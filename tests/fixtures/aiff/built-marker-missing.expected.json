@@ -1,0 +1,58 @@
+{
+ "length": 300,
+ "container": {
+  "id": "FORM",
+  "form": "AIFF",
+  "size": 292,
+  "end": 300
+ },
+ "chunks": [
+  {
+   "id": "COMM",
+   "offset": 12,
+   "end": 38,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "SSND",
+   "offset": 38,
+   "end": 254,
+   "size": 208,
+   "length": 208
+  },
+  {
+   "id": "MARK",
+   "offset": 254,
+   "end": 272,
+   "size": 10,
+   "length": 10
+  },
+  {
+   "id": "INST",
+   "offset": 272,
+   "end": 300,
+   "size": 20,
+   "length": 20
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 50,
+  "duration": 0.0011337868480725624,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2,
+  "type": "NONE"
+ },
+ "findings": [
+  {
+   "code": "aiff.marker-missing"
+  }
+ ]
+}

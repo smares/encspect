@@ -1,0 +1,68 @@
+{
+ "length": 1986,
+ "container": {
+  "id": "RIFF",
+  "size": 1978,
+  "end": 1986
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 50,
+   "size": 30,
+   "length": 30
+  },
+  {
+   "id": "fact",
+   "offset": 50,
+   "end": 62,
+   "size": 4,
+   "length": 4
+  },
+  {
+   "id": "LIST",
+   "offset": 62,
+   "end": 96,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 74,
+     "end": 96,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 96,
+   "end": 1986,
+   "size": 1881,
+   "length": 1881
+  }
+ ],
+ "stream": {
+  "routed": "mpeg-audio",
+  "sample_rate": 22050,
+  "channels": 1
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "libmp3lame",
+  "-b:a",
+  "48k"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 22050,
+  "channels": 1,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

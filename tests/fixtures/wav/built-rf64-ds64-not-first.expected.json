@@ -1,0 +1,59 @@
+{
+ "length": 216,
+ "container": {
+  "id": "RF64",
+  "size": 4294967295,
+  "end": 216
+ },
+ "chunks": [
+  {
+   "id": "JUNK",
+   "offset": 12,
+   "end": 28,
+   "size": 8,
+   "length": 8
+  },
+  {
+   "id": "ds64",
+   "offset": 28,
+   "end": 64,
+   "size": 28,
+   "length": 28
+  },
+  {
+   "id": "fmt ",
+   "offset": 64,
+   "end": 88,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 88,
+   "end": 216,
+   "size": 4294967295,
+   "length": 120
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 30,
+  "duration": 0.0006802721088435374,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2
+ },
+ "findings": [
+  {
+   "code": "wav.riff-size-placeholder"
+  },
+  {
+   "code": "wav.ds64-not-first"
+  }
+ ]
+}

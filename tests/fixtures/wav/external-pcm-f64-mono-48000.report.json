@@ -1,0 +1,368 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-pcm-f64-mono-48000.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 96114,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 96114,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 96106,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM (floating-point), 1 channel, 48000 Hz, 64 bits",
+              "offset": 12,
+              "length": 48,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 40,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0xFFFE (extensible)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 384000,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 64,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                },
+                {
+                  "name": "Codec Specific Data Size",
+                  "value": 22,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 2
+                },
+                {
+                  "name": "Valid Bits Per Sample",
+                  "value": 64,
+                  "unit": "bits",
+                  "offset": 38,
+                  "length": 2
+                },
+                {
+                  "name": "Channel Mask",
+                  "value": 4,
+                  "offset": 40,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Speakers",
+                      "value": "front center",
+                      "offset": 40,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Sub-Format",
+                  "value": "00000003-0000-0010-8000-00aa00389b71 (PCM (floating-point))",
+                  "offset": 44,
+                  "length": 16
+                }
+              ]
+            },
+            {
+              "name": "Fact Chunk",
+              "value": 12000,
+              "unit": "samples",
+              "offset": 60,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fact",
+                  "offset": 60,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 64,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Length",
+                  "value": 12000,
+                  "unit": "samples",
+                  "offset": 68,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "List Chunk",
+              "value": "INFO",
+              "offset": 72,
+              "length": 34,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "LIST",
+                  "offset": 72,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 26,
+                  "unit": "bytes",
+                  "offset": 76,
+                  "length": 4
+                },
+                {
+                  "name": "List Type",
+                  "value": "INFO",
+                  "offset": 80,
+                  "length": 4
+                },
+                {
+                  "name": "Software Chunk",
+                  "value": "Lavf60.16.100",
+                  "offset": 84,
+                  "length": 22,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "ISFT",
+                      "offset": 84,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 14,
+                      "unit": "bytes",
+                      "offset": 88,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "Lavf60.16.100",
+                      "offset": 92,
+                      "length": 14
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 96000,
+              "unit": "bytes",
+              "offset": 106,
+              "length": 96008,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 106,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 96000,
+                  "unit": "bytes",
+                  "offset": 110,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 106,
+                  "length": 96008,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM (floating-point)",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 12000,
+                      "unit": "sample frames",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.25,
+                      "unit": "s",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 64,
+                      "unit": "bits",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "IEEE 754 floating point",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 3072,
+                      "unit": "kbps",
+                      "offset": 106,
+                      "length": 96008
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 106,
+                  "length": 96008,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 106,
+                      "length": 96008
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "LIST INFO chunk ISFT (Software) at 0x5C names \"Lavf60.16.100\"",
+                      "offset": 106,
+                      "length": 96008
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            6
+          ]
+        ],
+        "codec": "PCM (floating-point)",
+        "sampleRate": 48000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 64,
+        "samples": 12000,
+        "duration": 0.25,
+        "averageBitrate": 3072,
+        "isVbr": false,
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

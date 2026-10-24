@@ -1,0 +1,302 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-aifc-fl64.aifc",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 332,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFC",
+          "offset": 0,
+          "length": 332,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 324,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFC",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Version Chunk",
+              "value": "AIFF-C version 1",
+              "offset": 12,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "FVER",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Timestamp",
+                  "value": "2726318400 (version 1 of AIFF-C)",
+                  "offset": 20,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Common Chunk",
+              "value": "PCM (floating-point), 1 channel, 48000 Hz, 64 bits",
+              "offset": 24,
+              "length": 52,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 44,
+                  "unit": "bytes",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 30,
+                  "unit": "sample frames",
+                  "offset": 34,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 64,
+                  "unit": "bits",
+                  "offset": 38,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 40,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16398,
+                      "offset": 40,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 13510798882111488000,
+                      "offset": 42,
+                      "length": 8
+                    }
+                  ]
+                },
+                {
+                  "name": "Compression Type",
+                  "value": "fl64",
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Compression Name Length",
+                  "value": 21,
+                  "offset": 54,
+                  "length": 1
+                },
+                {
+                  "name": "Compression Name",
+                  "value": "64-bit floating point",
+                  "offset": 55,
+                  "length": 21
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 248,
+              "unit": "bytes",
+              "offset": 76,
+              "length": 256,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 76,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 248,
+                  "unit": "bytes",
+                  "offset": 80,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 84,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 88,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 240,
+                  "unit": "bytes",
+                  "offset": 92,
+                  "length": 240
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 76,
+                  "length": 256,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM (floating-point)",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Compression Type",
+                      "value": "fl64",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 30,
+                      "unit": "sample frames",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.000625,
+                      "unit": "s",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 64,
+                      "unit": "bits",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "IEEE 754 floating point",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "big-endian",
+                      "offset": 76,
+                      "length": 256
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 3072,
+                      "unit": "kbps",
+                      "offset": 76,
+                      "length": 256
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "PCM (floating-point)",
+        "sampleRate": 48000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 64,
+        "samples": 30,
+        "duration": 0.000625,
+        "averageBitrate": 3072,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

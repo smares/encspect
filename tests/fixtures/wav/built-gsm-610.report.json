@@ -1,0 +1,265 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-gsm-610.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 190,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 190,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 182,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "GSM 6.10, 1 channel, 8000 Hz",
+              "offset": 12,
+              "length": 28,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 20,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0031 (GSM 6.10)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 8000,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 1625,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 65,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 0,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                },
+                {
+                  "name": "Codec Specific Data Size",
+                  "value": 2,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Block",
+                  "value": 320,
+                  "unit": "samples",
+                  "offset": 38,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Fact Chunk",
+              "value": 640,
+              "unit": "samples",
+              "offset": 40,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fact",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Length",
+                  "value": 640,
+                  "unit": "samples",
+                  "offset": 48,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 130,
+              "unit": "bytes",
+              "offset": 52,
+              "length": 138,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 52,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 130,
+                  "unit": "bytes",
+                  "offset": 56,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 52,
+                  "length": 138,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "GSM 6.10",
+                      "offset": 52,
+                      "length": 138
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 640,
+                      "unit": "samples",
+                      "offset": 52,
+                      "length": 138
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.08,
+                      "unit": "s",
+                      "offset": 52,
+                      "length": 138
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 8000,
+                      "unit": "Hz",
+                      "offset": 52,
+                      "length": 138
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 52,
+                      "length": 138
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 52,
+                      "length": 138
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 13,
+                      "unit": "kbps",
+                      "offset": 52,
+                      "length": 138
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "GSM 6.10",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "samples": 640,
+        "duration": 0.08,
+        "averageBitrate": 13,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "wav.coding-not-analyzed",
+        "message": "The coding is GSM 6.10, which the analyzer has no parser for; the audio is reported by the figures the file states.",
+        "offset": 52,
+        "length": 138,
+        "path": [
+          0,
+          5
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

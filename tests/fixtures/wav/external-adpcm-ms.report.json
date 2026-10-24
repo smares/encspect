@@ -1,0 +1,400 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-adpcm-ms.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 11388,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 11388,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 11380,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "Microsoft ADPCM, 2 channels, 44100 Hz, 4 bits",
+              "offset": 12,
+              "length": 58,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 50,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0002 (Microsoft ADPCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 16000,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 1024,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 4,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                },
+                {
+                  "name": "Codec Specific Data Size",
+                  "value": 32,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Block",
+                  "value": 1012,
+                  "unit": "samples",
+                  "offset": 38,
+                  "length": 2
+                },
+                {
+                  "name": "Coefficient Sets",
+                  "value": 7,
+                  "unit": "sets",
+                  "offset": 40,
+                  "length": 2
+                },
+                {
+                  "name": "Coefficients",
+                  "value": 7,
+                  "unit": "sets",
+                  "offset": 42,
+                  "length": 28,
+                  "children": [
+                    {
+                      "name": "Coefficient Set 0",
+                      "value": "256, 0",
+                      "offset": 42,
+                      "length": 4
+                    },
+                    {
+                      "name": "Coefficient Set 1",
+                      "value": "512, -256",
+                      "offset": 46,
+                      "length": 4
+                    },
+                    {
+                      "name": "Coefficient Set 2",
+                      "value": "0, 0",
+                      "offset": 50,
+                      "length": 4
+                    },
+                    {
+                      "name": "Coefficient Set 3",
+                      "value": "192, 64",
+                      "offset": 54,
+                      "length": 4
+                    },
+                    {
+                      "name": "Coefficient Set 4",
+                      "value": "240, 0",
+                      "offset": 58,
+                      "length": 4
+                    },
+                    {
+                      "name": "Coefficient Set 5",
+                      "value": "460, -208",
+                      "offset": 62,
+                      "length": 4
+                    },
+                    {
+                      "name": "Coefficient Set 6",
+                      "value": "392, -232",
+                      "offset": 66,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Fact Chunk",
+              "value": 11025,
+              "unit": "samples",
+              "offset": 70,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fact",
+                  "offset": 70,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 74,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Length",
+                  "value": 11025,
+                  "unit": "samples",
+                  "offset": 78,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "List Chunk",
+              "value": "INFO",
+              "offset": 82,
+              "length": 34,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "LIST",
+                  "offset": 82,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 26,
+                  "unit": "bytes",
+                  "offset": 86,
+                  "length": 4
+                },
+                {
+                  "name": "List Type",
+                  "value": "INFO",
+                  "offset": 90,
+                  "length": 4
+                },
+                {
+                  "name": "Software Chunk",
+                  "value": "Lavf60.16.100",
+                  "offset": 94,
+                  "length": 22,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "ISFT",
+                      "offset": 94,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 14,
+                      "unit": "bytes",
+                      "offset": 98,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "Lavf60.16.100",
+                      "offset": 102,
+                      "length": 14
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 11264,
+              "unit": "bytes",
+              "offset": 116,
+              "length": 11272,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 116,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 11264,
+                  "unit": "bytes",
+                  "offset": 120,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 116,
+                  "length": 11272,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "Microsoft ADPCM",
+                      "offset": 116,
+                      "length": 11272
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 11025,
+                      "unit": "samples",
+                      "offset": 116,
+                      "length": 11272
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.25,
+                      "unit": "s",
+                      "offset": 116,
+                      "length": 11272
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 116,
+                      "length": 11272
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 116,
+                      "length": 11272
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 116,
+                      "length": 11272
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 360.448,
+                      "unit": "kbps",
+                      "offset": 116,
+                      "length": 11272
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 116,
+                  "length": 11272,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 116,
+                      "length": 11272
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "LIST INFO chunk ISFT (Software) at 0x66 names \"Lavf60.16.100\"",
+                      "offset": 116,
+                      "length": 11272
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            6
+          ]
+        ],
+        "codec": "Microsoft ADPCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 11025,
+        "duration": 0.25,
+        "averageBitrate": 360.448,
+        "isVbr": false,
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "wav.coding-not-analyzed",
+        "message": "The coding is Microsoft ADPCM, which the analyzer has no parser for; the audio is reported by the figures the file states.",
+        "offset": 116,
+        "length": 11272,
+        "path": [
+          0,
+          6
+        ],
+        "count": 1
+      }
+    ]
+  }
+]
