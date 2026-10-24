@@ -57,8 +57,29 @@ public class TtaFindingTests
         Assert.Equal(70, Sniff([.. "TTA1"u8, 1, 0, 2]).Class);
     }
 
+    // The second version's header is 36 bytes (channels, bits per sample, sample rate, ...): the signature alone is four bytes of ASCII.
     [Fact]
-    public void TheSecondVersionsSignatureIsLikely() => Assert.Equal(80, Sniff([.. "TTA2"u8, .. new byte[40]]).Class);
+    public void TheSecondVersionsSignatureAloneIsPossible()
+    {
+        Assert.Equal(70, Sniff("TTA2"u8.ToArray()).Class);
+        Assert.Equal(70, Sniff([.. "TTA2"u8, .. new byte[10]]).Class);
+        Assert.Equal(70, Sniff([.. "TTA2 is a text file that begins with the signature"u8]).Class);
+    }
+
+    [Fact]
+    public void TheSecondVersionsSignatureWithAPlausibleHeaderIsLikely()
+    {
+        byte[] header = new byte[40];
+        "TTA2"u8.CopyTo(header);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(4), 2);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(6), 16);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(8), 44100);
+
+        Assert.Equal(80, Sniff(header).Class);
+        Assert.Equal(70, Sniff(header[..35]).Class);
+        header[4] = 0;
+        Assert.Equal(70, Sniff(header).Class);
+    }
 
     [Fact]
     public void AHeaderFurtherInIsNoMatch()
@@ -117,6 +138,8 @@ public class TtaFindingTests
         Assert.Empty(report.Streams);
     }
 
+    // The model of a password-protected stream; the real one, written by libtta-c 2.3 with a password, is the fixture external-libtta-16-stereo-password.tta,
+    // whose frame CRC-32s cover the stored bytes (TtaFixtureTests holds it to its manifest, the cross-check script to FFmpeg).
     [Fact]
     public void AnEncryptedStreamIsReportedAndItsCrcsAreStillCompared()
     {
@@ -128,6 +151,27 @@ public class TtaFindingTests
         Assert.Contains(report.Findings, f => f.Code == "tta.audio-format-encrypted" && f.Severity == Severity.Info);
         StreamVerification verification = report.Streams.Single().Verification!;
         Assert.Equal(true, verification.IsVerified);
+    }
+
+    [Fact]
+    public void FramesPastTheRecordsAreCountedAndTheirCrcsCompared()
+    {
+        int count = Records.MaxEntries + 10;
+        // At 100 Hz a frame is 104 samples, so the header's 32-bit sample count reaches the millions of frames.
+        byte[] data = TtaBuilder.Stream(100, 1, 16, count, payload: 0);
+        data[^1] ^= 1;
+
+        Report report = Analyze(data);
+
+        Assert.Equal(count * TtaBuilder.FrameLength(100), Assert.Single(report.Streams).Samples);
+        Finding limit = Assert.Single(report.Findings, f => f.Code == "tta.entries-limit");
+        Assert.Contains($"{count} entries", limit.Message);
+        Finding mismatch = Assert.Single(report.Findings, f => f.Code == "tta.frame-crc-mismatch");
+        Assert.Contains($"frame {count - 1} ", mismatch.Message);
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        Assert.Equal(false, report.Streams.Single().Verification!.IsVerified);
+        Node stream = report.Root.Children.Single(c => c.Name == "TTA");
+        Assert.Equal(Records.MaxEntries, stream.Children.Count(c => c.Name == "Frame"));
     }
 
     [Fact]

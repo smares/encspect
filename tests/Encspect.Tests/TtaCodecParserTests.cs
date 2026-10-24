@@ -6,8 +6,8 @@ namespace Encspect.Tests;
 
 // The "tta" codec parser, which a container that stores each frame in a packet, without the header and the seek table, hands packets to
 // (Matroska's A_TTA1, whose codec mapping keeps the frame whole with its CRC-32 and puts the header in the CodecPrivate; the route is a later
-// change). The packets are the frames of a fixture; its header is the configuration. Packets of the test container span "pages", so the frames'
-// bytes are not contiguous in the file.
+// change). The packets are the frames of a fixture; its header is the configuration. The test container's packets follow one another in the file;
+// FramesInPagesAreReadFromTheirRanges is the test of packets that span "pages".
 public class TtaCodecParserTests
 {
     private const string Fixture = "external-16-stereo.tta";
@@ -137,6 +137,45 @@ public class TtaCodecParserTests
         Assert.Contains(report.Findings, f => f.Code == "tta.header-invalid");
         Assert.Equal(48000, report.Streams.Single().SampleRate);
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    [Fact]
+    public void BytesAfterTheHeaderInTheConfigurationAreShownAndNotRead()
+    {
+        (byte[] header, uint[] sizes, List<byte[]> frames) = Parts();
+        byte[] withTable = [.. header, .. sizes.SelectMany(BitConverter.GetBytes), 1, 2, 3, 4];
+        Report report = Analyze(frames, node => Header(node, withTable));
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "tta.configuration-extra");
+        Assert.Equal(Severity.Info, finding.Severity);
+        Node extra = report.Root.Children.Single(c => c.Name == "Packets").Children.Single(c => c.Name == "Extra Data");
+        Assert.Equal(withTable.Length - 22, extra.Length);
+        Assert.Equal(1022, extra.Offset);
+        Assert.Equal(true, report.Streams.Single().Verification!.IsVerified);
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    [Fact]
+    public void FiguresOfTheTrackThatDifferFromTheHeadersAreAFinding()
+    {
+        (byte[] header, _, List<byte[]> frames) = Parts();
+        Report report = Analyze(frames, node => new CodecConfiguration(new MappedBytes(header, 1000), node) { Format = new AudioFormat(0, 1, 48000, 0, 0, 24) });
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "tta.configuration-differs");
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Contains("48000 Hz, 1 channel and 24 bits", finding.Message);
+        Assert.Contains("44100 Hz, 2 channels and 16 bits", finding.Message);
+        Assert.Equal(44100, report.Streams.Single().SampleRate);
+        Assert.NotNull(finding.Path);
+    }
+
+    [Fact]
+    public void FiguresOfTheTrackThatAgreeWithTheHeaderAreNoFinding()
+    {
+        (byte[] header, _, List<byte[]> frames) = Parts();
+        Report report = Analyze(frames, node => new CodecConfiguration(new MappedBytes(header, 1000), node) { Format = new AudioFormat(0, 2, 44100, 0, 0, 16) });
+
+        Assert.Empty(report.Findings);
     }
 
     [Fact]

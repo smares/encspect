@@ -45,10 +45,10 @@ public sealed class TtaCodecParser : ICodecParser
             Add(state, packet, index++);
         }
 
-        if (state.Header is { SampleRate: > 0 } header && header.FrameCount != state.Records.FrameNodes)
+        if (state.Header is { SampleRate: > 0 } header && header.FrameCount != state.Listed)
         {
             long expected = header.FrameCount;
-            long found = state.Records.FrameNodes;
+            long found = state.Listed;
             state.Findings.Add(Severity.Warning, "tta.frame-count-differs", state.Stream, _ =>
                 $"The header's {Counts.Of(header.Samples, "sample", "samples")} at {header.SampleRate} Hz call for {Counts.Of(expected, "frame", "frames")}, but the container holds {found}.");
         }
@@ -75,6 +75,16 @@ public sealed class TtaCodecParser : ICodecParser
             s.HeaderBytes = data.Slice(0, TtaHeader.Length);
             s.HeaderNode = configuration.Parent.Add(Nodes.Header(FieldMap.Of(data.Slice(0, TtaHeader.Length)), TtaHeader.Length, header, isConfiguration: true));
             Summary.HeaderFindings(s, header);
+            Compare(s, header, configuration);
+            if (data.Length > TtaHeader.Length)
+            {
+                // The mapping's "TTA Header Structure" may be read to include the seek table, which Matroska drops; whatever follows the 22 bytes is shown, not read.
+                int extra = data.Length - TtaHeader.Length;
+                Node rest = configuration.Parent.Add(FieldMap.Of(data.Slice(TtaHeader.Length, extra)).Bytes("Extra Data", 0, extra, NodeValue.Integer(extra, "bytes", "byte"), Explain.ConfigurationExtra));
+                s.Findings.Add(Severity.Info, "tta.configuration-extra", rest, _ =>
+                    $"The configuration the container stores for the track holds {Counts.Of(extra, "byte", "bytes")} after the {TtaHeader.Length} of the TTA1 header; {Counts.Agree(extra, "it is", "they are")} not read.");
+            }
+
             return;
         }
 
@@ -91,6 +101,20 @@ public sealed class TtaCodecParser : ICodecParser
             s.Channels = format.Channels;
             s.BitsPerSample = format.BitsPerSample;
         }
+    }
+
+    // The sample rate, channels and bits per sample the container states for the track against those of the header it stores.
+    private static void Compare(State s, TtaHeader header, CodecConfiguration configuration)
+    {
+        if (configuration.Format is not { } format
+            || (format.SampleRate == header.SampleRate && format.Channels == header.Channels && format.BitsPerSample == header.BitsPerSample))
+        {
+            return;
+        }
+
+        s.Findings.Add(Severity.Warning, "tta.configuration-differs", s.HeaderNode!, _ =>
+            $"The container states {format.SampleRate} Hz, {Counts.Of(format.Channels, "channel", "channels")} and {Counts.Of(format.BitsPerSample, "bit", "bits")} per sample for the track, but the TTA1 header it stores for it gives "
+            + $"{header.SampleRate} Hz, {Counts.Of(header.Channels, "channel", "channels")} and {Counts.Of(header.BitsPerSample, "bit", "bits")} per sample; the header's figures are used.");
     }
 
     private static void Add(State s, MappedBytes packet, int index)
@@ -113,7 +137,7 @@ public sealed class TtaCodecParser : ICodecParser
         }
 
         IReadOnlyList<ByteRange> ranges = packet.FileRanges();
-        if (ranges.Count > 1)
+        if (ranges.Count > 1 && index < Records.MaxEntries)
         {
             s.Records.Ranges[index] = ranges;
         }

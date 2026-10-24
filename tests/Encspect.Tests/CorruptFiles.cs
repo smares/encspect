@@ -71,7 +71,7 @@ internal static class CorruptFiles
                 Task work = Task.Run(() =>
                 {
                     started.SetResult();
-                    AnalyzeAndCheck(variant, name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("tta/", StringComparison.Ordinal));
+                    AnalyzeAndCheck(variant, name.StartsWith("flac/", StringComparison.Ordinal));
                 });
                 await started.Task;
                 await work.WaitAsync(VariantLimit);

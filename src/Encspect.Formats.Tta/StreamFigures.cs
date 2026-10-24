@@ -3,8 +3,8 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Tta;
 
-// The figures of a stream's block sets as they are read: bits, coded samples, the smallest and
-// largest, and per set its offset and bitrate for the graphs. Time is counted in samples, so no
+// The figures of a stream's frames as they are read: bits, coded samples, the smallest and
+// largest, and per frame its offset and bitrate for the graphs. Time is counted in samples, so no
 // rounding adds up.
 internal sealed class StreamFigures(long sampleRate)
 {
@@ -12,8 +12,8 @@ internal sealed class StreamFigures(long sampleRate)
     private const int LastBin = 1000;
 
     private readonly ChunkedList<Point> _points = new();
-    // Only the seconds a unit starts in, in order: a block may declare far more samples than its bytes
-    // hold, so the seconds it spans are not kept.
+    // Only the seconds a frame starts in, in order: a header may declare far more samples than the frames' bytes
+    // hold, so the seconds a frame spans are not kept.
     private readonly ChunkedList<(long Second, long Bits, long Samples)> _seconds = new();
     private readonly SortedDictionary<int, int> _bins = [];
 
@@ -36,15 +36,10 @@ internal sealed class StreamFigures(long sampleRate)
     // In kbps, over the coded samples; null without them.
     public double? AverageBitrate => CodedSamples > 0 && sampleRate > 0 ? Bits * (double)sampleRate / CodedSamples / 1000 : null;
 
-    // inSeries false leaves the unit out of the per-unit series: a set of thousands of blocks would
-    // cost a point for each.
-    public void Add(long offset, long bits, long samples, bool inSeries = true)
+    public void Add(long offset, long bits, long samples)
     {
         double bitrate = samples > 0 && sampleRate > 0 ? bits * (double)sampleRate / samples / 1000 : 0;
-        if (inSeries)
-        {
-            _points.Add(new Point(offset, bitrate));
-        }
+        _points.Add(new Point(offset, bitrate));
 
         Units++;
         if (sampleRate > 0)

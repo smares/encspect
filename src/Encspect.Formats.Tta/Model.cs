@@ -18,8 +18,9 @@ internal readonly record struct TtaHeader(int AudioFormat, int Channels, int Bit
 
     public const int CrcOffset = 18;
 
-    // The audio format an encoder writes, and the one FFmpeg reads as an encrypted stream that needs a password (observed with FFmpeg 6.1.1:
-    // "Missing password for encrypted stream"); the description defines neither.
+    // The audio formats Encspect's test files hold: 1 in the files FFmpeg 6.1.1 and libtta-c 2.3 write, and 2 in the one libtta-c 2.3 writes for a
+    // stream encoded with a password (FFmpeg 6.1.1 asks for a password to open it: "Missing password for encrypted stream"). The description
+    // defines neither.
     public const int FormatSimple = 1;
     public const int FormatEncrypted = 2;
 
@@ -30,7 +31,7 @@ internal readonly record struct TtaHeader(int AudioFormat, int Channels, int Bit
     public bool IsCrcValid => StoredCrc == ComputedCrc;
 
     // Samples in every frame but the last: the sample rate times the "frame time" of 256/245 s, truncated (the description's 1.04489795918...;
-    // truncation is what the seek tables of encoder-written files show, with a frame of 33,436 samples at 32,000 Hz).
+    // truncation is what the seek tables of the files written by FFmpeg 6.1.1 and libtta-c 2.3 show, with a frame of 33,436 samples at 32,000 Hz).
     public long FrameLength => FrameLengthOf(SampleRate);
 
     public static long FrameLengthOf(long sampleRate) => sampleRate * 256 / 245;
@@ -83,15 +84,27 @@ internal struct Entry
 // What the nodes are built from: one entry for each frame, the header and the facts about the seek table.
 internal sealed class Records
 {
+    // The most entries of the seek table, and so the most frames, the records keep: a crafted table can list billions. The entries past it are
+    // counted and their CRC-32s compared, but they have no record, no node and no place in the graphs.
+    public const int MaxEntries = 1 << 21;
+
+    // The entries whose frame the data holds, wholly or in part, as far as MaxEntries: entry i of the seek table is Entries[i]. The entries
+    // past the end of the data have none (they would cost 24 bytes each for 4 bytes of the table).
     public ChunkedList<Entry> Entries { get; } = new();
+
+    // The length each of the first MaxEntries entries of the seek table states, for the seek point nodes.
+    public ChunkedList<uint> Sizes { get; } = new();
+
+    // The entries of the seek table the data holds (all of them, MaxEntries or not).
+    public long TableEntries { get; set; }
 
     // Frames whose bytes are not contiguous in the file (a packet a container stored in pieces).
     public Dictionary<int, IReadOnlyList<ByteRange>> Ranges { get; } = [];
 
     public TtaHeader? Header { get; set; }
 
-    // The number of entries that have a frame node: every one but those past the end of the data.
-    public int FrameNodes { get; set; }
+    // The number of entries that have a frame node: every recorded one.
+    public int FrameNodes => Entries.Count;
 
     public long HeaderOffset { get; set; }
 
@@ -128,5 +141,4 @@ internal static class Topics
     public const string Coding = "tta-coding";
     public const string InMatroska = "tta-in-matroska";
     public const string Crc = "crc";
-    public const string Verification = "verification";
 }

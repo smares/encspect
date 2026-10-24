@@ -30,8 +30,8 @@ internal static class Nodes
     // The seek table as far as the data holds it: its entries (one per frame the table lists) and its CRC-32 where the data reaches it.
     public static Node SeekTable(Records r)
     {
-        int count = r.Entries.Count;
-        long length = (4L * count) + (r.TableStoredCrc is null ? 0 : 4);
+        long count = r.TableEntries;
+        long length = (4 * count) + (r.TableStoredCrc is null ? 0 : 4);
         return new Node("Seek Table", r.TableOffset, length, NodeValue.Integer(count, "entries", "entry"), () => SeekTableChildren(r))
         {
             Description = Explain.SeekTable,
@@ -41,11 +41,11 @@ internal static class Nodes
 
     private static IReadOnlyList<Node> SeekTableChildren(Records r)
     {
-        int count = r.Entries.Count;
-        long end = r.TableOffset + (4L * count);
+        long count = r.TableEntries;
+        long end = r.TableOffset + (4 * count);
         var children = new List<Node>
         {
-            new("Seek Points", r.TableOffset, 4L * count, NodeValue.Integer(count, "entries", "entry"), () => new BlockedChildren([], count, i => SeekPoint(r, i)))
+            new("Seek Points", r.TableOffset, 4 * count, NodeValue.Integer(count, "entries", "entry"), () => new BlockedChildren([], r.Sizes.Count, i => SeekPoint(r, i)))
             {
                 Description = Explain.SeekPoints,
                 Topic = Topics.SeekTable,
@@ -62,7 +62,7 @@ internal static class Nodes
     }
 
     public static Node SeekPoint(Records r, int index) =>
-        new("Seek Point", r.TableOffset + (4L * index), 4, NodeValue.Integer(r.Entries[index].Size, "bytes", "byte")) { Description = Explain.SeekPoint, Topic = Topics.SeekTable };
+        new("Seek Point", r.TableOffset + (4L * index), 4, NodeValue.Integer(r.Sizes[index], "bytes", "byte")) { Description = Explain.SeekPoint, Topic = Topics.SeekTable };
 
     // The node of the frame at an index; entries whose frame lies past the end of the data have none.
     public static Node Frame(Records r, int index)

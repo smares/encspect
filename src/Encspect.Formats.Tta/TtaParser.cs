@@ -13,12 +13,21 @@ public sealed class TtaParser : IFormatParser
 
     private const int ReadChunk = 1 << 16;
 
+    // The header of the second version is 36 bytes: the signature, channels, bits per sample, sample rate, the channel mask, two 8-byte sizes and
+    // a CRC-32 (the format description's "TTA2 headers (in development)").
+    private const int HeaderLengthV2 = 36;
+
+    // DeclaredEnd adds up the lengths the seek table gives, which a crafted table can make exceed any long; past this the sum stops growing.
+    private const long LongestDeclared = 1L << 60;
+
     public string Name => FormatName;
 
     // The header's signature and its CRC-32 are 8 bytes of evidence: a header whose CRC-32 holds is certain (class 100); one whose CRC-32 fails
-    // but whose fields are possible, or the second version's signature (which the description gives no CRC-32 check for), is likely (80);
-    // the signature with fields that cannot be a header, or cut short, is possible (70). Only the start of the data counts: a header further in
-    // is a Matroska track's CodecPrivate, among other places, and no start of a TTA file.
+    // but whose fields are possible is likely (80); the signature with fields that cannot be a header, or cut short, is possible (70). The
+    // signature "TTA2" of the second version is likely only with the 36 bytes of its header there and at most 64 channels, 64 bits per sample
+    // and a sample rate of at most 1,000,000 Hz, none of them zero; four bytes of ASCII alone are possible. The analyzer does not compute that header's CRC-32: the description
+    // lists one ("CRC32 block footer") and no file of Encspect's tests shows what it covers. Only the start of the data counts: a header
+    // further in is a Matroska track's CodecPrivate, among other places, and no start of a TTA file.
     public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
@@ -28,13 +37,15 @@ public sealed class TtaParser : IFormatParser
         }
 
         long start = reader.Start;
-        Span<byte> bytes = stackalloc byte[TtaHeader.Length];
+        Span<byte> bytes = stackalloc byte[HeaderLengthV2];
         int available = (int)Math.Min(bytes.Length, reader.Length);
         reader.Position = start;
         reader.Read(bytes[..available]);
         if (bytes[..4].SequenceEqual(TtaHeader.SignatureV2))
         {
-            return new SniffResult(80, start, 0, 0, "TTA2");
+            bool arePlausible = available == HeaderLengthV2 && BinaryPrimitives.ReadUInt16LittleEndian(bytes[4..]) is > 0 and <= 64
+                && BinaryPrimitives.ReadUInt16LittleEndian(bytes[6..]) is > 0 and <= 64 && BinaryPrimitives.ReadUInt32LittleEndian(bytes[8..]) is > 0 and <= 1_000_000;
+            return new SniffResult(arePlausible ? 80 : 70, start, 0, 0, "TTA2");
         }
 
         if (!TtaHeader.HasSignature(bytes))
@@ -96,7 +107,7 @@ public sealed class TtaParser : IFormatParser
             crc = Crc32.Update(crc, buffer.AsSpan(0, n));
             for (int i = 0; i < n; i += 4)
             {
-                total += BinaryPrimitives.ReadUInt32LittleEndian(buffer.AsSpan(i));
+                total = Math.Min(total + BinaryPrimitives.ReadUInt32LittleEndian(buffer.AsSpan(i)), LongestDeclared);
             }
 
             left -= n;
@@ -194,27 +205,69 @@ public sealed class TtaParser : IFormatParser
         s.TableEntriesExpected = expected;
         long tableAvailable = reader.End - tableOffset;
         long entries = Math.Min(expected, tableAvailable / 4);
-        var sizes = new ChunkedList<uint>();
-        uint crc = Crc32.Initial;
-        byte[] buffer = new byte[ReadChunk];
-        reader.Position = tableOffset;
-        for (long left = entries * 4; left > 0;)
-        {
-            int n = (int)Math.Min(left, buffer.Length);
-            reader.Read(buffer.AsSpan(0, n));
-            crc = Crc32.Update(crc, buffer.AsSpan(0, n));
-            for (int i = 0; i < n; i += 4)
-            {
-                sizes.Add(BinaryPrimitives.ReadUInt32LittleEndian(buffer.AsSpan(i)));
-            }
-
-            left -= n;
-        }
-
         long tableEnd = tableOffset + (4 * expected) + 4;
         s.IsTableComplete = entries == expected && tableAvailable >= (4 * expected) + 4;
+        records.TableEntries = entries;
+
+        // The table is read in chunks and each chunk's entries are walked at once, so no list of the lengths is kept: the frames lie after the
+        // table, so the reader moves between the two. An entry whose frame starts at or past the end of the data is missing, and so is every
+        // later one (the position only grows), which keeps the position from overflowing and the entries from needing a record.
+        long position = tableEnd;
+        uint crc = Crc32.Initial;
+        byte[] table = new byte[ReadChunk];
+        byte[] buffer = new byte[ReadChunk];
+        for (long done = 0; done < entries;)
+        {
+            reader.CancellationToken.ThrowIfCancellationRequested();
+            int count = (int)Math.Min(entries - done, table.Length / 4);
+            reader.Position = tableOffset + (4 * done);
+            reader.Read(table.AsSpan(0, 4 * count));
+            crc = Crc32.Update(crc, table.AsSpan(0, 4 * count));
+            for (int i = 0; i < count; i++)
+            {
+                uint size = BinaryPrimitives.ReadUInt32LittleEndian(table.AsSpan(4 * i));
+                var entry = new Entry { Offset = position, Size = size };
+                if (position >= reader.End)
+                {
+                    entry.Status = EntryStatus.Missing;
+                }
+                else if (size < 4)
+                {
+                    entry.Status = EntryStatus.TooSmall;
+                }
+                else if (reader.End - position < size)
+                {
+                    entry.Status = EntryStatus.Cut;
+                }
+                else
+                {
+                    reader.Position = position;
+                    uint frameCrc = Crc32.Initial;
+                    for (long left = size - 4; left > 0;)
+                    {
+                        int n = (int)Math.Min(left, buffer.Length);
+                        reader.Read(buffer.AsSpan(0, n));
+                        frameCrc = Crc32.Update(frameCrc, buffer.AsSpan(0, n));
+                        left -= n;
+                    }
+
+                    entry.StoredCrc = reader.ReadUInt32LittleEndian();
+                    entry.ComputedCrc = Crc32.Finish(frameCrc);
+                }
+
+                s.AddEntry(entry);
+                if (position < reader.End)
+                {
+                    position += size;
+                }
+            }
+
+            done += count;
+        }
+
         if (s.IsTableComplete)
         {
+            reader.Position = tableOffset + (4 * expected);
             records.TableStoredCrc = reader.ReadUInt32LittleEndian();
             records.TableComputedCrc = Crc32.Finish(crc);
         }
@@ -223,52 +276,6 @@ public sealed class TtaParser : IFormatParser
             long listed = entries;
             s.Findings.Add(Severity.Warning, "tta.seek-table-truncated", () => s.TableNode!, _ =>
                 $"The data ends inside the seek table: it holds {listed} of the {Counts.Of(expected, "entry", "entries")} the header's sample count calls for{(listed == expected ? ", but not the CRC-32 after them" : string.Empty)}.");
-        }
-
-        long position = tableEnd;
-        for (int i = 0; i < sizes.Count; i++)
-        {
-            if (i % 4096 == 0)
-            {
-                reader.CancellationToken.ThrowIfCancellationRequested();
-            }
-
-            uint size = sizes[i];
-            var entry = new Entry { Offset = position, Size = size };
-            if (position >= reader.End)
-            {
-                entry.Status = EntryStatus.Missing;
-            }
-            else if (size < 4)
-            {
-                entry.Status = EntryStatus.TooSmall;
-            }
-            else if (reader.End - position < size)
-            {
-                entry.Status = EntryStatus.Cut;
-            }
-            else
-            {
-                if (reader.Position != position)
-                {
-                    reader.Position = position;
-                }
-
-                uint frameCrc = Crc32.Initial;
-                for (long left = size - 4; left > 0;)
-                {
-                    int n = (int)Math.Min(left, buffer.Length);
-                    reader.Read(buffer.AsSpan(0, n));
-                    frameCrc = Crc32.Update(frameCrc, buffer.AsSpan(0, n));
-                    left -= n;
-                }
-
-                entry.StoredCrc = reader.ReadUInt32LittleEndian();
-                entry.ComputedCrc = Crc32.Finish(frameCrc);
-            }
-
-            s.AddEntry(entry);
-            position += size;
         }
 
         s.TableNode = Nodes.SeekTable(records);

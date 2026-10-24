@@ -76,23 +76,58 @@ internal sealed class State
 
     public long Samples { get; private set; }
 
+    // The entries added, recorded or not, which is the index the next one takes; and those with a frame the records do not keep (past
+    // Records.MaxEntries).
+    public long Listed { get; private set; }
+
+    public long Unrecorded { get; private set; }
+
+    // The first entry of each fault: its index, and its values for the message. Its node exists only where the index is below Records.MaxEntries.
+    public (long Index, Entry Entry) FirstCrcFailure { get; private set; } = (-1, default);
+
+    public (long Index, Entry Entry) FirstCut { get; private set; } = (-1, default);
+
+    public (long Index, Entry Entry) FirstTooSmall { get; private set; } = (-1, default);
+
     public void AddEntry(in Entry entry)
     {
-        Records.Entries.Add(entry);
+        long index = Listed++;
+        bool isRecorded = index < Records.MaxEntries;
+        if (isRecorded)
+        {
+            Records.Sizes.Add(entry.Size);
+        }
+
         if ((entry.Status & EntryStatus.Missing) != 0)
         {
             MissingFrames++;
             return;
         }
 
-        Records.FrameNodes++;
+        if (isRecorded)
+        {
+            Records.Entries.Add(entry);
+        }
+        else
+        {
+            Unrecorded++;
+        }
+
         if ((entry.Status & EntryStatus.Cut) != 0)
         {
             CutFrames++;
+            if (FirstCut.Index < 0)
+            {
+                FirstCut = (index, entry);
+            }
         }
         else if ((entry.Status & EntryStatus.TooSmall) != 0)
         {
             TooSmallFrames++;
+            if (FirstTooSmall.Index < 0)
+            {
+                FirstTooSmall = (index, entry);
+            }
         }
         else
         {
@@ -100,9 +135,13 @@ internal sealed class State
             if (!entry.IsCrcValid)
             {
                 CrcFailures++;
+                if (FirstCrcFailure.Index < 0)
+                {
+                    FirstCrcFailure = (index, entry);
+                }
             }
 
-            long samples = Records.SamplesOf(Records.Entries.Count - 1);
+            long samples = Records.SamplesOf(index);
             if (samples > 0)
             {
                 Samples += samples;

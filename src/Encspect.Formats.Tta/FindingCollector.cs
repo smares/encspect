@@ -11,29 +11,24 @@ internal sealed class FindingCollector
     private readonly List<(string Code, string Case)> _order = [];
     private readonly List<Finding> _immediate = [];
 
-    // While set, findings added with a node point to the node it returns instead: the findings of blocks that the tree does not list (their node
-    // is not in the tree) point to the node that stands for them. It is read when the findings are reported.
-    public Func<Node>? Redirect { get; set; }
+    public void Add(Severity severity, string code, Node node, Func<int, string> message, string problem = "") => Add(severity, code, () => node, message, 1, problem);
 
-    public void Add(Severity severity, string code, Node node, Func<int, string> message, string problem = "")
-    {
-        Func<Node>? redirect = Redirect;
-        Add(severity, code, redirect ?? (() => node), message, problem);
-    }
+    public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message, string problem = "") => Add(severity, code, node, message, 1, problem);
 
     // node is built only for the first case, and only when the findings are reported, so a finding
     // repeated over many units builds one node, and a node that grows while the units are read (a run
-    // of packets) is built as it ends.
-    public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message, string problem = "")
+    // of packets) is built as it ends. count is the number of cases at once, for a tally kept by the caller.
+    public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message, long count, string problem = "")
     {
+        int cases = (int)Math.Min(count, int.MaxValue);
         (string, string) key = (code, problem);
         if (_aggregated.TryGetValue(key, out var existing))
         {
-            _aggregated[key] = existing with { Count = existing.Count + 1 };
+            _aggregated[key] = existing with { Count = (int)Math.Min((long)existing.Count + cases, int.MaxValue) };
             return;
         }
 
-        _aggregated[key] = (severity, node, 1, message);
+        _aggregated[key] = (severity, node, cases, message);
         _order.Add(key);
     }
 

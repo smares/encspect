@@ -452,7 +452,7 @@
       {
         "severity": "Info",
         "code": "tta.audio-format-encrypted",
-        "message": "The audio format is 2, which FFmpeg reads as a stream encrypted with a password; the frames cannot be decoded without it.",
+        "message": "The audio format is 2: libtta-c 2.3 writes it for a stream encoded with a password in Encspect's test file, and FFmpeg 6.1.1 refuses to decode such a file without one. The format description does not define the value.",
         "offset": 0,
         "length": 22,
         "path": [

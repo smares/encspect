@@ -48,7 +48,7 @@ internal static class Summary
             stream.Add(new Node("Frames", start, end - start, NodeValue.Integer(records.FrameNodes, "frames", "frame"), () => new BlockedChildren([], records.FrameNodes, i => Nodes.Frame(records, i)))
             {
                 Kind = NodeKind.Stream,
-                Description = Explain.Stream,
+                Description = Explain.ContainedFrames,
                 Topic = Topics.Stream,
             });
         }
@@ -79,26 +79,25 @@ internal static class Summary
             }
         }
 
+        // The node of the entry at an index, or the stream's where the records stopped before it (Records.MaxEntries).
+        Node stream = s.Stream;
+        Func<Node> At(long index, Func<int, Node> node) => index < Records.MaxEntries ? () => node((int)index) : () => stream;
+
         if (s.CrcFailures > 0)
         {
-            int first = FirstWhere(records, e => e.IsComplete && !e.IsCrcValid);
-            Entry entry = records.Entries[first];
+            (long first, Entry entry) = s.FirstCrcFailure;
             uint stored = entry.StoredCrc;
             uint computed = entry.ComputedCrc;
-            for (long i = 0; i < s.CrcFailures; i++)
-            {
-                s.Findings.Add(Severity.Warning, "tta.frame-crc-mismatch", () => Nodes.CrcField(records, first), count =>
-                    $"The CRC-32 of frame {first} is {stored:x8}, but its bytes give {computed:x8}{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.");
-            }
+            s.Findings.Add(Severity.Warning, "tta.frame-crc-mismatch", At(first, i => Nodes.CrcField(records, i)), count =>
+                $"The CRC-32 of frame {first} is {stored:x8}, but its bytes give {computed:x8}{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.", s.CrcFailures);
         }
 
         if (s.CutFrames > 0)
         {
-            int cut = FirstWhere(records, e => (e.Status & EntryStatus.Cut) != 0);
-            Entry entry = records.Entries[cut];
+            (long cut, Entry entry) = s.FirstCut;
             long present = Math.Max(0, records.DataEnd - entry.Offset);
             uint declared = entry.Size;
-            s.Findings.Add(Severity.Warning, "tta.frame-cut", () => Nodes.Frame(records, cut), _ =>
+            s.Findings.Add(Severity.Warning, "tta.frame-cut", At(cut, i => Nodes.Frame(records, i)), _ =>
                 $"The data ends inside frame {cut}, which the seek table gives {Counts.Of(declared, "byte", "bytes")}; {present} of them {Counts.Agree(present, "is", "are")} there.");
         }
 
@@ -111,27 +110,21 @@ internal static class Summary
 
         if (s.TooSmallFrames > 0)
         {
-            int small = FirstWhere(records, e => (e.Status & EntryStatus.TooSmall) != 0);
-            uint declared = records.Entries[small].Size;
-            for (long i = 0; i < s.TooSmallFrames; i++)
-            {
-                s.Findings.Add(Severity.Warning, "tta.frame-too-small", () => Nodes.Frame(records, small), count =>
-                    $"The seek table gives frame {small} {Counts.Of(declared, "byte", "bytes")}, fewer than the 4 of the CRC-32 every frame ends with{(count > 1 ? $"; {count - 1} more {Counts.Agree(count - 1, "entry is", "entries are")} as short" : string.Empty)}.");
-            }
+            (long small, Entry entry) = s.FirstTooSmall;
+            uint declared = entry.Size;
+            s.Findings.Add(Severity.Warning, "tta.frame-too-small", At(small, i => Nodes.Frame(records, i)), count =>
+                $"The seek table gives frame {small} {Counts.Of(declared, "byte", "bytes")}, fewer than the 4 of the CRC-32 every frame ends with{(count > 1 ? $"; {count - 1} more {Counts.Agree(count - 1, "entry is", "entries are")} as short" : string.Empty)}.", s.TooSmallFrames);
         }
-    }
 
-    private static int FirstWhere(Records records, Func<Entry, bool> predicate)
-    {
-        for (int i = 0; i < records.Entries.Count; i++)
+        if (s.Listed > Records.MaxEntries)
         {
-            if (predicate(records.Entries[i]))
-            {
-                return i;
-            }
+            long listed = s.Listed;
+            bool isContained = s.IsContained;
+            Node at = s.TableNode ?? stream;
+            s.Findings.Add(Severity.Warning, "tta.entries-limit", at, _ =>
+                $"{(isContained ? "The container holds" : "The seek table lists")} {Counts.Of(listed, isContained ? "frame" : "entry", isContained ? "frames" : "entries")}, more than the {Records.MaxEntries} the report keeps; the rest are counted and their CRC-32s compared, "
+                + "but they have no nodes, and the graphs and the bitrate figures cover the frames before them.");
         }
-
-        return 0;
     }
 
     private static StreamVerification Verify(State s)
@@ -271,12 +264,12 @@ internal static class Summary
         Node at = s.HeaderNode!;
         if (header.AudioFormat == TtaHeader.FormatEncrypted)
         {
-            s.Findings.AddNow(Severity.Info, "tta.audio-format-encrypted", "The audio format is 2, which FFmpeg reads as a stream encrypted with a password; the frames cannot be decoded without it.", at);
+            s.Findings.AddNow(Severity.Info, "tta.audio-format-encrypted", "The audio format is 2: libtta-c 2.3 writes it for a stream encoded with a password in Encspect's test file, and FFmpeg 6.1.1 refuses to decode such a file without one. The format description does not define the value.", at);
         }
         else if (header.AudioFormat != TtaHeader.FormatSimple)
         {
             int format = header.AudioFormat;
-            s.Findings.AddNow(Severity.Warning, "tta.audio-format-unknown", $"The audio format is {format}; the format description does not define it, and encoders write 1.", at);
+            s.Findings.AddNow(Severity.Warning, "tta.audio-format-unknown", $"The audio format is {format}; the format description does not define it, and Encspect's test files hold 1 and 2.", at);
         }
 
         if (header.Channels == 0)
@@ -287,7 +280,7 @@ internal static class Summary
         if (header.BitsPerSample is not (8 or 16 or 24))
         {
             int bits = header.BitsPerSample;
-            s.Findings.AddNow(Severity.Info, "tta.bits-per-sample-unusual", $"The header gives {Counts.Of(bits, "bit", "bits")} per sample; the format description names 8, 16 and 24.", at);
+            s.Findings.AddNow(Severity.Info, "tta.bits-per-sample-unusual", $"The header gives {Counts.Of(bits, "bit", "bits")} per sample; the compression theory page of the TTA authors names 8, 16 and 24.", at);
         }
 
         if (header.SampleRate == 0)

@@ -136,7 +136,7 @@ public class CorruptFlacFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The TTA fixtures written by FFmpeg.
+// The TTA fixtures written by FFmpeg and libtta-c.
 public class CorruptTtaFileTests
 {
     public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("tta/external-", StringComparison.Ordinal));
