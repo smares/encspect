@@ -19,17 +19,25 @@ public class DtsTests
     {
         string dts = Path.Combine(Fixtures.FixtureDirectory, "dts") + Path.DirectorySeparatorChar;
         string matroska = Path.Combine(Fixtures.FixtureDirectory, "matroska") + Path.DirectorySeparatorChar;
+        string wav = Path.Combine(Fixtures.FixtureDirectory, "wav") + Path.DirectorySeparatorChar;
         var parser = new DtsParser();
         int checkedFiles = 0;
         foreach (string path in Directory.EnumerateFiles(Fixtures.FixtureDirectory, "*", SearchOption.AllDirectories))
         {
             if (path.StartsWith(dts, StringComparison.Ordinal) || path.EndsWith(".json", StringComparison.Ordinal) || Path.GetFileName(path).StartsWith("dts-", StringComparison.Ordinal)
                 // The DTS frames in a Matroska file are DTS to the DTS parser, as the ones in an MP4 file in dts/ are; the file is Matroska to the host.
-                || (path.StartsWith(matroska, StringComparison.Ordinal) && Path.GetFileName(path).Contains("dts", StringComparison.Ordinal)))
+                || (path.StartsWith(matroska, StringComparison.Ordinal) && Path.GetFileName(path).Contains("dts", StringComparison.Ordinal))
+                // The DTS frames in the data chunk of a WAVE file are DTS to the DTS parser, which the WAV parser hands them to; the file is WAV to the host.
+                || (path.StartsWith(wav, StringComparison.Ordinal) && Path.GetFileName(path).Contains("dts", StringComparison.Ordinal)))
             {
                 if (path.StartsWith(matroska, StringComparison.Ordinal) && !path.EndsWith(".json", StringComparison.Ordinal))
                 {
                     Assert.Equal("Matroska", Encspect.Host.Analyzer.CreateDefault().AnalyzeFile(path).Root.Value?.ToString());
+                }
+
+                if (path.StartsWith(wav, StringComparison.Ordinal) && !path.EndsWith(".json", StringComparison.Ordinal))
+                {
+                    Assert.Equal("WAV", Encspect.Host.Analyzer.CreateDefault().AnalyzeFile(path).Root.Value?.ToString());
                 }
 
                 continue;
