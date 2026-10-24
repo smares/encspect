@@ -106,8 +106,8 @@ public sealed partial class MpegAudioParser
             region.Nodes.ChannelBitShare = share;
         }
 
-        // Layer III's ancillary segments follow mp3guessenc's scan (AncillaryScan); Layers I and II
-        // count what mp3guessenc counts after the audio data.
+        // Layer III's ancillary segments are counted by AncillaryScan (R1, R5), Layers I and II by
+        // the bytes after the audio data (L1); both match mp3guessenc's output.
         AncillaryScan? scan = region.Ancillary;
         long ancillary = (scan?.AudioBytes ?? 0) + tally.Layer12Ancillary;
         Node data = node.Add("Ancillary Data", start, length, Bytes(ancillary), Explain.AncillaryTotal, Topics.AncillaryData);
@@ -227,7 +227,7 @@ public sealed partial class MpegAudioParser
 
         public int[] MaximumGain { get; } = [-1, -1];
 
-        // Layers I and II: the ancillary bytes mp3guessenc counts, and the smallest and largest
+        // Layers I and II: the ancillary bytes after the audio data (L1), and the smallest and largest
         // amount of a frame that has any.
         public long Layer12Ancillary { get; private set; }
 
@@ -254,8 +254,13 @@ public sealed partial class MpegAudioParser
             }
             else if (header.Layer != 3 && audioEnd <= length * 8)
             {
-                // Clean-room rewrite pending: implement from the rules in docs/formats/mpeg-audio.md, "Ancillary data".
-                throw new NotImplementedException();
+                int bytes = (length * 8 - audioEnd) / 8 - (header.Padding == 1 ? (header.Layer == 1 ? 4 : 1) : 0);
+                if (bytes > 0)
+                {
+                    Layer12Ancillary += bytes;
+                    SmallestLayer12 = SmallestLayer12 == 0 ? bytes : Math.Min(SmallestLayer12, bytes);
+                    LargestLayer12 = Math.Max(LargestLayer12, bytes);
+                }
             }
         }
 

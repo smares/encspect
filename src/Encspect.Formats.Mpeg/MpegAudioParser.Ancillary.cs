@@ -4,8 +4,8 @@ namespace Encspect.Formats.Mpeg;
 
 // mp3PRO, MP3 Surround and the Original File Length (OFL) block, which their encoders and
 // Fraunhofer's mp3sEncoder write into the ancillary data of Layer III frames. No specification is
-// public, so detection follows mp3guessenc 0.27.6 (scan_ancillary_III): a frame's ancillary segment
-// runs from the end of its main data, rounded up to a byte, to where the next frame's main data
+// public, so the rules are those of "Ancillary data" in docs/formats/mpeg-audio.md, which match
+// mp3guessenc 0.27.6's output as the MPEG cross-check confirms: a frame's ancillary segment runs from the end of its main data, rounded up to a byte, to where the next frame's main data
 // starts in the bit reservoir, and the last frame's to the end of its data. mp3PRO and MP3 Surround
 // encoders start every segment with signature bits; an OFL block starts the first frame's segment.
 // In mp3PRO, the OFL block counts samples at the rate an mp3PRO decoder outputs, twice the core's:
@@ -119,9 +119,8 @@ public sealed partial class MpegAudioParser
         public long LastSegmentBytes { get; private set; }
 
         // The statistics' ancillary data: the bytes of the segments of complete frames, and the
-        // smallest and largest such segment that is not empty, 0 when there is none. mp3guessenc
-        // leaves out a truncated last frame with its segment, and empty segments from its "Min
-        // packet" and "Max packet".
+        // smallest and largest such segment that is not empty, 0 when there is none. A truncated
+        // last frame's segment is left out (R5), and empty segments from the smallest.
         public long AudioBytes { get; private set; }
 
         public long SmallestSegment { get; private set; }
@@ -139,7 +138,7 @@ public sealed partial class MpegAudioParser
             // A truncated last frame keeps its place as long as its side information is there: its
             // main data starts in the reservoir, which ends the previous frame's segment (BladeEnc
             // 0.80 to 0.83 cut the last frame short), and it has a segment of its own where its main
-            // data fits what is left of it, as mp3guessenc reads it.
+            // data fits what is left of it (R1).
             bool inReservoir = header.Layer == 3 && (entry.HasSideInfo || entry.IsVbrHeader);
             if (!inReservoir || _stream is not { } stream || !stream.IsSameStream(header))
             {
@@ -169,7 +168,7 @@ public sealed partial class MpegAudioParser
             long begin = start - entry.MainDataBegin;
             long end = begin + entry.MainDataLength;
 
-            // mp3guessenc skips the segment where this frame's main data starts before the stream or
+            // R1: the segment is skipped where this frame's main data starts before the stream or
             // inside the previous frame's, and the next one where it does not fit its frame.
             if (_hasPrevious && _previousEnd is { } previousEnd && begin >= 0 && previousEnd <= begin)
             {
@@ -199,8 +198,83 @@ public sealed partial class MpegAudioParser
             _hasPrevious = false;
         }
 
-        // Clean-room rewrite pending: implement from the rules in docs/formats/mpeg-audio.md, "Ancillary data".
-        private void Segment(long from, long to) => throw new NotImplementedException();
+        // One segment of the reservoir: the signature (R2), the Original File Length block of the
+        // first frame's segment (R3) and the counts (R1, R5).
+        private void Segment(long from, long to)
+        {
+            if (to < from || _stream is not { } stream)
+            {
+                return;
+            }
+
+            int length = (int)(to - from);
+            Segments++;
+            Bytes += length;
+            LastSegmentBytes = length;
+            if (!_previousIsTruncated)
+            {
+                AudioBytes += length;
+                if (length > 0)
+                {
+                    SmallestSegment = SmallestSegment == 0 ? length : Math.Min(SmallestSegment, length);
+                    LargestSegment = Math.Max(LargestSegment, length);
+                }
+            }
+
+            if (length == 0)
+            {
+                Signature[0] = 0;
+                Signature[1] = 0;
+                return;
+            }
+
+            byte[] data = Read(from, Math.Min(length, 20));
+            bool andFirstTwo = true;
+            if (_previousIsFirst && Ofl is null)
+            {
+                if (!stream.IsMpeg1 && length > 20 && data[0] == 0xE0 && data[1] == 0xBA)
+                {
+                    int delay = data[14] << 8 | data[15];
+                    long samples = (long)data[16] << 24 | (long)data[17] << 16 | (long)data[18] << 8 | data[19];
+                    Ofl = BlockAt(from, 20, delay, samples, true);
+                }
+                else if (stream.IsMpeg1 && length > 9 && data[0] == 0xB4 && data[1] is 0x04 or 0x08)
+                {
+                    int delay = data[1] << 8 | data[2];
+                    long samples = (long)data[3] << 24 | (long)data[4] << 16 | (long)data[5] << 8 | data[6];
+                    Ofl = BlockAt(from, 7, delay, samples, false);
+                    andFirstTwo = false;
+                    if (data[1] == 0x08)
+                    {
+                        if (length > 10)
+                        {
+                            Signature[0] &= data[10];
+                        }
+
+                        if (length > 11)
+                        {
+                            Signature[1] &= data[11];
+                        }
+                    }
+                }
+            }
+
+            if (andFirstTwo)
+            {
+                Signature[0] &= data[0];
+                if (length >= 2)
+                {
+                    Signature[1] &= data[1];
+                }
+            }
+        }
+
+        // The block's bytes are contiguous in the reservoir but may not be in the file.
+        private (long Offset, int Length, int Delay, long Samples, bool IsMp3Pro) BlockAt(long position, int count, int delay, long samples, bool isMp3Pro)
+        {
+            long offset = FileOffset(position);
+            return (offset, (int)(FileOffset(position + count - 1) + 1 - offset), delay, samples, isMp3Pro);
+        }
 
         private byte[] Read(long from, int count)
         {
