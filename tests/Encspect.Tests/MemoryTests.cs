@@ -1209,6 +1209,55 @@ public class MemoryTests(ITestOutputHelper output)
     // Frames of constant subframes, the smallest there are: 4,096 samples of two channels in 14 bytes.
     private static byte[] FlacFrames(int count) => FlacBuilder.Stream(count);
 
+    // A TTA stream keeps a 24-byte entry per frame and 16 bytes of its bitrate graph (and its per-second figures while they are built); its
+    // nodes are built in blocks of 1,024 when read. The frames here are 4 bytes each, the CRC-32 alone, the fewest a file can hold per frame.
+    // linux-x64 measures 56 bytes kept and 80 at the peak per frame; the bounds are about twice that.
+    [Fact]
+    public void ManyTtaFramesStayCompact()
+    {
+        const int frames = 200_000;
+        byte[] data = TtaBuilder.SmallFrames(frames);
+
+        (Report report, long kept, long peak) = Measure("frames.tta", data, TtaBuilder.SmallFrames(100));
+
+        Assert.Equal(frames * TtaBuilder.FrameLength(8000), report.Streams.Single().Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * 100L, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * 140L, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    // A header of sample rate 1 and 4,294,967,295 samples calls for a seek table of 16 GB: the file holds 8 MB of it, 2,097,152 entries, and every
+    // frame lies past the end of the data. Such an entry keeps its 4-byte length for the seek point node and nothing else; a record of 24 bytes
+    // for each of them (with the length list beside it) once made the report 7 times the file.
+    [Fact]
+    public void ATtaSeekTableOfEntriesPastTheEndStaysTheSizeOfTheFile()
+    {
+        byte[] data = [.. TtaBuilder.Header(1, 1, 16, uint.MaxValue), .. new byte[8 << 20]];
+
+        (Report report, long kept, long peak) = Measure("table.tta", data, data[..4096]);
+
+        Assert.Contains(report.Findings, f => f.Code == "tta.seek-table-truncated");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        output.WriteLine($"{kept / (double)data.Length:F2} times the file kept, {peak / (double)data.Length:F2} at the peak");
+        Assert.True(kept < data.Length * 1.5, $"The report keeps {kept / (double)data.Length:F2} times the file.");
+        Assert.True(peak < data.Length * 2.5, $"The live heap grew by {peak / (double)data.Length:F2} times the file.");
+        GC.KeepAlive(report);
+    }
+
+    // Frames of a CRC-32 alone, more than the records keep: the rest are counted, their CRC-32s compared, and the heap stays near the cap's.
+    [Fact]
+    public void TtaFramesPastTheCapStayBounded()
+    {
+        int count = Encspect.Formats.Tta.Records.MaxEntries + 1_000;
+        byte[] data = TtaBuilder.Stream(100, 1, 16, count, payload: 0);
+
+        Report report = Bounded("capped.tta", data, 450_000_000, "tta.entries-limit");
+
+        Assert.Equal(count * TtaBuilder.FrameLength(100), Assert.Single(report.Streams).Samples);
+        Assert.Equal(true, report.Streams.Single().Verification!.IsVerified);
+    }
+
     // A WavPack file keeps a 64-byte entry per block and 16 bytes per set for its graph, and the
     // sub-blocks of the first 4,096 blocks; past them a block is its entry alone, and its nodes are
     // built in blocks of 1,024 when read. The bounds are about twice what linux-x64 measures and below

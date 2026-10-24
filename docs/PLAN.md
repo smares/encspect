@@ -422,7 +422,8 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
 - Documents that exist but have not been read:
   - Dolby's "Dolby TrueHD high-level bitstream description" (2018).
   - "MLP (Dolby TrueHD) streams within the ISO Base Media File Format" (version 1.0, 2009).
-  - Both are on developer.dolby.com. Reading them is the first step of the work; a field is added to the scope only if one of them or FFmpeg's source states it.
+  - Both are on developer.dolby.com. Reading them is the first step of the work; a field is added to the scope only if one of them or FFmpeg's source states it. The site refused connections from the agent session that wrote the format description (2026-10-24).
+- The clean-room format description written from FFmpeg's source, which the implementer reads instead of that source (decision 10): [docs/design/truehd-format.md](design/truehd-format.md). It also lists the real test files, pinned by SHA-256, that it was checked against.
 
 **Read from the bitstream alone**
 
@@ -439,15 +440,15 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
   - The signature 0xB752 and the flags word.
   - Variable or constant bit rate, peak data rate, substream count and the substream info bytes.
 - Major sync checksum:
-  - The last two bytes, little endian.
+  - The last two bytes, most significant first (FFmpeg's CRC code keeps 16-bit values byte-swapped, so its code reads them as little endian).
   - A CRC-16 (polynomial 0x002D, start value 0) over the bytes before the last four.
   - The two bytes before the checksum are XORed into the result instead of run through it.
 - Parity nibble: the four bytes of the unit header and the substream directory (without the major sync), XORed to one byte, must have a high nibble that is the complement of the low one (`mlp_parser.c` 135 to 158, `mlpdec.c` 1264 to 1270).
 - Substream directory:
-  - Per substream 16 bits: extra word present, bit clear when the substream starts with a restart header, check data present, one unknown bit, end offset in words (cumulative).
+  - Per substream 16 bits: extra word present, the non-restart bit (clear when the substream starts with a restart header), check data present, one unknown bit, end offset in words (cumulative).
   - A 16-bit extra word where flagged (TrueHD only).
-  - A unit with a major sync must have the restart bit clear in every entry, and one without it set.
-- Substream data starts with a block present bit and a restart present bit.
+  - A unit with a major sync must have the non-restart bit clear in every entry, and one without it set.
+- Each block of a substream starts with a parameters present bit and, where it is set, a restart header present bit.
 - Restart header:
   - A 13-bit sync 0x18F5 and a noise-type bit, which give 0x31EA or 0x31EB.
   - Timestamp, first and last coded channel, last matrix channel, noise shift and noise generator seed.
@@ -457,8 +458,8 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
 - Decoding parameters:
   - Block size, matrices, output shifts and quantization steps.
   - FIR and IIR filters with their orders, shifts and coefficients.
-  - Huffman offset, codebook and bypassed least significant bits.
-- End of stream: the marker 0xD234D234 (TrueHD adds a count of samples to drop).
+  - Per matrix, whether its least significant bit is bypassed; per channel, the Huffman offset, the codebook and the count of least significant bits below the Huffman-coded part.
+- End of stream marker: 0xD234D234 (TrueHD adds a count of samples to drop).
 - Substream tail, where the directory says so:
   - A parity byte: all bytes before it XORed with it give 0xA9.
   - A CRC-8 (polynomial 0x63, start value 0x3C) over the bytes before the parity byte, with the last of them XORed in.
@@ -468,7 +469,7 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
 **Needs decoding**
 
 - The lossless check:
-  - Each restart header holds one byte that FFmpeg compares at the next restart header with the XOR of every output sample since the last one.
+  - Each restart header holds one byte that FFmpeg compares with the XOR of every output sample since the previous restart header.
   - Per sample and channel, the value is the 24-bit sample after the output shift, shifted left by its matrix channel, then folded to 8 bits (`mlpdsp.c` 100 to 126).
   - It is not a function of the bitstream: it needs residuals, filters, matrices with the noise channels, bypassed bits and output shifts of every substream up to the highest one decoded.
   - It therefore belongs to the decoders that verify stored checksums (phase 3, above).
@@ -494,7 +495,7 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
 **Containers**
 
 - Raw files:
-  - FFmpeg's probe (`libavformat/mlpdec.c` 34 to 56) walks the length words from each major sync and needs 100 chained units.
+  - FFmpeg's probe (`libavformat/mlpdec.c` 34 to 56) walks the length words from each major sync and needs a score of 100: each major sync reached through the length words scores 1, plus 1 per 8 units since the previous one (about 50 major syncs, some 800 units, at one major sync every 16 units).
   - The analyzer's detection follows the chain as for other formats (a major sync whose unit is followed by units that pass the parity nibble) with fewer.
   - `.thd` and `.mlp` are the extensions.
 - MP4:
@@ -511,6 +512,18 @@ Not covered:
 - The audio itself beyond the lossless check.
 - TrueHD with the AC-3 core interleaved as on Blu-ray (FFmpeg's raw parser does not read it either).
 - Fields FFmpeg skips: the flags word and the substream info bits other than the Atmos bit are shown as raw values.
+
+## Phase 3: TTA
+
+TTA is a format parser of its own (`src/Encspect.Formats.Tta`, "TTA") for `.tta` files, and a codec parser "tta" for the frames of Matroska's `A_TTA1` (the route is the Matroska step of the decoder design's rollout). It has no decoder: the frames' CRC-32s are the checks, and they cover coded data, so a stream is verified without decoding (docs/design/decoders.md, "Checksums and verdicts"). It declares its end (`DeclaredEnd`) from the seek table, so APEv2 and ID3v1 tags after the last frame are the host's and look-alikes inside the frames belong to the stream. The sources are the TTA authors' format description (tta.sourceforge.net) and Matroska's codec mapping; libtta, ttaenc and FFmpeg's TTA code are LGPL or GPL and were not read (decision 10), so FFmpeg, libtta-c 2.3 (built from its pinned source as an encoder and run as a black box) and MediaInfo are cross-checks only. The report keeps at most 2,097,152 seek table entries and frame records (`tta.entries-limit`), like AAC's frame records, so a crafted table of billions of entries costs memory in proportion to the file.
+
+- **Structure:** a 22-byte header ("TTA1", audio format, channels, bits per sample, sample rate, samples, CRC-32), a seek table (one 4-byte frame length per frame, then a CRC-32), then the frames, each ending in a CRC-32 over its coded bytes. A frame holds the sample rate times 256/245 samples, truncated (as the files of FFmpeg 6.1.1 and libtta-c 2.3 show); the table has one entry for each frame.
+- **Findings:** `tta.header-crc-mismatch`, `tta.seek-table-crc-mismatch`, `tta.frame-crc-mismatch`, truncation in each part (`tta.header-truncated`, `tta.seek-table-truncated`, `tta.frame-cut`, `tta.frames-missing`), `tta.frame-too-small`, `tta.data-after-frames`, header fields (`tta.sample-rate-zero`, `tta.channels-zero`, `tta.no-samples`, `tta.bits-per-sample-unusual`, `tta.audio-format-unknown`, `tta.audio-format-encrypted`), `tta.version-2`, `tta.no-signature`, `tta.entries-limit`, the codec parser's (`tta.header-invalid`, `tta.configuration-extra`, `tta.configuration-differs`, `tta.frame-count-differs`, `tta.payload-not-analyzed`) and the writer's.
+- **Streams:** codec "TTA", sample rate, channels (no layout: the header states no positions), bits per sample, samples of the frames read whole, duration, average and per-frame bitrate with series and a distribution.
+- **Fixtures and checks:** 19 files from FFmpeg 6.1.1's encoder (8, 16 and 24 bits, 1 to 8 channels, 8,000 to 192,000 Hz, silence, noise, whole frames and a frame of one sample, tags, no tag), 7 from libtta-c 2.3 (16 and 24 bits, 1, 2 and 6 channels, two sample rates whose frames end one sample in, a whole frame length, noise, and a stream encoded with a password, which has audio format 2) and 41 hand-built ones (`make_tta_fixtures.py`, `tta_model.py`, reproducible in CI) for each header field, damage to the seek table and the frames, a file cut in each part, and the tags around a stream. `crosscheck_tta_fixtures.py`, a CI job on Ubuntu 26.04, confirms the manifests with ffprobe (frames as packets, rate, channels, bits, duration), ffmpeg (decoding with a CRC check, and the libtta files' samples against the signal) and MediaInfo 26.01.
+- **Articles:** `tta-stream`, `tta-seek-table`, `tta-coding` and `tta-in-matroska`; `crc`, `verification` and `bitrate-modes` mention TTA where the concept is shared.
+
+Not covered: the coded samples (no decoder), TTA2, and the compression ratio per frame of the coding graphs.
 
 ## Format detection
 
@@ -538,14 +551,14 @@ Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and 
 
 | Class | Evidence |
 |---|---|
-| 100 | Matroska or WebM: an EBML header with DocType matroska or webm followed by a Segment; DTS-HD file: `DTSHDHDR` at the start followed by a chain of chunks that fit (8-character IDs of printable characters, sizes of 4 to 2^61 bytes); MP4's ftyp box; Ogg's chain of pages from the start; Musepack's magic number with a consistent SV7 header (version 7, a frame count, a max band from 1 to 31, a last frame of at most 1,152 samples) or an SV8 stream header; ASF's Header Object GUID; WavPack's block header followed by another or by the end |
+| 100 | TTA: the header "TTA1" at the start of the data with a CRC-32 that holds; Matroska or WebM: an EBML header with DocType matroska or webm followed by a Segment; DTS-HD file: `DTSHDHDR` at the start followed by a chain of chunks that fit (8-character IDs of printable characters, sizes of 4 to 2^61 bytes); MP4's ftyp box; Ogg's chain of pages from the start; Musepack's magic number with a consistent SV7 header (version 7, a frame count, a max band from 1 to 31, a last frame of at most 1,152 samples) or an SV8 stream header; ASF's Header Object GUID; WavPack's block header followed by another or by the end |
 | 95 | MP4's run of top-level boxes that holds moov, mdat or moof; Musepack versions 4 to 6 with three units or more |
 | 93 | DTS chain at the start |
 | 92 | AC-3 chain at the start |
 | 91 | ADTS chain at the start, ADIF header |
 | 90 | Matroska EBML header (DocType matroska or webm) with no Segment after it; MPEG audio chain, wherever it starts in the first MiB; WavPack header whose block the data cuts short |
-| 80 | Matroska Segment at the start with a consistent child (a file whose EBML header was cut off); WavPack header at the start followed by bytes that are none; `DTSHDHDR` at the start with a first chunk the data cuts short or a chain that breaks after it |
-| 70 | EBML header that does not hold (no DocType, or an invalid field); `DTSHDHDR` at the start with a first chunk whose size is invalid |
+| 80 | TTA: "TTA1" at the start with a CRC-32 that fails and fields an encoder could write, or "TTA2" with the 36 bytes of its header and plausible channels, bits per sample and sample rate (1 to 64, 1 to 64, 1 to 1,000,000 Hz); Matroska Segment at the start with a consistent child (a file whose EBML header was cut off); WavPack header at the start followed by bytes that are none; `DTSHDHDR` at the start with a first chunk the data cuts short or a chain that breaks after it |
+| 70 | TTA: "TTA1" at the start with fields that cannot be a header, or cut short, or "TTA2" with no plausible header; EBML header that does not hold (no DocType, or an invalid field); `DTSHDHDR` at the start with a first chunk whose size is invalid |
 | 60 | Matroska run of top-level elements, or a Cluster with a Timestamp, at the start; Ogg chain further in (within 64 KiB); Musepack versions 4 to 6 with fewer than three units; "MP+" at the start of data whose SV7 header is not consistent; WavPack chain further in |
 | 50 | AC-3, ADTS (with eight frames or frames to the end of the data) and DTS chain further in |
 | 30 | MPEG audio chain that is not credible: a free-format chain whose frames do not hold what their headers promise, or a protected chain further in than the start of the data none of whose frames passes its CRC |

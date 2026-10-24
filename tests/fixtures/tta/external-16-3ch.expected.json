@@ -1,0 +1,112 @@
+{
+ "length": 149771,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 149678
+  },
+  {
+   "name": "APE",
+   "offset": 149678,
+   "length": 93
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 3,
+  "bits": 16,
+  "rate": 22050,
+  "samples": 50000,
+  "crc": "5a45de54",
+  "crc_ok": true
+ },
+ "frame_length": 23040,
+ "table": {
+  "offset": 22,
+  "expected": 3,
+  "entries": [
+   41566,
+   87956,
+   20118
+  ],
+  "crc": "6345ecd1",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 38,
+   "size": 41566,
+   "status": [],
+   "crc": "936124aa"
+  },
+  {
+   "offset": 41604,
+   "size": 87956,
+   "status": [],
+   "crc": "15bd8809"
+  },
+  {
+   "offset": 129560,
+   "size": 20118,
+   "status": [],
+   "crc": "9af5943c"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 22050,
+   "channels": 3,
+   "samples": 50000,
+   "duration": 2.2675736961451247,
+   "bits_per_sample": 16,
+   "average_bitrate": 527.92992,
+   "layout": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": true,
+   "decoding": "noDecoder",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 3,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "findings": [],
+ "encoder": {
+  "tool": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers (ffmpeg package of Ubuntu 24.04)",
+  "arguments": [],
+  "input": {
+   "kind": "music",
+   "rate": 22050,
+   "channels": 3,
+   "bits": 16,
+   "samples": 50000
+  }
+ }
+}

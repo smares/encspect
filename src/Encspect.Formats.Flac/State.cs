@@ -193,7 +193,7 @@ internal sealed class State
         SkippedBytes += length;
         Records records = Records;
         Findings.Add(Severity.Warning, "flac.data-skipped", () => Nodes.Skipped(records, index), count =>
-            $"{Counts.Of(length, "byte", "bytes")} at 0x{offset:X} {Counts.Agree(length, "holds", "hold")} no frame{(count > 1 ? $", and {count - 1} more such stretches do" : string.Empty)}; frames are found again after {(length == 1 ? "it" : "them")}.");
+            $"{Counts.Of(length, "byte", "bytes")} at 0x{offset:X} {Counts.Agree(length, "holds", "hold")} no frame{(count > 1 ? $", and {Counts.Of(count - 1, "more such stretch", "more such stretches")} {Counts.Agree(count - 1, "does", "do")}" : string.Empty)}; frames are found again after {(length == 1 ? "it" : "them")}.");
     }
 
     // Adds a frame, in stream order. bytes are the frame's bytes to its end, as far as it has one; for a cut frame, as far as the data goes.
@@ -242,7 +242,7 @@ internal sealed class State
             HasGap = true;
             long expected = NextSample;
             Findings.Add(Severity.Warning, "flac.sample-number-discontinuity", () => Nodes.Frame(records, index), count =>
-                $"The frame at 0x{offset:X} starts at sample {first}, but the frame before it ends at {expected}: {(first > expected ? $"{Counts.Of(first - expected, "sample", "samples")} {Counts.Agree(first - expected, "is", "are")} missing" : "the frames overlap or are out of order")}{(count > 1 ? $", and {count - 1} more frames break the sequence" : string.Empty)}.");
+                $"The frame at 0x{offset:X} starts at sample {first}, but the frame before it ends at {expected}: {(first > expected ? $"{Counts.Of(first - expected, "sample", "samples")} {Counts.Agree(first - expected, "is", "are")} missing" : "the frames overlap or are out of order")}{(count > 1 ? $", and {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "breaks", "break")} the sequence" : string.Empty)}.");
         }
 
         if (followsGap)
@@ -295,14 +295,14 @@ internal sealed class State
         {
             status |= EntryStatus.PaddingSet;
             Findings.Add(Severity.Info, "flac.padding-bits-set", () => Nodes.Frame(records, index), count =>
-                $"The padding bits that bring the frame at 0x{offset:X} to a byte boundary are not all 0{(count > 1 ? $", and {count - 1} more frames have the same fault" : string.Empty)}.");
+                $"The padding bits that bring the frame at 0x{offset:X} to a byte boundary are not all 0{(count > 1 ? $", and {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "has", "have")} the same fault" : string.Empty)}.");
         }
 
         Frames++;
         if (header.SampleRateBytes > 0 && header.SampleRate == 0)
         {
             Findings.Add(Severity.Info, "flac.sample-rate-zero", () => Nodes.Frame(records, index), count =>
-                $"The header of the frame at 0x{offset:X} states the sample rate 0, which the specification allows for content that is not audio{(count > 1 ? $"; {count - 1} more frames do" : string.Empty)}.");
+                $"The header of the frame at 0x{offset:X} states the sample rate 0, which the specification allows for content that is not audio{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "does", "do")}" : string.Empty)}.");
         }
 
         if (header.StoredCrc8 != header.ComputedCrc8)
@@ -313,7 +313,7 @@ internal sealed class State
             byte computedCrc8 = header.ComputedCrc8;
             bool isCrc16Right = !isCut && (status & EntryStatus.Crc16Fails) == 0;
             Findings.Add(Severity.Warning, "flac.header-crc-mismatch", () => Nodes.Frame(records, index), count =>
-                $"The header of the frame at 0x{offset:X} has the CRC-8 0x{storedCrc8:X2}, but 0x{computedCrc8:X2} is computed over it; {(isCrc16Right ? "the rest of the frame reads and holds its CRC-16" : "the frame has no CRC-16 that holds either")}{(count > 1 ? $"; {count - 1} more headers differ" : string.Empty)}.");
+                $"The header of the frame at 0x{offset:X} has the CRC-8 0x{storedCrc8:X2}, but 0x{computedCrc8:X2} is computed over it; {(isCrc16Right ? "the rest of the frame reads and holds its CRC-16" : "the frame has no CRC-16 that holds either")}{(count > 1 ? $"; {Counts.Of(count - 1, "more header", "more headers")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.");
         }
 
         if (isCut)
@@ -333,7 +333,7 @@ internal sealed class State
                 ushort storedCrc = stored;
                 ushort computedCrc = computed;
                 Findings.Add(Severity.Warning, "flac.crc16-mismatch", () => Nodes.Frame(records, index), count =>
-                    $"The frame at 0x{offset:X} has the CRC-16 0x{storedCrc:X4}, but 0x{computedCrc:X4} is computed over it{(count > 1 ? $"; {count - 1} more frames differ" : string.Empty)}.");
+                    $"The frame at 0x{offset:X} has the CRC-16 0x{storedCrc:X4}, but 0x{computedCrc:X4} is computed over it{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.");
             }
 
             MaxFrameLength = Math.Max(MaxFrameLength, coded);
@@ -368,7 +368,7 @@ internal sealed class State
             SubframeFault fault = walk.Fault;
             int channel = walk.FaultChannel;
             Findings.Add(Severity.Warning, "flac.subframe-invalid", () => Nodes.Frame(records, index), count =>
-                $"The frame at 0x{offset:X} cannot be read: {Describe(fault, channel)}{(count > 1 ? $"; {count - 1} more frames fail the same way" : string.Empty)}.", fault.ToString());
+                $"The frame at 0x{offset:X} cannot be read: {Describe(fault, channel)}{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "fails", "fail")} the same way" : string.Empty)}.", fault.ToString());
         }
 
         if (bytes.FileRanges() is { Count: > 1 } ranges)
@@ -446,12 +446,12 @@ internal sealed class State
         if (!isCut && ((info.MaxFrameSize != 0 && length > info.MaxFrameSize) || (info.MinFrameSize != 0 && length < info.MinFrameSize)))
         {
             Findings.Add(Severity.Warning, "flac.frame-size-out-of-range", () => Nodes.Frame(records, index), count =>
-                $"The frame at 0x{offset:X} is {Counts.Of(length, "byte", "bytes")} long, outside the {info.MinFrameSize} to {info.MaxFrameSize} bytes STREAMINFO states{(count > 1 ? $"; {count - 1} more frames are outside them" : string.Empty)}.");
+                $"The frame at 0x{offset:X} is {Counts.Of(length, "byte", "bytes")} long, outside the {info.MinFrameSize} to {info.MaxFrameSize} bytes STREAMINFO states{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "is", "are")} outside them" : string.Empty)}.");
         }
 
         void Differs(string problem, string text) =>
             Findings.Add(Severity.Warning, "flac.frame-differs-from-streaminfo", () => Nodes.Frame(records, index), count =>
-                $"The frame at 0x{offset:X} {text}, but STREAMINFO says otherwise{(count > 1 ? $"; {count - 1} more frames differ in the same way" : string.Empty)}.", problem);
+                $"The frame at 0x{offset:X} {text}, but STREAMINFO says otherwise{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "differs", "differ")} in the same way" : string.Empty)}.", problem);
         if (header.SampleRateCode != 0 && header.SampleRate != 0 && header.SampleRate != info.SampleRate)
         {
             Differs("sample rate", $"has the sample rate {header.SampleRate} Hz");
@@ -477,13 +477,13 @@ internal sealed class State
                 int order = f.PartitionOrder;
                 int predictor = f.Order;
                 Findings.Add(Severity.Warning, "flac.partition-order-too-high", () => Nodes.Frame(Records, index), count =>
-                    $"The residual of a subframe in the frame at 0x{offset:X} has partition order {order}, which leaves as many samples in each partition as the predictor order {predictor}; the specification requires more{(count > 1 ? $" ({count - 1} more frames)" : string.Empty)}.");
+                    $"The residual of a subframe in the frame at 0x{offset:X} has partition order {order}, which leaves as many samples in each partition as the predictor order {predictor}; the specification requires more{(count > 1 ? $" ({Counts.Of(count - 1, "more frame", "more frames")})" : string.Empty)}.");
             }
 
             if (f.HasMinimumResidual)
             {
                 Findings.Add(Severity.Warning, "flac.residual-out-of-range", () => Nodes.Frame(Records, index), count =>
-                    $"A subframe in the frame at 0x{offset:X} has the residual sample -2^31, which the specification excludes{(count > 1 ? $" ({count - 1} more frames)" : string.Empty)}.");
+                    $"A subframe in the frame at 0x{offset:X} has the residual sample -2^31, which the specification excludes{(count > 1 ? $" ({Counts.Of(count - 1, "more frame", "more frames")})" : string.Empty)}.");
             }
         }
     }

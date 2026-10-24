@@ -1,0 +1,407 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-whole-frames.tta",
+    "root": {
+      "name": "File",
+      "value": "TTA",
+      "offset": 0,
+      "length": 542,
+      "children": [
+        {
+          "name": "TTA",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 542,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 0,
+              "length": 22,
+              "children": [
+                {
+                  "name": "Signature",
+                  "value": "TTA1",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "Audio Format",
+                  "value": 1,
+                  "offset": 4,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 6,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 8,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 10,
+                  "length": 4
+                },
+                {
+                  "name": "Samples",
+                  "value": 92160,
+                  "unit": "samples",
+                  "offset": 14,
+                  "length": 4
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 273797874,
+                  "offset": 18,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 273797874,
+                  "offset": 18,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 18,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Seek Table",
+              "value": 2,
+              "unit": "entries",
+              "offset": 22,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Seek Points",
+                  "value": 2,
+                  "unit": "entries",
+                  "offset": 22,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Seek Point",
+                      "value": 204,
+                      "unit": "bytes",
+                      "offset": 22,
+                      "length": 4
+                    },
+                    {
+                      "name": "Seek Point",
+                      "value": 304,
+                      "unit": "bytes",
+                      "offset": 26,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 3116507015,
+                  "offset": 30,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 3116507015,
+                  "offset": 30,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 30,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 542,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 2,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Samples",
+                  "value": 92160,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Duration",
+                  "value": 2.089795918367347,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 46080,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Verified Frame Checksums",
+                  "value": 2,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 1.9446875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 204,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 304,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 1.561875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 2.3275,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 542
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 542,
+                  "children": [
+                    {
+                      "name": "0 to 31 kbps",
+                      "value": "2 frames (100.0%)",
+                      "offset": 0,
+                      "length": 542
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 46080,
+              "unit": "samples",
+              "offset": 34,
+              "length": 204,
+              "children": [
+                {
+                  "name": "Frame Data",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 34,
+                  "length": 200
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 4258392572,
+                  "offset": 234,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 4258392572,
+                  "offset": 234,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 234,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 46080,
+              "unit": "samples",
+              "offset": 238,
+              "length": 304,
+              "children": [
+                {
+                  "name": "Frame Data",
+                  "value": 300,
+                  "unit": "bytes",
+                  "offset": 238,
+                  "length": 300
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 2052589332,
+                  "offset": 538,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 2052589332,
+                  "offset": 538,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 538,
+                  "length": 4
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "TTA",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "bitsPerSample": 16,
+        "samples": 92160,
+        "duration": 2.089795918367347,
+        "averageBitrate": 1.9446875,
+        "isVbr": true,
+        "verification": {
+          "isVerified": true,
+          "decoding": "noDecoder",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "header CRC-32",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "seek table CRC-32",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "frame CRC-32",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 2,
+              "checked": 2,
+              "failed": 0
+            }
+          ]
+        },
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              34,
+              238
+            ],
+            "values": [
+              1.561875,
+              2.3275
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              2,
+              2
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": []
+  }
+]

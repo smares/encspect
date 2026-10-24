@@ -61,6 +61,7 @@ jobs:
       wavpack-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.wavpack-crosscheck }}
       flac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.flac-crosscheck }}
       monkeys-audio-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.monkeys-audio-crosscheck }}
+      tta-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.tta-crosscheck }}
       asf-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.asf-crosscheck }}
       ac3-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ac3-crosscheck }}
       dts-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.dts-crosscheck }}
@@ -483,6 +484,11 @@ jobs:
           python3 scripts/fixtures/make_interim_monkeys_audio_fixture.py --manifests-only
           python3 scripts/fixtures/make_legacy_monkeys_audio_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built TTA fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_tta_fixtures.py
+          python3 scripts/fixtures/make_external_tta_fixtures.py --manifests-only
+
       - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ac3_fixtures.py
@@ -903,6 +909,29 @@ jobs:
       - name: Cross-check the FLAC fixtures
         run: python3 scripts/fixtures/crosscheck_flac_fixtures.py
 
+  tta-crosscheck:
+    name: TTA fixtures agree with FFmpeg and MediaInfo
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.tta-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts (the manifests were
+      # checked with ffmpeg 6.1.1 and MediaInfo 26.01 built from source). No TTA encoder is packaged in Ubuntu: the
+      # files of libtta-c 2.3 are committed (libtta_tool.py builds it only to regenerate them), and both tools are black boxes here.
+      - name: Install ffmpeg and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+
+      - name: Cross-check the TTA fixtures
+        run: python3 scripts/fixtures/crosscheck_tta_fixtures.py
+
   asf-crosscheck:
     name: ASF and WMA fixtures agree with ffprobe, ffmpeg and MediaInfo, and the WMA tables with FFmpeg
     runs-on: ubuntu-26.04
@@ -1163,6 +1192,7 @@ jobs:
       - wavpack-crosscheck
       - flac-crosscheck
       - monkeys-audio-crosscheck
+      - tta-crosscheck
       - asf-crosscheck
       - ac3-crosscheck
       - dts-crosscheck
