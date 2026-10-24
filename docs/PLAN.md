@@ -431,9 +431,9 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
   - The two bytes before the checksum are XORed into the result instead of run through it.
 - Parity nibble: the four bytes of the unit header and the substream directory (without the major sync), XORed to one byte, must have a high nibble that is the complement of the low one (`mlp_parser.c` 135 to 158, `mlpdec.c` 1264 to 1270).
 - Substream directory:
-  - Per substream 16 bits: extra word present, bit clear when the substream starts with a restart header, check data present, one unknown bit, end offset in words (cumulative).
+  - Per substream 16 bits: extra word present, the non-restart bit (clear when the substream starts with a restart header), check data present, one unknown bit, end offset in words (cumulative).
   - A 16-bit extra word where flagged (TrueHD only).
-  - A unit with a major sync must have the restart bit clear in every entry, and one without it set.
+  - A unit with a major sync must have the non-restart bit clear in every entry, and one without it set.
 - Each block of a substream starts with a parameters present bit and, where it is set, a restart header present bit.
 - Restart header:
   - A 13-bit sync 0x18F5 and a noise-type bit, which give 0x31EA or 0x31EB.
@@ -444,8 +444,8 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
 - Decoding parameters:
   - Block size, matrices, output shifts and quantization steps.
   - FIR and IIR filters with their orders, shifts and coefficients.
-  - Huffman offset, codebook and bypassed least significant bits.
-- End of stream: the marker 0xD234D234 (TrueHD adds a count of samples to drop).
+  - Per matrix, whether its least significant bit is bypassed; per channel, the Huffman offset, the codebook and the count of least significant bits below the Huffman-coded part.
+- End of stream marker: 0xD234D234 (TrueHD adds a count of samples to drop).
 - Substream tail, where the directory says so:
   - A parity byte: all bytes before it XORed with it give 0xA9.
   - A CRC-8 (polynomial 0x63, start value 0x3C) over the bytes before the parity byte, with the last of them XORed in.
@@ -481,7 +481,7 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
 **Containers**
 
 - Raw files:
-  - FFmpeg's probe (`libavformat/mlpdec.c` 34 to 56) walks the length words from each major sync and needs 100 chained units.
+  - FFmpeg's probe (`libavformat/mlpdec.c` 34 to 56) walks the length words from each major sync and needs a score of 100: each major sync reached through the length words scores 1, plus 1 per 8 units since the previous one (about 50 major syncs, some 800 units, at one major sync every 16 units).
   - The analyzer's detection follows the chain as for other formats (a major sync whose unit is followed by units that pass the parity nibble) with fewer.
   - `.thd` and `.mlp` are the extensions.
 - MP4:

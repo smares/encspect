@@ -8,14 +8,15 @@ This is the clean-room description that [decoders.md](decoders.md) rollout step 
 
 **Read (FFmpeg 6.1.1, the release `scripts/fixtures/ffmpeg_sources.py` pins):**
 
-- `libavcodec/mlp_parse.c` and `mlp_parse.h`: the major sync (`ff_mlp_read_major_sync`, `mlp_get_major_sync_size`), the rate, word length, MLP arrangement and TrueHD channel tables.
+- `libavcodec/mlp_parse.c` and `mlp_parse.h`: the major sync, the rate, bit depth, MLP arrangement and TrueHD channel tables.
 - `libavcodec/mlp.c` and `mlp.h`: the three checksums, the parity, the Huffman tables, the MLP channel information table, the limits, the channel modifiers.
-- `libavcodec/mlpdec.c`: everything below the major sync (`read_access_unit`, `read_restart_header`, `read_decoding_params`, `read_matrix_params`, `read_channel_params`, `read_filter_params`, `read_huff_channels`, `read_block_data`, `generate_2_noise_channels`, `fill_noise_buffer`, `output_data`), and its noise table.
+- `libavcodec/mlpdec.c`: everything below the major sync, that is the reading of the access unit, the restart header, the decoding parameters (matrices, channels, filters), the residuals and blocks, the noise generation and the output, and its noise table.
 - `libavcodec/mlpdsp.c`: the prediction filter, the rematrixing and the output with the lossless check.
 - `libavcodec/mlp_parser.c`: framing and the parity check of FFmpeg's parser.
-- `libavcodec/mlpenc.c`: what FFmpeg's encoder writes into the fields the decoder skips (`write_major_sync`, `write_restart_header`, `write_substr`, `write_frame_headers`).
+- `libavcodec/mlpenc.c`: what FFmpeg's encoder writes into the fields the decoder skips (major sync, restart header, substream and unit headers).
 - `libavcodec/truehd_core_bsf.c` and `profiles.c`: the Atmos substream and its signaling.
-- `libavformat/mlpdec.c` (raw probe), `mov.c` (`mov_read_dmlp`), `movenc.c` (`mov_write_dmlp_tag`, the `mlpa` sample entry), `isom_tags.c`, `matroska.c` and `matroskadec.c`.
+- `libavformat/mlpdec.c` (raw probe and demuxer), `mov.c` (the `dmlp` box reader), `movenc.c` (the `dmlp` box and `mlpa` sample entry writer), `isom_tags.c`, `matroska.c` and `matroskadec.c`.
+- All of these are in the pinned release and listed in `FILES` of `scripts/fixtures/ffmpeg_sources.py`, which `scripts/fixtures/check_sources.py` checks against the archive.
 
 **Not reachable:** developer.dolby.com refused the connection from this session (proxy status 502), so neither "Dolby TrueHD high-level bitstream description" nor "MLP (Dolby TrueHD) streams within the ISO Base Media File Format" was read. The AES paper on MLP was not read for this document either. Nothing here comes from them.
 
@@ -23,11 +24,11 @@ This is the clean-room description that [decoders.md](decoders.md) rollout step 
 
 | File | Source | SHA-256 | What it is |
 | --- | --- | --- | --- |
-| `TrueHD.raw` | samples.ffmpeg.org/A-codecs/TrueHD/ | `221b59a28347b610c60019e4d4896bb9ac0be88642c6964c5876ba558f0d511c` | a commercial TrueHD stream (the Matroska file below names a Blu-ray film), 48 kHz, 5.1, two substreams, 19,407 units; begins with 2,362 bytes of units before the first major sync. Called "the Dolby file" below, on the assumption that it comes from Dolby's encoder; the stream does not name its encoder |
+| `TrueHD.raw` | samples.ffmpeg.org/A-codecs/TrueHD/ | `221b59a28347b610c60019e4d4896bb9ac0be88642c6964c5876ba558f0d511c` | a commercial TrueHD stream (the Matroska file below names a Blu-ray film), 48 kHz, 5.1, two substreams, 19,420 units (19,407 from the first major sync on); begins with 13 units (2,358 bytes) before the first major sync unit, whose sync word is at byte 2,362. Called "the Dolby file" below, on the assumption that it comes from Dolby's encoder; the stream does not name its encoder |
 | `TrueHD Sample 1 (Final Fantasy VII Advent Children).mkv` | same folder | `1c2bb751e78c38b7a1311abfdbe7149dae62df82fc9814e7edc740a188c1226c` | mkvmerge 2.9.7; its A_TRUEHD track's payload is byte for byte `TrueHD.raw`, so it is the same stream, not a second one |
 | `440hz.mlp` | samples.ffmpeg.org/A-codecs/lossless/mlp/ | `c46b722bbf56c8316a8088cbf1bc7a3f9eeac529699e7fe4600d449f4d0760d9` | MLP, 44.1 kHz, 16-bit, stereo, one substream, 11,025 units; encoder not stated |
 | `luckynight.mlp` | samples.ffmpeg.org/A-codecs/lossless/ | `448a25b6f1f01f23393fa379414d51682ea266f74670bcd1f96a9560905650e0` | MLP, 44.1 kHz, 16-bit, stereo, one substream, 66,680 units, uses IIR filters with state; encoder not stated |
-| FFmpeg-encoded | FFmpeg 6.1.1, `-c:a truehd` or `-c:a mlp` with `-strict -2`, from `lavfi` sine and noise sources | (made locally, reproducible) | TrueHD 5.1 at 48 kHz with an end-of-stream marker, TrueHD stereo at 96 kHz, MLP stereo at 44.1 kHz |
+| FFmpeg-encoded | FFmpeg 6.1.1, `-c:a truehd` or `-c:a mlp` with `-strict -2`, from `lavfi` sine and noise sources | (made locally, reproducible) | TrueHD 5.1 at 48 kHz with an end of stream marker, TrueHD stereo at 96 kHz, MLP stereo at 44.1 kHz |
 
 **How the text was checked:** the author wrote a throwaway model from this description (not committed; it is derived from reading FFmpeg and must not reach the implementer). On every file above it:
 
@@ -62,7 +63,7 @@ What the files do not exercise is listed under [Not determined](#not-determined)
 - A stream is a sequence of access units with no gaps or padding between them. Each unit states its length.
 - A major sync appears in some units (in the test files every 8 to 16 units, see [Observations](#observations-on-the-test-files)); between them, units have none.
 - Each unit holds: the unit header, the major sync where present, the substream directory, then the data of each substream in order.
-- The data of a substream is its blocks, an optional end-of-stream marker and an optional parity byte and CRC-8.
+- The data of a substream is its blocks, an optional end of stream marker and an optional parity byte and CRC-8.
 
 ## Access unit
 
@@ -76,7 +77,7 @@ What the files do not exercise is listed under [Not determined](#not-determined)
 
 ### Major sync presence
 
-- A unit carries a major sync where bytes 4 to 7 read 0xF8726FBA (TrueHD) or 0xF8726FBB (MLP). FFmpeg's decoder compares the first 31 bits with the common prefix; its parser and the raw demuxers compare all 32.
+- A unit carries a major sync where bytes 4 to 7 read 0xF8726FBA (TrueHD) or 0xF8726FBB (MLP). FFmpeg's decoder and parser compare the first 31 bits (the last bit, which tells TrueHD from MLP, is masked); only its raw probe compares all 32.
 - The major sync then fills bytes 4 to 4 + H − 1, where H is its size ([Major sync](#major-sync)); the directory follows it.
 - Without a major sync, the directory starts at byte 4.
 
@@ -102,7 +103,7 @@ One entry per substream, the count taken from the most recent major sync:
 - XOR together the four bytes of the unit header and every byte of the directory (extra words included), but not the major sync.
 - The XOR of the result's two nibbles must be 0xF. Otherwise the unit is invalid.
 - Equivalently: the XOR of all 16-bit words of the unit header and the directory, folded to one nibble, is 0xF. An encoder computes the check nibble last, as 0xF XOR the fold of everything else.
-- FFmpeg's decoder checks it on every unit; FFmpeg's parser only on units without a major sync (units with one have the CRC-16 instead).
+- FFmpeg's decoder checks it on every unit once stream parameters are valid (before the first major sync it skips units unchecked); FFmpeg's parser only on units without a major sync (units with one have the CRC-16 instead).
 
 ### Example unit
 
@@ -118,7 +119,7 @@ f1ea0000011000000453bdc0000000023044417922b341380d2009ffd7eafe19ddde
 - Major sync of 28 bytes ending in the CRC 0x538C.
 - Directory 0x3022: no extra word, non-restart 0, check data present, reserved 1, end 0x022 = 34 words.
 - Parity: 0x90 ⊕ 0x33 ⊕ 0xFF ⊕ 0xD8 ⊕ 0x30 ⊕ 0x22 = 0x96, and 9 ⊕ 6 = 0xF.
-- Substream: a restart header from bit 2 to bit 134 (noise type 0, channels 0 to 1, matrix channels 0 to 1, seed 2, stored CRC 0x02), decoding parameters with block size 8, a block, decoding parameters with block size 32 and a 5-tap FIR filter on channel 0, a block, the parity byte 0xE1 and the CRC-8 0xFF.
+- Substream: a restart header in bits 2 to 126 (noise type 0, output timing 0x0000, channels 0 to 1, matrix channels 0 to 1, noise seed 2, skipped fields 2, 19, 23 and 23, lossless check 0x00), then its CRC byte 0x18 (the register starts at 0, so 0x18 is the value to expect), decoding parameters with block size 8, a block, decoding parameters with block size 32 and a 5-tap FIR filter on channel 0, a block, the parity byte 0xE1 and the CRC-8 0xFF.
 - Output: the first four sample periods are 131,072, 261,888, 391,680 and 520,192 (24-bit values) on both channels.
 
 ## Major sync
@@ -153,8 +154,8 @@ Flags, from FFmpeg's encoder only: it writes 0x4000 for MLP (it ties bit 14 to D
 
 | Bit | Width | Field | Meaning |
 | --- | --- | --- | --- |
-| 32 | 4 | group 1 word length | 0: 16 bits, 1: 20 bits, 2: 24 bits; other codes give no word length, and a group 1 without one is invalid |
-| 36 | 4 | group 2 word length | as group 1; 0xF (no group 2) in every test file; a group 2 longer than group 1 is invalid |
+| 32 | 4 | group 1 bit depth | 0: 16 bits, 1: 20 bits, 2: 24 bits; other codes give no bit depth, and a group 1 without one is invalid |
+| 36 | 4 | group 2 bit depth | as group 1; 0xF (no group 2) in every test file; a group 2 longer than group 1 is invalid |
 | 40 | 4 | group 1 sampling rate | rate code ([table](#sampling-rate-and-unit-size)) |
 | 44 | 4 | group 2 sampling rate | 0xF where group 2 has no own rate; a different rate than group 1 is unsupported by FFmpeg (see [Implementation choices](#ffmpegs-implementation-choices)) |
 | 48 | 4 | reserved | |
@@ -162,7 +163,9 @@ Flags, from FFmpeg's encoder only: it writes 0x4000 for MLP (it ties bit 14 to D
 | 56 | 3 | reserved | |
 | 59 | 5 | channel arrangement | [MLP channel arrangements](#mlp-channel-arrangements); codes 21 to 31 give no layout |
 
-A channel group is a set of channels sharing word length and sampling rate (DVD-Audio uses two). How many channels each group holds follows from the arrangement (table below).
+The MLP substream info byte (major sync bit 136) is described by FFmpeg's encoder as four flags, **unverified**: 0x01 at most two channels, 0x02 a high sampling rate, 0x04 always set, 0x08 two substreams. Both real MLP files have 0x05 (stereo at 44.1 kHz, one substream). An analyzer can report the byte with these names as context.
+
+A channel group is a set of channels sharing bit depth and sampling rate (DVD-Audio uses two). How many channels each group holds follows from the arrangement (table below).
 
 ### Format info: TrueHD
 
@@ -178,7 +181,7 @@ A channel group is a set of channels sharing word length and sampling rate (DVD-
 | 49 | 2 | 8-channel modifier | |
 | 51 | 13 | 8-channel assignment | flags 0 to 12 |
 
-- TrueHD states no word length; FFmpeg reports 24 bits for every TrueHD stream.
+- TrueHD states no bit depth; FFmpeg reports 24 bits for every TrueHD stream.
 - These 32 bits are what an MP4 `dmlp` box repeats ([Files and containers](#files-and-containers)).
 
 ### Sampling rate and unit size
@@ -205,7 +208,7 @@ MLP:
 | Width | Field (FFmpeg's encoder) | `440hz.mlp` |
 | --- | --- | --- |
 | 5 | sampling rate code (44.1 kHz: 9, 88.2: 13, 176.4: 17, 48: 10, 96: 14, 192: 18) | 9 |
-| 5 | word length (16 or 24) | 16 |
+| 5 | bit depth (16 or 24) | 16 |
 | 6 | channel occupancy (the table below) | 3 |
 | 3 | reserved | 0 |
 | 10 | speaker layout | 0 |
@@ -260,31 +263,31 @@ Examples, both verified:
 
 ### MLP channel arrangements
 
-Channel order within an arrangement is group 1, then group 2, as listed. L and R are front left and right, C center, S a single surround channel (FFmpeg maps it to back center), Ls and Rs left and right surround (FFmpeg: back left and right). Occupancy and summary info are what FFmpeg's encoder writes for each arrangement (`ff_mlp_ch_info`); its decoder does not use them.
+Channel order within an arrangement is group 1, then group 2, as listed. Channels are written out; "surround" is the single surround channel (FFmpeg maps it to back center), "left surround" and "right surround" are the pair FFmpeg maps to back left and back right. Occupancy and summary info are what FFmpeg's encoder writes for each arrangement (`ff_mlp_ch_info`); its decoder does not use them.
 
 | Code | Group 1 | Group 2 | Channels | Occupancy | Summary info |
 | --- | --- | --- | --- | --- | --- |
-| 0 | C | | 1 | 0x01 | 0x1F |
-| 1 | L, R | | 2 | 0x03 | 0x1B |
-| 2 | L, R | S | 3 | 0x07 | 0x1F |
-| 3 | L, R | Ls, Rs | 4 | 0x0F | 0x19 |
-| 4 | L, R | LFE | 3 | 0x07 | 0x03 |
-| 5 | L, R | LFE, S | 4 | 0x0F | 0x1F |
-| 6 | L, R | LFE, Ls, Rs | 5 | 0x1F | 0x01 |
-| 7 | L, R | C | 3 | 0x07 | 0x1A |
-| 8 | L, R | C, S | 4 | 0x0F | 0x1F |
-| 9 | L, R | C, Ls, Rs | 5 | 0x1F | 0x18 |
-| 10 | L, R | C, LFE | 4 | 0x0F | 0x02 |
-| 11 | L, R | C, LFE, S | 5 | 0x1F | 0x1F |
-| 12 | L, R | C, LFE, Ls, Rs | 6 | 0x3F | 0x00 |
-| 13 | L, R, C | S | 4 | 0x0F | 0x1F |
-| 14 | L, R, C | Ls, Rs | 5 | 0x1F | 0x18 |
-| 15 | L, R, C | LFE | 4 | 0x0F | 0x02 |
-| 16 | L, R, C | LFE, S | 5 | 0x1F | 0x1F |
-| 17 | L, R, C | LFE, Ls, Rs | 6 | 0x3F | 0x00 |
-| 18 | L, R, Ls, Rs | LFE | 5 | 0x1F | 0x01 |
-| 19 | L, R, Ls, Rs | C | 5 | 0x1F | 0x18 |
-| 20 | L, R, Ls, Rs | C, LFE | 6 | 0x3F | 0x00 |
+| 0 | center |  | 1 | 0x01 | 0x1F |
+| 1 | front left, front right |  | 2 | 0x03 | 0x1B |
+| 2 | front left, front right | surround | 3 | 0x07 | 0x1F |
+| 3 | front left, front right | left surround, right surround | 4 | 0x0F | 0x19 |
+| 4 | front left, front right | LFE | 3 | 0x07 | 0x03 |
+| 5 | front left, front right | LFE, surround | 4 | 0x0F | 0x1F |
+| 6 | front left, front right | LFE, left surround, right surround | 5 | 0x1F | 0x01 |
+| 7 | front left, front right | center | 3 | 0x07 | 0x1A |
+| 8 | front left, front right | center, surround | 4 | 0x0F | 0x1F |
+| 9 | front left, front right | center, left surround, right surround | 5 | 0x1F | 0x18 |
+| 10 | front left, front right | center, LFE | 4 | 0x0F | 0x02 |
+| 11 | front left, front right | center, LFE, surround | 5 | 0x1F | 0x1F |
+| 12 | front left, front right | center, LFE, left surround, right surround | 6 | 0x3F | 0x00 |
+| 13 | front left, front right, center | surround | 4 | 0x0F | 0x1F |
+| 14 | front left, front right, center | left surround, right surround | 5 | 0x1F | 0x18 |
+| 15 | front left, front right, center | LFE | 4 | 0x0F | 0x02 |
+| 16 | front left, front right, center | LFE, surround | 5 | 0x1F | 0x1F |
+| 17 | front left, front right, center | LFE, left surround, right surround | 6 | 0x3F | 0x00 |
+| 18 | front left, front right, left surround, right surround | LFE | 5 | 0x1F | 0x01 |
+| 19 | front left, front right, left surround, right surround | center | 5 | 0x1F | 0x18 |
+| 20 | front left, front right, left surround, right surround | center, LFE | 6 | 0x3F | 0x00 |
 
 ### TrueHD channel flags
 
@@ -337,7 +340,8 @@ The data of a substream is a sequence of blocks. Each block is:
 | var | [block data](#block-data) | always |
 | 1 | last block | always; 1 ends the substream's blocks in this unit |
 
-- A substream that has not had a valid restart header since decoding started (or since its state was dropped) cannot be read past this point: FFmpeg skips the rest of it for the unit.
+- A substream needs a restart header before its first block can be decoded, and FFmpeg forgets that a substream had one at every major sync, not only when decoding starts. In a unit with a major sync, a substream whose first block carries no restart header is skipped for the unit and stays skipped until a restart header arrives, although its parameters from the previous restart interval are still held. The directory's non-restart bit is clear in exactly these units, so a unit with a major sync is expected to carry a restart header in every substream (all test files do).
+- A restart header in a unit without a major sync: FFmpeg accepts it (it resets the state and compares the lossless check), but no test file has one. Whether that is valid is **unverified**.
 - After a block's data at least one bit must remain for the last-block flag; otherwise the substream's length is wrong and the unit is invalid.
 - In every test file, restart headers occur only in units with a major sync, in every substream of those units, and always in the first block (so at bit 2 of the substream). FFmpeg computes the restart header CRC as if the header started at bit 2 (see [Restart header CRC](#restart-header-crc)).
 
@@ -353,7 +357,7 @@ The data of a substream is a sequence of blocks. Each block is:
 | 4 | last matrix channel | M, the presentation's channel count less 1; at most 5 for MLP and 7 for TrueHD. M above 5 with noise type 0 is unsupported by FFmpeg |
 | 4 | noise shift | left shift of the noise channels' values (noise type 0) |
 | 23 | noise seed | starting value of the noise generator |
-| 19 | (skipped) | FFmpeg skips them; its encoder writes four fields: 4 bits, the largest output shift, 5 bits, the largest LSB count, and twice 5 bits, the largest output word length, each over the samples up to the next restart header. Every test file fits that reading (see [Observations](#observations-on-the-test-files)); decoding does not need them |
+| 19 | (skipped) | FFmpeg skips them; its encoder writes four fields: 4 bits, the largest output shift, 5 bits, the largest LSB count, and twice 5 bits, the largest output bit depth, each over the samples up to the next restart header. Every test file fits that reading (see [Observations](#observations-on-the-test-files)); decoding does not need them |
 | 1 | block size check present | [Block size check data](#block-size-check-data) follows every block of this substream until the next restart header |
 | 8 | lossless check | [Lossless check](#lossless-check) |
 | 16 | (skipped) | 0 or 0x8000 in the Dolby file, 0 elsewhere; FFmpeg's encoder writes 0; meaning unknown |
@@ -368,7 +372,7 @@ The data of a substream is a sequence of blocks. Each block is:
 
 - Generator x^8 + x^4 + x^3 + x^2 + 1 (0x1D), most significant bit first, register starting at 0.
 - The check is the remainder of the restart header's bits, from the first bit of the restart sync through the last bit of the channel assignment, without the appended zero bits (as for the [CRC-16](#crc-16)); the next 8 bits must equal it.
-- The bits are generally not byte aligned. FFmpeg (`ff_mlp_restart_checksum`) assumes the header starts at bit 2 of the substream data, which holds in every test file; an implementation should take the header's actual first bit.
+- The bits are generally not byte aligned. FFmpeg (`ff_mlp_restart_checksum`) assumes the header starts at bit 2 of the substream data, which holds in every test file; an implementation could take the header's actual first bit (**unverified**: no test file has another start).
 - A mismatch is only logged by FFmpeg, which then uses the header.
 
 ### Values a restart header resets
@@ -379,7 +383,7 @@ After a restart header, before its decoding parameters are read, the substream's
 - no primitive matrices;
 - block size 8;
 - output shift 0 for every matrix channel; quantizer step size 0 for every channel;
-- for each coded channel: FIR and IIR filter orders 0 and their shifts 0, Huffman offset 0, codebook 0, LSB count 24 (that is, residuals are plain 24-bit values);
+- for each coded channel: FIR and IIR filter orders 0 and their shifts 0, Huffman offset 0, codebook 0, LSB count 24 (that is, with codebook 0, each residual is a 24-bit field minus 2^23, see [Block data](#block-data));
 - lossless check accumulator 0 (after its comparison, see [Lossless check](#lossless-check));
 - noise generator register: the noise seed.
 
@@ -394,7 +398,7 @@ The parameter presence flags (8 bits) decide which groups a decoding parameters 
 | 0 (0x01) | presence flags | u(8): new presence flags, used from the next group on |
 | 7 (0x80) | block size | u(9): samples per block, 8 to the unit's samples per channel (40, 80 or 160); others invalid |
 | 6 (0x40) | matrices | [Matrix parameters](#matrix-parameters) |
-| 5 (0x20) | output shifts | M + 1 × s(4): output shift of each matrix channel 0 to M; negative values are unsupported by FFmpeg, which uses 0 |
+| 5 (0x20) | output shifts | (M + 1) × s(4): output shift of each matrix channel 0 to M; negative values are unsupported by FFmpeg, which uses 0 |
 | 4 (0x10) | quantizer step sizes | u(4) for each channel **0** to the last coded channel (not from the first coded one) |
 | 3 (0x08) | FIR filter | inside each channel's parameters |
 | 2 (0x04) | IIR filter | inside each channel's parameters |
@@ -483,11 +487,11 @@ A residual of a channel with codebook c, LSB count N and quantizer step size Q:
 
 The residual's value, with H the Huffman offset:
 
-- With a codebook: ((i − 7) · 2^L + r + H − D) · 2^Q, where D = 2^(L + 2 − c) where L + 2 − c ≥ 0, else 0. So D is 2^(L+1) for codebook 1, 2^L for codebook 2, 2^(L−1) for codebook 3 (0 when L is 0).
+- With a codebook: ((i − 7) · 2^L + r + H − D) · 2^Q, where D = 2^(L + 2 − c) where L + 2 − c ≥ 0, else 0. So D is 2^(L+1) for codebook 1, 2^L for codebook 2, 2^(L−1) for codebook 3 (for codebook 3, 0 when L is 0).
 - Without a codebook: (r + H − 2^(L−1)) · 2^Q where L > 0, else H · 2^Q.
 - Where L ≤ 0 no raw bits are read and r is 0 (L < 0 is possible only without a codebook, where N < Q).
 
-The default after a restart header (no codebook, N = 24, Q = 0, H = 0) reads every residual as a plain 24-bit two's complement value.
+The default after a restart header (no codebook, N = 24, Q = 0, H = 0) reads each residual as an unsigned 24-bit field minus 2^23 (offset binary, not two's complement): a raw field of 0x000001 gives −8,388,607.
 
 ### Huffman codebooks
 
@@ -533,13 +537,13 @@ Where the restart header's block size check flag is set, each block's data is pr
 After the block with the last-block flag:
 
 1. Zero or more padding bits up to the next multiple of 16 bits, counted from the start of the substream. FFmpeg does not check their value; its encoder writes zeros.
-2. Where at least 32 bits remain: the end-of-stream marker, u(16) = 0xD234 (anything else makes the unit invalid), then a 16-bit word:
+2. Where at least 32 bits remain: the end of stream marker, u(16) = 0xD234 (anything else makes the unit invalid), then a 16-bit word:
    - MLP: it must be 0xD234 too (the marker is 0xD234D234).
    - TrueHD: where bit 13 (0x2000) is set, bits 0 to 12 give the number of samples at the end of this unit, in this substream, that are not output. FFmpeg's encoder writes bits 13 to 15 set; bits 14 and 15 have no meaning in FFmpeg's decoder.
 3. Where the directory's check data bit is set: exactly 16 bits must remain, the parity byte and the CRC-8.
 4. The substream's end must be reached exactly. Anything else is a length mismatch that makes the unit invalid.
 
-- Without check data, the substream ends right after the padding or the end-of-stream marker.
+- Without check data, the substream ends right after the padding or the end of stream marker.
 - Parity byte: the XOR of every byte of the substream before the parity byte, XORed with the parity byte, must be 0xA9.
 - CRC-8: generator x^8 + x^6 + x^5 + x + 1 (0x63), most significant bit first; a standard CRC-8 with the register starting at 0x3C over all bytes before the parity byte but the last of them, then XORed with that last byte. Equivalently, the remainder without appended zero bits over all those bytes, with the register starting at 0xA2.
 - FFmpeg only logs a failed parity byte or CRC-8.
@@ -596,6 +600,7 @@ Details:
 - The histories of y and e are updated for every sample, also while an order is 0, and continue across blocks, units and restart headers.
 - The sums need more than 32 bits (up to 8 taps of 16-bit coefficients times 24-bit values plus headroom); FFmpeg uses 64 bits. y is kept as a 32-bit value.
 - With no filter the prediction is 0, and y is the residual with its low Q bits cleared.
+- Arithmetic width: every stored value (residuals, y, the IIR error e, matrix outputs after the shift and mask, and output samples after the output shift) is a 32-bit two's complement value and wraps on overflow, as does the multiplication by 2^(output shift). Valid streams stay within 24 bits after the output shift. Without a codebook an LSB count up to 31 gives up to 31 raw bits, whose value can overflow 32 bits; that wraps as well.
 
 ### Noise generation
 
@@ -614,7 +619,7 @@ Noise type 1 (noise table), once per unit, for k = 0 to P − 1 (P from the [rat
 - R becomes (R · 2^8 XOR t XOR t · 2^5), keeping 23 bits.
 
 - In both kinds R continues from unit to unit and restarts from the seed at each restart header.
-- Type 0 generates as many values as the unit outputs (after any end-of-stream shortening); type 1 always P.
+- Type 0 generates as many values as the unit outputs (after any end of stream shortening); type 1 always P.
 
 Noise table (`noise_table` in `mlpdec.c`), 256 signed 8-bit values, entry 0 first, row by row:
 
@@ -653,13 +658,13 @@ For matrix j with output channel d, coefficients c_i and, for noise type 1, matr
 where Q_d is this substream's quantizer step size of channel d and β_j[n] the bypassed LSB of matrix j (0 for a matrix without LSB bypass).
 
 - FFmpeg applies the matrices and their quantizer masks in force at the end of the unit to all its samples. In every test file matrices, output shifts and quantizer step sizes change only in a unit's first block, so a change inside a unit is **unverified**.
-- The sums need 64 bits in damaged input.
+- The sums always need more than 32 bits: a coefficient of 1.0 is 2^14, a 24-bit sample up to 2^23, so one product reaches 2^37 and a sum of up to 10 terms about 41 bits, in valid streams too. Use a 64-bit accumulator; only the value after the 14-bit shift is kept, as 32 bits.
 
 ### Output
 
 For each sample n and matrix channel m of the presentation:
 
-- the output sample is x[n][m] · 2^(output shift of m), a 24-bit value; FFmpeg passes it on as the top 24 bits of a 32-bit sample, or, where the stream's word length is 16 bits or less, as its top 16 bits;
+- the output sample is x[n][m] · 2^(output shift of m), a 24-bit value; FFmpeg passes it on as the top 24 bits of a 32-bit sample, or, where the stream's bit depth is 16 bits or less, as its top 16 bits;
 - it goes to position a_m of the presentation's channel list, where a_m is matrix channel m's channel assignment in the restart header.
 
 The channel list:
@@ -672,18 +677,19 @@ The channel list:
 
 Per substream (per presentation) a 32-bit accumulator A:
 
-- For each output sample n of the unit (after end-of-stream shortening) and each matrix channel m from 0 to M: A = A XOR ((output sample, low 24 bits) · 2^m), keeping 32 bits. The output sample is the one after the output shift; the order does not matter.
+- For each output sample n of the unit (after end of stream shortening) and each matrix channel m from 0 to M: A = A XOR ((output sample, low 24 bits) · 2^m), keeping 32 bits. The output sample is the one after the output shift; the order does not matter.
+- FFmpeg actually walks the output positions and takes the matrix channel assigned to each (positions no assignment names default to matrix channel 0). This is the same for valid streams. Where two matrix channels name the same position, one matrix channel then enters twice and another not at all, so the check differs from the form above.
 - At the substream's next restart header, if A is valid: fold A to 8 bits (XOR of its four bytes) and compare it with the header's lossless check byte. Then A = 0 and valid.
-- A is invalid when decoding starts, after a unit with an end-of-stream marker in that substream, and (in FFmpeg) after a flush.
+- A is invalid when decoding starts, after a unit with an end of stream marker in that substream, and (in FFmpeg) after a flush.
 
-So a restart header's byte covers the output since the previous restart header of its substream. The first restart header seen, and the first after an end-of-stream marker, have nothing to be compared with, and the output after the last restart header is never checked.
+So a restart header's byte covers the output since the previous restart header of its substream. The first restart header seen, and the first after an end of stream marker, have nothing to be compared with, and the output after the last restart header is never checked.
 
 FFmpeg compares the check only for the substream it outputs and only logs a mismatch. Every presentation's check held in the test files when computed as above.
 
 ### End of stream
 
-- The samples a TrueHD end-of-stream marker drops are removed before rematrixing, noise generation and the lossless check of that substream.
-- After a unit with an end-of-stream marker, FFmpeg needs a new major sync before it decodes again, and the lossless check accumulators of the decoded substreams are invalid.
+- The samples a TrueHD end of stream marker drops are removed before rematrixing, noise generation and the lossless check of that substream.
+- After a unit with an end of stream marker, FFmpeg needs a new major sync before it decodes again, and the lossless check accumulators of the decoded substreams are invalid.
 - `ff51.thd` (FFmpeg's encoder, 48,624 samples) ends with a marker dropping 16 samples, in both substreams; the model and FFmpeg agree on the 48,624 samples.
 
 ### Presentations and substreams
@@ -700,7 +706,7 @@ In the test files:
 - FFmpeg's encoder does the same split for more than two channels and writes one substream for one or two.
 - Both presentations' lossless checks hold in the Dolby file, which supports this model.
 
-Substream info (byte 17 of the major sync) in TrueHD, as far as sources go:
+Substream info (byte 17 of the major sync; for MLP see [Format info: MLP](#format-info-mlp)) in TrueHD, as far as sources go:
 
 - FFmpeg's decoder uses bit 7 for Atmos ([below](#dolby-atmos)), bits 2 to 3 and bits 4 to 6 in a rule that skips a substream whose channels overlap the previous one's ([Implementation choices](#ffmpegs-implementation-choices)).
 - The values are 0x3C in the Dolby file and in FFmpeg's encoder for more than two channels, and 0x14 in FFmpeg's encoder for one or two.
@@ -710,6 +716,11 @@ Which channel list a TrueHD substream's assignment indexes:
 
 - Inferred: substream 0 of a stream with more than one substream outputs the 2-channel presentation (left, right); the substream that outputs the 6-channel or 8-channel presentation uses that presentation's assignment from the major sync; a single substream uses the 8-channel assignment where it is not 0, else the 6-channel one.
 - FFmpeg's own choice differs in places and depends on the channel count it already knows ([Implementation choices](#ffmpegs-implementation-choices)).
+
+Substreams of one unit that decode different sample counts, and a changed channel count:
+
+- FFmpeg outputs as many samples as the output substream decoded; the channels of lower substreams keep stale samples beyond their own count. Worth a finding.
+- FFmpeg outputs nothing for a unit when the channel count it already knows differs from M + 1 of the output substream.
 
 MLP:
 
@@ -725,18 +736,27 @@ MLP:
 
 ## Limits
 
+Limits the syntax itself sets (field widths, tables):
+
+| Limit | Value |
+| --- | --- |
+| Unit length | 4 to 8,190 bytes (12-bit word count) |
+| Substream count | 1 to 4 (4-bit field; 0 invalid) |
+| Coded channel indexes | 0 to 7 in the restart header (4-bit fields) |
+| Samples per unit and channel | 40, 80, 160 for the rates FFmpeg accepts (40 · 2^(rate code bits 0 to 2) in general) |
+| Block size | 8 to the unit's samples per channel (9-bit field) |
+| Filter orders | FIR at most 8, IIR at most 4, sum at most 8 |
+| Output sample | 24 bits |
+
+FFmpeg's own limits (a decoder that follows FFmpeg rejects more than the syntax does; whether the format itself allows more is not determined):
+
 | Limit | MLP | TrueHD |
 | --- | --- | --- |
-| Substreams | 1 to 2 | 1 to 4 (FFmpeg's limit; it rejects more as unsupported) |
-| Coded channels per stream | 8 (indexes 0 to 7) | 8 |
+| Substreams | 1 to 2 | 1 to 4 |
 | Last matrix channel | 5 | 7 (above 5 only with noise type 1) |
 | Primitive matrices | 6 | 8 |
-| FIR order, IIR order, sum | 8, 4, 8 | 8, 4, 8 |
-| Samples per unit and channel | 40, 80, 160 | 40, 80, 160 |
-| Block size | 8 to the unit's samples | same |
-| Sampling rate | at most 192 kHz | same |
-| Unit length | 4 to 8,190 bytes | same |
-| Output word | 24 bits | 24 bits |
+| Coded channels per stream | 8 | 8 |
+| Sampling rate | at most 192 kHz (the highest rate FFmpeg's sources say was seen in files) | same |
 
 ## Validity rules and damage
 
@@ -746,7 +766,7 @@ What FFmpeg does with each broken rule, and how an analyzer can treat it. "Unit 
 | --- | --- | --- |
 | Unit length below 4 bytes or past the data | unit dropped | unit invalid; resynchronize |
 | Major sync: too short, CRC, sync word, stream type | unit dropped, waits for a major sync | unit invalid |
-| Major sync: word length, rate, group 2 longer or at another rate, substream count 0 or above the format's limit | unit dropped, waits | unit invalid (group 2 at another rate: unsupported, not damage) |
+| Major sync: bit depth, rate, group 2 longer or at another rate, substream count 0 or above the format's limit | unit dropped, waits | unit invalid (group 2 at another rate: unsupported, not damage) |
 | Directory longer than the unit, extra word in MLP, non-restart bit wrong, end before the previous end | unit dropped, waits | unit invalid |
 | Substream end past the unit | logged, clamped | unit invalid |
 | Parity nibble | unit dropped, waits | unit invalid |
@@ -756,22 +776,22 @@ What FFmpeg does with each broken rule, and how an analyzer can treat it. "Unit 
 | Negative output shift | asks for a sample, uses 0 | unsupported |
 | Matrices or a filter read a third time in one unit | rest of substream skipped | substream invalid |
 | Block past the unit's samples, unknown codeword, data running out, no bit left for the last-block flag | unit dropped, state kept | unit invalid; the substream's filter and lossless state cannot be trusted until its next restart header |
-| End-of-stream marker wrong, MLP second word not 0xD234 | unit dropped, state kept | unit invalid |
+| End of stream marker wrong, MLP second word not 0xD234 | unit dropped, state kept | unit invalid |
 | Check data present but not exactly 16 bits left, or the end not reached exactly | unit dropped, state kept | unit invalid |
 | Substream parity byte, CRC-8 | logged | finding (a damaged substream) |
 | Lossless check | logged | finding (`truehd.lossless-check-failed`) |
-| A substream without a restart header since decoding started | skipped, logged | not decodable yet; not damage at the start of a file |
+| A substream without a restart header since the last major sync (or since decoding started) | skipped, logged | not decodable yet; not damage at the start of a file |
 
-Not checked by FFmpeg, and worth a finding rather than a failure: the signature, a last coded channel above M, a matrix channel no substream codes, two matrix channels with the same position, padding bits that are not zero, bytes after the last substream, and a unit whose blocks hold fewer samples than the unit size without an end-of-stream marker.
+Not checked by FFmpeg, and worth a finding rather than a failure: the signature, a last coded channel above M, a matrix channel no substream codes, two matrix channels with the same position, padding bits that are not zero, bytes after the last substream, and a unit whose blocks hold fewer samples than the unit size without an end of stream marker.
 
 ## Files and containers
 
 **Raw files:**
 
 - `.thd` (TrueHD) and `.mlp` (MLP) hold the access units back to back, with nothing before or after them.
-- A file cut from a longer stream may start with units without a major sync, as `TrueHD.raw` does (2,362 bytes); they cannot be decoded and are skipped up to the first major sync.
+- A file cut from a longer stream may start with units without a major sync, as `TrueHD.raw` does (13 units, 2,358 bytes); they cannot be decoded and are skipped up to the first major sync.
 - FFmpeg's probe follows the length words from each major sync; each major sync reached that way scores 1, plus 1 per 8 units between it and the previous one, and it needs a score of 100 in its probe buffer. Its parser takes 0xF8726FBA and 0xF8726FBB alike when searching, then checks the parity nibble of each unit without a major sync and drops sync where it fails.
-- FFmpeg's raw demuxer reads the rate code from unit byte 8 (TrueHD) or 9 (MLP), high nibble.
+- FFmpeg's raw demuxer reads the rate code from byte 8 (TrueHD) or byte 9 (MLP), high nibble, of the file's first 10 bytes, so only where the file starts with a major sync unit (`TrueHD.raw` does not).
 
 **MP4:**
 
@@ -795,14 +815,32 @@ These are choices of FFmpeg's decoder, not rules of the format; a cross-check mu
 
 - **MLP or TrueHD:** FFmpeg picks its MLP or TrueHD decoder from the container or demuxer, applies that format's limits and rejects a major sync of the other stream type. The stream type in the major sync is the format's own signal.
 - **Which presentation it outputs:** the highest of substreams 0 to 2, or with `-downmix` the lowest substream whose channel list contains every requested channel. It reads only substreams up to that one and compares only that one's lossless check.
-- **Skipped substreams:** for a 6-channel output where bits 2 to 3 of the substream info are not 3, or an 8-channel output where bits 4 to 6 are not 7, 6 or 3, it skips a middle substream whose first coded channel is at or below the previous substream's last; and it skips any lower substream whose coded channels overlap those of the substream it outputs. Skipping leaves that substream's filter history unread.
-- **Channel lists of TrueHD substreams:** substream 1 gets the 6-channel assignment; substream 0 becomes stereo where there is more than one substream (or mono or stereo in some single-substream cases); substream 2 gets the 8-channel assignment, or the 6-channel one where the 8-channel is 0. Where the channel count it already knows exceeds two and there are fewer than three substreams, the top substream (0 or 1) gets the 8-channel assignment instead. That count comes from its parser or the container, so the result can depend on what was read first.
+- **Skipped substreams:** which substreams below the output substream FFmpeg reads at all. A skipped substream's filter histories are left unread. The observed rules:
+
+  | Condition | Result |
+  | --- | --- |
+  | Output has 6 channels and substream info bits 2 to 3 are not 3, or output has 8 channels and bits 4 to 6 are none of 7, 6 and 3; and the substream is neither the first nor the output one; and its first coded channel is at or below the previous substream's last coded channel | substream skipped |
+  | Any other substream below the output one whose coded channels overlap those of the output substream | substream skipped |
+  | Neither condition | substream read |
+
+- **Channel lists of TrueHD substreams:** which assignment each substream's channel positions index, as FFmpeg sets them from the major sync and from the channel count its parser or the container already told it, so the result can depend on what was read first:
+
+  | Substreams | Known channel count | Substream 0 | Substream 1 | Substream 2 |
+  | --- | --- | --- | --- | --- |
+  | 1 | 1, and both assignments hold 1 channel | mono | | |
+  | 1 | 2, and both assignments hold 2 channels | stereo | | |
+  | 1 | more than 2 | 8-channel assignment | | |
+  | 2 | 2 or fewer | stereo | 6-channel assignment | |
+  | 2 | more than 2 | stereo | 8-channel assignment | |
+  | 3 or more | any | stereo | 6-channel assignment | 8-channel assignment, or the 6-channel one where it is 0 |
+
+  Other combinations (one substream with an unknown count) give substream 0 no list from these rules.
 - **Its own channel order:** it reorders TrueHD channels to its native order, and for MLP arrangements 18 to 20 swaps assignments.
-- **Output format:** 32-bit samples with the 24-bit value in the top bits, or 16-bit where the word length is at most 16; TrueHD is always reported as 24-bit.
+- **Output format:** 32-bit samples with the 24-bit value in the top bits, or 16-bit where the bit depth is at most 16; TrueHD is always reported as 24-bit.
 - **Logging instead of rejecting:** restart header CRC, substream parity and CRC-8, lossless check, block size check mismatch; an end past the unit is clamped.
 - **Accepting twice:** matrices and each filter may be read twice per substream and unit.
 - **Lossless check marker:** it marks an invalid accumulator with the value 0xFFFFFFFF, so a real accumulator of that value is not compared.
-- **State after errors:** some errors drop the stream state until the next major sync, others keep it; after an end-of-stream marker it waits for a major sync.
+- **State after errors:** some errors drop the stream state until the next major sync, others keep it; after an end of stream marker it waits for a major sync.
 - **Unsupported, not invalid:** more than 4 substreams, M above 5 with noise type 0, negative output shifts, MLP channel groups at different rates, the block size check data.
 - **Parser and probe:** its parser does not check the parity of units with a major sync (the decoder does); its probe needs a chain score of 100 (see [Files and containers](#files-and-containers)).
 - **Filter state at a restart header:** kept, not reset; zero at the start. No test file can tell the difference ([Observations](#observations-on-the-test-files)).
@@ -824,11 +862,14 @@ Observed behavior of the encoders behind Encspect's test files, not rules; none 
 ## Not determined
 
 - The meaning of the reserved directory bit, the extra word, the restart header's 16 skipped bits (its 19 skipped bits fit the reading under [Observations](#observations-on-the-test-files), which no specification confirms), the flags word, the multichannel type bits, the channel meaning fields and the extension.
-- The meaning of substream info bits 0 to 1, and whether bits 2 to 6 work as inferred above.
+- The meaning of TrueHD substream info bits 0 to 1, and whether bits 2 to 6 work as inferred above; for MLP, whether the encoder's flag names for the byte are the format's.
 - Which TrueHD presentation each substream outputs in a three-substream stream and how a single substream chooses between the 6-channel and 8-channel assignment; no test file has three substreams or an 8-channel assignment that differs from the 6-channel one.
 - Whether matrix, output shift and quantizer changes inside a unit apply from their block or to the whole unit.
 - Whether filter histories reset at a restart header.
 - Whether a Matroska block may hold more than one access unit, and the `mlpa` sample entry's rules beyond FFmpeg's muxer.
 - Anything about Dolby Atmos beyond FFmpeg's signaling rule: the fourth substream, its checks, the extended substream info, the extension.
-- Noise type 0 generation, LSB bypass and the block size check are described from FFmpeg alone; no file exercises them.
+- LSB bypass and the block size check are described from FFmpeg alone; no file exercises them. Noise type 0 runs in every MLP file and in the Dolby file's substream 0, but no file has a nonzero noise coefficient or noise shift, so the generated noise values never reach the output and are unverified.
+- The channel order of MLP arrangements 18 to 20 (inferred from FFmpeg's reordering) and of every MLP arrangement with more than two channels; all test files are stereo.
+- Whether a restart header may start at a bit other than 2 of its substream; the advice under [Restart header CRC](#restart-header-crc) to use the actual first bit is unverified, as every header in the test files starts at bit 2.
+- What a later major sync that changes stream parameters (substream count, rate, assignments) means for the state. FFmpeg takes the new parameters and keeps its accumulators.
 - The format rule behind FFmpeg's limit of two matrix or filter reads per unit.
