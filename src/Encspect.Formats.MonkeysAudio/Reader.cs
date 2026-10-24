@@ -446,19 +446,19 @@ internal static class Reader
         {
             long raw = start + s.DataStart;
             s.Findings.Add(Severity.Warning, "monkeys-audio.frame-misplaced", () => Nodes.Frame(records, index), count =>
-                $"The seek table puts frame {index} at 0x{raw:X}, outside the frame data or before the frame it follows, so its bytes cannot be told{(count > 1 ? $"; {count - 1} more frames are placed the same way" : string.Empty)}.");
+                $"The seek table puts frame {index} at 0x{raw:X}, outside the frame data or before the frame it follows, so its bytes cannot be told{(count > 1 ? $"; {Counts.Of(count - 1, "more frame is", "more frames are")} placed the same way" : string.Empty)}.");
         }
 
         if ((status & EntryStatus.Cut) != 0)
         {
             s.Findings.Add(Severity.Warning, "monkeys-audio.frame-cut", () => Nodes.Frame(records, index), count =>
-                $"The file ends inside frame {index}{(count > 1 ? $", and {count - 1} more frames lie past its end" : string.Empty)}; a frame is read only as far as the file holds whole words of it.");
+                $"The file ends inside frame {index}{(count > 1 ? $", and {Counts.Of(count - 1, "more frame lies", "more frames lie")} past its end" : string.Empty)}; a frame is read only as far as the file holds whole words of it.");
         }
 
         if ((status & EntryStatus.NoStartFields) != 0)
         {
             s.Findings.Add(Severity.Warning, "monkeys-audio.frame-too-short", () => Nodes.Frame(records, index), count =>
-                $"Frame {index} is too short for the CRC and the special frame codes it starts with{(count > 1 ? $", and {count - 1} more frames are" : string.Empty)}.");
+                $"Frame {index} is too short for the CRC and the special frame codes it starts with{(count > 1 ? $", and {Counts.Of(count - 1, "more frame is", "more frames are")} too" : string.Empty)}.");
         }
     }
 
@@ -505,7 +505,7 @@ internal static class Reader
         {
             long length = e.Length;
             s.Findings.Add(Severity.Info, "monkeys-audio.frame-not-decoded", () => index >= 0 ? Nodes.Frame(records, index) : s.Stream, count =>
-                $"Frame {frame} holds {Counts.Of(length, "byte", "bytes")}, more than the 64 MiB the analyzer reads into memory to decode a frame, so it is not decoded{(count > 1 ? $"; {count - 1} more frames are not either" : string.Empty)}.");
+                $"Frame {frame} holds {Counts.Of(length, "byte", "bytes")}, more than the 64 MiB the analyzer reads into memory to decode a frame, so it is not decoded{(count > 1 ? $"; {Counts.Of(count - 1, "more frame is", "more frames are")} not either" : string.Empty)}.");
         }
 
         if (isUnreadable)
@@ -599,7 +599,7 @@ internal static class Reader
             long entries = h.HasDescriptor ? h.SeekTableBytes / 4 : s.SeekEntries;
             uint frames = h.TotalFrames;
             s.Findings.Add(Severity.Warning, "monkeys-audio.seek-table-size", () => seek, _ =>
-                $"The seek table holds {Counts.Of(entries, "entry", "entries")}, but the header counts {Counts.Of(frames, "frame", "frames")}{(entries < frames ? $"; the {frames - entries} frames without an entry cannot be located" : "; the extra entries lead nowhere")}.", "count");
+                $"The seek table holds {Counts.Of(entries, "entry", "entries")}, but the header counts {Counts.Of(frames, "frame", "frames")}{(entries < frames ? $"; {Counts.Of(frames - entries, "frame has no entry and cannot", "frames have no entry and cannot")} be located" : "; the extra entries lead nowhere")}.", "count");
         }
 
         long available = Math.Max(0, reader.End - s.SeekTableAt);

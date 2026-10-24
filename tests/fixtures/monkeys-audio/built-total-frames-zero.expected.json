@@ -1,0 +1,112 @@
+{
+ "length": 136268,
+ "descriptor": {
+  "version": 3990,
+  "program": 13420,
+  "descriptor_bytes": 52,
+  "header_bytes": 24,
+  "seek_table_bytes": 12,
+  "header_data_bytes": 44,
+  "frame_data_bytes": 136136,
+  "terminating_bytes": 0,
+  "md5": "a887e0d6e0b7dcaea5dc08d95e69eb08",
+  "md5_computed": "a887e0d6e0b7dcaea5dc08d95e69eb08"
+ },
+ "header": {
+  "level": 2000,
+  "flags": 0,
+  "blocks_per_frame": 73728,
+  "final_frame_blocks": 12544,
+  "total_frames": 0,
+  "bits_per_sample": 16,
+  "channels": 1,
+  "sample_rate": 44100
+ },
+ "seek_entries": 0,
+ "frames": [],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front center"
+   ],
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 0,
+   "duration": 0.0,
+   "bits_per_sample": 16,
+   "average_bitrate": null,
+   "encoder": "Monkey's Audio 13.42"
+  }
+ ],
+ "decoded_samples": 0,
+ "pcm_samples": 0,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": null,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "descriptor MD5",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 136268
+  }
+ ],
+ "encoder": {
+  "tool": "monkeys_audio_model.py, from the frames of a file mac wrote"
+ },
+ "findings": [
+  {
+   "code": "monkeys-audio.no-frames",
+   "contains": ""
+  },
+  {
+   "code": "monkeys-audio.seek-table-size",
+   "contains": ""
+  }
+ ]
+}

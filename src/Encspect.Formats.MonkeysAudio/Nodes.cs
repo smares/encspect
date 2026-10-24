@@ -35,7 +35,7 @@ internal static class Nodes
         NodeValue samples = NodeValue.Integer(e.Blocks, "samples", "sample");
         if (ranges.Count == 0)
         {
-            return new Node("Frame", r.DataStart, 0, samples) { Kind = NodeKind.Frame, Description = Explain.Frame, Topic = Topics.Frames };
+            return new Node("Frame", Math.Min(r.DataStart, r.DataLimit), 0, samples) { Kind = NodeKind.Frame, Description = Explain.Frame, Topic = Topics.Frames };
         }
 
         return new Node("Frame", ranges[0].Offset, ranges[^1].End - ranges[0].Offset, samples, () => FrameChildren(r, index))

@@ -1,0 +1,78 @@
+{
+ "length": 136227,
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 136227
+  }
+ ],
+ "frames": [],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front center"
+   ],
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "samples": 30976,
+   "duration": 0.7024036281179138,
+   "bits_per_sample": 16,
+   "average_bitrate": 1550.5159090909092,
+   "encoder": "Monkey's Audio (file version 3.80)"
+  }
+ ],
+ "decoded_samples": 0,
+ "pcm_samples": 0,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": null,
+   "decoding": "notPossible",
+   "checksums": [
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [
+  {
+   "code": "decode.not-possible",
+   "count": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "monkeys-audio.old-format",
+   "contains": ""
+  },
+  {
+   "code": "monkeys-audio.final-frame-blocks",
+   "contains": ""
+  }
+ ],
+ "encoder": {
+  "tool": "monkeys_audio_model.py, from the frames of a file mac wrote"
+ }
+}
