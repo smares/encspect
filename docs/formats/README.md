@@ -17,6 +17,7 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | DTS-HD files (`.dtshd`: the chunks around a DTS stream) | [dtshd.md](dtshd.md) |
 | WavPack (lossless, hybrid and DSD, with correction files, and with decoding for verification) | [wavpack.md](wavpack.md) |
 | FLAC (native and in Ogg, with decoding for verification) | [flac.md](flac.md) |
+| Monkey's Audio (all versions parsed; version 3.99 and 4.11 files decoded for verification) | [monkeys-audio.md](monkeys-audio.md) |
 | ASF and WMA (versions 1 and 2, Professional and Voice; Lossless at header level) | [asf-wma.md](asf-wma.md) |
 | Matroska and WebM (audio tracks routed to the codec parsers; video at container level) | [matroska.md](matroska.md) |
 

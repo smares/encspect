@@ -1,7 +1,7 @@
 ---
 id: linear-prediction
 title: Linear prediction
-related: flac-subframes, rice-coding, wavpack-decorrelation
+related: flac-subframes, rice-coding, wavpack-decorrelation, monkeys-audio-prediction
 references: RFC 9639 (FLAC), section 9.2
 ---
 

@@ -1,7 +1,7 @@
 ---
 id: rice-coding
 title: Rice coding
-related: flac-subframes, linear-prediction, huffman-coding
+related: flac-subframes, linear-prediction, huffman-coding, monkeys-audio-range-coding
 references: RFC 9639 (FLAC), section 9.2
 ---
 
