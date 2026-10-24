@@ -22,6 +22,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     internal const long FilterTapUnits = 1;
 
     private readonly DecodeContext _context;
+    private readonly Records? _records;
     private readonly int _channels;
     private readonly int _bits;
     private readonly UnitLayout _layout = new();
@@ -55,18 +56,34 @@ internal sealed class StreamDecoder : IFrameDecoder
     public StreamDecoder(DecodeContext context)
     {
         _context = context;
+        _records = DecodeLink.Find(context.Setup.Stream);
         _channels = context.Setup.Channels;
         _bits = context.Setup.BitsPerSample;
     }
 
+    // A unit that fails after the decoder began to change its state leaves the lossless check accumulators and the filter histories behind it
+    // wrong, so any failure starts the next unit as one that follows a gap: nothing is compared across the unit that was lost.
     public int Decode(in CodedFrame frame)
     {
-        ReadOnlySpan<byte> bytes = frame.Bytes.Span;
         if (frame.FollowsGap)
         {
             Reset();
         }
 
+        try
+        {
+            return DecodeUnit(frame);
+        }
+        catch (Exception ex) when (ex is InvalidDataException or EndOfStreamException or OperationCanceledException)
+        {
+            Reset();
+            throw;
+        }
+    }
+
+    private int DecodeUnit(in CodedFrame frame)
+    {
+        ReadOnlySpan<byte> bytes = frame.Bytes.Span;
         _layout.Read(bytes, _sync is { } known ? known.SubstreamCount : 0, _sync is { IsTrueHd: false });
         if (_layout.Length < 4 || bytes.Length < _layout.Length)
         {
@@ -178,10 +195,19 @@ internal sealed class StreamDecoder : IFrameDecoder
 
     private void Accept(MajorSync sync)
     {
-        if (_sync is { } before && (before.RateCode != sync.RateCode || before.SubstreamCount != sync.SubstreamCount || before.IsTrueHd != sync.IsTrueHd))
+        if (_sync is { } before)
         {
-            Reset();
-            throw new InvalidDataException("The stream's format, sampling rate or substream count changes at this major sync, which the decoder does not follow");
+            if (before.RateCode != sync.RateCode || before.SubstreamCount != sync.SubstreamCount || before.IsTrueHd != sync.IsTrueHd)
+            {
+                Reset();
+                throw new InvalidDataException("The stream's format, sampling rate or substream count changes at this major sync, which the decoder does not follow");
+            }
+
+            // The interval a restart header closes would span two streams, so its lossless check has nothing to be compared with.
+            if (!before.SameStreamAs(sync))
+            {
+                Array.Clear(_isAccumulatorValid);
+            }
         }
 
         _sync = sync;
@@ -263,7 +289,7 @@ internal sealed class StreamDecoder : IFrameDecoder
                     int stored = header.LosslessCheck;
                     _context.AddFinding(Severity.Warning, "truehd.lossless-check-failed",
                         $"The output of the {channels}-channel presentation of substream {k} since the previous restart header folds to 0x{computed:X2}, but the lossless check of the restart header at 0x{substreamOffset:X} stores 0x{stored:X2}: the decoded audio differs from what the encoder read.",
-                        Nodes.LosslessCheckField(substreamOffset, header));
+                        _records is null ? Nodes.LosslessCheckField(substreamOffset, header) : Nodes.LosslessCheckFor(_records, substreamOffset, header));
                 }
             }
         }
@@ -436,6 +462,10 @@ internal sealed class StreamDecoder : IFrameDecoder
         _accumulator[k] = accumulator;
     }
 
+    // The width of the samples the sink gets: the stream's 16 or 24 bits, and for 20 bits 24, so that no bit of the decoded samples is dropped (FFmpeg
+    // too passes 20-bit streams as 24-bit samples).
+    private static int OutputBits(int bits) => bits == 20 ? 24 : bits;
+
     // Writes the highest substream's presentation to the sink, each matrix channel at the position of the channel list its restart header gives it.
     private int Write(in CodedFrame frame, in MajorSync sync, SubstreamState state, int substreamCount, int count)
     {
@@ -450,7 +480,7 @@ internal sealed class StreamDecoder : IFrameDecoder
         if (_sink is null)
         {
             Speaker[]? list = isPermutation ? Presentation.Resolve(sync, Math.Min(substreamCount, Substreams) - 1, substreamCount, m) : null;
-            _sink = _context.DeclareOutput(new PcmFormat(sync.SampleRate, m, _bits, SampleFormat.Integer) { ChannelLayout = list });
+            _sink = _context.DeclareOutput(new PcmFormat(sync.SampleRate, m, OutputBits(_bits), SampleFormat.Integer) { ChannelLayout = list });
         }
 
         if (count == 0)
@@ -463,7 +493,7 @@ internal sealed class StreamDecoder : IFrameDecoder
             _pcm = new int[m * count];
         }
 
-        int shift = Math.Max(0, 24 - _bits);
+        int shift = Math.Max(0, 24 - OutputBits(_bits));
         for (int c = 0; c < m; c++)
         {
             int plane = isPermutation ? state.ChannelAssignment[c] : c;

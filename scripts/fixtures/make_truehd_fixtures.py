@@ -220,13 +220,11 @@ def signature_unexpected():
 @builder("parameters-change")
 def parameters_change():
     first = Base("truehd-stereo-48k-24", 40)
-    b = Built(first, "A second stream, 96 kHz, follows the first one: its major sync changes the sampling rate, which decoding does not follow.")
+    b = Built(first, "A second stream, 96 kHz, follows the first one: its major sync changes the sampling rate. Decoding does not follow the change and the units of the second stretch are not handed to the decoder; the duration counts each stretch at its own rate.")
     other = Base("truehd-stereo-96k-24", 40)
     b.pieces += [["unit", u] for u in other.units]
     b.counts += other.counts
     b.findings = [finding("truehd.stream-parameters-change", "changes the stream's format")]
-    b.parameters_change_from = 40
-    b.decode_findings = ["decode.frame-invalid"]
     return b
 
 
@@ -377,6 +375,33 @@ def block_size_invalid():
     return b
 
 
+@builder("splice-channel-count")
+def splice_channel_count():
+    first = Base("truehd-51-48k-24", 33)
+    b = Built(first, "A 5.1 stream of two substreams, then a 4.0 stream of two substreams at the same rate, then the 5.1 stream again, each a run of 33 units cut before its end of stream marker. The decoder was opened for six channels, so it cannot decode the 4.0 stretch and starts again at the next 5.1 major sync; no lossless check is compared across the splices, and none may fail.")
+    second = Base("truehd-40-48k-16", 33)
+    third = Base("truehd-51-48k-24", 41)
+    b.pieces += [["unit", u] for u in second.units] + [["unit", u] for u in third.units]
+    b.counts += second.counts + third.counts
+    b.findings = [finding("truehd.stream-parameters-change", "channel assignments or bit depth")]
+    b.decode_findings = ["decode.frame-invalid"]
+    return b
+
+
+@builder("mlp-group-rates")
+def mlp_group_rates():
+    base = Base("mlp-51-48k-24", 64)
+    b = Built(base, "The major syncs of units 16 and 32 give the second MLP channel group the same depth as the first and the sampling rate code 1: not damage, but not read either. Those units and the ones after them up to the major sync of unit 48 are not read, and the stream goes on there.")
+    for index in (16, 32):
+        u = b.unit(index)
+        assert u[4 + 5] & 0x0F == 0x0F, "the second group has no rate of its own"
+        u[4 + 4] = (u[4 + 4] & 0xF0) | (u[4 + 4] >> 4)
+        u[4 + 5] = (u[4 + 5] & 0xF0) | 1
+        b.refresh(index)
+    b.findings = [finding("truehd.unsupported", "different sampling rates"), finding("truehd.unsupported", "carry no major sync")]
+    return b
+
+
 # --- units written again with bits inserted --------------------------------------------------------------------------------------------------
 
 # Where the blocks of the first three units of external-truehd-stereo-48k-24.thd lie, as (start bit, end bit of the decoding parameters, end bit of the
@@ -492,7 +517,7 @@ def framing_of(pieces):
 
 def manifest_of(b, path, data, framing, previous):
     """The manifest of a built fixture: what the model reads and the analyzer must report."""
-    result = m.manifest(data, framing, b.counts, b.unreadable, b.lossless_failures, getattr(b, "parameters_change_from", None))
+    result = m.manifest(data, framing, b.counts, b.unreadable, b.lossless_failures)
     manifest = {"description": b.description, **result, "findings": b.findings, "decode_findings": b.decode_findings, "regions": [{"name": result["format"], "offset": 0, "length": len(data)}],
                 "crosscheck": {"ffmpeg": b.ffmpeg}}
     if not getattr(b, "golden_full", False):

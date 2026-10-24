@@ -7,7 +7,7 @@ internal static class Summary
 {
     public static void Finish(Analysis a, long start, long end, AnalysisContext context)
     {
-        a.FlushRun();
+        a.FlushRun(isLast: true);
         Checks(a);
         StreamVerification? verification = Verify(a, context);
         StreamInfo? info = Statistics(a, start, end, verification);
@@ -16,7 +16,25 @@ internal static class Summary
             context.AddStream(info);
         }
 
+        CountUnrecorded(a);
         a.Findings.Flush(context);
+    }
+
+    // The units past the limit of records have a node that counts them, which the findings about them point to.
+    private static void CountUnrecorded(Analysis a)
+    {
+        if (a.UnrecordedFrom < 0)
+        {
+            return;
+        }
+
+        long from = a.UnrecordedFrom;
+        var counted = new Node("Counted Access Units", from, a.UnrecordedEnd - from, NodeValue.Integer(a.UnrecordedUnits, "units", "unit")) { Description = Explain.CountedUnits, Topic = Topics.AccessUnits };
+        a.Leading.Add(counted);
+        a.Records.Fallback = counted;
+        a.Findings.AddNow(Severity.Info, "truehd.units-limit",
+            $"The stream has more than {Counts.Of(a.RecordLimit, "access unit", "access units")} and skipped stretches; the {Counts.Of(a.UnrecordedUnits, "access unit", "access units")} from 0x{from:X} on are read, checked, decoded and counted in the statistics and graphs, but have no node of their own, and the findings about them point to this node.",
+            counted);
     }
 
     private static void Checks(Analysis a)
@@ -26,7 +44,8 @@ internal static class Summary
             return;
         }
 
-        if (a.SyncUnits > 0 && a.Samples == 0)
+        // A stream whose units are all unsupported has said so already, and is not damaged.
+        if (a.SyncUnits > 0 && a.Samples == 0 && !(a.UnsupportedUnits > 0 && a.UnreadableUnits == a.UnsupportedUnits))
         {
             a.Findings.Add(Severity.Warning, "truehd.no-units", a.Stream, _ => "No access unit of the stream could be read, so it holds no audio the analyzer can count.", "unreadable");
         }
@@ -59,7 +78,7 @@ internal static class Summary
         return session.Finish(tallies);
     }
 
-    // The lossless checks, one tally for each substream the stream's first major sync gives, whether or not it was read: a tally with nothing stored
+    // The lossless checks, one tally for each substream the decoding session was opened for, whether or not it was read: a tally with nothing stored
     // counts for nothing.
     internal static IEnumerable<ChecksumTally> LosslessTallies(IReadOnlyList<long> stored, int read)
     {
@@ -86,7 +105,7 @@ internal static class Summary
         Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, start, end - start, value) { Description = description, Topic = topic };
         var statistics = new Node("Statistics", start, end - start) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         int rate = sync.SampleRate;
-        double duration = rate > 0 ? a.Samples / (double)rate : 0;
+        double duration = a.Duration;
         int top = read - 1;
         Speaker[]? layout = Presentation.Resolve(sync, top, a.SubstreamCount, channels);
         statistics.Add(Cover("Access Units", NodeValue.Integer(a.Units - a.LeadingUnits, "units", "unit"), Explain.StatUnits, Topics.AccessUnits));
@@ -128,11 +147,10 @@ internal static class Summary
             statistics.Add(Cover("Failed Restart Header Checksums", NodeValue.Integer(a.RestartCrcFailures, "headers", "header"), Explain.StatFailedRestarts, Topics.Crc));
         }
 
-        long substreamFailures = a.SubstreamParityFailures + a.SubstreamCrcFailures;
-        statistics.Add(Cover("Verified Substream Checksums", NodeValue.Integer(a.SubstreamChecked - Math.Min(a.SubstreamChecked, Math.Max(a.SubstreamParityFailures, a.SubstreamCrcFailures)), "substreams", "substream"), Explain.StatVerifiedSubstreams, Topics.Crc));
-        if (substreamFailures > 0)
+        statistics.Add(Cover("Verified Substream Checksums", NodeValue.Integer(a.SubstreamChecked - a.SubstreamsFailing, "substreams", "substream"), Explain.StatVerifiedSubstreams, Topics.Crc));
+        if (a.SubstreamsFailing > 0)
         {
-            statistics.Add(Cover("Failed Substream Checksums", NodeValue.Integer(Math.Max(a.SubstreamParityFailures, a.SubstreamCrcFailures), "substreams", "substream"), Explain.StatFailedSubstreams, Topics.Crc));
+            statistics.Add(Cover("Failed Substream Checksums", NodeValue.Integer(a.SubstreamsFailing, "substreams", "substream"), Explain.StatFailedSubstreams, Topics.Crc));
         }
 
         if (a.SubstreamsWithoutCheck > 0)

@@ -13,8 +13,16 @@ internal static class Nodes
     // The node of an entry: an access unit, or a stretch of skipped bytes.
     public static Node Entry(Records r, int index) => r.Entries[index].Kind == EntryKind.Skipped ? Skipped(r, index) : Unit(r, index);
 
+    // The units past the limit of records have no entry; what is said about them points to the node that counts them.
+    private static bool IsUnrecorded(Records r, int index) => index >= r.Entries.Count;
+
     public static Node Skipped(Records r, int index)
     {
+        if (IsUnrecorded(r, index))
+        {
+            return r.Fallback!;
+        }
+
         Entry e = r.Entries[index];
         return new Node("Skipped Data", e.Offset, e.Header, NodeValue.Integer(e.Header, "bytes")) { Description = Explain.SkippedData };
     }
@@ -27,6 +35,11 @@ internal static class Nodes
 
     public static Node Unit(Records r, int index)
     {
+        if (IsUnrecorded(r, index))
+        {
+            return r.Fallback!;
+        }
+
         Entry e = r.Entries[index];
         int length = UnitLength(r, index);
         string description = (e.Status & UnitStatus.Unsynchronized) != 0 ? Explain.UnitBeforeSync : (e.Status & UnitStatus.Cut) != 0 ? Explain.CutUnit : Explain.AccessUnit;
@@ -40,6 +53,11 @@ internal static class Nodes
 
     public static Node MajorSyncOf(Records r, int index)
     {
+        if (IsUnrecorded(r, index))
+        {
+            return r.Fallback!;
+        }
+
         Entry e = r.Entries[index];
         return new Node(MajorSyncName, e.Offset + 4, e.SyncLength == 0 ? MajorSyncLengthOf(r, index) : e.SyncLength) { Description = Explain.MajorSync, Topic = Topics.AccessUnits };
     }
@@ -52,6 +70,11 @@ internal static class Nodes
     // The node of substream k of a unit: the node findings about it point to. A unit whose substreams the tree does not list gives the unit's own.
     public static Node SubstreamOf(Records r, int index, int k)
     {
+        if (IsUnrecorded(r, index))
+        {
+            return r.Fallback!;
+        }
+
         UnitDetail? detail = r.DetailOf(index);
         if (detail is null || detail.KnownCount <= k)
         {
@@ -285,12 +308,19 @@ internal static class Nodes
 
         if (hasCheck)
         {
+            // The fourth substream's last two bytes are shown as they are: the description does not say that substream follows these rules, so the
+            // analyzer does not compare them.
+            bool isCompared = k < Analysis.ParsedSubstreams;
             long at = start + data.Length - 2;
             var parity = new Node("Parity Byte", at, 1, NodeValue.Hex(data[^2], 2)) { Description = Explain.ParityByte, Topic = Topics.Crc };
-            parity.Add(new Node("IsValid", at, 1, NodeValue.Boolean((verdict & 1) != 0)) { Description = Explain.IsValid, Topic = Topics.Crc });
-            children.Add(parity);
             var crc = new Node("CRC-8", at + 1, 1, NodeValue.Hex(data[^1], 2)) { Description = Explain.SubstreamCrc, Topic = Topics.Crc };
-            crc.Add(new Node("IsValid", at + 1, 1, NodeValue.Boolean((verdict & 2) != 0)) { Description = Explain.IsValid, Topic = Topics.Crc });
+            if (isCompared)
+            {
+                parity.Add(new Node("IsValid", at, 1, NodeValue.Boolean((verdict & 1) != 0)) { Description = Explain.IsValid, Topic = Topics.Crc });
+                crc.Add(new Node("IsValid", at + 1, 1, NodeValue.Boolean((verdict & 2) != 0)) { Description = Explain.IsValid, Topic = Topics.Crc });
+            }
+
+            children.Add(parity);
             children.Add(crc);
         }
 
@@ -335,4 +365,18 @@ internal static class Nodes
     // The restart header's lossless check byte: the node the decoder's finding about a differing check points to.
     public static Node LosslessCheckField(long substreamOffset, in RestartHeader h) =>
         Field("Lossless Check", substreamOffset, h.StartBit + 89, h.StartBit + 97, NodeValue.Hex(h.LosslessCheck, 2), Explain.LosslessCheck, Topics.LosslessCheck);
+
+    // The node a finding about the lossless check of the unit being decoded points to: the check byte where the tree lists the restart header, else
+    // the unit's own node (the tree lists the detail of some units only), else the stream's (null) for a unit with no node.
+    public static Node? LosslessCheckFor(Records r, long substreamOffset, in RestartHeader h)
+    {
+        int index = r.DecodingIndex;
+        if (index < 0 || index >= r.Entries.Count)
+        {
+            return null;
+        }
+
+        UnitDetail? detail = r.DetailOf(index);
+        return detail is not null && (detail.IsFull || h.StartBit == 2) ? LosslessCheckField(substreamOffset, h) : Unit(r, index);
+    }
 }

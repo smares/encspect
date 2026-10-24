@@ -17,6 +17,17 @@ public sealed class TrueHdParser : IFormatParser
     // lending walk with (docs/design/decoders.md, "The second entropy pass").
     internal bool LendsBuffers { get; init; } = true;
 
+    // The units kept as records, past which they are only counted (Analysis.MaxRecords); tests lower it.
+    internal int RecordLimit { get; init; } = Analysis.MaxRecords;
+
+    // How many units keep all their bytes, and how many others keep the parts of a sparse record (Analysis.MaxFullUnits, MaxSparseUnits).
+    internal int FullUnitLimit { get; init; } = Analysis.MaxFullUnits;
+
+    internal int SparseUnitLimit { get; init; } = Analysis.MaxSparseUnits;
+
+    // The size of the window the file is read through (Source.MinimumWindow); tests lower it to put window boundaries between units.
+    internal int WindowSize { get; init; } = Source.MinimumWindow;
+
     // A usable major sync (its CRC holds) followed by units that fit: class 94 where the chain of units reaches it from the start of the data
     // (the units before the first sync have no sync of their own, so only their length words chain), 60 further in. Verified units are those
     // whose major sync CRC holds or whose substreams' parity bytes and CRC-8 all hold.
@@ -127,8 +138,8 @@ public sealed class TrueHdParser : IFormatParser
         long windowEnd = window.End;
         List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= windowStart && t.Offset < windowEnd).OrderBy(t => t.Offset)];
         ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
-        var source = new Source(reader);
-        var analysis = new Analysis(context) { LendsBuffers = LendsBuffers };
+        var source = new Source(reader, WindowSize);
+        var analysis = new Analysis(context) { LendsBuffers = LendsBuffers, RecordLimit = RecordLimit, FullUnitLimit = FullUnitLimit, SparseUnitLimit = SparseUnitLimit };
         long first = Locator.FindSyncUnit(source, reader.Start, Math.Min(reader.End, reader.Start + Locator.SearchLimit), out MajorSync sync);
         bool isMlp = first >= 0 && !sync.IsTrueHd;
         Records records = analysis.Records;
@@ -200,12 +211,16 @@ public sealed class TrueHdParser : IFormatParser
             if (length >= 4)
             {
                 int available = (int)Math.Min(length, end - position);
-                ReadOnlyMemory<byte> unit = source.Slice(position, available)[..available];
                 bool isCut = available < length;
                 bool isLeading = position < first;
                 // A unit the data cuts short is believed only where its header and directory hold; a unit whose own structure breaks only where
                 // another unit follows it.
-                bool isAccepted = isLeading || analysis.Probe(unit.Span) == UnitProblems.None || (!isCut && (position + length == end || LooksLikeUnit(analysis, source, position + length, end)));
+                bool isAccepted = isLeading || analysis.Probe(source.Slice(position, available).Span[..available]) == UnitProblems.None;
+                if (!isAccepted && !isCut)
+                {
+                    isAccepted = position + length == end || LooksLikeUnit(analysis, source, position + length, end);
+                }
+
                 if (isAccepted)
                 {
                     if (skipFrom >= 0)
@@ -215,6 +230,8 @@ public sealed class TrueHdParser : IFormatParser
                         hasLoss = true;
                     }
 
+                    // Sliced after the decision: looking at the next unit may have moved the window over the same array.
+                    ReadOnlyMemory<byte> unit = source.Slice(position, available)[..available];
                     analysis.AddUnit(unit, position, isCut, hasLoss);
                     hasLoss = false;
                     position += available;

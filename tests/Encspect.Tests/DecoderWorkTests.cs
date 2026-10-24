@@ -49,6 +49,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
     private const int Rounds = 5;
 
+    // A case that comes near the factor is fixed by raising the charge of the stage it undercharges and measuring again, never by raising the factor.
     private const double Factor = 2.0;
 
     private const double MinimumDecodingShare = 0.2;

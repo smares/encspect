@@ -320,7 +320,7 @@
       {
         "severity": "Info",
         "code": "truehd.parameters-change-within-unit",
-        "message": "A block after the first of substream 0 in the access unit at 0x0 changes the matrices, output shifts or quantizer step sizes. The analyzer applies the ones in force at the end of the unit to all its samples, as FFmpeg does; no file it was tested on changes them inside a unit, so this is unconfirmed.",
+        "message": "A block after the first of substream 0 in the access unit at 0x0 changes the matrices, output shifts or quantizer step sizes. The analyzer applies the ones in force at the end of the unit to all its samples, as FFmpeg does; only a file crafted for the analyzer's tests changes them inside a unit, so this is unconfirmed.",
         "offset": 34,
         "length": 180,
         "count": 1

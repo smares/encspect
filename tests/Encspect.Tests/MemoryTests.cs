@@ -2,6 +2,7 @@ using System.Runtime;
 using System.Text;
 using Encspect.Core;
 using Encspect.Formats.Aac;
+using Encspect.Formats.TrueHd;
 using Encspect.Formats.WavPack;
 using Encspect.Host;
 using Xunit.Abstractions;
@@ -1266,6 +1267,37 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // Past the limit of records (2,097,152 units, about 30 minutes at 48 kHz) a TrueHD unit costs its place in the figures of the graphs and nothing else,
+    // so a feature-length file stays bounded: a 2-hour stream has 8.6 million units at 48 kHz and 34.6 million at 192 kHz. The limit is lowered here so that
+    // the test can go past it; what a unit costs past it, measured, is projected over the real limit.
+    [Fact]
+    public void TrueHdUnitsPastTheLimitOfRecordsCostOnlyTheirFigures()
+    {
+        const int limit = 6_000;
+        const double RealRecordLimit = Formats.TrueHd.Analysis.MaxRecords;
+        Analyzer limited = new(DefaultParsers.Tags, [.. DefaultParsers.Formats.Select(f => f is TrueHdParser ? new TrueHdParser { RecordLimit = limit } : f)], DefaultParsers.Codecs, DefaultParsers.Decoders);
+
+        // What a unit costs while it has a record, from two sizes under the limit, and what it costs past the limit, from two sizes beyond it.
+        (_, long recordedFewer, _) = Measure("units.thd", TrueHdUnits(250), TrueHdUnits(10));
+        (_, long recordedMore, _) = Measure("units.thd", TrueHdUnits(500), TrueHdUnits(10));
+        (Report fewer, long fewerKept, _) = Measure("units.thd", TrueHdUnits(2_000), TrueHdUnits(10), analyzer: limited);
+        (Report more, long moreKept, _) = Measure("units.thd", TrueHdUnits(8_000), TrueHdUnits(10), analyzer: limited);
+
+        const int moreUnits = 8_000 * 12;
+        Assert.Equal(moreUnits * 40L, more.Streams.Single().Samples);
+        Assert.Equal(limit, more.Root.Children.Single(c => c.Kind == NodeKind.Stream).Children.Count(c => c.Name == "Access Unit"));
+        double perRecord = (recordedMore - recordedFewer) / (double)((500 - 250) * 12);
+        double slope = (moreKept - fewerKept) / (double)((8_000 - 2_000) * 12);
+        double twoHours48 = (RealRecordLimit * perRecord) + ((8_640_000 - RealRecordLimit) * slope);
+        double twoHours192 = (RealRecordLimit * perRecord) + ((34_560_000 - RealRecordLimit) * slope);
+        output.WriteLine($"{perRecord:F1} bytes a unit with a record, {slope:F2} bytes a unit past the limit; a 2-hour stream projects to {twoHours48 / 1_000_000:F0} MB at 48 kHz and {twoHours192 / 1_000_000:F0} MB at 192 kHz");
+        Assert.True(slope < 4, $"A unit past the limit keeps {slope:F2} bytes.");
+        Assert.True(twoHours48 < 200_000_000, $"A 2-hour stream at 48 kHz projects to {twoHours48 / 1_000_000:F0} MB.");
+        Assert.True(twoHours192 < 250_000_000, $"A 2-hour stream at 192 kHz projects to {twoHours192 / 1_000_000:F0} MB.");
+        GC.KeepAlive(fewer);
+        GC.KeepAlive(more);
+    }
+
     // The decoding of a TrueHD file holds the filter histories and planes of the unit at hand, so what it holds does not grow with the units.
     [Fact]
     public void DecodingManyTrueHdUnitsHoldsNothingPerUnit()
@@ -1625,9 +1657,9 @@ public class MemoryTests(ITestOutputHelper output)
     // analysis, is the least the analysis held at its end, so it counts as a reading too (the
     // smaller of the two pairs' readings). MeasureExcess is the variant for tests whose bound is on
     // a growth between two counts and so must not depend on the heap before the analysis.
-    private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data, byte[]? warmUp = null, AnalysisOptions? options = null)
+    private static (Report Report, long Kept, long Peak) Measure(string name, byte[] data, byte[]? warmUp = null, AnalysisOptions? options = null, Analyzer? analyzer = null)
     {
-        (Report report, long kept, long before, long sampled, long atEnd) = Run(name, data, warmUp, options);
+        (Report report, long kept, long before, long sampled, long atEnd) = Run(name, data, warmUp, options, analyzer);
         return (report, kept, Math.Max(Math.Max(before, sampled), atEnd) - before);
     }
 
@@ -1815,9 +1847,9 @@ public class MemoryTests(ITestOutputHelper output)
         }
     }
 
-    private static (Report Report, long Kept, long Before, long Sampled, long AtEnd) Run(string name, byte[] data, byte[]? warmUp, AnalysisOptions? options = null)
+    private static (Report Report, long Kept, long Before, long Sampled, long AtEnd) Run(string name, byte[] data, byte[]? warmUp, AnalysisOptions? options = null, Analyzer? given = null)
     {
-        var analyzer = Analyzer.CreateDefault();
+        Analyzer analyzer = given ?? Analyzer.CreateDefault();
         analyzer.Analyze("warm-up", new MemoryStream(warmUp ?? data[..Math.Min(data.Length, 4096)]), options);
         long before = Live();
         long withReport = SampledAnalysis(analyzer, name, data, out long sampled, options);

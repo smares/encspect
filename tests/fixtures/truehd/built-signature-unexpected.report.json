@@ -335,7 +335,7 @@
       {
         "severity": "Info",
         "code": "truehd.unexpected-value",
-        "message": "The major sync at 0x4 has the signature 0xB753, but every file the analyzer was tested on has 0xB752.",
+        "message": "The major sync at 0x4 has the signature 0xB753, but Encspect's test files have 0xB752 (apart from one crafted to differ); the analyzer does not use the signature.",
         "offset": 4,
         "length": 28,
         "count": 1

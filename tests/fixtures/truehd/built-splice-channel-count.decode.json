@@ -1,0 +1,59 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 2960,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "major sync CRC-16",
+        "stored": 9,
+        "checked": 9,
+        "failed": 0
+      },
+      {
+        "name": "unit parity nibble",
+        "stored": 107,
+        "checked": 107,
+        "failed": 0
+      },
+      {
+        "name": "restart header CRC-8",
+        "stored": 18,
+        "checked": 18,
+        "failed": 0
+      },
+      {
+        "name": "substream parity byte",
+        "stored": 214,
+        "checked": 214,
+        "failed": 0
+      },
+      {
+        "name": "substream CRC-8",
+        "stored": 214,
+        "checked": 214,
+        "failed": 0
+      },
+      {
+        "name": "lossless check, substream 0",
+        "stored": 6,
+        "checked": 4,
+        "failed": 0
+      },
+      {
+        "name": "lossless check, substream 1",
+        "stored": 6,
+        "checked": 4,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 33,
+      "message": "The truehd decoder could not decode the frame at 0x2964: The highest substream outputs 4 channels, but the stream was opened with 6."
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
- "description": "A second stream, 96 kHz, follows the first one: its major sync changes the sampling rate, which decoding does not follow.",
+ "description": "A second stream, 96 kHz, follows the first one: its major sync changes the sampling rate. Decoding does not follow the change and the units of the second stretch are not handed to the decoder; the duration counts each stretch at its own rate.",
  "length": 10378,
  "format": "Dolby TrueHD",
  "entries": [
@@ -85,12 +85,12 @@
   ["unit", 10238, 140, 0, "read"]
  ],
  "syncs": [
-  {"unit": 0, "crc_ok": true, "usable": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
-  {"unit": 16, "crc_ok": true, "usable": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
-  {"unit": 32, "crc_ok": true, "usable": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
-  {"unit": 40, "crc_ok": true, "usable": true, "rate": 96000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
-  {"unit": 56, "crc_ok": true, "usable": true, "rate": 96000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
-  {"unit": 72, "crc_ok": true, "usable": true, "rate": 96000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24}
+  {"unit": 0, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
+  {"unit": 16, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
+  {"unit": 32, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
+  {"unit": 40, "crc_ok": true, "usable": true, "supported": true, "rate": 96000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
+  {"unit": 56, "crc_ok": true, "usable": true, "supported": true, "rate": 96000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
+  {"unit": 72, "crc_ok": true, "usable": true, "supported": true, "rate": 96000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24}
  ],
  "restarts": [
   {"unit": 0, "sub": 0, "bit": 2, "crc_ok": true, "lossless": 0},
@@ -102,12 +102,12 @@
  ],
  "failures": [],
  "no_check_data": [],
- "stream_infos": [{"codec": "Dolby TrueHD", "sample_rate": 48000, "channels": 2, "layout": ["front left", "front right"], "bits_per_sample": 24, "samples": 4800, "duration": 0.1}],
+ "stream_infos": [{"codec": "Dolby TrueHD", "sample_rate": 48000, "channels": 2, "layout": ["front left", "front right"], "bits_per_sample": 24, "samples": 4800, "duration": 0.06666666666666667}],
  "decoded_samples": 1600,
- "verification": {"default": {"isVerified": null, "decoding": "notRequested", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 6, "checked": 6, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 80, "checked": 80, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 6, "checked": 6, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 5, "checked": 0, "failed": 0}]}, "verify": {"isVerified": null, "decoding": "decoded", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 6, "checked": 6, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 80, "checked": 80, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 6, "checked": 6, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 5, "checked": 2, "failed": 0}]}},
+ "verification": {"default": {"isVerified": null, "decoding": "notRequested", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 6, "checked": 6, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 80, "checked": 80, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 6, "checked": 6, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 4, "checked": 0, "failed": 0}]}, "verify": {"isVerified": null, "decoding": "decoded", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 6, "checked": 6, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 80, "checked": 80, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 6, "checked": 6, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 4, "checked": 2, "failed": 0}]}},
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "findings": [{"code": "truehd.stream-parameters-change", "contains": "changes the stream's format"}],
- "decode_findings": ["decode.frame-invalid"],
+ "decode_findings": [],
  "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 10378}],
  "crosscheck": {"ffmpeg": false},
  "golden_hides": ["frames"]

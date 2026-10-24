@@ -4,11 +4,11 @@ namespace Encspect.Formats.TrueHd;
 
 // Reads the file through one window that moves forward with the frames, so a frame is read once from the file however long it is, and the
 // memory held is the window: a megabyte, or as much as the frame in hand needs.
-internal sealed class Source(ByteReader reader)
+internal sealed class Source(ByteReader reader, int minimumWindow = Source.MinimumWindow)
 {
-    private const int MinimumWindow = 1 << 20;
+    public const int MinimumWindow = 1 << 20;
 
-    private byte[] _buffer = new byte[MinimumWindow];
+    private byte[] _buffer = new byte[minimumWindow];
     private long _start = -1;
     private int _length;
 
@@ -71,14 +71,14 @@ internal sealed class Source(ByteReader reader)
 
     private void Load(long offset, int needed)
     {
-        int size = Math.Max(MinimumWindow, needed);
+        int size = Math.Max(minimumWindow, needed);
         if (_buffer.Length < size)
         {
             _buffer = new byte[size];
         }
-        else if (_buffer.Length > MinimumWindow && size <= MinimumWindow)
+        else if (_buffer.Length > minimumWindow && size <= minimumWindow)
         {
-            _buffer = new byte[MinimumWindow];
+            _buffer = new byte[minimumWindow];
         }
 
         _start = offset;

@@ -142,7 +142,8 @@ internal readonly struct RestartHeader
 
         for (int m = 0; m <= LastMatrixChannel; m++)
         {
-            if (Assignment(m) >= channelListSize)
+            // For MLP a position past M is invalid whatever the arrangement lists.
+            if (Assignment(m) >= channelListSize || (isMlp && Assignment(m) > LastMatrixChannel))
             {
                 return SubstreamFault.ChannelAssignment;
             }

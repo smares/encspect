@@ -16,6 +16,10 @@ internal sealed class Analysis
     public const int MaxSparseUnits = 100_000;
     public const long MaxSparseBytes = 32L << 20;
 
+    // Units and skipped stretches kept as records (a 16-byte entry each): the first ones, as the other dense formats cap theirs (ADTS at 2,097,152
+    // frames). The units past the limit are read, checked, decoded and counted in the figures all the same, and have no node of their own.
+    public const int MaxRecords = 1 << 21;
+
     // The substreams the analyzer reads and decodes (FFmpeg decodes substreams 0 to 2: the fourth holds no audio it knows).
     public const int ParsedSubstreams = 3;
 
@@ -29,12 +33,18 @@ internal sealed class Analysis
     private readonly int[] _listSizes = new int[ParsedSubstreams];
     private MajorSync? _sync;
     private MajorSync? _firstSync;
+    private MajorSync? _sessionSync;
     private int _count;
     private bool _isMlp;
     private bool _isSynced;
     private bool _hasSynced;
     private bool _isGapPending;
     private bool _isAfterEndOfStream;
+    private bool _isAfterUnsupported;
+    private bool _isDecodePaused;
+    private bool _isDecodeResumed;
+    private readonly Dictionary<int, long> _samplesByRate = [];
+    private int _runRate;
     private long _fullBytes;
     private long _sparseBytes;
     private int _sparseUnits;
@@ -48,11 +58,30 @@ internal sealed class Analysis
         _context = context;
     }
 
-    // The stream's node, which the nodes of the units are children of; set before the first unit.
-    public Node Stream { get; set; } = null!;
+    // The stream's node, which the nodes of the units are children of; set before the first unit. The decoder finds the records of the stream
+    // through it (DecodeLink).
+    public Node Stream
+    {
+        get => _stream;
+        set
+        {
+            _stream = value;
+            DecodeLink.Register(value, Records);
+        }
+    }
+
+    private Node _stream = null!;
 
     // Whether the walk stores the residuals in the buffers the session lends.
     public bool LendsBuffers { get; init; } = true;
+
+    // How many units and skipped stretches are kept as records, and how many units keep all their bytes or the parts a sparse record needs; tests
+    // lower them.
+    public int RecordLimit { get; init; } = MaxRecords;
+
+    public int FullUnitLimit { get; init; } = MaxFullUnits;
+
+    public int SparseUnitLimit { get; init; } = MaxSparseUnits;
 
     // The nodes before the units.
     public List<Node> Leading { get; } = [];
@@ -92,6 +121,19 @@ internal sealed class Analysis
 
     public long UnreadableUnits { get; private set; }
 
+    // The units the analyzer does not read because they use what it leaves aside (a negative output shift, MLP channel groups at different rates).
+    public long UnsupportedUnits { get; private set; }
+
+    // The units past the records' limit: counted in everything, but with no node of their own.
+    public long UnrecordedUnits { get; private set; }
+
+    public long UnrecordedFrom { get; private set; } = -1;
+
+    public long UnrecordedEnd { get; private set; }
+
+    // Substreams of which the parity byte or the CRC-8, or both, differ.
+    public long SubstreamsFailing { get; private set; }
+
     public long CutUnits { get; private set; }
 
     public long SkippedBytes { get; private set; }
@@ -120,6 +162,11 @@ internal sealed class Analysis
     public int SessionSubstreams { get; private set; }
 
     public bool IsMlp => _isMlp;
+
+    // The seconds of audio the readable units hold, each at the sampling rate it was read with.
+    public double Duration => _samplesByRate.Sum(r => r.Value / (double)r.Key);
+
+    public bool HasSeveralRates => _samplesByRate.Count > 1;
 
     public int[] PresentationChannels => _presentationChannels;
 
@@ -168,7 +215,8 @@ internal sealed class Analysis
         {
             long part = Math.Min(length, int.MaxValue);
             int index = R.Entries.Count;
-            R.Entries.Add(new Entry { Kind = EntryKind.Skipped, Offset = offset, Header = (uint)part });
+            long at = offset;
+            AddEntry(new Entry { Kind = EntryKind.Skipped, Offset = offset, Header = (uint)part }, part);
             offset += part;
             length -= part;
             SkippedBytes += part;
@@ -180,12 +228,36 @@ internal sealed class Analysis
 
             Records records = R;
             long skipped = part;
-            long at = R.Entries[index].Offset;
             Findings.Add(Severity.Warning, "truehd.data-skipped", () => Nodes.Skipped(records, index), count =>
                 $"{Counts.Of(skipped, "byte", "bytes")} at 0x{at:X} {Counts.Agree(skipped, "holds", "hold")} no access unit that checks out{(count > 1 ? $", and {count - 1} more stretches do" : string.Empty)}; the stream is read again from the next major sync that checks out.");
         }
 
+        _isAfterUnsupported = false;
         Desync();
+    }
+
+    // Keeps the entry as a record while there is room for it; past the limit the unit is only counted, and what is said about it points to the node
+    // that counts such units.
+    private bool AddEntry(Entry entry, long length)
+    {
+        if (R.Entries.Count < RecordLimit)
+        {
+            R.Entries.Add(entry);
+            return true;
+        }
+
+        if (UnrecordedFrom < 0)
+        {
+            UnrecordedFrom = entry.Offset;
+        }
+
+        UnrecordedEnd = Math.Max(UnrecordedEnd, entry.Offset + length);
+        if (entry.Kind == EntryKind.Unit)
+        {
+            UnrecordedUnits++;
+        }
+
+        return false;
     }
 
     private void Desync()
@@ -215,6 +287,7 @@ internal sealed class Analysis
         UnitLayout layout = _layout;
         layout.Read(bytes, _hasSynced ? _count : 0, _isMlp);
         int index = R.Entries.Count;
+        bool isRecorded = index < RecordLimit;
         Records records = R;
         UnitStatus status = UnitStatus.None;
         uint header = bytes.Length >= 4 ? BinaryPrimitives.ReadUInt32BigEndian(bytes) : 0;
@@ -233,13 +306,24 @@ internal sealed class Analysis
             if (isCut)
             {
                 status |= UnitStatus.Cut;
-                R.CutLengths[index] = bytes.Length;
+                if (isRecorded)
+                {
+                    R.CutLengths[index] = bytes.Length;
+                }
+
                 ReportCut(index, offset, bytes.Length, length);
             }
 
-            R.Entries.Add(new Entry { Kind = EntryKind.Unit, Status = status, Offset = offset, Header = header });
+            AddEntry(new Entry { Kind = EntryKind.Unit, Status = status, Offset = offset, Header = header }, bytes.Length);
             Units++;
-            if (_hasSynced && _isAfterEndOfStream)
+            if (_isAfterUnsupported)
+            {
+                HasGap = true;
+                _isGapPending = true;
+                Findings.Add(Severity.Info, "truehd.unsupported", () => Nodes.Unit(records, index), count =>
+                    $"{(count == 1 ? "An access unit follows" : $"{count} access units follow")} a unit that uses what the analyzer does not read and carry no major sync, so {(count == 1 ? "it is" : "they are")} not read either; the first is at 0x{offset:X}.", "units after");
+            }
+            else if (_hasSynced && _isAfterEndOfStream)
             {
                 HasGap = true;
                 _isGapPending = true;
@@ -264,6 +348,7 @@ internal sealed class Analysis
         }
 
         bool isUnreadable = false;
+        bool isUnsupported = false;
         byte syncLength = 0;
         if (layout.HasSync)
         {
@@ -300,7 +385,19 @@ internal sealed class Analysis
             isUnreadable = layout.Sync is not { IsUsable: true };
             if (layout.Sync is { IsUsable: true } usable)
             {
-                NewSync(usable, offset, index);
+                if (usable.IsUnsupported)
+                {
+                    // MLP with channel groups at different sampling rates: not damage, but not read either (no unit of it is walked, decoded or counted).
+                    status |= UnitStatus.Unsupported;
+                    isUnreadable = true;
+                    isUnsupported = true;
+                    Findings.Add(Severity.Info, "truehd.unsupported", () => Nodes.MajorSyncOf(records, index), count =>
+                        $"The major sync at 0x{offset + 4:X} gives the two MLP channel groups different sampling rates, which the analyzer does not read; FFmpeg's decoder does not support it either{(count > 1 ? $"; {count - 1} more major syncs do the same" : string.Empty)}. The unit and the ones after it, up to the next major sync the analyzer reads, are not read.", "group rates");
+                }
+                else
+                {
+                    NewSync(usable, offset, index);
+                }
             }
         }
 
@@ -349,7 +446,9 @@ internal sealed class Analysis
         bool isWalked = false;
         if (isReadable && current is { } active)
         {
-            (isReadable, outSamples, isDamaged, isWalked, overall, detail) = ReadSubstreams(memory, offset, index, layout, active, overall);
+            SubstreamsRead read = ReadSubstreams(memory, offset, index, layout, active, overall);
+            (isReadable, outSamples, isDamaged, isWalked, overall, detail) = (read.IsReadable, read.OutSamples, read.IsDamaged, read.IsWalked, read.Status, read.Detail);
+            isUnsupported = read.IsUnsupported;
         }
 
         // A unit that cannot be read leaves the substreams' state behind: the stream is read again from the next major sync.
@@ -358,13 +457,25 @@ internal sealed class Analysis
             Desync();
             UnreadableUnits++;
             HasGap = true;
+            if (isUnsupported)
+            {
+                UnsupportedUnits++;
+                overall |= UnitStatus.Unsupported;
+            }
+
+            _isAfterUnsupported = isUnsupported;
+            if (isUnsupported)
+            {
+                _isAfterEndOfStream = false;
+            }
+
             if (current is not null)
             {
                 _isGapPending = true;
             }
         }
 
-        if (isCut)
+        if (isCut && isRecorded)
         {
             R.CutLengths[index] = bytes.Length;
         }
@@ -374,17 +485,20 @@ internal sealed class Analysis
             // After an end of stream marker the stream continues only at a major sync.
             Desync();
             _isAfterEndOfStream = true;
+            _isAfterUnsupported = false;
         }
 
         Units++;
         if (_hasSynced)
         {
             long counted = isReadable ? outSamples : current?.UnitSamples ?? 0;
-            Figure(offset, length, counted, bytes.Length);
+            Figure(offset, length, counted, bytes.Length, current?.SampleRate ?? 0);
         }
 
-        R.Entries.Add(new Entry { Kind = EntryKind.Unit, Status = overall, Offset = offset, Header = header, SyncLength = syncLength });
-        Store(index, memory, layout, detail, overall, isReadable, current);
+        if (AddEntry(new Entry { Kind = EntryKind.Unit, Status = overall, Offset = offset, Header = header, SyncLength = syncLength }, bytes.Length))
+        {
+            Store(index, memory, layout, detail, overall, isReadable, current);
+        }
 
         if (isReadable)
         {
@@ -393,20 +507,27 @@ internal sealed class Analysis
                 StartSession(start);
             }
 
-            if (Session is { IsDecoding: true } session)
+            if (Session is { IsDecoding: true } session && !_isDecodePaused)
             {
+                records.DecodingIndex = isRecorded ? index : -1;
                 session.Decode(new CodedFrame(new MappedBytes(memory, offset), Nodes.UnitName, FirstSample, outSamples)
                 {
                     IsDamaged = isDamaged,
-                    FollowsGap = (overall & UnitStatus.FollowsGap) != 0,
+                    FollowsGap = (overall & UnitStatus.FollowsGap) != 0 || _isDecodeResumed,
                     IsWalked = isWalked,
                 });
+                _isDecodeResumed = false;
+            }
+
+            if (current is { } counting)
+            {
+                _samplesByRate[counting.SampleRate] = _samplesByRate.GetValueOrDefault(counting.SampleRate) + outSamples;
             }
 
             FirstSample += outSamples;
             Samples += outSamples;
         }
-        else if (Session is { IsDecoding: true } failing)
+        else if (Session is { IsDecoding: true } failing && !_isDecodePaused)
         {
             failing.Decode(new CodedFrame(new MappedBytes(memory, offset), Nodes.UnitName, FirstSample, 0) { IsUnreadable = true, IsDamaged = true });
         }
@@ -436,8 +557,17 @@ internal sealed class Analysis
         Records records = R;
         if (_sync is { } before && !before.SameStreamAs(sync))
         {
-            Findings.Add(Severity.Info, "truehd.stream-parameters-change", () => Nodes.MajorSyncOf(records, index), count =>
-                $"The major sync at 0x{offset + 4:X} changes the stream's format, sampling rate, channel assignments or substream count from the earlier ones{(count > 1 ? $"; {count - 1} more major syncs change them again" : string.Empty)}; the audio of such a stream is decoded only while its channel count stays the same.");
+            bool isFollowed = before.RateCode == sync.RateCode && before.SubstreamCount == sync.SubstreamCount && before.IsTrueHd == sync.IsTrueHd;
+            if (isFollowed)
+            {
+                Findings.Add(Severity.Info, "truehd.stream-parameters-change", () => Nodes.MajorSyncOf(records, index), count =>
+                    $"The major sync at 0x{offset + 4:X} changes the stream's channel assignments or bit depth from the earlier ones{(count > 1 ? $"; {count - 1} more major syncs change the stream's parameters" : string.Empty)}; the decoder goes on while the channel count stays the same, and the lossless check at the sync is not compared.", "layout");
+            }
+            else
+            {
+                Findings.Add(Severity.Info, "truehd.stream-parameters-change", () => Nodes.MajorSyncOf(records, index), count =>
+                    $"The major sync at 0x{offset + 4:X} changes the stream's format, sampling rate or substream count from the earlier ones{(count > 1 ? $"; {count - 1} more major syncs change the stream's parameters" : string.Empty)}; the decoder does not follow such a change, so the audio of the stretch from this sync on is not decoded, and the duration counts each stretch at its own sampling rate.", "format");
+            }
         }
 
         if (_firstSync is null)
@@ -451,13 +581,7 @@ internal sealed class Analysis
         {
             int signature = sync.Signature;
             Findings.Add(Severity.Info, "truehd.unexpected-value", () => Nodes.MajorSyncOf(records, index), count =>
-                $"The major sync at 0x{offset + 4:X} has the signature 0x{signature:X4}, but every file the analyzer was tested on has 0xB752{(count > 1 ? $"; {count - 1} more major syncs differ" : string.Empty)}.", "signature");
-        }
-
-        if (!sync.IsTrueHd && sync.HasDifferentGroupRates)
-        {
-            Findings.Add(Severity.Info, "truehd.unsupported", () => Nodes.MajorSyncOf(records, index), _ =>
-                "The major sync gives the two MLP channel groups different sampling rates, which the analyzer does not read; FFmpeg's decoder does not support it either.", "group rates");
+                $"The major sync at 0x{offset + 4:X} has the signature 0x{signature:X4}, but Encspect's test files have 0xB752 (apart from one crafted to differ){(count > 1 ? $"; {count - 1} more major syncs differ" : string.Empty)}; the analyzer does not use the signature.", "signature");
         }
 
         if (sync.SignalsAtmos && !SignalsAtmos)
@@ -467,31 +591,48 @@ internal sealed class Analysis
                 "The stream has four substreams and bit 7 of its substream info set, which is how FFmpeg recognizes Dolby Atmos. The first three substreams are read; the fourth, which FFmpeg does not decode either, is checked against the directory and not read.");
         }
 
+        if (_sessionSync is { } started)
+        {
+            bool differs = started.RateCode != sync.RateCode || started.SubstreamCount != sync.SubstreamCount || started.IsTrueHd != sync.IsTrueHd;
+            _isDecodeResumed |= _isDecodePaused && !differs;
+            _isDecodePaused = differs;
+        }
+
+        // A stretch of the stream that follows a change cannot be compared with what came before it: the check at this sync closes no interval.
+        if (_sync is { } previous && !previous.SameStreamAs(sync))
+        {
+            Array.Clear(_isIntervalOpen);
+        }
+
         _sync = sync;
         _count = sync.SubstreamCount;
         _isMlp = !sync.IsTrueHd;
         _isSynced = true;
         _hasSynced = true;
         _isAfterEndOfStream = false;
+        _isAfterUnsupported = false;
         for (int k = 0; k < ParsedSubstreams; k++)
         {
             _listSizes[k] = Presentation.MaxListSize(sync, k, sync.SubstreamCount);
         }
+
         foreach (SubstreamState state in _states)
         {
             state.Forget();
         }
     }
 
-    private (bool IsReadable, int OutSamples, bool IsDamaged, bool IsWalked, UnitStatus Status, UnitDetail? Detail) ReadSubstreams(ReadOnlyMemory<byte> memory, long offset, int index, UnitLayout layout, MajorSync sync,
-        UnitStatus status)
+    // What reading the substreams of a unit gave. IsUnsupported: the unit cannot be read because of what the analyzer leaves aside, and of nothing else.
+    private readonly record struct SubstreamsRead(bool IsReadable, int OutSamples, bool IsDamaged, bool IsWalked, UnitStatus Status, UnitDetail? Detail, bool IsUnsupported);
+
+    private SubstreamsRead ReadSubstreams(ReadOnlyMemory<byte> memory, long offset, int index, UnitLayout layout, MajorSync sync, UnitStatus status)
     {
         ReadOnlySpan<byte> bytes = memory.Span;
         Records records = R;
         int n = sync.UnitSamples;
         int count = layout.SubstreamCount;
         int read = Math.Min(count, ParsedSubstreams);
-        bool isFull = index < MaxFullUnits && _fullBytes + bytes.Length <= MaxFullBytes;
+        bool isFull = index < FullUnitLimit && _fullBytes + bytes.Length <= MaxFullBytes;
         SubstreamState[]? snapshot = null;
         if (isFull)
         {
@@ -514,6 +655,8 @@ internal sealed class Analysis
 
         bool isReadable = true;
         bool isDamaged = false;
+        bool hasUnsupportedFault = false;
+        bool hasDamageFault = false;
         Span<int> pending = stackalloc int[ParsedSubstreams];
         var verdicts = new byte[count];
         for (int k = 0; k < count; k++)
@@ -530,37 +673,41 @@ internal sealed class Analysis
                     if (k < ParsedSubstreams)
                     {
                         isReadable = false;
+                        hasDamageFault = true;
                         SubstreamFaultFinding(index, k, offset, SubstreamFault.CheckData);
                     }
                 }
-                else
+                else if (k < ParsedSubstreams)
                 {
+                    // The fourth substream's last two bytes are not compared: the description does not say that substream follows these rules.
                     ReadOnlySpan<byte> body = data[..^2];
                     bool isParityValid = Checks.SubstreamParityHolds(body, data[^2]);
                     bool isCrcValid = body.Length > 0 && Checks.Substream(body) == data[^1];
                     verdict |= (byte)((isParityValid ? 1 : 0) | (isCrcValid ? 2 : 0));
-                    if (k < ParsedSubstreams)
+                    SubstreamChecked++;
+                    if (!isParityValid || !isCrcValid)
                     {
-                        SubstreamChecked++;
-                        if (!isParityValid)
-                        {
-                            SubstreamParityFailures++;
-                            status |= UnitStatus.CheckFails;
-                            isDamaged = true;
-                            int substream = k;
-                            Findings.Add(Severity.Warning, "truehd.substream-parity-mismatch", () => Nodes.SubstreamOf(records, index, substream), count2 =>
-                                $"The parity byte of substream {substream} of the access unit at 0x{offset:X} does not make the XOR of the substream's bytes 0xA9{(count2 > 1 ? $"; {count2 - 1} more substreams differ" : string.Empty)}.");
-                        }
+                        SubstreamsFailing++;
+                    }
 
-                        if (!isCrcValid)
-                        {
-                            SubstreamCrcFailures++;
-                            status |= UnitStatus.CheckFails;
-                            isDamaged = true;
-                            int substream = k;
-                            Findings.Add(Severity.Warning, "truehd.substream-crc-mismatch", () => Nodes.SubstreamOf(records, index, substream), count2 =>
-                                $"The CRC-8 of substream {substream} of the access unit at 0x{offset:X} differs from the one computed over the substream's bytes{(count2 > 1 ? $"; {count2 - 1} more substreams differ" : string.Empty)}.");
-                        }
+                    if (!isParityValid)
+                    {
+                        SubstreamParityFailures++;
+                        status |= UnitStatus.CheckFails;
+                        isDamaged = true;
+                        int substream = k;
+                        Findings.Add(Severity.Warning, "truehd.substream-parity-mismatch", () => Nodes.SubstreamOf(records, index, substream), count2 =>
+                            $"The parity byte of substream {substream} of the access unit at 0x{offset:X} does not make the XOR of the substream's bytes 0xA9{(count2 > 1 ? $"; {count2 - 1} more substreams differ" : string.Empty)}.");
+                    }
+
+                    if (!isCrcValid)
+                    {
+                        SubstreamCrcFailures++;
+                        status |= UnitStatus.CheckFails;
+                        isDamaged = true;
+                        int substream = k;
+                        Findings.Add(Severity.Warning, "truehd.substream-crc-mismatch", () => Nodes.SubstreamOf(records, index, substream), count2 =>
+                            $"The CRC-8 of substream {substream} of the access unit at 0x{offset:X} differs from the one computed over the substream's bytes{(count2 > 1 ? $"; {count2 - 1} more substreams differ" : string.Empty)}.");
                     }
                 }
             }
@@ -585,6 +732,8 @@ internal sealed class Analysis
             if (!walk.IsRead)
             {
                 isReadable = false;
+                hasUnsupportedFault |= SubstreamFaults.IsUnsupported(walk.Fault);
+                hasDamageFault |= !SubstreamFaults.IsUnsupported(walk.Fault);
                 state.Forget();
                 _isIntervalOpen[k] = false;
                 SubstreamFaultFinding(index, k, offset, walk.Fault);
@@ -623,6 +772,11 @@ internal sealed class Analysis
                 }
 
                 CheckAssignments(sync, k, count, restart, index, offset);
+                if (isReadable)
+                {
+                    // A lower substream that could not be read has no channels to count.
+                    CheckChannels(k, restart, index, offset);
+                }
             }
 
             if (walk.Tail.HasEndOfStream)
@@ -712,7 +866,7 @@ internal sealed class Analysis
         }
 
         bool isWalked = isReadable && !lent.IsEmpty;
-        return (isReadable, outSamples, isDamaged, isWalked, status, detail);
+        return new SubstreamsRead(isReadable, outSamples, isDamaged, isWalked, status, detail, hasUnsupportedFault && !hasDamageFault);
     }
 
     // Stores what the nodes of a unit are built from.
@@ -724,7 +878,7 @@ internal sealed class Analysis
             return;
         }
 
-        if ((status & UnitStatus.HasSync) == 0 || _sparseUnits >= MaxSparseUnits || _sparseBytes >= MaxSparseBytes || !layout.IsDirectoryRead)
+        if ((status & UnitStatus.HasSync) == 0 || _sparseUnits >= SparseUnitLimit || _sparseBytes >= MaxSparseBytes || !layout.IsDirectoryRead)
         {
             return;
         }
@@ -804,6 +958,7 @@ internal sealed class Analysis
         }
 
         SessionSubstreams = read;
+        _sessionSync = sync;
         Session = _context.StartDecoding(sync.IsTrueHd ? TrueHdCodecParser.TrueHdId : TrueHdCodecParser.MlpId, new DecodeSetup
         {
             Stream = Stream,
@@ -828,7 +983,7 @@ internal sealed class Analysis
         };
         Severity severity = isUnsupported ? Severity.Info : Severity.Warning;
         Findings.Add(severity, code, () => Nodes.SubstreamOf(records, index, k), count =>
-            $"Substream {k} of the access unit at 0x{offset:X} cannot be read: {SubstreamFaults.Describe(fault)}{(count > 1 ? $"; {count - 1} more substreams fail the same way" : string.Empty)}{(isUnsupported ? string.Empty : "; the stream is read again from the next major sync")}.", fault.ToString());
+            $"Substream {k} of the access unit at 0x{offset:X} cannot be read: {SubstreamFaults.Describe(fault)}{(count > 1 ? $"; {count - 1} more substreams fail the same way" : string.Empty)}; the unit and the ones after it, up to the next major sync, are not read{(isUnsupported ? ", and that is not damage" : string.Empty)}.", fault.ToString());
     }
 
     // Findings about what a substream read says without breaking a rule: padding, reserved use and the block size check.
@@ -845,14 +1000,14 @@ internal sealed class Analysis
         {
             Findings.Add(Severity.Info, "truehd.block-size-check", () => Nodes.SubstreamOf(records, index, k), _ =>
                 walk.HasBlockSizeCheckMismatch
-                    ? $"Substream {k} of the access unit at 0x{offset:X} carries the check data after its blocks, and a block's residuals do not end where it says. No file the analyzer was tested on uses the check data, so its reading is unconfirmed."
-                    : $"Substream {k} of the access unit at 0x{offset:X} carries the check data after its blocks. No file the analyzer was tested on uses it, so its reading is unconfirmed.");
+                    ? $"Substream {k} of the access unit at 0x{offset:X} carries the check data after its blocks, and a block's residuals do not end where it says. Only a file crafted for the analyzer's tests uses the check data, so its reading is unconfirmed."
+                    : $"Substream {k} of the access unit at 0x{offset:X} carries the check data after its blocks. Only a file crafted for the analyzer's tests uses it, so its reading is unconfirmed.");
         }
 
         if (walk.ChangesMatricesAfterFirstBlock)
         {
             Findings.Add(Severity.Info, "truehd.parameters-change-within-unit", () => Nodes.SubstreamOf(records, index, k), _ =>
-                $"A block after the first of substream {k} in the access unit at 0x{offset:X} changes the matrices, output shifts or quantizer step sizes. The analyzer applies the ones in force at the end of the unit to all its samples, as FFmpeg does; no file it was tested on changes them inside a unit, so this is unconfirmed.");
+                $"A block after the first of substream {k} in the access unit at 0x{offset:X} changes the matrices, output shifts or quantizer step sizes. The analyzer applies the ones in force at the end of the unit to all its samples, as FFmpeg does; only a file crafted for the analyzer's tests changes them inside a unit, so this is unconfirmed.");
         }
     }
 
@@ -877,9 +1032,68 @@ internal sealed class Analysis
         }
     }
 
-    private void Figure(long offset, int length, long samples, int available)
+    // What the restart header says about which channels are coded, which FFmpeg does not check: channels coded past the last matrix channel, and matrix
+    // channels that no substream up to this one codes (a matrix may still make them).
+    private void CheckChannels(int k, RestartHeader restart, int index, long offset)
+    {
+        Records records = R;
+        Span<(int First, int Last)> lower = stackalloc (int, int)[ParsedSubstreams];
+        int lowerCount = 0;
+        for (int j = 0; j < k; j++)
+        {
+            if (_states[j].HasRestart)
+            {
+                lower[lowerCount++] = (_states[j].FirstChannel, _states[j].LastChannel);
+            }
+        }
+
+        (bool isCodedPastMatrix, int uncoded) = ChannelProblems(restart, lower[..lowerCount]);
+        if (isCodedPastMatrix)
+        {
+            int coded = restart.LastChannel;
+            int last = restart.LastMatrixChannel;
+            Findings.Add(Severity.Info, "truehd.unexpected-value", () => Nodes.SubstreamOf(records, index, k), _ =>
+                $"The restart header in substream {k} of the access unit at 0x{offset:X} codes channels up to {coded}, past its last matrix channel {last}, which the presentation does not output.", "coded channels");
+        }
+
+        if (uncoded >= 0)
+        {
+            Findings.Add(Severity.Info, "truehd.unexpected-value", () => Nodes.SubstreamOf(records, index, k), _ =>
+                $"Matrix channel {uncoded} of the presentation of substream {k} in the access unit at 0x{offset:X} is coded by none of the substreams up to it; only a matrix can give it a value.", "uncoded matrix channel");
+        }
+    }
+
+    // Whether the header codes channels past its last matrix channel, and the first matrix channel that neither it nor the coded ranges of the lower
+    // substreams cover, or -1.
+    internal static (bool IsCodedPastMatrix, int UncodedChannel) ChannelProblems(in RestartHeader restart, ReadOnlySpan<(int First, int Last)> lower)
+    {
+        int uncoded = -1;
+        for (int c = 0; c <= restart.LastMatrixChannel && uncoded < 0; c++)
+        {
+            bool isCoded = restart.FirstChannel <= c && c <= restart.LastChannel;
+            foreach ((int first, int last) in lower)
+            {
+                isCoded |= first <= c && c <= last;
+            }
+
+            if (!isCoded)
+            {
+                uncoded = c;
+            }
+        }
+
+        return (restart.LastChannel > restart.LastMatrixChannel, uncoded);
+    }
+
+    private void Figure(long offset, int length, long samples, int available, int rate)
     {
         Figures ??= new StreamFigures(Records.StreamRate > 0 ? Records.StreamRate : 48000);
+        if (_runUnits > 0 && rate != _runRate)
+        {
+            FlushRun();
+        }
+
+        _runRate = rate;
         if (_runUnits == 0)
         {
             _runOffset = offset;
@@ -896,11 +1110,12 @@ internal sealed class Analysis
         }
     }
 
-    public void FlushRun()
+    // isLast: the stream's end flushes what is left, a run of fewer units than the others.
+    public void FlushRun(bool isLast = false)
     {
         if (_runUnits > 0)
         {
-            Figures?.Add(_runOffset, _runBits, _runSamples);
+            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && _runUnits < RunLength);
         }
 
         _runUnits = 0;

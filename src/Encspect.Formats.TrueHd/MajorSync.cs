@@ -76,6 +76,9 @@ internal readonly struct MajorSync
 
     public bool HasDifferentGroupRates => Group2RateCode != 0xF && Group2RateCode != RateCode;
 
+    // A sync the analyzer does not read, though nothing in it is damaged: MLP with channel groups at different sampling rates.
+    public bool IsUnsupported => !IsTrueHd && HasDifferentGroupRates;
+
     // TrueHD.
     public bool SixChannelType { get; init; }
 

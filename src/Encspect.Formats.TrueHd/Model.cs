@@ -52,6 +52,9 @@ internal enum UnitStatus : ushort
 
     // The unit holds fewer samples than its sampling rate says.
     Short = 4096,
+
+    // The unit uses what the analyzer does not read (a negative output shift, MLP channel groups at different rates), which is not damage.
+    Unsupported = 8192,
 }
 
 // An access unit, or a stretch of bytes between units that holds none, in 16 bytes. Header holds the unit's first four bytes, or the length of a
@@ -120,6 +123,14 @@ internal sealed class Records
     public int StreamRate { get; set; }
 
     public bool IsMlp { get; set; }
+
+    // The unit being handed to the decoder, by the index of its record, or -1 where it has none (past the limit of records): the decoder points its
+    // findings at the nodes of that unit.
+    public int DecodingIndex { get; set; } = -1;
+
+    // The node that stands for what has no node of its own, the units past the limit of records: findings about them point to it. Set when the
+    // analysis ends.
+    public Node? Fallback { get; set; }
 
     public UnitDetail? DetailOf(int index) => Details.GetValueOrDefault(index);
 }

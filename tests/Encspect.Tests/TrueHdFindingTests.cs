@@ -108,6 +108,59 @@ public class TrueHdFindingTests
         Assert.Contains(report.Streams.Single().Verification!.Checksums, c => c.Name == "lossless check, substream 0");
     }
 
+    private static Analyzer With(Func<TrueHdParser> parser) =>
+        new(DefaultParsers.Tags, [.. DefaultParsers.Formats.Select(f => f is TrueHdParser ? parser() : f)], DefaultParsers.Codecs, DefaultParsers.Decoders);
+
+    // More units than the analysis keeps as records (the limit is lowered to 20 here, 2,097,152 in all): the rest are read, decoded and counted, have one
+    // node that counts them, and what the parser says about them points to it (the decoder's lossless check finding, at unit 32, to the stream).
+    [Fact]
+    public void UnitsPastTheLimitOfRecordsAreCountedByOneNodeAndFindingsAboutThemPointToIt()
+    {
+        byte[] data = Fixture("built-lossless-check-mismatch.thd");
+        var options = new AnalysisOptions { Decoding = new DecodeOptions() };
+        Report whole = Analyzer.CreateDefault().Analyze("whole.thd", new MemoryStream(data), options);
+        Report limited = With(() => new TrueHdParser { RecordLimit = 20 }).Analyze("limited.thd", new MemoryStream(data), options);
+
+        Node stream = limited.Root.Children.Single(c => c.Kind == NodeKind.Stream);
+        Assert.Equal(20, stream.Children.Count(c => c.Name == "Access Unit"));
+        Node counted = stream.Children.Single(c => c.Name == "Counted Access Units");
+        Assert.Equal(Units(data).Count - 20, counted.Value!.AsInteger());
+        Assert.Equal(Units(data)[20].Offset, counted.Offset);
+        Assert.Equal(data.Length, counted.End);
+        TestFiles.CheckInsideParents(limited.Root);
+
+        Finding limit = Assert.Single(limited.Findings, f => f.Code == "truehd.units-limit");
+        Assert.Equal(Severity.Info, limit.Severity);
+        Assert.Equal("Counted Access Units", limit.Node!.Name);
+        Assert.NotNull(limit.Path);
+        // The decoder's finding about such a unit points to the stream, which no unit's record is needed for.
+        Finding failed = Assert.Single(limited.Findings, f => f.Code == "truehd.lossless-check-failed");
+        Assert.Equal("Dolby TrueHD", failed.Node!.Name);
+        Assert.NotNull(failed.Path);
+        Assert.Equal(whole.Findings.Count, limited.Findings.Count - 1);
+        Assert.Equal(whole.Streams.Single().Samples, limited.Streams.Single().Samples);
+        Assert.All(limited.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    // A unit with a record that keeps no detail (the tree lists the detail of the first units and of some units that carry a major sync): a finding about
+    // its restart header's lossless check points to the unit instead of to a field the tree does not hold.
+    [Fact]
+    public void AFindingAboutAUnitWithoutDetailPointsToTheUnit()
+    {
+        byte[] data = Fixture("built-lossless-check-mismatch.thd");
+        var options = new AnalysisOptions { Decoding = new DecodeOptions() };
+        Report whole = Analyzer.CreateDefault().Analyze("whole.thd", new MemoryStream(data), options);
+        Report limited = With(() => new TrueHdParser { FullUnitLimit = 8, SparseUnitLimit = 1 }).Analyze("limited.thd", new MemoryStream(data), options);
+
+        Assert.Equal("Lossless Check", whole.Findings.Single(f => f.Code == "truehd.lossless-check-failed").Node!.Name);
+        Finding failed = limited.Findings.Single(f => f.Code == "truehd.lossless-check-failed");
+        Assert.NotNull(failed.Path);
+        Assert.Equal("Access Unit", failed.Node!.Name);
+        Assert.Equal(Units(data)[32].Offset, failed.Node.Offset);
+        Assert.Equal(Units(data)[32].Length, failed.Node.Length);
+        Assert.Equal(whole.Findings.Count, limited.Findings.Count);
+    }
+
     private static byte[] Fixture(string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "truehd", name));
 
     private static List<(int Offset, int Length)> Units(byte[] data)
@@ -124,7 +177,7 @@ public class TrueHdFindingTests
     }
 
     // The file with one bit of the first substream of a unit flipped and the unit's checks worked out again.
-    private static byte[] Flip(string name, int unit, int bit)
+    internal static byte[] Flip(string name, int unit, int bit)
     {
         byte[] data = Fixture(name);
         (int offset, int length) = Units(data)[unit];

@@ -169,7 +169,7 @@
                 },
                 {
                   "name": "Smallest Run",
-                  "value": 274,
+                  "value": 4170,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 12946
@@ -202,19 +202,13 @@
                   "children": [
                     {
                       "name": "2496 to 2527 kbps",
-                      "value": "1 run (33.3%)",
-                      "offset": 0,
-                      "length": 12946
-                    },
-                    {
-                      "name": "2624 to 2655 kbps",
-                      "value": "1 run (33.3%)",
+                      "value": "1 run (50.0%)",
                       "offset": 0,
                       "length": 12946
                     },
                     {
                       "name": "2848 to 2879 kbps",
-                      "value": "1 run (33.3%)",
+                      "value": "1 run (50.0%)",
                       "offset": 0,
                       "length": 12946
                     }
@@ -347,7 +341,7 @@
       {
         "severity": "Warning",
         "code": "truehd.substream-without-restart-header",
-        "message": "Substream 1 of the access unit at 0x104A cannot be read: a block has no restart header, and none was read since the last major sync; the stream is read again from the next major sync.",
+        "message": "Substream 1 of the access unit at 0x104A cannot be read: a block has no restart header, and none was read since the last major sync; the unit and the ones after it, up to the next major sync, are not read.",
         "offset": 4370,
         "length": 298,
         "count": 1

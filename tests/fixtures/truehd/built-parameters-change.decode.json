@@ -36,18 +36,11 @@
       },
       {
         "name": "lossless check, substream 0",
-        "stored": 5,
+        "stored": 4,
         "checked": 2,
         "failed": 0
       }
     ]
   },
-  "findings": [
-    {
-      "code": "decode.frame-invalid",
-      "severity": "Warning",
-      "count": 40,
-      "message": "The truehd decoder could not decode the frame at 0x1140: The stream\u0027s format, sampling rate or substream count changes at this major sync, which the decoder does not follow."
-    }
-  ]
+  "findings": []
 }

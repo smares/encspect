@@ -136,10 +136,24 @@ class Sync:
             self.bits = depth.get(s[4] >> 4)
             self.arrangement = s[7] & 0x1F
         self.rate = RATES.get(self.rate_code)
+        self.group_rate2 = None if self.is_truehd else s[5] & 0xF
         self.unit_samples = 40 << (self.rate_code & 7)
         self.signature = int.from_bytes(s[8:10], "big")
         self.info = s[17]
         self.signals_atmos = self.is_truehd and self.count == 4 and bool(self.info & 0x80)
+
+    def supported(self):
+        """False for MLP whose second channel group has a sampling rate of its own, which the analyzer does not read (docs/formats/truehd.md)."""
+        return self.is_truehd or self.group_rate2 == 0xF or self.group_rate2 == self.rate_code
+
+    def same_stream(self, other):
+        """The parameters a decoder continues across (MajorSync.SameStreamAs): the format, the rate, the substream count, the channel assignments and the depth."""
+        return ((self.is_truehd, self.rate_code, self.count, self.arrangement, self.assign6, self.assign8, self.bits)
+                == (other.is_truehd, other.rate_code, other.count, other.arrangement, other.assign6, other.assign8, other.bits))
+
+    def followed(self, other):
+        """The parameters a decoder cannot go on across (rate, format, substream count): it decodes nothing from a sync that changes them."""
+        return (self.is_truehd, self.rate_code, self.count) == (other.is_truehd, other.rate_code, other.count)
 
     def usable(self):
         return self.crc_ok and self.rate is not None and self.count >= 1 and (self.count <= 4 if self.is_truehd else self.count <= 2) and self.bits is not None
@@ -309,24 +323,35 @@ def split_units(data, start=0):
 
 # --- the manifest ---------------------------------------------------------------------------------------------------------------------------
 
-def simulate(data, framing, unreadable=(), lossless_failures=(), decode_until=None):
+def simulate(data, framing, unreadable=(), lossless_failures=()):
     """The unit-level reading of a stream by the rules of docs/formats/truehd.md, for the manifests: which units are read, which wait for a major
-    sync, and the counts the verification states.
+    sync, which the decoder decodes, and the counts the verification states.
 
     framing: ("unit", offset, length[, cut]) and ("skipped", offset, length), in file order. unreadable: the units (indexes in the framing) with a
-    substream that breaks the syntax, and which substream it is (the others are still read), which the fixture's builder knows. lossless_failures: (index, substream) of restart headers whose lossless check the
-    builder changed. decode_until: the index from which the decoder refuses units (the stream changes its format). A unit with an end of stream
-    marker is not modeled: only the last unit of a file has one."""
+    substream that breaks the syntax, and which substream it is (the others are still read), which the fixture's builder knows. lossless_failures:
+    (index, substream) of restart headers whose lossless check the builder changed. A unit with an end of stream marker is not modeled: only the last
+    unit of a file has one.
+
+    The decoder: it opens on the first unit that is read, with that unit's sync and the channel count of its highest substream; it does not follow a
+    sync that changes the rate, the format or the substream count (the units of such a stretch are not handed to it), it cannot decode a unit whose
+    highest substream outputs another channel count (and then waits for the next major sync), and it compares no lossless check across a sync that
+    changes the stream's parameters, a unit it could not decode or the units that were not handed to it."""
     has_synced = False
     synced = False
+    after_unsupported = False
     count = 0
     is_mlp = False
     open_intervals = {0: False, 1: False, 2: False}
     valid = {0: False, 1: False, 2: False}
+    top_channels = {}
+    current = None
+    session = None
+    paused = False
+    decoder_synced = False
     t = {"sync_units": 0, "sync_failures": 0, "parity_checked": 0, "parity_failures": 0, "restart_headers": 0, "restart_failures": 0, "substream_checked": 0,
-         "substream_parity_failures": 0, "substream_crc_failures": 0, "without_check": 0, "unreadable": 0, "cut": 0, "skipped": 0, "leading": 0, "after_damage": 0,
-         "lossless_stored": {0: 0, 1: 0, 2: 0}, "lossless_checked": {0: 0, 1: 0, 2: 0}, "lossless_failed": {0: 0, 1: 0, 2: 0}, "gap": False,
-         "syncs": [], "restarts": [], "failures": [], "no_check_data": [], "channels": {}}
+         "substream_parity_failures": 0, "substream_crc_failures": 0, "substream_failing": 0, "without_check": 0, "unreadable": 0, "unsupported": 0, "cut": 0, "skipped": 0,
+         "leading": 0, "after_damage": 0, "lossless_stored": {0: 0, 1: 0, 2: 0}, "lossless_checked": {0: 0, 1: 0, 2: 0}, "lossless_failed": {0: 0, 1: 0, 2: 0},
+         "gap": False, "syncs": [], "restarts": [], "failures": [], "no_check_data": [], "channels": {}, "rates": [], "decoded": []}
     status = []
 
     def reset():
@@ -335,20 +360,27 @@ def simulate(data, framing, unreadable=(), lossless_failures=(), decode_until=No
         for k in open_intervals:
             open_intervals[k] = False
             valid[k] = False
+            top_channels.pop(k, None)
 
     for index, entry in enumerate(framing):
+        t["rates"].append(None)
+        t["decoded"].append(False)
         if entry[0] == "skipped":
             t["skipped"] += entry[2]
             if has_synced:
                 t["gap"] = True
             reset()
+            after_unsupported = False
             status.append("skipped")
             continue
         _, offset, length, *rest = entry
         cut = bool(rest and rest[0])
         unit = Unit(data, offset, length, count if has_synced else 0, is_mlp)
         if unit.sync is None and not synced:
-            if has_synced:
+            if after_unsupported:
+                t["gap"] = True
+                status.append("after-unsupported")
+            elif has_synced:
                 t["after_damage"] += 1
                 t["gap"] = True
                 status.append("after-damage")
@@ -357,21 +389,36 @@ def simulate(data, framing, unreadable=(), lossless_failures=(), decode_until=No
                 status.append("leading")
             continue
         is_unreadable = False
+        is_unsupported = False
+        accepted = False
         if unit.sync is not None:
             t["sync_units"] += 1
             sync = unit.sync
-            t["syncs"].append({"unit": index, "crc_ok": sync.crc_ok, "usable": sync.usable(), "rate": sync.rate, "substreams": sync.count, "mlp": not sync.is_truehd,
-                               "signature": sync.signature, "info": sync.info, "assign6": sync.assign6, "assign8": sync.assign8, "arrangement": sync.arrangement,
-                               "bits": sync.bits})
+            t["syncs"].append({"unit": index, "crc_ok": sync.crc_ok, "usable": sync.usable(), "supported": sync.supported(), "rate": sync.rate, "substreams": sync.count,
+                               "mlp": not sync.is_truehd, "signature": sync.signature, "info": sync.info, "assign6": sync.assign6, "assign8": sync.assign8,
+                               "arrangement": sync.arrangement, "bits": sync.bits})
             if not sync.crc_ok:
                 t["sync_failures"] += 1
             if not sync.usable():
                 is_unreadable = True
+            elif not sync.supported():
+                is_unreadable = True
+                is_unsupported = True
             else:
+                accepted = True
+                if current is not None and not current.same_stream(sync):
+                    for k in open_intervals:
+                        open_intervals[k] = False
+                        valid[k] = False
+                if session is not None:
+                    differs = not session["sync"].followed(sync)
+                    paused = differs
+                current = sync
                 count = sync.count
                 is_mlp = not sync.is_truehd
                 synced = True
                 has_synced = True
+                after_unsupported = False
         if cut:
             t["cut"] += 1
             is_unreadable = True
@@ -385,6 +432,7 @@ def simulate(data, framing, unreadable=(), lossless_failures=(), decode_until=No
                 if entry_["non_restart"] == (unit.sync is not None) or entry_["end"] < previous or unit.dir_end + 2 * entry_["end"] > unit.length:
                     is_unreadable = True
                 previous = max(previous, entry_["end"])
+        restarted = []
         if not is_unreadable:
             faulty = unreadable.get(index) if isinstance(unreadable, dict) else (0 if index in unreadable else None)
             if faulty is not None:
@@ -398,6 +446,8 @@ def simulate(data, framing, unreadable=(), lossless_failures=(), decode_until=No
                         t["substream_parity_failures"] += 1
                     if sub["crc_ok"] is False:
                         t["substream_crc_failures"] += 1
+                    if sub["parity_ok"] is False or sub["crc_ok"] is False:
+                        t["substream_failing"] += 1
                 else:
                     t["without_check"] += 1
                 if sub["restart"] is not None and k != faulty:
@@ -408,12 +458,38 @@ def simulate(data, framing, unreadable=(), lossless_failures=(), decode_until=No
                     if open_intervals[k]:
                         t["lossless_stored"][k] += 1
                     open_intervals[k] = True
-                    if valid[k] and not is_unreadable and (decode_until is None or index < decode_until):
+                    restarted.append((k, (index, k) in lossless_failures))
+                    top_channels[k] = r["matrix_last"] + 1
+                    t["channels"].setdefault(k, r["matrix_last"] + 1)
+        # What the decoder does with a unit that was read.
+        top = min(count, 3) - 1
+        decodable = False
+        if not is_unreadable:
+            t["rates"][index] = current.rate
+            if session is None:
+                session = {"sync": current, "channels": top_channels.get(top)}
+                decoder_synced = True
+            attempted = not paused and (unit.sync is not None or decoder_synced)
+            if attempted:
+                if unit.sync is not None:
+                    decoder_synced = True
+                for k, failed in restarted:
+                    if valid[k]:
                         t["lossless_checked"][k] += 1
-                        if (index, k) in lossless_failures:
+                        if failed:
                             t["lossless_failed"][k] += 1
                     valid[k] = True
-                    t["channels"].setdefault(k, r["matrix_last"] + 1)
+                if top_channels.get(top) == session["channels"]:
+                    decodable = True
+                else:
+                    decoder_synced = False
+                    for k in valid:
+                        valid[k] = False
+            else:
+                decoder_synced = False
+                for k in valid:
+                    valid[k] = False
+        t["decoded"][index] = decodable
         # What the nodes of a unit that was read show; a unit that was not has the nodes of its header alone, or of its major sync.
         if not is_unreadable:
             t["restarts"] += [{"unit": index, "sub": k, "bit": sub["restart"]["bit"], "crc_ok": sub["restart"]["crc_ok"], "lossless": sub["restart"]["lossless"]}
@@ -421,13 +497,20 @@ def simulate(data, framing, unreadable=(), lossless_failures=(), decode_until=No
             for k, (entry_, sub) in enumerate(zip(unit.directory, unit.substreams)):
                 if not entry_["check"]:
                     t["no_check_data"].append([index, k])
-                elif sub["parity_ok"] is False or sub["crc_ok"] is False:
+                elif k < 3 and (sub["parity_ok"] is False or sub["crc_ok"] is False):
                     t["failures"].append({"unit": index, "sub": k, "parity_ok": sub["parity_ok"], "crc_ok": sub["crc_ok"]})
         if is_unreadable:
             t["unreadable"] += 1
             t["gap"] = True
             reset()
-            status.append("cut" if cut else "unreadable")
+            decoder_synced = False
+            if session is not None:
+                for k in valid:
+                    valid[k] = False
+            after_unsupported = is_unsupported
+            if is_unsupported:
+                t["unsupported"] += 1
+            status.append("cut" if cut else "unsupported" if is_unsupported else "unreadable")
         else:
             status.append("read")
     t["status"] = status
@@ -445,7 +528,7 @@ def verification(t, decoded):
         ["substream CRC-8", "codedData", covers_all, t["substream_checked"], t["substream_checked"], t["substream_crc_failures"]],
     ]
     # One tally for each substream the first usable major sync gives, up to the third, whether or not it was read.
-    first = next((s for s in t["syncs"] if s["usable"]), None)
+    first = next((s for s in t["syncs"] if s["usable"] and s["supported"]), None)
     for k in range(min(first["substreams"], 3) if first else 0):
         tallies.append([f"lossless check, substream {k}", "decodedAudio", False, t["lossless_stored"][k],
                         t["lossless_checked"][k] if decoded else 0, t["lossless_failed"][k] if decoded else 0])
@@ -464,7 +547,7 @@ def verification(t, decoded):
 
 def stream_info(t, data, framing, counts, average=False):
     """The stream the analyzer reports: from the first usable major sync, the highest of the first three substreams, the units read."""
-    sync_entry = next((s for s in t["syncs"] if s["usable"]), None)
+    sync_entry = next((s for s in t["syncs"] if s["usable"] and s["supported"]), None)
     if sync_entry is None or not t["channels"]:
         return None
     first = Unit(data, framing[sync_entry["unit"]][1], framing[sync_entry["unit"]][2])
@@ -473,19 +556,25 @@ def stream_info(t, data, framing, counts, average=False):
     layout = channel_list(first.sync, top, first.sync.count, channels)
     samples = sum(c for c, s in zip(counts, t["status"]) if s == "read" and c is not None)
     rate = first.sync.rate
+    # Each stretch of units is counted at the sampling rate of the sync it was read with.
+    per_rate = {}
+    for c, s, r in zip(counts, t["status"], t["rates"]):
+        if s == "read" and c is not None:
+            per_rate[r] = per_rate.get(r, 0) + c
+    duration = sum(c / r for r, c in per_rate.items())
     info = {"codec": "MLP" if not first.sync.is_truehd else "Dolby TrueHD", "sample_rate": rate, "channels": channels, "layout": layout or [], "bits_per_sample": first.sync.bits,
-            "samples": samples, "duration": samples / rate}
+            "samples": samples, "duration": duration}
     if average:
         total_bits = sum(f[2] for f in framing[sync_entry["unit"]:]) * 8
         info["average_bitrate"] = total_bits * rate / samples / 1000
     return info
 
 
-def manifest(data, framing, counts, unreadable=(), lossless_failures=(), decode_until=None, average=False):
+def manifest(data, framing, counts, unreadable=(), lossless_failures=(), average=False):
     """Everything a manifest states that the model gives, for a file whose entries are framing (see simulate) and whose units hold counts samples."""
-    t = simulate(data, framing, unreadable, lossless_failures, decode_until)
+    t = simulate(data, framing, unreadable, lossless_failures)
     info = stream_info(t, data, framing, counts, average)
-    decoded = sum(c for i, (c, s) in enumerate(zip(counts, t["status"])) if s == "read" and c is not None and (decode_until is None or i < decode_until))
+    decoded = sum(c for c, d in zip(counts, t["decoded"]) if d and c is not None)
     entries = []
     for i, entry in enumerate(framing):
         if entry[0] == "skipped":

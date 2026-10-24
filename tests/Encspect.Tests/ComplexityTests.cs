@@ -282,7 +282,7 @@ public class ComplexityTests
     }
 
     // Units of the least bytes for the most work: stereo at 192 kHz, 160 samples a unit with 8 matrices and filters of 8 taps on both channels, and
-    // no bits of residual at all (codebook 0 with no LSBs). 60,000 of them (about 9 MB) charge 150 units a byte; the budget lowered to 2^28 ends the
+    // no bits of residual at all (codebook 0 with no LSBs). 60,000 of them (about 9 MB) charge about 220 units a byte (33,000 a unit over about 150 bytes); the budget lowered to 2^28 ends the
     // decoding after a few thousand, and the analysis costs by that and the bytes.
     [Fact]
     public void TrueHdUnitsThatCostTheMostForTheirBytes()

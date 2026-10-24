@@ -5,17 +5,23 @@ namespace Encspect.Formats.TrueHd;
 
 // The figures of a stream's runs of access units as they are read: bits, coded samples, the smallest and
 // largest, and per set its offset and bitrate for the graphs. Time is counted in samples, so no
-// rounding adds up.
-internal sealed class StreamFigures(long sampleRate)
+// rounding adds up; a stream that changes its sampling rate counts each stretch at its own rate.
+internal sealed class StreamFigures(long firstRate)
 {
+    private readonly long _firstRate = firstRate;
     private const int BinWidth = 32;
     private const int LastBin = 1000;
 
     private readonly ChunkedList<Point> _points = new();
     // Only the seconds a unit starts in, in order: a block may declare far more samples than its bytes
     // hold, so the seconds it spans are not kept.
-    private readonly ChunkedList<(long Second, long Bits, long Samples)> _seconds = new();
+    private readonly ChunkedList<(long Second, long Bits, long Samples, int Rate)> _seconds = new();
     private readonly SortedDictionary<int, int> _bins = [];
+    private readonly Dictionary<int, long> _samplesByRate = [];
+    private long _rate = firstRate;
+    private long _stretchSamples;
+    private long _stretchStart;
+    private long _counted;
 
     public int Count => _points.Count;
 
@@ -34,37 +40,60 @@ internal sealed class StreamFigures(long sampleRate)
     public double MaximumBitrate { get; private set; }
 
     // In kbps, over the coded samples; null without them.
-    public double? AverageBitrate => CodedSamples > 0 && sampleRate > 0 ? Bits * (double)sampleRate / CodedSamples / 1000 : null;
+    public double? AverageBitrate => CodedSamples <= 0 || _firstRate <= 0 ? null
+        : _samplesByRate.Count <= 1 ? Bits * (double)_firstRate / CodedSamples / 1000
+        : Bits / _samplesByRate.Sum(r => r.Value / (double)r.Key) / 1000;
 
     // inSeries false leaves the unit out of the per-unit series: a set of thousands of blocks would
-    // cost a point for each.
-    public void Add(long offset, long bits, long samples, bool inSeries = true)
+    // cost a point for each. rate: the sampling rate of the samples, where it is not the stream's first.
+    // isPartial: a run cut short by the end of the stream; it is in the series and the totals, but only
+    // counts for the extremes and the distribution where no whole run came before it, since a run of one
+    // unit is not what the bitrate of a run means.
+    public void Add(long offset, long bits, long samples, bool inSeries = true, int rate = 0, bool isPartial = false)
     {
-        double bitrate = samples > 0 && sampleRate > 0 ? bits * (double)sampleRate / samples / 1000 : 0;
+        long runRate = rate > 0 ? rate : _firstRate;
+        double bitrate = samples > 0 && runRate > 0 ? bits * (double)runRate / samples / 1000 : 0;
         if (inSeries)
         {
             _points.Add(new Point(offset, bitrate));
         }
 
-        Units++;
-        if (sampleRate > 0)
+        if (runRate != _rate && runRate > 0)
         {
-            long second = CodedSamples / sampleRate;
-            if (_seconds.Count > 0 && _seconds[_seconds.Count - 1].Second == second)
+            _stretchStart += _stretchSamples / Math.Max(1, _rate);
+            _stretchSamples = 0;
+            _rate = runRate;
+        }
+
+        if (runRate > 0)
+        {
+            long second = _stretchStart + (_stretchSamples / runRate);
+            if (_seconds.Count > 0 && _seconds[_seconds.Count - 1].Second == second && _seconds[_seconds.Count - 1].Rate == (int)runRate)
             {
-                (long _, long b, long counted) = _seconds[_seconds.Count - 1];
-                _seconds.SetLast((second, b + bits, counted + samples));
+                (long _, long b, long counted, int _) = _seconds[_seconds.Count - 1];
+                _seconds.SetLast((second, b + bits, counted + samples, (int)runRate));
             }
             else
             {
-                _seconds.Add((second, bits, samples));
+                _seconds.Add((second, bits, samples, (int)runRate));
             }
+
+            _stretchSamples += samples;
+            _samplesByRate[(int)runRate] = _samplesByRate.GetValueOrDefault((int)runRate) + samples;
         }
 
-        int bin = (int)Math.Min(LastBin, Math.Floor(bitrate / BinWidth));
-        _bins[bin] = _bins.GetValueOrDefault(bin) + 1;
+        bool isExtreme = !isPartial || _counted == 0;
+        Units++;
         Bits += bits;
         CodedSamples += samples;
+        if (!isExtreme)
+        {
+            return;
+        }
+
+        _counted++;
+        int bin = (int)Math.Min(LastBin, Math.Floor(bitrate / BinWidth));
+        _bins[bin] = _bins.GetValueOrDefault(bin) + 1;
         SmallestBits = Math.Min(SmallestBits, bits);
         LargestBits = Math.Max(LargestBits, bits);
         MinimumBitrate = Math.Min(MinimumBitrate, bitrate);
@@ -110,9 +139,9 @@ internal sealed class StreamFigures(long sampleRate)
                     cancellation.ThrowIfCancellationRequested();
                 }
 
-                (long second, long bits, long samples) = _seconds[i];
+                (long second, long bits, long samples, int rate) = _seconds[i];
                 starts[i] = second;
-                values[i] = samples > 0 ? Math.Round(bits * (double)sampleRate / samples / 1000, MidpointRounding.ToEven) : 0;
+                values[i] = samples > 0 ? Math.Round(bits * (double)rate / samples / 1000, MidpointRounding.ToEven) : 0;
             }
 
             series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
@@ -131,7 +160,7 @@ internal sealed class StreamFigures(long sampleRate)
             return;
         }
 
-        statistics.Add(cover("Bitrate Mode", Units == 1 ? "unknown" : MaximumBitrate > MinimumBitrate ? "variable" : "constant", Explain.BitrateMode));
+        statistics.Add(cover("Bitrate Mode", _counted == 1 ? "unknown" : MaximumBitrate > MinimumBitrate ? "variable" : "constant", Explain.BitrateMode));
         statistics.Add(cover($"Smallest {unitName}", inBytes ? NodeValue.Integer(SmallestBits / 8, "bytes") : NodeValue.Integer(SmallestBits, "bits"), Explain.Smallest));
         statistics.Add(cover($"Largest {unitName}", inBytes ? NodeValue.Integer(LargestBits / 8, "bytes") : NodeValue.Integer(LargestBits, "bits"), Explain.Largest));
         statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), Explain.MinimumBitrate));
@@ -140,7 +169,7 @@ internal sealed class StreamFigures(long sampleRate)
         foreach ((int bin, int count) in _bins)
         {
             string range = bin == LastBin ? $"{bin * BinWidth} kbps and more" : $"{bin * BinWidth} to {(bin * BinWidth) + BinWidth - 1} kbps";
-            distribution.Add(cover(range, $"{Counted(count, unitName, unitPlural)} ({Share(count, Units)})", Explain.DistributionBin));
+            distribution.Add(cover(range, $"{Counted(count, unitName, unitPlural)} ({Share(count, _counted)})", Explain.DistributionBin));
         }
     }
 

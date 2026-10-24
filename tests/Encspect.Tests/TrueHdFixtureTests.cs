@@ -102,7 +102,7 @@ public class TrueHdFixtureTests
             Assert.Equal(expected[3].GetInt32() == 1, node.Children.Any(c => c.Name == "Major Sync"));
             string description = expected[4].GetString() switch
             {
-                "leading" or "after-damage" => Formats.TrueHd.Explain.UnitBeforeSync,
+                "leading" or "after-damage" or "after-unsupported" => Formats.TrueHd.Explain.UnitBeforeSync,
                 "cut" => Formats.TrueHd.Explain.CutUnit,
                 _ => Formats.TrueHd.Explain.AccessUnit,
             };

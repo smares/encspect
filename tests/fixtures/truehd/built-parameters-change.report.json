@@ -47,7 +47,7 @@
                 },
                 {
                   "name": "Duration",
-                  "value": 0.1,
+                  "value": 0.06666666666666667,
                   "unit": "s",
                   "offset": 0,
                   "length": 10378
@@ -135,7 +135,7 @@
                 },
                 {
                   "name": "Stored Lossless Checks",
-                  "value": 5,
+                  "value": 4,
                   "unit": "checks",
                   "offset": 0,
                   "length": 10378
@@ -156,7 +156,7 @@
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": 830.24,
+                  "value": 1245.36,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 10378
@@ -169,28 +169,28 @@
                 },
                 {
                   "name": "Smallest Run",
-                  "value": 1698,
+                  "value": 1002,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 10378
                 },
                 {
                   "name": "Largest Run",
-                  "value": 2518,
+                  "value": 2320,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 10378
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": 684,
+                  "value": 1018.8,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 10378
                 },
                 {
                   "name": "Maximum Bitrate",
-                  "value": 1029.6,
+                  "value": 1392,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 10378
@@ -201,24 +201,6 @@
                   "length": 10378,
                   "children": [
                     {
-                      "name": "672 to 703 kbps",
-                      "value": "1 run (20.0%)",
-                      "offset": 0,
-                      "length": 10378
-                    },
-                    {
-                      "name": "736 to 767 kbps",
-                      "value": "1 run (20.0%)",
-                      "offset": 0,
-                      "length": 10378
-                    },
-                    {
-                      "name": "864 to 895 kbps",
-                      "value": "1 run (20.0%)",
-                      "offset": 0,
-                      "length": 10378
-                    },
-                    {
                       "name": "992 to 1023 kbps",
                       "value": "1 run (20.0%)",
                       "offset": 0,
@@ -226,6 +208,24 @@
                     },
                     {
                       "name": "1024 to 1055 kbps",
+                      "value": "1 run (20.0%)",
+                      "offset": 0,
+                      "length": 10378
+                    },
+                    {
+                      "name": "1184 to 1215 kbps",
+                      "value": "1 run (20.0%)",
+                      "offset": 0,
+                      "length": 10378
+                    },
+                    {
+                      "name": "1312 to 1343 kbps",
+                      "value": "1 run (20.0%)",
+                      "offset": 0,
+                      "length": 10378
+                    },
+                    {
+                      "name": "1376 to 1407 kbps",
                       "value": "1 run (20.0%)",
                       "offset": 0,
                       "length": 10378
@@ -256,8 +256,8 @@
         "channelLayoutName": "stereo",
         "bitsPerSample": 24,
         "samples": 4800,
-        "duration": 0.1,
-        "averageBitrate": 830.24,
+        "duration": 0.06666666666666667,
+        "averageBitrate": 1245.36,
         "isVbr": true,
         "verification": {
           "decoding": "notRequested",
@@ -307,7 +307,7 @@
               "name": "lossless check, substream 0",
               "covers": "decodedAudio",
               "coversAllAudio": false,
-              "stored": 5,
+              "stored": 4,
               "checked": 0,
               "failed": 0
             }
@@ -322,15 +322,17 @@
               0,
               1698,
               3414,
-              5580,
-              7860
+              4416,
+              6654,
+              8974
             ],
             "values": [
               1018.8,
               1029.6,
-              866.4,
-              684,
-              755.4
+              1202.4,
+              1342.8,
+              1392,
+              1684.8
             ]
           },
           {
@@ -338,10 +340,12 @@
             "unit": "kbps",
             "axis": "seconds",
             "x": [
+              0,
               0
             ],
             "values": [
-              830
+              1060,
+              1431
             ]
           }
         ]
@@ -351,7 +355,7 @@
       {
         "severity": "Info",
         "code": "truehd.stream-parameters-change",
-        "message": "The major sync at 0x1144 changes the stream's format, sampling rate, channel assignments or substream count from the earlier ones; the audio of such a stream is decoded only while its channel count stays the same.",
+        "message": "The major sync at 0x1144 changes the stream's format, sampling rate or substream count from the earlier ones; the decoder does not follow such a change, so the audio of the stretch from this sync on is not decoded, and the duration counts each stretch at its own sampling rate.",
         "offset": 4420,
         "length": 28,
         "count": 1
