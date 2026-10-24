@@ -12,6 +12,11 @@ public static class CodecNames
 
     public const string PcmFloat = "PCM (floating-point)";
 
+    // The companded 8-bit codings: WAVE_FORMAT_ALAW and WAVE_FORMAT_MULAW, and the AIFF-C types alaw and ulaw.
+    public const string ALaw = "A-law";
+
+    public const string MuLaw = "Mu-law";
+
     // MPEG audio the codec parser did not read, named in the parser's form ("MPEG-1 Layer III") with what the container states: the layer
     // alone where it states no version, the version alone where it states no layer. Where it states both, the parser's own name is used.
     public const string MpegAudioLayerI = "MPEG Layer I";

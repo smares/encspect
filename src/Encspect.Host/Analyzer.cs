@@ -127,6 +127,10 @@ public sealed class Analyzer
         ["webm"] = "Matroska",
         ["mpc"] = "Musepack",
         ["wv"] = "WavPack",
+        ["wave"] = "WAV",
+        ["rf64"] = "WAV",
+        ["aifc"] = "AIFF",
+        ["aif"] = "AIFF",
     };
 
     // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg", "AC-3" and "ac3" as "ac3".
