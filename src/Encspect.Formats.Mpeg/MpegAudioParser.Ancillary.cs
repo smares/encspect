@@ -199,64 +199,8 @@ public sealed partial class MpegAudioParser
             _hasPrevious = false;
         }
 
-        private void Segment(long from, long to)
-        {
-            Segments++;
-            Bytes += to - from;
-            LastSegmentBytes = to - from;
-            if (!_previousIsTruncated)
-            {
-                AudioBytes += to - from;
-            }
-
-            if (to > from && !_previousIsTruncated)
-            {
-                SmallestSegment = SmallestSegment == 0 ? to - from : Math.Min(SmallestSegment, to - from);
-                LargestSegment = Math.Max(LargestSegment, to - from);
-            }
-            if (to == from)
-            {
-                Signature[0] = 0;
-                Signature[1] = 0;
-                return;
-            }
-
-            byte[] head = Read(from, (int)Math.Min(to - from, 20));
-            var header = new MpegHeader(First!.Value.Header);
-
-            // mp3PRO: 0xE0 0xBA, then at byte 14 a 16-bit delay and a 32-bit length, in a segment of
-            // more than 20 bytes; its first two bytes still carry the mp3PRO signature.
-            if (_previousIsFirst && !header.IsMpeg1 && to - from > 20 && head[0] == 0xE0 && head[1] == 0xBA)
-            {
-                long offset = FileOffset(from);
-                Ofl = (offset, (int)(FileOffset(from + 19) + 1 - offset), (head[14] << 8) | head[15],
-                    ((long)head[16] << 24) | ((long)head[17] << 16) | ((long)head[18] << 8) | head[19], true);
-            }
-
-            // 0xB4, a 16-bit delay and a 32-bit length; mp3guessenc recognizes the block by the
-            // delay's high byte, 0x04 for plain MP3 and 0x08 for MP3 Surround, whose signature
-            // follows at bytes 10 and 11.
-            if (_previousIsFirst && header.IsMpeg1 && to - from > 9 && head[0] == 0xB4 && head[1] is 0x04 or 0x08)
-            {
-                long offset = FileOffset(from);
-                Ofl = (offset, (int)(FileOffset(from + 6) + 1 - offset), (head[1] << 8) | head[2],
-                    ((long)head[3] << 24) | ((long)head[4] << 16) | ((long)head[5] << 8) | head[6], false);
-                if (head[1] == 0x08)
-                {
-                    for (int i = 0; i < 2 && 10 + i < head.Length; i++)
-                    {
-                        Signature[i] &= head[10 + i];
-                    }
-                }
-
-                return;
-            }
-
-            for (int i = 0; i < 2 && i < head.Length; i++)
-            {
-                Signature[i] &= head[i];
-            }
-        }
+        // Clean-room rewrite pending: implement from the rules in docs/formats/mpeg-audio.md, "Ancillary data".
+        private void Segment(long from, long to) => throw new NotImplementedException();
 
         private byte[] Read(long from, int count)
         {

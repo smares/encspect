@@ -254,15 +254,8 @@ public sealed partial class MpegAudioParser
             }
             else if (header.Layer != 3 && audioEnd <= length * 8)
             {
-                // mp3guessenc (scan_layer__I, scan_layer_II): the whole bytes after the audio data,
-                // without the padding slot, in a frame whose audio data fits.
-                int bytes = ((length * 8) - audioEnd) / 8 - (header.Padding * header.SlotSize);
-                if (bytes > 0)
-                {
-                    Layer12Ancillary += bytes;
-                    SmallestLayer12 = SmallestLayer12 == 0 ? bytes : Math.Min(SmallestLayer12, bytes);
-                    LargestLayer12 = Math.Max(LargestLayer12, bytes);
-                }
+                // Clean-room rewrite pending: implement from the rules in docs/formats/mpeg-audio.md, "Ancillary data".
+                throw new NotImplementedException();
             }
         }
 
