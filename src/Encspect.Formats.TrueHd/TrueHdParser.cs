@@ -121,7 +121,11 @@ public sealed class TrueHdParser : IFormatParser
     public void Parse(ParseContext context)
     {
         ByteReader window = context.Reader;
-        List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
+        // The bounds, not the reader, are what the lambda holds: the closure of the stream's children lives as long as the report, and the reader
+        // would keep the input alive with it.
+        long windowStart = window.Start;
+        long windowEnd = window.End;
+        List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= windowStart && t.Offset < windowEnd).OrderBy(t => t.Offset)];
         ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
         var source = new Source(reader);
         var analysis = new Analysis(context) { LendsBuffers = LendsBuffers };

@@ -146,6 +146,84 @@ public class TrueHdTests
         Assert.Equal(0, Sniff(parser, new byte[200]).Class);
     }
 
+    // docs/design/truehd-format.md, "MLP channel arrangements": the channels of each code and how many of them are in group 1.
+    [Theory]
+    [InlineData(0, 1, 1)]
+    [InlineData(1, 2, 2)]
+    [InlineData(2, 3, 2)]
+    [InlineData(3, 4, 2)]
+    [InlineData(4, 3, 2)]
+    [InlineData(5, 4, 2)]
+    [InlineData(6, 5, 2)]
+    [InlineData(7, 3, 2)]
+    [InlineData(8, 4, 2)]
+    [InlineData(9, 5, 2)]
+    [InlineData(10, 4, 2)]
+    [InlineData(11, 5, 2)]
+    [InlineData(12, 6, 2)]
+    [InlineData(13, 4, 3)]
+    [InlineData(14, 5, 3)]
+    [InlineData(15, 4, 3)]
+    [InlineData(16, 5, 3)]
+    [InlineData(17, 6, 3)]
+    [InlineData(18, 5, 4)]
+    [InlineData(19, 5, 4)]
+    [InlineData(20, 6, 4)]
+    public void TheMlpArrangementsHaveTheChannelsOfTheTable(int code, int channels, int group1)
+    {
+        Speaker[]? speakers = Tables.ArrangementSpeakers(code);
+
+        Assert.NotNull(speakers);
+        Assert.Equal(channels, speakers.Length);
+        Assert.Equal(group1, Tables.ArrangementGroup1(code));
+        Assert.Null(Tables.ArrangementSpeakers(21));
+    }
+
+    [Fact]
+    public void TheTrueHdChannelFlagsAddTheChannelsOfTheTableInItsOrder()
+    {
+        // 5.1 is 0x000F: left, right, center, LFE and the surround pair (the back pair, as the layout has no rear pair).
+        Assert.Equal([Speaker.FrontLeft, Speaker.FrontRight, Speaker.FrontCenter, Speaker.LowFrequency, Speaker.BackLeft, Speaker.BackRight], Tables.SpeakersOf(0x0F));
+        Assert.Equal([Speaker.FrontLeft, Speaker.FrontRight], Tables.SpeakersOf(0x01));
+
+        // With a rear pair the surround pair is the side pair: 7.1 is 0x004F.
+        Assert.Equal([Speaker.FrontLeft, Speaker.FrontRight, Speaker.FrontCenter, Speaker.LowFrequency, Speaker.SideLeft, Speaker.SideRight, Speaker.BackLeft, Speaker.BackRight],
+            Tables.SpeakersOf(0x4F));
+
+        // Every flag adds as many channels as the table gives, and the list has as many speakers as ChannelsOf counts.
+        int[] channels = [2, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2, 1, 1];
+        int total = 0;
+        for (int flag = 0; flag < channels.Length; flag++)
+        {
+            Assert.Equal(channels[flag], Tables.ChannelsOf(1 << flag));
+            Assert.Equal(channels[flag], Tables.SpeakersOf(1 << flag).Length);
+            total += channels[flag];
+        }
+
+        Assert.Equal(total, Tables.ChannelsOf(0x1FFF));
+        Assert.Equal(total, Tables.SpeakersOf(0x1FFF).Length);
+    }
+
+    [Theory]
+    [InlineData(0, 48000, 40)]
+    [InlineData(1, 96000, 80)]
+    [InlineData(2, 192000, 160)]
+    [InlineData(8, 44100, 40)]
+    [InlineData(9, 88200, 80)]
+    [InlineData(10, 176400, 160)]
+    public void TheRateCodesGiveTheRatesAndTheSamplesOfAUnit(int code, int rate, int samples)
+    {
+        Assert.Equal(rate, Tables.RateOf(code));
+        Assert.Equal(samples, Tables.UnitSamplesOf(code));
+    }
+
+    [Theory]
+    [InlineData(3)]
+    [InlineData(7)]
+    [InlineData(11)]
+    [InlineData(15)]
+    public void TheOtherRateCodesGiveNoRate(int code) => Assert.Equal(0, Tables.RateOf(code));
+
     private static SniffResult Sniff(TrueHdParser parser, byte[] data) => parser.Sniff(new SniffContext(new ByteReader(new MemoryStream(data))));
 
     // A test-only container: "PKTS", then each packet as a 32-bit length and its bytes, with the codec ID in the first line.

@@ -10,21 +10,21 @@ Raw Dolby TrueHD files (`.thd`) and Meridian Lossless Packing files (`.mlp`): ac
   - the substream directory: for each substream the extra-word bit, the non-restart bit, the check data bit, the reserved bit and the end in words; the parity of the header and the directory;
   - each substream of the first three (the fourth is not read, see "Dolby Atmos"): its blocks, with the restart header (sync, noise type, channels, noise shift and seed, block size check flag, lossless check, channel assignment and CRC-8), the decoding parameters (block size, matrices, output shifts, quantizer step sizes, and for each channel the FIR and IIR filters, the Huffman offset, the codebook and the LSB count), the padding, the end of stream marker, the parity byte and the CRC-8.
 - The residuals are walked: every bit of a block's data is read, so a block whose codewords or length break the syntax is found without decoding.
-- The tree lists the first 512 units in detail, within 4 MiB of their bytes; further units with a major sync are kept in compact records (up to 100,000 of them within 32 MiB), and the rest in runs of 16 units. A unit is expanded into nodes when the tree is opened. See "Memory".
+- Every unit is an entry of the tree. The first 512 units (within 4 MiB of their bytes) keep their bytes, so that their blocks are read again for the nodes when the unit is opened; the units with a major sync after them keep their header, major sync, directory and the ends of their substreams (up to 100,000 of them within 32 MiB), and the others their entry alone. See "Memory".
 
 ## Units and resync
 
 - A file is taken for TrueHD or MLP where a major sync whose CRC-16 holds starts a unit that holds it, in the first MiB of the data, and the units that follow it by their length words are consistent (the same structure as the decoder reads) for at least two units or to the end of the data. The detection class is 94 where the units start at the beginning of the data (or the units before the sync chain to it) and 60 otherwise.
 - Units before the first major sync (`TrueHD.raw`, cut from a longer stream, begins with 13) are listed when their length words chain to the sync (`truehd.units-before-major-sync`, info); their substreams are not read, since the substream count and the sampling rate are not known yet. Otherwise those bytes are skipped (`truehd.data-skipped`).
 - A unit is accepted where its header and directory hold and the parity nibble is right, or where its structure breaks but another unit follows it by its length word (or the data ends). Where neither holds, the bytes are skipped up to the next major sync unit whose sync checks out (`truehd.data-skipped`), and the units after the gap cannot be read until a major sync (`truehd.units-after-damage`).
-- A unit cut by the end of the data is `truehd.unit-cut`. A unit with a major sync whose CRC-16 differs is `truehd.major-sync-crc-mismatch`; the unit is then read as far as the sync is plausible, and a sync whose fields are invalid is `truehd.major-sync-invalid` (the unit cannot be read).
+- A unit cut by the end of the data is `truehd.unit-cut`. A unit whose major sync has a CRC-16 that differs (`truehd.major-sync-crc-mismatch`) or fields that are invalid (`truehd.major-sync-invalid`) cannot be read, and the units after it wait for the next major sync (`truehd.units-after-damage`).
 - The units after an end of stream marker need a new major sync (`truehd.units-after-end-of-stream`, info), as in FFmpeg.
 - A major sync that changes the sampling rate, the channel count or the substream count in the middle of the data is `truehd.stream-parameters-change`: decoding does not follow the change.
 
 ## Reported
 
 - the sampling rate, bits per sample (the stream's, 16, 20 or 24), channels and layout of the highest presentation read, the samples (each unit's, less those an end of stream marker drops), the duration and the average bitrate, which counts the bytes of the units;
-- the bitrate per unit and per second as series, the smallest and largest and a distribution; the bitrate mode, which is variable;
+- the bitrate per unit and per second as series, the smallest and largest and a distribution; the bitrate mode is variable where the unit bitrates differ (`IsVbr`);
 - statistics: the units and major syncs, the substreams and the presentations, whether the stream signals Dolby Atmos (`SignalsAtmos`), the restart headers, the checksums that held and failed, the stored lossless checks, and the shortest and longest unit.
 
 ## Channel layout
@@ -35,7 +35,7 @@ Raw Dolby TrueHD files (`.thd`) and Meridian Lossless Packing files (`.mlp`): ac
 
 ## Checksums
 
-Five checksums are declared. Three cover headers and two the coded data:
+Six checksums are declared: three cover headers, two the coded data and one, for each presentation, the decoded audio:
 
 | Checksum | Covers | Counts as covering all of the audio when |
 |---|---|---|
@@ -48,13 +48,13 @@ Five checksums are declared. Three cover headers and two the coded data:
 
 - A stream is verified when every checksum it stores was compared, none failed, and at least one compared checksum covers all the audio ([`encspect --learn verification`](../cli.md)).
 - The lossless check can only be compared after decoding. Without it, a stream whose coded-data checksums all hold and cover all the audio is verified from those alone; the verdict with decoding adds the lossless checks.
-- Substream parity and CRC-8 are counted per substream of a unit that has check data; a substream the fourth of an Atmos stream is not.
+- The substream parity byte and CRC-8 are counted for each substream of a unit that has check data; the fourth substream of an Atmos stream is not counted.
 
 ## Decoding
 
 - The decoder (`Encspect.Formats.TrueHd.Decoding`, IDs `truehd` and `mlp`) runs when the front end asks for it: `--verify` on the command line, "Verify Audio" in the detail window. The tree is the same either way.
 - It reads no syntax of its own where the structure pass lent buffers: the walk stores the residuals and the bypassed bits, and the decoder reads the parameters again with the same reader (the syntax is one piece of code) and adds the prediction filters, the matrices, the noise, the output shifts and the lossless check. Where nothing was lent it reads the blocks itself.
-- Decoding is bit exact: for every fixture the samples equal FFmpeg's decoder's, checked sample for sample in the cross-check job.
+- Decoding is bit exact: for every fixture that FFmpeg reads as the manifest does (the encoder-written files and the hand-built ones whose fault leaves the audio alone) and for the three real files, the samples equal FFmpeg's decoder's, checked sample for sample in the cross-check job.
 - The output is the highest substream read, at the stream's bit depth, with the channel order of the layout. Lower substreams are decoded too (their channels feed the higher one) and their presentations' lossless checks are compared.
 - The lossless check of each presentation is compared at its next restart header. `truehd.lossless-check-failed` (a warning on the restart header) names the substream. The first restart header and the first after an end of stream marker have nothing to compare, and the output after the last restart header is never compared, so the checks together cover the output between a substream's first and last restart header.
 - A unit the decoder cannot read, or that follows damage, is `decode.frame-invalid`; the substream's histories and checks start again at the next major sync.
@@ -68,7 +68,7 @@ Five checksums are declared. Three cover headers and two the coded data:
 
 ## Memory
 
-- Units are kept as a 16-byte entry each, with a compact record for a unit with a major sync and for the first 512 units; the figures of the series cost a few bytes more: about 60 bytes a unit on linux-x64 (`MemoryTests`).
+- Units are kept as a 16-byte entry each, with a compact record for a unit with a major sync past the first 512; the figures of the series cost a few bytes more: about 60 bytes a unit on linux-x64 (`MemoryTests`).
 - The decoder holds one unit's planes and the filter histories of three substreams, nothing per unit.
 
 ## Dolby Atmos
@@ -78,7 +78,7 @@ Five checksums are declared. Three cover headers and two the coded data:
 
 ## Encoder detection
 
-- None. The streams carry no encoder string; the format info and the structure do not identify an encoder. The fixtures' encoder (FFmpeg) writes an unmistakable pattern in some reserved fields, but Encspect does not use it.
+- None. The streams carry no encoder string, and the analyzer uses no pattern in their reserved fields as evidence of one: what the description observes of the encoders behind its test files is not a detection rule.
 
 ## Tags
 
