@@ -98,7 +98,7 @@ public class MonkeysAudioFixtureTests
         {
             string Text(string field) => node.Children.Single(c => c.Name == field).Value?.ToString() ?? string.Empty;
             long Integer(string field) => node.Children.Single(c => c.Name == field).Value!.AsInteger()!.Value;
-            Assert.Equal(Version(descriptor.GetProperty("version").GetInt32()), Text("Encoder Version"));
+            Assert.Equal(Version(descriptor.GetProperty("version").GetInt32()), Text("File Version"));
             Assert.Equal(descriptor.GetProperty("descriptor_bytes").GetInt64(), Integer("Descriptor Bytes"));
             Assert.Equal(descriptor.GetProperty("header_bytes").GetInt64(), Integer("Header Bytes"));
             Assert.Equal(descriptor.GetProperty("seek_table_bytes").GetInt64(), Integer("Seek Table Bytes"));

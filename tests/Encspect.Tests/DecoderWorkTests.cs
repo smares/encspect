@@ -204,6 +204,8 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("insane", "external-level-insane-16-stereo.ape"),
             ("insane-mono-8-bit", "external-insane-8-mono.ape"),
             ("insane-24-bit", "external-insane-24-stereo.ape"),
+            // A frame of the full 1,179,648 samples that the highest level uses: the frame of 24-bit audio is held in memory until its CRC has passed.
+            ("insane-24-bit-full-frames", "external-full-frame-insane-24-mono.ape"),
             ("insane-32-bit", "external-insane-32-stereo.ape"),
             ("insane-pseudo-stereo", "external-pseudo-stereo-insane.ape"),
             ("insane-cheapest-symbol", "external-quiet-insane.ape"),

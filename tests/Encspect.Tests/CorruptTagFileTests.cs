@@ -146,10 +146,33 @@ public class CorruptFlacBuiltFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The Monkey's Audio fixtures written by mac, each analyzed with and without decoding.
+// The Monkey's Audio fixtures written by mac, each analyzed with and without decoding: the files of the highest levels and of several frames in one class
+// (a frame there costs the decoder the most), the rest in another, so that the two run side by side.
 public class CorruptMonkeysAudioFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/external-", StringComparison.Ordinal));
+    internal static bool IsHeavy(string name) => name.Contains("insane", StringComparison.Ordinal) || name.Contains("extra-high", StringComparison.Ordinal) || name.Contains("frames-", StringComparison.Ordinal);
+
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) && !IsHeavy(n));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The Monkey's Audio fixtures of the highest levels and of several frames.
+public class CorruptMonkeysAudioHeavyFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) && CorruptMonkeysAudioFileTests.IsHeavy(n));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The Monkey's Audio fixtures of versions 3.93 to 3.98 (monkeys_audio_legacy.py), each analyzed with and without decoding.
+public class CorruptMonkeysAudioLegacyFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("monkeys-audio/legacy-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]

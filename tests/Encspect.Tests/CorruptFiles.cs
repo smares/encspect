@@ -56,12 +56,36 @@ internal static class CorruptFiles
         }
     }
 
+    private enum VariantKind
+    {
+        Truncation,
+        Change,
+        Prefix,
+    }
+
+    // The fixtures of these families are also decoded. FLAC decodes every variant. A Monkey's Audio frame costs a thousand times what a FLAC frame does, so
+    // only some variants are decoded: every third of the byte changes (the damage the decoder meets), the prefixed ones, and one truncation in 64.
+    // Each is decoded for up to 2^28 units of work: the fixtures of the lower levels are decoded to their last frame, so damage in a later frame is
+    // decoded too, and at the highest levels the budget ends the decoding of a variant early.
+    private const long MonkeysAudioBudget = 1L << 28;
+
+    private static bool IsDecoded(string name) =>
+        name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/legacy-", StringComparison.Ordinal);
+
+    private static bool IsDecoded(string name, VariantKind kind, int number) =>
+        IsDecoded(name) && (!name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || kind switch
+        {
+            VariantKind.Change => number % 3 == 0,
+            VariantKind.Prefix => true,
+            _ => number % 64 == 0,
+        });
+
     public static async Task MutatedFixturesProduceReports(string name)
     {
         byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.TagDirectory, "..", name));
 
         int index = 0;
-        foreach (byte[] variant in Variants(original, name))
+        foreach ((byte[] variant, VariantKind kind, int number) in Variants(original, name))
         {
             try
             {
@@ -71,9 +95,7 @@ internal static class CorruptFiles
                 Task work = Task.Run(() =>
                 {
                     started.SetResult();
-                    AnalyzeAndCheck(variant, name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal),
-                        // A Monkey's Audio frame costs much more to decode than a FLAC one, and the budget ends the rest of a variant's decoding early.
-                        name.StartsWith("monkeys-audio/", StringComparison.Ordinal) ? 1L << 25 : 1L << 30);
+                    AnalyzeAndCheck(variant, IsDecoded(name, kind, number), name.StartsWith("monkeys-audio/", StringComparison.Ordinal) ? MonkeysAudioBudget : 1L << 30);
                 });
                 await started.Task;
                 await work.WaitAsync(VariantLimit);
@@ -111,7 +133,7 @@ internal static class CorruptFiles
         return (int)hash;
     }
 
-    private static IEnumerable<byte[]> Variants(byte[] original, string name)
+    private static IEnumerable<(byte[] Data, VariantKind Kind, int Number)> Variants(byte[] original, string name)
     {
         var random = new Random(StableSeed(name));
 
@@ -128,9 +150,10 @@ internal static class CorruptFiles
             lengths.Add(random.Next(0, original.Length + 1));
         }
 
+        int number = 0;
         foreach (int length in lengths)
         {
-            yield return original[..length];
+            yield return (original[..length], VariantKind.Truncation, number++);
         }
 
         // Single and multiple byte changes, biased toward the tag regions at both ends.
@@ -156,7 +179,7 @@ internal static class CorruptFiles
                 };
             }
 
-            yield return copy;
+            yield return (copy, VariantKind.Change, i);
         }
 
         // Garbage before the first byte shifts every leading anchor.
@@ -164,7 +187,7 @@ internal static class CorruptFiles
         {
             byte[] shifted = new byte[original.Length + prefix];
             original.CopyTo(shifted, prefix);
-            yield return shifted;
+            yield return (shifted, VariantKind.Prefix, prefix);
         }
     }
 

@@ -1,5 +1,7 @@
 {
  "length": 136227,
+ "file_version": 3800,
+ "seek_entries": 3,
  "regions": [
   {
    "name": "Monkey's Audio",
@@ -7,7 +9,38 @@
    "length": 136227
   }
  ],
- "frames": [],
+ "frames": [
+  {
+   "index": 0,
+   "offset": 91,
+   "length": 27292,
+   "samples": 9216,
+   "crc": null,
+   "special": null,
+   "start": 0,
+   "end": 27290
+  },
+  {
+   "index": 1,
+   "offset": 27379,
+   "length": 86212,
+   "samples": 9216,
+   "crc": null,
+   "special": null,
+   "start": 27290,
+   "end": 113497
+  },
+  {
+   "index": 2,
+   "offset": 113587,
+   "length": 22640,
+   "samples": 12544,
+   "crc": null,
+   "special": null,
+   "start": 113497,
+   "end": 136136
+  }
+ ],
  "stream_infos": [
   {
    "codec": "Monkey's Audio",
@@ -32,10 +65,10 @@
    "decoding": "notRequested",
    "checksums": [
     {
-     "name": "frame CRC-32",
+     "name": "frame checksum",
      "covers": "decodedAudio",
      "coversAllAudio": false,
-     "stored": 0,
+     "stored": 3,
      "checked": 0,
      "failed": 0
     }
@@ -46,10 +79,10 @@
    "decoding": "notPossible",
    "checksums": [
     {
-     "name": "frame CRC-32",
+     "name": "frame checksum",
      "covers": "decodedAudio",
      "coversAllAudio": false,
-     "stored": 0,
+     "stored": 3,
      "checked": 0,
      "failed": 0
     }
@@ -77,5 +110,8 @@
  },
  "crosscheck": {
   "mac_verify": null
+ },
+ "header": {
+  "flags": 0
  }
 }

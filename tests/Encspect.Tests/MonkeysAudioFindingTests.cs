@@ -72,6 +72,19 @@ public class MonkeysAudioFindingTests
     }
 
     [Fact]
+    public void ACutFrameIsReadForTheBytesTheFileHoldsAndNotTheBytesTheDescriptorStates()
+    {
+        // The descriptor states 100 MiB of frame data for a file of a few kilobytes: the last frame is cut, and what is left of it is decoded.
+        byte[] file = File.ReadAllBytes(MonkeysAudioBuilder.FixturePath(Stereo));
+        BinaryPrimitives.WriteUInt64LittleEndian(file.AsSpan(24), 100UL << 20);
+
+        Report report = Analyzer.CreateDefault().Analyze("cut.ape", new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "monkeys-audio.frame-not-decoded" or "parse.failed" or "decode.failed");
+        Assert.Contains(report.Findings, f => f.Code == "monkeys-audio.frame-cut");
+    }
+
+    [Fact]
     public void BuiltFilesOfTheFixturesFramesDecodeAsTheFixturesDo()
     {
         // The builder's own round trip: the frames of a fixture put together again are the fixture's audio, with every CRC and the MD5 right.
