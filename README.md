@@ -38,6 +38,7 @@ Phase 2, the lossy formats, is done. Next: the lossless formats, among them the 
 - [GUI](docs/gui.md)
 - [Formats](docs/formats/README.md) and [tags](docs/tags/README.md)
 - [Development](docs/development.md): building, tests, fixtures and cross-checks
+- [Using Encspect from other programs](docs/library.md): the JSON output today, NuGet packages and a native library later
 - [Plan](docs/PLAN.md): goals, architecture and rollout
 - [Release notes](docs/releases/0.1.0.md)
 
