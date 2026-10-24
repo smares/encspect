@@ -15,6 +15,7 @@ internal sealed class DecodeRun : IDisposable
     private ExceptionDispatchInfo? _sinkFailure;
     private long _work;
     private long _perInputByte;
+    private bool _isCrossed;
 
     public DecodeRun(DecodeOptions options, long fileLength, CancellationToken analysis)
     {
@@ -38,7 +39,9 @@ internal sealed class DecodeRun : IDisposable
     // it can grow during an analysis; a stream already stopped under the smaller figure stays stopped.
     public long Budget => Options.MaxWork ?? Math.Max(DecodeOptions.MinimumWork, _perInputByte > 0 && _fileLength > long.MaxValue / _perInputByte ? long.MaxValue : _fileLength * _perInputByte);
 
-    public bool IsOutOfBudget => _work > Budget;
+    // Sticky: a canceled token cannot be un-canceled, so a budget that grows after it was crossed (a later session of a decoder with a larger
+    // allowance) must not read as not crossed while the decoders of the other sessions hold a canceled token.
+    public bool IsOutOfBudget => _isCrossed || _work > Budget;
 
     public bool IsStopRequested => Options.Stop.IsCancellationRequested;
 
@@ -53,13 +56,22 @@ internal sealed class DecodeRun : IDisposable
         _work = units > long.MaxValue - _work ? long.MaxValue : _work + units;
         if (IsOutOfBudget)
         {
+            _isCrossed = true;
             _linked.Cancel();
         }
     }
 
     public void Dispose() => _linked.Dispose();
 
-    public void Capture(Exception ex) => _sinkFailure ??= ExceptionDispatchInfo.Capture(ex);
+    // A sink failure ends the decoding of every session, inside a long frame too.
+    public void Capture(Exception ex)
+    {
+        if (_sinkFailure is null)
+        {
+            _sinkFailure = ExceptionDispatchInfo.Capture(ex);
+            _linked.Cancel();
+        }
+    }
 
     public void ThrowIfSinkFailed() => _sinkFailure?.Throw();
 

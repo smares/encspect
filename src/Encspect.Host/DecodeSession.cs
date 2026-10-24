@@ -78,6 +78,17 @@ internal sealed class DecodeSession : IDecodeSession
         {
             NotPossible("The configuration ends in the middle of a structure.");
         }
+        catch (OperationCanceledException) when (IsCanceledByTheDecoding())
+        {
+            // A decoder opened after a stop, a sink failure or a crossed budget got a canceled token: nothing is decoded, and the
+            // finding is the host's own.
+            _isEnded = true;
+            EndIfAsked();
+        }
+        catch (OperationCanceledException ex) when (!Owner.CancellationToken.IsCancellationRequested)
+        {
+            Fail($"The {_codecId} decoder failed opening the stream", ex);
+        }
         catch (Exception ex) when (Analyzer.IsParserBug(ex))
         {
             Fail($"The {_codecId} decoder failed opening the stream", ex);
@@ -168,11 +179,17 @@ internal sealed class DecodeSession : IDecodeSession
             _framesDecoded++;
             CheckFloorOfCharge();
         }
-        catch (OperationCanceledException) when (!Owner.CancellationToken.IsCancellationRequested && (run.HasSinkFailure || run.IsStopRequested || run.IsOutOfBudget))
+        catch (OperationCanceledException) when (IsCanceledByTheDecoding())
         {
             // The sink's failure, the stop or the budget canceled the decoding's token inside the frame, which then counts as not
-            // decoded; the finding is picked from the host's own state below. Any other cancellation passes through.
+            // decoded; the finding is picked from the host's own state below.
             _framesNotDecoded++;
+        }
+        catch (OperationCanceledException ex) when (!Owner.CancellationToken.IsCancellationRequested)
+        {
+            // Nothing the host knows explains it (the lead's decision of 2026-10-23): a decoder bug, not a canceled analysis.
+            _framesNotDecoded++;
+            Fail($"The {_codecId} decoder failed decoding the frame at 0x{frame.Bytes.FileStart:X}", ex);
         }
         catch (Exception ex) when (ex is InvalidDataException or EndOfStreamException)
         {
@@ -193,6 +210,11 @@ internal sealed class DecodeSession : IDecodeSession
 
         return IsDecoding;
     }
+
+    // An OperationCanceledException the host's own state explains: the analysis's token is not canceled, and the front end's stop, a failure of its
+    // sink or the budget canceled the decoding's token. Any other one from a decoder is decode.failed; the analysis's own passes through.
+    private bool IsCanceledByTheDecoding() =>
+        !Owner.CancellationToken.IsCancellationRequested && (_run!.HasSinkFailure || _run.IsStopRequested || _run.IsOutOfBudget);
 
     // The work a decoder charged over the whole stream so far cannot be less than the fixed charge of the samples it has returned
     // (totals, since a WavPack set returns the samples of all its channels on its final block). A decoder that forgets to charge
@@ -288,7 +310,11 @@ internal sealed class DecodeSession : IDecodeSession
                     results = Validated(results, stored);
                 }
             }
-            catch (Exception ex) when (Analyzer.IsParserBug(ex))
+            catch (OperationCanceledException) when (IsCanceledByTheDecoding())
+            {
+                results = [];
+            }
+            catch (Exception ex) when (Analyzer.IsParserBug(ex) || (ex is OperationCanceledException && !Owner.CancellationToken.IsCancellationRequested))
             {
                 Fail($"The {_codecId} decoder failed ending the stream", ex);
                 results = [];
@@ -351,7 +377,7 @@ internal sealed class DecodeSession : IDecodeSession
         else if (run.IsOutOfBudget)
         {
             _isEnded = true;
-            Add(Severity.Info, "decode.limit", $"Decoding stopped after {Counts.Of(_framesDecoded, "frame", "frames")}: its work passed the budget of {run.Budget.ToString("N0", CultureInfo.InvariantCulture)} work units that the file's size allows.", null, 1);
+            Add(Severity.Info, "decode.limit", $"Decoding stopped after {string.Create(CultureInfo.InvariantCulture, $"{_framesDecoded:N0}")} {(_framesDecoded == 1 ? "frame" : "frames")}: its work passed the budget of {run.Budget.ToString("N0", CultureInfo.InvariantCulture)} work units{(run.Options.MaxWork is null ? " that the file's size allows" : string.Empty)}.", null, 1);
         }
 
         if (_isEnded && _status == DecodeStatus.Decoded)

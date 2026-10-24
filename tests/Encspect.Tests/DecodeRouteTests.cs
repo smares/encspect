@@ -367,7 +367,7 @@ public class DecodeRouteTests
         Assert.Null(verification.IsVerified);
         Finding finding = Assert.Single(report.Findings);
         Assert.Equal(("decode.limit", Severity.Info), (finding.Code, finding.Severity));
-        Assert.Equal("Decoding stopped after 3 frames: its work passed the budget of 6,400 work units that the file's size allows.", finding.Message);
+        Assert.Equal("Decoding stopped after 3 frames: its work passed the budget of 6,400 work units.", finding.Message);
     }
 
     [Fact]
@@ -650,6 +650,10 @@ public class DecodeRouteTests
 
         Assert.Contains(Analyze(new FrameParser { Frames = 1 }, [Heavy(null)], Verify).Findings, f => f.Code == "decode.limit");
         Assert.DoesNotContain(Analyze(new FrameParser { Frames = 1 }, [Heavy(1L << 40)], Verify).Findings, f => f.Code == "decode.limit");
+
+        // The message names the file's size only where the file's size set the budget, and writes both numbers alike.
+        Finding limit = Assert.Single(Analyze(new FrameParser { Frames = 1 }, [Heavy(null)], Verify).Findings, f => f.Code == "decode.limit");
+        Assert.Equal("Decoding stopped after 1 frame: its work passed the budget of 34,359,738,368 work units that the file's size allows.", limit.Message);
     }
 
     [Fact]
@@ -872,11 +876,126 @@ public class DecodeRouteTests
     }
 
     [Fact]
-    public void AnOperationCanceledExceptionFromTheDecoderIsNotADecodeFailure()
+    public void AnOperationCanceledExceptionTheHostDoesNotExplainIsDecodeFailed()
     {
+        // No stop, no budget and no sink failure: the decoder's own bug, which the host reports (the lead's decision of 2026-10-23) and does not
+        // let out of Analyze as a canceled analysis.
         var decoder = new ScriptedDecoder { OnDecode = _ => throw new OperationCanceledException() };
 
-        Assert.Throws<OperationCanceledException>(() => Analyze(new FrameParser(), [decoder], Verify));
+        Report report = Analyze(new FrameParser(), [decoder], Verify);
+
+        Assert.Equal(DecodeStatus.Failed, Assert.Single(report.Streams).Verification!.Decoding);
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "decode.failed");
+        Assert.Contains("OperationCanceledException", finding.Message);
+    }
+
+    [Fact]
+    public void AnOperationCanceledExceptionTheHostDoesNotExplainFromOpenOrFinishIsDecodeFailedToo()
+    {
+        Report opened = Analyze(new FrameParser(), [new ScriptedDecoder { OnOpen = _ => throw new OperationCanceledException() }], Verify);
+        Assert.Equal(DecodeStatus.Failed, Assert.Single(opened.Streams).Verification!.Decoding);
+        Assert.Contains(opened.Findings, f => f.Code == "decode.failed");
+
+        Report finished = Analyze(new FrameParser(), [new ScriptedDecoder { OnFinish = _ => throw new OperationCanceledException() }], Verify);
+        Assert.Equal(DecodeStatus.Failed, Assert.Single(finished.Streams).Verification!.Decoding);
+        Assert.Contains(finished.Findings, f => f.Code == "decode.failed");
+    }
+
+    [Fact]
+    public void ADecoderOpenedAfterTheStopGetsACanceledTokenAndTheHostReportsTheStop()
+    {
+        using var stop = new CancellationTokenSource();
+        stop.Cancel();
+        var decoder = new ScriptedDecoder { OnOpen = c => { c.CancellationToken.ThrowIfCancellationRequested(); throw new InvalidOperationException("not reached"); } };
+
+        Report report = Analyze(new FrameParser(), [decoder], new AnalysisOptions { Decoding = new DecodeOptions { Stop = stop.Token } });
+
+        Assert.Equal(DecodeStatus.Stopped, Assert.Single(report.Streams).Verification!.Decoding);
+        Assert.Equal("decode.stopped", Assert.Single(report.Findings).Code);
+    }
+
+    // Two streams of two codings: the first crosses the budget, then a session of a decoder with a larger allowance starts and raises the budget
+    // above the count. The decoding's token stays canceled, so the crossing is final: both streams stop with decode.limit and Analyze does not throw.
+    private sealed class TwoCodecParser : IFormatParser
+    {
+        public string Name => "TwoCodec";
+
+        public SniffResult Sniff(SniffContext context) => new(100);
+
+        public void Parse(ParseContext context)
+        {
+            Node a = context.Root.Add("Stream A", 0, 32);
+            Node b = context.Root.Add("Stream B", 32, 32);
+            byte[] data = new byte[64];
+            var frame = new CodedFrame(new MappedBytes(data.AsMemory(0, 16), 0), "Frame", 0, 100);
+            IDecodeSession one = context.StartDecoding("a", new DecodeSetup { Stream = a, Channels = 2, BitsPerSample = 16 });
+            one.Decode(frame);
+            IDecodeSession two = context.StartDecoding("b", new DecodeSetup { Stream = b, Channels = 2, BitsPerSample = 16 });
+            two.Decode(frame);
+            one.Decode(frame with { FirstSample = 100 });
+            context.AddStream(new StreamInfo { Nodes = [a], Codec = "Test", Verification = one.Finish([]) });
+            context.AddStream(new StreamInfo { Nodes = [b], Codec = "Test", Verification = two.Finish([]) });
+        }
+    }
+
+    [Fact]
+    public void ABudgetThatWouldGrowAfterItWasCrossedStaysCrossed()
+    {
+        DecodeContext? ca = null;
+        DecodeContext? cb = null;
+        var a = new ScriptedDecoder("a")
+        {
+            ChargesNothing = true,
+            OnOpened = c => ca = c,
+            OnDecode = f =>
+            {
+                ca!.AddWork(1L << 36);
+                ca.CancellationToken.ThrowIfCancellationRequested();
+                return f.Samples;
+            },
+        };
+        var b = new ScriptedDecoder("b")
+        {
+            ChargesNothing = true,
+            WorkPerByte = 1L << 40,
+            OnOpened = c => cb = c,
+            OnDecode = f =>
+            {
+                cb!.AddWork(Charge(cb.Setup, f.Samples));
+                cb.CancellationToken.ThrowIfCancellationRequested();
+                return f.Samples;
+            },
+        };
+
+        Report report = new Analyzer([], [new TwoCodecParser()], [], [a, b]).Analyze("two.bin", new MemoryStream(new byte[64]), Verify);
+
+        Assert.Equal(2, report.Findings.Count(f => f.Code == "decode.limit"));
+        Assert.DoesNotContain(report.Findings, f => f.Code == "decode.failed");
+    }
+
+    [Fact]
+    public void AStreamTheDecoderRefusesDoesNotRaiseTheAllowance()
+    {
+        // The refused stream's decoder allows 2^40 units a byte; it never opened a stream, so the other decoder's 2,048 bound the work.
+        DecodeContext? context = null;
+        var refused = new ScriptedDecoder("b") { WorkPerByte = 1L << 40, OnOpen = _ => throw new InvalidDataException("no") };
+        var heavy = new ScriptedDecoder("a")
+        {
+            OnOpened = c => context = c,
+            OnDecode = f =>
+            {
+                if (f.FirstSample >= 100)
+                {
+                    context!.AddWork(1L << 36);
+                }
+
+                return f.Samples;
+            },
+        };
+
+        Report report = new Analyzer([], [new TwoCodecParser()], [], [heavy, refused]).Analyze("two.bin", new MemoryStream(new byte[64]), Verify);
+
+        Assert.Contains(report.Findings, f => f.Code == "decode.limit");
     }
 
     // The front end's stop and sink.

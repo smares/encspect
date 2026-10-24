@@ -76,7 +76,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 - The 33-bit side channel and 32-bit data are decoded in 64-bit planes; the other streams use 32-bit planes.
 - **The work a frame is charged** to the host's work budget, before the decoder does it (see "As built: the work budget" in [the decoder design](../design/decoders.md)):
   - for each sample of each channel, the fixed work of the sample for its width: 13, 16, 19 or 22 units for 1 to 4 bytes;
-  - for each sample of each channel, the order of its predictor (a fixed predictor's 0 to 4, a linear predictor's 1 to 32), also in the 64-bit sums;
+  - for each sample of each channel, the order of its predictor (a fixed predictor's 0 to 4, a linear predictor's 1 to 32), two units a tap where the sums need 64 bits (the 33-bit side channel, or a linear predictor whose sum does not fit 32 bits); and 8 more for each sample of a verbatim subframe, the walk's store of it;
   - for a frame the parser's walk did not store, which the decoder reads itself, 16 units for each byte of the frame.
   - A frame is charged once, before it is decoded, so one that passes the budget is decoded in full and then ends the decoding.
 

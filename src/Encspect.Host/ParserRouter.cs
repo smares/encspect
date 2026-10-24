@@ -117,7 +117,6 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
         }
 
         // Figures a crafted file can state are not a bug of the parser: a stream that cannot be decoded is a finding.
-        run.AllowPerInputByte(decoder.WorkPerInputByte);
         var session = new DecodeSession(this, caller, run, codecId, setup, DecodeStatus.Decoded);
         _open.Add(session);
         if (setup.Channels < 1 || setup.BitsPerSample is < 1 or > 64)
@@ -127,6 +126,12 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
         else
         {
             session.Open(decoder);
+
+            // Only a decoder that opened a stream raises the allowance; a refused or failed one does not.
+            if (session.IsDecoding)
+            {
+                run.AllowPerInputByte(decoder.WorkPerInputByte);
+            }
         }
 
         return session;

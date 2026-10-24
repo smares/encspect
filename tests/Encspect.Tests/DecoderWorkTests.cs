@@ -29,8 +29,20 @@ namespace Encspect.Tests;
 // request and a push to main exclude it with the filter Category!=Nightly (scripts/ci/changes.py).
 [Collection(nameof(ComplexityTests))]
 [Trait("Category", "Nightly")]
-public sealed class DecoderWorkTests(ITestOutputHelper output)
+public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.CaseCache cache) : IClassFixture<DecoderWorkTests.CaseCache>
 {
+    // The built inputs (about 200 MB together) are kept for the cases of one run of the class and released with it, not for the life of the process.
+    public sealed class CaseCache : IDisposable
+    {
+        public void Dispose()
+        {
+            lock (Built)
+            {
+                Built.Clear();
+            }
+        }
+    }
+
     // Each run is sized to charge about this many units, about 0.3 s at 0.6 ns a unit.
     internal const long Target = 1L << 29;
 
@@ -55,6 +67,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output)
     [MemberData(nameof(CaseNames))]
     public void ATimePerUnitWithinTwiceTheFlacReferences(string name)
     {
+        GC.KeepAlive(cache);
         Case work = Cases[name]();
         Case reference = Cases["flac-reference"]();
 
@@ -193,6 +206,14 @@ public sealed class DecoderWorkTests(ITestOutputHelper output)
         Add("wavpack-sets-that-never-complete", () => new Case("wavpack-sets-that-never-complete", WavPackCases.SetsThatNeverComplete()));
         Add("wavpack-many-small-dsd-blocks", () => new Case("wavpack-many-small-dsd-blocks", WavPackCases.SmallDsdBlocks()));
         Add("wavpack-dsd-fast-5-history-bits", () => new Case("wavpack-dsd-fast-5-history-bits", WavPackCases.DsdFast()));
+
+        // WavPack with few passes, so that the work of a sample is not hidden by 16 passes: the cases that hold the 16 units a PCM sample.
+        Add("wavpack-0-passes-8-bit-zero-run", () => new Case("wavpack-0-passes-8-bit-zero-run", WavPackCases.FewPasses(0, 1)));
+        Add("wavpack-0-passes-16-bit-zero-run", () => new Case("wavpack-0-passes-16-bit-zero-run", WavPackCases.FewPasses(0, 2)));
+        Add("wavpack-0-passes-32-bit-zero-run", () => new Case("wavpack-0-passes-32-bit-zero-run", WavPackCases.FewPasses(0, 4)));
+        Add("wavpack-1-pass-8-bit-zero-run", () => new Case("wavpack-1-pass-8-bit-zero-run", WavPackCases.FewPasses(1, 1)));
+        Add("wavpack-1-pass-16-bit-zero-run", () => new Case("wavpack-1-pass-16-bit-zero-run", WavPackCases.FewPasses(1, 2)));
+        Add("wavpack-1-pass-32-bit-zero-run", () => new Case("wavpack-1-pass-32-bit-zero-run", WavPackCases.FewPasses(1, 4)));
 
         // WavPack: the committed fixtures the encoder wrote, repeated block for block.
         foreach ((string label, string file) in new[]
@@ -670,6 +691,30 @@ public sealed class DecoderWorkTests(ITestOutputHelper output)
                 random.NextBytes(payload);
                 byte[] dsd = [.. new byte[] { 4, 1, 5, 255 }, .. Enumerable.Repeat((byte)1, 32 * 256), .. payload];
                 all.Add(Block(flags, samples, i * (long)samples, WavPackBuilder.Sub(0x0E, dsd)));
+            }
+
+            return WavPackBuilder.Concat(all);
+        }
+
+        // Mono blocks of 196,607 samples of this many bytes whose bitstream codes one zero run, with this many passes of term 17.
+        public static byte[] FewPasses(int passes, int bytes, long target = Target)
+        {
+            const uint samples = 196_607;
+            long perSample = DecodeWork.ForSample(bytes) + StreamDecoder.WorkPerPcmSample + (passes * StreamDecoder.WorkPerPass);
+            int blocks = (int)(target / ((long)samples * perSample)) + 1;
+            uint flags = (Flags(1) & ~3u) | (uint)(bytes - 1);
+            var all = new List<byte[]>();
+            for (int i = 0; i < blocks; i++)
+            {
+                var parts = new List<byte[]>();
+                if (passes > 0)
+                {
+                    parts.Add(Terms([17], passes));
+                }
+
+                parts.Add(EntropyVariables(1, 0));
+                parts.Add(WavPackBuilder.Sub(0x0A, ZeroRun(samples)));
+                all.Add(Block(flags, samples, i * (long)samples, [.. parts]));
             }
 
             return WavPackBuilder.Concat(all);

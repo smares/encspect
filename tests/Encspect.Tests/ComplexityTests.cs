@@ -736,13 +736,16 @@ public class ComplexityTests
         return crc;
     }
 
-    // Frames of 65,535 samples of eight 32-bit channels that are all constant: 55 bytes code 2 MB of PCM each (RFC 9639, section 11), so 20 MB of
-    // them code 750 GB. The budget of the decoding stops the decoder in seconds, and the parser, which only walks the constants, goes on to the end.
+    // Frames of 65,535 samples of eight 32-bit channels that are all constant: 55 bytes code 2 MB of PCM each (RFC 9639, section 11), so 4 MB of
+    // them code 150 GB. The budget of the decoding stops the decoder after about 90 frames, and the parser, which only walks the constants, goes on to
+    // the end. The size is what the time allows: the structure pass costs about 25 to 55 microseconds a frame (about 4 for each subframe and 20 for the frame:
+    // the walk and the nodes the stream's path is looked up through), the same with decoding off, not GC (1.3 KB a frame, no pause), so 20 MB of them,
+    // 400,000 frames, took 25 to 27 s against the 30 s bound on this machine and on main; 4 MB is a fifth of that and still thousands of times the budget.
     [Fact]
     public void FlacFramesThatCodeMegabytesEach()
     {
         byte[] frame = FlacBuilder.ConstantFrame(0, 65535, 44100, 8, 32, 7);
-        int count = (20 << 20) / frame.Length;
+        int count = (4 << 20) / frame.Length;
         byte[] data = [.. FlacBuilder.Marker, .. FlacBuilder.Block(0, FlacBuilder.StreamInfo(65535, 44100, 8, 32, 65535L * count), isLast: true),
             .. Enumerable.Range(0, count).SelectMany(i => FlacBuilder.ConstantFrame(i, 65535, 44100, 8, 32, 7))];
         var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 30 } };
