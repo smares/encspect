@@ -14,7 +14,7 @@ internal static class LongInputs
     public static IReadOnlyList<string> Names { get; } =
     [
         "mpeg-layer3-lame", "mpeg-layer3-frames", "adts", "ac3", "eac3", "dts", "ogg-pages", "ogg-speex", "ogg-vorbis", "ogg-opus",
-        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "flac", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts", "matroska",
+        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "flac", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts", "matroska", "wav", "aiff",
     ];
 
     public static byte[] Build(string name) => name switch
@@ -43,8 +43,67 @@ internal static class LongInputs
         "mp4-eac3" => Mp4Samples(2060, "ec-3", FirstAc3Frame("ac3/external-ffmpeg-eac3-mono-48k.eac3")),
         "mp4-dts" => Mp4Samples(2060, "dtsc", FirstDtsFrame("dts/external-ffmpeg-mono-8k-64k.dts")),
         "matroska" => MatroskaBuilder.OpusBlocks(2060, 1000),
+        "wav" => RiffChunks(2060),
+        "aiff" => FormChunks(2060),
         _ => throw new ArgumentOutOfRangeException(nameof(name)),
     };
+
+    // A WAVE file whose format chunk is followed by many small chunks of a kind the parser names by their FourCC.
+    private static byte[] RiffChunks(int count)
+    {
+        byte[] format = [1, 0, 1, 0, 0x40, 0x1F, 0, 0, 0x80, 0x3E, 0, 0, 2, 0, 16, 0];
+        var body = new List<byte>(Encoding.ASCII.GetBytes("WAVEfmt "));
+        body.AddRange(BitConverter.GetBytes(format.Length));
+        body.AddRange(format);
+        for (int i = 0; i < count; i++)
+        {
+            body.AddRange(Encoding.ASCII.GetBytes("abcd"));
+            body.AddRange(BitConverter.GetBytes(4));
+            body.AddRange(BitConverter.GetBytes(i));
+        }
+
+        byte[] file = new byte[8 + body.Count];
+        Encoding.ASCII.GetBytes("RIFF").CopyTo(file, 0);
+        BinaryPrimitives.WriteInt32LittleEndian(file.AsSpan(4), body.Count);
+        body.CopyTo(file, 8);
+        return file;
+    }
+
+    // A WAVE file of 16-bit stereo PCM with the given number of bytes of samples.
+    public static byte[] WavWithSamples(int bytes)
+    {
+        byte[] format = [1, 0, 2, 0, 0x44, 0xAC, 0, 0, 0x10, 0xB1, 2, 0, 4, 0, 16, 0];
+        byte[] file = new byte[12 + 8 + format.Length + 8 + bytes];
+        Encoding.ASCII.GetBytes("RIFFxxxxWAVEfmt ").CopyTo(file, 0);
+        BinaryPrimitives.WriteInt32LittleEndian(file.AsSpan(4), file.Length - 8);
+        BinaryPrimitives.WriteInt32LittleEndian(file.AsSpan(16), format.Length);
+        format.CopyTo(file, 20);
+        Encoding.ASCII.GetBytes("data").CopyTo(file, 20 + format.Length);
+        BinaryPrimitives.WriteInt32LittleEndian(file.AsSpan(24 + format.Length), bytes);
+        new Random(7).NextBytes(file.AsSpan(28 + format.Length));
+        return file;
+    }
+
+    // An AIFF file whose Common Chunk is followed by many small chunks of a kind the parser names by their FourCC.
+    private static byte[] FormChunks(int count)
+    {
+        byte[] common = [0, 1, 0, 0, 0, 0, 0, 16, 0x40, 0x0E, 0xAC, 0x44, 0, 0, 0, 0, 0, 0];
+        var body = new List<byte>(Encoding.ASCII.GetBytes("AIFFCOMM"));
+        body.AddRange([0, 0, 0, (byte)common.Length]);
+        body.AddRange(common);
+        for (int i = 0; i < count; i++)
+        {
+            body.AddRange(Encoding.ASCII.GetBytes("abcd"));
+            body.AddRange([0, 0, 0, 4]);
+            body.AddRange([0, 0, (byte)(i >> 8), (byte)i]);
+        }
+
+        byte[] file = new byte[8 + body.Count];
+        Encoding.ASCII.GetBytes("FORM").CopyTo(file, 0);
+        BinaryPrimitives.WriteInt32BigEndian(file.AsSpan(4), body.Count);
+        body.CopyTo(file, 8);
+        return file;
+    }
 
     public static byte[] Repeat(string fixture, int times)
     {

@@ -1118,6 +1118,36 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // A WAVE file's samples are never read: the report of a file with 40 MiB of them is as large as that of one with 4 KiB, and a file with
+    // more chunks than the report lists keeps the nodes of the listed ones only.
+    [Fact]
+    public void TheSamplesOfAWaveFileCostNothing()
+    {
+        (Report small, long smallKept, long smallPeak) = Measure("small.wav", LongInputs.WavWithSamples(4096), LongInputs.WavWithSamples(4096));
+        (Report large, long largeKept, long largePeak) = Measure("large.wav", LongInputs.WavWithSamples(40 << 20), LongInputs.WavWithSamples(4096));
+
+        Assert.Equal(40 << 20 >> 2, large.Streams.Single().Samples);
+        output.WriteLine($"{smallKept} bytes kept for 4 KiB of samples, {largeKept} for 40 MiB, {smallPeak} and {largePeak} bytes peak");
+        Assert.True(largeKept < smallKept + 2_000, $"The report keeps {largeKept - smallKept} bytes more for 40 MiB of samples.");
+        Assert.True(largePeak < smallPeak + 100_000, $"The live heap grew by {largePeak - smallPeak} bytes more while 40 MiB of samples were skipped.");
+        GC.KeepAlive(small);
+        GC.KeepAlive(large);
+    }
+
+    [Theory]
+    [InlineData("wav")]
+    [InlineData("aiff")]
+    public void ManyChunksStayCompact(string kind)
+    {
+        byte[] data = LongInputs.Build(kind);
+        (Report report, long kept, long peak) = Measure($"chunks.{kind}", data, LongInputs.Build(kind));
+
+        output.WriteLine($"{kept / 2048} bytes kept and {peak / 2048} bytes peak per listed chunk");
+        Assert.True(kept < 2048 * 1_500L, $"The report keeps {kept / 2048} bytes per listed chunk.");
+        Assert.True(peak < 2048 * 2_000L, $"The live heap grew by {peak / 2048} bytes per listed chunk.");
+        GC.KeepAlive(report);
+    }
+
     // The bound is on the growth, from 50,000 to 200,000 frames, of the live heap that one reading inside the decoding of the last frame
     // sees above the heap the analysis ends with (report alive), so whatever decoding holds per frame for the length of the stream shows,
     // and nothing the analysis does after its last frame can. The reading is taken from the sink's Write of the last frame, on the

@@ -190,7 +190,16 @@ public class FormatDetectionTests
         Assert.Equal(["MPEG Audio"], analyzer.MatchFormats("MPEG audio"));
         Assert.Equal(["AAC"], analyzer.MatchFormats("aac"));
         Assert.Equal(["AC-3"], analyzer.MatchFormats("ac-3"));
-        Assert.Equal(["AAC", "AC-3", "ASF"], analyzer.MatchFormats("a"));
+        Assert.Equal(["AAC", "AC-3", "ASF", "AIFF"], analyzer.MatchFormats("a"));
+        foreach (string alias in new[] { "wav", "wave", "rf64" })
+        {
+            Assert.Equal(["WAV"], analyzer.MatchFormats(alias));
+        }
+
+        foreach (string alias in new[] { "aif", "aifc", "aiff" })
+        {
+            Assert.Equal(["AIFF"], analyzer.MatchFormats(alias));
+        }
         Assert.Equal(["AC-3"], analyzer.MatchFormats("ac3"));
         Assert.Equal(["MPEG Audio"], analyzer.MatchFormats("mp3"));
         Assert.Equal(["MP4"], analyzer.MatchFormats("m4a"));
