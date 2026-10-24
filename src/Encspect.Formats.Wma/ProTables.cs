@@ -3,6 +3,7 @@
 // the Huffman codebooks of Windows Media Audio Professional as {symbol, code length} pairs split in two
 // arrays, or lengths and symbols, in code order: the code of each entry follows from the lengths
 // (ff_vlc_init_from_lengths). The script's --check mode fails when this file differs from what it writes.
+// Format data: the codebooks and band tables the WMA bitstream defines, no code (docs/development.md, "Where the format tables come from").
 namespace Encspect.Formats.Wma;
 
 internal static class ProTables

@@ -1,3 +1,6 @@
+// Derived from libwavpack 5.6.0 (unpack_utils.c, unpack.c and open_utils.c), Copyright (c) 1998 - 2022 David Bryant, under the BSD 3-clause license.
+// The license text is in THIRD-PARTY-NOTICES.md.
+
 using Encspect.Core;
 using Syntax = Encspect.Formats.WavPack.Decode;
 

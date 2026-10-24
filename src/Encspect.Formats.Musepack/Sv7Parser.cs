@@ -1,3 +1,6 @@
+// Tables and reading derived from libmpcdec r495 (huffman.c and mpc_decoder.c), Copyright (c) 2005-2009 The Musepack Development Team, under the BSD 3-clause license.
+// The license text is in THIRD-PARTY-NOTICES.md.
+
 using System.Runtime.InteropServices;
 using System.Text;
 using Encspect.Core;
