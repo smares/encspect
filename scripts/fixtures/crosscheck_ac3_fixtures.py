@@ -461,6 +461,18 @@ COMPLETE_FRAMES = "MediaInfo counts the complete frames as the file size over th
 LEADING_JUNK = "MediaInfo derives the duration from the file size, junk included (File_Ac3.cpp, Streams_Finish), and the samples and stream size from it, where the analyzer counts the frames"
 DEPENDENT_FIRST = "MediaInfo adds the channels and bitrate of the dependent frame the stream starts with, which A/52 Annex E 2.3.1.2 places after an independent frame and the analyzer reports without it, and derives the samples, duration and stream size from that bitrate"
 
+VARYING_BLOCKS = ("MediaInfo's bitrate is the sum of the first frame sizes of the substreams over the number of blocks of the last frame it parsed (File_Ac3.cpp, Streams_Fill: "
+                  "frmsiz_Total * SamplingRate / 32 / numblks, numblkscod set by every frame), where the analyzer's averages over frames whose number of blocks varies; "
+                  "it derives the duration, samples and stream size from that bitrate and the file size")
+SEPARATE_DEPENDENT = ("MediaInfo ends a frame group at a dependent substream whose ID is not the number of independent substreams so far (File_Ac3.cpp, Core_Size_Get: "
+                      "substreamid != substreams_Count_Independant), so each dependent substream after the first is a frame of its own: 28 frames where the analyzer counts 4 program frames")
+EIGHTH_DEPENDENT = ("MediaInfo's sum of the first frame sizes stops at index 7 of the 9 it keeps (File_Ac3.cpp, Streams_Fill: Pos2<8; Core_Frame: index strmtyp+substreamid), "
+                    "which leaves out the eighth dependent substream")
+CORE_AND_DEPENDENT = ("MediaInfo names the stream AC-3 as soon as one frame has bsid 9 or lower (File_Ac3.cpp, Core_Frame: Formats[bsid<=0x09?0:1]++; Streams_Fill: Formats[0]?\"AC-3\":\"E-AC-3\"), "
+                      "where the analyzer reports the E-AC-3 stream that an AC-3 core with dependent frames makes (ETSI TS 102 366 J.1.5.2.2); its bitrate adds the core's nominal frame size and "
+                      "the dependent frame's over the last frame's number of blocks (Streams_Fill: frmsiz_Total), 272 kbps, where the analyzer gives the core's nominal 192 kbps; "
+                      "it calls that constant and derives the duration, samples and stream size from it and the file size")
+
 AUXILIARY_FIELD = "MediaInfo searches the frame for the container but parses it only if it starts before the auxiliary data field (File_Ac3.cpp, Core_Frame: BitsAtEnd<EMDF_RemainPos), which this fixture's container, inside that field, does not"
 
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
@@ -478,6 +490,11 @@ MEDIAINFO_READS_OTHERWISE = {
     "stream-changes": dict.fromkeys(["samples", "duration"], "MediaInfo describes the whole file as one stream and counts all six frames (9216 samples), where the analyzer's first stream is the first two 2/0 frames"),
     "truncated-in-skip": {**dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
                           **dict.fromkeys(["bitrate", "bitrate mode"], "MediaInfo takes the bitrate of the first frame (512 kbps, constant), where the analyzer's average over its four frames includes the cut one and varies")},
+    "coding-ac3-core-dependent": dict.fromkeys(["format", "bitrate", "bitrate mode", "samples", "duration", "stream size"], CORE_AND_DEPENDENT),
+    "coding-eac3-blocks": dict.fromkeys(["bitrate", "samples", "duration"], VARYING_BLOCKS),
+    "coding-eac3-dependent": dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], VARYING_BLOCKS + "; it calls the stream constant (Streams_Fill, \"CBR\" by default)"),
+    "coding-eac3-nine-frames": {**dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], VARYING_BLOCKS + "; " + EIGHTH_DEPENDENT),
+                                "frames": SEPARATE_DEPENDENT},
     "joc-auxiliary-data": {"joint object coding": AUXILIARY_FIELD},
     "joc-short": {"frames": "MediaInfo reads the one-byte JOC payload's joc_header and joc_info past the payload and then skips to the end of the data (File_Ac3.cpp, emdf_container: \"Problem during emdf_payload parsing, going to end directly\"), so it does not count that frame",
                   "joint object coding": "MediaInfo reads joc_header and joc_info without regard to the payload's size (File_Ac3.cpp, joc_header, joc_info), so the one-byte JOC payload gives it a second joc_num_objects, and it reports JOC only when all frames agree on one (HasJOC: joc_num_objects_map.size()==1)"},
@@ -529,7 +546,12 @@ def check_mediainfo(path, tally):
     check_object_audio(path, audio, report, stream, features, tally)
     tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
     tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
-    tally.compare("channel layout", mi.speakers(audio.get("ChannelLayout")), mi.normalized(stream["channelLayout"]))
+    layout = mi.speakers(audio.get("ChannelLayout"))
+    if audio.get("ChannelLayout") == "M M":
+        # acmod 0 is two independent mono channels, 1+1 (A/52 5.4.2.3), which the analyzer calls discrete; MediaInfo
+        # names them like a pair of mono speakers (File_Ac3.cpp, AC3_ChannelLayout_lfeoff[0]).
+        layout = ["discrete", "discrete"]
+    tally.compare("channel layout", layout, mi.normalized(stream["channelLayout"]))
     extra = audio.get("extra", {})
     first = next(f for f in frames if f not in dependent)
     bsi = mi.child(first, "Bit Stream Information")
@@ -538,8 +560,15 @@ def check_mediainfo(path, tally):
         return mi.leading_number(mi.value(frame, "Bit Stream Information", *names))
 
     tally.compare("bsid", extra.get("bsid"), str(max(field(f, "Bit Stream ID") for f in frames)))
-    acmods = [str(field(f, "Audio Coding Mode")) for f in [first] + dependent[:1]]
-    lfes = ["1" if mi.value(f, "Bit Stream Information", "HasLfe") else "0" for f in [first] + dependent[:1]]
+    # MediaInfo keeps these fields of the first frame of each substream, the independent one at index 0 and the dependent
+    # substream n at index 1 + n, and lists them up to the first index no frame fills (File_Ac3.cpp, Core_Frame:
+    # acmod_Max[...][strmtyp+substreamid]; Streams_Fill: break on -1).
+    chain = []
+    for f in dependent:
+        if mi.leading_number(mi.value(f, "Bit Stream Information", "Substream ID")) == len(chain):
+            chain.append(f)
+    acmods = [str(field(f, "Audio Coding Mode")) for f in [first] + chain]
+    lfes = ["1" if mi.value(f, "Bit Stream Information", "HasLfe") else "0" for f in [first] + chain]
     tally.compare("acmod", extra.get("acmod"), " / ".join(acmods))
     tally.compare("lfeon", extra.get("lfeon"), " / ".join(lfes))
     mode = mi.value(bsi, "Bit Stream Mode")
