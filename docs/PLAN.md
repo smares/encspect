@@ -39,6 +39,7 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 | Hosting and CI | GitHub, hosted runners | Covers Windows, macOS (Apple Silicon) and Linux on x64 and ARM64 |
 | Name | Encspect | Detenc and Framescope were already taken; Encspect was free |
 | License | MIT | Default in the .NET ecosystem; each dependency's license is still checked individually |
+| Licensed sources | Permissive only, with notices | Decoders follow specifications and permissively licensed reference code (BSD, MIT, Apache), with their notices in the source and in `THIRD-PARTY-NOTICES.md` (libwavpack is listed); nothing is ported from LGPL or GPL code, so TrueHD and MLP, and later TTA and WMA Lossless, are built clean-room from a code-free format description, with the reference tool only as a black-box cross-check, and Monkey's Audio follows its BSD-licensed SDK, not FFmpeg; ALAC will follow Apple's Apache 2.0 source (docs/design/decoders.md, decision 10) |
 
 ## Architecture
 
