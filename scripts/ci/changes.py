@@ -72,6 +72,13 @@ AREAS = {
         "scripts": ["crosscheck_flac_fixtures.py"],
         "globs": ["scripts/fixtures/make_*flac*", "scripts/fixtures/flac_*"],
     },
+    "wav-crosscheck": {
+        "projects": ["Encspect.Formats.Wav", "Encspect.Formats.Aiff"],
+        "fixtures": ["wav", "aiff"],
+        "scripts": ["crosscheck_wav_fixtures.py"],
+        "globs": ["scripts/fixtures/make_wav_fixtures.py", "scripts/fixtures/make_external_wav_fixtures.py", "scripts/fixtures/make_aiff_fixtures.py",
+                  "scripts/fixtures/make_external_aiff_fixtures.py", "scripts/fixtures/aiff_model.py", "scripts/fixtures/wav_model.py"],
+    },
     "asf-crosscheck": {
         "projects": ["Encspect.Formats.Asf", "Encspect.Formats.Wma"],
         "fixtures": ["asf"],

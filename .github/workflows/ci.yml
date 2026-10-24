@@ -64,6 +64,7 @@ jobs:
       ac3-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ac3-crosscheck }}
       dts-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.dts-crosscheck }}
       matroska-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.matroska-crosscheck }}
+      wav-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.wav-crosscheck }}
     steps:
       # Two commits deep: on a pull request the checkout is the merge commit, and its first parent is the base.
       # Only the scripts are needed in the working tree; the diff reads names, not contents.
@@ -470,6 +471,13 @@ jobs:
           python3 scripts/fixtures/make_wavpack_fixtures.py
           python3 scripts/fixtures/make_external_wavpack_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built WAV and AIFF fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_wav_fixtures.py
+          python3 scripts/fixtures/make_external_wav_fixtures.py --manifests-only
+          python3 scripts/fixtures/make_aiff_fixtures.py
+          python3 scripts/fixtures/make_external_aiff_fixtures.py --manifests-only
+
       - name: Regenerate the hand-built FLAC fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_flac_fixtures.py
@@ -842,6 +850,27 @@ jobs:
       - name: Cross-check the FLAC fixtures
         run: python3 scripts/fixtures/crosscheck_flac_fixtures.py
 
+  wav-crosscheck:
+    name: WAV and AIFF fixtures agree with FFmpeg and MediaInfo
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.wav-crosscheck == 'true'
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts (the manifests were checked with 6.1.1 and 26.01).
+      - name: Install ffmpeg and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+
+      - name: Cross-check the WAV and AIFF fixtures
+        run: python3 scripts/fixtures/crosscheck_wav_fixtures.py
+
   asf-crosscheck:
     name: ASF and WMA fixtures agree with ffprobe, ffmpeg and MediaInfo, and the WMA tables with FFmpeg
     runs-on: ubuntu-26.04
@@ -1105,6 +1134,7 @@ jobs:
       - ac3-crosscheck
       - dts-crosscheck
       - matroska-crosscheck
+      - wav-crosscheck
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v5

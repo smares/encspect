@@ -31,6 +31,10 @@ lossless codings the decoder design cites):
   libavformat/mlpdec.c, movenc.c, isom_tags.c and matroska.c (with mov.c and matroskadec.c above): the TrueHD and MLP decoder, encoder,
   parser, bitstream filter and container handling that docs/design/truehd-format.md is written from.
 
+- libavformat/riff.c, riff.h, riffdec.c, riffenc.c, wavdec.c and wavenc.c, aiff.c, aiff.h, aiffdec.c and aiffenc.c: the RIFF tag tables, the WAVEFORMATEX
+  reader and writer, the WAV and RF64 demuxer and muxer and the AIFF and AIFF-C demuxer and muxer the WAV and AIFF fixtures' models and
+  manifests are checked against (placeholder sizes of a pipe, the JUNK chunk of -rf64 auto, the ID3 chunk, the packet-based duration of ima4).
+
 The release is the one Ubuntu 24.04's ffmpeg 6.1.1 is built from, which the cross-checks run.
 """
 
@@ -65,6 +69,8 @@ FILES = [
     "libavformat/mlpdec.c", "libavformat/movenc.c", "libavformat/isom_tags.c", "libavformat/matroska.c",
     "libavcodec/alac.c", "libavcodec/alac_data.c", "libavcodec/alac_data.h",
     "libavformat/matroskadec.c",
+    "libavformat/riff.c", "libavformat/riff.h", "libavformat/riffdec.c", "libavformat/riffenc.c", "libavformat/wavdec.c", "libavformat/wavenc.c",
+    "libavformat/aiff.c", "libavformat/aiff.h", "libavformat/aiffdec.c", "libavformat/aiffenc.c", "libavformat/pcm.c",
 ]
 
 
