@@ -1,6 +1,6 @@
 # Monkey's Audio
 
-Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monkey's Audio. The parser reads every version of the format; the decoder, which verifies the frame CRCs, reads the version that every recent encoder writes (see "Decoding").
+Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monkey's Audio. The parser reads every version of the format; the decoder, which verifies the frame CRCs, reads versions 3.93 to 3.99 and 4.11 (see "Decoding"); the versions before 3.93 come next.
 
 ## What is read
 
@@ -8,11 +8,12 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
   - the descriptor: the signature (`MAC ` for integer audio, `MACF` for floating point), the file version, the version of the program that wrote the file, the sizes of the descriptor, the header, the seek table, the WAV header data, the frame data and the terminating data, and the MD5;
   - the header: the compression level, the format flags (each one named), the samples in a frame, the samples in the final frame, the number of frames, the bits per sample, the channels and the sample rate.
 - Files of earlier versions start with one header of 32 bytes (a peak level and a count of seek elements may follow it) and have no descriptor and no MD5. The parser reads them the same way, down to version 3.80, and reports them with `monkeys-audio.old-format`.
+- Where a frame starts with a CRC word: in every file of version 3.93 and later whatever the format flags say, and in an older file only when its CRC flag is set (`Old/UnMACOld.cpp`). All 32 bits of the word are the CRC up to version 3.82, and bit 31 flags the special frame codes from 3.83. An older file without the flag starts each frame with a checksum of 30 bits, Rice-coded, that is no CRC: the parser reads no CRC and no special codes there, and declares the checksum as "frame checksum" (stored, never compared).
 - The **seek table**: one 32-bit offset for each frame. Entries are made 64 bits wide where a value is lower than the one before it, as the SDK does for files over 4 GiB.
 - The **WAV header data** (the header of the compressed WAV file, kept so that decompressing gives it back) and the **terminating data** (what followed the samples in the WAV file, such as a LIST chunk). The terminating data is a region of its own in the tree.
 - Every **frame**, found by the seek table:
   - the samples it holds (the header's count, the final frame's own);
-  - the stored CRC of the decoded audio (31 bits) and, where the top bit of the CRC says so, the special frame codes: silent left channel, silent right channel, pseudo stereo;
+  - the stored CRC of the decoded audio (31 bits) and, where the top bit of the CRC says so, the special frame codes: silent left channel (the only channel of a mono file, where this is the one code that counts), silent right channel, pseudo-stereo;
   - the bytes it occupies. The file stores the audio in 32-bit words with the bytes of each word reversed, so a frame that starts or ends inside a word covers its bytes in up to three ranges (`Node.Ranges`), and its node covers whole words.
 - The descriptor **MD5** is computed in every analysis, over the WAV header data, the frame data and the terminating data, the header and the seek table, and compared with the stored one.
 - The tree lists the first 1,048,576 frames in detail (`monkeys-audio.frames-not-listed`); later frames are read, checked and shown as one stretch. A file of any length costs a bounded amount of memory.
@@ -39,8 +40,23 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 ## Decoding
 
 - The decoder (`Encspect.Formats.MonkeysAudio.Decoding`, ID `monkeys-audio`) runs when the front end asks for it: `--verify` on the command line, "Verify Audio" in the detail window. The tree is the same either way.
-- It decodes files of version 3.99 and 4.11 (the format of every file the SDK has written since 3.99) at all five levels, with 8, 16, 24 and 32 bits per sample, floating point (`MACF`) and 1 to 32 channels. The parser's code reads the descriptor, header, seek table and the start of each frame; the decoder adds the range decoder, the predictors with their neural network filters, the undoing of the mid/side coding of channel pairs, the silent and pseudo-stereo frames and the CRC over the decoded audio.
-- Two checksums are declared and tallied:
+- It decodes files of versions 3.93 to 3.99 and 4.11 at all five levels (the predictor of 3.93 and 3.94 has no insane level), with 8, 16, 24 and 32 bits per sample (the old header's flags name 8, 16 and 24 only), floating point (`MACF`) and 1 to 32 channels. The parser's code reads the descriptor or header, the seek table and the start of each frame; the decoder adds the range decoder, the predictors with their neural network filters, the undoing of the mid/side coding of channel pairs, the silent and pseudo-stereo frames and the CRC over the decoded audio.
+- What each version changes, from the SDK 13.42 (the decoder follows its code, version by version):
+
+| File version | Header | Range coder | Predictor | Neural network filters |
+|---|---|---|---|---|
+| 3.99, 4.11 | descriptor | current | current | new delta |
+| 3.98 | descriptor | 3.91 to 3.98 | current | new delta |
+| 3.95 to 3.97 | one header | 3.91 to 3.98 | current | old delta |
+| 3.93, 3.94 | one header | 3.91 to 3.98 | one filter of four taps | old delta |
+
+  From 3.95 on the two channels of a pair are predicted with each other's values, the second one's value coded first; in 3.93 and 3.94 each channel is predicted on its own, the first one's value coded first (`APEDecompressCore.cpp`).
+
+- Before version 3.93 the SDK uses another decoder (`Old/UnMACOld.cpp`, with its own predictors and, up to 3.89, its own bit coding). It is a separate piece of work and comes next: those files are parsed in full and reported with `decode.not-possible`.
+- References. The versions from 3.98 on have no public file this repository could hold; the checks are these:
+  - `legacy-*` fixtures: files of 3.93 to 3.98 written by `scripts/fixtures/monkeys_audio_legacy.py`, an encoder written as the inverse of the SDK's decoder. The SDK 13.42 decodes those versions and does not write them, so the files are held to its decoder: `mac -V` decodes every frame with the decoder of the version and compares the CRC, `mac -d` gives the samples, and FFmpeg decodes the same ones. They cover every level (insane from 3.95 on), 8, 16 and 24 bits, mono and stereo, silent and pseudo-stereo frames, loud noise, several frames and the old header's peak level.
+  - A real file of 3.97, `sh3.ape` of the FFmpeg sample archive (level normal, with CRCs), downloaded and pinned by SHA-256 (`tests/conformance/monkeys-audio-samples.json`, `check_monkeys_audio_samples.py`): `mac -V` verifies it, its samples from `mac -d` equal the decoder's, and the analyzer verifies all three frame CRCs. The archive has no other file of these versions that is small enough to download in every run.
+- Two checksums are declared and tallied (a file of the old header without the CRC flag has "frame checksum" in place of the second):
 
 | Checksum | Covers | Counts as covering all of the audio when |
 |---|---|---|
@@ -50,14 +66,16 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 - The frame CRC is the CRC-32 of the decoded samples in WAV layout, inverted and shifted right by one bit. A frame whose CRC differs is reported with `monkeys-audio.frame-crc-mismatch`; the samples are kept as decoded.
 - A file is verified when the MD5 holds and every frame CRC holds. The MD5 alone, which needs no decoding, leaves a file unverified until the CRCs are compared.
 - A frame the decoder cannot read (its coded data ends before the samples do, or holds a value the model cannot code) is reported with `decode.frame-invalid` and counts as not decoded; the decoding goes on with the next frame, since every frame starts afresh.
-- A frame of more than 64 MiB is not decoded (`monkeys-audio.frame-not-decoded`): the analyzer reads a frame into memory to decode it.
+- A frame of more than 64 MiB is not decoded (`monkeys-audio.frame-not-decoded`): the analyzer reads a frame into memory to decode it. A frame the file holds only in part is measured by the bytes it holds, not by what the seek table or the descriptor states.
 - The decoder is cooperative: it charges its work to the host's budget by the chunk of 4,096 samples (see below) and checks the cancellation token between chunks. It holds one frame's bytes, the samples of one chunk and the filter state of the frame, nothing for each frame.
-- **Files it does not decode** (`decode.not-possible`, with the reason): files of version 3.98 and before, and files whose header states a compression level other than 1000 to 5000, other than 1 to 32 channels, other than 8, 16, 24 or 32 bits per sample, or no samples in a frame or more than the SDK accepts. The frames of version 3.93 to 3.98 are coded with another range coder, an older predictor and a different delta filter, and files before 3.93 with the SDK's older decoder. The SDK 13.42 encoder writes none of them and no tool in reach writes a reference file to hold the decoder to, so these versions are parsed and not decoded.
-- **The 24-bit retry.** The SDK decodes a frame of 24-bit audio once more in a second mode when its CRC fails, for files that 2019 to 2022 versions wrote (`APEDecompressCore.cpp`). The decoder does the same. No fixture exercises it: the SDK 13.42 encoder never writes such a file, so this path is written from the SDK's code and verified by nothing.
+- **Files it does not decode** (`decode.not-possible`, with the reason): files before version 3.93, files of 3.93 and 3.94 at the level insane (the SDK's predictor of those versions has none), and files whose header states a compression level other than 1000 to 5000, other than 1 to 32 channels, other than 8, 16, 24 or 32 bits per sample, or no samples in a frame or more than the SDK accepts.
+- **The 24-bit retry.** Monkey's Audio 5.01 to 8.51 (November 2019 to August 2022) wrote 24-bit files with the first stage of the predictor summed in 64 bits, which the SDK's decoder undoes in an "interim mode" it enters when a frame of a 24-bit file fails its CRC (`APEDecompressCore.cpp`, `Interim.cpp`). The decoder does the same: it holds the samples of such a frame until the CRC has passed, decodes it again in the interim mode when it does not, and keeps the mode for the next frame only if the CRC passes in it. This differs from the SDK, which keeps the mode for the rest of the file: its tools stop at the first bad frame, but the analyzer goes on, and one damaged frame must not make the frames after it fail. A frame that fails in both modes gives the samples of the normal mode. `external-interim-24-stereo` is a file of that period, written by `mac` built with the one line of its encoder changed back (`make_interim_monkeys_audio_fixture.py`); the unchanged `mac` 13.42 verifies it through the same retry. `built-24-bit-frame-crc-changed` is a normal file of four loud 24-bit frames with a damaged CRC in the second: one mismatch, and the frames after it verify.
 - **Seven channels.** The SDK's own decoder skips the seventh channel of a seven-channel file (`Prepare.cpp`), so its tool fails to verify such a file (error 1009). The decoder follows the SDK, and the frame CRC of the file differs.
+- **Samples of a pair and of the center.** A file of 16 bits and six channels or more has its channels 2 and 3 checked for 16 bits like the samples of a pair, as the SDK does; a value that does not fit makes the frame invalid.
 - **The work a frame is charged:**
   - for each sample of each channel the frame outputs, the fixed work of the sample for its width (`DecodeWork.ForSample`);
   - for each channel that is coded, 192 units a sample for the range decoder, 48 for the predictor, and one unit for every two taps of the neural network filters of the level (none at fast, 16 taps at normal, 64 at high, 288 at extra high and 1,552 at insane);
+  - for each channel of a frame flagged silent, which codes nothing, 40 units a sample more: the zeros still go through the channel pairing, the byte conversion, the CRC and the sink;
   - the charge is made for each chunk of 4,096 samples, so a frame is never charged more than the chunk before it is decoded.
   - A file may be charged 8,192 units for each of its bytes (`WorkPerInputByte`) before `decode.limit` ends the decoding. The weights, the measured time for a unit and how they were chosen are in "As built: Monkey's Audio" of [the decoder design](../design/decoders.md).
 
@@ -75,10 +93,12 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 - Checksums: `monkeys-audio.md5-mismatch`, `monkeys-audio.md5-not-compared`, `monkeys-audio.frame-crc-mismatch` (decoding), `monkeys-audio.frame-not-decoded` (decoding).
 - Encoder: `monkeys-audio.writer-claim-differs`.
 
+The descriptor MD5 is worked out over the layout the descriptor states, as `VerifyFileW2` reads it, with the header found at the end of a descriptor of at least 52 bytes. For a descriptor that states fewer than 52 bytes for itself, the SDK is not consistent: its quick verify reads the header from the stated offset (and reports error 1009 on `built-descriptor-bytes-smaller.ape`), while its decoder reads the header after 52 bytes. The analyzer follows the decoder's layout, the one the frames are found from, and reports `monkeys-audio.descriptor-size`.
+
 ## Not covered
 
 - Playback and any output other than the checksum comparison (the PCM sink is for tests and a later export).
-- Decoding of files before version 3.99 (see "Decoding"); they are parsed in full.
+- Decoding of files before version 3.93 (see "Decoding"); they are parsed in full.
 - The channel positions of files with more than two channels (the WAV header data's channel mask).
 - The APEv2 tag's own content beyond what the tag parser reads; the Monkey's Audio link files (`.apl`).
 - Monkey's Audio inside other containers (Matroska, MP4): none of the container parsers routes to it.
