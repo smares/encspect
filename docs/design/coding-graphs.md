@@ -396,7 +396,7 @@ No parser yet: it comes with its decoder in step 3 of the [decoder design's roll
 
 ### TTA
 
-No parser yet: step 3 of the [decoder design's rollout](decoders.md#rollout) brings a format parser and a "tta" codec parser for Matroska, without a decoder. It reads every frame to compare the frame CRC.
+The parser is built (step 3 of the [decoder design's rollout](decoders.md#rollout), [As built](decoders.md#as-built-in-step-3-tta)): a format parser and a "tta" codec parser for Matroska, without a decoder. It reads every frame to compare the frame CRC, and reports the bitrate per frame and per second as the other lossless formats do; the compression ratio below is not built, and the series carry no concept yet.
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -767,7 +767,7 @@ Bytes added per unit to what the report keeps now, against the bounds `MemoryTes
 | WMA standard | 19 bytes per block: block sizes 1, mid/side flag 1, noise substitution 1, coded bandwidth with its own x 16 | not measured | not yet set |
 | FLAC stereo | 48 bytes: stereo coding 1; subframe types, fixed predictor orders, residual coding method, partition orders and wasted bits 3 each (2 subframes and a count byte); linear predictor order 8 and its own x 8; coefficient precision 8 (the same x); compression ratio 8. A variable block-size stream adds block size 8 | a 56-byte entry and 16 bytes of the bitrate graph per frame, and the subframe records of the first 4,096 frames (`ManyFlacFramesStayCompact`) | 200, 260 |
 | Monkey's Audio | 9 bytes per frame: stereo coding or silent frames 1, compression ratio 8; a frame lasts 1.67 s or more at 44,100 Hz | parser not built | not yet set |
-| TTA | 8 bytes per frame: compression ratio; a frame lasts about 1.045 s | parser not built | not yet set |
+| TTA | 8 bytes per frame: compression ratio; a frame lasts about 1.045 s | parser built without the compression ratio (`ManyTtaFramesStayCompact` measures 56 kept and 80 peak bytes per frame in all) | not yet set |
 
 - Every addition fits the bounds as they are, with two things to measure, not assume: AAC in MP4 (13 added to the plan's 91 bytes per access unit, measured on a 195 MB M4A, against a bound of 110 per sample; `MemoryTests`' own MP4 test measures about 60 per sample on linux-x64, so the margin there is larger, and the AAC pull request states which of the two figures it measures against) and E-AC-3 with dependent frames, for which the AC-3 pull request adds a memory test whose bound is its measured figure plus this addition. No existing bound is raised. If AAC in MP4 reaches 110, the AAC pull request says so and the lead decides; nothing is raised silently.
 - FLAC adds the most of the lossless formats, and records its subframe series and two numeric series while reading, so its peak grows by them, and by the copy of the numeric values into arrays at the end that the memory test's comment describes for the bitrate. The FLAC pull request measures both figures against 200 and 260 rather than assuming them.
