@@ -26,6 +26,7 @@ internal sealed class Analysis
     private readonly bool[] _isIntervalOpen = new bool[ParsedSubstreams];
     private readonly int[] _presentationChannels = new int[ParsedSubstreams];
     private readonly WalkResult?[] _walks = new WalkResult?[UnitLayout.MaxSubstreams];
+    private readonly int[] _listSizes = new int[ParsedSubstreams];
     private MajorSync? _sync;
     private MajorSync? _firstSync;
     private int _count;
@@ -33,6 +34,7 @@ internal sealed class Analysis
     private bool _isSynced;
     private bool _hasSynced;
     private bool _isGapPending;
+    private bool _isAfterEndOfStream;
     private long _fullBytes;
     private long _sparseBytes;
     private int _sparseUnits;
@@ -216,7 +218,14 @@ internal sealed class Analysis
             status |= UnitStatus.Unsynchronized;
             R.Entries.Add(new Entry { Kind = EntryKind.Unit, Status = status, Offset = offset, Header = header });
             Units++;
-            if (_hasSynced)
+            if (_hasSynced && _isAfterEndOfStream)
+            {
+                HasGap = true;
+                _isGapPending = true;
+                Findings.Add(Severity.Info, "truehd.units-after-end-of-stream", () => Nodes.Unit(records, index), count =>
+                    $"{(count == 1 ? "An access unit follows" : $"{count} access units follow")} an end of stream marker without a major sync, so {(count == 1 ? "it" : "they")} cannot be read; the first is at 0x{offset:X}.");
+            }
+            else if (_hasSynced)
             {
                 HasGap = true;
                 _isGapPending = true;
@@ -241,6 +250,7 @@ internal sealed class Analysis
             syncLength = (byte)(layout.Sync?.Length ?? MajorSync.MinLength);
             if (layout.Sync is { } sync)
             {
+                SyncUnits++;
                 if (!sync.IsCrcValid)
                 {
                     status |= UnitStatus.SyncCrcFails;
@@ -342,6 +352,13 @@ internal sealed class Analysis
             R.CutLengths[index] = bytes.Length;
         }
 
+        if (isReadable && (overall & UnitStatus.HasEndOfStream) != 0)
+        {
+            // After an end of stream marker the stream continues only at a major sync.
+            Desync();
+            _isAfterEndOfStream = true;
+        }
+
         Units++;
         if (_hasSynced)
         {
@@ -400,7 +417,6 @@ internal sealed class Analysis
     private void NewSync(MajorSync sync, long offset, int index)
     {
         Records records = R;
-        SyncUnits++;
         if (_sync is { } before && !before.SameStreamAs(sync))
         {
             Findings.Add(Severity.Info, "truehd.stream-parameters-change", () => Nodes.MajorSyncOf(records, index), count =>
@@ -439,6 +455,11 @@ internal sealed class Analysis
         _isMlp = !sync.IsTrueHd;
         _isSynced = true;
         _hasSynced = true;
+        _isAfterEndOfStream = false;
+        for (int k = 0; k < ParsedSubstreams; k++)
+        {
+            _listSizes[k] = Presentation.MaxListSize(sync, k, sync.SubstreamCount);
+        }
         foreach (SubstreamState state in _states)
         {
             state.Forget();
@@ -476,6 +497,7 @@ internal sealed class Analysis
 
         bool isReadable = true;
         bool isDamaged = false;
+        Span<int> pending = stackalloc int[ParsedSubstreams];
         var verdicts = new byte[count];
         for (int k = 0; k < count; k++)
         {
@@ -540,7 +562,7 @@ internal sealed class Analysis
             ReadOnlySpan<byte> content = hasCheck && data.Length >= 2 ? data[..^2] : hasCheck ? default : data;
             Span<int> planes = lent.IsEmpty ? default : lent.Narrow.Slice(k * SubstreamReader.PlanesPerSubstream * n, SubstreamReader.PlanesPerSubstream * n);
             SubstreamState state = _states[k];
-            WalkResult walk = SubstreamWalk.Run(state, content, hasCheck, !sync.IsTrueHd, n, Presentation.MaxListSize(sync, k, count), planes, n);
+            WalkResult walk = SubstreamWalk.Run(state, content, hasCheck, !sync.IsTrueHd, n, _listSizes[k], planes, n);
             _walks[k] = walk;
             verdicts[k] = verdict;
             if (!walk.IsRead)
@@ -578,9 +600,9 @@ internal sealed class Analysis
                 }
 
                 _isIntervalOpen[k] = true;
-                if (_presentationChannels[k] == 0)
+                if (pending[k] == 0)
                 {
-                    _presentationChannels[k] = restart.LastMatrixChannel + 1;
+                    pending[k] = restart.LastMatrixChannel + 1;
                 }
 
                 CheckAssignments(sync, k, count, restart, index, offset);
@@ -598,6 +620,15 @@ internal sealed class Analysis
         int outSamples = 0;
         if (isReadable)
         {
+            // The first restart header of a unit that could be read names a presentation, as the decoder's first does.
+            for (int k = 0; k < read; k++)
+            {
+                if (_presentationChannels[k] == 0)
+                {
+                    _presentationChannels[k] = pending[k];
+                }
+            }
+
             WalkResult top = _walks[read - 1]!;
             outSamples = top.OutputSamples;
             if (top.IsDropMoreThanHeld)
@@ -723,8 +754,15 @@ internal sealed class Analysis
         }
 
         var result = new List<byte>();
-        foreach ((int start, int end) in runs)
+        foreach ((int rawStart, int rawEnd) in runs)
         {
+            int start = Math.Min(rawStart, unit.Length);
+            int end = Math.Min(rawEnd, unit.Length);
+            if (end <= start)
+            {
+                continue;
+            }
+
             result.Add((byte)(start >> 8));
             result.Add((byte)start);
             result.Add((byte)((end - start) >> 8));
@@ -772,7 +810,7 @@ internal sealed class Analysis
         };
         Severity severity = isUnsupported ? Severity.Info : Severity.Warning;
         Findings.Add(severity, code, () => Nodes.SubstreamOf(records, index, k), count =>
-            $"Substream {k} of the access unit at 0x{offset:X} cannot be read: {SubstreamFaults.Describe(fault)}{(count > 1 ? $"; {count - 1} more substreams fail the same way" : string.Empty)}{(isUnsupported ? string.Empty : "; it is read again from its next restart header")}.", fault.ToString());
+            $"Substream {k} of the access unit at 0x{offset:X} cannot be read: {SubstreamFaults.Describe(fault)}{(count > 1 ? $"; {count - 1} more substreams fail the same way" : string.Empty)}{(isUnsupported ? string.Empty : "; the stream is read again from the next major sync")}.", fault.ToString());
     }
 
     // Findings about what a substream read says without breaking a rule: padding, reserved use and the block size check.
@@ -806,19 +844,16 @@ internal sealed class Analysis
         int channels = restart.LastMatrixChannel + 1;
         Speaker[]? list = Presentation.Resolve(sync, k, count, channels);
         int mask = 0;
-        bool isDuplicate = false;
         for (int m = 0; m < channels; m++)
         {
-            int bit = 1 << restart.Assignment(m);
-            isDuplicate |= (mask & bit) != 0;
-            mask |= bit;
+            mask |= 1 << restart.Assignment(m);
         }
 
-        if (list is null || isDuplicate || restart.Assignment(channels - 1) >= channels && mask != (1 << channels) - 1)
+        if (list is null || mask != (1 << channels) - 1)
         {
             string why = list is null
                 ? $"none of the channel lists the major sync gives for substream {k} has {Counts.Of(channels, "channel", "channels")}"
-                : "two matrix channels share a position";
+                : "the matrix channels do not take each position of the list once";
             Findings.Add(Severity.Info, "truehd.channel-assignment", () => Nodes.SubstreamOf(records, index, k), _ =>
                 $"The restart header in substream {k} of the access unit at 0x{offset:X} places {Counts.Of(channels, "channel", "channels")} in a channel list, but {why}; the channels are reported in the order of the matrix channels.");
         }

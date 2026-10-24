@@ -30,6 +30,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     private readonly long[] _failed = new long[Substreams];
     private readonly int[] _presentationChannels = new int[Substreams];
     private readonly bool[] _isFailureReported = new bool[Substreams];
+    private readonly int[] _listSizes = new int[Substreams];
     private readonly int[] _held = new int[Substreams];
     private readonly int[] _output = new int[Substreams];
     private readonly bool[] _ended = new bool[Substreams];
@@ -176,6 +177,11 @@ internal sealed class StreamDecoder : IFrameDecoder
 
         _sync = sync;
         _isSynced = true;
+        for (int k = 0; k < Substreams; k++)
+        {
+            _listSizes[k] = Presentation.MaxListSize(sync, k, sync.SubstreamCount);
+        }
+
         foreach (SubstreamState state in _states)
         {
             state.Forget();
@@ -199,7 +205,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     private void DecodeSubstream(int k, ReadOnlySpan<byte> content, bool hasCheck, in MajorSync sync, int count, int n, Span<int> planes, bool isReplay, long substreamOffset)
     {
         SubstreamState state = _states[k];
-        var reader = new SubstreamReader(content, state, !sync.IsTrueHd, n, Presentation.MaxListSize(sync, k, count), planes, n, isReplay);
+        var reader = new SubstreamReader(content, state, !sync.IsTrueHd, n, _listSizes[k], planes, n, isReplay);
         while (true)
         {
             if (!reader.ReadBlock(out BlockInfo block))

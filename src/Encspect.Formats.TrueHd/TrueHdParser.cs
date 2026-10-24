@@ -152,7 +152,7 @@ public sealed class TrueHdParser : IFormatParser
     }
 
     // Reads the units from the start of the data. first: where the first access unit with a usable major sync is, or -1.
-    private static void Run(Analysis analysis, Source source, long first, CancellationToken cancellation)
+    internal static void Run(Analysis analysis, Source source, long first, CancellationToken cancellation)
     {
         long end = source.End;
         long position = source.Start;
@@ -195,7 +195,9 @@ public sealed class TrueHdParser : IFormatParser
                 ReadOnlyMemory<byte> unit = source.Slice(position, available)[..available];
                 bool isCut = available < length;
                 bool isLeading = position < first;
-                bool isAccepted = isCut || isLeading || position + length == end || analysis.Probe(unit.Span) == UnitProblems.None || LooksLikeUnit(analysis, source, position + length, end);
+                // A unit the data cuts short is believed only where its header and directory hold; a unit whose own structure breaks only where
+                // another unit follows it.
+                bool isAccepted = isLeading || analysis.Probe(unit.Span) == UnitProblems.None || (!isCut && (position + length == end || LooksLikeUnit(analysis, source, position + length, end)));
                 if (isAccepted)
                 {
                     if (skipFrom >= 0)
