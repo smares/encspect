@@ -1387,6 +1387,18 @@ What the WavPack pull request implements: the decoder (`Encspect.Formats.WavPack
   - The codec parser lists only the first 256 packets, so a decode finding for a later one has no node to point to.
 - **Not verified:** the MediaInfo checks of the new fixtures (the local MediaInfo is 24.01, the cross-check asserts 26.01).
 
+## As built in step 3: WAV and AIFF
+
+What the pull request implements: the WAV and AIFF format parsers (`Encspect.Formats.Wav`, `Encspect.Formats.Aiff`), registered in `DefaultParsers.Formats`. Neither has a decoder: PCM stores no checksum over decoded audio, so there is nothing to verify, and `--verify` says `decode.no-decoder` as for any format without one. The parsers are described in [wav.md](../formats/wav.md) and [aiff.md](../formats/aiff.md).
+
+- **Why no decoder:** the samples are the data. A decoder would copy them to the sink and compare them with nothing. The streams of PCM, floating-point, A-law and mu-law report their figures from the headers, and a data chunk of MPEG audio, AC-3 or DTS goes to that codec's parser through `ParseStream`, which has its own decoder where there is one.
+- **Placeholders:** FFmpeg writing to a pipe leaves `0xFFFFFFFF` in the RIFF and `data` sizes. The parsers read the data to the end of the file and say so in a finding; the stream's duration then comes from the bytes present. MediaInfo 26.01 reports an absurd duration for such a file, so the cross-check skips the fixture.
+- **RF64:** the 32-bit `0xFFFFFFFF` markers are resolved from `ds64`, whose table of chunk sizes lists at most 1,024 entries in the report.
+- **AIFF-C packed codings:** the Common Chunk's frame count of `ima4` counts packets of 64 samples (34 bytes for each channel); the parser reports the duration from it times 64, as FFmpeg's `aiffdec.c` does, and MediaInfo 26.01 does not. For GSM, ACE, MACE and unlisted types the specification does not say what the count counts, so the stream has no length (`aiff.length-unknown`).
+- **Writer:** the only writer evidence is `LIST INFO` `ISFT` in a WAVE file; AIFF has none.
+- **Tags:** an ID3v2 tag in a chunk is the chunk's and goes to the tag parser; a tag after the RIFF or FORM chunk is the host's. `DeclaredEnd` makes a candidate that starts inside the chunk a `tag.near-miss` rather than a trailing tag.
+- **Not verified:** the cross-check was run locally with FFmpeg 6.1.1 and MediaInfo 26.01; CI runs FFmpeg 8.0.1. sox was not used.
+
 ## As built: the work budget
 
 What the pull request for decision 8 implements: the contract, the host's count and bound, the work of FLAC and WavPack, and `DecoderWorkTests`. [flac.md](../formats/flac.md) and [wavpack.md](../formats/wavpack.md) describe the charges from the user's side; [development.md](../development.md) describes the tests.

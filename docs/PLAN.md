@@ -386,6 +386,21 @@ DTS Coherent Acoustics is a format parser of its own (`src/Encspect.Formats.Dts`
 
 Not covered: the subframes and the extensions' audio data, the XLL band data and the parameters of its bands, DTS:X beyond its sync word, and the core's optional information beyond its flags.
 
+## Phase 3: WAV and AIFF
+
+WAV (`src/Encspect.Formats.Wav`, "WAV") and AIFF (`src/Encspect.Formats.Aiff`, "AIFF") are format parsers of their own, without decoders (Gate 3, step 3 of the [rollout](design/decoders.md)). Each declares its end (`DeclaredEnd`), so the host treats a tag that starts inside the RIFF or FORM chunk as the chunk's (an ID3v2 tag in an `id3 ` or `ID3 ` chunk) and one after it as a trailing tag. The details are in [wav.md](formats/wav.md) and [aiff.md](formats/aiff.md).
+
+- **Chunks:** every chunk is a node, an unknown one named by its FourCC and size; the known ones are read field by field (WAVEFORMATEX and its extensible and compressed-format extras, `fact`, `ds64`, `bext`, `cue `, `plst`, `smpl`, `inst`, `chna`, `LIST` with `INFO`, `adtl` and `wavl`, `iXML` and `axml`; in AIFF `COMM`, `SSND`, `FVER`, `MARK`, `INST`, `COMT`, the text chunks, `APPL`, `AESD` and `MIDI`).
+- **Routes:** the data chunk of a WAVE file whose format is MPEG audio, AC-3 or DTS goes to that codec parser through `ParseStream`; an ID3v2 chunk goes to the ID3 tag parser through `ParseTag`.
+- **Sizes:** the placeholders of a writer that could not seek back (`0xFFFFFFFF`, or 0) are findings and the data runs to the end of the file; RF64 resolves its sizes from `ds64`.
+- **Streams:** PCM, floating point, A-law and mu-law report a `StreamInfo` from the headers; the other codings are named and their length stated where the container states it. AIFF-C's `ima4` counts 64-sample packets; the other packed codings give no length.
+- **Detection:** the sniff needs the form type, so a RIFF file of another form (an AVI, `RMP3` wrapped MPEG audio) and a WavPack file with a RIFF wrapper (which starts with `wvpk`) are not claimed. A WAVE file whose data chunk holds MPEG audio is a WAV file, not an MPEG one: the MPEG chain starts later and WAV's class is 100.
+- **Verification:** hand-built and FFmpeg-written fixtures, manifests from independent readers (`wav_model.py`, `aiff_model.py`), goldens, corrupt-file tests, and a cross-check with ffprobe and MediaInfo ([development.md](development.md)).
+
+Articles: `riff-chunks`, `waveformatex`, `wave-format-extensible`, `channel-layouts`, `pcm-samples`, `wave-compressed-formats`, `riff-info`, `wave-cue-points`, `bwf-broadcast-extension`, `rf64`, `id3v2-in-chunks`, `aiff-container`, `aiff-common-chunk`, `extended-sample-rate`, `aiff-sound-data`, `aiff-c-compression` and `aiff-markers-and-loops`.
+
+Not covered: decoding, BW64, IEC 61937 bursts in PCM, the contents of `levl`, `link`, `dbmd`, `qlty` and `r64m`, the `CHAN` chunk and the contents of the packed AIFF-C codings.
+
 ## Phase 3: Dolby TrueHD and MLP
 
 Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).
@@ -525,13 +540,13 @@ Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and 
 
 | Class | Evidence |
 |---|---|
-| 100 | Matroska or WebM: an EBML header with DocType matroska or webm followed by a Segment; DTS-HD file: `DTSHDHDR` at the start followed by a chain of chunks that fit (8-character IDs of printable characters, sizes of 4 to 2^61 bytes); MP4's ftyp box; Ogg's chain of pages from the start; Musepack's magic number with a consistent SV7 header (version 7, a frame count, a max band from 1 to 31, a last frame of at most 1,152 samples) or an SV8 stream header; ASF's Header Object GUID; WavPack's block header followed by another or by the end |
+| 100 | Matroska or WebM: an EBML header with DocType matroska or webm followed by a Segment; DTS-HD file: `DTSHDHDR` at the start followed by a chain of chunks that fit (8-character IDs of printable characters, sizes of 4 to 2^61 bytes); MP4's ftyp box; Ogg's chain of pages from the start; Musepack's magic number with a consistent SV7 header (version 7, a frame count, a max band from 1 to 31, a last frame of at most 1,152 samples) or an SV8 stream header; ASF's Header Object GUID; WavPack's block header followed by another or by the end; WAV and AIFF: the RIFF/RIFX/RF64 header with form type WAVE, or the FORM header with form type AIFF or AIFC, at the start, followed by a chunk header of four printable characters that fits (the chunks that fit are the frames) |
 | 95 | MP4's run of top-level boxes that holds moov, mdat or moof; Musepack versions 4 to 6 with three units or more |
 | 93 | DTS chain at the start |
 | 92 | AC-3 chain at the start |
 | 91 | ADTS chain at the start, ADIF header |
-| 90 | Matroska EBML header (DocType matroska or webm) with no Segment after it; MPEG audio chain, wherever it starts in the first MiB; WavPack header whose block the data cuts short |
-| 80 | Matroska Segment at the start with a consistent child (a file whose EBML header was cut off); WavPack header at the start followed by bytes that are none; `DTSHDHDR` at the start with a first chunk the data cuts short or a chain that breaks after it |
+| 90 | Matroska EBML header (DocType matroska or webm) with no Segment after it; MPEG audio chain, wherever it starts in the first MiB; WavPack header whose block the data cuts short; WAV or AIFF header followed by a chunk header whose chunk runs past the data |
+| 80 | Matroska Segment at the start with a consistent child (a file whose EBML header was cut off); WavPack header at the start followed by bytes that are none; `DTSHDHDR` at the start with a first chunk the data cuts short or a chain that breaks after it; WAV or AIFF header followed by bytes that are no chunk header, or by fewer than eight bytes |
 | 70 | EBML header that does not hold (no DocType, or an invalid field); `DTSHDHDR` at the start with a first chunk whose size is invalid |
 | 60 | Matroska run of top-level elements, or a Cluster with a Timestamp, at the start; Ogg chain further in (within 64 KiB); Musepack versions 4 to 6 with fewer than three units; "MP+" at the start of data whose SV7 header is not consistent; WavPack chain further in |
 | 50 | AC-3, ADTS (with eight frames or frames to the end of the data) and DTS chain further in |

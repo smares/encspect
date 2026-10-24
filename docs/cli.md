@@ -88,7 +88,7 @@ A stream of a coding that declares its checksums has a verification, with or wit
 
 ### `--only-format`
 
-`--only-format mpeg` (or `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `ac-3`, `asf`, `dts`, `dts-hd`, `matroska`, several separated by commas) analyzes only files whose detected format starts with that name and skips the rest. Detection looks at the bytes, not the extension. A name that starts no known format is wrong usage, as is a missing list (`--only-format` followed by a file or folder).
+`--only-format mpeg` (or `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `ac-3`, `asf`, `dts`, `dts-hd`, `matroska`, `wav`, `aiff`, several separated by commas) analyzes only files whose detected format starts with that name and skips the rest. Detection looks at the bytes, not the extension. A name that starts no known format is wrong usage, as is a missing list (`--only-format` followed by a file or folder).
 
 - **Names:** the same as for `--as` (see below), so `ac3` is `ac-3`. A prefix several formats share (`a`) selects all of them. `dts` is the DTS parser's own name, so `--only-format dts` selects raw DTS files and not `.dtshd` files, which are `dts-hd`.
 
@@ -96,8 +96,8 @@ A stream of a coding that declares its checksums has a verification, with or wit
 
 `--as aac` skips format detection and analyzes every file as that format, for a file whose format detection does not find (a damaged one) or finds wrongly. The format is named like this, ignoring case, spaces, hyphens and underscores; one that fits no format, or several (`a`), is wrong usage, as is a missing name (`--as` followed by a file or folder).
 
-- **The formats and the start of their names:** `mpeg` (MPEG Audio), `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `ac-3` (also `ac3`), `asf`, `dts`, `dts-hd`, `matroska`.
-- **Other names a format goes by:** `mp1`, `mp2`, `mp3` for MPEG Audio; `m4a`, `m4b`, `mov`, `3gp` for MP4; `adts`, `adif` for AAC; `eac3`, `ec3` for AC-3; `vorbis`, `opus`, `speex`, `spx`, `oga` for Ogg; `wma` for ASF; `mkv`, `mka`, `webm` for Matroska; `mpc` for Musepack; `wv` for WavPack. `dtshd` is the name of DTS-HD itself (ignoring the hyphen), so `--as dtshd` analyzes a file as a DTS-HD file, with its chunks; before the DTS-HD parser existed it meant DTS. `--as dts` reads the same file as a raw DTS stream.
+- **The formats and the start of their names:** `mpeg` (MPEG Audio), `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `ac-3` (also `ac3`), `asf`, `dts`, `dts-hd`, `matroska`, `wav`, `aiff`.
+- **Other names a format goes by:** `mp1`, `mp2`, `mp3` for MPEG Audio; `m4a`, `m4b`, `mov`, `3gp` for MP4; `adts`, `adif` for AAC; `eac3`, `ec3` for AC-3; `vorbis`, `opus`, `speex`, `spx`, `oga` for Ogg; `wma` for ASF; `mkv`, `mka`, `webm` for Matroska; `mpc` for Musepack; `wv` for WavPack; `wave`, `rf64` for WAV; `aif`, `aifc` for AIFF. `dtshd` is the name of DTS-HD itself (ignoring the hyphen), so `--as dtshd` analyzes a file as a DTS-HD file, with its chunks; before the DTS-HD parser existed it meant DTS. `--as dts` reads the same file as a raw DTS stream.
 
 - **Tags:** found as always; only the format parser changes. The forced format's declared size decides which signatures inside the data are no tags only where the format matches the data; otherwise the detected format's does, so forcing a format that is not there leaves the tags as detection finds them.
 - **Report:** says it was forced and what detection would have chosen (see "Format detection" below), in the text tree, in JSON and in the `format.forced` finding. A CSV row does not mark it: `--as` applies to the whole run, so the command line says which files were forced.
