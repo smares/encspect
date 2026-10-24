@@ -52,6 +52,13 @@ class ChangesTests(unittest.TestCase):
             self.assertIn("flac-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/crosscheck_flac_fixtures.py"), {"flac-crosscheck", "fixtures"})
 
+    def test_tta_parser_scripts_and_fixtures_belong_to_the_tta_job(self):
+        for path in ("src/Encspect.Formats.Tta/TtaParser.cs", "tests/fixtures/tta/a.tta", "scripts/fixtures/tta_model.py", "scripts/fixtures/make_tta_fixtures.py",
+                     "scripts/fixtures/make_external_tta_fixtures.py"):
+            self.assertIn("tta-crosscheck", run(path), path)
+        self.assertEqual(run("scripts/fixtures/crosscheck_tta_fixtures.py"), {"tta-crosscheck", "fixtures"})
+        self.assertNotIn("tta-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
+
     def test_cross_check_script_runs_only_its_job(self):
         self.assertEqual(run("scripts/fixtures/crosscheck_asf_fixtures.py"), {"asf-crosscheck", "fixtures"})
 
