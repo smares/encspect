@@ -862,7 +862,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts (the manifests were checked with 6.1.1 and 26.01).
+      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts (it was run with 8.0.1 built from the release tarball and with 6.1.1: docs/development.md).
       - name: Install ffmpeg and mediainfo
         run: |
           sudo apt-get update

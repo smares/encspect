@@ -2,8 +2,9 @@
 """Checks the WAV and AIFF fixtures' manifests against independent tools.
 
 For every manifest in tests/fixtures/wav and tests/fixtures/aiff (make_external_wav_fixtures.py, make_wav_fixtures.py, make_external_aiff_fixtures.py,
-make_aiff_fixtures.py), on the fixtures whose manifest lists no finding (a file the specifications accept; a damaged or unusual file is read
-differently by every tool, and its manifest rests on the model's reading of the specifications, docs/development.md):
+make_aiff_fixtures.py), on the fixtures whose manifest lists no finding or only findings the parsers raise as information (a file the specifications
+accept, with a note: a coding the analyzer has no parser for, a fact chunk it would want; a damaged file is read differently by every tool, and its
+manifest rests on the model's reading of the specifications, docs/development.md):
 
 - FFmpeg 8.0.1 (ffprobe): the codec (as FFMPEG_CODECS maps the manifest's), the sample rate, the channels and the duration; the bits per sample of
   the linear codings; for a file whose data FFmpeg routes to a codec (MPEG audio, AC-3, E-AC-3, DTS) the codec's name, sample rate and channels.
@@ -17,6 +18,7 @@ Every skipped check prints its reason. Disagreements fail the run (exit status 1
 
 import json
 import pathlib
+import re
 import subprocess
 import sys
 
@@ -25,7 +27,19 @@ import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIRECTORIES = [ROOT / "tests" / "fixtures" / "wav", ROOT / "tests" / "fixtures" / "aiff"]
+SOURCES = [ROOT / "src" / "Encspect.Formats.Wav", ROOT / "src" / "Encspect.Formats.Aiff"]
 SKIPS = {}
+
+
+def information_codes():
+    """The finding codes the parsers raise only as information (never as a warning or an error): the sources are read, so a code whose severity
+    changes leaves or joins the compared fixtures with the change."""
+    severities = {}
+    for directory in SOURCES:
+        for path in directory.glob("*.cs"):
+            for severity, code in re.findall(r'Severity\.(Info|Warning|Error),\s*"((?:wav|aiff)\.[a-z0-9-]+)"', path.read_text(encoding="utf-8")):
+                severities.setdefault(code, set()).add(severity)
+    return {code for code, found in severities.items() if found == {"Info"}}
 
 # The manifest's codec -> the codec_name values ffprobe gives, by byte order and sample width where the manifest does not say them.
 FFMPEG_CODECS = {
@@ -34,6 +48,8 @@ FFMPEG_CODECS = {
     "Microsoft ADPCM": {"adpcm_ms"},
     "IMA ADPCM": {"adpcm_ima_wav", "adpcm_ima_qt"},
     "GSM 6.10": {"gsm_ms", "gsm"},
+    "MACE 3-to-1": {"mace3"},
+    "MACE 6-to-1": {"mace6"},
 }
 
 # The manifest's codec -> MediaInfo's Format. MediaInfo names every AIFF sample coding "PCM", and the A-law and mu-law WAVE tags "ADPCM"
@@ -45,7 +61,7 @@ MEDIAINFO_FORMATS = {
     "Mu-law": {"ADPCM", "PCM"},
     "Microsoft ADPCM": {"ADPCM"},
     "IMA ADPCM": {"ADPCM"},
-    "GSM 6.10": {"GSM"},
+    "GSM 6.10": {"GSM 6.10"},
 }
 
 # The manifest's stream "routed": the codec FFmpeg reads from the data chunk is not in the manifest, so only its presence is compared.
@@ -55,14 +71,32 @@ ROUTED_FORMATS = {"mp3", "mp2", "ac3", "eac3", "dts"}
 # {fixture: {field: reason}}: a tool's own reading of a field on a fixture, with the evidence. The field must still differ from the manifest, so
 # the list stays current.
 EXPLAINED = {
+    "wav/built-fact-missing-compressed": {"ffprobe duration": "ffprobe estimates the duration of a compressed format without a fact chunk from the average bytes per second; the analyzer states none without the samples of a fact chunk",
+                                          "MediaInfo Duration": "MediaInfo estimates the duration of a compressed format without a fact chunk from the average bytes per second; the analyzer states none"},
+    "wav/built-wavl-list-without-fact": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"no 'data' tag found\": wavdec.c looks for a data chunk at the top level and does not enter a wavl list"},
+    "aiff/built-aifc-ace2": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 list no ACE2 coding (aiff.c has MACE 3:1 and 6:1 only) and ffprobe reports no audio stream"},
+    "aiff/built-aifc-ace8": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 list no ACE8 coding (aiff.c has MACE 3:1 and 6:1 only) and ffprobe reports no audio stream",
+                            "MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of compressed sample frames for a count of sample frames"},
+    "aiff/built-aifc-gsm": {"ffprobe channels": "FFmpeg's GSM decoder is mono whatever the Common Chunk states",
+                           "ffprobe duration": "aiffdec.c takes the Common Chunk's count for blocks of 160 samples (33 bytes) for GSM; no source read says what that count counts, so the analyzer states no length",
+                           "MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count for a count of sample frames; no source read says what it counts for GSM, so the analyzer states no length"},
+    "aiff/built-aifc-mac3": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of compressed sample frames for a count of sample frames"},
+    "aiff/built-aifc-mac3-short": {"ffprobe duration": "ffprobe's duration is the Common Chunk's count times the 6 samples of a frame (aiffdec.c, st->duration = nb_frames * block_duration), not cut to the frames the sound data holds as the analyzer cuts it",
+                                   "MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of compressed sample frames for a count of sample frames, and does not cut it to the sound data"},
+    "aiff/built-aifc-mac6": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of compressed sample frames for a count of sample frames"},
+    "aiff/built-aifc-unknown-type": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 refuse a compression type they do not know (aiffdec.c: \"unknown or unsupported codec tag\") and ffprobe reports no audio stream"},
     "wav/built-extensible-ebu-mask": {"MediaInfo ChannelLayout": "MediaInfo lists the two speakers of the mask and none of the discrete channels the mask leaves over"},
     "wav/built-leading-id3v2": {"MediaInfo audio stream": "MediaInfo does not find the RIFF header behind a leading ID3v2 tag and reports no audio stream"},
     "aiff/built-leading-id3v2": {"MediaInfo audio stream": "MediaInfo does not find the FORM header behind a leading ID3v2 tag and reports no audio stream"},
-    "wav/built-pcm-24-bit-extensible-in-32": {"ffprobe codec": "FFmpeg 6.1.1 and 8.0.1 read 24 bits in a 32-bit block as pcm_f24le (wavdec.c, wav_parse_fmt_tag)",
+    "wav/built-pcm-24-bit-extensible-in-32": {"ffprobe codec": "FFmpeg 6.1.1 and 8.0.1 read 24 valid bits in a 32-bit block as pcm_f24le (wavdec.c, wav_read_header: a pcm_s24le coding whose block align is 4 bytes for each channel)",
                                              "ffprobe bits": "ffprobe gives that coding a width of 32 bits"},
-    "wav/built-rf64-table": {"ffprobe audio stream": "ffprobe reports no audio stream for an RF64 file whose ds64 chunk lists chunk sizes in a table"},
+    "wav/built-dts-format-tag-0008": {"ffprobe codec": "FFmpeg 6.1.1 and 8.0.1 name no codec for the format tag 0x0008 (riff.c maps only 0x2001 to DTS), so ffprobe gives the stream no codec_name"},
+    "wav/built-extensible-mask-fewer": {"MediaInfo ChannelLayout": "MediaInfo lists the two speakers of the mask and none of the discrete channels the mask leaves over"},
+    "wav/built-extensible-mask-mismatch": {"MediaInfo ChannelLayout": "MediaInfo lists all six speakers of the mask for two channels; Microsoft's rule ignores the extra, most significant bits"},
+    "wav/built-extensible-samples-per-block": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 cannot open the IMA ADPCM decoder for an extensible header with a container size of 0: \"unspecified number of channels\""},
+    "wav/built-rf64-table": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"Cannot allocate memory\": the bext chunk of the fixture has the size 0xFFFFFFFF, which its ds64 table resolves, and wavdec.c reads the 32-bit size (wav_parse_bext_tag allocates the coding history by it) and takes only the data size from the ds64 chunk"},
     "wav/built-riffx-pcm-16": {"MediaInfo audio stream": "MediaInfo reports no audio stream for a big-endian RIFX file"},
-    "wav/built-wavl-list": {"ffprobe audio stream": "ffprobe reports no audio stream for a file whose samples are in a wavl list"},
+    "wav/built-wavl-list": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"no 'data' tag found\": wavdec.c looks for a data chunk at the top level and does not enter a wavl list"},
     "aiff/built-aifc-ima4": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of packets for a count of sample frames"},
     "aiff/external-ima4-stereo-44100": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of packets for a count of sample frames"},
 }
@@ -103,11 +137,17 @@ def ffprobe_codec_ok(stream, codec):
 
 def check_ffprobe(name, manifest, path, problems):
     probe = subprocess.run(["ffprobe", "-v", "error", "-show_streams", "-show_format", "-of", "json", str(path)], capture_output=True)
-    document = json.loads(probe.stdout or b"{}")
+    try:
+        document = json.loads(probe.stdout or b"{}")
+    except json.JSONDecodeError:
+        document = {}
     stream = next((s for s in document.get("streams", []) if s.get("codec_type") == "audio"), None)
     expected = manifest["stream"]
     differs(name, "ffprobe audio stream", stream is not None, True, problems, "ffprobe finds no audio stream")
     if stream is None:
+        return
+    if expected.get("carried"):
+        skip(name, "ffprobe stream", "ffprobe reads the PCM carrier: wavdec.c has no probe for a stream in the samples, so the codec, rate and channels are the fmt chunk's")
         return
     differs(name, "ffprobe sample_rate", str(stream.get("sample_rate")), str(expected["sample_rate"]), problems)
     differs(name, "ffprobe channels", stream.get("channels"), expected["channels"], problems)
@@ -116,8 +156,11 @@ def check_ffprobe(name, manifest, path, problems):
         differs(name, "ffprobe codec", codec in ROUTED_FORMATS, True, problems, f"ffprobe codec_name is {codec}, expected a codec the data chunk is routed to")
         skip(name, "ffprobe duration", "a routed stream's length is the codec parser's, which its own fixtures check")
         return
-    differs(name, "ffprobe codec", ffprobe_codec_ok(stream, expected["codec"]), True, problems,
-            f"ffprobe codec_name is {stream.get('codec_name')}, the manifest {expected['codec']}")
+    if expected["codec"] == "Other":
+        skip(name, "ffprobe codec", "the analyzer names no coding for a format tag it does not list")
+    else:
+        differs(name, "ffprobe codec", ffprobe_codec_ok(stream, expected["codec"]), True, problems,
+                f"ffprobe codec_name is {stream.get('codec_name')}, the manifest {expected['codec']}")
     bits = expected["bits"]
     if bits in (8, 16, 24, 32, 64) and expected["codec"] in ("PCM", "PCM (floating-point)"):
         differs(name, "ffprobe bits", int(stream.get("bits_per_sample") or bits), bits, problems)
@@ -178,6 +221,7 @@ def main():
     tool_versions.require("ffprobe")
     mi.require()
     chosen = set(a for a in sys.argv[1:] if not a.startswith("-"))
+    informational = information_codes()
     failures = 0
     checked = 0
     for directory in DIRECTORIES:
@@ -186,7 +230,7 @@ def main():
             if chosen and name not in chosen:
                 continue
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            if manifest["stream"] is None or manifest["findings"]:
+            if manifest["stream"] is None or any(finding["code"] not in informational for finding in manifest["findings"]):
                 skip(name, "ffprobe and MediaInfo", "the fixture is damaged or unusual, so the tools do not agree on what it holds")
                 continue
             path = find(manifest_path)
