@@ -1,0 +1,118 @@
+{
+ "description": "Real Dolby TrueHD and MLP files from the FFmpeg sample archive: a commercial TrueHD 5.1 stream of two substreams that begins with 13 units before its first major sync, and two MLP stereo files at 44.1 kHz, one of them with IIR filters that carry state. The archive allows downloading and states no license for redistribution, so they are downloaded and checked against their SHA-256 rather than committed. They are the only real data for the files the description was checked against: the encoders are not named by the streams. Per file: what the analyzer, ffprobe and MediaInfo must report (the analyzer's first stream, decoded with --verify: every checksum, including the lossless check of each presentation, must hold), and the codes of the analyzer's warnings and errors (\"findings\") and of its infos (\"info_findings\").",
+ "sources": {
+  "ffmpeg": {
+   "page": "https://samples.ffmpeg.org/A-codecs/",
+   "terms": "The FFmpeg sample archive's 00-README: \"You are free to download any samples you want\". They are downloaded and checked, not committed."
+  }
+ },
+ "samples": [
+  {
+   "file": "TrueHD.raw",
+   "url": "https://samples.ffmpeg.org/A-codecs/TrueHD/TrueHD.raw",
+   "sha256": "221b59a28347b610c60019e4d4896bb9ac0be88642c6964c5876ba558f0d511c",
+   "size": 3793626,
+   "codec": "Dolby TrueHD",
+   "sample_rate": 48000,
+   "channels": 6,
+   "layout": [
+    "front left",
+    "front right",
+    "front center",
+    "LFE",
+    "back left",
+    "back right"
+   ],
+   "bits_per_sample": 24,
+   "samples": 776280,
+   "units": 19407,
+   "findings": [],
+   "info_findings": [
+    "truehd.units-before-major-sync"
+   ],
+   "ffprobe": {
+    "codec_name": "truehd",
+    "channel_layout": "5.1(side)",
+    "bits_per_raw_sample": 24
+   },
+   "mediainfo": {
+    "Format": "MLP FBA",
+    "Format_Commercial_IfAny": "Dolby TrueHD",
+    "Channels": "6",
+    "SamplingRate": "48000",
+    "SamplesPerFrame": "40",
+    "Compression_Mode": "Lossless"
+   },
+   "source": "ffmpeg",
+   "format": "TrueHD"
+  },
+  {
+   "file": "440hz.mlp",
+   "url": "https://samples.ffmpeg.org/A-codecs/lossless/mlp/440hz.mlp",
+   "sha256": "c46b722bbf56c8316a8088cbf1bc7a3f9eeac529699e7fe4600d449f4d0760d9",
+   "size": 390966,
+   "codec": "MLP",
+   "sample_rate": 44100,
+   "channels": 2,
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "bits_per_sample": 16,
+   "samples": 441000,
+   "units": 11025,
+   "findings": [],
+   "info_findings": [],
+   "ffprobe": {
+    "codec_name": "mlp",
+    "channel_layout": "stereo",
+    "bits_per_raw_sample": 16
+   },
+   "mediainfo": {
+    "Format": "MLP",
+    "Format_Commercial_IfAny": "MLP Lossless",
+    "Channels": "2",
+    "SamplingRate": "44100",
+    "BitDepth": "16",
+    "SamplesPerFrame": "40",
+    "Compression_Mode": "Lossless"
+   },
+   "source": "ffmpeg",
+   "format": "TrueHD"
+  },
+  {
+   "file": "luckynight.mlp",
+   "url": "https://samples.ffmpeg.org/A-codecs/lossless/luckynight.mlp",
+   "sha256": "448a25b6f1f01f23393fa379414d51682ea266f74670bcd1f96a9560905650e0",
+   "size": 7899056,
+   "codec": "MLP",
+   "sample_rate": 44100,
+   "channels": 2,
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "bits_per_sample": 16,
+   "samples": 2667200,
+   "units": 66680,
+   "findings": [],
+   "info_findings": [],
+   "ffprobe": {
+    "codec_name": "mlp",
+    "channel_layout": "stereo",
+    "bits_per_raw_sample": 16
+   },
+   "mediainfo": {
+    "Format": "MLP",
+    "Format_Commercial_IfAny": "MLP Lossless",
+    "Channels": "2",
+    "SamplingRate": "44100",
+    "BitDepth": "16",
+    "SamplesPerFrame": "40",
+    "Compression_Mode": "Lossless"
+   },
+   "source": "ffmpeg",
+   "format": "TrueHD"
+  }
+ ]
+}

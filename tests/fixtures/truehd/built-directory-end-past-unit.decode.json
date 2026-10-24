@@ -1,0 +1,46 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 2880,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "major sync CRC-16",
+        "stored": 5,
+        "checked": 5,
+        "failed": 0
+      },
+      {
+        "name": "unit parity nibble",
+        "stored": 73,
+        "checked": 73,
+        "failed": 0
+      },
+      {
+        "name": "restart header CRC-8",
+        "stored": 5,
+        "checked": 5,
+        "failed": 0
+      },
+      {
+        "name": "substream parity byte",
+        "stored": 72,
+        "checked": 72,
+        "failed": 0
+      },
+      {
+        "name": "substream CRC-8",
+        "stored": 72,
+        "checked": 72,
+        "failed": 0
+      },
+      {
+        "name": "lossless check, substream 0",
+        "stored": 3,
+        "checked": 3,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": []
+}

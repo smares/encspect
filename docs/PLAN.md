@@ -402,7 +402,7 @@ Not covered: decoding before version 3.93 (the next change), channel positions b
 
 ## Phase 3: Dolby TrueHD and MLP
 
-Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).
+Raw files and the decoder: done (October 2026; [truehd.md](formats/truehd.md)). The codec parser (`truehd` and `mlp`) is registered, and the MP4 and Matroska routes are step 4 of the decoder rollout. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on DVD-Audio) are one format parser, "TrueHD" (`src/Encspect.Formats.TrueHd`), for raw files, plus a codec parser that MP4 and Matroska route their samples to. The scope is set by what can be checked: FFmpeg 6.1.1 reads and decodes both, so its source is the reference. No full specification is public, and Dolby's two public documents have not been read yet (see Sources).
 
 **Sources**
 
@@ -489,7 +489,7 @@ Planned. Dolby TrueHD and its predecessor MLP (Meridian Lossless Packing, as on 
 - The analyzer reports:
   - The flag, the substream count and the extended substream info bits.
   - The major sync extension words as bytes.
-  - The fourth substream's length, and its parity and CRC where the directory flags them.
+  - The fourth substream's length and, where the directory flags check data, its last two bytes as the stored parity byte and CRC-8; they are not compared, since nothing says that substream follows the rules of the others.
 - What the fourth substream and the extension words hold is not described by any source read so far, so `HasObjectAudio` and an object count stay unset, unlike for E-AC-3.
 
 **Containers**

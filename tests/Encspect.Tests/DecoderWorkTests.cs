@@ -7,6 +7,7 @@ using Encspect.Formats.MonkeysAudio.Decoding;
 using Encspect.Formats.WavPack.Decoding;
 using Encspect.Host;
 using Xunit.Abstractions;
+using TrueHdDecoder = Encspect.Formats.TrueHd.Decoding.TrueHdDecoder;
 
 namespace Encspect.Tests;
 
@@ -49,6 +50,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
     private const int Rounds = 5;
 
+    // A case that comes near the factor is fixed by raising the charge of the stage it undercharges and measuring again, never by raising the factor.
     private const double Factor = 2.0;
 
     private const double MinimumDecodingShare = 0.2;
@@ -112,17 +114,35 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
     private static (double Seconds, long Units, Report Report) Run(Case work, bool decode)
     {
-        var counting = new CountingDecoder(work.Decoder?.Invoke() ?? (work.Name.StartsWith("flac", StringComparison.Ordinal) ? new FlacDecoder() : work.Name.StartsWith("monkeys-audio", StringComparison.Ordinal) ? new MonkeysAudioDecoder() : new WavPackDecoder()));
+        var counting = new CountingDecoder(work.Decoder?.Invoke() ?? DecoderOf(work.Name));
         IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(p => p is FlacParser && !work.LendsBuffers ? new FlacParser { LendsBuffers = false } : p);
         var analyzer = new Analyzer(DefaultParsers.Tags, formats, DefaultParsers.Codecs, [counting]);
         var options = new AnalysisOptions { Decoding = decode ? new DecodeOptions { MaxWork = long.MaxValue } : null };
         using var stream = new MemoryStream(work.Data, writable: false);
 
         long start = Stopwatch.GetTimestamp();
-        Report report = analyzer.Analyze(work.Name + (work.Name.StartsWith("flac", StringComparison.Ordinal) ? ".flac" : work.Name.StartsWith("monkeys-audio", StringComparison.Ordinal) ? ".ape" : ".wv"), stream, options);
+        Report report = analyzer.Analyze(work.Name + ExtensionOf(work.Name), stream, options);
         double seconds = Stopwatch.GetElapsedTime(start).TotalSeconds;
         return (seconds, counting.Units, report);
     }
+
+    private static IDecoder DecoderOf(string name) => name switch
+    {
+        _ when name.StartsWith("flac", StringComparison.Ordinal) => new FlacDecoder(),
+        _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => new MonkeysAudioDecoder(),
+        _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
+        _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
+        _ => new WavPackDecoder(),
+    };
+
+    private static string ExtensionOf(string name) => name switch
+    {
+        _ when name.StartsWith("flac", StringComparison.Ordinal) => ".flac",
+        _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => ".ape",
+        _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
+        _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
+        _ => ".wv",
+    };
 
     private static Measurement Measure(Case reference, Case work)
     {
@@ -259,6 +279,27 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         {
             Add("wavpack-fixture-" + label, () => new Case("wavpack-fixture-" + label, WavPackCases.Repeated(file)));
         }
+
+        // TrueHD and MLP: the encoder's fixtures repeated, and crafted units of the stages' worst cases (192 kHz, 160 samples a unit).
+        foreach ((string label, string file) in new[]
+        {
+            ("fixture-stereo-192k", "external-truehd-stereo-192k-24.thd"),
+            ("fixture-51-48k", "external-truehd-51-48k-24.thd"),
+            ("fixture-51-96k", "external-truehd-51-96k-24.thd"),
+            ("fixture-cholesky", "external-truehd-51-48k-24-cholesky.thd"),
+            ("fixture-mono-48k", "external-truehd-mono-48k-16.thd"),
+        })
+        {
+            Add("truehd-" + label, () => new Case("truehd-" + label, TrueHdCases.Repeated(file)));
+        }
+
+        Add("mlp-fixture-51-48k", () => new Case("mlp-fixture-51-48k", TrueHdCases.Repeated("external-mlp-51-48k-24.mlp")));
+        Add("mlp-fixture-stereo-192k", () => new Case("mlp-fixture-stereo-192k", TrueHdCases.Repeated("external-mlp-stereo-192k-24.mlp")));
+        Add("truehd-crafted-no-filters-no-matrices", () => new Case("truehd-crafted-no-filters-no-matrices", TrueHdCases.Crafted(0, 0, 0)));
+        Add("truehd-crafted-fir-8", () => new Case("truehd-crafted-fir-8", TrueHdCases.Crafted(8, 0, 0)));
+        Add("truehd-crafted-fir-4-iir-4", () => new Case("truehd-crafted-fir-4-iir-4", TrueHdCases.Crafted(4, 4, 0)));
+        Add("truehd-crafted-8-matrices", () => new Case("truehd-crafted-8-matrices", TrueHdCases.Crafted(0, 0, 8)));
+        Add("truehd-crafted-fir-4-iir-4-8-matrices", () => new Case("truehd-crafted-fir-4-iir-4-8-matrices", TrueHdCases.Crafted(4, 4, 8)));
 
         return cases;
     }
@@ -779,6 +820,127 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             (_, long units, _) = Run(once, decode: true);
             int copies = (int)Math.Max(1, (Target + units - 1) / units);
             return WavPackBuilder.Concat(Enumerable.Repeat(blocks, copies).SelectMany(b => b));
+        }
+    }
+
+    internal static class TrueHdCases
+    {
+        // The units of a fixture, repeated until they come to the target: each pass starts with a major sync and its restart header, so the passes join.
+        public static byte[] Repeated(string file)
+        {
+            byte[] bytes = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "truehd", file));
+            return RepeatedTo(bytes, file.EndsWith(".mlp", StringComparison.Ordinal) ? "mlp-once" : "truehd-once");
+        }
+
+        private static byte[] RepeatedTo(byte[] once, string name)
+        {
+            (_, long units, _) = Run(new Case(name, once), decode: true);
+            int copies = (int)Math.Max(1, (Target + units - 1) / units);
+            byte[] data = new byte[once.Length * copies];
+            for (int i = 0; i < copies; i++)
+            {
+                once.CopyTo(data, i * once.Length);
+            }
+
+            return data;
+        }
+
+        // A stereo unit of 160 samples at 192 kHz in one block that restarts the substream: the encoder's major sync and restart header, then parameters
+        // of the stages' worst cases for every channel: FIR and IIR filters of the given orders (a channel allows 8 taps in all), matrices with every
+        // coefficient present, and lsbCount raw bits a sample (codebook 0). Repeated until the units come to the target, since each unit restarts; with repeat
+        // false it is the one unit.
+        public static byte[] Crafted(int firOrder, int iirOrder, int matrices, int lsbCount = 8, bool repeat = true)
+        {
+            byte[] fixture = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "truehd", "external-truehd-stereo-192k-24.thd"));
+            const int headerBits = 133;
+            const int substreamStart = 34;
+            var w = new BitWriter();
+            w.Write(1, 1);
+            w.Write(1, 1);
+            for (int i = 0; i < headerBits; i++)
+            {
+                int at = (substreamStart * 8) + 2 + i;
+                w.Write((ulong)((fixture[at >> 3] >> (7 - (at & 7))) & 1), 1);
+            }
+
+            w.Write(0, 1);
+            w.Write(1, 1);
+            w.Write(160, 9);
+            w.Write(1, 1);
+            w.Write((ulong)matrices, 4);
+            for (int j = 0; j < matrices; j++)
+            {
+                w.Write((ulong)(j & 1), 4);
+                w.Write(0, 4);
+                w.Write(0, 1);
+                for (int input = 0; input < 4; input++)
+                {
+                    w.Write(1, 1);
+                    w.Write(1, 2);
+                }
+            }
+
+            w.Write(1, 1);
+            w.Write(0, 8);
+            w.Write(1, 1);
+            w.Write(0, 8);
+            for (int c = 0; c < 2; c++)
+            {
+                w.Write(1, 1);
+                WriteFilter(w, firOrder);
+                WriteFilter(w, iirOrder);
+                w.Write(0, 1);
+                w.Write(0, 2);
+                w.Write((ulong)lsbCount, 5);
+            }
+
+            for (int i = 0; i < 160 * 2 * lsbCount; i++)
+            {
+                w.Write((ulong)(((i * 2654435761L) >> 7) & 1), 1);
+            }
+
+            w.Write(1, 1);
+            byte[] bits = w.ToArray();
+            int padded = ((bits.Length + 1) / 2) * 2;
+            byte[] body = new byte[padded];
+            bits.CopyTo(body, 0);
+            byte parity = 0xA9;
+            foreach (byte b in body)
+            {
+                parity ^= b;
+            }
+
+            byte[] substream = [.. body, parity, Encspect.Formats.TrueHd.Checks.Substream(body)];
+            byte[] unit = [.. fixture[..substreamStart], .. substream];
+            int words = unit.Length / 2;
+            unit[0] = (byte)((unit[0] & 0xF0) | (words >> 8));
+            unit[1] = (byte)words;
+            int end = substream.Length / 2;
+            unit[32] = (byte)((unit[32] & 0xF0) | (end >> 8));
+            unit[33] = (byte)end;
+            TrueHdFindingTests.Refresh(unit, 0, unit.Length, hasSync: true);
+            return repeat ? RepeatedTo(unit, "truehd-once") : unit;
+        }
+
+        private static void WriteFilter(BitWriter w, int order)
+        {
+            if (order == 0)
+            {
+                w.Write(0, 1);
+                return;
+            }
+
+            w.Write(1, 1);
+            w.Write((ulong)order, 4);
+            w.Write(3, 4);
+            w.Write(2, 5);
+            w.Write(0, 3);
+            for (int k = 0; k < order; k++)
+            {
+                w.Write(1, 2);
+            }
+
+            w.Write(0, 1);
         }
     }
 }

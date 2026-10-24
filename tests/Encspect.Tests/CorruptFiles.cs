@@ -46,7 +46,7 @@ internal static class CorruptFiles
             yield return name;
         }
 
-        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack", "flac", "monkeys-audio", "tta" })
+        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack", "flac", "monkeys-audio", "tta", "truehd" })
         {
             foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, family), "*", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal)
                 .Where(p => !p.EndsWith(".json", StringComparison.Ordinal)))

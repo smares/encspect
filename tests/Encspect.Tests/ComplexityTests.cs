@@ -258,6 +258,53 @@ public class ComplexityTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
     }
 
+    // Major syncs whose CRC holds, in units that state a length but hold no directory that reads, over and over: each is a candidate that
+    // the walk rejects and the search for the next major sync follows; the time must stay linear in the data.
+    [Fact]
+    public void ManyTrueHdMajorSyncsThatHoldNoUnit()
+    {
+        byte[] first = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "truehd", "built-tiny-truehd-stereo.thd"));
+        byte[] pattern = [.. first[..32], .. new byte[8]];
+        pattern[0] = 0x00;
+        pattern[1] = 20;
+        var data = new byte[24 << 20];
+        for (int at = 0; at + pattern.Length <= data.Length; at += pattern.Length)
+        {
+            pattern.CopyTo(data, at);
+        }
+
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("flood.thd", new MemoryStream(data), new AnalysisOptions { ForcedFormat = "thd" });
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    // Units of the least bytes for the most work: stereo at 192 kHz, 160 samples a unit with 8 matrices and filters of 8 taps on both channels, and
+    // no bits of residual at all (codebook 0 with no LSBs). 60,000 of them (about 9 MB) charge about 220 units a byte (33,000 a unit over about 150 bytes); the budget lowered to 2^28 ends the
+    // decoding after a few thousand, and the analysis costs by that and the bytes.
+    [Fact]
+    public void TrueHdUnitsThatCostTheMostForTheirBytes()
+    {
+        byte[] unit = DecoderWorkTests.TrueHdCases.Crafted(4, 4, 8, lsbCount: 0, repeat: false);
+        byte[] data = new byte[unit.Length * 60_000];
+        for (int at = 0; at < data.Length; at += unit.Length)
+        {
+            unit.CopyTo(data, at);
+        }
+
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 28 } };
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("work.thd", new MemoryStream(data), options);
+        watch.Stop();
+
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Contains(report.Findings, f => f.Code == "decode.limit");
+        Assert.InRange(report.Streams.Single().Verification!.DecodedSamples, 160, 160L * 60_000 / 2);
+    }
+
     // Mono blocks of 196,607 samples (the most a block may state) whose bitstream is 16 bytes, each a set of its own that states 100 channels
     // of a stream that has one: no set completes, so none reaches the sink. 60,000 blocks (3.4 MB) state 11.8 billion samples; every block is
     // charged when it is decoded (32 units for each of its samples), so the work budget ends the decoding after the 2^35 units of the floor
