@@ -1,8 +1,8 @@
 {
-  "note": "Balanced by measured duration. The classes of a shard run in parallel, except the non-parallel 'Thread hammers' collection, which runs alone at the end of the shard that has it (rest). MemoryTests and CategorySeriesMemoryTests ride with the second corrupt shard, which has time to spare.",
+  "note": "Balanced by measured duration (a local run with the TrueHD and MLP tests, 4 shared vCPUs: class times in minutes, in brackets; a class runs its tests one at a time, the classes of a shard in parallel, and MemoryTests and CategorySeriesMemoryTests, which cannot overlap anything, run alone after them: corrupt-a 26 before the TrueHD class and the MP4, DTS and AC-3 classes joined it, corrupt-b 73 with MemoryTests (48) and 91 minutes of damaged-input classes, rest 33). The classes of a shard run in parallel, except the non-parallel 'Thread hammers' collection, which runs alone at the end of the shard that has it (rest). MemoryTests and CategorySeriesMemoryTests ride with the second corrupt shard, which keeps only the two smallest damaged-input classes (Layer, VBR) beside them.",
   "shards": [
-    {"name": "corrupt-a", "classes": ["CorruptMpegFileTests", "CorruptLameFileTests", "CorruptOggFileTests", "CorruptTagFileTests", "CorruptMatroskaFileTests", "CorruptFlacFileTests"]},
-    {"name": "corrupt-b", "classes": ["CorruptMp4FileTests", "CorruptAdtsFileTests", "CorruptLayerFileTests", "CorruptVbrFileTests", "CorruptDtsFileTests", "CorruptAc3FileTests", "CorruptTrueHdFileTests", "MemoryTests", "CategorySeriesMemoryTests"]},
+    {"name": "corrupt-a", "classes": ["CorruptMpegFileTests", "CorruptLameFileTests", "CorruptOggFileTests", "CorruptTagFileTests", "CorruptMatroskaFileTests", "CorruptMp4FileTests", "CorruptDtsFileTests", "CorruptAc3FileTests", "CorruptTrueHdFileTests"]},
+    {"name": "corrupt-b", "classes": ["CorruptLayerFileTests", "CorruptVbrFileTests", "MemoryTests", "CategorySeriesMemoryTests"]},
     {"name": "rest", "classes": null}
   ]
 }
