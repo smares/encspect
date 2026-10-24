@@ -271,6 +271,20 @@ class RepositoryTests(unittest.TestCase):
         self.commit()
         self.assertEqual(self.run_check(), 1)
 
+    def test_a_changed_entry_that_names_goldens_applies_to_those_only(self):
+        # a.report.json and b.report.json both change Frames; the entry names a, so b's change is not allowed.
+        self.write("tests/fixtures/mpeg/a.report.json", [report([node("Frames", value=99), *OLD_STATS[1:]])])
+        self.write("tests/fixtures/mpeg/b.report.json", [report([node("Frames", value=98), *OLD_STATS[1:]])])
+        self.write("tests/fixtures/mpeg/golden-changes.json", {
+            "goldens": ["tests/fixtures/mpeg/"],
+            "changed": [{"path": ["MPEG Audio", "Statistics", "Frames"], "fields": ["value"], "goldens": ["tests/fixtures/mpeg/a.report.json"]}]})
+        self.commit()
+        self.assertEqual(self.run_check(), 1)
+
+        self.write("tests/fixtures/mpeg/b.report.json", [report(OLD_STATS)])
+        self.commit()
+        self.assertEqual(self.run_check(), 0)
+
     def test_a_copy_of_a_real_golden_goes_through_git(self):
         real = json.loads(REAL.read_text())
         real[0]["streams"][0].pop("categorySeries", None)

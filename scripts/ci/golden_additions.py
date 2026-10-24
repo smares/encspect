@@ -25,7 +25,8 @@ every child of that name. A change file:
       "renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],  # only where the old report has it
       "moved":   [{"name": "Long Blocks", "from": ["Ogg", "Statistics"], "fromPosition": 4,
                    "to": ["Ogg", "Statistics", "Block Sizes"], "position": 0}],
-      "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"]}]
+      "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"],
+                   "goldens": ["tests/fixtures/mpeg/some.report.json"]}]   # an entry may name the goldens it applies to, else it applies to all
     }
 
 Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
@@ -275,6 +276,16 @@ def check_golden(old, new, change):
     return problems
 
 
+def scoped(change, path):
+    """The change as it applies to one golden: an entry of added, renamed, moved or changed that names "goldens" (files or folders, as the change
+    file does) applies only to those, so a value that changes in one file is not allowed to change in the others."""
+    out = dict(change)
+    for key in ("added", "renamed", "moved", "changed"):
+        if key in change:
+            out[key] = [e for e in change[key] if "goldens" not in e or covers(e, path)]
+    return out
+
+
 def covers(change, path):
     return any(path == g or (g.endswith("/") and path.startswith(g)) for g in change.get("goldens", []))
 
@@ -319,7 +330,7 @@ def run(repo, base, head, change_files):
             continue
         old = json.loads(git(repo, "show", f"{merge_base}:{path}"))
         new = json.loads(git(repo, "show", f"{head}:{path}"))
-        found = [check_golden(old, new, changes[owner]) for owner in owners]
+        found = [check_golden(old, new, scoped(changes[owner], path)) for owner in owners]
         if all(found):
             problems += [f"{path}: {d}" for d in found[0]]
         checked += 1

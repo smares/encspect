@@ -411,8 +411,8 @@ public class MemoryTests(ITestOutputHelper output)
 
     // An AC-3 stream keeps a 16-byte record per frame (offset, store position, kept bits and CRC
     // verdicts), the fields its nodes are built from without the exponent groups and mantissas,
-    // and its per-frame series: the frames repeat a committed mono fixture of 384-byte frames at
-    // 96 kbps, 70 bytes kept per frame on linux-x64 and a peak of 64. The bounds leave room and
+    // and its per-frame series, with the coding series (14 bytes for a mono frame): the frames repeat a committed mono fixture of 384-byte frames at
+    // 96 kbps, 85 bytes kept per frame on linux-x64 and a peak of 89 to 102. The bounds leave room and
     // stay far below what keeping each frame's bytes would cost.
     [Fact]
     public void ManyAc3FramesStayCompact()
@@ -432,6 +432,92 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(kept < frames * 220L, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * 300L, $"The live heap grew by {peak / frames} bytes per frame.");
         GC.KeepAlive(report);
+    }
+
+    // The coding series of an AC-3 stream (docs/design/coding-graphs.md, "Memory budget") are recorded while the audio blocks are read: a
+    // stereo frame of six blocks holds the three flag series of a fixed layout, 18 bytes with no count byte, and the coded bandwidth, which
+    // the report keeps as a value of 8 bytes (26 in all). The bound is on the growth between two counts of frames, so that what is kept
+    // whatever the count (pools, the records of the first frames) does not count; the whole report must grow by less than the bound of
+    // ManyAc3FramesStayCompact.
+    [Fact]
+    public void TheCodingSeriesOfFurtherAc3FramesStayWithinTheirBudget()
+    {
+        const int perCopy = 16;
+        const int fewer = 1_562 * perCopy;
+        const int frames = 3_125 * perCopy;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", "external-ffmpeg-stereo-192k.ac3"));
+
+        (Report few, long fewerKept) = MeasureKept("few.ac3", Repeated(source, fewer / perCopy), source);
+        (Report many, long kept) = MeasureKept("many.ac3", Repeated(source, frames / perCopy), source);
+
+        CheckAc3CodingGrowth(few, many, fewer, frames, ["Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing"], categoryBytes: 18, numericBytes: 8);
+        double keptPerFrame = (kept - fewerKept) / (double)(frames - fewer);
+        output.WriteLine($"{Hundredths(keptPerFrame)} bytes kept per further frame");
+        Assert.True(keptPerFrame < 220, $"The report keeps {keptPerFrame:F2} bytes per further frame.");
+        GC.KeepAlive(few);
+        GC.KeepAlive(many);
+    }
+
+    // The E-AC-3 case the design asks for: program frames of an independent frame and a dependent frame of up to six blocks each, a variable
+    // layout of four series, whose values are 12 and a count byte at the most for each series (52 bytes), and the coded bandwidth.
+    [Fact]
+    public void TheCodingSeriesOfFurtherEac3ProgramFramesWithDependentFramesStayWithinTheirBudget()
+    {
+        const int fewer = 10_000;
+        const int units = 20_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", "coding-eac3-dependent.eac3"));
+        int perCopy = 4;
+
+        (Report few, long fewerKept) = MeasureKept("few.eac3", Repeated(source, fewer / perCopy), source);
+        (Report many, long kept) = MeasureKept("many.eac3", Repeated(source, units / perCopy), source);
+
+        // The budget of this stream, from its own units: for each of the four series the values of every unit and its count byte (a fixed copy of the
+        // fixture's 31 blocks in 4 units is 35 bytes a unit), not the worst case of 12 values, which would let 17 bytes a unit of regression pass.
+        CategorySeries first = Assert.Single(few.Streams).CategorySeries[0];
+        double perUnit = 4.0 * (Enumerable.Range(0, first.Count).Sum(u => first.ValueCount(u)) + first.Count) / first.Count;
+        CheckAc3CodingGrowth(few, many, fewer, units, ["Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing", "Blocks With Spectral Extension"],
+            categoryBytes: (int)Math.Ceiling(perUnit) + 1, numericBytes: 8);
+        double keptPerUnit = (kept - fewerKept) / (double)(units - fewer);
+        output.WriteLine($"{Hundredths(keptPerUnit)} bytes kept per further program frame");
+        // 158 bytes measured on linux-x64 (a 16-byte record, the kept bits, the bitrate series' two points and 35 bytes of series for each program frame); the
+        // bound leaves a quarter for the other platforms.
+        Assert.True(keptPerUnit < 190, $"The report keeps {keptPerUnit:F2} bytes per further program frame.");
+        GC.KeepAlive(few);
+        GC.KeepAlive(many);
+    }
+
+    private static byte[] Repeated(byte[] source, int copies)
+    {
+        byte[] data = new byte[source.Length * copies];
+        for (int at = 0; at < data.Length; at += source.Length)
+        {
+            source.CopyTo(data, at);
+        }
+
+        return data;
+    }
+
+    // What the further units add to the coding series, from the series' own sizes: the codes and count bytes of the category series and 8
+    // bytes for each point of the numeric series, which shares the bitrate series' x values.
+    private static void CheckAc3CodingGrowth(Report few, Report many, int fewer, int units, string[] names, int categoryBytes, int numericBytes)
+    {
+        StreamInfo small = Assert.Single(few.Streams);
+        StreamInfo large = Assert.Single(many.Streams);
+        Assert.Equal(names, large.CategorySeries.Select(c => c.Name));
+        Assert.Equal(units, large.CategorySeries[0].Count);
+        long grown = large.CategorySeries.Sum(c => c.StorageBytes) - small.CategorySeries.Sum(c => c.StorageBytes);
+        long index = large.CategorySeries.Count * 4L * ((units - fewer) / 1024 + 1);
+        Assert.True(grown <= (units - fewer) * (long)categoryBytes + index, $"The category series grow by {grown / (double)(units - fewer):F3} bytes per further unit.");
+        Assert.True(grown > 0, "The category series did not grow with the units.");
+
+        Series bandwidth = large.Series.Single(s => s.Name == "Coded Bandwidth");
+        Assert.Equal(units, bandwidth.Values.Length);
+        long numeric = BackingBytes(bandwidth.Values) - BackingBytes(small.Series.Single(s => s.Name == "Coded Bandwidth").Values);
+        Assert.True(numeric <= (units - fewer) * (long)numericBytes, $"The coded bandwidth grows by {numeric / (double)(units - fewer):F2} bytes per further unit.");
+        Series bitrate = large.Series.Single(s => s.Name == "Bitrate");
+        Assert.True(System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bandwidth.X, out ArraySegment<double> own)
+            && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
+            "The coded bandwidth copies the bitrate series' x values although every unit has a value.");
     }
 
     // A DTS stream keeps a 24-byte record per unit, the fields its nodes are built from (the headers; the subframes are

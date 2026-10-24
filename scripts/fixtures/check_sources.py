@@ -13,6 +13,7 @@ import sys
 import tempfile
 import time
 
+import a52_trace_tool
 import aotuv_tool
 import asf_specs
 import blade_tool
@@ -66,6 +67,7 @@ def sources():
     for sample in wmavoice["samples"]:
         yield sample["file"], sample["sha256"], check_wmavoice_samples.addresses(sample)
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
+    yield a52_trace_tool.ARCHIVE, a52_trace_tool.SHA256, a52_trace_tool.ADDRESSES
     yield "mp3sconsv15.zip", fhg_tool.SHA256, fhg_tool.ADDRESSES
     yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES
     for release in blade_tool.RELEASES.values():

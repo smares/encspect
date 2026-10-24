@@ -49,6 +49,9 @@ public sealed class GraphChoice : ObservableObject
 
     public string? Description { get; }
 
+    // The tooltip of its entry in the list: the name, then what it shows.
+    public string ToolTipText => Description is null ? Title : $"{Title}\n{Description}";
+
     public IReadOnlyList<GraphFormChoice> Forms { get; }
 
     public bool HasForms => Forms.Count > 1;

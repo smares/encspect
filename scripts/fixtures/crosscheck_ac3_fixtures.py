@@ -12,6 +12,13 @@ For every fixture, its manifest's "crosscheck" says what to confirm:
   joins dependent frames to the one before ("ffprobe_packets": "substream 0" where it starts one only at an independent
   frame of substream 0, and "ffprobe_fields": false where it then reads no sample rate or channels, "channels" where it reads only no channels). For raw files, ffprobe's bitrate must be the first
   packet's, unless "ffprobe_bitrate" is false (ffmpeg gives none for frames it cannot decode).
+- "liba52" also holds the golden report's coding series to the audio blocks liba52 decodes, frame by frame (check_coding_series): a patched
+  build of liba52 0.7.4's original source (a52_trace_tool.py) prints blksw of every channel, chincpl, rematflg and the end bins of each block, from
+  which the checker computes, by the rules of ATSC A/52:2018 5.4.3.1, 5.4.3.8, 5.4.3.20 and 7.2.2.1, whether the block switches, couples and
+  rematrixes, and the highest end bin; the series "Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing" and "Coded
+  Bandwidth" must hold exactly those, for every frame of a raw AC-3 file that liba52 decodes to its sixth block. E-AC-3 has no such reference,
+  liba52 not decoding it; the coding fixtures' manifests carry the expected values ("coding"), computed by make_ac3_fixtures.py's model and held
+  to the series by Ac3CodingSeriesTests.
 - "decode": ffmpeg with CRC checking must decode each packet alone without an error, unless the
   packet holds a frame the manifest lists as one decoders reject ("damaged": cut or failing a CRC,
   or a dependent frame without its independent one), which it must reject, as it rejects the frames
@@ -70,6 +77,7 @@ import subprocess
 import sys
 import tempfile
 
+import a52_trace_tool
 import ac3_model as m
 import channel_layouts
 import mediainfo_tool as mi
@@ -295,6 +303,69 @@ def check_liba52(tool, path, manifest, problems):
             problems.append(f"liba52 ends the blocks of the frame at {offset} at {found.get(offset)}, the manifest at {ends}")
 
 
+def series_units(series, count):
+    """The values of each unit of a category series of the report, from its run-length codes (None for a block without a value)."""
+    flat = [code for code, length in series["runs"] for _ in range(length)]
+    counts = [c for c, units in series["valueCounts"] for _ in range(units)] if "valueCounts" in series else [series.get("valuesPerUnit", 1)] * count
+    out, at = [], 0
+    for c in counts:
+        out.append(flat[at:at + c])
+        at += c
+    return out
+
+
+def round_half_even(numerator, denominator):
+    quotient, rest = divmod(numerator, denominator)
+    return quotient + (1 if rest * 2 > denominator or (rest * 2 == denominator and quotient % 2) else 0)
+
+
+# What check_coding_series compared, and the units it left out: printed at the end of a run.
+CODING_COMPARED = []
+
+
+def check_coding_series(path, problems):
+    """Holds the coding series of an AC-3 file's golden report to liba52's decisions, unit by unit (see the module's documentation). Every
+    frame is a unit of an AC-3 stream; a frame liba52 rejects or stops inside is left out, and so is a unit whose stream is E-AC-3."""
+    report = mi.golden(path)
+    frames = {f["offset"]: f for f in a52_trace_tool.trace(path)}
+    compared = left_out = 0
+    for stream in report["streams"]:
+        by_name = {c["name"]: c for c in stream.get("categorySeries", [])}
+        if stream["codec"] != "AC-3" or "Blocks With Block Switching" not in by_name:
+            continue
+        xs = next(s for s in stream["series"] if s["name"] == "Bitrate")["x"]
+        units = {name: series_units(series, len(xs)) for name, series in by_name.items()}
+        bandwidth = next(s for s in stream["series"] if s["name"] == "Coded Bandwidth")
+        hertz = dict(zip(bandwidth["x"], bandwidth["values"]))
+        for unit, x in enumerate(xs):
+            frame = frames.get(int(x))
+            if frame is None or frame["rejected"] or frame["error"] or len(frame["blocks"]) != 6:
+                left_out += 1
+                continue
+            blocks = frame["blocks"]
+            channels = len(blocks[0]["blksw"])
+            expected = {
+                "Blocks With Block Switching": [0 if any(b["blksw"]) else 1 for b in blocks],
+                "Blocks With Coupling": [0 if b["chincpl"] else 1 for b in blocks] if channels > 1 else None,
+                "Blocks With Rematrixing": [0 if b["acmod"] == 2 and b["rematflg"] else 1 for b in blocks],
+            }
+            for name, codes in expected.items():
+                if name in units and units[name][unit] != codes:
+                    problems.append(f"unit {unit} at {int(x)}: {name} {units[name][unit]}, liba52 decides {codes}")
+            # A series exists where its tally node does: coupling from acmod 2, rematrixing at acmod 2 only.
+            acmod = blocks[0]["acmod"]
+            for name, wanted in (("Blocks With Coupling", acmod >= 2), ("Blocks With Rematrixing", acmod == 2)):
+                if (name in units) != wanted:
+                    problems.append(f"unit {unit} at {int(x)}: acmod {acmod} {'has' if name in units else 'lacks'} the series {name}")
+            top = max(max(b["endmant"] + ([b["cplendmant"]] if b["chincpl"] else [])) for b in blocks)
+            if hertz.get(x) != round_half_even(top * stream["sampleRate"], 512):
+                problems.append(f"unit {unit} at {int(x)}: coded bandwidth {hertz.get(x)} Hz, liba52's end bins give {round_half_even(top * stream['sampleRate'], 512)} Hz")
+            compared += 1
+            if len(problems) > 5:
+                return
+    CODING_COMPARED.append((path.name, compared, left_out))
+
+
 def bits_of(data):
     return "".join(f"{b:08b}" for b in data)
 
@@ -390,6 +461,18 @@ COMPLETE_FRAMES = "MediaInfo counts the complete frames as the file size over th
 LEADING_JUNK = "MediaInfo derives the duration from the file size, junk included (File_Ac3.cpp, Streams_Finish), and the samples and stream size from it, where the analyzer counts the frames"
 DEPENDENT_FIRST = "MediaInfo adds the channels and bitrate of the dependent frame the stream starts with, which A/52 Annex E 2.3.1.2 places after an independent frame and the analyzer reports without it, and derives the samples, duration and stream size from that bitrate"
 
+VARYING_BLOCKS = ("MediaInfo's bitrate is the sum of the first frame sizes of the substreams over the number of blocks of the last frame it parsed (File_Ac3.cpp, Streams_Fill: "
+                  "frmsiz_Total * SamplingRate / 32 / numblks, numblkscod set by every frame), where the analyzer's averages over frames whose number of blocks varies; "
+                  "it derives the duration, samples and stream size from that bitrate and the file size")
+SEPARATE_DEPENDENT = ("MediaInfo ends a frame group at a dependent substream whose ID is not the number of independent substreams so far (File_Ac3.cpp, Core_Size_Get: "
+                      "substreamid != substreams_Count_Independant), so each dependent substream after the first is a frame of its own: 28 frames where the analyzer counts 4 program frames")
+EIGHTH_DEPENDENT = ("MediaInfo's sum of the first frame sizes stops at index 7 of the 9 it keeps (File_Ac3.cpp, Streams_Fill: Pos2<8; Core_Frame: index strmtyp+substreamid), "
+                    "which leaves out the eighth dependent substream")
+CORE_AND_DEPENDENT = ("MediaInfo names the stream AC-3 as soon as one frame has bsid 9 or lower (File_Ac3.cpp, Core_Frame: Formats[bsid<=0x09?0:1]++; Streams_Fill: Formats[0]?\"AC-3\":\"E-AC-3\"), "
+                      "where the analyzer reports the E-AC-3 stream that an AC-3 core with dependent frames makes (ETSI TS 102 366 J.1.5.2.2); its bitrate adds the core's nominal frame size and "
+                      "the dependent frame's over the last frame's number of blocks (Streams_Fill: frmsiz_Total), 272 kbps, where the analyzer gives the core's nominal 192 kbps; "
+                      "it calls that constant and derives the duration, samples and stream size from it and the file size")
+
 AUXILIARY_FIELD = "MediaInfo searches the frame for the container but parses it only if it starts before the auxiliary data field (File_Ac3.cpp, Core_Frame: BitsAtEnd<EMDF_RemainPos), which this fixture's container, inside that field, does not"
 
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
@@ -407,6 +490,11 @@ MEDIAINFO_READS_OTHERWISE = {
     "stream-changes": dict.fromkeys(["samples", "duration"], "MediaInfo describes the whole file as one stream and counts all six frames (9216 samples), where the analyzer's first stream is the first two 2/0 frames"),
     "truncated-in-skip": {**dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
                           **dict.fromkeys(["bitrate", "bitrate mode"], "MediaInfo takes the bitrate of the first frame (512 kbps, constant), where the analyzer's average over its four frames includes the cut one and varies")},
+    "coding-ac3-core-dependent": dict.fromkeys(["format", "bitrate", "bitrate mode", "samples", "duration", "stream size"], CORE_AND_DEPENDENT),
+    "coding-eac3-blocks": dict.fromkeys(["bitrate", "samples", "duration"], VARYING_BLOCKS),
+    "coding-eac3-dependent": dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], VARYING_BLOCKS + "; it calls the stream constant (Streams_Fill, \"CBR\" by default)"),
+    "coding-eac3-nine-frames": {**dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], VARYING_BLOCKS + "; " + EIGHTH_DEPENDENT),
+                                "frames": SEPARATE_DEPENDENT},
     "joc-auxiliary-data": {"joint object coding": AUXILIARY_FIELD},
     "joc-short": {"frames": "MediaInfo reads the one-byte JOC payload's joc_header and joc_info past the payload and then skips to the end of the data (File_Ac3.cpp, emdf_container: \"Problem during emdf_payload parsing, going to end directly\"), so it does not count that frame",
                   "joint object coding": "MediaInfo reads joc_header and joc_info without regard to the payload's size (File_Ac3.cpp, joc_header, joc_info), so the one-byte JOC payload gives it a second joc_num_objects, and it reports JOC only when all frames agree on one (HasJOC: joc_num_objects_map.size()==1)"},
@@ -458,7 +546,12 @@ def check_mediainfo(path, tally):
     check_object_audio(path, audio, report, stream, features, tally)
     tally.compare("sample rate", audio.get("SamplingRate"), str(stream["sampleRate"]))
     tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
-    tally.compare("channel layout", mi.speakers(audio.get("ChannelLayout")), mi.normalized(stream["channelLayout"]))
+    layout = mi.speakers(audio.get("ChannelLayout"))
+    if audio.get("ChannelLayout") == "M M":
+        # acmod 0 is two independent mono channels, 1+1 (A/52 5.4.2.3), which the analyzer calls discrete; MediaInfo
+        # names them like a pair of mono speakers (File_Ac3.cpp, AC3_ChannelLayout_lfeoff[0]).
+        layout = ["discrete", "discrete"]
+    tally.compare("channel layout", layout, mi.normalized(stream["channelLayout"]))
     extra = audio.get("extra", {})
     first = next(f for f in frames if f not in dependent)
     bsi = mi.child(first, "Bit Stream Information")
@@ -467,8 +560,15 @@ def check_mediainfo(path, tally):
         return mi.leading_number(mi.value(frame, "Bit Stream Information", *names))
 
     tally.compare("bsid", extra.get("bsid"), str(max(field(f, "Bit Stream ID") for f in frames)))
-    acmods = [str(field(f, "Audio Coding Mode")) for f in [first] + dependent[:1]]
-    lfes = ["1" if mi.value(f, "Bit Stream Information", "HasLfe") else "0" for f in [first] + dependent[:1]]
+    # MediaInfo keeps these fields of the first frame of each substream, the independent one at index 0 and the dependent
+    # substream n at index 1 + n, and lists them up to the first index no frame fills (File_Ac3.cpp, Core_Frame:
+    # acmod_Max[...][strmtyp+substreamid]; Streams_Fill: break on -1).
+    chain = []
+    for f in dependent:
+        if mi.leading_number(mi.value(f, "Bit Stream Information", "Substream ID")) == len(chain):
+            chain.append(f)
+    acmods = [str(field(f, "Audio Coding Mode")) for f in [first] + chain]
+    lfes = ["1" if mi.value(f, "Bit Stream Information", "HasLfe") else "0" for f in [first] + chain]
     tally.compare("acmod", extra.get("acmod"), " / ".join(acmods))
     tally.compare("lfeon", extra.get("lfeon"), " / ".join(lfes))
     mode = mi.value(bsi, "Bit Stream Mode")
@@ -549,6 +649,8 @@ def main():
                 check_decode(path, data, manifest, problems, work)
             if check.get("liba52"):
                 check_liba52(tool, path, manifest, problems)
+                if path.suffix == ".ac3":
+                    check_coding_series(path, problems)
             if check.get("skip_insertion"):
                 if analyzer is None:
                     print(f"{path.name}: the skip insertion check needs --analyzer; not run")
@@ -563,6 +665,8 @@ def main():
         print(problem)
         failures += 1
     tally.print()
+    print(f"The coding series agree with liba52's decisions on {sum(c for _, c, _ in CODING_COMPARED)} frames of {len(CODING_COMPARED)} fixtures; "
+          f"{sum(o for _, _, o in CODING_COMPARED)} frames it rejects or stops in are left out.")
     print(f"{checked} fixtures checked, {failures} disagree.")
     return 1 if failures else 0
 

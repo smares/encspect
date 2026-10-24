@@ -390,7 +390,7 @@ public class CategoryViewTests
 
         var entries = window.GraphChoices.GetVisualDescendants().OfType<Button>().Where(b => b.Classes.Contains("entry")).ToList();
         var headings = window.GraphChoices.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("heading")).ToList();
-        Assert.Equal(window.Model.Graphs.Choices.Select(c => c.Title), entries.Select(b => (string)b.Content!));
+        Assert.Equal(window.Model.Graphs.Choices.Select(c => c.Title), entries.Select(b => ((TextBlock)b.Content!).Text));
         Assert.Equal(window.Model.Graphs.ChoiceGroups.Select(g => g.Heading), headings.Select(h => h.Text));
         Assert.True(window.GraphList.Bounds.Width <= 240);
         Assert.True(window.Graph.Bounds.Width > window.GraphList.Bounds.Width * 2);
