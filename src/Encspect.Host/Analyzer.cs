@@ -127,6 +127,9 @@ public sealed class Analyzer
         ["webm"] = "Matroska",
         ["mpc"] = "Musepack",
         ["wv"] = "WavPack",
+        ["thd"] = "TrueHD",
+        ["mlp"] = "TrueHD",
+        ["dolbytruehd"] = "TrueHD",
     };
 
     // "MPEG Audio" and "mpeg" compare as "mpegaudio" and "mpeg", "AC-3" and "ac3" as "ac3".
