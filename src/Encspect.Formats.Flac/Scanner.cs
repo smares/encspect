@@ -17,6 +17,9 @@ internal struct Attempt
 // found by searching must read, agree with STREAMINFO, have a CRC-16 that holds and be followed by the end of the data or another header.
 internal sealed class FrameScanner(Source source, StreamInfoBlock? info, long probeBudget)
 {
+    // Most frames are far shorter; the request doubles when the frame is cut, and the window slides, so a small request costs no reread.
+    private const int FirstRequest = 1 << 16;
+
     private readonly SubframeFacts[] _facts = new SubframeFacts[8];
     private readonly PartitionLog[] _logs = [new(), new(), new(), new(), new(), new(), new(), new()];
 
@@ -68,7 +71,7 @@ internal sealed class FrameScanner(Source source, StreamInfoBlock? info, long pr
         }
 
         long remaining = source.End - position;
-        int want = (int)Math.Min(remaining, 1 << 20);
+        int want = (int)Math.Min(remaining, FirstRequest);
         while (true)
         {
             ReadOnlySpan<byte> data = source.Window(position, want);

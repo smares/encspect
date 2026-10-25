@@ -121,35 +121,36 @@ internal sealed class WordDecoder
 
         uint low;
         uint high;
+        Span<uint> median = _median.AsSpan(m, 3);
         if (ones == 0)
         {
             low = 0;
-            high = Median(m, 0) - 1;
-            _median[m] -= (((_median[m] + 126) / 128) * 2);
+            high = median[0] >> 4;
+            median[0] -= (((median[0] + 126) / 128) * 2);
         }
         else
         {
-            low = Median(m, 0);
-            _median[m] += ((_median[m] + 128) / 128) * 5;
+            low = (median[0] >> 4) + 1;
+            median[0] += ((median[0] + 128) / 128) * 5;
             if (ones == 1)
             {
-                high = low + Median(m, 1) - 1;
-                _median[m + 1] -= ((_median[m + 1] + 62) / 64) * 2;
+                high = low + (median[1] >> 4);
+                median[1] -= ((median[1] + 62) / 64) * 2;
             }
             else
             {
-                low += Median(m, 1);
-                _median[m + 1] += ((_median[m + 1] + 64) / 64) * 5;
+                low += (median[1] >> 4) + 1;
+                median[1] += ((median[1] + 64) / 64) * 5;
                 if (ones == 2)
                 {
-                    high = low + Median(m, 2) - 1;
-                    _median[m + 2] -= ((_median[m + 2] + 30) / 32) * 2;
+                    high = low + (median[2] >> 4);
+                    median[2] -= ((median[2] + 30) / 32) * 2;
                 }
                 else
                 {
-                    low += (ones - 2) * Median(m, 2);
-                    high = low + Median(m, 2) - 1;
-                    _median[m + 2] += ((_median[m + 2] + 32) / 32) * 5;
+                    low += (ones - 2) * ((median[2] >> 4) + 1);
+                    high = low + (median[2] >> 4);
+                    median[2] += ((median[2] + 32) / 32) * 5;
                 }
             }
         }
@@ -200,8 +201,6 @@ internal sealed class WordDecoder
         value = (int)(isNegative ? ~mid : mid);
         return !bits.IsOverrun;
     }
-
-    private uint Median(int m, int zone) => (_median[m + zone] >> 4) + 1;
 
     // read_code: a value from 0 to maxCode, in as few bits as the range needs.
     private static uint ReadCode(ref LsbBitCursor bits, uint maxCode)

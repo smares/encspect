@@ -86,7 +86,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - A block whose CRC fails is not zeroed; the samples are kept as decoded.
 - The cancellation token is checked in the long loops. Every block is charged to the host's work budget before it is decoded (see below), the blocks of a set that never completes (no final block, channels that do not add up) as any other, so the budget bounds them and `decode.limit` ends the decoding of a crafted file of them. The decoder holds one block's state and the set's planes, nothing per block.
 - **The work a block is charged:**
-  - for each sample of each channel the block outputs, a muted block's too: the fixed work of the sample for its width (`DecodeWork.ForSample`: 13, 16, 19 or 22 units for 1 to 4 bytes, 13 for a byte of DSD) and, for integers and floats, 16 more for the entropy decoder's word, the mute check, the CRC and the copy into the set's planes, and 16 more for restoring a float;
+  - for each sample of each channel the block outputs, a muted block's too: the fixed work of the sample for its width (`DecodeWork.ForSample`: 13, 16, 19 or 22 units for 1 to 4 bytes, 13 for a byte of DSD) and, for integers and floats, 24 more for the entropy decoder's word, the mute check, the CRC and the copy into the set's planes, and 16 more for restoring a float;
   - 16 for each byte of the bitstream sub-blocks it reads (the main one, the extra one, the DSD data);
   - 8 for each decorrelation pass, for each sample of each channel the passes run on;
   - DSD: 32 more for each byte of each channel in the fast mode and 128 in the high mode, and the setup of the block's tables, 1,792 units for each of the 2^history bits bins in the fast mode (57,344 at 5 bits) and 4,096 in the high mode.

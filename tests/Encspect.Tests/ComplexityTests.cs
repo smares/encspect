@@ -307,7 +307,7 @@ public class ComplexityTests
 
     // Mono blocks of 196,607 samples (the most a block may state) whose bitstream is 16 bytes, each a set of its own that states 100 channels
     // of a stream that has one: no set completes, so none reaches the sink. 60,000 blocks (3.4 MB) state 11.8 billion samples; every block is
-    // charged when it is decoded (32 units for each of its samples), so the work budget ends the decoding after the 2^35 units of the floor
+    // charged when it is decoded (40 units for each of its samples), so the work budget ends the decoding after the 2^35 units of the floor
     // and the analysis costs by that and the bytes, not by the samples the blocks state.
     [Fact]
     public void WavPackBlocksThatStateMoreSamplesThanTheyCode()
@@ -335,11 +335,11 @@ public class ComplexityTests
         Assert.Contains(report.Findings, f => f.Code == "decode.frame-invalid");
         Assert.Contains(report.Findings, f => f.Code == "decode.limit");
 
-        // Each block decoded before the limit fails its CRC (it ends before its samples do), and is charged 32 units for each of its samples (the
-        // 16 of the sample's fixed work and the 16 WavPack's entropy decoder and copies cost) and 16 for each byte of its bitstream:
-        // 2^35 / (32 * 196,607 + 16 * 16) = 5,461 blocks.
+        // Each block decoded before the limit fails its CRC (it ends before its samples do), and is charged 40 units for each of its samples (the
+        // 16 of the sample's fixed work and the 24 WavPack's entropy decoder and copies cost) and 16 for each byte of its bitstream:
+        // 2^35 / (40 * 196,607 + 16 * 16) = 4,369 blocks.
         Finding crc = Assert.Single(report.Findings, f => f.Code == "wavpack.audio-crc-mismatch");
-        Assert.InRange(crc.Count, 5_000, 5_900);
+        Assert.InRange(crc.Count, 4_000, 4_750);
     }
 
     // The signature of a descriptor every four bytes: each is a candidate the scan for the descriptor passes over, and the time must stay linear in the data.

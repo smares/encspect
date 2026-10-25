@@ -102,6 +102,62 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 - `DescriptionTests` also walks every fixture's category series: a series or a category without a description, or with a topic that does not exist, fails.
 - The GUI tests (`CategoryGraphTests`, `CategoryViewTests`) hold the aggregation per pixel column against a brute-force count, the rule that keeps rare categories visible, the frame each click selects, the entries, their forms and the headings, a value without a category in every layout (pointer and keys), the minimums of the layout in short panes, the palette (the surfaces it was validated against and the pixels the views draw) and the speed at 200,000 units, with the aggregation timed (the width changes every frame). The screenshots of the list, each form, a narrow window and a stream with many entries are saved with `ENCSPECT_SCREENSHOTS`.
 
+## NativeAOT check
+
+- The host and the parsers use no reflection that NativeAOT lacks (the host asks the parser it picked for `DeclaredEnd`, whose default returns null, instead of looking at the interface map), so `dotnet publish src/Encspect.Cli -p:PublishAot=true` gives a binary that starts and analyzes.
+- `scripts/check_aot.sh [output directory]` publishes it and compares its CSV report with decoding against the framework-dependent build's for every tenth fixture. It needs clang and the linker, takes about three minutes, and is not part of CI.
+- `DeclaredEndTests` checks that the host asks a parser for its declared end.
+
+## Vector paths of the decoders
+
+- **Where:** Monkey's Audio's neural network filters (`NnVectors`: the dot product of 16-bit history and weights with the multiply-and-add-adjacent-pairs instruction of AVX-512BW, AVX2, SSE2 or Arm's widening multiply-add, and the weights' step in portable vectors) and FLAC's linear predictor (`Prediction.RestoreLpc`: the oldest taps of a window of 12 or more in vectors, the newest four to eleven in scalar code, because a vector load that overlaps the store of the previous sample stalls).
+- **Same bits:** all of it is integer arithmetic that wraps like the scalar code, so every path gives the same output; the scalar paths are the ones a machine without the instructions takes.
+- **Testing the fallbacks locally:** run the decoder fixtures once for each of these settings (the runtime reads them as environment variables):
+  - `DOTNET_EnableAVX512=0`: no AVX-512, so the 256-bit paths. This is .NET 10's name; `DOTNET_EnableAVX512F=0` and `DOTNET_EnableAVX512BW=0` leave `Avx512BW.IsSupported` true there.
+  - `DOTNET_EnableAVX2=0`: SSE2 only (AVX-512 needs AVX2).
+  - `DOTNET_EnableHWIntrinsic=0`: no vector instructions at all, the scalar paths.
+  - `DOTNET_PreferredVectorBitWidth=512`: on a processor with AVX-512 that the runtime keeps to 256-bit vectors, this takes the 512-bit paths.
+- **A run:** `DOTNET_EnableAVX512=0 dotnet test tests/Encspect.Tests --filter "FullyQualifiedName~Encspect.Tests.DecoderFixtureTests|FullyQualifiedName~Encspect.Tests.MonkeysAudioDecoderFixtureTests|FullyQualifiedName~Encspect.Tests.WavPackDecoderFixtureTests"` takes under a minute.
+- **512-bit vectors:** the dot product of Monkey's Audio's filters uses them only where the runtime prefers them (`Vector512.IsHardwareAccelerated`), as the runtime does for its own vector types. Where the runtime does not, a processor with AVX-512BW takes the AVX2 path. The processors of GitHub's x64 runners are mixed, so CI reaches the 512-bit paths only on a runner whose processor has them and is preferred; the setting above reaches them locally.
+- **Arm:** FLAC's wide predictor (64-bit sums) has an AdvSimd path; the narrow one (32-bit sums, the common case) stays scalar there, since it needs 256-bit vectors. A 128-bit version was not measured on Arm, so it is not written; add it only with a measured gain.
+- **CI:** the `rest` shard on ubuntu-26.04 runs those three classes once more for each of `DOTNET_EnableAVX512=0`, `DOTNET_EnableAVX2=0` and `DOTNET_EnableHWIntrinsic=0`, with trx results in the failed-test summary; the Arm runners take the `AdvSimd` paths in every run, and the x64 runners the paths their processor has.
+
+## CLI runtime settings
+
+The CLI project sets `TieredPGO=false`, `System.Runtime.TieredCompilation.CallCountingDelayMs=20` and, for a publish with a runtime identifier, `PublishReadyToRun` of the app's own assemblies without the composite image (`PublishReadyToRunComposite=false`). The GUI keeps the defaults: it was not measured.
+
+- **Why:** the decoders' loops start in tier 0 and then in the instrumented tier of dynamic PGO, and an analysis of a few seconds is over before the default tiering (a 100 ms wait with no new method compiled, 30 calls, a background compile) has replaced them. Ahead-of-time code (ReadyToRun) removes the first step, switching PGO off the second, and the shorter delay the third. With tiering off altogether the long runs take about as long as with these settings, so the loss is the first seconds of a run.
+- **Measured** (Linux x64, Xeon 2.8 GHz, one pinned core, load average under 1.5, interleaved runs; minimum seconds of `encspect --csv --verify` on 300 s files of noisy pink noise, 5 runs each for the first table and 3 for the second; the fixture folders are 456 FLAC files with `--verify` and 493 MPEG files):
+
+| Setting | FLAC -5 | WavPack default | Monkey's Audio -c3000 | tiny FLAC, first analysis | 456 FLAC fixtures | 493 MPEG fixtures |
+|---|---|---|---|---|---|---|
+| JIT, defaults | 1.85 | 2.80 | 4.81 | 0.24 | 1.69 | 2.99 |
+| JIT, `TieredPGO=0` | 1.58 | 2.77 | - | 0.24 | 1.67 | 3.26 |
+| JIT, `TieredPGO=0`, delay 0 | 1.22 | 1.86 | 3.44 | 0.34 | 2.43 | 4.13 |
+| JIT, `TieredPGO=0`, delay 20 ms (the setting) | 1.33 | 2.03 | - | 0.24 | 1.63 | 3.35 |
+| JIT, `TieredCompilation=0` | 1.29 | 1.79 | 3.59 | 0.50 | - | - |
+| ReadyToRun, defaults | 1.41 | 1.98 | 4.85 | 0.15 | 1.40 | 2.96 |
+| ReadyToRun, `TieredPGO=0`, delay 20 ms (the setting for a publish) | 1.02 | 1.62 | - | 0.15 | 1.34 | 3.01 |
+| ReadyToRun, `TieredPGO=0`, delay 0 | 1.04 | 1.71 | 3.37 | 0.23 | 2.23 | 3.80 |
+| NativeAOT, defaults | 0.72 | 1.30 | 2.79 | 0.01 | 0.99 | 2.78 |
+
+- **The choice:**
+  - A delay of 0 gives the best long run but costs 100 ms on the first file and 40% on a folder of small files, where every method is promoted at once; 20 ms keeps what a long run gains and the cost of a folder at zero or 12% (JIT) and nothing with ReadyToRun.
+  - `TieredPGO=0` alone gains 15% on FLAC and nothing elsewhere; with ReadyToRun it is neutral on short runs and costs nothing on long ones.
+  - ReadyToRun saves 90 to 100 ms of the first analysis (0.24 to 0.15 s) and about 17% of a folder of FLAC files; those rows were measured on a framework-dependent build, so the size and time of the release publish are measured separately (next list).
+  - `ReadyToRun` is set only where a runtime identifier is given (`dotnet publish -r`), so `dotnet build` and the tests are not changed, and not for NativeAOT. Crossgen2 for the other runtime identifiers is not run in this environment; the publish steps of CI and the release workflow compile it for each.
+- **The release publish** (`dotnet publish -r linux-x64 --self-contained -p:PublishSingleFile=true`, clean `obj`, same machine, load average 2 to 4 from other sessions, one pinned core, interleaved runs, minimum seconds of `encspect --csv --verify`; the tiny file is a FLAC fixture, the folder is `tests/fixtures/flac`, the big file is the 300 s FLAC -5 file):
+
+| Release publish | File | Archive (`tar.gz`) | tiny FLAC | 456 FLAC fixtures | FLAC -5, 300 s |
+|---|---|---|---|---|---|
+| No ReadyToRun (`PublishReadyToRun=false`) | 79.7 MB | 34.0 MB | 0.34 | 1.87 | 1.45 |
+| ReadyToRun, composite with the framework (the SDK's default for a self-contained publish) | 100.4 MB (+26%) | 41.7 MB (+23%) | 0.15 | 1.31 | 1.05 |
+| ReadyToRun of the app's assemblies only (`PublishReadyToRunComposite=false`; the framework stays as shipped) | 85.1 MB (+6.8%) | 36.8 MB (+8.3%) | 0.19 | 1.47 | 1.30 |
+
+- **Choice for the release publish:** ReadyToRun of the app's own assemblies only. The archive grows by 8.3%, inside the 10% allowed, and the first analysis still takes 0.19 s against 0.34 s; the composite image is faster on the long run (1.05 s against 1.30 s) but adds 23% to every download, and the long run is still 10% ahead of no ReadyToRun.
+- **Why the composite image is bigger:** it compiles the framework's assemblies again together with the app's, an image of 59 MB.
+- **NativeAOT is the fastest on every row** (startup 10 ms, FLAC 2.5 times the JIT default) and is not made the shipped build: it needs the native toolchain on every runner and the check above is local. Which instruction sets its binary uses was not examined.
+
 ## CI
 
 `.github/workflows/ci.yml` is one workflow for pull requests, pushes to main, the nightly schedule and manual runs.

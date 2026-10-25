@@ -317,13 +317,30 @@ jobs:
           SHARD_FILTER: ${{ matrix.filter }}
         run: dotnet test tests/Encspect.Tests --no-build --configuration Release --filter "$SHARD_FILTER" --logger "trx;LogFileName=${{ matrix.shard }}.trx" --results-directory "${{ runner.temp }}/trx"
 
+      # The vector paths of the decoders (FLAC's predictor, Monkey's Audio's filters) have narrower paths for machines without the wider
+      # instructions. The step above runs the paths the runner's processor takes; this one runs, with the decoder fixtures, the 256-bit path
+      # (AVX-512 off), the 128-bit path (AVX2 off) and the scalar one (no hardware intrinsics). DOTNET_EnableAVX512 is .NET 10's knob; the
+      # older DOTNET_EnableAVX512F does not turn AVX-512BW off there.
+      - name: Test the decoders on the narrower instruction sets
+        id: fallbacks
+        if: matrix.shard == 'rest' && matrix.os == 'ubuntu-26.04'
+        shell: bash
+        run: |
+          status=0
+          for knob in DOTNET_EnableAVX512 DOTNET_EnableAVX2 DOTNET_EnableHWIntrinsic; do
+            env "$knob=0" dotnet test tests/Encspect.Tests --no-build --configuration Release \
+              --filter "FullyQualifiedName~Encspect.Tests.DecoderFixtureTests|FullyQualifiedName~Encspect.Tests.MonkeysAudioDecoderFixtureTests|FullyQualifiedName~Encspect.Tests.WavPackDecoderFixtureTests" \
+              --logger "trx;LogFileName=${{ matrix.shard }}-$knob.trx" --results-directory "${{ runner.temp }}/trx" || status=1
+          done
+          exit $status
+
       - name: Summarize the failed tests
-        if: failure() && steps.tests.outcome == 'failure'
+        if: failure() && (steps.tests.outcome == 'failure' || steps.fallbacks.outcome == 'failure')
         shell: bash
         run: bash scripts/ci/python.sh scripts/ci/summarize.py tests "${{ runner.temp }}/trx" --title "Unit tests, ${{ matrix.shard }} shard, ${{ matrix.os }}" || true
 
       - name: Keep the failed test results
-        if: failure() && steps.tests.outcome == 'failure'
+        if: failure() && (steps.tests.outcome == 'failure' || steps.fallbacks.outcome == 'failure')
         uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.os }}-${{ matrix.shard }}
