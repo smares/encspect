@@ -30,6 +30,40 @@ public class TrueHdTests
         Assert.Equal((byte)(Checks.Standard8Restart(Digits[..^1]) ^ Digits[^1]), Checks.RestartHeader(Digits, 0, Digits.Length * 8));
     }
 
+    // The substream's CRC-8 and the parities take a word of bytes at a time; they equal the byte by byte forms at every length.
+    [Fact]
+    public void TheSubstreamChecksEqualTheByteByByteForms()
+    {
+        var random = new Random(8);
+        for (int length = 1; length <= 100; length++)
+        {
+            byte[] body = new byte[length];
+            random.NextBytes(body);
+            int register = 0x3C;
+            foreach (byte b in body[..^1])
+            {
+                register ^= b;
+                for (int bit = 0; bit < 8; bit++)
+                {
+                    register = (register & 0x80) != 0 ? ((register << 1) ^ 0x63) & 0xFF : (register << 1) & 0xFF;
+                }
+            }
+
+            Assert.Equal((byte)(register ^ body[^1]), Checks.Substream(body));
+
+            int x = 0;
+            foreach (byte b in body)
+            {
+                x ^= b;
+            }
+
+            byte parity = (byte)(x ^ 0xA9);
+            Assert.True(Checks.SubstreamParityHolds(body, parity));
+            Assert.False(Checks.SubstreamParityHolds(body, (byte)(parity ^ 1)));
+            Assert.Equal(((x >> 4) ^ (x & 0xF)) == 0xF, Checks.ParityHolds(body.AsSpan(0, length / 2), body.AsSpan(length / 2)));
+        }
+    }
+
     [Theory]
     [InlineData("f8726fba0007800fb75200000000841b203c003ec947e307e3003602", 0x3602)]
     [InlineData("f8726fbb0f8f0001b752400000008d9a11054c0300008080001b538c", 0x538C)]
