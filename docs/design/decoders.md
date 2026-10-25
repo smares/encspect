@@ -1617,6 +1617,64 @@ The decode times of the benchmark files after the pass, `--verify` on the JIT bu
   - WavPack: term 17 0.96 / 1.01, term 18 1.07 / 0.89, terms 1 to 8 1.35 / 1.05, mono terms 1.45 / 1.04.
   - TrueHD fixture mono 1.57 / 1.44, the reference's own case 1.27 / 1.07.
 
+## As built: the second speed pass
+
+The first pass left the decoders 2 to 4 times behind the references; this one measured where the rest of the time goes before it changed anything, and implemented only what promised 15% or more of a format's analysis or `--verify` time. Same inputs and machine as the first pass (300 s files of noisy pink noise, one pinned core of a shared Xeon at 2.8 GHz, load average under 1.5, interleaved runs), profiles by `dotnet-trace` (sampled thread time) of the JIT build of the CLI.
+
+**Where the time goes** (before this pass; `--verify` minus analysis is the decoding step, the shares are of the decoding step and come from the profiles):
+
+| Stream | Analysis | Decoding step | Reference | Decoding step: shares |
+|---|---|---|---|---|
+| FLAC -5, 16-bit/44.1 kHz | 0.73 s | 0.55 s | `flac -d` 0.35 s | linear predictor 48%, MD5 28%, canonical PCM bytes 8%, channel recombination 8%, the frame's glue 8% |
+| WavPack default, 16-bit | 0.36 s | 1.65 s | `wvunpack` 0.84 s | entropy decoder 64%, decorrelation passes 20%, MD5 and the byte packing before it 10%, CRC and mute loops 4%, planes 1% |
+| WavPack `-hh`, 24-bit/96 kHz | 0.50 s | 7.2 s | `wvunpack` 3.08 s | decorrelation passes 66%, entropy decoder 23%, MD5 and packing 7%, the rest 4% |
+| Monkey's Audio `-c3000` | 0.51 s | 3.3 s | `mac -d` 1.7 s | prediction stages and the value loop 43%, range decoder 29%, neural network filters 17%, CRC-32 5%, sample conversion 4%, the rest 2% |
+| TrueHD, 24-bit/96 kHz | 2.4 s | 1.0 s | FFmpeg 10.1 s | matrices 36%, filters 38%, the rest 26% |
+
+- **The analysis in the run:** it is 57% of a FLAC `--verify` run, 65 to 70% of a TrueHD one and 5 to 20% of WavPack's and Monkey's Audio's; about 0.15 s of every run of the release build (0.24 s of the JIT build) is the start of the runtime and of the host.
+- **Not where the time goes:**
+  - The decoders do not read what the parser walked again: FLAC and TrueHD decode from the planes the walk filled; WavPack and Monkey's Audio never walk their entropy-coded data. The 3.1 times the file that WavPack reads, and 2.5 for Monkey's Audio, are the parser's own: the cache of WavPack's block probes loads 64 KiB for a 32-byte header (`BlockCache.Load`), and Monkey's Audio's descriptor MD5 is a pass over the file of its own (`Reader.Hash`). Reading a file from the page cache costs 1 to 2% of a `--verify` run (the profile's `pread`), 5 to 8% of a WavPack analysis.
+  - Work charges, cancellation checks and sink calls are under 0.5% in every profile.
+  - The canonical PCM bytes before the digest are 4 to 8% (FLAC 3.8%, WavPack 1.5 to 2.3%), the MD5 itself 6 to 13%; MD5 is bound by its dependency chain (about 4.5 cycles a byte, 600 MB/s at 2.8 GHz; the first pass measured 470 MB/s), so a digest in place or a better MD5 gains 3% at most.
+- **Where the cycles are:** the serial per-sample work of the entropy decoders and predictors, which the references run 2 to 3 times faster than the .NET code; and the start of the loops (tier 0, below).
+
+**What changed** (each its own commit; reports are byte-identical to `origin/main` c94e71d for every fixture of every format and for the benchmark files, JSON and CSV, with and without `--verify`):
+
+- **Rice residuals:** `BitCursor.ReadRice` reads a partition's values while the bit buffer holds them whole, with the buffer in locals, and the residual walk reads the rest one value at a time as before (the walk is 55% of the analysis of a FLAC file). Analysis 0.73 to 0.54 s (-26%), `--verify` 1.27 to 1.10 s (-13%); `BitCursorTests.ReadRiceReadsLikeCountZerosAndRead` holds it to the one-at-a-time reading at every length, parameter and end of data.
+- **TrueHD checks:** the substreams' CRC-8 takes eight bytes at a time (eight tables, the byte step applied k times) and the parities fold words: 19% of the analysis profile of the 24-bit/96 kHz file; analysis 2.56 to 2.30 s.
+- **TrueHD codewords:** the codeword branches mispredict (the code is a unary-like prefix code over noise), and the cursor's fields were reloaded for every bit. The samples that start well before the end of a substream take their codeword from a table of 512 entries per codebook, built by running the slow reader on every nine bits, with the buffer in locals (`BitCursor.Detach` and `Attach`); the last samples, and any codeword the table rejects, go through the old code, which names the faults and leaves the cursor where it did. 24-bit/96 kHz: analysis 2.30 to 1.72 s, `--verify` 3.10 to 2.78 s; 16-bit/48 kHz -11% and -2%.
+- **Hot loops, optimized at the first call:** see "Hot loops and tiering" in [development.md](../development.md). The loops of MD5, CRC-32, the FLAC CRC-16, the Rice loop, the residual walk, the linear predictor, the recombination and the canonical PCM writer are no longer left to tier 0, which cost the descriptor MD5 of a Monkey's Audio file a third of its analysis.
+- **Monkey's Audio 32-bit weight:** see "Work weights" below.
+
+The decode times of the benchmark files, JIT build of the CLI with its settings, minimum of five runs (three for the last three rows); the references are the fastest of `flac -d`, `wvunpack`, `mac -d` and FFmpeg:
+
+| Stream | Analysis before, after | `--verify` before, after | Reference | Ratio before, after |
+|---|---|---|---|---|
+| FLAC -5, 16-bit/44.1 kHz | 0.77, 0.52 s | 1.29, 1.02 s | 0.32 s | 4.0, 3.2 |
+| FLAC -8, 24-bit/96 kHz | 1.24, 0.83 s | 2.40, 1.88 s | 0.98 s | 2.4, 1.9 |
+| WavPack default, 16-bit | 0.35, 0.34 s | 1.89, 1.84 s | 0.77 s | 2.5, 2.4 |
+| WavPack `-hh`, 24-bit/96 kHz | 0.45, 0.48 s | 7.64, 7.36 s | 2.99 s | 2.6, 2.5 |
+| Monkey's Audio `-c1000` | 0.53, 0.34 s | 2.69, 2.51 s | 1.09 s | 2.5, 2.3 |
+| Monkey's Audio `-c3000` | 0.48, 0.36 s | 4.01, 3.73 s | 1.65 s | 2.4, 2.3 |
+| Monkey's Audio `-c5000` | 0.51, 0.38 s | 10.00, 9.16 s | 4.71 s | 2.1, 1.9 |
+| TrueHD, 16-bit/48 kHz | 1.62, 1.50 s | 2.24, 2.13 s | 9.40 s (FFmpeg) | 0.2, 0.2 |
+| TrueHD, 24-bit/96 kHz | 2.40, 1.75 s | 3.70, 2.75 s | 9.93 s (FFmpeg) | 0.4, 0.3 |
+
+- **The ReadyToRun publish** (the release build), minimum of four: FLAC -5 analysis 0.65 to 0.39 s and `--verify` 1.15 to 1.03 s; FLAC -8 24-bit 1.16 to 0.73 s and 2.11 to 1.79 s; Monkey's Audio `-c3000` analysis 0.32 to 0.28 s; TrueHD 24-bit 2.35 to 1.49 s and 3.62 to 2.46 s; WavPack unchanged.
+- **New gaps:** FLAC `--verify` 3.2 times `flac -d` (analysis 1.6 times); WavPack 2.4 to 2.5; Monkey's Audio 1.9 to 2.3; Encspect is 3.5 to 4.5 times faster than FFmpeg's TrueHD decoder on these files. The analysis of a WavPack, Monkey's Audio or FLAC file is now 0.3 to 0.5 s of 300 s, including the 0.15 s of start.
+- **Tried and not kept:**
+  - WavPack's word decoder with the bit buffer and the medians in locals: -6% (16-bit) and -7% (24-bit) of `--verify`, a second copy of the algorithm; a variant of it without branches (masks for the unary count, the held bits and the median updates) was 10% slower than the branches, since a predicted branch cuts the dependency chain through the bit position that a mask keeps.
+  - A mask in place of the branch of `Apply` (the 16-bit and the wide form of the decorrelation weight): 17% slower, the branch is predictable.
+  - Monkey's Audio's range decoder without the remainder (`low -= q * range` for `low %= range`): no change, the JIT already shares the division.
+  - The optimized-at-first-call attribute on WavPack's, TrueHD's and Monkey's Audio's loops: no change beyond 3 to 6% for Monkey's Audio, so they are not marked.
+- **What is left:** the entropy decoders and predictors of WavPack and Monkey's Audio are 70 to 90% of their `--verify` time, serial per sample, and 2 to 2.5 times the references; a lower bound for an in-process gain is a rewrite of their loops for the dependency chains (fusing decorrelation passes, two channels in one vector). The multi-core gains need a change of the decoder contract and are in the lead's list, not here.
+
+**Work weights.** `DecoderWorkTests` (62 cases, nightly) on the final code, five runs of the class (three before the change below and two after), the factor against the FLAC reference:
+
+- Worst before the change: `monkeys-audio-insane-32-bit` at 1.08, 1.66 and 1.30 (0.76 to 1.10 ns a unit); the next cases read 1.16 and below. The reference reads 0.48 to 0.83 ns a unit, against 0.43 after the first pass. Probably the walk of a FLAC file got faster without the stores of the lent planes, which the difference of "decoding on" and "off" counts in the reference's time; not examined further.
+- **The change:** the filters of 32-bit samples (64-bit sums over 32-bit history, half the lanes of the 16-bit filters) are charged three units for every four taps instead of one for every two (`FrameDecoder.TapUnits`): 1,426 units a sample of a channel at insane, 6,556 for a byte of a legitimate file against the allowance of 8,192. The case reads 1.15 and 0.89 in two runs, the other 61 cases at most 1.23 (`wavpack-fixture-dsd-high`). No limit was widened.
+- The charges of the other decoders are unchanged.
+
 ## After the milestone review
 
 The independent review of the FLAC step found two blocking defects and a set of smaller ones, all fixed; the rules it drew from them hold for every format, and the work on WavPack, TrueHD and WMA Lossless starts from them.
