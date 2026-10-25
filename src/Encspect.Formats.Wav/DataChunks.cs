@@ -85,6 +85,12 @@ internal static class DataChunks
                 $"The fact chunk states {fact} samples, but the audio holds {Counts.Of(counted, "sample frame", "sample frames")}.");
         }
 
+        if (s.Burst is { Type.Codec: null } unread)
+        {
+            Iec61937Route.AddUnanalyzed(s, format, data, unread);
+            return;
+        }
+
         // None of the routed codec parsers takes anything from the fmt chunk: AC-3 would read the extra bytes of the WAVEFORMATEX as a dac3 or dec3 box.
         string? codec = format.CodecId ?? s.CarriedCodec;
         bool isCarried = format.CodecId is null && s.CarriedCodec is not null;
@@ -92,7 +98,9 @@ internal static class DataChunks
         bool isRouted = false;
         if (codec is not null && data.Available > 0)
         {
-            isRouted = context.ParseStream(codec, data.Node, context.Reader.Slice(data.Start, data.Available));
+            isRouted = s.Burst is { } chain
+                ? Iec61937Route.ParseBursts(s, format, data, chain, codec)
+                : context.ParseStream(codec, data.Node, context.Reader.Slice(data.Start, data.Available));
         }
         else if (codec is not null)
         {
@@ -101,7 +109,11 @@ internal static class DataChunks
 
         if (isRouted && context.Streams.Count > streamsBefore)
         {
-            if (isCarried)
+            if (s.Burst is not null)
+            {
+                Iec61937Route.Compare(s, format, data, context.Streams[streamsBefore]);
+            }
+            else if (isCarried)
             {
                 int bits = format.Bits;
                 long rate = format.SampleRate;
@@ -141,11 +153,27 @@ internal static class DataChunks
         AddStream(s, format, data, samples, stored, blockAlign);
     }
 
-    // The codec parser whose stream the samples of a PCM file carry, or null: a DTS stream in the 16-bit stereo samples, as on a DTS music CD,
-    // where the format tag says PCM. The codec parser decides by a chain of consistent frames at the start of the data, after any silence.
+    // The codec parser whose stream the samples of a PCM file carry, or null: IEC 61937 bursts of AC-3, E-AC-3 or DTS in the 16-bit stereo samples
+    // (S/PDIF passthrough), or a DTS stream written straight into them, as on a DTS music CD, where the format tag says PCM. A chain of bursts, or
+    // for the codec parser a chain of consistent frames, at the start of the data, after any silence, decides.
     public static string? CarriedCodec(State s, WaveFormat format, Node parent, ByteReader data)
     {
-        if (format.CodingTag != FormatTags.Pcm || format.Bits != 16 || format.Channels != 2 || s.IsBigEndian || data.Length == 0)
+        if (data.Length == 0 || s.IsBigEndian)
+        {
+            return null;
+        }
+
+        // IEC 61937 bursts in the samples of 16-bit stereo PCM, or in a file whose format tag says AC-3 over S/PDIF: a chain of bursts decides.
+        if ((format.CodingTag == FormatTags.Pcm && format.Bits == 16 && format.Channels == 2) || format.CodingTag == FormatTags.DolbyAc3Spdif)
+        {
+            if (Iec61937.Recognize(data) is { } chain)
+            {
+                s.Burst = chain;
+                return chain.Type.Codec ?? Iec61937Route.Unanalyzed;
+            }
+        }
+
+        if (format.CodingTag != FormatTags.Pcm || format.Bits != 16 || format.Channels != 2)
         {
             return null;
         }

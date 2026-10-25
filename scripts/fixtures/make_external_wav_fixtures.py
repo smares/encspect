@@ -83,6 +83,21 @@ W64_FIXTURES = {
     "w64-adpcm-ima": (("sine", 44100, 2, SHORT, "s16le"), ["-c:a", "adpcm_ima_wav"], None, ["wav.coding-not-analyzed"], "IMA ADPCM"),
 }
 
+# IEC 61937 bursts in the samples of a WAVE file, as S/PDIF passthrough is captured: the signal is encoded (FFmpeg's encoder for the arguments), the
+# stream is written as IEC 61937 by the spdif muxer (used as a black box; its source was not read), and the bytes of that are the samples of a 16-bit
+# stereo PCM WAVE file at the link rate. name: (signal, encoder arguments, file extension of the stream, link rate in Hz, (codec, rate, channels) the
+# codec parser reads, findings the analyzer must raise).
+IEC_FIXTURES = {
+    "iec61937-ac3-stereo-192k": (("sine", 48000, 2, 0.1, "s16le"), ["-c:a", "ac3", "-b:a", "192k"], "ac3", 48000, ("ac-3", 48000, 2), ["wav.iec61937-in-pcm"]),
+    "iec61937-ac3-5.1-448k": (("sine", 44100, 6, 0.1, "s16le"), ["-c:a", "ac3", "-b:a", "448k"], "ac3", 44100, ("ac-3", 44100, 6), ["wav.iec61937-in-pcm"]),
+    "iec61937-eac3-stereo-192k": (("sine", 48000, 2, 0.1, "s16le"), ["-c:a", "eac3", "-b:a", "192k"], "eac3", 192000, ("e-ac-3", 48000, 2), ["wav.iec61937-in-pcm"]),
+    "iec61937-dts-stereo-768k": (("sine", 48000, 2, 0.1, "s16le"), ["-c:a", "dca", "-strict", "-2", "-b:a", "768k"], "dts", 48000, ("dts", 48000, 2), ["wav.iec61937-in-pcm"]),
+    "iec61937-mp2-stereo-192k": (("sine", 48000, 2, 0.1, "s16le"), ["-c:a", "mp2", "-b:a", "192k"], "mp2", 48000, None, ["wav.iec61937-payload-not-analyzed"]),
+    "iec61937-mp2-lsf-24000": (("sine", 24000, 2, 0.1, "s16le"), ["-c:a", "mp2", "-b:a", "64k"], "mp2", 48000, None, ["wav.iec61937-payload-not-analyzed"]),
+    "iec61937-mp3-stereo-128k": (("sine", 44100, 2, 0.1, "s16le"), ["-c:a", "libmp3lame", "-b:a", "128k"], "mp3", 44100, None, ["wav.iec61937-payload-not-analyzed"]),
+    "iec61937-aac-stereo-128k": (("sine", 48000, 2, 0.1, "s16le"), ["-c:a", "aac", "-b:a", "128k"], "aac", 48000, None, ["wav.iec61937-payload-not-analyzed"]),
+}
+
 # name: (signal, arguments, findings). Written to a pipe: the muxer cannot go back to fill in the sizes.
 PIPE_FIXTURES = {
     "pcm-s16-stereo-pipe": (("sine", 44100, 2, SHORT, "s16le"), ["-c:a", "pcm_s16le"], ["wav.riff-size-placeholder", "wav.data-size-placeholder"]),
@@ -126,6 +141,24 @@ def encode(name, spec, arguments, layout, work):
     return target
 
 
+def encode_iec(name, spec, arguments, extension, link_rate, work):
+    kind, rate, channels, seconds, raw = spec
+    target = OUT / f"external-{name}.wav"
+    stream = work / f"stream.{extension}"
+    command = ["ffmpeg", "-v", "error", "-y", "-f", RAW[raw][1], "-ar", str(rate), "-ac", str(channels), "-i", "-", *arguments, str(stream)]
+    result = subprocess.run(command, input=signal(spec), capture_output=True)
+    if result.returncode != 0:
+        raise SystemExit(f"ffmpeg failed for {name}: {result.stderr.decode(errors='replace')}")
+    spdif = work / "stream.spdif"
+    result = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(stream), "-c", "copy", "-f", "spdif", str(spdif)], capture_output=True)
+    if result.returncode != 0:
+        raise SystemExit(f"ffmpeg spdif failed for {name}: {result.stderr.decode(errors='replace')}")
+    result = subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "s16le", "-ar", str(link_rate), "-ac", "2", "-i", str(spdif), "-c:a", "pcm_s16le", str(target)], capture_output=True)
+    if result.returncode != 0:
+        raise SystemExit(f"ffmpeg wav failed for {name}: {result.stderr.decode(errors='replace')}")
+    return target
+
+
 def encode_pipe(name, spec, arguments):
     kind, rate, channels, seconds, raw = spec
     target = OUT / f"external-{name}.wav"
@@ -137,9 +170,9 @@ def encode_pipe(name, spec, arguments):
     return target
 
 
-def write_manifest(path, spec, arguments, findings, codec, layout=None):
+def write_manifest(path, spec, arguments, findings, codec, layout=None, carried=None):
     data = path.read_bytes()
-    manifest = m.manifest(data, codec)
+    manifest = m.manifest(data, codec, 0, carried)
     manifest["findings"] = [{"code": code} for code in findings]
     manifest["tool"] = f"{tool_version()} (ffmpeg package of Ubuntu 24.04)"
     manifest["arguments"] = arguments
@@ -150,31 +183,45 @@ def write_manifest(path, spec, arguments, findings, codec, layout=None):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     manifests_only = "--manifests-only" in sys.argv
+    # --only PREFIX writes just the fixtures whose names start with it, for a file added later (a full run writes every file again, and files whose
+    # bytes depend on the time they were made, such as the peak envelope, would change).
+    only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else ""
     if manifests_only:
         # The committed files are the evidence; the manifests are recomputed from them and from the settings the script lists.
         for name, (spec, arguments, layout, findings, codec) in {**FIXTURES, **W64_FIXTURES}.items():
             write_manifest_keep_tool(OUT / f"external-{name}.{'w64' if name.startswith('w64-') else 'wav'}", spec, arguments, findings, codec, layout)
         for name, (spec, arguments, findings) in PIPE_FIXTURES.items():
             write_manifest_keep_tool(OUT / f"external-{name}.wav", spec, ["-f", "wav", "-", *arguments], findings, None, None)
+        for name, (spec, arguments, extension, link_rate, carried, findings) in IEC_FIXTURES.items():
+            write_manifest_keep_tool(OUT / f"external-{name}.wav", spec, ["-f", "spdif", *arguments], findings, None, None, carried)
         return
     with tempfile.TemporaryDirectory() as folder:
         work = pathlib.Path(folder)
         for name, (spec, arguments, layout, findings, codec) in {**FIXTURES, **W64_FIXTURES}.items():
+            if not name.startswith(only):
+                continue
             path = encode(name, spec, arguments, layout, work)
             write_manifest(path, spec, arguments, findings, codec, layout)
         for name, (spec, arguments, findings) in PIPE_FIXTURES.items():
+            if not name.startswith(only):
+                continue
             path = encode_pipe(name, spec, arguments)
             write_manifest(path, spec, ["-f", "wav", "-", *arguments], findings, None)
+        for name, (spec, arguments, extension, link_rate, carried, findings) in IEC_FIXTURES.items():
+            if not name.startswith(only):
+                continue
+            path = encode_iec(name, spec, arguments, extension, link_rate, work)
+            write_manifest(path, spec, ["-f", "spdif", *arguments], findings, None, None, carried)
 
 
-def write_manifest_keep_tool(path, spec, arguments, findings, codec, layout):
+def write_manifest_keep_tool(path, spec, arguments, findings, codec, layout, carried=None):
     """The manifest of a committed file: the tool that wrote the file stays as the last full run recorded it."""
     tool = "FFmpeg 6.1.1 (ffmpeg package of Ubuntu 24.04)"
     old = path.with_suffix(".expected.json")
     if old.exists():
         tool = json.loads(old.read_text(encoding="utf-8"))["tool"]
     data = path.read_bytes()
-    manifest = m.manifest(data, codec)
+    manifest = m.manifest(data, codec, 0, carried)
     manifest["findings"] = [{"code": code} for code in findings]
     manifest["tool"] = tool
     manifest["arguments"] = arguments

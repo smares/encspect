@@ -1,0 +1,54 @@
+{
+ "length": 20524,
+ "container": {
+  "id": "RIFF",
+  "size": 20516,
+  "end": 20524
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 20524,
+   "size": 20480,
+   "length": 20480
+  }
+ ],
+ "stream": {
+  "codec": "MPEG-2 AAC",
+  "sample_rate": 48000,
+  "channels": 0,
+  "bits": null,
+  "samples": 5120,
+  "duration": 0.10666666666666667,
+  "layout": [],
+  "average_bitrate": 113.54999999999998
+ },
+ "iec61937": {
+  "first": 44,
+  "data_type": 7,
+  "name": "MPEG-2 AAC",
+  "bursts": 5,
+  "pauses": 0,
+  "listed": [
+   44,
+   4140,
+   8236,
+   12332,
+   16428
+  ],
+  "findings": {}
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-payload-not-analyzed"
+  }
+ ]
+}

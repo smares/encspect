@@ -1,0 +1,85 @@
+{
+ "length": 27726,
+ "container": {
+  "id": "RIFF",
+  "size": 27718,
+  "end": 27726
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "LIST",
+   "offset": 36,
+   "end": 70,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 48,
+     "end": 70,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 70,
+   "end": 27726,
+   "size": 27648,
+   "length": 27648
+  }
+ ],
+ "stream": {
+  "codec": "MPEG-2 Layer II low sampling frequency",
+  "sample_rate": 48000,
+  "channels": 0,
+  "bits": null,
+  "samples": 6912,
+  "duration": 0.144,
+  "layout": [],
+  "average_bitrate": 64.00000000000001
+ },
+ "iec61937": {
+  "first": 78,
+  "data_type": 9,
+  "name": "MPEG-2 Layer II low sampling frequency",
+  "bursts": 3,
+  "pauses": 0,
+  "listed": [
+   78,
+   9294,
+   18510
+  ],
+  "findings": {}
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-payload-not-analyzed"
+  }
+ ],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-f",
+  "spdif",
+  "-c:a",
+  "mp2",
+  "-b:a",
+  "64k"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 24000,
+  "channels": 2,
+  "seconds": 0.1,
+  "format": "s16le"
+ }
+}

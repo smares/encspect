@@ -1,0 +1,568 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-iec61937-atrac-x-low-latency.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 2604,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 2604,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 2596,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 48000 Hz, 16 bits",
+              "offset": 12,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 192000,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "value": 2560,
+              "unit": "bytes",
+              "offset": 36,
+              "length": 2568,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 2560,
+                  "unit": "bytes",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "IEC 61937 Bursts",
+                  "value": 5,
+                  "unit": "bursts",
+                  "offset": 44,
+                  "length": 2560,
+                  "children": [
+                    {
+                      "name": "Burst 0",
+                      "value": "ATRAC-X low latency",
+                      "offset": 44,
+                      "length": 136,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 44,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 112,
+                          "offset": 48,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "112 (ATRAC-X low latency)",
+                              "offset": 48,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 48,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 49,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 49,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 1024,
+                          "offset": 50,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 128,
+                          "unit": "bytes",
+                          "offset": 52,
+                          "length": 128
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 1",
+                      "value": "ATRAC-X low latency",
+                      "offset": 556,
+                      "length": 136,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 556,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 112,
+                          "offset": 560,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "112 (ATRAC-X low latency)",
+                              "offset": 560,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 560,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 561,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 561,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 1024,
+                          "offset": 562,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 128,
+                          "unit": "bytes",
+                          "offset": 564,
+                          "length": 128
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 2",
+                      "value": "ATRAC-X low latency",
+                      "offset": 1068,
+                      "length": 136,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 1068,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 112,
+                          "offset": 1072,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "112 (ATRAC-X low latency)",
+                              "offset": 1072,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 1072,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 1073,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 1073,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 1024,
+                          "offset": 1074,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 128,
+                          "unit": "bytes",
+                          "offset": 1076,
+                          "length": 128
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 3",
+                      "value": "ATRAC-X low latency",
+                      "offset": 1580,
+                      "length": 136,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 1580,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 112,
+                          "offset": 1584,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "112 (ATRAC-X low latency)",
+                              "offset": 1584,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 1584,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 1585,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 1585,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 1024,
+                          "offset": 1586,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 128,
+                          "unit": "bytes",
+                          "offset": 1588,
+                          "length": 128
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 4",
+                      "value": "ATRAC-X low latency",
+                      "offset": 2092,
+                      "length": 136,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 2092,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 112,
+                          "offset": 2096,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "112 (ATRAC-X low latency)",
+                              "offset": 2096,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 2096,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 2097,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 2097,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 1024,
+                          "offset": 2098,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 128,
+                          "unit": "bytes",
+                          "offset": 2100,
+                          "length": 128
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 36,
+                  "length": 2568,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "ATRAC-X low latency",
+                      "offset": 36,
+                      "length": 2568
+                    },
+                    {
+                      "name": "Bursts",
+                      "value": 5,
+                      "unit": "bursts",
+                      "offset": 36,
+                      "length": 2568
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.013333333333333334,
+                      "unit": "s",
+                      "offset": 36,
+                      "length": 2568
+                    },
+                    {
+                      "name": "Link Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 36,
+                      "length": 2568
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 384,
+                      "unit": "kbps",
+                      "offset": 36,
+                      "length": 2568
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            4
+          ]
+        ],
+        "codec": "ATRAC-X low latency",
+        "sampleRate": 48000,
+        "channels": 0,
+        "samples": 640,
+        "duration": 0.013333333333333334,
+        "averageBitrate": 384,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "wav.iec61937-payload-not-analyzed",
+        "message": "The data holds 5 data-bursts of IEC 61937 with ATRAC-X low latency frames, which the analyzer has no parser for; the stream is described by what the bursts state.",
+        "offset": 44,
+        "length": 2560,
+        "path": [
+          0,
+          4,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

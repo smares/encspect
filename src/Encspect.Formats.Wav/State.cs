@@ -52,6 +52,9 @@ internal sealed class State(ParseContext context)
     // The codec of a stream the samples of the first data chunk carry although the fmt chunk says PCM, found when the chunk was reached.
     public string? CarriedCodec { get; set; }
 
+    // The chain of IEC 61937 bursts found in the samples of the first data chunk, or null.
+    public BurstChain? Burst { get; set; }
+
     // The nodes the walk has built, counted against Walker.MaxNodes, and whether the walk stopped at the budget.
     public int Nodes { get; set; }
 

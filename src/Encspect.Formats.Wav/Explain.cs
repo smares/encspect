@@ -36,6 +36,19 @@ internal static class Explain
     public const string Wave64Padding = "Zero bytes after the chunk, up to the next multiple of 8 bytes from the start of the file; Wave64 aligns chunks to 8 bytes where RIFF aligns them to 2.";
     public const string Wave64List = "A list chunk, the LIST of a RIFF file under its GUID. The analyzer does not read its contents.";
     public const string Wave64UnreadData = "Bytes where a chunk should start but its size is under the 24 bytes of a chunk header. The analyzer does not read them.";
+    public const string BurstsContainer = "The data-bursts of IEC 61937 in the samples: each a preamble and an encoded audio frame, with stuffing up to the next burst. The analyzer lists the first 1,024.";
+    public const string BurstNode = "One data-burst of IEC 61937: the burst-preamble of four 16-bit words, then the burst-payload, an encoded audio frame (IEC 61937-1, 6.1.6).";
+    public const string BurstSync = "The sync words Pa and Pb, F872h and 4E1Fh, which the file holds as the 16-bit samples they are, little-endian (IEC 61937-1, Table 3).";
+    public const string BurstInfo = "The burst-info Pc: the data type, an error flag, information that depends on the data type and the bitstream number (IEC 61937-1, Table 5).";
+    public const string BurstDataType = "The data type, bits 0 to 6 of Pc: what the payload is coded as; IEC 61937-2 gives the values (the conventional type in bits 0 to 4, the sub-data-type in bits 5 and 6).";
+    public const string BurstErrorFlag = "Bit 7 of Pc: set when the payload may contain errors.";
+    public const string BurstDependentInfo = "Bits 8 to 12 of Pc: information the data type defines. The analyzer does not interpret it.";
+    public const string BurstBitstream = "Bits 13 to 15 of Pc: the number of the bitstream, which tells apart the streams interleaved on one interface.";
+    public const string BurstLength = "The length code Pd: the length of the payload, in bits, bytes or 8-byte units according to the data type (IEC 61937-2, Table 2).";
+    public const string BurstPayload = "The payload: one encoded audio frame, as 16-bit words, so each pair of bytes is swapped from the coding's own order.";
+    public const string StatBursts = "The number of data-bursts of the stream's data type.";
+    public const string StatBurstCoding = "The coding the data-bursts carry, from the data type in their burst-info; the analyzer has no parser for it.";
+    public const string StatLinkRate = "The rate of the IEC 60958 frames that carry the bursts, the sample rate of the fmt chunk; normally the sampling rate of the coding, E-AC-3 excepted.";
     public const string PadByte = "A byte of zero after a chunk whose size is odd, which keeps every chunk at an even offset (RIFF specification, \"Chunks\").";
     public const string UnknownChunk = "A chunk the analyzer does not read. A reader skips the chunks it does not know (RIFF specification, \"Waveform Audio File Format\").";
 

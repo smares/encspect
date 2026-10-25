@@ -1,0 +1,87 @@
+{
+ "length": 23118,
+ "container": {
+  "id": "RIFF",
+  "size": 23110,
+  "end": 23118
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "LIST",
+   "offset": 36,
+   "end": 70,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 48,
+     "end": 70,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 70,
+   "end": 23118,
+   "size": 23040,
+   "length": 23040
+  }
+ ],
+ "stream": {
+  "codec": "MPEG-1 Layer II or III, or MPEG-2 without extension",
+  "sample_rate": 44100,
+  "channels": 0,
+  "bits": null,
+  "samples": 5760,
+  "duration": 0.1306122448979592,
+  "layout": [],
+  "average_bitrate": 128.0125
+ },
+ "iec61937": {
+  "first": 78,
+  "data_type": 5,
+  "name": "MPEG-1 Layer II or III, or MPEG-2 without extension",
+  "bursts": 5,
+  "pauses": 0,
+  "listed": [
+   78,
+   4686,
+   9294,
+   13902,
+   18510
+  ],
+  "findings": {}
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-payload-not-analyzed"
+  }
+ ],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-f",
+  "spdif",
+  "-c:a",
+  "libmp3lame",
+  "-b:a",
+  "128k"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 44100,
+  "channels": 2,
+  "seconds": 0.1,
+  "format": "s16le"
+ }
+}

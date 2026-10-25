@@ -264,6 +264,125 @@ def data_info(riff):
     return (first[0] if first else None), extra, silent
 
 
+# IEC 61937 (S/PDIF passthrough) bursts in 16-bit stereo samples, from the freely available previews of IEC 61937-1:2021 (the burst-preamble, 6.1.6 to
+# 6.1.8), IEC 61937-2:2021 (Table 2, the data types) and IEC 61937-3:2017 (AC-3 and E-AC-3).
+IEC_SYNC = b"\x72\xf8\x1f\x4e"  # Pa = F872h, Pb = 4E1Fh as the 16-bit samples they are, little-endian
+# data type (bits 0 to 6 of Pc): (name, repetition period in IEC 60958 frames, unit of Pd, codec route)
+IEC_TYPES = {
+    1: ("AC-3", 1536, "bits", "ac-3"), 4: ("MPEG-1 Layer I", 384, "bits", None),
+    5: ("MPEG-1 Layer II or III, or MPEG-2 without extension", 1152, "bits", None), 6: ("MPEG-2 with extension", 1152, "bits", None),
+    7: ("MPEG-2 AAC", 1024, "bits", None), 8: ("MPEG-2 Layer I low sampling frequency", 768, "bits", None),
+    9: ("MPEG-2 Layer II low sampling frequency", 2304, "bits", None), 10: ("MPEG-2 Layer III low sampling frequency", 1152, "bits", None),
+    11: ("DTS type I", 512, "bits", "dts"), 12: ("DTS type II", 1024, "bits", "dts"), 13: ("DTS type III", 2048, "bits", "dts"),
+    14: ("ATRAC", 512, "bits", None), 15: ("ATRAC 2/3", 1024, "bits", None), 16: ("ATRAC-X", 2048, "bits", None),
+    48: ("ATRAC-X low latency", 512, "bits", None), 80: ("ATRAC-X low latency", 256, "bits", None), 112: ("ATRAC-X low latency", 128, "bits", None),
+    18: ("WMA Professional type I", 2048, "bits", None), 50: ("WMA Professional type II", 2048, "bits", None),
+    82: ("WMA Professional type III", 1024, "bits", None), 114: ("WMA Professional type IV", 512, "bits", None),
+    19: ("MPEG-2 AAC low sampling frequency", 2048, "bits", None), 51: ("MPEG-2 AAC low sampling frequency", 4096, "bits", None),
+    20: ("MPEG-4 AAC", 1024, "bits", None), 52: ("MPEG-4 AAC", 2048, "bits", None), 84: ("MPEG-4 AAC", 4096, "bits", None),
+    116: ("MPEG-4 AAC", 512, "bits", None), 21: ("E-AC-3", 6144, "bytes", "e-ac-3"), 22: ("MAT", 15360, "bytes", None),
+}
+IEC_CHAIN = 3
+
+
+def iec_header(data, at):
+    """(pc, pd) of the burst preamble at at, or None: the sync words are there and the data type is one of the table, null data (0) or pause (3)."""
+    if at + 8 > len(data) or data[at:at + 4] != IEC_SYNC:
+        return None
+    pc, pd = struct.unpack_from("<HH", data, at + 4)
+    return (pc, pd) if (pc & 0x7F) in IEC_TYPES or (pc & 0x7F) in (0, 3) else None
+
+
+def iec_length(kind, pd, unit):
+    return {"bits": (pd + 7) // 8, "bytes": pd, "8bytes": pd * 8}[unit]
+
+
+def iec_chain(data):
+    """The chain at the start of the data: after the zero frames (at most 1 MiB of them), IEC_CHAIN bursts of one audio data type and bitstream number at
+    the repetition period, each with a payload that fits the period and the data. (first, data type) or None."""
+    at = 0
+    limit = min(len(data), 1 << 20)
+    while at < limit and data[at:at + 4] == b"\0\0\0\0":
+        at += 4
+    first = iec_header(data, at)
+    if first is None or (first[0] & 0x7F) not in IEC_TYPES:
+        return None
+    kind = first[0] & 0x7F
+    name, repetition, unit, codec = IEC_TYPES[kind]
+    period = repetition * 4
+    for i in range(IEC_CHAIN):
+        header = iec_header(data, at + i * period)
+        if header is None or (header[0] & 0x7F) != kind or header[0] >> 13 != first[0] >> 13:
+            return None
+        length = iec_length(kind, header[1], unit)
+        if length == 0 or length > period - 8 or at + i * period + 8 + length > len(data):
+            return None
+    return at, kind
+
+
+def iec_walk(data, first, kind):
+    """The bursts of the chain's data type and bitstream number, and the pause and null bursts, from the first one: each is (offset, header, length of its
+    payload read), found at the repetition period; where none starts, the next valid preamble is looked for, and a burst of another type is skipped.
+    Returns {"bursts": [...], "pauses": n, "findings": {code: count}}."""
+    name, repetition, unit, codec = IEC_TYPES[kind]
+    period = repetition * 4
+    bitstream = iec_header(data, first)[0] >> 13
+    found = {"bursts": [], "pauses": 0, "findings": {}, "payload_bytes": 0, "nodes": []}
+
+    def note(code):
+        found["findings"][code] = found["findings"].get(code, 0) + 1
+
+    def next_header(frm):
+        at = frm + (-(frm) % 4)
+        while at + 8 <= len(data):
+            if data[at:at + 2] == b"\x72\xf8" and iec_header(data, at):
+                return at
+            at += 4
+        return None
+
+    position = first
+    expected = first
+    search = first
+    while True:
+        header = iec_header(data, position)
+        if header is None:
+            nxt = next_header(search)
+            if nxt is None:
+                if any(data[search:]):
+                    note("wav.iec61937-data-after-bursts")
+                return found
+            if expected >= 0:
+                note("wav.iec61937-burst-spacing" if nxt < expected else "wav.iec61937-burst-missing")
+            position, expected = nxt, -1
+            continue
+        pc, pd = header
+        found["nodes"].append(position)
+        if (pc & 0x7F) != kind or pc >> 13 != bitstream:
+            if (pc & 0x7F) in (0, 3):
+                found["pauses"] += 1
+            else:
+                note("wav.iec61937-type-changed")
+            search = position + 8
+            position = search
+            expected = -1
+            continue
+        length = iec_length(kind, pd, unit)
+        room = period - 8
+        start = position + 8
+        too_long = length > room
+        cut = start + min(length, room) > len(data)
+        payload = min(length, room, len(data) - start)
+        if too_long or cut or payload == 0:
+            note("wav.iec61937-length-invalid")
+        if pc & 0x80:
+            note("wav.iec61937-error-flag")
+        found["bursts"].append((position, header, payload))
+        found["payload_bytes"] += payload
+        expected = position + period
+        search = start + (-(-payload // 4) * 4)
+        position = expected
+
+
 def shift(items, base):
     for item in items:
         item["offset"] += base
@@ -286,6 +405,24 @@ def manifest(data, extra_codec=None, base=0, carried=None):
         return result
     coding = fmt["coding"]
     routed = fmt["named"] or ROUTED.get(coding)
+    if coding in (1, 0x92) and not riff["big"] and (coding == 0x92 or (fmt["bits"] == 16 and fmt["channels"] == 2)):
+        start = base + chunk["offset"] + 8
+        body = data[start:start + chunk["length"]]
+        chain = iec_chain(body)
+        if chain is not None:
+            name, repetition, unit, codec = IEC_TYPES[chain[1]]
+            walked = iec_walk(body, *chain)
+            bursts = walked["bursts"]
+            result["iec61937"] = {"first": start + chain[0], "data_type": chain[1], "name": name, "bursts": len(bursts), "pauses": walked["pauses"],
+                                  "listed": [start + o for o in walked["nodes"][:1024]], "findings": walked["findings"]}
+            if codec is not None:
+                result["stream"] = {"routed": codec, "carried": True, "sample_rate": carried[1] if carried else 0, "channels": carried[2] if carried else 0}
+            else:
+                samples = len(bursts) * repetition
+                duration = samples / fmt["rate"]
+                result["stream"] = {"codec": name, "sample_rate": fmt["rate"], "channels": 0, "bits": None, "samples": samples, "duration": duration, "layout": [],
+                                    "average_bitrate": walked["payload_bytes"] * 8 / duration / 1000 if duration > 0 else None}
+            return result
     if carried is not None:
         result["stream"] = {"routed": carried[0], "carried": True, "sample_rate": carried[1], "channels": carried[2]}
         return result

@@ -1,0 +1,90 @@
+{
+ "length": 20558,
+ "container": {
+  "id": "RIFF",
+  "size": 20550,
+  "end": 20558
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "LIST",
+   "offset": 36,
+   "end": 70,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 48,
+     "end": 70,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 70,
+   "end": 20558,
+   "size": 20480,
+   "length": 20480
+  }
+ ],
+ "stream": {
+  "routed": "dts",
+  "carried": true,
+  "sample_rate": 48000,
+  "channels": 2
+ },
+ "iec61937": {
+  "first": 78,
+  "data_type": 11,
+  "name": "DTS type I",
+  "bursts": 10,
+  "pauses": 0,
+  "listed": [
+   78,
+   2126,
+   4174,
+   6222,
+   8270,
+   10318,
+   12366,
+   14414,
+   16462,
+   18510
+  ],
+  "findings": {}
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-in-pcm"
+  }
+ ],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-f",
+  "spdif",
+  "-c:a",
+  "dca",
+  "-strict",
+  "-2",
+  "-b:a",
+  "768k"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 48000,
+  "channels": 2,
+  "seconds": 0.1,
+  "format": "s16le"
+ }
+}

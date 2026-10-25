@@ -1,0 +1,54 @@
+{
+ "length": 2604,
+ "container": {
+  "id": "RIFF",
+  "size": 2596,
+  "end": 2604
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 2604,
+   "size": 2560,
+   "length": 2560
+  }
+ ],
+ "stream": {
+  "codec": "ATRAC-X low latency",
+  "sample_rate": 48000,
+  "channels": 0,
+  "bits": null,
+  "samples": 640,
+  "duration": 0.013333333333333334,
+  "layout": [],
+  "average_bitrate": 384.0
+ },
+ "iec61937": {
+  "first": 44,
+  "data_type": 112,
+  "name": "ATRAC-X low latency",
+  "bursts": 5,
+  "pauses": 0,
+  "listed": [
+   44,
+   556,
+   1068,
+   1580,
+   2092
+  ],
+  "findings": {}
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-payload-not-analyzed"
+  }
+ ]
+}

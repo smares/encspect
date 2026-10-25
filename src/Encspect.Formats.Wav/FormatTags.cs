@@ -17,6 +17,7 @@ internal static class FormatTags
     public const int Gsm610 = 0x0031;
     public const int Mpeg = 0x0050;
     public const int MpegLayer3 = 0x0055;
+    public const int DolbyAc3Spdif = 0x0092;
     public const int Extensible = 0xFFFE;
     public const int Ac3 = 0x2000;
     public const int Dts = 0x2001;

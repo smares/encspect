@@ -1,0 +1,693 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-iec61937-aac-stereo-128k.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 24654,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 24654,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 24646,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 48000 Hz, 16 bits",
+              "offset": 12,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 192000,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "List Chunk",
+              "value": "INFO",
+              "offset": 36,
+              "length": 34,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "LIST",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 26,
+                  "unit": "bytes",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "List Type",
+                  "value": "INFO",
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Software Chunk",
+                  "value": "Lavf60.16.100",
+                  "offset": 48,
+                  "length": 22,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "ISFT",
+                      "offset": 48,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 14,
+                      "unit": "bytes",
+                      "offset": 52,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "Lavf60.16.100",
+                      "offset": 56,
+                      "length": 14
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "value": 24576,
+              "unit": "bytes",
+              "offset": 70,
+              "length": 24584,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 70,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 24576,
+                  "unit": "bytes",
+                  "offset": 74,
+                  "length": 4
+                },
+                {
+                  "name": "IEC 61937 Bursts",
+                  "value": 6,
+                  "unit": "bursts",
+                  "offset": 78,
+                  "length": 24576,
+                  "children": [
+                    {
+                      "name": "Burst 0",
+                      "value": "MPEG-2 AAC",
+                      "offset": 78,
+                      "length": 318,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 78,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 7,
+                          "offset": 82,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "7 (MPEG-2 AAC)",
+                              "offset": 82,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 82,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 83,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 83,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 2480,
+                          "offset": 84,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 310,
+                          "unit": "bytes",
+                          "offset": 86,
+                          "length": 310
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 1",
+                      "value": "MPEG-2 AAC",
+                      "offset": 4174,
+                      "length": 370,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 4174,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 7,
+                          "offset": 4178,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "7 (MPEG-2 AAC)",
+                              "offset": 4178,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 4178,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 4179,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 4179,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 2896,
+                          "offset": 4180,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 362,
+                          "unit": "bytes",
+                          "offset": 4182,
+                          "length": 362
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 2",
+                      "value": "MPEG-2 AAC",
+                      "offset": 8270,
+                      "length": 256,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 8270,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 7,
+                          "offset": 8274,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "7 (MPEG-2 AAC)",
+                              "offset": 8274,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 8274,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 8275,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 8275,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 1984,
+                          "offset": 8276,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 248,
+                          "unit": "bytes",
+                          "offset": 8278,
+                          "length": 248
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 3",
+                      "value": "MPEG-2 AAC",
+                      "offset": 12366,
+                      "length": 268,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 12366,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 7,
+                          "offset": 12370,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "7 (MPEG-2 AAC)",
+                              "offset": 12370,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 12370,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 12371,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 12371,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 2080,
+                          "offset": 12372,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 260,
+                          "unit": "bytes",
+                          "offset": 12374,
+                          "length": 260
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 4",
+                      "value": "MPEG-2 AAC",
+                      "offset": 16462,
+                      "length": 342,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 16462,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 7,
+                          "offset": 16466,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "7 (MPEG-2 AAC)",
+                              "offset": 16466,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 16466,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 16467,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 16467,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 2672,
+                          "offset": 16468,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 334,
+                          "unit": "bytes",
+                          "offset": 16470,
+                          "length": 334
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 5",
+                      "value": "MPEG-2 AAC",
+                      "offset": 20558,
+                      "length": 324,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 20558,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 7,
+                          "offset": 20562,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": "7 (MPEG-2 AAC)",
+                              "offset": 20562,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 20562,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 20563,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 20563,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 2528,
+                          "offset": 20564,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 316,
+                          "unit": "bytes",
+                          "offset": 20566,
+                          "length": 316
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 70,
+                  "length": 24584,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "MPEG-2 AAC",
+                      "offset": 70,
+                      "length": 24584
+                    },
+                    {
+                      "name": "Bursts",
+                      "value": 6,
+                      "unit": "bursts",
+                      "offset": 70,
+                      "length": 24584
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.128,
+                      "unit": "s",
+                      "offset": 70,
+                      "length": 24584
+                    },
+                    {
+                      "name": "Link Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 70,
+                      "length": 24584
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 114.375,
+                      "unit": "kbps",
+                      "offset": 70,
+                      "length": 24584
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "MPEG-2 AAC",
+        "sampleRate": 48000,
+        "channels": 0,
+        "samples": 6144,
+        "duration": 0.128,
+        "averageBitrate": 114.375,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "wav.iec61937-payload-not-analyzed",
+        "message": "The data holds 6 data-bursts of IEC 61937 with MPEG-2 AAC frames, which the analyzer has no parser for; the stream is described by what the bursts state.",
+        "offset": 78,
+        "length": 24576,
+        "path": [
+          0,
+          5,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

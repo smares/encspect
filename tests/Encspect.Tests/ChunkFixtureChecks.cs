@@ -49,6 +49,11 @@ internal static class ChunkFixtureChecks
         JsonElement stream = manifest.GetProperty("stream");
         bool isRouted = stream.ValueKind == JsonValueKind.Object && stream.TryGetProperty("routed", out _);
         CheckStream(stream, report.Streams, name);
+        if (manifest.TryGetProperty("iec61937", out JsonElement bursts))
+        {
+            CheckBursts(bursts, node, name);
+        }
+
         CheckFindings(manifest.GetProperty("findings"), report, isRouted);
     }
 
@@ -129,6 +134,19 @@ internal static class ChunkFixtureChecks
         Assert.Equal(expected.GetProperty("layout").EnumerateArray().Select(s => s.GetString()), stream.ChannelLayout?.Select(ChannelLayouts.Name) ?? []);
         Assert.All(stream.NodePaths, path => Assert.NotNull(path));
         Assert.Null(stream.Verification);
+    }
+
+    // The data-bursts of IEC 61937 the model found in the samples: how many of the stream's data type, and where the first of them start.
+    private static void CheckBursts(JsonElement expected, Node container, string where)
+    {
+        Node data = container.Children.Single(c => c.Name == "Data Chunk");
+        Node bursts = data.Children.Single(c => c.Name == "IEC 61937 Bursts");
+        Assert.Equal(expected.GetProperty("bursts").GetInt32(), bursts.Value?.AsInteger());
+        long[] listed = [.. expected.GetProperty("listed").EnumerateArray().Select(o => o.GetInt64())];
+        long[] found = [.. bursts.Children.Select(c => c.Offset)];
+        Assert.True(listed.SequenceEqual(found), $"{where}: the burst nodes are at {string.Join(", ", found.Take(6))}, the manifest {string.Join(", ", listed.Take(6))}.");
+        Assert.Equal(expected.GetProperty("first").GetInt64(), bursts.Offset);
+        Assert.Equal(expected.GetProperty("pauses").GetInt32(), bursts.Children.Count(c => c.Value?.AsText() == "pause"));
     }
 
     // The findings of the analyzer's own codes and of the host's routes must be exactly the manifest's. A codec parser reached through a route adds

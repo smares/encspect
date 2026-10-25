@@ -200,6 +200,25 @@ internal static class LongInputs
         return file;
     }
 
+    // A WAVE file whose 16-bit stereo samples are IEC 61937 bursts of the data type ATRAC-X low latency, which no codec parser reads: 128 IEC 60958
+    // frames of 4 bytes each, a payload of 100 bytes.
+    public static byte[] WavBursts(int count)
+    {
+        byte[] samples = new byte[count * 512];
+        for (int i = 0; i < count; i++)
+        {
+            new byte[] { 0x72, 0xF8, 0x1F, 0x4E, 112, 0, 0x20, 0x03 }.CopyTo(samples, i * 512);
+            for (int k = 0; k < 100; k++)
+            {
+                samples[(i * 512) + 8 + k] = (byte)(k + 1);
+            }
+        }
+
+        byte[] file = WavWithSamples(samples.Length);
+        samples.CopyTo(file, file.Length - samples.Length);
+        return file;
+    }
+
     // An AIFF file whose Common Chunk is followed by many small chunks of a kind the parser names by their FourCC.
     private static byte[] FormChunks(int count)
     {

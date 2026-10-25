@@ -1214,6 +1214,22 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // The bursts of IEC 61937 in a WAVE file are walked once and only the first 1,024 are listed: 100,000 bursts (51 MB) cost the figures of the
+    // stream and the nodes of the listed ones, not a record for each.
+    [Fact]
+    public void ManyBurstsCostNothingPerBurst()
+    {
+        (Report report, long kept, long peak) = Measure("bursts.wav", LongInputs.WavBursts(100_000), LongInputs.WavBursts(10));
+
+        output.WriteLine($"{kept} bytes kept and {peak} bytes peak");
+        Node bursts = Fixtures.Resolve(report.Root, "RIFF/Data Chunk/IEC 61937 Bursts").Single();
+        Assert.Equal(100_000, bursts.Value?.AsInteger());
+        Assert.Equal(1024, bursts.Children.Count);
+        Assert.True(kept < 3_000_000, $"The report keeps {kept} bytes.");
+        Assert.True(peak < 12_000_000, $"The live heap grew by {peak} bytes.");
+        GC.KeepAlive(report);
+    }
+
     private static int CountNodes(Node root)
     {
         int count = 0;
