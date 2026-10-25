@@ -1,4 +1,6 @@
-# WAV
+# WAV and Wave64
+
+Two format parsers in `src/Encspect.Formats.Wav`: "WAV" for WAVE files in a RIFF container and "Wave64" for Sony's Wave64 (`.w64`, see [Wave64](#wave64)). They share the readers of the `fmt `, `fact` and `data` chunks, the routes to the codec parsers and the checks over the stream.
 
 WAVE files in a RIFF container (`.wav`, `.wave`): RIFF for little-endian integers, RIFX for big-endian ones, and RF64 and BW64 for sizes of 64 bits. There is no decoder; the audio is not decoded.
 
@@ -103,7 +105,27 @@ A WAVE file of linear PCM, IEEE float, A-law or mu-law reports a stream: codec, 
 - IEC 61937 bursts of AC-3 or DTS inside PCM samples (the "SPDIF in WAV" case): the data is PCM to the analyzer. Only a DTS core stream written straight into the samples of a 16-bit stereo file is read (see Routes).
 - The `CHAN`-style channel descriptions of other containers, and the contents of `levl`, `link`, `dbmd`, `qlty` and `r64m`.
 - Decoding, and a check of the samples. A WAVE file is verified by nothing but its headers.
-- sox was not used for the cross-check: FFmpeg writes the fixtures and ffprobe and MediaInfo read them.
+- sox was not used for the cross-check: FFmpeg writes the fixtures and ffprobe and MediaInfo read them (sox is not installed on the development machines).
+
+## Wave64
+
+Wave64 (`.w64`) is the layout of a RIFF file with GUIDs for chunk IDs, 64-bit sizes and chunks aligned to 8 bytes. It is its own parser, "Wave64" (`--as wave64`, alias `w64`), and not a variant of the WAV parser: the chunk header, the sizes, the alignment and the end of the file differ, while the readers of the chunks it has in common are the WAV parser's.
+
+What it rests on:
+
+- **Sony's specification was not reachable.** The document the MultimediaWiki points to (VCS's "Informations about Sony Wave64", `vcs.de`) could not be fetched from this environment, and no other copy was found. The wiki page itself could not be fetched either; its content comes from search-result summaries of it. The layout therefore rests on:
+  - the MultimediaWiki's description of Wave64 as those summaries report it (<https://wiki.multimedia.cx/index.php/Sony_Wave64>): GUIDs as chunk IDs, 64-bit sizes that count the header, the riff GUID `66666972-912E-11CF-A5D6-28DB04C10000` and the LIST GUID `7473696C-912F-11CF-A5D6-28DB04C10000`;
+  - the National Archives' PRONOM entry fmt/951 (<https://pronom.nationalarchives.gov.uk/fmt/951>), which names the format;
+  - files written by FFmpeg 6.1.1's w64 muxer, read as black-box examples: the wave GUID `65766177-ACF3-11D3-8CD1-00C04F8EDB8A`; the GUIDs of fmt, data and fact, which are the four characters followed by `F3ACD311-8CD1-00C0-4F8E-DB8A` in the byte order Windows stores a GUID; a riff size equal to the file's; chunk sizes that count their 24-byte header; padding to multiples of 8 bytes (`ffprobe` 8.0.1 and MediaInfo 26.01 read the files the same way).
+  - FFmpeg's and Rockbox's sources were not read.
+- **Not verified:** the padding of a chunk whose size is not a multiple of 8 was observed in FFmpeg's output for data chunks only; the contents of the LIST chunk and the GUIDs of other chunks (markers, the summary list, `bext`, `levl`) are not read, since no source that can be checked gives them. Any chunk whose GUID has the four-character form is named by them and sized.
+
+What is read:
+
+- The riff chunk: its GUID, its size (the whole file, 40 bytes at least) and the form GUID. The GUID of a chunk is shown with the characters it stands for. `DeclaredEnd` is the riff chunk's size; a size under 40 is `wav.riff-size-placeholder`, a size past the file `wav.truncated`, bytes after the end `wav.data-after-riff` (a tag the host finds there is the host's).
+- Every chunk is a node: its GUID, its size (counting the 24 bytes of its header), the data and the padding. `fmt `, `fact` and `data` are read as in a WAVE file, with the same findings (the fmt, fact and data checks, `wav.partial-sample-frame` and the rest), the same routes (MPEG audio, AC-3, E-AC-3 and DTS by format tag or sub-format, and DTS in PCM samples) and the same stream; a `junk` chunk is filler; a `LIST` chunk, a chunk with a four-character GUID and any other GUID are named and sized.
+- The findings of the structure: `wav.w64-chunk-size-invalid` (a size under 24, so the rest of the file is not read), `wav.chunk-past-end`, `wav.pad-byte-missing` (the padding after a chunk is cut short by the end of the file), `wav.pad-byte-not-zero`, `wav.trailing-bytes`, `wav.chunk-limit` and `wav.node-limit`, with the same budgets as WAV (2,048 chunks at one level, 250,000 nodes).
+- Not covered: the contents of `LIST`, markers and other chunks of Sony's editor, and the `ds64` chunk of RF64 and BW64, which a Wave64 file has no use for.
 
 ## Tests and fixtures
 

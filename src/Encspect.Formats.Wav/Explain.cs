@@ -27,6 +27,15 @@ internal static class Explain
     public const string ChunkSize = "The size of the chunk's data in bytes, not counting the ID, this field or the pad byte (RIFF specification, \"Chunks\").";
     public const string ChunkSizeRf64 = "The size of the chunk's data in bytes. In an RF64 file 0xFFFFFFFF means the size is in the ds64 chunk (EBU Tech 3306-2009, section 3.4).";
     public const string ChunkSizeBw64 = "The size of the chunk's data in bytes. In a BW64 file 0xFFFFFFFF means the size is in the ds64 chunk (ITU-R BS.2088, section 2.4); the BW64 chunk's own size is always 0xFFFFFFFF.";
+    public const string Wave64Container = "The riff chunk that holds the whole file in Wave64: a GUID, a 64-bit size that counts the whole file, and the GUID of the form wave, followed by the chunks. Wave64 is the layout of a RIFF file with GUIDs for IDs and 64-bit sizes.";
+    public const string Wave64Id = "The GUID of the riff chunk, which starts every Wave64 file; the characters riff are in its first bytes.";
+    public const string Wave64Size = "The size of the riff chunk in bytes. It counts the whole file, the 40 bytes of the header included.";
+    public const string Wave64FormType = "The GUID of the form wave, which makes the file a waveform audio file; the characters wave are in its first bytes.";
+    public const string Wave64ChunkId = "The GUID of the chunk. For fmt, data, fact and the other chunks of a WAVE file the first four bytes are the characters of the RIFF ID and the other twelve are the same in every chunk.";
+    public const string Wave64ChunkSize = "The size of the chunk in bytes, 64 bits wide. It counts the 24 bytes of the chunk's own GUID and size, but not the padding that takes the chunk to a multiple of 8 bytes.";
+    public const string Wave64Padding = "Zero bytes after the chunk, up to the next multiple of 8 bytes from the start of the file; Wave64 aligns chunks to 8 bytes where RIFF aligns them to 2.";
+    public const string Wave64List = "A list chunk, the LIST of a RIFF file under its GUID. The analyzer does not read its contents.";
+    public const string Wave64UnreadData = "Bytes where a chunk should start but its size is under the 24 bytes of a chunk header. The analyzer does not read them.";
     public const string PadByte = "A byte of zero after a chunk whose size is odd, which keeps every chunk at an even offset (RIFF specification, \"Chunks\").";
     public const string UnknownChunk = "A chunk the analyzer does not read. A reader skips the chunks it does not know (RIFF specification, \"Waveform Audio File Format\").";
 

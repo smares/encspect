@@ -7,7 +7,8 @@ sub-format GUIDs and the channel mask), the sub-format GUIDs of ksuuids.h and mf
 fields and the figures of the stream that a manifest states come from here. The signal generators and the byte builders the fixture scripts use
 live here too.
 
-    read(data)          the chunk tree of a file: {"magic", "size", "form", "end", "chunks": [...], "ds64", ...}
+    read(data)          the chunk tree of a file: {"magic", "size", "form", "end", "chunks": [...], "ds64", ...}; a Wave64 file (the layout
+                        the MultimediaWiki gives and FFmpeg's w64 files show) is read by read_w64 with the same result
     manifest(data)      what the analyzer must report about a file that is well formed enough to have a stream: the length, the chunks, the stream
 """
 
@@ -93,8 +94,76 @@ def read_chunks(data, at, end, big, ds64=None, top=False, rf64=False, depth=0):
     return chunks, stop
 
 
+W64_RIFF = uuid.UUID("66666972-912E-11CF-A5D6-28DB04C10000").bytes_le
+W64_WAVE = uuid.UUID("65766177-ACF3-11D3-8CD1-00C04F8EDB8A").bytes_le
+W64_LIST = uuid.UUID("7473696C-912F-11CF-A5D6-28DB04C10000").bytes_le
+W64_TAIL = uuid.UUID("00000000-ACF3-11D3-8CD1-00C04F8EDB8A").bytes_le[4:]
+
+
+def w64_guid(guid):
+    """A chunk GUID as the analyzer shows it: the text of the GUID and, in brackets, the four characters that name it."""
+    text = str(uuid.UUID(bytes_le=bytes(guid)))
+    if guid == W64_RIFF:
+        return f"{text} (riff)"
+    if guid == W64_WAVE:
+        return f"{text} (wave)"
+    if guid == W64_LIST:
+        return f"{text} (LIST)"
+    if guid[4:] == W64_TAIL and is_id(guid[:4]):
+        return f"{text} ({guid[:4].decode('latin1')})"
+    return text
+
+
+def w64_key(guid):
+    """The RIFF ID a Wave64 chunk stands for: fmt, fact, data and the other four-character names, LIST, or the GUID text."""
+    if guid == W64_LIST:
+        return "LIST"
+    if guid[4:] == W64_TAIL and is_id(guid[:4]):
+        return guid[:4].decode("latin1")
+    return str(uuid.UUID(bytes_le=bytes(guid)))
+
+
+def read_w64(data):
+    """A Wave64 file: the riff GUID, the size of the whole file, the wave GUID, then chunks of a GUID, a 64-bit size that counts these 24 bytes and
+    the data, each padded to a multiple of 8 bytes from the start of the file."""
+    if data[:16] != W64_RIFF or data[24:40] != W64_WAVE:
+        raise ValueError("not a Wave64 file")
+    size = u64(data, 16)
+    placeholder = size < 40 or size > len(data) * 4 + (1 << 40)
+    end = len(data) if placeholder else min(size, len(data))
+    chunks = []
+    at = 40
+    stop = at
+    while at + 24 <= end and len(chunks) < 2048:
+        stated = u64(data, at + 16)
+        if stated < 24:
+            break
+        past = stated > end - at
+        length = end - at - 24 if past else stated - 24
+        nxt = end if past else min(at + ((stated + 7) & ~7), end)
+        guid = data[at:at + 16]
+        chunks.append({"id": w64_guid(guid), "key": w64_key(guid), "offset": at, "end": nxt, "size": stated - 24, "length": length, "placeholder": False, "stated": stated})
+        stop = nxt
+        if past:
+            break
+        at = nxt
+    result = {"magic": "Wave64", "size": size, "form": "WAVE", "big": False, "end": end, "placeholder": placeholder, "declared_end": None if placeholder else size,
+              "chunks": chunks, "ds64": None, "stop": stop}
+    for chunk in chunks:
+        key = chunk["key"]
+        if key == "fmt " and "fmt" not in result:
+            result["fmt"] = parse_fmt(data, {"offset": chunk["offset"] + 16, "length": chunk["length"]}, False)
+        elif key == "fact" and "fact" not in result and chunk["length"] >= 4:
+            result["fact"] = u32(data, chunk["offset"] + 24)
+        elif key == "data" and "data" not in result:
+            result["data"] = {**chunk, "offset": chunk["offset"] + 16}
+    return result
+
+
 def read(data):
     """The RIFF chunk of a file: its header, the chunks, and the figures of the fmt, fact, data and ds64 chunks."""
+    if data[:16] == W64_RIFF:
+        return read_w64(data)
     magic = data[:4].decode("latin1")
     if magic not in ("RIFF", "RIFX", "RF64", "BW64") or data[8:12] != b"WAVE":
         raise ValueError("not a WAVE file")
@@ -182,7 +251,7 @@ def data_info(riff):
     def walk(chunks, in_wavl):
         nonlocal first, extra, silent
         for c in chunks:
-            if c["id"] == "data":
+            if c.get("key", c["id"]) == "data":
                 if first is None:
                     first = (c, in_wavl)
                 elif in_wavl and first[1]:

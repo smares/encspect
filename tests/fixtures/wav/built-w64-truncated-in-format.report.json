@@ -1,0 +1,131 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-w64-truncated-in-format.w64",
+    "root": {
+      "name": "File",
+      "value": "Wave64",
+      "offset": 0,
+      "length": 70,
+      "children": [
+        {
+          "name": "Wave64",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 70,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "66666972-912e-11cf-a5d6-28db04c10000 (riff)",
+              "offset": 0,
+              "length": 16
+            },
+            {
+              "name": "Chunk Size",
+              "value": 304,
+              "unit": "bytes",
+              "offset": 16,
+              "length": 8
+            },
+            {
+              "name": "Form Type",
+              "value": "65766177-acf3-11d3-8cd1-00c04f8edb8a (wave)",
+              "offset": 24,
+              "length": 16
+            },
+            {
+              "name": "Format Chunk",
+              "value": 6,
+              "unit": "bytes",
+              "offset": 40,
+              "length": 30,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "20746d66-acf3-11d3-8cd1-00c04f8edb8a (fmt )",
+                  "offset": 40,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 40,
+                  "unit": "bytes",
+                  "offset": 56,
+                  "length": 8
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 64,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 66,
+                  "length": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "wav.no-data-chunk",
+        "message": "The file has no data chunk, so it holds no audio.",
+        "offset": 0,
+        "length": 70,
+        "path": [
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wav.truncated",
+        "message": "The riff chunk states 304 bytes, but the data ends 234 bytes short of that: the file is cut off.",
+        "offset": 16,
+        "length": 8,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wav.chunk-too-short",
+        "message": "The fmt chunk at 0x28 holds 6 bytes, too few for its fields.",
+        "offset": 40,
+        "length": 30,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wav.chunk-past-end",
+        "message": "The chunk states 40 bytes with its header, but only 30 bytes are left in the file; the chunk is cut short.",
+        "offset": 56,
+        "length": 8,
+        "path": [
+          0,
+          3,
+          1
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

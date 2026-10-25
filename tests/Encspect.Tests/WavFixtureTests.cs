@@ -21,10 +21,10 @@ public class WavFixtureTests
 
     [Theory]
     [MemberData(nameof(Names))]
-    public void TheFormatIsDetectedAsWav(string name)
+    public void TheFormatIsDetected(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
-        Assert.Equal("WAV", report.Root.Value?.ToString());
+        Assert.Equal(name.EndsWith(".w64", StringComparison.Ordinal) ? "Wave64" : "WAV", report.Root.Value?.ToString());
         Assert.Null(report.Detection);
     }
 
@@ -258,7 +258,7 @@ public class WavFixtureTests
         Assert.Equal("DTS", stream.Codec);
         Assert.Equal(48000, stream.SampleRate);
         Assert.Equal(0.064, stream.Duration, 3);
-        Assert.Equal("WAV", report.Root.Value?.ToString());
+        Assert.Equal(name.EndsWith(".w64", StringComparison.Ordinal) ? "Wave64" : "WAV", report.Root.Value?.ToString());
         Assert.Single(report.Findings, f => f.Code == "wav.dts-in-pcm" && f.Severity == Severity.Info);
         Assert.DoesNotContain(report.Findings, f => f.Code == "wav.format-differs-from-stream");
         Node data = report.Root.Children.Single().Children.Single(c => c.Name == "Data Chunk");
@@ -472,4 +472,67 @@ public class WavFixtureTests
     [Fact]
     public void AnAxmlChunkWithoutTheAudioDefinitionModelNeedsNoChnaChunk() =>
         Assert.Empty(Fixtures.AnalyzeMpeg("wav/built-axml-without-adm.wav").Findings);
+
+    [Fact]
+    public void AWave64ChunkSizeCountsItsHeaderAndChunksAreAlignedToEightBytes()
+    {
+        const string name = "wav/built-w64-pcm-8-bit-mono-odd.w64";
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.Empty(report.Findings);
+        Assert.Equal("Wave64", report.Root.Children.Single().Name);
+        Assert.Equal(40 + 40 + 128, Field(name, "Wave64/Chunk Size").Value?.AsInteger());
+        Assert.Equal(24 + 16, Field(name, "Wave64/Format Chunk/Chunk Size").Value?.AsInteger());
+        Node data = Field(name, "Wave64/Data Chunk");
+        Assert.Equal(101, data.Value?.AsInteger());
+        Assert.Equal(24 + 101, Field(name, "Wave64/Data Chunk/Chunk Size").Value?.AsInteger());
+        Assert.Equal(128, data.Length);
+        Node padding = Field(name, "Wave64/Data Chunk/Padding");
+        Assert.Equal(3, padding.Length);
+        Assert.Equal(data.End - 3, padding.Offset);
+        Assert.Equal(101, Assert.Single(report.Streams).Samples);
+    }
+
+    [Fact]
+    public void AWave64ChunkIsNamedByTheCharactersOfItsGuid()
+    {
+        const string name = "wav/built-w64-unknown-chunks.w64";
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.Empty(report.Findings);
+        Assert.Equal("20746d66-acf3-11d3-8cd1-00c04f8edb8a (fmt )", Text(name, "Wave64/Format Chunk/Chunk ID"));
+        Assert.Equal("'abcd' Chunk", Field(name, "Wave64/'abcd' Chunk").Name);
+        Assert.Equal("List Chunk", Fixtures.Resolve(report.Root, "Wave64/List Chunk").Single().Name);
+        Assert.Contains(report.Root.Children.Single().Children, c => c.Name == "Chunk 03020100-0504-0706-0809-0a0b0c0d0e0f");
+    }
+
+    [Fact]
+    public void AWave64FileIsNotAWavFileAndAWavFileIsNotWave64()
+    {
+        Analyzer analyzer = Analyzer.CreateDefault();
+        byte[] w64 = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "wav", "built-w64-minimal.w64"));
+        byte[] wav = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "wav", "built-minimal-pcm.wav"));
+        Assert.Equal("Wave64", analyzer.Analyze("a.wav", new MemoryStream(w64)).Root.Value?.ToString());
+        Assert.Equal("WAV", analyzer.Analyze("a.w64", new MemoryStream(wav)).Root.Value?.ToString());
+        // The riff GUID alone is no Wave64 file: the wave GUID must follow.
+        byte[] half = [.. w64[..24], .. new byte[16], .. w64[40..]];
+        Assert.NotEqual("Wave64", analyzer.Analyze("a.w64", new MemoryStream(half)).Root.Value?.ToString());
+    }
+
+    [Fact]
+    public void AWave64HeaderWithoutAChunkIsLikelyAndWithOneIsCertain()
+    {
+        var parser = new Encspect.Formats.Wav.Wave64Parser();
+        byte[] w64 = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "wav", "built-w64-minimal.w64"));
+        SniffResult Sniff(byte[] data) => parser.Sniff(new SniffContext(new ByteReader(new MemoryStream(data))));
+        Assert.Equal(100, Sniff(w64).Class);
+        Assert.Equal(2, Sniff(w64).Frames);
+        Assert.Equal(80, Sniff(w64[..40]).Class);
+        Assert.Equal(80, Sniff(w64[..50]).Class);
+        Assert.Equal(90, Sniff(w64[..70]).Class);
+        Assert.Equal(0, Sniff(w64[..39]).Class);
+        byte[] zeroSize = [.. w64];
+        zeroSize[56] = 0;
+        Assert.Equal(80, Sniff(zeroSize).Class);
+        Assert.Null(parser.DeclaredEnd(new SniffContext(new ByteReader(new MemoryStream(w64[..20])))));
+        Assert.Equal(w64.Length, parser.DeclaredEnd(new SniffContext(new ByteReader(new MemoryStream(w64)))));
+    }
 }

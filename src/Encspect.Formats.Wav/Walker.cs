@@ -42,7 +42,7 @@ internal static class Walker
     }
 
     // The nodes of the subtree under node, itself included; children built on demand (a tag parser's frames) are one node, so counting builds none.
-    private static int Count(Node node)
+    internal static int Count(Node node)
     {
         int count = 0;
         var pending = new Stack<Node>();
@@ -221,7 +221,7 @@ internal static class Walker
                 ulong claimed = stated;
                 long held = length;
                 s.Findings.Add(Severity.Warning, "wav.chunk-past-end", at, _ =>
-                    $"The {id.TrimEnd()} chunk states {Counts.Of(claimed, "byte", "bytes")}, but only {Counts.Of(held, "byte", "bytes")} are left in the {(listType is null ? (s.ContainerEnd < s.Reader.End ? "RIFF chunk" : "file") : "list")}; the chunk is cut short.");
+                    $"The {id.TrimEnd()} chunk states {Counts.Of(claimed, "byte", "bytes")}, but only {Counts.Of(held, "byte", "bytes")} are left in the {(listType is null ? (s.ContainerEnd < s.Reader.End ? s.ContainerLabel : "file") : "list")}; the chunk is cut short.");
             }
 
             long chunkStart = position;

@@ -41,7 +41,7 @@ internal static class ChunkFixtureChecks
             return;
         }
 
-        Node node = report.Root.Children.Single(c => c.Name is "RIFF" or "RIFX" or "RF64" or "BW64" or "FORM");
+        Node node = report.Root.Children.Single(c => c.Name is "RIFF" or "RIFX" or "RF64" or "BW64" or "Wave64" or "FORM");
         Assert.Equal(container.GetProperty("id").GetString(), node.Name);
         Assert.Equal(container.GetProperty("end").GetInt64(), node.End);
         CheckChunks(manifest.GetProperty("chunks"), node, name);

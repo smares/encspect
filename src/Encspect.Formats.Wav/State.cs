@@ -25,6 +25,9 @@ internal sealed class State(ParseContext context)
     // RF64 and BW64: a size field of 0xFFFFFFFF stands for a size in the ds64 chunk.
     public bool Is64Bit => IsRf64 || IsBw64;
 
+    // What the RIFF chunk is called in messages: Wave64 calls it the riff chunk.
+    public string ContainerLabel { get; set; } = "RIFF chunk";
+
     public Node Container { get; set; } = null!;
 
     // Where the RIFF chunk ends: its stated end, cut to the data there is.

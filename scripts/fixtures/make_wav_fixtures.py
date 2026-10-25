@@ -310,12 +310,66 @@ fixture("built-xml-chunk-repeated", bw64([BW_FMT, CHNA, chunk("axml", ADM), chun
 fixture("built-axml-without-adm", riff([*basic(), chunk("axml", b"<?xml version=\"1.0\"?><ebuCoreMain/>")]))
 
 
+# Wave64: GUID IDs, 64-bit sizes that count the 24-byte chunk header, chunks aligned to 8 bytes (docs/formats/wav.md says what this rests on).
+def w64_guid(tag):
+    """The GUID of a chunk named by four characters: the characters, then the twelve bytes every such chunk has."""
+    return tag.encode("latin1") + m.W64_TAIL
+
+
+def w64_chunk(guid, body, size=None, pad=True):
+    guid = w64_guid(guid) if isinstance(guid, str) else guid
+    out = guid + struct.pack("<Q", 24 + len(body) if size is None else size) + body
+    if pad:
+        out += b"\0" * (-len(out) % 8)
+    return out
+
+
+def w64(chunks, size=None):
+    body = b"".join(chunks)
+    return m.W64_RIFF + struct.pack("<Q", 40 + len(body) if size is None else size) + m.W64_WAVE + body
+
+
+W_FMT = w64_chunk("fmt ", fmt_body())
+W_DATA = w64_chunk("data", audio(50))
+fixture("built-w64-minimal", w64([W_FMT, W_DATA]))
+fixture("built-w64-pcm-8-bit-mono-odd", w64([w64_chunk("fmt ", fmt_body(channels=1, bits=8, rate=11025)), w64_chunk("data", audio(101, 1, 8, 11025))]))
+fixture("built-w64-extensible-5-1", w64([w64_chunk("fmt ", extensible(6, 48000, 24, mask=0x3F)), w64_chunk("data", audio(10, 6, 24, 48000))]))
+fixture("built-w64-float", w64([w64_chunk("fmt ", fmt_body(3, 2, 48000, 32)), w64_chunk("fact", struct.pack("<I", 20)), w64_chunk("data", b"\0" * 160)]))
+fixture("built-w64-unknown-chunks", w64([w64_chunk("junk", b"\0" * 20), W_FMT, w64_chunk("abcd", b"12345"), w64_chunk(bytes(range(16)), b"x" * 9), w64_chunk(m.W64_LIST, b"INFO" + b"\0" * 12), w64_chunk("zz  ", b""), W_DATA]))
+fixture("built-w64-fact-ima-adpcm", w64([w64_chunk("fmt ", fmt_body(0x11, 1, 11025, 4, 256, 5612, struct.pack("<H", 505))), w64_chunk("fact", struct.pack("<I", 505)), w64_chunk("data", b"\0" * 256)]), ["wav.coding-not-analyzed"], codec="IMA ADPCM")
+fixture("built-w64-ac3", w64([w64_chunk("fmt ", fmt_body(0x2000, 2, 48000, 0, 1, 48000)), w64_chunk("fact", struct.pack("<I", 1536)), w64_chunk("data", AC3)]))
+fixture("built-w64-mp2", w64([w64_chunk("fmt ", fmt_body(0x0050, 2, 48000, 0, 1, 24000)), w64_chunk("fact", struct.pack("<I", 1152)), w64_chunk("data", MP2)]))
+fixture("built-w64-dts-in-pcm-14le", w64([w64_chunk("fmt ", fmt_body()), w64_chunk("data", DTS_14LE)]), ["wav.dts-in-pcm"], carried=("dts", 48000, 2))
+fixture("built-w64-id3v1-after-riff", w64([W_FMT, W_DATA]) + id3v1())
+fixture("built-w64-riff-size-zero", w64([W_FMT, W_DATA], size=0), ["wav.riff-size-placeholder"])
+fixture("built-w64-riff-size-too-small", w64([W_FMT, W_DATA], size=39), ["wav.riff-size-placeholder"])
+fixture("built-w64-riff-size-ffff", w64([W_FMT, W_DATA], size=0xFFFFFFFFFFFFFFFF), ["wav.riff-size-placeholder"])
+w64_whole = w64([W_FMT, W_DATA])
+fixture("built-w64-truncated-data", w64_whole[:-40], ["wav.truncated", "wav.chunk-past-end"])
+fixture("built-w64-truncated-in-format", w64_whole[:40 + 24 + 6], ["wav.truncated", "wav.chunk-past-end", "wav.chunk-too-short", "wav.no-data-chunk"], stream=False)
+fixture("built-w64-header-only", w64([]), ["wav.no-format-chunk", "wav.no-data-chunk"], stream=False)
+fixture("built-w64-data-after-riff", w64_whole + bytes(range(1, 21)), ["wav.data-after-riff"])
+fixture("built-w64-trailing-bytes", w64([W_FMT, W_DATA, b"\1\2\3\4\5\6\7\x08\x09"]), ["wav.trailing-bytes"])
+fixture("built-w64-chunk-size-invalid", w64([W_FMT, w64_guid("abcd") + struct.pack("<Q", 10) + b"\xff" * 20]), ["wav.w64-chunk-size-invalid", "wav.no-data-chunk"], stream=False)
+fixture("built-w64-pad-missing-at-end", w64([w64_chunk("fmt ", fmt_body(channels=1, bits=8, rate=8000)), w64_chunk("data", audio(101, 1, 8, 8000), pad=False)]), ["wav.pad-byte-missing"])
+fixture("built-w64-pad-not-zero", w64([W_FMT, w64_chunk("odd ", b"abc")[:-1] + b"\xff", W_DATA]), ["wav.pad-byte-not-zero"])
+fixture("built-w64-no-format", w64([W_DATA]), ["wav.no-format-chunk"], stream=False)
+fixture("built-w64-no-data", w64([W_FMT]), ["wav.no-data-chunk"], stream=False)
+fixture("built-w64-data-before-format", w64([W_DATA, W_FMT]), ["wav.data-before-format"])
+fixture("built-w64-format-repeated", w64([W_FMT, w64_chunk("fmt ", fmt_body(channels=1)), W_DATA]), ["wav.format-repeated"])
+fixture("built-w64-data-repeated", w64([W_FMT, W_DATA, w64_chunk("data", audio(20))]), ["wav.data-repeated"])
+fixture("built-w64-format-too-short", w64([w64_chunk("fmt ", fmt_body()[:10]), W_DATA]), ["wav.chunk-too-short"], stream=False)
+fixture("built-w64-partial-sample-frame", w64([W_FMT, w64_chunk("data", audio(50)[:198])]), ["wav.partial-sample-frame"])
+fixture("built-w64-fact-mismatch", w64([W_FMT, w64_chunk("fact", struct.pack("<I", 999)), W_DATA]), ["wav.fact-samples-mismatch"])
+fixture("built-w64-chunk-limit", w64([W_FMT, *[w64_chunk("junk", b"\0\0") for _ in range(2100)], W_DATA]), ["wav.chunk-limit", "wav.no-data-chunk"], stream=False)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    for old in OUT.glob("built-*.wav"):
+    for old in [*OUT.glob("built-*.wav"), *OUT.glob("built-*.w64")]:
         old.unlink()
     for name, (data, findings, stream, codec, note, base, carried) in sorted(FIXTURES.items()):
-        (OUT / f"{name}.wav").write_bytes(data)
+        (OUT / f"{name}.{'w64' if name.startswith('built-w64-') else 'wav'}").write_bytes(data)
         try:
             manifest = m.manifest(data, codec, base, carried)
         except ValueError:

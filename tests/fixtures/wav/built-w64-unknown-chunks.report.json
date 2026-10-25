@@ -1,0 +1,368 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-w64-unknown-chunks.w64",
+    "root": {
+      "name": "File",
+      "value": "Wave64",
+      "offset": 0,
+      "length": 488,
+      "children": [
+        {
+          "name": "Wave64",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 488,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "66666972-912e-11cf-a5d6-28db04c10000 (riff)",
+              "offset": 0,
+              "length": 16
+            },
+            {
+              "name": "Chunk Size",
+              "value": 488,
+              "unit": "bytes",
+              "offset": 16,
+              "length": 8
+            },
+            {
+              "name": "Form Type",
+              "value": "65766177-acf3-11d3-8cd1-00c04f8edb8a (wave)",
+              "offset": 24,
+              "length": 16
+            },
+            {
+              "name": "Junk Chunk",
+              "value": 20,
+              "unit": "bytes",
+              "offset": 40,
+              "length": 48,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "6b6e756a-acf3-11d3-8cd1-00c04f8edb8a (junk)",
+                  "offset": 40,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 44,
+                  "unit": "bytes",
+                  "offset": 56,
+                  "length": 8
+                },
+                {
+                  "name": "Filler",
+                  "value": 20,
+                  "unit": "bytes",
+                  "offset": 64,
+                  "length": 20
+                },
+                {
+                  "name": "Padding",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 84,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 88,
+              "length": 40,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "20746d66-acf3-11d3-8cd1-00c04f8edb8a (fmt )",
+                  "offset": 88,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 40,
+                  "unit": "bytes",
+                  "offset": 104,
+                  "length": 8
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 112,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 114,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 116,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 176400,
+                  "unit": "bytes/s",
+                  "offset": 120,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 124,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 126,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "'abcd' Chunk",
+              "value": 5,
+              "unit": "bytes",
+              "offset": 128,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "64636261-acf3-11d3-8cd1-00c04f8edb8a (abcd)",
+                  "offset": 128,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 29,
+                  "unit": "bytes",
+                  "offset": 144,
+                  "length": 8
+                },
+                {
+                  "name": "Padding",
+                  "value": 3,
+                  "unit": "bytes",
+                  "offset": 157,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Chunk 03020100-0504-0706-0809-0a0b0c0d0e0f",
+              "value": 9,
+              "unit": "bytes",
+              "offset": 160,
+              "length": 40,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "03020100-0504-0706-0809-0a0b0c0d0e0f",
+                  "offset": 160,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 33,
+                  "unit": "bytes",
+                  "offset": 176,
+                  "length": 8
+                },
+                {
+                  "name": "Padding",
+                  "value": 7,
+                  "unit": "bytes",
+                  "offset": 193,
+                  "length": 7
+                }
+              ]
+            },
+            {
+              "name": "List Chunk",
+              "value": 16,
+              "unit": "bytes",
+              "offset": 200,
+              "length": 40,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "7473696c-912f-11cf-a5d6-28db04c10000 (LIST)",
+                  "offset": 200,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 40,
+                  "unit": "bytes",
+                  "offset": 216,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "'zz  ' Chunk",
+              "value": 0,
+              "unit": "bytes",
+              "offset": 240,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "20207a7a-acf3-11d3-8cd1-00c04f8edb8a (zz  )",
+                  "offset": 240,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 24,
+                  "unit": "bytes",
+                  "offset": 256,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 200,
+              "unit": "bytes",
+              "offset": 264,
+              "length": 224,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "61746164-acf3-11d3-8cd1-00c04f8edb8a (data)",
+                  "offset": 264,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 224,
+                  "unit": "bytes",
+                  "offset": 280,
+                  "length": 8
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 264,
+                  "length": 224,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 264,
+                      "length": 224
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 50,
+                      "unit": "sample frames",
+                      "offset": 264,
+                      "length": 224
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0011337868480725624,
+                      "unit": "s",
+                      "offset": 264,
+                      "length": 224
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 264,
+                      "length": 224
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 264,
+                      "length": 224
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 264,
+                      "length": 224
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 264,
+                      "length": 224
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 264,
+                      "length": 224
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 264,
+                      "length": 224
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1411.2,
+                      "unit": "kbps",
+                      "offset": 264,
+                      "length": 224
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            9
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 50,
+        "duration": 0.0011337868480725624,
+        "averageBitrate": 1411.2,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]
