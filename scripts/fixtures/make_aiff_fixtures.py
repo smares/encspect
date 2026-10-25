@@ -155,6 +155,49 @@ fixture("built-comment-count-mismatch", form([*basic(), chunk("COMT", struct.pac
 fixture("built-chunk-limit", form([chunk("COMM", comm(2, 10, 16, 44100)), *[chunk("abcd", b"\0\0") for _ in range(2100)], chunk("SSND", ssnd(sound(10)))]), ["aiff.chunk-limit", "aiff.no-sound-data"])
 
 
+# The Channel Layout chunk (CHAN): Core Audio's AudioChannelLayout, as the Core Audio Format Specification gives it for CAF files (layout tag, channel
+# bitmap, channel descriptions), here in AIFF files as Apple's tools and FFmpeg's muxer write it.
+def chan(tag, bitmap=0, labels=(), count=None, coordinates=None, extra=b""):
+    body = struct.pack(">III", tag, bitmap, len(labels) if count is None else count)
+    for i, label in enumerate(labels):
+        flags, xyz = (1, coordinates[i]) if coordinates else (0, (0.0, 0.0, 0.0))
+        body += struct.pack(">II3f", label, flags, *xyz)
+    return chunk("CHAN", body + extra)
+
+
+def tag(number, channels):
+    return (number << 16) | channels
+
+
+def with_chan(channels, chan_chunk, bits=16, kind=None):
+    if kind:
+        return aifc([chunk("COMM", comm(channels, 30, bits, 48000, kind, "")), chan_chunk, chunk("SSND", ssnd(sound(30, channels, bits, 48000)))])
+    return form([chunk("COMM", comm(channels, 30, bits, 48000)), chan_chunk, chunk("SSND", ssnd(sound(30, channels, bits, 48000)))])
+
+
+fixture("built-chan-layout-tag-5-1", with_chan(6, chan(tag(121, 6))))
+fixture("built-chan-layout-tag-center-first", with_chan(3, chan(tag(114, 3))))
+fixture("built-chan-layout-tag-7-1", with_chan(8, chan(tag(128, 8))))
+fixture("built-chan-layout-tag-quadraphonic", with_chan(4, chan(tag(132, 4))))
+fixture("built-chan-layout-tag-aifc", with_chan(6, chan(tag(121, 6)), kind="NONE"), extension="aifc")
+fixture("built-chan-channel-bitmap", with_chan(6, chan(0x10000, 0x3F)))
+fixture("built-chan-channel-bitmap-sides", with_chan(6, chan(0x10000, 0x60F)))
+fixture("built-chan-descriptions", with_chan(6, chan(0, 0, [1, 2, 3, 4, 5, 6])))
+fixture("built-chan-descriptions-rear-labels", with_chan(8, chan(0, 0, [1, 2, 3, 4, 5, 6, 33, 34])))
+fixture("built-chan-descriptions-coordinates", with_chan(2, chan(0, 0, [100, 100], coordinates=[(-1.0, 1.0, 0.0), (1.0, 1.0, 0.0)])))
+fixture("built-chan-descriptions-discrete", with_chan(2, chan(0, 0, [0, 0xFFFFFFFF])))
+fixture("built-chan-discrete-in-order", with_chan(4, chan(tag(147, 4))))
+fixture("built-chan-after-sound", form([chunk("COMM", comm(6, 30, 16, 48000)), chunk("SSND", ssnd(sound(30, 6, 16, 48000))), chan(tag(121, 6))]))
+fixture("built-chan-layout-tag-unknown", with_chan(2, chan(tag(300, 2))), ["aiff.layout-tag-unknown"])
+fixture("built-chan-extra-data", with_chan(2, chan(tag(101, 2), extra=b"\1\2\3\4")))
+fixture("built-chan-differs-tag", with_chan(2, chan(tag(121, 6))), ["aiff.channel-layout-differs"])
+fixture("built-chan-differs-bitmap", with_chan(2, chan(0x10000, 0x3F)), ["aiff.channel-layout-differs"])
+fixture("built-chan-differs-descriptions", with_chan(2, chan(0, 0, [1, 2, 3])), ["aiff.channel-layout-differs"])
+fixture("built-chan-descriptions-exceed", with_chan(2, chan(0, 0, [1, 2], count=100)), ["aiff.chan-descriptions-exceed-chunk", "aiff.channel-layout-differs"])
+fixture("built-chan-repeated", with_chan(2, chan(tag(101, 2)) + chan(tag(101, 2))), ["aiff.chunk-repeated"])
+fixture("built-chan-too-short", with_chan(2, chunk("CHAN", b"\0\x65\0\x02\0\0")), ["aiff.chunk-too-short"])
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for pattern in ("built-*.aiff", "built-*.aifc"):

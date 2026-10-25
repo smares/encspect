@@ -1,0 +1,515 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-chan-descriptions-rear-labels.aiff",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 714,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFF",
+          "offset": 0,
+          "length": 714,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 706,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFF",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Common Chunk",
+              "value": "PCM, 8 channels, 48000 Hz, 16 bits",
+              "offset": 12,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 18,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 8,
+                  "unit": "channels",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 30,
+                  "unit": "sample frames",
+                  "offset": 22,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 26,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 28,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16398,
+                      "offset": 28,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 13510798882111488000,
+                      "offset": 30,
+                      "length": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Channel Layout Chunk",
+              "value": "7.1 (front left, front right, front center, LFE, side left, side right, back left, back right)",
+              "offset": 38,
+              "length": 180,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "CHAN",
+                  "offset": 38,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 172,
+                  "unit": "bytes",
+                  "offset": 42,
+                  "length": 4
+                },
+                {
+                  "name": "Layout Tag",
+                  "value": "UseChannelDescriptions (0x00000000)",
+                  "offset": 46,
+                  "length": 4
+                },
+                {
+                  "name": "Channel Bitmap",
+                  "value": 0,
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Channel Descriptions",
+                  "value": 8,
+                  "unit": "descriptions",
+                  "offset": 54,
+                  "length": 4
+                },
+                {
+                  "name": "Descriptions",
+                  "value": 8,
+                  "unit": "descriptions",
+                  "offset": 58,
+                  "length": 160,
+                  "children": [
+                    {
+                      "name": "Description 0",
+                      "value": "Left (1)",
+                      "offset": 58,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Label",
+                          "value": "Left (1)",
+                          "offset": 58,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 62,
+                          "length": 4
+                        },
+                        {
+                          "name": "Coordinates",
+                          "value": "not used",
+                          "offset": 66,
+                          "length": 12
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Description 1",
+                      "value": "Right (2)",
+                      "offset": 78,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Label",
+                          "value": "Right (2)",
+                          "offset": 78,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 82,
+                          "length": 4
+                        },
+                        {
+                          "name": "Coordinates",
+                          "value": "not used",
+                          "offset": 86,
+                          "length": 12
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Description 2",
+                      "value": "Center (3)",
+                      "offset": 98,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Label",
+                          "value": "Center (3)",
+                          "offset": 98,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 102,
+                          "length": 4
+                        },
+                        {
+                          "name": "Coordinates",
+                          "value": "not used",
+                          "offset": 106,
+                          "length": 12
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Description 3",
+                      "value": "LFEScreen (4)",
+                      "offset": 118,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Label",
+                          "value": "LFEScreen (4)",
+                          "offset": 118,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 122,
+                          "length": 4
+                        },
+                        {
+                          "name": "Coordinates",
+                          "value": "not used",
+                          "offset": 126,
+                          "length": 12
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Description 4",
+                      "value": "LeftSurround (5)",
+                      "offset": 138,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Label",
+                          "value": "LeftSurround (5)",
+                          "offset": 138,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 142,
+                          "length": 4
+                        },
+                        {
+                          "name": "Coordinates",
+                          "value": "not used",
+                          "offset": 146,
+                          "length": 12
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Description 5",
+                      "value": "RightSurround (6)",
+                      "offset": 158,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Label",
+                          "value": "RightSurround (6)",
+                          "offset": 158,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 162,
+                          "length": 4
+                        },
+                        {
+                          "name": "Coordinates",
+                          "value": "not used",
+                          "offset": 166,
+                          "length": 12
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Description 6",
+                      "value": "RearSurroundLeft (33)",
+                      "offset": 178,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Label",
+                          "value": "RearSurroundLeft (33)",
+                          "offset": 178,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 182,
+                          "length": 4
+                        },
+                        {
+                          "name": "Coordinates",
+                          "value": "not used",
+                          "offset": 186,
+                          "length": 12
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Description 7",
+                      "value": "RearSurroundRight (34)",
+                      "offset": 198,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Label",
+                          "value": "RearSurroundRight (34)",
+                          "offset": 198,
+                          "length": 4
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 202,
+                          "length": 4
+                        },
+                        {
+                          "name": "Coordinates",
+                          "value": "not used",
+                          "offset": 206,
+                          "length": 12
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 488,
+              "unit": "bytes",
+              "offset": 218,
+              "length": 496,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 218,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 488,
+                  "unit": "bytes",
+                  "offset": 222,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 226,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 230,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 480,
+                  "unit": "bytes",
+                  "offset": 234,
+                  "length": 480
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 218,
+                  "length": 496,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 218,
+                      "length": 496
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 30,
+                      "unit": "sample frames",
+                      "offset": 218,
+                      "length": 496
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.000625,
+                      "unit": "s",
+                      "offset": 218,
+                      "length": 496
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 218,
+                      "length": 496
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 8,
+                      "unit": "channels",
+                      "offset": 218,
+                      "length": 496
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "7.1 (front left, front right, front center, LFE, side left, side right, back left, back right)",
+                      "offset": 218,
+                      "length": 496
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 218,
+                      "length": 496
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 218,
+                      "length": 496
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "big-endian",
+                      "offset": 218,
+                      "length": 496
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 6144,
+                      "unit": "kbps",
+                      "offset": 218,
+                      "length": 496
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 48000,
+        "channels": 8,
+        "channelMode": "Multichannel",
+        "channelLayout": [
+          "front left",
+          "front right",
+          "front center",
+          "LFE",
+          "side left",
+          "side right",
+          "back left",
+          "back right"
+        ],
+        "channelLayoutName": "7.1",
+        "bitsPerSample": 16,
+        "samples": 30,
+        "duration": 0.000625,
+        "averageBitrate": 6144,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

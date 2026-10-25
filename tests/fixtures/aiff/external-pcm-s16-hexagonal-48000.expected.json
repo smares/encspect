@@ -1,0 +1,64 @@
+{
+ "length": 57674,
+ "container": {
+  "id": "FORM",
+  "form": "AIFF",
+  "size": 57666,
+  "end": 57674
+ },
+ "chunks": [
+  {
+   "id": "CHAN",
+   "offset": 12,
+   "end": 32,
+   "size": 12,
+   "length": 12
+  },
+  {
+   "id": "COMM",
+   "offset": 32,
+   "end": 58,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "SSND",
+   "offset": 58,
+   "end": 57674,
+   "size": 57608,
+   "length": 57608
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 48000,
+  "channels": 6,
+  "bits": 16,
+  "samples": 4800,
+  "duration": 0.1,
+  "layout": [
+   "front left",
+   "front right",
+   "front center",
+   "back left",
+   "back right",
+   "back center"
+  ],
+  "average_bitrate": 4608.0,
+  "type": "NONE"
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_s16be"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 48000,
+  "channels": 6,
+  "seconds": 0.1,
+  "format": "s16le",
+  "layout": "hexagonal"
+ }
+}

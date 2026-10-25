@@ -1,0 +1,293 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-chan-layout-tag-center-first.aiff",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 254,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFF",
+          "offset": 0,
+          "length": 254,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 246,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFF",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Common Chunk",
+              "value": "PCM, 3 channels, 48000 Hz, 16 bits",
+              "offset": 12,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 18,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 3,
+                  "unit": "channels",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 30,
+                  "unit": "sample frames",
+                  "offset": 22,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 26,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 28,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16398,
+                      "offset": 28,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 13510798882111488000,
+                      "offset": 30,
+                      "length": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Channel Layout Chunk",
+              "value": "3.0 (front center, front left, front right)",
+              "offset": 38,
+              "length": 20,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "CHAN",
+                  "offset": 38,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 12,
+                  "unit": "bytes",
+                  "offset": 42,
+                  "length": 4
+                },
+                {
+                  "name": "Layout Tag",
+                  "value": "MPEG_3_0_B: C L R (0x00720003)",
+                  "offset": 46,
+                  "length": 4
+                },
+                {
+                  "name": "Channel Bitmap",
+                  "value": 0,
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Channel Descriptions",
+                  "value": 0,
+                  "unit": "descriptions",
+                  "offset": 54,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 188,
+              "unit": "bytes",
+              "offset": 58,
+              "length": 196,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 58,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 188,
+                  "unit": "bytes",
+                  "offset": 62,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 66,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 70,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 180,
+                  "unit": "bytes",
+                  "offset": 74,
+                  "length": 180
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 58,
+                  "length": 196,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 58,
+                      "length": 196
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 30,
+                      "unit": "sample frames",
+                      "offset": 58,
+                      "length": 196
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.000625,
+                      "unit": "s",
+                      "offset": 58,
+                      "length": 196
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 58,
+                      "length": 196
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 3,
+                      "unit": "channels",
+                      "offset": 58,
+                      "length": 196
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "3.0 (front center, front left, front right)",
+                      "offset": 58,
+                      "length": 196
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 58,
+                      "length": 196
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 58,
+                      "length": 196
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "big-endian",
+                      "offset": 58,
+                      "length": 196
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 2304,
+                      "unit": "kbps",
+                      "offset": 58,
+                      "length": 196
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 48000,
+        "channels": 3,
+        "channelMode": "Multichannel",
+        "channelLayout": [
+          "front center",
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "3.0",
+        "bitsPerSample": 16,
+        "samples": 30,
+        "duration": 0.000625,
+        "averageBitrate": 2304,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

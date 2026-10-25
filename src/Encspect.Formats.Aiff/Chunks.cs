@@ -22,6 +22,7 @@ internal sealed record ChunkSpec(string? Name, string Description, string? Topic
         ["APPL"] = new("Application Specific Chunk", Explain.ApplChunk, Topics.Container, Chunks.Application),
         ["AESD"] = new("Audio Recording Chunk", Explain.AesdChunk, Topics.Container, Chunks.AudioRecording),
         ["MIDI"] = new("MIDI Data Chunk", Explain.MidiChunk, Topics.Container, Chunks.Midi),
+        ["CHAN"] = new("Channel Layout Chunk", Explain.ChanChunk, Topics.ChannelLayouts, ChannelChunk.Read),
         ["ID3 "] = new("ID3v2 Chunk", Explain.Id3Chunk, Topics.Id3InChunks, Chunks.Id3),
         ["id3 "] = new("ID3v2 Chunk", Explain.Id3Chunk, Topics.Id3InChunks, Chunks.Id3),
     };

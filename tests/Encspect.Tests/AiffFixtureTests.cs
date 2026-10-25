@@ -192,7 +192,7 @@ public class AiffFixtureTests
     [Fact]
     public void NodesCoverTheirBytesAndTheChunksTileTheFormChunk()
     {
-        foreach (string name in new[] { "aiff/built-markers-comments-instrument.aiff", "aiff/built-application-chunks.aiff", "aiff/built-text-chunks.aiff", "aiff/external-pcm-s16-stereo-id3-v4.aiff", "aiff/built-aifc-none.aifc" })
+        foreach (string name in new[] { "aiff/built-markers-comments-instrument.aiff", "aiff/built-application-chunks.aiff", "aiff/built-text-chunks.aiff", "aiff/external-pcm-s16-stereo-id3-v4.aiff", "aiff/built-aifc-none.aifc", "aiff/built-chan-descriptions-coordinates.aiff", "aiff/external-pcm-s16-5.1-48000.aiff" })
         {
             Node container = Fixtures.AnalyzeMpeg(name).Root.Children.Single();
             long position = container.Offset + 12;
@@ -205,5 +205,74 @@ public class AiffFixtureTests
 
             Assert.Equal(container.End, position);
         }
+    }
+
+    [Fact]
+    public void TheChannelLayoutChunkIsReadFieldByField()
+    {
+        const string name = "aiff/external-pcm-s16-5.1-48000.aiff";
+        Assert.Equal("MPEG_5_1_A: L R C LFE Ls Rs (0x00790006)", Text(name, "FORM/Channel Layout Chunk/Layout Tag"));
+        Assert.Equal(0, Field(name, "FORM/Channel Layout Chunk/Channel Bitmap").Value?.AsInteger());
+        Assert.Equal(0, Field(name, "FORM/Channel Layout Chunk/Channel Descriptions").Value?.AsInteger());
+        Assert.Equal("5.1 (front left, front right, front center, LFE, back left, back right)", Text(name, "FORM/Channel Layout Chunk"));
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg(name).Streams);
+        Assert.Equal("5.1", stream.ChannelLayoutName);
+        Assert.Equal([Speaker.FrontLeft, Speaker.FrontRight, Speaker.FrontCenter, Speaker.LowFrequency, Speaker.BackLeft, Speaker.BackRight], stream.ChannelLayout);
+    }
+
+    [Theory]
+    [InlineData("aiff/external-pcm-s24-7.1-96000.aiff", "7.1")]
+    [InlineData("aiff/external-pcm-s16-quad-48000.aiff", "quadraphonic")]
+    [InlineData("aiff/external-pcm-s16-6.1-48000.aiff", "6.1")]
+    [InlineData("aiff/external-pcm-s16-hexagonal-48000.aiff", "6.0")]
+    [InlineData("aiff/built-chan-descriptions-rear-labels.aiff", "7.1")]
+    [InlineData("aiff/built-chan-channel-bitmap-sides.aiff", "5.1")]
+    public void TheLayoutOfTheChunkNamesTheStreamsSpeakers(string name, string layout) =>
+        Assert.Equal(layout, Assert.Single(Fixtures.AnalyzeMpeg(name).Streams).ChannelLayoutName);
+
+    [Fact]
+    public void TheTagMayPutTheCenterFirst()
+    {
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("aiff/built-chan-layout-tag-center-first.aiff").Streams);
+        Assert.Equal([Speaker.FrontCenter, Speaker.FrontLeft, Speaker.FrontRight], stream.ChannelLayout);
+    }
+
+    [Fact]
+    public void ChannelDescriptionsShowTheirLabelsFlagsAndCoordinates()
+    {
+        const string name = "aiff/built-chan-descriptions-coordinates.aiff";
+        Assert.Equal("UseCoordinates (100)", Text(name, "FORM/Channel Layout Chunk/Descriptions/Description 0/Label"));
+        Assert.Equal(1, Field(name, "FORM/Channel Layout Chunk/Descriptions/Description 0/Flags").Value?.AsInteger());
+        Assert.Equal("-1, 1, 0", Text(name, "FORM/Channel Layout Chunk/Descriptions/Description 0/Coordinates"));
+        Assert.Equal("1, 1, 0", Text(name, "FORM/Channel Layout Chunk/Descriptions/Description 1/Coordinates"));
+        Assert.Equal("not used", Text("aiff/built-chan-descriptions.aiff", "FORM/Channel Layout Chunk/Descriptions/Description 0/Coordinates"));
+        Assert.Null(Assert.Single(Fixtures.AnalyzeMpeg(name).Streams).ChannelLayoutName);
+    }
+
+    [Fact]
+    public void ADiscreteLayoutHasNoSpeakers()
+    {
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("aiff/built-chan-discrete-in-order.aiff").Streams);
+        Assert.Equal([Speaker.Discrete, Speaker.Discrete, Speaker.Discrete, Speaker.Discrete], stream.ChannelLayout);
+    }
+
+    [Theory]
+    [InlineData("aiff/built-chan-differs-tag.aiff", "layout tag states 6 channels, but the Common Chunk states 2")]
+    [InlineData("aiff/built-chan-differs-bitmap.aiff", "channel bitmap states 6 channels, but the Common Chunk states 2")]
+    [InlineData("aiff/built-chan-differs-descriptions.aiff", "channel descriptions states 3 channels, but the Common Chunk states 2")]
+    public void AChannelCountThatDisagreesWithTheCommonChunkIsReportedAndItsLayoutIsNotUsed(string name, string message)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "aiff.channel-layout-differs");
+        Assert.Contains(message, finding.Message, StringComparison.Ordinal);
+        Assert.Equal([Speaker.FrontLeft, Speaker.FrontRight], Assert.Single(report.Streams).ChannelLayout);
+    }
+
+    [Fact]
+    public void AnUnknownLayoutTagGivesNoLayoutAndTheCommonChunkStands()
+    {
+        Report report = Fixtures.AnalyzeMpeg("aiff/built-chan-layout-tag-unknown.aiff");
+        Assert.Equal("not known (0x012C0002)", Text("aiff/built-chan-layout-tag-unknown.aiff", "FORM/Channel Layout Chunk/Layout Tag"));
+        Assert.Equal("stereo", Assert.Single(report.Streams).ChannelLayoutName);
     }
 }

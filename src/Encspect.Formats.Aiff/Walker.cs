@@ -13,7 +13,7 @@ internal static class Walker
     public delegate void ChunkReader(State s, Fields f, Node chunk, long length);
 
     // The chunks of which at most one may appear in a FORM (sections 3.0 to 13.0).
-    private static readonly HashSet<string> Single = new(StringComparer.Ordinal) { "FVER", "COMM", "SSND", "MARK", "COMT", "INST", "AESD", "NAME", "AUTH", "(c) " };
+    private static readonly HashSet<string> Single = new(StringComparer.Ordinal) { "FVER", "COMM", "SSND", "MARK", "COMT", "INST", "AESD", "NAME", "AUTH", "(c) ", "CHAN" };
 
     // The nodes the tree of the chunks holds in all (as MP4 and Matroska budget theirs): the caps on the chunks and on a table multiply when a
     // chunk is repeated, so a file of a few megabytes could otherwise ask for millions. Past it the rest of the FORM is one node and is not

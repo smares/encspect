@@ -5,6 +5,7 @@ AIFF and AIFF-C files (`.aif`, `.aiff`, `.aifc`): an IFF `FORM` chunk of the for
 Sources:
 
 - Apple's "Audio Interchange File Format: AIFF, version 1.3" (1989) and the "Audio Interchange File Format AIFF-C" draft of 8/26/91 (`FVER`, the compression types of section 4.0 and the sample frames of the compressed codings in its appendix C).
+- For the `CHAN` chunk: Apple's Core Audio Format Specification, "Channel Layout Chunk", "Channel Layout Tags", "Channel Bitmaps", "Channel Description" and "Label Codes for Channel Layouts" (<https://developer.apple.com/library/archive/documentation/MusicAudio/Reference/CAFSpec/CAF_spec/CAF_spec.html>), which gives the structure for CAF files. No Apple document read says that an AIFF file holds the same structure in a `CHAN` chunk; the analyzer reads it so because FFmpeg 6.1.1's muxer writes it (12 bytes: tag, bitmap, a count of 0 descriptions) and QuickTime's `chan` atom holds the same structure. Files written by Apple's own tools were not available, so their `CHAN` chunks (with descriptions, say) are not checked against a real file.
 - For the compression types the drafts do not list (`sowt`, `in24`, `in32`, `raw `, `fl32`, `fl64`, `alaw`, `ulaw`, `ima4`): Apple's QuickTime File Format Specification (2001-03-01), "Sound Codec Formats Supported" (Table 3-3), whose sound sample description codes AIFF-C files use, and for the packet of `ima4` (64 samples in 34 bytes for each channel) Apple's Core Audio Format Specification, "Audio Description Chunk".
 - `GSM `: no Apple document read lists it; it is a code FFmpeg 6.1.1's `aiff.c` reads. FFmpeg 6.1.1 wrote `sowt`, `raw `, `fl32`, `fl64`, `alaw`, `ulaw` and `ima4` into the fixtures; FFmpeg and MediaInfo are cross-checks, not sources of the format.
 
@@ -17,6 +18,7 @@ Sources:
 - `FVER` (AIFF-C format version): the timestamp, which must be 2726318400 (23 May 1990), the version of the draft.
 - `MARK` (markers), `INST` (instrument: base note, detune, gains, sustain and release loops), `COMT` (comments with a time stamp, a marker ID and text), `AESD` (audio recording), `MIDI` and `APPL` (application specific, with the signature).
 - `NAME`, `AUTH`, `(c) ` and `ANNO`: text chunks.
+- `CHAN` (Channel Layout Chunk): Core Audio's layout tag, channel bitmap and channel descriptions (label, flags, coordinates); see Channel layout below.
 - `ID3 ` and `id3 `: the chunk's data is handed to the ID3 tag parser through `ParseTag`.
 - Limits, so that a small file cannot ask for a large report:
   - at most 2,048 chunks are listed (`aiff.chunk-limit`) and tables inside chunks (markers, comments) list at most 1,024 entries;
@@ -58,8 +60,14 @@ A file with a Common Chunk reports a stream: codec, sample rate, channels, layou
 
 ## Channel layout
 
-- One channel is front center, two are front left and front right and three are front left, front right and front center (specification, "Common Chunk").
-- More channels give no layout: the specification lists two conventions for four channels that disagree on what the channels are, and one for six that places a "surround" channel nowhere.
+- A `CHAN` chunk states the layout. It has a layout tag, a bitmap and descriptions, and the tag says which gives the layout:
+  - the tag `UseChannelDescriptions` (0): the channel descriptions, one for each channel, with a label such as Left or LFEScreen (the labels of the specification: 1 to 18 are the positions of the WAVE channel mask, 33 and 34 the rear surround pair, which makes the surround pair of 5 and 6 a side pair);
+  - the tag `UseChannelBitmap` (0x10000): one channel for each bit of the bitmap, lowest first, in the order of the WAVE channel mask;
+  - any other tag names an arrangement in its upper 16 bits and counts the channels in its lower 16: `MPEG_5_1_A` is front left, front right, front center, LFE, back left, back right. The tags are those of the specification (100 to 147) and the later ones of `CoreAudioBaseTypes.h` that QuickTime files use; the table is the one MP4's `chan` atom uses (`CoreAudioLayouts`, shared by the two parsers).
+  - The speakers are written out in the stream's layout, in the order of the channels in the file, which the tag may put the center first in (`MPEG_3_0_B` is center, front left, front right).
+- The number of channels the chunk states is checked against the Common Chunk's: the descriptions' count, the set bits of the bitmap or the lower 16 bits of the tag. A chunk that disagrees is `aiff.channel-layout-differs` (the Common Chunk's count and the layout of its channel count stand); one whose descriptions do not fit is `aiff.chan-descriptions-exceed-chunk`; a tag that is none of the table's is `aiff.layout-tag-unknown` (info) and gives no layout. A second `CHAN` chunk is `aiff.chunk-repeated`.
+- Without a `CHAN` chunk: one channel is front center, two are front left and front right and three are front left, front right and front center (specification, "Common Chunk").
+- More channels without a `CHAN` chunk give no layout: the specification lists two conventions for four channels that disagree on what the channels are, and one for six that places a "surround" channel nowhere.
 
 ## Encoder and writer detection
 
@@ -69,7 +77,7 @@ None. AIFF has no field for the writer; the text chunks (`ANNO`, `AUTH`) are sho
 
 - Decoding, and any check of the samples.
 - The contents of the packed codings (IMA, GSM, ACE and MACE blocks).
-- The `CHAN` chunk (Core Audio channel descriptions) and other chunks Apple's tools add: they are listed by their ID and size.
+- Other chunks Apple's tools add: they are listed by their ID and size. The coordinates of a channel description are shown, not interpreted, and `CHAN` chunks written by Apple's tools were not checked.
 - sox was not used for the cross-check.
 
 ## Tests and fixtures

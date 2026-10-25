@@ -38,9 +38,8 @@
               "length": 4
             },
             {
-              "name": "'CHAN' Chunk",
-              "value": 12,
-              "unit": "bytes",
+              "name": "Channel Layout Chunk",
+              "value": "3.0 (front left, front right, front center)",
               "offset": 12,
               "length": 20,
               "children": [
@@ -55,6 +54,25 @@
                   "value": 12,
                   "unit": "bytes",
                   "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Layout Tag",
+                  "value": "MPEG_3_0_A: L R C (0x00710003)",
+                  "offset": 20,
+                  "length": 4
+                },
+                {
+                  "name": "Channel Bitmap",
+                  "value": 0,
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Channel Descriptions",
+                  "value": 0,
+                  "unit": "descriptions",
+                  "offset": 28,
                   "length": 4
                 }
               ]
