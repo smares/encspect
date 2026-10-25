@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Encspect.Core;
 
 // CRC-32 with the reflected polynomial 0xEDB88320, the one TTA, Monkey's Audio, Matroska, Musepack and ID3v2 use.
@@ -12,6 +14,8 @@ public static class Crc32
 
     private static readonly uint[] Table = CreateTable();
 
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static uint Update(uint crc, ReadOnlySpan<byte> data)
     {
         uint[] table = Table;

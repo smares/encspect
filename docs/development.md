@@ -158,6 +158,23 @@ The CLI project sets `TieredPGO=false`, `System.Runtime.TieredCompilation.CallCo
 - **Why the composite image is bigger:** it compiles the framework's assemblies again together with the app's, an image of 59 MB.
 - **NativeAOT is the fastest on every row** (startup 10 ms, FLAC 2.5 times the JIT default) and is not made the shipped build: it needs the native toolchain on every runner and the check above is local. Which instruction sets its binary uses was not examined.
 
+## Hot loops and tiering
+
+A loop that every analysis runs for seconds and that a method is called from only a few times is the case the tiering settings above do not reach: the method starts in tier 0 (about 5 to 10 times slower), and the runtime replaces it only after 30 calls and a quiet 20 ms, with an on-stack replacement for a loop that does not return before.
+
+- **What is marked:** the leaf methods that hold the loops of the checksums and digests (`Md5`, `Crc32`, `FlacCrc.Crc16`), of the FLAC walk and decoder (`BitCursor.ReadRice`, `SubframeSyntax.ReadResidual`, `Prediction.RestoreLpc`, `FrameDecoder.Combine`) and of the canonical PCM writer carry `MethodImplOptions.AggressiveOptimization`: they are compiled optimized at the first call and never tiered. A ReadyToRun image does not hold such a method, so the first call compiles it (a few milliseconds), which the tiny file and the folder of fixtures below show to be inside the noise.
+- **Where it paid:** the descriptor MD5 of a Monkey's Audio file is computed in every analysis, and its 35 MB took about a third of the analysis of 0.5 s, mostly in tier 0. The other leaf methods of the four formats were tried the same way (WavPack's word decoder and decorrelation passes, Monkey's Audio's range decoder and predictors, TrueHD's block reader) and gained nothing measurable, so they are not marked.
+- **Measured** (the same machine, one pinned core, load average under 1.5, interleaved runs, minimum of seconds of `encspect --csv`, the ReadyToRun publish of the app's assemblies before and after):
+
+| File | Analysis | `--verify` |
+|---|---|---|
+| FLAC -5, 300 s | 0.69 to 0.40 | 1.01 to 0.82 |
+| Monkey's Audio `-c3000`, 300 s | 0.29 to 0.26 | 3.53 to 3.38 |
+| tiny FLAC fixture | 0.151 to 0.141 | 0.146 to 0.138 |
+| 456 FLAC fixtures | 1.38 to 1.28 | 1.39 to 1.32 |
+
+The FLAC row includes the Rice loop of `BitCursor.ReadRice` (a change of its own, measured in `docs/design/decoders.md`, "As built: the second speed pass").
+
 ## CI
 
 `.github/workflows/ci.yml` is one workflow for pull requests, pushes to main, the nightly schedule and manual runs.

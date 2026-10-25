@@ -341,6 +341,8 @@ internal static class SubframeSyntax
     // count it declares (a packet of a dozen bytes that claims 65,535 samples).
     private static bool Lacks(ref BitCursor bits, long needed) => bits.BitsLeft < needed;
 
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static SubframeFault ReadResidual(ref BitCursor bits, ref SubframeFacts facts, int blockSize, Span<int> narrow, Span<long> wide, PartitionLog? log)
     {
         int method = (int)bits.Read(2);

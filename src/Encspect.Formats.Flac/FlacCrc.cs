@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Encspect.Formats.Flac;
 
 // The CRC-8 of a frame header (polynomial x^8 + x^2 + x + 1) and the CRC-16 of a whole frame (x^16 + x^15 + x^2 + 1), both
@@ -19,6 +21,8 @@ internal static class FlacCrc
     }
 
     // Four bytes at a time: table k holds the CRC of a byte followed by k zero bytes.
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static ushort Crc16(ReadOnlySpan<byte> data)
     {
         ushort[] t0 = Table16[0];

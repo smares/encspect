@@ -192,6 +192,8 @@ public static class CanonicalPcm
 
     // The common widths without a bounds check per sample: the caller has checked that the destination holds length * channels * width bytes
     // and the source length samples in each of channels planes stride apart.
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static int WriteIntegers(ReadOnlySpan<int> integers, Span<byte> destination, int length, int channels, int stride, int width)
     {
         ref int source = ref MemoryMarshal.GetReference(integers);

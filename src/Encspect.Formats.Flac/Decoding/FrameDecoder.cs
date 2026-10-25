@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.Flac.Decoding;
@@ -228,6 +229,8 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // Undoes the channel assignment and writes the planar output (RFC 9639, section 9.2.3 for the side channel's extra bit).
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Combine(in FrameHeader header, Span<int> narrow, Span<long> wide, int stride, int n)
     {
         int channels = header.Channels;

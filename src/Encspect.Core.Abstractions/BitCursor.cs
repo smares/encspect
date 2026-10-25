@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Encspect.Core;
 
@@ -162,6 +163,8 @@ public ref struct BitCursor
     // needs the end of the data or a quotient above what a 32-bit value holds; the caller reads the rest one value at a time.
     // Returns how many values it read. With a destination, value i is stored unfolded to a signed number; hasMinimum is set
     // when a value is 0xFFFFFFFF, which cannot be negated in 32 bits.
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int ReadRice(int parameter, int count, Span<int> destination, ref bool hasMinimum)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
