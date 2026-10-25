@@ -37,7 +37,7 @@ public class DtsTests
 
                 if (path.StartsWith(wav, StringComparison.Ordinal) && !path.EndsWith(".json", StringComparison.Ordinal))
                 {
-                    Assert.Equal("WAV", Encspect.Host.Analyzer.CreateDefault().AnalyzeFile(path).Root.Value?.ToString());
+                    Assert.Equal(Path.GetFileName(path).Contains("w64", StringComparison.Ordinal) ? "Wave64" : "WAV", Encspect.Host.Analyzer.CreateDefault().AnalyzeFile(path).Root.Value?.ToString());
                 }
 
                 continue;
