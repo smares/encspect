@@ -1,7 +1,5 @@
 // Follows the Monkey's Audio SDK 13.42 (NNFilter.cpp, NNFilterGeneric.cpp, NNFilterCommon.h, Interim.cpp), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
-using System.Numerics;
-
 namespace Encspect.Formats.MonkeysAudio.Decoding;
 
 // A neural network filter of the decoder: an adaptive FIR filter over the last output samples, whose weights follow the sign of each coded value
@@ -47,7 +45,7 @@ internal sealed class NnFilter16
     public int Decompress(int value, bool isNewDelta)
     {
         int order = _order;
-        int dot = Dot(_input.AsSpan(_current - order, order), _weights);
+        int dot = NnVectors.Dot(_input.AsSpan(_current - order, order), _weights);
         int output = _isInterim
             ? value + (int)(((long)dot + _round) >> _shift)
             : value + ((dot + _round) >> _shift);
@@ -116,55 +114,8 @@ internal sealed class NnFilter16
             return;
         }
 
-        Span<short> weights = _weights;
         ReadOnlySpan<short> delta = _delta.AsSpan(_current - _order, _order);
-        int step = Vector<short>.Count;
-        int i = 0;
-        if (direction < 0)
-        {
-            for (; i <= weights.Length - step; i += step)
-            {
-                (new Vector<short>(weights.Slice(i)) + new Vector<short>(delta.Slice(i))).CopyTo(weights.Slice(i));
-            }
-
-            for (; i < weights.Length; i++)
-            {
-                weights[i] += delta[i];
-            }
-        }
-        else
-        {
-            for (; i <= weights.Length - step; i += step)
-            {
-                (new Vector<short>(weights.Slice(i)) - new Vector<short>(delta.Slice(i))).CopyTo(weights.Slice(i));
-            }
-
-            for (; i < weights.Length; i++)
-            {
-                weights[i] -= delta[i];
-            }
-        }
-    }
-
-    private static int Dot(ReadOnlySpan<short> a, ReadOnlySpan<short> b)
-    {
-        int step = Vector<short>.Count;
-        var sum = Vector<int>.Zero;
-        int i = 0;
-        for (; i <= a.Length - step; i += step)
-        {
-            Vector.Widen(new Vector<short>(a.Slice(i)), out Vector<int> a0, out Vector<int> a1);
-            Vector.Widen(new Vector<short>(b.Slice(i)), out Vector<int> b0, out Vector<int> b1);
-            sum += (a0 * b0) + (a1 * b1);
-        }
-
-        int total = Vector.Sum(sum);
-        for (; i < a.Length; i++)
-        {
-            total += a[i] * b[i];
-        }
-
-        return total;
+        NnVectors.AddOrSubtract(_weights, delta, isSubtract: direction > 0);
     }
 }
 
@@ -207,7 +158,7 @@ internal sealed class NnFilter32
     public long Decompress(long value, bool isNewDelta)
     {
         int order = _order;
-        long dot = Dot(_input.AsSpan(_current - order, order), _weights);
+        long dot = NnVectors.Dot(_input.AsSpan(_current - order, order), _weights);
         long output = value + ((dot + _round) >> _shift);
         Adapt(value);
         Span<int> delta = _delta;
@@ -269,54 +220,7 @@ internal sealed class NnFilter32
             return;
         }
 
-        Span<int> weights = _weights;
         ReadOnlySpan<int> delta = _delta.AsSpan(_current - _order, _order);
-        int step = Vector<int>.Count;
-        int i = 0;
-        if (direction < 0)
-        {
-            for (; i <= weights.Length - step; i += step)
-            {
-                (new Vector<int>(weights.Slice(i)) + new Vector<int>(delta.Slice(i))).CopyTo(weights.Slice(i));
-            }
-
-            for (; i < weights.Length; i++)
-            {
-                weights[i] += delta[i];
-            }
-        }
-        else
-        {
-            for (; i <= weights.Length - step; i += step)
-            {
-                (new Vector<int>(weights.Slice(i)) - new Vector<int>(delta.Slice(i))).CopyTo(weights.Slice(i));
-            }
-
-            for (; i < weights.Length; i++)
-            {
-                weights[i] -= delta[i];
-            }
-        }
-    }
-
-    private static long Dot(ReadOnlySpan<int> a, ReadOnlySpan<int> b)
-    {
-        int step = Vector<int>.Count;
-        var sum = Vector<long>.Zero;
-        int i = 0;
-        for (; i <= a.Length - step; i += step)
-        {
-            Vector<int> product = new Vector<int>(a.Slice(i)) * new Vector<int>(b.Slice(i));
-            Vector.Widen(product, out Vector<long> low, out Vector<long> high);
-            sum += low + high;
-        }
-
-        long total = Vector.Sum(sum);
-        for (; i < a.Length; i++)
-        {
-            total += a[i] * b[i];
-        }
-
-        return total;
+        NnVectors.AddOrSubtract(_weights, delta, isSubtract: direction > 0);
     }
 }

@@ -108,6 +108,17 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 - `scripts/check_aot.sh [output directory]` publishes it and compares its CSV report with decoding against the framework-dependent build's for every tenth fixture. It needs clang and the linker, takes two to three minutes, and is not part of CI.
 - `DeclaredEndFlagTests` checks the flag against the interface map for every parser the host registers.
 
+## Vector paths of the decoders
+
+- **Where:** Monkey's Audio's neural network filters (`NnVectors`: the dot product of 16-bit history and weights with the multiply-and-add-adjacent-pairs instruction of AVX-512BW, AVX2, SSE2 or Arm's widening multiply-add, and the weights' step in portable vectors) and FLAC's linear predictor (`Prediction.RestoreLpc`: the oldest taps of a window of 12 or more in vectors, the newest four to eleven in scalar code, because a vector load that overlaps the store of the previous sample stalls).
+- **Same bits:** all of it is integer arithmetic that wraps like the scalar code, so every path gives the same output; the scalar paths are the ones a machine without the instructions takes.
+- **Testing the fallbacks locally:** run the decoder fixtures with the instruction sets switched off, one run for each (the runtime reads these variables):
+  - `DOTNET_EnableHWIntrinsic=0` (no vector instructions at all: the scalar paths),
+  - `DOTNET_EnableAVX2=0` (SSE2 only, and no AVX-512, which needs AVX2),
+  - `DOTNET_EnableAVX512F=0` (AVX2 and below).
+  - `DOTNET_EnableHWIntrinsic=0 dotnet test tests/Encspect.Tests --filter "FullyQualifiedName~Encspect.Tests.DecoderFixtureTests|FullyQualifiedName~Encspect.Tests.MonkeysAudioDecoderFixtureTests|FullyQualifiedName~Encspect.Tests.WavPackDecoderFixtureTests"` takes under a minute.
+- **CI:** the `rest` shard on ubuntu-26.04 runs those three classes once more with `DOTNET_EnableHWIntrinsic=0`; the Arm runners take the `AdvSimd` paths in every run, and the x64 runners the paths their processor has.
+
 ## CI
 
 `.github/workflows/ci.yml` is one workflow for pull requests, pushes to main, the nightly schedule and manual runs.

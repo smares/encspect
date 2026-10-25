@@ -317,6 +317,15 @@ jobs:
           SHARD_FILTER: ${{ matrix.filter }}
         run: dotnet test tests/Encspect.Tests --no-build --configuration Release --filter "$SHARD_FILTER" --logger "trx;LogFileName=${{ matrix.shard }}.trx" --results-directory "${{ runner.temp }}/trx"
 
+      # The vector paths of the decoders (FLAC's predictor, Monkey's Audio's filters) have scalar fallbacks for machines without the
+      # instructions. The step above runs the paths the runner's processor takes; this one runs the fallbacks, with the decoder fixtures.
+      - name: Test the decoders without hardware intrinsics
+        if: matrix.shard == 'rest' && matrix.os == 'ubuntu-26.04'
+        shell: bash
+        env:
+          DOTNET_EnableHWIntrinsic: '0'
+        run: dotnet test tests/Encspect.Tests --no-build --configuration Release --filter "FullyQualifiedName~Encspect.Tests.DecoderFixtureTests|FullyQualifiedName~Encspect.Tests.MonkeysAudioDecoderFixtureTests|FullyQualifiedName~Encspect.Tests.WavPackDecoderFixtureTests"
+
       - name: Summarize the failed tests
         if: failure() && steps.tests.outcome == 'failure'
         shell: bash
