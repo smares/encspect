@@ -42,6 +42,8 @@ public sealed class Wave64Parser : IFormatParser
         return new SniffResult(rank, reader.Start, frames, End: Math.Min(position, reader.End));
     }
 
+    public bool HasDeclaredEnd => true;
+
     // Where the riff chunk ends by its own size, which counts the whole file. A size too small to hold the header is no size.
     public long? DeclaredEnd(SniffContext context) => Wave64.DeclaredEnd(context.Reader);
 

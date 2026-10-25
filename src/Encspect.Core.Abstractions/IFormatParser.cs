@@ -22,5 +22,9 @@ public interface IFormatParser
     // without a declared size.
     long? DeclaredEnd(SniffContext context) => null;
 
+    // Whether DeclaredEnd can return a value: a parser that implements DeclaredEnd also returns true here. The host asks it once, so
+    // that it spends the extra sniff only when some parser declares an end (a flag rather than reflection, which NativeAOT lacks).
+    bool HasDeclaredEnd => false;
+
     void Parse(ParseContext context);
 }

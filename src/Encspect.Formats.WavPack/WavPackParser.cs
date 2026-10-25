@@ -49,6 +49,8 @@ public sealed class WavPackParser : IFormatParser
         return found >= 0 ? new SniffResult(60, found, 2, End: reader.End) : SniffResult.None;
     }
 
+    public bool HasDeclaredEnd => true;
+
     // Where the blocks that follow one another from the start end. A block states its own size, so a
     // tag signature inside one is no tag.
     public long? DeclaredEnd(SniffContext context)

@@ -22,6 +22,8 @@ internal sealed class ChunkedContainer(bool declaresEnd = true, IReadOnlyDiction
     public SniffResult Sniff(SniffContext context) =>
         context.Reader.MatchesAt(context.Reader.Start, "RIFF"u8) || context.Reader.MatchesAt(context.Reader.Start, "FORM"u8) ? new(100, context.Reader.Start) : SniffResult.None;
 
+    public bool HasDeclaredEnd => true;
+
     public long? DeclaredEnd(SniffContext context)
     {
         if (!declaresEnd)

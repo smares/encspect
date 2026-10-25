@@ -70,6 +70,8 @@ public sealed class TtaParser : IFormatParser
         return new SniffResult(areFieldsPossible ? 80 : 70, start, 0, 0, "header CRC-32 differs", end);
     }
 
+    public bool HasDeclaredEnd => true;
+
     // The end of the last frame the seek table lists, when the header and the whole table are there and the table's CRC-32 holds (a damaged
     // table says nothing about where the frames end); it lies past the end of a truncated file.
     public long? DeclaredEnd(SniffContext context)

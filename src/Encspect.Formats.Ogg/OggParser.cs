@@ -54,6 +54,8 @@ public sealed partial class OggParser : IFormatParser
         return new SniffResult(sniffClass, offset, pages, 1, End: position);
     }
 
+    public bool HasDeclaredEnd => true;
+
     // Ogg states no size of its own, but every page states its own length, so a chain of pages from
     // the start of the data says where the Ogg data ends: a trailing tag signature found before that
     // end lies inside the last pages, not after them. The chain ends where the next bytes are not a

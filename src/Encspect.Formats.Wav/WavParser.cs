@@ -59,6 +59,8 @@ public sealed class WavParser : IFormatParser
         return new SniffResult(rank, reader.Start, frames, End: Math.Min(position, reader.End));
     }
 
+    public bool HasDeclaredEnd => true;
+
     // Where the RIFF chunk ends by its own size. A size of 0 or 0xFFFFFFFF is the placeholder of a writer that could not fill it in, which the
     // host cannot trust to own the tags after it; in an RF64 or BW64 file the size is the one in the ds64 chunk.
     public long? DeclaredEnd(SniffContext context)

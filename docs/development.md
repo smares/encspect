@@ -102,6 +102,12 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 - `DescriptionTests` also walks every fixture's category series: a series or a category without a description, or with a topic that does not exist, fails.
 - The GUI tests (`CategoryGraphTests`, `CategoryViewTests`) hold the aggregation per pixel column against a brute-force count, the rule that keeps rare categories visible, the frame each click selects, the entries, their forms and the headings, a value without a category in every layout (pointer and keys), the minimums of the layout in short panes, the palette (the surfaces it was validated against and the pixels the views draw) and the speed at 200,000 units, with the aggregation timed (the width changes every frame). The screenshots of the list, each form, a narrow window and a stream with many entries are saved with `ENCSPECT_SCREENSHOTS`.
 
+## NativeAOT check
+
+- The host and the parsers use no reflection that NativeAOT lacks (`IFormatParser.HasDeclaredEnd` replaced a look at the interface map), so `dotnet publish src/Encspect.Cli -p:PublishAot=true` gives a binary that starts and analyzes.
+- `scripts/check_aot.sh [output directory]` publishes it and compares its CSV report with decoding against the framework-dependent build's for every tenth fixture. It needs clang and the linker, takes two to three minutes, and is not part of CI.
+- `DeclaredEndFlagTests` checks the flag against the interface map for every parser the host registers.
+
 ## CI
 
 `.github/workflows/ci.yml` is one workflow for pull requests, pushes to main, the nightly schedule and manual runs.

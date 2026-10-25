@@ -28,6 +28,8 @@ public sealed class MatroskaParser : IFormatParser
         return Detect(reader, context.CancellationToken).Result;
     }
 
+    public bool HasDeclaredEnd => true;
+
     // The end of the last Segment by its own account, which may lie past the end of a truncated file; where a Segment's size is
     // unknown (a live stream) the end of the Top-Level Elements and Cluster children that follow one another from its start. A tag after
     // it is the file's, not an element's.
