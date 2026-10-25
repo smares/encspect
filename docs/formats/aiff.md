@@ -21,7 +21,7 @@ Sources:
 - `CHAN` (Channel Layout Chunk): Core Audio's layout tag, channel bitmap and channel descriptions (label, flags, coordinates); see Channel layout below.
 - `ID3 ` and `id3 `: the chunk's data is handed to the ID3 tag parser through `ParseTag`.
 - Limits, so that a small file cannot ask for a large report:
-  - at most 2,048 chunks are listed (`aiff.chunk-limit`) and tables inside chunks (markers, comments) list at most 1,024 entries;
+  - at most 2,048 chunks are listed (`aiff.chunk-limit`) and tables inside chunks (markers, comments, channel descriptions) list at most 1,024 entries;
   - the tree holds at most 250,000 nodes in all, as MP4's and Matroska's do: past that the rest of the FORM is one "Chunks Not Shown" node and is not read (`aiff.node-limit`, warning);
   - the references of loops and comments to markers, kept to find one the Marker Chunk does not hold, are limited to 65,536.
 - A chunk ID is four printable characters from the space to the tilde, with no space before a printing character and none as its first character (a blank run is padding).
