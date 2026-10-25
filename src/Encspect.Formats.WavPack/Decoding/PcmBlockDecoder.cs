@@ -2,6 +2,7 @@
 // The license text is in THIRD-PARTY-NOTICES.md.
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.WavPack.Decoding;
@@ -223,7 +224,14 @@ internal sealed class PcmBlockDecoder
         c.WeightsA[pass] = weight;
     }
 
-    // decorr_stereo_pass.
+    // A left and a right sample next to each other in the interleaved buffer.
+    private struct Pair
+    {
+        public int Left;
+        public int Right;
+    }
+
+    // decorr_stereo_pass. The history of the pass stays in locals for the loop and goes back to the block's arrays after it.
     private static void StereoPass(Span<int> buffer, BlockContents c, int pass)
     {
         int term = c.Terms[pass];
@@ -232,89 +240,127 @@ internal sealed class PcmBlockDecoder
         int weightB = c.WeightsB[pass];
         Span<int> a = c.SamplesA.AsSpan(pass * BlockContents.MaxTerm, BlockContents.MaxTerm);
         Span<int> b = c.SamplesB.AsSpan(pass * BlockContents.MaxTerm, BlockContents.MaxTerm);
+        Span<Pair> pairs = MemoryMarshal.Cast<int, Pair>(buffer);
         switch (term)
         {
             case 17:
-                for (int i = 0; i + 1 < buffer.Length; i += 2)
+                int a0 = a[0];
+                int a1 = a[1];
+                int b0 = b[0];
+                int b1 = b[1];
+                for (int i = 0; i < pairs.Length; i++)
                 {
-                    int sam = unchecked((2 * a[0]) - a[1]);
-                    a[1] = a[0];
-                    int original = buffer[i];
-                    buffer[i] = a[0] = unchecked(Apply(weightA, sam) + original);
+                    ref Pair p = ref pairs[i];
+                    int sam = unchecked((2 * a0) - a1);
+                    a1 = a0;
+                    int original = p.Left;
+                    p.Left = a0 = unchecked(Apply(weightA, sam) + original);
                     Update(ref weightA, delta, sam, original);
-                    sam = unchecked((2 * b[0]) - b[1]);
-                    b[1] = b[0];
-                    original = buffer[i + 1];
-                    buffer[i + 1] = b[0] = unchecked(Apply(weightB, sam) + original);
+                    sam = unchecked((2 * b0) - b1);
+                    b1 = b0;
+                    original = p.Right;
+                    p.Right = b0 = unchecked(Apply(weightB, sam) + original);
                     Update(ref weightB, delta, sam, original);
                 }
 
+                a[0] = a0;
+                a[1] = a1;
+                b[0] = b0;
+                b[1] = b1;
                 break;
             case 18:
-                for (int i = 0; i + 1 < buffer.Length; i += 2)
+                a0 = a[0];
+                a1 = a[1];
+                b0 = b[0];
+                b1 = b[1];
+                for (int i = 0; i < pairs.Length; i++)
                 {
-                    int sam = unchecked(a[0] + ((a[0] - a[1]) >> 1));
-                    a[1] = a[0];
-                    int original = buffer[i];
-                    buffer[i] = a[0] = unchecked(Apply(weightA, sam) + original);
+                    ref Pair p = ref pairs[i];
+                    int sam = unchecked(a0 + ((a0 - a1) >> 1));
+                    a1 = a0;
+                    int original = p.Left;
+                    p.Left = a0 = unchecked(Apply(weightA, sam) + original);
                     Update(ref weightA, delta, sam, original);
-                    sam = unchecked(b[0] + ((b[0] - b[1]) >> 1));
-                    b[1] = b[0];
-                    original = buffer[i + 1];
-                    buffer[i + 1] = b[0] = unchecked(Apply(weightB, sam) + original);
+                    sam = unchecked(b0 + ((b0 - b1) >> 1));
+                    b1 = b0;
+                    original = p.Right;
+                    p.Right = b0 = unchecked(Apply(weightB, sam) + original);
                     Update(ref weightB, delta, sam, original);
                 }
 
+                a[0] = a0;
+                a[1] = a1;
+                b[0] = b0;
+                b[1] = b1;
                 break;
             case -1:
-                for (int i = 0; i + 1 < buffer.Length; i += 2)
+                a0 = a[0];
+                for (int i = 0; i < pairs.Length; i++)
                 {
-                    int sam = unchecked(buffer[i] + Apply(weightA, a[0]));
-                    UpdateClip(ref weightA, delta, a[0], buffer[i]);
-                    buffer[i] = sam;
-                    a[0] = unchecked(buffer[i + 1] + Apply(weightB, sam));
-                    UpdateClip(ref weightB, delta, sam, buffer[i + 1]);
-                    buffer[i + 1] = a[0];
+                    ref Pair p = ref pairs[i];
+                    int sam = unchecked(p.Left + Apply(weightA, a0));
+                    UpdateClip(ref weightA, delta, a0, p.Left);
+                    p.Left = sam;
+                    a0 = unchecked(p.Right + Apply(weightB, sam));
+                    UpdateClip(ref weightB, delta, sam, p.Right);
+                    p.Right = a0;
                 }
 
+                a[0] = a0;
                 break;
             case -2:
-                for (int i = 0; i + 1 < buffer.Length; i += 2)
+                b0 = b[0];
+                for (int i = 0; i < pairs.Length; i++)
                 {
-                    int sam = unchecked(buffer[i + 1] + Apply(weightB, b[0]));
-                    UpdateClip(ref weightB, delta, b[0], buffer[i + 1]);
-                    buffer[i + 1] = sam;
-                    b[0] = unchecked(buffer[i] + Apply(weightA, sam));
-                    UpdateClip(ref weightA, delta, sam, buffer[i]);
-                    buffer[i] = b[0];
+                    ref Pair p = ref pairs[i];
+                    int sam = unchecked(p.Right + Apply(weightB, b0));
+                    UpdateClip(ref weightB, delta, b0, p.Right);
+                    p.Right = sam;
+                    b0 = unchecked(p.Left + Apply(weightA, sam));
+                    UpdateClip(ref weightA, delta, sam, p.Left);
+                    p.Left = b0;
                 }
 
+                b[0] = b0;
                 break;
             case -3:
-                for (int i = 0; i + 1 < buffer.Length; i += 2)
+                a0 = a[0];
+                b0 = b[0];
+                for (int i = 0; i < pairs.Length; i++)
                 {
-                    int samA = unchecked(buffer[i] + Apply(weightA, a[0]));
-                    UpdateClip(ref weightA, delta, a[0], buffer[i]);
-                    int samB = unchecked(buffer[i + 1] + Apply(weightB, b[0]));
-                    UpdateClip(ref weightB, delta, b[0], buffer[i + 1]);
-                    buffer[i] = b[0] = samA;
-                    buffer[i + 1] = a[0] = samB;
+                    ref Pair p = ref pairs[i];
+                    int samA = unchecked(p.Left + Apply(weightA, a0));
+                    UpdateClip(ref weightA, delta, a0, p.Left);
+                    int samB = unchecked(p.Right + Apply(weightB, b0));
+                    UpdateClip(ref weightB, delta, b0, p.Right);
+                    p.Left = b0 = samA;
+                    p.Right = a0 = samB;
                 }
 
+                a[0] = a0;
+                b[0] = b0;
                 break;
             default:
+                // The masks keep the indexes inside the MaxTerm entries of each history.
+                ref int ha = ref MemoryMarshal.GetReference(a[..BlockContents.MaxTerm]);
+                ref int hb = ref MemoryMarshal.GetReference(b[..BlockContents.MaxTerm]);
                 int m = 0;
                 int k = term & (BlockContents.MaxTerm - 1);
-                for (int i = 0; i + 1 < buffer.Length; i += 2)
+                for (int i = 0; i < pairs.Length; i++)
                 {
-                    int sam = a[m];
-                    a[k] = unchecked(Apply(weightA, sam) + buffer[i]);
-                    Update(ref weightA, delta, sam, buffer[i]);
-                    buffer[i] = a[k];
-                    sam = b[m];
-                    b[k] = unchecked(Apply(weightB, sam) + buffer[i + 1]);
-                    Update(ref weightB, delta, sam, buffer[i + 1]);
-                    buffer[i + 1] = b[k];
+                    ref Pair p = ref pairs[i];
+                    int sam = Unsafe.Add(ref ha, m);
+                    int original = p.Left;
+                    int result = unchecked(Apply(weightA, sam) + original);
+                    Unsafe.Add(ref ha, k) = result;
+                    p.Left = result;
+                    Update(ref weightA, delta, sam, original);
+                    sam = Unsafe.Add(ref hb, m);
+                    original = p.Right;
+                    result = unchecked(Apply(weightB, sam) + original);
+                    Unsafe.Add(ref hb, k) = result;
+                    p.Right = result;
+                    Update(ref weightB, delta, sam, original);
                     m = (m + 1) & (BlockContents.MaxTerm - 1);
                     k = (k + 1) & (BlockContents.MaxTerm - 1);
                 }

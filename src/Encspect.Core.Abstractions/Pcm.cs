@@ -1,4 +1,6 @@
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Encspect.Core;
 
@@ -127,6 +129,11 @@ public static class CanonicalPcm
         {
             case SampleFormat.Integer:
                 ReadOnlySpan<int> integers = block.Integers;
+                if (width is 2 or 3 or 4 && length > 0 && channels > 0 && ((long)(channels - 1) * stride) + length <= integers.Length)
+                {
+                    return WriteIntegers(integers, destination, length, channels, stride, width);
+                }
+
                 for (int i = 0; i < length; i++)
                 {
                     for (int channel = 0; channel < channels; channel++)
@@ -178,6 +185,41 @@ public static class CanonicalPcm
                 }
 
                 break;
+        }
+
+        return at;
+    }
+
+    // The common widths without a bounds check per sample: the caller has checked that the destination holds length * channels * width bytes
+    // and the source length samples in each of channels planes stride apart.
+    private static int WriteIntegers(ReadOnlySpan<int> integers, Span<byte> destination, int length, int channels, int stride, int width)
+    {
+        ref int source = ref MemoryMarshal.GetReference(integers);
+        ref byte target = ref MemoryMarshal.GetReference(destination);
+        int at = 0;
+        for (int i = 0; i < length; i++)
+        {
+            for (int channel = 0; channel < channels; channel++)
+            {
+                int value = Unsafe.Add(ref source, (channel * stride) + i);
+                ref byte sample = ref Unsafe.Add(ref target, at);
+                switch (width)
+                {
+                    case 2:
+                        Unsafe.WriteUnaligned(ref sample, BitConverter.IsLittleEndian ? (short)value : BinaryPrimitives.ReverseEndianness((short)value));
+                        break;
+                    case 3:
+                        sample = (byte)value;
+                        Unsafe.Add(ref sample, 1) = (byte)(value >> 8);
+                        Unsafe.Add(ref sample, 2) = (byte)(value >> 16);
+                        break;
+                    default:
+                        Unsafe.WriteUnaligned(ref sample, BitConverter.IsLittleEndian ? value : BinaryPrimitives.ReverseEndianness(value));
+                        break;
+                }
+
+                at += width;
+            }
         }
 
         return at;

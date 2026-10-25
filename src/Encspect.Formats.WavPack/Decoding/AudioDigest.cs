@@ -62,30 +62,55 @@ internal sealed class AudioDigest
 
         bool isUnsigned = (_qmode & QmodeUnsignedWords) != 0 || (_bytesPerSample == 1 && (_qmode & QmodeSignedBytes) == 0);
         bool isBigEndian = (_qmode & QmodeBigEndian) != 0;
+        int bias = isUnsigned ? (int)(0x80u << (8 * (_bytesPerSample - 1))) : 0;
         for (int start = 0; start < samples; start += chunk)
         {
             int count = Math.Min(chunk, samples - start);
-            int at = 0;
-            for (int i = 0; i < count; i++)
+            for (int c = 0; c < _channels; c++)
             {
-                for (int c = 0; c < _channels; c++)
-                {
-                    int plane = _order is not null && (uint)c < (uint)_order.Length ? _order[c] : c;
-                    int value = planes[(plane * samples) + start + i];
-                    if (isUnsigned)
-                    {
-                        value = unchecked(value + (int)(0x80u << (8 * (_bytesPerSample - 1))));
-                    }
+                int plane = _order is not null && (uint)c < (uint)_order.Length ? _order[c] : c;
+                ReadOnlySpan<int> source = planes.Slice((plane * samples) + start, count);
+                WriteChannel(source, _bytes, c * _bytesPerSample, perSample, bias, isBigEndian);
+            }
 
-                    for (int b = 0; b < _bytesPerSample; b++)
+            _md5.AppendData(_bytes.AsSpan(0, count * perSample));
+        }
+    }
+
+    // One channel's samples to their places in the interleaved bytes: sample i at offset + i * step.
+    private void WriteChannel(ReadOnlySpan<int> source, Span<byte> destination, int offset, int step, int bias, bool isBigEndian)
+    {
+        int width = _bytesPerSample;
+        if (!isBigEndian && width is 2 or 3 or 4)
+        {
+            Span<byte> bytes = destination[offset..];
+            for (int i = 0; i < source.Length; i++)
+            {
+                int value = unchecked(source[i] + bias);
+                Span<byte> sample = bytes.Slice(i * step, width);
+                sample[0] = (byte)value;
+                sample[1] = (byte)(value >> 8);
+                if (width > 2)
+                {
+                    sample[2] = (byte)(value >> 16);
+                    if (width > 3)
                     {
-                        int shift = isBigEndian ? 8 * (_bytesPerSample - 1 - b) : 8 * b;
-                        _bytes[at++] = (byte)(value >> shift);
+                        sample[3] = (byte)(value >> 24);
                     }
                 }
             }
 
-            _md5.AppendData(_bytes.AsSpan(0, at));
+            return;
+        }
+
+        for (int i = 0; i < source.Length; i++)
+        {
+            int value = unchecked(source[i] + bias);
+            for (int b = 0; b < width; b++)
+            {
+                int shift = isBigEndian ? 8 * (width - 1 - b) : 8 * b;
+                destination[offset + (i * step) + b] = (byte)(value >> shift);
+            }
         }
     }
 
