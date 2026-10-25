@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Publishes the CLI with NativeAOT and checks that the binary starts and gives the same CSV report, with decoding, as the framework-dependent
-# build for every tenth fixture. A local check, not part of CI: the publish takes about a minute and needs the platform's native toolchain
+# build for every tenth fixture. A local check, not part of CI: the whole run takes about three minutes and needs the platform's native toolchain
 # (clang and the linker, see https://learn.microsoft.com/dotnet/core/deploying/native-aot/).
 #   scripts/check_aot.sh [output directory]
 set -euo pipefail
