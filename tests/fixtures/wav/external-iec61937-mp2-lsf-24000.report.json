@@ -182,7 +182,7 @@
                   "children": [
                     {
                       "name": "Burst 0",
-                      "value": "MPEG-2 Layer II low sampling frequency",
+                      "value": "MPEG-2 Layer II",
                       "offset": 78,
                       "length": 392,
                       "children": [
@@ -200,7 +200,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "9 (MPEG-2 Layer II low sampling frequency)",
+                              "value": 9,
                               "offset": 82,
                               "length": 1,
                               "bitOffset": 0,
@@ -253,7 +253,7 @@
                     },
                     {
                       "name": "Burst 1",
-                      "value": "MPEG-2 Layer II low sampling frequency",
+                      "value": "MPEG-2 Layer II",
                       "offset": 9294,
                       "length": 392,
                       "children": [
@@ -271,7 +271,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "9 (MPEG-2 Layer II low sampling frequency)",
+                              "value": 9,
                               "offset": 9298,
                               "length": 1,
                               "bitOffset": 0,
@@ -324,7 +324,7 @@
                     },
                     {
                       "name": "Burst 2",
-                      "value": "MPEG-2 Layer II low sampling frequency",
+                      "value": "MPEG-2 Layer II",
                       "offset": 18510,
                       "length": 392,
                       "children": [
@@ -342,7 +342,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "9 (MPEG-2 Layer II low sampling frequency)",
+                              "value": 9,
                               "offset": 18514,
                               "length": 1,
                               "bitOffset": 0,
@@ -403,7 +403,7 @@
                   "children": [
                     {
                       "name": "Codec",
-                      "value": "MPEG-2 Layer II low sampling frequency",
+                      "value": "MPEG-2 Layer II",
                       "offset": 70,
                       "length": 27656
                     },
@@ -451,7 +451,7 @@
             5
           ]
         ],
-        "codec": "MPEG-2 Layer II low sampling frequency",
+        "codec": "MPEG-2 Layer II",
         "sampleRate": 0,
         "channels": 0,
         "samples": 0,
@@ -465,7 +465,7 @@
       {
         "severity": "Info",
         "code": "wav.iec61937-payload-not-analyzed",
-        "message": "The data holds 3 data-bursts of IEC 61937 with MPEG-2 Layer II low sampling frequency frames, which the analyzer has no parser for; the stream is described by what the bursts state.",
+        "message": "The data holds 3 data-bursts of IEC 61937 with MPEG-2 Layer II frames, which the analyzer has no parser for; the stream is described by what the bursts state.",
         "offset": 78,
         "length": 27648,
         "path": [

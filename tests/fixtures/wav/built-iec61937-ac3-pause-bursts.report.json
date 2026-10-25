@@ -146,7 +146,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "1 (AC-3)",
+                              "value": 1,
                               "offset": 48,
                               "length": 1,
                               "bitOffset": 0,
@@ -217,7 +217,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "1 (AC-3)",
+                              "value": 1,
                               "offset": 6192,
                               "length": 1,
                               "bitOffset": 0,
@@ -288,7 +288,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "1 (AC-3)",
+                              "value": 1,
                               "offset": 12336,
                               "length": 1,
                               "bitOffset": 0,
@@ -341,134 +341,6 @@
                     },
                     {
                       "name": "Burst 3",
-                      "value": "pause",
-                      "offset": 18476,
-                      "length": 8,
-                      "children": [
-                        {
-                          "name": "Sync Words",
-                          "value": "F872h 4E1Fh",
-                          "offset": 18476,
-                          "length": 4
-                        },
-                        {
-                          "name": "Burst Info",
-                          "value": 3,
-                          "offset": 18480,
-                          "length": 2,
-                          "children": [
-                            {
-                              "name": "Data Type",
-                              "value": "3 (pause)",
-                              "offset": 18480,
-                              "length": 1,
-                              "bitOffset": 0,
-                              "bitLength": 7,
-                              "bitOrder": "leastSignificantFirst"
-                            },
-                            {
-                              "name": "Error Flag",
-                              "value": false,
-                              "offset": 18480,
-                              "length": 1,
-                              "bitOffset": 7,
-                              "bitLength": 1,
-                              "bitOrder": "leastSignificantFirst"
-                            },
-                            {
-                              "name": "Data-Type-Dependent Info",
-                              "value": 0,
-                              "offset": 18481,
-                              "length": 1,
-                              "bitOffset": 0,
-                              "bitLength": 5,
-                              "bitOrder": "leastSignificantFirst"
-                            },
-                            {
-                              "name": "Bitstream Number",
-                              "value": 0,
-                              "offset": 18481,
-                              "length": 1,
-                              "bitOffset": 5,
-                              "bitLength": 3,
-                              "bitOrder": "leastSignificantFirst"
-                            }
-                          ]
-                        },
-                        {
-                          "name": "Length Code",
-                          "value": 0,
-                          "offset": 18482,
-                          "length": 2
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Burst 4",
-                      "value": "pause",
-                      "offset": 24620,
-                      "length": 8,
-                      "children": [
-                        {
-                          "name": "Sync Words",
-                          "value": "F872h 4E1Fh",
-                          "offset": 24620,
-                          "length": 4
-                        },
-                        {
-                          "name": "Burst Info",
-                          "value": 3,
-                          "offset": 24624,
-                          "length": 2,
-                          "children": [
-                            {
-                              "name": "Data Type",
-                              "value": "3 (pause)",
-                              "offset": 24624,
-                              "length": 1,
-                              "bitOffset": 0,
-                              "bitLength": 7,
-                              "bitOrder": "leastSignificantFirst"
-                            },
-                            {
-                              "name": "Error Flag",
-                              "value": false,
-                              "offset": 24624,
-                              "length": 1,
-                              "bitOffset": 7,
-                              "bitLength": 1,
-                              "bitOrder": "leastSignificantFirst"
-                            },
-                            {
-                              "name": "Data-Type-Dependent Info",
-                              "value": 0,
-                              "offset": 24625,
-                              "length": 1,
-                              "bitOffset": 0,
-                              "bitLength": 5,
-                              "bitOrder": "leastSignificantFirst"
-                            },
-                            {
-                              "name": "Bitstream Number",
-                              "value": 0,
-                              "offset": 24625,
-                              "length": 1,
-                              "bitOffset": 5,
-                              "bitLength": 3,
-                              "bitOrder": "leastSignificantFirst"
-                            }
-                          ]
-                        },
-                        {
-                          "name": "Length Code",
-                          "value": 0,
-                          "offset": 24626,
-                          "length": 2
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Burst 5",
                       "value": "AC-3",
                       "offset": 30764,
                       "length": 776,
@@ -487,7 +359,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "1 (AC-3)",
+                              "value": 1,
                               "offset": 30768,
                               "length": 1,
                               "bitOffset": 0,
@@ -539,7 +411,7 @@
                       ]
                     },
                     {
-                      "name": "Burst 6",
+                      "name": "Burst 4",
                       "value": "AC-3",
                       "offset": 36908,
                       "length": 776,
@@ -558,7 +430,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "1 (AC-3)",
+                              "value": 1,
                               "offset": 36912,
                               "length": 1,
                               "bitOffset": 0,
@@ -9469,6 +9341,19 @@
       }
     ],
     "findings": [
+      {
+        "severity": "Info",
+        "code": "wav.iec61937-pause-bursts",
+        "message": "The data holds 2 pause or null bursts in 1 run, which carry no audio (IEC 61937-1 7.2 and 7.4); they are counted and not listed.",
+        "offset": 44,
+        "length": 43008,
+        "path": [
+          0,
+          4,
+          2
+        ],
+        "count": 1
+      },
       {
         "severity": "Info",
         "code": "wav.iec61937-in-pcm",

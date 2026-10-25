@@ -22,14 +22,10 @@
   }
  ],
  "stream": {
-  "codec": "MPEG-2 AAC",
-  "sample_rate": 0,
-  "channels": 0,
-  "bits": null,
-  "samples": 0,
-  "duration": 0.10666666666666667,
-  "layout": [],
-  "average_bitrate": 113.54999999999998
+  "routed": "aac-adts",
+  "carried": true,
+  "sample_rate": 48000,
+  "channels": 2
  },
  "iec61937": {
   "first": 44,
@@ -37,6 +33,7 @@
   "name": "MPEG-2 AAC",
   "bursts": 5,
   "pauses": 0,
+  "pause_runs": 0,
   "listed": [
    44,
    4140,
@@ -50,7 +47,7 @@
  },
  "findings": [
   {
-   "code": "wav.iec61937-payload-not-analyzed"
+   "code": "wav.iec61937-in-pcm"
   }
  ]
 }

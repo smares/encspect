@@ -400,6 +400,9 @@ DTS_BURSTS = bursts_of("wav/external-iec61937-dts-stereo-768k.wav")
 AAC_BURSTS = bursts_of("wav/external-iec61937-aac-stereo-128k.wav")
 AC3_PERIOD, EAC3_PERIOD, DTS_PERIOD, AAC_PERIOD = 1536 * 4, 6144 * 4, 512 * 4, 1024 * 4
 PAUSE = struct.pack("<HHHH", 0xF872, 0x4E1F, 3, 0) + b"\0" * (AC3_PERIOD - 8)
+# The pause and null bursts at the recommended period of 3 IEC 60958 frames (IEC 61937-3:2017 Table 2): the preamble and a payload of 32 bits.
+PAUSE_3 = m.IEC_SYNC + struct.pack("<HH", 3, 32) + b"\0" * 4
+NULL_3 = m.IEC_SYNC + struct.pack("<HH", 0, 32) + b"\0" * 4
 
 
 def ac3_bursts(count=5, **kw):
@@ -410,13 +413,18 @@ IEC_CARRIED = ("ac-3", 48000, 2)
 fixture("built-iec61937-ac3", riff(basic_data(b"".join(ac3_bursts()), rate=48000)), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
 fixture("built-iec61937-ac3-three-bursts", riff(basic_data(b"".join(ac3_bursts(3)), rate=48000)), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
 fixture("built-iec61937-ac3-after-silence", riff(basic_data(b"\0" * 4000 + b"".join(ac3_bursts()), rate=48000)), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
-fixture("built-iec61937-ac3-pause-bursts", riff(basic_data(b"".join([*ac3_bursts(3), PAUSE, PAUSE, *ac3_bursts(2)]), rate=48000)), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-pause-bursts", riff(basic_data(b"".join([*ac3_bursts(3), PAUSE, PAUSE, *ac3_bursts(2)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-pause-bursts"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-leading-pause-bursts", riff(basic_data(b"".join([*[NULL_3] * 3, *[PAUSE_3] * 100, *ac3_bursts(5)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-pause-bursts"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-pause-gap", riff(basic_data(b"".join([*ac3_bursts(3), *[PAUSE_3] * 2000, ac3_bursts(4)[3], *[PAUSE_3] * 5, *ac3_bursts(2)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-pause-bursts"], carried=IEC_CARRIED)
 fixture("built-iec61937-ac3-silence-between", riff(basic_data(b"".join([*ac3_bursts(3), b"\0" * AC3_PERIOD, b"\0" * AC3_PERIOD]), rate=48000)), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
 fixture("built-iec61937-ac3-fmt-tag-0092", riff([chunk("fmt ", fmt_body(0x92, 2, 48000, 16, 4, 192000)), chunk("fact", struct.pack("<I", 7680)), chunk("data", b"".join(ac3_bursts()))]), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
+for tag in (0x240, 0x241):
+    fixture(f"built-iec61937-ac3-fmt-tag-{tag:04x}", riff([chunk("fmt ", fmt_body(tag, 2, 48000, 16, 4, 192000)), chunk("fact", struct.pack("<I", 7680)), chunk("data", b"".join(ac3_bursts()))]), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
 fixture("built-w64-iec61937-ac3", w64([w64_chunk("fmt ", fmt_body(rate=48000)), w64_chunk("data", b"".join(ac3_bursts()))]), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
 fixture("built-iec61937-eac3", riff(basic_data(b"".join(burst_of(EAC3_BURSTS[i % len(EAC3_BURSTS)], EAC3_PERIOD) for i in range(4)), rate=192000)), ["wav.iec61937-in-pcm"], carried=("e-ac-3", 48000, 2))
 fixture("built-iec61937-dts-type-i", riff(basic_data(b"".join(burst_of(DTS_BURSTS[i], DTS_PERIOD) for i in range(6)), rate=48000)), ["wav.iec61937-in-pcm"], carried=("dts", 48000, 2))
-fixture("built-iec61937-aac", riff(basic_data(b"".join(burst_of(AAC_BURSTS[i], AAC_PERIOD) for i in range(5)), rate=48000)), ["wav.iec61937-payload-not-analyzed"])
+fixture("built-iec61937-dts-fmt-tag-0008", riff([chunk("fmt ", fmt_body(0x8, 2, 48000, 16, 4, 192000)), chunk("fact", struct.pack("<I", 3072)), chunk("data", b"".join(burst_of(DTS_BURSTS[i], DTS_PERIOD) for i in range(6)))]), ["wav.iec61937-in-pcm"], carried=("dts", 48000, 2))
+fixture("built-iec61937-aac", riff(basic_data(b"".join(burst_of(AAC_BURSTS[i], AAC_PERIOD) for i in range(5)), rate=48000)), ["wav.iec61937-in-pcm"], carried=("aac-adts", 48000, 2))
 ATRAC = [burst(14, 800, bytes(range(100)) * 1 + b"", 512 * 4) for _ in range(4)]
 fixture("built-iec61937-atrac", riff(basic_data(b"".join(ATRAC), rate=44100)), ["wav.iec61937-payload-not-analyzed"])
 ATRAC_X_LL = [burst(112, 128 * 8, bytes(range(128)), 128 * 4) for _ in range(5)]
@@ -440,6 +448,7 @@ fixture("built-iec61937-length-invalid", riff(basic_data(b"".join([*ac3_bursts(3
 fixture("built-iec61937-length-zero", riff(basic_data(b"".join([*ac3_bursts(3), burst_of(AC3_BURSTS[3], AC3_PERIOD, pd=0, payload=b""), *ac3_bursts(1)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-length-invalid"], carried=IEC_CARRIED)
 whole_ac3 = b"".join(ac3_bursts())
 fixture("built-iec61937-cut-in-payload", riff(basic_data(whole_ac3[:4 * AC3_PERIOD + 400], rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-length-invalid", "ac3.frame-truncated"], carried=IEC_CARRIED)
+fixture("built-iec61937-cut-odd-payload", riff(basic_data(whole_ac3[:4 * AC3_PERIOD + 401], rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-length-invalid", "ac3.frame-truncated", "wav.partial-sample-frame"], carried=IEC_CARRIED)
 fixture("built-iec61937-type-changed", riff(basic_data(b"".join([*ac3_bursts(3), burst_of(EAC3_BURSTS[0], AC3_PERIOD, payload=EAC3_BURSTS[0][2][:700], pd=700)[:AC3_PERIOD], *ac3_bursts(1)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-type-changed"], carried=IEC_CARRIED)
 fixture("built-iec61937-other-bitstream", riff(basic_data(b"".join([*ac3_bursts(3), burst_of(AC3_BURSTS[3], AC3_PERIOD, pc=AC3_BURSTS[3][0] | (1 << 13)), *ac3_bursts(1)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-type-changed"], carried=IEC_CARRIED)
 fixture("built-iec61937-error-flag", riff(basic_data(b"".join([*ac3_bursts(3), burst_of(AC3_BURSTS[3], AC3_PERIOD, pc=AC3_BURSTS[3][0] | 0x80), *ac3_bursts(1)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-error-flag"], carried=IEC_CARRIED)

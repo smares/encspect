@@ -182,7 +182,7 @@
                   "children": [
                     {
                       "name": "Burst 0",
-                      "value": "MPEG-1 Layer II or III, or MPEG-2 without extension",
+                      "value": "MPEG-1 Layer II or III",
                       "offset": 78,
                       "length": 426,
                       "children": [
@@ -200,7 +200,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "5 (MPEG-1 Layer II or III, or MPEG-2 without extension)",
+                              "value": 5,
                               "offset": 82,
                               "length": 1,
                               "bitOffset": 0,
@@ -253,7 +253,7 @@
                     },
                     {
                       "name": "Burst 1",
-                      "value": "MPEG-1 Layer II or III, or MPEG-2 without extension",
+                      "value": "MPEG-1 Layer II or III",
                       "offset": 4686,
                       "length": 426,
                       "children": [
@@ -271,7 +271,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "5 (MPEG-1 Layer II or III, or MPEG-2 without extension)",
+                              "value": 5,
                               "offset": 4690,
                               "length": 1,
                               "bitOffset": 0,
@@ -324,7 +324,7 @@
                     },
                     {
                       "name": "Burst 2",
-                      "value": "MPEG-1 Layer II or III, or MPEG-2 without extension",
+                      "value": "MPEG-1 Layer II or III",
                       "offset": 9294,
                       "length": 426,
                       "children": [
@@ -342,7 +342,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "5 (MPEG-1 Layer II or III, or MPEG-2 without extension)",
+                              "value": 5,
                               "offset": 9298,
                               "length": 1,
                               "bitOffset": 0,
@@ -395,7 +395,7 @@
                     },
                     {
                       "name": "Burst 3",
-                      "value": "MPEG-1 Layer II or III, or MPEG-2 without extension",
+                      "value": "MPEG-1 Layer II or III",
                       "offset": 13902,
                       "length": 426,
                       "children": [
@@ -413,7 +413,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "5 (MPEG-1 Layer II or III, or MPEG-2 without extension)",
+                              "value": 5,
                               "offset": 13906,
                               "length": 1,
                               "bitOffset": 0,
@@ -466,7 +466,7 @@
                     },
                     {
                       "name": "Burst 4",
-                      "value": "MPEG-1 Layer II or III, or MPEG-2 without extension",
+                      "value": "MPEG-1 Layer II or III",
                       "offset": 18510,
                       "length": 426,
                       "children": [
@@ -484,7 +484,7 @@
                           "children": [
                             {
                               "name": "Data Type",
-                              "value": "5 (MPEG-1 Layer II or III, or MPEG-2 without extension)",
+                              "value": 5,
                               "offset": 18514,
                               "length": 1,
                               "bitOffset": 0,
@@ -545,7 +545,7 @@
                   "children": [
                     {
                       "name": "Codec",
-                      "value": "MPEG-1 Layer II or III, or MPEG-2 without extension",
+                      "value": "MPEG-1 Layer II or III",
                       "offset": 70,
                       "length": 23048
                     },
@@ -593,7 +593,7 @@
             5
           ]
         ],
-        "codec": "MPEG-1 Layer II or III, or MPEG-2 without extension",
+        "codec": "MPEG-1 Layer II or III",
         "sampleRate": 0,
         "channels": 0,
         "samples": 0,
@@ -607,7 +607,7 @@
       {
         "severity": "Info",
         "code": "wav.iec61937-payload-not-analyzed",
-        "message": "The data holds 5 data-bursts of IEC 61937 with MPEG-1 Layer II or III, or MPEG-2 without extension frames, which the analyzer has no parser for; the stream is described by what the bursts state.",
+        "message": "The data holds 5 data-bursts of IEC 61937 with MPEG-1 Layer II or III frames, which the analyzer has no parser for; the stream is described by what the bursts state.",
         "offset": 78,
         "length": 23040,
         "path": [

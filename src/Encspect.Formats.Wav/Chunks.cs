@@ -538,8 +538,8 @@ internal static class Chunks
             {
                 int stated = tracks;
                 int found = indexes.Count;
-                s.Findings.Add(Severity.Warning, "wav.chna-track-count-mismatch", table ?? chunk, _ =>
-                    $"The chna chunk states {Counts.Of(stated, "track", "tracks")}, but its structures name {Counts.Of(found, "different track", "different tracks")}.");
+                s.Findings.Add(Severity.Info, "wav.chna-track-count-mismatch", table ?? chunk, _ =>
+                    $"The chna chunk states {Counts.Of(stated, "track", "tracks")}, but its structures name {Counts.Of(found, "different track", "different tracks")}; BS.2088 section 8.2 says only that the field is the number of tracks used in the file, so counting the different track indexes is the analyzer's reading.");
             }
         }
 

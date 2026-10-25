@@ -8,10 +8,14 @@ namespace Encspect.Formats.Wav;
 internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, Node container)
 {
     private int _listed;
+    private bool _isInPauseRun;
 
     public int Bursts { get; private set; }
 
-    public int Pauses { get; private set; }
+    // The pause and null bursts, which carry no audio and are counted, not listed, and the runs of them with no other burst between.
+    public long Pauses { get; private set; }
+
+    public long PauseRuns { get; private set; }
 
     public long PayloadBytes { get; private set; }
 
@@ -20,8 +24,8 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
 
     public IEnumerable<MappedBytes> Payloads()
     {
-        ByteReader reader = data;
-        long end = reader.End;
+        var window = new BurstWindow(data);
+        long end = window.End;
         BurstType type = chain.Type;
         long period = (long)type.Repetition * Iec61937.FrameLength;
         long position = chain.First;
@@ -35,12 +39,12 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
                 state.Context.CancellationToken.ThrowIfCancellationRequested();
             }
 
-            if (Iec61937.HeaderAt(reader, position) is not { } header)
+            if (Iec61937.HeaderAt(window, position) is not { } header)
             {
-                long? found = FindBurst(searchFrom);
+                long? found = FindBurst(window, searchFrom);
                 if (found is not { } next)
                 {
-                    Rest = RestAfter(searchFrom);
+                    Rest = RestAfter(window, searchFrom);
                     if (Rest >= 0)
                     {
                         long at = Rest;
@@ -48,6 +52,7 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
                             $"The bytes from 0x{at:X} to the end of the data chunk are neither a data-burst nor stuffing of zeros, {Counts.Of(data.End - at, "byte", "bytes")} in all.");
                     }
 
+                    ReportPauses();
                     yield break;
                 }
 
@@ -73,21 +78,31 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
                 continue;
             }
 
+            if (Iec61937.IsPauseOrNull(header.DataType))
+            {
+                // Stepped over by its own length code, so that a gap of pause bursts at their recommended period costs a few bytes each; where nothing
+                // starts after it the search goes on from its preamble.
+                Pauses++;
+                if (!_isInPauseRun)
+                {
+                    PauseRuns++;
+                    _isInPauseRun = true;
+                }
+
+                searchFrom = position + Iec61937.PreambleLength;
+                position = Iec61937.EndOfPause(position, header);
+                expected = -1;
+                continue;
+            }
+
+            _isInPauseRun = false;
             if (header.DataType != chain.DataType || header.Bitstream != chain.Bitstream)
             {
                 Node other = AddBurst(position, Iec61937.PreambleLength, header, null);
-                if (Iec61937.IsPauseOrNull(header.DataType))
-                {
-                    Pauses++;
-                }
-                else
-                {
-                    int found = header.DataType;
-                    int bitstream = header.Bitstream;
-                    state.Findings.Add(Severity.Warning, "wav.iec61937-type-changed", other, _ =>
-                        $"A burst of {Iec61937.NameOf(found)} (data type {found}, bitstream {bitstream}) comes among bursts of {type.Name} (data type {chain.DataType}, bitstream {chain.Bitstream}); it is not read as part of the stream.");
-                }
-
+                int found = header.DataType;
+                int bitstream = header.Bitstream;
+                state.Findings.Add(Severity.Warning, "wav.iec61937-type-changed", other, _ =>
+                    $"A burst of {Iec61937.NameOf(found)} (data type {found}, bitstream {bitstream}) comes among bursts of {type.Name} (data type {chain.DataType}, bitstream {chain.Bitstream}); it is not read as part of the stream.");
                 searchFrom = position + Iec61937.PreambleLength;
                 position = searchFrom;
                 expected = -1;
@@ -100,6 +115,12 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
             bool isTooLong = length > room;
             bool isCut = start + Math.Min(length, room) > end;
             long payload = Math.Min(Math.Min(length, room), end - start);
+            if (isCut && payload % 2 == 1)
+            {
+                // The last byte of an odd payload is the second byte of a sample the data ends before.
+                payload--;
+            }
+
             Node burst = AddBurst(position, Iec61937.PreambleLength + payload, header, payload);
             if (isTooLong || isCut || payload == 0)
             {
@@ -117,12 +138,12 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
             Bursts++;
             PayloadBytes += payload;
             expected = position + period;
-            searchFrom = start + ((payload + Iec61937.FrameLength - 1) / Iec61937.FrameLength * Iec61937.FrameLength);
+            // A burst the data ends in owns the rest of the data.
+            searchFrom = isCut ? end : start + ((payload + Iec61937.FrameLength - 1) / Iec61937.FrameLength * Iec61937.FrameLength);
             if (payload > 0)
             {
                 int count = (int)Math.Min(payload + (payload % 2), end - start);
-                byte[] raw = reader.ReadBytesAt(start, count);
-                yield return new MappedBytes(Iec61937.Payload(raw, (int)payload), start);
+                yield return new MappedBytes(Iec61937.Payload(window.At(start, count), (int)payload), start);
             }
 
             position = expected;
@@ -130,25 +151,26 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
     }
 
     // The next preamble from position on at a frame of the chain, or null.
-    private long? FindBurst(long from)
+    private long? FindBurst(BurstWindow window, long from)
     {
         const int Block = 1 << 16;
         long position = from + ((Iec61937.FrameLength - ((from - data.Start) % Iec61937.FrameLength)) % Iec61937.FrameLength);
         long end = data.End;
         while (position + Iec61937.PreambleLength <= end)
         {
-            int count = (int)Math.Min(Block, end - position);
-            byte[] block = data.ReadBytesAt(position, count);
-            for (int i = 0; i + Iec61937.PreambleLength <= block.Length; i += Iec61937.FrameLength)
+            ReadOnlySpan<byte> block = window.At(position, Block);
+            int length = block.Length;
+            for (int i = 0; i + Iec61937.PreambleLength <= length; i += Iec61937.FrameLength)
             {
-                if (block[i] == 0x72 && block[i + 1] == 0xF8 && Iec61937.HeaderAt(data, position + i) is not null)
+                // The preamble lies inside the block, so looking at it reads nothing and the block stays valid.
+                if (block[i] == 0x72 && block[i + 1] == 0xF8 && Iec61937.HeaderAt(window, position + i) is not null)
                 {
                     return position + i;
                 }
             }
 
             // The next block starts at a frame, and re-reads the frames whose preamble the block cut.
-            position += Math.Max(Iec61937.FrameLength, (count - Iec61937.PreambleLength) / Iec61937.FrameLength * Iec61937.FrameLength);
+            position += Math.Max(Iec61937.FrameLength, (length - Iec61937.PreambleLength) / Iec61937.FrameLength * Iec61937.FrameLength);
         }
 
         return null;
@@ -156,23 +178,37 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
 
     // Where the first byte that is not zero lies from position to the end of the data, or -1 when there is none: what follows the last burst is stuffing
     // of zeros, and anything else is not.
-    private long RestAfter(long from)
+    private long RestAfter(BurstWindow window, long from)
     {
         const int Block = 1 << 16;
         long position = Math.Min(from, data.End);
         while (position < data.End)
         {
-            int count = (int)Math.Min(Block, data.End - position);
-            int found = Array.FindIndex(data.ReadBytesAt(position, count), b => b != 0);
+            ReadOnlySpan<byte> block = window.At(position, Block);
+            int found = block.IndexOfAnyExcept((byte)0);
             if (found >= 0)
             {
                 return position + found;
             }
 
-            position += count;
+            position += block.Length;
         }
 
         return -1;
+    }
+
+    // What the walk found that is not a burst of the stream: pause and null bursts, counted and not listed.
+    private void ReportPauses()
+    {
+        if (Pauses == 0)
+        {
+            return;
+        }
+
+        long pauses = Pauses;
+        long runs = PauseRuns;
+        state.Findings.Add(Severity.Info, "wav.iec61937-pause-bursts", container, _ =>
+            $"The data holds {Counts.Of(pauses, "pause or null burst", "pause or null bursts")} in {Counts.Of(runs, "run", "runs")}, which carry no audio (IEC 61937-1 7.2 and 7.4); they are counted and not listed.");
     }
 
     private Node AddBurst(long position, long length, BurstHeader header, long? payload)
@@ -186,7 +222,7 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
         var burst = new Node($"Burst {_listed - 1}", position, length, Iec61937.NameOf(header.DataType)) { Description = Explain.BurstNode, Topic = Topics.Iec61937 };
         burst.Add("Sync Words", position, 4, NodeValue.Text("F872h 4E1Fh"), Explain.BurstSync, Topics.Iec61937);
         Node info = burst.Add("Burst Info", position + 4, 2, NodeValue.Hex(header.Pc, 4), Explain.BurstInfo, Topics.Iec61937);
-        info.Add(Node.FromBits("Data Type", position + 4, 0, 7, NodeValue.Text($"{header.DataType} ({Iec61937.NameOf(header.DataType)})"), NodeKind.Detail, Explain.BurstDataType, Topics.Iec61937, BitOrder.LeastSignificantFirst));
+        info.Add(Node.FromBits("Data Type", position + 4, 0, 7, NodeValue.Integer(header.DataType), NodeKind.Detail, Explain.BurstDataType, Topics.Iec61937, BitOrder.LeastSignificantFirst));
         info.Add(Node.FromBits("Error Flag", position + 4, 7, 8, NodeValue.Boolean(header.HasError), NodeKind.Detail, Explain.BurstErrorFlag, Topics.Iec61937, BitOrder.LeastSignificantFirst));
         info.Add(Node.FromBits("Data-Type-Dependent Info", position + 4, 8, 13, NodeValue.Integer(header.Info), NodeKind.Detail, Explain.BurstDependentInfo, Topics.Iec61937, BitOrder.LeastSignificantFirst));
         info.Add(Node.FromBits("Bitstream Number", position + 4, 13, 16, NodeValue.Integer(header.Bitstream), NodeKind.Detail, Explain.BurstBitstream, Topics.Iec61937, BitOrder.LeastSignificantFirst));
@@ -197,6 +233,7 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
         }
 
         container.Add(burst);
+        state.Nodes += Walker.Count(burst);
         return burst;
     }
 }

@@ -15,7 +15,8 @@ internal enum BurstUnit
 // of the codec parser that reads the payload, or null where the analyzer has none for it.
 internal sealed record BurstType(string Name, int Repetition, BurstUnit Unit, string? Codec);
 
-// The first burst of a chain found at the start of the data chunk: where it is, its data type (bits 0 to 6 of Pc) and bitstream number.
+// A chain found at the start of the data chunk: where its first burst of any kind starts (a pause or null burst may come before the audio), and the
+// data type (bits 0 to 6 of Pc) and bitstream number of the audio bursts.
 internal sealed record BurstChain(long First, int DataType, int Bitstream, BurstType Type);
 
 // A burst preamble as read: the words Pa to Pd, with Pc taken apart.
@@ -46,8 +47,8 @@ internal static class Iec61937
     // CLAUDE.md: a sync word alone is no stream).
     public const int ChainLength = 3;
 
-    // How far into the data zero frames are skipped before the first burst, so that a recording that starts in silence is still found; a longer
-    // silence is PCM.
+    // How far into the data zero frames and pause or null bursts are skipped before the first audio burst, so that a recording that starts in silence
+    // or in a gap of the stream is still found; a longer lead-in is PCM.
     private const int MaxSilence = 1 << 20;
 
     // The bursts listed as nodes; the rest are counted.
@@ -61,12 +62,12 @@ internal static class Iec61937
     {
         [1] = new("AC-3", 1536, BurstUnit.Bits, "ac-3"),
         [4] = new("MPEG-1 Layer I", 384, BurstUnit.Bits, null),
-        [5] = new("MPEG-1 Layer II or III, or MPEG-2 without extension", 1152, BurstUnit.Bits, null),
-        [6] = new("MPEG-2 with extension", 1152, BurstUnit.Bits, null),
-        [7] = new("MPEG-2 AAC", 1024, BurstUnit.Bits, null),
-        [8] = new("MPEG-2 Layer I low sampling frequency", 768, BurstUnit.Bits, null),
-        [9] = new("MPEG-2 Layer II low sampling frequency", 2304, BurstUnit.Bits, null),
-        [10] = new("MPEG-2 Layer III low sampling frequency", 1152, BurstUnit.Bits, null),
+        [5] = new("MPEG-1 Layer II or III", 1152, BurstUnit.Bits, null),
+        [6] = new("MPEG-2 audio with extension", 1152, BurstUnit.Bits, null),
+        [7] = new("MPEG-2 AAC", 1024, BurstUnit.Bits, "aac-adts"),
+        [8] = new("MPEG-2 Layer I", 768, BurstUnit.Bits, null),
+        [9] = new("MPEG-2 Layer II", 2304, BurstUnit.Bits, null),
+        [10] = new("MPEG-2 Layer III", 1152, BurstUnit.Bits, null),
         [11] = new("DTS type I", 512, BurstUnit.Bits, "dts"),
         [12] = new("DTS type II", 1024, BurstUnit.Bits, "dts"),
         [13] = new("DTS type III", 2048, BurstUnit.Bits, "dts"),
@@ -80,12 +81,12 @@ internal static class Iec61937
         [50] = new("WMA Professional type II", 2048, BurstUnit.Bits, null),
         [82] = new("WMA Professional type III", 1024, BurstUnit.Bits, null),
         [114] = new("WMA Professional type IV", 512, BurstUnit.Bits, null),
-        [19] = new("MPEG-2 AAC low sampling frequency", 2048, BurstUnit.Bits, null),
-        [51] = new("MPEG-2 AAC low sampling frequency", 4096, BurstUnit.Bits, null),
-        [20] = new("MPEG-4 AAC", 1024, BurstUnit.Bits, null),
-        [52] = new("MPEG-4 AAC", 2048, BurstUnit.Bits, null),
-        [84] = new("MPEG-4 AAC", 4096, BurstUnit.Bits, null),
-        [116] = new("MPEG-4 AAC", 512, BurstUnit.Bits, null),
+        [19] = new("MPEG-2 AAC low sampling frequency", 2048, BurstUnit.Bits, "aac-adts"),
+        [51] = new("MPEG-2 AAC low sampling frequency", 4096, BurstUnit.Bits, "aac-adts"),
+        [20] = new("MPEG-4 AAC", 1024, BurstUnit.Bits, "aac-adts"),
+        [52] = new("MPEG-4 AAC", 2048, BurstUnit.Bits, "aac-adts"),
+        [84] = new("MPEG-4 AAC", 4096, BurstUnit.Bits, "aac-adts"),
+        [116] = new("MPEG-4 AAC", 512, BurstUnit.Bits, "aac-adts"),
         [21] = new("E-AC-3", 6144, BurstUnit.Bytes, "e-ac-3"),
         [22] = new("MAT", 15360, BurstUnit.Bytes, null),
     };
@@ -112,30 +113,51 @@ internal static class Iec61937
 
     // The burst preamble at position if the sync words are there and the data type is one the analyzer knows (an audio type with a repetition
     // period, null data or pause); null otherwise. Looks at 8 bytes.
-    public static BurstHeader? HeaderAt(ByteReader data, long position)
+    public static BurstHeader? HeaderAt(BurstWindow data, long position)
     {
-        if (position + PreambleLength > data.End)
+        ReadOnlySpan<byte> bytes = data.At(position, PreambleLength);
+        if (bytes.Length < PreambleLength || !bytes[..4].SequenceEqual(Sync))
         {
             return null;
         }
 
-        byte[] bytes = data.ReadBytesAt(position, PreambleLength);
-        if (!bytes.AsSpan(0, 4).SequenceEqual(Sync))
-        {
-            return null;
-        }
-
-        var header = new BurstHeader(BinaryPrimitives.ReadUInt16LittleEndian(bytes.AsSpan(4)), BinaryPrimitives.ReadUInt16LittleEndian(bytes.AsSpan(6)));
+        var header = new BurstHeader(BinaryPrimitives.ReadUInt16LittleEndian(bytes[4..]), BinaryPrimitives.ReadUInt16LittleEndian(bytes[6..]));
         return IsPauseOrNull(header.DataType) || TypeOf(header.DataType) is not null ? header : null;
     }
 
-    // A chain of bursts at the start of the data, after any silence: ChainLength bursts of one audio data type and bitstream number, each at the
-    // repetition period of the type after the one before, each with a payload that fits its period and the data. Null for anything else, a lone
-    // sync word included.
+    // Where the frame after a pause or null burst at position lies: the preamble and the payload that the length code states in bits (IEC 61937-1
+    // 7.2 and 7.4), up to a whole frame.
+    public static long EndOfPause(long position, BurstHeader header) =>
+        position + (((PreambleLength + ((header.Pd + 7) / 8) + FrameLength - 1) / FrameLength) * FrameLength);
+
+    // A chain of bursts at the start of the data, after any silence and any pause or null bursts (a capture that starts in a gap of the stream):
+    // ChainLength bursts of one audio data type and bitstream number, each at the repetition period of the type after the one before, each with a
+    // payload that fits its period and the data. First is where the first burst of any kind starts. Null for anything else, a lone sync word
+    // included.
     public static BurstChain? Recognize(ByteReader data)
     {
-        long position = SkipSilence(data);
-        if (HeaderAt(data, position) is not { } first || TypeOf(first.DataType) is not { } type)
+        var window = new BurstWindow(data);
+        long limit = Math.Min(data.End, data.Start + MaxSilence);
+        long first = SkipZeroFrames(window, data.Start, limit);
+        long position = first;
+        BurstHeader audio;
+        while (true)
+        {
+            if (position >= limit || HeaderAt(window, position) is not { } header)
+            {
+                return null;
+            }
+
+            if (!IsPauseOrNull(header.DataType))
+            {
+                audio = header;
+                break;
+            }
+
+            position = SkipZeroFrames(window, EndOfPause(position, header), limit);
+        }
+
+        if (TypeOf(audio.DataType) is not { } type)
         {
             return null;
         }
@@ -144,7 +166,7 @@ internal static class Iec61937
         for (int i = 0; i < ChainLength; i++)
         {
             long at = position + (i * period);
-            if (HeaderAt(data, at) is not { } header || header.DataType != first.DataType || header.Bitstream != first.Bitstream)
+            if (HeaderAt(window, at) is not { } header || header.DataType != audio.DataType || header.Bitstream != audio.Bitstream)
             {
                 return null;
             }
@@ -156,26 +178,28 @@ internal static class Iec61937
             }
         }
 
-        return new BurstChain(position, first.DataType, first.Bitstream, type);
+        return new BurstChain(first, audio.DataType, audio.Bitstream, type);
     }
 
-    // The first frame of the data that is not zero, as a position, or the end when the first MaxSilence bytes are zero.
-    private static long SkipSilence(ByteReader data)
+    // The first frame from position on that is not zero, as a position, or limit when the frames up to it are all zero.
+    private static long SkipZeroFrames(BurstWindow data, long position, long limit)
     {
-        const int Block = 1 << 16;
-        long position = data.Start;
-        long limit = Math.Min(data.End, data.Start + MaxSilence);
+        const int Block = 1 << 14;
         while (position < limit)
         {
-            int count = (int)Math.Min(Block, limit - position);
-            byte[] block = data.ReadBytesAt(position, count);
-            int first = Array.FindIndex(block, b => b != 0);
+            ReadOnlySpan<byte> block = data.At(position, (int)Math.Min(Block, limit - position));
+            if (block.Length == 0)
+            {
+                break;
+            }
+
+            int first = block.IndexOfAnyExcept((byte)0);
             if (first >= 0)
             {
                 return position + (first / FrameLength * FrameLength);
             }
 
-            position += count;
+            position += block.Length;
         }
 
         return limit;
@@ -183,7 +207,7 @@ internal static class Iec61937
 
     // The payload as the coding has it: the words are 16-bit samples, so a pair of bytes is swapped. A payload of an odd number of bytes ends in the
     // first byte of a word whose second byte is the zero stuffing, which the swap moves in front of it.
-    public static byte[] Payload(byte[] raw, int length)
+    public static byte[] Payload(ReadOnlySpan<byte> raw, int length)
     {
         byte[] result = new byte[length];
         for (int i = 0; i + 1 < raw.Length && i < length; i += 2)

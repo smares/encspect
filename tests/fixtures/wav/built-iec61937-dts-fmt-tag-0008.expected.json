@@ -1,0 +1,42 @@
+{
+ "length": 12344,
+ "container": {
+  "id": "RIFF",
+  "size": 12336,
+  "end": 12344
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "fact",
+   "offset": 36,
+   "end": 48,
+   "size": 4,
+   "length": 4
+  },
+  {
+   "id": "data",
+   "offset": 48,
+   "end": 12344,
+   "size": 12288,
+   "length": 12288
+  }
+ ],
+ "stream": {
+  "routed": "dts",
+  "carried": true,
+  "sample_rate": 48000,
+  "channels": 2
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-in-pcm"
+  }
+ ]
+}

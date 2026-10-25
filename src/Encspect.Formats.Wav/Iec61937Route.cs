@@ -54,8 +54,9 @@ internal static class Iec61937Route
             $"The data holds {Counts.Of(bursts, "data-burst", "data-bursts")} of IEC 61937 with {name} frames, as S/PDIF passthrough writes them, not samples; the fmt chunk describes the carrier ({bits} bits, {Counts.Of(channels, "channel", "channels")} at {rate} Hz), and the stream is read as {stream.Codec}.");
 
         // The link runs at the sampling rate of the coding, and at four times it for E-AC-3 (IEC 61937-1 6.1.5; Microsoft, "Representing Formats for IEC 61937 Transmissions").
+        // For AAC nothing read says how the link rate relates to the sampling rate of the low sampling frequency types or of a stream with SBR, so it is not compared.
         long expected = chain.Type.Codec == "e-ac-3" ? 4L * stream.SampleRate : stream.SampleRate;
-        if (stream.SampleRate > 0 && rate > 0 && rate != expected)
+        if (chain.Type.Codec != "aac-adts" && stream.SampleRate > 0 && rate > 0 && rate != expected)
         {
             int content = stream.SampleRate;
             s.Findings.Add(Severity.Warning, "wav.iec61937-rate-mismatch", s.FormatChunkNode ?? s.Container, _ =>
@@ -63,7 +64,7 @@ internal static class Iec61937Route
         }
     }
 
-    // Bursts of a coding with no codec parser here (MPEG audio, AAC, ATRAC, WMA Professional, MAT): the stream is described by what the bursts state.
+    // Bursts of a coding with no codec parser here (MPEG audio, ATRAC, WMA Professional, MAT): the stream is described by what the bursts state.
     public static void AddUnanalyzed(State s, WaveFormat format, DataChunk data, BurstChain chain)
     {
         (BurstRun run, Node container) = Walk(s, data, chain);

@@ -31,7 +31,7 @@ internal static class Explain
     public const string Wave64Id = "The GUID of the riff chunk, which starts every Wave64 file; the characters riff are in its first bytes.";
     public const string Wave64Size = "The size of the riff chunk in bytes. It counts the whole file, the 40 bytes of the header included.";
     public const string Wave64FormType = "The GUID of the form wave, which makes the file a waveform audio file; the characters wave are in its first bytes.";
-    public const string Wave64ChunkId = "The GUID of the chunk. For fmt, data, fact and the other chunks of a WAVE file the first four bytes are the characters of the RIFF ID and the other twelve are the same in every chunk.";
+    public const string Wave64ChunkId = "The GUID of the chunk. For fmt, fact, data and junk the first four bytes are the characters of the RIFF ID and the other twelve are the same in each of them.";
     public const string Wave64ChunkSize = "The size of the chunk in bytes, 64 bits wide. It counts the 24 bytes of the chunk's own GUID and size, but not the padding that takes the chunk to a multiple of 8 bytes.";
     public const string Wave64Padding = "Zero bytes after the chunk, up to the next multiple of 8 bytes from the start of the file; Wave64 aligns chunks to 8 bytes where RIFF aligns them to 2.";
     public const string Wave64List = "A list chunk, the LIST of a RIFF file under its GUID. The analyzer does not read its contents.";

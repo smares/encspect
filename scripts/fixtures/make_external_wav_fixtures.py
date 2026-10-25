@@ -95,7 +95,7 @@ IEC_FIXTURES = {
     "iec61937-mp2-stereo-192k": (("sine", 48000, 2, 0.1, "s16le"), ["-c:a", "mp2", "-b:a", "192k"], "mp2", 48000, None, ["wav.iec61937-payload-not-analyzed"]),
     "iec61937-mp2-lsf-24000": (("sine", 24000, 2, 0.1, "s16le"), ["-c:a", "mp2", "-b:a", "64k"], "mp2", 48000, None, ["wav.iec61937-payload-not-analyzed"]),
     "iec61937-mp3-stereo-128k": (("sine", 44100, 2, 0.1, "s16le"), ["-c:a", "libmp3lame", "-b:a", "128k"], "mp3", 44100, None, ["wav.iec61937-payload-not-analyzed"]),
-    "iec61937-aac-stereo-128k": (("sine", 48000, 2, 0.1, "s16le"), ["-c:a", "aac", "-b:a", "128k"], "aac", 48000, None, ["wav.iec61937-payload-not-analyzed"]),
+    "iec61937-aac-stereo-128k": (("sine", 48000, 2, 0.1, "s16le"), ["-c:a", "aac", "-b:a", "128k"], "aac", 48000, ("aac-adts", 48000, 2), ["wav.iec61937-in-pcm"]),
 }
 
 # name: (signal, arguments, findings). Written to a pipe: the muxer cannot go back to fill in the sizes.

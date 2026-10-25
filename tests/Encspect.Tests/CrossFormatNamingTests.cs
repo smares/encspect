@@ -70,7 +70,7 @@ public partial class CrossFormatNamingTests
 
     // The form every MPEG audio name takes: the codec parser's "MPEG-1 Layer III"; a container that states only the layer drops the version
     // ("MPEG Layer III"), one that states only the version drops the layer ("MPEG-1 audio").
-    [GeneratedRegex(@"^(MPEG(-(1|2|2\.5))? Layer (I|II|III|I and II)|MPEG-(1|2|4) audio)$")]
+    [GeneratedRegex(@"^(MPEG(-(1|2|2\.5))? Layer (I|II|III|I and II|II or III)|MPEG-(1|2|4) audio)$")]
     private static partial Regex MpegAudioName();
 
     [Fact]

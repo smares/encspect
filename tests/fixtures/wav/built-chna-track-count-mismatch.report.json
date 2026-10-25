@@ -425,9 +425,9 @@
     ],
     "findings": [
       {
-        "severity": "Warning",
+        "severity": "Info",
         "code": "wav.chna-track-count-mismatch",
-        "message": "The chna chunk states 5 tracks, but its structures name 2 different tracks.",
+        "message": "The chna chunk states 5 tracks, but its structures name 2 different tracks; BS.2088 section 8.2 says only that the field is the number of tracks used in the file, so counting the different track indexes is the analyzer's reading.",
         "offset": 84,
         "length": 80,
         "path": [

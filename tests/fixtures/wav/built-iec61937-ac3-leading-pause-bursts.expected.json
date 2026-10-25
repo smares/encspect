@@ -1,0 +1,58 @@
+{
+ "length": 32000,
+ "container": {
+  "id": "RIFF",
+  "size": 31992,
+  "end": 32000
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 32000,
+   "size": 31956,
+   "length": 31956
+  }
+ ],
+ "stream": {
+  "routed": "ac-3",
+  "carried": true,
+  "sample_rate": 48000,
+  "channels": 2
+ },
+ "iec61937": {
+  "first": 44,
+  "data_type": 1,
+  "name": "AC-3",
+  "bursts": 5,
+  "pauses": 103,
+  "pause_runs": 1,
+  "listed": [
+   1280,
+   7424,
+   13568,
+   19712,
+   25856
+  ],
+  "findings": {
+   "wav.iec61937-pause-bursts": 1
+  },
+  "duration": 0.16,
+  "link_rate": 48000
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-in-pcm"
+  },
+  {
+   "code": "wav.iec61937-pause-bursts"
+  }
+ ]
+}
