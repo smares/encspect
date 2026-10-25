@@ -614,7 +614,8 @@ internal ref struct SubstreamReader
 
         bool store = !_planes.IsEmpty;
         int position = Samples;
-        for (int i = 0; i < size; i++)
+        int start = ReadBlockDataFast(size, position, first, coded, store, raw, books, offsets, steps, bypass[..bypassCount]);
+        for (int i = start; i < size; i++)
         {
             for (int b = 0; b < bypassCount; b++)
             {
@@ -697,6 +698,186 @@ internal ref struct SubstreamReader
         }
 
         return Check();
+    }
+
+    // The samples of the block that start more than a sample's bits (at most 42 a channel) and 24 bytes before the end of the data, read
+    // with the bit buffer in local variables: every refill is then a whole word of real data and a sample cannot end past the data, so
+    // nothing looks for an overrun. It stops, with the cursor before the sample it stops at, at the first sample it cannot read with certainty:
+    // a codeword that is invalid or whose raw bits are more than 24, which the caller reads again with the checks that name the fault.
+    // Returns the number of samples it read.
+    private int ReadBlockDataFast(int size, int position, int first, int coded, bool store, scoped ReadOnlySpan<int> raw, scoped ReadOnlySpan<int> books,
+        scoped ReadOnlySpan<int> offsets, scoped ReadOnlySpan<int> steps, scoped ReadOnlySpan<int> bypass)
+    {
+        for (int c = 0; c < coded; c++)
+        {
+            if (raw[c] > 24)
+            {
+                return 0;
+            }
+        }
+
+        ReadOnlySpan<byte> data = _data;
+        _bits.Detach(out ulong cache, out int bits, out long next);
+        long last = data.Length - (((((long)coded * 42) + bypass.Length) >> 3) + 24);
+        Span<int> planes = _planes;
+        int stride = _stride;
+        int i = 0;
+        ulong committedCache = cache;
+        int committedBits = bits;
+        long committedNext = next;
+        for (; i < size && next <= last; i++)
+        {
+            for (int b = 0; b < bypass.Length; b++)
+            {
+                Ensure(data, ref cache, ref bits, ref next);
+                uint bit = Take(ref cache, ref bits, 1);
+                if (store)
+                {
+                    planes[((BypassPlane + bypass[b]) * stride) + position + i] = (int)bit;
+                }
+            }
+
+            bool isValid = true;
+            for (int c = 0; c < coded; c++)
+            {
+                int book = books[c];
+                int l = raw[c];
+                long value;
+                Ensure(data, ref cache, ref bits, ref next);
+                if (book != 0)
+                {
+                    // The codeword is decided within its first nine bits (an entry of 0 is a codeword the slow reader rejects).
+                    ushort entry = Codewords[book][(int)(cache >> 55)];
+                    if (entry == 0)
+                    {
+                        isValid = false;
+                        break;
+                    }
+
+                    int index = entry & 0xFF;
+                    cache <<= entry >> 8;
+                    bits -= entry >> 8;
+                    Ensure(data, ref cache, ref bits, ref next);
+                    if (!store)
+                    {
+                        if (l > 0)
+                        {
+                            Skip(ref cache, ref bits, l);
+                        }
+
+                        continue;
+                    }
+
+                    long raws = l > 0 ? Take(ref cache, ref bits, l) : 0;
+                    int back = l + 2 - book;
+                    long subtract = back >= 0 ? 1L << back : 0;
+                    value = ((((long)(index - 7) << l) + raws + offsets[c] - subtract)) << steps[c];
+                }
+                else
+                {
+                    if (!store)
+                    {
+                        if (l > 0)
+                        {
+                            Skip(ref cache, ref bits, l);
+                        }
+
+                        continue;
+                    }
+
+                    value = l > 0 ? ((long)Take(ref cache, ref bits, l) + offsets[c] - (1L << (l - 1))) << steps[c] : (long)offsets[c] << steps[c];
+                }
+
+                planes[((first + c) * stride) + position + i] = (int)value;
+            }
+
+            if (!isValid)
+            {
+                break;
+            }
+
+            committedCache = cache;
+            committedBits = bits;
+            committedNext = next;
+        }
+
+        _bits.Attach(committedCache, committedBits, committedNext);
+        return i;
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    private static void Ensure(ReadOnlySpan<byte> data, ref ulong cache, ref int bits, ref long next)
+    {
+        if (bits < 40)
+        {
+            cache |= System.Buffers.Binary.BinaryPrimitives.ReadUInt64BigEndian(data.Slice((int)next)) >> bits;
+            int bytes = (63 - bits) >> 3;
+            next += bytes;
+            bits += bytes * 8;
+        }
+    }
+
+    // 1 to 32 bits that Ensure has put in the buffer.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    private static uint Take(ref ulong cache, ref int bits, int count)
+    {
+        uint value = (uint)(cache >> (64 - count));
+        cache <<= count;
+        bits -= count;
+        return value;
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    private static void Skip(ref ulong cache, ref int bits, int count)
+    {
+        cache <<= count;
+        bits -= count;
+    }
+
+    // For each codebook 1 to 3 (index 0 is unused), what the first nine bits of a codeword say: the length in the high byte and the index in
+    // the low one, built by running the reader that names the faults on every nine bits, or 0 for a codeword it rejects.
+    private static readonly ushort[][] Codewords = BuildCodewords();
+
+    private static ushort[][] BuildCodewords()
+    {
+        var tables = new ushort[4][];
+        for (int book = 1; book <= 3; book++)
+        {
+            tables[book] = new ushort[512];
+            for (int pattern = 0; pattern < 512; pattern++)
+            {
+                byte[] bytes = [(byte)(pattern >> 1), (byte)((pattern & 1) << 7), 0, 0, 0, 0, 0, 0];
+                var bits = new BitCursor(bytes);
+                int zeros = bits.CountZeros(9);
+                int index;
+                if (zeros == 0)
+                {
+                    index = 7 + (book == 1 ? (int)bits.Read(2) : book == 2 ? (int)bits.Read(1) : 0);
+                }
+                else if (zeros == 1)
+                {
+                    int more = bits.CountZeros(7);
+                    if (more == 7)
+                    {
+                        continue;
+                    }
+
+                    index = (book == 1 ? 11 : book == 2 ? 9 : 8) + more;
+                }
+                else if (zeros < 9)
+                {
+                    index = 8 - zeros;
+                }
+                else
+                {
+                    continue;
+                }
+
+                tables[book][pattern] = (ushort)((bits.Position << 8) | index);
+            }
+        }
+
+        return tables;
     }
 
     // Reads what follows the last block: the padding to a multiple of 16 bits, the end of stream marker where the bytes left hold one, and

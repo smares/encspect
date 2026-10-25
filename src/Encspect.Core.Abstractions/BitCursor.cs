@@ -225,6 +225,24 @@ public ref struct BitCursor
         return done;
     }
 
+    // For a loop that keeps the buffer in local variables: the data and the state of the cursor, in the form Refill and the readers above
+    // leave it. Attach puts back what the loop leaves; nothing else may read the cursor in between.
+    public readonly ReadOnlySpan<byte> Data => _data;
+
+    public readonly void Detach(out ulong cache, out int cacheBits, out long nextByte)
+    {
+        cache = _cache;
+        cacheBits = _cacheBits;
+        nextByte = _nextByte;
+    }
+
+    public void Attach(ulong cache, int cacheBits, long nextByte)
+    {
+        _cache = cache;
+        _cacheBits = cacheBits;
+        _nextByte = nextByte;
+    }
+
     public void Skip(int count)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);
