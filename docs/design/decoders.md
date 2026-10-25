@@ -1577,7 +1577,7 @@ What the pull request for decision 8 implements: the contract, the host's count 
 
 A benchmark of the built decoders against flac 1.4.3, wvunpack 5.6.0, mac 13.42 and FFmpeg found them 2.5 to 6.7 times slower than the fastest reference with `--verify`, and this pass closed part of that. The inputs were 300 s files of pink noise with tones (noisier than music, so every tool runs faster on music), one pinned core of a shared Xeon at 2.8 GHz, load average under 1.5, five interleaved runs, minimum of the wall time; the weights are unchanged (below).
 
-- **Reading:** the sources of FLAC, Monkey's Audio and TrueHD slide their window instead of reloading it, and FLAC's scanner asks for 64 KiB (doubling when a frame is cut) instead of 1 MiB at every frame. FLAC read 3.3 GB for a 34 MB file and 7.3 GB for 133 MB; it now reads 58 MB and 156 MB, the file once for the walk and once for the decoding pass (WavPack and Monkey's Audio read the file 3.1 and 3.6 times, TTA 1.6, none of it through the old pattern). The analysis of the 16-bit file went from 1.07 to 0.78 s and of the 24-bit file from 2.21 to 1.61 s.
+- **Reading:** the sources of FLAC, Monkey's Audio and TrueHD slide their window instead of reloading it, and FLAC's scanner asks for 64 KiB (doubling when a frame is cut) instead of 1 MiB at every frame. FLAC read 3.3 GB for a 34 MB file and 7.3 GB for 133 MB; it now reads about 1.6 times the 16-bit file (58 MB) and 1.2 times the 24-bit one (156 MB), with or without `--verify`: there is no second pass for the decoding, and the formats without a decoder read as much beyond one pass (measured as bytes of `read` calls: TTA 1.6 times, TrueHD 1.6, WavPack 3.1, Monkey's Audio 2.5 and, with `--verify`, 3.5, none of it through the old pattern). The analysis of the 16-bit file went from 1.07 to 0.78 s and of the 24-bit file from 2.21 to 1.61 s.
 - **MD5:** the managed `Md5` stays as it was. It runs at about 470 MB/s once compiled, as measured on 64 MB chunked as the decoders feed it and on 1 MiB chunks, before and after a rewrite that read the words through one span cast and kept the state in locals (both 460 to 480 MB/s); the 140 MB/s of the benchmark's profile was a sampling artifact of the first seconds. It is not hashed from a system library: that is refused in FIPS mode and absent in browser WebAssembly.
 - **Bit cursors:** `BitCursor` and `LsbBitCursor` keep a 64-bit buffer refilled a word at a time. WavPack default `--verify` went from 3.20 to 3.00 s; FLAC's walk showed no change beyond noise.
 - **Loops:** WavPack's stereo decorrelation pass runs over pairs of samples with the history in locals, the word decoder reads the three medians of a channel through one span, and the digest and the canonical PCM writer pack a channel's samples without a loop over bytes (`CanonicalPcm.Write` for the common widths without a bounds check per sample).
@@ -1591,15 +1591,26 @@ The decode times of the benchmark files after the pass, `--verify` on the JIT bu
 | FLAC -5, 16-bit/44.1 kHz | 2.12 s | 1.34 s | 0.33 s (`flac -d`) | 6.4, 4.0 |
 | FLAC -8, 24-bit/96 kHz | 4.34 s | 2.36 s | 1.17 s (`flac -d`) | 3.7, 2.0 |
 | WavPack default, 16-bit | 3.14 s | 2.13 s | 0.87 s (`wvunpack`) | 3.6, 2.5 |
-| WavPack `-hh`, 24-bit | 8.92 s | 7.71 s | 3.07 s | 2.9, 2.5 |
+| WavPack `-hh`, 24-bit | 8.92 s | 7.71 s | 2.98 s (`wvunpack -v`) | 3.0, 2.6 |
 | Monkey's Audio `-c1000` | 4.52 s | 2.79 s | 1.15 s (`mac -d`) | 3.9, 2.4 |
 | Monkey's Audio `-c3000` | 5.27 s | 4.34 s | 1.65 s (`mac -d`) | 3.2, 2.6 |
 | Monkey's Audio `-c5000`, 16-bit | 16.17 s | 8.87 s | 5.17 s (`mac -d`) | 3.1, 1.7 |
-| Monkey's Audio `-c5000`, 24-bit/96 kHz | 42.93 s | 22.78 s | 12.49 s (`mac -d`) | 3.4, 1.8 |
+| Monkey's Audio `-c5000`, 24-bit/96 kHz | 42.93 s | 22.78 s | 12.08 s (`mac -V`) | 3.6, 1.9 |
 
 - **What is left:** the Rice and range decoders and the per-sample structure (Monkey's Audio below `-c4000`, WavPack's entropy decoder and passes, which are serial per channel and do not vectorize) are where the references stay 2 to 2.6 times ahead. FLAC's walk alone, the analysis without decoding, takes 2.4 times `flac -d`'s whole decode at 16-bit, and the decoding step adds the CRC-16, the repacking and the MD5.
-- **The work weights are unchanged.** `DecoderWorkTests` (62 cases, nightly) passes on the final code with the largest ratio 1.57 (the TrueHD mono fixture, which the pass did not touch: 1.44 on the same machine before), then 1.45, 1.42, 1.42 and 1.35 for WavPack cases that read 1.04, 1.07, 1.03 and 1.05 before. The reference, FLAC's decoder, is 25% faster per unit (0.57 to 0.43 ns), so every decoder that gained less than it reads a higher ratio. In absolute terms the time per unit fell or stayed within noise for every case but five (`wavpack-0-passes-8-bit-zero-run` 0.54 to 0.63 ns, `truehd-crafted-fir-4-iir-4-8-matrices` 0.48 to 0.54, `monkeys-audio-normal-float` 0.53 to 0.56, `wavpack-sets-that-never-complete` 0.51 to 0.54, `wavpack-dsd-fast-5-history-bits` 0.226 to 0.236), and the largest is 0.71 ns (`wavpack-terms-mono`) against 0.99 ns (`monkeys-audio-insane-32-bit`) before, so the budget's bound in seconds only improved. A weight is raised for a case at the limit of 2, and none is near it; if a CI runner's nightly reads WavPack's terms above 1.9, the per-pass weight (8) is the one to raise.
-- **Table of the run:** the unchanged-weight ratios, after / before: Monkey's Audio insane 0.54 / 0.84, insane 24-bit 0.70 / 1.08, high 0.97 / 0.67, normal 0.85 / 0.61, FLAC fixed order 4 0.69 / 0.77, FLAC order 32 in 64-bit sums 0.81 / 0.98, WavPack term 17 0.96 / 1.01, term 18 1.07 / 0.89, terms 1 to 8 1.35 / 1.05, mono terms 1.45 / 1.04, TrueHD fixture mono 1.57 / 1.44, the reference's own case 1.27 / 1.07.
+- **The work weights are unchanged.** `DecoderWorkTests` (62 cases, nightly) passes on the final code:
+  - The largest ratio is 1.57 (the TrueHD mono fixture, which the pass did not touch: 1.44 on the same machine before).
+  - Next come 1.45, 1.42, 1.42 and 1.35 for WavPack cases that read 1.04, 1.07, 1.03 and 1.05 before.
+  - The reference, FLAC's decoder, is 25% faster per unit (0.57 to 0.43 ns), so every decoder that gained less than it reads a higher ratio.
+- **Time per unit:** it fell or stayed within noise for every case but five, and the budget's bound in seconds only improved.
+  - The five that rose: `wavpack-0-passes-8-bit-zero-run` 0.54 to 0.63 ns, `truehd-crafted-fir-4-iir-4-8-matrices` 0.48 to 0.54, `monkeys-audio-normal-float` 0.53 to 0.56, `wavpack-sets-that-never-complete` 0.51 to 0.54, `wavpack-dsd-fast-5-history-bits` 0.226 to 0.236.
+  - The largest is 0.71 ns (`wavpack-terms-mono`) against 0.99 ns (`monkeys-audio-insane-32-bit`) before.
+  - A weight is raised for a case at the limit of 2, and none is near it; if a CI runner's nightly reads WavPack's terms above 1.9, the per-pass weight (8) is the one to raise.
+- **Table of the run:** the unchanged-weight ratios, after / before:
+  - Monkey's Audio: insane 0.54 / 0.84, insane 24-bit 0.70 / 1.08, high 0.97 / 0.67, normal 0.85 / 0.61.
+  - FLAC: fixed order 4 0.69 / 0.77, order 32 in 64-bit sums 0.81 / 0.98.
+  - WavPack: term 17 0.96 / 1.01, term 18 1.07 / 0.89, terms 1 to 8 1.35 / 1.05, mono terms 1.45 / 1.04.
+  - TrueHD fixture mono 1.57 / 1.44, the reference's own case 1.27 / 1.07.
 
 ## After the milestone review
 
