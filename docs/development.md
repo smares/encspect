@@ -119,6 +119,32 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
   - `DOTNET_EnableHWIntrinsic=0 dotnet test tests/Encspect.Tests --filter "FullyQualifiedName~Encspect.Tests.DecoderFixtureTests|FullyQualifiedName~Encspect.Tests.MonkeysAudioDecoderFixtureTests|FullyQualifiedName~Encspect.Tests.WavPackDecoderFixtureTests"` takes under a minute.
 - **CI:** the `rest` shard on ubuntu-26.04 runs those three classes once more with `DOTNET_EnableHWIntrinsic=0`; the Arm runners take the `AdvSimd` paths in every run, and the x64 runners the paths their processor has.
 
+## CLI runtime settings
+
+The CLI project sets `TieredPGO=false`, `System.Runtime.TieredCompilation.CallCountingDelayMs=20` and, for a publish with a runtime identifier, `PublishReadyToRun`. The GUI keeps the defaults: it was not measured.
+
+- **Why:** the decoders' loops start in tier 0 and then in the instrumented tier of dynamic PGO, and an analysis of a few seconds is over before the default tiering (a 100 ms wait with no new method compiled, 30 calls, a background compile) has replaced them. Ahead-of-time code (ReadyToRun) removes the first step, switching PGO off the second, and the shorter delay the third. With tiering off altogether the long runs take about as long as with these settings, so the loss is the first seconds of a run.
+- **Measured** (Linux x64, Xeon 2.8 GHz, one pinned core, load average under 1.5, interleaved runs; minimum seconds of `encspect --csv --verify` on 300 s files of noisy pink noise, 5 runs each for the first table and 3 for the second; the fixture folders are 456 FLAC files with `--verify` and 493 MPEG files):
+
+| Setting | FLAC -5 | WavPack default | Monkey's Audio -c3000 | tiny FLAC, first analysis | 456 FLAC fixtures | 493 MPEG fixtures |
+|---|---|---|---|---|---|---|
+| JIT, defaults | 1.85 | 2.80 | 4.81 | 0.24 | 1.69 | 2.99 |
+| JIT, `TieredPGO=0` | 1.58 | 2.77 | - | 0.24 | 1.67 | 3.26 |
+| JIT, `TieredPGO=0`, delay 0 | 1.22 | 1.86 | 3.44 | 0.34 | 2.43 | 4.13 |
+| JIT, `TieredPGO=0`, delay 20 ms (the setting) | 1.33 | 2.03 | - | 0.24 | 1.63 | 3.35 |
+| JIT, `TieredCompilation=0` | 1.29 | 1.79 | 3.59 | 0.50 | - | - |
+| ReadyToRun, defaults | 1.41 | 1.98 | 4.85 | 0.15 | 1.40 | 2.96 |
+| ReadyToRun, `TieredPGO=0`, delay 20 ms (the setting for a publish) | 1.02 | 1.62 | - | 0.15 | 1.34 | 3.01 |
+| ReadyToRun, `TieredPGO=0`, delay 0 | 1.04 | 1.71 | 3.37 | 0.23 | 2.23 | 3.80 |
+| NativeAOT, defaults | 0.72 | 1.30 | 2.79 | 0.01 | 0.99 | 2.78 |
+
+- **The choice:**
+  - A delay of 0 gives the best long run but costs 100 ms on the first file and 40% on a folder of small files, where every method is promoted at once; 20 ms keeps what a long run gains and the cost of a folder at zero or 12% (JIT) and nothing with ReadyToRun.
+  - `TieredPGO=0` alone gains 15% on FLAC and nothing elsewhere; with ReadyToRun it is neutral on short runs and costs nothing on long ones.
+  - ReadyToRun saves 90 to 100 ms of the first analysis (0.24 to 0.15 s) and about 17% of a folder of FLAC files; it makes the host assembly 55% larger (494 to 766 KB), and the single-file self-contained publish works with it.
+  - `ReadyToRun` is set only where a runtime identifier is given (`dotnet publish -r`), so `dotnet build` and the tests are not changed. Crossgen2 for the other runtime identifiers is not run in this environment; the publish steps of CI and the release workflow compile it for each.
+- **NativeAOT is the fastest on every row** (startup 10 ms, FLAC 2.5 times the JIT default) and is not made the shipped build: it needs the native toolchain on every runner and the check above is local. Which instruction sets its binary uses was not examined.
+
 ## CI
 
 `.github/workflows/ci.yml` is one workflow for pull requests, pushes to main, the nightly schedule and manual runs.

@@ -3,7 +3,14 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>encspect</AssemblyName>
     <RootNamespace>Encspect.Cli</RootNamespace>
+    <!-- Runtime settings measured in docs/development.md ("CLI runtime settings"): the decoders' hot loops start in tier 0 and the
+         instrumented tier of dynamic PGO, and an analysis of a few seconds is over before the default tiering has replaced them. -->
+    <TieredPGO>false</TieredPGO>
+    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
   </PropertyGroup>
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Runtime.TieredCompilation.CallCountingDelayMs" Value="20" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Encspect.Host\Encspect.Host.csproj" />
   </ItemGroup>
