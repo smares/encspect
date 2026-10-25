@@ -6,10 +6,14 @@ make_aiff_fixtures.py), on the fixtures whose manifest lists no finding or only 
 accept, with a note: a coding the analyzer has no parser for, a fact chunk it would want; a damaged file is read differently by every tool, and its
 manifest rests on the model's reading of the specifications, docs/development.md):
 
-- FFmpeg 8.0.1 (ffprobe): the codec (as FFMPEG_CODECS maps the manifest's), the sample rate, the channels and the duration; the bits per sample of
-  the linear codings; for a file whose data FFmpeg routes to a codec (MPEG audio, AC-3, E-AC-3, DTS) the codec's name, sample rate and channels.
+- FFmpeg 8.0.1 (ffprobe, built with the wav, w64 and spdif demuxers): the codec (as FFMPEG_CODECS maps the manifest's), the sample rate, the channels
+  and the duration; the bits per sample of the linear codings; for a file whose data FFmpeg routes to a codec (MPEG audio, AC-3, E-AC-3, DTS) the
+  codec's name, sample rate and channels. For IEC 61937 bursts in the samples: the duration, which is the bursts times the repetition period over the
+  link rate, and, where FFmpeg finds the bursts (AC-3 and DTS), the codec, sample rate and channels.
+  For an AIFF file with a CHAN chunk the speakers of ffprobe's channel_layout (see ffprobe_speakers).
 - MediaInfo 26.01 (mediainfo_tool.py): the audio stream's format (as MEDIAINFO_FORMATS maps the manifest's codec), sample rate, channels, the bit
-  depth of the linear codings, the duration and the speakers of ChannelLayout, where it reports them.
+  depth of the linear codings, the duration and the speakers of ChannelLayout, where it reports them. For IEC 61937 bursts: the format family and the
+  duration, where MediaInfo finds the bursts (AC-3, MPEG audio and AAC in some files).
 
 Every skipped check prints its reason. Disagreements fail the run (exit status 1).
 
@@ -64,6 +68,49 @@ MEDIAINFO_FORMATS = {
     "GSM 6.10": {"GSM 6.10"},
 }
 
+# FFmpeg's channel layout names (ffmpeg-utils, "Channel Layout") for the layouts the CHAN fixtures produce, as the speakers in the project's terms.
+FFMPEG_SPEAKERS = {"FL": "front left", "FR": "front right", "FC": "front center", "LFE": "LFE", "BL": "back left", "BR": "back right", "BC": "back center",
+                   "SL": "side left", "SR": "side right", "FLC": "front left of center", "FRC": "front right of center", "UNK": "discrete"}
+FFMPEG_LAYOUTS = {
+    "mono": "FC", "stereo": "FL+FR", "2.1": "FL+FR+LFE", "3.0": "FL+FR+FC", "4.0": "FL+FR+FC+BC", "quad": "FL+FR+BL+BR", "quad(side)": "FL+FR+SL+SR",
+    "5.0": "FL+FR+FC+BL+BR", "5.0(side)": "FL+FR+FC+SL+SR", "5.1": "FL+FR+FC+LFE+BL+BR", "5.1(side)": "FL+FR+FC+LFE+SL+SR", "6.0": "FL+FR+FC+BC+SL+SR",
+    "hexagonal": "FL+FR+FC+BL+BR+BC", "6.1": "FL+FR+FC+LFE+BC+SL+SR", "7.0": "FL+FR+FC+BL+BR+SL+SR", "7.1": "FL+FR+FC+LFE+BL+BR+SL+SR",
+}
+
+
+def ffprobe_speakers(layout):
+    """(speakers, is_ordered) of ffprobe's channel_layout: "5.1(side)" is a named layout, whose order is FFmpeg's and not the file's, and "8 channels
+    (FL+FR+...)" lists the channels in the file's order; None for a layout this table does not hold (unknown)."""
+    match = re.fullmatch(r"\d+ channels \((.*)\)", layout or "")
+    names = match.group(1) if match else FFMPEG_LAYOUTS.get(layout or "")
+    if names is None or any(n not in FFMPEG_SPEAKERS for n in names.split("+")):
+        return None
+    return [FFMPEG_SPEAKERS[n] for n in names.split("+")], bool(match)
+
+
+def surround_normalized(speakers):
+    """The speakers with the surround pair named alike: this project (Speaker) calls the only surround pair of a layout the back pair, FFmpeg's
+    5.1 and 5.1(side) differ in what the same channels are called, and the pair is the same two channels."""
+    if ("back left" in speakers) != ("side left" in speakers):
+        return ["surround left" if s in ("back left", "side left") else "surround right" if s in ("back right", "side right") else s for s in speakers]
+    return list(speakers)
+
+
+# IEC 61937 bursts: the codec_name ffprobe gives the data types its WAVE demuxer finds, by the codec the manifest routes to; the data type's name -> the
+# Format MediaInfo gives when it finds them.
+IEC_FFPROBE = {"ac-3": "ac3", "dts": "dts"}
+IEC_MEDIAINFO_FORMATS = {"AC-3": {"AC-3"}, "E-AC-3": set(), "MPEG": {"MPEG Audio"}, "AAC": {"AAC"}}
+
+
+def iec_family(name):
+    """The family of a data type's name for IEC_MEDIAINFO_FORMATS."""
+    if name.startswith("MPEG") and "AAC" in name:
+        return "AAC"
+    if name.startswith("MPEG"):
+        return "MPEG"
+    return name if name in IEC_MEDIAINFO_FORMATS else None
+
+
 # The manifest's stream "routed": the codec FFmpeg reads from the data chunk is not in the manifest, so only its presence is compared.
 ROUTED_FORMATS = {"mp3", "mp2", "ac3", "eac3", "dts"}
 
@@ -97,6 +144,33 @@ EXPLAINED = {
     "wav/built-rf64-table": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"Cannot allocate memory\": the bext chunk of the fixture has the size 0xFFFFFFFF, which its ds64 table resolves, and wavdec.c reads the 32-bit size (wav_parse_bext_tag allocates the coding history by it) and takes only the data size from the ds64 chunk"},
     "wav/built-riffx-pcm-16": {"MediaInfo audio stream": "MediaInfo reports no audio stream for a big-endian RIFX file"},
     "wav/built-wavl-list": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"no 'data' tag found\": wavdec.c looks for a data chunk at the top level and does not enter a wavl list"},
+    "wav/built-bw64-table": {"ffprobe audio stream": "FFmpeg 8.0.1 stops with \"no 'data' tag found\": the axml chunk of the fixture has the size 0xFFFFFFFF, which its ds64 table resolves, and wavdec.c takes the 32-bit size and skips past the end of the file (as for built-rf64-table)"},
+    "wav/built-w64-unknown-chunks": {"ffprobe audio stream": "FFmpeg 8.0.1 refuses a Wave64 file with a chunk of no data (the chunk 'zz  ' of size 24): \"Invalid data found when processing input\" (observed: the same file without that chunk, and with chunks of 3, 5 and 9 bytes or a LIST, is read)"},
+    "wav/external-w64-adpcm-ima": {"MediaInfo Duration": "MediaInfo gives 0.706 s for 0.25 s of audio: it does not use the fact chunk of a Wave64 file (observed)"},
+    "wav/built-w64-fact-ima-adpcm": {"MediaInfo Duration": "MediaInfo does not use the fact chunk of a Wave64 file (observed, as for external-w64-adpcm-ima)"},
+    "wav/external-w64-pcm-u8-mono-8000": {"MediaInfo Duration": "MediaInfo's duration of a Wave64 file is 24 samples too long for 8-bit mono (0.253 s for 2,000 samples at 8,000 Hz): it counts the 24 bytes of the data chunk's header (observed)"},
+    "wav/external-w64-alaw-mono-8000": {"MediaInfo Duration": "MediaInfo's duration of a Wave64 file is 24 samples too long for 8-bit mono (0.253 s for 2,000 samples at 8,000 Hz): it counts the 24 bytes of the data chunk's header (observed)"},
+    "wav/built-w64-pcm-8-bit-mono-odd": {"MediaInfo Duration": "MediaInfo's duration of a Wave64 file counts the bytes of the data chunk's header too (observed, as for external-w64-pcm-u8-mono-8000)"},
+    "wav/built-iec61937-ac3-after-silence": {"ffprobe duration": "ffprobe's duration is that of the whole data chunk, the silence before the first burst included; the analyzer times the bursts",
+                                            "MediaInfo Duration": "MediaInfo's duration is that of the whole data chunk, the silence before the first burst included; the analyzer times the bursts"},
+    "wav/built-iec61937-ac3-pause-bursts": {"ffprobe duration": "ffprobe's duration is that of the whole data chunk, the pause bursts included; the analyzer times the bursts of the stream",
+                                           "MediaInfo Duration": "MediaInfo's duration is that of the whole data chunk, the pause bursts included; the analyzer times the bursts of the stream"},
+    "wav/built-iec61937-ac3-silence-between": {"ffprobe duration": "ffprobe's duration is that of the whole data chunk, the silent periods included; the analyzer times the bursts",
+                                              "MediaInfo Duration": "MediaInfo's duration is that of the whole data chunk, the silent periods included; the analyzer times the bursts"},
+    "wav/built-iec61937-ac3-fmt-tag-0092": {"ffprobe codec": "ffprobe gives the format tag 0x0092 no codec_name (it finds the bursts, whose duration it reads)"},
+    "wav/built-iec61937-in-24-bits": {"ffprobe codec": "ffprobe's WAVE demuxer looks for IEC 61937 bursts at the start of the data whatever the fmt chunk states (24 bits here) and finds AC-3; the analyzer takes only 16-bit stereo PCM for a carrier"},
+    "wav/built-iec61937-in-mono": {"ffprobe codec": "ffprobe's WAVE demuxer looks for IEC 61937 bursts at the start of the data whatever the fmt chunk states (one channel here) and finds AC-3; the analyzer takes only 16-bit stereo PCM for a carrier",
+                                  "ffprobe channels": "ffprobe gives the AC-3 stream its two channels, not the fmt chunk's one"},
+    "wav/built-iec61937-in-rifx": {"ffprobe codec": "ffprobe's WAVE demuxer finds the bursts in the data of a RIFX file, which are little-endian samples there and no big-endian ones; the analyzer takes only little-endian PCM for a carrier",
+                                  "MediaInfo Format": "MediaInfo finds the bursts in the data of a RIFX file too (observed)",
+                                  "MediaInfo Duration": "MediaInfo's duration for this RIFX file is 1.248 s for 0.16 s of data (observed)"},
+    "wav/built-iec61937-payload-too-long-at-start": {"ffprobe codec": "ffprobe takes the first burst alone for AC-3, whatever its length code states (the analyzer needs a chain of three bursts that fit their period)",
+                                                    "MediaInfo Format": "MediaInfo takes the first burst alone for AC-3, whatever its length code states"},
+    "wav/built-iec61937-sync-word-alone": {"MediaInfo Format": "MediaInfo takes the sync words and a burst-info at the start for AC-3; the analyzer needs a chain of three bursts",
+                                          "MediaInfo SamplingRate": "MediaInfo reports no rate for that AC-3 stream",
+                                          "MediaInfo Channels": "MediaInfo reports no channels for that AC-3 stream"},
+    "wav/built-iec61937-two-bursts": {"MediaInfo Format": "MediaInfo takes two bursts at the start for an AC-3 stream; the analyzer needs a chain of three"},
+    "aiff/built-chan-descriptions-rear-labels": {"ffprobe channel_layout": "ffprobe 8.0.1 gives the channel labels 33 and 34 (RearSurroundLeft and RearSurroundRight) no speaker (UNK); the Core Audio Format Specification lists them"},
     "aiff/built-aifc-ima4": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of packets for a count of sample frames"},
     "aiff/external-ima4-stereo-44100": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of packets for a count of sample frames"},
 }
@@ -146,8 +220,21 @@ def check_ffprobe(name, manifest, path, problems):
     differs(name, "ffprobe audio stream", stream is not None, True, problems, "ffprobe finds no audio stream")
     if stream is None:
         return
+    if "iec61937" in manifest:
+        check_iec_ffprobe(name, manifest, stream, document, problems)
+        return
+    if name.startswith("aiff/") and any(c["id"] == "CHAN" for c in manifest["chunks"]) and expected.get("layout"):
+        found = ffprobe_speakers(stream.get("channel_layout"))
+        if found is None:
+            skip(name, "ffprobe channel_layout", f"ffprobe gives no layout this script maps ({stream.get('channel_layout')!r})")
+        else:
+            speakers, is_ordered = found
+            ours = surround_normalized(expected["layout"])
+            theirs = surround_normalized(speakers)
+            differs(name, "ffprobe channel_layout", ours == theirs if is_ordered else sorted(ours) == sorted(theirs), True, problems,
+                    f"ffprobe channel_layout {stream.get('channel_layout')!r} is {theirs}, the manifest {ours}")
     if expected.get("carried"):
-        skip(name, "ffprobe stream", "ffprobe reads the PCM carrier: wavdec.c has no probe for a stream in the samples, so the codec, rate and channels are the fmt chunk's")
+        skip(name, "ffprobe stream", "ffprobe reads the PCM carrier: wavdec.c has no probe for a DTS stream written straight into the samples, so the codec, rate and channels are the fmt chunk's")
         return
     differs(name, "ffprobe sample_rate", str(stream.get("sample_rate")), str(expected["sample_rate"]), problems)
     differs(name, "ffprobe channels", stream.get("channels"), expected["channels"], problems)
@@ -174,6 +261,41 @@ def check_ffprobe(name, manifest, path, problems):
                 f"ffprobe duration is {duration}, the manifest {expected['duration']}")
 
 
+def check_iec_ffprobe(name, manifest, stream, document, problems):
+    """Bursts of IEC 61937 in the samples: the length is the bursts' (the carrier's too), and AC-3 and DTS bursts are found by the WAVE demuxer."""
+    iec = manifest["iec61937"]
+    expected = manifest["stream"]
+    duration = stream.get("duration") or document.get("format", {}).get("duration")
+    differs(name, "ffprobe duration", duration is not None and abs(float(duration) - iec["duration"]) <= 0.0015, True, problems,
+            f"ffprobe duration is {duration}, the bursts' {iec['duration']}")
+    codec = expected.get("routed")
+    if codec in IEC_FFPROBE:
+        differs(name, "ffprobe codec", stream.get("codec_name"), IEC_FFPROBE[codec], problems)
+        differs(name, "ffprobe sample_rate", str(stream.get("sample_rate")), str(expected["sample_rate"]), problems)
+        differs(name, "ffprobe channels", stream.get("channels"), expected["channels"], problems)
+    else:
+        skip(name, "ffprobe stream", "ffprobe 8.0.1 finds AC-3 and DTS bursts in a WAVE file and reads the others as the PCM carrier (observed; the layer II file of the low sampling frequency types as mp2 at the content rate)")
+
+
+def check_iec_mediainfo(name, manifest, audio, problems):
+    iec = manifest["iec61937"]
+    expected = manifest["stream"]
+    family = iec_family(iec["name"])
+    found = audio.get("Format")
+    if found not in {"AC-3", "MPEG Audio", "AAC"}:
+        skip(name, "MediaInfo stream", "MediaInfo reports the PCM carrier for this file (observed: it finds AC-3, MPEG audio and AAC bursts in some files, DTS and E-AC-3 in none)")
+        return
+    differs(name, "MediaInfo Format", found in IEC_MEDIAINFO_FORMATS.get(family, set()), True, problems, f"MediaInfo Format is {found}, expected one of {sorted(IEC_MEDIAINFO_FORMATS.get(family, set()))}")
+    if audio.get("Duration") is not None:
+        differs(name, "MediaInfo Duration", abs(float(audio["Duration"]) - iec["duration"]) <= 0.0025, True, problems,
+                f"MediaInfo Duration is {audio['Duration']}, the bursts' {iec['duration']}")
+    if "routed" in expected:
+        differs(name, "MediaInfo SamplingRate", audio.get("SamplingRate"), str(expected["sample_rate"]), problems)
+        differs(name, "MediaInfo Channels", audio.get("Channels"), str(expected["channels"]), problems)
+    else:
+        skip(name, "MediaInfo rate and channels", "the analyzer states neither for bursts of a coding it has no parser for")
+
+
 def check_mediainfo(name, manifest, path, problems):
     tracks = mi.read_or_problem(path, problems, full=True)
     if tracks is None:
@@ -183,6 +305,9 @@ def check_mediainfo(name, manifest, path, problems):
     if audio is None:
         return
     expected = manifest["stream"]
+    if "iec61937" in manifest:
+        check_iec_mediainfo(name, manifest, audio, problems)
+        return
     differs(name, "MediaInfo SamplingRate", audio.get("SamplingRate"), str(expected["sample_rate"]), problems)
     differs(name, "MediaInfo Channels", audio.get("Channels"), str(expected["channels"]), problems)
     if "routed" in expected:

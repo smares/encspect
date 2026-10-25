@@ -27,7 +27,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - TTA (`.tta`), verified by the CRC-32s of its header, seek table and frames
 - Dolby TrueHD and MLP (`.thd`, `.mlp`), with an optional decode that verifies the lossless checks of the audio
 - ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio versions 1 and 2, Professional and Voice, and Lossless at header level
-- WAV (`.wav`; RIFF, RIFX and RF64) and AIFF (`.aif`, `.aiff`, `.aifc`) with all their chunks; PCM, floating-point and compressed formats at header level, and MPEG audio, AC-3 and DTS in WAV read by their parsers
+- WAV (`.wav`; RIFF, RIFX, RF64 and BW64), Wave64 (`.w64`) and AIFF (`.aif`, `.aiff`, `.aifc`) with all their chunks; PCM, floating-point and compressed formats at header level, and MPEG audio, AC-3, E-AC-3 and DTS in WAV read by their parsers, also as S/PDIF bursts in the samples
 - Matroska and WebM (`.mka`, `.mkv`, `.webm`) with AAC, AC-3, E-AC-3, DTS, Vorbis and Opus audio read by their parsers
 
 Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis comments.
