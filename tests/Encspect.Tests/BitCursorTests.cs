@@ -272,6 +272,122 @@ public class BitCursorTests
         Assert.Equal(16, lsb.Position);
     }
 
+    // A mix of every operation against a model that keeps a bit position and reads one bit at a time, so the buffer of the cursors never
+    // shows: reads, runs, skips and alignments in any order, at every length and past the end.
+    [Fact]
+    public void AMixOfOperationsAgreesWithABitByBitModel()
+    {
+        for (int seed = 0; seed < 400; seed++)
+        {
+            var random = new Random(seed);
+            byte[] data = RandomBytes(seed, random.Next(0, 40));
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (random.Next(4) == 0)
+                {
+                    data[i] = (byte)(random.Next(2) * 0xFF);
+                }
+            }
+
+            foreach (bool isLsb in new[] { false, true })
+            {
+                long position = 0;
+                var msb = new BitCursor(data);
+                var lsb = new LsbBitCursor(data);
+                int length = data.Length * 8;
+                bool Bit(long at) => at < length && at >= 0 && (isLsb ? (data[at >> 3] >> (int)(at & 7)) & 1 : (data[at >> 3] >> (7 - (int)(at & 7))) & 1) != 0;
+                uint Value(int count)
+                {
+                    uint value = 0;
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (isLsb)
+                        {
+                            value |= (Bit(position + i) ? 1u : 0u) << i;
+                        }
+                        else
+                        {
+                            value = (value << 1) | (Bit(position + i) ? 1u : 0u);
+                        }
+                    }
+
+                    return value;
+                }
+
+                for (int step = 0; step < 80; step++)
+                {
+                    switch (random.Next(7))
+                    {
+                        case 0:
+                        case 1:
+                            int count = random.Next(0, 33);
+                            uint expected = Value(count);
+                            position += count;
+                            Assert.Equal(expected, isLsb ? lsb.Read(count) : msb.Read(count));
+                            break;
+                        case 2:
+                            bool bit = Bit(position++);
+                            Assert.Equal(bit, isLsb ? lsb.ReadBit() : msb.ReadBit());
+                            break;
+                        case 3:
+                        case 4:
+                            bool ones = random.Next(2) == 0;
+                            int limit = random.Next(0, 80);
+                            int total = 0;
+                            while (total < limit)
+                            {
+                                if (position >= length)
+                                {
+                                    position = Math.Max(position, length + 1L);
+                                    break;
+                                }
+
+                                bool b = Bit(position++);
+                                if (b != ones)
+                                {
+                                    break;
+                                }
+
+                                total++;
+                            }
+
+                            int actual = isLsb ? (ones ? lsb.CountOnes(limit) : lsb.CountZeros(limit)) : (ones ? msb.CountOnes(limit) : msb.CountZeros(limit));
+                            Assert.Equal(total, actual);
+                            break;
+                        case 5:
+                            int skip = random.Next(0, random.Next(2) == 0 ? 20 : 300);
+                            position += skip;
+                            if (isLsb)
+                            {
+                                lsb.Skip(skip);
+                            }
+                            else
+                            {
+                                msb.Skip(skip);
+                            }
+
+                            break;
+                        default:
+                            position = (position + 7) & ~7L;
+                            if (isLsb)
+                            {
+                                lsb.AlignToByte();
+                            }
+                            else
+                            {
+                                msb.AlignToByte();
+                            }
+
+                            break;
+                    }
+
+                    Assert.Equal((int)position, isLsb ? lsb.Position : msb.Position);
+                    Assert.Equal(position > length, isLsb ? lsb.IsOverrun : msb.IsOverrun);
+                }
+            }
+        }
+    }
+
     [Fact]
     public void RefusesWidthsOutOfRange()
     {
