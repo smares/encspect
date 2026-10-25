@@ -15,6 +15,8 @@ public sealed class DtsCodecParser : ICodecParser
 
     public string Id => Dts;
 
+    public bool Recognizes(ByteReader payload) => DtsParser.StartsWithChain(payload);
+
     public void Parse(CodecContext context)
     {
         Node parent = context.Parent;

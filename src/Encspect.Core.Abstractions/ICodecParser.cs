@@ -13,4 +13,10 @@ public interface ICodecParser
     string Id { get; }
 
     void Parse(CodecContext context);
+
+    // Whether the payload starts with a stream of this coding that Parse would read, by the evidence the coding's own raw files are
+    // recognized by (a chain of consistent frames, not a sync word alone). A container asks where its own fields do not say what
+    // the data holds: the 16-bit samples of a PCM WAVE file may carry a DTS stream. It reads at most the start of the payload and
+    // reports nothing. A parser that has no such evidence leaves the default, which says no.
+    bool Recognizes(ByteReader payload) => false;
 }

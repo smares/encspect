@@ -1,0 +1,271 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-unlisted-format-tag.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 162,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 162,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 154,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "unlisted coding, 1 channel, 8000 Hz, 8 bits",
+              "offset": 12,
+              "length": 30,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 21,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x7777 (unlisted)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 8000,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 8000,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 1,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 8,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                },
+                {
+                  "name": "Codec Specific Data Size",
+                  "value": 3,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 2
+                },
+                {
+                  "name": "Codec Specific Data",
+                  "value": 3,
+                  "unit": "bytes",
+                  "offset": 38,
+                  "length": 3
+                },
+                {
+                  "name": "Pad Byte",
+                  "value": 0,
+                  "offset": 41,
+                  "length": 1
+                }
+              ]
+            },
+            {
+              "name": "Fact Chunk",
+              "value": 100,
+              "unit": "samples",
+              "offset": 42,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fact",
+                  "offset": 42,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 46,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Length",
+                  "value": 100,
+                  "unit": "samples",
+                  "offset": 50,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 100,
+              "unit": "bytes",
+              "offset": 54,
+              "length": 108,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 54,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 100,
+                  "unit": "bytes",
+                  "offset": 58,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 54,
+                  "length": 108,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "Other",
+                      "offset": 54,
+                      "length": 108
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 100,
+                      "unit": "samples",
+                      "offset": 54,
+                      "length": 108
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0125,
+                      "unit": "s",
+                      "offset": 54,
+                      "length": 108
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 8000,
+                      "unit": "Hz",
+                      "offset": 54,
+                      "length": 108
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 54,
+                      "length": 108
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 54,
+                      "length": 108
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 64,
+                      "unit": "kbps",
+                      "offset": 54,
+                      "length": 108
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "Other",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "samples": 100,
+        "duration": 0.0125,
+        "averageBitrate": 64,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "wav.coding-unknown",
+        "message": "The format tag 0x7777 is not one the analyzer lists, so the audio is reported by the figures the file states.",
+        "offset": 12,
+        "length": 30,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

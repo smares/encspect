@@ -111,6 +111,11 @@ public sealed class NodeValue : IEquatable<NodeValue>, ISpanFormattable
         ["parts"] = "part",
         ["headers"] = "header",
         ["sizes"] = "size",
+        ["markers"] = "marker",
+        ["cue points"] = "cue point",
+        ["comments"] = "comment",
+        ["loops"] = "loop",
+        ["sample frames"] = "sample frame",
     }.ToFrozenDictionary();
 
     // A count whose unit reads in the singular for one ("1 frame", "3 frames").

@@ -141,6 +141,40 @@ public partial class FindingCoverageTests
         Assert.True(missing.Length == 0, $"No crafted file, manifest or golden raises: {string.Join(", ", missing)}");
     }
 
+    [GeneratedRegex("\"(wav\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex WavCode();
+
+    [GeneratedRegex("\"(aiff\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex AiffCode();
+
+    // Every code the WAV and AIFF parsers emit is listed by a fixture's manifest or raised by a crafted file of the fixture tests.
+    [Fact]
+    public void EveryWavCodeIsAsserted() => CheckCodes("Encspect.Formats.Wav", "wav", WavCode(), "ChunkCraftedTests.cs");
+
+    [Fact]
+    public void EveryAiffCodeIsAsserted() => CheckCodes("Encspect.Formats.Aiff", "aiff", AiffCode(), "ChunkCraftedTests.cs");
+
+    private static void CheckCodes(string project, string fixtures, Regex code, string crafted)
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", project), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => code.Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 20, $"Found only {emitted.Count} codes.");
+
+        var asserted = code.Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", crafted))).Select(m => m.Groups[1].Value).ToHashSet();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", fixtures), "*.expected.json"))
+        {
+            foreach (Match m in code.Matches(File.ReadAllText(path)))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        string[] missing = [.. emitted.Where(c => !asserted.Contains(c)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
+    }
+
     [GeneratedRegex("\"(tta\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex TtaCode();
 

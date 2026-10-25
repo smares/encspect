@@ -1,0 +1,99 @@
+{
+ "length": 48762,
+ "container": {
+  "id": "RF64",
+  "size": 4294967295,
+  "end": 48762
+ },
+ "chunks": [
+  {
+   "id": "ds64",
+   "offset": 12,
+   "end": 48,
+   "size": 28,
+   "length": 28
+  },
+  {
+   "id": "fmt ",
+   "offset": 48,
+   "end": 72,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "bext",
+   "offset": 72,
+   "end": 720,
+   "size": 640,
+   "length": 640
+  },
+  {
+   "id": "LIST",
+   "offset": 720,
+   "end": 754,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 732,
+     "end": 754,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 754,
+   "end": 48762,
+   "size": 48000,
+   "length": 48000
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 48000,
+  "channels": 2,
+  "bits": 16,
+  "samples": 12000,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1536.0
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_s16le",
+  "-rf64",
+  "always",
+  "-write_bext",
+  "1",
+  "-metadata",
+  "description=A description of the sound",
+  "-metadata",
+  "originator=Fixture originator",
+  "-metadata",
+  "originator_reference=REF-0001",
+  "-metadata",
+  "origination_date=2026-10-24",
+  "-metadata",
+  "origination_time=12:34:56",
+  "-metadata",
+  "time_reference=48000",
+  "-metadata",
+  "coding_history=A=PCM,F=48000,W=16,M=stereo,T=Fixture"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 48000,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

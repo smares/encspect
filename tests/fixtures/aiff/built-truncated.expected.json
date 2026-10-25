@@ -1,0 +1,50 @@
+{
+ "length": 214,
+ "container": {
+  "id": "FORM",
+  "form": "AIFF",
+  "size": 246,
+  "end": 214
+ },
+ "chunks": [
+  {
+   "id": "COMM",
+   "offset": 12,
+   "end": 38,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "SSND",
+   "offset": 38,
+   "end": 214,
+   "size": 208,
+   "length": 168
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 40,
+  "duration": 0.0009070294784580499,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2,
+  "type": "NONE"
+ },
+ "findings": [
+  {
+   "code": "aiff.truncated"
+  },
+  {
+   "code": "aiff.chunk-past-end"
+  },
+  {
+   "code": "aiff.sound-data-short"
+  }
+ ]
+}

@@ -1,0 +1,55 @@
+{
+ "length": 192,
+ "container": {
+  "id": "RF64",
+  "size": 4294967295,
+  "end": 192
+ },
+ "chunks": [
+  {
+   "id": "ds64",
+   "offset": 12,
+   "end": 40,
+   "size": 20,
+   "length": 20
+  },
+  {
+   "id": "fmt ",
+   "offset": 40,
+   "end": 64,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 64,
+   "end": 192,
+   "size": 4294967295,
+   "length": 120
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 30,
+  "duration": 0.0006802721088435374,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2
+ },
+ "findings": [
+  {
+   "code": "wav.riff-size-placeholder"
+  },
+  {
+   "code": "wav.chunk-too-short"
+  },
+  {
+   "code": "wav.chunk-size-unresolved"
+  }
+ ]
+}

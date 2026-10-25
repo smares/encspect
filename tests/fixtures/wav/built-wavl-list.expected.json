@@ -1,0 +1,69 @@
+{
+ "length": 248,
+ "container": {
+  "id": "RIFF",
+  "size": 240,
+  "end": 248
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "fact",
+   "offset": 36,
+   "end": 48,
+   "size": 4,
+   "length": 4
+  },
+  {
+   "id": "LIST",
+   "offset": 48,
+   "end": 248,
+   "size": 192,
+   "length": 192,
+   "list_type": "wavl",
+   "children": [
+    {
+     "id": "data",
+     "offset": 60,
+     "end": 148,
+     "size": 80,
+     "length": 80
+    },
+    {
+     "id": "slnt",
+     "offset": 148,
+     "end": 160,
+     "size": 4,
+     "length": 4
+    },
+    {
+     "id": "data",
+     "offset": 160,
+     "end": 248,
+     "size": 80,
+     "length": 80
+    }
+   ]
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 70,
+  "duration": 0.0015873015873015873,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 806.4
+ },
+ "findings": []
+}

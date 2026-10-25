@@ -1,0 +1,283 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-aifc-ima4.aifc",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 350,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFC",
+          "offset": 0,
+          "length": 350,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 342,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFC",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Version Chunk",
+              "value": "AIFF-C version 1",
+              "offset": 12,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "FVER",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Timestamp",
+                  "value": "2726318400 (version 1 of AIFF-C)",
+                  "offset": 20,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Common Chunk",
+              "value": "IMA ADPCM, 2 channels, 22050 Hz, 16 bits",
+              "offset": 24,
+              "length": 38,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 30,
+                  "unit": "bytes",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 4,
+                  "unit": "sample frames",
+                  "offset": 34,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 38,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 22050,
+                  "unit": "Hz",
+                  "offset": 40,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16397,
+                      "offset": 40,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 12413046472939929600,
+                      "offset": 42,
+                      "length": 8
+                    }
+                  ]
+                },
+                {
+                  "name": "Compression Type",
+                  "value": "ima4",
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Compression Name Length",
+                  "value": 7,
+                  "offset": 54,
+                  "length": 1
+                },
+                {
+                  "name": "Compression Name",
+                  "value": "IMA 4:1",
+                  "offset": 55,
+                  "length": 7
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 280,
+              "unit": "bytes",
+              "offset": 62,
+              "length": 288,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 62,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 280,
+                  "unit": "bytes",
+                  "offset": 66,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 70,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 74,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 272,
+                  "unit": "bytes",
+                  "offset": 78,
+                  "length": 272
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 62,
+                  "length": 288,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "IMA ADPCM",
+                      "offset": 62,
+                      "length": 288
+                    },
+                    {
+                      "name": "Compression Type",
+                      "value": "ima4",
+                      "offset": 62,
+                      "length": 288
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 256,
+                      "unit": "sample frames",
+                      "offset": 62,
+                      "length": 288
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.011609977324263039,
+                      "unit": "s",
+                      "offset": 62,
+                      "length": 288
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 22050,
+                      "unit": "Hz",
+                      "offset": 62,
+                      "length": 288
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 62,
+                      "length": 288
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 62,
+                      "length": 288
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 187.425,
+                      "unit": "kbps",
+                      "offset": 62,
+                      "length": 288
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "IMA ADPCM",
+        "sampleRate": 22050,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 256,
+        "duration": 0.011609977324263039,
+        "averageBitrate": 187.425,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

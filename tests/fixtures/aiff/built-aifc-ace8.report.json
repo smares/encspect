@@ -1,0 +1,289 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-aifc-ace8.aifc",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 202,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFC",
+          "offset": 0,
+          "length": 202,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 194,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFC",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Version Chunk",
+              "value": "AIFF-C version 1",
+              "offset": 12,
+              "length": 12,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "FVER",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Timestamp",
+                  "value": "2726318400 (version 1 of AIFF-C)",
+                  "offset": 20,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Common Chunk",
+              "value": "ACE 8-to-3, 2 channels, 22050 Hz, 16 bits",
+              "offset": 24,
+              "length": 42,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 34,
+                  "unit": "bytes",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 20,
+                  "unit": "sample frames",
+                  "offset": 34,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 38,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 22050,
+                  "unit": "Hz",
+                  "offset": 40,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16397,
+                      "offset": 40,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 12413046472939929600,
+                      "offset": 42,
+                      "length": 8
+                    }
+                  ]
+                },
+                {
+                  "name": "Compression Type",
+                  "value": "ACE8",
+                  "offset": 50,
+                  "length": 4
+                },
+                {
+                  "name": "Compression Name Length",
+                  "value": 10,
+                  "offset": 54,
+                  "length": 1
+                },
+                {
+                  "name": "Compression Name",
+                  "value": "ACE 8-to-3",
+                  "offset": 55,
+                  "length": 10
+                },
+                {
+                  "name": "Pad Byte",
+                  "value": 0,
+                  "offset": 65,
+                  "length": 1
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 128,
+              "unit": "bytes",
+              "offset": 66,
+              "length": 136,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 66,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 128,
+                  "unit": "bytes",
+                  "offset": 70,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 74,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 78,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 120,
+                  "unit": "bytes",
+                  "offset": 82,
+                  "length": 120
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 66,
+                  "length": 136,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "ACE 8-to-3",
+                      "offset": 66,
+                      "length": 136
+                    },
+                    {
+                      "name": "Compression Type",
+                      "value": "ACE8",
+                      "offset": 66,
+                      "length": 136
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 160,
+                      "unit": "sample frames",
+                      "offset": 66,
+                      "length": 136
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0072562358276643995,
+                      "unit": "s",
+                      "offset": 66,
+                      "length": 136
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 22050,
+                      "unit": "Hz",
+                      "offset": 66,
+                      "length": 136
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 66,
+                      "length": 136
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 66,
+                      "length": 136
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 132.3,
+                      "unit": "kbps",
+                      "offset": 66,
+                      "length": 136
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "ACE 8-to-3",
+        "sampleRate": 22050,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 160,
+        "duration": 0.0072562358276643995,
+        "averageBitrate": 132.3,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

@@ -1,0 +1,78 @@
+{
+ "length": 11388,
+ "container": {
+  "id": "RIFF",
+  "size": 11380,
+  "end": 11388
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 70,
+   "size": 50,
+   "length": 50
+  },
+  {
+   "id": "fact",
+   "offset": 70,
+   "end": 82,
+   "size": 4,
+   "length": 4
+  },
+  {
+   "id": "LIST",
+   "offset": 82,
+   "end": 116,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 94,
+     "end": 116,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 116,
+   "end": 11388,
+   "size": 11264,
+   "length": 11264
+  }
+ ],
+ "stream": {
+  "codec": "Microsoft ADPCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": null,
+  "samples": 11025,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 360.448
+ },
+ "findings": [
+  {
+   "code": "wav.coding-not-analyzed"
+  }
+ ],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "adpcm_ms"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 44100,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

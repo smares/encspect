@@ -41,6 +41,10 @@ internal static class Program
         [0x64, 0x58, 0x20, 0x25], [0x58, 0x64, 0x25, 0x20], [0x5A, 0x5A, 0x5A, 0x5A], [0x1D, 0x95, 0xF2, 0x62], [0x47, 0x00, 0x4A, 0x03],
         [0x65, 0x5E, 0x31, 0x5E], [0x0A, 0x80, 0x19, 0x21], [0x41, 0xA2, 0x95, 0x47], [0x02, 0xB0, 0x92, 0x61], "ddts"u8.ToArray(), "dtsc"u8.ToArray(),
         "dtsh"u8.ToArray(), "dtsl"u8.ToArray(), "dtse"u8.ToArray(),
+        "RIFF"u8.ToArray(), "RIFX"u8.ToArray(), "RF64"u8.ToArray(), "WAVE"u8.ToArray(), "fmt "u8.ToArray(), "fact"u8.ToArray(), "ds64"u8.ToArray(), "LIST"u8.ToArray(),
+        "INFO"u8.ToArray(), "adtl"u8.ToArray(), "wavl"u8.ToArray(), "cue "u8.ToArray(), "plst"u8.ToArray(), "smpl"u8.ToArray(), "bext"u8.ToArray(), "chna"u8.ToArray(),
+        "FORM"u8.ToArray(), "AIFF"u8.ToArray(), "AIFC"u8.ToArray(), "COMM"u8.ToArray(), "SSND"u8.ToArray(), "FVER"u8.ToArray(), "MARK"u8.ToArray(), "COMT"u8.ToArray(),
+        [0xFE, 0xFF, 0, 0], [0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0, 0],
         "sinf"u8.ToArray(), "frma"u8.ToArray(), "schm"u8.ToArray(), "schi"u8.ToArray(), "tenc"u8.ToArray(), "pssh"u8.ToArray(), "senc"u8.ToArray(), "saiz"u8.ToArray(),
         "saio"u8.ToArray(), "sgpd"u8.ToArray(), "sbgp"u8.ToArray(), "seig"u8.ToArray(), "enca"u8.ToArray(), "encv"u8.ToArray(), "drms"u8.ToArray(), "drmi"u8.ToArray(),
         "aavd"u8.ToArray(), "adrm"u8.ToArray(), "cenc"u8.ToArray(), "cbcs"u8.ToArray(), "cens"u8.ToArray(), "cbc1"u8.ToArray(), "itun"u8.ToArray(), "iviv"u8.ToArray(),
@@ -72,7 +76,7 @@ internal static class Program
         long? only = Option(args, "--iteration") is { } i ? long.Parse(i, CultureInfo.InvariantCulture) : null;
 
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
-            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" or ".flac" or ".tta" or ".thd" or ".mlp" or ".dts" or ".dtshd" or ".mka" or ".mkv" or ".webm" && new FileInfo(f).Length <= MaxCorpusFileSize)
+            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" or ".flac" or ".tta" or ".thd" or ".mlp" or ".dts" or ".dtshd" or ".mka" or ".mkv" or ".webm" or ".wav" or ".aiff" or ".aifc" && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
             .Select(File.ReadAllBytes)
             .ToArray();

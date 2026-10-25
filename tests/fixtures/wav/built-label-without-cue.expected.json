@@ -1,0 +1,66 @@
+{
+ "length": 312,
+ "container": {
+  "id": "RIFF",
+  "size": 304,
+  "end": 312
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "cue ",
+   "offset": 36,
+   "end": 72,
+   "size": 28,
+   "length": 28
+  },
+  {
+   "id": "LIST",
+   "offset": 72,
+   "end": 104,
+   "size": 24,
+   "length": 24,
+   "list_type": "adtl",
+   "children": [
+    {
+     "id": "labl",
+     "offset": 84,
+     "end": 104,
+     "size": 12,
+     "length": 12
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 104,
+   "end": 312,
+   "size": 200,
+   "length": 200
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 50,
+  "duration": 0.0011337868480725624,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2
+ },
+ "findings": [
+  {
+   "code": "wav.label-without-cue"
+  }
+ ]
+}

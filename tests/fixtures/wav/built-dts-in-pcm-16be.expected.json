@@ -1,0 +1,35 @@
+{
+ "length": 3116,
+ "container": {
+  "id": "RIFF",
+  "size": 3108,
+  "end": 3116
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 3116,
+   "size": 3072,
+   "length": 3072
+  }
+ ],
+ "stream": {
+  "routed": "dts",
+  "carried": true,
+  "sample_rate": 48000,
+  "channels": 2
+ },
+ "findings": [
+  {
+   "code": "wav.dts-in-pcm"
+  }
+ ]
+}

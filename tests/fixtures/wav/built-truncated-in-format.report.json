@@ -1,0 +1,138 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-truncated-in-format.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 30,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 30,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 236,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": 10,
+              "unit": "bytes",
+              "offset": 12,
+              "length": 18,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "wav.no-data-chunk",
+        "message": "The file has no data chunk, so it holds no audio.",
+        "offset": 0,
+        "length": 30,
+        "path": [
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wav.truncated",
+        "message": "The RIFF chunk states 244 bytes, but the data ends 214 bytes short of that: the file is cut off.",
+        "offset": 4,
+        "length": 4,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wav.chunk-too-short",
+        "message": "The fmt chunk at 0xC holds 10 bytes, too few for its fields.",
+        "offset": 12,
+        "length": 18,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wav.chunk-past-end",
+        "message": "The fmt chunk states 16 bytes, but only 10 bytes are left in the file; the chunk is cut short.",
+        "offset": 16,
+        "length": 4,
+        "path": [
+          0,
+          3,
+          1
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

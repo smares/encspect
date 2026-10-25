@@ -1,0 +1,43 @@
+{
+ "length": 128,
+ "container": {
+  "id": "RIFF",
+  "size": 120,
+  "end": 128
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 60,
+   "size": 40,
+   "length": 40
+  },
+  {
+   "id": "data",
+   "offset": 60,
+   "end": 128,
+   "size": 60,
+   "length": 60
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 48000,
+  "channels": 3,
+  "bits": 16,
+  "samples": 10,
+  "duration": 0.00020833333333333335,
+  "layout": [
+   "front left",
+   "front right",
+   "discrete"
+  ],
+  "average_bitrate": 2304.0
+ },
+ "findings": [
+  {
+   "code": "wav.channel-mask-mismatch"
+  }
+ ]
+}

@@ -1,0 +1,40 @@
+{
+ "length": 850,
+ "container": {
+  "id": "RF64",
+  "size": 4294967295,
+  "end": 850
+ },
+ "chunks": [
+  {
+   "id": "ds64",
+   "offset": 12,
+   "end": 48,
+   "size": 28,
+   "length": 28
+  },
+  {
+   "id": "fmt ",
+   "offset": 48,
+   "end": 72,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "bext",
+   "offset": 72,
+   "end": 850,
+   "size": 4294967295,
+   "length": 770
+  }
+ ],
+ "stream": null,
+ "findings": [
+  {
+   "code": "wav.chunk-size-unresolved"
+  },
+  {
+   "code": "wav.no-data-chunk"
+  }
+ ]
+}

@@ -1,0 +1,501 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-list-nesting.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 392,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 392,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 384,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 12,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 176400,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 200,
+              "unit": "bytes",
+              "offset": 36,
+              "length": 208,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 36,
+                  "length": 208,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 36,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 50,
+                      "unit": "sample frames",
+                      "offset": 36,
+                      "length": 208
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0011337868480725624,
+                      "unit": "s",
+                      "offset": 36,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 36,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 36,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 36,
+                      "length": 208
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 36,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 36,
+                      "length": 208
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 36,
+                      "length": 208
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1411.2,
+                      "unit": "kbps",
+                      "offset": 36,
+                      "length": 208
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "List Chunk",
+              "value": "zzzz",
+              "offset": 244,
+              "length": 148,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "LIST",
+                  "offset": 244,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 140,
+                  "unit": "bytes",
+                  "offset": 248,
+                  "length": 4
+                },
+                {
+                  "name": "List Type",
+                  "value": "zzzz",
+                  "offset": 252,
+                  "length": 4
+                },
+                {
+                  "name": "List Chunk",
+                  "value": "zzzz",
+                  "offset": 256,
+                  "length": 136,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "LIST",
+                      "offset": 256,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 128,
+                      "unit": "bytes",
+                      "offset": 260,
+                      "length": 4
+                    },
+                    {
+                      "name": "List Type",
+                      "value": "zzzz",
+                      "offset": 264,
+                      "length": 4
+                    },
+                    {
+                      "name": "List Chunk",
+                      "value": "zzzz",
+                      "offset": 268,
+                      "length": 124,
+                      "children": [
+                        {
+                          "name": "Chunk ID",
+                          "value": "LIST",
+                          "offset": 268,
+                          "length": 4
+                        },
+                        {
+                          "name": "Chunk Size",
+                          "value": 116,
+                          "unit": "bytes",
+                          "offset": 272,
+                          "length": 4
+                        },
+                        {
+                          "name": "List Type",
+                          "value": "zzzz",
+                          "offset": 276,
+                          "length": 4
+                        },
+                        {
+                          "name": "List Chunk",
+                          "value": "zzzz",
+                          "offset": 280,
+                          "length": 112,
+                          "children": [
+                            {
+                              "name": "Chunk ID",
+                              "value": "LIST",
+                              "offset": 280,
+                              "length": 4
+                            },
+                            {
+                              "name": "Chunk Size",
+                              "value": 104,
+                              "unit": "bytes",
+                              "offset": 284,
+                              "length": 4
+                            },
+                            {
+                              "name": "List Type",
+                              "value": "zzzz",
+                              "offset": 288,
+                              "length": 4
+                            },
+                            {
+                              "name": "List Chunk",
+                              "value": "zzzz",
+                              "offset": 292,
+                              "length": 100,
+                              "children": [
+                                {
+                                  "name": "Chunk ID",
+                                  "value": "LIST",
+                                  "offset": 292,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Chunk Size",
+                                  "value": 92,
+                                  "unit": "bytes",
+                                  "offset": 296,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "List Type",
+                                  "value": "zzzz",
+                                  "offset": 300,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "List Chunk",
+                                  "value": "zzzz",
+                                  "offset": 304,
+                                  "length": 88,
+                                  "children": [
+                                    {
+                                      "name": "Chunk ID",
+                                      "value": "LIST",
+                                      "offset": 304,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Chunk Size",
+                                      "value": 80,
+                                      "unit": "bytes",
+                                      "offset": 308,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "List Type",
+                                      "value": "zzzz",
+                                      "offset": 312,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "List Chunk",
+                                      "value": "zzzz",
+                                      "offset": 316,
+                                      "length": 76,
+                                      "children": [
+                                        {
+                                          "name": "Chunk ID",
+                                          "value": "LIST",
+                                          "offset": 316,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Chunk Size",
+                                          "value": 68,
+                                          "unit": "bytes",
+                                          "offset": 320,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "List Type",
+                                          "value": "zzzz",
+                                          "offset": 324,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "List Chunk",
+                                          "value": "zzzz",
+                                          "offset": 328,
+                                          "length": 64,
+                                          "children": [
+                                            {
+                                              "name": "Chunk ID",
+                                              "value": "LIST",
+                                              "offset": 328,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Chunk Size",
+                                              "value": 56,
+                                              "unit": "bytes",
+                                              "offset": 332,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "List Type",
+                                              "value": "zzzz",
+                                              "offset": 336,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "List Chunk",
+                                              "value": "zzzz",
+                                              "offset": 340,
+                                              "length": 52,
+                                              "children": [
+                                                {
+                                                  "name": "Chunk ID",
+                                                  "value": "LIST",
+                                                  "offset": 340,
+                                                  "length": 4
+                                                },
+                                                {
+                                                  "name": "Chunk Size",
+                                                  "value": 44,
+                                                  "unit": "bytes",
+                                                  "offset": 344,
+                                                  "length": 4
+                                                },
+                                                {
+                                                  "name": "List Type",
+                                                  "value": "zzzz",
+                                                  "offset": 348,
+                                                  "length": 4
+                                                },
+                                                {
+                                                  "name": "Chunks",
+                                                  "value": 40,
+                                                  "unit": "bytes",
+                                                  "offset": 352,
+                                                  "length": 40
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            4
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 50,
+        "duration": 0.0011337868480725624,
+        "averageBitrate": 1411.2,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "wav.list-nesting",
+        "message": "LIST chunks nest more than 8 deep; the inner ones are not read.",
+        "offset": 340,
+        "length": 52,
+        "path": [
+          0,
+          5,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

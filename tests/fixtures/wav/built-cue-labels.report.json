@@ -1,0 +1,678 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-cue-labels.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 446,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 446,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 438,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 12,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 176400,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Cue Points Chunk",
+              "value": 52,
+              "unit": "bytes",
+              "offset": 36,
+              "length": 60,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "cue ",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 52,
+                  "unit": "bytes",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "Cue Point Count",
+                  "value": 2,
+                  "unit": "cue points",
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Cue Points",
+                  "value": 2,
+                  "unit": "cue points",
+                  "offset": 48,
+                  "length": 48,
+                  "children": [
+                    {
+                      "name": "Cue Point 0",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 48,
+                      "length": 24,
+                      "children": [
+                        {
+                          "name": "Name",
+                          "value": 1,
+                          "offset": 48,
+                          "length": 4
+                        },
+                        {
+                          "name": "Position",
+                          "value": 0,
+                          "unit": "samples",
+                          "offset": 52,
+                          "length": 4
+                        },
+                        {
+                          "name": "Chunk ID",
+                          "value": "data",
+                          "offset": 56,
+                          "length": 4
+                        },
+                        {
+                          "name": "Chunk Start",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 60,
+                          "length": 4
+                        },
+                        {
+                          "name": "Block Start",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 64,
+                          "length": 4
+                        },
+                        {
+                          "name": "Sample Offset",
+                          "value": 0,
+                          "unit": "samples",
+                          "offset": 68,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Cue Point 1",
+                      "value": 30,
+                      "unit": "samples",
+                      "offset": 72,
+                      "length": 24,
+                      "children": [
+                        {
+                          "name": "Name",
+                          "value": 2,
+                          "offset": 72,
+                          "length": 4
+                        },
+                        {
+                          "name": "Position",
+                          "value": 30,
+                          "unit": "samples",
+                          "offset": 76,
+                          "length": 4
+                        },
+                        {
+                          "name": "Chunk ID",
+                          "value": "data",
+                          "offset": 80,
+                          "length": 4
+                        },
+                        {
+                          "name": "Chunk Start",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 84,
+                          "length": 4
+                        },
+                        {
+                          "name": "Block Start",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 88,
+                          "length": 4
+                        },
+                        {
+                          "name": "Sample Offset",
+                          "value": 30,
+                          "unit": "samples",
+                          "offset": 92,
+                          "length": 4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Playlist Chunk",
+              "value": 28,
+              "unit": "bytes",
+              "offset": 96,
+              "length": 36,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "plst",
+                  "offset": 96,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 100,
+                  "length": 4
+                },
+                {
+                  "name": "Segment Count",
+                  "value": 2,
+                  "unit": "segments",
+                  "offset": 104,
+                  "length": 4
+                },
+                {
+                  "name": "Segments",
+                  "value": 2,
+                  "unit": "segments",
+                  "offset": 108,
+                  "length": 24,
+                  "children": [
+                    {
+                      "name": "Segment 0",
+                      "value": 30,
+                      "unit": "samples",
+                      "offset": 108,
+                      "length": 12,
+                      "children": [
+                        {
+                          "name": "Cue Point Name",
+                          "value": 1,
+                          "offset": 108,
+                          "length": 4
+                        },
+                        {
+                          "name": "Length",
+                          "value": 30,
+                          "unit": "samples",
+                          "offset": 112,
+                          "length": 4
+                        },
+                        {
+                          "name": "Loops",
+                          "value": 1,
+                          "unit": "times",
+                          "offset": 116,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segment 1",
+                      "value": 20,
+                      "unit": "samples",
+                      "offset": 120,
+                      "length": 12,
+                      "children": [
+                        {
+                          "name": "Cue Point Name",
+                          "value": 2,
+                          "offset": 120,
+                          "length": 4
+                        },
+                        {
+                          "name": "Length",
+                          "value": 20,
+                          "unit": "samples",
+                          "offset": 124,
+                          "length": 4
+                        },
+                        {
+                          "name": "Loops",
+                          "value": 2,
+                          "unit": "times",
+                          "offset": 128,
+                          "length": 4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "List Chunk",
+              "value": "adtl",
+              "offset": 132,
+              "length": 106,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "LIST",
+                  "offset": 132,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 98,
+                  "unit": "bytes",
+                  "offset": 136,
+                  "length": 4
+                },
+                {
+                  "name": "List Type",
+                  "value": "adtl",
+                  "offset": 140,
+                  "length": 4
+                },
+                {
+                  "name": "Label Chunk",
+                  "value": "Start",
+                  "offset": 144,
+                  "length": 18,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "labl",
+                      "offset": 144,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 10,
+                      "unit": "bytes",
+                      "offset": 148,
+                      "length": 4
+                    },
+                    {
+                      "name": "Cue Point Name",
+                      "value": 1,
+                      "offset": 152,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "Start",
+                      "offset": 156,
+                      "length": 6
+                    }
+                  ]
+                },
+                {
+                  "name": "Note Chunk",
+                  "value": "A note",
+                  "offset": 162,
+                  "length": 20,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "note",
+                      "offset": 162,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 11,
+                      "unit": "bytes",
+                      "offset": 166,
+                      "length": 4
+                    },
+                    {
+                      "name": "Cue Point Name",
+                      "value": 2,
+                      "offset": 170,
+                      "length": 4
+                    },
+                    {
+                      "name": "Text",
+                      "value": "A note",
+                      "offset": 174,
+                      "length": 7
+                    },
+                    {
+                      "name": "Pad Byte",
+                      "value": 0,
+                      "offset": 181,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Labeled Text Chunk",
+                  "value": "Caption",
+                  "offset": 182,
+                  "length": 36,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "ltxt",
+                      "offset": 182,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 28,
+                      "unit": "bytes",
+                      "offset": 186,
+                      "length": 4
+                    },
+                    {
+                      "name": "Cue Point Name",
+                      "value": 2,
+                      "offset": 190,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sample Length",
+                      "value": 20,
+                      "unit": "samples",
+                      "offset": 194,
+                      "length": 4
+                    },
+                    {
+                      "name": "Purpose",
+                      "value": "capt",
+                      "offset": 198,
+                      "length": 4
+                    },
+                    {
+                      "name": "Country",
+                      "value": 1,
+                      "offset": 202,
+                      "length": 2
+                    },
+                    {
+                      "name": "Language",
+                      "value": 9,
+                      "offset": 204,
+                      "length": 2
+                    },
+                    {
+                      "name": "Dialect",
+                      "value": 1,
+                      "offset": 206,
+                      "length": 2
+                    },
+                    {
+                      "name": "Code Page",
+                      "value": 1252,
+                      "offset": 208,
+                      "length": 2
+                    },
+                    {
+                      "name": "Text",
+                      "value": "Caption",
+                      "offset": 210,
+                      "length": 8
+                    }
+                  ]
+                },
+                {
+                  "name": "Embedded File Chunk",
+                  "value": 11,
+                  "unit": "bytes",
+                  "offset": 218,
+                  "length": 20,
+                  "children": [
+                    {
+                      "name": "Chunk ID",
+                      "value": "file",
+                      "offset": 218,
+                      "length": 4
+                    },
+                    {
+                      "name": "Chunk Size",
+                      "value": 11,
+                      "unit": "bytes",
+                      "offset": 222,
+                      "length": 4
+                    },
+                    {
+                      "name": "Cue Point Name",
+                      "value": 1,
+                      "offset": 226,
+                      "length": 4
+                    },
+                    {
+                      "name": "Media Type",
+                      "value": "RDIB",
+                      "offset": 230,
+                      "length": 4
+                    },
+                    {
+                      "name": "File Data",
+                      "value": 3,
+                      "unit": "bytes",
+                      "offset": 234,
+                      "length": 3
+                    },
+                    {
+                      "name": "Pad Byte",
+                      "value": 0,
+                      "offset": 237,
+                      "length": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 200,
+              "unit": "bytes",
+              "offset": 238,
+              "length": 208,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 238,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 242,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 238,
+                  "length": 208,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 238,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 50,
+                      "unit": "sample frames",
+                      "offset": 238,
+                      "length": 208
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0011337868480725624,
+                      "unit": "s",
+                      "offset": 238,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 238,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 238,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 238,
+                      "length": 208
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 238,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 238,
+                      "length": 208
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 238,
+                      "length": 208
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1411.2,
+                      "unit": "kbps",
+                      "offset": 238,
+                      "length": 208
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            7
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 50,
+        "duration": 0.0011337868480725624,
+        "averageBitrate": 1411.2,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

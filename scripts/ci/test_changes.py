@@ -70,6 +70,14 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(run("scripts/fixtures/crosscheck_tta_fixtures.py"), {"tta-crosscheck", "fixtures"})
         self.assertNotIn("tta-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
 
+    def test_wav_and_aiff_parsers_scripts_and_fixtures_belong_to_the_wav_job(self):
+        for path in ("src/Encspect.Formats.Wav/WavParser.cs", "src/Encspect.Formats.Aiff/AiffParser.cs", "tests/fixtures/wav/a.wav", "tests/fixtures/aiff/a.aiff",
+                     "scripts/fixtures/wav_model.py", "scripts/fixtures/aiff_model.py", "scripts/fixtures/make_wav_fixtures.py",
+                     "scripts/fixtures/make_external_aiff_fixtures.py"):
+            self.assertIn("wav-crosscheck", run(path), path)
+        self.assertNotIn("wavpack-crosscheck", run("scripts/fixtures/make_wav_fixtures.py"))
+        self.assertEqual(run("scripts/fixtures/crosscheck_wav_fixtures.py"), {"wav-crosscheck", "fixtures"})
+
     def test_cross_check_script_runs_only_its_job(self):
         self.assertEqual(run("scripts/fixtures/crosscheck_asf_fixtures.py"), {"asf-crosscheck", "fixtures"})
 

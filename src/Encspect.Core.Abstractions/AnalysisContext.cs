@@ -93,6 +93,18 @@ public abstract class AnalysisContext
         return _router?.ParseStream(this, codecId, parent, payload, configuration, claims) ?? false;
     }
 
+    // Whether the codec parser with that ID recognizes the payload as a stream of its coding (ICodecParser.Recognizes), for a container
+    // whose own fields do not say what its data holds, before it hands the data to ParseStream. False when no codec parser has the ID
+    // or the payload is none of its coding; nothing is added to the report except a finding on parent if the codec parser fails.
+    public bool Recognizes(string codecId, Node parent, ByteReader payload)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(codecId);
+        ArgumentNullException.ThrowIfNull(parent);
+        ArgumentNullException.ThrowIfNull(payload);
+
+        return _router?.Recognizes(this, codecId, parent, payload) ?? false;
+    }
+
     // As ParseStream, for a codec whose data the container hands over as packets, such as Ogg
     // pages or MP4 samples. The packets are enumerated once, while the codec parser runs, so a
     // container may read them lazily; it reports damage in its own pages and ends the sequence

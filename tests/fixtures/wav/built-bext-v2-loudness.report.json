@@ -1,0 +1,353 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-bext-v2-loudness.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 894,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 894,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 886,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Broadcast Extension Chunk",
+              "value": "A description",
+              "offset": 12,
+              "length": 650,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "bext",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 641,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Description",
+                  "value": "A description",
+                  "offset": 20,
+                  "length": 256
+                },
+                {
+                  "name": "Originator",
+                  "value": "Fixture originator",
+                  "offset": 276,
+                  "length": 32
+                },
+                {
+                  "name": "Originator Reference",
+                  "value": "REF-0001",
+                  "offset": 308,
+                  "length": 32
+                },
+                {
+                  "name": "Origination Date",
+                  "value": "2026-10-24",
+                  "offset": 340,
+                  "length": 10
+                },
+                {
+                  "name": "Origination Time",
+                  "value": "12:34:56",
+                  "offset": 350,
+                  "length": 8
+                },
+                {
+                  "name": "Time Reference",
+                  "value": 44100,
+                  "unit": "samples",
+                  "offset": 358,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": 2,
+                  "offset": 366,
+                  "length": 2
+                },
+                {
+                  "name": "UMID",
+                  "value": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f200000000000000000000000000000000000000000000000000000000000000000",
+                  "offset": 368,
+                  "length": 64
+                },
+                {
+                  "name": "Integrated Loudness",
+                  "value": -23,
+                  "unit": "LUFS",
+                  "offset": 432,
+                  "length": 2
+                },
+                {
+                  "name": "Loudness Range",
+                  "value": 8,
+                  "unit": "LU",
+                  "offset": 434,
+                  "length": 2
+                },
+                {
+                  "name": "Maximum True Peak Level",
+                  "value": -1,
+                  "unit": "dBTP",
+                  "offset": 436,
+                  "length": 2
+                },
+                {
+                  "name": "Maximum Momentary Loudness",
+                  "value": -18,
+                  "unit": "LUFS",
+                  "offset": 438,
+                  "length": 2
+                },
+                {
+                  "name": "Maximum Short-Term Loudness",
+                  "value": "not used",
+                  "offset": 440,
+                  "length": 2
+                },
+                {
+                  "name": "Reserved",
+                  "value": 180,
+                  "unit": "bytes",
+                  "offset": 442,
+                  "length": 180
+                },
+                {
+                  "name": "Coding History",
+                  "value": "A=PCM,F=44100,W=16,M=stereo,T=Fixture\r\n",
+                  "offset": 622,
+                  "length": 39
+                },
+                {
+                  "name": "Pad Byte",
+                  "value": 0,
+                  "offset": 661,
+                  "length": 1
+                }
+              ]
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 662,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 662,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 666,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 670,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 672,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 674,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 176400,
+                  "unit": "bytes/s",
+                  "offset": 678,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 682,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 684,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 200,
+              "unit": "bytes",
+              "offset": 686,
+              "length": 208,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 686,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 690,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 686,
+                  "length": 208,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 686,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 50,
+                      "unit": "sample frames",
+                      "offset": 686,
+                      "length": 208
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0011337868480725624,
+                      "unit": "s",
+                      "offset": 686,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 686,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 686,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 686,
+                      "length": 208
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 686,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 686,
+                      "length": 208
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 686,
+                      "length": 208
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1411.2,
+                      "unit": "kbps",
+                      "offset": 686,
+                      "length": 208
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 50,
+        "duration": 0.0011337868480725624,
+        "averageBitrate": 1411.2,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

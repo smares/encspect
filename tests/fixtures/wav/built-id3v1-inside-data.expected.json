@@ -1,0 +1,41 @@
+{
+ "length": 644,
+ "container": {
+  "id": "RIFF",
+  "size": 636,
+  "end": 644
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 644,
+   "size": 600,
+   "length": 600
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 8000,
+  "channels": 1,
+  "bits": 8,
+  "samples": 600,
+  "duration": 0.075,
+  "layout": [
+   "front center"
+  ],
+  "average_bitrate": 64.0
+ },
+ "findings": [
+  {
+   "code": "tag.near-miss"
+  }
+ ]
+}

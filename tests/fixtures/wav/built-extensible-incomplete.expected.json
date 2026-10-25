@@ -1,0 +1,48 @@
+{
+ "length": 246,
+ "container": {
+  "id": "RIFF",
+  "size": 238,
+  "end": 246
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 38,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "data",
+   "offset": 38,
+   "end": 246,
+   "size": 200,
+   "length": 200
+  }
+ ],
+ "stream": {
+  "codec": "Other",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": null,
+  "samples": 0,
+  "duration": 0.0,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2
+ },
+ "findings": [
+  {
+   "code": "wav.extensible-incomplete"
+  },
+  {
+   "code": "wav.fact-missing"
+  },
+  {
+   "code": "wav.coding-unknown"
+  }
+ ]
+}

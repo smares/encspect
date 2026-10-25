@@ -1,0 +1,59 @@
+{
+ "length": 44172,
+ "container": {
+  "id": "FORM",
+  "form": "AIFC",
+  "size": 44164,
+  "end": 44172
+ },
+ "chunks": [
+  {
+   "id": "FVER",
+   "offset": 12,
+   "end": 24,
+   "size": 4,
+   "length": 4
+  },
+  {
+   "id": "COMM",
+   "offset": 24,
+   "end": 56,
+   "size": 24,
+   "length": 24
+  },
+  {
+   "id": "SSND",
+   "offset": 56,
+   "end": 44172,
+   "size": 44108,
+   "length": 44108
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 11025,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2,
+  "type": "sowt"
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_s16le"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 44100,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

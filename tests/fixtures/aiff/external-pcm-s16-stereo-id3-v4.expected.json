@@ -1,0 +1,76 @@
+{
+ "length": 44322,
+ "container": {
+  "id": "FORM",
+  "form": "AIFF",
+  "size": 44314,
+  "end": 44322
+ },
+ "chunks": [
+  {
+   "id": "NAME",
+   "offset": 12,
+   "end": 34,
+   "size": 14,
+   "length": 14
+  },
+  {
+   "id": "COMM",
+   "offset": 34,
+   "end": 60,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "SSND",
+   "offset": 60,
+   "end": 44176,
+   "size": 44108,
+   "length": 44108
+  },
+  {
+   "id": "ID3 ",
+   "offset": 44176,
+   "end": 44322,
+   "size": 137,
+   "length": 137
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 11025,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2,
+  "type": "NONE"
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_s16be",
+  "-write_id3v2",
+  "1",
+  "-metadata",
+  "title=Fixture title",
+  "-metadata",
+  "artist=Fixture artist",
+  "-metadata",
+  "album=Fixture album",
+  "-metadata",
+  "date=2026"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 44100,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

@@ -44,6 +44,9 @@ public class ParallelAnalysisTests
     [InlineData("matroska/external-ffmpeg-opus.mka")]
     [InlineData("matroska/block-groups.mka")]
     [InlineData("matroska/external-mkvmerge-vorbis.mka")]
+    [InlineData("wav/external-mp3-in-wav-stereo.wav")]
+    [InlineData("wav/external-pcm-s16-stereo-44100.wav")]
+    [InlineData("aiff/external-pcm-s16-stereo-44100.aiff")]
     public void OneReportWrittenOnSeveralThreadsAtOnce(string fixture)
     {
         Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, fixture));

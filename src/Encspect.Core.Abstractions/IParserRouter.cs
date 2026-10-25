@@ -8,6 +8,8 @@ public interface IParserRouter
 {
     bool ParseStream(AnalysisContext caller, string codecId, Node parent, ByteReader payload, CodecConfiguration? configuration, IReadOnlyList<EncoderClaim>? claims);
 
+    bool Recognizes(AnalysisContext caller, string codecId, Node parent, ByteReader payload);
+
     bool ParsePackets(AnalysisContext caller, string codecId, Node parent, IEnumerable<MappedBytes> packets, CodecConfiguration? configuration, IReadOnlyList<EncoderClaim>? claims);
 
     Node? ParseTag(AnalysisContext caller, string tagName, ByteReader slice, Node parent);

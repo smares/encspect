@@ -1,0 +1,490 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-smpl-inst.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 356,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 356,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 348,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 12,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 176400,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Sample Chunk",
+              "value": 88,
+              "unit": "bytes",
+              "offset": 36,
+              "length": 96,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "smpl",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 88,
+                  "unit": "bytes",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "Manufacturer",
+                  "value": 16777235,
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Product",
+                  "value": 5,
+                  "offset": 48,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Period",
+                  "value": 22675,
+                  "unit": "ns",
+                  "offset": 52,
+                  "length": 4
+                },
+                {
+                  "name": "MIDI Unity Note",
+                  "value": 60,
+                  "offset": 56,
+                  "length": 4
+                },
+                {
+                  "name": "MIDI Pitch Fraction",
+                  "value": 2147483648,
+                  "offset": 60,
+                  "length": 4
+                },
+                {
+                  "name": "SMPTE Format",
+                  "value": "25 frames per second",
+                  "offset": 64,
+                  "length": 4
+                },
+                {
+                  "name": "SMPTE Offset",
+                  "value": 16909060,
+                  "offset": 68,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Loop Count",
+                  "value": 2,
+                  "unit": "loops",
+                  "offset": 72,
+                  "length": 4
+                },
+                {
+                  "name": "Sampler Data Size",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 76,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Loops",
+                  "value": 2,
+                  "unit": "loops",
+                  "offset": 80,
+                  "length": 48,
+                  "children": [
+                    {
+                      "name": "Sample Loop 0",
+                      "value": "forward",
+                      "offset": 80,
+                      "length": 24,
+                      "children": [
+                        {
+                          "name": "Identifier",
+                          "value": 1,
+                          "offset": 80,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "0 (forward)",
+                          "offset": 84,
+                          "length": 4
+                        },
+                        {
+                          "name": "Start",
+                          "value": 10,
+                          "unit": "samples",
+                          "offset": 88,
+                          "length": 4
+                        },
+                        {
+                          "name": "End",
+                          "value": 40,
+                          "unit": "samples",
+                          "offset": 92,
+                          "length": 4
+                        },
+                        {
+                          "name": "Fraction",
+                          "value": 0,
+                          "offset": 96,
+                          "length": 4
+                        },
+                        {
+                          "name": "Play Count",
+                          "value": "0 (infinite sustain loop)",
+                          "offset": 100,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Sample Loop 1",
+                      "value": "alternating",
+                      "offset": 104,
+                      "length": 24,
+                      "children": [
+                        {
+                          "name": "Identifier",
+                          "value": 2,
+                          "offset": 104,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "1 (alternating forward and backward)",
+                          "offset": 108,
+                          "length": 4
+                        },
+                        {
+                          "name": "Start",
+                          "value": 5,
+                          "unit": "samples",
+                          "offset": 112,
+                          "length": 4
+                        },
+                        {
+                          "name": "End",
+                          "value": 30,
+                          "unit": "samples",
+                          "offset": 116,
+                          "length": 4
+                        },
+                        {
+                          "name": "Fraction",
+                          "value": 2147483648,
+                          "offset": 120,
+                          "length": 4
+                        },
+                        {
+                          "name": "Play Count",
+                          "value": 3,
+                          "unit": "times",
+                          "offset": 124,
+                          "length": 4
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Sampler Data",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 128,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Instrument Chunk",
+              "value": 7,
+              "unit": "bytes",
+              "offset": 132,
+              "length": 16,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "inst",
+                  "offset": 132,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 7,
+                  "unit": "bytes",
+                  "offset": 136,
+                  "length": 4
+                },
+                {
+                  "name": "Unshifted Note",
+                  "value": 60,
+                  "offset": 140,
+                  "length": 1
+                },
+                {
+                  "name": "Fine Tune",
+                  "value": -6,
+                  "unit": "cents",
+                  "offset": 141,
+                  "length": 1
+                },
+                {
+                  "name": "Gain",
+                  "value": -3,
+                  "unit": "dB",
+                  "offset": 142,
+                  "length": 1
+                },
+                {
+                  "name": "Low Note",
+                  "value": 24,
+                  "offset": 143,
+                  "length": 1
+                },
+                {
+                  "name": "High Note",
+                  "value": 96,
+                  "offset": 144,
+                  "length": 1
+                },
+                {
+                  "name": "Low Velocity",
+                  "value": 1,
+                  "offset": 145,
+                  "length": 1
+                },
+                {
+                  "name": "High Velocity",
+                  "value": 127,
+                  "offset": 146,
+                  "length": 1
+                },
+                {
+                  "name": "Pad Byte",
+                  "value": 0,
+                  "offset": 147,
+                  "length": 1
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 200,
+              "unit": "bytes",
+              "offset": 148,
+              "length": 208,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 148,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 200,
+                  "unit": "bytes",
+                  "offset": 152,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 148,
+                  "length": 208,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 148,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 50,
+                      "unit": "sample frames",
+                      "offset": 148,
+                      "length": 208
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0011337868480725624,
+                      "unit": "s",
+                      "offset": 148,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 148,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 148,
+                      "length": 208
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 148,
+                      "length": 208
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 148,
+                      "length": 208
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 148,
+                      "length": 208
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 148,
+                      "length": 208
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1411.2,
+                      "unit": "kbps",
+                      "offset": 148,
+                      "length": 208
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            6
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 50,
+        "duration": 0.0011337868480725624,
+        "averageBitrate": 1411.2,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

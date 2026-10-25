@@ -42,6 +42,15 @@ public sealed class DtsParser : IFormatParser
         return new SniffResult(found == start ? 93 : 50, found, units, verified, End: chainEnd);
     }
 
+    // Whether a chain of frames starts at the start of the data, after any zero bytes (a stream in the samples of a PCM file, perhaps after silence):
+    // the evidence of class 93, looked for at that one place and nowhere further in.
+    internal static bool StartsWithChain(ByteReader reader)
+    {
+        var cache = new BlockCache(reader);
+        long start = ZeroRunEnd(cache, reader.Start, Math.Min(reader.End, reader.Start + SniffLimit));
+        return start < reader.End && FindChain(cache, start, start + 1, reader.End, new CrcBudget()) == start;
+    }
+
     private static (int Units, int Verified, long End) CountChain(BlockCache cache, long position, long end)
     {
         int units = 0;

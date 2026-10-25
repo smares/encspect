@@ -14,7 +14,7 @@ internal static class LongInputs
     public static IReadOnlyList<string> Names { get; } =
     [
         "mpeg-layer3-lame", "mpeg-layer3-frames", "adts", "ac3", "eac3", "dts", "ogg-pages", "ogg-speex", "ogg-vorbis", "ogg-opus",
-        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "flac", "monkeys-audio", "tta", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts", "matroska", "truehd", "mlp",
+        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "flac", "monkeys-audio", "tta", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts", "matroska", "truehd", "mlp", "wav", "aiff",
     ];
 
     public static byte[] Build(string name) => name switch
@@ -45,10 +45,181 @@ internal static class LongInputs
         "mp4-eac3" => Mp4Samples(2060, "ec-3", FirstAc3Frame("ac3/external-ffmpeg-eac3-mono-48k.eac3")),
         "mp4-dts" => Mp4Samples(2060, "dtsc", FirstDtsFrame("dts/external-ffmpeg-mono-8k-64k.dts")),
         "matroska" => MatroskaBuilder.OpusBlocks(2060, 1000),
+        "wav" => RiffChunks(2060),
+        "aiff" => FormChunks(2060),
         "truehd" => Repeat("truehd/built-tiny-truehd-stereo.thd", 175),
         "mlp" => Repeat("truehd/built-tiny-mlp-stereo.mlp", 175),
         _ => throw new ArgumentOutOfRangeException(nameof(name)),
     };
+
+    // A WAVE file whose format chunk is followed by many small chunks of a kind the parser names by their FourCC.
+    private static byte[] RiffChunks(int count)
+    {
+        byte[] format = [1, 0, 1, 0, 0x40, 0x1F, 0, 0, 0x80, 0x3E, 0, 0, 2, 0, 16, 0];
+        var body = new List<byte>(Encoding.ASCII.GetBytes("WAVEfmt "));
+        body.AddRange(BitConverter.GetBytes(format.Length));
+        body.AddRange(format);
+        for (int i = 0; i < count; i++)
+        {
+            body.AddRange(Encoding.ASCII.GetBytes("abcd"));
+            body.AddRange(BitConverter.GetBytes(4));
+            body.AddRange(BitConverter.GetBytes(i));
+        }
+
+        byte[] file = new byte[8 + body.Count];
+        Encoding.ASCII.GetBytes("RIFF").CopyTo(file, 0);
+        BinaryPrimitives.WriteInt32LittleEndian(file.AsSpan(4), body.Count);
+        body.CopyTo(file, 8);
+        return file;
+    }
+
+    private static byte[] RiffChunk(string id, byte[] body)
+    {
+        byte[] chunk = new byte[8 + body.Length + (body.Length & 1)];
+        Encoding.ASCII.GetBytes(id).CopyTo(chunk, 0);
+        BinaryPrimitives.WriteInt32LittleEndian(chunk.AsSpan(4), body.Length);
+        body.CopyTo(chunk, 8);
+        return chunk;
+    }
+
+    private static byte[] RiffFile(string magic, params byte[][] chunks)
+    {
+        byte[] body = [.. "WAVE"u8, .. chunks.SelectMany(c => c)];
+        byte[] file = new byte[8 + body.Length];
+        Encoding.ASCII.GetBytes(magic).CopyTo(file, 0);
+        BinaryPrimitives.WriteInt32LittleEndian(file.AsSpan(4), body.Length);
+        body.CopyTo(file, 8);
+        return file;
+    }
+
+    private static readonly byte[] PcmFormat = RiffChunk("fmt ", [1, 0, 2, 0, 0x44, 0xAC, 0, 0, 0x10, 0xB1, 2, 0, 4, 0, 16, 0]);
+
+    // A WAVE file of lists inside lists' place: lists LIST chunks of INFO type, each holding chunks empty chunks (the shape that multiplies the caps on
+    // one level into millions of nodes), then the audio.
+    public static byte[] WavNestedLists(int lists, int chunks)
+    {
+        byte[] inner = new byte[chunks * 8];
+        for (int i = 0; i < chunks; i++)
+        {
+            Encoding.ASCII.GetBytes("abcd").CopyTo(inner, i * 8);
+        }
+
+        byte[] list = RiffChunk("LIST", [.. "xxxx"u8, .. inner]);
+        var all = new List<byte[]> { PcmFormat };
+        for (int i = 0; i < lists; i++)
+        {
+            all.Add(list);
+        }
+
+        all.Add(RiffChunk("data", new byte[16]));
+        return RiffFile("RIFF", [.. all]);
+    }
+
+    // One cue chunk of the given number of cue points, named from 0.
+    public static byte[] WavCueChunk(int points)
+    {
+        byte[] body = new byte[4 + (points * 24)];
+        BinaryPrimitives.WriteInt32LittleEndian(body, points);
+        for (int i = 0; i < points; i++)
+        {
+            BinaryPrimitives.WriteInt32LittleEndian(body.AsSpan(4 + (i * 24)), i);
+            Encoding.ASCII.GetBytes("data").CopyTo(body, 4 + (i * 24) + 8);
+        }
+
+        return RiffChunk("cue ", body);
+    }
+
+    // A WAVE file with many cue chunks of the given number of cue points, or one chunk of that many.
+    public static byte[] WavCueChunks(int chunks, int points)
+    {
+        byte[] cue = WavCueChunk(points);
+        var all = new List<byte[]> { PcmFormat };
+        for (int i = 0; i < chunks; i++)
+        {
+            all.Add(cue);
+        }
+
+        all.Add(RiffChunk("data", new byte[16]));
+        return RiffFile("RIFF", [.. all]);
+    }
+
+    // An RF64 file whose ds64 chunk lists the given number of table entries, each of another four-character ID.
+    public static byte[] WavDs64Table(int entries)
+    {
+        byte[] body = new byte[28 + (entries * 12)];
+        BinaryPrimitives.WriteInt32LittleEndian(body.AsSpan(24), entries);
+        for (int i = 0; i < entries; i++)
+        {
+            byte[] id = [(byte)('A' + (i % 26)), (byte)('a' + ((i / 26) % 26)), (byte)('a' + ((i / 676) % 26)), (byte)('a' + ((i / 17576) % 26))];
+            id.CopyTo(body, 28 + (i * 12));
+        }
+
+        byte[] file = RiffFile("RF64", RiffChunk("ds64", body), PcmFormat, RiffChunk("data", new byte[16]));
+        BinaryPrimitives.WriteUInt32LittleEndian(file.AsSpan(4), uint.MaxValue);
+        return file;
+    }
+
+    // An AIFF file with the given number of Marker Chunks of the given number of markers (a marker of no name takes 8 bytes).
+    public static byte[] AiffMarkerChunks(int chunks, int markers)
+    {
+        byte[] body = new byte[2 + (markers * 8)];
+        BinaryPrimitives.WriteUInt16BigEndian(body, (ushort)markers);
+        for (int i = 0; i < markers; i++)
+        {
+            BinaryPrimitives.WriteUInt16BigEndian(body.AsSpan(2 + (i * 8)), (ushort)(i + 1));
+        }
+
+        byte[] common = [.. "COMM"u8, 0, 0, 0, 18, 0, 1, 0, 0, 0, 0, 0, 16, 0x40, 0x0E, 0xAC, 0x44, 0, 0, 0, 0, 0, 0];
+        var all = new List<byte>(common);
+        for (int i = 0; i < chunks; i++)
+        {
+            all.AddRange("MARK"u8.ToArray());
+            all.AddRange([0, 0, (byte)(body.Length >> 8), (byte)body.Length]);
+            all.AddRange(body);
+        }
+
+        byte[] file = new byte[12 + all.Count];
+        Encoding.ASCII.GetBytes("FORMxxxxAIFF").CopyTo(file, 0);
+        BinaryPrimitives.WriteInt32BigEndian(file.AsSpan(4), file.Length - 8);
+        all.CopyTo(file, 12);
+        return file;
+    }
+
+    // A WAVE file of 16-bit stereo PCM with the given number of bytes of samples.
+    public static byte[] WavWithSamples(int bytes)
+    {
+        byte[] format = [1, 0, 2, 0, 0x44, 0xAC, 0, 0, 0x10, 0xB1, 2, 0, 4, 0, 16, 0];
+        byte[] file = new byte[12 + 8 + format.Length + 8 + bytes];
+        Encoding.ASCII.GetBytes("RIFFxxxxWAVEfmt ").CopyTo(file, 0);
+        BinaryPrimitives.WriteInt32LittleEndian(file.AsSpan(4), file.Length - 8);
+        BinaryPrimitives.WriteInt32LittleEndian(file.AsSpan(16), format.Length);
+        format.CopyTo(file, 20);
+        Encoding.ASCII.GetBytes("data").CopyTo(file, 20 + format.Length);
+        BinaryPrimitives.WriteInt32LittleEndian(file.AsSpan(24 + format.Length), bytes);
+        new Random(7).NextBytes(file.AsSpan(28 + format.Length));
+        return file;
+    }
+
+    // An AIFF file whose Common Chunk is followed by many small chunks of a kind the parser names by their FourCC.
+    private static byte[] FormChunks(int count)
+    {
+        byte[] common = [0, 1, 0, 0, 0, 0, 0, 16, 0x40, 0x0E, 0xAC, 0x44, 0, 0, 0, 0, 0, 0];
+        var body = new List<byte>(Encoding.ASCII.GetBytes("AIFFCOMM"));
+        body.AddRange([0, 0, 0, (byte)common.Length]);
+        body.AddRange(common);
+        for (int i = 0; i < count; i++)
+        {
+            body.AddRange(Encoding.ASCII.GetBytes("abcd"));
+            body.AddRange([0, 0, 0, 4]);
+            body.AddRange([0, 0, (byte)(i >> 8), (byte)i]);
+        }
+
+        byte[] file = new byte[8 + body.Count];
+        Encoding.ASCII.GetBytes("FORM").CopyTo(file, 0);
+        BinaryPrimitives.WriteInt32BigEndian(file.AsSpan(4), body.Count);
+        body.CopyTo(file, 8);
+        return file;
+    }
 
     public static byte[] Repeat(string fixture, int times)
     {

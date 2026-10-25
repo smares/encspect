@@ -1119,6 +1119,133 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // A WAVE file's samples are never read: the report of a file with 40 MiB of them is as large as that of one with 4 KiB, nothing the analysis
+    // allocates depends on their size, and what it holds while it runs (the blocks the format sniffs of MPEG audio and DTS read from the start
+    // of the data, about 1 MiB) stays below a bound far under the 40 MiB.
+    // The growth from 8 MiB to 40 MiB is read from the bytes allocated, not from the peak: the sniffed blocks are alive for a few milliseconds
+    // at the start of an analysis, so whether a sampler's collection falls into them decides if a peak reads 0.26 or 1.05 MB (ubuntu-26.04 read
+    // 263,368 for 8 MiB and 1,049,720 for 40 MiB, and 1,058,752 and 1,050,808 locally), while the allocation of both is the same to a few KB.
+    // A per-block cost of 24 bytes per KiB of samples would add 786 KB.
+    [Fact]
+    public void TheSamplesOfAWaveFileCostNothing()
+    {
+        (Report small, long smallKept, _) = Measure("small.wav", LongInputs.WavWithSamples(4096), LongInputs.WavWithSamples(4096));
+        (Report large, long largeKept, long largePeak) = Measure("large.wav", LongInputs.WavWithSamples(40 << 20), LongInputs.WavWithSamples(4096));
+
+        Assert.Equal(40 << 20 >> 2, large.Streams.Single().Samples);
+        long mediumAllocated = Allocated("medium.wav", LongInputs.WavWithSamples(8 << 20));
+        long largeAllocated = Allocated("large.wav", LongInputs.WavWithSamples(40 << 20));
+        output.WriteLine($"{smallKept} bytes kept for 4 KiB of samples, {largeKept} for 40 MiB, {largePeak} bytes peak for 40 MiB, {mediumAllocated} and {largeAllocated} bytes allocated for 8 and 40 MiB");
+        Assert.True(largeKept < smallKept + 2_000, $"The report keeps {largeKept - smallKept} bytes more for 40 MiB of samples.");
+        Assert.True(largeAllocated < mediumAllocated + 20_000, $"The analysis allocated {largeAllocated - mediumAllocated} bytes more for 40 MiB of samples than for 8 MiB.");
+        Assert.True(largePeak < 4_000_000, $"The live heap grew by {largePeak} bytes while the samples were skipped.");
+        GC.KeepAlive(small);
+        GC.KeepAlive(large);
+    }
+
+    // The bytes the process allocated during one analysis, after a first one that has run everything once; the smaller of two.
+    private static long Allocated(string name, byte[] data)
+    {
+        var analyzer = Analyzer.CreateDefault();
+        analyzer.Analyze(name, new MemoryStream(data));
+        long least = long.MaxValue;
+        for (int pass = 0; pass < 2; pass++)
+        {
+            long before = GC.GetTotalAllocatedBytes(precise: true);
+            GC.KeepAlive(analyzer.Analyze(name, new MemoryStream(data)));
+            least = Math.Min(least, GC.GetTotalAllocatedBytes(precise: true) - before);
+        }
+
+        return least;
+    }
+
+    // Lists inside lists multiply the caps on one level (2,048 chunks) into millions of nodes: this file, of 600 lists of 600 empty chunks, asks
+    // for 360,000 chunk nodes and a million with their fields. The tree is held to its node budget whatever the file asks (the file of 1,500
+    // lists of 1,500 chunks that showed it took 12 s and 1.9 GB before the budget), and the analysis takes a bounded time.
+    [Fact]
+    public void NestedListsOfManyChunksStayWithinTheNodeBudget()
+    {
+        byte[] data = LongInputs.WavNestedLists(600, 600);
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        (Report report, long kept, long peak) = Measure("nested.wav", data, LongInputs.WavNestedLists(2, 2));
+        watch.Stop();
+
+        int nodes = CountNodes(report.Root);
+        output.WriteLine($"{nodes} nodes, {kept / nodes} bytes kept and {peak / nodes} bytes peak per node, {watch.Elapsed.TotalSeconds:F1} s for three analyses");
+        Assert.Contains(report.Findings, f => f.Code == "wav.node-limit");
+        Assert.InRange(nodes, 250_000, 260_000);
+        Assert.True(kept < nodes * 500L, $"The report keeps {kept / nodes} bytes per node.");
+        Assert.True(peak < nodes * 700L, $"The live heap grew by {peak / nodes} bytes per node.");
+        GC.KeepAlive(report);
+    }
+
+    [Theory]
+    [InlineData("cue")]
+    [InlineData("aiff")]
+    public void RepeatedTableChunksStayWithinTheNodeBudget(string kind)
+    {
+        byte[] data = kind == "cue" ? LongInputs.WavCueChunks(300, 1024) : LongInputs.AiffMarkerChunks(300, 1024);
+        byte[] warm = kind == "cue" ? LongInputs.WavCueChunks(2, 4) : LongInputs.AiffMarkerChunks(2, 4);
+        (Report report, long kept, long peak) = Measure($"tables.{kind}", data, warm);
+
+        int nodes = CountNodes(report.Root);
+        output.WriteLine($"{nodes} nodes, {kept / nodes} bytes kept and {peak / nodes} bytes peak per node");
+        Assert.Contains(report.Findings, f => f.Code is "wav.node-limit" or "aiff.node-limit");
+        Assert.InRange(nodes, 250_000, 270_000);
+        Assert.True(kept < nodes * 500L, $"The report keeps {kept / nodes} bytes per node.");
+        Assert.True(peak < nodes * 700L, $"The live heap grew by {peak / nodes} bytes per node.");
+        GC.KeepAlive(report);
+    }
+
+    // A ds64 table of a million entries with distinct IDs (12 MB) and a cue chunk of 2 million cue points (48 MB) cost the names they keep, which
+    // are capped: the live heap does not grow with them (431 MB and 180 MB of resident memory before the caps). The report keeps the 1,024 entries it lists.
+    [Theory]
+    [InlineData("ds64")]
+    [InlineData("cue")]
+    public void BigTablesCostNoMoreThanTheirCaps(string kind)
+    {
+        byte[] data = kind == "ds64" ? LongInputs.WavDs64Table(1_000_000) : LongInputs.WavCueChunks(1, 2_000_000);
+        byte[] warm = kind == "ds64" ? LongInputs.WavDs64Table(10) : LongInputs.WavCueChunks(1, 10);
+        (Report report, long kept, long peak) = Measure($"big.{kind}", data, warm);
+
+        output.WriteLine($"{kept} bytes kept and {peak} bytes peak for {data.Length} bytes of file");
+        Assert.True(kept < 3_000_000, $"The report keeps {kept} bytes.");
+        Assert.True(peak < 12_000_000, $"The live heap grew by {peak} bytes.");
+        GC.KeepAlive(report);
+    }
+
+    private static int CountNodes(Node root)
+    {
+        int count = 0;
+        var pending = new Stack<Node>();
+        pending.Push(root);
+        while (pending.Count > 0)
+        {
+            Node node = pending.Pop();
+            count++;
+            foreach (Node child in node.Children)
+            {
+                pending.Push(child);
+            }
+        }
+
+        return count;
+    }
+
+    [Theory]
+    [InlineData("wav")]
+    [InlineData("aiff")]
+    public void ManyChunksStayCompact(string kind)
+    {
+        byte[] data = LongInputs.Build(kind);
+        (Report report, long kept, long peak) = Measure($"chunks.{kind}", data, LongInputs.Build(kind));
+
+        output.WriteLine($"{kept / 2048} bytes kept and {peak / 2048} bytes peak per listed chunk");
+        Assert.True(kept < 2048 * 1_500L, $"The report keeps {kept / 2048} bytes per listed chunk.");
+        Assert.True(peak < 2048 * 2_000L, $"The live heap grew by {peak / 2048} bytes per listed chunk.");
+        GC.KeepAlive(report);
+    }
+
     // The bound is on the growth, from 50,000 to 200,000 frames, of the live heap that one reading inside the decoding of the last frame
     // sees above the heap the analysis ends with (report alive), so whatever decoding holds per frame for the length of the stream shows,
     // and nothing the analysis does after its last frame can. The reading is taken from the sink's Write of the last frame, on the

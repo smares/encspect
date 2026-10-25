@@ -1,0 +1,129 @@
+{
+ "length": 392,
+ "container": {
+  "id": "RIFF",
+  "size": 384,
+  "end": 392
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 244,
+   "size": 200,
+   "length": 200
+  },
+  {
+   "id": "LIST",
+   "offset": 244,
+   "end": 392,
+   "size": 140,
+   "length": 140,
+   "list_type": "zzzz",
+   "children": [
+    {
+     "id": "LIST",
+     "offset": 256,
+     "end": 392,
+     "size": 128,
+     "length": 128,
+     "list_type": "zzzz",
+     "children": [
+      {
+       "id": "LIST",
+       "offset": 268,
+       "end": 392,
+       "size": 116,
+       "length": 116,
+       "list_type": "zzzz",
+       "children": [
+        {
+         "id": "LIST",
+         "offset": 280,
+         "end": 392,
+         "size": 104,
+         "length": 104,
+         "list_type": "zzzz",
+         "children": [
+          {
+           "id": "LIST",
+           "offset": 292,
+           "end": 392,
+           "size": 92,
+           "length": 92,
+           "list_type": "zzzz",
+           "children": [
+            {
+             "id": "LIST",
+             "offset": 304,
+             "end": 392,
+             "size": 80,
+             "length": 80,
+             "list_type": "zzzz",
+             "children": [
+              {
+               "id": "LIST",
+               "offset": 316,
+               "end": 392,
+               "size": 68,
+               "length": 68,
+               "list_type": "zzzz",
+               "children": [
+                {
+                 "id": "LIST",
+                 "offset": 328,
+                 "end": 392,
+                 "size": 56,
+                 "length": 56,
+                 "list_type": "zzzz",
+                 "children": [
+                  {
+                   "id": "LIST",
+                   "offset": 340,
+                   "end": 392,
+                   "size": 44,
+                   "length": 44
+                  }
+                 ]
+                }
+               ]
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 50,
+  "duration": 0.0011337868480725624,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2
+ },
+ "findings": [
+  {
+   "code": "wav.list-nesting"
+  }
+ ]
+}
