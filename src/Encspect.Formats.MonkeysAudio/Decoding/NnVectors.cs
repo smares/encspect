@@ -1,3 +1,5 @@
+// Follows the Monkey's Audio SDK 13.42 (NNFilterAVX2.cpp, NNFilterAVX512.cpp, NNFilterNeon.cpp), 3-clause BSD license:
+// Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -10,7 +12,7 @@ namespace Encspect.Formats.MonkeysAudio.Decoding;
 // The two loops of the neural network filters, over the filter's order: the dot product of history and weights, and the weights' step along
 // the sign of the coded value. All integer, so every path gives the same result: sums wrap on 32 bits (16-bit filters) or run in 64 bits over
 // products of 32 bits (32-bit filters), as the SDK's do. The 16-bit dot product uses the multiply-and-add-adjacent-pairs instruction of the
-// instruction set at hand (as the SDK's NNFilterAVX2.cpp, NNFilterAVX512.cpp and NNFilterNeon.cpp do), the other loops the portable vectors.
+// instruction set at hand, 512-bit only where the runtime prefers 512-bit vectors (as the SDK's NNFilterAVX2.cpp, NNFilterAVX512.cpp and NNFilterNeon.cpp do), the other loops the portable vectors.
 // The spans are as long as the order; the loops read and write inside them.
 internal static class NnVectors
 {
@@ -21,7 +23,7 @@ internal static class NnVectors
         ref short pb = ref MemoryMarshal.GetReference(b);
         int total = 0;
         int i = 0;
-        if (Avx512BW.IsSupported)
+        if (Avx512BW.IsSupported && Vector512.IsHardwareAccelerated)
         {
             Vector512<int> sum = Vector512<int>.Zero;
             for (; i <= n - 32; i += 32)
