@@ -20,6 +20,11 @@ internal sealed class State(ParseContext context)
 
     public bool IsRf64 => Magic == "RF64";
 
+    public bool IsBw64 => Magic == "BW64";
+
+    // RF64 and BW64: a size field of 0xFFFFFFFF stands for a size in the ds64 chunk.
+    public bool Is64Bit => IsRf64 || IsBw64;
+
     public Node Container { get; set; } = null!;
 
     // Where the RIFF chunk ends: its stated end, cut to the data there is.
@@ -80,6 +85,14 @@ internal sealed class State(ParseContext context)
 
     // The cue point names the labels, notes, labeled texts and embedded files of 'adtl' lists refer to.
     public List<(uint Name, Node Chunk)> LabelReferences { get; } = [];
+
+    // The chna chunks read, for the checks that need the format chunk, and how many of each XML chunk of BS.2088 (axml, bxml, sxml) the file holds.
+    public List<ChnaChunk> ChnaChunks { get; } = [];
+
+    public Dictionary<string, int> XmlChunkCounts { get; } = [];
+
+    // The first XML chunk that holds Audio Definition Model metadata, which needs a chna chunk.
+    public Node? AdmNode { get; set; }
 
     // The chunk being read: the size its header states (after the ds64 chunk's say in an RF64 file), and whether that size is a placeholder.
     public ulong ChunkStated { get; set; }

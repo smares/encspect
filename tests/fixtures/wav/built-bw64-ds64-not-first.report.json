@@ -1,0 +1,482 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-bw64-ds64-not-first.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 500,
+      "children": [
+        {
+          "name": "BW64",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 500,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "BW64",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 4294967295,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Junk Chunk",
+              "value": 8,
+              "unit": "bytes",
+              "offset": 12,
+              "length": 16,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "JUNK",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Filler",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 20,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Data Size 64 Chunk",
+              "value": 28,
+              "unit": "bytes",
+              "offset": 28,
+              "length": 36,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "ds64",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 4
+                },
+                {
+                  "name": "BW64 Size",
+                  "value": 492,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 8
+                },
+                {
+                  "name": "Data Size",
+                  "value": 60,
+                  "unit": "bytes",
+                  "offset": 44,
+                  "length": 8
+                },
+                {
+                  "name": "Dummy",
+                  "value": 0,
+                  "offset": 52,
+                  "length": 8
+                },
+                {
+                  "name": "Table Length",
+                  "value": 0,
+                  "unit": "entries",
+                  "offset": 60,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 48000 Hz, 24 bits",
+              "offset": 64,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 64,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 68,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 72,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 74,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 76,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 288000,
+                  "unit": "bytes/s",
+                  "offset": 80,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 6,
+                  "unit": "bytes",
+                  "offset": 84,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 24,
+                  "unit": "bits",
+                  "offset": 86,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Channel Allocation Chunk",
+              "value": 84,
+              "unit": "bytes",
+              "offset": 88,
+              "length": 92,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "chna",
+                  "offset": 88,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 84,
+                  "unit": "bytes",
+                  "offset": 92,
+                  "length": 4
+                },
+                {
+                  "name": "Track Count",
+                  "value": 2,
+                  "unit": "tracks",
+                  "offset": 96,
+                  "length": 2
+                },
+                {
+                  "name": "UID Count",
+                  "value": 2,
+                  "unit": "UIDs",
+                  "offset": 98,
+                  "length": 2
+                },
+                {
+                  "name": "Track UIDs",
+                  "value": 2,
+                  "unit": "entries",
+                  "offset": 100,
+                  "length": 80,
+                  "children": [
+                    {
+                      "name": "Track UID 0",
+                      "value": "ATU_00000001",
+                      "offset": 100,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Track Index",
+                          "value": 1,
+                          "offset": 100,
+                          "length": 2
+                        },
+                        {
+                          "name": "UID",
+                          "value": "ATU_00000001",
+                          "offset": 102,
+                          "length": 12
+                        },
+                        {
+                          "name": "Track Format Reference",
+                          "value": "AT_00010001_01",
+                          "offset": 114,
+                          "length": 14
+                        },
+                        {
+                          "name": "Pack Format Reference",
+                          "value": "AP_00010002",
+                          "offset": 128,
+                          "length": 11
+                        },
+                        {
+                          "name": "Pad",
+                          "value": 0,
+                          "offset": 139,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Track UID 1",
+                      "value": "ATU_00000002",
+                      "offset": 140,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Track Index",
+                          "value": 2,
+                          "offset": 140,
+                          "length": 2
+                        },
+                        {
+                          "name": "UID",
+                          "value": "ATU_00000002",
+                          "offset": 142,
+                          "length": 12
+                        },
+                        {
+                          "name": "Track Format Reference",
+                          "value": "AT_00010002_01",
+                          "offset": 154,
+                          "length": 14
+                        },
+                        {
+                          "name": "Pack Format Reference",
+                          "value": "AP_00010002",
+                          "offset": 168,
+                          "length": 11
+                        },
+                        {
+                          "name": "Pad",
+                          "value": 0,
+                          "offset": 179,
+                          "length": 1
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "XML Chunk",
+              "value": 244,
+              "unit": "bytes",
+              "offset": 180,
+              "length": 252,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "axml",
+                  "offset": 180,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 244,
+                  "unit": "bytes",
+                  "offset": 184,
+                  "length": 4
+                },
+                {
+                  "name": "XML Text",
+                  "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ebuCoreMain xmlns=\"urn:ebu:metadata-schema:ebuCore_2015\"><coreMetadata><format><audioFormatExtended><audioProgramme audioProgrammeID=\"APR_1001\"/></audioFormatExtended></format></coreMetadata></ebuCoreMain>",
+                  "offset": 188,
+                  "length": 244
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 60,
+              "unit": "bytes",
+              "offset": 432,
+              "length": 68,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 432,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 4294967295,
+                  "unit": "bytes",
+                  "offset": 436,
+                  "length": 4
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 432,
+                  "length": 68,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 432,
+                      "length": 68
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 10,
+                      "unit": "sample frames",
+                      "offset": 432,
+                      "length": 68
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.00020833333333333335,
+                      "unit": "s",
+                      "offset": 432,
+                      "length": 68
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 432,
+                      "length": 68
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 432,
+                      "length": 68
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 432,
+                      "length": 68
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 24,
+                      "unit": "bits",
+                      "offset": 432,
+                      "length": 68
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 432,
+                      "length": 68
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 432,
+                      "length": 68
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 2304,
+                      "unit": "kbps",
+                      "offset": 432,
+                      "length": 68
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            8
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 48000,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 24,
+        "samples": 10,
+        "duration": 0.00020833333333333335,
+        "averageBitrate": 2304,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "wav.riff-size-placeholder",
+        "message": "The BW64 chunk's size is 0xFFFFFFFF and the ds64 chunk does not give a size, which is no size a BW64 chunk can have; a writer leaves it when it cannot go back and fill it in. The file is read to its end, 492 bytes after the size field.",
+        "offset": 4,
+        "length": 4,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wav.ds64-not-first",
+        "message": "The ds64 chunk is not the first chunk after the BW64 header, where ITU-R BS.2088 section 2.4 puts it.",
+        "offset": 28,
+        "length": 36,
+        "path": [
+          0,
+          4
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

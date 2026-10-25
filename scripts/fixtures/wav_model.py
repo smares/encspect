@@ -3,7 +3,7 @@
 Written from Microsoft's "Multimedia Programming Interface and Data Specifications 1.0" (RIFF, WAVE, LIST/INFO, cue, plst, adtl), the
 "Multimedia Data Standards Update" of April 1994 (fact, inst, smpl, the extra fields of the WAVE types), mmreg.h and ksmedia.h (format tags,
 sub-format GUIDs and the channel mask), the sub-format GUIDs of ksuuids.h and mfapi.h that Microsoft's "Multiple channel audio data and WAVE files" and
-"Audio Subtype GUIDs" name, EBU Tech 3285 (bext) and Tech 3306-2009 (RF64, ds64), apart from the analyzer: the chunk tree, the fmt
+"Audio Subtype GUIDs" name, EBU Tech 3285 (bext) and Tech 3306-2009 (RF64, ds64), ITU-R BS.2088 (BW64, ds64, chna, axml), apart from the analyzer: the chunk tree, the fmt
 fields and the figures of the stream that a manifest states come from here. The signal generators and the byte builders the fixture scripts use
 live here too.
 
@@ -96,12 +96,12 @@ def read_chunks(data, at, end, big, ds64=None, top=False, rf64=False, depth=0):
 def read(data):
     """The RIFF chunk of a file: its header, the chunks, and the figures of the fmt, fact, data and ds64 chunks."""
     magic = data[:4].decode("latin1")
-    if magic not in ("RIFF", "RIFX", "RF64") or data[8:12] != b"WAVE":
+    if magic not in ("RIFF", "RIFX", "RF64", "BW64") or data[8:12] != b"WAVE":
         raise ValueError("not a WAVE file")
     big = magic == "RIFX"
     size = u32(data, 4, big)
     ds64 = None
-    if magic == "RF64" and data[12:16] == b"ds64" and u32(data, 16) >= 24:
+    if magic in ("RF64", "BW64") and data[12:16] == b"ds64" and u32(data, 16) >= 24:
         table = {}
         count = u32(data, 12 + 8 + 24) if u32(data, 16) >= 28 else 0
         for i in range(min(count, (u32(data, 16) - 28) // 12, 1024)):
@@ -110,7 +110,7 @@ def read(data):
                 table.setdefault(data[entry:entry + 4].decode("latin1"), u32(data, entry + 4) | (u32(data, entry + 8) << 32))
         ds64 = {"riff_size": u64(data, 20), "data_size": u64(data, 28), "sample_count": u64(data, 36), "table": table}
     placeholder = False
-    if magic == "RF64" and size == 0xFFFFFFFF:
+    if magic in ("RF64", "BW64") and size == 0xFFFFFFFF:
         total = ds64["riff_size"] if ds64 else None
     elif size in (0, 0xFFFFFFFF) or size < 4:
         total = None
@@ -121,7 +121,7 @@ def read(data):
         end = len(data)
     else:
         end = min(8 + total, len(data))
-    chunks, stop = read_chunks(data, 12, end, big, ds64, True, magic == "RF64")
+    chunks, stop = read_chunks(data, 12, end, big, ds64, True, magic in ("RF64", "BW64"))
     result = {"magic": magic, "size": size, "form": "WAVE", "big": big, "end": end, "placeholder": placeholder, "declared_end": None if total is None else 8 + total, "chunks": chunks, "ds64": ds64, "stop": stop}
     for chunk in chunks:
         if chunk["id"] == "fmt " and "fmt" not in result:

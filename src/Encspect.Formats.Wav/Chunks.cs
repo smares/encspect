@@ -18,8 +18,10 @@ internal sealed record ChunkSpec(string? Name, string Description, string? Topic
         ["LIST"] = new("List Chunk", Explain.ListChunk, Topics.RiffChunks, Chunks.List),
         ["smpl"] = new("Sample Chunk", Explain.SampleChunk, Topics.CuePoints, Chunks.Sample),
         ["inst"] = new("Instrument Chunk", Explain.InstrumentChunk, Topics.CuePoints, Chunks.Instrument),
-        ["chna"] = new("Channel Allocation Chunk", Explain.ChnaChunk, Topics.Bext, Chunks.Chna),
-        ["axml"] = new("XML Chunk", Explain.AxmlChunk, Topics.Bext, Chunks.Xml),
+        ["chna"] = new("Channel Allocation Chunk", Explain.ChnaChunk, Topics.Bw64, Chunks.Chna),
+        ["axml"] = new("XML Chunk", Explain.AxmlChunk, Topics.Bw64, Chunks.Axml),
+        ["bxml"] = new("Compressed XML Chunk", Explain.BxmlChunk, Topics.Bw64, Chunks.Bxml),
+        ["sxml"] = new("Serial XML Chunk", Explain.SxmlChunk, Topics.Bw64, Chunks.Sxml),
         ["iXML"] = new("iXML Chunk", Explain.IxmlChunk, Topics.Bext, Chunks.Xml),
         ["id3 "] = new("ID3v2 Chunk", Explain.Id3Chunk, Topics.Id3InChunks, Chunks.Id3),
         ["ID3 "] = new("ID3v2 Chunk", Explain.Id3Chunk, Topics.Id3InChunks, Chunks.Id3),
@@ -136,9 +138,14 @@ internal static class Chunks
 
     public static void Ds64(State s, Fields f, Node chunk, long length)
     {
-        ulong riff = f.Qword("RIFF Size", Explain.Ds64RiffSize, "bytes", Topics.Rf64);
-        ulong data = f.Qword("Data Size", Explain.Ds64DataSize, "bytes", Topics.Rf64);
-        ulong samples = f.Qword("Sample Count", Explain.Ds64SampleCount, "samples", Topics.Rf64);
+        string topic = s.IsBw64 ? Topics.Bw64 : Topics.Rf64;
+        ulong riff = s.IsBw64 ? f.Qword("BW64 Size", Explain.Ds64Bw64Size, "bytes", topic) : f.Qword("RIFF Size", Explain.Ds64RiffSize, "bytes", topic);
+        ulong data = f.Qword("Data Size", Explain.Ds64DataSize, "bytes", topic);
+        ulong samples = s.IsBw64 ? f.Qword("Dummy", Explain.Ds64Dummy, null, topic) : f.Qword("Sample Count", Explain.Ds64SampleCount, "samples", topic);
+        if (s.IsBw64 && samples != 0 && s.Ds64 is null)
+        {
+            s.Findings.Add(Severity.Info, "wav.ds64-dummy-not-zero", chunk.Children[^1], _ => "The ds64 chunk's dummy value is not zero, but a BW64 writer sets it to zero (ITU-R BS.2088, section 4.2).");
+        }
 
         // The three sizes are what the RF64 header and the data chunk need, so the first ds64 chunk that holds them counts even if it ends there.
         var table = new Dictionary<string, ulong>(StringComparer.Ordinal);
@@ -155,13 +162,13 @@ internal static class Chunks
             return;
         }
 
-        uint count = f.Dword("Table Length", Explain.Ds64TableLength, "entries", Topics.Rf64);
+        uint count = f.Dword("Table Length", Explain.Ds64TableLength, "entries", topic);
         Node? entries = null;
         long fit = f.Remaining / 12;
         long read = Math.Min(count, fit);
         if (count > 0)
         {
-            entries = f.Node.Add(new Node("Table", f.Position, read * 12, NodeValue.Integer(count, "entries", "entry")) { Description = Explain.Ds64Table, Topic = Topics.Rf64 });
+            entries = f.Node.Add(new Node("Table", f.Position, read * 12, NodeValue.Integer(count, "entries", "entry")) { Description = Explain.Ds64Table, Topic = topic });
         }
 
         // Only a top-level chunk can use an entry, by its ID; an entry whose ID is no ID, or past the first MaxListed, can name no chunk the
@@ -177,7 +184,7 @@ internal static class Chunks
             if (i < MaxListed)
             {
                 string id = System.Text.Encoding.Latin1.GetString(idBytes);
-                entries!.Add(new Node($"Entry {i}", at, 12, $"{Fields.Clean(id)}, {size.ToString(CultureInfo.InvariantCulture)} bytes") { Description = Explain.Ds64Entry, Topic = Topics.Rf64 });
+                entries!.Add(new Node($"Entry {i}", at, 12, $"{Fields.Clean(id)}, {size.ToString(CultureInfo.InvariantCulture)} bytes") { Description = Explain.Ds64Entry, Topic = topic });
                 if (isId)
                 {
                     table.TryAdd(id, size);
@@ -447,33 +454,66 @@ internal static class Chunks
         }
     }
 
+    // BS.2088 section 8: numTracks, numUIDs and N structures of 40 bytes (ckSize = 4 + N * 40, N >= numUIDs). A structure in use has a track index
+    // from 1 and the three IDs; an unused one is zero throughout. numUIDs "shall match the number of defined IDs".
     public static void Chna(State s, Fields f, Node chunk, long length)
     {
-        f.Word("Track Count", Explain.ChnaTracks, "tracks", Topics.Bext);
-        int uids = f.Word("UID Count", Explain.ChnaUids, "UIDs", Topics.Bext);
+        int tracks = f.Word("Track Count", Explain.ChnaTracks, "tracks", Topics.Bw64);
+        int uids = f.Word("UID Count", Explain.ChnaUids, "UIDs", Topics.Bw64);
         long fit = f.Remaining / 40;
-        Node? table = fit > 0 ? f.Node.Add(new Node("Track UIDs", f.Position, fit * 40, NodeValue.Integer(fit, "entries", "entry")) { Description = Explain.ChnaTable, Topic = Topics.Bext }) : null;
+        Node? table = fit > 0 ? f.Node.Add(new Node("Track UIDs", f.Position, fit * 40, NodeValue.Integer(fit, "entries", "entry")) { Description = Explain.ChnaTable, Topic = Topics.Bw64 }) : null;
+        var indexes = new HashSet<int>();
+        long defined = 0;
+        Node? unusedNotZero = null;
+        Node? badId = null;
         for (long i = 0; i < fit; i++)
         {
+            if (i % 4096 == 0)
+            {
+                s.Context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
             long at = f.Position;
             int index = f.ReadWord();
-            string uid = AsciiField(f.Reader.ReadBytes(12));
-            string trackRef = AsciiField(f.Reader.ReadBytes(14));
-            string packRef = AsciiField(f.Reader.ReadBytes(11));
+            byte[] uidBytes = f.Reader.ReadBytes(12);
+            byte[] trackBytes = f.Reader.ReadBytes(14);
+            byte[] packBytes = f.Reader.ReadBytes(11);
             byte pad = f.Reader.ReadByte();
+            string uid = AsciiField(uidBytes);
+            string trackRef = AsciiField(trackBytes);
+            string packRef = AsciiField(packBytes);
+            Node? entry = null;
             if (i < MaxListed)
             {
-                var entry = new Node($"Track UID {i}", at, 40, index == 0 && uid.Length == 0 ? "unused" : uid) { Description = Explain.ChnaEntry, Topic = Topics.Bext };
-                entry.Add("Track Index", at, 2, NodeValue.Integer(index), Explain.ChnaIndex, Topics.Bext);
-                entry.Add("UID", at + 2, 12, uid, Explain.ChnaUid, Topics.Bext);
-                entry.Add("Track Format Reference", at + 14, 14, trackRef, Explain.ChnaTrackRef, Topics.Bext);
-                entry.Add("Pack Format Reference", at + 28, 11, packRef, Explain.ChnaPackRef, Topics.Bext);
+                entry = new Node($"Track UID {i}", at, 40, index == 0 && uid.Length == 0 ? "unused" : uid) { Description = Explain.ChnaEntry, Topic = Topics.Bw64 };
+                entry.Add("Track Index", at, 2, NodeValue.Integer(index), Explain.ChnaIndex, Topics.Bw64);
+                entry.Add("UID", at + 2, 12, uid, Explain.ChnaUid, Topics.Bw64);
+                entry.Add("Track Format Reference", at + 14, 14, trackRef, Explain.ChnaTrackRef, Topics.Bw64);
+                entry.Add("Pack Format Reference", at + 28, 11, packRef, Explain.ChnaPackRef, Topics.Bw64);
                 entry.Add("Pad", at + 39, 1, NodeValue.Hex(pad, 2), Explain.ChnaPad);
                 table!.Add(entry);
             }
+
+            if (index == 0)
+            {
+                if (unusedNotZero is null && (uidBytes.Any(b => b != 0) || trackBytes.Any(b => b != 0) || packBytes.Any(b => b != 0)))
+                {
+                    unusedNotZero = entry ?? table;
+                }
+
+                continue;
+            }
+
+            defined++;
+            indexes.Add(index);
+            if (badId is null && !(IsId(uidBytes, "ATU_", 8, null) && (IsId(trackBytes, "AT_", 8, "_") || IsId(trackBytes, "AC_", 8, "_00")) && (IsId(packBytes, "AP_", 8, null) || packBytes.All(b => b == 0))))
+            {
+                badId = entry ?? table;
+            }
         }
 
-        if (f.Remaining > 0 || uids > fit)
+        bool isSized = f.Remaining == 0 && uids <= fit;
+        if (!isSized)
         {
             int stated = uids;
             long held = fit;
@@ -484,6 +524,70 @@ internal static class Chunks
                 f.Bytes("Extra Data", f.Remaining, Explain.ExtraData);
             }
         }
+        else
+        {
+            if (uids != defined)
+            {
+                int stated = uids;
+                long found = defined;
+                s.Findings.Add(Severity.Warning, "wav.chna-uid-count-mismatch", table ?? chunk, _ =>
+                    $"The chna chunk states {Counts.Of(stated, "UID", "UIDs")}, but {Counts.Of(found, "structure names", "structures name")} a track; BS.2088 section 8.2 wants the two to match.");
+            }
+
+            if (tracks != indexes.Count)
+            {
+                int stated = tracks;
+                int found = indexes.Count;
+                s.Findings.Add(Severity.Warning, "wav.chna-track-count-mismatch", table ?? chunk, _ =>
+                    $"The chna chunk states {Counts.Of(stated, "track", "tracks")}, but its structures name {Counts.Of(found, "different track", "different tracks")}.");
+            }
+        }
+
+        if (unusedNotZero is not null)
+        {
+            Node at = unusedNotZero;
+            s.Findings.Add(Severity.Warning, "wav.chna-unused-entry-not-zero", at, _ =>
+                "A structure with track index 0 is unused, and BS.2088 section 8.2 wants its IDs to be zero throughout, but this one holds IDs.");
+        }
+
+        if (badId is not null)
+        {
+            Node at = badId;
+            s.Findings.Add(Severity.Warning, "wav.chna-id-format", at, _ =>
+                "A structure in use holds an ID that does not have the form BS.2088 section 8.2 gives: ATU_ and 8 hexadecimal digits, AT_ and 8 hexadecimal digits, _ and 2 (or AC_ and 8 digits, _00), AP_ and 8 digits or zeros.");
+        }
+
+        s.ChnaChunks.Add(new ChnaChunk(table ?? chunk, tracks, indexes));
+    }
+
+    // Whether the field is the prefix, then hexadecimal digits for the count, then the suffix (or two hexadecimal digits when the suffix is "_"), and
+    // then zeros to the end of the field.
+    private static bool IsId(byte[] field, string prefix, int digits, string? suffix)
+    {
+        int end = Array.IndexOf(field, (byte)0);
+        ReadOnlySpan<byte> text = end < 0 ? field : field.AsSpan(0, end);
+        if (end >= 0 && field.AsSpan(end).ToArray().Any(b => b != 0))
+        {
+            return false;
+        }
+
+        int tail = suffix is null ? 0 : suffix == "_" ? 3 : suffix.Length;
+        if (text.Length != prefix.Length + digits + tail)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = (char)text[i];
+            bool isDigit = Uri.IsHexDigit(c);
+            if (i < prefix.Length ? c != prefix[i] : i < prefix.Length + digits ? !isDigit : suffix == "_" ? (i == prefix.Length + digits ? c != '_' : !isDigit) : c != suffix![i - prefix.Length - digits])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static string AsciiField(byte[] bytes)
@@ -492,11 +596,100 @@ internal static class Chunks
         return Fields.Clean(System.Text.Encoding.Latin1.GetString(bytes, 0, end < 0 ? bytes.Length : end));
     }
 
+    // The iXML chunk and any other XML text.
     public static void Xml(State s, Fields f, Node chunk, long length)
     {
         if (length > 0)
         {
             f.Text("XML Text", length, Explain.XmlText, Topics.Bext);
+        }
+    }
+
+    // How far into XML text the scan for the root element of the Audio Definition Model goes.
+    private const int MaxAdmScan = 1 << 20;
+
+    private static void CountXml(State s, string id, Node chunk)
+    {
+        int count = s.XmlChunkCounts.GetValueOrDefault(id) + 1;
+        s.XmlChunkCounts[id] = count;
+        if (count >= 2)
+        {
+            s.Findings.Add(Severity.Warning, "wav.xml-chunk-repeated", chunk, n =>
+                $"The file holds {n + 1} {id} chunks, but ITU-R BS.2088 section 9 allows no more than one of each XML chunk.", id);
+        }
+    }
+
+    // BS.2088 section 9: ADM metadata is in the axml or the bxml chunk, and then the chna chunk must be present.
+    private static void NoteAdm(State s, Fields f, Node chunk, long length)
+    {
+        if (s.AdmNode is null && ContainsAdmRoot(f.Reader, length))
+        {
+            s.AdmNode = chunk;
+        }
+    }
+
+    private static bool ContainsAdmRoot(ByteReader body, long length)
+    {
+        ReadOnlySpan<byte> needle = "audioFormatExtended"u8;
+        long limit = Math.Min(length, MaxAdmScan);
+        const int Block = 1 << 16;
+        long start = body.Position;
+        long position = start;
+        long stop = position + limit;
+        byte[] previous = [];
+        while (position < stop)
+        {
+            int count = (int)Math.Min(Block, stop - position);
+            byte[] block = [.. previous, .. body.ReadBytesAt(position, count)];
+            if (block.AsSpan().IndexOf(needle) >= 0)
+            {
+                body.Position = start;
+                return true;
+            }
+
+            previous = block[^Math.Min(block.Length, needle.Length - 1)..];
+            position += count;
+        }
+
+        body.Position = start;
+        return false;
+    }
+
+    public static void Axml(State s, Fields f, Node chunk, long length)
+    {
+        CountXml(s, "axml", chunk);
+        if (length > 0)
+        {
+            NoteAdm(s, f, chunk, length);
+            f.Text("XML Text", length, Explain.XmlText, Topics.Bw64);
+        }
+    }
+
+    public static void Bxml(State s, Fields f, Node chunk, long length)
+    {
+        CountXml(s, "bxml", chunk);
+        ushort type = f.Word("Compression Method", Explain.XmlFormatType, v => NodeValue.Text(v switch { 0 => "0 (none)", 1 => "1 (gzip)", _ => v.ToString(CultureInfo.InvariantCulture) }), Topics.Bw64);
+        if (type == 0 && f.Remaining > 0)
+        {
+            NoteAdm(s, f, chunk, f.Remaining);
+        }
+
+        if (f.Remaining > 0)
+        {
+            f.Bytes(type == 0 ? "XML Text" : "Compressed XML", f.Remaining, type == 0 ? Explain.XmlText : Explain.BxmlData, Topics.Bw64);
+        }
+    }
+
+    public static void Sxml(State s, Fields f, Node chunk, long length)
+    {
+        CountXml(s, "sxml", chunk);
+        f.Word("Compression Method", Explain.XmlFormatType, v => NodeValue.Text(v switch { 0 => "0 (none)", 1 => "1 (gzip)", _ => v.ToString(CultureInfo.InvariantCulture) }), Topics.Bw64);
+        f.Dword("Table Size Low", Explain.SxmlTableSize, "bytes", Topics.Bw64);
+        f.Dword("Table Size High", Explain.SxmlTableSize, "bytes", Topics.Bw64);
+        f.Dword("Sub-Chunk Count", Explain.SxmlSubChunks, "sub-chunks", Topics.Bw64);
+        if (f.Remaining > 0)
+        {
+            f.Bytes("Sub-Chunks", f.Remaining, Explain.SxmlRest, Topics.Bw64);
         }
     }
 

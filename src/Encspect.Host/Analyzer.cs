@@ -129,6 +129,7 @@ public sealed class Analyzer
         ["wv"] = "WavPack",
         ["wave"] = "WAV",
         ["rf64"] = "WAV",
+        ["bw64"] = "WAV",
         ["aifc"] = "AIFF",
         ["aif"] = "AIFF",
         ["ape"] = "Monkey's Audio",

@@ -408,7 +408,7 @@ public class WavFixtureTests
     [Fact]
     public void NodesCoverTheirBytesAndTheChunksTileTheRiffChunk()
     {
-        foreach (string name in new[] { "wav/external-pcm-s16-stereo-bwf.wav", "wav/built-cue-labels.wav", "wav/built-info-list.wav", "wav/built-unknown-chunks.wav", "wav/external-pcm-s24-stereo-rf64.wav" })
+        foreach (string name in new[] { "wav/external-pcm-s16-stereo-bwf.wav", "wav/built-cue-labels.wav", "wav/built-info-list.wav", "wav/built-unknown-chunks.wav", "wav/external-pcm-s24-stereo-rf64.wav", "wav/built-bw64.wav", "wav/built-bw64-xml-chunks.wav" })
         {
             Node container = Fixtures.AnalyzeMpeg(name).Root.Children.Single();
             long position = container.Offset + 12;
@@ -422,4 +422,54 @@ public class WavFixtureTests
             Assert.Equal(container.End, position);
         }
     }
+
+    [Fact]
+    public void ABw64FileResolvesItsSizesFromTheDs64ChunkAndHasADummyValue()
+    {
+        const string name = "wav/built-bw64.wav";
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.Empty(report.Findings);
+        Assert.Equal("BW64", report.Root.Children.Single().Name);
+        Assert.Equal(uint.MaxValue, Field(name, "BW64/Chunk Size").Value?.AsInteger());
+        Assert.Equal(476, Field(name, "BW64/Data Size 64 Chunk/BW64 Size").Value?.AsInteger());
+        Assert.Equal(60, Field(name, "BW64/Data Size 64 Chunk/Data Size").Value?.AsInteger());
+        Assert.Equal(0, Field(name, "BW64/Data Size 64 Chunk/Dummy").Value?.AsInteger());
+        Assert.Equal(60, Field(name, "BW64/Data Chunk").Value?.AsInteger());
+        Assert.Equal(10, Assert.Single(report.Streams).Samples);
+    }
+
+    [Fact]
+    public void ABw64FilesChnaAndXmlChunksAreRead()
+    {
+        const string name = "wav/built-bw64.wav";
+        string chna = "BW64/Channel Allocation Chunk";
+        Assert.Equal(2, Field(name, $"{chna}/Track Count").Value?.AsInteger());
+        Assert.Equal("ATU_00000002", Text(name, $"{chna}/Track UIDs/Track UID 1/UID"));
+        Assert.Equal("AP_00010002", Text(name, $"{chna}/Track UIDs/Track UID 0/Pack Format Reference"));
+        Assert.Contains("audioFormatExtended", Text(name, "BW64/XML Chunk/XML Text"), StringComparison.Ordinal);
+        const string xml = "wav/built-bw64-xml-chunks.wav";
+        Assert.Equal("1 (gzip)", Text(xml, "BW64/Compressed XML Chunk/Compression Method"));
+        Assert.Equal(4, Field(xml, "BW64/Serial XML Chunk/Table Size Low").Value?.AsInteger());
+    }
+
+    [Fact]
+    public void ABw64DsTableGivesTheSizeOfAnotherChunk()
+    {
+        const string name = "wav/built-bw64-table.wav";
+        Assert.Empty(Fixtures.AnalyzeMpeg(name).Findings);
+        Assert.Equal("axml, 244 bytes", Text(name, "BW64/Data Size 64 Chunk/Table/Entry 0"));
+        Assert.Equal(244, Field(name, "BW64/XML Chunk").Value?.AsInteger());
+    }
+
+    [Fact]
+    public void UnusedChnaStructuresAreNoFindings()
+    {
+        Report report = Fixtures.AnalyzeMpeg("wav/built-bw64-unused-chna-entries.wav");
+        Assert.Empty(report.Findings);
+        Assert.Equal("unused", Text("wav/built-bw64-unused-chna-entries.wav", "BW64/Channel Allocation Chunk/Track UIDs/Track UID 5"));
+    }
+
+    [Fact]
+    public void AnAxmlChunkWithoutTheAudioDefinitionModelNeedsNoChnaChunk() =>
+        Assert.Empty(Fixtures.AnalyzeMpeg("wav/built-axml-without-adm.wav").Findings);
 }

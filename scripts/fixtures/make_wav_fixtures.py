@@ -248,11 +248,11 @@ real = audio(30)
 FMT = chunk("fmt ", fmt_body())
 
 
-def rf64(chunks, data_size=len(real), samples=30, table=(), header=0xFFFFFFFF, riff_delta=0, first=()):
-    """An RF64 file: the ds64 chunk (after the chunks of first), the chunks, and the sizes in the ds64 chunk that the layout gives."""
+def rf64(chunks, data_size=len(real), samples=30, table=(), header=0xFFFFFFFF, riff_delta=0, first=(), magic=b"RF64"):
+    """An RF64 file (BW64 with magic): the ds64 chunk (after the chunks of first), the chunks, and the sizes in the ds64 chunk that the layout gives."""
     probe = b"".join(first) + rf64_ds64(0, data_size, samples, table) + b"".join(chunks)
     size = 4 + len(probe)
-    return riff([*first, rf64_ds64(size + riff_delta, data_size, samples, table), *chunks], magic=b"RF64", size=header if header is not None else size)
+    return riff([*first, rf64_ds64(size + riff_delta, data_size, samples, table), *chunks], magic=magic, size=header if header is not None else size)
 
 
 fixture("built-rf64", rf64([FMT, chunk("data", real, size=0xFFFFFFFF)]))
@@ -269,6 +269,45 @@ fixture("built-rf64-ds64-too-short", riff([chunk("ds64", short_sizes), FMT, chun
 fixture("built-rf64-ds64-truncated", riff([chunk("ds64", short_sizes[:20]), FMT, chunk("data", real, size=0xFFFFFFFF)], magic=b"RF64", size=0xFFFFFFFF), ["wav.riff-size-placeholder", "wav.chunk-too-short", "wav.chunk-size-unresolved"])
 fixture("built-rf64-table-invalid-ids", rf64([FMT, chunk("data", real, size=0xFFFFFFFF)], table=[(b"\x01\x02\x03\x04", 77), (b"bext", 12)]))
 fixture("built-rf64-chunk-size-unresolved", rf64([FMT, chunk("bext", bext(0), size=0xFFFFFFFF), chunk("data", real)]), ["wav.chunk-size-unresolved", "wav.no-data-chunk"], stream=False)
+
+
+# BW64 (ITU-R BS.2088): the ds64 chunk with a dummy value in place of the sample count, chna and axml chunks.
+def bw64(chunks, data_size=None, table=(), header=0xFFFFFFFF, dummy=0, first=(), real_data=None):
+    return rf64(chunks, len(real_data if real_data is not None else BW_AUDIO) if data_size is None else data_size, dummy, table, header, 0, first, b"BW64")
+
+
+def chna_entry(index, uid=b"ATU_00000001", track=b"AT_00010001_01", pack=b"AP_00010002", pad=0):
+    return struct.pack("<H12s14s11sB", index, uid, track, pack, pad)
+
+
+def chna_body(tracks, uids, entries):
+    return struct.pack("<HH", tracks, uids) + b"".join(entries)
+
+
+ADM = b'<?xml version="1.0" encoding="UTF-8"?><ebuCoreMain xmlns="urn:ebu:metadata-schema:ebuCore_2015"><coreMetadata><format><audioFormatExtended><audioProgramme audioProgrammeID="APR_1001"/></audioFormatExtended></format></coreMetadata></ebuCoreMain>'
+BW_AUDIO = audio(10, 2, 24, 48000)
+BW_FMT = chunk("fmt ", fmt_body(bits=24, rate=48000))
+CHNA = chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01")]))
+BW_DATA = chunk("data", BW_AUDIO, size=0xFFFFFFFF)
+fixture("built-bw64", bw64([BW_FMT, CHNA, chunk("axml", ADM), BW_DATA]))
+fixture("built-bw64-explicit-sizes", bw64([BW_FMT, CHNA, chunk("axml", ADM), chunk("data", BW_AUDIO)]))
+fixture("built-bw64-table", bw64([BW_FMT, CHNA, chunk("axml", ADM, size=0xFFFFFFFF), BW_DATA], table=[(b"axml", len(ADM))]))
+fixture("built-bw64-unused-chna-entries", bw64([BW_FMT, chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01"), chna_entry(0, b"", b"", b"")] + [struct.pack("<H37sx", 0, b"")] * 29)), chunk("axml", ADM), BW_DATA]))
+fixture("built-bw64-without-ds64", riff([BW_FMT, CHNA, chunk("axml", ADM), chunk("data", BW_AUDIO)], magic=b"BW64", size=0xFFFFFFFF), ["wav.riff-size-placeholder", "wav.ds64-missing"])
+fixture("built-bw64-ds64-not-first", bw64([BW_FMT, CHNA, chunk("axml", ADM), BW_DATA], first=[chunk("JUNK", b"\0" * 8)]), ["wav.riff-size-placeholder", "wav.ds64-not-first"])
+fixture("built-bw64-size-not-placeholder", bw64([BW_FMT, CHNA, chunk("axml", ADM), chunk("data", BW_AUDIO)], header=None), ["wav.bw64-size-not-placeholder"])
+fixture("built-bw64-dummy-not-zero", bw64([BW_FMT, CHNA, chunk("axml", ADM), BW_DATA], dummy=30), ["wav.ds64-dummy-not-zero"])
+fixture("built-bw64-format-extra-data", bw64([chunk("fmt ", fmt_body(1, 2, 48000, 24, extra=b"\1\2")), CHNA, chunk("axml", ADM), BW_DATA]), ["wav.bw64-format-extra-data"])
+fixture("built-bw64-xml-chunks", bw64([BW_FMT, CHNA, chunk("bxml", struct.pack("<H", 1) + b"\x1f\x8b\x08\x00" + b"\0" * 12), chunk("sxml", struct.pack("<HIII", 0, 4, 0, 0)), BW_DATA]))
+fixture("built-chna-uid-count-mismatch", bw64([BW_FMT, chunk("chna", chna_body(2, 3, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01"), struct.pack("<H37sx", 0, b"")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-uid-count-mismatch"])
+fixture("built-chna-track-count-mismatch", bw64([BW_FMT, chunk("chna", chna_body(5, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-track-count-mismatch"])
+fixture("built-chna-unused-entry-not-zero", bw64([BW_FMT, chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01"), chna_entry(0)])), chunk("axml", ADM), BW_DATA]), ["wav.chna-unused-entry-not-zero"])
+fixture("built-chna-id-format", bw64([BW_FMT, chunk("chna", chna_body(2, 2, [chna_entry(1, b"UID_00000001"), chna_entry(2, b"ATU_00000002", b"AT_00010002_01")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-id-format"])
+fixture("built-chna-track-index-out-of-range", bw64([BW_FMT, chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(3, b"ATU_00000002", b"AT_00010002_01")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-track-index-out-of-range"])
+fixture("built-adm-without-chna", riff([*basic(), chunk("axml", ADM)]), ["wav.adm-without-chna"])
+fixture("built-adm-in-bxml-without-chna", riff([*basic(), chunk("bxml", struct.pack("<H", 0) + ADM)]), ["wav.adm-without-chna"])
+fixture("built-xml-chunk-repeated", bw64([BW_FMT, CHNA, chunk("axml", ADM), chunk("axml", b"<other/>"), BW_DATA]), ["wav.xml-chunk-repeated"])
+fixture("built-axml-without-adm", riff([*basic(), chunk("axml", b"<?xml version=\"1.0\"?><ebuCoreMain/>")]))
 
 
 def main():

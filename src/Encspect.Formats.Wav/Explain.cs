@@ -15,16 +15,18 @@ internal static class Explain
     public static string RiffChunk(string magic) => magic switch
     {
         "RIFX" => "The RIFX chunk that holds the whole file: the big-endian counterpart of RIFF, with the integers in Motorola byte order (RIFF specification, \"About the RIFF Tagged File Format\"). Its form type WAVE makes it a waveform audio file.",
+        "BW64" => "The BW64 chunk that holds the whole file: RIFF with 64-bit sizes, which the ds64 chunk gives, for audio programs with Audio Definition Model metadata (ITU-R BS.2088, section 3). Its form type WAVE makes it a waveform audio file.",
         "RF64" => "The RF64 chunk that holds the whole file: RIFF with 64-bit sizes, which the ds64 chunk gives (EBU Tech 3306-2009). Its form type WAVE makes it a waveform audio file.",
         _ => "The RIFF chunk that holds the whole file: a chunk ID, a size and a form type, followed by the chunks (RIFF specification, \"RIFF Forms\"). Its form type WAVE makes it a waveform audio file.",
     };
 
-    public const string RiffId = "The first four bytes of the file: RIFF for little-endian integers, RIFX for big-endian ones, RF64 for 64-bit sizes.";
+    public const string RiffId = "The first four bytes of the file: RIFF for little-endian integers, RIFX for big-endian ones, RF64 and BW64 for 64-bit sizes.";
     public const string RiffSize = "The size of the RIFF chunk's data in bytes: the form type and all the chunks, not the ID and this field. A writer that cannot go back leaves 0 or 0xFFFFFFFF.";
     public const string FormType = "The form type of the RIFF chunk. WAVE makes the file a waveform audio file (RIFF specification, \"Waveform Audio File Format\").";
     public const string ChunkId = "The ID of the chunk: four ASCII characters, padded on the right with blanks (RIFF specification, \"Chunks\").";
     public const string ChunkSize = "The size of the chunk's data in bytes, not counting the ID, this field or the pad byte (RIFF specification, \"Chunks\").";
     public const string ChunkSizeRf64 = "The size of the chunk's data in bytes. In an RF64 file 0xFFFFFFFF means the size is in the ds64 chunk (EBU Tech 3306-2009, section 3.4).";
+    public const string ChunkSizeBw64 = "The size of the chunk's data in bytes. In a BW64 file 0xFFFFFFFF means the size is in the ds64 chunk (ITU-R BS.2088, section 2.4); the BW64 chunk's own size is always 0xFFFFFFFF.";
     public const string PadByte = "A byte of zero after a chunk whose size is odd, which keeps every chunk at an even offset (RIFF specification, \"Chunks\").";
     public const string UnknownChunk = "A chunk the analyzer does not read. A reader skips the chunks it does not know (RIFF specification, \"Waveform Audio File Format\").";
 
@@ -79,6 +81,9 @@ internal static class Explain
     public const string StatBitrate = "The average bitrate of the data chunk: its bytes times 8 over the length of the audio.";
 
     public const string Ds64Chunk = "The ds64 chunk of an RF64 file: the 64-bit sizes of the RIFF chunk, of the data chunk and of the fact chunk's sample count, and the sizes of other large chunks. It comes first after the RF64 header (EBU Tech 3306-2009, section 3.4).";
+    public const string Ds64ChunkBw64 = "The ds64 chunk of a BW64 file: the 64-bit sizes of the BW64 chunk and of the data chunk, two dummy values, and the sizes of other large chunks. It comes first after the BW64 header (ITU-R BS.2088, section 4).";
+    public const string Ds64Bw64Size = "The size of the BW64 chunk in bytes, replacing the 32-bit size field of the header.";
+    public const string Ds64Dummy = "A dummy value, which a reader ignores and a writer sets to zero; it holds the sample count of the fact chunk in an RF64 file, and a BW64 file has no fact chunk to count (ITU-R BS.2088, section 4.2).";
     public const string Ds64RiffSize = "The size of the RF64 chunk in bytes, replacing the 32-bit size field of the header.";
     public const string Ds64DataSize = "The size of the data chunk in bytes, replacing its 32-bit size field.";
     public const string Ds64SampleCount = "The number of samples of each channel, replacing the sample length of the fact chunk.";
@@ -179,7 +184,14 @@ internal static class Explain
     public const string PadChunk = "A PAD chunk: filler, as JUNK is (multimedia update, \"PAD (Filler) Chunk\").";
     public const string Filler = "The filler bytes.";
     public const string Id3Chunk = "An ID3v2 tag stored in a chunk. The analyzer hands the chunk's data to the ID3v2 parser.";
-    public const string AxmlChunk = "The axml chunk: XML metadata, such as the Audio Definition Model (EBU Tech 3285 supplement 5).";
+    public const string AxmlChunk = "The axml chunk: XML metadata, such as the Audio Definition Model (EBU Tech 3285 supplement 5; ITU-R BS.2088, section 5).";
+    public const string BxmlChunk = "The bxml chunk: XML metadata compressed with the method its first field names, an alternative to the axml chunk (ITU-R BS.2088, section 6). The analyzer does not decompress it.";
+    public const string SxmlChunk = "The sxml chunk: XML metadata tied to stretches of the audio, such as the serial Audio Definition Model, in sub-chunks with a table of alignment points (ITU-R BS.2088, section 7). The analyzer reads its header, not its sub-chunks.";
+    public const string XmlFormatType = "The compression method of the XML text, fmtType: 0 for none, 1 for gzip (ITU-R BS.2088, sections 6.2 and 7.2).";
+    public const string SxmlTableSize = "The size of the table of sub-chunks, with the count that starts it, as a low and a high 32-bit part.";
+    public const string SxmlSubChunks = "The number of sub-chunks with XML data.";
+    public const string SxmlRest = "The sub-chunks and the table of alignment points, which the analyzer does not read.";
+    public const string BxmlData = "The compressed XML text, which the analyzer does not decompress.";
     public const string IxmlChunk = "The iXML chunk: XML metadata that location recorders and editors write. The analyzer shows its text.";
     public const string XmlText = "The XML text of the chunk, ended by zero bytes when the writer padded it.";
     public const string ChnaChunk = "The chna chunk: for each track of the audio, the IDs of its description in the Audio Definition Model (EBU Tech 3285 supplement 7).";
