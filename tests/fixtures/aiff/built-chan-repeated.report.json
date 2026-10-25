@@ -331,7 +331,7 @@
       {
         "severity": "Warning",
         "code": "aiff.chunk-repeated",
-        "message": "The FORM holds 2 CHAN chunks, but the specification allows one; the first is used.",
+        "message": "The FORM holds 2 CHAN chunks; no document defines the chunk for AIFF files, and the analyzer uses only the first.",
         "offset": 58,
         "length": 20,
         "path": [

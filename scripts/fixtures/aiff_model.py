@@ -45,13 +45,16 @@ CHAN_TAGS = {
     122: "L R Ls Rs C LFE", 125: "L R C LFE Ls Rs Cs", 126: "L R C LFE Ls Rs Lc Rc", 127: "C Lc Rc L R Ls Rs LFE", 128: "L R C LFE Ls Rs Rls Rrs",
     131: "L R Cs", 132: "L R Ls Rs", 133: "L R LFE", 136: "L R C LFE", 138: "L R Ls Rs LFE", 139: "L R Ls Rs C Cs", 141: "C L R Ls Rs Cs",
     142: "C L R Ls Rs Cs LFE", 143: "C L R Ls Rs Rls Rrs", 144: "C L R Ls Rs Rls Rrs Cs",
+    # Octagonal ends in the side pair ("side left, side right" in the specification's description), and WAVE_6_1 has the order of the WAVE channel mask.
+    111: "L R Ls Rs C Cs Lsd Rsd", 188: "L R C LFE Cs Ls Rs",
 }
 # The channel bitmap's bits (kCAFChannelBit_*) and the channel labels 1 to 18 (kCAFChannelLabel_*) name the same positions, in the WAVE terms the
 # specification gives in its comments ("WAVE: Back Left" for LeftSurround and so on); the rear surround labels 33 and 34 move the surround pair to the sides.
 POSITIONS = ["front left", "front right", "front center", "LFE", "back left", "back right", "front left of center", "front right of center", "back center",
              "side left", "side right", "top center", "top front left", "top front center", "top front right", "top back left", "top back center", "top back right"]
 ABBREVIATIONS = {"L": "front left", "R": "front right", "C": "front center", "LFE": "LFE", "Lfe": "LFE", "Ls": "back left", "Rs": "back right", "Cs": "back center",
-                 "Lc": "front left of center", "Rc": "front right of center", "Rls": "back left", "Rrs": "back right"}
+                 "Lc": "front left of center", "Rc": "front right of center", "Rls": "back left", "Rrs": "back right",
+                 "Lsd": "side left", "Rsd": "side right"}
 
 LAYOUTS = {1: ["front center"], 2: ["front left", "front right"], 3: ["front left", "front right", "front center"]}
 
@@ -179,7 +182,7 @@ def chan_layout(chan):
         return ["discrete"] * (tag & 0xFFFF)
     if tag >> 16 in CHAN_TAGS and len(CHAN_TAGS[tag >> 16].split()) == tag & 0xFFFF:
         channels = CHAN_TAGS[tag >> 16].split()
-        rear = "Rls" in channels
+        rear = "Rls" in channels or tag >> 16 == 188
         return [("side left" if rear else "back left") if ch == "Ls" else ("side right" if rear else "back right") if ch == "Rs" else ABBREVIATIONS[ch] for ch in channels]
     return None
 

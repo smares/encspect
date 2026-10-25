@@ -19,6 +19,9 @@ public static class CoreAudioLayouts
 
     public const uint UnknownLayout = 0xFFFF;
 
+    // kAudioChannelLayoutTag_WAVE_6_1, "L R C LFE Cs Ls Rs": the order of the WAVE channel mask, where the pair after the back center is the side pair.
+    private const uint Wave61 = 188;
+
     // Core Audio's layout tags (CoreAudioBaseTypes.h, AudioChannelLayoutTag) by their upper 16 bits,
     // with the channels in Apple's abbreviations, in order. Tags whose channels are not speakers
     // (Ambisonic B-format, mid/side) have discrete channels.
@@ -35,7 +38,7 @@ public static class CoreAudioLayouts
         [108] = ("Quadraphonic", "L R Ls Rs"),
         [109] = ("Pentagonal", "L R Ls Rs C"),
         [110] = ("Hexagonal", "L R Ls Rs C Cs"),
-        [111] = ("Octagonal", "L R Ls Rs C Cs Lw Rw"),
+        [111] = ("Octagonal", "L R Ls Rs C Cs Lsd Rsd"),
         [112] = ("Cube", "L R Rls Rrs Vhl Vhr Ltr Rtr"),
         [113] = ("MPEG_3_0_A", "L R C"),
         [114] = ("MPEG_3_0_B", "C L R"),
@@ -129,7 +132,7 @@ public static class CoreAudioLayouts
         UseChannelBitmap => FromBitmap(bitmap),
         _ when (tag >> 16) is DiscreteInOrder or UnknownLayout => ChannelLayouts.Discrete((int)(tag & 0xFFFF)),
         _ when LayoutTags.TryGetValue(tag >> 16, out (string Name, string Channels) known) && known.Channels.Split(' ').Length == (tag & 0xFFFF) =>
-            FromAbbreviations(known.Channels.Split(' ')),
+            FromAbbreviations(known.Channels.Split(' '), (tag >> 16) == Wave61),
         _ => null,
     };
 
@@ -143,10 +146,11 @@ public static class CoreAudioLayouts
     };
 
     // Ls and Rs are the back pair, unless the layout also has the rear pair Rls and Rrs, which
-    // makes them the side pair. Lt and Rt, a matrix-encoded stereo mix, play on the front pair.
-    public static IReadOnlyList<Speaker> FromAbbreviations(string[] channels)
+    // makes them the side pair, or the layout is the WAVE one that names them in the order of the WAVE mask after the back center
+    // (areSurroundsSide). Lt and Rt, a matrix-encoded stereo mix, play on the front pair.
+    public static IReadOnlyList<Speaker> FromAbbreviations(string[] channels, bool areSurroundsSide = false)
     {
-        bool hasRear = channels.Contains("Rls");
+        bool hasRear = areSurroundsSide || channels.Contains("Rls");
         return [.. channels.Select(c => c switch
         {
             "L" or "Lt" => Speaker.FrontLeft,

@@ -160,7 +160,9 @@ internal static class Walker
             s.Counts[id] = s.Counts.GetValueOrDefault(id) + 1;
             if (Single.Contains(id) && s.Counts[id] > 1)
             {
-                s.Findings.Add(Severity.Warning, "aiff.chunk-repeated", chunk, n => $"The FORM holds {n + 1} {id.TrimEnd()} chunks, but the specification allows one; the first is used.", id);
+                s.Findings.Add(Severity.Warning, "aiff.chunk-repeated", chunk, n => id == "CHAN"
+                    ? $"The FORM holds {n + 1} CHAN chunks; no document defines the chunk for AIFF files, and the analyzer uses only the first."
+                    : $"The FORM holds {n + 1} {id.TrimEnd()} chunks, but the specification allows one; the first is used.", id);
             }
 
             if (isPlaceholder)

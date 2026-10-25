@@ -156,7 +156,7 @@ fixture("built-chunk-limit", form([chunk("COMM", comm(2, 10, 16, 44100)), *[chun
 
 
 # The Channel Layout chunk (CHAN): Core Audio's AudioChannelLayout, as the Core Audio Format Specification gives it for CAF files (layout tag, channel
-# bitmap, channel descriptions), here in AIFF files as Apple's tools and FFmpeg's muxer write it.
+# bitmap, channel descriptions), here in AIFF files as FFmpeg's muxer writes it.
 def chan(tag, bitmap=0, labels=(), count=None, coordinates=None, extra=b""):
     body = struct.pack(">III", tag, bitmap, len(labels) if count is None else count)
     for i, label in enumerate(labels):
@@ -179,6 +179,8 @@ fixture("built-chan-layout-tag-5-1", with_chan(6, chan(tag(121, 6))))
 fixture("built-chan-layout-tag-center-first", with_chan(3, chan(tag(114, 3))))
 fixture("built-chan-layout-tag-7-1", with_chan(8, chan(tag(128, 8))))
 fixture("built-chan-layout-tag-quadraphonic", with_chan(4, chan(tag(132, 4))))
+fixture("built-chan-layout-tag-octagonal", with_chan(8, chan(tag(111, 8))))
+fixture("built-chan-layout-tag-wave-6-1", with_chan(7, chan(tag(188, 7))))
 fixture("built-chan-layout-tag-aifc", with_chan(6, chan(tag(121, 6)), kind="NONE"), extension="aifc")
 fixture("built-chan-channel-bitmap", with_chan(6, chan(0x10000, 0x3F)))
 fixture("built-chan-channel-bitmap-sides", with_chan(6, chan(0x10000, 0x60F)))

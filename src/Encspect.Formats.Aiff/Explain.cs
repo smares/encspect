@@ -83,7 +83,7 @@ internal static class Explain
     public const string AesdData = "The AES channel status data, AESChannelStatusData.";
     public const string MidiChunk = "The MIDI Data Chunk: a stream of MIDI data, mainly system exclusive messages of instruments (AIFF-C, section 10.0).";
     public const string MidiData = "The MIDI data.";
-    public const string ChanChunk = "The Channel Layout Chunk: which speaker each channel feeds, as Core Audio's AudioChannelLayout states it. It is not part of the AIFF specifications; Apple's tools and FFmpeg write it.";
+    public const string ChanChunk = "The Channel Layout Chunk: which speaker each channel feeds, as Core Audio's AudioChannelLayout states it. It is not part of the AIFF specifications; FFmpeg's muxer writes it.";
     public const string ChanLayoutTag = "The layout tag, mChannelLayoutTag: a number that names an arrangement of channels (the high 16 bits) and counts them (the low 16 bits), or says that the bitmap or the descriptions give the layout (Core Audio Format Specification, \"Channel Layout Tags\").";
     public const string ChanBitmap = "The channel bitmap, mChannelBitmap: one bit for each channel present, in the order of the WAVE channel mask; read when the tag says so (Core Audio Format Specification, \"Channel Bitmaps\").";
     public const string ChanDescriptionCount = "The number of channel descriptions, mNumberChannelDescriptions; they follow, and the count must equal the channels when the tag says to use them.";
