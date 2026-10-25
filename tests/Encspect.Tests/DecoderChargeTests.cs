@@ -185,12 +185,12 @@ public class DecoderChargeTests
     public void MonkeysAudioChargesTheFixedWorkOfASampleAndTheRangeDecoderThePredictorAndATapForEachCodedChannel(string fixture, int bytes, int channels, int taps)
     {
         // The frames of 24,000 samples of the fixture, charged by chunks of 4,096 samples, each sample for the width of its bytes in each channel and, in
-        // each channel, 192 for the range decoder, 48 for the predictor and a unit for every two taps.
+        // each channel, 192 for the range decoder, 48 for the predictor and a unit for every two taps (three for every four at 32 bits).
         byte[] file = DecoderWorkTests.MonkeysAudioCases.Repeated(fixture, 1L << 24);
 
         long units = DecoderWorkTests.MonkeysAudioCases.Units(file);
 
-        long perSample = (DecodeWork.ForSample(bytes) * channels) + (channels * (MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + ((taps + 1) / 2)));
+        long perSample = (DecodeWork.ForSample(bytes) * channels) + (channels * (MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + MonkeysAudioFrameDecoder.TapUnits(bytes * 8, taps)));
         Assert.Equal(0, units % (24000 * perSample));
         Assert.Equal(MonkeysAudioFrames(file) * 24000 * perSample, units);
     }

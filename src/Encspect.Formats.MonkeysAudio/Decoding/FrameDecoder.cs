@@ -72,9 +72,14 @@ internal sealed class FrameDecoder : IFrameDecoder
         _values = new int[_channels];
         _samples = new int[_channels * Chunk];
         _pcm = new byte[_channels * Chunk * (_bits / 8)];
-        _taps = (Levels.Taps(header.CompressionLevel) + 1) / 2;
+        _taps = TapUnits(_bits, Levels.Taps(header.CompressionLevel));
         CreatePredictors();
     }
+
+    // The units of the neural network filters for a sample of a channel: a unit for every two taps over 16-bit history, which runs in vector registers
+    // of twice the lanes, and three for every four over the 32-bit history of 32-bit samples (measured, docs/design/decoders.md, "As built: the second
+    // speed pass").
+    internal static long TapUnits(int bitsPerSample, int taps) => bitsPerSample == 32 ? taps * 3 / 4 : (taps + 1) / 2;
 
     private void CreatePredictors()
     {
