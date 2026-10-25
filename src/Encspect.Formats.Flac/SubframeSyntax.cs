@@ -439,67 +439,49 @@ internal static class SubframeSyntax
                 minimum = Math.Min(minimum, parameter);
                 maximum = Math.Max(maximum, parameter);
                 uint limit = uint.MaxValue >> parameter;
-                int fast = isWide ? 0 : bits.ReadRice(parameter, count, store ? narrow.Slice(at, count) : default, ref facts.HasMinimumResidual);
-                if (!store)
+                // The fast path takes the values the bit buffer holds whole; each value it stops at (one that needs the end of the data, an
+                // unusually long quotient, an overflow) is read here, one at a time with the checks that name the fault, and the fast path
+                // goes on after it. Subframes of the side channel of 32-bit streams (isWide) are rare and store 64-bit values, which the fast
+                // path does not: they read every value here.
+                int i = 0;
+                while (true)
                 {
-                    for (int i = fast; i < count; i++)
+                    if (!isWide)
                     {
-                        int quotient = bits.CountZeros(int.MaxValue);
-                        if (bits.IsOverrun)
-                        {
-                            return SubframeFault.Overrun;
-                        }
+                        i += bits.ReadRice(parameter, count - i, store ? narrow.Slice(at + i, count - i) : default, ref facts.HasMinimumResidual);
+                    }
 
-                        if ((uint)quotient > limit)
-                        {
-                            return SubframeFault.ResidualOverflow;
-                        }
+                    if (i >= count)
+                    {
+                        break;
+                    }
 
-                        if (((uint)quotient << parameter | bits.Read(parameter)) == uint.MaxValue)
+                    int quotient = bits.CountZeros(int.MaxValue);
+                    if (bits.IsOverrun)
+                    {
+                        return SubframeFault.Overrun;
+                    }
+
+                    if ((uint)quotient > limit)
+                    {
+                        return SubframeFault.ResidualOverflow;
+                    }
+
+                    uint folded = ((uint)quotient << parameter) | bits.Read(parameter);
+                    facts.HasMinimumResidual |= folded == uint.MaxValue;
+                    if (store)
+                    {
+                        if (isWide)
                         {
-                            facts.HasMinimumResidual = true;
+                            wide[at + i] = (int)(folded >> 1) ^ -(int)(folded & 1);
+                        }
+                        else
+                        {
+                            narrow[at + i] = (int)(folded >> 1) ^ -(int)(folded & 1);
                         }
                     }
-                }
-                else if (isWide)
-                {
-                    for (int i = fast; i < count; i++)
-                    {
-                        int quotient = bits.CountZeros(int.MaxValue);
-                        if (bits.IsOverrun)
-                        {
-                            return SubframeFault.Overrun;
-                        }
 
-                        if ((uint)quotient > limit)
-                        {
-                            return SubframeFault.ResidualOverflow;
-                        }
-
-                        uint folded = ((uint)quotient << parameter) | bits.Read(parameter);
-                        facts.HasMinimumResidual |= folded == uint.MaxValue;
-                        wide[at + i] = (int)(folded >> 1) ^ -(int)(folded & 1);
-                    }
-                }
-                else
-                {
-                    for (int i = fast; i < count; i++)
-                    {
-                        int quotient = bits.CountZeros(int.MaxValue);
-                        if (bits.IsOverrun)
-                        {
-                            return SubframeFault.Overrun;
-                        }
-
-                        if ((uint)quotient > limit)
-                        {
-                            return SubframeFault.ResidualOverflow;
-                        }
-
-                        uint folded = ((uint)quotient << parameter) | bits.Read(parameter);
-                        facts.HasMinimumResidual |= folded == uint.MaxValue;
-                        narrow[at + i] = (int)(folded >> 1) ^ -(int)(folded & 1);
-                    }
+                    i++;
                 }
             }
 

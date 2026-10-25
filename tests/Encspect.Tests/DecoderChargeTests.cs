@@ -217,6 +217,28 @@ public class DecoderChargeTests
         Assert.Equal(MonkeysAudioFrames(file) * 24000 * perSample, units);
     }
 
+    // The most a legitimate frame can charge for a byte of coded data: every coded value is the cheapest symbol of the range coder, whose model
+    // gives its largest symbol 19,578 of 65,536 (RangeDecoder.RangeWidth), 1.743 bits, and a pseudo-stereo frame codes one channel and charges
+    // the fixed work of two. The 32-bit insane case (1,426 units a coded sample, 6,556 a byte; pseudo-stereo 1,448 and 6,657) has 20% of the
+    // allowance to spare; a value of 1.4 bits, which the model cannot code, would take 8,148 and 8,274.
+    [Theory]
+    [InlineData(1, 8, 1, 1)]
+    [InlineData(2, 16, 2, 2)]
+    [InlineData(3, 24, 2, 2)]
+    [InlineData(4, 32, 2, 2)]
+    [InlineData(4, 32, 2, 1)]
+    [InlineData(3, 24, 2, 1)]
+    [InlineData(4, 32, 1, 1)]
+    [InlineData(4, 32, 8, 8)]
+    public void TheInsaneLevelStaysUnderTheDefaultAllowanceForTheCheapestSymbolAtEveryWidthAndLayout(int bytes, int bits, int channels, int codedChannels)
+    {
+        long taps = MonkeysAudioFrameDecoder.TapUnits(bits, 1280 + 256 + 16);
+        double unitsPerSample = (DecodeWork.ForSample(bytes) * channels) + (codedChannels * (MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + taps));
+        double bytesPerSample = codedChannels * (-Math.Log2(19578.0 / 65536) / 8);
+
+        Assert.True(unitsPerSample / bytesPerSample < MonkeysAudioDecoder.PerInputByte, $"{unitsPerSample / bytesPerSample:F0} units a byte against {MonkeysAudioDecoder.PerInputByte}.");
+    }
+
     [Fact]
     public void AnInsaneFileOfTheCheapestSymbolStaysUnderTheDefaultAllowanceForItsBytes()
     {

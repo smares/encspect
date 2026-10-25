@@ -1,11 +1,12 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Encspect.Core;
 
 // Reads bits most significant first from a span through a 64-bit bit buffer that is refilled a word at a time, without allocating. Past
-// the end it reads zero bits and sets IsOverrun, as BitReader does. LsbBitCursor has the same members for least significant first
+// the end it reads zero bits and sets IsOverrun, as BitReader does. LsbBitCursor has the same readers for least significant first
 // (TTA, WavPack). A cursor is for loops over every coded bit; BitReader is the class for header fields. Positions count bits in
 // an int, so a span is at most 256 MiB: a parser bounds the unit it hands a cursor (a frame, a block) before it does.
 public ref struct BitCursor
@@ -158,9 +159,11 @@ public ref struct BitCursor
     }
 
     // Reads Rice-coded values (a unary quotient of zero bits ended by a one bit, then parameter bits) while the buffer holds a whole
-    // code that lies in real data, keeping the state in locals for the loop. A value is folded: the sign is its lowest bit, as in
-    // FLAC's residual (RFC 9639, section 9.2.7.1). It stops, consuming nothing of the value it stops at, before a code that
-    // needs the end of the data or a quotient above what a 32-bit value holds; the caller reads the rest one value at a time.
+    // code, keeping the state in locals for the loop. The buffer is filled only from a whole word of the data, so the codes it reads
+    // lie in the data and none of them sets IsOverrun. A value is folded: the sign is its lowest bit, as in FLAC's residual (RFC 9639,
+    // section 9.2.7.1). It stops, consuming nothing of the value it stops at, before a code it cannot complete from whole words of
+    // the data (those within eight bytes of the end) or a quotient above what a 32-bit value holds;
+    // the caller reads the rest one value at a time, where the parameter bits past the end read as zeros and set IsOverrun as Read does.
     // Returns how many values it read. With a destination, value i is stored unfolded to a signed number; hasMinimum is set
     // when a value is 0xFFFFFFFF, which cannot be negated in 32 bits.
     // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
@@ -208,7 +211,7 @@ public ref struct BitCursor
             }
 
             // The parameter bits follow the one bit that ended the quotient; the extra shift by one keeps a parameter of 0 from shifting by 64.
-            ulong rest = cache << (zeros + 1);
+            ulong rest = (cache << zeros) << 1;
             uint folded = ((uint)zeros << parameter) | (uint)((rest >> 1) >> (63 - parameter));
             cache = rest << parameter;
             bits -= zeros + 1 + parameter;
@@ -228,19 +231,19 @@ public ref struct BitCursor
         return done;
     }
 
-    // For a loop that keeps the buffer in local variables: the data and the state of the cursor, in the form Refill and the readers above
-    // leave it. Attach puts back what the loop leaves; nothing else may read the cursor in between.
-    public readonly ReadOnlySpan<byte> Data => _data;
-
-    public readonly void Detach(out ulong cache, out int cacheBits, out long nextByte)
+    // For a loop that keeps the buffer in local variables: the state of the cursor, in the form Refill and the readers above leave it.
+    // Attach puts back what the loop leaves: at most 64 valid bits, with zeros or the bytes that follow below them. Nothing else may read
+    // the cursor in between. Internal to the parsers the project file names.
+    internal readonly void Detach(out ulong cache, out int cacheBits, out long nextByte)
     {
         cache = _cache;
         cacheBits = _cacheBits;
         nextByte = _nextByte;
     }
 
-    public void Attach(ulong cache, int cacheBits, long nextByte)
+    internal void Attach(ulong cache, int cacheBits, long nextByte)
     {
+        Debug.Assert(cacheBits is >= 0 and <= 64 && nextByte >= 0, "The cursor's buffer holds 0 to 64 bits.");
         _cache = cache;
         _cacheBits = cacheBits;
         _nextByte = nextByte;

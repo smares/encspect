@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.TrueHd;
@@ -48,6 +50,14 @@ internal ref struct SubstreamReader
     public const int MetaPlane = 16;
     public const int PlanesPerSubstream = 17;
     public const int MaxBypassPlanes = 8;
+
+    // For each codebook 1 to 3 (index 0 is unused), what the first nine bits of a codeword say: the length in the high byte and the index in
+    // the low one, built by running the reader that names the faults on every nine bits, or 0 for a codeword it rejects.
+    private static readonly ushort[][] Codewords = BuildCodewords();
+
+    // Reads every block's samples one at a time, for the test that compares the table with it.
+    [ThreadStatic]
+    internal static bool IsFastPathOff;
 
     private BitCursor _bits;
     private readonly ReadOnlySpan<byte> _data;
@@ -614,7 +624,7 @@ internal ref struct SubstreamReader
 
         bool store = !_planes.IsEmpty;
         int position = Samples;
-        int start = ReadBlockDataFast(size, position, first, coded, store, raw, books, offsets, steps, bypass[..bypassCount]);
+        int start = IsFastPathOff ? 0 : ReadBlockDataFast(size, position, first, coded, store, raw, books, offsets, steps, bypass[..bypassCount]);
         for (int i = start; i < size; i++)
         {
             for (int b = 0; b < bypassCount; b++)
@@ -700,7 +710,7 @@ internal ref struct SubstreamReader
         return Check();
     }
 
-    // The samples of the block that start more than a sample's bits (at most 42 a channel) and 24 bytes before the end of the data, read
+    // The samples of the block that start more than a sample's bits (at most 33 bits a channel: a codeword of 9 and 24 raw bits) and 24 bytes before the end of the data, read
     // with the bit buffer in local variables: every refill is then a whole word of real data and a sample cannot end past the data, so
     // nothing looks for an overrun. It stops, with the cursor before the sample it stops at, at the first sample it cannot read with certainty:
     // a codeword that is invalid or whose raw bits are more than 24, which the caller reads again with the checks that name the fault.
@@ -718,7 +728,7 @@ internal ref struct SubstreamReader
 
         ReadOnlySpan<byte> data = _data;
         _bits.Detach(out ulong cache, out int bits, out long next);
-        long last = data.Length - (((((long)coded * 42) + bypass.Length) >> 3) + 24);
+        long last = data.Length - (((((long)coded * 33) + bypass.Length + 7) >> 3) + 24);
         Span<int> planes = _planes;
         int stride = _stride;
         int i = 0;
@@ -805,12 +815,12 @@ internal ref struct SubstreamReader
         return i;
     }
 
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Ensure(ReadOnlySpan<byte> data, ref ulong cache, ref int bits, ref long next)
     {
         if (bits < 40)
         {
-            cache |= System.Buffers.Binary.BinaryPrimitives.ReadUInt64BigEndian(data.Slice((int)next)) >> bits;
+            cache |= BinaryPrimitives.ReadUInt64BigEndian(data.Slice((int)next)) >> bits;
             int bytes = (63 - bits) >> 3;
             next += bytes;
             bits += bytes * 8;
@@ -818,7 +828,7 @@ internal ref struct SubstreamReader
     }
 
     // 1 to 32 bits that Ensure has put in the buffer.
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint Take(ref ulong cache, ref int bits, int count)
     {
         uint value = (uint)(cache >> (64 - count));
@@ -827,16 +837,12 @@ internal ref struct SubstreamReader
         return value;
     }
 
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Skip(ref ulong cache, ref int bits, int count)
     {
         cache <<= count;
         bits -= count;
     }
-
-    // For each codebook 1 to 3 (index 0 is unused), what the first nine bits of a codeword say: the length in the high byte and the index in
-    // the low one, built by running the reader that names the faults on every nine bits, or 0 for a codeword it rejects.
-    private static readonly ushort[][] Codewords = BuildCodewords();
 
     private static ushort[][] BuildCodewords()
     {

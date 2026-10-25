@@ -2,4 +2,8 @@
   <PropertyGroup>
     <RootNamespace>Encspect.Core</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- The cursor's buffer in local variables (BitCursor.Detach and Attach). -->
+    <InternalsVisibleTo Include="Encspect.Formats.TrueHd" />
+  </ItemGroup>
 </Project>

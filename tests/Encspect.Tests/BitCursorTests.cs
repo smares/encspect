@@ -491,55 +491,133 @@ public class BitCursorTests
         Assert.Equal(expected, isLsb ? lsb.Read(count) : msb.Read(count));
     }
 
-    // ReadRice reads the values it can take from the buffer and leaves the rest where the one-at-a-time reading finds them: the cursor
-    // ends where reading the same number of values with CountZeros and Read would end it, at every length, parameter and end of data.
-    [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(5)]
-    [InlineData(9)]
-    [InlineData(17)]
-    [InlineData(31)]
-    public void ReadRiceReadsLikeCountZerosAndRead(int parameter)
+    // ReadRice reads the values the buffer holds whole and stops before the rest: after it, the cursor is where reading the same number of
+    // values with CountZeros and Read would leave it, with the same position, bits left and overrun state, and the values and the flag for
+    // 0xFFFFFFFF are the ones that reading gives. The cursor starts from a random prefix of the other readers, so ReadRice is entered with the
+    // buffer in any state: empty, full, refilled byte by byte near the end, already past the end. The data are random, with long runs of
+    // zeros, with runs of exactly 63 and 64 zeros before a one, and cut inside a code; the parameters include 0, 14 and 30 (the largest
+    // FLAC has with its 5-bit escape of 31), and 31.
+    [Fact]
+    public void ReadRiceLeavesTheCursorWhereReadingTheSameValuesOneAtATimeDoes()
     {
-        for (int length = 0; length <= 80; length++)
+        var rng = new Random(12345);
+        long fastValues = 0;
+        for (int iteration = 0; iteration < 60000; iteration++)
         {
-            for (int seed = 0; seed < 4; seed++)
+            byte[] data = RiceData(rng);
+            int parameter = rng.Next(3) == 0 ? rng.Next(0, 32) : rng.Next(5) switch { 0 => 0, 1 => 14, 2 => 30, _ => rng.Next(0, 15) };
+            int count = rng.Next(0, 60);
+            var fast = new BitCursor(data);
+            var slow = new BitCursor(data);
+            int operations = rng.Next(0, 6);
+            for (int o = 0; o < operations; o++)
             {
-                byte[] data = RandomBytes((length * 7) + seed, length);
-                if (seed == 3)
+                int n = rng.Next(0, 33);
+                switch (rng.Next(5))
                 {
-                    // Short quotients and the occasional long run, as residuals have them.
-                    for (int i = 0; i < data.Length; i++)
-                    {
-                        data[i] |= (byte)(i % 3 == 0 ? 0x10 : 0);
-                    }
+                    case 0:
+                        Assert.Equal(slow.Read(n), fast.Read(n));
+                        break;
+                    case 1:
+                        Assert.Equal(slow.ReadBit(), fast.ReadBit());
+                        break;
+                    case 2:
+                        Assert.Equal(slow.CountZeros(n), fast.CountZeros(n));
+                        break;
+                    case 3:
+                        fast.Skip(n);
+                        slow.Skip(n);
+                        break;
+                    default:
+                        fast.AlignToByte();
+                        slow.AlignToByte();
+                        break;
                 }
+            }
 
-                var fast = new BitCursor(data);
-                var slow = new BitCursor(data);
-                int[] stored = new int[40];
-                bool minimum = false;
-                int read = fast.ReadRice(parameter, stored.Length, stored, ref minimum);
-                Assert.InRange(read, 0, stored.Length);
-                bool expectedMinimum = false;
-                uint limit = uint.MaxValue >> parameter;
-                for (int i = 0; i < read; i++)
+            bool store = rng.Next(2) == 0;
+            int[] stored = new int[count];
+            bool minimum = false;
+            int read = fast.ReadRice(parameter, count, store ? stored : default, ref minimum);
+            fastValues += read;
+            Assert.InRange(read, 0, count);
+            uint limit = uint.MaxValue >> parameter;
+            bool expectedMinimum = false;
+            for (int i = 0; i < read; i++)
+            {
+                int quotient = slow.CountZeros(int.MaxValue);
+                Assert.True((uint)quotient <= limit);
+                uint folded = ((uint)quotient << parameter) | slow.Read(parameter);
+                expectedMinimum |= folded == uint.MaxValue;
+                if (store)
                 {
-                    int quotient = slow.CountZeros(int.MaxValue);
-                    Assert.False(slow.IsOverrun);
-                    Assert.True((uint)quotient <= limit);
-                    uint folded = ((uint)quotient << parameter) | slow.Read(parameter);
-                    expectedMinimum |= folded == uint.MaxValue;
                     Assert.Equal((int)(folded >> 1) ^ -(int)(folded & 1), stored[i]);
                 }
+            }
 
-                Assert.Equal(expectedMinimum, minimum);
+            Assert.Equal(expectedMinimum, minimum);
+            Assert.Equal(slow.Position, fast.Position);
+            Assert.Equal(slow.IsOverrun, fast.IsOverrun);
+            Assert.Equal(slow.BitsLeft, fast.BitsLeft);
+
+            // The rest one value at a time on both, as the residual walk does, then plain reads.
+            for (int i = read; i < count; i++)
+            {
+                int quotientFast = fast.CountZeros(int.MaxValue);
+                int quotientSlow = slow.CountZeros(int.MaxValue);
+                Assert.Equal(quotientSlow, quotientFast);
+                Assert.Equal(slow.IsOverrun, fast.IsOverrun);
+                if (fast.IsOverrun || (uint)quotientFast > limit)
+                {
+                    break;
+                }
+
+                Assert.Equal(slow.Read(parameter), fast.Read(parameter));
+            }
+
+            for (int t = 0; t < 4; t++)
+            {
+                int n = rng.Next(0, 33);
+                Assert.Equal(slow.Read(n), fast.Read(n));
                 Assert.Equal(slow.Position, fast.Position);
-                Assert.False(fast.IsOverrun);
-                Assert.Equal(slow.Read(7), fast.Read(7));
             }
         }
+
+        Assert.True(fastValues > 100000);
+    }
+
+    private static byte[] RiceData(Random rng)
+    {
+        int length = rng.Next(0, 90);
+        byte[] data = new byte[length];
+        int style = rng.Next(8);
+        for (int i = 0; i < length; i++)
+        {
+            data[i] = style switch
+            {
+                0 => (byte)rng.Next(256),
+                1 => (byte)(rng.Next(8) == 0 ? rng.Next(256) : 0),
+                2 => (byte)(rng.Next(256) | 0x11),
+                3 => 0xFF,
+                4 => (byte)(1 << rng.Next(8)),
+                _ => (byte)(rng.Next(3) == 0 ? 0 : rng.Next(256)),
+            };
+        }
+
+        if (style >= 6 && length >= 12)
+        {
+            // A run of 63 or 64 zeros (a quotient the 64-bit buffer holds whole only just, or not at all) ended by a one bit, at a random bit.
+            int zeros = rng.Next(2) == 0 ? 63 : 64;
+            int start = rng.Next(0, Math.Min(8, length * 8 - zeros - 2));
+            Array.Clear(data, start / 8, Math.Min(length - (start / 8), (zeros + 7) / 8 + 1));
+            int one = start + zeros;
+            if (one / 8 < length)
+            {
+                data[one / 8] |= (byte)(0x80 >> (one % 8));
+            }
+        }
+
+        return data;
     }
 
     [Fact]

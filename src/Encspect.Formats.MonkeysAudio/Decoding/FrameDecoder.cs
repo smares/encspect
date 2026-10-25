@@ -12,7 +12,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     internal const int Chunk = 4096;
 
     // Units a sample of one coded channel costs besides its fixed work: the range decoder, and the predictor's stages (docs/design/decoders.md,
-    // "As built: Monkey's Audio"). The neural network filters cost a unit for every two taps: they run in vector registers.
+    // "As built: Monkey's Audio"). The neural network filters cost a unit for every two taps (three for every four at 32 bits, see TapUnits): they run in vector registers.
     internal const long RangeUnits = 192;
     internal const long PredictorUnits = 48;
 
