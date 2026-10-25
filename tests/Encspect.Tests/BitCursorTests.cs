@@ -332,7 +332,7 @@ public class BitCursorTests
                         case 3:
                         case 4:
                             bool ones = random.Next(2) == 0;
-                            int limit = random.Next(0, 80);
+                            int limit = random.Next(8) == 0 ? int.MaxValue : random.Next(0, 140);
                             int total = 0;
                             while (total < limit)
                             {
@@ -386,6 +386,109 @@ public class BitCursorTests
                 }
             }
         }
+    }
+
+    // A run of 63 or 64 equal bits ends exactly at, or just short of, the end of the buffer when the last bytes are loaded one at a time:
+    // the counts, the data after the run and the zeros past the end must still match a model that reads one bit at a time.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RunsOf63And64BitsNearTheEndAgreeWithABitByBitModel(bool isLsb)
+    {
+        for (int length = 1; length <= 24; length++)
+        {
+            int bits = length * 8;
+            foreach (bool runBit in new[] { false, true })
+            {
+                foreach (int run in new[] { 31, 32, 33, 62, 63, 64, 65 })
+                {
+                    for (int start = 0; start + run <= bits + 2; start++)
+                    {
+                        foreach (int chunk in new[] { 1, 7, 8, 13, 16, 24, 32 })
+                        {
+                            var random = new Random(length * 1000 + start);
+                            bool[] model = new bool[bits];
+                            for (int i = 0; i < bits; i++)
+                            {
+                                model[i] = random.Next(2) == 0;
+                            }
+
+                            for (int i = start; i < Math.Min(bits, start + run); i++)
+                            {
+                                model[i] = runBit;
+                            }
+
+                            if (start + run < bits)
+                            {
+                                model[start + run] = !runBit;
+                            }
+
+                            byte[] data = new byte[length];
+                            for (int i = 0; i < bits; i++)
+                            {
+                                if (model[i])
+                                {
+                                    data[i >> 3] |= (byte)(isLsb ? 1 << (i & 7) : 0x80 >> (i & 7));
+                                }
+                            }
+
+                            RunScenario(data, model, isLsb, runBit, start, chunk);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static void RunScenario(byte[] data, bool[] model, bool isLsb, bool countOnes, int start, int chunk)
+    {
+        var msb = new BitCursor(data);
+        var lsb = new LsbBitCursor(data);
+        long position = 0;
+        bool Bit(long at) => at < model.Length && model[at];
+
+        while (position < start)
+        {
+            ReadAndCheck(ref msb, ref lsb, isLsb, model, ref position, (int)Math.Min(chunk, start - position));
+        }
+
+        int total = 0;
+        while (true)
+        {
+            if (position >= model.Length)
+            {
+                position = Math.Max(position, model.Length + 1L);
+                break;
+            }
+
+            if (Bit(position++) != countOnes)
+            {
+                break;
+            }
+
+            total++;
+        }
+
+        int actual = isLsb ? (countOnes ? lsb.CountOnes(int.MaxValue) : lsb.CountZeros(int.MaxValue)) : (countOnes ? msb.CountOnes(int.MaxValue) : msb.CountZeros(int.MaxValue));
+        Assert.Equal(total, actual);
+        Assert.Equal((int)position, isLsb ? lsb.Position : msb.Position);
+        for (int i = 0; i < 4; i++)
+        {
+            ReadAndCheck(ref msb, ref lsb, isLsb, model, ref position, 32);
+        }
+    }
+
+    private static void ReadAndCheck(ref BitCursor msb, ref LsbBitCursor lsb, bool isLsb, bool[] model, ref long position, int count)
+    {
+        uint expected = 0;
+        for (int i = 0; i < count; i++)
+        {
+            bool bit = position + i < model.Length && model[position + i];
+            expected = isLsb ? expected | ((bit ? 1u : 0u) << i) : (expected << 1) | (bit ? 1u : 0u);
+        }
+
+        position += count;
+        Assert.Equal(expected, isLsb ? lsb.Read(count) : msb.Read(count));
     }
 
     [Fact]

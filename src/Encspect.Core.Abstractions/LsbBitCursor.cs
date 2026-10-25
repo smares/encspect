@@ -115,7 +115,8 @@ public ref struct LsbBitCursor
             int zeros = BitOperations.TrailingZeroCount(_cache);
             if (zeros < _cacheBits && zeros < limit)
             {
-                _cache >>= zeros + 1;
+                _cache >>= zeros;
+                _cache >>= 1;
                 _cacheBits -= zeros + 1;
                 return zeros;
             }
@@ -137,7 +138,8 @@ public ref struct LsbBitCursor
             int ones = BitOperations.TrailingZeroCount(~_cache);
             if (ones < _cacheBits && ones < limit && _nextByte <= _data.Length)
             {
-                _cache >>= ones + 1;
+                _cache >>= ones;
+                _cache >>= 1;
                 _cacheBits -= ones + 1;
                 return ones;
             }

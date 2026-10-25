@@ -122,7 +122,8 @@ public ref struct BitCursor
             int zeros = BitOperations.LeadingZeroCount(_cache);
             if (zeros < _cacheBits && zeros < limit)
             {
-                _cache <<= zeros + 1;
+                _cache <<= zeros;
+                _cache <<= 1;
                 _cacheBits -= zeros + 1;
                 return zeros;
             }
@@ -145,7 +146,8 @@ public ref struct BitCursor
             int ones = BitOperations.LeadingZeroCount(~_cache);
             if (ones < _cacheBits && ones < limit && _nextByte <= _data.Length)
             {
-                _cache <<= ones + 1;
+                _cache <<= ones;
+                _cache <<= 1;
                 _cacheBits -= ones + 1;
                 return ones;
             }
