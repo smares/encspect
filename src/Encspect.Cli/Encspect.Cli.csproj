@@ -6,7 +6,10 @@
     <!-- Runtime settings measured in docs/development.md ("CLI runtime settings"): the decoders' hot loops start in tier 0 and the
          instrumented tier of dynamic PGO, and an analysis of a few seconds is over before the default tiering has replaced them. -->
     <TieredPGO>false</TieredPGO>
-    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != ''">true</PublishReadyToRun>
+    <!-- ReadyToRun for the app's own assemblies only: a self-contained publish defaults to a composite image of the framework as well,
+         which grew the linux-x64 single file from 79.7 to 100.4 MB (docs/development.md, "CLI runtime settings"). -->
+    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != '' and '$(PublishAot)' != 'true'">true</PublishReadyToRun>
+    <PublishReadyToRunComposite>false</PublishReadyToRunComposite>
   </PropertyGroup>
   <ItemGroup>
     <RuntimeHostConfigurationOption Include="System.Runtime.TieredCompilation.CallCountingDelayMs" Value="20" />
