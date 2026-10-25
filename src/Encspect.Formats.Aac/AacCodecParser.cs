@@ -47,9 +47,17 @@ public sealed class AacCodecParser : ICodecParser
                 "The container hands over AAC without an AudioSpecificConfig, so the object type, sample rate and channels are unknown.", parent);
         }
 
+        ReadUnits(context, config, configNode, "The AudioSpecificConfig", findings, context.Packets!);
+    }
+
+    // The access units of a stream, one raw_data_block per packet, read and reported under the context's node; where names the configuration the
+    // findings about its signaling mention.
+    internal static void ReadUnits(CodecContext context, AacConfig? config, Node? configNode, string where, FindingCollector findings, IEnumerable<MappedBytes> packets)
+    {
+        Node parent = context.Parent;
         var log = new UnitLog(config, findings);
         int index = 0;
-        foreach (MappedBytes packet in context.Packets!)
+        foreach (MappedBytes packet in packets)
         {
             if (index % 4096 == 0)
             {
@@ -63,7 +71,7 @@ public sealed class AacCodecParser : ICodecParser
         if (config is not null && log.Blocks is { } blocks)
         {
             config = config with { SbrFound = blocks.Tally.IsSbrEvident, PsFound = blocks.Tally.IsPsEvident };
-            blocks.ReportSignaling(config, configNode ?? parent, "The AudioSpecificConfig");
+            blocks.ReportSignaling(config, configNode ?? parent, where);
             if (configNode is not null)
             {
                 configNode.Value = config.Codec;
