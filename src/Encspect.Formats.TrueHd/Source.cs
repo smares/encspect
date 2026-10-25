@@ -31,10 +31,11 @@ internal sealed class Source(ByteReader reader, int minimumWindow = Source.Minim
         }
 
         int needed = (int)Math.Min(want, reader.End - offset);
-        bool isLoaded = offset >= _start && offset < _start + _length;
-        if (!isLoaded || (offset - _start) + needed > _length && _start + _length < reader.End)
+        long loadedEnd = _start + _length;
+        bool isLoaded = offset >= _start && offset < loadedEnd;
+        if (!isLoaded || ((offset - _start) + needed > _length && loadedEnd < reader.End))
         {
-            Load(offset, needed);
+            Load(offset, needed, isLoaded);
         }
 
         int index = (int)(offset - _start);
@@ -69,21 +70,32 @@ internal sealed class Source(ByteReader reader, int minimumWindow = Source.Minim
         return -1;
     }
 
-    private void Load(long offset, int needed)
+    // Moves the window to start at offset. What the window already holds from offset on is kept and only the bytes after it are read, so the
+    // file is read about once however the requests fall.
+    private void Load(long offset, int needed, bool keepsTail)
     {
         int size = Math.Max(minimumWindow, needed);
-        if (_buffer.Length < size)
+        int kept = keepsTail ? _length - (int)(offset - _start) : 0;
+        if (_buffer.Length < size || (_buffer.Length > minimumWindow && size <= minimumWindow))
         {
-            _buffer = new byte[size];
+            byte[] next = new byte[size];
+            kept = Math.Min(kept, size);
+            if (kept > 0)
+            {
+                _buffer.AsSpan((int)(offset - _start), kept).CopyTo(next);
+            }
+
+            _buffer = next;
         }
-        else if (_buffer.Length > minimumWindow && size <= minimumWindow)
+        else if (kept > 0)
         {
-            _buffer = new byte[minimumWindow];
+            _buffer.AsSpan((int)(offset - _start), kept).CopyTo(_buffer);
         }
 
         _start = offset;
-        _length = (int)Math.Min(_buffer.Length, reader.End - offset);
-        reader.Position = offset;
-        reader.Read(_buffer.AsSpan(0, _length));
+        int count = (int)Math.Min(_buffer.Length - kept, reader.End - offset - kept);
+        reader.Position = offset + kept;
+        reader.Read(_buffer.AsSpan(kept, count));
+        _length = kept + count;
     }
 }
