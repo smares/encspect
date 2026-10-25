@@ -33,8 +33,6 @@ public sealed class MusepackParser : IFormatParser
         return OldStreamParser.Sniff(context.FirstEmbeddedTag is { } tag && tag > reader.Start && tag < reader.End ? reader.Slice(reader.Start, tag - reader.Start) : reader);
     }
 
-    public bool HasDeclaredEnd => true;
-
     public long? DeclaredEnd(SniffContext context)
     {
         ByteReader reader = context.Reader;

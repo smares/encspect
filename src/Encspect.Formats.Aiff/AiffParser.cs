@@ -55,8 +55,6 @@ public sealed class AiffParser : IFormatParser
         return new SniffResult(rank, reader.Start, frames, End: Math.Min(position, reader.End));
     }
 
-    public bool HasDeclaredEnd => true;
-
     // Where the FORM chunk ends by its size. A size of 0 or 0xFFFFFFFF is the placeholder of a writer that could not fill it in, which the host
     // cannot trust to own the tags after it. An AIFF file's ID3 chunk, which taggers write last, lies inside the FORM chunk.
     public long? DeclaredEnd(SniffContext context)

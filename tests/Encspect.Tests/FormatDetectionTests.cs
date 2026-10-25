@@ -15,8 +15,6 @@ public class FormatDetectionTests
 
         public SniffResult Sniff(SniffContext context) => result;
 
-        public bool HasDeclaredEnd => true;
-
         public long? DeclaredEnd(SniffContext context) => end;
 
         public void Parse(ParseContext context)

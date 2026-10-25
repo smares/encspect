@@ -47,8 +47,6 @@ public sealed class MonkeysAudioParser : IFormatParser
         return isPlausible ? new SniffResult(60, found, 1, End: Math.Min(reader.End, found + header.FixedLength)) : SniffResult.None;
     }
 
-    public bool HasDeclaredEnd => true;
-
     // Where the file ends by its own account: the descriptor counts the frame data and the terminating data. Files before version 3.98 state
     // no size.
     public long? DeclaredEnd(SniffContext context)

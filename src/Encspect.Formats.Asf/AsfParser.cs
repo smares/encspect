@@ -53,8 +53,6 @@ public sealed partial class AsfParser : IFormatParser
         return reader.Length >= ObjectHeaderSize && StartsWithHeader(reader) ? new SniffResult(100, reader.Start, 1) : SniffResult.None;
     }
 
-    public bool HasDeclaredEnd => true;
-
     // The end of the file by its own account: the File Properties Object's File Size, which the
     // specification gives as the size of the entire file (section 3.2); where that is unset (a
     // broadcast file) or cannot be right, the end of the run of top-level objects. A tag after it is

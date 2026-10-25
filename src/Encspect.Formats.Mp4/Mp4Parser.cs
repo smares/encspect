@@ -76,8 +76,6 @@ public sealed partial class Mp4Parser : IFormatParser
         return sawMedia ? new SniffResult(95, reader.Start, boxes, End: position) : SniffResult.None;
     }
 
-    public bool HasDeclaredEnd => true;
-
     // The end of the run of top-level boxes, which may lie past the end of a truncated file; null
     // where a box extends to the end of the file (size 0), which says nothing about a tag after it.
     public long? DeclaredEnd(SniffContext context)

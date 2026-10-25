@@ -69,8 +69,6 @@ public sealed class DtsHdParser : IFormatParser
         return new SniffResult(broken && frames < 2 ? 80 : 100, reader.Start, frames, End: position);
     }
 
-    public bool HasDeclaredEnd => true;
-
     // Where the chunks that follow one another from the start end by their own sizes.
     public long? DeclaredEnd(SniffContext context)
     {

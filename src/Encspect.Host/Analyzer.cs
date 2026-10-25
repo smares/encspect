@@ -9,7 +9,6 @@ public sealed class Analyzer
     private readonly IReadOnlyList<IFormatParser> _formatParsers;
     private readonly IReadOnlyList<ICodecParser> _codecParsers;
     private readonly IReadOnlyList<IDecoder> _decoders;
-    private readonly bool _hasContainers;
 
     public Analyzer(IEnumerable<IFormatParser> formatParsers)
         : this([], formatParsers)
@@ -43,7 +42,6 @@ public sealed class Analyzer
         _formatParsers = formatParsers.ToList();
         _codecParsers = codecParsers.ToList();
         _decoders = decoders.ToList();
-        _hasContainers = _formatParsers.Any(p => p.HasDeclaredEnd);
         if (_codecParsers.GroupBy(c => c.Id).FirstOrDefault(g => g.Count() > 1) is { } duplicate)
         {
             throw new ArgumentException($"Two codec parsers have the ID {duplicate.Key}.", nameof(codecParsers));
@@ -717,7 +715,7 @@ public sealed class Analyzer
     // truncation.
     private Container? FindContainer(ByteReader reader, long dataStart, string? extension, List<Failure> failures, IFormatParser? forced)
     {
-        if (!_hasContainers || dataStart >= reader.Length)
+        if (dataStart >= reader.Length)
         {
             return null;
         }

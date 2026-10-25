@@ -185,8 +185,6 @@ internal static class CategoryTestData
 
         public SniffResult Sniff(SniffContext context) => inner.Sniff(context);
 
-        public bool HasDeclaredEnd => true;
-
         public long? DeclaredEnd(SniffContext context) => inner.DeclaredEnd(context);
 
         public void Parse(ParseContext context)

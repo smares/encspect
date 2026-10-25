@@ -369,8 +369,6 @@ public class MatroskaFindingTests
 
         public SniffResult Sniff(SniffContext context) => new(100);
 
-        public bool HasDeclaredEnd => true;
-
         public long? DeclaredEnd(SniffContext context) => _parser.DeclaredEnd(context);
 
         public void Parse(ParseContext context) => _parser.Parse(context);

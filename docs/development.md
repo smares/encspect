@@ -104,9 +104,9 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is i
 
 ## NativeAOT check
 
-- The host and the parsers use no reflection that NativeAOT lacks (`IFormatParser.HasDeclaredEnd` replaced a look at the interface map), so `dotnet publish src/Encspect.Cli -p:PublishAot=true` gives a binary that starts and analyzes.
+- The host and the parsers use no reflection that NativeAOT lacks (the host asks the parser it picked for `DeclaredEnd`, whose default returns null, instead of looking at the interface map), so `dotnet publish src/Encspect.Cli -p:PublishAot=true` gives a binary that starts and analyzes.
 - `scripts/check_aot.sh [output directory]` publishes it and compares its CSV report with decoding against the framework-dependent build's for every tenth fixture. It needs clang and the linker, takes two to three minutes, and is not part of CI.
-- `DeclaredEndFlagTests` checks the flag against the interface map for every parser the host registers.
+- `DeclaredEndTests` checks that the host asks a parser for its declared end.
 
 ## Vector paths of the decoders
 
