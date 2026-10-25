@@ -1,0 +1,57 @@
+{
+ "length": 96160,
+ "container": {
+  "id": "Wave64",
+  "size": 96160,
+  "end": 96160
+ },
+ "chunks": [
+  {
+   "id": "20746d66-acf3-11d3-8cd1-00c04f8edb8a (fmt )",
+   "offset": 40,
+   "end": 104,
+   "size": 40,
+   "length": 40
+  },
+  {
+   "id": "74636166-acf3-11d3-8cd1-00c04f8edb8a (fact)",
+   "offset": 104,
+   "end": 136,
+   "size": 8,
+   "length": 8
+  },
+  {
+   "id": "61746164-acf3-11d3-8cd1-00c04f8edb8a (data)",
+   "offset": 136,
+   "end": 96160,
+   "size": 96000,
+   "length": 96000
+  }
+ ],
+ "stream": {
+  "codec": "PCM (floating-point)",
+  "sample_rate": 48000,
+  "channels": 2,
+  "bits": 32,
+  "samples": 12000,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 3072.0
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_f32le"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 48000,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "f32le"
+ }
+}

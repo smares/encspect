@@ -127,6 +127,22 @@ internal static class Summary
         double duration = rate > 0 ? frames / rate : 0;
         double? bitrate = duration > 0 && s.Sound is not null && isLengthKnown ? (frameBytes is > 0 ? frames * frameBytes.Value * 8 : dataBytes * 8) / duration / 1000 : null;
         IReadOnlyList<Speaker>? layout = common.Channels is >= 1 and <= 3 ? AiffLayouts.Of(common.Channels) : null;
+        if (s.Channel is { } chan)
+        {
+            if (chan.Channels != common.Channels)
+            {
+                long stated = chan.Channels;
+                int channels = common.Channels;
+                string field = chan.Field;
+                s.Findings.Add(Severity.Warning, "aiff.channel-layout-differs", chan.Node, _ =>
+                    $"The CHAN chunk's {field} states {Counts.Of(stated, "channel", "channels")}, but the Common Chunk states {channels}; the layout of the CHAN chunk is not used.");
+            }
+            else if (chan.Layout is not null)
+            {
+                layout = chan.Layout;
+            }
+        }
+
         int? bits = type is { IsLinear: true } ? (type.FixedBits ?? (common.SampleSize is >= 1 and <= 32 ? common.SampleSize : null)) : null;
         Node node = s.Sound?.Node ?? s.Container;
         Node Cover(string name, NodeValue? value, string description, string? topic = null) =>

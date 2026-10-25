@@ -1,0 +1,32 @@
+{
+ "length": 70,
+ "container": {
+  "id": "Wave64",
+  "size": 304,
+  "end": 70
+ },
+ "chunks": [
+  {
+   "id": "20746d66-acf3-11d3-8cd1-00c04f8edb8a (fmt )",
+   "offset": 40,
+   "end": 70,
+   "size": 16,
+   "length": 6
+  }
+ ],
+ "stream": null,
+ "findings": [
+  {
+   "code": "wav.truncated"
+  },
+  {
+   "code": "wav.chunk-past-end"
+  },
+  {
+   "code": "wav.chunk-too-short"
+  },
+  {
+   "code": "wav.no-data-chunk"
+  }
+ ]
+}

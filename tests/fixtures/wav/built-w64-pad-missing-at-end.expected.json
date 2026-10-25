@@ -1,0 +1,41 @@
+{
+ "length": 205,
+ "container": {
+  "id": "Wave64",
+  "size": 205,
+  "end": 205
+ },
+ "chunks": [
+  {
+   "id": "20746d66-acf3-11d3-8cd1-00c04f8edb8a (fmt )",
+   "offset": 40,
+   "end": 80,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "61746164-acf3-11d3-8cd1-00c04f8edb8a (data)",
+   "offset": 80,
+   "end": 205,
+   "size": 101,
+   "length": 101
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 8000,
+  "channels": 1,
+  "bits": 8,
+  "samples": 101,
+  "duration": 0.012625,
+  "layout": [
+   "front center"
+  ],
+  "average_bitrate": 63.99999999999999
+ },
+ "findings": [
+  {
+   "code": "wav.pad-byte-missing"
+  }
+ ]
+}

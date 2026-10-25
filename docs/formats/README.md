@@ -21,7 +21,8 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | TTA (True Audio, verified by its CRC-32s; the frames of a Matroska track) | [tta.md](tta.md) |
 | Dolby TrueHD and MLP (raw `.thd` and `.mlp` files, with decoding for verification) | [truehd.md](truehd.md) |
 | ASF and WMA (versions 1 and 2, Professional and Voice; Lossless at header level) | [asf-wma.md](asf-wma.md) |
-| WAV (RIFF, RIFX and RF64; PCM, floating point and the compressed formats at header level; MPEG audio, AC-3 and DTS routed to their parsers) | [wav.md](wav.md) |
+| WAV (RIFF, RIFX, RF64 and BW64; PCM, floating point and the compressed formats at header level; MPEG audio, AC-3 and DTS routed to their parsers) | [wav.md](wav.md) |
+| Wave64 (Sony's 64-bit WAVE, `.w64`; the chunks of a WAVE file in GUID-named chunks) | [wav.md](wav.md#wave64) |
 | AIFF and AIFF-C (all compression types at header level) | [aiff.md](aiff.md) |
 | Matroska and WebM (audio tracks routed to the codec parsers; video at container level) | [matroska.md](matroska.md) |
 

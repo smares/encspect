@@ -196,6 +196,13 @@ public class FormatDetectionTests
             Assert.Equal(["WAV"], analyzer.MatchFormats(alias));
         }
 
+        foreach (string alias in new[] { "w64", "wave64" })
+        {
+            Assert.Equal(["Wave64"], analyzer.MatchFormats(alias));
+        }
+
+        Assert.Equal(["WavPack", "WAV", "Wave64"], analyzer.MatchFormats("wa"));
+        Assert.Equal(["Wave64"], analyzer.MatchFormats("wave6"));
         foreach (string alias in new[] { "aif", "aifc", "aiff" })
         {
             Assert.Equal(["AIFF"], analyzer.MatchFormats(alias));

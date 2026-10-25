@@ -1,0 +1,497 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-iec61937-atrac.wav",
+    "root": {
+      "name": "File",
+      "value": "WAV",
+      "offset": 0,
+      "length": 8236,
+      "children": [
+        {
+          "name": "RIFF",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 8236,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "RIFF",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 8228,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "WAVE",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 2 channels, 44100 Hz, 16 bits",
+              "offset": 12,
+              "length": 24,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "fmt ",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 22,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 24,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 176400,
+                  "unit": "bytes/s",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 4,
+                  "unit": "bytes",
+                  "offset": 32,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 34,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "value": 8192,
+              "unit": "bytes",
+              "offset": 36,
+              "length": 8200,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "data",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 8192,
+                  "unit": "bytes",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "IEC 61937 Bursts",
+                  "value": 4,
+                  "unit": "bursts",
+                  "offset": 44,
+                  "length": 8192,
+                  "children": [
+                    {
+                      "name": "Burst 0",
+                      "value": "ATRAC",
+                      "offset": 44,
+                      "length": 108,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 44,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 14,
+                          "offset": 48,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": 14,
+                              "offset": 48,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 48,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 49,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 49,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 800,
+                          "offset": 50,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 100,
+                          "unit": "bytes",
+                          "offset": 52,
+                          "length": 100
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 1",
+                      "value": "ATRAC",
+                      "offset": 2092,
+                      "length": 108,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 2092,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 14,
+                          "offset": 2096,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": 14,
+                              "offset": 2096,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 2096,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 2097,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 2097,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 800,
+                          "offset": 2098,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 100,
+                          "unit": "bytes",
+                          "offset": 2100,
+                          "length": 100
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 2",
+                      "value": "ATRAC",
+                      "offset": 4140,
+                      "length": 108,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 4140,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 14,
+                          "offset": 4144,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": 14,
+                              "offset": 4144,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 4144,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 4145,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 4145,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 800,
+                          "offset": 4146,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 100,
+                          "unit": "bytes",
+                          "offset": 4148,
+                          "length": 100
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Burst 3",
+                      "value": "ATRAC",
+                      "offset": 6188,
+                      "length": 108,
+                      "children": [
+                        {
+                          "name": "Sync Words",
+                          "value": "F872h 4E1Fh",
+                          "offset": 6188,
+                          "length": 4
+                        },
+                        {
+                          "name": "Burst Info",
+                          "value": 14,
+                          "offset": 6192,
+                          "length": 2,
+                          "children": [
+                            {
+                              "name": "Data Type",
+                              "value": 14,
+                              "offset": 6192,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 7,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Error Flag",
+                              "value": false,
+                              "offset": 6192,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Data-Type-Dependent Info",
+                              "value": 0,
+                              "offset": 6193,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Bitstream Number",
+                              "value": 0,
+                              "offset": 6193,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Length Code",
+                          "value": 800,
+                          "offset": 6194,
+                          "length": 2
+                        },
+                        {
+                          "name": "Burst Payload",
+                          "value": 100,
+                          "unit": "bytes",
+                          "offset": 6196,
+                          "length": 100
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 36,
+                  "length": 8200,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "ATRAC",
+                      "offset": 36,
+                      "length": 8200
+                    },
+                    {
+                      "name": "Bursts",
+                      "value": 4,
+                      "unit": "bursts",
+                      "offset": 36,
+                      "length": 8200
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.046439909297052155,
+                      "unit": "s",
+                      "offset": 36,
+                      "length": 8200
+                    },
+                    {
+                      "name": "Link Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 36,
+                      "length": 8200
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 68.90625,
+                      "unit": "kbps",
+                      "offset": 36,
+                      "length": 8200
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            4
+          ]
+        ],
+        "codec": "ATRAC",
+        "sampleRate": 0,
+        "channels": 0,
+        "samples": 0,
+        "duration": 0.046439909297052155,
+        "averageBitrate": 68.90625,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "wav.iec61937-payload-not-analyzed",
+        "message": "The data holds 4 data-bursts of IEC 61937 with ATRAC frames, which the analyzer has no parser for; the stream is described by what the bursts state.",
+        "offset": 44,
+        "length": 8192,
+        "path": [
+          0,
+          4,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

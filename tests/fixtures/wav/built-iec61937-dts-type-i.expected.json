@@ -1,0 +1,54 @@
+{
+ "length": 12332,
+ "container": {
+  "id": "RIFF",
+  "size": 12324,
+  "end": 12332
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 12332,
+   "size": 12288,
+   "length": 12288
+  }
+ ],
+ "stream": {
+  "routed": "dts",
+  "carried": true,
+  "sample_rate": 48000,
+  "channels": 2
+ },
+ "iec61937": {
+  "first": 44,
+  "data_type": 11,
+  "name": "DTS type I",
+  "bursts": 6,
+  "pauses": 0,
+  "pause_runs": 0,
+  "listed": [
+   44,
+   2092,
+   4140,
+   6188,
+   8236,
+   10284
+  ],
+  "findings": {},
+  "duration": 0.064,
+  "link_rate": 48000
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-in-pcm"
+  }
+ ]
+}

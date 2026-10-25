@@ -1,0 +1,242 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-w64-pad-missing-at-end.w64",
+    "root": {
+      "name": "File",
+      "value": "Wave64",
+      "offset": 0,
+      "length": 205,
+      "children": [
+        {
+          "name": "Wave64",
+          "value": "WAVE",
+          "offset": 0,
+          "length": 205,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "66666972-912e-11cf-a5d6-28db04c10000 (riff)",
+              "offset": 0,
+              "length": 16
+            },
+            {
+              "name": "Chunk Size",
+              "value": 205,
+              "unit": "bytes",
+              "offset": 16,
+              "length": 8
+            },
+            {
+              "name": "Form Type",
+              "value": "65766177-acf3-11d3-8cd1-00c04f8edb8a (wave)",
+              "offset": 24,
+              "length": 16
+            },
+            {
+              "name": "Format Chunk",
+              "value": "PCM, 1 channel, 8000 Hz, 8 bits",
+              "offset": 40,
+              "length": 40,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "20746d66-acf3-11d3-8cd1-00c04f8edb8a (fmt )",
+                  "offset": 40,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 40,
+                  "unit": "bytes",
+                  "offset": 56,
+                  "length": 8
+                },
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 64,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 66,
+                  "length": 2
+                },
+                {
+                  "name": "Samples Per Second",
+                  "value": 8000,
+                  "unit": "Hz",
+                  "offset": 68,
+                  "length": 4
+                },
+                {
+                  "name": "Average Bytes Per Second",
+                  "value": 8000,
+                  "unit": "bytes/s",
+                  "offset": 72,
+                  "length": 4
+                },
+                {
+                  "name": "Block Alignment",
+                  "value": 1,
+                  "unit": "bytes",
+                  "offset": 76,
+                  "length": 2
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 8,
+                  "unit": "bits",
+                  "offset": 78,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Data Chunk",
+              "kind": "Stream",
+              "value": 101,
+              "unit": "bytes",
+              "offset": 80,
+              "length": 125,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "61746164-acf3-11d3-8cd1-00c04f8edb8a (data)",
+                  "offset": 80,
+                  "length": 16
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 125,
+                  "unit": "bytes",
+                  "offset": 96,
+                  "length": 8
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 80,
+                  "length": 125,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 80,
+                      "length": 125
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 101,
+                      "unit": "sample frames",
+                      "offset": 80,
+                      "length": 125
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.012625,
+                      "unit": "s",
+                      "offset": 80,
+                      "length": 125
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 8000,
+                      "unit": "Hz",
+                      "offset": 80,
+                      "length": 125
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 80,
+                      "length": 125
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 80,
+                      "length": 125
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 8,
+                      "unit": "bits",
+                      "offset": 80,
+                      "length": 125
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "unsigned integer",
+                      "offset": 80,
+                      "length": 125
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 80,
+                      "length": 125
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 63.99999999999999,
+                      "unit": "kbps",
+                      "offset": 80,
+                      "length": 125
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            4
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 8,
+        "samples": 101,
+        "duration": 0.012625,
+        "averageBitrate": 63.99999999999999,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "wav.pad-byte-missing",
+        "message": "The chunk is followed by 3 bytes too few of the padding that takes it to a multiple of 8 bytes.",
+        "offset": 80,
+        "length": 125,
+        "path": [
+          0,
+          4
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

@@ -73,7 +73,7 @@ internal static class DataChunks
         {
             long partial = stored % blockAlign;
             s.Findings.Add(Severity.Warning, "wav.partial-sample-frame", data.Node, _ =>
-                $"The data chunk's {Counts.Of(stored, "byte", "bytes")} are not a whole number of sample frames of {Counts.Of(blockAlign, "byte", "bytes")}; {Counts.Of(partial, "byte", "bytes")} are left over.");
+                $"The data chunk's {Counts.Of(stored, "byte", "bytes")} are not a whole number of sample frames of {Counts.Of(blockAlign, "byte", "bytes")}; {Counts.Of(partial, "byte", "bytes")} {(partial == 1 ? "is" : "are")} left over.");
         }
 
         long samples = isLinear && blockAlign > 0 ? (stored / blockAlign) + s.SilentSamples : s.FactNode is not null ? (long)Math.Min(s.FactSamples64, long.MaxValue) : 0;
@@ -85,14 +85,22 @@ internal static class DataChunks
                 $"The fact chunk states {fact} samples, but the audio holds {Counts.Of(counted, "sample frame", "sample frames")}.");
         }
 
+        if (s.Burst is { Type.Codec: null } unread)
+        {
+            Iec61937Route.AddUnanalyzed(s, format, data, unread);
+            return;
+        }
+
         // None of the routed codec parsers takes anything from the fmt chunk: AC-3 would read the extra bytes of the WAVEFORMATEX as a dac3 or dec3 box.
-        string? codec = format.CodecId ?? s.CarriedCodec;
-        bool isCarried = format.CodecId is null && s.CarriedCodec is not null;
+        string? codec = s.Burst is not null ? s.CarriedCodec : format.CodecId ?? s.CarriedCodec;
+        bool isCarried = s.Burst is null && format.CodecId is null && s.CarriedCodec is not null;
         int streamsBefore = context.Streams.Count;
         bool isRouted = false;
         if (codec is not null && data.Available > 0)
         {
-            isRouted = context.ParseStream(codec, data.Node, context.Reader.Slice(data.Start, data.Available));
+            isRouted = s.Burst is { } chain
+                ? Iec61937Route.ParseBursts(s, format, data, chain, codec)
+                : context.ParseStream(codec, data.Node, context.Reader.Slice(data.Start, data.Available));
         }
         else if (codec is not null)
         {
@@ -101,7 +109,11 @@ internal static class DataChunks
 
         if (isRouted && context.Streams.Count > streamsBefore)
         {
-            if (isCarried)
+            if (s.Burst is not null)
+            {
+                Iec61937Route.Compare(s, format, data, context.Streams[streamsBefore]);
+            }
+            else if (isCarried)
             {
                 int bits = format.Bits;
                 long rate = format.SampleRate;
@@ -141,11 +153,28 @@ internal static class DataChunks
         AddStream(s, format, data, samples, stored, blockAlign);
     }
 
-    // The codec parser whose stream the samples of a PCM file carry, or null: a DTS stream in the 16-bit stereo samples, as on a DTS music CD,
-    // where the format tag says PCM. The codec parser decides by a chain of consistent frames at the start of the data, after any silence.
+    // The codec parser whose stream the samples of a PCM file carry, or null: IEC 61937 bursts of AC-3, E-AC-3 or DTS in the 16-bit stereo samples
+    // (S/PDIF passthrough, also under the format tags that stand for it), or a DTS stream written straight into them, as on a DTS music CD, where the format tag says PCM. A chain of bursts, or
+    // for the codec parser a chain of consistent frames, at the start of the data, after any silence, decides.
     public static string? CarriedCodec(State s, WaveFormat format, Node parent, ByteReader data)
     {
-        if (format.CodingTag != FormatTags.Pcm || format.Bits != 16 || format.Channels != 2 || s.IsBigEndian || data.Length == 0)
+        if (data.Length == 0 || s.IsBigEndian)
+        {
+            return null;
+        }
+
+        // IEC 61937 bursts in the samples of 16-bit stereo PCM or of the DTS tag (Microsoft's sub-format of DTS over IEC 61937 is that tag's), or in a
+        // file whose format tag is one of those for S/PDIF data: a chain of bursts decides.
+        if ((format.CodingTag is FormatTags.Pcm or FormatTags.DtsMicrosoft && format.Bits == 16 && format.Channels == 2) || FormatTags.IsIec61937Carrier(format.CodingTag))
+        {
+            if (Iec61937.Recognize(data) is { } chain)
+            {
+                s.Burst = chain;
+                return chain.Type.Codec ?? Iec61937Route.Unanalyzed;
+            }
+        }
+
+        if (format.CodingTag != FormatTags.Pcm || format.Bits != 16 || format.Channels != 2)
         {
             return null;
         }

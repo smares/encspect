@@ -42,3 +42,7 @@ internal sealed record Ds64(ulong RiffSize, ulong DataSize, ulong SampleCount, D
 
 // The data chunk the stream is taken from: where its bytes are, how many the file holds, and what the header states.
 internal sealed record DataChunk(Node Node, long Start, long Available, ulong Stated, bool IsSizeUnknown);
+
+// A chna chunk as far as the checks over the whole file need it: the entries that name a track, how many tracks the chunk states, and the node
+// of the chunk's table (or the chunk).
+internal sealed record ChnaChunk(Node Node, int Tracks, HashSet<int> Indexes);

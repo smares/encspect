@@ -1,0 +1,59 @@
+{
+ "length": 448,
+ "container": {
+  "id": "BW64",
+  "size": 4294967295,
+  "end": 448
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "chna",
+   "offset": 36,
+   "end": 128,
+   "size": 84,
+   "length": 84
+  },
+  {
+   "id": "axml",
+   "offset": 128,
+   "end": 380,
+   "size": 244,
+   "length": 244
+  },
+  {
+   "id": "data",
+   "offset": 380,
+   "end": 448,
+   "size": 60,
+   "length": 60
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 48000,
+  "channels": 2,
+  "bits": 24,
+  "samples": 10,
+  "duration": 0.00020833333333333335,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 2304.0
+ },
+ "findings": [
+  {
+   "code": "wav.riff-size-placeholder"
+  },
+  {
+   "code": "wav.ds64-missing"
+  }
+ ]
+}

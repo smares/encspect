@@ -152,6 +152,16 @@ public class ChannelLayoutTests
         Assert.Equal([C, X, X], Mp4Parser.FromLabels([42, 0x10000, 0xFFFFFFFF]));
     }
 
+    // The two layout tags whose speakers Apple's Core Audio Format specification describes differently from their abbreviations: Octagonal ends in the
+    // side pair (not the wide pair), and WAVE_6_1 follows the WAVE channel mask, whose pair after the back center is the side pair.
+    [Fact]
+    public void CoreAudioLayoutTagsFollowApplesDescriptions()
+    {
+        Assert.Equal([L, R, Bl, Br, C, Bc, Sl, Sr], Encspect.Core.CoreAudioLayouts.Of((111U << 16) | 8, 0, null));
+        Assert.Equal([L, R, C, Lfe, Bc, Sl, Sr], Encspect.Core.CoreAudioLayouts.Of((188U << 16) | 7, 0, null));
+        Assert.Equal([L, R, C, Lfe, Bl, Br, Bc], Encspect.Core.CoreAudioLayouts.Of((125U << 16) | 7, 0, null));
+    }
+
     // ISO/IEC 23091-3 speaker positions, as the chnl box lists them.
     [Fact]
     public void IsoPositions()

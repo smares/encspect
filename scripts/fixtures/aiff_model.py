@@ -3,7 +3,7 @@
 Written from Apple's "Audio Interchange File Format AIFF-C" draft of 8/26/91 and "Audio Interchange File Format: AIFF, version 1.3" (chunks,
 Common Chunk, Sound Data Chunk, markers, comments, instrument, text chunks, and in the AIFF-C draft's appendix C the sample frames of ACE and MACE),
 for the compression types they do not list Apple's QuickTime File Format Specification (2001-03-01, "Sound Codec Formats Supported") and, for the
-packet of ima4, Apple's Core Audio Format Specification ("Audio Description Chunk"), and for "GSM " FFmpeg 6.1.1's libavformat/aiff.c, apart from the
+packet of ima4, Apple's Core Audio Format Specification ("Audio Description Chunk"; its "Channel Layout Chunk" for the CHAN chunk), and for "GSM " FFmpeg 6.1.1's libavformat/aiff.c, apart from the
 analyzer: the chunk tree and the stream a manifest states come from here. The byte builders of the fixture scripts live here too.
 
     read(data)          the chunk tree of a file
@@ -37,6 +37,24 @@ TYPES = {
 # compression type: (bytes of one compressed sample frame of one channel, samples of one channel it holds), for the codings that count compressed
 # sample frames in the Common Chunk (AIFF-C draft, section 4.0 and appendix C; Core Audio Format Specification for ima4).
 PACKETS = {"ima4": (34, 64), "ACE2": (1, 2), "ACE8": (3, 8), "MAC3": (2, 6), "MAC6": (1, 6)}
+
+# The layout tags of the Core Audio Format Specification's "Channel Layout Tags" (the upper 16 bits of the tag) with the channels in the abbreviations of its
+# comments, for the tags the fixtures use. (The comment of tag 128 reads "Ls R Rls Rrs" in the specification; Rs is meant.)
+CHAN_TAGS = {
+    100: "C", 101: "L R", 113: "L R C", 114: "C L R", 115: "L R C Cs", 116: "C L R Cs", 117: "L R C Ls Rs", 118: "L R Ls Rs C", 121: "L R C LFE Ls Rs",
+    122: "L R Ls Rs C LFE", 125: "L R C LFE Ls Rs Cs", 126: "L R C LFE Ls Rs Lc Rc", 127: "C Lc Rc L R Ls Rs LFE", 128: "L R C LFE Ls Rs Rls Rrs",
+    131: "L R Cs", 132: "L R Ls Rs", 133: "L R LFE", 136: "L R C LFE", 138: "L R Ls Rs LFE", 139: "L R Ls Rs C Cs", 141: "C L R Ls Rs Cs",
+    142: "C L R Ls Rs Cs LFE", 143: "C L R Ls Rs Rls Rrs", 144: "C L R Ls Rs Rls Rrs Cs",
+    # Octagonal ends in the side pair ("side left, side right" in the specification's description), and WAVE_6_1 has the order of the WAVE channel mask.
+    111: "L R Ls Rs C Cs Lsd Rsd", 188: "L R C LFE Cs Ls Rs",
+}
+# The channel bitmap's bits (kCAFChannelBit_*) and the channel labels 1 to 18 (kCAFChannelLabel_*) name the same positions, in the WAVE terms the
+# specification gives in its comments ("WAVE: Back Left" for LeftSurround and so on); the rear surround labels 33 and 34 move the surround pair to the sides.
+POSITIONS = ["front left", "front right", "front center", "LFE", "back left", "back right", "front left of center", "front right of center", "back center",
+             "side left", "side right", "top center", "top front left", "top front center", "top front right", "top back left", "top back center", "top back right"]
+ABBREVIATIONS = {"L": "front left", "R": "front right", "C": "front center", "LFE": "LFE", "Lfe": "LFE", "Ls": "back left", "Rs": "back right", "Cs": "back center",
+                 "Lc": "front left of center", "Rc": "front right of center", "Rls": "back left", "Rrs": "back right",
+                 "Lsd": "side left", "Rsd": "side right"}
 
 LAYOUTS = {1: ["front center"], 2: ["front left", "front right"], 3: ["front left", "front right", "front center"]}
 
@@ -105,6 +123,8 @@ def read(data):
     for c in chunks:
         if c["id"] == "COMM" and "comm" not in result:
             result["comm"] = parse_comm(data, c, result["form"] == "AIFC")
+        elif c["id"] == "CHAN" and "chan" not in result:
+            result["chan"] = parse_chan(data, c)
         elif c["id"] == "SSND" and "ssnd" not in result and c["length"] >= 8:
             result["ssnd"] = {"chunk": c, "offset": u32(data, c["offset"] + 8), "block": u32(data, c["offset"] + 12)}
     return result
@@ -122,6 +142,58 @@ def parse_comm(data, c, aifc):
     elif aifc:
         comm["type"] = "NONE"
     return comm
+
+
+def parse_chan(data, c):
+    """The Channel Layout chunk (Core Audio's AudioChannelLayout, big-endian): the layout tag, the bitmap, the number of descriptions and their labels."""
+    at = c["offset"] + 8
+    if c["length"] < 12:
+        return None
+    tag, bitmap, count = u32(data, at), u32(data, at + 4), u32(data, at + 8)
+    fit = (c["length"] - 12) // 20
+    labels = [u32(data, at + 12 + 20 * i) for i in range(min(count, fit, 1024))]
+    return {"tag": tag, "bitmap": bitmap, "count": count, "labels": labels, "complete": min(count, fit) == count and count <= 1024}
+
+
+def chan_layout(chan):
+    """The speakers of the channels the chunk gives, in the order of the channels, or None where the tables of the specification do not give them."""
+    tag = chan["tag"]
+    if tag == 0:
+        labels = chan["labels"]
+        if not chan["complete"] or not labels:
+            return None
+        rear = 33 in labels or 34 in labels
+        names = []
+        for label in labels:
+            if rear and label in (5, 6):
+                names.append("side left" if label == 5 else "side right")
+            elif 1 <= label <= 18:
+                names.append(POSITIONS[label - 1])
+            elif label == 33:
+                names.append("back left")
+            elif label == 34:
+                names.append("back right")
+            else:
+                names.append("discrete")
+        return names
+    if tag == 0x10000:
+        return [POSITIONS[bit] if bit < 18 else "discrete" for bit in range(32) if chan["bitmap"] >> bit & 1]
+    if tag >> 16 in (147, 0xFFFF):
+        return ["discrete"] * (tag & 0xFFFF)
+    if tag >> 16 in CHAN_TAGS and len(CHAN_TAGS[tag >> 16].split()) == tag & 0xFFFF:
+        channels = CHAN_TAGS[tag >> 16].split()
+        rear = "Rls" in channels or tag >> 16 == 188
+        return [("side left" if rear else "back left") if ch == "Ls" else ("side right" if rear else "back right") if ch == "Rs" else ABBREVIATIONS[ch] for ch in channels]
+    return None
+
+
+def chan_channels(chan):
+    """The number of channels the chunk states: its descriptions for the tag 0, the bits of the bitmap for the tag 0x10000, else the low 16 bits of the tag."""
+    if chan["tag"] == 0:
+        return chan["count"]
+    if chan["tag"] == 0x10000:
+        return bin(chan["bitmap"]).count("1")
+    return chan["tag"] & 0xFFFF
 
 
 def tree(chunks):
@@ -177,6 +249,10 @@ def manifest(data, base=0):
         bitrate = (frames * frame * 8 if frame else data_bytes * 8) / duration / 1000
     else:
         bitrate = None
+    layout = LAYOUTS.get(comm["channels"], [])
+    chan = aiff.get("chan")
+    if chan is not None and chan_channels(chan) == comm["channels"] and chan_layout(chan) is not None:
+        layout = chan_layout(chan)
     result["stream"] = {
         "codec": codec,
         "sample_rate": round(rate) if valid_rate else 0,
@@ -184,7 +260,7 @@ def manifest(data, base=0):
         "bits": bits,
         "samples": frames,
         "duration": duration,
-        "layout": LAYOUTS.get(comm["channels"], []),
+        "layout": layout,
         "average_bitrate": bitrate,
         "type": comm["type"],
     }

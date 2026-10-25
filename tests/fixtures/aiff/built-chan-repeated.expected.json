@@ -1,0 +1,58 @@
+{
+ "length": 214,
+ "container": {
+  "id": "FORM",
+  "form": "AIFF",
+  "size": 206,
+  "end": 214
+ },
+ "chunks": [
+  {
+   "id": "COMM",
+   "offset": 12,
+   "end": 38,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "CHAN",
+   "offset": 38,
+   "end": 58,
+   "size": 12,
+   "length": 12
+  },
+  {
+   "id": "CHAN",
+   "offset": 58,
+   "end": 78,
+   "size": 12,
+   "length": 12
+  },
+  {
+   "id": "SSND",
+   "offset": 78,
+   "end": 214,
+   "size": 128,
+   "length": 128
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 48000,
+  "channels": 2,
+  "bits": 16,
+  "samples": 30,
+  "duration": 0.000625,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1536.0,
+  "type": "NONE"
+ },
+ "findings": [
+  {
+   "code": "aiff.chunk-repeated"
+  }
+ ]
+}

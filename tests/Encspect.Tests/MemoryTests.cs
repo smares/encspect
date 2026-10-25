@@ -1126,20 +1126,22 @@ public class MemoryTests(ITestOutputHelper output)
     // at the start of an analysis, so whether a sampler's collection falls into them decides if a peak reads 0.26 or 1.05 MB (ubuntu-26.04 read
     // 263,368 for 8 MiB and 1,049,720 for 40 MiB, and 1,058,752 and 1,050,808 locally), while the allocation of both is the same to a few KB.
     // A per-block cost of 24 bytes per KiB of samples would add 786 KB.
+    // The kept bytes are bounded absolutely and not compared with those of the 4 KiB file: a reading of them is a difference of two process-wide
+    // heap readings, each good to the 64 KB at which Live() stops collecting, so two readings of about 7 KB can differ by tens of KB in either
+    // direction (the small file once read -9,368 and the large one 6,872), which a bound of 2 KB over the small one turns into a failure. The bound
+    // is above that resolution and below the 786 KB of a per-block cost; the exact allocation check below is what proves there is none.
     [Fact]
     public void TheSamplesOfAWaveFileCostNothing()
     {
-        (Report small, long smallKept, _) = Measure("small.wav", LongInputs.WavWithSamples(4096), LongInputs.WavWithSamples(4096));
         (Report large, long largeKept, long largePeak) = Measure("large.wav", LongInputs.WavWithSamples(40 << 20), LongInputs.WavWithSamples(4096));
 
         Assert.Equal(40 << 20 >> 2, large.Streams.Single().Samples);
         long mediumAllocated = Allocated("medium.wav", LongInputs.WavWithSamples(8 << 20));
         long largeAllocated = Allocated("large.wav", LongInputs.WavWithSamples(40 << 20));
-        output.WriteLine($"{smallKept} bytes kept for 4 KiB of samples, {largeKept} for 40 MiB, {largePeak} bytes peak for 40 MiB, {mediumAllocated} and {largeAllocated} bytes allocated for 8 and 40 MiB");
-        Assert.True(largeKept < smallKept + 2_000, $"The report keeps {largeKept - smallKept} bytes more for 40 MiB of samples.");
+        output.WriteLine($"{largeKept} bytes kept for 40 MiB of samples, {largePeak} bytes peak for 40 MiB, {mediumAllocated} and {largeAllocated} bytes allocated for 8 and 40 MiB");
+        Assert.True(largeKept < 128 * 1024, $"The report keeps {largeKept} bytes for 40 MiB of samples.");
         Assert.True(largeAllocated < mediumAllocated + 20_000, $"The analysis allocated {largeAllocated - mediumAllocated} bytes more for 40 MiB of samples than for 8 MiB.");
         Assert.True(largePeak < 4_000_000, $"The live heap grew by {largePeak} bytes while the samples were skipped.");
-        GC.KeepAlive(small);
         GC.KeepAlive(large);
     }
 
@@ -1210,6 +1212,22 @@ public class MemoryTests(ITestOutputHelper output)
 
         output.WriteLine($"{kept} bytes kept and {peak} bytes peak for {data.Length} bytes of file");
         Assert.True(kept < 3_000_000, $"The report keeps {kept} bytes.");
+        Assert.True(peak < 12_000_000, $"The live heap grew by {peak} bytes.");
+        GC.KeepAlive(report);
+    }
+
+    // The bursts of IEC 61937 in a WAVE file are walked once and only the first 1,024 are listed: 100,000 bursts (51 MB) cost the figures of the
+    // stream and the nodes of the listed ones, not a record for each.
+    [Fact]
+    public void ManyBurstsCostNothingPerBurst()
+    {
+        (Report report, long kept, long peak) = Measure("bursts.wav", LongInputs.WavBursts(100_000), LongInputs.WavBursts(10));
+
+        output.WriteLine($"{kept} bytes kept and {peak} bytes peak");
+        Node bursts = Fixtures.Resolve(report.Root, "RIFF/Data Chunk/IEC 61937 Bursts").Single();
+        Assert.Equal(100_000, bursts.Value?.AsInteger());
+        Assert.Equal(1024, bursts.Children.Count);
+        Assert.True(kept < 4_000_000, $"The report keeps {kept} bytes.");
         Assert.True(peak < 12_000_000, $"The live heap grew by {peak} bytes.");
         GC.KeepAlive(report);
     }

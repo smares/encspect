@@ -25,6 +25,9 @@ internal sealed class State(ParseContext context)
 
     public SoundChunk? Sound { get; set; }
 
+    // The first CHAN chunk, which names the speakers of the channels.
+    public ChannelLayoutChunk? Channel { get; set; }
+
 
     public int VersionChunks { get; set; }
 

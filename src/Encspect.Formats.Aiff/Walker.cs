@@ -13,7 +13,7 @@ internal static class Walker
     public delegate void ChunkReader(State s, Fields f, Node chunk, long length);
 
     // The chunks of which at most one may appear in a FORM (sections 3.0 to 13.0).
-    private static readonly HashSet<string> Single = new(StringComparer.Ordinal) { "FVER", "COMM", "SSND", "MARK", "COMT", "INST", "AESD", "NAME", "AUTH", "(c) " };
+    private static readonly HashSet<string> Single = new(StringComparer.Ordinal) { "FVER", "COMM", "SSND", "MARK", "COMT", "INST", "AESD", "NAME", "AUTH", "(c) ", "CHAN" };
 
     // The nodes the tree of the chunks holds in all (as MP4 and Matroska budget theirs): the caps on the chunks and on a table multiply when a
     // chunk is repeated, so a file of a few megabytes could otherwise ask for millions. Past it the rest of the FORM is one node and is not
@@ -160,7 +160,9 @@ internal static class Walker
             s.Counts[id] = s.Counts.GetValueOrDefault(id) + 1;
             if (Single.Contains(id) && s.Counts[id] > 1)
             {
-                s.Findings.Add(Severity.Warning, "aiff.chunk-repeated", chunk, n => $"The FORM holds {n + 1} {id.TrimEnd()} chunks, but the specification allows one; the first is used.", id);
+                s.Findings.Add(Severity.Warning, "aiff.chunk-repeated", chunk, n => id == "CHAN"
+                    ? $"The FORM holds {n + 1} CHAN chunks; no document defines the chunk for AIFF files, and the analyzer uses only the first."
+                    : $"The FORM holds {n + 1} {id.TrimEnd()} chunks, but the specification allows one; the first is used.", id);
             }
 
             if (isPlaceholder)

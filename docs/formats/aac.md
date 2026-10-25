@@ -1,6 +1,6 @@
 # AAC
 
-AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF.
+AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF. A container that hands over ADTS frames one by one is served by the `aac-adts` codec parser (see below).
 
 ## What is read
 
@@ -28,6 +28,12 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF.
 - **ADTS streams:** a change of the fixed header ends the stream and starts another, also where an earlier header returns; the stream rule is the same for MPEG audio, AC-3 and DTS (the [plan](../PLAN.md), AC-3 and E-AC-3, "Framing and sync").
   - `aac.stream-changed` is one Info finding with the number of changes.
   - A file has at most 64 streams. The frames from the change that would start stream 65 on are in no stream and are counted in one warning, `aac.streams-limited`; the frames counted only from their headers past the record cap (see Limits) are counted by the frames they hold. Their raw data blocks are not read, and no log of blocks is kept for their headers, so a file that changes its header at every frame keeps a few kilobytes per stream, 64 at most, not a log for each change.
+- **ADTS frames as packets (`aac-adts`):** the IEC 61937 bursts of AAC in a WAV file carry ADTS frames ([wav.md](wav.md)). The codec parser takes one frame per packet:
+  - the configuration is the first valid frame's header (object type, sampling frequency index and channel configuration, as in a raw ADTS file; SBR and PS are found from the fill elements of the raw data blocks, as there);
+  - each frame's raw data block follows its header and error check and is read as an access unit of the `aac` codec parser, with the same statistics, series and encoder detection; a payload handed over in one piece is read as a raw AAC file;
+  - a packet that does not start with a valid header of the stream (the fixed header fields of the first frame) is skipped, `aac.adts-packet-invalid`; with none valid there is no configuration (`aac.no-configuration`);
+  - a frame of several raw data blocks is skipped, `aac.adts-multiple-blocks` (info), since the positions of its blocks are not read in this mode;
+  - the frames are not nodes of their own: the stream's nodes are the access units, at the bytes of the file the frame's raw data block is in.
 - **ADTS frames of several blocks:** an unprotected frame that holds fewer raw data blocks than its header declares is reported (`aac.blocks-missing`) and counted by the blocks it holds; bytes after its last declared block are reported like those of a single block.
 
 ## Statistics

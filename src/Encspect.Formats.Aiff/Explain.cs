@@ -83,6 +83,15 @@ internal static class Explain
     public const string AesdData = "The AES channel status data, AESChannelStatusData.";
     public const string MidiChunk = "The MIDI Data Chunk: a stream of MIDI data, mainly system exclusive messages of instruments (AIFF-C, section 10.0).";
     public const string MidiData = "The MIDI data.";
+    public const string ChanChunk = "The Channel Layout Chunk: which speaker each channel feeds, as Core Audio's AudioChannelLayout states it. It is not part of the AIFF specifications; FFmpeg's muxer writes it.";
+    public const string ChanLayoutTag = "The layout tag, mChannelLayoutTag: a number that names an arrangement of channels (the high 16 bits) and counts them (the low 16 bits), or says that the bitmap or the descriptions give the layout (Core Audio Format Specification, \"Channel Layout Tags\").";
+    public const string ChanBitmap = "The channel bitmap, mChannelBitmap: one bit for each channel present, in the order of the WAVE channel mask; read when the tag says so (Core Audio Format Specification, \"Channel Bitmaps\").";
+    public const string ChanDescriptionCount = "The number of channel descriptions, mNumberChannelDescriptions; they follow, and the count must equal the channels when the tag says to use them.";
+    public const string ChanDescriptions = "The channel descriptions, one for each channel in the order of the file.";
+    public const string ChanDescription = "One channel description: a label, flags and coordinates (Core Audio's AudioChannelDescription).";
+    public const string ChanLabel = "The label, mChannelLabel: which speaker or other use the channel has, such as Left or LFEScreen.";
+    public const string ChanFlags = "The flags, mChannelFlags: whether the coordinates give a rectangular position or angles, and whether they are in meters.";
+    public const string ChanCoordinates = "The coordinates, mCoordinates: three 32-bit floats, left/right, back/front and down/up, or azimuth, elevation and distance; read when the flags say they are used.";
     public const string Id3Chunk = "An ID3v2 tag stored in a chunk. The analyzer hands the chunk's data to the ID3v2 parser.";
 
     public const string Statistics = "Figures over the audio the file describes: its length, rate, channels and the bits of its samples.";
@@ -92,7 +101,7 @@ internal static class Explain
     public const string StatDuration = "The length of the audio: the sample frames divided by the sample rate.";
     public const string StatRate = "The sample rate in Hz, from the Common Chunk's extended number.";
     public const string StatChannels = "The number of channels, from the Common Chunk.";
-    public const string StatLayout = "The speaker each channel feeds where the specification says: mono, stereo left and right, three channels left, right and center (AIFF-C, section 4.0).";
+    public const string StatLayout = "The speaker each channel feeds: as the CHAN chunk states where there is one that agrees with the Common Chunk, else where the specification says: mono, stereo left and right, three channels left, right and center (AIFF-C, section 4.0).";
     public const string StatBits = "The bits of each sample: the Common Chunk's sample size, or 32 or 64 for the floating-point types.";
     public const string StatSampleFormat = "How a sample is coded: AIFF samples are signed integers (AIFF-C, section 5.0), the type raw is unsigned 8-bit, fl32 and fl64 are IEEE 754 numbers.";
     public const string StatByteOrder = "The order of the bytes of a sample: big-endian, except for the type sowt, which is little-endian.";

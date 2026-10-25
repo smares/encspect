@@ -1,0 +1,45 @@
+{
+ "length": 264,
+ "container": {
+  "id": "Wave64",
+  "size": 304,
+  "end": 264
+ },
+ "chunks": [
+  {
+   "id": "20746d66-acf3-11d3-8cd1-00c04f8edb8a (fmt )",
+   "offset": 40,
+   "end": 80,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "61746164-acf3-11d3-8cd1-00c04f8edb8a (data)",
+   "offset": 80,
+   "end": 264,
+   "size": 200,
+   "length": 160
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 40,
+  "duration": 0.0009070294784580499,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2
+ },
+ "findings": [
+  {
+   "code": "wav.truncated"
+  },
+  {
+   "code": "wav.chunk-past-end"
+  }
+ ]
+}

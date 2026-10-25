@@ -248,11 +248,11 @@ real = audio(30)
 FMT = chunk("fmt ", fmt_body())
 
 
-def rf64(chunks, data_size=len(real), samples=30, table=(), header=0xFFFFFFFF, riff_delta=0, first=()):
-    """An RF64 file: the ds64 chunk (after the chunks of first), the chunks, and the sizes in the ds64 chunk that the layout gives."""
+def rf64(chunks, data_size=len(real), samples=30, table=(), header=0xFFFFFFFF, riff_delta=0, first=(), magic=b"RF64"):
+    """An RF64 file (BW64 with magic): the ds64 chunk (after the chunks of first), the chunks, and the sizes in the ds64 chunk that the layout gives."""
     probe = b"".join(first) + rf64_ds64(0, data_size, samples, table) + b"".join(chunks)
     size = 4 + len(probe)
-    return riff([*first, rf64_ds64(size + riff_delta, data_size, samples, table), *chunks], magic=b"RF64", size=header if header is not None else size)
+    return riff([*first, rf64_ds64(size + riff_delta, data_size, samples, table), *chunks], magic=magic, size=header if header is not None else size)
 
 
 fixture("built-rf64", rf64([FMT, chunk("data", real, size=0xFFFFFFFF)]))
@@ -271,12 +271,198 @@ fixture("built-rf64-table-invalid-ids", rf64([FMT, chunk("data", real, size=0xFF
 fixture("built-rf64-chunk-size-unresolved", rf64([FMT, chunk("bext", bext(0), size=0xFFFFFFFF), chunk("data", real)]), ["wav.chunk-size-unresolved", "wav.no-data-chunk"], stream=False)
 
 
+# BW64 (ITU-R BS.2088): the ds64 chunk with a dummy value in place of the sample count, chna and axml chunks.
+def bw64(chunks, data_size=None, table=(), header=0xFFFFFFFF, dummy=0, first=(), real_data=None):
+    return rf64(chunks, len(real_data if real_data is not None else BW_AUDIO) if data_size is None else data_size, dummy, table, header, 0, first, b"BW64")
+
+
+def chna_entry(index, uid=b"ATU_00000001", track=b"AT_00010001_01", pack=b"AP_00010002", pad=0):
+    return struct.pack("<H12s14s11sB", index, uid, track, pack, pad)
+
+
+def chna_body(tracks, uids, entries):
+    return struct.pack("<HH", tracks, uids) + b"".join(entries)
+
+
+ADM = b'<?xml version="1.0" encoding="UTF-8"?><ebuCoreMain xmlns="urn:ebu:metadata-schema:ebuCore_2015"><coreMetadata><format><audioFormatExtended><audioProgramme audioProgrammeID="APR_1001"/></audioFormatExtended></format></coreMetadata></ebuCoreMain>'
+def gzip_stored(data):
+    """A gzip file (RFC 1952) of the data in stored deflate blocks, so that its bytes do not depend on the zlib that wrote them."""
+    import zlib
+    packer = zlib.compressobj(0, zlib.DEFLATED, -15)
+    return b"\x1f\x8b\x08\x00\0\0\0\0\x00\xff" + packer.compress(data) + packer.flush() + struct.pack("<II", zlib.crc32(data), len(data))
+
+
+BW_AUDIO = audio(10, 2, 24, 48000)
+BW_FMT = chunk("fmt ", fmt_body(bits=24, rate=48000))
+CHNA = chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01")]))
+BW_DATA = chunk("data", BW_AUDIO, size=0xFFFFFFFF)
+fixture("built-bw64", bw64([BW_FMT, CHNA, chunk("axml", ADM), BW_DATA]))
+fixture("built-bw64-explicit-sizes", bw64([BW_FMT, CHNA, chunk("axml", ADM), chunk("data", BW_AUDIO)]))
+fixture("built-bw64-table", bw64([BW_FMT, CHNA, chunk("axml", ADM, size=0xFFFFFFFF), BW_DATA], table=[(b"axml", len(ADM))]))
+fixture("built-bw64-unused-chna-entries", bw64([BW_FMT, chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01"), chna_entry(0, b"", b"", b"")] + [struct.pack("<H37sx", 0, b"")] * 29)), chunk("axml", ADM), BW_DATA]))
+fixture("built-bw64-without-ds64", riff([BW_FMT, CHNA, chunk("axml", ADM), chunk("data", BW_AUDIO)], magic=b"BW64", size=0xFFFFFFFF), ["wav.riff-size-placeholder", "wav.ds64-missing"])
+fixture("built-bw64-ds64-not-first", bw64([BW_FMT, CHNA, chunk("axml", ADM), BW_DATA], first=[chunk("JUNK", b"\0" * 8)]), ["wav.riff-size-placeholder", "wav.ds64-not-first"])
+fixture("built-bw64-size-not-placeholder", bw64([BW_FMT, CHNA, chunk("axml", ADM), chunk("data", BW_AUDIO)], header=None), ["wav.bw64-size-not-placeholder"])
+fixture("built-bw64-dummy-not-zero", bw64([BW_FMT, CHNA, chunk("axml", ADM), BW_DATA], dummy=30), ["wav.ds64-dummy-not-zero"])
+fixture("built-bw64-format-extra-data", bw64([chunk("fmt ", fmt_body(1, 2, 48000, 24, extra=b"\1\2")), CHNA, chunk("axml", ADM), BW_DATA]), ["wav.bw64-format-extra-data"])
+fixture("built-bw64-xml-chunks", bw64([BW_FMT, CHNA, chunk("bxml", struct.pack("<H", 1) + gzip_stored(ADM)), chunk("sxml", struct.pack("<HIII", 0, 4, 0, 0)), BW_DATA]))
+fixture("built-chna-uid-count-mismatch", bw64([BW_FMT, chunk("chna", chna_body(2, 3, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01"), struct.pack("<H37sx", 0, b"")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-uid-count-mismatch"])
+fixture("built-chna-track-count-mismatch", bw64([BW_FMT, chunk("chna", chna_body(5, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-track-count-mismatch"])
+fixture("built-chna-unused-entry-not-zero", bw64([BW_FMT, chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01"), chna_entry(0)])), chunk("axml", ADM), BW_DATA]), ["wav.chna-unused-entry-not-zero"])
+fixture("built-chna-id-format", bw64([BW_FMT, chunk("chna", chna_body(2, 2, [chna_entry(1, b"UID_00000001"), chna_entry(2, b"ATU_00000002", b"AT_00010002_01")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-id-format"])
+fixture("built-chna-track-index-out-of-range", bw64([BW_FMT, chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(3, b"ATU_00000002", b"AT_00010002_01")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-track-index-out-of-range"])
+fixture("built-adm-without-chna", riff([*basic(), chunk("axml", ADM)]), ["wav.adm-without-chna"])
+fixture("built-adm-in-bxml-without-chna", riff([*basic(), chunk("bxml", struct.pack("<H", 0) + ADM)]), ["wav.adm-without-chna"])
+fixture("built-xml-chunk-repeated", bw64([BW_FMT, CHNA, chunk("axml", ADM), chunk("axml", b"<other/>"), BW_DATA]), ["wav.xml-chunk-repeated"])
+fixture("built-axml-without-adm", riff([*basic(), chunk("axml", b"<?xml version=\"1.0\"?><ebuCoreMain/>")]))
+
+
+# Wave64: GUID IDs, 64-bit sizes that count the 24-byte chunk header, chunks aligned to 8 bytes (docs/formats/wav.md says what this rests on).
+def w64_guid(tag):
+    """The GUID of a chunk named by four characters: the characters, then the twelve bytes every such chunk has."""
+    return tag.encode("latin1") + m.W64_TAIL
+
+
+def w64_chunk(guid, body, size=None, pad=True):
+    guid = w64_guid(guid) if isinstance(guid, str) else guid
+    out = guid + struct.pack("<Q", 24 + len(body) if size is None else size) + body
+    if pad:
+        out += b"\0" * (-len(out) % 8)
+    return out
+
+
+def w64(chunks, size=None):
+    body = b"".join(chunks)
+    return m.W64_RIFF + struct.pack("<Q", 40 + len(body) if size is None else size) + m.W64_WAVE + body
+
+
+W_FMT = w64_chunk("fmt ", fmt_body())
+W_DATA = w64_chunk("data", audio(50))
+fixture("built-w64-minimal", w64([W_FMT, W_DATA]))
+fixture("built-w64-pcm-8-bit-mono-odd", w64([w64_chunk("fmt ", fmt_body(channels=1, bits=8, rate=11025)), w64_chunk("data", audio(101, 1, 8, 11025))]))
+fixture("built-w64-extensible-5-1", w64([w64_chunk("fmt ", extensible(6, 48000, 24, mask=0x3F)), w64_chunk("data", audio(10, 6, 24, 48000))]))
+fixture("built-w64-float", w64([w64_chunk("fmt ", fmt_body(3, 2, 48000, 32)), w64_chunk("fact", struct.pack("<I", 20)), w64_chunk("data", b"\0" * 160)]))
+fixture("built-w64-unknown-chunks", w64([w64_chunk("junk", b"\0" * 20), W_FMT, w64_chunk("abcd", b"12345"), w64_chunk(bytes(range(16)), b"x" * 9), w64_chunk(m.W64_LIST, b"INFO" + b"\0" * 12), w64_chunk("zz  ", b""), W_DATA]))
+fixture("built-w64-fact-ima-adpcm", w64([w64_chunk("fmt ", fmt_body(0x11, 1, 11025, 4, 256, 5612, struct.pack("<H", 505))), w64_chunk("fact", struct.pack("<I", 505)), w64_chunk("data", b"\0" * 256)]), ["wav.coding-not-analyzed"], codec="IMA ADPCM")
+fixture("built-w64-ac3", w64([w64_chunk("fmt ", fmt_body(0x2000, 2, 48000, 0, 1, 48000)), w64_chunk("fact", struct.pack("<I", 1536)), w64_chunk("data", AC3)]))
+fixture("built-w64-mp2", w64([w64_chunk("fmt ", fmt_body(0x0050, 2, 48000, 0, 1, 24000)), w64_chunk("fact", struct.pack("<I", 1152)), w64_chunk("data", MP2)]))
+fixture("built-w64-dts-in-pcm-14le", w64([w64_chunk("fmt ", fmt_body()), w64_chunk("data", DTS_14LE)]), ["wav.dts-in-pcm"], carried=("dts", 48000, 2))
+fixture("built-w64-id3v1-after-riff", w64([W_FMT, W_DATA]) + id3v1())
+fixture("built-w64-riff-size-zero", w64([W_FMT, W_DATA], size=0), ["wav.riff-size-placeholder"])
+fixture("built-w64-riff-size-too-small", w64([W_FMT, W_DATA], size=39), ["wav.riff-size-placeholder"])
+fixture("built-w64-riff-size-ffff", w64([W_FMT, W_DATA], size=0xFFFFFFFFFFFFFFFF), ["wav.riff-size-placeholder"])
+w64_whole = w64([W_FMT, W_DATA])
+fixture("built-w64-truncated-data", w64_whole[:-40], ["wav.truncated", "wav.chunk-past-end"])
+fixture("built-w64-truncated-in-format", w64_whole[:40 + 24 + 6], ["wav.truncated", "wav.chunk-past-end", "wav.chunk-too-short", "wav.no-data-chunk"], stream=False)
+fixture("built-w64-header-only", w64([]), ["wav.no-format-chunk", "wav.no-data-chunk"], stream=False)
+fixture("built-w64-data-after-riff", w64_whole + bytes(range(1, 21)), ["wav.data-after-riff"])
+fixture("built-w64-trailing-bytes", w64([W_FMT, W_DATA, b"\1\2\3\4\5\6\7\x08\x09"]), ["wav.trailing-bytes"])
+fixture("built-w64-chunk-size-invalid", w64([W_FMT, w64_guid("abcd") + struct.pack("<Q", 10) + b"\xff" * 20]), ["wav.w64-chunk-size-invalid", "wav.no-data-chunk"], stream=False)
+fixture("built-w64-pad-missing-at-end", w64([w64_chunk("fmt ", fmt_body(channels=1, bits=8, rate=8000)), w64_chunk("data", audio(101, 1, 8, 8000), pad=False)]), ["wav.pad-byte-missing"])
+fixture("built-w64-pad-not-zero", w64([W_FMT, w64_chunk("odd ", b"abc")[:-1] + b"\xff", W_DATA]), ["wav.pad-byte-not-zero"])
+fixture("built-w64-no-format", w64([W_DATA]), ["wav.no-format-chunk"], stream=False)
+fixture("built-w64-no-data", w64([W_FMT]), ["wav.no-data-chunk"], stream=False)
+fixture("built-w64-data-before-format", w64([W_DATA, W_FMT]), ["wav.data-before-format"])
+fixture("built-w64-format-repeated", w64([W_FMT, w64_chunk("fmt ", fmt_body(channels=1)), W_DATA]), ["wav.format-repeated"])
+fixture("built-w64-data-repeated", w64([W_FMT, W_DATA, w64_chunk("data", audio(20))]), ["wav.data-repeated"])
+fixture("built-w64-format-too-short", w64([w64_chunk("fmt ", fmt_body()[:10]), W_DATA]), ["wav.chunk-too-short"], stream=False)
+fixture("built-w64-partial-sample-frame", w64([W_FMT, w64_chunk("data", audio(50)[:198])]), ["wav.partial-sample-frame"])
+fixture("built-w64-fact-mismatch", w64([W_FMT, w64_chunk("fact", struct.pack("<I", 999)), W_DATA]), ["wav.fact-samples-mismatch"])
+fixture("built-w64-chunk-limit", w64([W_FMT, *[w64_chunk("junk", b"\0\0") for _ in range(2100)], W_DATA]), ["wav.chunk-limit", "wav.no-data-chunk"], stream=False)
+
+
+# IEC 61937 bursts in the samples (S/PDIF passthrough). The payloads are those of the bursts FFmpeg's spdif muxer wrote into the encoder-made fixtures
+# (read back by wav_model.iec_walk, apart from the analyzer), laid out here by the repetition period of IEC 61937-2 Table 2.
+def bursts_of(relative):
+    """(pc, pd, payload as the file holds it) of each burst of the stream of an encoder-made fixture."""
+    data = (FIXTURE_DIRECTORY / relative).read_bytes()
+    chunk_ = m.read(data)["data"]
+    body = data[chunk_["offset"] + 8:chunk_["offset"] + 8 + chunk_["length"]]
+    first, kind = m.iec_chain(body)
+    walked = m.iec_walk(body, first, kind)
+    return [(header[0], header[1], body[at + 8:at + 8 + length]) for at, header, length in walked["bursts"]]
+
+
+def burst(pc, pd, payload, period, stuffing=True):
+    """One data-burst: the preamble, the payload as the file holds it, and zero stuffing up to the repetition period in bytes."""
+    out = m.IEC_SYNC + struct.pack("<HH", pc, pd) + payload
+    return out + (b"\0" * (period - len(out)) if stuffing else b"")
+
+
+def burst_of(source, period, **changes):
+    pc, pd, payload = source
+    return burst(changes.get("pc", pc), changes.get("pd", pd), changes.get("payload", payload), period)
+
+
+AC3_BURSTS = bursts_of("wav/external-iec61937-ac3-stereo-192k.wav")
+EAC3_BURSTS = bursts_of("wav/external-iec61937-eac3-stereo-192k.wav")
+DTS_BURSTS = bursts_of("wav/external-iec61937-dts-stereo-768k.wav")
+AAC_BURSTS = bursts_of("wav/external-iec61937-aac-stereo-128k.wav")
+AC3_PERIOD, EAC3_PERIOD, DTS_PERIOD, AAC_PERIOD = 1536 * 4, 6144 * 4, 512 * 4, 1024 * 4
+PAUSE = struct.pack("<HHHH", 0xF872, 0x4E1F, 3, 0) + b"\0" * (AC3_PERIOD - 8)
+# The pause and null bursts at the recommended period of 3 IEC 60958 frames (IEC 61937-3:2017 Table 2): the preamble and a payload of 32 bits.
+PAUSE_3 = m.IEC_SYNC + struct.pack("<HH", 3, 32) + b"\0" * 4
+NULL_3 = m.IEC_SYNC + struct.pack("<HH", 0, 32) + b"\0" * 4
+
+
+def ac3_bursts(count=5, **kw):
+    return [burst_of(AC3_BURSTS[i % len(AC3_BURSTS)], AC3_PERIOD) for i in range(count)]
+
+
+IEC_CARRIED = ("ac-3", 48000, 2)
+fixture("built-iec61937-ac3", riff(basic_data(b"".join(ac3_bursts()), rate=48000)), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-three-bursts", riff(basic_data(b"".join(ac3_bursts(3)), rate=48000)), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-after-silence", riff(basic_data(b"\0" * 4000 + b"".join(ac3_bursts()), rate=48000)), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-pause-bursts", riff(basic_data(b"".join([*ac3_bursts(3), PAUSE, PAUSE, *ac3_bursts(2)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-pause-bursts"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-leading-pause-bursts", riff(basic_data(b"".join([*[NULL_3] * 3, *[PAUSE_3] * 100, *ac3_bursts(5)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-pause-bursts"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-pause-gap", riff(basic_data(b"".join([*ac3_bursts(3), *[PAUSE_3] * 2000, ac3_bursts(4)[3], *[PAUSE_3] * 5, *ac3_bursts(2)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-pause-bursts"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-silence-between", riff(basic_data(b"".join([*ac3_bursts(3), b"\0" * AC3_PERIOD, b"\0" * AC3_PERIOD]), rate=48000)), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
+fixture("built-iec61937-ac3-fmt-tag-0092", riff([chunk("fmt ", fmt_body(0x92, 2, 48000, 16, 4, 192000)), chunk("fact", struct.pack("<I", 7680)), chunk("data", b"".join(ac3_bursts()))]), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
+for tag in (0x240, 0x241):
+    fixture(f"built-iec61937-ac3-fmt-tag-{tag:04x}", riff([chunk("fmt ", fmt_body(tag, 2, 48000, 16, 4, 192000)), chunk("fact", struct.pack("<I", 7680)), chunk("data", b"".join(ac3_bursts()))]), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
+fixture("built-w64-iec61937-ac3", w64([w64_chunk("fmt ", fmt_body(rate=48000)), w64_chunk("data", b"".join(ac3_bursts()))]), ["wav.iec61937-in-pcm"], carried=IEC_CARRIED)
+fixture("built-iec61937-eac3", riff(basic_data(b"".join(burst_of(EAC3_BURSTS[i % len(EAC3_BURSTS)], EAC3_PERIOD) for i in range(4)), rate=192000)), ["wav.iec61937-in-pcm"], carried=("e-ac-3", 48000, 2))
+fixture("built-iec61937-dts-type-i", riff(basic_data(b"".join(burst_of(DTS_BURSTS[i], DTS_PERIOD) for i in range(6)), rate=48000)), ["wav.iec61937-in-pcm"], carried=("dts", 48000, 2))
+fixture("built-iec61937-dts-fmt-tag-0008", riff([chunk("fmt ", fmt_body(0x8, 2, 48000, 16, 4, 192000)), chunk("fact", struct.pack("<I", 3072)), chunk("data", b"".join(burst_of(DTS_BURSTS[i], DTS_PERIOD) for i in range(6)))]), ["wav.iec61937-in-pcm"], carried=("dts", 48000, 2))
+fixture("built-iec61937-aac", riff(basic_data(b"".join(burst_of(AAC_BURSTS[i], AAC_PERIOD) for i in range(5)), rate=48000)), ["wav.iec61937-in-pcm"], carried=("aac-adts", 48000, 2))
+ATRAC = [burst(14, 800, bytes(range(100)) * 1 + b"", 512 * 4) for _ in range(4)]
+fixture("built-iec61937-atrac", riff(basic_data(b"".join(ATRAC), rate=44100)), ["wav.iec61937-payload-not-analyzed"])
+ATRAC_X_LL = [burst(112, 128 * 8, bytes(range(128)), 128 * 4) for _ in range(5)]
+fixture("built-iec61937-atrac-x-low-latency", riff(basic_data(b"".join(ATRAC_X_LL), rate=48000)), ["wav.iec61937-payload-not-analyzed"])
+
+# What is no chain: two bursts, a lone sync word, a carrier that is not 16-bit stereo, a data type with no repetition period, a burst whose payload does
+# not fit its period.
+fixture("built-iec61937-two-bursts", riff(basic_data(b"".join(ac3_bursts(2)), rate=48000)))
+fixture("built-iec61937-sync-word-alone", riff(basic_data(m.IEC_SYNC + struct.pack("<HH", 1, 6144) + audio(2000)[8:], rate=48000)))
+fixture("built-iec61937-in-mono", riff([chunk("fmt ", fmt_body(channels=1, rate=48000)), chunk("data", b"".join(ac3_bursts()))]))
+fixture("built-iec61937-in-24-bits", riff([chunk("fmt ", fmt_body(bits=24, rate=48000)), chunk("data", b"".join(ac3_bursts()))]))
+fixture("built-iec61937-in-rifx", b"RIFX" + struct.pack(">I", 4 + 8 + 16 + 8 + len(b"".join(ac3_bursts()))) + b"WAVE" + b"fmt " + struct.pack(">I", 16) + struct.pack(">HHIIHH", 1, 2, 48000, 192000, 4, 16) + b"data" + struct.pack(">I", len(b"".join(ac3_bursts()))) + b"".join(ac3_bursts()))
+fixture("built-iec61937-unknown-data-type", riff(basic_data(b"".join(burst_of(AC3_BURSTS[i % len(AC3_BURSTS)], AC3_PERIOD, pc=2) for i in range(5)), rate=48000)))
+fixture("built-iec61937-payload-too-long-at-start", riff(basic_data(b"".join(burst_of(AC3_BURSTS[i % len(AC3_BURSTS)], AC3_PERIOD, pd=65000) for i in range(5)), rate=48000)))
+
+# Damage in a chain.
+fixture("built-iec61937-burst-missing", riff(basic_data(b"".join([*ac3_bursts(3), b"\0" * AC3_PERIOD, *ac3_bursts(2)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-burst-missing"], carried=IEC_CARRIED)
+early = ac3_bursts(5)
+fixture("built-iec61937-burst-spacing", riff(basic_data(b"".join([*early[:3], early[3][:-64], early[4]]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-burst-spacing"], carried=IEC_CARRIED)
+fixture("built-iec61937-length-invalid", riff(basic_data(b"".join([*ac3_bursts(3), burst_of(AC3_BURSTS[3], AC3_PERIOD, pd=65000), *ac3_bursts(1)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-length-invalid", "ac3.sample-not-frame"], carried=IEC_CARRIED)
+fixture("built-iec61937-length-zero", riff(basic_data(b"".join([*ac3_bursts(3), burst_of(AC3_BURSTS[3], AC3_PERIOD, pd=0, payload=b""), *ac3_bursts(1)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-length-invalid"], carried=IEC_CARRIED)
+whole_ac3 = b"".join(ac3_bursts())
+fixture("built-iec61937-cut-in-payload", riff(basic_data(whole_ac3[:4 * AC3_PERIOD + 400], rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-length-invalid", "ac3.frame-truncated"], carried=IEC_CARRIED)
+fixture("built-iec61937-cut-odd-payload", riff(basic_data(whole_ac3[:4 * AC3_PERIOD + 401], rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-length-invalid", "ac3.frame-truncated", "wav.partial-sample-frame"], carried=IEC_CARRIED)
+fixture("built-iec61937-type-changed", riff(basic_data(b"".join([*ac3_bursts(3), burst_of(EAC3_BURSTS[0], AC3_PERIOD, payload=EAC3_BURSTS[0][2][:700], pd=700)[:AC3_PERIOD], *ac3_bursts(1)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-type-changed"], carried=IEC_CARRIED)
+fixture("built-iec61937-other-bitstream", riff(basic_data(b"".join([*ac3_bursts(3), burst_of(AC3_BURSTS[3], AC3_PERIOD, pc=AC3_BURSTS[3][0] | (1 << 13)), *ac3_bursts(1)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-type-changed"], carried=IEC_CARRIED)
+fixture("built-iec61937-error-flag", riff(basic_data(b"".join([*ac3_bursts(3), burst_of(AC3_BURSTS[3], AC3_PERIOD, pc=AC3_BURSTS[3][0] | 0x80), *ac3_bursts(1)]), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-error-flag"], carried=IEC_CARRIED)
+fixture("built-iec61937-data-after-bursts", riff(basic_data(whole_ac3 + bytes(range(1, 200)) * 4, rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-data-after-bursts"], carried=IEC_CARRIED)
+fixture("built-iec61937-rate-mismatch", riff(basic_data(whole_ac3, rate=44100)), ["wav.iec61937-in-pcm", "wav.iec61937-rate-mismatch"], carried=IEC_CARRIED)
+fixture("built-iec61937-eac3-at-the-content-rate", riff(basic_data(b"".join(burst_of(EAC3_BURSTS[i % len(EAC3_BURSTS)], EAC3_PERIOD) for i in range(4)), rate=48000)), ["wav.iec61937-in-pcm", "wav.iec61937-rate-mismatch"], carried=("e-ac-3", 48000, 2))
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    for old in OUT.glob("built-*.wav"):
+    for old in [*OUT.glob("built-*.wav"), *OUT.glob("built-*.w64")]:
         old.unlink()
     for name, (data, findings, stream, codec, note, base, carried) in sorted(FIXTURES.items()):
-        (OUT / f"{name}.wav").write_bytes(data)
+        (OUT / f"{name}.{'w64' if name.startswith('built-w64-') else 'wav'}").write_bytes(data)
         try:
             manifest = m.manifest(data, codec, base, carried)
         except ValueError:
@@ -284,6 +470,9 @@ def main():
         if not stream:
             manifest["stream"] = None
         manifest["findings"] = [{"code": code, **({"count": count} if count != 1 else {})} for code, count in findings]
+        declared = {code for code, _ in findings}
+        modeled = set(manifest.get("iec61937", {}).get("findings", {}))
+        assert modeled <= declared, f"{name}: the model finds {sorted(modeled - declared)}, the fixture declares none of them"
         (OUT / f"{name}.expected.json").write_text(json.dumps(manifest, indent=1) + "\n", encoding="utf-8")
     print(f"{len(FIXTURES)} fixtures written")
 

@@ -1,0 +1,56 @@
+{
+ "length": 2144,
+ "container": {
+  "id": "Wave64",
+  "size": 2144,
+  "end": 2144
+ },
+ "chunks": [
+  {
+   "id": "20746d66-acf3-11d3-8cd1-00c04f8edb8a (fmt )",
+   "offset": 40,
+   "end": 88,
+   "size": 24,
+   "length": 24
+  },
+  {
+   "id": "74636166-acf3-11d3-8cd1-00c04f8edb8a (fact)",
+   "offset": 88,
+   "end": 120,
+   "size": 8,
+   "length": 8
+  },
+  {
+   "id": "61746164-acf3-11d3-8cd1-00c04f8edb8a (data)",
+   "offset": 120,
+   "end": 2144,
+   "size": 2000,
+   "length": 2000
+  }
+ ],
+ "stream": {
+  "codec": "A-law",
+  "sample_rate": 8000,
+  "channels": 1,
+  "bits": 8,
+  "samples": 2000,
+  "duration": 0.25,
+  "layout": [
+   "front center"
+  ],
+  "average_bitrate": 64.0
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "pcm_alaw"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 8000,
+  "channels": 1,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

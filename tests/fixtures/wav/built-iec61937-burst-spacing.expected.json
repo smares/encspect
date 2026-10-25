@@ -1,0 +1,58 @@
+{
+ "length": 30700,
+ "container": {
+  "id": "RIFF",
+  "size": 30692,
+  "end": 30700
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 30700,
+   "size": 30656,
+   "length": 30656
+  }
+ ],
+ "stream": {
+  "routed": "ac-3",
+  "carried": true,
+  "sample_rate": 48000,
+  "channels": 2
+ },
+ "iec61937": {
+  "first": 44,
+  "data_type": 1,
+  "name": "AC-3",
+  "bursts": 5,
+  "pauses": 0,
+  "pause_runs": 0,
+  "listed": [
+   44,
+   6188,
+   12332,
+   18476,
+   24556
+  ],
+  "findings": {
+   "wav.iec61937-burst-spacing": 1
+  },
+  "duration": 0.16,
+  "link_rate": 48000
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-in-pcm"
+  },
+  {
+   "code": "wav.iec61937-burst-spacing"
+  }
+ ]
+}

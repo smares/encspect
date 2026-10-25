@@ -41,7 +41,7 @@ internal static class ChunkFixtureChecks
             return;
         }
 
-        Node node = report.Root.Children.Single(c => c.Name is "RIFF" or "RIFX" or "RF64" or "FORM");
+        Node node = report.Root.Children.Single(c => c.Name is "RIFF" or "RIFX" or "RF64" or "BW64" or "Wave64" or "FORM");
         Assert.Equal(container.GetProperty("id").GetString(), node.Name);
         Assert.Equal(container.GetProperty("end").GetInt64(), node.End);
         CheckChunks(manifest.GetProperty("chunks"), node, name);
@@ -49,6 +49,11 @@ internal static class ChunkFixtureChecks
         JsonElement stream = manifest.GetProperty("stream");
         bool isRouted = stream.ValueKind == JsonValueKind.Object && stream.TryGetProperty("routed", out _);
         CheckStream(stream, report.Streams, name);
+        if (manifest.TryGetProperty("iec61937", out JsonElement bursts))
+        {
+            CheckBursts(bursts, node, report, name);
+        }
+
         CheckFindings(manifest.GetProperty("findings"), report, isRouted);
     }
 
@@ -129,6 +134,30 @@ internal static class ChunkFixtureChecks
         Assert.Equal(expected.GetProperty("layout").EnumerateArray().Select(s => s.GetString()), stream.ChannelLayout?.Select(ChannelLayouts.Name) ?? []);
         Assert.All(stream.NodePaths, path => Assert.NotNull(path));
         Assert.Null(stream.Verification);
+    }
+
+    // The data-bursts of IEC 61937 the model found in the samples: how many of the stream's data type, where the first of them start, and the pause and null bursts that are counted and not listed.
+    private static void CheckBursts(JsonElement expected, Node container, Report report, string where)
+    {
+        Node data = container.Children.Single(c => c.Name == "Data Chunk");
+        Node bursts = data.Children.Single(c => c.Name == "IEC 61937 Bursts");
+        Assert.Equal(expected.GetProperty("bursts").GetInt32(), bursts.Value?.AsInteger());
+        long[] listed = [.. expected.GetProperty("listed").EnumerateArray().Select(o => o.GetInt64())];
+        long[] found = [.. bursts.Children.Select(c => c.Offset)];
+        Assert.True(listed.SequenceEqual(found), $"{where}: the burst nodes are at {string.Join(", ", found.Take(6))}, the manifest {string.Join(", ", listed.Take(6))}.");
+        Assert.Equal(expected.GetProperty("first").GetInt64(), bursts.Offset);
+        Assert.DoesNotContain(bursts.Children, c => c.Value?.AsText() is "pause" or "null data");
+        int pauses = expected.GetProperty("pauses").GetInt32();
+        Finding[] counted = [.. report.Findings.Where(f => f.Code == "wav.iec61937-pause-bursts")];
+        if (pauses == 0)
+        {
+            Assert.Empty(counted);
+        }
+        else
+        {
+            Assert.Contains($"{pauses} pause or null burst", Assert.Single(counted).Message, StringComparison.Ordinal);
+            Assert.Contains($" in {expected.GetProperty("pause_runs").GetInt32()} run", counted[0].Message, StringComparison.Ordinal);
+        }
     }
 
     // The findings of the analyzer's own codes and of the host's routes must be exactly the manifest's. A codec parser reached through a route adds

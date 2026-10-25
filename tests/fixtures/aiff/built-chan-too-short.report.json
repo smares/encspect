@@ -1,0 +1,293 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-chan-too-short.aiff",
+    "root": {
+      "name": "File",
+      "value": "AIFF",
+      "offset": 0,
+      "length": 188,
+      "children": [
+        {
+          "name": "FORM",
+          "value": "AIFF",
+          "offset": 0,
+          "length": 188,
+          "children": [
+            {
+              "name": "Chunk ID",
+              "value": "FORM",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Chunk Size",
+              "value": 180,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 4
+            },
+            {
+              "name": "Form Type",
+              "value": "AIFF",
+              "offset": 8,
+              "length": 4
+            },
+            {
+              "name": "Common Chunk",
+              "value": "PCM, 2 channels, 48000 Hz, 16 bits",
+              "offset": 12,
+              "length": 26,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "COMM",
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 18,
+                  "unit": "bytes",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 20,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Frames",
+                  "value": 30,
+                  "unit": "sample frames",
+                  "offset": 22,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Size",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 26,
+                  "length": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 48000,
+                  "unit": "Hz",
+                  "offset": 28,
+                  "length": 10,
+                  "children": [
+                    {
+                      "name": "Sign and Exponent",
+                      "value": 16398,
+                      "offset": 28,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mantissa",
+                      "value": 13510798882111488000,
+                      "offset": 30,
+                      "length": 8
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Channel Layout Chunk",
+              "value": 6,
+              "unit": "bytes",
+              "offset": 38,
+              "length": 14,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "CHAN",
+                  "offset": 38,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 6,
+                  "unit": "bytes",
+                  "offset": 42,
+                  "length": 4
+                },
+                {
+                  "name": "Layout Tag",
+                  "value": "Stereo: L R (0x00650002)",
+                  "offset": 46,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "Sound Data Chunk",
+              "kind": "Stream",
+              "value": 128,
+              "unit": "bytes",
+              "offset": 52,
+              "length": 136,
+              "children": [
+                {
+                  "name": "Chunk ID",
+                  "value": "SSND",
+                  "offset": 52,
+                  "length": 4
+                },
+                {
+                  "name": "Chunk Size",
+                  "value": 128,
+                  "unit": "bytes",
+                  "offset": 56,
+                  "length": 4
+                },
+                {
+                  "name": "Offset",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 60,
+                  "length": 4
+                },
+                {
+                  "name": "Block Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 64,
+                  "length": 4
+                },
+                {
+                  "name": "Sound Data",
+                  "value": 120,
+                  "unit": "bytes",
+                  "offset": 68,
+                  "length": 120
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 52,
+                  "length": 136,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 52,
+                      "length": 136
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 30,
+                      "unit": "sample frames",
+                      "offset": 52,
+                      "length": 136
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.000625,
+                      "unit": "s",
+                      "offset": 52,
+                      "length": 136
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 52,
+                      "length": 136
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 52,
+                      "length": 136
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 52,
+                      "length": 136
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 52,
+                      "length": 136
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 52,
+                      "length": 136
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "big-endian",
+                      "offset": 52,
+                      "length": 136
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1536,
+                      "unit": "kbps",
+                      "offset": 52,
+                      "length": 136
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            5
+          ]
+        ],
+        "codec": "PCM",
+        "sampleRate": 48000,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 30,
+        "duration": 0.000625,
+        "averageBitrate": 1536,
+        "isVbr": false,
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "aiff.chunk-too-short",
+        "message": "The CHAN chunk at 0x26 holds 6 bytes, too few for its fields.",
+        "offset": 38,
+        "length": 14,
+        "path": [
+          0,
+          4
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

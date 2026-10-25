@@ -13,5 +13,8 @@ internal static class Topics
     public const string CuePoints = "wave-cue-points";
     public const string Bext = "bwf-broadcast-extension";
     public const string Rf64 = "rf64";
+    public const string Bw64 = "bw64";
+    public const string Wave64 = "wave64";
+    public const string Iec61937 = "iec-61937";
     public const string Id3InChunks = "id3v2-in-chunks";
 }

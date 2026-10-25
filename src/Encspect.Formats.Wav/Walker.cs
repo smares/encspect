@@ -42,7 +42,7 @@ internal static class Walker
     }
 
     // The nodes of the subtree under node, itself included; children built on demand (a tag parser's frames) are one node, so counting builds none.
-    private static int Count(Node node)
+    internal static int Count(Node node)
     {
         int count = 0;
         var pending = new Stack<Node>();
@@ -115,7 +115,7 @@ internal static class Walker
             ulong stated = size32;
             bool isDs64Size = false;
             bool isUnresolved = false;
-            if (isTop && s.IsRf64 && size32 == uint.MaxValue)
+            if (isTop && s.Is64Bit && size32 == uint.MaxValue)
             {
                 if (s.Ds64 is { } ds64 && id == "data")
                 {
@@ -175,6 +175,11 @@ internal static class Walker
             }
 
             ChunkSpec spec = ChunkSpec.Of(id, listType);
+            if (isTop && id == "ds64" && s.IsBw64)
+            {
+                spec = spec with { Description = Explain.Ds64ChunkBw64, Topic = Topics.Bw64 };
+            }
+
             string name = spec.Name ?? $"'{id}' Chunk";
             bool isFirstData = isData && s.FirstDataNode is null && s.Format is not null;
             string? carried = isFirstData ? DataChunks.CarriedCodec(s, s.Format!, parent, reader.Slice(bodyStart, length)) : null;
@@ -193,13 +198,13 @@ internal static class Walker
             listed++;
             s.Nodes += 3;
             chunk.Add("Chunk ID", position, 4, id, Explain.ChunkId, Topics.RiffChunks);
-            chunk.Add("Chunk Size", position + 4, 4, NodeValue.Integer(size32, "bytes", "byte"), isTop && s.IsRf64 ? Explain.ChunkSizeRf64 : Explain.ChunkSize, Topics.RiffChunks);
+            chunk.Add("Chunk Size", position + 4, 4, NodeValue.Integer(size32, "bytes", "byte"), isTop && s.IsBw64 ? Explain.ChunkSizeBw64 : isTop && s.IsRf64 ? Explain.ChunkSizeRf64 : Explain.ChunkSize, Topics.RiffChunks);
 
             if (isUnresolved)
             {
                 Node at = chunk.Children[1];
                 s.Findings.Add(Severity.Warning, "wav.chunk-size-unresolved", at, _ =>
-                    $"The {id.TrimEnd()} chunk's size is 0xFFFFFFFF, which in an RF64 file stands for a size in the ds64 chunk, but the ds64 chunk {(s.Ds64 is null ? "is missing or too short" : "does not list this chunk")}; the chunk is read to the end of the RIFF chunk.");
+                    $"The {id.TrimEnd()} chunk's size is 0xFFFFFFFF, which in {(s.IsBw64 ? "a BW64" : "an RF64")} file stands for a size in the ds64 chunk, but the ds64 chunk {(s.Ds64 is null ? "is missing or too short" : "does not list this chunk")}; the chunk is read to the end of the RIFF chunk.");
             }
 
             if (isPlaceholder)
@@ -216,7 +221,7 @@ internal static class Walker
                 ulong claimed = stated;
                 long held = length;
                 s.Findings.Add(Severity.Warning, "wav.chunk-past-end", at, _ =>
-                    $"The {id.TrimEnd()} chunk states {Counts.Of(claimed, "byte", "bytes")}, but only {Counts.Of(held, "byte", "bytes")} are left in the {(listType is null ? (s.ContainerEnd < s.Reader.End ? "RIFF chunk" : "file") : "list")}; the chunk is cut short.");
+                    $"The {id.TrimEnd()} chunk states {Counts.Of(claimed, "byte", "bytes")}, but only {Counts.Of(held, "byte", "bytes")} are left in the {(listType is null ? (s.ContainerEnd < s.Reader.End ? s.ContainerLabel : "file") : "list")}; the chunk is cut short.");
             }
 
             long chunkStart = position;

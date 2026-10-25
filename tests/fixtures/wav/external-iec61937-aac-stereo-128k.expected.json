@@ -1,0 +1,87 @@
+{
+ "length": 24654,
+ "container": {
+  "id": "RIFF",
+  "size": 24646,
+  "end": 24654
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "LIST",
+   "offset": 36,
+   "end": 70,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 48,
+     "end": 70,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 70,
+   "end": 24654,
+   "size": 24576,
+   "length": 24576
+  }
+ ],
+ "stream": {
+  "routed": "aac-adts",
+  "carried": true,
+  "sample_rate": 48000,
+  "channels": 2
+ },
+ "iec61937": {
+  "first": 78,
+  "data_type": 7,
+  "name": "MPEG-2 AAC",
+  "bursts": 6,
+  "pauses": 0,
+  "pause_runs": 0,
+  "listed": [
+   78,
+   4174,
+   8270,
+   12366,
+   16462,
+   20558
+  ],
+  "findings": {},
+  "duration": 0.128,
+  "link_rate": 48000
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-in-pcm"
+  }
+ ],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-f",
+  "spdif",
+  "-c:a",
+  "aac",
+  "-b:a",
+  "128k"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 48000,
+  "channels": 2,
+  "seconds": 0.1,
+  "format": "s16le"
+ }
+}

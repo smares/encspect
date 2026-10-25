@@ -1,0 +1,73 @@
+{
+ "length": 500,
+ "container": {
+  "id": "BW64",
+  "size": 4294967295,
+  "end": 500
+ },
+ "chunks": [
+  {
+   "id": "JUNK",
+   "offset": 12,
+   "end": 28,
+   "size": 8,
+   "length": 8
+  },
+  {
+   "id": "ds64",
+   "offset": 28,
+   "end": 64,
+   "size": 28,
+   "length": 28
+  },
+  {
+   "id": "fmt ",
+   "offset": 64,
+   "end": 88,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "chna",
+   "offset": 88,
+   "end": 180,
+   "size": 84,
+   "length": 84
+  },
+  {
+   "id": "axml",
+   "offset": 180,
+   "end": 432,
+   "size": 244,
+   "length": 244
+  },
+  {
+   "id": "data",
+   "offset": 432,
+   "end": 500,
+   "size": 4294967295,
+   "length": 60
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 48000,
+  "channels": 2,
+  "bits": 24,
+  "samples": 10,
+  "duration": 0.00020833333333333335,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 2304.0
+ },
+ "findings": [
+  {
+   "code": "wav.riff-size-placeholder"
+  },
+  {
+   "code": "wav.ds64-not-first"
+  }
+ ]
+}

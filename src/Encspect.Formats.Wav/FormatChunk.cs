@@ -322,6 +322,13 @@ internal static class FormatChunk
             }
         }
 
+        if (s.IsBw64 && !format.IsExtensible && format.ExtraSize != 0)
+        {
+            int extra = format.ExtraSize;
+            s.Findings.Add(Severity.Warning, "wav.bw64-format-extra-data", At("Codec Specific Data Size"), _ =>
+                $"The fmt chunk of a BW64 file states {Counts.Of(extra, "byte", "bytes")} of format-specific data, but ITU-R BS.2088 section 2.6.2 sets cbSize to zero (or leaves it out) outside the extensible form.");
+        }
+
         if (format.IsExtensible && format.Bits > 0 && format.Bits % 8 != 0)
         {
             int bits = format.Bits;

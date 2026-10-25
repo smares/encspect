@@ -3,11 +3,12 @@
 Written from Microsoft's "Multimedia Programming Interface and Data Specifications 1.0" (RIFF, WAVE, LIST/INFO, cue, plst, adtl), the
 "Multimedia Data Standards Update" of April 1994 (fact, inst, smpl, the extra fields of the WAVE types), mmreg.h and ksmedia.h (format tags,
 sub-format GUIDs and the channel mask), the sub-format GUIDs of ksuuids.h and mfapi.h that Microsoft's "Multiple channel audio data and WAVE files" and
-"Audio Subtype GUIDs" name, EBU Tech 3285 (bext) and Tech 3306-2009 (RF64, ds64), apart from the analyzer: the chunk tree, the fmt
+"Audio Subtype GUIDs" name, EBU Tech 3285 (bext) and Tech 3306-2009 (RF64, ds64), ITU-R BS.2088 (BW64, ds64, chna, axml), apart from the analyzer: the chunk tree, the fmt
 fields and the figures of the stream that a manifest states come from here. The signal generators and the byte builders the fixture scripts use
 live here too.
 
-    read(data)          the chunk tree of a file: {"magic", "size", "form", "end", "chunks": [...], "ds64", ...}
+    read(data)          the chunk tree of a file: {"magic", "size", "form", "end", "chunks": [...], "ds64", ...}; a Wave64 file (the layout
+                        that dr_wav and PRONOM fmt/951 give and FFmpeg's w64 files show) is read by read_w64 with the same result
     manifest(data)      what the analyzer must report about a file that is well formed enough to have a stream: the length, the chunks, the stream
 """
 
@@ -93,15 +94,83 @@ def read_chunks(data, at, end, big, ds64=None, top=False, rf64=False, depth=0):
     return chunks, stop
 
 
+W64_RIFF = uuid.UUID("66666972-912E-11CF-A5D6-28DB04C10000").bytes_le
+W64_WAVE = uuid.UUID("65766177-ACF3-11D3-8CD1-00C04F8EDB8A").bytes_le
+W64_LIST = uuid.UUID("7473696C-912F-11CF-A5D6-28DB04C10000").bytes_le
+W64_TAIL = uuid.UUID("00000000-ACF3-11D3-8CD1-00C04F8EDB8A").bytes_le[4:]
+
+
+def w64_guid(guid):
+    """A chunk GUID as the analyzer shows it: the text of the GUID and, in brackets, the four characters that name it."""
+    text = str(uuid.UUID(bytes_le=bytes(guid)))
+    if guid == W64_RIFF:
+        return f"{text} (riff)"
+    if guid == W64_WAVE:
+        return f"{text} (wave)"
+    if guid == W64_LIST:
+        return f"{text} (LIST)"
+    if guid[4:] == W64_TAIL and is_id(guid[:4]):
+        return f"{text} ({guid[:4].decode('latin1')})"
+    return text
+
+
+def w64_key(guid):
+    """The RIFF ID a Wave64 chunk stands for: fmt, fact, data and the other four-character names, LIST, or the GUID text."""
+    if guid == W64_LIST:
+        return "LIST"
+    if guid[4:] == W64_TAIL and is_id(guid[:4]):
+        return guid[:4].decode("latin1")
+    return str(uuid.UUID(bytes_le=bytes(guid)))
+
+
+def read_w64(data):
+    """A Wave64 file: the riff GUID, the size of the whole file, the wave GUID, then chunks of a GUID, a 64-bit size that counts these 24 bytes and
+    the data, each padded to a multiple of 8 bytes from the start of the file."""
+    if data[:16] != W64_RIFF or data[24:40] != W64_WAVE:
+        raise ValueError("not a Wave64 file")
+    size = u64(data, 16)
+    placeholder = size < 40 or size > len(data) * 4 + (1 << 40)
+    end = len(data) if placeholder else min(size, len(data))
+    chunks = []
+    at = 40
+    stop = at
+    while at + 24 <= end and len(chunks) < 2048:
+        stated = u64(data, at + 16)
+        if stated < 24:
+            break
+        past = stated > end - at
+        length = end - at - 24 if past else stated - 24
+        nxt = end if past else min(at + ((stated + 7) & ~7), end)
+        guid = data[at:at + 16]
+        chunks.append({"id": w64_guid(guid), "key": w64_key(guid), "offset": at, "end": nxt, "size": stated - 24, "length": length, "placeholder": False, "stated": stated})
+        stop = nxt
+        if past:
+            break
+        at = nxt
+    result = {"magic": "Wave64", "size": size, "form": "WAVE", "big": False, "end": end, "placeholder": placeholder, "declared_end": None if placeholder else size,
+              "chunks": chunks, "ds64": None, "stop": stop}
+    for chunk in chunks:
+        key = chunk["key"]
+        if key == "fmt " and "fmt" not in result:
+            result["fmt"] = parse_fmt(data, {"offset": chunk["offset"] + 16, "length": chunk["length"]}, False)
+        elif key == "fact" and "fact" not in result and chunk["length"] >= 4:
+            result["fact"] = u32(data, chunk["offset"] + 24)
+        elif key == "data" and "data" not in result:
+            result["data"] = {**chunk, "offset": chunk["offset"] + 16}
+    return result
+
+
 def read(data):
     """The RIFF chunk of a file: its header, the chunks, and the figures of the fmt, fact, data and ds64 chunks."""
+    if data[:16] == W64_RIFF:
+        return read_w64(data)
     magic = data[:4].decode("latin1")
-    if magic not in ("RIFF", "RIFX", "RF64") or data[8:12] != b"WAVE":
+    if magic not in ("RIFF", "RIFX", "RF64", "BW64") or data[8:12] != b"WAVE":
         raise ValueError("not a WAVE file")
     big = magic == "RIFX"
     size = u32(data, 4, big)
     ds64 = None
-    if magic == "RF64" and data[12:16] == b"ds64" and u32(data, 16) >= 24:
+    if magic in ("RF64", "BW64") and data[12:16] == b"ds64" and u32(data, 16) >= 24:
         table = {}
         count = u32(data, 12 + 8 + 24) if u32(data, 16) >= 28 else 0
         for i in range(min(count, (u32(data, 16) - 28) // 12, 1024)):
@@ -110,7 +179,7 @@ def read(data):
                 table.setdefault(data[entry:entry + 4].decode("latin1"), u32(data, entry + 4) | (u32(data, entry + 8) << 32))
         ds64 = {"riff_size": u64(data, 20), "data_size": u64(data, 28), "sample_count": u64(data, 36), "table": table}
     placeholder = False
-    if magic == "RF64" and size == 0xFFFFFFFF:
+    if magic in ("RF64", "BW64") and size == 0xFFFFFFFF:
         total = ds64["riff_size"] if ds64 else None
     elif size in (0, 0xFFFFFFFF) or size < 4:
         total = None
@@ -121,7 +190,7 @@ def read(data):
         end = len(data)
     else:
         end = min(8 + total, len(data))
-    chunks, stop = read_chunks(data, 12, end, big, ds64, True, magic == "RF64")
+    chunks, stop = read_chunks(data, 12, end, big, ds64, True, magic in ("RF64", "BW64"))
     result = {"magic": magic, "size": size, "form": "WAVE", "big": big, "end": end, "placeholder": placeholder, "declared_end": None if total is None else 8 + total, "chunks": chunks, "ds64": ds64, "stop": stop}
     for chunk in chunks:
         if chunk["id"] == "fmt " and "fmt" not in result:
@@ -182,7 +251,7 @@ def data_info(riff):
     def walk(chunks, in_wavl):
         nonlocal first, extra, silent
         for c in chunks:
-            if c["id"] == "data":
+            if c.get("key", c["id"]) == "data":
                 if first is None:
                     first = (c, in_wavl)
                 elif in_wavl and first[1]:
@@ -193,6 +262,165 @@ def data_info(riff):
                 walk(c["children"], True)
     walk(riff["chunks"], False)
     return (first[0] if first else None), extra, silent
+
+
+# IEC 61937 (S/PDIF passthrough) bursts in 16-bit stereo samples, from the freely available previews of IEC 61937-1:2021 (the burst-preamble, 6.1.6 to
+# 6.1.8), IEC 61937-2:2021 (Table 2, the data types) and IEC 61937-3:2017 (AC-3 and E-AC-3).
+IEC_SYNC = b"\x72\xf8\x1f\x4e"  # Pa = F872h, Pb = 4E1Fh as the 16-bit samples they are, little-endian
+# data type (bits 0 to 6 of Pc): (name, repetition period in IEC 60958 frames, unit of Pd, codec route)
+IEC_TYPES = {
+    1: ("AC-3", 1536, "bits", "ac-3"), 4: ("MPEG-1 Layer I", 384, "bits", None),
+    5: ("MPEG-1 Layer II or III", 1152, "bits", None), 6: ("MPEG-2 audio with extension", 1152, "bits", None),
+    7: ("MPEG-2 AAC", 1024, "bits", "aac-adts"), 8: ("MPEG-2 Layer I", 768, "bits", None),
+    9: ("MPEG-2 Layer II", 2304, "bits", None), 10: ("MPEG-2 Layer III", 1152, "bits", None),
+    11: ("DTS type I", 512, "bits", "dts"), 12: ("DTS type II", 1024, "bits", "dts"), 13: ("DTS type III", 2048, "bits", "dts"),
+    14: ("ATRAC", 512, "bits", None), 15: ("ATRAC 2/3", 1024, "bits", None), 16: ("ATRAC-X", 2048, "bits", None),
+    48: ("ATRAC-X low latency", 512, "bits", None), 80: ("ATRAC-X low latency", 256, "bits", None), 112: ("ATRAC-X low latency", 128, "bits", None),
+    18: ("WMA Professional type I", 2048, "bits", None), 50: ("WMA Professional type II", 2048, "bits", None),
+    82: ("WMA Professional type III", 1024, "bits", None), 114: ("WMA Professional type IV", 512, "bits", None),
+    19: ("MPEG-2 AAC low sampling frequency", 2048, "bits", "aac-adts"), 51: ("MPEG-2 AAC low sampling frequency", 4096, "bits", "aac-adts"),
+    20: ("MPEG-4 AAC", 1024, "bits", "aac-adts"), 52: ("MPEG-4 AAC", 2048, "bits", "aac-adts"), 84: ("MPEG-4 AAC", 4096, "bits", "aac-adts"),
+    116: ("MPEG-4 AAC", 512, "bits", "aac-adts"), 21: ("E-AC-3", 6144, "bytes", "e-ac-3"), 22: ("MAT", 15360, "bytes", None),
+}
+IEC_CHAIN = 3
+
+
+def iec_header(data, at):
+    """(pc, pd) of the burst preamble at at, or None: the sync words are there and the data type is one of the table, null data (0) or pause (3)."""
+    if at + 8 > len(data) or data[at:at + 4] != IEC_SYNC:
+        return None
+    pc, pd = struct.unpack_from("<HH", data, at + 4)
+    return (pc, pd) if (pc & 0x7F) in IEC_TYPES or (pc & 0x7F) in (0, 3) else None
+
+
+def iec_length(kind, pd, unit):
+    return {"bits": (pd + 7) // 8, "bytes": pd, "8bytes": pd * 8}[unit]
+
+
+def iec_pause_end(at, pd):
+    """Where the frame after a pause or null burst at at lies: the preamble and the payload of Pd bits, up to a whole frame."""
+    return at + -(-(8 + (pd + 7) // 8) // 4) * 4
+
+
+def iec_chain(data):
+    """The chain at the start of the data: after the zero frames and any pause or null bursts (at most 1 MiB of them together), IEC_CHAIN bursts of one
+    audio data type and bitstream number at the repetition period, each with a payload that fits the period and the data. (first, data type) or None;
+    first is where the first burst of any kind starts."""
+    limit = min(len(data), 1 << 20)
+
+    def skip_zeros(at):
+        while at < limit and data[at:at + 4] == b"\0\0\0\0":
+            at += 4
+        return at
+
+    first = at = skip_zeros(0)
+    while True:
+        if at >= limit:
+            return None
+        head = iec_header(data, at)
+        if head is None:
+            return None
+        if (head[0] & 0x7F) not in (0, 3):
+            break
+        at = skip_zeros(iec_pause_end(at, head[1]))
+    if (head[0] & 0x7F) not in IEC_TYPES:
+        return None
+    kind = head[0] & 0x7F
+    name, repetition, unit, codec = IEC_TYPES[kind]
+    period = repetition * 4
+    for i in range(IEC_CHAIN):
+        header = iec_header(data, at + i * period)
+        if header is None or (header[0] & 0x7F) != kind or header[0] >> 13 != head[0] >> 13:
+            return None
+        length = iec_length(kind, header[1], unit)
+        if length == 0 or length > period - 8 or at + i * period + 8 + length > len(data):
+            return None
+    return first, kind
+
+
+def iec_walk(data, first, kind):
+    """The bursts of the chain's data type and bitstream number, from the first burst of any kind: each is (offset, header, length of its payload
+    read), found at the repetition period; where none starts, the next valid preamble is looked for, and a burst of another type is skipped. Pause and
+    null bursts are stepped over by their length code and counted, with the runs of them, not listed. Returns {"bursts": [...], "pauses": n,
+    "pause_runs": n, "findings": {code: count}, "nodes": [offsets of the listed bursts]}."""
+    name, repetition, unit, codec = IEC_TYPES[kind]
+    period = repetition * 4
+    start = first
+    while (iec_header(data, start)[0] & 0x7F) in (0, 3):
+        start = iec_pause_end(start, iec_header(data, start)[1])
+        while data[start:start + 4] == b"\0\0\0\0":
+            start += 4
+    bitstream = iec_header(data, start)[0] >> 13
+    found = {"bursts": [], "pauses": 0, "pause_runs": 0, "findings": {}, "payload_bytes": 0, "nodes": []}
+
+    def note(code):
+        found["findings"][code] = found["findings"].get(code, 0) + 1
+
+    def next_header(frm):
+        at = frm + (-(frm) % 4)
+        while at + 8 <= len(data):
+            if data[at:at + 2] == b"\x72\xf8" and iec_header(data, at):
+                return at
+            at += 4
+        return None
+
+    def done():
+        if found["pauses"]:
+            note("wav.iec61937-pause-bursts")
+        return found
+
+    position = first
+    expected = first
+    search = first
+    in_pause_run = False
+    while True:
+        header = iec_header(data, position)
+        if header is None:
+            nxt = next_header(search)
+            if nxt is None:
+                if any(data[search:]):
+                    note("wav.iec61937-data-after-bursts")
+                return done()
+            if expected >= 0:
+                note("wav.iec61937-burst-spacing" if nxt < expected else "wav.iec61937-burst-missing")
+            position, expected = nxt, -1
+            continue
+        pc, pd = header
+        if (pc & 0x7F) in (0, 3):
+            found["pauses"] += 1
+            if not in_pause_run:
+                found["pause_runs"] += 1
+                in_pause_run = True
+            search = position + 8
+            position = iec_pause_end(position, pd)
+            expected = -1
+            continue
+        in_pause_run = False
+        if (pc & 0x7F) != kind or pc >> 13 != bitstream:
+            found["nodes"].append(position)
+            note("wav.iec61937-type-changed")
+            search = position + 8
+            position = search
+            expected = -1
+            continue
+        length = iec_length(kind, pd, unit)
+        room = period - 8
+        at = position + 8
+        too_long = length > room
+        cut = at + min(length, room) > len(data)
+        payload = min(length, room, len(data) - at)
+        if cut and payload % 2:
+            payload -= 1
+        if too_long or cut or payload == 0:
+            note("wav.iec61937-length-invalid")
+        if pc & 0x80:
+            note("wav.iec61937-error-flag")
+        found["nodes"].append(position)
+        found["bursts"].append((position, header, payload))
+        found["payload_bytes"] += payload
+        expected = position + period
+        search = len(data) if cut else at + (-(-payload // 4) * 4)
+        position = expected
 
 
 def shift(items, base):
@@ -217,6 +445,24 @@ def manifest(data, extra_codec=None, base=0, carried=None):
         return result
     coding = fmt["coding"]
     routed = fmt["named"] or ROUTED.get(coding)
+    if coding in (1, 0x92) and not riff["big"] and (coding == 0x92 or (fmt["bits"] == 16 and fmt["channels"] == 2)):
+        start = base + chunk["offset"] + 8
+        body = data[start:start + chunk["length"]]
+        chain = iec_chain(body)
+        if chain is not None:
+            name, repetition, unit, codec = IEC_TYPES[chain[1]]
+            walked = iec_walk(body, *chain)
+            bursts = walked["bursts"]
+            result["iec61937"] = {"first": start + chain[0], "data_type": chain[1], "name": name, "bursts": len(bursts), "pauses": walked["pauses"], "pause_runs": walked["pause_runs"],
+                                  "listed": [start + o for o in walked["nodes"][:1024]], "findings": walked["findings"],
+                                  "duration": len(bursts) * repetition / fmt["rate"], "link_rate": fmt["rate"]}
+            if codec is not None:
+                result["stream"] = {"routed": codec, "carried": True, "sample_rate": carried[1] if carried else 0, "channels": carried[2] if carried else 0}
+            else:
+                duration = len(bursts) * repetition / fmt["rate"]
+                result["stream"] = {"codec": name, "sample_rate": 0, "channels": 0, "bits": None, "samples": 0, "duration": duration, "layout": [],
+                                    "average_bitrate": walked["payload_bytes"] * 8 / duration / 1000 if duration > 0 else None}
+            return result
     if carried is not None:
         result["stream"] = {"routed": carried[0], "carried": True, "sample_rate": carried[1], "channels": carried[2]}
         return result

@@ -2,7 +2,7 @@
 """Writes the encoder-made AIFF fixtures in tests/fixtures/aiff (external-*.aiff, external-*.aifc).
 
 They come from FFmpeg 6.1.1 of Ubuntu 24.04 (its aiff muxer and the encoders that feed it): PCM of 8, 16, 24 and 32 bits, floating point of 32 and
-64 bits, the AIFF-C types sowt, raw, fl32, fl64, alaw, ulaw and ima4, mono, stereo and three channels, the sample rates 8,000 to 96,000 Hz, the NAME,
+64 bits, the AIFF-C types sowt, raw, fl32, fl64, alaw, ulaw and ima4, mono, stereo, three channels and the layouts of four to eight channels (the CHAN chunk), the sample rates 8,000 to 96,000 Hz, the NAME,
 AUTH, (c) and ANNO text chunks, and an ID3v2 tag in an ID3 chunk, in versions 3 and 4. The inputs are deterministic signals written by wav_model.py.
 
 The muxer's output depends on its version, so the files are committed and --manifests-only recomputes the manifests from them without FFmpeg.
@@ -36,6 +36,11 @@ FIXTURES = {
     "pcm-s16-mono-8000": (("sine", 8000, 1, SHORT, "s16le"), ["-c:a", "pcm_s16be"], "aiff", None, []),
     "pcm-s16-stereo-96000": (("sine", 96000, 2, 0.1, "s16le"), ["-c:a", "pcm_s16be"], "aiff", None, []),
     "pcm-s16-3ch-48000": (("sine", 48000, 3, 0.1, "s16le"), ["-c:a", "pcm_s16be"], "aiff", "3.0", []),
+    "pcm-s16-quad-48000": (("sine", 48000, 4, 0.1, "s16le"), ["-c:a", "pcm_s16be"], "aiff", "quad", []),
+    "pcm-s16-5.1-48000": (("sine", 48000, 6, 0.1, "s16le"), ["-c:a", "pcm_s16be"], "aiff", "5.1", []),
+    "pcm-s16-6.1-48000": (("sine", 48000, 7, 0.1, "s16le"), ["-c:a", "pcm_s16be"], "aiff", "6.1", []),
+    "pcm-s24-7.1-96000": (("sine", 96000, 8, 0.05, "s24le"), ["-c:a", "pcm_s24be"], "aiff", "7.1", []),
+    "pcm-s16-hexagonal-48000": (("sine", 48000, 6, 0.1, "s16le"), ["-c:a", "pcm_s16be"], "aiff", "hexagonal", []),
     "pcm-s24-stereo-48000": (("sine", 48000, 2, SHORT, "s24le"), ["-c:a", "pcm_s24be"], "aiff", None, []),
     "pcm-s32-stereo-96000": (("sine", 96000, 2, 0.1, "s32le"), ["-c:a", "pcm_s32be"], "aiff", None, []),
     "raw-u8-mono-22050": (("sine", 22050, 1, SHORT, "u8"), ["-c:a", "pcm_u8"], "aifc", None, []),
@@ -83,9 +88,13 @@ def write_manifest(path, spec, arguments, layout, findings, tool):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     manifests_only = "--manifests-only" in sys.argv
+    # --only PREFIX writes just the fixtures whose names start with it (a file added later; a full run writes every file again).
+    only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else ""
     with tempfile.TemporaryDirectory() as folder:
         work = pathlib.Path(folder)
         for name, (spec, arguments, extension, layout, findings) in FIXTURES.items():
+            if not name.startswith(only):
+                continue
             if manifests_only:
                 path = OUT / f"external-{name}.{extension}"
                 old = path.with_name(f"external-{name}.expected.json")

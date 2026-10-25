@@ -17,6 +17,9 @@ internal static class FormatTags
     public const int Gsm610 = 0x0031;
     public const int Mpeg = 0x0050;
     public const int MpegLayer3 = 0x0055;
+    public const int DolbyAc3Spdif = 0x0092;
+    public const int RawSport = 0x0240;
+    public const int EsstAc3 = 0x0241;
     public const int Extensible = 0xFFFE;
     public const int Ac3 = 0x2000;
     public const int Dts = 0x2001;
@@ -117,6 +120,8 @@ internal static class FormatTags
         0x0180 => "MPEG-2 AAC (Fraunhofer)",
         0x0190 => "DTS (DirectShow)",
         0x0200 => "Creative ADPCM",
+        RawSport => "Raw SPORT",
+        EsstAc3 => "ESS Technology AC-3",
         0x0272 => "Sony ATRAC3",
         0x1600 => "AAC (ADTS)",
         0x1601 => "AAC (raw)",
@@ -134,6 +139,10 @@ internal static class FormatTags
         Extensible => "extensible",
         _ => null,
     };
+
+    // The tags that Microsoft gives as synonyms for IEC 61937 data over S/PDIF ("Representing Formats for IEC 61937 Transmissions"): the data holds
+    // data-bursts whatever the fmt chunk says of bits and channels.
+    public static bool IsIec61937Carrier(int tag) => tag is DolbyAc3Spdif or RawSport or EsstAc3;
 
     public static bool IsPcm(int tag) => tag == Pcm;
 
