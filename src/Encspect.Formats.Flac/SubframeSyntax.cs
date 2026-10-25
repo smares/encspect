@@ -437,9 +437,10 @@ internal static class SubframeSyntax
                 minimum = Math.Min(minimum, parameter);
                 maximum = Math.Max(maximum, parameter);
                 uint limit = uint.MaxValue >> parameter;
+                int fast = isWide ? 0 : bits.ReadRice(parameter, count, store ? narrow.Slice(at, count) : default, ref facts.HasMinimumResidual);
                 if (!store)
                 {
-                    for (int i = 0; i < count; i++)
+                    for (int i = fast; i < count; i++)
                     {
                         int quotient = bits.CountZeros(int.MaxValue);
                         if (bits.IsOverrun)
@@ -460,7 +461,7 @@ internal static class SubframeSyntax
                 }
                 else if (isWide)
                 {
-                    for (int i = 0; i < count; i++)
+                    for (int i = fast; i < count; i++)
                     {
                         int quotient = bits.CountZeros(int.MaxValue);
                         if (bits.IsOverrun)
@@ -480,7 +481,7 @@ internal static class SubframeSyntax
                 }
                 else
                 {
-                    for (int i = 0; i < count; i++)
+                    for (int i = fast; i < count; i++)
                     {
                         int quotient = bits.CountZeros(int.MaxValue);
                         if (bits.IsOverrun)

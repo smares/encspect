@@ -156,6 +156,75 @@ public ref struct BitCursor
         return Count(limit, ones: true);
     }
 
+    // Reads Rice-coded values (a unary quotient of zero bits ended by a one bit, then parameter bits) while the buffer holds a whole
+    // code that lies in real data, keeping the state in locals for the loop. A value is folded: the sign is its lowest bit, as in
+    // FLAC's residual (RFC 9639, section 9.2.7.1). It stops, consuming nothing of the value it stops at, before a code that
+    // needs the end of the data or a quotient above what a 32-bit value holds; the caller reads the rest one value at a time.
+    // Returns how many values it read. With a destination, value i is stored unfolded to a signed number; hasMinimum is set
+    // when a value is 0xFFFFFFFF, which cannot be negated in 32 bits.
+    public int ReadRice(int parameter, int count, Span<int> destination, ref bool hasMinimum)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        if ((uint)parameter > 31)
+        {
+            return 0;
+        }
+
+        ReadOnlySpan<byte> data = _data;
+        ulong cache = _cache;
+        int bits = _cacheBits;
+        long next = _nextByte;
+        uint limit = uint.MaxValue >> parameter;
+        bool minimum = false;
+        int done = 0;
+        bool store = !destination.IsEmpty;
+        if (store)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(destination.Length, count);
+        }
+
+        while (done < count)
+        {
+            if (bits < 56)
+            {
+                if (next + 8 > data.Length)
+                {
+                    break;
+                }
+
+                cache |= BinaryPrimitives.ReadUInt64BigEndian(data.Slice((int)next)) >> bits;
+                int bytes = (63 - bits) >> 3;
+                next += bytes;
+                bits += bytes * 8;
+            }
+
+            int zeros = BitOperations.LeadingZeroCount(cache);
+            if (zeros + 1 + parameter > bits || (uint)zeros > limit)
+            {
+                break;
+            }
+
+            // The parameter bits follow the one bit that ended the quotient; the extra shift by one keeps a parameter of 0 from shifting by 64.
+            ulong rest = cache << (zeros + 1);
+            uint folded = ((uint)zeros << parameter) | (uint)((rest >> 1) >> (63 - parameter));
+            cache = rest << parameter;
+            bits -= zeros + 1 + parameter;
+            minimum |= folded == uint.MaxValue;
+            if (store)
+            {
+                destination[done] = (int)(folded >> 1) ^ -(int)(folded & 1);
+            }
+
+            done++;
+        }
+
+        _cache = cache;
+        _cacheBits = bits;
+        _nextByte = next;
+        hasMinimum |= minimum;
+        return done;
+    }
+
     public void Skip(int count)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(count);

@@ -491,6 +491,57 @@ public class BitCursorTests
         Assert.Equal(expected, isLsb ? lsb.Read(count) : msb.Read(count));
     }
 
+    // ReadRice reads the values it can take from the buffer and leaves the rest where the one-at-a-time reading finds them: the cursor
+    // ends where reading the same number of values with CountZeros and Read would end it, at every length, parameter and end of data.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(9)]
+    [InlineData(17)]
+    [InlineData(31)]
+    public void ReadRiceReadsLikeCountZerosAndRead(int parameter)
+    {
+        for (int length = 0; length <= 80; length++)
+        {
+            for (int seed = 0; seed < 4; seed++)
+            {
+                byte[] data = RandomBytes((length * 7) + seed, length);
+                if (seed == 3)
+                {
+                    // Short quotients and the occasional long run, as residuals have them.
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        data[i] |= (byte)(i % 3 == 0 ? 0x10 : 0);
+                    }
+                }
+
+                var fast = new BitCursor(data);
+                var slow = new BitCursor(data);
+                int[] stored = new int[40];
+                bool minimum = false;
+                int read = fast.ReadRice(parameter, stored.Length, stored, ref minimum);
+                Assert.InRange(read, 0, stored.Length);
+                bool expectedMinimum = false;
+                uint limit = uint.MaxValue >> parameter;
+                for (int i = 0; i < read; i++)
+                {
+                    int quotient = slow.CountZeros(int.MaxValue);
+                    Assert.False(slow.IsOverrun);
+                    Assert.True((uint)quotient <= limit);
+                    uint folded = ((uint)quotient << parameter) | slow.Read(parameter);
+                    expectedMinimum |= folded == uint.MaxValue;
+                    Assert.Equal((int)(folded >> 1) ^ -(int)(folded & 1), stored[i]);
+                }
+
+                Assert.Equal(expectedMinimum, minimum);
+                Assert.Equal(slow.Position, fast.Position);
+                Assert.False(fast.IsOverrun);
+                Assert.Equal(slow.Read(7), fast.Read(7));
+            }
+        }
+    }
+
     [Fact]
     public void RefusesWidthsOutOfRange()
     {
