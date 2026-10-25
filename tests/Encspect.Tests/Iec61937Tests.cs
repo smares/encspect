@@ -122,6 +122,8 @@ public class Iec61937Tests
         Assert.Equal(codec, stream.Codec);
         Assert.Equal(seconds, stream.Duration, 9);
         Assert.Equal(0, stream.Channels);
+        Assert.Equal(0, stream.SampleRate);
+        Assert.Equal(0, stream.Samples);
         Assert.Contains(report.Findings, f => f.Code == "wav.iec61937-payload-not-analyzed" && f.Severity == Severity.Info);
         Assert.Equal(codec, Fixtures.Resolve(report.Root, "RIFF/Data Chunk/Statistics/Codec").Single().Value?.AsText());
     }

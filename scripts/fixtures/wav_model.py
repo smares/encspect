@@ -414,13 +414,13 @@ def manifest(data, extra_codec=None, base=0, carried=None):
             walked = iec_walk(body, *chain)
             bursts = walked["bursts"]
             result["iec61937"] = {"first": start + chain[0], "data_type": chain[1], "name": name, "bursts": len(bursts), "pauses": walked["pauses"],
-                                  "listed": [start + o for o in walked["nodes"][:1024]], "findings": walked["findings"]}
+                                  "listed": [start + o for o in walked["nodes"][:1024]], "findings": walked["findings"],
+                                  "duration": len(bursts) * repetition / fmt["rate"], "link_rate": fmt["rate"]}
             if codec is not None:
                 result["stream"] = {"routed": codec, "carried": True, "sample_rate": carried[1] if carried else 0, "channels": carried[2] if carried else 0}
             else:
-                samples = len(bursts) * repetition
-                duration = samples / fmt["rate"]
-                result["stream"] = {"codec": name, "sample_rate": fmt["rate"], "channels": 0, "bits": None, "samples": samples, "duration": duration, "layout": [],
+                duration = len(bursts) * repetition / fmt["rate"]
+                result["stream"] = {"codec": name, "sample_rate": 0, "channels": 0, "bits": None, "samples": 0, "duration": duration, "layout": [],
                                     "average_bitrate": walked["payload_bytes"] * 8 / duration / 1000 if duration > 0 else None}
             return result
     if carried is not None:

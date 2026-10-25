@@ -285,6 +285,13 @@ def chna_body(tracks, uids, entries):
 
 
 ADM = b'<?xml version="1.0" encoding="UTF-8"?><ebuCoreMain xmlns="urn:ebu:metadata-schema:ebuCore_2015"><coreMetadata><format><audioFormatExtended><audioProgramme audioProgrammeID="APR_1001"/></audioFormatExtended></format></coreMetadata></ebuCoreMain>'
+def gzip_stored(data):
+    """A gzip file (RFC 1952) of the data in stored deflate blocks, so that its bytes do not depend on the zlib that wrote them."""
+    import zlib
+    packer = zlib.compressobj(0, zlib.DEFLATED, -15)
+    return b"\x1f\x8b\x08\x00\0\0\0\0\x00\xff" + packer.compress(data) + packer.flush() + struct.pack("<II", zlib.crc32(data), len(data))
+
+
 BW_AUDIO = audio(10, 2, 24, 48000)
 BW_FMT = chunk("fmt ", fmt_body(bits=24, rate=48000))
 CHNA = chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01")]))
@@ -298,7 +305,7 @@ fixture("built-bw64-ds64-not-first", bw64([BW_FMT, CHNA, chunk("axml", ADM), BW_
 fixture("built-bw64-size-not-placeholder", bw64([BW_FMT, CHNA, chunk("axml", ADM), chunk("data", BW_AUDIO)], header=None), ["wav.bw64-size-not-placeholder"])
 fixture("built-bw64-dummy-not-zero", bw64([BW_FMT, CHNA, chunk("axml", ADM), BW_DATA], dummy=30), ["wav.ds64-dummy-not-zero"])
 fixture("built-bw64-format-extra-data", bw64([chunk("fmt ", fmt_body(1, 2, 48000, 24, extra=b"\1\2")), CHNA, chunk("axml", ADM), BW_DATA]), ["wav.bw64-format-extra-data"])
-fixture("built-bw64-xml-chunks", bw64([BW_FMT, CHNA, chunk("bxml", struct.pack("<H", 1) + b"\x1f\x8b\x08\x00" + b"\0" * 12), chunk("sxml", struct.pack("<HIII", 0, 4, 0, 0)), BW_DATA]))
+fixture("built-bw64-xml-chunks", bw64([BW_FMT, CHNA, chunk("bxml", struct.pack("<H", 1) + gzip_stored(ADM)), chunk("sxml", struct.pack("<HIII", 0, 4, 0, 0)), BW_DATA]))
 fixture("built-chna-uid-count-mismatch", bw64([BW_FMT, chunk("chna", chna_body(2, 3, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01"), struct.pack("<H37sx", 0, b"")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-uid-count-mismatch"])
 fixture("built-chna-track-count-mismatch", bw64([BW_FMT, chunk("chna", chna_body(5, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01")])), chunk("axml", ADM), BW_DATA]), ["wav.chna-track-count-mismatch"])
 fixture("built-chna-unused-entry-not-zero", bw64([BW_FMT, chunk("chna", chna_body(2, 2, [chna_entry(1), chna_entry(2, b"ATU_00000002", b"AT_00010002_01"), chna_entry(0)])), chunk("axml", ADM), BW_DATA]), ["wav.chna-unused-entry-not-zero"])

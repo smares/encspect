@@ -74,9 +74,11 @@ internal static class Iec61937Route
         Close(run, container);
         ParseContext context = s.Context;
         BurstType type = chain.Type;
-        long samples = run.Bursts * (long)type.Repetition;
+        // The repetition period counts IEC 60958 frames, so the length follows from the link rate; the sampling rate of the coding and the number of its
+        // samples are not known, since the link runs at twice the rate for some data types.
+        long linkFrames = run.Bursts * (long)type.Repetition;
         long rate = format.SampleRate;
-        double duration = rate > 0 ? samples / (double)rate : 0;
+        double duration = rate > 0 ? linkFrames / (double)rate : 0;
         double? bitrate = duration > 0 ? run.PayloadBytes * 8 / duration / 1000 : null;
         Node node = data.Node;
         Node Cover(string name, NodeValue? value, string description, string? topic = null) =>
@@ -101,9 +103,9 @@ internal static class Iec61937Route
         {
             Nodes = [node],
             Codec = type.Name,
-            SampleRate = (int)Math.Min(rate, int.MaxValue),
+            SampleRate = 0,
             Channels = 0,
-            Samples = samples,
+            Samples = 0,
             Duration = duration,
             AverageBitrate = bitrate,
         });
