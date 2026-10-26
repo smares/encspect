@@ -10,13 +10,14 @@ Status: draft for the project lead, not approved; nothing of it is built. Revise
 - **Two changes** (named in "Two changes, named once"):
   - **reuse:** the second pass takes the first pass's results where both see the same bytes; host-only, no contract change;
   - **the pre-check:** each searching parser also says what it finds at the start of the data without a search, and the highest class its search can give; the host runs a search only where its result could still change the report.
-- **The gain, in one batch** (NativeAOT, minimum of 7 runs, against `main`):
-  - **reuse alone:** all 2,502 fixtures -29%, the 2,025 fixtures under 32 KiB -26%, the folder of 300 short MP3 and AAC files -31%, the fixtures with junk in front -25%; a fixture folder -4 to -34%; one 300-second file -33% (WAV), -29% (Musepack), -13 to -17% (Vorbis, Opus, Speex), and nothing beyond the noise for the others;
-  - **what the pre-check adds to reuse:** all fixtures -13 points (-38% in all), small files -11 points, the fixture folders of the containers -5 to -49 points (WavPack -35, TTA -49, AIFF -27, WAV -21, Monkey's Audio -19, Musepack -17, Matroska -14, Ogg -11), 300-second files of Vorbis, Opus, Speex, Musepack and WAV -17 to -41 points, 120 tagged MP3 files -10 points (reuse alone gives -4% there);
-  - **where it adds nothing, or loses:** the folder of 300 short MP3 and AAC files (+10 points), the 120 MP3 files without tags (+14), the fixtures with junk in front (+2), and the raw streams' folders, except `dts` (-14 points): -7 to +6, `truehd` +6.
-- **The guarantee:** reports stay byte-identical. The prototype's JSON and CSV reports, `--only-format` and `--as` were identical to `main`'s on every fixture, the benchmark files, a tagged folder and 26,000 junk-prefixed, damaged and limit-sized inputs (270 comparisons, none different), and the checking wrapper found no violation of the contract on any of them.
+- **The gain, in one batch** (NativeAOT, 7 runs, against `main`; each figure is the fastest run and then the median, and a row counts as a result only where both agree):
+  - **reuse alone:** all 2,502 fixtures -29% / -33%, the 2,025 fixtures under 32 KiB -26% / -28%, the folder of 300 short MP3 and AAC files -31% / -19%, the fixtures with junk in front -25% / -24%; one 300-second file -33% / -21% (WAV), -29% / -31% (Musepack), -17% / -20% (Vorbis); little or nothing for the other single files;
+  - **what the pre-check adds to reuse** (the design's time against reuse alone's, fastest / median, in % faster): all fixtures -13% / -9%; the fixture folders of TTA -49% / -40%, WavPack -35% / -39%, Monkey's Audio -19% / -27%, WAV -21% / -22%, Musepack -17% / -22%, Matroska -14% / -11%, Ogg -11% / -11%; the 300-second files of Vorbis, Opus, Speex, Musepack and WAV -17% to -48%;
+  - **where it adds nothing, or loses:** the 120 MP3 files without tags (+14% / +10%); the raw streams' folders, except `dts`, are inside the noise (`truehd` +6% / +1%);
+  - **where the two measures disagree, so there is no result:** the folder of 300 short MP3 and AAC files (+10% / -4%), the 2,025 small fixtures (-11% / 0%), the 120 tagged MP3 files (-10% / +3%), AIFF (-27% / -2%), `apple`, `vbr`, the WavPack file (-10% / +10%).
+- **The guarantee:** reports stay byte-identical. The prototype's JSON and CSV reports were identical to `main`'s for reuse alone, for the pre-check without reuse and for the design; `--only-format` and `--as` were compared for the design only, and not for reuse alone or the pre-check alone. They were identical on every fixture, the benchmark files, a tagged folder and 26,000 junk-prefixed, damaged and limit-sized inputs (270 comparisons, none different), and the checking wrapper found no violation of the contract on any of them.
 - **What it costs:** reuse alone costs about 100 lines of host code. The pre-check adds two members on `IFormatParser` whose defaults keep any parser exactly as it is, a check of the start of the data in nine parsers, a checking wrapper, three test classes and a fuzz mode.
-- **Recommendation:** reuse alone first, as its own step; the pre-check only as a second step, and only if scans of containers (lossless and WAV libraries) or of tagged MP3 files matter, since on the headline scans of MP3 and AAC folders its own gain does not clear the project's bar of about 15% (open decision 1).
+- **Recommendation:** reuse alone first, as its own step; the pre-check only as a second step, and only if scans of containers (lossless and WAV libraries) matter. On the scans of MP3 and AAC folders its own gain does not clear the project's bar of about 15%, and the medians do not show a gain on tagged MP3 files (open decision 1).
 
 ## What was measured
 
@@ -25,7 +26,7 @@ Setup: Linux x64, Xeon at 2.8 GHz, 4 vCPUs shared with another session. Every ti
 **One batch, six builds of three trees:** the first round compared columns from three batches, which let batch noise pass for gains. This round runs every variant in every case in the same loop:
 
 - **`main`:** the tree at b656c90, published unchanged.
-- **The prototype tree,** published once and switched by an environment variable: no switch (the prototype's overhead; it reads between -9% and +6% against `main`, which is the noise floor of this machine, so a difference of less than about 6 points is not a result), `reuse`, `pre` (the pre-check without reuse), `pre,reuse` (the design) and `pre,reuse,two` (the design with the two-byte check of "The contract change").
+- **The prototype tree,** published once and switched by an environment variable: no switch (the prototype's overhead; it reads between -9% and +6% against `main`, which is the noise floor of this machine for folders; for rows under 0.1 s and single runs it is about 11 points, see the two-byte table), `reuse`, `pre` (the pre-check without reuse), `pre,reuse` (the design) and `pre,reuse,two` (the design with the two-byte check of "The contract change").
 
 Inputs:
 
@@ -44,76 +45,76 @@ An instrumented scratch build timed the two passes of detection (every parser's 
 
 ### Reuse alone, and what the pre-check adds
 
-Percentages are against `main` of the same batch; the last column is the design (pre-check and reuse) against reuse alone, so it is the pre-check's own gain (negative is faster). Differences below about 6 points are noise. "Detection" is round 1's share of the run, for scale.
+Percentages are against `main` of the same batch, as the fastest of 7 runs and as the median; the last column is the design (pre-check and reuse) against reuse alone, in % faster (its time over reuse alone's time, minus 1, so -13% is 13% less time than reuse alone, not 13 points). A row is a result only where the fastest run and the median agree. The noise floor: the prototype with no switch reads between -9% and +6% against `main`; the two-byte rows below move by up to 11 points between builds that can only remove work, so differences under about 6 points on folders over 0.1 s, and under about 11 points on rows under 0.1 s and on single runs, are noise. "Detection" is round 1's share of the run, for scale.
 
-| Case | Files | `main` (s) | Detection (round 1) | Reuse alone | Pre-check, no reuse | Pre-check and reuse | Pre-check's own gain over reuse |
+| Case | Files | `main` (s) | Detection (round 1) | Reuse alone (min / median) | Pre-check, no reuse (min) | Pre-check and reuse (min / median) | Pre-check and reuse against reuse alone (min / median) |
 |---|---|---|---|---|---|---|---|
 | **Folders and mixed scans** | | | | | | | |
-| all fixtures | 2502 | 1.946 | 57% | -29% | -31% | -38% | -13% |
-| fixtures under 32 KiB | 2025 | 0.955 | 49% | -26% | -24% | -34% | -11% |
-| 300 short MP3 and AAC files | 301 | 0.666 | 40% | -31% | -22% | -24% | +10% |
-| all fixtures, 1,000 junk bytes in front | 2502 | 1.713 | - | -25% | +22% | -23% | +2% |
+| all fixtures | 2502 | 1.946 | 57% | -29% / -33% | -31% | -38% / -39% | -13% / -9% |
+| fixtures under 32 KiB | 2025 | 0.955 | 49% | -26% / -28% | -24% | -34% / -28% | -11% / -0% |
+| 300 short MP3 and AAC files | 301 | 0.666 | 40% | -31% / -19% | -22% | -24% / -22% | +10% / -4% |
+| all fixtures, 1,000 junk bytes in front | 2502 | 1.713 | - | -25% / -24% | +22% | -23% / -20% | +2% / +5% |
 | **Tagged and untagged MP3 (new)** | | | | | | | |
-| the same 120 MP3 files without tags | 120 | 0.222 | - | -25% | -3% | -15% | +14% |
-| 120 MP3 files with ID3v2, 90 of them also with ID3v1 or APE | 120 | 0.249 | - | -4% | -2% | -14% | -10% |
-| tagged folder: those 120 and the 145 `tags` fixtures | 265 | 0.285 | - | +0% | -1% | -9% | -9% |
+| the same 120 MP3 files without tags | 120 | 0.222 | - | -25% / -27% | -3% | -15% / -19% | +14% / +10% |
+| 120 MP3 files with ID3v2, 90 of them also with ID3v1 or APE | 120 | 0.249 | - | -4% / -14% | -2% | -14% / -12% | -10% / +3% |
+| tagged folder: those 120 and the 145 `tags` fixtures | 265 | 0.285 | - | +0% / -15% | -1% | -9% / -19% | -9% / -5% |
 | **Fixture folders of the raw streams** | | | | | | | |
-| `mpeg` | 164 | 0.161 | 52% | -13% | -4% | -13% | -0% |
-| `layer3` | 37 | 0.042 | 46% | -11% | -13% | -17% | -7% |
-| `adts` | 57 | 0.054 | 35% | -13% | -2% | -15% | -2% |
-| `ac3` | 78 | 0.064 | 44% | -15% | -11% | -18% | -3% |
-| `dts` | 165 | 0.101 | 53% | -20% | -16% | -32% | -14% |
-| `flac` | 114 | 0.150 | 56% | -26% | -17% | -30% | -5% |
-| `truehd` | 65 | 0.103 | 36% | -13% | -7% | -8% | +6% |
+| `mpeg` | 164 | 0.161 | 52% | -13% / -18% | -4% | -13% / -25% | -0% / -8% |
+| `layer3` | 37 | 0.042 | 46% | -11% / -8% | -13% | -17% / -13% | -7% / -6% |
+| `adts` | 57 | 0.054 | 35% | -13% / -20% | -2% | -15% / -13% | -2% / +9% |
+| `ac3` | 78 | 0.064 | 44% | -15% / -18% | -11% | -18% / -23% | -3% / -7% |
+| `dts` | 165 | 0.101 | 53% | -20% / -25% | -16% | -32% / -28% | -14% / -4% |
+| `flac` | 114 | 0.150 | 56% | -26% / -29% | -17% | -30% / -33% | -5% / -6% |
+| `truehd` | 65 | 0.103 | 36% | -13% / -7% | -7% | -8% / -7% | +6% / +1% |
 | **Fixture folders of the containers** | | | | | | | |
-| `mp4` | 187 | 0.111 | 42% | -20% | -12% | -24% | -6% |
-| `ogg` | 120 | 0.078 | 43% | -16% | -18% | -25% | -11% |
-| `musepack` | 99 | 0.114 | 55% | -28% | -32% | -41% | -17% |
-| `asf` | 152 | 0.204 | 37% | -17% | -14% | -21% | -5% |
-| `matroska` | 189 | 0.116 | 43% | -18% | -25% | -30% | -14% |
-| `wav` | 242 | 0.116 | 56% | -23% | -27% | -39% | -21% |
-| `aiff` | 119 | 0.056 | 60% | -14% | -24% | -37% | -27% |
-| `wavpack` | 159 | 0.184 | 72% | -32% | -51% | -56% | -35% |
-| `monkeys-audio` | 113 | 0.228 | 73% | -34% | -23% | -46% | -19% |
-| `tta` | 67 | 0.141 | 71% | -13% | -43% | -56% | -49% |
+| `mp4` | 187 | 0.111 | 42% | -20% / -14% | -12% | -24% / -23% | -6% / -10% |
+| `ogg` | 120 | 0.078 | 43% | -16% / -21% | -18% | -25% / -30% | -11% / -11% |
+| `musepack` | 99 | 0.114 | 55% | -28% / -30% | -32% | -41% / -45% | -17% / -22% |
+| `asf` | 152 | 0.204 | 37% | -17% / -19% | -14% | -21% / -21% | -5% / -2% |
+| `matroska` | 189 | 0.116 | 43% | -18% / -10% | -25% | -30% / -19% | -14% / -11% |
+| `wav` | 242 | 0.116 | 56% | -23% / -25% | -27% | -39% / -42% | -21% / -22% |
+| `aiff` | 119 | 0.056 | 60% | -14% / -30% | -24% | -37% / -31% | -27% / -2% |
+| `wavpack` | 159 | 0.184 | 72% | -32% / -28% | -51% | -56% / -56% | -35% / -39% |
+| `monkeys-audio` | 113 | 0.228 | 73% | -34% / -33% | -23% | -46% / -51% | -19% / -27% |
+| `tta` | 67 | 0.141 | 71% | -13% / -26% | -43% | -56% / -56% | -49% / -40% |
 | **Other folders** | | | | | | | |
-| `tags` | 145 | 0.070 | 51% | -10% | +10% | -3% | +7% |
-| `fuzz` | 57 | 0.070 | 39% | -11% | -6% | -14% | -3% |
-| `aac` | 53 | 0.071 | - | -10% | -4% | -13% | -4% |
-| `layer2` | 27 | 0.040 | - | -8% | -2% | -7% | +1% |
-| `alac` | 4 | 0.018 | - | -18% | -1% | -17% | +1% |
-| `apple` | 31 | 0.060 | - | -14% | -12% | -13% | +2% |
-| `stats` | 9 | 0.030 | - | -4% | +0% | -6% | -2% |
-| `vbr` | 49 | 0.047 | - | -19% | -2% | -9% | +13% |
+| `tags` | 145 | 0.070 | 51% | -10% / -11% | +10% | -3% / -11% | +7% / +1% |
+| `fuzz` | 57 | 0.070 | 39% | -11% / -1% | -6% | -14% / -2% | -3% / -1% |
+| `aac` | 53 | 0.071 | - | -10% / -12% | -4% | -13% / -2% | -4% / +11% |
+| `layer2` | 27 | 0.040 | - | -8% / -15% | -2% | -7% / -15% | +1% / -0% |
+| `alac` | 4 | 0.018 | - | -18% / -11% | -1% | -17% / -21% | +1% / -11% |
+| `apple` | 31 | 0.060 | - | -14% / -17% | -12% | -13% / +1% | +2% / +22% |
+| `stats` | 9 | 0.030 | - | -4% / -10% | +0% | -6% / -7% | -2% / +3% |
+| `vbr` | 49 | 0.047 | - | -19% / -5% | -2% | -9% / +18% | +13% / +24% |
 | **One file of 300 s (the lossy ones) or a lossless benchmark file** | | | | | | | |
-| MP3 CBR 128, 300 s | 1 | 0.085 | 16% | -7% | -4% | -5% | +3% |
-| MP3 CBR 128, 60 min | 1 | 0.620 | 3% | +4% | +4% | -2% | -6% |
-| AAC LC, ADTS | 1 | 0.140 | 11% | -2% | +4% | +12% | +14% |
-| AAC LC, MP4 | 1 | 0.145 | 11% | -2% | -6% | -8% | -7% |
-| AC-3 | 1 | 0.229 | 5% | +0% | -0% | -1% | -1% |
-| WMA v2 | 1 | 0.132 | 14% | -2% | -5% | -6% | -4% |
-| Vorbis | 1 | 0.063 | 37% | -17% | -25% | -32% | -17% |
-| Opus | 1 | 0.059 | 32% | -13% | -22% | -29% | -18% |
-| Speex | 1 | 0.063 | 30% | -14% | -16% | -30% | -19% |
-| Musepack SV8 | 1 | 0.028 | 55% | -29% | -38% | -47% | -25% |
-| FLAC -5 | 1 | 0.213 | 7% | -2% | -1% | -1% | +1% |
-| WavPack default | 1 | 0.083 | 26% | -8% | -9% | -17% | -10% |
-| Monkey's Audio `-c3000` | 1 | 0.111 | 19% | -11% | -14% | -16% | -5% |
-| TTA | 1 | 0.121 | 12% | +3% | -5% | -7% | -10% |
-| WAV, 16-bit | 1 | 0.033 | 67% | -33% | -51% | -60% | -41% |
-| TrueHD, 16-bit | 1 | 0.821 | 2% | -1% | +3% | -6% | -5% |
+| MP3 CBR 128, 300 s | 1 | 0.085 | 16% | -7% / -10% | -4% | -5% / -8% | +3% / +3% |
+| MP3 CBR 128, 60 min | 1 | 0.620 | 3% | +4% / +8% | +4% | -2% / +5% | -6% / -3% |
+| AAC LC, ADTS | 1 | 0.140 | 11% | -2% / -4% | +4% | +12% / -2% | +14% / +2% |
+| AAC LC, MP4 | 1 | 0.145 | 11% | -2% / -14% | -6% | -8% / -11% | -7% / +3% |
+| AC-3 | 1 | 0.229 | 5% | +0% / -4% | -0% | -1% / -4% | -1% / -1% |
+| WMA v2 | 1 | 0.132 | 14% | -2% / +2% | -5% | -6% / -8% | -4% / -10% |
+| Vorbis | 1 | 0.063 | 37% | -17% / -20% | -25% | -32% / -35% | -17% / -19% |
+| Opus | 1 | 0.059 | 32% | -13% / -18% | -22% | -29% / -32% | -18% / -17% |
+| Speex | 1 | 0.063 | 30% | -14% / -6% | -16% | -30% / -29% | -19% / -24% |
+| Musepack SV8 | 1 | 0.028 | 55% | -29% / -31% | -38% | -47% / -47% | -25% / -24% |
+| FLAC -5 | 1 | 0.213 | 7% | -2% / -6% | -1% | -1% / -2% | +1% / +5% |
+| WavPack default | 1 | 0.083 | 26% | -8% / -8% | -9% | -17% / +2% | -10% / +10% |
+| Monkey's Audio `-c3000` | 1 | 0.111 | 19% | -11% / -5% | -14% | -16% / -17% | -5% / -12% |
+| TTA | 1 | 0.121 | 12% | +3% / -3% | -5% | -7% / -10% | -10% / -7% |
+| WAV, 16-bit | 1 | 0.033 | 67% | -33% / -21% | -51% | -60% / -59% | -41% / -48% |
+| TrueHD, 16-bit | 1 | 0.821 | 2% | -1% / -10% | +3% | -6% / -2% | -5% / +8% |
 
 
-- **The split:** reuse alone gives most of the gain on the mixed scans: all fixtures -29% against -38% for the design, the folder of 300 short MP3 and AAC files -31% against -24%, junk in front -25% against -23%. The pre-check's own gain is on the folders of containers, which reuse cannot help much (it still sniffs everything once): WavPack -35 points, TTA -49, AIFF -27, WAV -21, Monkey's Audio -19, Musepack -17, Matroska -14, and on the 300-second Vorbis, Opus, Speex, Musepack and WAV files (-17 to -41 points).
-- **Where the pre-check loses:** the folder of 300 short MP3 and AAC files (+10 points), the 120 MP3 files without tags (+14), `vbr` (+13), `truehd` (+6). Where every file is a raw stream without tags, both run each search once, and the checks of the start of the data cost a few points more than they save. The pre-check alone (no reuse) is +22% on junk in front: with junk nothing matches at the start, so every search runs in pass 1 and again in pass 2.
-- **Tagged files (new):** the folder of 300 short files has no tags, so reuse applied to every file in it; a real library does not look like that. With 90 of 120 MP3 files carrying a trailing tag, reuse alone falls from -25% to -4%, and the pre-check with reuse gives -14%, 10 points more than reuse alone; on the tagged folder with the 145 `tags` fixtures (data mostly unrecognized) reuse alone gives 0% and the design -9%. The pre-check is the only one of the two that helps a tagged MP3 library, and it does not reach the bar there.
-- **The bar of about 15%:** reuse alone clears it on all fixtures, the small files, the folder of short files, junk in front, every container's fixture folder but AIFF and TTA (-14% and -13%), and not on a tagged MP3 library or a single 300-second raw stream. The design clears it on the same and on the tagged MP3 library by a hair (-14%); its own gain over reuse clears it on six of the ten container folders (Matroska is at -14) and on none of the mixed scans of MP3 and AAC.
-- **A single 300-second file:** reuse alone helps WAV (-33%), Musepack (-29%), Vorbis, Opus and Speex (-13 to -17%) and nothing else beyond the noise; the design adds to those and gives WavPack -17%, Monkey's Audio -16%; none of the raw streams (MP3, ADTS, AC-3, FLAC, TrueHD) moves beyond the noise of about 10%.
+- **The split:** reuse alone gives most of the gain on the mixed scans: all fixtures -29% / -33% against -38% / -39% for the design, the folder of 300 short MP3 and AAC files -31% / -19% against -24% / -22%, junk in front -25% / -24% against -23% / -20%. The pre-check's own gain is on the folders of containers, which reuse cannot help much (it still sniffs everything once): TTA -49% / -40% faster than reuse alone, WavPack -35% / -39%, Monkey's Audio -19% / -27%, WAV -21% / -22%, Musepack -17% / -22%, Matroska -14% / -11%, Ogg -11% / -11%, and the 300-second Vorbis, Opus, Speex, Musepack and WAV files (-17% to -48%). All fixtures read -13% / -9%.
+- **Where the pre-check loses:** the 120 MP3 files without tags (+14% / +10%). The folder of 300 short MP3 and AAC files (+10% / -4%) and `vbr` do not agree between the two measures, so they show no loss either. Where every file is a raw stream without tags, both run each search once, and the checks of the start of the data cost about what they save. The pre-check alone (no reuse) is +22% / +28% on junk in front: with junk nothing matches at the start, so every search runs in pass 1 and again in pass 2.
+- **Tagged files (new):** the folder of 300 short files has no tags, so reuse applied to every file in it; a real library does not look like that. With 90 of 120 MP3 files carrying a trailing tag, reuse is off for them. The 120 tagged MP3 files read -4% / -14% for reuse alone and -14% / -12% for the design, so the design is 10% faster than reuse alone by the fastest run and 3% slower by the median: no result. The measurement does not show that the pre-check helps a tagged MP3 library, nor that it does not; it would take more rounds on this one case. The tagged folder with the 145 `tags` fixtures (data mostly unrecognized) reads 0% / -15% for reuse alone and -9% / -19% for the design, again without agreement.
+- **The bar of about 15%** is applied below to rows where the fastest run and the median both reach it.
+- **A single 300-second file:** reuse alone helps WAV (-33% / -21%), Musepack (-29% / -31%) and Vorbis (-17% / -20%) and nothing else beyond the noise; the design adds to those and to Opus, Speex (each about -30%); none of the raw streams (MP3, ADTS, AC-3, FLAC, TrueHD) moves beyond the noise of about 10%.
 - **The earlier tables' oddities:**
   - the first round's "upper bound" (the winner only, sniffed once, read from a table made by `main`) was beaten in about 14 rows, because it came from a batch of its own and loaded its table in every process; it was an estimate, not a bound, and is dropped. What is left to gain is not known;
   - its gaps between batches for `tags` and `truehd` (the first round read -14% (`tags`) and -15% (`truehd`) for reuse in one batch and +1% and -6% for the design in another) are not reproduced: in one batch `tags` reads -10% (reuse), +10% (pre-check alone) and -3% (design), `truehd` -13%, -7% and -8%, so they were batch noise;
   - the first round's figures for the folder of short files (-19 and -22%) and all fixtures (-46%) read lower or higher here (-24% and -38%); batch noise of 5 to 10 points is normal on this machine.
-- **The two-byte check** (the last table): inside the noise nearly everywhere; it helps `mpeg` (-13% to -20%) and `layer3` (-17% to -24%), where 0xFF passes the one-byte filters of ADTS and DTS, and `dts` (-32% to -36%), and costs nothing measurable elsewhere (`fuzz` and the folder of short files read worse by 5 to 12 points, which is the noise of those rows). It is a few lines per parser; open decision 10.
+- **The two-byte check** (the last table, against `main`): inside the noise nearly everywhere, and the rows that read worse with it (`fuzz` -14% to -3%, the tagged files -14% to -9%, the folder of short files) are noise by construction, since the check only removes work. It helps `mpeg` (-13% to -20%) and `layer3` (-17% to -24%), where 0xFF passes the one-byte filters of ADTS and DTS; that is the one row where it may matter. It is a few lines per parser; open decision 10.
 
 The two-byte check: the design without and with it, against `main`:
 
@@ -137,15 +138,15 @@ The two-byte check: the design without and with it, against `main`:
 
 ### What the bar says
 
-The project's bar is a gain of about 15%.
+The project's bar is a gain of about 15%. A row is listed only where both the fastest run and the median reach it (the numbers are against `main`, fastest / median).
 
-- **Reuse alone clears it on:**
-  - all fixtures (-29%), the small files (-26%), the folder of 300 short MP3 and AAC files (-31%), files with junk in front (-25%);
-  - the fixture folders of every container but AIFF and TTA (-14%, -13%), and of `flac` (-26%), `dts` (-20%), `ac3` (-15%);
-  - one 300-second file of WAV, Musepack, Vorbis, Opus and Speex.
-- **Reuse alone does not clear it on:** the folders of MP3 (`mpeg` -13%, `layer3` -11%, `layer2` -8%), ADTS and AAC, `truehd`, `tags`, `fuzz`, a tagged MP3 library (-4%), and a single raw stream.
-- **The pre-check with reuse clears it on** all of those, on a tagged MP3 library by a hair (-14%), on `adts` (-15%) and `fuzz` (-14%), on `mpeg` (-13%) only just, and with the two-byte check (-20%); it does not on `truehd` (-8%), `tags` (-3%) and a single raw stream.
-- **The pre-check's own gain over reuse clears it on** the folders of WavPack, TTA, AIFF, WAV, Monkey's Audio and Musepack, and on one 300-second file of Vorbis, Opus, Speex, Musepack and WAV; not on any mixed scan (-13% on all fixtures, -11% on the small files, +10% on the folder of short files).
+- **Reuse alone reaches it on:**
+  - all fixtures (-29% / -33%), the small files (-26% / -28%), the folder of 300 short MP3 and AAC files (-31% / -19%), files with junk in front (-25% / -24%);
+  - the fixture folders of `flac`, `dts`, `ac3`, `ogg`, `asf`, `musepack`, `wav`, `wavpack` and `monkeys-audio`;
+  - one 300-second file of WAV, Musepack and Vorbis.
+- **Reuse alone does not reach it on:** the folders of MP3 and ADTS (`mpeg`, `layer2`, `layer3`, `aac`, `adts`), `truehd`, `tags`, `fuzz`, `mp4`, `matroska`, `aiff`, `tta`, a tagged MP3 library, Opus and Speex, and a single raw stream.
+- **The pre-check with reuse reaches it on** everything reuse alone does and, in addition, on `mp4`, `matroska`, `aiff` and `tta`, and on the 300-second Opus and Speex files; with reuse it does not reach it on `mpeg` (-13% / -25%), `layer3`, `layer2`, `aac`, `adts` (-15% / -13%), `truehd`, `tags`, `fuzz`, the 120 tagged MP3 files (-14% / -12%) and a single raw stream.
+- **The pre-check's own gain over reuse (the design's time against reuse alone's) reaches it on** the folders of TTA (-49% / -40%), WavPack (-35% / -39%), Monkey's Audio (-19% / -27%), WAV (-21% / -22%) and Musepack (-17% / -22%), and on the 300-second Vorbis, Opus, Speex, Musepack and WAV files; at the looser 10% also Matroska and Ogg. All fixtures read -13% / -9%, so it does not reach the bar. It does not on any mixed scan of MP3 and AAC.
 
 ## Why every file is sniffed twice
 
@@ -176,7 +177,7 @@ int FurtherInClass => 0;
 
 The rules hold for every context the host builds (both passes, `DetectFormat`, the forced parser's own sniff), with the same window, extension hint and `FirstEmbeddedTag` for the two methods:
 
-- **Rule 1:** where `SniffAtStart` matches, `Sniff` returns the same result, every field (class, offset, end, frames, verified frames, note).
+- **Rule 1:** where `SniffAtStart` matches, `Sniff` returns the same result, every field (class, offset, end, frames, verified frames, note); a `Sniff` that throws there, even `EndOfStreamException`, breaks the rule.
 - **Rule 2:** where `SniffAtStart` returns None, or throws, `Sniff` returns at most `FurtherInClass`.
 - **Rule 3:** a match starts on a byte of the window (`Offset` at least its start and below its end), which every sniff does today and the host's argument below relies on.
 - **Rule 4, exceptions:** the host treats any exception from `SniffAtStart` as None, as for `Sniff`: `EndOfStreamException` and `InvalidDataException` silently, anything else but cancellation and running out of memory as a failure with the activity "sniffing the data", the text `Sniff`'s failure has, so that `AddFailure` keeps one finding per parser. A parser may throw a bug exception from `SniffAtStart` only where `Sniff` throws one on the same context, so the pre-check never reports a `parse.failed` that `main` would not (it may stay silent where `main` reports one, see "What does change").
@@ -215,7 +216,9 @@ For each ranking (`Rank`), with the pass-1 results of the same call where reuse 
    - the parser is not the forced one (`--as`, `AnalysisOptions.ForcedFormat`);
    - in pass 2 only, where the report's alternatives are made: W starts at the start of the window, and its matched structure or its declared end, whichever is further, reaches the end of the window (`Math.Max(W.Extent, DeclaredEnd(W)) >= window end`).
 3. In pass 2, if the best of all the results is not W, the parsers skipped in step 2 are sniffed after all.
-4. **Reuse:** where pass 2 sees the same bytes as pass 1 (above) and no format is forced, it takes pass 1's results of `SniffAtStart` and of every `Sniff` that ran, and runs only the searches pass 1 skipped and pass 2 needs. W's declared end is reused only if W is the parser pass 1 asked for its declared end, the pass-1 winner; if a search outranked W in pass 1, pass 2 asks W's own.
+4. **Reuse** (with the pre-check): where pass 2 sees the same bytes as pass 1 (above) and no format is forced, it takes pass 1's results of `SniffAtStart` and of every `Sniff` that ran, and runs only the searches pass 1 skipped and pass 2 needs. W's declared end is reused only if W is the parser pass 1 asked for its declared end, the pass-1 winner; if a search outranked W in pass 1, pass 2 asks W's own.
+
+**Reuse alone** (step 1 of the rollout) has no W and no skipping: pass 1 sniffs every parser in full, as today, and keeps the sorted ranking whole and the declared end `FindContainer` asked of its winner, which is the best of that ranking. Where pass 2 (or `DetectFormat`'s second ranking) sees the same bytes and no format is forced, it takes that ranking as its own and that declared end as the best's, and sniffs nothing again; `Describe` and everything after it run on them as today. Otherwise it ranks afresh, as today.
 5. The ranking, the alternatives, the ambiguity finding and the report are made from the results exactly as today.
 
 Pass 1, `DetectFormat` and the forced pass's search for the container ask only which format wins, so they skip without the third condition of step 2.
@@ -251,7 +254,7 @@ The report uses the ranking in four places; a skipped parser changes none of the
 
 ## Containers, raw streams, junk and tags
 
-- **Containers matched at 95 or 100** (MP4, Ogg, ASF, Musepack SV7 and SV8, Matroska with a Segment, WAV, Wave64 and AIFF with a chunk, WavPack, Monkey's Audio, TTA, DTS-HD): W is found at the start and, in a whole file, declares an end at or past the end of the window, so both passes skip every search. A truncated container declares an end past the end of the data, which still covers it. (Musepack versions 4 to 6, class 95 with three units, is not a container: it declares no end, so pass 2 treats it as a raw stream.)
+- **Containers matched at 95 or 100** (MP4, Ogg, ASF, Musepack SV7 and SV8, Matroska with a Segment, WAV, Wave64 and AIFF with a chunk, WavPack, Monkey's Audio, TTA, DTS-HD): W is found at the start and, in a whole file, declares an end at or past the end of the window, so both passes skip every search. A truncated container declares an end past the end of the data, which still covers it. (Musepack versions 4 to 6, class 95 with three units, is not a container: it declares no end, so pass 2 treats it as a raw stream. Nor are Monkey's Audio files before version 3.98, which state no size: `DeclaredEnd` is null for them, W does not cover the window, and pass 2 runs the searches.)
 - **Containers matched at 90 or below** (a WAV, Wave64 or AIFF header whose chunk runs past the data, a Matroska without a Segment, a WavPack block the data cuts short): MPEG audio (`FurtherInClass` 90) and TrueHD (94) still run in both passes, since W is not above their class; the other seven searches are skipped, in pass 2 only where W covers the window.
 - **A container with bytes after its declared end** (an appended stream, junk not taken by a tag): W does not cover the window, so pass 2 runs every search, as today, and finds the alternative after the container.
 - **Raw streams** (MPEG audio, ADTS, AC-3, DTS, FLAC, TrueHD, Musepack versions 4 to 6): there is no declared end, and W's matched structure is its first 16 frames, so pass 2 runs the searches, which may find a second stream further in, the alternatives the plan describes. Pass 1 skips them. This is why a single raw stream gains little.
@@ -266,11 +269,11 @@ A skipped parser that would have changed the report is a false negative. It can 
 
 **The checking wrapper** (test code, one source file in `tests/Encspect.Tests`, linked into `tests/Encspect.Fuzz`): an `IFormatParser` that wraps a real parser and forwards `Name`, `DeclaredEnd`, `Parse` and `FurtherInClass`. Whenever the host calls its `SniffAtStart` or its `Sniff`, it calls both methods of the inner parser on that same context and checks:
 
-- **Rule 1** (equal results where `SniffAtStart` matches), **rule 2** (`Sniff` at most `FurtherInClass` where it does not, or where it throws) and **rule 3** (a match starts on a byte of the window);
+- **Rule 1** (equal results where `SniffAtStart` matches, and a `Sniff` that throws there is a break), **rule 2** (`Sniff` at most `FurtherInClass` where it does not, or where it throws) and **rule 3** (a match starts on a byte of the window);
 - **Rule 4**, exception parity: `SniffAtStart` throws a bug exception only where `Sniff` does;
-- that the bound is reached: it counts, per parser, the contexts where `Sniff` returned exactly `FurtherInClass`, and the contract test fails if a searching parser's count is 0 over all its inputs (a bound that is never reached cannot be told from a constant that is too high).
+- that the bound is reached: it counts, per parser, the contexts where `Sniff` returned exactly `FurtherInClass`, and the contract test fails if a searching parser's count is 0 over all its inputs (the counters are shared state: one wrapper per test, or `Interlocked`, so parallel tests do not mix them) (a bound that is never reached cannot be told from a constant that is too high).
 
-On a violation it throws, so the host reports a `parse.failed` with the rule and the evidence, which every check that fails on `parse.failed` (the fuzzer, `DescriptionTests`, the finding tests) already catches. Because it sits inside an `Analyzer`, it sees the contexts the real host builds: both passes, `DetectFormat`, the forced parser's sniff and the contexts with `FirstEmbeddedTag`, not the contexts a test imagines.
+On a violation it throws, so the host reports a `parse.failed` with the rule and the evidence, which the fuzzer already fails on, and which `SniffAtStartTests` and `DetectionPrecheckTests` assert on (`DescriptionTests` and the finding tests do not use the wrapper). Because it sits inside an `Analyzer`, it sees the contexts the real host builds: both passes, `DetectFormat`, the forced parser's sniff and the contexts with `FirstEmbeddedTag`, not the contexts a test imagines.
 
 **Three tests and a fuzz mode:**
 
@@ -289,7 +292,7 @@ On a violation it throws, so the host reports a `parse.failed` with the rule and
 
 **What the prototype showed:**
 
-- **Identity:** the prototype (pre-check and reuse, also each half apart and with the two-byte check) was run with `--json`, `--csv`, `--only-format mpeg,flac,ogg` and `--as` for nine formats against `main`'s CLI on 15 sets: all 2,502 fixtures, the 300-second lossy and lossless benchmark files, the tagged folder, the 284 limit inputs, 3,317 inputs with embedded tags, and nine kinds of copy of the fixtures (about 22,500: 352 and 1,000 junk bytes, zero bytes, short junk, header bit flips, header cut, bit flips, truncation, a run of 0x00 or 0xFF). 270 comparisons, no difference.
+- **Identity:** `--json` and `--csv` of four prototype variants (reuse alone, the pre-check alone, the design, and the design with the two-byte check), and `--only-format mpeg,flac,ogg` and `--as` for nine formats of the design only (not of reuse alone or the pre-check alone: the prototype was deleted before this was noticed), were compared with `main`'s CLI on 15 sets: all 2,502 fixtures, the 300-second lossy and lossless benchmark files, the tagged folder, the 284 limit inputs, 3,317 inputs with embedded tags, and nine kinds of copy of the fixtures (about 22,500: 352 and 1,000 junk bytes, zero bytes, short junk, header bit flips, header cut, bit flips, truncation, a run of 0x00 or 0xFF). 270 comparisons, no difference.
 - **The contract:** the checking wrapper ran in every one of them, on the build that was measured, and found no violation. It checked about 55,000 sniff contexts per searching parser. Each of the nine searching sniffs returned exactly its `FurtherInClass` somewhere (counts of contexts per parser, all sets: ADTS 852, AC-3 1,485, DTS 2,320, FLAC 1,309, MPEG audio 3,909, Monkey's Audio 918, Ogg 1,654, TrueHD 120, WavPack 1,965). Step 3 of the host's rule ran 8 times, all on the inputs made for it (2 of the limit inputs, 6 of the embedded-tag ones); on the first round's inputs it ran on none, which is why the tests need them.
 - **The tests would have caught the trap and the hole.** Two mutants of the prototype, checked by the wrapper:
   - DTS's `SniffAtStart` with the zero run capped at 1 MiB, as `StartsWithChain` has it: 24 violations of rule 2, on exactly the limit inputs of 1 MiB + 1 byte of zeros and above (1 MiB − 1 and 1 MiB are fine), and none on the inputs of 1 MiB of zeros and fewer; the first round's corpus, which added up to 4,096 zero bytes, cannot see it;
@@ -320,7 +323,7 @@ Each step is its own pull request with the measurements of the build that ships.
 
 ## Open decisions
 
-1. **Reuse alone, or the pre-check with reuse?** Reuse alone is host-only, with no contract change, and byte-identical. Measured side by side in one batch (table above), it gains 29% on all fixtures against 38%, 26% on the small files against 34%, 31% on the folder of short MP3 and AAC files against 24%, and 25% on files with junk in front against 23%. The pre-check's own gain clears the bar of about 15% on the folders of containers (WavPack, TTA, AIFF, WAV, Monkey's Audio, Musepack) and on 300-second files of Ogg, Musepack and WAV, and does not on any mixed scan; on the folder of short MP3 and AAC files it loses 10 points, and on a tagged MP3 library it adds 10 points where reuse is off for 90 of 120 files. Recommendation: **reuse alone**, as step 1 and its own pull request, whose time it fully earns on the headline scans; build the pre-check only if lossless and WAV libraries or tagged MP3 libraries are a use case that matters, as step 2, and with all of the tests below.
+1. **Reuse alone, or the pre-check with reuse?** Reuse alone is host-only, with no contract change, and byte-identical. Measured side by side in one batch (table above; fastest run / median), it gains 29% / 33% on all fixtures against 38% / 39% for the design, 31% / 19% on the folder of short MP3 and AAC files against 24% / 22%, and 25% / 24% on files with junk in front against 23% / 20%. The pre-check's own gain reaches the bar of about 15% on both measures only on the folders of containers (TTA, WavPack, Monkey's Audio, WAV, Musepack) and on 300-second files of Vorbis, Opus, Speex, Musepack and WAV; on all fixtures it is 13% / 9%, on the 120 MP3 files without tags it loses 14% / 10%, and on the folder of short files and on the 120 tagged MP3 files the fastest run and the median disagree (+10% / -4% and -10% / +3%), so tagged MP3 libraries are not a reason for the pre-check. Recommendation: **reuse alone**, as step 1 and its own pull request; build the pre-check only if libraries of lossless and WAV files are a use case that matters, as step 2, and with all of the tests below. Before deciding on the tagged case, measure it again with more rounds.
 2. **The names `SniffAtStart` and `FurtherInClass`:** they follow the plan's words ("a chain at the start of the data", "a chain further in"). Recommendation: keep them, if step 2 is built.
 3. **TrueHD's 94 further in:** its sniff calls a stream whose access units chain from the start to a later major sync a stream from the start, which no bounded check decides, so its search runs whenever the winner is below 94, which keeps TrueHD's search running on every MP3, AC-3 and DTS file (classes 90, 92 and 93) and on every raw stream. Bounding that chain to a few units would let it drop to 60, but changes what the sniff accepts. Recommendation: keep 94; TrueHD's sniff was 7% of detection over all fixtures.
 4. **The tests' switches:**
