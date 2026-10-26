@@ -89,7 +89,10 @@ COVERED = {
     "Tmds.DBus.Protocol", "SkiaSharp", "HarfBuzzSharp",
 }
 COVERED_PREFIXES = ("SkiaSharp.NativeAssets.", "HarfBuzzSharp.NativeAssets.")
-BUILD_ONLY = {"Avalonia.BuildServices", "Microsoft.NET.ILLink.Tasks"}
+# runtime.<rid>.Microsoft.DotNet.ILCompiler holds the NativeAOT runtime libraries linked into the CLI; its notices are
+# the runtime pack's, which the .NET runtime row covers. Microsoft.DotNet.ILCompiler is the compiler and ships nothing.
+COVERED_SUFFIXES = (".Microsoft.DotNet.ILCompiler",)
+BUILD_ONLY = {"Avalonia.BuildServices", "Microsoft.NET.ILLink.Tasks", "Microsoft.DotNet.ILCompiler"}
 
 
 def uncovered(assets):
@@ -99,14 +102,19 @@ def uncovered(assets):
         for key, entry in target.items():
             if entry.get("type") == "package":
                 found.add(key.split("/")[0])
-    return sorted(p for p in found if p not in COVERED and not p.startswith(COVERED_PREFIXES) and p not in BUILD_ONLY)
+    return sorted(
+        p for p in found
+        if p not in COVERED and not p.startswith(COVERED_PREFIXES) and not p.endswith(COVERED_SUFFIXES) and p not in BUILD_ONLY
+    )
 
 
 def self_test():
     graph = {"targets": {"net10.0": {"Avalonia/1.0": {"type": "package"}, "SkiaSharp.NativeAssets.Linux/1.0": {"type": "package"},
                                      "Avalonia.BuildServices/1.0": {"type": "package"}, "Encspect.Host/1.0": {"type": "project"}}}}
     assert uncovered(graph) == [], uncovered(graph)
-    graph["targets"]["net10.0/linux-x64"] = {"Some.NewLibrary/2.0": {"type": "package"}, "Avalonia.Skia/1.0": {"type": "package"}}
+    graph["targets"]["net10.0/linux-x64"] = {"Some.NewLibrary/2.0": {"type": "package"}, "Avalonia.Skia/1.0": {"type": "package"},
+                                             "Microsoft.DotNet.ILCompiler/1.0": {"type": "package"},
+                                             "runtime.linux-x64.Microsoft.DotNet.ILCompiler/1.0": {"type": "package"}}
     assert uncovered(graph) == ["Some.NewLibrary"], uncovered(graph)
     print("make_notices self-test passed.")
 
