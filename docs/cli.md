@@ -65,6 +65,7 @@ Decodes each file's audio while reading it and compares the checksums that cover
   - FLAC (native and in Ogg), WavPack, Monkey's Audio, and TrueHD and MLP have decoders.
   - `decode.no-decoder` (info) is raised only where a parser starts a decode session for a codec ID that no decoder has. Of the formats today that is TTA.
   - Formats whose parsers start no session (WAV, AIFF, MPEG audio and the others) get neither the finding nor a `verification`.
+  - Streams a container does not hand to a codec parser (FLAC, WavPack and TrueHD in Matroska today, `matroska.codec-not-analyzed`) get no verification either, although a decoder for the coding exists.
 - **Findings:** a stored checksum that differs is a warning, so `--fail-on warning` fails the run. A decoder that fails (`decode.failed`) is an error and a bug.
 - **Output:** the text tree, JSON and CSV carry the verdict (see below). Without `--verify` the tree and every other field are the same.
 
