@@ -1439,7 +1439,7 @@ What the TrueHD and MLP pull request implements: the parser and the decoder (`En
   - `DecodeWork.PerCodedByte` (16) for each byte of a unit the walk did not store.
   - At most 8 matrix channels, 8 matrices and filters on every channel give about 8 × 10^4 units per substream and unit at 160 samples, and 2.5 × 10^5 for the three substreams: far under 2^27, so a unit is charged once, before it is decoded. The draft's 5 × 10^4 a substream counted 80 units a sample period for the matrices and the taps alone; the built weights count what the measurement asked for.
   - The unit that costs the most for its bytes is the crafted one of `ComplexityTests` (stereo, 160 samples, 8 matrices, filters on both channels, no residual bits): about 220 units a byte (33,000 units a unit over about 150 bytes), far under the 2,048 of the default bound, so the budget does not stop a file of TrueHD that way before its bytes do; lowered to 2^28 it stops after a few thousand units.
-- **The measurements** (Linux x64, 4 shared vCPUs, load average 4 to 12, so the reference itself reads 0.47 to 0.94 ns a unit between runs; the figures are single runs of `DecoderWorkTests`, 5 rounds each, medians):
+- **The timings** (Linux x64, 4 shared vCPUs, load average 4 to 12, so the reference itself reads 0.47 to 0.94 ns a unit between runs; the figures are single runs of `DecoderWorkTests`, 5 rounds each, medians):
 
 | Case | Ns a unit | Ratio to the reference | Decoding share |
 | --- | --- | --- | --- |
@@ -1516,7 +1516,7 @@ What the pull request for decision 8 implements: the contract, the host's count 
 - **A muted block is charged its passes.** The charge comes before the decode, and a block whose bitstream ends is only found muted by decoding it, so the 16-pass muted block of `DecoderWorkTests` is charged 160 units a sample for work that costs about 8 ns (0.12 of the reference). This over-charges and cannot under-bound.
 - **Run time:** the nightly run of `DecoderWorkTests` takes 5.2 to 5.5 minutes on the machine below (the draft estimated 3 to 4), and its 35 tests are one test for each case and the reference's own charge. Six of the cases are zero runs with 0 or 1 pass at 1, 2 and 4 bytes a sample, added after the review: a planted `WorkPerPcmSample = 0` fails four of them (2.08 to 2.81 times) and two more read 1.95 and 1.97, where only one fixture had held that weight; a run on the final code reads their ratios 1.2 to 1.43.
 
-### The measurements
+### The work-unit timings
 
 - **Machine:** the build machine of the earlier steps (4 vCPUs, Linux 6.18, .NET 10.0.401, Release), shared with another agent's builds and tests, so these are noisy single-machine figures: the load average was 0.7 to 6, and the reference's own time per unit moved between 0.42 and 1.28 ns across runs. A ratio is the case's time per unit over the reference's in the same round.
 - **How:** the complete runs of `DecoderWorkTests` after the first weights were set (the table has the first three; a fourth, after the last change to the tests, passed all 29 with the largest ratios 1.47 for the FLAC constant case and 1.49 for the WavPack fast mode fixture), and the single runs of the cases listed with the draft's weights. Each case charges about 2^29 units (the verbatim case 2^27, the order-32 and the escape cases 2^28).
