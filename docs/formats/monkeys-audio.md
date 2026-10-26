@@ -74,7 +74,7 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 - **Samples of a pair and of the center.** A file of 16 bits and six channels or more has its channels 2 and 3 checked for 16 bits like the samples of a pair, as the SDK does; a value that does not fit makes the frame invalid.
 - **The work a frame is charged:**
   - for each sample of each channel the frame outputs, the fixed work of the sample for its width (`DecodeWork.ForSample`);
-  - for each channel that is coded, 192 units a sample for the range decoder, 48 for the predictor, and one unit for every two taps of the neural network filters of the level (none at fast, 16 taps at normal, 64 at high, 288 at extra high and 1,552 at insane);
+  - for each channel that is coded, 192 units a sample for the range decoder, 48 for the predictor, and one unit for every two taps (three for every four at 32 bits) of the neural network filters of the level (none at fast, 16 taps at normal, 64 at high, 288 at extra high and 1,552 at insane);
   - for each channel of a frame flagged silent, which codes nothing, 40 units a sample more: the zeros still go through the channel pairing, the byte conversion, the CRC and the sink;
   - the charge is made for each chunk of 4,096 samples, so a frame is never charged more than the chunk before it is decoded.
   - A file may be charged 8,192 units for each of its bytes (`WorkPerInputByte`) before `decode.limit` ends the decoding. The weights, the measured time for a unit and how they were chosen are in "As built: Monkey's Audio" of [the decoder design](../design/decoders.md).

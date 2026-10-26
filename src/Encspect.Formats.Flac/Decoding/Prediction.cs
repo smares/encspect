@@ -91,6 +91,8 @@ internal static class Prediction
     // sum over j of coefficients[j] * d[i - 1 - j] is the dot product of the coefficients in reverse with the window d[i - order, i), which
     // is contiguous in memory and so can run through vectors; the sums wrap on 32 bits where the subframe fits them and are exact in 64
     // bits otherwise, in either order of summation.
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void RestoreLpc(Span<int> d, ReadOnlySpan<int> coefficients, int order, int shift, int n, bool isNarrow)
     {
         if (order is < 1 or > MaxOrder || coefficients.Length < order || n > d.Length)
@@ -201,6 +203,8 @@ internal static class Prediction
         return sum;
     }
 
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void RestoreLpcPlain(Span<int> d, ReadOnlySpan<int> coefficients, int order, int shift, int n, bool isNarrow)
     {
         if (isNarrow)
@@ -231,6 +235,8 @@ internal static class Prediction
         }
     }
 
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void RestoreLpc(Span<long> d, ReadOnlySpan<int> coefficients, int order, int shift, int n)
     {
         for (int i = order; i < n; i++)

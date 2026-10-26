@@ -12,8 +12,9 @@ public sealed class MonkeysAudioDecoder : IDecoder
     private const int FirstVersion = 3930;
 
     // Units of work a byte of the file may take. A sample of the highest level costs 1,032 units a channel (16 for the sample, 192 for the range
-    // decoder, 48 for the predictor and 776 for the filters) and the cheapest symbol of the range coder takes 1.74 bits, so a legitimate file
-    // takes at most 1,032 / 0.2175 = 4,745 units a byte, rounded up to 8,192 (docs/design/decoders.md, "The default bound").
+    // decoder, 48 for the predictor and 776 for the filters; 1,426 at 32 bits: 22, 192, 48 and 1,164) and the cheapest symbol of the range coder
+    // takes 1.74 bits, so a legitimate file takes at most 1,032 / 0.2175 = 4,745 units a byte (6,556 at 32 bits), rounded up to 8,192
+    // (docs/design/decoders.md, "The default bound").
     public const long PerInputByte = 8192;
 
     public string Id => MonkeysAudioCodec.Id;

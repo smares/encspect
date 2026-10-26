@@ -30,6 +30,99 @@ public class TrueHdTests
         Assert.Equal((byte)(Checks.Standard8Restart(Digits[..^1]) ^ Digits[^1]), Checks.RestartHeader(Digits, 0, Digits.Length * 8));
     }
 
+    // The residuals of the samples that start well before the end of a substream come from a table of codewords with the bit buffer in
+    // locals (SubstreamReader.ReadBlockDataFast); the rest, and every codeword the table rejects, go through the reader that names the faults.
+    // The same files, damaged at random (bytes changed, so codewords turn invalid inside the fast region; bytes cut, so blocks end within the
+    // distance the fast path keeps from the end), give the same report, findings, verification and decoded audio with the fast path off.
+    [Theory]
+    [InlineData("external-truehd-stereo-48k-24.thd")]
+    [InlineData("external-truehd-51-96k-24.thd")]
+    [InlineData("external-truehd-51-48k-16-loud.thd")]
+    [InlineData("external-mlp-stereo-48k-24.mlp")]
+    public void TheFastPathOfTheResidualsGivesTheReportOfTheSlowReader(string name)
+    {
+        byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "truehd", name));
+        var random = new Random(name.Length);
+        int different = 0;
+        for (int round = 0; round < 40; round++)
+        {
+            byte[] data = original;
+            if (round > 0)
+            {
+                data = (byte[])original.Clone();
+                int changes = random.Next(1, 4);
+                for (int i = 0; i < changes; i++)
+                {
+                    data[random.Next(data.Length)] ^= (byte)(1 << random.Next(8));
+                }
+
+                if (round % 3 == 0)
+                {
+                    Array.Resize(ref data, data.Length - random.Next(1, 60));
+                }
+            }
+
+            string fast = Report(name, data, isFastPathOff: false);
+            string slow = Report(name, data, isFastPathOff: true);
+            Assert.Equal(slow, fast);
+            different += data == original ? 0 : 1;
+        }
+
+        Assert.True(different > 0);
+    }
+
+    private static string Report(string name, byte[] data, bool isFastPathOff)
+    {
+        var sink = new HashingSink();
+        SubstreamReader.IsFastPathOff = isFastPathOff;
+        try
+        {
+            Report report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(data),
+                new AnalysisOptions { Decoding = new DecodeOptions { Output = s => { sink.Format(s.Format); return sink; } } });
+            using var json = new MemoryStream();
+            ReportJsonWriter.Write([report], json);
+            return System.Text.Encoding.UTF8.GetString(json.ToArray()) + "\n" + sink.Hash() + sink.Samples;
+        }
+        finally
+        {
+            SubstreamReader.IsFastPathOff = false;
+        }
+    }
+
+    // The substream's CRC-8 and the parities take a word of bytes at a time; they equal the byte by byte forms at every length.
+    [Fact]
+    public void TheSubstreamChecksEqualTheByteByByteForms()
+    {
+        var random = new Random(8);
+        for (int length = 1; length <= 100; length++)
+        {
+            byte[] body = new byte[length];
+            random.NextBytes(body);
+            int register = 0x3C;
+            foreach (byte b in body[..^1])
+            {
+                register ^= b;
+                for (int bit = 0; bit < 8; bit++)
+                {
+                    register = (register & 0x80) != 0 ? ((register << 1) ^ 0x63) & 0xFF : (register << 1) & 0xFF;
+                }
+            }
+
+            Assert.Equal((byte)(register ^ body[^1]), Checks.Substream(body));
+
+            int x = 0;
+            foreach (byte b in body)
+            {
+                x ^= b;
+            }
+
+            byte parity = (byte)(x ^ 0xA9);
+            Assert.True(Checks.SubstreamParityHolds(body, parity));
+            Assert.False(Checks.SubstreamParityHolds(body, (byte)(parity ^ 1)));
+            Assert.Equal(((x >> 4) ^ (x & 0xF)) == 0xF, Checks.ParityHolds(body.AsSpan(0, length / 2), body.AsSpan(length / 2)));
+        }
+    }
+
     [Theory]
     [InlineData("f8726fba0007800fb75200000000841b203c003ec947e307e3003602", 0x3602)]
     [InlineData("f8726fbb0f8f0001b752400000008d9a11054c0300008080001b538c", 0x538C)]

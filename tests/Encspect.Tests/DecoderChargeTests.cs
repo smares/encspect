@@ -185,12 +185,12 @@ public class DecoderChargeTests
     public void MonkeysAudioChargesTheFixedWorkOfASampleAndTheRangeDecoderThePredictorAndATapForEachCodedChannel(string fixture, int bytes, int channels, int taps)
     {
         // The frames of 24,000 samples of the fixture, charged by chunks of 4,096 samples, each sample for the width of its bytes in each channel and, in
-        // each channel, 192 for the range decoder, 48 for the predictor and a unit for every two taps.
+        // each channel, 192 for the range decoder, 48 for the predictor and a unit for every two taps (three for every four at 32 bits).
         byte[] file = DecoderWorkTests.MonkeysAudioCases.Repeated(fixture, 1L << 24);
 
         long units = DecoderWorkTests.MonkeysAudioCases.Units(file);
 
-        long perSample = (DecodeWork.ForSample(bytes) * channels) + (channels * (MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + ((taps + 1) / 2)));
+        long perSample = (DecodeWork.ForSample(bytes) * channels) + (channels * (MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + MonkeysAudioFrameDecoder.TapUnits(bytes * 8, taps)));
         Assert.Equal(0, units % (24000 * perSample));
         Assert.Equal(MonkeysAudioFrames(file) * 24000 * perSample, units);
     }
@@ -215,6 +215,28 @@ public class DecoderChargeTests
 
         long perSample = (16 * 2) + MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + 776;
         Assert.Equal(MonkeysAudioFrames(file) * 24000 * perSample, units);
+    }
+
+    // The most a legitimate frame can charge for a byte of coded data: every coded value is the cheapest symbol of the range coder, whose model
+    // gives its largest symbol 19,578 of 65,536 (RangeDecoder.RangeWidth), 1.743 bits, and a pseudo-stereo frame codes one channel and charges
+    // the fixed work of two. The 32-bit insane case (1,426 units a coded sample, 6,556 a byte; pseudo-stereo 1,448 and 6,657) has 20% of the
+    // allowance to spare; a value of 1.4 bits, which the model cannot code, would take 8,148 and 8,274.
+    [Theory]
+    [InlineData(1, 8, 1, 1)]
+    [InlineData(2, 16, 2, 2)]
+    [InlineData(3, 24, 2, 2)]
+    [InlineData(4, 32, 2, 2)]
+    [InlineData(4, 32, 2, 1)]
+    [InlineData(3, 24, 2, 1)]
+    [InlineData(4, 32, 1, 1)]
+    [InlineData(4, 32, 8, 8)]
+    public void TheInsaneLevelStaysUnderTheDefaultAllowanceForTheCheapestSymbolAtEveryWidthAndLayout(int bytes, int bits, int channels, int codedChannels)
+    {
+        long taps = MonkeysAudioFrameDecoder.TapUnits(bits, 1280 + 256 + 16);
+        double unitsPerSample = (DecodeWork.ForSample(bytes) * channels) + (codedChannels * (MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + taps));
+        double bytesPerSample = codedChannels * (-Math.Log2(19578.0 / 65536) / 8);
+
+        Assert.True(unitsPerSample / bytesPerSample < MonkeysAudioDecoder.PerInputByte, $"{unitsPerSample / bytesPerSample:F0} units a byte against {MonkeysAudioDecoder.PerInputByte}.");
     }
 
     [Fact]

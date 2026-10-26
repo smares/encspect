@@ -19,6 +19,8 @@ public sealed class Md5
     private uint _c = 0x98badcfe;
     private uint _d = 0x10325476;
 
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void AppendData(ReadOnlySpan<byte> data)
     {
         _length += data.Length;
@@ -84,6 +86,8 @@ public sealed class Md5
     private static uint I(uint x, uint y, uint z) => y ^ (x | ~z);
 
     // The 64 steps of RFC 1321, section 3.4, unrolled: step i adds the constant floor(2^32 * abs(sin(i + 1))).
+    // Compiled optimized at the first call and not tiered (docs/development.md, "Hot loops and tiering").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Transform(ReadOnlySpan<byte> block)
     {
         uint x0 = BinaryPrimitives.ReadUInt32LittleEndian(block[0..]);

@@ -18,6 +18,8 @@ namespace Encspect.Tests;
 //
 //   - What is timed is decoding alone: the analysis with decoding on minus the analysis with it off, in the same round, so the time of the
 //     parse and the walk (very different between a FLAC reference with a large structure pass and a WavPack block of 8 bytes) is out.
+//     For FLAC the "off" run is a run with a hollow decoder (it charges the fixed work and does nothing else): the parser lends its buffers and
+//     the walk stores into them in both, so a faster walk cannot inflate the difference (the second speed pass in docs/design/decoders.md).
 //   - A wrapper around the real decoder sums the units it charges, so the report is the real one.
 //   - A round runs the reference off, the reference on, the case off and the case on, five rounds, and the time of a run is the median of
 //     the rounds' differences; the case's time per unit may be at most twice the reference's, and decoding must be at least a fifth of the
@@ -112,9 +114,32 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         public double Ratio => Case.NanosecondsPerUnit / Reference.NanosecondsPerUnit;
     }
 
-    private static (double Seconds, long Units, Report Report) Run(Case work, bool decode)
+    // The decoder of a FLAC case in the run that stands for "decoding off": it charges the fixed work of every sample, as the host requires, and
+    // does nothing else, so the parser lends its buffers and the walk stores into them as it does when the decoder works.
+    private sealed class HollowDecoder(IDecoder real) : IDecoder
     {
-        var counting = new CountingDecoder(work.Decoder?.Invoke() ?? DecoderOf(work.Name));
+        public string Id => real.Id;
+
+        public long WorkPerInputByte => real.WorkPerInputByte;
+
+        public IFrameDecoder Open(DecodeContext context) => new Frames(context);
+
+        private sealed class Frames(DecodeContext context) : IFrameDecoder
+        {
+            public int Decode(in CodedFrame frame)
+            {
+                context.AddWork(DecodeWork.ForSample(CanonicalPcm.BytesPerSample(context.Setup.BitsPerSample)) * context.Setup.Channels * frame.Samples);
+                return frame.Samples;
+            }
+
+            public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end) => [];
+        }
+    }
+
+    private static (double Seconds, long Units, Report Report) Run(Case work, bool decode, bool isHollow = false)
+    {
+        IDecoder real = work.Decoder?.Invoke() ?? DecoderOf(work.Name);
+        var counting = new CountingDecoder(isHollow ? new HollowDecoder(real) : real);
         IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(p => p is FlacParser && !work.LendsBuffers ? new FlacParser { LendsBuffers = false } : p);
         var analyzer = new Analyzer(DefaultParsers.Tags, formats, DefaultParsers.Codecs, [counting]);
         var options = new AnalysisOptions { Decoding = decode ? new DecodeOptions { MaxWork = long.MaxValue } : null };
@@ -157,9 +182,9 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         for (int round = 0; round < Rounds; round++)
         {
             GC.Collect();
-            (double referenceOff, _, _) = Run(reference, decode: false);
+            (double referenceOff, _, _) = Run(reference, decode: true, isHollow: true);
             (double referenceOn, long referenceCharged, Report referenceReport) = Run(reference, decode: true);
-            (double caseOff, _, _) = Run(work, decode: false);
+            (double caseOff, _, _) = IsFlac(work) ? Run(work, decode: true, isHollow: true) : Run(work, decode: false);
             (double caseOn, long caseCharged, Report caseReport) = Run(work, decode: true);
 
             Assert.DoesNotContain(referenceReport.Findings, f => f.Code is "parse.failed" or "decode.failed" or "decode.limit");
@@ -176,6 +201,8 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             new Figures(caseDiff, caseUnits) { Share = caseDiff / Median(caseOns) },
             new Figures(Median(referenceDiffs), referenceUnits));
     }
+
+    private static bool IsFlac(Case work) => work.LendsBuffers && work.Name.StartsWith("flac", StringComparison.Ordinal);
 
     private static double Median(List<double> values)
     {
