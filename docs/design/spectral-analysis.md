@@ -1,6 +1,6 @@
 # Measurements of decoded audio: spectrum, cutoff, levels and loudness
 
-Status: draft for the project lead, 2026-10-26, revised the same day after an independent review. Nothing is built. Two throwaway prototypes outside the repository measured the costs and the numerical behavior (see [Performance and budget](#performance-and-budget) and [Determinism](#determinism)); the second was written for the review and replaced the first's cutoff method and its table; nothing of either is committed. The decisions are under [Open decisions](#open-decisions), and the claims that no source read for this design confirms are marked **unverified**; figures worked out rather than measured are marked **estimate**. The public specifications were read for the revision (ITU-R BS.1770-5, EBU R 128, EBU Tech 3341 and 3342; see [Sources](#sources)).
+Status: approved by the project lead on 2026-10-26 with every recommendation of [Decisions](#decisions) as listed; not built yet. It was revised after two independent reviews. Two throwaway prototypes outside the repository measured the costs and the numerical behavior (see [Performance and budget](#performance-and-budget) and [Determinism](#determinism)); the second was written for the review and replaced the first's cutoff method and its table; nothing of either is committed. The claims that no source read for this design confirms are marked **unverified**; figures worked out rather than measured are marked **estimate**. The public specifications were read for the revision (ITU-R BS.1770-5, EBU R 128, EBU Tech 3341 and 3342; see [Sources](#sources)).
 
 - It designs the "host-side PCM analyses" that [decoders.md](decoders.md) leaves for later ("The PCM path", "Host-side PCM analyses, later"): waveform, spectrogram and lowpass detection, and the level and loudness figures that the same pass can give.
 - It keeps the decoder contract as approved and built: no parser, decoder or session changes for the measurements themselves. The PCM route of WAV, Wave64 and AIFF (step 3) adds a decoder, one record (`PcmCoding`) and one property of `DecodeSetup` to `Core.Abstractions`; the sink, the session and the router do not change.
@@ -847,7 +847,9 @@ Each step is its own pull request, with fixtures, goldens, articles and document
 - **Why this order:** step 1 carries the use case and every risk (determinism, cost, wording), so it is reviewed first; steps 2 and 3 widen what is measured at little risk; the GUI follows once the data are settled, so its panels are drawn from a stable model; loudness and true peak have their own references and come once the framework is proven.
 - **Alternative:** the GUI panels right after step 1, so users see the spectrogram sooner, before WAV files are measured. Decision 1.
 
-## Open decisions
+## Decisions
+
+The project lead approved the recommendation of each decision below on 2026-10-26: 1(a), 2(a), 3(a), 4(a), 5(a), 6(a), 7(a), 8(a), 9(a), 10(a), 11(a), 12(a), 13(a), 14(a), 15(a), 16(b), 17(a), 18(a) and 19(a). The options are kept for the record.
 
 Each has its options and a recommendation; 15 to 19 are new with the revision.
 
