@@ -3,20 +3,15 @@ using Encspect.Core;
 namespace Encspect.Formats.Flac;
 
 // Reads the file through one window that moves forward with the frames, so a frame is read once from the file however long it is, and the
-// memory held is the window: a megabyte, or as much as the frame in hand needs.
+// memory held is the window: a megabyte, a whole file of up to 128 KiB, or as much as the frame in hand needs (SourceWindow).
 internal sealed class Source(ByteReader reader)
 {
     private const int MinimumWindow = 1 << 20;
-    private const int SmallFile = 1 << 17;
 
-    // A file of a few kilobytes is held whole: a window of a megabyte for each sniff of a folder of small files was a fifth of its time, in the
-    // allocation and the pages it touched. Larger files keep the minimum window, so what is held does not depend on the size of the file.
-    private readonly int _window = WindowFor(reader.Length, MinimumWindow);
-    private byte[] _buffer = new byte[WindowFor(reader.Length, MinimumWindow)];
+    private readonly int _window = SourceWindow.For(reader.Length, MinimumWindow);
+    private byte[] _buffer = [];
     private long _start = -1;
     private int _length;
-
-    private static int WindowFor(long length, int minimum) => length <= SmallFile ? (int)Math.Min(minimum, Math.Max(length, 16)) : minimum;
 
     public long Start => reader.Start;
 
