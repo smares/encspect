@@ -175,6 +175,25 @@ A loop that every analysis runs for seconds and that a method is called from onl
 
 The FLAC row includes the Rice loop of `BitCursor.ReadRice` (a change of its own, measured in `docs/design/decoders.md`, "As built: the second speed pass").
 
+## Analysis speed of the lossy formats
+
+The lossy formats have no decoders: their cost is the structure analysis (headers, frames, side information, AAC's spectral pass, the statistics and graphs, the findings, the checksums over coded bytes). Measured on `origin/main` 65e7fb5 with 300 s files of noise (pink noise, so the bit rates are those of the hardest signal; MP3 also as one 60-minute file), one pinned core, load average under 1.5, interleaved runs, minimum of 5, `--csv`.
+
+- **Where the time goes:** a 300 s file takes 0.3 to 0.9 s in the JIT build and 0.25 to 0.45 s in the ReadyToRun build, of which the start of the runtime and the host is about 0.19 s (a 37 KB MP3: 0.29 s JIT, 0.19 s ReadyToRun). The steady-state analysis is MP3 about 0.14 s per 300 s (60 minutes: 1.4 s), the rest is first-call compilation. A `--json` or text report costs 1 to 3 s more than `--csv` for a 300 s file, almost all in the size of the output.
+- **Comparable tools** (same files, JIT build of Encspect): `mp3guessenc -e -r` (side information, reservoir, ancillary data, music CRC) takes 0.06 s for the 4.8 MB MP3 and is the only tool that does comparable work; `ffprobe -show_frames` reads headers only (0.37 s for the same file, mostly its own start) and FFmpeg's decoder takes 0.56 s; MediaInfo `--ParseSpeed=1` stops early on MP3 and MP4 (0.025 s) and reads whole AAC, AC-3, Opus and Musepack files (0.1 to 0.4 s), doing less.
+- **Format detection:** every file is sniffed by every parser, twice (once to find a container's declared end, once to parse). A parser that searches the file for its signature dominates a folder scan of small files; the sniffs of FLAC, Monkey's Audio and TrueHD each allocated and filled a window of a megabyte, 21% of a scan of 300 short MP3 and AAC files.
+
+What changed (each its own commit; `--json` and `--csv` of every fixture folder of the changed formats, the tags folder and the benchmark files are byte-identical to 65e7fb5, as are 900 mutants of the fixtures: bit flips, truncations and runs of 0x00 and 0xFF):
+
+| Change | Where it paid | JIT build | ReadyToRun build |
+|---|---|---|---|
+| File windows of the FLAC, Monkey's Audio and TrueHD sniffs hold a file of up to 128 KiB whole instead of a megabyte | folder of 300 short MP3 and AAC files | 2.58 to 1.91 s (-26%) | 1.75 to 1.35 s (-23%) |
+| MPEG audio: the frame summary text is built once per header shape, not twice per frame; the side information check does not allocate an iterator and closures for a frame without a problem; no LINQ in the totals | 60-minute MP3 / 300 s MP3 | 1.95 to 1.40 s (-28%) / 0.61 to 0.53 s (-14%) | 1.52 to 1.11 s (-27%) / 0.41 to 0.34 s (-17%) |
+| WMA: the bit reader's `Peek` reads its eight bytes as one word | 300 s WMA | 0.85 to 0.70 s (-17%) | 0.41 to 0.37 s (-9%) |
+
+- **Tested against the slow code:** `WmaBitsPeekTests` (every position around both ends of the data, every width, random buffers and lengths), `MpegSpeedPathTests` (`HasSideInfoProblems` against the iterator over 40,000 random side informations of all versions and channel modes; the summary against the formula for every header shape), `SniffWindowTests` (the three windows against the file at sizes from 0 to over a megabyte).
+- **Tried and dropped:** `AggressiveOptimization` on AC-3's CRC, bit allocation and exponent loops (JIT -17%, ReadyToRun +2%), AAC's spectral loop (JIT -13%, ReadyToRun +7%) and the Ogg page CRC (no gain): the compiled-in-advance code of the ReadyToRun build does not start in tier 0, so they only help the JIT build; WMA's coefficient loop (no gain on top of the bit reader); a bit reader of AC-3 that reads a word (JIT -4%, ReadyToRun 0%). The MPEG frame CRC-16, the LAME music CRC (13% of a 60-minute file; a slicing-by-8 table would save about 10%) and the Ogg page CRC are each below 15% of any format's time.
+
 ## CI
 
 `.github/workflows/ci.yml` is one workflow for pull requests, pushes to main, the nightly schedule and manual runs.
