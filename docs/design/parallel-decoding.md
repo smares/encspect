@@ -26,7 +26,7 @@ Status: a draft for the project lead, not approved and not built.
   - a **commit** on the analysis thread in stream order: checksums over the whole stream, set assembly, the sink.
 - One worker holds the scratch state that `IFrameDecoder` holds today. The host gives each running batch a worker of its own; the stream's state stays in the `IFrameDecoder` and is touched only by the plan, the replan and the commit.
 - What a worker reports (work, findings, PCM) goes into a **journal** of the frame. The host replays the journals in stream order at the commit, so findings, sink calls, the budget and the session's end happen in the order and at the frame where a serial run has them.
-- **A degree of 1 is decoding at the hand-off:** plan, frame decoding and commit run inline in the call that hands the frame, with no copy of the bytes, no window and no batches, and the journal passes every event on at once, so the PCM still streams to the sink chunk by chunk. A degree above 1 changes only where the frame decoding runs and when its journal is replayed.
+- **A degree of 1 is decoding at the hand-off:** plan, replan (which always holds there and only applies the plan stage's effects to the committed state), frame decoding and commit run inline in the call that hands the frame, with no copy of the bytes, no window and no batches, and the journal passes every event on at once, so the PCM still streams to the sink chunk by chunk. A degree above 1 changes only where the frame decoding runs and when its journal is replayed.
 - The host owns the threads: a degree of parallelism in `DecodeOptions` (an option of the call, not a setting), a window of frames in flight, batches of small frames, a memory bound, and a join of every worker before `Analyze` returns or throws.
 - The report, the PCM a sink receives and every checksum are byte-identical to a serial run for every degree, which a test holds over all decoder fixtures, the corrupt-file and fuzz corpora and the benchmark files.
 - **Serial reports stay as they are** wherever the design can keep them. Where a fix would change them, the design takes the option that keeps them and lists the other as an open decision (WavPack sets and DSD charge points, decisions 8 and 9). The Monkey's Audio parser's `frame-not-decoded` finding has two options (decision 11); the design takes the one that changes no report, at the price of one more session member, and both need the owner's sign-off, as does the new parser rule (decision 12).
@@ -138,8 +138,11 @@ public interface IParallelFrameDecoder : IFrameDecoder
     // failures (the same type and message, since decode.frame-invalid carries the first exception's message). Otherwise it
     // returns the FramePlan to decode the frame with (its Failure may be set), and the host drops the frame's journal (its
     // head included), decodes the frame inline with it and replays that journal in its place. Like Plan it may charge and
-    // add findings, which go to the head of the new journal. A frame decoded at the hand-off is not replanned: its plan ran
-    // on the committed state. The planning copy is touched only on a mismatch.
+    // add findings, which go to the head of the new journal. Replan also runs for a frame decoded at the hand-off
+    // (a degree of 1, a frame over the memory bound): it then always returns null and only applies the plan stage's effects
+    // to the committed state, which no one else does. When it returns null, its charges and findings are dropped and the
+    // journal head Plan wrote stands; they are used only on a mismatch, as the head of the new journal (otherwise FLAC's
+    // decode.frame-too-large and the plan's work would count twice). The planning copy is touched only on a mismatch.
     FramePlan? Replan(in CodedFrame frame, FramePlan plan);
 
     // On the analysis thread, in stream order, for each PCM block the frame's worker wrote, in the order it wrote them:
@@ -149,7 +152,8 @@ public interface IParallelFrameDecoder : IFrameDecoder
     // On the analysis thread, in stream order, after the frame's journal has been replayed: takes the frame's result into
     // the stream's state (tallies, set assembly, the MD5 over a WavPack set) and returns the samples per channel by which
     // the stream's output advanced, as IFrameDecoder.Decode returns them today. plan is the one the frame was decoded with
-    // (Replan's where it returned one). Commit applies only the worker's outcome; the plan stage's effects were Replan's.
+    // (Replan's where it returned one). Commit applies only the worker's outcome, the worker's being that of a frame
+    // whose plan.Failure is null; the plan stage's effects were Replan's.
     // result is null, and failure is the exception, where the plan failed, the worker threw, or the replay cut the frame at a
     // charge point (failure is then the OperationCanceledException); the decoder needs the kind of exception for its state (WavPack sets _isSetFailed
     // only on an InvalidDataException, Monkey's Audio keeps the mode the frame was planned with on any failure). No Output runs for blocks after a
@@ -214,7 +218,7 @@ public sealed class FrameContext
 ```
 
 - **Object, not generic:** the host moves plans and results without knowing their types. `Core.Abstractions` adds an abstract base class `ParallelFrameDecoder<TPlan, TResult>` that implements the interface with typed methods, so a decoder casts nowhere.
-- **The base class also implements `IFrameDecoder.Decode`,** as plan, decoding on a worker of its own, and commit, with every call passed on at once. A decoder therefore has no dead member, and a test or another host that only knows `IFrameDecoder` gets the same behavior as a degree of 1.
+- **The base class also implements `IFrameDecoder.Decode`,** as plan, replan, decoding on a worker of its own, and commit, with every call passed on at once. A decoder therefore has no dead member, and a test or another host that only knows `IFrameDecoder` gets the same behavior as a degree of 1.
 - **Why plan, replan and commit:**
   - The plan is where the stream's ordered facts are read before a frame leaves the analysis thread, so a worker never reads the stream's state.
   - The replan is where a guess is checked against the state the earlier commits left, before anything of the frame is delivered. Without it the check would come after the replay, and a frame decoded twice would charge twice, double-deliver PCM to the sink and count its findings twice.
@@ -230,9 +234,9 @@ public sealed class FrameContext
 
 | Decoder | Plan (analysis thread) | Frame decoding (worker) | Replan (analysis thread, before the replay) | Output and Commit (analysis thread) |
 |---|---|---|---|---|
-| Monkey's Audio | the frame's special codes and mode; the interim mode of the stream as the plan's guess | `DecodeBody` with the frame's CRC, and the interim retry of `DecodeHeld`; writes its chunks; returns the mode the frame ended in | the plan's interim mode against the mode the committed frames left | the sink; the CRC tally and `monkeys-audio.frame-crc-mismatch`; the carried mode |
-| WavPack | the header, `BlockContents.Read` with the channel info as known, `Settle`, the set the block belongs to (assuming the earlier blocks of the set decoded), its sample count, the mute decision | the charges and `PcmBlockDecoder.Decode` or `DsdBlockDecoder.Decode`; writes the block's samples through the journal; returns the CRC outcome | the parts of the plan that depend on whether earlier blocks decoded (below), recomputed over the committed state and compared with the plan's, a plan that threw included | the CRC and extra CRC tallies and their findings, `Keep` (from the journal's block), `Complete` (sink, `AudioDigest`), `_isSetFailed` and the set's channels, from `failure` |
-| FLAC | the header checks of `FrameDecoder.Decode` (channels, bits, the ceiling); a frame over the ceiling is a plan that says so, and `_isIncomplete` is set by `Commit`, not by the plan | the charges, the walk where the frame was not walked, `Restore`, `Combine`; writes the frame's block | none: the plan depends on the frame and the setup only, so it always holds | the sink; the canonical bytes into the MD5 |
+| Monkey's Audio | the frame's special codes and mode; the interim mode of the stream as the plan's guess | `DecodeBody` with the frame's CRC, and the interim retry of `DecodeHeld`; writes its chunks; returns the mode the frame ended in | re-runs the plan stage on the committed state (the plan's interim mode against the mode the committed frames left) | the sink; the CRC tally and `monkeys-audio.frame-crc-mismatch`; the carried mode |
+| WavPack | the header, `BlockContents.Read` with the channel info as known, `Settle`, the set the block belongs to (assuming the earlier blocks of the set decoded), its sample count, the mute decision | the charges and `PcmBlockDecoder.Decode` or `DsdBlockDecoder.Decode`; writes the block's samples through the journal; returns the CRC outcome | re-runs the plan stage on the committed state and applies its effects there (`Abandon`, the set start, `Settle` from the snapshot, `_isSetFailed` from the DSD-flag and overflow checks), a plan that failed included; the outcome is compared with the plan's | the CRC and extra CRC tallies and their findings, `Keep` (from the journal's block), `Complete` (sink, `AudioDigest`), `_isSetFailed` only for the worker's `InvalidDataException` (that is, when `plan.Failure` is null) and the set's channels |
+| FLAC | the header checks of `FrameDecoder.Decode` (channels, bits, the ceiling); a frame over the ceiling is a plan that says so, and `_isIncomplete` is set by `Commit`, not by the plan | the charges, the walk where the frame was not walked, `Restore`, `Combine`; writes the frame's block | re-runs the stage, which has no effect on the state and always holds | the sink; the canonical bytes into the MD5 |
 
 ### Per-worker state
 
@@ -428,7 +432,7 @@ For the replay to know where a serial run would stop, a worker looks at cancella
 - "Loops that only compute over every frame or packet check `ParseContext.CancellationToken` (a decoder's, `DecodeContext.CancellationToken`) every few thousand iterations; reads check it already." gets a sentence after it: "A frame worker has no token and looks at cancellation only through `FrameContext.Charge`." A worker that checked between charges could not be replayed where a serial run stops. WavPack's one check per block replaces the checks every 4,096 samples.
   - The amendment is safe because `FrameContext` has no token (a worker cannot check between charges), which a test holds (see Verification), and because the work between two charge points is bounded (about 1.9 × 10^8 units at the most, about 110 ms: see [Cancellation and stop](#cancellation-and-stop)). It makes no claim that every charge is at most 2^27 units, and it leaves the rule of a check every few thousand iterations to the loops that have a token.
 - "A decoder charges its work through `DecodeContext.AddWork` before it does it, ..." becomes "... through `DecodeContext.AddWork` (on a worker `FrameContext.AddWork` or `Charge`) before it does it, ...": the same charge on a worker.
-- A sentence for the parser rule, if decision 12 adopts it: ""A parser's report does not depend on `IsDecoding` or on the return value of `IDecodeSession.Decode` beyond whether decoding was asked for and a session was started; they only let it skip work. It may read `IsDecoding` for its report only right after `StartDecoding`, before the first frame is handed, and the one exception is the session member that settles the end of decoding at a frame over 64 MiB (`docs/design/parallel-decoding.md`)." 
+- A sentence for the parser rule, if decision 12 adopts it: "A parser's report does not depend on `IsDecoding` or on the return value of `IDecodeSession.Decode` beyond whether decoding was asked for and a session was started; they only let it skip work. It may read `IsDecoding` for its report only right after `StartDecoding`, before the first frame is handed, and the one exception is the session member that settles the end of decoding at a frame over 64 MiB (`docs/design/parallel-decoding.md`)." 
 - The exception rule ("Parsers and decoders throw only ...") stays; `decode.failed` is still reported on the frame's stream, at the frame where a serial run reports it.
 
 ## Scheduling
