@@ -7,10 +7,16 @@ namespace Encspect.Formats.MonkeysAudio;
 internal sealed class Source(ByteReader reader)
 {
     private const int MinimumWindow = 1 << 20;
+    private const int SmallFile = 1 << 17;
 
-    private byte[] _buffer = new byte[MinimumWindow];
+    // A file of a few kilobytes is held whole: a window of a megabyte for each sniff of a folder of small files was a fifth of its time, in the
+    // allocation and the pages it touched. Larger files keep the minimum window, so what is held does not depend on the size of the file.
+    private readonly int _window = WindowFor(reader.Length, MinimumWindow);
+    private byte[] _buffer = new byte[WindowFor(reader.Length, MinimumWindow)];
     private long _start = -1;
     private int _length;
+
+    private static int WindowFor(long length, int minimum) => length <= SmallFile ? (int)Math.Min(minimum, Math.Max(length, 16)) : minimum;
 
     public long Start => reader.Start;
 
@@ -74,9 +80,9 @@ internal sealed class Source(ByteReader reader)
     // file is read about once however the requests fall.
     private void Load(long offset, int needed, bool keepsTail)
     {
-        int size = Math.Max(MinimumWindow, needed);
+        int size = Math.Max(_window, needed);
         int kept = keepsTail ? _length - (int)(offset - _start) : 0;
-        if (_buffer.Length < size || (_buffer.Length > MinimumWindow && size <= MinimumWindow))
+        if (_buffer.Length < size || (_buffer.Length > _window && size <= _window))
         {
             byte[] next = new byte[size];
             kept = Math.Min(kept, size);
