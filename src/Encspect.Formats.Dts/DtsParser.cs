@@ -13,7 +13,9 @@ public sealed class DtsParser : IFormatParser
     private const int SniffLimit = 1 << 20;
 
     // The first bytes of every sync word: 0x7F, 0xFE, 0x1F and 0xFF start the core's four forms, 0x64 and 0x58 the extension substream's two.
-    internal static readonly bool[] SyncStarts = Table(0x7F, 0xFE, 0x1F, 0xFF, 0x64, 0x58);
+    private static readonly bool[] SyncStartTable = Table(0x7F, 0xFE, 0x1F, 0xFF, 0x64, 0x58);
+
+    internal static ReadOnlySpan<bool> SyncStarts => SyncStartTable;
 
     private static bool[] Table(params byte[] values)
     {

@@ -62,7 +62,7 @@ internal sealed class BlockCache(ByteReader reader) : ISource
 
     // The first offset in [from, limit) that holds a byte whose entry in the 256-entry table is set, or -1, searched a block at a time. A loop
     // over a table: a vectorized search restarts at every candidate, and a file of another format has one every few dozen bytes.
-    public long IndexOfAny(bool[] table, long from, long limit)
+    public long IndexOfAny(ReadOnlySpan<bool> table, long from, long limit)
     {
         from = Math.Max(from, reader.Start);
         limit = Math.Min(limit, reader.End);
@@ -87,7 +87,7 @@ internal sealed class BlockCache(ByteReader reader) : ISource
         return -1;
     }
 
-    internal static int FirstInTable(byte[] block, int index, int count, bool[] table)
+    internal static int FirstInTable(byte[] block, int index, int count, ReadOnlySpan<bool> table)
     {
         for (int i = 0; i < count; i++)
         {

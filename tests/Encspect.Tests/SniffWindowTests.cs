@@ -98,4 +98,18 @@ public class SniffWindowTests
         var truehd = new Encspect.Formats.TrueHd.Source(new ByteReader(new MemoryStream(data)), window);
         CheckWindow(data, 0, size, (o, w) => truehd.Window(o, w).ToArray(), truehd.IndexOf, returnsTheRest: false);
     }
+
+    [Fact]
+    public void TheWindowOfAReaderIsItsLengthUpToTheLimitAndTheMinimumAboveIt()
+    {
+        Assert.Equal(0, SourceWindow.For(0, 1 << 20));
+        Assert.Equal(1, SourceWindow.For(1, 1 << 20));
+        Assert.Equal(131071, SourceWindow.For(131071, 1 << 20));
+        Assert.Equal(131072, SourceWindow.For(131072, 1 << 20));
+        Assert.Equal(1 << 20, SourceWindow.For(131073, 1 << 20));
+        Assert.Equal(1 << 20, SourceWindow.For(5_000_000, 1 << 20));
+        Assert.Equal(4096, SourceWindow.For(70000, 4096));
+        Assert.Equal(4096, SourceWindow.For(4096, 4096));
+        Assert.Equal(100, SourceWindow.For(100, 4096));
+    }
 }

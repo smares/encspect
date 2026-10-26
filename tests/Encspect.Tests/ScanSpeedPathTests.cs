@@ -43,10 +43,40 @@ public class ScanSpeedPathTests
         }
     }
 
+    // The block cache loads a block at the offset a search starts from, so the edges of its blocks lie at that offset plus multiples of 64 KiB:
+    // a fresh cache for each start, and a single candidate on either side of each edge.
     [Theory]
     [InlineData(0)]
     [InlineData(500)]
-    public void TheBlockCacheFindsTheSameOffsetsAcrossBlockEdgesAndInASlice(int prefix)
+    public void TheBlockCacheFindsASyncStartOnEitherSideOfEveryEdgeOfItsBlocks(int prefix)
+    {
+        const int size = (4 * 65536) + 10;
+        foreach (byte start in new byte[] { 0x7F, 0xFE, 0x1F, 0xFF, 0x64, 0x58 })
+        {
+            for (int from = 0; from <= 3; from++)
+            {
+                for (int k = 1; k <= 3; k++)
+                {
+                    for (int d = -1; d <= 1; d++)
+                    {
+                        long candidate = from + (65536L * k) + d;
+                        byte[] data = new byte[prefix + size];
+                        Array.Fill(data, (byte)0x80);
+                        data[prefix + candidate] = start;
+                        ByteReader reader = new ByteReader(new MemoryStream(data)).Slice(prefix, size);
+                        var cache = new BlockCache(reader);
+                        Assert.Equal(prefix + candidate, cache.IndexOfAny(DtsParser.SyncStarts, prefix + from, prefix + size));
+                        Assert.Equal(-1, new BlockCache(reader).IndexOfAny(DtsParser.SyncStarts, prefix + candidate + 1, prefix + size));
+                    }
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(500)]
+    public void TheBlockCacheFindsTheSameOffsetsAsALoopOverTheBytes(int prefix)
     {
         var rng = new Random(12 + prefix);
         foreach (int size in new[] { 1, 100, 65535, 65536, 65537, 131072, 200000 })
