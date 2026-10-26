@@ -101,7 +101,7 @@ internal sealed class StreamMeasurer
 
         for (int r = 0; r < MeasurementLimits.Rows; r++)
         {
-            _highs[r] = Math.Min(r + _geometry.BandRows, MeasurementLimits.Rows - 1);
+            _highs[r] = Math.Min(r + _geometry.BandRows, CutoffGeometry.TopRow);
             _aboveRows[r] = _highs[r] - r;
         }
 

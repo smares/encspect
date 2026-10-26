@@ -39,6 +39,10 @@ internal readonly struct CutoffGeometry
 
     public const int LastCandidate = 505;
 
+    // The highest row the search reaches: the last row that starts below 99 % of Nyquist (506 / 1,024 < 0.495), so the bands above a
+    // candidate stop short of the notch that digital filters have at Nyquist.
+    public const int TopRow = 506;
+
     public const int MinimumRate = 8000;
 
     public int SampleRate { get; }
@@ -88,7 +92,7 @@ internal static class CutoffFinder
         long bestDenominator = 1;
         for (int r = geometry.FirstCandidate; r <= CutoffGeometry.LastCandidate; r++)
         {
-            int high = Math.Min(r + w, rowCount - 1);
+            int high = Math.Min(r + w, CutoffGeometry.TopRow);
             int above = high - r;
             long under = prefix[r + 1] - prefix[r - w + 1];
             long over = prefix[high + 1] - prefix[r + 1];
@@ -149,10 +153,10 @@ internal static class CutoffFinder
         }
 
         // The edge: the highest row, from the step's row up, more than 6 dB above the mean level of everything above the step.
-        int aboveCount = rowCount - 1 - best;
-        long aboveSum = prefix[rowCount] - prefix[best + 1];
+        int aboveCount = CutoffGeometry.TopRow - best;
+        long aboveSum = prefix[CutoffGeometry.TopRow + 1] - prefix[best + 1];
         int edge = best;
-        for (int r = rowCount - 1; r >= best; r--)
+        for (int r = CutoffGeometry.TopRow; r >= best; r--)
         {
             if ((long)level[r] * aboveCount > aboveSum + (60L * aboveCount))
             {

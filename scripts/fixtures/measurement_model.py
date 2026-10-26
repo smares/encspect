@@ -1,0 +1,286 @@
+"""An independent model of the measurements of docs/design/spectral-analysis.md (step 1): the average spectrum, the spectral cutoff and the
+waveform grid of a FLAC file, worked out in Python from the committed bytes with flac_model.py's decoder and this module's own FFT and
+filters, not from the analyzer's code. make_measurement_fixtures.py and make_external_measurement_fixtures.py write its results into the
+manifests (`<name>.expected.json`); MeasurementFixtureTests holds the analyzer to them.
+
+The model follows the design's text:
+
+- the frame size is the smallest power of two that is at least 0.085 s of samples, from 1,024 to 32,768 points; a periodic Hann window,
+  hop half a frame; frames never cross a gap; a stream without a complete frame is measured as one frame padded with zeros;
+- 512 rows of mean power (bins N / 1,024 a row), 0 dB a full-scale sine centered on a bin; the average level of each row in tenths of a dB,
+  rounded to the nearest, halves up;
+- the spectral cutoff: the largest step of the mean dB of a band of 1 kHz under a row against the mean above it, from 2 kHz to row 505, and
+  the edge, the start of the transition and the frames that show an own step of 15 dB at the step's row (the 1 % reference level and the
+  ten levels of 3 dB below it), found where the step is 25 dB or more and half of the frames with signal show it.
+
+Everything is plain Python (the standard library). The FFT is a complex radix-2 transform of the full frame, apart from the analyzer's
+real transform with its split step, so the two agree up to rounding (about 1e-12 relative), which the tests allow for.
+"""
+
+import math
+
+import flac_model as m
+
+ROWS = 512
+TOP_ROW = 506
+OWN_STEP_RATIO = 10 ** 1.5
+MAX_CHANNELS = 32
+
+
+def fft_size(rate):
+    need = (85 * rate + 999) // 1000
+    size = 1024
+    while size < need and size < 32768:
+        size *= 2
+    return size
+
+
+def fft(values):
+    """The DFT of a list of complex numbers (a power of two long), iterative radix-2."""
+    n = len(values)
+    bits = n.bit_length() - 1
+    data = [values[int(format(i, f"0{bits}b")[::-1], 2)] for i in range(n)]
+    size = 2
+    while size <= n:
+        half = size // 2
+        twiddle = [complex(math.cos(2 * math.pi * k / size), -math.sin(2 * math.pi * k / size)) for k in range(half)]
+        for start in range(0, n, size):
+            for k in range(half):
+                a = data[start + k]
+                b = data[start + k + half] * twiddle[k]
+                data[start + k] = a + b
+                data[start + k + half] = a - b
+        size *= 2
+    return data
+
+
+def hann(n):
+    return [0.5 - 0.5 * math.cos(2 * math.pi * i / n) for i in range(n)]
+
+
+def rows_of(samples, window):
+    """The 512 rows of mean power of one frame of samples (in full scale +-1), relative to a full-scale sine centered on a bin."""
+    n = len(window)
+    spectrum = fft([complex(s * w, 0.0) for s, w in zip(samples, window)])
+    scale = 16.0 / (n * n)
+    bins = n // (ROWS * 2)
+    rows = []
+    for r in range(ROWS):
+        total = 0.0
+        for k in range(r * bins, (r + 1) * bins):
+            c = spectrum[k]
+            total += (c.real * c.real + c.imag * c.imag) * scale
+        rows.append(total / bins)
+    return rows
+
+
+def tenths(power):
+    return math.floor(100 * math.log10(power) + 0.5)
+
+
+def band_rows(rate, size):
+    """(W, first candidate row, bins a row): 1 kHz in rows and the first row whose upper edge reaches 2 kHz."""
+    bins = size // (ROWS * 2)
+    w = max(1, (2000 * size + rate * bins) // (2 * rate * bins))
+    first = -(-2000 * size // (rate * bins)) - 1
+    return w, max(w - 1, first), bins
+
+
+def hertz(boundary, rate, size, bins):
+    return (2 * boundary * bins * rate + size) // (2 * size)
+
+
+class Counters:
+    def __init__(self):
+        self.all = [[0] * 72 for _ in range(ROWS)]
+        self.show = [[0] * 72 for _ in range(ROWS)]
+
+
+def count_frame(rows, counters, w, first):
+    suffix = [0.0] * (ROWS + 1)
+    for r in range(ROWS - 1, -1, -1):
+        suffix[r] = suffix[r + 1] + rows[r]
+    for r in range(first, 506):
+        under = suffix[r - w + 1] - suffix[r + 1]
+        high = min(r + w, TOP_ROW)
+        above_rows = high - r
+        over = suffix[r + 1] - suffix[high + 1]
+        mean = under / w
+        exponent = math.frexp(mean)[1] - 1 if mean > 0 else -1023
+        level = min(max(exponent, -64), 7) + 64
+        counters.all[r][level] += 1
+        lhs = under * above_rows
+        if lhs > 0 and lhs >= OWN_STEP_RATIO * over * w:
+            counters.show[r][level] += 1
+
+
+def floor_div(a, b):
+    return a // b
+
+
+def find_cutoff(level_tenths, counters, rate, size):
+    """The spectral cutoff of a spectrum given as 512 tenths of a dB (None for a row without power) and its counters."""
+    if rate < 8000:
+        return {"is_searched": False}
+    w, first, bins = band_rows(rate, size)
+    level = [-2000 if v is None else v for v in level_tenths]
+    prefix = [0]
+    for v in level:
+        prefix.append(prefix[-1] + v)
+    best = None
+    for r in range(first, 506):
+        high = min(r + w, TOP_ROW)
+        above = high - r
+        under = prefix[r + 1] - prefix[r - w + 1]
+        over = prefix[high + 1] - prefix[r + 1]
+        numerator = under * above - over * w
+        denominator = w * above
+        if best is None or numerator * best[2] > best[1] * denominator:
+            best = (r, numerator, denominator)
+    r, numerator, denominator = best
+    step = floor_div(2 * numerator + denominator, 2 * denominator)
+    total = sum(counters.all[r])
+    with_signal = showing = 0
+    if total:
+        cumulative = 0
+        reference = 0
+        for l in range(71, -1, -1):
+            cumulative += counters.all[r][l]
+            if cumulative * 100 >= total:
+                reference = l
+                break
+        for l in range(max(0, reference - 10), 72):
+            with_signal += counters.all[r][l]
+            showing += counters.show[r][l]
+    result = {"is_searched": True, "is_found": False, "frequency": 0, "transition_start": 0, "step_frequency": hertz(r + 1, rate, size, bins),
+              "step_tenths": step, "frames_showing": showing, "frames_with_signal": with_signal}
+    if step >= 250 and with_signal > 0 and 2 * showing >= with_signal:
+        above_count = TOP_ROW - r
+        above_sum = prefix[TOP_ROW + 1] - prefix[r + 1]
+        edge = r
+        for i in range(TOP_ROW, r - 1, -1):
+            if level[i] * above_count > above_sum + 60 * above_count:
+                edge = i
+                break
+        under_sum = prefix[r + 1] - prefix[r - w + 1]
+        start = r + 1
+        i = r
+        while i >= 0 and level[i] * w < under_sum - 30 * w:
+            start = i
+            i -= 1
+        result.update(is_found=True, frequency=hertz(edge + 1, rate, size, bins), transition_start=hertz(start, rate, size, bins))
+    return result
+
+
+def segments(stream):
+    """The decoded blocks of a FLAC stream as (position, [channel lists])."""
+    out = []
+    for f in stream.frames:
+        if "channels" in f:
+            out.append((f["first_sample"], f["channels"]))
+    return out
+
+
+def measure(data, layout=None):
+    """The model's figures for a FLAC file: stream figures, the average spectrum rows (tenths of a dB, None for a row without power), the
+    cutoff of the combined spectrum and of each channel, and the waveform's columns. layout: the speakers by channel (default: the
+    format's; "LFE" is left out of the combined spectrum)."""
+    stream = m.Stream(data)
+    info = stream.info
+    rate, bits, channels = info["sample_rate"], info["bits"], info["channels"]
+    if layout is None:
+        layout = m.LAYOUTS.get(channels)
+    measured = min(channels, MAX_CHANNELS)
+    combined_channels = [c for c in range(measured) if not layout or c >= len(layout) or layout[c] != "LFE"] or list(range(measured))
+    size = fft_size(rate)
+    hop = size // 2
+    window = hann(size)
+    scale = 1.0 / (1 << (bits - 1))
+    w, first_candidate, bins = band_rows(rate, size)
+    searched = rate >= 8000
+
+    sums = [[0.0] * ROWS for _ in range(measured + 1)]
+    counters = [Counters() for _ in range(measured + 1)]
+    frames = 0
+    samples = lost = gaps = 0
+    first_position = None
+    expected = None
+    mins, maxs = {}, {}
+    buffers = [[] for _ in range(measured)]
+    segment_start = 0
+
+    def process(frame_samples):
+        nonlocal frames
+        per = [rows_of([v * scale for v in frame_samples[c]], window) for c in range(measured)]
+        combined = [sum(per[c][r] for c in combined_channels) / len(combined_channels) for r in range(ROWS)]
+        for c in range(measured):
+            for r in range(ROWS):
+                sums[c][r] += per[c][r]
+            if searched:
+                count_frame(per[c], counters[c], w, first_candidate)
+        for r in range(ROWS):
+            sums[measured][r] += combined[r]
+        if searched:
+            count_frame(combined, counters[measured], w, first_candidate)
+        frames += 1
+
+    for position, block in segments(stream):
+        if expected is None:
+            first_position = position
+            expected = position
+            segment_start = position
+        if position > expected:
+            lost += position - expected
+            gaps += 1
+            expected = position
+            buffers = [[] for _ in range(measured)]
+            segment_start = position
+        count = len(block[0])
+        for c in range(measured):
+            buffers[c].extend(block[c])
+            for i in range(count):
+                v = block[c][i] * scale
+                key = (c, (position + i) // hop)
+                if key in mins:
+                    mins[key] = min(mins[key], v)
+                    maxs[key] = max(maxs[key], v)
+                else:
+                    mins[key] = maxs[key] = v
+        samples += count
+        expected += count
+        while len(buffers[0]) >= size:
+            process([b[:size] for b in buffers])
+            buffers = [b[hop:] for b in buffers]
+            segment_start += hop
+    if frames == 0 and buffers and buffers[0]:
+        process([b + [0] * (size - len(b)) for b in buffers])
+
+    levels = [[None if sums[c][r] <= 0 or frames == 0 else tenths(sums[c][r] / frames) for r in range(ROWS)] for c in range(measured + 1)]
+    cutoffs = [find_cutoff(levels[c], counters[c], rate, size) for c in range(measured + 1)]
+
+    last_hop = max(h for _, h in mins) if mins else 0
+    shift = 0
+    while (last_hop >> shift) >= 1024:
+        shift += 1
+    columns = (last_hop >> shift) + 1
+    waveform = []
+    for c in range(measured):
+        low = [0] * columns
+        high = [0] * columns
+        seen = [False] * columns
+        for (channel, h), v in mins.items():
+            if channel != c:
+                continue
+            col = h >> shift
+            lo = math.floor(v * 32768.0)
+            hi = math.ceil(maxs[(c, h)] * 32768.0)
+            if not seen[col]:
+                low[col], high[col], seen[col] = lo, hi, True
+            else:
+                low[col], high[col] = min(low[col], lo), max(high[col], hi)
+        waveform.append({"minimum": [max(-32768, min(32767, v)) for v in low], "maximum": [max(-32768, min(32767, v)) for v in high]})
+    return {
+        "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
+        "lost_samples": lost, "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
+        "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
+    }
