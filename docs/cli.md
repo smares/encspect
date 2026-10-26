@@ -61,7 +61,11 @@ Without it, the output is unchanged.
 Decodes each file's audio while reading it and compares the checksums that cover decoded audio, for the codings that have a decoder (an MD5 over all samples, a CRC over the samples of a frame). Without it, only the checksums over coded data are compared, so a stream whose checksum over decoded audio was not compared says so.
 
 - **Cost:** decoding runs in the same pass over the file and costs time for every sample, much more than the structure analysis alone. Each decoder counts the work it does in work units (one unit is a predictor or filter tap on one sample of one channel, about 0.6 ns on the machines it was measured on), and decoding stops with an info finding (`decode.limit`) past the larger of 2^35 units, about 21 seconds, and the file's size times 2,048 units a byte, about 1.2 seconds a megabyte. A stream that stops is verified as unknown unless a checksum compared before the stop failed, which makes it "no"; the structure analysis carries on.
-- **Formats without a decoder:** the stream says so (`decode.no-decoder`, info) and the report is otherwise the same. FLAC has a decoder (native and in Ogg); the decoders of the other formats arrive with them.
+- **Formats without a decoder:** the report is the same as without `--verify`.
+  - FLAC (native and in Ogg), WavPack, Monkey's Audio, and TrueHD and MLP have decoders.
+  - `decode.no-decoder` (info) is raised only where a parser starts a decode session for a codec ID that no decoder has. Of the formats today that is TTA.
+  - Formats whose parsers start no session (WAV, AIFF, MPEG audio and the others) get neither the finding nor a `verification`.
+  - Streams a container does not hand to a codec parser (FLAC, WavPack and TrueHD in Matroska today, `matroska.codec-not-analyzed`) get no verification either, although a decoder for the coding exists.
 - **Findings:** a stored checksum that differs is a warning, so `--fail-on warning` fails the run. A decoder that fails (`decode.failed`) is an error and a bug.
 - **Output:** the text tree, JSON and CSV carry the verdict (see below). Without `--verify` the tree and every other field are the same.
 
