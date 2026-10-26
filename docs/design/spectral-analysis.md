@@ -959,4 +959,3 @@ Each has its options and a recommendation; 15 to 19 are new with the revision.
 - G. Heinzel, A. Rüdiger and R. Schilling, "Spectrum and spectral density estimation by the Discrete Fourier transform (DFT)", Max-Planck-Institut für Gravitationsphysik (2002).
 - License texts read on 2026-10-26: KISS FFT (`COPYING`, `LICENSES/BSD-3-Clause`), PocketFFT (`LICENSE.md`), PFFFT (`LICENSE.txt` of marton78/pffft), muFFT (`COPYING`), Math.NET Numerics (`LICENSE.md`), libebur128 (`COPYING`); minimp3's CC0 from `third_party/minimp3`.
 - The tools of the prototypes: LAME 3.100, vorbis-tools 1.4.2, FFmpeg 6.1.1 (Ubuntu's 6.1.1-3ubuntu5), flac 1.4.3, .NET 10.0.401.
-
