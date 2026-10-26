@@ -1,6 +1,6 @@
 name: Release
 
-# A pushed version tag (vX.Y.Z) builds the self-contained CLI and GUI for the six targets of CI's full matrix, each on
+# A pushed version tag (vX.Y.Z) builds the NativeAOT CLI (on x64 also built for x86-64-v3, as a second archive) and the self-contained GUI for the six targets of CI's full matrix, each on
 # a runner of its own platform, runs the same self-checks CI runs on them, packages them and publishes a GitHub release
 # with the notes of docs/releases/<version>.md. The tag must equal v plus the Version in Directory.Build.props and be
 # on main. A manual run (from main only) takes the tag as input, or derives v plus the Version when the input is empty:
@@ -172,20 +172,54 @@ jobs:
         with:
           dotnet-version: 10.0.402
 
-      # Restored only: a release run saves no cache entry, so it cannot change what the runs of main restore.
-      - name: Restore the NuGet packages
-        uses: actions/cache/restore@v6
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-
-
+      # No cache is restored in a release: what is compiled into it is downloaded fresh (NuGet from nuget.org, the sysroot by its
+      # digest below), so nothing a cache entry holds can reach a release. CI caches both.
       - name: Restore
         run: dotnet restore
 
       # The release is built from the tagged sources on the runner of its own platform, so the runs below execute the real binaries.
-      - name: Publish the self-contained CLI
-        run: dotnet publish src/Encspect.Cli --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/${{ matrix.rid }}
+      # The CLI is a NativeAOT executable, which cannot be cross-compiled between operating systems, hence a runner per platform.
+      - name: Install the NativeAOT toolchain
+        if: runner.os == 'Linux'
+        # The one apt-get update of the job: the Wayland self-check below installs its packages from the same lists.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld
+
+      # NativeAOT links the C library it is given; linked on the runner's glibc the CLI would need that glibc or newer. The Linux
+      # builds link against the sysroot of .NET's own cross-build image instead (Ubuntu 18.04, glibc 2.27, the floor of the runtime
+      # pack the GUI carries). Only the layer of that image that holds the sysroot is fetched, by its content digest, which names
+      # those bytes for good and is checked after the download (the image's tags are rebuilt and old ones pruned); the digests and
+      # how to renew them are in docs/development.md, "NativeAOT". CI caches the layer by its digest; the release downloads it.
+      - name: Fetch the glibc 2.27 sysroot
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.rid }}" in
+            linux-x64) dir=x64; digest=e47eeec6fa3711530ee4a6a7e7388dc338e99a5f3649770cc86a4f5ead96c0e2 ;;
+            linux-arm64) dir=arm64; digest=b572d3dd8b297da80060077fbec8cd6d5062c219722ed466793128a640ac5e3b ;;
+          esac
+          layer="$RUNNER_TEMP/sysroot-layer/$digest.tar.gz"
+          mkdir -p "$RUNNER_TEMP/sysroot-layer"
+          download() {
+            curl --fail --silent --show-error --location --retry 3 --output "$layer" \
+              "https://mcr.microsoft.com/v2/dotnet-buildtools/prereqs/blobs/sha256:$digest"
+          }
+          if [ ! -f "$layer" ]; then download; fi
+          # A cached file that does not match is downloaded once more before the check can fail the job.
+          if ! echo "$digest  $layer" | sha256sum --check --status -; then
+            echo "The layer does not match its digest; downloading it again." >&2
+            rm -f "$layer"
+            download
+          fi
+          echo "$digest  $layer" | sha256sum --check -
+          # The sysroot's symbolic links are absolute, so it must sit where the image keeps it.
+          sudo tar --extract --gzip --file "$layer" --directory / "crossrootfs/$dir"
+          echo "ENCSPECT_SYSROOT=/crossrootfs/$dir" >> "$GITHUB_ENV"
+
+      - name: Publish the NativeAOT CLI
+        run: dotnet publish src/Encspect.Cli --configuration Release --runtime ${{ matrix.rid }} -p:PublishAot=true --output publish/${{ matrix.rid }}
 
       - name: Run the published CLI
         shell: bash
@@ -194,6 +228,42 @@ jobs:
           grep -q 'LAME 3.100' "$RUNNER_TEMP/out.csv"
           publish/${{ matrix.rid }}/encspect --version | tee "$RUNNER_TEMP/version.txt"
           grep -qE "^encspect $VERSION(\+[0-9a-f]+)?\$" "$RUNNER_TEMP/version.txt"
+
+      # What the CLI needs of the system: glibc 2.27 and the libraries glibc ships, nothing else (the version references and
+      # the dynamic section, so a requirement no symbol shows counts too). docs/releases/package-readme.md names 2.27.
+      - name: Check the glibc the CLI needs
+        if: runner.os == 'Linux'
+        run: bash scripts/ci/check_glibc_floor.sh publish/${{ matrix.rid }}/encspect
+
+      # The same analysis as the JIT build gives, on the whole fixture corpus with decoding: the reports, their standard error and the
+      # exit codes must be identical but for the tool version line. CI runs it with the newest 10.0 SDK and the release with the pinned
+      # one that builds what ships; a run on a pull request that changes the code is the first.
+      - name: Compare the NativeAOT CLI with the JIT build
+        shell: bash
+        run: bash scripts/check_aot.sh -p publish/${{ matrix.rid }}/encspect "$RUNNER_TEMP/aot-check"
+
+      # The x64 platforms ship a second CLI for processors with AVX2 (Haswell, 2013, and later; AMD Excavator and Zen): the same code compiled
+      # for x86-64-v3, which the default build (x86-64-v2: Intel Core since Nehalem (2008), AMD since Bulldozer (2011) and Jaguar (2013); not Phenom II, Athlon II, Bobcat or Atom before Silvermont) cannot use. It gets the same checks. On a pull
+      # request only linux-x64 builds it, to keep the time down; main, the nightly run and the release build it on every x64 platform.
+      - name: Publish the NativeAOT CLI for x86-64-v3
+        if: endsWith(matrix.rid, '-x64') && (matrix.rid == 'linux-x64' || github.event_name != 'pull_request')
+        run: dotnet publish src/Encspect.Cli --configuration Release --runtime ${{ matrix.rid }} -p:PublishAot=true -p:IlcInstructionSet=x86-64-v3 --output publish/${{ matrix.rid }}-v3
+
+      - name: Run the published x86-64-v3 CLI
+        if: endsWith(matrix.rid, '-x64') && (matrix.rid == 'linux-x64' || github.event_name != 'pull_request')
+        shell: bash
+        run: |
+          publish/${{ matrix.rid }}-v3/encspect --csv tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/out-v3.csv"
+          grep -q 'LAME 3.100' "$RUNNER_TEMP/out-v3.csv"
+
+      - name: Check the glibc the x86-64-v3 CLI needs
+        if: runner.os == 'Linux' && endsWith(matrix.rid, '-x64') && (matrix.rid == 'linux-x64' || github.event_name != 'pull_request')
+        run: bash scripts/ci/check_glibc_floor.sh publish/${{ matrix.rid }}-v3/encspect
+
+      - name: Compare the x86-64-v3 CLI with the JIT build
+        if: endsWith(matrix.rid, '-x64') && (matrix.rid == 'linux-x64' || github.event_name != 'pull_request')
+        shell: bash
+        run: bash scripts/check_aot.sh -p publish/${{ matrix.rid }}-v3/encspect "$RUNNER_TEMP/aot-check"
 
       # A runner has no display to open a window on, so the published GUI runs its self-check: it loads Skia's and
       # HarfBuzz's native libraries and the platform backend's (ANGLE on Windows, Avalonia.Native on macOS) from the
@@ -220,7 +290,6 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          sudo apt-get update
           sudo apt-get install -y weston xvfb
           export XDG_RUNTIME_DIR="$RUNNER_TEMP/runtime"
           mkdir -p "$XDG_RUNTIME_DIR"
@@ -269,20 +338,28 @@ jobs:
           test "$status" = 1
           grep -q 'ENCSPECT_GUI_BACKEND' "$RUNNER_TEMP/no-x11.err"
 
-      # One folder per archive, so extracting does not scatter files: both single files, the license, the notices of
-      # the libraries inside them and a short README. The pdb files of the publish output are left out.
+      # One folder per archive, so extracting does not scatter files: both programs, the license, the notices of the
+      # libraries inside them and a short README. Only the executables are taken from the publish output, not the symbol
+      # files. The x64 platforms have a second archive, named with the suffix -v3 (encspect-<version>-<rid>-v3), which holds
+      # the CLI built for x86-64-v3 and the same GUI; NAMES lists the archives of this platform.
       - name: Collect the files of the archive
         shell: bash
         run: |
-          name="encspect-$VERSION-${{ matrix.rid }}"
           ext=""
           if [ "$RUNNER_OS" = Windows ]; then ext=".exe"; fi
-          mkdir -p "dist/$name"
-          cp "publish/${{ matrix.rid }}/encspect$ext" "publish/gui-${{ matrix.rid }}/encspect-gui$ext" LICENSE THIRD-PARTY-NOTICES.md "dist/$name/"
-          cp docs/releases/package-readme.md "dist/$name/README.md"
-          if [ "$RUNNER_OS" != Windows ]; then chmod +x "dist/$name/encspect" "dist/$name/encspect-gui"; fi
-          ls -l "dist/$name"
-          echo "NAME=$name" >> "$GITHUB_ENV"
+          names=""
+          for variant in "" "-v3"; do
+            cli="publish/${{ matrix.rid }}$variant/encspect$ext"
+            if [ -n "$variant" ] && [ ! -f "$cli" ]; then continue; fi
+            name="encspect-$VERSION-${{ matrix.rid }}$variant"
+            mkdir -p "dist/$name"
+            cp "$cli" "publish/gui-${{ matrix.rid }}/encspect-gui$ext" LICENSE THIRD-PARTY-NOTICES.md "dist/$name/"
+            cp docs/releases/package-readme.md "dist/$name/README.md"
+            if [ "$RUNNER_OS" != Windows ]; then chmod +x "dist/$name/encspect" "dist/$name/encspect-gui"; fi
+            ls -l "dist/$name"
+            names="$names $name"
+          done
+          echo "NAMES=$names" >> "$GITHUB_ENV"
 
       # tar keeps the executable bit; COPYFILE_DISABLE keeps macOS's tar from adding ._ files for extended attributes.
       - name: Pack the archive (tar.gz)
@@ -291,15 +368,19 @@ jobs:
         env:
           COPYFILE_DISABLE: 1
         run: |
-          tar -czf "dist/$NAME.tar.gz" -C dist "$NAME"
-          tar -tzvf "dist/$NAME.tar.gz"
+          for name in $NAMES; do
+            tar -czf "dist/$name.tar.gz" -C dist "$name"
+            tar -tzvf "dist/$name.tar.gz"
+          done
 
       - name: Pack the archive (zip)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path "dist/$env:NAME" -DestinationPath "dist/$env:NAME.zip"
-          Get-Item "dist/$env:NAME.zip"
+          foreach ($name in $env:NAMES.Trim().Split(' ')) {
+            Compress-Archive -Path "dist/$name" -DestinationPath "dist/$name.zip"
+            Get-Item "dist/$name.zip"
+          }
 
       # The archive is what users get, so the programs in it, extracted elsewhere, are the ones run.
       - name: Run the CLI and the GUI from the archive
@@ -307,20 +388,22 @@ jobs:
         run: |
           mkdir "$RUNNER_TEMP/unpacked"
           ext=""
-          if [ "$RUNNER_OS" = Windows ]; then
-            ext=".exe"
-            powershell -NoProfile -Command "Expand-Archive -Path 'dist/$NAME.zip' -DestinationPath '$RUNNER_TEMP/unpacked'"
-          else
-            tar -xzf "dist/$NAME.tar.gz" -C "$RUNNER_TEMP/unpacked"
-          fi
-          unpacked="$RUNNER_TEMP/unpacked/$NAME"
-          "$unpacked/encspect$ext" --version | tee "$RUNNER_TEMP/packed-version.txt"
-          grep -qE "^encspect $VERSION(\+[0-9a-f]+)?\$" "$RUNNER_TEMP/packed-version.txt"
-          # The GUI as well: a lost executable bit or signature would show here.
-          "$unpacked/encspect-gui$ext" --self-check tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/packed-gui.txt"
-          grep -q 'Skia and HarfBuzz loaded' "$RUNNER_TEMP/packed-gui.txt"
-          test -f "$unpacked/THIRD-PARTY-NOTICES.md"
-          test -f "$unpacked/LICENSE"
+          if [ "$RUNNER_OS" = Windows ]; then ext=".exe"; fi
+          for NAME in $NAMES; do
+            if [ "$RUNNER_OS" = Windows ]; then
+              powershell -NoProfile -Command "Expand-Archive -Path 'dist/$NAME.zip' -DestinationPath '$RUNNER_TEMP/unpacked'"
+            else
+              tar -xzf "dist/$NAME.tar.gz" -C "$RUNNER_TEMP/unpacked"
+            fi
+            unpacked="$RUNNER_TEMP/unpacked/$NAME"
+            "$unpacked/encspect$ext" --version | tee "$RUNNER_TEMP/packed-version.txt"
+            grep -qE "^encspect $VERSION(\+[0-9a-f]+)?\$" "$RUNNER_TEMP/packed-version.txt"
+            # The GUI as well: a lost executable bit or signature would show here.
+            "$unpacked/encspect-gui$ext" --self-check tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/packed-gui.txt"
+            grep -q 'Skia and HarfBuzz loaded' "$RUNNER_TEMP/packed-gui.txt"
+            test -f "$unpacked/THIRD-PARTY-NOTICES.md"
+            test -f "$unpacked/LICENSE"
+          done
 
       # After packaging, so a stale notice does not hide the packaging steps. The notices name the runtime pack the publish
       # bundled and cover every package the GUI restored; scripts/release/make_notices.py regenerates the file (see
@@ -380,7 +463,7 @@ jobs:
         run: |
           cd dist
           archives=(encspect-"$VERSION"-*)
-          test "${#archives[@]}" = 6
+          test "${#archives[@]}" = 9
           sha256sum encspect-"$VERSION"-* > SHA256SUMS
           cat SHA256SUMS
           sha256sum --check SHA256SUMS

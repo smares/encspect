@@ -8,11 +8,15 @@ namespace Encspect.Gui.Views;
 // a program place its windows; older settings files hold numbers there.
 public sealed record WindowPlacement(int? X, int? Y, double Width, double Height, bool IsMaximized);
 
+// Source-generated, so that reading and writing the settings needs no reflection (NativeAOT has none to give).
+[JsonSourceGenerationOptions(WriteIndented = true)]
+[JsonSerializable(typeof(Settings))]
+internal sealed partial class SettingsJsonContext : JsonSerializerContext;
+
 // The GUI's settings, as JSON in the user's application data folder. Settings that cannot be read
 // are ignored, and a failure to write them is not an error worth interrupting anyone for.
 public sealed class Settings
 {
-    private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
     private static readonly TimeSpan StaleTemporaryAge = TimeSpan.FromHours(1);
 
     public WindowPlacement? DetailWindow { get; set; }
@@ -40,7 +44,7 @@ public sealed class Settings
         {
             try
             {
-                settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(path), Options);
+                settings = JsonSerializer.Deserialize(File.ReadAllText(path), SettingsJsonContext.Default.Settings);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
             {
@@ -65,7 +69,7 @@ public sealed class Settings
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-            File.WriteAllText(temporary, JsonSerializer.Serialize(this, Options));
+            File.WriteAllText(temporary, JsonSerializer.Serialize(this, SettingsJsonContext.Default.Settings));
             File.Move(temporary, FilePath, overwrite: true);
             SweepStaleTemporaries();
         }

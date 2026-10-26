@@ -89,7 +89,10 @@ COVERED = {
     "Tmds.DBus.Protocol", "SkiaSharp", "HarfBuzzSharp",
 }
 COVERED_PREFIXES = ("SkiaSharp.NativeAssets.", "HarfBuzzSharp.NativeAssets.")
-BUILD_ONLY = {"Avalonia.BuildServices", "Microsoft.NET.ILLink.Tasks"}
+# runtime.<rid>.Microsoft.DotNet.ILCompiler holds the NativeAOT runtime libraries linked into the CLI; its notices are
+# the runtime pack's, which the .NET runtime row covers. Microsoft.DotNet.ILCompiler is the compiler and ships nothing.
+COVERED_SUFFIXES = (".Microsoft.DotNet.ILCompiler",)
+BUILD_ONLY = {"Avalonia.BuildServices", "Microsoft.NET.ILLink.Tasks", "Microsoft.DotNet.ILCompiler"}
 
 
 def uncovered(assets):
@@ -99,14 +102,19 @@ def uncovered(assets):
         for key, entry in target.items():
             if entry.get("type") == "package":
                 found.add(key.split("/")[0])
-    return sorted(p for p in found if p not in COVERED and not p.startswith(COVERED_PREFIXES) and p not in BUILD_ONLY)
+    return sorted(
+        p for p in found
+        if p not in COVERED and not p.startswith(COVERED_PREFIXES) and not p.endswith(COVERED_SUFFIXES) and p not in BUILD_ONLY
+    )
 
 
 def self_test():
     graph = {"targets": {"net10.0": {"Avalonia/1.0": {"type": "package"}, "SkiaSharp.NativeAssets.Linux/1.0": {"type": "package"},
                                      "Avalonia.BuildServices/1.0": {"type": "package"}, "Encspect.Host/1.0": {"type": "project"}}}}
     assert uncovered(graph) == [], uncovered(graph)
-    graph["targets"]["net10.0/linux-x64"] = {"Some.NewLibrary/2.0": {"type": "package"}, "Avalonia.Skia/1.0": {"type": "package"}}
+    graph["targets"]["net10.0/linux-x64"] = {"Some.NewLibrary/2.0": {"type": "package"}, "Avalonia.Skia/1.0": {"type": "package"},
+                                             "Microsoft.DotNet.ILCompiler/1.0": {"type": "package"},
+                                             "runtime.linux-x64.Microsoft.DotNet.ILCompiler/1.0": {"type": "package"}}
     assert uncovered(graph) == ["Some.NewLibrary"], uncovered(graph)
     print("make_notices self-test passed.")
 
@@ -204,7 +212,7 @@ def build(packages, version_of, runtime_deps):
     a = out.append
     a(f"""# Third-party notices
 
-Encspect is released under the [MIT License](LICENSE). The published builds, the command line tool `encspect` and the GUI `encspect-gui`, are self-contained single files that carry the components below. This file is shipped with each build and shown by the GUI's About window.
+Encspect is released under the [MIT License](LICENSE). The published builds, the command line tool `encspect` (a native executable, compiled ahead of time) and the GUI `encspect-gui` (a self-contained single file), carry the components below. This file is shipped with each build and shown by the GUI's About window.
 
 Each text below is copied from a file, never written by hand; `scripts/release/make_notices.py` regenerates this file and the release workflow fails when it differs:
 
@@ -235,7 +243,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 | Monkey's Audio SDK 13.42: the code of Encspect's Monkey's Audio parser and decoder derived from it (the header and seek table layouts, the order of the bytes of a frame, the range decoders, the predictors, the neural network filters, the frame checksum and the output of the samples) | 13.42 | BSD 3-Clause | both builds, all platforms |
 | libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
 
-The command line tool contains the .NET runtime and Encspect's own code only.
+The command line tool contains the NativeAOT build of the .NET runtime and the library code of the runtime pack, and Encspect's own code. The packages it is compiled and linked from (`Microsoft.NETCore.App.Runtime.NativeAOT` and `runtime.<rid>.Microsoft.DotNet.ILCompiler`, which holds the native runtime libraries) carry a `THIRD-PARTY-NOTICES.TXT` byte-identical to the runtime pack's, so the .NET runtime row above covers them. On Linux it also links a few objects of the Ubuntu 18.04 sysroot it is built against (found in the binary's symbols and its `.comment` section): glibc's start files `crt1.o`, `crti.o` and `crtn.o` and the `__libc_csu_init`, `__libc_csu_fini` and `atexit` pieces of `libc_nonshared.a`, under glibc's license (LGPL 2.1 or later) with the linking exception glibc gives these start-up objects, which does not make the program a work covered by the LGPL; and GCC 7's `crtbegin.o` and `crtend.o`, under GPL 3 or later with the GCC Runtime Library Exception 3.1. None of `libgcc.a` is linked in. The program loads the system's C library at run time.
 
 The sources in `third_party/` (minimp3, getID3, EncSpot, mp3guessenc) are test tools for the cross-checks. No project references them, and they are in neither build.
 
@@ -341,7 +349,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--packages", default=os.environ.get("NUGET_PACKAGES") or os.path.expanduser("~/.nuget/packages"))
     parser.add_argument("--assets", default=str(ROOT / "src" / "Encspect.Gui" / "obj" / "project.assets.json"))
-    parser.add_argument("--runtime-deps", help="encspect.deps.json of the self-contained CLI build")
+    parser.add_argument("--runtime-deps", help="encspect.deps.json of the CLI publish (it names the runtime pack the NativeAOT build compiled in)")
     parser.add_argument("--check", action="store_true", help="fail when THIRD-PARTY-NOTICES.md differs")
     parser.add_argument("--self-test", action="store_true", help="test the check for packages the notices do not cover")
     parser.add_argument("--fetch", action="store_true", help="download the licensors' license files into scripts/release/licenses")

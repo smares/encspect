@@ -3,15 +3,26 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>encspect</AssemblyName>
     <RootNamespace>Encspect.Cli</RootNamespace>
-    <!-- Runtime settings measured in docs/development.md ("CLI runtime settings"): the decoders' hot loops start in tier 0 and the
-         instrumented tier of dynamic PGO, and an analysis of a few seconds is over before the default tiering has replaced them. -->
-    <TieredPGO>false</TieredPGO>
-    <!-- ReadyToRun for the app's own assemblies only: a self-contained publish defaults to a composite image of the framework as well,
-         which grew the linux-x64 single file from 79.7 to 100.4 MB (docs/development.md, "CLI runtime settings"). -->
-    <PublishReadyToRun Condition="'$(RuntimeIdentifier)' != '' and '$(PublishAot)' != 'true'">true</PublishReadyToRun>
-    <PublishReadyToRunComposite>false</PublishReadyToRunComposite>
+    <!-- Releases are published with NativeAOT (-p:PublishAot=true, one native executable per platform; docs/development.md, "NativeAOT").
+         Every trim and AOT warning of that publish is an error (TreatWarningsAsErrors of Directory.Build.props), and each one is shown
+         on its own instead of one per assembly. -->
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
   </PropertyGroup>
-  <ItemGroup>
+  <!-- A Linux NativeAOT executable needs the glibc of the machine it is linked on. The release links against an old sysroot (Ubuntu 18.04's,
+       glibc 2.27, taken from .NET's cross-build image by the workflows) named by ENCSPECT_SYSROOT, so the file runs wherever the runtime pack
+       and the GUI do; without it the host's own libc is used. lld is the linker the .NET build images use with a sysroot. -->
+  <PropertyGroup Condition="'$(PublishAot)' == 'true' and '$(ENCSPECT_SYSROOT)' != ''">
+    <SysRoot>$(ENCSPECT_SYSROOT)</SysRoot>
+    <LinkerFlavor>lld</LinkerFlavor>
+  </PropertyGroup>
+  <!-- The JIT build (dotnet build and run, the tests, the cross-check scripts) still runs on the runtime's tiering, which NativeAOT
+       has none of: the decoders' loops start in tier 0 and the instrumented tier of dynamic PGO, and an analysis of a few seconds is over
+       before the default tiering has replaced them (docs/development.md, "CLI runtime settings"). Nothing here applies to a NativeAOT
+       executable, which is compiled optimized once and has no tiers. -->
+  <PropertyGroup Condition="'$(PublishAot)' != 'true'">
+    <TieredPGO>false</TieredPGO>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(PublishAot)' != 'true'">
     <RuntimeHostConfigurationOption Include="System.Runtime.TieredCompilation.CallCountingDelayMs" Value="20" />
   </ItemGroup>
   <ItemGroup>

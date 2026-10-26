@@ -231,7 +231,15 @@ public sealed class ReleaseWorkflowTests
 
         foreach (string name in new[]
         {
-            "Publish the self-contained CLI",
+            "Install the NativeAOT toolchain",
+            "Fetch the glibc 2.27 sysroot",
+            "Publish the NativeAOT CLI",
+            "Check the glibc the CLI needs",
+            "Compare the NativeAOT CLI with the JIT build",
+            "Publish the NativeAOT CLI for x86-64-v3",
+            "Run the published x86-64-v3 CLI",
+            "Check the glibc the x86-64-v3 CLI needs",
+            "Compare the x86-64-v3 CLI with the JIT build",
             "Publish the self-contained GUI",
             "Run the published GUI's self-check",
             "Run the published GUI's self-check on Wayland and X11",
@@ -243,6 +251,26 @@ public sealed class ReleaseWorkflowTests
         // The CLI step is CI's plus the check of --version.
         Assert.StartsWith(Step(ci, "Run the published CLI"), Step(workflow, "Run the published CLI"), StringComparison.Ordinal);
         Assert.Contains("--version", Step(workflow, "Run the published CLI"), StringComparison.Ordinal);
+    }
+
+    // The Linux sysroot is fetched by content digest; the digests are where the workflows, the cache keys and the documentation agree.
+    [Fact]
+    public void TheSysrootLayersAreNamedByTheSameDigestEverywhere()
+    {
+        string[] digests =
+        [
+            "e47eeec6fa3711530ee4a6a7e7388dc338e99a5f3649770cc86a4f5ead96c0e2",
+            "b572d3dd8b297da80060077fbec8cd6d5062c219722ed466793128a640ac5e3b",
+        ];
+        string ci = File.ReadAllText(Path.Combine(Root, ".github", "workflows", "ci.yml"));
+        string documentation = File.ReadAllText(Path.Combine(Root, "docs", "development.md"));
+        foreach (string digest in digests)
+        {
+            // The download here, which restores no cache; CI's also has the keys of its restore and save steps.
+            Assert.Single(Regex.Matches(Workflow(), digest));
+            Assert.Equal(3, Regex.Matches(ci, digest).Count);
+            Assert.Contains(digest, documentation, StringComparison.Ordinal);
+        }
     }
 
     [Fact]
