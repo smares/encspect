@@ -1297,15 +1297,37 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // The measurer holds a frame of overlap, the grids and the counters whatever the length of the stream: the same reading, taken inside the sink's
+    // Write of the last frame, grows by nothing per further frame when the stream is measured (docs/design/spectral-analysis.md, "Memory").
+    [Fact]
+    public void MeasuringManyFlacFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 10_000;
+        const int frames = 40_000;
+        var measure = new MeasureOptions();
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(FlacFrames(100)), new AnalysisOptions { Decoding = new DecodeOptions { Measure = measure } });
+
+        (long fewerHeld, _) = LastFrameReading("frames.flac", FlacFrames(fewer), fewer, 4096, measure: measure);
+        (long held, long kept) = LastFrameReading("frames.flac", FlacFrames(frames), frames, 4096, measure: measure);
+        (_, long plainKept) = LastFrameReading("frames.flac", FlacFrames(frames), frames, 4096, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with measuring; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Measuring held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+
+        // The report keeps the rows and the grids: under 1 MiB for a stream, not a figure for each frame.
+        Assert.True(kept < plainKept + 1_000_000, $"Measuring made the report keep {kept - plainKept} bytes more.");
+    }
+
     // The live heap read inside the sink's Write of the last frame less the live heap with the report alive after the analysis, and
     // what the report keeps (alive less dropped); each the smaller of two analyses, as for Measure.
-    private static (long Held, long Kept) LastFrameReading(string name, byte[] data, int frames, long samplesPerFrame, bool isDecoding = true)
+    private static (long Held, long Kept) LastFrameReading(string name, byte[] data, int frames, long samplesPerFrame, bool isDecoding = true, MeasureOptions? measure = null)
     {
         long held = long.MaxValue;
         long kept = long.MaxValue;
         for (int pass = 0; pass < 2; pass++)
         {
-            (long reading, long withReport) = AnalyzeReadingAtLastFrame(name, data, frames, samplesPerFrame, isDecoding);
+            (long reading, long withReport) = AnalyzeReadingAtLastFrame(name, data, frames, samplesPerFrame, isDecoding, measure);
             long withoutReport = Live();
             held = Math.Min(held, reading - withReport);
             kept = Math.Min(kept, withReport - withoutReport);
@@ -1316,10 +1338,10 @@ public class MemoryTests(ITestOutputHelper output)
     }
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private static (long Reading, long WithReport) AnalyzeReadingAtLastFrame(string name, byte[] data, int frames, long samplesPerFrame, bool isDecoding)
+    private static (long Reading, long WithReport) AnalyzeReadingAtLastFrame(string name, byte[] data, int frames, long samplesPerFrame, bool isDecoding, MeasureOptions? measure)
     {
         var probe = new LastFrameSink(frames);
-        var options = new AnalysisOptions { Decoding = isDecoding ? new DecodeOptions { Output = _ => probe } : null };
+        var options = new AnalysisOptions { Decoding = isDecoding ? new DecodeOptions { Output = _ => probe, Measure = measure } : null };
         Live();
         Report report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(data), options);
         if (isDecoding)
