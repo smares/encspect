@@ -82,6 +82,13 @@ def lines(rate, highest_hz, rms_db, seed, length, lowest_hz=40.0):
     return [period[i % n] * gain for i in range(length)]
 
 
+def lines_q(rate, highest_hz, rms_db, seed, length, bits=16, dither=True):
+    """The lines as integers, with TPDF dither of one least significant bit unless dither is off: a signal that repeats with the frame's
+    period has quantization error that repeats too and so is itself a set of lines, which does not average away over frames as the floor of a
+    recording does."""
+    return quantize(lines(rate, highest_hz, rms_db, seed, length), bits, dither_seed=seed + 1 if dither else None)
+
+
 def white(length, seed, rms_db):
     rng = Lcg(seed)
     gain = 10 ** (rms_db / 20) * math.sqrt(3)
@@ -219,82 +226,82 @@ def build():
 
     # Sines: a bin center and a quarter between two bins, at -6 dBFS, in 8, 16, 24 and 32 bits.
     add("sine-bin-center", "A sine at the center of bin 400 of the 4,096-point frame (about 4,306.6 Hz), amplitude 0.5.",
-        [quantize(sine_bin(rate44, 400, 1, one, 0.5), 16)], rate44, 16, {"cutoff_hz": None, "tone_bin": 400, "tone_dbfs": -6.0})
+        [quantize(sine_bin(rate44, 400, 1, one, 0.5), 16)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "tone_bin": 400, "tone_dbfs": -6.0})
     add("sine-between-bins", "A sine halfway between bins 400 and 401, amplitude 0.5.",
-        [quantize(sine_bin(rate44, 801, 2, one, 0.5), 16)], rate44, 16, {"cutoff_hz": None})
-    add("sine-8-bits", "The sine of bin 400 in 8 bits.", [quantize(sine_bin(rate44, 400, 1, one, 0.5), 8)], rate44, 8, {"cutoff_hz": None})
-    add("sine-24-bits", "The sine of bin 400 in 24 bits.", [quantize(sine_bin(rate44, 400, 1, one // 2, 0.5), 24)], rate44, 24, {"cutoff_hz": None})
-    add("sine-32-bits", "The sine of bin 400 in 32 bits.", [quantize(sine_bin(rate44, 400, 1, one // 2, 0.5), 32)], rate44, 32, {"cutoff_hz": None})
+        [quantize(sine_bin(rate44, 801, 2, one, 0.5), 16)], rate44, 16, {"cutoff_hz": None, "unspecified": True})
+    add("sine-8-bits", "The sine of bin 400 in 8 bits.", [quantize(sine_bin(rate44, 400, 1, one, 0.5), 8)], rate44, 8, {"cutoff_hz": None, "unspecified": True, "tone_bin": 400})
+    add("sine-24-bits", "The sine of bin 400 in 24 bits.", [quantize(sine_bin(rate44, 400, 1, one // 2, 0.5), 24)], rate44, 24, {"cutoff_hz": None, "unspecified": True, "tone_bin": 400})
+    add("sine-32-bits", "The sine of bin 400 in 32 bits.", [quantize(sine_bin(rate44, 400, 1, one // 2, 0.5), 32)], rate44, 32, {"cutoff_hz": None, "unspecified": True, "tone_bin": 400})
     add("sweep", "A logarithmic sweep from 100 Hz to 20 kHz in 2 s at amplitude 0.5.", [quantize(sweep(rate44, 2.0, 100.0, 20000.0, 0.5), 16)], rate44, 16,
-        {"cutoff_hz": None, "sweep": [100, 20000, 2.0]})
+        {"cutoff_hz": None, "unspecified": True, "sweep": [100, 20000, 2.0]})
 
     # Noise band-limited exactly: lines at bin centers.
     for rate, count in ((rate44, n44), (rate48, n48)):
         for edge in (11000, 16000, 19000, 20500):
-            add(f"lines-{edge}-{rate}", f"Lines at the bin centers from 40 Hz to {edge} Hz at {rate} Hz with fixed random phases, -20 dBFS RMS: a brickwall at {edge} Hz.",
-                [quantize(lines(rate, edge, -20.0, edge + rate, count), 16)], rate, 16, {"cutoff_hz": edge})
+            add(f"lines-{edge}-{rate}", f"Lines at the bin centers from 40 Hz to {edge} Hz at {rate} Hz with fixed random phases, -20 dBFS RMS{', with TPDF dither of one least significant bit' if not (rate == rate44 and edge == 16000) else ', undithered'}: a brickwall at {edge} Hz.",
+                [lines_q(rate, edge, -20.0, edge + rate, count, dither=not (rate == rate44 and edge == 16000))], rate, 16, {"cutoff_hz": edge})
     base = lines(rate44, 16000, -20.0, 7, n44)
     add("lines-16000-44100-dithered", "The 16 kHz lines with TPDF dither of one least significant bit.", [quantize(base, 16, dither_seed=11)], rate44, 16, {"cutoff_hz": 16000})
     for db in (30, 45, 60):
         add(f"lines-16000-44100-quiet-{db}", f"The 16 kHz lines lowered by {db} dB, with TPDF dither of one least significant bit.",
-            [quantize(base, 16, dither_seed=11, level=10 ** (-db / 20))], rate44, 16, {"cutoff_hz": 16000, "level_db": -db})
+            [quantize(base, 16, dither_seed=11, level=10 ** (-db / 20))], rate44, 16, {"cutoff_hz": 16000, "level_db": -db, "hidden_by_dither": db == 60})
     add("lines-16000-44100-b1152", "The audio of lines-16000-44100 in blocks of 1,152 samples.", [quantize(lines(rate44, 16000, -20.0, 16000 + rate44, n44), 16)], rate44, 16,
         {"cutoff_hz": 16000, "same_audio_as": "synthetic-lines-16000-44100"}, block=1152)
 
     # Other rates.
-    add("lines-3200-8000", "Lines up to 3,200 Hz at 8,000 Hz (the frame is 1,024 points).", [quantize(lines(8000, 3200, -20.0, 5, 16000), 16)], 8000, 16, {"cutoff_hz": 3200})
-    add("lines-4400-11025", "Lines up to 4,400 Hz at 11,025 Hz.", [quantize(lines(11025, 4400, -20.0, 6, 22050), 16)], 11025, 16, {"cutoff_hz": 4400})
-    add("lines-8000-22050", "Lines up to 8,000 Hz at 22,050 Hz (the frame is 2,048 points).", [quantize(lines(22050, 8000, -20.0, 8, 44100), 16)], 22050, 16, {"cutoff_hz": 8000})
-    add("lines-20000-192000", "Lines up to 20 kHz at 192 kHz (the frame is 16,384 points), -40 dBFS RMS.", [quantize(lines(192000, 20000, -40.0, 9, 115200), 24)], 192000, 24,
+    add("lines-3200-8000", "Lines up to 3,200 Hz at 8,000 Hz (the frame is 1,024 points).", [lines_q(8000, 3200, -20.0, 5, 16000)], 8000, 16, {"cutoff_hz": 3200})
+    add("lines-4400-11025", "Lines up to 4,400 Hz at 11,025 Hz.", [lines_q(11025, 4400, -20.0, 6, 22050)], 11025, 16, {"cutoff_hz": 4400})
+    add("lines-8000-22050", "Lines up to 8,000 Hz at 22,050 Hz (the frame is 2,048 points).", [lines_q(22050, 8000, -20.0, 8, 44100)], 22050, 16, {"cutoff_hz": 8000})
+    add("lines-20000-192000", "Lines up to 20 kHz at 192 kHz (the frame is 16,384 points), -40 dBFS RMS, with TPDF dither of one least significant bit.", [lines_q(192000, 20000, -40.0, 9, 115200, bits=24)], 192000, 24,
         {"cutoff_hz": 20000})
-    add("white-2000", "White noise at 2,000 Hz: under 8,000 Hz no cutoff is searched.", [quantize(white(4000, 3, -20.0), 16)], 2000, 16, {"cutoff_hz": None, "is_searched": False})
-    add("white-44100", "White noise, -20 dBFS RMS: no cutoff.", [quantize(white(n44, 4, -20.0), 16)], rate44, 16, {"cutoff_hz": None})
+    add("white-2000", "White noise at 2,000 Hz: under 8,000 Hz no cutoff is searched.", [quantize(white(4000, 3, -20.0), 16)], 2000, 16, {"cutoff_hz": None, "no_cutoff": True, "is_searched": False})
+    add("white-44100", "White noise, -20 dBFS RMS: no cutoff.", [quantize(white(n44, 4, -20.0), 16)], rate44, 16, {"cutoff_hz": None, "no_cutoff": True})
 
     # Natural rolloff.
     noise = pink(n44, 21, -20.0)
     for sections in (1, 2, 4):
         add(f"rolloff-{sections}", f"Pink noise with a 330 Hz tone through {sections} cascaded second-order lowpass sections at 16 kHz: a gradual rolloff, no cutoff.",
-            [quantize(biquad_lowpass(noise, rate44, 16000.0, sections), 16)], rate44, 16, {"cutoff_hz": None})
+            [quantize(biquad_lowpass(noise, rate44, 16000.0, sections), 16)], rate44, 16, {"cutoff_hz": None, "no_cutoff": True})
 
     # Mixed content.
     half = n44 // 2
-    mixed = lines(rate44, 16000, -20.0, 31, half) + white(n44 - half, 32, -20.0)
-    add("mixed-half-and-half", "Three quarters of a second of 16 kHz lines, then as much white noise at the same level: part of the stream has the edge.", [quantize(mixed, 16)], rate44, 16,
-        {"cutoff_hz": None})
-    with_silence = lines(rate44, 16000, -20.0, 33, int(rate44 * 0.75)) + [0.0] * int(rate44 * 0.75)
-    add("lines-16000-then-silence", "Three quarters of a second of 16 kHz lines and as much digital silence: the silent frames count as without signal.", [quantize(with_silence, 16)], rate44, 16,
-        {"cutoff_hz": 16000})
+    mixed = lines_q(rate44, 16000, -20.0, 31, half) + quantize(white(n44 - half, 32, -20.0), 16)
+    add("mixed-half-and-half", "Three quarters of a second of 16 kHz lines, then as much white noise at the same level: part of the stream has the edge.", [mixed], rate44, 16,
+        {"cutoff_hz": None, "no_cutoff": True})
+    with_silence = lines_q(rate44, 16000, -20.0, 33, int(rate44 * 0.75)) + [0] * int(rate44 * 0.75)
+    add("lines-16000-then-silence", "Three quarters of a second of 16 kHz lines and as much digital silence: the silent frames count as without signal.", [with_silence], rate44, 16,
+        {"cutoff_hz": 16000, "tolerance_hz": 1000, "tolerance_note": "the cut from lines to silence inside a frame splatters above the edge"})
 
     # Silence after an impulse.
     for rate in (rate44, rate48):
         samples = [0] * int(rate * 1.5)
         samples[1000] = 30000
-        add(f"impulse-silence-{rate}", "An impulse of 30,000 at sample 1,000, then digital silence.", [samples], rate, 16, {"cutoff_hz": None})
+        add(f"impulse-silence-{rate}", "An impulse of 30,000 at sample 1,000, then digital silence.", [samples], rate, 16, {"cutoff_hz": None, "no_cutoff": True})
 
     # 5.1: five channels with a 8 kHz brickwall, the LFE wideband.
     rate22 = 22050
-    channels = [quantize(lines(rate22, 8000, -30.0, 40 + c, 33075), 16) for c in (0, 1, 2)]
+    channels = [lines_q(rate22, 8000, -30.0, 40 + c, 33075) for c in (0, 1, 2)]
     lfe = quantize(white(33075, 50, -30.0), 16)
-    surrounds = [quantize(lines(rate22, 8000, -30.0, 43 + c, 33075), 16) for c in (0, 1)]
+    surrounds = [lines_q(rate22, 8000, -30.0, 43 + c, 33075) for c in (0, 1)]
     add("surround-5-1-wideband-lfe", "Six channels at 22,050 Hz: five with lines up to 8 kHz and a wideband LFE, which the combined spectrum leaves out.",
         channels + [lfe] + surrounds, rate22, 16, {"cutoff_hz": 8000, "lfe_channel": 3})
 
     # Short and long streams.
     add("short-1000-samples", "A stream of 1,000 samples, shorter than one frame: measured as one frame padded with zeros.", [quantize(white(1000, 61, -20.0), 16)], rate44, 16,
-        {"cutoff_hz": None})
+        {"cutoff_hz": None, "no_cutoff": True})
     long_samples = [0] * (rate44 * 48)
     burst = quantize(white(8192, 62, -10.0), 16)
     for second in (10, 25, 40):
         long_samples[rate44 * second:rate44 * second + 8192] = burst
     add("long-bursts-48-seconds", "48 s of digital silence with a burst of white noise at 10, 25 and 40 s: more than 1,024 hops, so the grid merges its columns.", [long_samples], rate44, 16,
-        {"cutoff_hz": None, "bursts_at_seconds": [10, 25, 40]})
+        {"cutoff_hz": None, "no_cutoff": True, "bursts_at_seconds": [10, 25, 40]})
 
     # Gaps.
-    gap_audio = quantize(lines(rate44, 16000, -20.0, 71, int(rate44 * 1.5)), 16)
+    gap_audio = lines_q(rate44, 16000, -20.0, 71, int(rate44 * 1.5))
     add("gap-frames-removed", "The 16 kHz lines with the sixth and seventh frames removed: the positions jump by 8,192 samples.", [gap_audio], rate44, 16,
         {"cutoff_hz": 16000, "lost_samples": 8192}, drop=(5, 6))
     add("gap-jump-2-40", "Two blocks, then two more numbered 2^28 frames later: the positions jump by about 2^40 samples.", [gap_audio[:16384]], rate44, 16,
-        {"cutoff_hz": None, "jump": 1 << 40}, numbers=[0, 1, 1 << 28, (1 << 28) + 1])
+        {"cutoff_hz": None, "unspecified": True, "jump": 1 << 40}, numbers=[0, 1, 1 << 28, (1 << 28) + 1])
 
 
 def main():
