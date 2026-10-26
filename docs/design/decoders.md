@@ -22,7 +22,7 @@ What the plan already settles, and this design keeps:
 What is not in Gate 3:
 
 - Waveform, spectrogram and lowpass detection. The plan puts "decoders for waveform and spectrogram" under "Later" and the waveform panels in the GUI section, not in a phase.
-- This design defines the PCM path and the hook that host-side PCM analyses will use, so those features add fields but change no contract (see [The PCM path](#the-pcm-path)).
+- This design defines the PCM path and the hook that the measurements of the decoded audio use ([spectral-analysis.md](spectral-analysis.md); once "host-side PCM analyses"), so those features add fields but change no contract (see [The PCM path](#the-pcm-path)).
 - Decoders for lossy codings.
 
 Sources read for this design, all pinned or public:
@@ -43,7 +43,7 @@ Sources read for this design, all pinned or public:
 - A parser hands each frame to a decode session through a new route on its context, `StartDecoding`, in the same pass in which it reads the frame. The host serves the route: it finds the decoder, runs it inside an exception boundary and a work budget, and ends the session with the stream's verdict.
 - The parser declares every checksum the stream stores, of either kind, with how many values it stores. It compares the ones over coded data in every analysis; the decoder compares the ones over decoded audio. Both end up in one record on the stream, `StreamInfo.Verification`, with a tri-state `IsVerified`.
 - Decoding is off unless a front end asks for it: `AnalysisOptions.Decoding` in the library, `--verify` in the CLI, a "Verify Audio" command in the GUI's detail window. The file list never decodes, and no verdict over decoded audio is cached.
-- Decoding never changes the parser's nodes: it adds findings, the stream's verification and, once host-side PCM analyses exist, their figures on the stream.
+- Decoding never changes the parser's nodes: it adds findings, the stream's verification and, its measurements' figures on the stream (once "host-side PCM analyses").
 
 ## Where decoders live
 
@@ -360,7 +360,7 @@ public sealed class DecodeContext
     public void AddFinding(Severity severity, string code, string message, Node? node = null, int count = 1);
 
     // Called once, before the first block: the PCM the decoder will write, and where to write it. The sink is the
-    // host's: it forwards to the front end's sink (DecodeOptions.Output) and later to the host's PCM analyses, and it
+    // host's: it forwards to the front end's sink (DecodeOptions.Output) and to the stream's measurer (docs/design/spectral-analysis.md), and it
     // never throws, and the host alone ends it (IPcmSink.End): a call from the decoder is ignored. A coding that decodes to something other than PCM (WavPack's DSD) does not call it.
     public IPcmSink DeclareOutput(PcmFormat format);
 }
@@ -1189,15 +1189,17 @@ public interface IPcmSink
 - Gapless trimming (TrueHD's samples to drop, an MP4 edit list) is the report's business, not the PCM's: positions are untrimmed, and a later feature trims with what the stream reports.
 - `Core.Abstractions` also gets the canonical byte layout as one function: interleaved, signed, little-endian, `ceil(bits / 8)` bytes a sample. FLAC's MD5 uses it, and so do the tests' hashing sink and the manifests' `decoded_pcm_md5`. Monkey's Audio and WavPack compute their checksums over their own layouts.
 
-### Host-side PCM analyses, later
+### Measurements of the decoded audio
 
-Lowpass detection is an analysis result, so it belongs in the library ("A library others could use"), not in a front end. The hook is fixed now; the analyses come with their features:
+This section was called "Host-side PCM analyses, later"; [spectral-analysis.md](spectral-analysis.md) renamed the concept to **measurements** (its decision 2), and its first step built it. What this design fixed stays as the contract:
 
-- The host's sink (`DecodeContext.DeclareOutput`) forwards each block to the front end's sink and to the host's own PCM analyses, an internal list in `Encspect.Host` that is empty in Gate 3.
-- An analysis adds figures to the stream, never nodes. The rule becomes "decoding never changes the parser's nodes".
-- The first such analysis adds one field to `StreamInfo` for its figures, as `Verification` is added now. That is additive (`schemaVersion` stays 1).
-- The figures reach the stream through the host: once the format parser returns, the host attaches each session's figures to the stream whose first node is that session's `DecodeSetup.Stream`, as it sets `NodePaths` on the streams today. So no parser, decoder, session or sink changes.
-- **Decision:** this hook now, the figures with the first feature. The alternative is to leave lowpass detection to a later contract change, which would then change `DecodeContext` and the rule.
+Lowpass detection and its kin are analysis results, so they belong in the library ("A library others could use"), not in a front end. The hook was fixed in Gate 3 and the measurements came with their features:
+
+- The host's sink (`DecodeContext.DeclareOutput`) forwards each block to the front end's sink and to the stream's measurer, a class of `Encspect.Host` that exists for a stream only when `DecodeOptions.Measure` is set.
+- A measurement adds figures to the stream, never nodes. The rule is "decoding never changes the parser's nodes".
+- The figures are one field of `StreamInfo`, `Measurements`, as `Verification` is: additive (`schemaVersion` stays 1).
+- The figures reach the stream through the host: once the format parser returns, the host attaches each session's figures to the stream whose first node is that session's `DecodeSetup.Stream`, as it sets `NodePaths`. So no parser, decoder, session or sink changed.
+- **Decision (Gate 3):** this hook first, the figures with the first feature. The alternative was a later contract change to `DecodeContext` and the rule.
 
 ## Verifying the decoders
 
@@ -1320,7 +1322,7 @@ What the contract pull request implements, and where it differs from the signatu
 - **Analyze:** a negative `MaxPcmBytes` is refused before anything is read, for every input; the exceptions `Analyze` throws are listed in its comment.
 - **CLAUDE.md:** the sentence "Design documents are drafted on Opus with high effort; fixes to them count as implementation." in Verification is not one of the proposed lines: the project lead added it to this pull request on 2026-10-22. Two of the proposed lines are completed for decoders: the host reports `decode.failed` for a decoder as it reports `parse.failed` for a parser, and a decoder checks `DecodeContext.CancellationToken`.
 - **For step 2:** `decode.frame-too-large` is listed among the contract tests but cannot be tested before a decoder exists, since only a decoder knows its ceiling. The FLAC decoder's ceiling is 65,535 samples of eight channels, which no frame header can exceed, so the guard is unreachable and no test covers it; the next decoders are to say whether theirs can be reached.
-- **Not built:** the host's internal list of PCM analyses (the sink forwards to the front end's sink only), and every decoder: `DefaultParsers.Decoders` is empty.
+- **Not built (at Gate 3):** the host's internal list of measurements (the sink forwarded to the front end's sink only), and every decoder: `DefaultParsers.Decoders` was empty.
 
 ## As built in step 2
 
@@ -1706,7 +1708,7 @@ The project lead decided all nine on 2026-10-22: decision 1 as below, in place o
 4. **Meaning of verified (approved):** every checksum the stream stores was compared and holds, and at least one compared checksum covers all of its audio, coded or decoded; for the phase 3 codings and WavPack in every mode. Alternatives: count only checksums over decoded audio, or cover the lossy formats' CRCs now.
 5. **Scope (approved):** Gate 3 decoders for FLAC, Monkey's Audio, WavPack, and TrueHD and MLP, the codings with a checksum over decoded audio; ALAC, TTA and WMA Lossless decoders move to "Later", which leaves their waveform and lowpass without a decoder until then (costs listed under "What the table means"). A WavPack hybrid file is verified as its lossy stream by its header CRCs; one with an MD5 stays unverified until companion-file access finds its `.wvc`. Alternative: all seven decoders, and `.wvc` access, now.
 6. **TrueHD (approved):** compare the lossless check of every presentation up to substream 2, one tally each, not the Atmos substream. The check never counts as covering all audio, since the last interval of each segment is never checked; a stream is verified only where substream CRC-8s in every access unit cover it and every lossless check holds. Alternatives: compare the top presentation only, as FFmpeg does, or count the check as covering and report the samples it leaves out.
-7. **PCM analyses (approved):** lowpass and similar analyses run in the host on the decoded PCM and add figures to the stream, never nodes; the hook is fixed now, the figures come with the first feature. Alternative: a later change to the contract.
+7. **PCM analyses (approved; now "measurements"):** lowpass and similar analyses run in the host on the decoded PCM and add figures to the stream, never nodes; the hook is fixed now, the figures come with the first feature. Alternative: a later change to the contract.
 8. **Budget (changed by the lead on 2026-10-23, approved the same day after an independent review; `DecoderWorkTests` runs in the nightly run only, the lead's choice):** the budget counts decoding work, not PCM. Each decoder charges the work of a frame before it does it (`DecodeContext.AddWork`), in work units of one predictor or filter tap on one sample of one channel: 16 per sample of each channel (more for samples of 3 or 4 bytes, whose checksums hash more), 16 per byte of coded data it reads itself, and its stages' units (FLAC its order, WavPack 8 a decorrelation pass, Monkey's Audio 48 a sample for its range decoder). Decoding stops with an info past the larger of 2^35 units and the file's size times the units per byte of its coding, 2,048 by default and 8,192 for Monkey's Audio, about 21 s and 1.2 s per MB at the 0.6 ns a unit measured so far, which `DecodeOptions.MaxWork` overrides for tests. A decoder whose stream totals charge less than the per-sample figure is `decode.failed`, and `DecoderWorkTests` holds each decoder's decoding time per unit (the parse taken out) within twice a FLAC reference's. `StreamDecoder.MaxWastedSamples` goes. Details in [Work instead of samples](#work-instead-of-samples). Alternatives:
    - **Previous (approved 2026-10-22):** decoding stops with an info past the larger of 16 GiB of PCM in the canonical layout and 256 times the file's size, which `DecodeOptions.MaxPcmBytes` overrides for tests. WavPack's crafted worst case runs about 13 minutes under it on a 3.2 MB file.
    - One per-byte figure for all codings (Monkey's Audio may need more than FLAC and WavPack, so the draft declares it per coding instead).

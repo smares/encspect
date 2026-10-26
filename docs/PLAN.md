@@ -35,7 +35,7 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 | Parsers | Written ourselves, one project per format | Libraries hide the fields this tool exists to show; TagLib# is used only to cross-check |
 | Playback | None | Pure analyzer; removes BASS, native binaries and licensing questions |
 | Plugins | Build-time modules only | No runtime loading, so no version policy and no publishing restrictions |
-| Decoding | Optional, per format | For checksum verification, waveform, spectrogram, lowpass and similar; formats without a decoder still get the full structure report |
+| Decoding | Optional, per format | For checksum verification and for the measurements of the decoded audio (spectral cutoff, spectrogram, waveform, and later levels and loudness; [docs/design/spectral-analysis.md](design/spectral-analysis.md)); formats without a decoder still get the full structure report |
 | Hosting and CI | GitHub, hosted runners | Covers Windows, macOS (Apple Silicon) and Linux on x64 and ARM64 |
 | Name | Encspect | Detenc and Framescope were already taken; Encspect was free |
 | License | MIT | Default in the .NET ecosystem; each dependency's license is still checked individually |
@@ -49,7 +49,7 @@ Every parser depends on one small abstractions library and on nothing else; the 
 flowchart TD
     CLI["CLI<br/>text, JSON and CSV output"] --> Host
     GUI["GUI (Avalonia)<br/>tree, hex view, graphs"] --> Host
-    Host -.->|"decoded PCM for waveform, spectrogram"| GUI
+    Host -.->|"measurements of the decoded audio"| GUI
     Host["Host<br/>sniffs the format, runs tag and format parsers,<br/>assembles one report"] --> Tags["Tag parsers<br/>ID3v1, ID3v2, Lyrics3, APE"]
     Host --> Formats["Format parsers, one project each,<br/>with their optional decoders<br/>MP1/2/3 (v1), FLAC, Ogg, MP4, ..."]
     Host --> Codecs["Codec parsers<br/>MPEG audio (in WAV, MP4), Vorbis, Opus, AAC, ..."]
@@ -743,7 +743,7 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
   - Musepack SV8 frames inside packets.
   - Vorbis floors and residues, Opus SILK and CELT.
   - AAC USAC, ER AAC and SBR envelope data.
-- Decoders for waveform and spectrogram, format by format.
+- Lossy decoders (MP3, AAC, Vorbis, Opus and the others), format by format, which the measurements of decoded audio wait for.
 - ALAC, TTA and WMA Lossless decoders (they store no checksum over decoded audio, so phase 3 leaves them out; docs/design/decoders.md, decision 5).
 - Small separate items:
   - WMA Pro frames without the length prefix.
@@ -801,7 +801,7 @@ Both front ends are thin views over the same result model, so neither can show s
 - Explanations from the parsers: a tree row's tooltip shows its description, the panel under the hex view shows the selected node's and links to the topic of the node or its nearest ancestor, which opens in a side pane of the detail window, closed by default, that renders the host's Markdown subset with its own control and remembers whether it was open. The file list's column headers, the streams line and the graphs' chips explain what they show.
 - Findings list with severity, filterable and linked to the node that caused them.
 - Graphs: bitrate over time, bitrate distribution, bit reservoir fill, all from header-level data and available in v1, and the category series of each frame's coding choices, each in three views (share over time, a strip of one cell per frame that keeps rare categories visible, a summary table) and a Coding Summary of all of them, under the headings "Stereo Coding", "Block Switching", "Coded Bandwidth" and "Bit Distribution" in every format, in a fixed six-hue palette with names and shares always in text. They are drawn from the streams' series alone, each series as a line and the per-frame bitrate's distribution as bars, by a small control of the GUI's own rather than a charting library; a line of more points than pixels is drawn as the smallest and largest value of each pixel column. Hovering a point shows its value, and clicking it selects its frame in the tree and hex view, found by offset through the tree's containment.
-- Waveform and spectrogram panels that need decoded audio. These appear only for formats that have a decoder and otherwise say so.
+- Waveform, Spectrogram, Spectrum and Loudness panels drawn from a decode (the measurements of the decoded audio). They appear for streams that have a decoder, and a stream without one carries a caption that says its audio is not decoded here.
 - Export of the report as text or JSON.
 
 ## Risks and open questions
@@ -812,7 +812,7 @@ The largest risks are a wrong core contract and spec details that no reviewer wi
 
 - **Core model reworked late.** If the result model or reader APIs are wrong, every format pays. MP3 goes first and the contract stays internal and changeable until the second format works.
 - **Spec details wrong.** Field offsets and edge cases written from memory can be off; known-input fixtures and tool cross-checks are the safety net.
-- **Decoders.** Quality, license and upkeep of managed decoders vary, and some formats (AAC, Musepack) may have none; the lossless formats' decoders are planned in [docs/design/decoders.md](design/decoders.md). Waveform and spectrum are therefore optional per format.
+- **Decoders.** Quality, license and upkeep of managed decoders vary, and some formats (AAC, Musepack) may have none; the lossless formats' decoders are planned in [docs/design/decoders.md](design/decoders.md). The measurements that need decoded audio are therefore optional per format.
 - **Closed formats.** TAK and OptimFROG are poorly documented, so they get only what their headers reveal.
 - **References for AAC.** faad2 2.11's parser, with a trace added, is the reference for every raw data block, and the hand-built blocks come from a model of the syntax written for this project, so a misreading the two share would pass; ffmpeg's decoder and fdk-aac's CRC check are the second opinions, and the encoders' fixtures exercise what real streams hold. No encoder by Nero or qaac runs here, and Apple's runs only on macOS runners (afconvert writes iTunSMPB but no Encoding Params), so those metadata are shown but name no encoder; ffmpeg 6.1 and faad2 2.11 cannot read USAC, so its configuration and sample sizes are confirmed with MP4Box alone; and no Ubuntu package checks ADTS CRCs, so fdk-aac's decoder, built from source, confirms the CRC fixtures when the external fixtures are regenerated, not in CI.
 - **Heuristic encoder detection.** Files without LAME or Xing tags can be misidentified; results carry a confidence label. Encoder habits are only trusted where encodes with that encoder confirm them, which leaves out encoders that no longer run.
