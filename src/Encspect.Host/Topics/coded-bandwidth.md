@@ -1,7 +1,7 @@
 ---
 id: coded-bandwidth
 title: Coded bandwidth
-related: lowpass, subband-coding, filter-bank, mpeg-layers, aac-windows-and-blocks, ac3-audio-blocks
+related: lowpass, spectral-cutoff, subband-coding, filter-bank, mpeg-layers, aac-windows-and-blocks, ac3-audio-blocks
 references: ISO/IEC 11172-3 2.4.1.5, 2.4.1.6, 2.4.2.5, 2.4.2.6; ISO/IEC 14496-3 4.5.2, 4.6.11; ATSC A/52:2018 5.4.3.24, 7.2.2.1; Annex E 3.3.3
 ---
 
@@ -15,6 +15,6 @@ references: ISO/IEC 11172-3 2.4.1.5, 2.4.1.6, 2.4.2.5, 2.4.2.6; ISO/IEC 14496-3 
 
 **A bound the data states.** The value is what the syntax declares, not a measurement of the sound: a band below it can carry very little. Noise substitution and intensity stereo bands count, and SBR or spectral extension adds content above.
 
-**What you see.** The lowest, most common and highest value of a file's units, and a graph of each unit and each second. It is not the [lowpass](lowpass): a LAME tag's is the setting the encoder filtered with, and one measured from decoded audio would need a decoder.
+**What you see.** The lowest, most common and highest value of a file's units, and a graph of each unit and each second. It is not the [lowpass frequency](lowpass): a LAME tag's is the setting the encoder filtered with. Nor is it the [spectral cutoff](spectral-cutoff), which is measured from decoded audio, for the streams that have a decoder; three figures that can differ.
 
 **Layer III** has no such field: where its coded spectrum ends lies in Huffman-coded data the analyzer does not walk.

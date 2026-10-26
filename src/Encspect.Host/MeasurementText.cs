@@ -15,13 +15,13 @@ public static class MeasurementText
 
     public const string SpectralCutoffDescription = "Where the average spectrum of the decoded audio ends: the highest frequency more than 6 dB above the level above the largest step, with the size of that step, where the transition to it starts and how many of the frames with signal show a step there. It is a measured edge, not the lowpass frequency an encoder states.";
 
-    public const string MeasuredTopic = "measurements";
+    public const string MeasuredTopic = Topics.Measurements;
 
-    public const string SpectralCutoffTopic = "spectral-cutoff";
+    public const string SpectralCutoffTopic = Topics.SpectralCutoff;
 
     public const string SpectrogramDescription = "The average power over time and frequency of the decoded audio: 512 rows from 0 Hz to Nyquist and up to 1,024 columns of the FFT hops, with 0 dB the level of a full-scale sine centered on a bin.";
 
-    public const string SpectrogramTopic = "spectrogram";
+    public const string SpectrogramTopic = Topics.Spectrogram;
 
     public const string WaveformDescription = "The smallest and largest sample of each channel in each column of the spectrogram's time axis, in 16-bit sample codes.";
 

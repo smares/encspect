@@ -12,6 +12,9 @@ public sealed class MeasureOptions
     // of 2^35 and the file's size times the largest allowance among the decoders). Tests and the fuzzer lower it. An option of the
     // call, not a setting.
     public long? MaxWork { get; init; }
+
+    // For tests: runs before each block is measured, so a test can raise the exception a bug in a measurement would (measure.failed).
+    internal Action<long>? BeforeBlock { get; init; }
 }
 
 [Flags]

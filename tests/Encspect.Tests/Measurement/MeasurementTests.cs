@@ -207,11 +207,11 @@ public class MeasurementTests
         Assert.InRange(estimate, 1, 30L << 20);
 
         int[] data = new int[65535 * 8];
-        long before = GC.GetTotalAllocatedBytes(precise: true);
+        long before = GC.GetAllocatedBytesForCurrentThread();
         var measurer = new StreamMeasurer(format, new MeasureOptions(), CancellationToken.None, _ => true);
         measurer.Write(new PcmBlock(0, 8, 65535, 8, data));
         StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
-        long allocated = GC.GetTotalAllocatedBytes(precise: true) - before;
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
 
         Assert.Equal(65535, m.Channels);
         Assert.Equal(32, m.ChannelsMeasured);

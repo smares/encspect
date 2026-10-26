@@ -15,4 +15,7 @@ internal static class HostText
 internal static class Topics
 {
     public const string TagPlacement = "tag-placement";
+    public const string Measurements = "measurements";
+    public const string Spectrogram = "spectrogram";
+    public const string SpectralCutoff = "spectral-cutoff";
 }

@@ -31,6 +31,7 @@ internal sealed class StreamMeasurer
     private readonly int _hop;
     private readonly double _scale;
     private readonly int _weight;
+    private readonly Action<long>? _beforeBlock;
 
     private readonly double[][] _buffers = [];
     private readonly double[] _re = [];
@@ -67,6 +68,7 @@ internal sealed class StreamMeasurer
         _format = format;
         _token = token;
         _charge = charge;
+        _beforeBlock = options.BeforeBlock;
         _channels = format.Channels;
         _measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
         MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
@@ -141,6 +143,11 @@ internal sealed class StreamMeasurer
         bytes += 4L * MeasurementLimits.MaxColumns * rows;
         bytes += 2L * MeasurementLimits.MaxColumns * rows;
         bytes += 2L * 8 * MeasurementLimits.MaxColumns * measured;
+
+        // The figures the record keeps: the grids as bytes and 16-bit codes, and the rows.
+        bytes += (long)MeasurementLimits.MaxColumns * rows;
+        bytes += 4L * MeasurementLimits.MaxColumns * measured;
+        bytes += 2L * (measured + 1) * rows;
         return bytes;
     }
 
@@ -192,6 +199,7 @@ internal sealed class StreamMeasurer
 
     private void Process(PcmBlock block)
     {
+        _beforeBlock?.Invoke(block.Position);
         if (_token.IsCancellationRequested)
         {
             IsCanceled = true;

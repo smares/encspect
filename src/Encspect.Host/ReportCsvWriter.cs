@@ -51,9 +51,13 @@ public static class ReportCsvWriter
     // negative figure reads back as a number.
     private static void WriteRow(TextWriter writer, IEnumerable<string?> fields, IReadOnlyCollection<int>? numeric = null)
     {
-        writer.Write(string.Join(',', fields.Select((f, i) => numeric is not null && numeric.Contains(i) && IsNumber(f) ? f! : Field(f))));
+        writer.Write(string.Join(',', fields.Select((f, i) => Cell(f, numeric is not null && numeric.Contains(i)))));
         writer.Write("\r\n");
     }
+
+    // A field the writer formats from a number is written as it is where it reads as one; every other, or a number-flagged field that does
+    // not read as one, goes through the guard.
+    internal static string Cell(string? value, bool isNumeric) => isNumeric && IsNumber(value) ? value! : Field(value);
 
     internal static bool IsNumber(string? value) =>
         !string.IsNullOrEmpty(value) && (char.IsAsciiDigit(value[0]) || (value[0] == '-' && value.Length > 1 && char.IsAsciiDigit(value[1])))
