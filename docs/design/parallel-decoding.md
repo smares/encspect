@@ -1,11 +1,11 @@
 # Parallel decoding: frames on several threads
 
-Status: a draft for the project lead, not approved and not built.
+Status: approved by the project lead on 2026-10-26 with every recommendation of [Decisions](#decisions) as listed; not built yet. The `CLAUDE.md` sentences of [The rules in CLAUDE.md](#the-rules-in-claudemd) take effect with the first implementation pull request.
 
 - It designs option B of the second speed pass ("Decode independent units in parallel"), the one that needs a change of the decoder contract in [decoders.md](decoders.md).
 - A throwaway prototype outside the repository measured the gains (see [Expected gains](#expected-gains)); nothing of it is committed.
-- The decisions it asks for are under [Open decisions](#open-decisions).
-- It was revised after two independent reviews. The main changes: the check of the plan before the journal is replayed (replan, also for a plan that threw), WavPack sets whose blocks fail, the replay's check of cancellation at every charge point, early cancellation of workers, ownership of buffers a canceled worker still holds, scratch memory, the wasted-work bound and the verification.
+- The decisions are under [Decisions](#decisions).
+- It was revised after three independent reviews. The main changes: the check of the plan before the journal is replayed (replan, also for a plan that threw), WavPack sets whose blocks fail, the replay's check of cancellation at every charge point, early cancellation of workers, ownership of buffers a canceled worker still holds, scratch memory, the wasted-work bound and the verification.
 - The **analysis thread** in this document is the thread that runs `Analyze` and with it the parsers: the term of the sink contract (`IPcmSink.Write` is called "on the analysis thread, in stream order").
 
 ## Scope
@@ -14,7 +14,7 @@ Status: a draft for the project lead, not approved and not built.
 - **Out, and how this design relates to them:**
   - **Option A, decoding while the parser walks** (a pipeline of the parser and one decoder thread). B contains it for the three formats above: the parser hands a frame over and reads on while workers decode. What A adds is a stateful decoder (TrueHD) on one thread of its own. The design leaves room for it: a decoder that does not split its frames could run its whole `Decode` as one worker in stream order, with the same copy of the bytes, the same lent buffers and the same commit. That is a later change with its own measurement, not part of this one.
   - **Option C, checksums on a thread of their own.** In B the stream-order checksums (FLAC's and WavPack's MD5) run in the commit, on the analysis thread. C would move the commit to a thread of its own. The commit is one method called in stream order (below), so moving it later changes where it runs and not what it does; nothing in B has to be undone for C. The stream decoder's state is therefore "used by one thread at a time, in stream order", not "only on the analysis thread". FLAC is the format that would gain (see [What stays serial](#what-stays-serial)).
-  - **Parallel files in the CLI.** The CLI analyzes files one after another (`InputWalker` and the loop of `CommandLine`); a folder of small files would gain more from files in parallel than from frames in parallel. That is a separate decision (see [Open decisions](#open-decisions)).
+  - **Parallel files in the CLI.** The CLI analyzes files one after another (`InputWalker` and the loop of `CommandLine`); a folder of small files would gain more from files in parallel than from frames in parallel. That is a separate decision (see [Decisions](#decisions), 6).
   - TrueHD and MLP, whose frames carry state (see [Independence per format](#independence-per-format)), and the codings without a decoder.
 
 ## The design in short
@@ -614,7 +614,9 @@ Minimum wall time in seconds, first run (all configurations of a file in the sam
 - **A run that did not decode.** The first helping runs list `f16-5.flac` at four workers with a minimum of 0.238 s, which equals the analysis without decoding (0.23 s) and cannot be a decoding run. It is not used; the rerun with the identity check reads 0.50 s for that configuration.
 - **One machine:** four vCPUs, the JIT build, 300 s files, one four-core Xeon. Nothing here says how a machine with more cores, a slower memory or the NativeAOT build behaves.
 
-## Open decisions
+## Decisions
+
+The project lead approved the recommendation of each decision below: 1(a), 2(a), 3(a), 4(a), 5(a), 6(a), 7(b), 8(a), 9(a), 10(a), 11(b) and 12(a). The options are kept for the record.
 
 1. **Parallel decoding on by default?**
    - (a) The library stays serial unless `MaxParallelism` is set; the CLI with `--verify` and the GUI's "Verify Audio" set it (the degrees above).
