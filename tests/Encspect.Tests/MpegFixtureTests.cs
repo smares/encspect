@@ -14,6 +14,25 @@ public class MpegFixtureTests
 {
     public static TheoryData<string> Names => Fixtures.MpegFixtures();
 
+    // A finding on a frame points to a node equal to the tree's in name, offset and length. The nodes of the stream-changed and
+    // free-format-length-changed findings are built before the frame's entry is, from the same bounds.
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void FindingsOnFramesPointToNodesOfTheSameExtentAsTheirTreeNodes(string fileName)
+    {
+        Report report = Fixtures.AnalyzeMpeg(fileName);
+        foreach (Finding finding in report.Findings.Where(f => f.Node is { Kind: NodeKind.Frame } && f.Path is not null))
+        {
+            Node node = report.Root;
+            foreach (int index in finding.Path!)
+            {
+                node = node.Children[index];
+            }
+
+            Assert.Equal((finding.Node!.Name, finding.Node.Offset, finding.Node.Length), (node.Name, node.Offset, node.Length));
+        }
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void ReportMatchesManifest(string fileName)

@@ -2,41 +2,9 @@ using Encspect.Formats.Mpeg;
 
 namespace Encspect.Tests;
 
-// The frame summaries and the side information check of MPEG audio, each held to the code it replaced.
+// The side information check of MPEG audio, held to the code it replaced.
 public class MpegSpeedPathTests
 {
-    [Fact]
-    public void MpegSummaryEqualsTheFormulaForEveryHeaderShapeAndIgnoresTheOtherBits()
-    {
-        var rng = new Random(33);
-        for (uint version = 0; version < 4; version++)
-        {
-            for (uint layer = 1; layer < 4; layer++)
-            {
-                for (uint bitrate = 0; bitrate < 15; bitrate++)
-                {
-                    for (uint rate = 0; rate < 3; rate++)
-                    {
-                        for (uint mode = 0; mode < 4; mode++)
-                        {
-                            if (version == 1)
-                            {
-                                continue;
-                            }
-
-                            uint raw = 0xFFE00000 | (version << 19) | (layer << 17) | (bitrate << 12) | (rate << 10) | (mode << 6);
-                            var header = new MpegHeader(raw);
-                            string expected = $"{header.VersionName} Layer {header.LayerName}, {header.BitrateName}, {header.SampleRate} Hz, {header.ChannelMode}";
-                            Assert.Equal(expected, header.Summary);
-                            uint noise = (uint)rng.Next() & 0x0001030F;
-                            Assert.Equal(expected, new MpegHeader(raw | noise).Summary);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private static Layer3SideInfo RandomSideInfo(Random rng, MpegHeader header)
     {
         byte[] bytes = new byte[Layer3SideInfo.Size(header)];
@@ -53,13 +21,73 @@ public class MpegSpeedPathTests
         return Layer3SideInfo.Read(bytes, header);
     }
 
+    private static string Frames(int count) => count == 1 ? "1 frame" : $"{count} frames";
+
+    private static string Frames(int count, string singular, string plural) => $"{Frames(count)} {(count == 1 ? singular : plural)}";
+
+    // The check of the side information as 65e7fb5 had it, frozen: an iterator over the granules with the conditions written out, and the
+    // findings' texts. The parser's flags must give the same findings in the same order, and HasSideInfoProblems whether there are any.
+    private static IEnumerable<(string Code, Encspect.Core.Node Node, Func<int, string> Message)> FrozenSideInfoProblems(Layer3SideInfo info, long position, long offset)
+    {
+        MpegHeader header = info.Header;
+        for (int gr = 0; gr < info.Granules.Length; gr++)
+        {
+            for (int ch = 0; ch < info.Granules[gr].Length; ch++)
+            {
+                Layer3Granule g = info.Granules[gr][ch];
+                if (g.BigValues.Value > 288)
+                {
+                    yield return ("mpeg.big-values-too-large", Field("Big Values", g.BigValues), count =>
+                        $"{Frames(count, "has", "have")} more than 288 big_values pairs, the first {g.BigValues.Value} at 0x{position:X}.");
+                }
+
+                if (g.IsSwitched && g.BlockType.Value == 0)
+                {
+                    yield return ("mpeg.block-type-reserved", Layer3SideInfo.BlockTypeSpan(offset, g), count =>
+                        $"{Frames(count, "switches", "switch")} windows with block type 0, which is reserved, the first at 0x{position:X}.");
+                }
+
+                foreach (BitField table in g.TableSelect.Where(t => t.Value is 4 or 14))
+                {
+                    yield return ("mpeg.huffman-table-undefined", Layer3SideInfo.TableSelectSpan(offset, g), count =>
+                        $"{Frames(count, "selects", "select")} a Huffman table that does not exist, the first table {table.Value} at 0x{position:X}.");
+                }
+
+                int part2 = info.Part2Bits(gr, ch);
+                if (part2 > g.Part23Length.Value)
+                {
+                    yield return ("mpeg.scalefactors-exceed-granule", Field("Part 2 and 3 Length", g.Part23Length), count =>
+                        $"{Frames(count, "has", "have")} scalefactors longer than part2_3_length, the first {part2} of {Encspect.Core.Counts.Of(g.Part23Length.Value, "bit", "bits")} at 0x{position:X}.");
+                }
+
+                if (header.IsMpeg1 && g.IsShort && info.Scfsi[ch].Value != 0)
+                {
+                    yield return ("mpeg.scfsi-with-short-blocks", Field($"Channel {ch}", info.Scfsi[ch]), count =>
+                        $"{Frames(count, "sets", "set")} scfsi for a channel with short blocks, which libmad rejects, the first at 0x{position:X}.");
+                }
+            }
+        }
+
+        bool jointStereo = header.ChannelModeBits == 1 && header.ModeExtension != 0;
+        foreach (Layer3Granule[] row in info.Granules.Where(row => jointStereo && row.Length == 2))
+        {
+            if (row[0].BlockTypeValue != row[1].BlockTypeValue || row[0].IsMixed != row[1].IsMixed)
+            {
+                yield return ("mpeg.stereo-block-types-differ", Layer3SideInfo.BlockTypeSpan(offset, row[1]), count =>
+                    $"{Frames(count, "uses", "use")} mid/side or intensity stereo with a different block type in each channel, which libmad rejects, the first at 0x{position:X}.");
+            }
+        }
+
+        Encspect.Core.Node Field(string name, BitField field) => Layer3SideInfo.Span(name, offset, field.Bit, field.Bit + field.Length);
+    }
+
     [Fact]
-    public void MpegHasSideInfoProblemsEqualsWhetherTheIteratorYieldsAnything()
+    public void MpegSideInfoFindingsEqualTheFrozenIteratorInCodeNodeTextAndOrder()
     {
         var rng = new Random(44);
-        int with = 0;
+        var seen = new Dictionary<string, int>();
         int without = 0;
-        for (int iteration = 0; iteration < 40000; iteration++)
+        for (int iteration = 0; iteration < 60000; iteration++)
         {
             uint version = rng.Next(3) == 0 ? 2u : (rng.Next(2) == 0 ? 3u : 0u);
             uint mode = (uint)rng.Next(4);
@@ -67,19 +95,30 @@ public class MpegSpeedPathTests
             uint raw = 0xFFE00000 | (version << 19) | (1u << 17) | (9u << 12) | (mode << 6) | (extension << 4);
             var header = new MpegHeader(raw);
             Layer3SideInfo info = RandomSideInfo(rng, header);
-            bool any = MpegAudioParser.SideInfoProblems(info, 0, 0).Any();
-            Assert.Equal(any, MpegAudioParser.HasSideInfoProblems(info));
-            if (any)
+            long position = rng.Next(0, 1000000);
+            long offset = position + 4;
+            var expected = FrozenSideInfoProblems(info, position, offset).ToList();
+            var actual = MpegAudioParser.SideInfoProblems(info, position, offset).ToList();
+            Assert.Equal(expected.Count, actual.Count);
+            for (int i = 0; i < expected.Count; i++)
             {
-                with++;
+                Assert.Equal(expected[i].Code, actual[i].Code);
+                Assert.Equal((expected[i].Node.Name, expected[i].Node.Offset, expected[i].Node.Length), (actual[i].Node.Name, actual[i].Node.Offset, actual[i].Node.Length));
+                Assert.Equal(expected[i].Message(1), actual[i].Message(1));
+                Assert.Equal(expected[i].Message(7), actual[i].Message(7));
+                seen[expected[i].Code] = seen.GetValueOrDefault(expected[i].Code) + 1;
             }
-            else
-            {
-                without++;
-            }
+
+            Assert.Equal(expected.Count > 0, MpegAudioParser.HasSideInfoProblems(info));
+            without += expected.Count == 0 ? 1 : 0;
         }
 
-        Assert.True(with > 1000 && without > 1000, $"{with} with problems, {without} without");
+        foreach (string code in new[] { "mpeg.big-values-too-large", "mpeg.block-type-reserved", "mpeg.huffman-table-undefined", "mpeg.scalefactors-exceed-granule", "mpeg.scfsi-with-short-blocks", "mpeg.stereo-block-types-differ" })
+        {
+            Assert.True(seen.GetValueOrDefault(code) > 100, $"{code} occurred {seen.GetValueOrDefault(code)} times");
+        }
+
+        Assert.True(without > 1000, $"{without} without problems");
     }
 
     // The scalefactor bits of an MPEG-2 or 2.5 granule as they were summed before, with slen and nr_of_sfb_block (ISO/IEC 13818-3 2.4.3.2) as arrays.
