@@ -1,6 +1,6 @@
 # Parallel decoding: frames on several threads
 
-Status: approved by the project lead on 2026-10-26 with every recommendation of [Decisions](#decisions) as listed; not built yet. The `CLAUDE.md` sentences of [The rules in CLAUDE.md](#the-rules-in-claudemd) take effect with the first implementation pull request.
+Status: approved by the project lead on 2026-10-26 with every recommendation of [Decisions](#decisions) as listed; not built yet. On 2026-10-26 the owner deferred building it in favor of new formats and deeper analysis such as [spectral analysis](spectral-analysis.md). It stays approved and ready to build. The `CLAUDE.md` sentences of [The rules in CLAUDE.md](#the-rules-in-claudemd) take effect with the first implementation pull request.
 
 - It designs option B of the second speed pass ("Decode independent units in parallel"), the one that needs a change of the decoder contract in [decoders.md](decoders.md).
 - A throwaway prototype outside the repository measured the gains (see [Expected gains](#expected-gains)); nothing of it is committed.
