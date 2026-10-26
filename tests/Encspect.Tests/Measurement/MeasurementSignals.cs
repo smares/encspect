@@ -67,3 +67,31 @@ internal static class MeasurementSignals
         return measurer.Result(MeasurementStatus.Complete, null);
     }
 }
+
+internal static class BandLimited
+{
+    // Lines at the bin centers of a 4,096-point frame up to a cutoff, with fixed pseudo-random phases, repeated: a signal whose every
+    // frame has the same line spectrum, so the edge is as sharp as the bins. Level: the amplitude of each line.
+    public static double[] Lines(int length, int rate, int highestBin, double amplitude, uint seed = 3)
+    {
+        double[] period = new double[4096];
+        double[] phases = MeasurementSignals.Noise(highestBin + 1, seed);
+        for (int bin = 20; bin <= highestBin; bin++)
+        {
+            double phase = phases[bin] * Math.PI;
+            for (int n = 0; n < period.Length; n++)
+            {
+                period[n] += amplitude * Math.Cos((2 * Math.PI * ((long)bin * n % 4096) / 4096) + phase);
+            }
+        }
+
+        var result = new double[length];
+        for (int i = 0; i < length; i++)
+        {
+            result[i] = period[i % 4096];
+        }
+
+        _ = rate;
+        return result;
+    }
+}

@@ -98,6 +98,19 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Assert.InRange(units, Target * 0.9, Target * 1.1);
     }
 
+    // The time per work unit of the FLAC reference, which MeasurementWorkTests holds the measurements to.
+    internal static double ReferenceNanosecondsPerUnit()
+    {
+        Case reference = Cases["flac-reference"]();
+        double result = Measure(reference, reference).Reference.NanosecondsPerUnit;
+        lock (Built)
+        {
+            Built.Clear();
+        }
+
+        return result;
+    }
+
     // ----- The measurement -----
 
     private sealed record Case(string Name, byte[] Data, bool LendsBuffers = true, Func<IDecoder>? Decoder = null);

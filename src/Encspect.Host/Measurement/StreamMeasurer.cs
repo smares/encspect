@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Encspect.Core;
 
 namespace Encspect.Host.Measurement;
@@ -35,9 +37,13 @@ internal sealed class StreamMeasurer
     private readonly double[] _im = [];
     private readonly double[] _rows = [];
     private readonly double[] _suffix = new double[MeasurementLimits.Rows + 1];
+    private readonly int[] _highs = new int[MeasurementLimits.Rows];
+    private readonly double[] _aboveRows = new double[MeasurementLimits.Rows];
+    private readonly double _inverseBand;
+    private readonly double _ratioTimesBand;
     private readonly double[] _average = [];
-    private readonly CutoffCounters[] _counters = [];
-    private readonly float[] _cells = [];
+    private CutoffCounters[] _counters = [];
+    private float[] _cells = [];
     private readonly int[] _counts = new int[MeasurementLimits.MaxColumns];
     private readonly double[] _minimum = [];
     private readonly double[] _maximum = [];
@@ -93,20 +99,18 @@ internal sealed class StreamMeasurer
             _buffers[c] = new double[_plan.Size];
         }
 
+        for (int r = 0; r < MeasurementLimits.Rows; r++)
+        {
+            _highs[r] = Math.Min(r + _geometry.BandRows, MeasurementLimits.Rows - 1);
+            _aboveRows[r] = _highs[r] - r;
+        }
+
+        _inverseBand = 1.0 / _geometry.BandRows;
+        _ratioTimesBand = CutoffCounters.OwnStepRatio * _geometry.BandRows;
         _re = _plan.NewScratch();
         _im = _plan.NewScratch();
         _rows = new double[(_measured + 1) * MeasurementLimits.Rows];
         _average = new double[(_measured + 1) * MeasurementLimits.Rows];
-        if (_geometry.IsSearched)
-        {
-            _counters = new CutoffCounters[_measured + 1];
-            for (int i = 0; i < _counters.Length; i++)
-            {
-                _counters[i] = new CutoffCounters();
-            }
-        }
-
-        _cells = new float[MeasurementLimits.MaxColumns * MeasurementLimits.Rows];
         _minimum = new double[_measured * MeasurementLimits.MaxColumns];
         _maximum = new double[_measured * MeasurementLimits.MaxColumns];
         Array.Fill(_minimum, double.MaxValue);
@@ -297,7 +301,11 @@ internal sealed class StreamMeasurer
             count -= piece;
             if (_fill == plan.Size)
             {
-                ProcessFrame();
+                if (!ProcessFrame())
+                {
+                    return;
+                }
+
                 for (int c = 0; c < _measured; c++)
                 {
                     _buffers[c].AsSpan(_hop, _hop).CopyTo(_buffers[c]);
@@ -321,21 +329,18 @@ internal sealed class StreamMeasurer
             case SampleFormat.Integer:
                 ReadOnlySpan<int> integers = block.Integers.Slice(at, count);
                 double scale = _scale;
+                int smallest = int.MaxValue;
+                int largest = int.MinValue;
                 for (int i = 0; i < integers.Length; i++)
                 {
-                    double v = integers[i] * scale;
-                    target[i] = v;
-                    if (v < low)
-                    {
-                        low = v;
-                    }
-
-                    if (v > high)
-                    {
-                        high = v;
-                    }
+                    int v = integers[i];
+                    target[i] = v * scale;
+                    smallest = v < smallest ? v : smallest;
+                    largest = v > largest ? v : largest;
                 }
 
+                low = smallest * scale;
+                high = largest * scale;
                 break;
             case SampleFormat.Float32:
                 ReadOnlySpan<float> floats = block.Floats.Slice(at, count);
@@ -414,7 +419,7 @@ internal sealed class StreamMeasurer
         int rows = MeasurementLimits.Rows;
         int half = MeasurementLimits.MaxColumns / 2;
         int usedPairs = (_used + 1) / 2;
-        for (int i = 0; i < usedPairs; i++)
+        for (int i = 0; _cells.Length > 0 && i < usedPairs; i++)
         {
             int a = 2 * i;
             int b = a + 1;
@@ -426,7 +431,11 @@ internal sealed class StreamMeasurer
             _counts[i] = _counts[a] + _counts[b];
         }
 
-        Array.Clear(_cells, usedPairs * rows, (MeasurementLimits.MaxColumns - usedPairs) * rows);
+        if (_cells.Length > 0)
+        {
+            Array.Clear(_cells, usedPairs * rows, (MeasurementLimits.MaxColumns - usedPairs) * rows);
+        }
+
         Array.Clear(_counts, usedPairs, MeasurementLimits.MaxColumns - usedPairs);
         for (int c = 0; c < _measured; c++)
         {
@@ -445,8 +454,39 @@ internal sealed class StreamMeasurer
         _used = usedPairs;
     }
 
-    private void ProcessFrame()
+    // The big arrays (the grid's cells and the cutoff's counters, about 2.3 MiB and 0.3 MiB a channel) are allocated with the first
+    // frame, and charged as the work of a few milliseconds, so that a stream that never fills a frame costs nothing.
+    private const long AllocationUnits = 1 << 21;
+
+    private bool Allocate()
     {
+        if (!_charge(AllocationUnits))
+        {
+            return false;
+        }
+
+        if (_geometry.IsSearched)
+        {
+            _counters = new CutoffCounters[_measured + 1];
+            for (int i = 0; i < _counters.Length; i++)
+            {
+                _counters[i] = new CutoffCounters();
+            }
+        }
+
+        _cells = new float[MeasurementLimits.MaxColumns * MeasurementLimits.Rows];
+        return true;
+    }
+
+    private bool ProcessFrame()
+    {
+        if (_cells.Length == 0 && !Allocate())
+        {
+            IsLimited = true;
+            _isStopped = true;
+            return false;
+        }
+
         FftPlan plan = _plan!;
         int rows = MeasurementLimits.Rows;
         for (int c = 0; c < _measured; c++)
@@ -510,33 +550,46 @@ internal sealed class StreamMeasurer
 
         _counts[column]++;
         _frames++;
+        return true;
     }
 
     // The counters of one frame's rows: suffix sums from the top row down, so that a band near the edge is not added to the bass.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Count(ReadOnlySpan<double> rows, CutoffCounters counters)
     {
         int rowCount = MeasurementLimits.Rows;
         double[] suffix = _suffix;
-        suffix[rowCount] = 0;
+        ref double sfx = ref MemoryMarshal.GetArrayDataReference(suffix);
+        ref double source = ref MemoryMarshal.GetReference(rows);
+        double sum = 0;
+        Unsafe.Add(ref sfx, rowCount) = 0;
         for (int r = rowCount - 1; r >= 0; r--)
         {
-            suffix[r] = suffix[r + 1] + rows[r];
+            sum += Unsafe.Add(ref source, r);
+            Unsafe.Add(ref sfx, r) = sum;
         }
 
         int w = _geometry.BandRows;
-        for (int r = _geometry.FirstCandidate; r <= CutoffGeometry.LastCandidate; r++)
+        int first = _geometry.FirstCandidate;
+        int last = CutoffGeometry.LastCandidate;
+        double inverseBand = _inverseBand;
+        double ratio = _ratioTimesBand;
+        ref int all = ref MemoryMarshal.GetArrayDataReference(counters.All);
+        ref int show = ref MemoryMarshal.GetArrayDataReference(counters.Show);
+        ref int highs = ref MemoryMarshal.GetArrayDataReference(_highs);
+        ref double aboveRows = ref MemoryMarshal.GetArrayDataReference(_aboveRows);
+        for (int r = first; r <= last; r++)
         {
-            double under = suffix[r - w + 1] - suffix[r + 1];
-            int high = Math.Min(r + w, rowCount - 1);
-            int above = high - r;
-            double over = suffix[r + 1] - suffix[high + 1];
-            int exponent = Math.Clamp(DetMath.Exponent(under / w), CutoffCounters.FirstExponent, CutoffCounters.FirstExponent + CutoffCounters.Levels - 1);
-            int cell = (r * CutoffCounters.Levels) + exponent - CutoffCounters.FirstExponent;
-            counters.All[cell]++;
-            double lhs = under * above;
-            if (lhs > 0 && lhs >= CutoffCounters.OwnStepRatio * over * w)
+            double under = Unsafe.Add(ref sfx, r - w + 1) - Unsafe.Add(ref sfx, r + 1);
+            double over = Unsafe.Add(ref sfx, r + 1) - Unsafe.Add(ref sfx, Unsafe.Add(ref highs, r) + 1);
+            int exponent = (int)((BitConverter.DoubleToInt64Bits(under * inverseBand) >> 52) & 0x7FF) - 1023;
+            exponent = exponent < CutoffCounters.FirstExponent ? 0 : exponent > CutoffCounters.FirstExponent + CutoffCounters.Levels - 1 ? CutoffCounters.Levels - 1 : exponent - CutoffCounters.FirstExponent;
+            int cell = (r * CutoffCounters.Levels) + exponent;
+            Unsafe.Add(ref all, cell)++;
+            double lhs = under * Unsafe.Add(ref aboveRows, r);
+            if (lhs > 0 && lhs >= ratio * over)
             {
-                counters.Show[cell]++;
+                Unsafe.Add(ref show, cell)++;
             }
         }
     }
@@ -581,11 +634,11 @@ internal sealed class StreamMeasurer
         for (int c = 0; c < _measured; c++)
         {
             perChannel[c] = Levels(_average.AsSpan(c * rows, rows));
-            cutoffs.Add(CutoffFinder.Find(perChannel[c], _geometry.IsSearched ? _counters[c] : null, _geometry));
+            cutoffs.Add(CutoffFinder.Find(perChannel[c], _counters.Length > 0 ? _counters[c] : null, _geometry));
         }
 
         short[] combined = Levels(_average.AsSpan(_measured * rows, rows));
-        SpectralCutoff cutoff = CutoffFinder.Find(combined, _geometry.IsSearched ? _counters[_measured] : null, _geometry);
+        SpectralCutoff cutoff = CutoffFinder.Find(combined, _counters.Length > 0 ? _counters[_measured] : null, _geometry);
         return record with
         {
             Spectrum = new SpectrumFigures
