@@ -3,12 +3,13 @@ using Encspect.Core;
 namespace Encspect.Formats.Flac;
 
 // Reads the file through one window that moves forward with the frames, so a frame is read once from the file however long it is, and the
-// memory held is the window: a megabyte, or as much as the frame in hand needs.
+// memory held is the window: a megabyte, a whole file of up to 128 KiB, or as much as the frame in hand needs (SourceWindow).
 internal sealed class Source(ByteReader reader)
 {
     private const int MinimumWindow = 1 << 20;
 
-    private byte[] _buffer = new byte[MinimumWindow];
+    private readonly int _window = SourceWindow.For(reader.Length, MinimumWindow);
+    private byte[] _buffer = [];
     private long _start = -1;
     private int _length;
 
@@ -74,9 +75,9 @@ internal sealed class Source(ByteReader reader)
     // file is read about once however the requests fall.
     private void Load(long offset, int needed, bool keepsTail)
     {
-        int size = Math.Max(MinimumWindow, needed);
+        int size = Math.Max(_window, needed);
         int kept = keepsTail ? _length - (int)(offset - _start) : 0;
-        if (_buffer.Length < size || (_buffer.Length > MinimumWindow && size <= MinimumWindow))
+        if (_buffer.Length < size || (_buffer.Length > _window && size <= _window))
         {
             byte[] next = new byte[size];
             kept = Math.Min(kept, size);

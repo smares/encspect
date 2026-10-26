@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+
 namespace Encspect.Formats.Wma;
 
 // Reads bits most significant first, as the Windows Media Audio coders pack them (FFmpeg's GetBitContext
@@ -23,13 +25,29 @@ internal sealed class Bits(byte[] data, int length)
     public uint Peek(int count)
     {
         int index = Position >> 3;
+        ulong window;
+        if ((ulong)(uint)index + 8 <= (ulong)(uint)data.Length)
+        {
+            window = BinaryPrimitives.ReadUInt64BigEndian(data.AsSpan(index));
+        }
+        else
+        {
+            window = PeekNearEnd(index);
+        }
+
+        return (uint)((window << (Position & 7)) >> (64 - count));
+    }
+
+    // The eight bytes from index, zero where they lie outside the data.
+    private ulong PeekNearEnd(int index)
+    {
         ulong window = 0;
         for (int i = 0; i < 8; i++)
         {
             window = (window << 8) | (uint)(index + i < data.Length && index + i >= 0 ? data[index + i] : 0);
         }
 
-        return (uint)((window << (Position & 7)) >> (64 - count));
+        return window;
     }
 
     public uint Read(int count)
