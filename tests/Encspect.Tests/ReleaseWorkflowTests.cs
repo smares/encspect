@@ -232,6 +232,7 @@ public sealed class ReleaseWorkflowTests
         foreach (string name in new[]
         {
             "Install the NativeAOT toolchain",
+            "Fetch the glibc 2.27 sysroot",
             "Publish the NativeAOT CLI",
             "Check the glibc the CLI needs",
             "Publish the self-contained GUI",

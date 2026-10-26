@@ -189,7 +189,26 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang zlib1g-dev
+          sudo apt-get install -y clang lld
+
+      # NativeAOT links the C library it finds, so a build on the runner's glibc would need that glibc or newer. Linking against
+      # the sysroot of .NET's own cross-build image (Ubuntu 18.04, glibc 2.27, the floor of the runtime pack the GUI carries)
+      # keeps the floor where it was; the image is only unpacked here, not run, so the arm64 runner can take the amd64 image.
+      # The tag is the image's immutable build of .NET 10.
+      - name: Fetch the glibc 2.27 sysroot
+        if: runner.os == 'Linux'
+        run: |
+          case "${{ matrix.rid }}" in
+            linux-x64) arch=amd64; dir=x64 ;;
+            linux-arm64) arch=arm64; dir=arm64 ;;
+          esac
+          container=$(docker create --platform linux/amd64 "mcr.microsoft.com/dotnet-buildtools/prereqs:azurelinux-3.0-net10.0-cross-$arch-ecafe28" true)
+          # The sysroot's symbolic links are absolute, so it must sit where the image keeps it.
+          sudo mkdir /crossrootfs
+          sudo chown "$USER" /crossrootfs
+          docker cp "$container:/crossrootfs/$dir" /crossrootfs/
+          docker rm "$container"
+          echo "ENCSPECT_SYSROOT=/crossrootfs/$dir" >> "$GITHUB_ENV"
 
       - name: Publish the NativeAOT CLI
         run: dotnet publish src/Encspect.Cli --configuration Release --runtime ${{ matrix.rid }} -p:PublishAot=true --output publish/${{ matrix.rid }}
@@ -202,14 +221,14 @@ jobs:
           publish/${{ matrix.rid }}/encspect --version | tee "$RUNNER_TEMP/version.txt"
           grep -qE "^encspect $VERSION(\+[0-9a-f]+)?\$" "$RUNNER_TEMP/version.txt"
 
-      # A NativeAOT executable links the C library of the machine that built it, so the glibc it needs is the image's, not the 2.27
-      # of the runtime pack that the self-contained GUI carries. docs/releases/package-readme.md names 2.34; a build that needs more fails here.
+      # A NativeAOT executable links the C library it is given, and without the sysroot that is the image's, not the 2.27
+      # of the runtime pack that the self-contained GUI carries, kept by the sysroot above. docs/releases/package-readme.md names 2.27; a build that needs more fails here.
       - name: Check the glibc the CLI needs
         if: runner.os == 'Linux'
         run: |
           highest=$(objdump -T publish/${{ matrix.rid }}/encspect | grep -o 'GLIBC_[0-9.]*' | sort -Vu | tail -1)
           echo "The CLI needs $highest"
-          test "$(printf '%s\n' "$highest" GLIBC_2.34 | sort -V | tail -1)" = GLIBC_2.34
+          test "$(printf '%s\n' "$highest" GLIBC_2.27 | sort -V | tail -1)" = GLIBC_2.27
 
       # A runner has no display to open a window on, so the published GUI runs its self-check: it loads Skia's and
       # HarfBuzz's native libraries and the platform backend's (ANGLE on Windows, Avalonia.Native on macOS) from the

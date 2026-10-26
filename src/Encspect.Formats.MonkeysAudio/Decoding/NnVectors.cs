@@ -47,13 +47,26 @@ internal static class NnVectors
 
         if (Sse2.IsSupported)
         {
-            Vector128<int> sum = Vector128<int>.Zero;
-            for (; i <= n - 8; i += 8)
+            // Four independent sums, so the 128-bit loop (all there is under NativeAOT's x86-64-v2 baseline) is not bound by the
+            // latency of one chain; sums wrap on 32 bits, so the order of the additions does not change the result.
+            Vector128<int> sum0 = Vector128<int>.Zero;
+            Vector128<int> sum1 = Vector128<int>.Zero;
+            Vector128<int> sum2 = Vector128<int>.Zero;
+            Vector128<int> sum3 = Vector128<int>.Zero;
+            for (; i <= n - 32; i += 32)
             {
-                sum += Sse2.MultiplyAddAdjacent(Vector128.LoadUnsafe(ref pa, (nuint)i), Vector128.LoadUnsafe(ref pb, (nuint)i));
+                sum0 += Sse2.MultiplyAddAdjacent(Vector128.LoadUnsafe(ref pa, (nuint)i), Vector128.LoadUnsafe(ref pb, (nuint)i));
+                sum1 += Sse2.MultiplyAddAdjacent(Vector128.LoadUnsafe(ref pa, (nuint)(i + 8)), Vector128.LoadUnsafe(ref pb, (nuint)(i + 8)));
+                sum2 += Sse2.MultiplyAddAdjacent(Vector128.LoadUnsafe(ref pa, (nuint)(i + 16)), Vector128.LoadUnsafe(ref pb, (nuint)(i + 16)));
+                sum3 += Sse2.MultiplyAddAdjacent(Vector128.LoadUnsafe(ref pa, (nuint)(i + 24)), Vector128.LoadUnsafe(ref pb, (nuint)(i + 24)));
             }
 
-            total += Vector128.Sum(sum);
+            for (; i <= n - 8; i += 8)
+            {
+                sum0 += Sse2.MultiplyAddAdjacent(Vector128.LoadUnsafe(ref pa, (nuint)i), Vector128.LoadUnsafe(ref pb, (nuint)i));
+            }
+
+            total += Vector128.Sum((sum0 + sum1) + (sum2 + sum3));
         }
         else if (AdvSimd.IsSupported)
         {
@@ -145,6 +158,24 @@ internal static class NnVectors
                     Vector256<short> w = Vector256.LoadUnsafe(ref pw, (nuint)i);
                     Vector256<short> d = Vector256.LoadUnsafe(ref pd, (nuint)i);
                     (isSubtract ? w - d : w + d).StoreUnsafe(ref pw, (nuint)i);
+                }
+            }
+
+            // The direction is tested once, not in the loop, and the loop takes two vectors a step.
+            if (isSubtract)
+            {
+                for (; i <= n - 16; i += 16)
+                {
+                    (Vector128.LoadUnsafe(ref pw, (nuint)i) - Vector128.LoadUnsafe(ref pd, (nuint)i)).StoreUnsafe(ref pw, (nuint)i);
+                    (Vector128.LoadUnsafe(ref pw, (nuint)(i + 8)) - Vector128.LoadUnsafe(ref pd, (nuint)(i + 8))).StoreUnsafe(ref pw, (nuint)(i + 8));
+                }
+            }
+            else
+            {
+                for (; i <= n - 16; i += 16)
+                {
+                    (Vector128.LoadUnsafe(ref pw, (nuint)i) + Vector128.LoadUnsafe(ref pd, (nuint)i)).StoreUnsafe(ref pw, (nuint)i);
+                    (Vector128.LoadUnsafe(ref pw, (nuint)(i + 8)) + Vector128.LoadUnsafe(ref pd, (nuint)(i + 8))).StoreUnsafe(ref pw, (nuint)(i + 8));
                 }
             }
 

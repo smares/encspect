@@ -8,6 +8,13 @@
          on its own instead of one per assembly. -->
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
   </PropertyGroup>
+  <!-- A Linux NativeAOT executable needs the glibc of the machine it is linked on. The release links against an old sysroot (Ubuntu 18.04's,
+       glibc 2.27, taken from .NET's cross-build image by the workflows) named by ENCSPECT_SYSROOT, so the file runs wherever the runtime pack
+       and the GUI do; without it the host's own libc is used. lld is the linker the .NET build images use with a sysroot. -->
+  <PropertyGroup Condition="'$(PublishAot)' == 'true' and '$(ENCSPECT_SYSROOT)' != ''">
+    <SysRoot>$(ENCSPECT_SYSROOT)</SysRoot>
+    <LinkerFlavor>lld</LinkerFlavor>
+  </PropertyGroup>
   <!-- The JIT build (dotnet build and run, the tests, the cross-check scripts) still runs on the runtime's tiering, which NativeAOT
        has none of: the decoders' loops start in tier 0 and the instrumented tier of dynamic PGO, and an analysis of a few seconds is over
        before the default tiering has replaced them (docs/development.md, "CLI runtime settings"). Nothing here applies to a NativeAOT
