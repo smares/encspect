@@ -40,6 +40,9 @@ public sealed record ReportSummary(
     // property of the analysis, not of the file: the CSV writes it only for an analysis that asked for decoding.
     public bool? IsVerified { get; init; }
 
+    // The spectral cutoff in hertz of the first audio stream's combined spectrum, where measurements found one; null otherwise.
+    public int? SpectralCutoff { get; init; }
+
     // The schemes and systems as lists even for a summary made without them.
     public IReadOnlyList<string> ProtectionSchemes { get; init; } = ProtectionSchemes ?? [];
 
@@ -98,6 +101,7 @@ public sealed record ReportSummary(
             [.. streams.SelectMany(s => s.Protection?.Systems ?? []).Distinct()])
         {
             IsVerified = verified,
+            SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
         };
     }
 

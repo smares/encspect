@@ -10,6 +10,7 @@ public enum ReportSections
     Frames = 2,
     SideInfo = 4,
     Statistics = 8,
+    Measurements = 16,
 }
 
 // Which parts of a report the writers leave out, by the kinds the parsers give their nodes, never
@@ -26,6 +27,12 @@ public sealed class ReportFilter
 
     public ReportSections Hidden { get; }
 
+    // True for the JSON writers to write the measurements' spectrogram and waveform grids (--measure-grids); the text and CSV
+    // never hold them.
+    public bool WritesGrids { get; init; }
+
+    public bool ShowsMeasurements => !Hidden.HasFlag(ReportSections.Measurements);
+
     // Section names as the command line takes them.
     public static IReadOnlyDictionary<string, ReportSections> Names { get; } = new Dictionary<string, ReportSections>(StringComparer.OrdinalIgnoreCase)
     {
@@ -33,6 +40,7 @@ public sealed class ReportFilter
         ["frames"] = ReportSections.Frames,
         ["side-info"] = ReportSections.SideInfo,
         ["statistics"] = ReportSections.Statistics,
+        ["measurements"] = ReportSections.Measurements,
     };
 
     public bool Includes(Node node)

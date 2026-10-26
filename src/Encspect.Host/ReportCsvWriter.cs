@@ -10,13 +10,14 @@ public static class ReportCsvWriter
     [
         "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
         "Channel Layout", "Encoder", "Encoder Confidence", "Writer", "Writer Confidence", "Tags", "Errors", "Warnings", "Infos", "Has Object Audio", "JOC Object Count",
-        "Is Protected", "Is Verified", "Protection Scheme", "DRM Systems",
+        "Is Protected", "Is Verified", "Protection Scheme", "DRM Systems", "Spectral Cutoff (Hz)",
     ];
 
     public static void Write(IEnumerable<Report> reports, TextWriter writer) => Write(reports, writer, isVerifying: false);
 
-    // isVerifying: the analysis asked for decoding (--verify), so Is Verified holds its verdict; otherwise it is empty for
-    // every file, and a folder export never mixes verdicts from coded data alone with empty ones.
+    // isVerifying: the analysis asked for decoding (--verify or --measure), so Is Verified holds its verdict; otherwise it is empty for
+    // every file, and a folder export never mixes verdicts from coded data alone with empty ones. The measured columns are empty
+    // for a file without a figure, and for every file of an analysis that did not measure.
     public static void Write(IEnumerable<Report> reports, TextWriter writer, bool isVerifying)
     {
         ArgumentNullException.ThrowIfNull(reports);
@@ -33,8 +34,8 @@ public static class ReportCsvWriter
                 s.EncoderConfidence?.ToString(), s.Writer, s.WriterConfidence?.ToString(), string.Join(", ", s.Tags), Count(s.Errors), Count(s.Warnings), Count(s.Infos),
                 s.Streams == 0 ? null : s.HasObjectAudio ? "true" : "false", s.JocObjectCount?.ToString(CultureInfo.InvariantCulture),
                 s.Streams == 0 ? null : s.IsProtected ? "true" : "false", isVerifying && s.IsVerified is { } verified ? (verified ? "true" : "false") : null,
-                string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems),
-            ]);
+                string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems), s.SpectralCutoff?.ToString(CultureInfo.InvariantCulture),
+            ], numeric: [Columns.Length - 1]);
             writer.Flush();
         }
     }
@@ -45,11 +46,18 @@ public static class ReportCsvWriter
     private static string? Fixed(double? value, int decimals) =>
         value is { } number ? Math.Round(number, decimals, MidpointRounding.ToEven).ToString("F" + decimals, CultureInfo.InvariantCulture) : null;
 
-    private static void WriteRow(TextWriter writer, IEnumerable<string?> fields)
+    // numeric: the indexes of the fields the writer formats from numbers (counts, Fixed, the measured figures). A number cannot start a
+    // formula (its first character is a digit, or a minus sign followed by a digit), so the guard against formulas skips it and a
+    // negative figure reads back as a number.
+    private static void WriteRow(TextWriter writer, IEnumerable<string?> fields, IReadOnlyCollection<int>? numeric = null)
     {
-        writer.Write(string.Join(',', fields.Select(Field)));
+        writer.Write(string.Join(',', fields.Select((f, i) => numeric is not null && numeric.Contains(i) && IsNumber(f) ? f! : Field(f))));
         writer.Write("\r\n");
     }
+
+    internal static bool IsNumber(string? value) =>
+        !string.IsNullOrEmpty(value) && (char.IsAsciiDigit(value[0]) || (value[0] == '-' && value.Length > 1 && char.IsAsciiDigit(value[1])))
+        && value.All(c => char.IsAsciiDigit(c) || c is '-' or '.');
 
     // Encoder and writer names and paths come from files. Quoted where they hold a separator, quote or line
     // break; a leading =, +, -, @ or control character gets an apostrophe, so a spreadsheet shows

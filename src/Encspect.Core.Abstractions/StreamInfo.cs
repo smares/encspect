@@ -74,6 +74,10 @@ public sealed record StreamInfo
     // null for the others.
     public StreamVerification? Verification { get; init; }
 
+    // What the host measured of the stream's decoded audio; set by the host, for every session of an analysis that asked
+    // for measurements, null otherwise and for a stream that has no session.
+    public StreamMeasurements? Measurements { get; init; }
+
     // What the stream carries; a stream that is not audio has no sample rate or channels.
     public StreamKind Kind { get; init; } = StreamKind.Audio;
 

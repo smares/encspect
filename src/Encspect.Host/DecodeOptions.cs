@@ -23,6 +23,11 @@ public sealed class DecodeOptions
     // The analysis's work budget in work units (DecodeWork), shared by all its sessions; null for the default (see
     // MinimumWork). Tests and the fuzzer lower it. An option of the call, not a setting.
     public long? MaxWork { get; init; }
+
+    // Null (the default): nothing is measured. Set: every decoded stream is measured as it is decoded, and the figures go to
+    // StreamInfo.Measurements. Measuring needs decoding, so a caller sets AnalysisOptions.Decoding to measure; it also compares the
+    // checksums over decoded audio, as without measuring. See docs/design/spectral-analysis.md.
+    public MeasureOptions? Measure { get; init; }
 }
 
 // The stream a front end's sink is asked for: the codec ID the parser started the session with, the parser's node of the

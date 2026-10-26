@@ -1,0 +1,663 @@
+using Encspect.Core;
+
+namespace Encspect.Host.Measurement;
+
+// Measures one stream's decoded PCM as the host's sink passes it on (docs/design/spectral-analysis.md). Host code: it never throws to
+// the decoder (a bug becomes Failure and the stream's figures are dropped), never throws on cancellation (it stops and remembers),
+// and keeps one frame of overlap and bounded arrays whatever the stream's length. The result depends only on the samples and their
+// positions, never on how the decoder cuts blocks.
+internal sealed class StreamMeasurer
+{
+    // The work per sample of a measured channel, in the decoders' unit (about 0.6 ns), by FFT size 1,024 to 32,768 points.
+    private static readonly int[] SpectrumWeights = [29, 24, 23, 27, 27, 30];
+
+    private const int CheckEvery = 1 << 16;
+
+    private const double SmallestSample = 1e-30;
+
+    private const double LargestSample = 1024.0;
+
+    private readonly PcmFormat _format;
+    private readonly CancellationToken _token;
+    private readonly Func<long, bool> _charge;
+    private readonly int _channels;
+    private readonly int _measured;
+    private readonly int[] _combined;
+    private readonly bool _isMeasuringSpectrum;
+    private readonly FftPlan? _plan;
+    private readonly CutoffGeometry _geometry;
+    private readonly int _hop;
+    private readonly double _scale;
+    private readonly int _weight;
+
+    private readonly double[][] _buffers = [];
+    private readonly double[] _re = [];
+    private readonly double[] _im = [];
+    private readonly double[] _rows = [];
+    private readonly double[] _suffix = new double[MeasurementLimits.Rows + 1];
+    private readonly double[] _average = [];
+    private readonly CutoffCounters[] _counters = [];
+    private readonly float[] _cells = [];
+    private readonly int[] _counts = new int[MeasurementLimits.MaxColumns];
+    private readonly double[] _minimum = [];
+    private readonly double[] _maximum = [];
+
+    private bool _hasStarted;
+    private long _firstPosition;
+    private long _next;
+    private long _bufferStart;
+    private int _fill;
+    private int _frames;
+    private int _shift;
+    private int _used;
+    private long _samples;
+    private long _lost;
+    private int _gaps;
+    private bool _isStopped;
+    private long _nonFinite;
+
+    public StreamMeasurer(PcmFormat format, MeasureOptions options, CancellationToken token, Func<long, bool> charge)
+    {
+        _format = format;
+        _token = token;
+        _charge = charge;
+        _channels = format.Channels;
+        _measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
+        MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
+        _isMeasuringSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
+
+        // The speakers: the combined figures leave out the LFE; a stream without a layout uses every channel.
+        var combined = new List<int>();
+        for (int c = 0; c < _measured; c++)
+        {
+            if (format.ChannelLayout is not { } layout || c >= layout.Count || layout[c] is not (Speaker.LowFrequency or Speaker.LowFrequency2))
+            {
+                combined.Add(c);
+            }
+        }
+
+        _combined = combined.Count > 0 ? [.. combined] : [.. Enumerable.Range(0, _measured)];
+        _scale = format.Format == SampleFormat.Integer ? DetMath.PowerOfTwo(-(Math.Clamp(format.BitsPerSample, 1, 32) - 1)) : 1.0;
+        if (!_isMeasuringSpectrum)
+        {
+            return;
+        }
+
+        _plan = new FftPlan(FftPlan.SizeFor(format.SampleRate));
+        _geometry = new CutoffGeometry(format.SampleRate, _plan.Size);
+        _hop = _plan.Size / 2;
+        _weight = SpectrumWeights[BitOperationsLog2(_plan.Size) - 10];
+        _buffers = new double[_measured][];
+        for (int c = 0; c < _measured; c++)
+        {
+            _buffers[c] = new double[_plan.Size];
+        }
+
+        _re = _plan.NewScratch();
+        _im = _plan.NewScratch();
+        _rows = new double[(_measured + 1) * MeasurementLimits.Rows];
+        _average = new double[(_measured + 1) * MeasurementLimits.Rows];
+        if (_geometry.IsSearched)
+        {
+            _counters = new CutoffCounters[_measured + 1];
+            for (int i = 0; i < _counters.Length; i++)
+            {
+                _counters[i] = new CutoffCounters();
+            }
+        }
+
+        _cells = new float[MeasurementLimits.MaxColumns * MeasurementLimits.Rows];
+        _minimum = new double[_measured * MeasurementLimits.MaxColumns];
+        _maximum = new double[_measured * MeasurementLimits.MaxColumns];
+        Array.Fill(_minimum, double.MaxValue);
+        Array.Fill(_maximum, double.MinValue);
+    }
+
+    // The state of a stream of this format, in bytes, for the memory bound (decided before anything is allocated).
+    public static long EstimateBytes(PcmFormat format, MeasureOptions options)
+    {
+        int measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
+        long bytes = 64 * 1024;
+        MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
+        if ((kinds & MeasurementKinds.Spectrum) == 0 || format.SampleRate <= 0)
+        {
+            return bytes;
+        }
+
+        int size = FftPlan.SizeFor(format.SampleRate);
+        int rows = MeasurementLimits.Rows;
+        bytes += (long)measured * size * 8;
+        bytes += 8L * size * 6;
+        bytes += 2L * (measured + 1) * rows * 8 * 2;
+        if (format.SampleRate >= CutoffGeometry.MinimumRate)
+        {
+            bytes += (measured + 1) * CutoffCounters.Bytes;
+        }
+
+        bytes += 4L * MeasurementLimits.MaxColumns * rows;
+        bytes += 2L * MeasurementLimits.MaxColumns * rows;
+        bytes += 2L * 8 * MeasurementLimits.MaxColumns * measured;
+        return bytes;
+    }
+
+    public Exception? Failure { get; private set; }
+
+    public bool IsLimited { get; private set; }
+
+    public bool IsCanceled { get; private set; }
+
+    public bool HasFormatChanged { get; private set; }
+
+    public bool HasPositionJumped { get; private set; }
+
+    // The position of the block that went back, or the sample count at which the format changed.
+    public long StopPosition { get; private set; }
+
+    public bool HasClamped { get; private set; }
+
+    public long NonFiniteSamples => _nonFinite;
+
+    public long Samples => _samples;
+
+    public int SampleRate => _format.SampleRate;
+
+    public int Channels => _channels;
+
+    public int ChannelsMeasured => _measured;
+
+    public bool IsStarted => _hasStarted;
+
+    // The sink's side: never throws.
+    public void Write(PcmBlock block)
+    {
+        if (_isStopped)
+        {
+            return;
+        }
+
+        try
+        {
+            Process(block);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            Failure = ex;
+            _isStopped = true;
+        }
+    }
+
+    private void Process(PcmBlock block)
+    {
+        if (_token.IsCancellationRequested)
+        {
+            IsCanceled = true;
+            _isStopped = true;
+            return;
+        }
+
+        if (block.Channels != _channels || block.Format != _format.Format)
+        {
+            HasFormatChanged = true;
+            StopPosition = _samples;
+            _isStopped = true;
+            return;
+        }
+
+        if (!_hasStarted)
+        {
+            _hasStarted = true;
+            _firstPosition = block.Position;
+            _next = block.Position;
+            _bufferStart = block.Position;
+        }
+
+        if (block.Position < _next)
+        {
+            HasPositionJumped = true;
+            StopPosition = block.Position;
+            _isStopped = true;
+            return;
+        }
+
+        if (block.Length == 0)
+        {
+            return;
+        }
+
+        if (!_charge((long)block.Length * _measured * (_isMeasuringSpectrum ? _weight : 1)))
+        {
+            IsLimited = true;
+            _isStopped = true;
+            return;
+        }
+
+        if (block.Position > _next)
+        {
+            _lost += block.Position - _next;
+            _gaps++;
+            _next = block.Position;
+            _fill = 0;
+            _bufferStart = block.Position;
+        }
+
+        if (!_isMeasuringSpectrum)
+        {
+            _samples += block.Length;
+            _next += block.Length;
+            return;
+        }
+
+        for (int done = 0; done < block.Length;)
+        {
+            if (done > 0 && _token.IsCancellationRequested)
+            {
+                IsCanceled = true;
+                _isStopped = true;
+                return;
+            }
+
+            int count = Math.Min(CheckEvery, block.Length - done);
+            Append(block, done, count);
+            done += count;
+        }
+    }
+
+    // Takes count samples of the block from index start, in pieces that end at a hop boundary or when the frame is full.
+    private void Append(PcmBlock block, int start, int count)
+    {
+        FftPlan plan = _plan!;
+        while (count > 0)
+        {
+            long position = block.Position + start;
+            int toHop = (int)(_hop - (position % _hop));
+            int piece = Math.Min(Math.Min(count, plan.Size - _fill), toHop);
+            long hopIndex = position / _hop;
+            EnsureColumns(hopIndex);
+            int column = (int)(hopIndex >> _shift);
+            _used = Math.Max(_used, column + 1);
+            for (int c = 0; c < _measured; c++)
+            {
+                Convert(block, c, start, piece, _buffers[c].AsSpan(_fill, piece), out double low, out double high);
+                int cell = (c * MeasurementLimits.MaxColumns) + column;
+                if (low < _minimum[cell])
+                {
+                    _minimum[cell] = low;
+                }
+
+                if (high > _maximum[cell])
+                {
+                    _maximum[cell] = high;
+                }
+            }
+
+            _fill += piece;
+            _samples += piece;
+            _next += piece;
+            start += piece;
+            count -= piece;
+            if (_fill == plan.Size)
+            {
+                ProcessFrame();
+                for (int c = 0; c < _measured; c++)
+                {
+                    _buffers[c].AsSpan(_hop, _hop).CopyTo(_buffers[c]);
+                }
+
+                _fill = _hop;
+                _bufferStart += _hop;
+            }
+        }
+    }
+
+    // Scales a channel's samples to full scale +-1 in doubles, with the minimum and maximum. Non-finite floats are 0 and counted, floats
+    // beyond 1,024 times full scale are clamped, and floats under 1e-30 are 0, before anything reaches the arithmetic.
+    private void Convert(PcmBlock block, int channel, int start, int count, Span<double> target, out double low, out double high)
+    {
+        low = double.MaxValue;
+        high = double.MinValue;
+        int at = (channel * block.Stride) + start;
+        switch (block.Format)
+        {
+            case SampleFormat.Integer:
+                ReadOnlySpan<int> integers = block.Integers.Slice(at, count);
+                double scale = _scale;
+                for (int i = 0; i < integers.Length; i++)
+                {
+                    double v = integers[i] * scale;
+                    target[i] = v;
+                    if (v < low)
+                    {
+                        low = v;
+                    }
+
+                    if (v > high)
+                    {
+                        high = v;
+                    }
+                }
+
+                break;
+            case SampleFormat.Float32:
+                ReadOnlySpan<float> floats = block.Floats.Slice(at, count);
+                for (int i = 0; i < floats.Length; i++)
+                {
+                    double v = Sanitize(floats[i]);
+                    target[i] = v;
+                    if (v < low)
+                    {
+                        low = v;
+                    }
+
+                    if (v > high)
+                    {
+                        high = v;
+                    }
+                }
+
+                break;
+            default:
+                ReadOnlySpan<double> doubles = block.Doubles.Slice(at, count);
+                for (int i = 0; i < doubles.Length; i++)
+                {
+                    double v = Sanitize(doubles[i]);
+                    target[i] = v;
+                    if (v < low)
+                    {
+                        low = v;
+                    }
+
+                    if (v > high)
+                    {
+                        high = v;
+                    }
+                }
+
+                break;
+        }
+    }
+
+    private double Sanitize(double v)
+    {
+        double magnitude = Math.Abs(v);
+        if (magnitude >= SmallestSample && magnitude <= LargestSample)
+        {
+            return v;
+        }
+
+        if (v == 0)
+        {
+            return v;
+        }
+
+        if (!double.IsFinite(v))
+        {
+            _nonFinite++;
+            return 0;
+        }
+
+        HasClamped = true;
+        return magnitude > LargestSample ? (v < 0 ? -LargestSample : LargestSample) : 0;
+    }
+
+    // Merges adjacent columns until the hop's column fits: whenever the columns would pass 1,024, pairs are merged and each column then
+    // covers twice the hops. A gap of any size takes at most about 54 merges of an at most half-empty grid.
+    private void EnsureColumns(long hopIndex)
+    {
+        while ((hopIndex >> _shift) >= MeasurementLimits.MaxColumns)
+        {
+            Merge();
+        }
+    }
+
+    private void Merge()
+    {
+        int rows = MeasurementLimits.Rows;
+        int half = MeasurementLimits.MaxColumns / 2;
+        int usedPairs = (_used + 1) / 2;
+        for (int i = 0; i < usedPairs; i++)
+        {
+            int a = 2 * i;
+            int b = a + 1;
+            for (int r = 0; r < rows; r++)
+            {
+                _cells[(i * rows) + r] = _cells[(a * rows) + r] + _cells[(b * rows) + r];
+            }
+
+            _counts[i] = _counts[a] + _counts[b];
+        }
+
+        Array.Clear(_cells, usedPairs * rows, (MeasurementLimits.MaxColumns - usedPairs) * rows);
+        Array.Clear(_counts, usedPairs, MeasurementLimits.MaxColumns - usedPairs);
+        for (int c = 0; c < _measured; c++)
+        {
+            int baseIndex = c * MeasurementLimits.MaxColumns;
+            for (int i = 0; i < half; i++)
+            {
+                _minimum[baseIndex + i] = Math.Min(_minimum[baseIndex + (2 * i)], _minimum[baseIndex + (2 * i) + 1]);
+                _maximum[baseIndex + i] = Math.Max(_maximum[baseIndex + (2 * i)], _maximum[baseIndex + (2 * i) + 1]);
+            }
+
+            Array.Fill(_minimum, double.MaxValue, baseIndex + half, half);
+            Array.Fill(_maximum, double.MinValue, baseIndex + half, half);
+        }
+
+        _shift++;
+        _used = usedPairs;
+    }
+
+    private void ProcessFrame()
+    {
+        FftPlan plan = _plan!;
+        int rows = MeasurementLimits.Rows;
+        for (int c = 0; c < _measured; c++)
+        {
+            Span<double> channelRows = _rows.AsSpan(c * rows, rows);
+            plan.Rows(_buffers[c], _re, _im, channelRows);
+            Span<double> sums = _average.AsSpan(c * rows, rows);
+            for (int r = 0; r < rows; r++)
+            {
+                sums[r] += channelRows[r];
+            }
+
+            if (_geometry.IsSearched)
+            {
+                Count(channelRows, _counters[c]);
+            }
+        }
+
+        // The combined spectrum: the mean power of the channels other than the LFE, in channel order.
+        Span<double> combined = _rows.AsSpan(_measured * rows, rows);
+        combined.Clear();
+        foreach (int c in _combined)
+        {
+            ReadOnlySpan<double> channelRows = _rows.AsSpan(c * rows, rows);
+            for (int r = 0; r < rows; r++)
+            {
+                combined[r] += channelRows[r];
+            }
+        }
+
+        double divisor = _combined.Length;
+        for (int r = 0; r < rows; r++)
+        {
+            combined[r] /= divisor;
+        }
+
+        Span<double> combinedSums = _average.AsSpan(_measured * rows, rows);
+        for (int r = 0; r < rows; r++)
+        {
+            combinedSums[r] += combined[r];
+        }
+
+        if (_geometry.IsSearched)
+        {
+            Count(combined, _counters[_measured]);
+        }
+
+        long hopIndex = _bufferStart / _hop;
+        EnsureColumns(hopIndex);
+        int column = (int)(hopIndex >> _shift);
+        _used = Math.Max(_used, column + 1);
+        Span<float> cells = _cells.AsSpan(column * rows, rows);
+        for (int r = 0; r < rows; r++)
+        {
+            double p = combined[r];
+            if (p >= SmallestSample)
+            {
+                cells[r] += (float)p;
+            }
+        }
+
+        _counts[column]++;
+        _frames++;
+    }
+
+    // The counters of one frame's rows: suffix sums from the top row down, so that a band near the edge is not added to the bass.
+    private void Count(ReadOnlySpan<double> rows, CutoffCounters counters)
+    {
+        int rowCount = MeasurementLimits.Rows;
+        double[] suffix = _suffix;
+        suffix[rowCount] = 0;
+        for (int r = rowCount - 1; r >= 0; r--)
+        {
+            suffix[r] = suffix[r + 1] + rows[r];
+        }
+
+        int w = _geometry.BandRows;
+        for (int r = _geometry.FirstCandidate; r <= CutoffGeometry.LastCandidate; r++)
+        {
+            double under = suffix[r - w + 1] - suffix[r + 1];
+            int high = Math.Min(r + w, rowCount - 1);
+            int above = high - r;
+            double over = suffix[r + 1] - suffix[high + 1];
+            int exponent = Math.Clamp(DetMath.Exponent(under / w), CutoffCounters.FirstExponent, CutoffCounters.FirstExponent + CutoffCounters.Levels - 1);
+            int cell = (r * CutoffCounters.Levels) + exponent - CutoffCounters.FirstExponent;
+            counters.All[cell]++;
+            double lhs = under * above;
+            if (lhs > 0 && lhs >= CutoffCounters.OwnStepRatio * over * w)
+            {
+                counters.Show[cell]++;
+            }
+        }
+    }
+
+    // The record of what was measured. Called once, when the stream's decoding has ended.
+    public StreamMeasurements Result(MeasurementStatus status, string? reason)
+    {
+        var record = new StreamMeasurements
+        {
+            Status = status,
+            Reason = reason,
+            Samples = _samples,
+            FirstPosition = _firstPosition,
+            LostSamples = _lost,
+            Gaps = _gaps,
+            SampleRate = _format.SampleRate,
+            ChannelLayout = _format.ChannelLayout is { } layout ? [.. layout.Take(_measured)] : null,
+            Channels = _channels,
+            ChannelsMeasured = _measured,
+            HasClampedSamples = HasClamped,
+            NonFiniteSamples = _nonFinite,
+        };
+        if (status == MeasurementStatus.Failed || !_isMeasuringSpectrum || !_hasStarted)
+        {
+            return record;
+        }
+
+        if (_frames == 0 && _fill > 0)
+        {
+            // A stream shorter than one frame is measured as one frame, padded with zeros.
+            for (int c = 0; c < _measured; c++)
+            {
+                _buffers[c].AsSpan(_fill).Clear();
+            }
+
+            ProcessFrame();
+        }
+
+        int rows = MeasurementLimits.Rows;
+        short[][] perChannel = new short[_measured][];
+        var cutoffs = new List<SpectralCutoff>();
+        for (int c = 0; c < _measured; c++)
+        {
+            perChannel[c] = Levels(_average.AsSpan(c * rows, rows));
+            cutoffs.Add(CutoffFinder.Find(perChannel[c], _geometry.IsSearched ? _counters[c] : null, _geometry));
+        }
+
+        short[] combined = Levels(_average.AsSpan(_measured * rows, rows));
+        SpectralCutoff cutoff = CutoffFinder.Find(combined, _geometry.IsSearched ? _counters[_measured] : null, _geometry);
+        return record with
+        {
+            Spectrum = new SpectrumFigures
+            {
+                FftSize = _plan!.Size,
+                Frames = _frames,
+                Combined = combined,
+                PerChannel = perChannel.Select(p => (ReadOnlyMemory<short>)p).ToList(),
+                Cutoff = cutoff,
+                ChannelCutoffs = cutoffs,
+            },
+            Spectrogram = Grid(),
+            Waveform = Wave(),
+        };
+    }
+
+    private short[] Levels(ReadOnlySpan<double> sums)
+    {
+        var result = new short[sums.Length];
+        for (int r = 0; r < sums.Length; r++)
+        {
+            result[r] = _frames == 0 || sums[r] <= 0 ? MeasurementLimits.NoPower : (short)Math.Clamp(DetMath.Tenths(sums[r] / _frames), short.MinValue + 1, short.MaxValue);
+        }
+
+        return result;
+    }
+
+    private SpectrogramGrid Grid()
+    {
+        int rows = MeasurementLimits.Rows;
+        byte[] power = new byte[_used * rows];
+        for (int column = 0; column < _used; column++)
+        {
+            int count = _counts[column];
+            if (count == 0)
+            {
+                continue;
+            }
+
+            for (int r = 0; r < rows; r++)
+            {
+                double mean = (double)_cells[(column * rows) + r] / count;
+                int value = mean > 0 ? (int)Math.Floor(DetMath.Decibels(mean) + 0.5) + MeasurementLimits.GridOffset : 1;
+                power[(column * rows) + r] = (byte)Math.Clamp(value, 1, 220);
+            }
+        }
+
+        return new SpectrogramGrid { Columns = _used, HopsPerColumn = 1 << _shift, HopSamples = _hop, Power = power };
+    }
+
+    private WaveformGrid Wave()
+    {
+        short[] minimum = new short[_measured * _used];
+        short[] maximum = new short[_measured * _used];
+        for (int c = 0; c < _measured; c++)
+        {
+            for (int i = 0; i < _used; i++)
+            {
+                double low = _minimum[(c * MeasurementLimits.MaxColumns) + i];
+                double high = _maximum[(c * MeasurementLimits.MaxColumns) + i];
+                if (low > high)
+                {
+                    continue;
+                }
+
+                minimum[(c * _used) + i] = (short)Math.Clamp(Math.Floor(low * 32768.0), -32768.0, 32767.0);
+                maximum[(c * _used) + i] = (short)Math.Clamp(Math.Ceiling(high * 32768.0), -32768.0, 32767.0);
+            }
+        }
+
+        return new WaveformGrid { Columns = _used, Channels = _measured, Minimum = minimum, Maximum = maximum };
+    }
+
+    private static int BitOperationsLog2(int value) => System.Numerics.BitOperations.Log2((uint)value);
+}
