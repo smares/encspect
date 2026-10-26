@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using Encspect.Core;
 
 namespace Encspect.Formats.Mpeg;
@@ -23,6 +24,13 @@ internal sealed class BlockReader(ByteReader reader)
             return false;
         }
 
+        long index = offset - _blockStart;
+        if (offset >= _blockStart && index + 4 <= _block.Length)
+        {
+            value = BinaryPrimitives.ReadUInt32BigEndian(_block.AsSpan((int)index));
+            return true;
+        }
+
         for (int i = 0; i < 4; i++)
         {
             value = (value << 8) | ByteAt(offset + i);
@@ -40,6 +48,28 @@ internal sealed class BlockReader(ByteReader reader)
         }
 
         return _block[offset - _blockStart];
+    }
+
+    // The first offset in [from, limit) that holds value, or -1, searched a block at a time. Positions outside the reader are not searched.
+    public long IndexOf(byte value, long from, long limit)
+    {
+        from = Math.Max(from, reader.Start);
+        limit = Math.Min(limit, reader.End);
+        while (from < limit)
+        {
+            ByteAt(from);
+            int index = (int)(from - _blockStart);
+            int count = (int)Math.Min(_block.Length - index, limit - from);
+            int found = _block.AsSpan(index, count).IndexOf(value);
+            if (found >= 0)
+            {
+                return from + found;
+            }
+
+            from += count;
+        }
+
+        return -1;
     }
 
     public byte[] Read(long offset, int count)

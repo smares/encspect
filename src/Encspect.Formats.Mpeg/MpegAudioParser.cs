@@ -1194,9 +1194,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     private static long FindStreamStart(BlockReader blocks, long from, long limit, long end, out int freeLength)
     {
         freeLength = 0;
-        for (long position = from; position < limit; position++)
+        for (long position = blocks.IndexOf(0xFF, from, limit); position >= 0; position = blocks.IndexOf(0xFF, position + 1, limit))
         {
-            if (blocks.ByteAt(position) != 0xFF || !blocks.TryReadUInt32(position, out uint raw))
+            if (!blocks.TryReadUInt32(position, out uint raw))
             {
                 continue;
             }
@@ -1250,9 +1250,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
 
         long limit = Math.Min(end - 4, position + MaxFreeFormatLength);
-        for (long next = position + 4; next <= limit; next++)
+        for (long next = blocks.IndexOf(0xFF, position + 4, limit + 1); next >= 0; next = blocks.IndexOf(0xFF, next + 1, limit + 1))
         {
-            if (blocks.ByteAt(next) == 0xFF && blocks.TryReadUInt32(next, out uint raw)
+            if (blocks.TryReadUInt32(next, out uint raw)
                 && new MpegHeader(raw) is { IsValid: true } candidate && candidate.IsSameStream(header))
             {
                 int length = (int)(next - position) - (header.Padding * header.SlotSize);
