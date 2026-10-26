@@ -1251,7 +1251,7 @@ Lowpass detection is an analysis result, so it belongs in the library ("A librar
   - Rice codes that run to the end of each frame;
   - predictor order 32 at the largest block;
   - the highest Monkey's Audio level.
-- **Threads:** `ParallelAnalysisMatchTests` compares parallel and sequential decoding of the lossless fixture directories.
+- **Threads:** `ParallelAnalysisMatchTests` compares parallel and sequential analysis of the lossless fixture directories. It passes no `DecodeOptions`, so it decodes nothing; no test decodes on several threads yet (the tests that would are in [parallel-decoding.md](parallel-decoding.md), "Verification").
 - **Golden reports:**
   - The default golden of each fixture stays the full report; for the phase 3 codings and WavPack it now holds the verification with what was not compared.
   - A small `<name>.decode.json` holds what decoding adds (the decoder's tallies and the decode findings), compared on every run and rewritten with `ENCSPECT_UPDATE_GOLDEN=1`, so the full report is not stored twice.
