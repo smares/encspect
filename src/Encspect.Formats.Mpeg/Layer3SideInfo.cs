@@ -94,7 +94,22 @@ internal sealed class Layer3SideInfo
     public IEnumerable<(int Granule, int Channel, Layer3Granule Info)> All =>
         Granules.SelectMany((row, gr) => row.Select((info, ch) => (gr, ch, info)));
 
-    public int Part23Total => All.Sum(g => g.Info.Part23Length.Value);
+    public int Part23Total
+    {
+        get
+        {
+            int total = 0;
+            foreach (Layer3Granule[] row in Granules)
+            {
+                foreach (Layer3Granule g in row)
+                {
+                    total += g.Part23Length.Value;
+                }
+            }
+
+            return total;
+        }
+    }
 
     public int MainDataLength => (Part23Total + 7) / 8;
 
@@ -111,7 +126,11 @@ internal sealed class Layer3SideInfo
         {
             info.MainDataBegin = Field(9);
             info.PrivateBits = Field(channels == 1 ? 5 : 3);
-            info.Scfsi = Enumerable.Range(0, channels).Select(_ => Field(4)).ToArray();
+            info.Scfsi = new BitField[channels];
+            for (int ch = 0; ch < channels; ch++)
+            {
+                info.Scfsi[ch] = Field(4);
+            }
         }
         else
         {
@@ -177,9 +196,9 @@ internal sealed class Layer3SideInfo
 
             // scfsi bands 0-5, 6-10, 11-15 and 16-20; granule 1 reuses the scalefactors of granule 0
             // for each band whose scfsi bit is set.
-            int[] groups = [6 * slen1, 5 * slen1, 5 * slen2, 5 * slen2];
             int reused = gr == 1 ? Scfsi[ch].Value : 0;
-            return groups.Where((_, i) => ((reused >> (3 - i)) & 1) == 0).Sum();
+            return (((reused >> 3) & 1) == 0 ? 6 * slen1 : 0) + (((reused >> 2) & 1) == 0 ? 5 * slen1 : 0)
+                + (((reused >> 1) & 1) == 0 ? 5 * slen2 : 0) + ((reused & 1) == 0 ? 5 * slen2 : 0);
         }
 
         bool intensityRight = ch == 1 && Header.ChannelModeBits == 1 && (Header.ModeExtension & 1) == 1;

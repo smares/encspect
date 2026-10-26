@@ -996,9 +996,12 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
     private static void CheckSideInfo(Layer3SideInfo info, long position, long offset, int frameLength, FindingCollector findings)
     {
-        foreach ((string code, Node node, Func<int, string> message) in SideInfoProblems(info, position, offset))
+        if (HasSideInfoProblems(info))
         {
-            findings.Add(Severity.Warning, code, node, message);
+            foreach ((string code, Node node, Func<int, string> message) in SideInfoProblems(info, position, offset))
+            {
+                findings.Add(Severity.Warning, code, node, message);
+            }
         }
 
         // The decoder's buffer holds one frame at the highest bitrate (bitrate_index 14) at the
@@ -1017,7 +1020,50 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
     }
 
-    private static IEnumerable<(string Code, Node Node, Func<int, string> Message)> SideInfoProblems(Layer3SideInfo info, long position, long offset)
+    // Whether SideInfoProblems yields anything, tested without allocating: nearly every frame of a file has none, and an
+    // iterator with its closures for each of them was a fifth of the time of the frame walk. MpegSpeedPathTests holds the two equal.
+    internal static bool HasSideInfoProblems(Layer3SideInfo info)
+    {
+        MpegHeader header = info.Header;
+        for (int gr = 0; gr < info.Granules.Length; gr++)
+        {
+            Layer3Granule[] row = info.Granules[gr];
+            for (int ch = 0; ch < row.Length; ch++)
+            {
+                Layer3Granule g = row[ch];
+                if (g.BigValues.Value > 288
+                    || (g.IsSwitched && g.BlockType.Value == 0)
+                    || info.Part2Bits(gr, ch) > g.Part23Length.Value
+                    || (header.IsMpeg1 && g.IsShort && info.Scfsi[ch].Value != 0))
+                {
+                    return true;
+                }
+
+                foreach (BitField table in g.TableSelect)
+                {
+                    if (table.Value is 4 or 14)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        if (header.ChannelModeBits == 1 && header.ModeExtension != 0)
+        {
+            foreach (Layer3Granule[] row in info.Granules)
+            {
+                if (row.Length == 2 && (row[0].BlockTypeValue != row[1].BlockTypeValue || row[0].IsMixed != row[1].IsMixed))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    internal static IEnumerable<(string Code, Node Node, Func<int, string> Message)> SideInfoProblems(Layer3SideInfo info, long position, long offset)
     {
         MpegHeader header = info.Header;
         foreach ((int gr, int ch, Layer3Granule g) in info.All)
@@ -1292,7 +1338,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 int offset = 4 + (header.IsProtected ? 2 : 0);
                 int size = Layer3SideInfo.Size(header);
                 var info = offset + size <= length ? Layer3SideInfo.Read(bytes[offset..(offset + size)], header) : null;
-                isWellFormed = info is not null && !SideInfoProblems(info, position, position + offset).Any()
+                isWellFormed = info is not null && !HasSideInfoProblems(info)
                     && info.MainDataLength <= length - offset - size + info.MainDataBegin.Value;
             }
 

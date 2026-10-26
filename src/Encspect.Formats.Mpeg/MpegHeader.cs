@@ -121,7 +121,18 @@ internal readonly record struct MpegHeader(uint Raw)
         }
     }
 
-    public string Summary => $"{VersionName} Layer {LayerName}, {BitrateName}, {SampleRate} Hz, {ChannelMode}";
+    // Every frame of a file has a node whose value is its summary, and neighboring frames share it: one string for each
+    // combination of the five fields it is made of. Two threads that fill an entry make equal strings.
+    private static readonly string?[] Summaries = new string?[1 << 12];
+
+    public string Summary
+    {
+        get
+        {
+            uint key = ((Raw >> 6) & 3) | (((Raw >> 10) & 3) << 2) | (((Raw >> 12) & 15) << 4) | (((Raw >> 17) & 3) << 8) | (((Raw >> 19) & 3) << 10);
+            return Summaries[key] ??= $"{VersionName} Layer {LayerName}, {BitrateName}, {SampleRate} Hz, {ChannelMode}";
+        }
+    }
 
     public string StreamName => $"{VersionName} Layer {LayerName}, {SampleRate} Hz" + (IsFreeFormat ? ", free format" : string.Empty);
 
