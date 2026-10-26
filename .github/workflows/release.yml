@@ -172,14 +172,8 @@ jobs:
         with:
           dotnet-version: 10.0.402
 
-      # Restored only: a release run saves no cache entry, so it cannot change what the runs of main restore.
-      - name: Restore the NuGet packages
-        uses: actions/cache/restore@v6
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-
-
+      # No cache is restored in a release: what is compiled into it is downloaded fresh (NuGet from nuget.org, the sysroot by its
+      # digest below), so nothing a cache entry holds can reach a release. CI caches both.
       - name: Restore
         run: dotnet restore
 
@@ -196,15 +190,7 @@ jobs:
       # builds link against the sysroot of .NET's own cross-build image instead (Ubuntu 18.04, glibc 2.27, the floor of the runtime
       # pack the GUI carries). Only the layer of that image that holds the sysroot is fetched, by its content digest, which names
       # those bytes for good and is checked after the download (the image's tags are rebuilt and old ones pruned); the digests and
-      # how to renew them are in docs/development.md, "NativeAOT". The layer is cached by its digest.
-      - name: Restore the sysroot layer
-        id: sysroot-cache
-        if: runner.os == 'Linux'
-        uses: actions/cache/restore@v6
-        with:
-          path: ${{ runner.temp }}/sysroot-layer
-          key: sysroot-layer-${{ matrix.rid == 'linux-x64' && 'e47eeec6fa3711530ee4a6a7e7388dc338e99a5f3649770cc86a4f5ead96c0e2' || 'b572d3dd8b297da80060077fbec8cd6d5062c219722ed466793128a640ac5e3b' }}
-
+      # how to renew them are in docs/development.md, "NativeAOT". CI caches the layer by its digest; the release downloads it.
       - name: Fetch the glibc 2.27 sysroot
         if: runner.os == 'Linux'
         shell: bash
@@ -216,9 +202,16 @@ jobs:
           esac
           layer="$RUNNER_TEMP/sysroot-layer/$digest.tar.gz"
           mkdir -p "$RUNNER_TEMP/sysroot-layer"
-          if [ ! -f "$layer" ]; then
+          download() {
             curl --fail --silent --show-error --location --retry 3 --output "$layer" \
               "https://mcr.microsoft.com/v2/dotnet-buildtools/prereqs/blobs/sha256:$digest"
+          }
+          if [ ! -f "$layer" ]; then download; fi
+          # A cached file that does not match is downloaded once more before the check can fail the job.
+          if ! echo "$digest  $layer" | sha256sum --check --status -; then
+            echo "The layer does not match its digest; downloading it again." >&2
+            rm -f "$layer"
+            download
           fi
           echo "$digest  $layer" | sha256sum --check -
           # The sysroot's symbolic links are absolute, so it must sit where the image keeps it.
@@ -250,7 +243,7 @@ jobs:
         run: bash scripts/check_aot.sh -p publish/${{ matrix.rid }}/encspect "$RUNNER_TEMP/aot-check"
 
       # The x64 platforms ship a second CLI for processors with AVX2 (Haswell, 2013, and later; AMD Excavator and Zen): the same code compiled
-      # for x86-64-v3, which the default build (x86-64-v2, any x64 processor since about 2009) cannot use. It gets the same checks. On a pull
+      # for x86-64-v3, which the default build (x86-64-v2: Intel Core since Nehalem (2008), AMD since Bulldozer (2011) and Jaguar (2013); not Phenom II, Athlon II, Bobcat or Atom before Silvermont) cannot use. It gets the same checks. On a pull
       # request only linux-x64 builds it, to keep the time down; main, the nightly run and the release build it on every x64 platform.
       - name: Publish the NativeAOT CLI for x86-64-v3
         if: endsWith(matrix.rid, '-x64') && (matrix.rid == 'linux-x64' || github.event_name != 'pull_request')
@@ -270,7 +263,7 @@ jobs:
       - name: Compare the x86-64-v3 CLI with the JIT build
         if: endsWith(matrix.rid, '-x64') && (matrix.rid == 'linux-x64' || github.event_name != 'pull_request')
         shell: bash
-        run: bash scripts/check_aot.sh -p publish/${{ matrix.rid }}-v3/encspect "$RUNNER_TEMP/aot-check-v3"
+        run: bash scripts/check_aot.sh -p publish/${{ matrix.rid }}-v3/encspect "$RUNNER_TEMP/aot-check"
 
       # A runner has no display to open a window on, so the published GUI runs its self-check: it loads Skia's and
       # HarfBuzz's native libraries and the platform backend's (ANGLE on Windows, Avalonia.Native on macOS) from the

@@ -26,7 +26,15 @@ else
 fi
 trap 'if [ "$keep" = 0 ]; then rm -rf "$out"; fi' EXIT
 
-dotnet build "$root/src/Encspect.Cli" -c Release -o "$out/jit" > /dev/null
+# The JIT build is reused when the output directory already holds one made from this very tree (the second check of a job, for the
+# x86-64-v3 build); any change of the sources or of git's state builds it again.
+stamp="$(cd "$root" && { git rev-parse HEAD; git status --porcelain; } 2>/dev/null | md5sum | cut -d' ' -f1)"
+if [ "$stamp" = "$(cat "$out/jit.stamp" 2>/dev/null || true)" ] && [ -f "$out/jit/encspect.dll" ]; then
+    echo "reusing the JIT build in $out/jit"
+else
+    dotnet build "$root/src/Encspect.Cli" -c Release -o "$out/jit" > /dev/null
+    echo "$stamp" > "$out/jit.stamp"
+fi
 if [ -z "$published" ]; then
     dotnet publish "$root/src/Encspect.Cli" -c Release -p:PublishAot=true -o "$out/aot" > /dev/null
     published="$out/aot/encspect"
@@ -46,14 +54,15 @@ run() {
     shift
     local statuses
     set +e
-    "$@" 2> >(tr -d '\r' > "$out/$name.err") | normalize > "$out/$name.json"
+    "$@" 2> "$out/$name.err.raw" | normalize > "$out/$name.json"
     statuses=("${PIPESTATUS[@]}")
     set -e
-    wait
     if [ "${statuses[1]}" != 0 ]; then
         echo "normalizing the $name report failed" >&2
         exit 1
     fi
+    tr -d '\r' < "$out/$name.err.raw" > "$out/$name.err"
+    rm -f "$out/$name.err.raw"
     echo "${statuses[0]}" > "$out/$name.status"
 }
 

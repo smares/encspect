@@ -7,7 +7,7 @@ set -euo pipefail
 
 file="${1:?usage: check_glibc_floor.sh <executable>}"
 limit="2.27"
-dump="$(objdump -p "$file")"
+dump="$(objdump -p "$file")" || { echo "$file: objdump could not read it" >&2; exit 1; }
 
 needed="$(awk '$1 == "NEEDED" { print $2 }' <<< "$dump")"
 references="$(awk '/^Version References:/ { in_section = 1; next } in_section && /^[^ ]/ { in_section = 0 } in_section && NF == 4 && $1 ~ /^0x/ { print $4 }' <<< "$dump")"

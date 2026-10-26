@@ -224,9 +224,16 @@ jobs:
           esac
           layer="$RUNNER_TEMP/sysroot-layer/$digest.tar.gz"
           mkdir -p "$RUNNER_TEMP/sysroot-layer"
-          if [ ! -f "$layer" ]; then
+          download() {
             curl --fail --silent --show-error --location --retry 3 --output "$layer" \
               "https://mcr.microsoft.com/v2/dotnet-buildtools/prereqs/blobs/sha256:$digest"
+          }
+          if [ ! -f "$layer" ]; then download; fi
+          # A cached file that does not match is downloaded once more before the check can fail the job.
+          if ! echo "$digest  $layer" | sha256sum --check --status -; then
+            echo "The layer does not match its digest; downloading it again." >&2
+            rm -f "$layer"
+            download
           fi
           echo "$digest  $layer" | sha256sum --check -
           # The sysroot's symbolic links are absolute, so it must sit where the image keeps it.
@@ -257,7 +264,6 @@ jobs:
         if: runner.os == 'Linux'
         run: bash scripts/ci/check_glibc_floor.sh publish/${{ matrix.rid }}/encspect
 
-
       # The same analysis as the JIT build gives, on the whole fixture corpus with decoding: the reports, their standard error and the
       # exit codes must be identical but for the tool version line. CI runs it with the newest 10.0 SDK and the release with the pinned
       # one that builds what ships; a run on a pull request that changes the code is the first.
@@ -266,7 +272,7 @@ jobs:
         run: bash scripts/check_aot.sh -p publish/${{ matrix.rid }}/encspect "$RUNNER_TEMP/aot-check"
 
       # The x64 platforms ship a second CLI for processors with AVX2 (Haswell, 2013, and later; AMD Excavator and Zen): the same code compiled
-      # for x86-64-v3, which the default build (x86-64-v2, any x64 processor since about 2009) cannot use. It gets the same checks. On a pull
+      # for x86-64-v3, which the default build (x86-64-v2: Intel Core since Nehalem (2008), AMD since Bulldozer (2011) and Jaguar (2013); not Phenom II, Athlon II, Bobcat or Atom before Silvermont) cannot use. It gets the same checks. On a pull
       # request only linux-x64 builds it, to keep the time down; main, the nightly run and the release build it on every x64 platform.
       - name: Publish the NativeAOT CLI for x86-64-v3
         if: endsWith(matrix.rid, '-x64') && (matrix.rid == 'linux-x64' || github.event_name != 'pull_request')
@@ -286,7 +292,7 @@ jobs:
       - name: Compare the x86-64-v3 CLI with the JIT build
         if: endsWith(matrix.rid, '-x64') && (matrix.rid == 'linux-x64' || github.event_name != 'pull_request')
         shell: bash
-        run: bash scripts/check_aot.sh -p publish/${{ matrix.rid }}-v3/encspect "$RUNNER_TEMP/aot-check-v3"
+        run: bash scripts/check_aot.sh -p publish/${{ matrix.rid }}-v3/encspect "$RUNNER_TEMP/aot-check"
 
       # Not uploaded either; release.yml repeats these steps. A runner has no display to open a window on, so the published GUI runs
       # its self-check: it loads Skia's and HarfBuzz's native libraries and the platform backend's

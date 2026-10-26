@@ -232,7 +232,6 @@ public sealed class ReleaseWorkflowTests
         foreach (string name in new[]
         {
             "Install the NativeAOT toolchain",
-            "Restore the sysroot layer",
             "Fetch the glibc 2.27 sysroot",
             "Publish the NativeAOT CLI",
             "Check the glibc the CLI needs",
@@ -267,8 +266,8 @@ public sealed class ReleaseWorkflowTests
         string documentation = File.ReadAllText(Path.Combine(Root, "docs", "development.md"));
         foreach (string digest in digests)
         {
-            // The cache key and the download here; CI's also has the key of its save step.
-            Assert.Equal(2, Regex.Matches(Workflow(), digest).Count);
+            // The download here, which restores no cache; CI's also has the keys of its restore and save steps.
+            Assert.Single(Regex.Matches(Workflow(), digest));
             Assert.Equal(3, Regex.Matches(ci, digest).Count);
             Assert.Contains(digest, documentation, StringComparison.Ordinal);
         }
