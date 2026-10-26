@@ -1,0 +1,434 @@
+# Parallel decoding: frames on several threads
+
+Status: a draft for the project lead, not approved and not built. It designs option B of the second speed pass ("Decode independent units in parallel"), the one that needs a change of the decoder contract in [decoders.md](decoders.md). A throwaway prototype outside the repository measured the gains (see [Expected gains](#expected-gains)); nothing of it is committed. The decisions it asks for are under [Open decisions](#open-decisions).
+
+## Scope
+
+- **In:** decoding frames of one stream on several threads while the parser reads the stream, with a report, PCM and checksums identical to a serial run. The formats are Monkey's Audio, WavPack and FLAC, whose frames decode apart from each other.
+- **Out, and how this design relates to them:**
+  - **Option A, decoding while the parser walks** (a pipeline of the parser and one decoder thread). B contains it for the three formats above: the parser hands a frame over and reads on while workers decode. What A adds is a stateful decoder (TrueHD) on one thread of its own. The design leaves room for it: a decoder that does not split its frames could run its whole `Decode` as one worker in stream order, with the same copy of the bytes, the same plane sets and the same commit. That is a later change with its own measurement, not part of this one.
+  - **Option C, checksums on a thread of their own.** In B the stream-order checksums (FLAC's and WavPack's MD5) run in the commit, on the thread that parses. C would move the commit to a thread of its own. The commit is one method called in stream order (below), so moving it later changes where it runs and not what it does; nothing in B has to be undone for C. FLAC is the format that would gain (see [What stays serial](#what-stays-serial)).
+  - **Parallel files in the CLI.** The CLI analyzes files one after another (`InputWalker` and the loop of `CommandLine`); a folder of small files would gain more from files in parallel than from frames in parallel. That is a separate decision (see [Open decisions](#open-decisions)).
+  - TrueHD and MLP, whose frames carry state (see [Independence per format](#independence-per-format)), and the codings without a decoder.
+
+## The design in short
+
+- A decoder whose frames decode apart from each other splits the decoding of a frame into three steps: a **plan** on the parsing thread in stream order (what the frame needs of the stream's state), the **frame decoding** on a worker (the expensive part, which reads only the frame, its plan and the worker's own buffers), and a **commit** on the parsing thread in stream order (checksums over the whole stream, set assembly, the sink).
+- One worker object per thread holds the scratch state that `IFrameDecoder` holds today; the stream's state stays in the `IFrameDecoder` and is touched only by the plan and the commit.
+- What a worker reports (work, findings, PCM) goes into a **journal** of the frame. The host replays the journals in stream order at the commit, so findings, sink calls, the budget and the session's end happen in the order and at the frame where a serial run has them.
+- **Serial is the same code at a degree of 1:** the host runs plan, frame decoding and commit inline, and the journal passes every event on at once, so the PCM still streams to the sink chunk by chunk. A degree above 1 changes only where the frame decoding runs and when its journal is replayed.
+- The host owns the threads: a degree of parallelism in `DecodeOptions` (an option of the call, not a setting), a window of frames in flight, batches of small frames, a memory bound, and a join of every worker before `Analyze` returns.
+- The report, the PCM a sink receives and every checksum are byte-identical to a serial run for every degree, which a test holds over all decoder fixtures, the corrupt-file and fuzz corpora and the benchmark files.
+
+## Goal and expected gains
+
+The goal is a faster `--verify` (and "Verify Audio") on a machine with free cores, for the formats where decoding is most of the run. The library's analysis without decoding is not changed.
+
+### What stays serial
+
+Per format, from the code and the profiles of the second speed pass (`decoders.md`, "As built: the second speed pass"; JIT build, one pinned core, 300 s files):
+
+| Format | Decoded on workers | Serial: on the parsing thread | Analysis / `--verify` (s) | Serial share of `--verify` | Bound at 4 workers, estimated | Bound with unlimited workers |
+|---|---|---|---|---|---|---|
+| Monkey's Audio `-c5000`, 16-bit | the whole frame: range decoder, predictors, filters, frame CRC | the parser's walk of headers and seek table, the descriptor MD5 pass (`Reader.Hash`), the commit (tallies, sink) | 0.38 / 9.16 | about 4% | about 3.4 times: 12 frames of 1,179,648 samples (11.2 frames' work) take 3 rounds on 4 workers | about 8 times: one frame (0.8 s) is the shortest decode |
+| Monkey's Audio `-c4000`, 16-bit | as above | as above | not in the pass's table; prototype: 0.10 / 4.78 in process | about 2% | about 3.6 times (45 frames) | far above 4 |
+| WavPack default, 16-bit | each block: words, decorrelation passes, mute check, block CRC | the parser's walk, the plan (sub-block reading for the stream's facts), the commit: set assembly, MD5 and its byte packing (8 to 10% of the decoding step), the sink | 0.34 / 1.84 | about 25% | about 3 times | about 4 times |
+| WavPack `-hh`, 24-bit/96 kHz | as above | as above, the MD5 and packing 6 to 7% of the decoding step | 0.48 / 7.36 | about 12% | about 3.5 times | about 8 times |
+| FLAC -5, 16-bit | prediction, channel recombination | the parser's walk (it finds where a frame ends), the commit: the canonical bytes and the MD5 (36% of the decoding step), the sink | 0.52 / 1.02 | about 70% | about 1.4 times | about 1.4 times |
+| FLAC -8, 24-bit/96 kHz | as above | as above (the shares taken from the -5 profile) | 0.83 / 1.88 | about 64% | about 1.5 times | about 1.5 times |
+| TrueHD, MLP | nothing | everything (not parallel) | 1.75 / 2.75 (24-bit) | 100% | 1 | 1 |
+
+- The "Serial share" is the analysis plus the serial part of the decoding step, over the `--verify` time. The analysis includes the start of the runtime and the host, about 0.15 s of the release build and 0.24 s of the JIT build (`decoders.md`, "As built: the second speed pass").
+- **Amdahl, with the overlap B gives:** the parser and the workers run at the same time, so the run takes about the start plus the longer of the parsing thread's work (walk and commit) and the workers' work divided by their number. That is the "Bound" column; it is an estimate from the profile shares, not a measurement.
+- **FLAC** is bound by the parsing thread: its walk alone is half the run and the MD5 is a dependency chain (about 4.5 cycles a byte). With option C, the commit on a thread of its own, the bound becomes the walk: about 2 times for FLAC -5 (estimated). That is the case for C.
+- **Granularity:** a frame is the smallest unit. Monkey's Audio at insane holds 1,179,648 samples per channel in a frame (27 s at 44.1 kHz), so a 3-minute song has 7 frames and gains at most about 3.5 times on 4 workers, and a song under 27 s gains nothing. Within a frame the predictors, filters and the range decoder are sequential, and the two channels of a stereo pair are predicted from each other (`FrameDecoder.DecodeChunk`), so there is nothing to split further.
+
+### What the measured gains are
+
+The prototype (see [Expected gains](#expected-gains)) measured whole analyses with decoding of the benchmark files on this four-core machine, with reports equal to the serial ones:
+
+- Monkey's Audio 3.0 to 3.7 times (`-c3000` to `-c5000`, 16 and 24 bits), as the speed pass expected (3 to 3.5 times);
+- WavPack 2.2 to 3.2 times, at the low end of the expected 2.5 to 3.5 for 16-bit files, whose serial share is the largest;
+- FLAC 1.1 to 1.25 times, below the expected 1.4 (the prototype hashes twice; see there);
+- TrueHD nothing, by design.
+
+## Independence per format
+
+What a frame needs from the frames before it, read in the code (which follows the reference sources named in its notices), and how the frame boundaries are known before decoding.
+
+### Monkey's Audio
+
+- **Per frame:** `FrameDecoder.DecodeBody` flushes every predictor and neural network filter (`Predictor32.Flush`, `Predictor64.Flush`, `Predictor3930.Flush`, `NnFilter16.Flush`), resets each channel's range-decoding state (`ChannelState.Flush`, the SDK's `UNBIT_ARRAY_STATE`), starts the range decoder on the frame's own bytes (`RangeDecoder.Begin`, the SDK's `FlushBitArray`) and starts the stereo pair's cross-prediction at 0 (`lastX`). This is the SDK's `StartFrame` (`APEDecompressCore.cpp`), which the decoder follows. Nothing of the coded data of one frame is read by another.
+- **What crosses frames:**
+  - **Interim mode** (`FrameDecoder._isInterim`): a 24-bit frame whose CRC fails in the normal mode is decoded again with the interim predictors, and when the CRC then passes the decoder keeps interim mode for the frames after it (`DecodeHeld`, "As built: Monkey's Audio" in `decoders.md`). So the mode a frame starts in is the mode the frame before it ended in: a carried state of one bit, which the design handles by planning and checking (below).
+  - The frame CRC tallies (`_checked`, `_failed`), the sink (declared at the first frame) and the findings: all stream-order effects, which go to the commit.
+- **Boundaries:** the seek table gives every frame's start before the first frame is read (`Reader.Frames` with `SeekReader`), and the parser reads each frame into an array of its own (`MappedBytes.Read` in `Reader.Feed`), up to 64 MiB (`State.MaxDecodedFrameBytes`).
+- **The descriptor MD5** covers the coded data and is computed by the parser after it has handed every frame (`Reader.Hash` after `Reader.Frames`), so in B it runs while the workers decode the last frames.
+
+### WavPack
+
+- **Per block:** the entropy decoder starts from the block's own entropy variables and, in hybrid mode, its own profile (`WordDecoder.Start` copies the medians, slow levels and bitrate figures from the block's sub-blocks); the decorrelation passes take their terms, weights and samples from the block's sub-blocks (`BlockContents`, `PcmBlockDecoder.MonoPass` and `StereoPass`); a DSD block builds its tables and filters from its own data (`DsdBlockDecoder.PrepareFast` and `PrepareHigh`). The block's header CRC is over the block's own samples. `decoders.md` records it in "As built in step 3: WavPack": "a block's entropy and decorrelation state is the block's own".
+- **What crosses blocks:**
+  - **Sets:** the blocks of one set, from the initial flag to the final flag, carry the channels of the same samples. Each block still decodes alone; the set's planes are assembled from the decoded blocks (`StreamDecoder.Keep`) and its samples go to the sink and the MD5 on the final block (`Complete`). A block is muted when it holds fewer samples than the first block of its set (`isMuted` in `StreamDecoder.Block`), which the set's first block decides.
+  - **The stream's facts,** settled by the first blocks as libwavpack settles them when it opens a file (`StreamDecoder.Settle`): the channel info and sample rate of the first blocks that carry them, the qualify mode up to the first block with audio, whether the stream is DSD or floating point and its bytes per sample from the first block with audio, and the last stored MD5. Reading a block's sub-blocks depends on whether the channel info is known (`BlockContents.Read`'s third argument).
+  - The MD5 over the whole stream in its own layout (`AudioDigest`), the CRC tallies, and the sink.
+- **Boundaries:** each block's 32-byte header states its length, and the parser reads block by block (`Reader.Block`, `DecodeFeed.Offer`). The bytes are in a buffer the parser reuses for every block, so they are valid only during the call.
+
+### FLAC
+
+- **Per frame:** every subframe starts with its warm-up samples, stored unencoded, as many as the predictor's order (RFC 9639, sections 9.2.5 and 9.2.6), so prediction never reaches into the frame before. The channel assignment, the wasted bits and the block size are the frame's own (section 9.1). The decoder reconstructs from the planes the parser's walk filled (`FrameDecoder.Restore`, `Combine`) and keeps nothing of one frame for the next.
+- **What crosses frames:** the STREAMINFO MD5 over every sample in stream order in the canonical layout (section 8.2; `FrameDecoder._md5`), the flag of a frame not decoded (`_isIncomplete`), and the sink.
+- **Boundaries:** a frame states its length nowhere; the parser's walk reads every subframe to its end to find where the frame ends, and the CRC-16 confirms it (`decoders.md`, "Who owns the bits"). The walk is therefore the serial producer of FLAC frames, and it is half of a `--verify` run. The frame's bytes are a slice of the parser's sliding window (`Source.Window`, `RawReader`), valid only during the call.
+
+### TrueHD and MLP
+
+- **State that crosses access units and restart headers:** the filters' histories, "updated for every sample, also while an order is 0, and continue across blocks, units and restart headers", which a restart header does not reset ([truehd-format.md](truehd-format.md), "Values a restart header resets" and "Prediction filters"); the noise generator, which "continues from unit to unit and restarts from the seed at each restart header"; and the lossless check accumulator, which covers the output since the previous restart header.
+- So neither an access unit nor a restart interval decodes alone. B gives TrueHD and MLP nothing; option A (the decoder on a thread of its own, overlapped with the walk) is what would gain, about a third of `--verify` by the speed pass's estimate.
+
+## The contract changes
+
+### Plan, frame decoding and commit
+
+A decoder opts in through its stream decoder. The serial contract (`IFrameDecoder.Decode`) stays for the decoders that do not.
+
+```csharp
+namespace Encspect.Core;
+
+// The IFrameDecoder of a coding whose frames decode apart from each other. The host runs every frame as Plan, then
+// IFrameWorker.Decode, then Commit; at a degree of 1 inline on the parsing thread, otherwise the middle step on a worker.
+// IFrameDecoder.Decode is not called for such a decoder.
+public interface IParallelFrameDecoder : IFrameDecoder
+{
+    // The state of one worker: scratch buffers, predictors, filters. Called on the parsing thread; the host never runs
+    // two frames on one worker at once, and a worker may decode any frame of the stream.
+    IFrameWorker CreateWorker();
+
+    // On the parsing thread, in stream order, before the frame is decoded: what the frame needs of the stream's state
+    // (WavPack's settled facts and the set the block belongs to, Monkey's Audio's interim mode), as an object the
+    // frame carries to its worker. It may charge work and add findings through the stream's DecodeContext; the host
+    // records them at the head of the frame's journal, so they are replayed at the frame's commit, in stream order. An
+    // exception it throws is the frame's, reported at the frame's replay; no worker runs for that frame.
+    object? Plan(in CodedFrame frame);
+
+    // On the parsing thread, in stream order, for each PCM block the frame's worker wrote, in the order it wrote them:
+    // what the stream does with its PCM (the sink, FLAC's MD5). Called before the frame's Commit.
+    void Output(in CodedFrame frame, PcmBlock block);
+
+    // On the parsing thread, in stream order, after the frame's journal has been replayed: takes the frame's result into
+    // the stream's state (tallies, set assembly, the MD5 over a WavPack set) and returns the samples per channel by which
+    // the stream's output advanced, as IFrameDecoder.Decode returns them today. A plan that no longer holds (the carried
+    // state differs) is the decoder's to detect here: it decodes the frame again inline, through redo.
+    int Commit(in CodedFrame frame, object? plan, object? result, FrameRedo redo);
+}
+
+// What one worker decodes with. One per thread; never two calls at once.
+public interface IFrameWorker
+{
+    // Decodes one frame. Reads only the frame, its plan, the setup and the worker's own state, so its result does not
+    // depend on which worker runs it or on what the worker decoded before. Reports through context; returns the result
+    // the commit takes (the frame CRC it computed, a WavPack block's samples and CRC outcome).
+    object? Decode(in CodedFrame frame, object? plan, FrameContext context);
+}
+
+// The context of one frame on a worker: its journal. Every call is recorded and replayed in stream order at the commit;
+// at a degree of 1 the host replays each call at once.
+public sealed class FrameContext
+{
+    public DecodeSetup Setup { get; }
+
+    // The frame's token: canceled by the analysis, the front end's stop, a sink failure, and by the budget once the work
+    // charged before this point in stream order has certainly passed it (see "The work budget").
+    public CancellationToken CancellationToken { get; }
+
+    // The plane set the parser's walk filled for this frame (CodedFrame.IsWalked); empty otherwise.
+    public SampleBuffers LentBuffers { get; }
+
+    // False where the analysis gives the stream's PCM to no one (DecodeOptions.Output is null and no host-side PCM
+    // analysis runs). A worker then writes only what its own stream checksum needs (FLAC's MD5), and Monkey's Audio
+    // nothing. Known without asking DecodeOptions.Output, which the commit still asks at the first block, as today.
+    public bool IsOutputWanted { get; }
+
+    // As DecodeContext.AddWork: charges the work before it is done.
+    public void AddWork(long units);
+
+    // AddWork followed by a look at CancellationToken: a charge point. A worker looks at its token only here.
+    public void Charge(long units);
+
+    public void AddFinding(Severity severity, string code, string message, Node? node = null, int count = 1);
+
+    // A block of the frame's PCM, in stream order within the frame; the host copies it into the journal (or, at a degree
+    // of 1, passes it straight to IParallelFrameDecoder.Output).
+    public void Write(PcmBlock block);
+}
+
+// Passed to Commit: decodes the frame once more, inline on the parsing thread, with another plan (Monkey's Audio after a
+// frame changed the interim mode), and replays that decoding's journal in place of the first one's.
+public delegate object? FrameRedo(object? plan);
+```
+
+- **Object, not generic:** the host moves plans and results without knowing their types. `Core.Abstractions` adds an abstract base class `ParallelFrameDecoder<TPlan, TResult>` that implements the interface with typed methods, so a decoder casts nowhere.
+- **Why three steps and not two:** the plan is where the stream's ordered facts are read before a frame leaves the parsing thread, so a worker never reads the stream's state; the commit is where the stream's ordered state is written. Without the plan, WavPack's settled facts and set position would have to be shared with the workers.
+- **A plan leaves no trace by itself:** a frame can be planned and then dropped (it was handed after the session ended, see below), so what `Finish` and the report read is only what `Commit` wrote. A decoder whose plan advances state (WavPack's settled facts) keeps a planning copy of it, which the plans advance, apart from the one the commits advance. Otherwise a block with the MD5 sub-block, planned after the budget ended the session, would give the stream a stored MD5 that a serial run never saw (and with it `wavpack.md5-set-too-large`).
+- **What each decoder puts where:**
+
+| Decoder | Plan (parsing thread) | Frame decoding (worker) | Output and Commit (parsing thread) |
+|---|---|---|---|
+| Monkey's Audio | the frame's special codes and mode; the interim mode of the stream as the plan's guess | `DecodeBody` with the frame's CRC, and the interim retry of `DecodeHeld`; writes its chunks | the sink; the CRC tally and `monkeys-audio.frame-crc-mismatch`; the carried mode, with a redo where the guess was wrong |
+| WavPack | the header, `BlockContents.Read` with the channel info as known, `Settle`, the set the block belongs to and its sample count, the mute decision | the charge and `PcmBlockDecoder.Decode` or `DsdBlockDecoder.Decode`; returns the block's samples and CRC outcome | the CRC and extra CRC tallies and their findings, `Keep`, `Complete` (sink, `AudioDigest`) |
+| FLAC | the header checks of `FrameDecoder.Decode` (channels, bits, the ceiling) | the charges, the walk where the frame was not walked, `Restore`, `Combine`; writes the frame's block | the sink; the canonical bytes into the MD5 |
+
+### Per-worker state
+
+- **Today:** "One parser or decoder instance serves every analysis and thread: keep no per-call state in fields" (`CLAUDE.md`), and the state of one stream lives in the `IFrameDecoder` that `Open` returns, called "on one thread, frame by frame".
+- **Changed:** a stream's decoding has one `IParallelFrameDecoder` (the stream's state, plan and commit, on the parsing thread) and up to the degree of parallelism `IFrameWorker`s (scratch state, one per thread at a time). The `IDecoder` instance still keeps nothing in fields and still serves every analysis and thread.
+- **The rule a worker keeps:** its result depends only on the frame, the plan and the setup. A worker may keep buffers and objects (Monkey's Audio's predictors and filters, WavPack's `WordDecoder`, the DSD tables) from frame to frame, but must reset what it reads before it reads it, as `DecodeBody` flushes its predictors today. The shuffle test (below) holds every decoder to it.
+- **What moves out of today's stream decoders:**
+  - Monkey's Audio: `RangeDecoder`, `ChannelState`, the predictors, `Unprepare`, `_values`, `_samples`, `_pcm`, `_stream`, `_held`, `_floats` go to the worker; the tallies, the sink and the stream's interim mode stay.
+  - WavPack: `PcmBlockDecoder`, `DsdBlockDecoder`, `BlockContents` (one for the plan, one per worker) and the muted buffer go to the worker; the settled facts, the set planes, `AudioDigest` and the tallies stay.
+  - FLAC: `_narrow`, `_wide`, `_output` go to the worker; `_md5`, `_bytes`, `_isIncomplete` and the sink stay.
+
+### Lifetimes: frame bytes and lent planes
+
+- **`CodedFrame.Bytes`** is "valid only during the call" today, and the FLAC and WavPack parsers hand slices of a buffer they reuse. At a degree above 1 the host copies the frame's bytes, with their file ranges, into a buffer the frame owns until its commit (`MappedBytes` over the copy, so findings still point to the file). Monkey's Audio's frames are already arrays of their own; the copy is still made, so no parser has to promise anything. A copy at memory speed is about 10 ms per 100 MB (estimated); the prototype copied every frame, and its single-worker runs were no slower than serial ones for Monkey's Audio and WavPack.
+- **The parsers keep the contract they have:** the bytes and the planes are theirs only during `Decode`. No parser changes for the lifetime.
+- **Lent planes** (FLAC; TrueHD stays serial): `IDecodeSession.Lend` lends "the session's own [buffers], grown to the largest frame seen", valid until the next `Lend`. With frames in flight, the session keeps a pool of plane sets, one for each frame in flight plus the one being walked: `Lend` takes a free set (and, where none is free, commits frames until one is), the frame handed next owns it, and its commit returns it to the pool; a set lent for a walk whose frame is never handed (a candidate the parser rejects) returns at the next `Lend`. The comment of `SampleBuffers` ("valid until the next Lend") becomes "valid until the frame is handed over (`Decode`); the parser does not touch them after". The FLAC parser already never reads them after `Decode` (`FrameWalker.Walk` writes them, `State.AddFrame` reads the walk's facts, not the planes). The 2^24-sample limit of a lend (`DecodeSession.MaxLentSamples`) stays, per set.
+- **The journal's PCM:** a worker's `Write` is copied into the journal, in buffers the host reuses from frame to frame; `PcmBlock` stays a `ref struct` valid only during the call, for the worker and for the sink alike.
+
+### Ordered completion: the journal and the commit
+
+- **The commit runs on the parsing thread, in stream order:** when the parser hands a frame (`IDecodeSession.Decode`) and the window is full or its oldest frame is done, and in `Finish`, which commits every frame before it computes `DecodeEnd`.
+- **Replay:** for the oldest frame, the host replays its journal in the order the worker recorded it: charges (against the budget, below), findings (into the session's list as `DecodeContext.AddFinding` does today), PCM blocks (to `Output`). Then it calls `Commit`, adds the samples it returns to `DecodedSamples`, and checks the floor of the charge on the totals, as `DecodeSession.Decode` does now.
+- **What that keeps:**
+  - Findings of one code are "reported once per stream with a count, pointing to the first, with the message of the first": the first is the first in stream order, as in a serial run.
+  - The sink: `IPcmSink.Write` is called "on the analysis thread, in stream order", as its contract says; `DeclareOutput` (and with it `DecodeOptions.Output`) is called from `Output` or `Commit`, on the same thread and before the same block as today.
+  - Stream-order checksums: FLAC's MD5 takes the canonical bytes of each block in `Output`; WavPack's `AudioDigest` takes each set in `Commit`.
+- **The carried state of Monkey's Audio:** the plan records the interim mode the stream is in when the frame is handed (normal for almost every file); the worker decodes with it; the commit compares it with the mode the frame before actually ended in. Where they differ, the commit calls `redo` with the right mode, which decodes the frame again inline and replays that journal instead. Only frames in flight when a frame changes the mode are decoded twice; the frames handed after that are planned with the new mode. A serial run gives the same result, since its frame decodes once with the right mode.
+- **Frames handed after the session ended:** the parser learns of the end through `IsDecoding` and `Decode`'s return value, which at a degree above 1 come a few frames late (the frame that crossed the budget is committed after later frames were handed). Those frames are dropped at the commit without a count, as a serial session never received them: `FramesNotDecoded` and the findings stay as serial. This needs one new rule for parsers (below).
+
+### The work budget
+
+- **Today:** `DecodeRun` adds every charge to one count for the analysis (`DecodeRun.AddWork`), cancels the decoding's token as soon as the count passes the budget, and the session picks `decode.limit` from the host's state. A decoder that checks its token inside a frame (Monkey's Audio after each chunk's charge; WavPack in `ReadWords` and the DSD loops, every 4,096 samples, the first time before any output) stops there and the frame counts as not decoded; a decoder that does not (FLAC) finishes the frame it charged.
+- **The rule that keeps it deterministic:** the budget is applied in stream order, at the replay. The count of the analysis is the count of what was replayed, so the frame and the charge at which the budget is crossed are the same as in a serial run, whatever the threads did.
+- **The replay of a crossing:** at the first replayed charge that passes the budget, the host cancels the decoding's token (so the other sessions stop as now) and goes on through the frame's journal to the first charge point (`Charge`) at or after the crossing: a serial run's decoder throws there, so the replay keeps the PCM and findings before it, drops the rest, and counts the frame as not decoded. Where no charge point follows, a serial run finishes the frame (FLAC), and so does the replay. Frames after it are dropped. Then the session ends with `decode.limit` as today.
+- **Charge points:** for the replay to know where a serial run would stop, a worker looks at its token only right after a charge. `FrameContext.Charge` is that pair. Monkey's Audio already charges and checks per chunk in that order (`DecodeBody`). WavPack charges the whole block before decoding (`StreamDecoder.Charge`, at most 2^27 units a block) and checks in its loops; its first check comes before any output, so its loops' checks become one `Charge` of the block, and the later checks in the loops go (a block of at most 5.9 × 10^7 units is under the 80 ms the contract allows between checks). FLAC charges twice before its work and checks nothing, which is a frame without a charge point.
+- **AddWork before the work:** unchanged for the decoder, which charges on its worker before it does the work. The host's count follows the replay, after the work; the token a worker sees (below) is what keeps the work bounded.
+- **The worker's token and the bound on wasted work:** a worker cannot wait for the replay, so its token is canceled as soon as the budget is certainly crossed before its own position: when the replayed count, plus what the frames before it in stream order have charged so far, plus what it has charged itself, passes the budget. That sum only grows and, for a frame a serial run still decodes, never exceeds what the serial run charged up to that point, so a worker stops no earlier than a serial run would (a frame after the serial crossing is dropped whatever it did); it may stop later, by at most what the frames in flight charge between two charge points. The replay then cuts its journal at the serial point. Speculative work past the budget is therefore at most the window's frames times one charge (2^27 units, about 80 ms each), wasted CPU and no effect on the report.
+- **Accounting across threads:** the charges of a worker go into its frame's journal (one thread writes it) and into a per-frame running total that the workers of later frames read with `Volatile.Read` (a sum over the window, at each charge point); `DecodeRun`'s count stays on the parsing thread and is advanced only by the replay. Nothing else is shared between threads but the token.
+- **What `decode.limit` means:** unchanged: "Decoding stopped after N frames: its work passed the budget of B work units that the file's size allows", with N and B as a serial run gives them. The budget still bounds wall time: the work in flight past it is bounded as above, so a crafted file stops within the window's work of where a serial run stops.
+- **The floor of the charge** (`DecodeSession.CheckFloorOfCharge`) is checked at each commit on the replayed totals: the same check at the same frame.
+- **`MaxWork`, `MinimumWork`, `WorkPerInputByte`:** unchanged.
+
+### Cancellation and stop
+
+- **Analysis canceled** (`AnalysisOptions.CancellationToken`): the workers' tokens are linked to it, so they stop at their next charge point; the parsing thread throws `OperationCanceledException` at its next hand-off or commit, as today. Before `Analyze` returns or throws, every session cancels and joins its workers, so no worker runs past `Analyze`, touches a sink, or holds the linked token source that `Analyze` disposes (`using DecodeRun`).
+- **Stop** (`DecodeOptions.Stop`): the workers stop at their next charge point. The session commits the frames that completed, in order, up to the first that did not, and ends with `decode.stopped`, "Decoding was stopped after N frames", counting the committed frames. A serial run's N depends on when Stop comes, and so does this one's; what holds is that the report is one a serial run stopped after N frames would give.
+- **A sink that throws:** the sink is called only from the commit, on the parsing thread, so the host's `GuardedSink` catches it as today, cancels the token, and `Analyze` rethrows it once the format parser has returned. The workers stop at their next charge point and are joined.
+- **Latency:** a worker checks at least every 2^27 units (the contract's rule for a frame charged once, about 80 ms), and the parsing thread checks between frames as today, so Stop and cancellation are as quick as now.
+
+### A frame that throws
+
+- **On a worker, or in the plan,** the exception is caught and recorded in the frame's journal, with the journal up to the throw; nothing is reported at that moment.
+- **At the replay,** the host reports it as `DecodeSession.Decode` does today, on that frame: `InvalidDataException` and `EndOfStreamException` are `decode.frame-invalid` on the frame's node ("The monkeys-audio decoder could not decode the frame at 0x…"), the frame counts as not decoded and decoding carries on with the next frame; an `OperationCanceledException` the host's state explains is a frame not decoded; anything else is `decode.failed`, and the frames after it are dropped, since a serial session ends there.
+- **The decoder's state after a failure:** what the serial code does in its `catch` (WavPack's `_isSetFailed`, Monkey's Audio's `LeaveInterim`) moves to the commit, which learns of the failure through `result` (null with the frame's exception recorded); the worker's own state needs nothing, since it resets before each frame.
+- **Why at the replay:** the prototype reported a frame's exception from a later call, the way a decorator of today's contract has to, and five damaged Monkey's Audio fixtures came out `decode.failed` instead of `decode.frame-invalid` (see [Expected gains](#expected-gains)). Only the host knows which frame a journal belongs to.
+
+### Memory bounds
+
+- **What is in flight:** at most the window's frames: each with its copy of the coded bytes, its journal's PCM (only where `IsOutputWanted`, or where the decoder's own checksum needs it: FLAC, WavPack), and a plane set where it was walked (FLAC). Each worker adds its scratch state, which is today's `IFrameDecoder`'s: for Monkey's Audio one chunk of 4,096 samples of each channel and, for a 24-bit frame held for its CRC, up to 2^23 samples (32 MiB).
+- **The bound:** the frames in flight hold at most 64 MiB of copied bytes, journal PCM and plane sets together (the figure of the session's lending limit, 2^24 32-bit samples), and at least one frame. A frame that would pass the bound alone runs inline at a degree of 1 after the window has drained: deterministic, since inline and on a worker give the same journal. The largest frames are the cases that need it: Monkey's Audio frames up to 64 MiB of coded data and 10,000,000 samples of 32 channels, which inline stream to the sink chunk by chunk as now.
+- **The window:** twice the degree of parallelism plus one batch (below), within the bound. The parser waits (by committing, or by decoding the oldest frame itself) when the window is full: that is the back-pressure, and it is what keeps memory from growing with the stream.
+- **Today's ceilings stay:** `MaxLentSamples` (per plane set), WavPack's `MaxSetSamples` (a set's planes, in the commit), Monkey's Audio's chunk of 4,096 samples and `MaxHeldSamples`, FLAC's frame ceiling.
+- **Nothing grows with the stream:** the journal of a frame is dropped at its commit, buffers return to pools that are the session's own and are dropped with it; `ArrayPool<T>.Shared` stays unused, as the memory section of `decoders.md` asks.
+
+### Determinism
+
+- **Guaranteed, for every degree of parallelism, where the analysis is not canceled, not stopped and no sink throws:**
+  - the report: the tree (decoding adds no node), the findings with their order, counts, messages and nodes, and each stream's verification (status, `DecodedSamples`, every tally);
+  - the PCM a front end's sink receives: the same `DeclareOutput` format, the same blocks with the same positions, lengths and samples in the same order, and the same `End`;
+  - the work the analysis counts and the frame at which it crosses the budget, so `decode.limit` and its message.
+- **Where a serial run is not deterministic either** (Stop at a moment), the parallel run gives a report a serial run could give: the one stopped after the frames it committed.
+- **What it rests on:** a degree of 1 is the same code inline; a worker's result depends only on the frame, the plan and the setup (the shuffle test); the journal replays in stream order; the budget, the session's end and the frame errors are decided at the replay; the frames after the end are dropped without a trace.
+- **Timing fields:** the reports have none (no writer of `Encspect.Host` or the CLI reads a clock), so "byte-identical" is literal.
+
+### What parsers keep, and one new rule
+
+- Parsers do not change: they hand frames and lend planes as today, and `IDecodeSession` keeps its members.
+- **The new rule:** a parser's report does not depend on `IsDecoding` or on `Decode`'s return value beyond whether decoding was asked for and a session was started; they only let a parser skip work (building a `CodedFrame`, storing into planes). At a degree above 1 they turn false a few frames later than in a serial run.
+- **The one place that breaks it:** the Monkey's Audio parser reports `monkeys-audio.frame-not-decoded` (a frame over 64 MiB) and counts it unreadable only where `IsDecoding` is true when it reaches the frame (`Reader.Frames`, `Feed`). The Monkey's Audio pull request takes `IsDecoding` once, right after `StartDecoding`, and reports the finding by that, whatever happens to the session later; a serial run differs from today only for a frame over 64 MiB after the budget or a stop ended decoding, which no committed fixture has (the goldens of that pull request confirm it). The FLAC parser (lending and building frames only while decoding), the WavPack feed (`Hand`) and the TrueHD walk (lending) only skip work.
+
+### The rules in CLAUDE.md
+
+- "One parser or decoder instance serves every analysis and thread: keep no per-call state in fields." stays as it is.
+- After it, a sentence is added: "A decoder that decodes frames in parallel keeps the stream's state in its stream decoder, used only on the parsing thread, and gives each worker its own state, which it resets before each frame; a frame's result depends only on the frame, its plan and the stream's setup (`docs/design/parallel-decoding.md`)."
+- "Loops that only compute over every frame or packet check `ParseContext.CancellationToken` (a decoder's, `DecodeContext.CancellationToken`) every few thousand iterations; reads check it already." becomes "... (a decoder's, `DecodeContext.CancellationToken`, and a frame worker's only at its charge points, `FrameContext.Charge`) ...", since a worker that checks between charges cannot be replayed where a serial run stops.
+- "A decoder charges its work through `DecodeContext.AddWork` before it does it, ..." stays; `FrameContext.AddWork` and `Charge` are the same charge on a worker.
+- The exception rule ("Parsers and decoders throw only ...") stays; `decode.failed` is still reported on the frame's stream, at the frame where a serial run reports it.
+
+## Scheduling
+
+### The degree of parallelism
+
+- **A host option of the call:** `DecodeOptions.MaxParallelism` (an `int?`), the most frames of one analysis decoded at once, the parsing thread included: a degree of D runs D - 1 workers, and the parsing thread decodes a batch itself whenever it would otherwise wait (below). Null or 1 decodes inline as today. Like `MaxWork`, it is an option of the call and not a setting; the front ends choose it.
+- **Why the parsing thread counts:** it is busy for WavPack (parsing, plans, the MD5) and idle for Monkey's Audio. Counting it and letting it help gave, in the prototype, within about 7% of the better of three and four workers on every file, where a fixed number of workers was best for one format and up to 15% behind for the other (see [Expected gains](#expected-gains)).
+- **The host resolves it to 1** where the decoder is not an `IParallelFrameDecoder`, where the platform has no threads (below), and for a stream whose frames are each larger than the memory bound.
+- **Per analysis, not per session:** the sessions of one analysis (a Matroska file with two FLAC tracks, later) share the workers, so an analysis never decodes more than the degree's frames at once.
+
+### With the GUI and the CLI
+
+- **CLI:** analyzes one file at a time (`CommandLine`, `InputWalker`), so it passes a degree from `Environment.ProcessorCount` with `--verify` (decision 2 below), and 1 without decoding, where nothing is decoded anyway.
+- **GUI:** the file list analyzes `Parallelism` files at once (`MainViewModel`: `Math.Clamp(Environment.ProcessorCount / 2, 1, 4)`), and never decodes. "Verify Audio" analyzes one file in the detail window (`DetailViewModel`, `new DecodeOptions()`), which may run while the list's background analysis is busy. The GUI passes `Environment.ProcessorCount` minus the list's `Parallelism` while the list is analyzing, and `Environment.ProcessorCount` otherwise, at least 1 (decided when the analysis starts).
+- **A library caller** gets serial decoding unless it asks; a server that analyzes many files at once keeps 1, since its files are its parallelism.
+
+### Threads, batches and back-pressure
+
+- **The thread pool, not dedicated threads:**
+  - The GUI already runs its analyses on the pool (`Task.Run`, `Parallel.ForEachAsync`), and a pool shared by both levels lets the runtime balance them; dedicated threads would add their own to the GUI's and cost a thread start per analysis, which a folder of small files with `--verify` would pay per file.
+  - The session limits its own concurrency: at most the degree of batches run at once, queued in stream order to the pool's global queue (`TaskCreationOptions.PreferFairness`), so the oldest frames run first, which is what an in-order commit wants. The pool's work stealing between its threads stays as it is; a session does no stealing of its own.
+  - **The parsing thread helps:** where it has to wait for the oldest frame (the window is full, or `Finish`), it decodes the oldest batch no worker has started instead of waiting; a batch is claimed by whichever thread takes it first (one atomic exchange). A degree of 1 is the case where it decodes every batch, with no worker.
+  - NativeAOT supports the pool and tasks; nothing here uses reflection or dynamic code.
+- **Batches:** a task decodes a run of consecutive frames, closed once it holds at least 2^16 samples over all channels or at a frame that closes a WavPack set. A FLAC frame of 4,096 stereo samples decodes in about 0.1 ms, so one task per frame would spend a measurable share in scheduling; a Monkey's Audio frame (73,728 to 1,179,648 samples) or a WavPack block (11,025 to 24,000 samples in the benchmark files) is a task of its own. The figure is to be tuned by the first pull request on the benchmark files.
+- **Back-pressure:** the window (twice the degree in batches) and the memory bound: `Decode` and `Lend` return only once the frame fits, by committing finished frames or decoding the oldest one. The parser therefore runs at most a window ahead of the commit.
+
+### Without threads
+
+- Browser WebAssembly without its threads feature has no thread pool to run work on, and a blocking wait there throws (**unverified** for .NET 10's browser runtime; it is the documented behavior of the single-threaded runtime of .NET 8). The host resolves the degree to 1 there (`OperatingSystem.IsBrowser()` and `OperatingSystem.IsWasi()`), and at a degree of 1 nothing is queued and nothing waits: plan, frame decoding and commit run inline.
+- So the serial path is not a fallback beside the parallel one; it is the same path with no worker, and every test that runs at a degree of 1 covers it.
+
+## Verification
+
+### The same report, PCM and checksums
+
+- **`ParallelDecodingMatchTests`:** every file of the decoder fixtures (`tests/fixtures/flac`, `wavpack`, `monkeys-audio`, `truehd`), the corrupt-file variants the `CorruptFiles` classes build from them, and the fuzz corpus (`tests/fixtures/fuzz`), analyzed with decoding at degrees 1, 2 and 4 (and 8 in the nightly run): the report through all three writers (`ReportRendering.All`, as `ParallelAnalysisMatchTests` compares), every stream's verification, and the PCM through a hashing sink that records each `Write`'s position, length and samples and the `End`. Each must be byte-identical to the degree-1 run. It runs with `MaxWork` lowered as the corrupt files and the fuzzer run, so the budget crosses in many of them.
+- **Budget crossings on purpose:** the same comparison at `MaxWork` of 2^20, 2^24 and 2^28 over the decoder fixtures, so the crossing falls at different frames and inside frames; and every case of `ComplexityTests` at degrees 1 and 4.
+- **The benchmark files** (300 s, outside the repository): `--json --verify` and `--csv --verify` of the JIT and NativeAOT builds at degrees 1 and 4, byte-identical, as the speed passes compared them; run by each pull request of the rollout and recorded in its notes.
+- **The fuzzer** analyzes with decoding at a degree of 4 as well as 1 and fails on a difference between the two reports, besides `decode.failed`.
+- **Shuffle test (`FrameWorkerPurityTests`):** for each decoder, the frames of each decoder fixture are planned in stream order, then decoded on one worker in a random order and on fresh workers, and each frame's journal must be equal; this is the rule "a frame's result depends only on the frame, its plan and the setup", tested directly.
+
+### Cancellation, budget and memory under parallelism
+
+- `DecodeRouteTests` gains a scripted parallel decoder (as `ScriptedDecoder` scripts the serial one) with frames that sleep, throw, charge across the budget and write PCM, and cases for: a frame's exception reported on that frame at the replay; frames after a `decode.failed` dropped; a crossing at a charge point and in a frame without one; frames handed after the end dropped without a count; Stop in the middle; the analysis canceled while workers run (no worker runs after `Analyze` throws, checked with a worker that records its exit); a sink that throws, rethrown; the floor of the charge at the replay.
+- **Wasted work bound:** a case where the budget crosses early and frames charge in small steps measures the work the workers did past it, and asserts it under the window times one charge.
+- **Memory:** `MemoryTests` gets the decoder streams at a degree of 4: the live heap read from the last frame's sink write grows by no more than the bound plus the workers' scratch, whatever the stream's length; a case with Monkey's Audio frames larger than the bound checks they run inline. `InputReleaseTests` checks that no worker, journal or plane set is reachable from a report.
+
+### Thread-safety tests
+
+- In the style of `LongListReadTests` and `ParallelAnalysisTests` (the "Thread hammers" collection, which runs alone): four analyses with decoding at a degree of 4 at once, on more threads than the machine has cores, with collections forced, each compared with its private serial report; and the GUI's case, a verify at full degree while the list analyzes `Parallelism` files.
+- `ThreadTestScope` decides the size as for the other thread tests: a sample on pull requests, all long inputs in the nightly run (`ENCSPECT_FULL_THREAD_TESTS=1`).
+
+### `DecoderWorkTests`
+
+- It measures time per work unit on one thread: decoding time (analysis with decoding minus analysis without, interleaved with the FLAC reference) over the units charged. That is the figure the budget's bounds assume, and it stays a single-thread figure: the test runs at a degree of 1 and is otherwise unchanged.
+- The budget counts work, not wall time, so parallel decoding does not change what a unit allows; it makes the wall time of a budget shorter on a machine with free cores, by up to the degree.
+- Parallel speed is not asserted: the CI runners differ in cores and load (the test notes in `docs/development.md` record loaded runs that moved the reference by a factor of 2), so a speedup assertion would be noise. The nightly run prints the speedup of a degree of 4 over 1 on the Monkey's Audio and WavPack cases, so the history shows a regression.
+
+### NativeAOT
+
+- `scripts/check_aot.sh` compares the JIT build and the NativeAOT build over `tests/fixtures` with `--json --verify`; at the CLI's new default degree that comparison covers the parallel path in both builds. Nothing in the design needs reflection or dynamic code; `IsAotCompatible` and the analyzers keep that true.
+- The vector width differs (128 bits under the NativeAOT baseline, the processor's best under the JIT, see "NativeAOT" in `docs/development.md`), which changes the time of Monkey's Audio's filters and not their output.
+
+### CI cost
+
+- The match tests decode every decoder fixture three more times on pull requests (degrees 2 and 4, against degree 1), and the corrupt-file variants at degree 4. Decoding is most of the cost of `CorruptMonkeysAudio*` (about 15 minutes of CPU on four cores, `docs/development.md`); at a degree of 4 on a four-core runner those classes take about the same wall time, since the classes already run side by side. **Estimated:** 5 to 10 minutes more per platform on the `corrupt-c` and `corrupt-d` shards, to be measured by the first pull request; the corrupt variants at degree 4 can move to the nightly run if a shard passes its time limit.
+- The thread tests add about a minute to `rest`; the benchmark comparison is local, as in the speed passes.
+
+## Rollout
+
+Each step is a pull request with its own review, and each decoder's step keeps its golden reports unchanged (a parallel run must give them).
+
+1. **The contract and the host, with Monkey's Audio** (the largest gain, the simplest split):
+   - `Core.Abstractions`: `IParallelFrameDecoder`, `IFrameWorker`, `FrameContext`, `FrameRedo`, the `ParallelFrameDecoder<TPlan, TResult>` base class, `DecodeOptions.MaxParallelism`, and the comments of `SampleBuffers` and `CodedFrame.Bytes`.
+   - The host: the frame pipeline in `DecodeSession` (copy, plan, batches, window, memory bound, replay, commit), the plane-set pool, the budget replay and the workers' tokens in `DecodeRun`, the join in `Analyze`, the degree's resolution.
+   - Monkey's Audio split into plan, worker and commit, with the redo for interim mode and the parser change for `monkeys-audio.frame-not-decoded`.
+   - Tests: `ParallelDecodingMatchTests`, `FrameWorkerPurityTests`, the `DecodeRouteTests` cases, the memory and thread cases; the interim fixtures (`external-interim-24-stereo`, the `legacy-*` fixtures) are the redo's cases.
+   - The CLI's degree with `--verify` and the GUI's for "Verify Audio" (or behind the owner's default, decision 1), `docs/cli.md` and `docs/gui.md`; the `CLAUDE.md` sentences; this document's "As built".
+2. **WavPack:** the plan (settle, set position, mute decision), the block worker, the commit (set assembly, `AudioDigest`); the checks in `ReadWords` and the DSD loops become the block's charge point. Its fixtures cover sets of several blocks (5.1, `external-from-caf-51-md5`), DSD, hybrid files and the sets that never complete.
+3. **FLAC** (decision 7): the plane-set pool's first user, the frame worker (restore, recombination), the MD5 in `Output`; batches of frames. Its gain is the smallest of the three (1.1 to 1.25 times measured, about 1.4 estimated), so it comes last, and only with option C, if the owner decides so.
+4. **Later, separate designs:** option A for TrueHD and MLP, option C, and the CLI's file-level parallelism.
+
+## Expected gains
+
+### The prototype
+
+- **What it is:** a scratch program outside the repository (in the session's scratchpad, not committed), built against `origin/main` at b656c90, using the public API only. A wrapper `IDecoder` registered through `Analyzer`'s decoder constructor opens W real stream decoders (one per worker) and hands each frame, copied, to the thread pool with W tasks at most at once (`ConcurrentExclusiveSchedulerPair`); results are committed in stream order on the parsing thread, with each frame's findings, work and PCM replayed there. For FLAC it copies the lent planes and gives each worker the frame's copy; for FLAC and WavPack it buffers the PCM and computes an MD5 over the canonical bytes at the commit, serially, to stand for the stream-order checksum (their workers still compute their own, so the parallel figures carry that work twice and are, if anything, low). Batches of at least 16,384 samples over all channels.
+- **What it is not:** the contract above. A decorator cannot attribute a frame's exception to its frame or replay the budget, so it reserved the per-sample charge at the hand-off and returned the parser's sample count there. It ignores Monkey's Audio's interim mode (no benchmark file uses it).
+- **Identity:** its reports equaled the serial ones (JSON) for every benchmark file it timed, and for 108 of 113 Monkey's Audio fixtures and 107 of 114 FLAC fixtures (with one frame a batch); every one that differed is damaged or has an MD5 the wrapper treats otherwise, and the Monkey's Audio five are the case the design answers in [A frame that throws](#a-frame-that-throws): a frame's `InvalidDataException`, surfacing at a later call or in `Finish`, became `decode.failed`. WavPack's fixtures were not compared, since the wrapper does not compute WavPack's MD5 in its own layout; the reports of the WavPack benchmark files, which the comparison covered, were equal.
+
+### Measured
+
+- **Machine and method:** the four-vCPU Intel Xeon at 2.8 GHz of the speed passes, Linux 6.18, .NET 10.0.401, Release, JIT with the CLI's runtime settings (`TieredPGO` off, call counting delay 20 ms). The exclusive machine lock was held and the one-minute load average was under 1.5 at each file's start. In one process per file: one warm-up of each configuration, then three rounds, each running every configuration once; the minimum wall time of the three. "None" is the analysis without decoding, "serial" the real decoders, "W" the wrapper with W workers. In-process times have no runtime start, so they are about 0.1 to 0.25 s below the CLI's.
+
+Minimum wall time in seconds, first run (all configurations of a file in the same rounds):
+
+| File | Frames | None | Serial | W = 1 | W = 2 | W = 3 | W = 4 | Best speedup | CPU at W = 4 / serial |
+|---|---|---|---|---|---|---|---|---|---|
+| Monkey's Audio `-c3000`, 16-bit | 180 | 0.10 | 3.29 | 2.86 | 1.87 | 1.29 | 1.09 | 3.0 (W = 4) | 1.21 |
+| Monkey's Audio `-c4000`, 16-bit | 45 | 0.10 | 4.78 | 4.65 | 2.87 | 1.88 | 1.44 | 3.3 (W = 4) | 1.16 |
+| Monkey's Audio `-c5000`, 16-bit | 12 | 0.09 | 9.60 | 9.80 | 4.89 | 3.79 | 2.70 | 3.6 (W = 4) | 0.99 |
+| Monkey's Audio `-c4000`, 24-bit/96 kHz | 98 | 0.33 | 11.21 | 10.52 | 5.62 | 3.75 | 3.03 | 3.7 (W = 4) | 1.02 |
+| WavPack default, 16-bit | 1,200 blocks | 0.07 | 1.41 | 1.47 | 0.79 | 0.63 | 0.73 | 2.2 (W = 3) | 1.42 |
+| WavPack `-hh`, 16-bit | 600 blocks | 0.07 | 2.30 | 2.34 | 1.18 | 0.87 | 0.89 | 2.6 (W = 3) | 1.29 |
+| WavPack `-hh`, 24-bit/96 kHz | 1,200 blocks | 0.19 | 7.40 | 7.63 | 3.93 | 2.57 | 2.31 | 3.2 (W = 4) | 1.16 |
+| FLAC -5, 16-bit | 3,230 | 0.23 | 0.66 | 0.52 | 0.56 | 0.58 | 0.55 | 1.25 (W = 1) | 1.82 |
+| FLAC -8, 24-bit/96 kHz | 7,032 | 0.50 | 1.50 | 1.46 | 1.36 | 1.35 | 1.39 | 1.1 (W = 3) | 2.06 |
+
+- **The reports** of every configuration equaled the serial report for all nine files (JSON, 36 comparisons).
+- **Monkey's Audio gains 3 to 3.7 times on four workers**, as the speed pass expected, and the CPU time stays within about 20% of the serial run's: the frames are large and the commit has nothing to do. The 16-bit insane file shows the granularity: 12 frames, 3 rounds on four workers (2.70 s), 4 rounds on three (3.79 s).
+- **WavPack gains 2.2 to 3.2 times,** and at 16 bits four workers are slower than three: the parsing thread, which parses, copies and hashes, is the fifth busy thread on four cores. The prototype computes WavPack's MD5 twice (on the workers, in the decoders it wraps, and at the commit) and copies every block's PCM, which the design does not; its CPU overhead (16 to 42%) is mostly that.
+- **FLAC gains 1.1 to 1.25 times,** below the speed pass's estimate of 1.4. The parsing thread does the walk, a copy of every frame's planes and of its PCM, and the MD5, and the workers hash a second time; the analysis without decoding (the walk) is already a third of the serial run. The design's FLAC (no second hash, planes lent from a pool, no PCM copy where no sink takes it) should come closer to the estimate, which stays unconfirmed; option C is what would move FLAC further.
+- **One worker** (W = 1, the pipeline of option A for these formats) gains nothing for Monkey's Audio and WavPack, where the parsing thread has almost nothing to overlap, and 2 to 25% for FLAC.
+- **A second run** of five of the files (same method) read Monkey's Audio `-c4000` 4.72 serial and 1.43 at W = 4, `-c5000` 9.10 and 2.76, WavPack default 1.49 and 0.66 (W = 3), `-hh` 16-bit 2.09 and 0.80 (W = 3), `-hh` 24-bit 7.50 and 2.44 (W = 4): the speedups agree within about 10%. FLAC in a third run: -5 0.62 serial, 0.54 at W = 4; -8 1.62 serial, 1.38 at W = 3 with the parsing thread helping.
+
+**The parsing thread helping.** A variant in which the parsing thread, waiting for the oldest frame, decodes the oldest batch no worker has started (three workers plus that thread), in the same rounds as the second run:
+
+| File | W = 3 | W = 4 | Three workers and the parsing thread helping |
+|---|---|---|---|
+| Monkey's Audio `-c4000`, 16-bit | 1.72 | 1.43 | 1.28 |
+| Monkey's Audio `-c5000`, 16-bit | 3.60 | 2.76 | 2.93 |
+| WavPack default, 16-bit | 0.66 | 0.75 | 0.70 |
+| WavPack `-hh`, 16-bit | 0.80 | 0.83 | 0.85 |
+| WavPack `-hh`, 24-bit/96 kHz | 2.57 | 2.44 | 2.58 |
+
+- The helping variant is the fastest on one file and within about 7% of the better of three and four workers on the others: where the parsing thread has serial work (WavPack), it helps less, and where it would wait (Monkey's Audio), it decodes. That is why the design counts the parsing thread in the degree (see [The degree of parallelism](#the-degree-of-parallelism)).
+- **A race the prototype had** shows why `DeclareOutput` belongs to the commit: with the helping thread, a worker could decode a later batch before an earlier one, and the wrapper declared the stream's output from the batch in which a worker first wrote; one run in about two decoded FLAC with `decode.failed` (a `NullReferenceException` at the commit) until the format was kept per stream. In the design the worker never declares output, and the commit declares it before the first block in stream order.
+
+## Open decisions
+
+1. **Parallel decoding on by default?**
+   - (a) The library stays serial unless `MaxParallelism` is set; the CLI with `--verify` and the GUI's "Verify Audio" set it (the degrees above).
+   - (b) The library decodes in parallel by default too.
+   - (c) Off everywhere until a front-end option asks for it.
+   - **Recommendation: (a).** A library that starts threads unasked surprises a caller who runs its own parallelism (a server, the GUI's own list); the two front ends know their situation, and the report is the same either way.
+2. **The CLI's default degree with `--verify`.**
+   - (a) `Environment.ProcessorCount`, at most 8 (on four cores: three workers and the parsing thread helping).
+   - (b) `Environment.ProcessorCount`, unlimited.
+   - (c) A fixed 4.
+   - **Recommendation: (a).** On four cores it was within about 7% of the best fixed number of workers for every file measured. The gains flatten where the parsing thread and the frame count bind (FLAC, Monkey's Audio at insane), and memory grows with the window; the cap of 8 is to be confirmed on a machine with more cores, which this design did not have.
+3. **A CLI option for the degree** (such as `--decode-threads N`, 1 for serial).
+   - (a) Yes, documented in `docs/cli.md`; it makes benchmarks and bug reports reproducible.
+   - (b) No; the default only.
+   - **Recommendation: (a).** It is a front-end option, not a setting below it, so it fits the plan's rule.
+4. **May `--verify` output differ between degrees in fields that only reflect timing?**
+   - (a) No: byte-identical, and no report field may depend on timing (none does today).
+   - (b) Allow timing-only fields (none exist) and exclude them from the match tests.
+   - **Recommendation: (a).** The match tests stay a byte comparison, and a "decoded in N ms" field, if wanted later, would go to the CLI's standard error, not into the report.
+5. **The memory bound of the frames in flight.**
+   - (a) 64 MiB (the lending limit's figure), with larger frames inline.
+   - (b) Scaled with the degree (16 MiB a worker).
+   - **Recommendation: (a)**, revisited if the first pull request measures a loss on the 24-bit insane files at a degree of 8.
+6. **The CLI's file-level parallelism** (several files at once, with output in input order).
+   - (a) A design of its own after this rollout.
+   - (b) In this design's scope.
+   - **Recommendation: (a).** It helps a folder of small files, which frame-level parallelism cannot, but it changes the CLI's output path and needs its own memory bound; the two compose (the degree of each analysis then shrinks).
+7. **FLAC in B.** The prototype gained 1.1 to 1.25 times, the estimate for the design is about 1.4, and FLAC alone needs the plane-set pool.
+   - (a) FLAC as step 3 of this rollout, on B alone.
+   - (b) FLAC together with option C (the commit on a thread of its own, about 2 times estimated for FLAC -5), after a prototype of C on the B pipeline.
+   - (c) FLAC stays serial.
+   - **Recommendation: (b).** B alone buys FLAC little for the pool's complexity; with C the walk becomes the bound, and the commit as one method in stream order is what C moves, so B leaves it ready.
+
+## Unverified and estimates
+
+- The "Bound" column of [What stays serial](#what-stays-serial) and the CI cost are estimates from profile shares, not measurements.
+- The behavior of a blocking wait in .NET 10's single-threaded browser runtime (see [Without threads](#without-threads)).
+- Degrees above 4: this machine has four vCPUs, so the scaling past 4 and the default cap of 8 are not measured.
+- The batch size of 2^16 samples is the prototype's order of magnitude (it used 16,384), not a tuned figure.
+- The prototype ran the real decoders, but not the contract above: the host's replay, the plane-set pool and the redo of Monkey's Audio are designed here and not tried.
