@@ -1,6 +1,18 @@
 # Detection pre-check: the start of the data before the searches
 
-Status: draft for the project lead, not approved; nothing of it is built. Revised after an independent review: the measurements were redone in one batch, with prototypes rebuilt from this description (the first round's were deleted), on `main` at b656c90. Estimates are marked as estimates.
+Status: recorded, not to be built. The project lead decided on 2026-10-26 to build neither step, for the reasons in [Decision](#decision); the design and its measurements stay as a record for when detection becomes a bottleneck. It was revised after two independent reviews; the measurements were redone in one batch, with prototypes rebuilt from this description, on `main` at b656c90. Estimates are marked as estimates.
+
+## Decision
+
+- **Neither reuse nor the pre-check is built.** The project lead decided so on 2026-10-26.
+- **Why the gains are small in practice:**
+  - Detection costs under 2 ms a file in the NativeAOT build (the 300 short files take about 0.54 s in all), so even the best case saves a few seconds a scan of 10,000 files.
+  - Reuse is off for a file with a trailing ID3v1 or APE tag, which most real MP3 collections carry; on the tagged folder it gained about 4%.
+  - The runs read files from the page cache; a first scan from disk spends a larger share reading, so the share detection saves is smaller still.
+  - The pre-check needs a contract change for every format parser, a checking wrapper, a fuzz mode and a rule, and clears the bar only for lossless container libraries and long Ogg and WAV files, which are already quick to detect.
+- **Where the effort goes instead:** parallel decoding ([parallel-decoding.md](parallel-decoding.md)), which shortens the waits users notice (`--verify` of large Monkey's Audio and WavPack files).
+- **If detection ever matters for tagged libraries:** the better path is likely reuse that copes with trailing tags rather than the pre-check; it would need its own measurement first.
+- The open decisions below were not taken; they stay as the design's record.
 
 ## Summary
 
