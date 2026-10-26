@@ -1,6 +1,6 @@
 # Third-party notices
 
-Encspect is released under the [MIT License](LICENSE). The published builds, the command line tool `encspect` and the GUI `encspect-gui`, are self-contained single files that carry the components below. This file is shipped with each build and shown by the GUI's About window.
+Encspect is released under the [MIT License](LICENSE). The published builds, the command line tool `encspect` (a native executable, compiled ahead of time) and the GUI `encspect-gui` (a self-contained single file), carry the components below. This file is shipped with each build and shown by the GUI's About window.
 
 Each text below is copied from a file, never written by hand; `scripts/release/make_notices.py` regenerates this file and the release workflow fails when it differs:
 

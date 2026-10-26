@@ -1,6 +1,6 @@
 name: Release
 
-# A pushed version tag (vX.Y.Z) builds the self-contained CLI and GUI for the six targets of CI's full matrix, each on
+# A pushed version tag (vX.Y.Z) builds the NativeAOT CLI and the self-contained GUI for the six targets of CI's full matrix, each on
 # a runner of its own platform, runs the same self-checks CI runs on them, packages them and publishes a GitHub release
 # with the notes of docs/releases/<version>.md. The tag must equal v plus the Version in Directory.Build.props and be
 # on main. A manual run (from main only) takes the tag as input, or derives v plus the Version when the input is empty:
@@ -184,8 +184,15 @@ jobs:
         run: dotnet restore
 
       # The release is built from the tagged sources on the runner of its own platform, so the runs below execute the real binaries.
-      - name: Publish the self-contained CLI
-        run: dotnet publish src/Encspect.Cli --configuration Release --runtime ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true --output publish/${{ matrix.rid }}
+      # The CLI is a NativeAOT executable, which cannot be cross-compiled between operating systems, hence a runner per platform.
+      - name: Install the NativeAOT toolchain
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang zlib1g-dev
+
+      - name: Publish the NativeAOT CLI
+        run: dotnet publish src/Encspect.Cli --configuration Release --runtime ${{ matrix.rid }} -p:PublishAot=true --output publish/${{ matrix.rid }}
 
       - name: Run the published CLI
         shell: bash
@@ -194,6 +201,15 @@ jobs:
           grep -q 'LAME 3.100' "$RUNNER_TEMP/out.csv"
           publish/${{ matrix.rid }}/encspect --version | tee "$RUNNER_TEMP/version.txt"
           grep -qE "^encspect $VERSION(\+[0-9a-f]+)?\$" "$RUNNER_TEMP/version.txt"
+
+      # A NativeAOT executable links the C library of the machine that built it, so the glibc it needs is the image's, not the 2.27
+      # of the runtime pack that the self-contained GUI carries. docs/releases/package-readme.md names 2.34; a build that needs more fails here.
+      - name: Check the glibc the CLI needs
+        if: runner.os == 'Linux'
+        run: |
+          highest=$(objdump -T publish/${{ matrix.rid }}/encspect | grep -o 'GLIBC_[0-9.]*' | sort -Vu | tail -1)
+          echo "The CLI needs $highest"
+          test "$(printf '%s\n' "$highest" GLIBC_2.34 | sort -V | tail -1)" = GLIBC_2.34
 
       # A runner has no display to open a window on, so the published GUI runs its self-check: it loads Skia's and
       # HarfBuzz's native libraries and the platform backend's (ANGLE on Windows, Avalonia.Native on macOS) from the

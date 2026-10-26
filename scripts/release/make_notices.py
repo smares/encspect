@@ -204,7 +204,7 @@ def build(packages, version_of, runtime_deps):
     a = out.append
     a(f"""# Third-party notices
 
-Encspect is released under the [MIT License](LICENSE). The published builds, the command line tool `encspect` and the GUI `encspect-gui`, are self-contained single files that carry the components below. This file is shipped with each build and shown by the GUI's About window.
+Encspect is released under the [MIT License](LICENSE). The published builds, the command line tool `encspect` (a native executable, compiled ahead of time) and the GUI `encspect-gui` (a self-contained single file), carry the components below. This file is shipped with each build and shown by the GUI's About window.
 
 Each text below is copied from a file, never written by hand; `scripts/release/make_notices.py` regenerates this file and the release workflow fails when it differs:
 
@@ -341,7 +341,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--packages", default=os.environ.get("NUGET_PACKAGES") or os.path.expanduser("~/.nuget/packages"))
     parser.add_argument("--assets", default=str(ROOT / "src" / "Encspect.Gui" / "obj" / "project.assets.json"))
-    parser.add_argument("--runtime-deps", help="encspect.deps.json of the self-contained CLI build")
+    parser.add_argument("--runtime-deps", help="encspect.deps.json of the CLI publish (it names the runtime pack the NativeAOT build compiled in)")
     parser.add_argument("--check", action="store_true", help="fail when THIRD-PARTY-NOTICES.md differs")
     parser.add_argument("--self-test", action="store_true", help="test the check for packages the notices do not cover")
     parser.add_argument("--fetch", action="store_true", help="download the licensors' license files into scripts/release/licenses")

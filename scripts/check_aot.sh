@@ -1,26 +1,46 @@
 #!/usr/bin/env bash
-# Publishes the CLI with NativeAOT and checks that the binary starts and gives the same CSV report, with decoding, as the framework-dependent
-# build for every tenth fixture. A local check, not part of CI: the whole run takes about three minutes and needs the platform's native toolchain
-# (clang and the linker, see https://learn.microsoft.com/dotnet/core/deploying/native-aot/).
-#   scripts/check_aot.sh [output directory]
+# Checks that the NativeAOT build of the CLI reports like the JIT build: both analyze all of tests/fixtures in one process each with
+# `--json --verify`, and the two reports must be byte-identical but for the tool version line. CI runs it on the CLI it published
+# (-p); without -p it publishes the NativeAOT CLI for this platform first, which needs the platform's native toolchain (clang and the
+# linker, see https://learn.microsoft.com/dotnet/core/deploying/native-aot/). A local run takes about three minutes.
+#   scripts/check_aot.sh [-p published/encspect] [output directory]
 set -euo pipefail
+
+published=""
+if [ "${1:-}" = "-p" ]; then
+    published="$2"
+    shift 2
+fi
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 out="${1:-$(mktemp -d)}"
+mkdir -p "$out"
 
 dotnet build "$root/src/Encspect.Cli" -c Release -o "$out/jit" > /dev/null
-dotnet publish "$root/src/Encspect.Cli" -c Release -p:PublishAot=true -o "$out/aot" > /dev/null
-"$out/aot/encspect" --version
+if [ -z "$published" ]; then
+    dotnet publish "$root/src/Encspect.Cli" -c Release -p:PublishAot=true -o "$out/aot" > /dev/null
+    published="$out/aot/encspect"
+fi
+"$published" --version
 
-checked=0
-while IFS= read -r fixture; do
-    "$out/jit/encspect" --csv --verify "$fixture" > "$out/jit.csv" 2>&1 || true
-    "$out/aot/encspect" --csv --verify "$fixture" > "$out/aot.csv" 2>&1 || true
-    if ! cmp -s "$out/jit.csv" "$out/aot.csv"; then
-        echo "differs: $fixture" >&2
-        diff "$out/jit.csv" "$out/aot.csv" | head -5 >&2
-        exit 1
-    fi
-    checked=$((checked + 1))
-done < <(find "$root/tests/fixtures" -type f ! -name '*.json' ! -name '*.md' ! -name '*.txt' ! -name '*.py' | sort | awk 'NR % 10 == 1')
-echo "NativeAOT build in $out/aot starts and reports like the JIT build on $checked fixtures"
+# The tool version line is the only line allowed to differ, so a build from another commit still compares.
+normalize() {
+    sed 's/^\( *"version": "\).*"$/\1"/'
+}
+
+cd "$root"
+# A report with findings gives a nonzero exit code, so the codes are compared instead of ignored.
+jit_status=0
+aot_status=0
+dotnet "$out/jit/encspect.dll" --json --verify tests/fixtures | normalize > "$out/jit.json" || jit_status=${PIPESTATUS[0]}
+"$published" --json --verify tests/fixtures | normalize > "$out/aot.json" || aot_status=${PIPESTATUS[0]}
+if [ "$jit_status" != "$aot_status" ]; then
+    echo "the exit codes differ: JIT $jit_status, NativeAOT $aot_status" >&2
+    exit 1
+fi
+if ! cmp -s "$out/jit.json" "$out/aot.json"; then
+    echo "the NativeAOT report differs from the JIT report:" >&2
+    diff "$out/jit.json" "$out/aot.json" | head -20 >&2
+    exit 1
+fi
+echo "NativeAOT CLI ($published) reports like the JIT build on $(grep -c '^    "source":' "$out/jit.json") inputs"

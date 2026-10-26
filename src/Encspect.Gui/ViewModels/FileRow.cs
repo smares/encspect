@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Encspect.Core;
 
 namespace Encspect.Gui.ViewModels;
@@ -10,7 +11,9 @@ public enum FileState
 }
 
 // One file in the list. The typed properties (Duration, Bitrate, SampleRate, the finding counts)
-// are what columns sort by; the *Text properties are what they show.
+// are what columns sort by; the *Text properties are what they show. The grid reads the sort figures
+// by property name (SortMemberPath), which is reflection, so a trimmed or ahead-of-time compiled build keeps them.
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 public sealed class FileRow : ObservableObject
 {
     private const long Cap = (1 << 20) - 1;

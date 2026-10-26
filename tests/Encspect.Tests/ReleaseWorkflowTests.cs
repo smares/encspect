@@ -231,7 +231,9 @@ public sealed class ReleaseWorkflowTests
 
         foreach (string name in new[]
         {
-            "Publish the self-contained CLI",
+            "Install the NativeAOT toolchain",
+            "Publish the NativeAOT CLI",
+            "Check the glibc the CLI needs",
             "Publish the self-contained GUI",
             "Run the published GUI's self-check",
             "Run the published GUI's self-check on Wayland and X11",
