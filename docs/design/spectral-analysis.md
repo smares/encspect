@@ -1,17 +1,17 @@
 # Measurements of decoded audio: spectrum, cutoff, levels and loudness
 
-Status: draft for the project lead, 2026-10-26. Nothing is built. A throwaway prototype outside the repository measured the costs and the numerical behavior (see [Performance and budget](#performance-and-budget) and [Determinism](#determinism)); nothing of it is committed. The decisions are under [Open decisions](#open-decisions), and the claims no source read for this design confirms are marked **unverified**; figures worked out rather than measured are marked **estimate**.
+Status: draft for the project lead, 2026-10-26, revised the same day after an independent review. Nothing is built. Two throwaway prototypes outside the repository measured the costs and the numerical behavior (see [Performance and budget](#performance-and-budget) and [Determinism](#determinism)); the second was written for the review and replaced the first's cutoff method and its table; nothing of either is committed. The decisions are under [Open decisions](#open-decisions), and the claims that no source read for this design confirms are marked **unverified**; figures worked out rather than measured are marked **estimate**. The public specifications were read for the revision (ITU-R BS.1770-5, EBU R 128, EBU Tech 3341 and 3342; see [Sources](#sources)).
 
 - It designs the "host-side PCM analyses" that [decoders.md](decoders.md) leaves for later ("The PCM path", "Host-side PCM analyses, later"): waveform, spectrogram and lowpass detection, and the level and loudness figures that the same pass can give.
-- It keeps the decoder contract as approved and built: no parser, decoder or session changes for the measurements themselves.
-- It fits the approved [parallel decoding](parallel-decoding.md) design (deferred), which calls the sink on the analysis thread in stream order.
-- One name for the concept from here on: **measurements**. A measurement is a figure the host computes from decoded PCM; decoders.md's "host-side PCM analyses" are these, and its section is renamed with the first pull request (decision 2).
+- It keeps the decoder contract as approved and built: no parser, decoder or session changes for the measurements themselves. The PCM route of WAV, Wave64 and AIFF (step 3) adds a decoder, one record (`PcmCoding`) and one property of `DecodeSetup` to `Core.Abstractions`; the sink, the session and the router do not change.
+- It fits the approved [parallel decoding](parallel-decoding.md) design (deferred, still approved and ready to build), which calls the sink on the analysis thread in stream order.
+- One name for the concept from here on: **measurements**. A measurement is a figure the host computes from decoded PCM; decoders.md's "host-side PCM analyses" are these, and its section is renamed with the first pull request (decision 2). Its benchmark section "The measurements", which clashed with the name, is already renamed "The work-unit timings". The sample peak, RMS, DC offset, clipping, digital silence and bit-depth figures are one group, the **levels** (`--measure levels`), a name that does not collide with `NodeKind.Statistics` and `--hide statistics`. A figure the file states about itself (the BWF `bext` loudness values, ReplayGain, iTunNORM, USAC `loudnessInfo`) is **stated**; one this design computes is **measured**, and the two are never mixed under one name in a sentence (see [Descriptions, topics and articles](#descriptions-topics-and-articles)).
 
 ## Scope
 
 - **In:**
   - the measurement framework on the PCM path: options, the host's fan-out from the sink, the result on `StreamInfo`, the writers, the budget, the exception boundary;
-  - the measurements: the average spectrum and the spectral cutoff, the spectrogram and waveform grids, sample statistics (sample peak, RMS, DC offset, clipping runs, digital silence, bit-depth usage), loudness and loudness range (ITU-R BS.1770, EBU R 128), true peak;
+  - the measurements: the average spectrum and the spectral cutoff, the spectrogram and waveform grids, the levels (sample peak, RMS, DC offset, clipping runs, digital silence, bit-depth usage), loudness and loudness range (ITU-R BS.1770, EBU R 128), true peak;
   - a PCM route for WAV, Wave64 and AIFF, which have no decoder;
   - the CLI and GUI behavior, fixtures, cross-checks and the rollout.
 - **Out, and why:**
@@ -23,50 +23,50 @@ Status: draft for the project lead, 2026-10-26. Nothing is built. A throwaway pr
 ## The design in short
 
 - The host's sink, which every decoder writes its PCM to (`DecodeContext.DeclareOutput`), forwards each block to a measurer of the stream as well as to the front end's sink. The measurer is host code; parsers and decoders do not change.
-- Measuring is asked for in `DecodeOptions.Measure`, so one decode pass serves verification and measurement: measuring implies decoding, and decoding always compares the checksums over decoded audio.
+- Measuring is asked for in `DecodeOptions.Measure`, so one decode pass serves verification and measurement: measuring implies decoding, and decoding always compares the checksums over decoded audio. Measuring changes no verification and no `decode.*` finding.
 - Off by default everywhere: the library measures only when asked; the CLI with `--measure`; the GUI in the detail window when the user decodes; the file list never.
-- The result is a typed record on the stream, `StreamInfo.Measurements`, attached by the host after the format parser returns, as decoders.md fixes it. It adds figures, never nodes, so the tree is the same with or without measuring.
-- Reports stay byte-identical on every platform: double-precision arithmetic with no fused multiply-add, own trigonometric tables and logarithm instead of the platform's math library, fixed summation order, element-wise vectors only. The prototype measured bit-identical spectra under JIT and NativeAOT, x86-64-v2 and v3, and with every vector extension turned off.
-- Measurements report figures with units and their basis, never a verdict: "spectral cutoff 16,630 Hz, a step of 54.9 dB, in 644 of 644 frames with signal", not "lossy source".
-- A work budget of their own, counted like the decoders' and as large, bounds their time; their memory is bounded per stream whatever the stream's length.
-- First step: the framework with the average spectrum, the spectral cutoff and the grids (see [Rollout](#rollout)).
+- The result is a typed record on the stream, `StreamInfo.Measurements`, attached by the host after the format parser returns, as decoders.md fixes it, for every session of a measured analysis, including those that produce no PCM (they carry a status). It adds figures, never nodes, so the tree is the same with or without measuring.
+- Reports stay byte-identical on every platform: double-precision arithmetic with no fused multiply-add, own trigonometric tables, logarithm and power function instead of the platform's math library, fixed summation order, element-wise vectors only, no `*Native` or `*Estimate` API, subnormals flushed. The first prototype measured bit-identical spectra under JIT and NativeAOT, x86-64-v2 and v3, and with every vector extension turned off.
+- Measurements report figures with units and their basis, never a verdict: "spectral cutoff 17,054 Hz, a step of 60.4 dB, in 644 of 644 frames with signal", not "lossy source".
+- A work budget of their own, counted like the decoders' and as large, bounds their time; their memory is bounded per stream whatever the stream's length, and per-channel figures are capped at 32 channels.
+- First step: the framework with the average spectrum, the spectral cutoff and the grids, on the decoders that exist (see [Rollout](#rollout)).
 
 ## Goal and user value
 
 ### What a user learns
 
 - **Spectrogram:** level over time and frequency. It shows a lowpass as a flat ceiling, band-limited sections, inserted segments of another source, noise, hum and tones, clipped passages as vertical streaks, and lossy coders' marks (holes, bands that switch on and off, replicated high bands).
-- **Average spectrum and spectral cutoff:** where the energy of the whole stream ends, with how steep an edge and how consistently over time. This is the prime use case: a lossless file made from a lossy encode keeps the encoder's lowpass, which the prototype shows as a step of 43 to 62 dB within a few hundred hertz, in every frame with signal (see [Lossless files from lossy encodes](#lossless-files-from-lossy-encodes)).
+- **Average spectrum and spectral cutoff:** where the energy of the whole stream ends, with how steep an edge and how consistently over time. This is the prime use case: a lossless file made from a lossy encode keeps the encoder's lowpass, which the second prototype shows as a step of 34 to 69 dB, from the start of the transition to the edge in 130 to 1,260 Hz, in every frame with signal (see [Lossless files from lossy encodes](#lossless-files-from-lossy-encodes)).
 - **Waveform:** the envelope of each channel over time; clipping, silence, fades, gaps and level changes.
-- **Sample statistics:** sample peak, RMS, DC offset, runs of clipped samples, digital silence at the start, the end and in total, and bit-depth usage (low bits that are always zero, as in 16-bit audio padded to 24 bits; float samples that are all 16- or 24-bit values).
+- **Levels:** sample peak, RMS, DC offset, runs of clipped samples, digital silence at the start, the end and in total, and bit-depth usage (low bits that are always zero, as in 16-bit audio padded to 24 bits; float samples that are all 16- or 24-bit values).
 - **Loudness, loudness range and true peak:** the figures of ITU-R BS.1770 and EBU R 128 that mastering and delivery are judged by.
 
 ### Evidence, not verdicts
 
 - The plan's non-goal "quality verdicts" and CLAUDE.md's rules on observations apply to every figure, message and article here.
 - The analyzer reports what it measured and how: a cutoff's frequency, the size of the step, the width of the transition, and the share of frames that show it. It never says "transcoded", "fake", "upsampled" or "lossy source".
-- The measured signature is not unique to lossy coding. The prototype's 16 kHz brickwall filter applied to the lossless source gives the same figures as LAME at 128 kbps (60.6 dB step, 645 of 645 frames; see the table below). Mastering filters, sample rate conversion, old analog sources and deliberate band limits do the same. The `spectral-cutoff` article says so.
-- The absence of a cutoff is no evidence either: LAME 3.100 at `-V 0` and oggenc at `-q 8` leave none in the prototype's input (largest step 2.3 to 2.4 dB).
+- The measured signature is not unique to lossy coding. The prototype's 16 kHz brickwall filter applied to the lossless source gives the same kind of figures as LAME at 128 kbps (a 67.5 dB step in 645 of 645 frames, against 60.4 dB in 644 of 644; see the table below). Mastering filters, sample rate conversion, old analog sources and deliberate band limits do the same. The `spectral-cutoff` article says so.
+- The absence of a cutoff is no evidence either: LAME 3.100 at `-V 0` and oggenc at `-q 8` leave none in the prototype's input (largest step 2.4 dB, the source's own 2.3 dB), and a quiet lossy decode under strong dither can hide one (see [Spectral cutoff](#spectral-cutoff)).
 - Articles may state encoder behavior only as observations backed by committed fixtures, with encoder versions and settings, scoped to "Encspect's test files", and saying that the analyzer does not name an encoder from them (see [Lossless files from lossy encodes](#lossless-files-from-lossy-encodes)).
 
 ### The analyses weighed
 
-| Analysis | What it gives | Cost per sample of a channel (prototype, NativeAOT x86-64-v2) | How it is checked | Step |
+| Analysis | What it gives | Cost per sample of a channel (prototype) | How it is checked | Step |
 | --- | --- | --- | --- | --- |
-| Average spectrum, spectral cutoff | the prime use case | FFT 12.2 ns (4,096 points, hop 2,048, 128-bit vectors) | lossy-derived fixtures against the encoders' stated lowpass; synthetic band-limited noise | 1 |
+| Average spectrum, spectral cutoff | the prime use case | window, FFT and power 11.2 ns (4,096 points, hop 2,048, 128-bit vectors) and the frame counters 1.6 ns for each channel and for the combined spectrum, about 13.6 ns for stereo (second prototype, JIT; the first, NativeAOT, read 12.2 ns for the FFT) | lossy-derived fixtures against the encoders' stated lowpass; synthetic band-limited noise | 1 |
 | Spectrogram and waveform grids | the GUI panels | grid sums on top of the FFT: under 1 ns (**estimate**) | synthetic sweeps and tones at known times | 1 |
-| Sample peak, RMS, DC offset | basic levels | 2.0 ns for all sample statistics together | exact, from integer samples | 2 |
+| Sample peak, RMS, DC offset | basic levels | 2.0 ns for all the levels together (first prototype) | exact, from integer samples | 2 |
 | Clipping runs | runs at the extreme codes | in the 2.0 ns | exact | 2 |
 | Digital silence | leading, trailing and total zero samples | in the 2.0 ns | exact | 2 |
 | Bit-depth usage | padded or reduced depth | in the 2.0 ns | exact | 2 |
-| Loudness, loudness range | BS.1770 integrated loudness, EBU loudness range, maximum momentary and short-term | 4.6 ns (K-weighting and mean square) | EBU test set, libebur128's expectations, FFmpeg's ebur128 | 4 |
-| True peak | BS.1770 Annex 2 | 23.1 ns (12.5 ns in the x86-64-v3 build) | synthetic overs, FFmpeg's ebur128 | 4 |
-| Dynamic range | EBU loudness range covers it | none beyond loudness | as loudness | 4 |
+| Loudness, loudness range | BS.1770 integrated loudness, EBU loudness range, maximum momentary and short-term | 4.6 ns (K-weighting and mean square; first prototype) | EBU test set, libebur128 as a black-box tool, FFmpeg's ebur128 | 5 |
+| True peak | BS.1770 Annex 2 | 23.1 ns (12.5 ns in the x86-64-v3 build; first prototype) | synthetic overs, libebur128 and FFmpeg's ebur128 with their tolerances | 5 |
+| Dynamic range | EBU loudness range covers it | none beyond loudness | as loudness | 5 |
 | Upsampling | the edge of the content below Nyquist | none beyond the spectrum | needs a bandwidth figure the step finder does not give (see [Spectral cutoff](#spectral-cutoff)) | later |
 | Mid/side spectra, holes, replicated bands | lossy coders' finer marks | mid/side from the complex bins, no further FFT (**estimate**: about 1 ns) | needs fixtures that show each mark | later |
 
 - **Why the spectrum first:** it is the prime use case, it needs the FFT, the grids and the determinism rules that everything else reuses, and it is where the risks are (cost, determinism, wording).
-- **Why sample statistics second and small:** they are exact on integer samples, so their fixtures are exact too, and they cost almost nothing; they could also join step 1 (decision 1).
+- **Why the levels second and small:** they are exact on integer samples, so their fixtures are exact too, and they cost almost nothing; they could also join step 1 (decision 1).
 - **Why loudness and true peak later:** they need the BS.1770 filters at every sample rate, the gating, and their own cross-check set; true peak is the most expensive measurement.
 - **Dynamic range:** EBU Tech 3342's loudness range is the standardized figure. The "DR" value of the Pleasurize Music Foundation's meter has no open specification this design found (**unverified**), so it is not offered.
 
@@ -82,12 +82,42 @@ Status: draft for the project lead, 2026-10-26. Nothing is built. A throwaway pr
 
 The samples are the data, so these formats need no reconstruction, only a route from the parser's data chunk to the sink.
 
-- **(a) A "pcm" decoder, recommended.** `Encspect.Formats.Wav.Decoding` gets a decoder with the codec ID `pcm`. The WAV, Wave64 and AIFF parsers start a session with it (`StartDecoding("pcm", setup)`, `DecodeSetup.Format` the stated format, `Configuration` naming byte order, width and coding) and, only while the session `IsDecoding`, read the data chunk in slices of whole sample frames (64 KiB, **estimate** to tune) and hand each as a `CodedFrame`. The decoder unpacks little- and big-endian integers of 8 to 32 bits (8-bit WAV unsigned), 32- and 64-bit floats, and A-law and mu-law (the G.711 tables are format data). It declares no checksum.
+- **(a) A "pcm" decoder, recommended.** `Encspect.Formats.Wav.Decoding` gets a decoder with the codec ID `pcm`, registered in `DefaultParsers.Decoders` next to the others. The WAV, Wave64 and AIFF parsers start a session with it (`StartDecoding("pcm", setup)`) and, only while the session `IsDecoding`, read the data chunk in slices of whole sample frames (64 KiB, **estimate** to tune) and hand each as a `CodedFrame`. The decoder declares no checksum.
   - The AIFF parser names the codec by ID only, so it does not reference the WAV project; parsers never reference each other, and the host routes by ID.
   - Later containers of PCM (MP4 `lpcm`, `sowt`, `twos`; Matroska `A_PCM/*`; CAF) use the same ID.
   - The unpacking code lives in the WAV project's `Decoding` namespace; if a second format project ever needs it as code, it moves to `Core.Abstractions` next to `CanonicalPcm`.
-  - **What changes in reports:** with `--verify`, a PCM stream no longer reports `decode.no-decoder`; its stream gets no `Verification`, since it stores no checksum (a parser attaches a verification only where it declares a checksum, decoding or not, so no report depends on `IsDecoding`, decision 12 of parallel-decoding.md). Without decoding nothing changes: the parser still reads no samples, which `MemoryTests.TheSamplesOfAWaveFileCostNothing` keeps holding.
   - **Work:** `DecodeWork.ForSample` per sample of each channel, as every decoder charges; nothing per tap.
+- **The descriptor.** `DecodeSetup.Format` is a WAVEFORMATEX, which cannot say big-endian, and AIFF's Common Chunk is not a WAVEFORMATEX and cannot be read with the WAV project's code. So the parser states the layout in a neutral record in `Core.Abstractions`, carried by one new property, `DecodeSetup.Pcm` (`Configuration` stays null and `Format` unused by this decoder):
+
+```csharp
+public enum PcmEncoding { SignedInteger, UnsignedInteger, Float, ALaw, MuLaw }
+
+public sealed record PcmCoding
+{
+    public required PcmEncoding Encoding { get; init; }
+
+    public required bool IsBigEndian { get; init; }
+
+    // Bits one sample takes in the data, a whole number of bytes: 8, 16, 24 or 32 for integers, 32 or 64 for floats, 8 for
+    // A-law and mu-law.
+    public required int ContainerBits { get; init; }
+}
+```
+
+- **What the decoder outputs:** integers of 8 to 32 bits as `Integer` blocks of `ContainerBits` (unsigned 8-bit minus 128), 32-bit floats as `Float32`, 64-bit floats as `Float64`, A-law and mu-law expanded to 16-bit `Integer` (the G.711 tables are format data; the scaling to 16 bits is checked against FFmpeg's decoded MD5, **unverified** until then). `DecodeSetup.BitsPerSample` is the output width, so the per-sample charge follows it.
+- **The cases the parsers map:**
+  - WAV: little-endian, or big-endian for RIFX; 8-bit is unsigned, wider integers signed; IEEE float of 32 and 64 bits; A-law and mu-law.
+  - AIFF: big-endian signed integers; AIFF-C `NONE` and `twos` the same; `sowt` little-endian signed; `in24` and `in32` big-endian 24 and 32 bits; `raw ` unsigned 8-bit; `fl32` and `fl64` big-endian floats; `alaw` and `ulaw` (the type table is `AifcTypes.cs`, with its sources).
+  - Valid bits smaller than the container (`wValidBitsPerSample` of 20 in 24 bits; AIFF's sample size of 12 in 16 bits): the decoder outputs the container's value as stored and ignores the valid-bit count, which the parsers keep as a figure of the file. If the file pads at the low end, the bit-depth usage shows the unused low bits. Whether the specifications place the valid bits at the top of the container is **unverified** here (the WAV parser's descriptions do not say, and the AIFF text was not read for this design); fixtures of a 20-in-24 WAV and a 12-bit AIFF, decoded by FFmpeg, settle what a decoder must do.
+  - Integers of 33 bits or more (a WAV container of 40 or 64 bits): `PcmBlock` holds 32-bit integers, so the decoder refuses the setup, `decode.not-possible` (info) and status `NotPossible`; the measurements' record says so too. 64-bit floats stay.
+- **Data that is not PCM stays out.** The parser starts the session only where it reports a PCM stream (`DataChunks.AddStream`, which runs when the data chunk was not handed to a codec parser). A data chunk of a routed codec (by format tag or sub-format GUID), DTS in 16-bit stereo samples, and IEC 61937 bursts, recognized or not, start no `pcm` session, so their bytes are never measured as PCM; their codec parsers' streams have their own decoders, where there is one.
+- **Slices have no node.** A slice is not a unit of the parser's tree. `CodedFrame.NodeName` is the data chunk's node name and `Bytes` the slice, and the decoder raises no finding about a slice (every bit pattern is a sample), so the host never builds a node for one; the session's findings (`decode.limit`, `decode.stopped`) point to the stream.
+- **What changes in reports** (decision 15 gives the alternatives):
+  - the WAV, Wave64 and AIFF parsers start the `pcm` session in every analysis, as TTA's parser starts one to finish it with its tallies, and finish it with an empty list of checksums. The stream then carries a `Verification` with `Decoding` `NotRequested` (decoding off) or `Decoded`, and no checksums, so `IsVerified` stays null and the CSV's `Is Verified` stays empty. JSON gains `verification` for these streams (additive, `schemaVersion` stays 1);
+  - the text output and the GUI leave the "Verified:" line out where a verification declares no checksum, so a WAV file's text does not change;
+  - `--verify` raises no `decode.no-decoder` for these formats, and did not before: their parsers never started a session (decoders.md, "As built in step 3: WAV and AIFF", and [cli.md](../cli.md) were corrected for this). Only the router raises it, for a session whose codec ID has no decoder (TTA);
+  - without decoding nothing is read: the parser still reads no samples, which `MemoryTests.TheSamplesOfAWaveFileCostNothing` keeps holding. The goldens of the WAV, Wave64 and AIFF fixtures gain the `verification` object in step 3.
+- **Tests:** `pcm` joins `DecoderWorkTests` (a case of integers and one of floats, with its time per unit) and the decoder-list assertion of `DecodeRouteTests` (`["flac", "wavpack", "monkeys-audio", "truehd", "mlp", "pcm"]`); a cross-check compares the MD5 of the decoded samples with FFmpeg's for the WAV, AIFF and Wave64 fixtures (`ffmpeg -i f -c:a pcm_<format> -f md5 -`, the format being the canonical layout of the decoder's output), including the 12-bit, 20-in-24, `sowt`, `in24`, `raw `, A-law and mu-law cases.
 - **(b) The host reads the samples itself.** The host would need to know where a WAV file's samples are and how they are laid out, which is the parser's knowledge; it breaks the layering the plan keeps.
 - **(c) No measurement for PCM files.** WAV and AIFF are where many lossless-from-lossy files live, so this loses much of the use case.
 - **Decision 4.**
@@ -100,12 +130,20 @@ The samples are the data, so these formats need no reconstruction, only a route 
 
 ### Channels, rates, widths and DSD
 
-- **Multichannel:** every channel is measured on its own (spectrum, statistics, peaks). The combined spectrum, the spectrogram and the stream's cutoff use the mean power of the channels other than the LFE (`Speaker.LowFrequency`), which is band-limited by design; a stream without a layout (`ChannelLayout` null) uses all channels and says so in its description.
-- **Sample rates:** the FFT size follows the rate so that a frame lasts about 85 to 93 ms and a bin is about 10.8 to 11.7 Hz wide (decision 10): 2,048 points up to 24 kHz, 4,096 up to 48 kHz, 8,192 up to 96 kHz, 16,384 up to 192 kHz, 32,768 above. Cost grows with log N: the prototype's 8,192-point FFT costs 15.6 ns a sample against 12.2 at 4,096.
+- **Multichannel:** every channel is measured on its own (spectrum, levels, peaks). The combined spectrum, the spectrogram and the stream's cutoff use the mean power of the channels other than the LFE (`Speaker.LowFrequency` and `Speaker.LowFrequency2`), which are band-limited by design; a stream without a layout (`ChannelLayout` null) uses all channels and says so in its description.
+- **At most 32 channels are measured.** A WAV header may declare 65,535 channels; measured in full that is about 2 GiB of overlap buffers, 1 GiB of average spectra and about 200 MB of per-channel JSON (**estimate**, from the sizes). The measurer takes the first 32 channels of a block (the combined figures cover those), the record says how many channels the stream has and how many were measured (`Channels`, `ChannelsMeasured`), and `measure.channels-limited` (info) says so. Each stream's state is sized from its format, before anything is allocated, against the analysis's memory bound (see [Memory](#memory)).
+- **Sample rates:** the FFT size follows the rate so that a frame lasts 85 to 170 ms: the smallest power of two that is at least 0.085 s of samples, and at least 1,024 points. At the common rates that is 85 or 93 ms with bins of about 10.8 to 11.7 Hz: 2,048 points at 22.05 and 24 kHz, 4,096 at 44.1 and 48 kHz, 8,192 at 88.2 and 96 kHz, 16,384 at 176.4 and 192 kHz, 32,768 at 352.8 and 384 kHz (and above, where frames get shorter). Others get longer frames: 128 ms at 8, 16 and 32 kHz (1,024, 2,048 and 4,096 points), 93 ms at 11.025 kHz (1,024). The spectrum costs a little more per sample as the size grows (measured, see [Measured](#measured); decision 10).
+- **Rates the measurements do not take:** a rate of 0 Hz (a header that states none) gives status `NotPossible` for the whole record. Below 8,000 Hz the spectrum and the grids, the levels and the true peak are measured, the spectral cutoff is not searched and loudness is `NotPossible` ("needs a sample rate of 8,000 Hz or more", see [Loudness and loudness range](#loudness-and-loudness-range)). Fixtures at 2 kHz, 8 kHz and 0 Hz hold these edges.
 - **192 kHz and the grid:** the spectrogram's 512 rows cover 0 Hz to Nyquist, 187.5 Hz a row at 192 kHz. The GUI can show the range up to 24 kHz from the same rows; finer rows above need a later option.
-- **Widths:** integers of 1 to 32 bits are scaled by 2^-(bits - 1) to full scale ±1; floats are taken as they are. Statistics on integer samples (peaks, DC, clipping, silence, bit usage) are computed on the integers, exactly.
-- **Floats:** samples above full scale are counted ("Samples Over Full Scale"), not clipped. Non-finite samples (NaN, infinities) are counted, measured as 0, and raise `measure.non-finite-samples` (decision 6).
-- **DSD:** WavPack's DSD decoder declares no PCM output. The stream's measurements say "not measured: the stream decodes to DSD" (status `NotPossible`), without a finding.
+- **Widths:** integers of 1 to 32 bits are scaled by 2^-(bits - 1) to full scale ±1; floats are taken as they are. The levels on integer samples (peaks, DC, clipping, silence, bit usage) are computed on the integers, exactly.
+- **Floats:** samples above full scale are counted ("Samples Over Full Scale"), not clipped. Non-finite samples (NaN, infinities) are counted, measured as 0, and raise `measure.non-finite-samples` (decision 6). **Large finite floats** are clamped to ±1,024 times full scale (+60.2 dB) before anything else, because 1e300 would overflow to infinity and then NaN in the butterflies and filters; a clamped sample counts as over full scale, and the record says some were clamped (`HasClampedSamples`), so a peak that reads +60.2 dBFS is the clamp, not the file.
+- **Gaps:** a decoder that lost frames makes the next block's `Position` jump (the parser then sets `CodedFrame.FollowsGap`). The measurer measures the samples it gets and handles the jump so that nothing spans it:
+  - no FFT frame, K-weighting state, gating block or true-peak history crosses a gap: the overlap is dropped and the filter states are reset at the first sample after it, and gating blocks that would span it are not formed;
+  - the grids follow the stream's positions, not the count of measured samples: the columns a gap covers hold no data (a cell of 0 is "no data", see [dB scale and quantization](#db-scale-and-quantization)), and a gap of any size is a few arithmetic steps, not a loop over its hops (a crafted position of 2^40 costs the same as a small one);
+  - runs do not span it: a clipping run ends at the gap, the trailing digital silence starts again after it, and the samples inside it are neither silent nor clipped but unknown; `Samples` counts the samples measured and `LostSamples` the positions skipped (`Gaps` their number);
+  - a block whose `Position` is below the next expected one is a decoder bug: the measurer ends with `measure.failed`.
+- **Format changes:** `PcmBlock` carries its own channel count and sample format, and the contract says only that `DeclareOutput` is called once, so nothing in the types stops a decoder from writing a block that differs from the declared output. The review suspected TrueHD, whose `Write` takes `m = LastMatrixChannel + 1` from the state at every access unit (`Decoding/StreamDecoder.cs`, line 472, after the declaration at line 483). It is guarded today: lines 156 to 158 compare that same substream's channel count with the count the stream was opened with and throw `InvalidDataException` (reported as `decode.frame-invalid`, the unit not decoded, so the next block's position jumps and the gap rules apply) before `Write` runs. So no decoder of today changes format; the measurer checks anyway, as a guard for the contract and for the decoders to come: it compares every block's channel count and sample format with the declared output, and on a difference ends with status `FormatChanged` and the info `measure.format-changed`, the figures covering what came before. Verification and the front end's sink are not affected.
+- **DSD:** WavPack's DSD decoder declares no PCM output. The stream's measurements say "not measured: the stream decodes to DSD" (status `NotPossible`), without a finding (see [Attaching the result](#on-the-decoder-hook)).
 
 ### Lossy formats later
 
@@ -122,9 +160,13 @@ Nothing here blocks lossy decoders:
 ### On the decoder hook
 
 - `DecodeRun.OpenSink` creates, for each stream whose session declares output, the front end's target (as now) and, where `DecodeOptions.Measure` is set, a `StreamMeasurer` (internal to `Encspect.Host`). `GuardedSink.Write` passes each block to both; `EndByHost` ends both.
-- **The decoder contract stays:** the sink never throws to the decoder. The measurer catches its own exceptions (see [Cancellation and the exception boundary](#cancellation-and-the-exception-boundary)); it does not throw on cancellation either: it stops working and leaves the throw to the decoder's next check of its token, which is linked to the analysis's.
+- **The decoder contract stays:** the sink never throws to the decoder. The measurer catches its own exceptions (see [Cancellation and the exception boundary](#cancellation-and-the-exception-boundary)); it does not throw on cancellation either: it stops working, remembers that it did, and leaves the throw to the decoder's next check of its token, which is linked to the analysis's.
 - **No parser changes** beyond the PCM route of WAV, Wave64 and AIFF, which is a parser handing frames to a decoder as every decoded format does.
-- **Attaching the result:** once the format parser returns, the host gives each stream whose first node is a session's `DecodeSetup.Stream` that session's `StreamMeasurements`, as decoders.md fixes it and as it sets `NodePaths`. A routed codec's stream (FLAC in Ogg) is matched the same way.
+- **Attaching the result:** the measurer is created at `OpenSink`, which only a session that declares output reaches, so the record cannot hang on the sink. The host attaches one `StreamMeasurements` to **every session of a measured analysis**, when the session closes, as decoders.md fixes it and as it sets `NodePaths`: the stream whose first node is the session's `DecodeSetup.Stream` gets it (a routed codec's stream, FLAC in Ogg, is matched the same way). Its content comes from what the session did:
+  - a measurer that ran: its figures and status (`Complete`, `Stopped`, `FormatChanged`, `Failed`);
+  - a session with `DecodeStatus.NoDecoder` (TTA), `NotPossible` (a refused configuration), or one whose decoder never declared output (WavPack's DSD): status `NotPossible` with the reason as text ("no decoder for TTA", "the stream decodes to DSD"), no finding of its own;
+  - a session that decoded nothing because the stream stopped or the budget ran out before the first block: status `Stopped`, no figures.
+  - A stream without any session (MPEG audio, AAC and the other formats whose parsers start none) gets no record at all, as it has no `Verification`. The front ends read that absence as "no decoder" (see [GUI](#gui)).
 - **Order:** the measurer gets the block before the front end's sink. Both see the same span, valid only during the call; the measurer copies what it keeps (the window's overlap).
 
 ### One decode pass with verification
@@ -132,6 +174,7 @@ Nothing here blocks lossy decoders:
 - Measuring implies decoding with the same `DecodeOptions` (stop, budget, sink). The checksums over decoded audio are compared as with `--verify`, at a cost that is small next to the measurements (FLAC's MD5 is about 28% of its decoding step, decoders.md "As built: the second speed pass").
 - So `--measure` implies `--verify`, and a measured stream always has its verdict. A decoder option to skip the checksums would change the decoder contract for a small gain; it is not proposed (decision 3).
 - `decode.limit` and `decode.stopped` end the measurements with the decoding: the measurements then cover the samples decoded, status `Stopped`, and the text says how much was measured.
+- **Nothing the decoder or the verification does depends on measuring.** The checksums compared, `IsVerified` and every `decode.*` finding are equal with and without `--measure`, also when `measure.limit` stops the measurements first, because the measurer's budget is counted apart from the decoders' (decision 5) and the measurer never throws. A test holds it for every decoded fixture (see [Tests](#tests)).
 
 ### Options in the host API
 
@@ -147,8 +190,10 @@ public sealed class DecodeOptions
 
 public sealed class MeasureOptions
 {
-    // Which measurements run; the default is every one the library has.
-    public Measurements Include { get; init; } = Measurements.All;
+    // Which measurements run; null (the default) means every one the library has when the code runs. (An `All` member of the
+    // flags enum would be a constant compiled into the caller, and a caller built against an older library would keep
+    // asking for the kinds that library had.)
+    public MeasurementKinds? Include { get; init; }
 
     // The measurements' work budget in work units, counted apart from the decoders' (see "The work budget"); null for
     // the default. Tests and the fuzzer lower it. An option of the call, not a setting.
@@ -156,54 +201,77 @@ public sealed class MeasureOptions
 }
 
 [Flags]
-public enum Measurements
+public enum MeasurementKinds
 {
     None = 0,
     Spectrum = 1,           // average spectrum, spectral cutoff, spectrogram and waveform grids
-    SampleStatistics = 2,   // peak, RMS, DC offset, clipping runs, digital silence, bit-depth usage
+    Levels = 2,             // peak, RMS, DC offset, clipping runs, digital silence, bit-depth usage
     Loudness = 4,           // BS.1770 integrated loudness, loudness range, maximum momentary and short-term loudness
     TruePeak = 8,
-    All = Spectrum | SampleStatistics | Loudness | TruePeak,
+}
+
+// The kinds the library has, as a property so that it is read when it runs (never a const or a field initializer in a caller).
+public static class MeasurementSets
+{
+    public static MeasurementKinds All => MeasurementKinds.Spectrum | MeasurementKinds.Levels | MeasurementKinds.Loudness | MeasurementKinds.TruePeak;
 }
 ```
 
-- The flags grow with the rollout; `All` is what the library has at the time.
+- The enum is `MeasurementKinds` because `StreamInfo.Measurements` already names the record, and a type of the same name next to a property of that name would read as one thing in two places. `--measure`'s names (`spectrum`, `levels`, `loudness`, `true-peak`) map one to one onto its members.
+- The flags grow with the rollout; `MeasurementSets.All` is what the library has at the time.
 - The grids are always computed with the spectrum (they cost little beyond the FFT) and kept in the report; the JSON writer writes them only when asked (below).
 - No setting, cache or console output below the front ends: all of this is an option of the call ("A library others could use").
 
 ### CLI
 
-- `--measure`: decode, verify and measure every stream with a decoder; `--measure spectrum,levels` picks measurements by name (`spectrum`, `levels` for the sample statistics, `loudness`, `true-peak`).
+- `--measure`: decode, verify and measure every stream with a decoder; `--measure spectrum,levels` picks measurements by name (`spectrum`, `levels`, `loudness`, `true-peak`).
 - `--measure-grids`: also write the spectrogram and waveform grids into JSON (implies `--measure`). Text and CSV never hold them.
-- `--hide measurements` hides the measurement lines of the text tree, as `--hide statistics` does for statistics.
-- **Text:** lines under the stream's first node, after the "Verified:" line:
+- `--hide measurements` hides the measurement lines of the text tree, as `--hide statistics` does, and the `measurements` object of the JSON, as `--hide` leaves sections out of the JSON too (decision 17).
+- **Text:** lines under the stream's first node, after the "Verified:" line. The figure names are those the BWF `bext` chunk already uses for the loudness values it *states* (`Chunks.cs`: "Integrated Loudness", "Loudness Range", "Maximum True Peak Level", "Maximum Momentary Loudness", "Maximum Short-Term Loudness"); the measured ones sit under "Measured:", the stated ones under the `bext` chunk, and both read the same way:
 
 ```
       Verified: yes (frame header CRC-8 3230 of 3230, frame CRC-16 3230 of 3230, STREAMINFO MD5 1 of 1)
       Measured: 300.0 s of 2 channels
-        Spectral Cutoff: 16,630 Hz (a step of 54.9 dB, 16,559 to 16,914 Hz, in 644 of 644 frames with signal)
+        Spectral Cutoff: 17,054 Hz (a step of 60.4 dB, transition from 16,559 Hz, in 644 of 644 frames with signal)
         Sample Peak: -0.3 dBFS (front left -0.3, front right -0.5)
         Integrated Loudness: -9.8 LUFS
         Loudness Range: 5.2 LU
-        True Peak: +0.4 dBTP (front left +0.4, front right -0.1)
+        Maximum True Peak Level: +0.4 dBTP (front left +0.4, front right -0.1)
 ```
 
-  - No cutoff: `Spectral Cutoff: none found (largest step 2.3 dB, at 1,992 Hz)`.
+  - No cutoff: `Spectral Cutoff: none found (largest step 2.3 dB, at 2,003 Hz)`.
+  - A silent channel reads `-inf dBFS`; text shows tenths with a sign for the peaks, and a value of -0.0 is written 0.0.
   - With `--explain`, each line's description and topic, as for nodes.
 - **JSON:** `measurements` in the stream, after `verification` (see [JSON](#json)). A field is added and none changes meaning, so `schemaVersion` stays 1.
-- **CSV:** five columns at the end: `Spectral Cutoff`, `Sample Peak`, `True Peak`, `Integrated Loudness`, `Loudness Range`, from the first audio stream (peaks the highest over its channels), empty without `--measure`, so a folder export never mixes measured and unmeasured rows. `Is Verified` is filled with `--measure` too.
+- **CSV:** five columns at the end, named with their units as the existing ones are (`Duration (s)`, `Sample Rate (Hz)`): `Spectral Cutoff (Hz)`, `Sample Peak (dBFS)`, `Maximum True Peak Level (dBTP)`, `Integrated Loudness (LUFS)`, `Loudness Range (LU)`, from the first audio stream (peaks the highest over its channels), empty without `--measure`, so a folder export never mixes measured and unmeasured rows. `Is Verified` is filled with `--measure` too.
+  - **Negative numbers.** `ReportCsvWriter.Field` puts an apostrophe before a value that starts with `=`, `+`, `-`, `@` or a control character, so every negative loudness or peak would be written as `'-0.3`. The formula guard is for text that comes from files. The writer's numeric fields (the ones it formats from numbers: counts, `Fixed`, these five) skip the guard; a test writes a measured file with negative values and reads them back as numbers. A numeric field cannot start a formula: its first character is a digit or a minus sign followed by a digit.
 - **Exit codes:** unchanged; `--fail-on` sees only the host's `measure.*` findings.
 
 ### GUI
 
-- **Detail window:** decoding stays a command, as decoders.md decided for verification. The one command decodes, verifies and measures, so a file is decoded once; its label is decision 8. The analysis then shows:
-  - under the graphs a heading "Audio", with "Waveform", "Spectrogram", "Spectrum" and, from step 4, "Loudness", drawn from the stream's measurements;
+- **Detail window:** decoding stays a command, as decoders.md decided for verification. The one command analyzes the file again with `AnalysisOptions.Decoding` and `DecodeOptions.Measure` set, so it decodes, verifies and measures in one pass and a file is decoded once; its label is **Decode Audio** (decision 8), which replaces Verify Audio. The analysis then shows:
+  - under the graphs a heading "Audio", with "Waveform", "Spectrogram", "Spectrum" and, from step 5, "Loudness", drawn from the stream's measurements;
   - the cutoff as a line on the spectrogram and the spectrum, with its figures in the hover text;
   - hovering the spectrogram shows time, frequency and level; clicking it selects the frame that holds that time, as clicking a graph point does now. The GUI finds frames by byte offset today (`FrameLocator`), so finding one by sample position is new GUI code, designed here and not tried.
-- **Before decoding:** the heading shows one line, "Decode the audio to see its waveform and spectrogram." with the command; for a stream without a decoder, "No decoder for <codec>: the waveform and spectrogram need the decoded audio." This is the plan's "appear only for formats that have a decoder and otherwise say so".
-- **Drawing:** the spectrogram is the grid's bytes through a fixed 256-entry color ramp into an Avalonia `WriteableBitmap`, scaled to the panel; no charting library and no new dependency. The ramp is a perceptually even ramp defined in code (**unverified** which published ramp, and its license, if one is followed).
+- **When the command is enabled, and the captions before decoding.** Today `DetailViewModel.CanVerifyAudio` is true only while a stream has `Verification is { Decoding: DecodeStatus.NotRequested }`, and a PCM stream has no `Verification`, so the command would stay disabled for WAV, AIFF and Wave64. And a stream of MPEG audio, which has no session either, would not be told apart from a decodable stream with nothing to verify. Decision 15 fixes both by giving every stream that has a decoder a session, hence a `Verification` with a decoding status, in every analysis. The rule then reads:
+  - **Enabled** (renamed `CanDecodeAudio`): a report is shown, nothing is loading or decoding, and some stream has `Verification.Decoding == NotRequested`. The expression is the present one; what changes is that PCM streams satisfy it.
+  - **Caption of a stream before decoding**, one line under the heading "Audio" (sentence case):
+    - `NotRequested`: "Decode the audio to see its waveform and spectrogram." with the command;
+    - `Verification` null (no session: no decoder exists for the coding) or `NoDecoder` (a session, no decoder): "No decoder for <codec>: the waveform and spectrogram need the decoded audio." This is the plan's "appear only for formats that have a decoder and otherwise say so". It is true because of an invariant that a test holds: every stream whose coding has a registered decoder starts a session in every analysis, decoding or not, so a null `Verification` means no decoder exists. The test walks the fixtures of each registered decoder ID;
+    - `NotPossible`: "The audio cannot be decoded: <reason>." (a refused configuration; WavPack's DSD: "the stream decodes to DSD, which is not measured");
+    - decoded, with a measurements record whose status is `NotPossible`, `FormatChanged`, `Stopped` or `Failed`: the panels it has and a line with the status text.
+- **Drawing:** the spectrogram is the grid's bytes through a fixed 256-entry color ramp into an Avalonia `WriteableBitmap`, scaled to the panel; no charting library and no new dependency. The ramp is matplotlib's magma (or viridis), whose 256 entries are format data: the table in `BIDS/colormap`'s `colormaps.py` carries the header "released under the CC0 license / public domain dedication" and asks for credit, which `THIRD-PARTY-NOTICES.md` gives (read on 2026-10-26 from that file; the text is the source of the claim, no other copy of the license was read).
 - **File list and summary cache:** never decode, so never measure; the list's columns stay as they are.
 - **Folder parallelism:** the list analyzes `Parallelism` files at once without decoding; a decode in the detail window runs beside it with the degree parallel-decoding.md's decision 2 gives, and the measurer adds at most one thread (below).
+- **Everything the rename touches** (decision 8; one pull request, step 4):
+  - `DetailViewModel`: `CanVerifyAudio` to `CanDecodeAudio`, `VerifyAudioAsync` and its cancel, `IsVerifying`, the comments that say "Verify Audio" (lines 442 and 461), and the error text "Not verified: " to "Not decoded: " (line 558);
+  - `DetailWindow.axaml`: the button (`VerifyAudioButton`, content "Verify Audio" to "Decode Audio") and its tooltip (which today says to compare the checksums; it also names the measurements), and the tooltip of the verification line, which says "choose Verify Audio" (line 19);
+  - `DetailWindow.axaml.cs`: the macOS File menu entry (`Shortcuts.Item(this, "Verify Audio", ...)`, line 162);
+  - `tests/Encspect.Gui.Tests/VerifyAudioTests.cs`: renamed with the tests, including the one that asserts `StartsWith("Not verified: ")`; `CapitalizationTests` reads the labels from the windows, and "Decode Audio" is Title Case (both words capitalized, no function word), so it passes unchanged;
+  - `docs/gui.md` lines 87 to 90 (the command, its enabling, the failure text "Not verified: …", the macOS menu), which will also say that the CLI's `--verify` and `--measure` and the GUI's one command run the same decode;
+  - the four format docs that name the command: `docs/formats/flac.md`, `wavpack.md`, `monkeys-audio.md` and `truehd.md`;
+  - the approved texts that say "Verify Audio": decoders.md (lines 45, 822, 1274, 1327, 1339) and parallel-decoding.md (lines 36, 450, 552, 622, 627), edited with the first implementation pull request as their status lines allow, and noted as renamed;
+  - the comment in `DecodeContext.cs` ("later to the host's PCM analyses") and decoders.md's "Host-side PCM analyses, later", which become the measurements.
 
 ## The result model
 
@@ -213,17 +281,34 @@ public enum Measurements
 // In Encspect.Core (Core.Abstractions), plain data like StreamVerification; computed by the host.
 public sealed record StreamMeasurements
 {
-    public required MeasurementStatus Status { get; init; }      // Complete, Stopped, NotPossible, Failed
+    public required MeasurementStatus Status { get; init; }      // Complete, Stopped, NotPossible, FormatChanged, Failed
 
-    // Samples per channel measured, and from which position of the stream (untrimmed, as PcmBlock.Position).
+    // Why less than was asked was measured, as text for the front ends ("the stream decodes to DSD", "no decoder for TTA",
+    // "loudness needs a sample rate of 8,000 Hz or more"); null where everything asked was measured.
+    public string? Reason { get; init; }
+
+    // Samples per channel measured (not counting gaps), the position of the first one (untrimmed, as PcmBlock.Position),
+    // and what the gaps skipped.
     public long Samples { get; init; }
+
+    public long FirstPosition { get; init; }
+
+    public long LostSamples { get; init; }
+
+    public int Gaps { get; init; }
 
     public int SampleRate { get; init; }
 
     // The channels measured, in the stream's order; the speakers where the decoder stated them.
     public IReadOnlyList<Speaker>? ChannelLayout { get; init; }
 
+    // The stream's channels, and how many were measured (at most 32).
     public int Channels { get; init; }
+
+    public int ChannelsMeasured { get; init; }
+
+    // True where a float sample beyond 1,024 times full scale was clamped to that.
+    public bool HasClampedSamples { get; init; }
 
     public SpectrumFigures? Spectrum { get; init; }
 
@@ -231,11 +316,29 @@ public sealed record StreamMeasurements
 
     public WaveformGrid? Waveform { get; init; }
 
-    public SampleFigures? SampleStatistics { get; init; }
+    public LevelFigures? Levels { get; init; }
 
     public LoudnessFigures? Loudness { get; init; }
 
     public TruePeakFigures? TruePeak { get; init; }
+}
+
+public enum MeasurementStatus
+{
+    Complete,
+
+    // Decoding ended before the stream did (the front end's stop, the decoders' budget, the measurer's own budget); the
+    // figures cover what was measured.
+    Stopped,
+
+    // Nothing, or less than asked, can be measured: no decoder, DSD, a rate of 0 Hz, a configuration the decoder refused.
+    NotPossible,
+
+    // A block's channels or format differed from the declared output (no decoder does this today; see "Format changes").
+    FormatChanged,
+
+    // A measurement's bug (measure.failed); the figures are dropped.
+    Failed,
 }
 
 public sealed record SpectrumFigures
@@ -243,7 +346,7 @@ public sealed record SpectrumFigures
     public required int FftSize { get; init; }
 
     // The average level of each of the 512 rows (0 Hz to Nyquist) in tenths of a dB, combined (all channels but the LFE)
-    // and per channel.
+    // and per channel. A row with no power at all holds short.MinValue.
     public required ReadOnlyMemory<short> Combined { get; init; }
 
     public required IReadOnlyList<ReadOnlyMemory<short>> PerChannel { get; init; }
@@ -257,24 +360,33 @@ public sealed record SpectralCutoff
 {
     public bool IsFound { get; init; }
 
-    public int Frequency { get; init; }            // Hz, the edge: the highest bin over the level above by 6 dB
-    public int TransitionStart { get; init; }      // Hz
-    public int StepTenthsOfDb { get; init; }        // the step, in 0.1 dB
+    public int Frequency { get; init; }            // Hz, the cutoff: the edge, the highest bin over the level above by 6 dB; 0 where none is found
+
+    public int TransitionStart { get; init; }      // Hz, where the transition to the edge starts; 0 where none is found
+
+    public int StepFrequency { get; init; }        // Hz, where the largest step lies (found or not)
+
+    public int StepTenthsOfDb { get; init; }       // the largest step, in 0.1 dB (found or not)
+
     public int FramesShowing { get; init; }
+
     public int FramesWithSignal { get; init; }
 }
 ```
 
-- Every figure is an integer in a fixed unit (whole hertz, tenths of a dB, samples), so the JSON and the goldens hold no floating-point text (see [Determinism](#determinism)). The writers turn them into `NodeValue` decimals with their units ("dBFS", "dBTP", "LUFS", "LU", "Hz", "dB", "%"), as node values are written.
-- `SampleFigures`, `LoudnessFigures` and `TruePeakFigures` hold per-channel arrays and the stream's figure the same way; their fields follow the measurements listed under [Algorithms](#algorithms).
-- **Why not `StreamInfo.Series`:** a series is numbers over a time or offset axis, owned by the parser. A spectrum is over frequency and a spectrogram is a grid. The loudness over time (short-term loudness each second) is a `Series` with the `Seconds` axis, kept in `LoudnessFigures`, so the parser's series stay the parser's; the `Series` class is reused, with its `Description`.
+- **"The cutoff" is the edge:** `Frequency`, the highest bin more than 6 dB above the level above the step (see [Spectral cutoff](#spectral-cutoff)). The start of the transition and the position of the step are separate figures, and the text prints the cutoff first. The step itself usually lies between them (LAME `-b 128`: transition from 16,559 Hz, step at 16,753 Hz, cutoff 17,054 Hz).
+- Every figure is an integer in a fixed unit (whole hertz, tenths of a dB, samples), so the JSON and the goldens hold no floating-point text (see [Determinism](#determinism)). A level that is minus infinity (a silent channel's peak) is `int.MinValue` in tenths, `short.MinValue` in a row; writers print `-inf` in text, `null` in JSON and nothing in CSV. The writers turn the integers into `NodeValue` decimals with their units ("dBFS", "dBTP", "LUFS", "LU", "Hz", "dB", "%"), as node values are written, by placing the decimal point (604 is 60.4), never by formatting a double.
+- `LevelFigures`, `LoudnessFigures` and `TruePeakFigures` hold per-channel arrays and the stream's figure the same way; their fields follow the measurements listed under [Algorithms](#algorithms). Loudness uses the BWF `bext` chunk's names for its figures ("Integrated Loudness", "Loudness Range", "Maximum True Peak Level", "Maximum Momentary Loudness", "Maximum Short-Term Loudness"), as `Chunks.cs` has them.
+- **Why not `StreamInfo.Series`:** a series is numbers over a time or offset axis, owned by the parser. A spectrum is over frequency and a spectrogram is a grid. The loudness over time (short-term loudness) is a `Series` with the `Seconds` axis, kept in `LoudnessFigures` and bounded like the grids (below), so the parser's series stay the parser's; the `Series` class is reused, with its `Description`.
 - **Why no nodes:** decoders.md's rule is "decoding never changes the parser's nodes", and the tree must be the same with or without decoding (`AnalysisOptions.Decoding`'s contract, `DecoderFixtureTests`). A host node "Measurements" would break both.
 
 ### The time-frequency grid
 
-- **Bounded whatever the length:** the spectrogram has 512 rows (linear, 0 Hz to Nyquist; each row the mean power of its bins) and between 512 and 1,024 columns. A column starts as one FFT hop; whenever the columns would pass 1,024, adjacent pairs are merged and each column then covers twice the hops. So a stream of any length ends with 512 to 1,024 columns of 2^k hops each, the last one partial; a stream of fewer than 512 hops (about 24 s at 44.1 kHz) has one column per hop.
+- **Bounded whatever the length:** the spectrogram has 512 rows (linear, 0 Hz to Nyquist; each row the mean power of its bins) and between 512 and 1,024 columns. A column starts as one FFT hop; whenever the columns would pass 1,024, adjacent pairs are merged and each column then covers twice the hops. So a stream of any length ends with 512 to 1,024 columns of 2^k hops each, the last one partial. A stream of up to 1,024 hops (about 47 s at 44.1 kHz and 4,096 points) keeps one column per hop; merging starts with the 1,025th.
+- **The partial last column** holds the mean over the hops it has: each cell keeps the power sum and the count of hops it summed, so a partial column is not understated by empty hops. The waveform's last column holds the extremes of the samples it has.
 - The merge needs no stated length, so it works for streams whose length is unknown (a WAV file with a placeholder size) and gives the same grid wherever the length is known.
-- **Waveform:** the same columns, with each channel's smallest and largest sample, scaled to 16-bit integers (floor of the value times 32,768, clamped).
+- **Gaps:** columns follow positions. A gap leaves its columns without data (cells of 0), and a gap longer than the columns left advances the clock by arithmetic (merging empty columns), not by a loop over the hops.
+- **Waveform:** the same columns, with each channel's smallest and largest sample, scaled to 16-bit integers (the smallest rounded down and the largest up of the value times 32,768, clamped to -32,768 and 32,767).
 - **Accumulation:** each cell sums power in single precision while it is open (2 MiB for 1,024 × 512 cells), in a fixed order; rounding to single precision is deterministic. Finished cells keep the sums for merging and are quantized only when the stream ends.
 
 ### dB scale and quantization
@@ -282,26 +394,32 @@ public sealed record SpectralCutoff
 - **Reference:** 0 dB is the level of a full-scale sine centered on a bin (the window's coherent gain taken out, as Heinzel et al. normalize amplitude spectra). Noise reads lower per bin as the FFT size grows (10 log10 of the bin width), which the `spectrogram` article says.
 - **Grid cells:** whole dB, offset by 200 and clamped to 1 to 220, so a cell is a byte (-199 to +20 dB); 0 means no data. The quietest 24-bit quantization noise per bin is about -177 dB at 4,096 points (**estimate**: -144 dBFS spread over 2,048 bins), inside the range.
 - **Spectrum rows and figures:** tenths of a dB, as `short`.
-- **Rounding:** floor of the value, from the deterministic logarithm (below). Quantization is for size and reading, not to hide differences between platforms; the arithmetic is made deterministic instead.
+- **Rounding, one rule for every figure:** to the nearest, halves up: `floor(x * scale + 0.5)` with scale 1 for grid cells and 10 for tenths, where x comes from the deterministic logarithm (below), then clamped. Flooring would show a peak of 32,767 in 16 bits (20 log10(32,767 / 32,768) = -0.0003 dB) as -0.1 dBFS; rounded to the nearest tenth it reads 0.0. Quantization is for size and reading, not to hide differences between platforms; the arithmetic is made deterministic instead.
 
 ### JSON
 
 ```json
 "measurements": {
-  "status": "complete", "samples": 13230000, "sampleRate": 44100, "channels": 2,
-  "spectrum": { "fftSize": 4096, "rows": 512, "hertzPerRow": 43.06640625,
-    "combined": [-412, -398, …], "perChannel": [[-410, …], [-415, …]],
-    "cutoff": { "isFound": true, "frequency": 16630, "unit": "Hz", "transitionStart": 16559, "step": 54.9, "stepUnit": "dB",
+  "status": "complete", "samples": 13230000, "firstPosition": 0, "lostSamples": 0, "gaps": 0,
+  "sampleRate": 44100, "channels": 2, "channelsMeasured": 2,
+  "spectrum": { "fftSize": 4096, "rows": 512, "binsPerRow": 4,
+    "levels": { "unit": "dB", "valuesPerUnit": 10, "combined": [-412, -398, …], "perChannel": [[-410, …], [-415, …]] },
+    "cutoff": { "isFound": true,
+                "frequency": { "value": 17054, "unit": "Hz" }, "transitionStart": { "value": 16559, "unit": "Hz" },
+                "stepFrequency": { "value": 16753, "unit": "Hz" }, "step": { "value": 60.4, "unit": "dB" },
                 "framesShowing": 644, "framesWithSignal": 644 } },
-  "sampleStatistics": { "samplePeak": { "value": -0.3, "unit": "dBFS", "perChannel": [-0.3, -0.5] }, … },
-  "spectrogram": { "columns": 1000, "rows": 512, "hopsPerColumn": 8, "secondsPerColumn": 0.371519, "levels": "<base64, column by column>" },
-  "waveform": { "columns": 1000, "minimum": "<base64 of int16 little-endian, channel by channel>", "maximum": "…" }
+  "levels": { "samplePeak": { "value": -0.3, "unit": "dBFS", "perChannel": [-0.3, -0.5] }, … },
+  "spectrogram": { "columns": 1000, "rows": 512, "hopsPerColumn": 8, "hopSamples": 2048, "unit": "dB", "valueOffset": 200, "noData": 0,
+                   "levels": "<base64, column by column>" },
+  "waveform": { "columns": 1000, "unit": "16-bit sample codes", "minimum": "<base64 of int16 little-endian, channel by channel>", "maximum": "…" }
 }
 ```
 
-- `spectrum.combined` and `perChannel` are in tenths of a dB as integers (documented as such, with `"levelUnit": "0.1 dB"`), so 512 rows are a few kilobytes per channel.
+- **One shape per figure:** a single value is `{ "value", "unit" }` (null for minus infinity), the same figure per channel adds `"perChannel": [...]` in that unit, and `isFound`-style booleans and plain counts (`samples`, `framesShowing`) are bare. No figure carries its unit in a sibling key.
+- **Arrays state their scale:** the spectrum rows are integers with `unit` and `valuesPerUnit` (10 values per dB), so a reader divides by it; the grid states its `valueOffset`. Neither uses a floating-point number to say what a row or a column is.
+- **No doubles for geometry:** the row spacing is `sampleRate * binsPerRow / fftSize` hertz (43.06640625 Hz at 44,100 Hz, 4,096 points and 4 bins a row) and the time of a column is `hopsPerColumn * hopSamples / sampleRate` seconds (0.371519… s here); the JSON gives the integers, never the quotient (the hop is half the FFT size, `hopSamples`).
 - `spectrogram` and `waveform` are written only with `--measure-grids` (decision 7). A grid of 1,024 × 512 bytes is 512 KiB, 683 KiB in base64; the waveform of 8 channels about 43 KiB.
-- **Sizes without grids:** about 3 KB per channel for the spectrum and well under 1 KB for the other figures (**estimate**), so a measured stereo stream adds under 10 KB.
+- **Sizes without grids:** about 3 KB per channel for the spectrum (a few more with the cutoff) and well under 1 KB for the other figures (**estimate**), so a measured stereo stream adds under 10 KB, and a 32-channel stream about 100 KB; channels beyond 32 add nothing.
 
 ### Text and CSV
 
@@ -311,16 +429,21 @@ As under [CLI](#cli). The text never prints the spectrum rows or the grids, as i
 
 - Measurements are not nodes, but every figure the writers print carries a description and a topic, as nodes do: constant strings in the host (`MeasurementText`, as `VerificationText` holds the verification's), one or two sentences on what the figure is, citing the specification section where there is one, without verdicts. `--explain` prints them; the GUI shows them as hover text. A test walks the measurements of every measured fixture and fails on a figure without a description or with a topic that does not exist, as `DescriptionTests` does for nodes.
 - The loudness series carries its `Description`, as every series does.
+- **Stated and measured stay apart.** Loudness appears in files as stated values: the BWF `bext` chunk's (`Integrated Loudness` and the others), ReplayGain's, iTunNORM, USAC's `loudnessInfo`, AC-3's dialogue normalization. The measured figures use the `bext` names on purpose (one concept, one name), so each description and article says which kind it is: a measured figure is "computed from the decoded audio", a stated one "written by the file's creator, not checked here". Neither text compares them or calls a difference an error.
 - **Articles,** each 100 to 300 words, from checkable sources only (the specifications, the literature, the tool cross-checks, committed fixtures):
-  - `measurements`: what is measured, from which samples (decoded, untrimmed, the presentation TrueHD decodes, the lossy stream of a WavPack hybrid file), the budget, determinism and quantization;
+  - `measurements`: what is measured, from which samples (decoded, untrimmed, the presentation TrueHD decodes, the lossy stream of a WavPack hybrid file), stated against measured, the budget, determinism and quantization;
   - `spectrogram`: the short-time Fourier transform, window, frame and hop, the dB reference, why noise reads lower in finer bins, how the grid is bounded;
-  - `spectral-cutoff`: the measurement, its figures, what a sharp edge is consistent with (an encoder's lowpass, a mastering filter, resampling, an anti-alias filter), what its absence does not show, and the observations the committed fixtures back;
+  - `spectral-cutoff`: the measurement, its figures, what a sharp edge is consistent with (an encoder's lowpass, a mastering filter, resampling, an anti-alias filter), what its absence does not show (a quiet decode under dither, mixed content), and the observations the committed fixtures back;
   - `sample-peak-and-true-peak`: inter-sample peaks, BS.1770 Annex 2, dBTP;
   - `loudness`: BS.1770 K-weighting, channel weights, gating, LUFS and LKFS, EBU R 128's target;
   - `loudness-range`: EBU Tech 3342;
   - `dc-offset`, `clipping`, `digital-silence`, `bit-depth-usage` (linked with `wasted-bits`);
-  - updated: `lowpass` (its sentence "the analyzer does not decode the audio, so it cannot measure the cutoff of other files" goes), `coded-bandwidth`, `verification` (one decode pass), `pcm-samples`, `wasted-bits`.
-- **One concept, one name:** "spectral cutoff" is the measured edge; "lowpass" stays the encoder's setting (the LAME tag's Lowpass); "coded bandwidth" stays the figure the coded data states. The three articles link each other and never use one name for another.
+  - updated: `lowpass`, `coded-bandwidth`, `verification` (one decode pass), `pcm-samples`, `wasted-bits`, and the articles that name a stated loudness, `bwf-broadcast-extension` and `replaygain` first (then `usac`, `itunes-metadata` and `dialogue-normalization` where they name one), each with a sentence that the measured loudness is another figure.
+- **The `lowpass` article's rework.** Today it calls the encoder's setting "a cutoff frequency" and "its cutoff" ("LAME records its cutoff in the LAME tag's Lowpass field"), which collides with the measured spectral cutoff, and it says "A low cutoff at a high bitrate can point to audio that was encoded more than once", an inference no fixture backs. The rework:
+  - calls the encoder's setting the **lowpass frequency** throughout, and "cutoff" only for the measured edge, linked to `spectral-cutoff`;
+  - drops "the analyzer does not decode the audio, so it cannot measure the cutoff of other files" (it can, with decoding) and says that a spectral cutoff is measured from decoded audio and may match, or not, the lowpass frequency a tag states;
+  - removes the "encoded more than once" sentence; what an edge does and does not show goes into `spectral-cutoff`, only as far as committed fixtures back it.
+- **One concept, one name:** "spectral cutoff" is the measured edge; "lowpass frequency" is the encoder's setting (the LAME tag's Lowpass); "coded bandwidth" stays the figure the coded data states. The three articles link each other and never use one name for another.
 
 ### Findings
 
@@ -330,6 +453,8 @@ As under [CLI](#cli). The text never prints the spectrum rows or the grids, as i
   - `measure.limit`, info: "Measuring stopped after 1,234.5 s of the stream: its work passed the budget of 34,359,738,368 work units that the file's size allows."
   - `measure.failed`, error: a measurement's bug, with the exception's type and message; that stream's measurements are dropped (status `Failed`) and the analysis carries on. The fuzzer fails on it, as on `decode.failed`.
   - `measure.streams-limited`, info: more streams than the measurement memory bound allows (below); the rest are not measured.
+  - `measure.channels-limited`, info: more than 32 channels; the first 32 are measured.
+  - `measure.format-changed`, info: a block's channels or format differed from the declared output; the figures cover what came before.
 - Each code gets its row in the finding-coverage test.
 
 ## Algorithms
@@ -348,74 +473,142 @@ As under [CLI](#cli). The text never prints the spectrum rows or the grids, as i
 
 ### Window, size and hop
 
-- **Window:** periodic Hann. Its highest sidelobe is -31.5 dB and its sidelobes fall 18 dB an octave (Harris 1978, Table 1), so 1 kHz away from a strong component (about 90 bins at 4,096 points and 44.1 kHz) its leakage is far below 16-bit quantization noise (**estimate** from those figures); the prototype's steps of 55 to 62 dB down to the quantization floor of about -129 dB confirm it in practice. Blackman-Harris would buy a cleaner stopband near the edge at twice the main lobe, which widens the measured transition; not needed.
-- **Size:** by sample rate, about 85 to 93 ms and 10.8 to 11.7 Hz a bin (see [Channels, rates, widths and DSD](#channels-rates-widths-and-dsd); decision 10).
-- **Hop:** half the frame, so every sample is weighted fully across two frames (Hann at 50 % overlap sums to a constant) and averaging follows Welch (1967). A hop of a whole frame halves the cost (6.1 against 12.2 ns a sample) but weights the samples at frame edges near zero, so short events between frames are missed; decision 10 keeps half.
+- **Window:** periodic Hann. Its highest sidelobe is -31.5 dB and its sidelobes fall 18 dB an octave (Harris 1978, Table 1), so 1 kHz away from a strong component (about 90 bins at 4,096 points and 44.1 kHz) its leakage is far below 16-bit quantization noise (**estimate** from those figures); the prototype's steps of 34 to 69 dB down to the quantization floor of about -129 dB confirm it in practice. Blackman-Harris would buy a cleaner stopband near the edge at twice the main lobe, which widens the measured transition; not needed.
+- **Size:** by sample rate, 85 to 170 ms, 10.8 to 11.7 Hz a bin at the common rates (see [Channels, rates, widths and DSD](#channels-rates-widths-and-dsd); decision 10).
+- **Hop:** half the frame. The sum of Hann windows shifted by half a frame is constant (1), so every sample's *amplitude* is weighted fully across the two frames it falls in; the sum of their *squares*, which is what a power spectrum averages, is not constant but runs from 0.5 (where the two windows are equal) to 1, so a short event is weighted between half and fully in the averaged power depending on where it falls. Averaging follows Welch (1967). A hop of a whole frame halves the cost (6.1 against 12.2 ns a sample, first prototype) but weights the samples at frame edges near zero, so short events between frames are missed; decision 10 keeps half.
 
 ### Channels
 
 - Each channel is transformed on its own; power is averaged across channels for the combined spectrum and the grid, never computed from a downmix, which would cancel content in antiphase.
-- The LFE is left out of the combined figures (above).
+- The LFE (`Speaker.LowFrequency` and `Speaker.LowFrequency2`) is left out of the combined figures (above).
 - **Mid/side, later:** the mid and side spectra are (X_L ± X_R) / 2 from the complex bins of the two channels already transformed, with no further FFT. They show where a joint stereo coder cut the side channel lower than the mid. They wait for fixtures that show it.
 
 ### Spectral cutoff
 
-The method, as prototyped:
+The method, as prototyped in the second prototype (the first prototype's frame share kept every frame's levels, which grows with the stream; the bounded method below replaces it, and the thresholds and the table are the new method's):
 
 1. **Average spectrum:** the mean power of each bin over all frames, per channel and combined, in dB.
-2. **Step search:** for each candidate bin k from 1 kHz to Nyquist less 1 % (the prototype searched from 2 kHz to Nyquist less 200 Hz), the mean level of a band of about 1 kHz under k against a band of the same width above k + 2 bins, clipped at the top of the search. The largest difference is the step.
-3. **Edge:** from the step's bin upward, the highest bin whose level is more than 6 dB above the mean level of everything above the step; that is the reported cutoff frequency. **Transition start:** the lowest bin, from the step downward, still more than 3 dB below the band under it.
-4. **Consistency over time:** the share of frames with signal that show the edge. The prototype kept every frame's levels, which grows with the stream. The design replaces it with a bounded histogram: each frame's own bandwidth (the highest of the 512 rows whose level is within a fixed distance of the frame's loudest row, **not prototyped**) counted over 512 rows, frames whose rows under the edge are more than 30 dB below the loudest frame counted apart as "without signal". Frames showing the edge are those whose bandwidth lies at or below the edge's row.
-5. **Found or not:** a cutoff is reported as found where the step is at least 20 dB and at least half the frames with signal show it. Both thresholds come from the prototype's cases (below) and are fixed by the fixtures in the first pull request. Otherwise the report says "none found" and gives the largest step and its frequency.
+2. **Step search:** for each candidate bin k from 2 kHz to Nyquist less 1 %, the mean level of a band of 1 kHz under k against the mean level of a band of the same width above k + 2 bins, clipped at the top of the search. The largest difference is the step (the lowest k on a tie). Candidates also stop at the last row that still has a row above it (row 505 of 512), so the row counters of step 4 cover every candidate. Rates below 8,000 Hz are not searched (status text "not searched: the sample rate is below 8,000 Hz").
+   - **Why from 2 kHz and not 1 kHz:** a start at 1 kHz was tried in the second prototype. From 1 kHz the largest step of the plain pink noise source is 6.2 dB, of brown noise 10.4 dB and of LAME `-V 0` 6.2 dB, all at the first candidate (1,001 Hz): a spectral slope, not an edge, and it would be printed as "largest step 6.2 dB, at 1,001 Hz". From 2 kHz they are 2.3, 4.6 and 2.4 dB. A real bass-heavy recording can have a steeper slope than brown noise (**unverified**: no music was in the prototype's inputs), which the 25 dB threshold below keeps clear of.
+3. **Edge and transition start:** from the step's bin upward, the highest bin whose level is more than 6 dB above the mean level of everything above the step; that is the reported cutoff frequency (**the edge**). **Transition start:** the lowest bin, from the step downward, still more than 3 dB below the band under it.
+4. **Consistency over time, in one bounded pass.** The edge is known only at the end of the stream, so the frames cannot be classified by it, and "the loudest frame" is known only at the end too. So the host counts, for every candidate row, how many frames show a step there, and at what level:
+   - **Per frame,** for each channel and for the combined power, the bins are reduced to 512 rows of mean power and prefix sums are taken over the rows. For each candidate row r the band under it has W rows (W = 1 kHz in rows, 23 at 44.1 kHz and 4,096 points) and the band above it W rows from r + 1, clipped at the top of the search. The frame's **own step at r reaches T** when the mean power under is at least 10^(T/10) times the mean power above: a comparison of products, no logarithm. (This is the mean of power in each band; step 2 uses the mean of dB, a different mean, so a frame's own step and the average step are not the same quantity and T is not the step threshold.)
+   - **Counters:** a histogram of 512 rows by 72 levels, two 32-bit counters per cell: `all` (frames) and `show` (frames whose own step reaches T). The level axis is the binary exponent of the mean power under r, read from the bits of the double (one bin per factor of 2, 3.01 dB; exponents -64 to +7, clamped): exact, deterministic, no logarithm. That is 295 KB for the combined spectrum and for each channel measured.
+   - **T = 15 dB.**
+   - **At the end,** for the step's row r\*: the loudest level is the highest exponent with a frame in `all[r*]`. **Frames with signal** are those at most 10 exponents (30.1 dB) below it; **frames showing the edge** are those of them counted in `show[r*]`. A frame whose under-band is more than 30 dB below the loudest frame is counted as without signal, so a silent passage does not count against the edge (LAME `-b 128` for 20 s and then 10 s of digital silence: 431 of 431). One very loud frame raises the reference and takes quiet ones out (a full-scale noise burst of 4,096 samples in a 30 s file: 2 of 644 frames).
+   - **Cost:** 1.6 ns per sample of the channel it serves at 4,096 points (0.7 to 2.4 ns from 2,048 to 32,768 points, 5.1 ns at 1,024), added to the FFT's (see [Measured](#measured)).
+5. **Found or not:** a cutoff is reported as found where the step is at least 25 dB and at least half the frames with signal show it. Otherwise the report says "none found" and gives the largest step and its frequency. Both thresholds come from the second prototype's table below and are fixed by the fixtures in the first pull request.
 
-What the prototype shows about robustness (30 s of stereo pink noise with a 330 Hz tone; see [Lossless files from lossy encodes](#lossless-files-from-lossy-encodes) for the encoders):
+**The second prototype's table** (30 s of stereo pink noise with a 330 Hz tone, quantized to 16 bits; FFT of 4,096 points at 44.1 and 48 kHz, 2,048 at 22.05 kHz and 1,024 at 8 kHz, Hann, hop half; the step, its frequency, the cutoff (edge), the start of the transition and the frames of step 4 at T = 15 dB; the first prototype's code is gone, so its table is not reproduced and the figures below differ from it in the last digits of the edge and in the step, since the source, the edge rule and the band edges were rewritten):
 
-- **Quiet passages:** the average is dominated by loud frames, and the frame share counts only frames with signal. LAME at 128 kbps decoded, lowered by 30 dB and dithered with TPDF still gives a step of 26.6 dB in 642 of 644 frames.
-- **Noise and dither:** TPDF dither lifts the floor above the edge a few dB (-124.5 against -128.7 dB). Noise-shaped dither (FFmpeg's `shibata`) lifts it to -94.9 dB, and the step falls from 54.9 to 31.2 dB, still found. Strong noise shaping on a quiet recording can hide an edge: then no cutoff is found, which is a missed edge, never an invented one.
-- **Intentionally band-limited masters:** a 16 kHz brickwall (FFmpeg's `firequalizer`) on the lossless source gives 60.6 dB in 645 of 645 frames, the signature of a lossy encode. The report cannot tell them apart and does not try.
-- **Natural rolloff:** four cascaded 16 kHz biquad lowpass filters give an 18.1 dB step spread from 18,292 to 19,025 Hz in 4 of 644 frames: not found.
-- **22.05 versus 24 kHz Nyquist:** the search is relative to Nyquist, so it works at both rates (LAME at 128 kbps: 16,914 Hz at 44.1 kHz, 16,910 Hz at 48 kHz). An edge just below Nyquist is often an anti-alias or resampling filter; no fixture backs a figure for that yet, so the article says only that such filters exist.
-- **Upsampling:** the source resampled from 44.1 to 48 kHz by FFmpeg's default resampler gave only a 7.7 dB step at 22,781 Hz in 0 of 702 frames: pink noise has little energy near 22 kHz, so the step finder does not see where the content ends. Reporting upsampling needs a second figure, the highest frequency whose level stays a set distance above the noise floor, which is left for later with its own fixtures.
+| Input | Largest step | At | Cutoff (edge) | Transition from | Frames showing, of those with signal | Found |
+| --- | --- | --- | --- | --- | --- | --- |
+| LAME `-b 128` | 60.4 dB | 16,753 Hz | 17,054 Hz | 16,559 Hz | 644 of 644 | yes |
+| LAME `-b 192` | 61.0 dB | 18,820 Hz | 19,121 Hz | 18,659 Hz | 644 of 644 | yes |
+| LAME `-b 320` | 62.7 dB | 20,209 Hz | 20,424 Hz | 20,037 Hz | 644 of 644 | yes |
+| LAME `-V 2` | 60.8 dB | 18,831 Hz | 19,121 Hz | 18,626 Hz | 644 of 644 | yes |
+| LAME `-V 5` | 58.1 dB | 16,731 Hz | 16,979 Hz | 16,538 Hz | 644 of 644 | yes |
+| LAME `-V 0` | 2.4 dB | 2,003 Hz | none |  | 0 of 644 | no |
+| LAME `-b 128`, 48 kHz | 59.4 dB | 16,734 Hz | 17,062 Hz | 16,523 Hz | 702 of 702 | yes |
+| oggenc `-q 2` | 69.0 dB | 16,591 Hz | 16,731 Hz | 16,548 Hz | 644 of 644 | yes |
+| oggenc `-q 5` | 53.0 dB | 20,618 Hz | 20,973 Hz | 20,349 Hz | 644 of 644 | yes |
+| oggenc `-q 8` | 2.4 dB | 2,003 Hz | none |  | 0 of 644 | no |
+| FFmpeg `aac` 96 kbps | 42.1 dB | 15,913 Hz | 17,119 Hz | 15,859 Hz | 644 of 645 | yes |
+| FFmpeg `aac` 128 kbps | 68.5 dB | 17,280 Hz | 17,367 Hz | 17,237 Hz | 645 of 645 | yes |
+| FFmpeg `aac` 192 kbps | 64.2 dB | 19,348 Hz | 19,703 Hz | 19,305 Hz | 645 of 645 | yes |
+| libopus 96 kbps (48 kHz) | 48.8 dB | 20,367 Hz | 20,906 Hz | 20,039 Hz | 702 of 702 | yes |
+| LAME `-b 64`, 22.05 kHz | 64.1 dB | 10,099 Hz | 10,218 Hz | 9,981 Hz | 644 of 644 | yes |
+| LAME `-b 32`, 8 kHz | 44.5 dB | 3,938 Hz | 3,953 Hz | 3,812 Hz | 467 of 467 | yes |
+| brickwall 11 kHz on the lossless source | 68.9 dB | 11,068 Hz | 11,208 Hz | 10,993 Hz | 645 of 645 | yes |
+| brickwall 16 kHz on the lossless source | 67.5 dB | 16,064 Hz | 16,204 Hz | 15,988 Hz | 645 of 645 | yes |
+| brickwall 16 kHz, TPDF dither | 63.5 dB | 16,064 Hz | 16,161 Hz | 15,988 Hz | 645 of 645 | yes |
+| natural rolloff, one 2-pole 16 kHz lowpass | 19.1 dB | 21,781 Hz | none |  | 644 of 644 | no |
+| natural rolloff, two cascaded | 21.9 dB | 20,586 Hz | none |  | 644 of 644 | no |
+| natural rolloff, four cascaded | 21.0 dB | 18,938 Hz | none |  | 644 of 644 | no |
+| LAME `-b 128`, shibata noise shaping | 60.4 dB | 16,753 Hz | 17,054 Hz | 16,559 Hz | 644 of 644 | yes |
+| LAME `-b 128`, -30 dB, TPDF dither | 33.5 dB | 16,613 Hz | 16,721 Hz | 16,538 Hz | 644 of 644 | yes |
+| LAME `-b 128`, -45 dB, TPDF dither | 20.1 dB | 16,559 Hz | none |  | 630 of 644 | no |
+| LAME `-b 128`, -60 dB, TPDF dither | 6.7 dB | 16,527 Hz | none |  | 0 of 644 | no |
+| source resampled 44.1 to 48 kHz | 7.6 dB | 22,746 Hz | none |  | 0 of 702 | no |
+| the 16-bit source (pink noise and a 330 Hz tone) | 2.3 dB | 2,003 Hz | none |  | 0 of 644 | no |
+| white noise | 0.1 dB | 2,132 Hz | none |  | 0 of 644 | no |
+| brown noise | 4.6 dB | 2,003 Hz | none |  | 0 of 644 | no |
+| LAME `-b 128` for 6 s, then the source (20 % lossy) | 2.3 dB | 2,003 Hz | none |  | 0 of 644 | no |
+| LAME `-b 128` for 15 s, then the source (50 %) | 3.2 dB | 16,527 Hz | none |  | 291 of 644 | no |
+| LAME `-b 128` for 24 s, then the source (80 %) | 7.2 dB | 16,538 Hz | none |  | 513 of 644 | no |
+| LAME `-b 128` for 20 s, then 10 s of digital silence | 49.3 dB | 16,688 Hz | 16,904 Hz | 16,548 Hz | 431 of 431 | yes |
+
+For an input where nothing is found, the frames column counts the frames of step 4 at the row of the largest step.
+
+- **Margins of the thresholds:** every input with a lowpass has a step of 33.5 dB or more (the lowest is LAME `-b 128` lowered by 30 dB and dithered; the first prototype read 26.6 dB for it), and every input without one 21.9 dB or less (the highest is the natural rolloff of two cascaded lowpass sections). 25 dB sits between them, 3.1 dB above the rolloff and 8.5 dB below the dithered case. The frame share does not separate them: the rolloff cases show a step in every frame because they have one in the average too.
+- **LAME's own statements** (the tag's Lowpass byte and the band `--verbose` prints): `-b 128` and `-V 5` tag 17,000 Hz, band 16,538 to 17,071 Hz; `-b 192` tag 18,600 Hz, band 18,671 to 19,205 Hz; `-b 320` tag 20,500 Hz, band 20,094 to 20,627 Hz; `-V 2` tag 18,500 Hz, same band as `-b 192`; `-V 0` tag 22,100 Hz, filter disabled; `-b 128` at 48 kHz tag 17,000 Hz, band 16,452 to 17,032 Hz. Every cutoff lies inside the printed band except the 48 kHz one, 30 Hz above it (three bins); every transition starts within 75 Hz of the band's lower end (0 to 71 Hz). The tag's value is a rounded setting, not the edge.
+- **Quiet passages:** the average is dominated by loud frames, and the frame share counts only frames with signal. LAME at 128 kbps decoded, lowered by 30 dB and dithered with TPDF still gives a step of 33.5 dB in 644 of 644 frames.
+- **Noise and dither:** TPDF dither lifts the floor above the edge. At -45 dB the step falls to 20.1 dB and at -60 dB to 6.7 dB: no cutoff is found. Noise-shaped dither (FFmpeg's `shibata`) at full level leaves 60.4 dB. Strong dither on a quiet recording can hide an edge, which is a missed edge, never an invented one; the `spectral-cutoff` article says so.
+- **Intentionally band-limited masters:** a 16 kHz brickwall (FFmpeg's `firequalizer`) on the lossless source gives 67.5 dB in 645 of 645 frames, the signature of a lossy encode; with TPDF dither 63.5 dB. The report cannot tell them apart and does not try.
+- **Natural rolloff:** a 16 kHz digital lowpass of 2 poles gives a step of 19.1 dB, two sections 21.9 dB and four 21.0 dB (the first prototype's four cascaded sections gave 18.1 dB), all below 25 dB and so not found, although every frame shows them. The steps come largely from the digital filter's zero at Nyquist; this is the weakest margin of the method and the reason the step threshold is not lower.
+- **Mixed content:** half or more of a file from a lossy source and the rest not is not found: LAME `-b 128` for 15 s and then the source gives a step of 3.2 dB, for 24 s (80 %) 7.2 dB, although 291 of 644 and 513 of 644 frames show an own step of 15 dB at the step's row. The average spectrum's power mean is lifted above the edge by the frames that have content there. Finding such an edge from the counters (the row with the most frames showing) would use data the pass already holds; it is not built, because a sparse real spectrum (a solo instrument) would also show own steps in many frames (**unverified**, no music in the prototype).
+- **22.05 versus 24 kHz Nyquist, low rates:** the search is relative to Nyquist, so it works at 22.05, 44.1 and 48 kHz (LAME at 128 kbps: 17,054 Hz at 44.1 kHz, 17,062 Hz at 48 kHz) and at 8 kHz (LAME `-b 32`: 3,953 Hz of Nyquist 4,000 Hz). An edge just below Nyquist is often an anti-alias or resampling filter; no fixture backs a figure for that yet, so the article says only that such filters exist.
+- **Upsampling:** the source resampled from 44.1 to 48 kHz by FFmpeg's default resampler gave only a 7.6 dB step at 22,746 Hz in 0 of 702 frames: pink noise has little energy near 22 kHz, so the step finder does not see where the content ends. Reporting upsampling needs a second figure, the highest frequency whose level stays a set distance above the noise floor, which is left for later with its own fixtures.
 - **No lowpass:** LAME `-V 0` (its lowpass disabled) and oggenc `-q 8` give no step above 2.4 dB, as the source itself (2.3 dB).
 
-### Sample statistics
+### Levels
 
 Exact on integer samples, in 64-bit integer sums; floats in double:
 
-- **Sample peak:** the largest magnitude per channel, in dBFS (the most negative integer counts as full scale).
+- **Sample peak:** the largest magnitude per channel, in dBFS (the most negative integer counts as full scale), rounded to the nearest tenth (see [dB scale and quantization](#db-scale-and-quantization)). A channel whose samples are all 0 has no peak: minus infinity, printed `-inf`.
 - **RMS:** per channel, in dBFS, a full-scale square wave reading 0 dB (the convention is stated in the article; AES17's sine-referenced convention reads 3.01 dB higher, **unverified** which the tools use).
 - **DC offset:** the mean per channel, in percent of full scale and dBFS.
-- **Clipping runs:** runs of at least 3 consecutive samples at the extreme codes (integers) or at or beyond full scale (floats), per channel: the number of runs, the samples in them, the longest. Three is a convention of this design, not a specification's; the article says so.
-- **Digital silence:** samples that are exactly 0 in every channel at the start, at the end and in total.
-- **Bit-depth usage:** for integers, the OR of every sample gives the low bits that are never set ("Low Bits Unused: 8 of 24") and the highest magnitude reached; for floats, whether every sample is a whole multiple of 2^-15 or 2^-23 in [-1, 1) ("Float Samples Hold 16-bit Values"). FLAC's per-subframe wasted bits (`wasted-bits`) are the coded counterpart.
+- **Clipping runs:** runs of at least 3 consecutive samples at the extreme codes (integers) or at or beyond full scale (floats), per channel: the number of runs, the samples in them, the longest. Three is a convention of this design, not a specification's; the article says so. A run ends at a gap.
+- **Digital silence:** samples that are exactly 0 in every channel at the start, at the end and in total; not counted across a gap.
+- **Bit-depth usage:** for integers, the OR of every sample gives the low bits that are never set ("Low Bits Unused: 8 of 24") and the highest magnitude reached; for floats, two booleans, `HasOnly16BitValues` and `HasOnly24BitValues`: whether every sample is a whole multiple of 2^-15 (2^-23) in [-1, 1). They are figures, not labels; the text writes them as "Has Only 16-Bit Values: yes". FLAC's per-subframe wasted bits (`wasted-bits`) are the coded counterpart.
 
 ### Loudness and loudness range
 
-- **ITU-R BS.1770-5** (11/2023, the current revision; -4 has the same algorithm, **unverified** in detail), Annex 1:
-  - K-weighting, a high-shelf pre-filter and a highpass (the "RLB" filter), whose coefficients the Recommendation gives for 48 kHz only. For other rates the coefficients are derived from the filters' analog parameters, as libebur128 does (MIT, its notice in the source and `THIRD-PARTY-NOTICES.md`, decision 13; the parameter values are **unverified** until that pull request reads its source).
-  - Mean square per channel over gating blocks of 400 ms overlapping by 75 %; channel weights 1.0 for left, right and center and 1.41 for the surround channels, the LFE left out; the weights of other positions from the Recommendation's table (**unverified** for heights).
-  - Gating: an absolute gate at -70 LUFS, then a relative gate 10 LU below the loudness of the blocks above it; the integrated loudness is -0.691 + 10 log10 of the weighted mean over the blocks that pass.
-- **EBU R 128 and Tech 3341:** momentary loudness (400 ms) and short-term loudness (3 s), reported as their maxima; the loudness unit is LUFS, one name for what BS.1770 calls LKFS, which the article mentions once.
-- **EBU Tech 3342:** loudness range from short-term values, absolute gate -70 LUFS, relative gate 20 LU below, the spread between the 10th and the 95th percentile.
-- **Bounded memory:** block loudness values go into histograms of 0.01 LU from -70 to +10 LUFS (8,000 bins), each bin holding the count and the sum of its blocks' energies. The integrated loudness then sums energies exactly, except for the blocks in the one bin that holds the relative gate, which are taken whole or not at all (at most 0.01 LU off, **estimate**, against Tech 3341's tolerance of ±0.1 LU). The loudness range takes its percentiles from the short-term histogram. libebur128's histogram mode works the same way (**unverified** in detail).
-- **Rates without a decoded 48 kHz:** the filters run at the stream's rate; 44.1 kHz and the high rates are tested against the cross-checks.
+- **ITU-R BS.1770-5** (11/2023; its text was read for this revision from itu.int; earlier revisions were not compared), Annex 1:
+  - **K-weighting,** a high-shelf pre-filter and a highpass (the "RLB" filter). The Recommendation gives the coefficients for 48 kHz only (Tables 1 and 2) and says that other rates "will require different coefficient values, which should be chosen to provide the same frequency response that the specified filter provides at 48 kHz". At **48,000 Hz the Recommendation's published coefficients are used**, as written; at every other rate the coefficients are derived from the filters' analog parameters, as libebur128 does (decision 13). The derived coefficients at 48 kHz differ from the published ones by 1.8 × 10^-15 in the cascaded polynomial (second prototype), so the choice changes no figure, but the published ones keep the EBU test set exact by definition.
+  - **The derivation,** from libebur128's source (MIT; read on 2026-10-26): shelf f0 = 1681.974450955533 Hz, Q = 0.7071752369554196, gain G = 3.999843853973347 dB, Vh = 10^(G/20), Vb = Vh^0.4996667741545416, K = tan(π f0 / fs), a bilinear transform with K; highpass f0 = 38.13547087602444 Hz, Q = 0.5003270373238773. Inverting the bilinear transform of the Recommendation's 48 kHz coefficients, from the Recommendation alone, gives f0 1681.97445095553 Hz, Q 0.7071752369554184, G 3.9998438539733447 dB and exponent 0.4996667741545441 for the shelf, and f0 38.13547087611304 Hz, Q 0.5003270373250421 for the highpass: the same to 11 to 14 digits (second prototype). So the parameters are recoverable without an implementation, which is option (b) of decision 13.
+  - **Lowest rate: 8,000 Hz.** The derivation is unstable below fs = 2 f0 = 3,364 Hz, where tan(π f0 / fs) turns negative (the largest pole radius is 1.31 at 3 kHz and 1.98 at 2 kHz, 0.94 at 4 kHz; second prototype). Above that it is stable but its response drifts from the 48 kHz one, over 20 Hz to 0.45 of the rate: 1.4 dB at 4 kHz, 0.50 dB at 8 kHz, 0.29 dB at 11.025 kHz, 0.15 dB at 16 kHz, 0.08 dB at 22.05 kHz and under 0.05 dB from 32 kHz up. Loudness is measured from 8,000 Hz (a choice of this design: the drift stays at or under 0.5 dB); below it the status is `NotPossible` with the reason "loudness needs a sample rate of 8,000 Hz or more".
+  - **Gating blocks:** 400 ms to the nearest sample (libebur128: `(rate + 5) / 10` samples per 100 ms, four of them), overlapping by 75 %, so a block every 100 ms; the interval ends at the end of a gating block and an incomplete block at the end is not used. A stream shorter than 400 ms has no integrated loudness ("none: shorter than 400 ms"). Blocks never span a gap (see [Channels, rates, widths and DSD](#channels-rates-widths-and-dsd)).
+  - **Channel weights.** BS.1770-5 Annex 1 gives 1.0 for left, right and center, 1.41 for the surround channels and leaves the LFE out; Annex 3 (Table 4, read) gives the rule by position for every layout: with an elevation under 30 degrees, 1.00 for an azimuth under 60 degrees, **1.41 for 60 to 120 degrees (both included)** and 1.00 from over 120 degrees to 180; at 30 degrees of elevation or more, 1.00. Table 5 lists it per loudspeaker: M±060, M±090 and M±110 1.41; M±135, M±180, M±030, M+000 and every height and bottom position 1.00. Applied to `Speaker` by the layout the stream states:
+    - `FrontLeft`, `FrontRight`, `FrontCenter`, `FrontLeftOfCenter`, `FrontRightOfCenter`, `BackCenter`: 1.0;
+    - `SideLeft`, `SideRight`: 1.41 (azimuth ±90);
+    - `BackLeft`, `BackRight`: **by the layout.** With a `SideLeft` and `SideRight` in the layout they are the rear pair of a 7.1 (M±135): 1.0. Without them they are the surround pair (M±110, as 5.0, 5.1 and quadraphonic have it, the `Speaker` comment's convention): 1.41;
+    - `TopFrontLeft`, `TopFrontCenter`, `TopFrontRight`, `TopBackLeft`, `TopBackCenter`, `TopBackRight`, `TopCenter`, `TopSideLeft`, `TopSideRight`, `BottomFrontLeft`, `BottomFrontCenter`, `BottomFrontRight`: 1.0 (elevation of 30 degrees or more);
+    - `FrontLeftWide`, `FrontRightWide`: 1.0, **unverified**: the azimuth ISO/IEC 23091-3 gives them was not read, and at 60 degrees or more the rule would give 1.41;
+    - `LowFrequency` and `LowFrequency2`: left out, as Annex 3 says of "the LFE channels".
+    - **No layout (`ChannelLayout` null) and a `Discrete` channel:** mono is one channel of weight 1.0 (a full-scale 997 Hz sine in the left, center or right input reads -3.01 LKFS, Annex 1); two channels without a layout are left and right, both 1.0; with three or more channels and no stated positions (or a `Discrete` among them) loudness is `NotPossible` ("the channel positions are not stated"), since a weight would be a guess (decision 18).
+  - **What the tools do** (black-box; FFmpeg 6.1.1's `ebur128` filter with a 997 Hz sine in one channel at a time; libebur128's source for its map): FFmpeg weights 1.41 every channel at a side or rear position, including the rear pair of a 7.1, `BC` of a 6.1 and `TBL` of a 7.1.4, which Table 4 weights 1.0; its mono, stereo, center and front channels read 1.0, its LFE is left out. libebur128 weights 1.41 only M±060, M±090 and M±110, as the Recommendation does, and its default map leaves channels above the sixth unused, so a cross-check of a 7.1 sets its map explicitly (`Mp135` and `Mm135` for the rear pair). So the FFmpeg cross-check is asserted on mono, stereo, 3.0, 5.0 and 5.1 (back or side surrounds) and quadraphonic, where the three agree; for 7.1, 6.1 and layouts with top-back channels it compares FFmpeg's figure with the one computed from FFmpeg's observed weights, and libebur128 carries the assertion. Only FFmpeg 6.1.1 ran for this; the CI image's version was not run (**unverified**).
+  - **Gating:** an absolute gate at -70 LKFS, then a relative gate 10 LU below the loudness of the blocks above the absolute one; the integrated loudness is -0.691 + 10 log10 of the weighted mean over the blocks that pass (equations 4 to 7, read).
+- **EBU R 128 and Tech 3341:** momentary loudness (400 ms, rectangular) and short-term loudness (3 s), reported as their maxima; the loudness unit is LUFS, one name for what BS.1770 calls LKFS, which the article mentions once. A stream shorter than 3 s has no short-term maximum.
+- **EBU Tech 3342:** loudness range from short-term values taken at least 10 times a second (an overlap of 2.9 s or more; here every 100 ms), absolute gate -70 LUFS, relative gate 20 LU below the power mean of the values above the absolute gate, the spread between the 10th and the 95th percentile (the document's reference code picks `sorted[round((n - 1) p / 100 + 1)]`, p = 10 and 95).
+- **Bounded memory:** block loudness values go into histograms of 0.01 LU bins from -70 to +30 LUFS (10,000 bins, each holding the count and the sum of its blocks' energies; 160 KB each, one for the gating blocks and one for the short-term values). **Why +30:** libebur128's histogram runs from -70 to +30 LUFS in 0.1 LU bins (read in its source), and the loudest possible block is far lower than that: even 24 channels of full-scale in-phase signal at 1.41 weight and a 4 dB K-weighting gain stay near +19 LUFS (**estimate**), and a top of +10 would be below what a 5.0 file of full-scale square waves reaches (about +11, **estimate**). A block above +30 goes into the top bin, whose energy sum is exact, so the integrated loudness is unaffected unless the relative gate itself sits there (it cannot: it is 10 LU below the mean).
+  - **Error bound.** The gate is computed exactly from the energy sums, so the only approximation is the one bin that holds the relative gate: its blocks are taken whole when their mean energy (the bin's sum over its count) is at or above the gate, and left out otherwise. If the share of the passing blocks that lie in that bin is p, taking them or not changes the mean energy by at most the factor 1 / (1 - p), at most 4.34 p LU (an error of at most 0.01 LU holds only for p under 0.23 %, and fails when many blocks fall in the gate's bin: a steady segment exactly at the gate). A bin is 0.01 LU wide, so a smooth distribution over 20 LU puts about 0.05 % of the blocks in it, an error of 0.002 LU, against Tech 3341's tolerance of ±0.1 LU. The block-energy decision by the bin's mean is exact for blocks of one level, the usual synthetic case. The tests assert the bound 4.34 p LU on a constructed file, not 0.01.
+  - **The short-term series is bounded** like the grids: the values at 100 ms go into the histogram for the loudness range and into a series of at most 1,024 points, merging adjacent pairs as the stream grows (each point the energy mean of the 100 ms values it covers, in LUFS; the maximum short-term loudness is kept exactly, apart). One value each second for the whole stream would grow with its length.
+  - The loudness range takes its percentiles from the short-term histogram, at 0.01 LU, against Tech 3342's ±1 LU.
+- **Rates other than 48 kHz:** the filters run at the stream's rate; 44.1 kHz and the high rates are tested against the cross-checks.
 
 ### True peak
 
-- **BS.1770-5 Annex 2:** oversample by 4 with the Annex's interpolation filter (48 taps, 12 per phase), take the largest magnitude, report in dBTP. The factor for rates above 48 kHz follows the Annex's text (**unverified** here: the design assumes a factor that brings the rate to at least 176.4 kHz).
-- **Cost:** 48 multiply-adds a sample of a channel; 23.1 ns with the four phases in vector lanes (x86-64-v2), 12.5 ns where the x86-64-v3 build has 256-bit vectors.
-- **Skipping (estimate):** an interpolated value cannot exceed the sum of the filter's absolute taps times the largest sample magnitude among its 12 inputs. Where that bound is below the peak found so far, the window is skipped; the result is the same, and in music with an early loud peak most windows are skipped. Not prototyped.
+- **BS.1770-5 Annex 2** (read): oversample, take the largest magnitude, report in dBTP. The Annex presumes 48 kHz and a 4× oversampling (a 48-tap, 4-phase FIR, whose 48 coefficients it lists as "one set that would satisfy the requirements"); it says that "incoming signals at higher sampling rates require proportionately less over-sampling (e.g. for an incoming signal at 96 kHz sample rate a 2× over-sampling would be sufficient)" and that meters with an oversampled rate of at least 192 kHz may indicate dB TP. So the factor is 4 below 96 kHz, 2 from 96 kHz up to 192 kHz and 1 (the sample peak) from 192 kHz, the same as libebur128's (read in its source). The Annex gives no 2× filter; this design takes phases 0 and 2 of the 4× filter (the positions 0 and 1/2 of the same prototype lowpass), **unverified** against any reference until step 5 checks it against libebur128 and the Tech 3341 tolerance.
+- **Prototype check of the 4× filter** (the Annex's coefficients, 48 kHz, second prototype): a stereo sine at fs/4 with amplitude 0.5 and phase 45° reads -5.98 dBTP (Tech 3341 signal 16 expects -6.0 +0.2/-0.4), fs/6 at 60° -6.32 (signal 17), fs/8 at 67.5° -6.03 (18), fs/4 at 1.41 amplitude +3.03 (19, expects +3.0). FFmpeg 6.1.1's `ebur128=peak=true`, whose true peak is resampler-based, reads -5.4, -6.0, -6.0 and +3.6 on the same files, 0.6 dB over the first and last, outside the tolerance, so the FFmpeg cross-check of true peak allows +0.7/-0.1 dB against our figure (measured on 6.1.1; asserted again with the CI's version) and the assertions on the synthetic overs rest on the Annex's expected values, not on FFmpeg. On the LAME `-b 128` decode FFmpeg reads -9.3 and the Annex's filter -9.25 dBTP.
+- **Cost:** 48 multiply-adds a sample of a channel; 23.1 ns with the four phases in vector lanes (x86-64-v2), 12.5 ns where the x86-64-v3 build has 256-bit vectors (first prototype).
+- **Skipping (estimate):** an interpolated value cannot exceed the sum of the filter's absolute taps times the largest sample magnitude among its 12 inputs. A window is skipped only where that bound, multiplied by 1 + 2^-50 so that rounding in the bound's own sum cannot make it fall short, is below the peak found so far; the result is the same, and in music with an early loud peak most windows are skipped. Not prototyped.
 
 ## Determinism
 
-Reports are compared byte for byte in the goldens on all six CI platforms and between the JIT and the NativeAOT build (`scripts/check_aot.sh`). Floating-point code can differ between machines for five reasons, and the design closes each:
+Reports are compared byte for byte in the goldens on all six CI platforms and between the JIT and the NativeAOT build (`scripts/check_aot.sh`). Floating-point code can differ between machines for these reasons, and the design closes each:
 
 ### What can differ
 
-- **Fused multiply-add:** `a * b + c` rounded once instead of twice. .NET is expected to emit it only for `Math.FusedMultiplyAdd` and the vector `FusedMultiplyAdd` methods (**unverified** as a general statement); the prototype found no automatic contraction on x64, in the JIT or in NativeAOT for x86-64-v3, which may use FMA instructions (below). Arm64 is not measured here (**unverified**); the goldens on the two Arm runners hold it.
-- **The math library:** `Math.Sin`, `Math.Cos`, `Math.Log10`, `Math.Exp` and `Math.Pow` call the platform's C library, whose results may differ in the last bit between glibc, macOS and Windows (**unverified** for .NET 10's current implementations; not measurable on one machine). `Math.Sqrt`, +, -, * and / are correctly rounded IEEE operations everywhere.
-- **Vector width and horizontal sums:** `Vector<T>` is 256 bits on AVX2 and 128 on Arm, and a sum across lanes adds in an order that depends on the width.
-- **NaN semantics of minimum and maximum:** the x86 instructions return an operand, Arm's return NaN (**unverified** for .NET's `Vector128.Max` on each platform).
+- **Fused multiply-add:** `a * b + c` rounded once instead of twice. .NET is expected to emit it only for `Math.FusedMultiplyAdd` and the vector `FusedMultiplyAdd` methods (**unverified** as a general statement); the prototype found no automatic contraction on x64, in the JIT or in NativeAOT for x86-64-v3, which may use FMA instructions (below). Arm64 is not measured here (**unverified**); the goldens on the two Arm runners hold it. **The ban rests on the hash test, not on the language:** the C# and CLI specifications let an implementation compute floating-point intermediates at higher precision than their type (quoted from memory, **unverified** here), so nothing in the language promises two roundings; the rule is kept because a platform that contracts fails `MeasurementDeterminismTests` before it fails a golden.
+- **The math library:** `Math.Sin`, `Math.Cos`, `Math.Tan`, `Math.Log10`, `Math.Exp` and `Math.Pow` call the platform's C library, whose results may differ in the last bit between glibc, macOS and Windows (**unverified** for .NET 10's current implementations; not measurable on one machine). `Math.Sqrt`, +, -, * and / are correctly rounded IEEE operations everywhere.
+- **Vector width and horizontal sums:** `Vector<T>` is 256 bits on AVX2 and 128 on Arm, and a sum across lanes adds in an order that depends on the width. The BCL's vectorized reductions (`TensorPrimitives`) choose their own order and width and may change with the runtime.
+- **NaN and out-of-range semantics of conversions, minimum and maximum.** Measured on .NET 10.0.401, x64 (second prototype):
+  - `(int)NaN` is 0, a double-to-integer cast saturates (`(int)1e300` is 2,147,483,647, `(long)-1e300` is long.MinValue), and `Vector128.ConvertToInt64` does the same (NaN gives 0, 1e300 gives long.MaxValue);
+  - `Vector128.ConvertToInt64Native` returns **long.MinValue** for both NaN and 1e300: the `*Native` variants give the hardware's answer;
+  - `Vector128.Max(NaN, 1)` is NaN, in either operand order; `Vector128.MaxNative(NaN, 1)` is 1 and `MaxNative(1, NaN)` is NaN: the native variant returns an operand, as the x86 instruction does, and Arm's returns NaN (**unverified** on Arm).
+  So the same call differs between its plain and its `*Native` form on one machine, and the `*Native` forms are what a platform is free to differ on. The plain forms are defined by the runtime and are the ones allowed.
+- **Subnormals:** not a difference in value but in time; a recursive filter whose input has gone to silence can sit in the subnormal range, and every operation on a subnormal is slow (below).
 - **Summation order:** parallel or reordered sums give different roundings.
 
 ### What was measured
@@ -439,16 +632,20 @@ The prototype computed the power spectra of 2^20 samples of a test signal (two i
 They go into `CLAUDE.md` with the first pull request:
 
 - **No fused multiply-add** in measurement code: no `Math.FusedMultiplyAdd`, no vector `FusedMultiplyAdd` or `MultiplyAddEstimate`.
-- **No platform math library:** trigonometric tables come from a polynomial evaluated with + and * only (the prototype's Taylor series on the first octant, with symmetry), logarithms from the exponent bits and a series (the prototype's `Log10Det`). `Math.Sqrt` is allowed.
+- **No platform math library:** trigonometric tables come from a polynomial evaluated with + and * only (the prototype's Taylor series on the first octant, with symmetry), logarithms from the exponent bits and a series (the prototype's `Log10Det`). `Math.Sqrt` is allowed. **Own `Tan` and `Pow` too,** for the K-weighting derivation of decision 13 (`tan(π f0 / fs)`, `10^(G/20)` and `Vh^0.4996…`): `Tan` from the same sine and cosine polynomials with range reduction, `Pow` and `Exp` from the exponent bits and a polynomial. The derivation runs once per stream, so its speed does not matter; a hash test over the coefficients of every rate that the tests use holds it.
+- **No `*Native` and no `*Estimate` API:** neither `ConvertToInt64Native`, `MaxNative`, `MinNative` and the other `*Native` methods, nor `ReciprocalEstimate`, `ReciprocalSqrtEstimate`, `MultiplyAddEstimate` and the other `*Estimate` ones: their results for NaN, out-of-range values and rounding are platform-defined (measured above). A test over the compiled `Encspect.Host` and `Core.Abstractions` assemblies' measurement namespace fails on a call of one, as `DecodingBoundaryTests` checks its boundary.
+- **No BCL vectorized reductions:** no `TensorPrimitives`, and no `System.Linq` or other BCL sum, dot product, maximum or average over floating-point spans.
 - **Fixed order:** every sum runs in an order that depends only on the data's length; channels are combined in channel order; parallel work (below) never changes it.
 - **Vectors element-wise only:** `Vector128` (and `Vector256`, which runs as two 128-bit halves where 256 bits are not available) for lane-independent operations, never `Vector<T>`, never a horizontal sum; lanes are combined in scalar code in a fixed order.
-- **No NaN reaches the arithmetic:** non-finite inputs are counted and replaced with 0 before anything else.
+- **No NaN and no huge value reaches the arithmetic:** non-finite inputs are counted and replaced with 0, and finite floats beyond 1,024 times full scale are clamped to that and counted, before anything else (a Float64 WAV holding 1e300 would give infinity and then NaN in the butterflies and filters).
+- **Subnormals are flushed:** every recursive state (the K-weighting biquads, any later filter) is set to 0 where its magnitude is below 1e-30, at the end of each block of at most 4,096 samples. Measured (second prototype, JIT with tiering off, the 48 kHz K-weighting in transposed direct form II, 20 million samples): zeros 134 ms (6.7 ns a sample); an impulse and then zeros **4,056 ms (203 ns a sample)**, because the states go subnormal after 4,517 samples (0.09 s at 48 kHz) and stay at ±4.9 × 10^-324 and ±2.6 × 10^-322 for good; the same with the flush every 4,096 samples 136 ms (6.8 ns), and with a flush every sample 140 ms. A review had measured 1,621 ms against 81 ms in another filter form; the effect is a factor of 20 to 30 either way, so a crafted file of one click and then silence would cost thirty times the time the work budget charges. 1e-30 is -600 dB, far below any figure. `MeasurementWorkTests` times the case "an impulse, then silence" against the case of zeros and fails on a ratio above 2.
 - **Integers where exact:** peaks, sums for DC, clipping, silence and bit usage on integer samples are integer arithmetic.
 - **Outputs on fixed grids:** figures are integers in fixed units (whole hertz, tenths of a dB), so no writer formats a double.
+- **The kernels are compiled optimized:** each kernel method carries `[MethodImpl(MethodImplOptions.AggressiveOptimization)]`, so the JIT compiles it fully optimized at its first call, bypassing tiering. Otherwise the hash test could run the unoptimized tier-0 code for its short input while the real analysis, after tiering up, runs tier-1 code (and the JIT is free to choose different instructions in each). The attribute is ignored by NativeAOT, which compiles optimized anyway.
 
 ### How it is held
 
-- `MeasurementDeterminismTests`: the raw spectra of a synthetic signal hash to a constant committed in the test, on every platform; the same for the K-weighting filter's output and the true-peak interpolation. A platform that differs fails this test before any golden.
+- `MeasurementDeterminismTests`: the raw spectra of a synthetic signal hash to a constant committed in the test, on every platform; the same for the K-weighting filter's output (including an impulse followed by silence, after the flush), the true-peak interpolation and the derived coefficients for each rate. A platform that differs fails this test before any golden. The kernels it runs are the ones the analysis runs, optimized (above).
 - The `.measure.json` goldens (below) on all six platforms, and `check_aot.sh` with `--measure`.
 - The vector paths are tested against the scalar ones with `DOTNET_EnableHWIntrinsic=0`, as the decoders' are ("Vector paths of the decoders" in [development.md](../development.md)).
 
@@ -474,55 +671,87 @@ They go into `CLAUDE.md` with the first pull request:
 | K-weighting (two biquads) and mean square | 4.6 ns | 4.4 ns | 4.8 ns |
 | True peak, 4 × 12 taps, plain loop | 49.0 ns | 46.6 ns | 53.7 ns |
 | True peak, the four phases in `Vector256` lanes | 23.1 ns | 12.5 ns | not run |
-| Sample statistics on integers (peak, sums, OR, clipping runs) | 2.0 ns | 2.3 ns | 2.2 ns |
+| Levels on integers (peak, sums, OR, clipping runs) | 2.0 ns | 2.3 ns | 2.2 ns |
 
   The JIT figures of the optimized FFT rows come from a run outside the machine lock, the rest of the JIT column from the first locked run; the CLI is released as NativeAOT, so its columns count.
+- **The second prototype (written for the review), per sample of one channel,** the same machine, one pinned core under the machine lock (`flock -x`, load average 0.3 to 0.6), JIT with `DOTNET_TieredCompilation=0`, minimum of 7 rounds, a real FFT of N points through a complex FFT of N/2 (split step), double precision, Hann window, hop N/2, `Vector128` butterflies, no fused multiply-add. "Window, FFT and power" includes the window multiply, the bit reversal and the power accumulation; "frame counters" are those of step 4 of [Spectral cutoff](#spectral-cutoff) for the one spectrum they serve. The scalar column has no vectors.
+
+| Points | Window, FFT and power, `Vector128` | Window, FFT and power, scalar | Frame counters (one spectrum) | Stereo: FFT + 1.5 counter sets | Weight in work units (ns / 0.6, rounded up) |
+| --- | --- | --- | --- | --- | --- |
+| 1,024 | 9.8 ns | not run | 5.1 ns | 17.4 ns | 29 |
+| 2,048 | 10.4 ns | 13.4 ns | 2.4 ns | 14.0 ns | 24 |
+| 4,096 | 11.2 ns | 14.5 ns | 1.6 ns | 13.6 ns | 23 |
+| 8,192 | 14.6 ns | 17.8 ns | 1.1 ns | 16.2 ns | 27 |
+| 16,384 | 15.1 ns | 19.4 ns | 0.7 ns | 16.2 ns | 27 |
+| 32,768 | 16.5 ns | 20.8 ns | 0.7 to 1.3 ns | 17.5 ns | 30 |
+
+  - "1.5 counter sets" is one set per channel plus one for the combined spectrum, shared by two channels. The first prototype read 12.2 ns at 4,096 points (NativeAOT x86-64-v2); the JIT reads within 10 % of it.
+  - The cost does not grow with log2 N alone: 8,192 points cost 1.3 times 4,096 (14.6 against 11.2 ns), the step where the working set (twiddles, window, two arrays of N/2 doubles) stops fitting the first-level cache; from 8,192 to 32,768 it grows by 13 % (**unverified** as the cause; one machine).
+  - The cost of a larger FFT at high rates is measured, not extrapolated: 16,384 points cost 16.2 ns against 13.6 at 4,096, 1.2 times; at 96 kHz (8,192 points) also 1.2 times. Per second of stereo audio that is 1.2 ms at 44.1 kHz, 3.1 ms at 96 kHz (2.6 times) and 6.2 ms at 192 kHz (5.2 times).
+  - K-weighting in a plain loop (two biquads in transposed direct form II, the flush check, and the mean square) took 6.7 ns a sample here against 4.6 ns in the first prototype; the weights are set by the test from the built kernel, not from either.
 - **The real decoder, same machine and build (NativeAOT x86-64-v2 of c517387):** a 300 s file of stereo 16-bit 44.1 kHz pink noise with a 440 Hz tone, FLAC `-5` (18.5 MB): analysis 0.132 s, `--verify` 0.390 s, so decoding costs **9.75 ns a sample of a channel**. The same audio as WAV (52.9 MB) analyzes in 0.061 s.
 
 ### Cost relative to decoding
 
-**Estimates,** adding the kernels (NativeAOT x86-64-v2), for that 300 s stereo file (26.46 million samples of a channel):
+**Estimates,** adding the kernels (the first prototype's NativeAOT figures, except the spectrum's, from the second prototype), for that 300 s stereo file (26.46 million samples of a channel):
 
 | Measurements | Per sample of a channel | Added to the file's 0.39 s of `--verify` |
 | --- | --- | --- |
-| Spectrum (FFT, grids) | about 13 ns | about 0.35 s |
-| and sample statistics | about 15 ns | about 0.40 s |
-| and loudness and true peak (all) | about 43 ns | about 1.1 s |
+| Spectrum (FFT, counters, grids) | about 14.5 ns | about 0.38 s |
+| and levels | about 16.5 ns | about 0.44 s |
+| and loudness and true peak (all) | about 44 ns | about 1.2 s |
 
-- So the spectrum costs about 1.3 times FLAC's decoding, and everything about 4.4 times; against Monkey's Audio at insane or WavPack `-hh`, whose decoding costs 5 to 30 times FLAC's (decoders.md's tables), measuring is a small addition.
-- A 300 s stereo file is measured in about 1.5 s in all; a 24-bit 96 kHz file costs about 2.2 times per second of audio (twice the samples, a larger FFT).
+- So the spectrum costs about 1.5 times FLAC's decoding, and everything about 4.5 times; against Monkey's Audio at insane or WavPack `-hh`, whose decoding costs 5 to 30 times FLAC's (decoders.md's tables), measuring is a small addition.
+- A 300 s stereo file is measured in about 1.6 s in all; a 24-bit 96 kHz file costs about 2.6 times per second of audio (twice the samples, a larger FFT).
 
 ### The work budget
 
 - **Why a budget:** measurements cost per decoded sample, and decoding a crafted file amplifies bytes into samples (a 49-byte FLAC frame codes more than 2 MB of PCM). The decoders' budget bounds the samples, so the measurements are bounded too, but only by about four times the decoders' time, since they cost more per sample than the cheapest decoding.
-- **(a) A count of their own, as large as the decoders', recommended (decision 5):** the measurer charges work units per block before it does the work, at weights per sample of a channel in the decoders' unit (about 0.6 ns): 21 for the spectrum, 4 for the sample statistics, 8 for loudness, 38 for true peak (**estimate** from the kernels; a test sets them). The bound is the larger of 2^35 units and the file's size times the largest `WorkPerInputByte` among the sessions, the decoders' formula, counted apart. Past it, measuring stops (`measure.limit`) and decoding and verification go on.
+- **(a) A count of their own, as large as the decoders', recommended (decision 5):** the measurer charges work units per block before it does the work, at weights per sample of a channel in the decoders' unit (about 0.6 ns):
+  - **spectrum: by the FFT size,** 29, 24, 23, 27, 27 and 30 for 1,024, 2,048, 4,096, 8,192, 16,384 and 32,768 points (the table above: the cost per sample is not independent of N, and 8,192 points cost 1.3 times 4,096, so one weight for every size would be wrong);
+  - 4 for the levels, 8 for loudness, 38 for true peak (**estimate** from the kernels; a test sets them).
+  - The charge is per sample of a measured channel, so a block of 32 channels costs 32 times; channels beyond the cap are not charged because they are not measured.
+  - The bound is the larger of 2^35 units and the file's size times the largest `WorkPerInputByte` among the sessions, the decoders' formula, counted apart. Past it, measuring stops (`measure.limit`) and decoding and verification go on.
   - Worst case: at most the decoders' time again (about 21 s for a small crafted file, 1.2 s per MB beyond 16 MiB).
   - Legitimate files: an hour of CD audio is 317.5 million samples of a channel, 2.2 × 10^10 units for everything, under the floor of 2^35 (3.4 × 10^10), so it is measured in full at any size; an hour of 8 channels at 24 bits and 192 kHz (5.5 × 10^9 samples, 3.9 × 10^11 units) needs a file of 190 MB, and such a file is several GB.
 - **(b) Shared with the decoders:** simpler, but turning measurement on would make some files stop decoding earlier, so whether a stream verifies would depend on whether it was measured.
 - **(c) None:** the decoders' budget bounds samples, and measurement time is at most about four times the decoding time it follows. Acceptable, but a crafted file then costs up to about 90 s more instead of 21 s (**estimate**: 2^35 units at 16 a sample is 2.1 × 10^9 samples, at 43 ns each).
 - **The floor of the charge,** as for decoders: after each block the measurer has charged at least its weights times the samples it measured; a measurement that forgets to charge is `measure.failed` in every test.
-- **`MeasurementWorkTests`,** in the `ComplexityTests` collection like `DecoderWorkTests`: each measurement's time per unit at most twice the FLAC reference's, in the nightly run.
+- **`MeasurementWorkTests`,** in the `ComplexityTests` collection like `DecoderWorkTests`: each measurement's time per unit at most twice the FLAC reference's, in the nightly run, for every FFT size and for the case "an impulse, then silence" (see [Determinism](#determinism)).
 
 ### Memory
 
-Per measured stream, independent of its length (**estimates** from the sizes, at 8 channels where it matters):
+Per measured stream, independent of its length and sized from the declared format before anything is allocated (**estimates** from the sizes; C measured channels, at most 32; N the FFT size):
 
-- the overlap buffer: one frame of samples per channel in doubles (4,096 × 8 × 8 B = 256 KiB; 16,384 points: 1 MiB);
-- FFT scratch, twiddles and window: 6 arrays of the frame size in doubles (192 KiB at 4,096; 768 KiB at 16,384);
-- average spectra: (channels + 1) × (N/2 + 1) doubles (590 KiB at 8 channels and 16,384 points);
+- the overlap buffer: one frame of samples per channel in doubles (C × N × 8 B);
+- FFT scratch, twiddles and window: 6 arrays of the frame size in doubles (48 N B, shared);
+- average spectra: (C + 1) × (N/2 + 1) doubles;
+- the frame counters of the cutoff: (C + 1) × 512 × 72 × 2 counters of 4 B, 295 KB each (the combined spectrum and each channel);
 - the spectrogram's cells in single precision (2 MiB) and the kept bytes (512 KiB);
-- the waveform (1,024 columns × channels × 2 × 2 B, 32 KiB at 8 channels);
-- the loudness histograms (8,000 bins × 16 B, twice: 256 KiB) and the true-peak filter state;
-- in all under 6 MiB per stream. The report keeps the figures, the 512-row spectra and the grids: under 1 MiB per stream.
-- **A bound per analysis:** at most 64 MiB of measurement state, about 10 streams at the largest sizes; further streams are not measured (`measure.streams-limited`). Decoded streams of one file are few today (Matroska's later routes may bring more).
-- `MemoryTests`: a long stream measured, heap read from inside the last `Write`, growth per further block bounded, as `DecodingManyFlacFramesHoldsNothingPerFrame` does for decoders.
+- the waveform (1,024 columns × C × 2 × 2 B);
+- the loudness histograms (10,000 bins × 16 B, twice: 320 KB), the 1,024-point short-term series and the true-peak filter state;
+
+| Stream | Total |
+| --- | --- |
+| 2 channels, 4,096 points (CD) | 4.0 MiB |
+| 6 channels, 8,192 points (5.1 at 96 kHz) | 5.8 MiB |
+| 8 channels, 4,096 points | 6.0 MiB |
+| 8 channels, 32,768 points (8 channels at 384 kHz) | 10.0 MiB |
+| 32 channels (the cap), 32,768 points | 25.9 MiB |
+
+Under 6 MiB holds only for up to 8 channels at 4,096 points; 32,768 points need about 7.5 MiB without the frame counters. The report keeps the figures, the 512-row spectra and the grids: under 1 MiB per stream.
+
+- **A bound per analysis:** at most 64 MiB of measurement state; a stream's state is sized from its format when its output is declared and reserved from that bound, so two streams of the largest size fit and a third is not measured (`measure.streams-limited`); a stream whose own size is above the bound cannot occur at 32 channels (26 MiB). Decoded streams of one file are few today (Matroska's later routes may bring more).
+- **A bound per stream on channels:** 32 (see [Channels, rates, widths and DSD](#channels-rates-widths-and-dsd)); the format's channel count, which a header can set to 65,535, never sizes an allocation.
+- `MemoryTests`: a long stream measured, heap read from inside the last `Write`, growth per further block bounded, as `DecodingManyFlacFramesHoldsNothingPerFrame` does for decoders; a WAV that declares 65,535 channels stays within the bound.
 - No `ArrayPool<T>.Shared`, for the reason decoders.md gives.
 
 ### Cancellation and the exception boundary
 
-- **Cancellation:** the measurer checks the analysis's token every 64 KiB samples of a channel and at every block. When it is canceled, the measurer stops working and returns; the decoder's next check of its own token (linked to the analysis's) throws, as decoders.md's contract has it. So the sink never throws, and the latency is at most one block (a WavPack set of up to 2^24 samples, measured in chunks with the check inside).
+- **Cancellation:** the measurer checks the analysis's token every 64 KiB samples of a channel and at every block. When it is canceled, the measurer stops working and returns, and **remembers that it stopped**; the decoder's next check of its own token (linked to the analysis's) throws, as decoders.md's contract has it. So the sink never throws, and the latency is at most one block (a WavPack set of up to 2^24 samples, measured in chunks with the check inside).
+- **The last block.** A cancel that arrives while the last block is measured, with no later check by the decoder, would end the decode normally and leave a record that says `Complete` over figures cut short. So: a measurer that stopped on the token ends with status `Stopped`, never `Complete`, whatever the decoder does next; and at the end, before the host attaches any record, it checks the token once more and, if it is canceled, throws `OperationCanceledException` from the host's own boundary (not from the sink), as it does for every cancel of the analysis.
 - **Stop:** `DecodeOptions.Stop` ends decoding, so the measurements end with status `Stopped`, covering what was decoded.
-- **Exceptions:** the measurer catches every exception of its own code. An `OperationCanceledException` from the analysis's token cannot arise (it never throws on cancellation), so any exception is a bug: `measure.failed` (error), the stream's measurements are dropped, measuring of that stream stops, decoding goes on. Measurement code throws nothing on purpose: malformed PCM does not exist at this level (every bit pattern is a sample), and non-finite floats are counted.
+- **Exceptions:** the measurer catches every exception of its own code. An `OperationCanceledException` from the analysis's token cannot arise (it never throws on cancellation), so any exception is a bug: `measure.failed` (error), the stream's measurements are dropped, measuring of that stream stops, decoding goes on. Measurement code throws nothing on purpose: malformed PCM does not exist at this level (every bit pattern is a sample), non-finite floats are counted and large ones clamped.
 - `OutOfMemoryException` passes through, as everywhere in the host.
 
 ### Streaming
@@ -532,8 +761,8 @@ Per measured stream, independent of its length (**estimates** from the sizes, at
 
 ### Parallel decoding and the GUI
 
-- parallel-decoding.md (approved, deferred) calls the sink in the commit, on the analysis thread, in stream order. The measurer would then add to the serial part: about 13 to 43 ns a sample of a channel next to commits of a few nanoseconds, which would eat most of the gain for WavPack (whose serial share is already 12 to 25 %).
-- **So:** with parallel decoding, the measurer runs on a thread of its own that takes copied blocks from a bounded queue (two frames' worth, then back-pressure on the commit) and processes them in stream order. The copy costs about 1 ns a sample (**estimate**); the result is the same bits, since the order of every operation is unchanged. The channels of a block can be transformed on several threads, with the combined sums still added in channel order.
+- parallel-decoding.md (approved, deferred by the owner on 2026-10-26 in favor of new formats and deeper analysis such as this) calls the sink in the commit, on the analysis thread, in stream order. The measurer would then add to the serial part: about 14 to 44 ns a sample of a channel next to commits of a few nanoseconds, which would eat most of the gain for WavPack (whose serial share is already 12 to 25 %).
+- **So:** with parallel decoding, the measurer runs on a thread of its own that takes copied blocks from a bounded queue and processes them in stream order, with back-pressure on the commit when the queue is full. The queue is **bounded in samples, not in blocks**: at most 2^21 sample values (channels × samples; 8 MiB as 32-bit values, 16 MiB as doubles), in chunks of whole sample frames, so a block of a WavPack set of 2^24 samples or of many channels is split on the way in instead of copied whole (two blocks of the largest size would be 2 × 64 MiB of copies, **estimate**). The copy costs about 1 ns a sample (**estimate**); the result is the same bits, since the order of every operation is unchanged. The channels of a block can be transformed on several threads, with the combined sums still added in channel order.
 - Without parallel decoding, the measurer runs inline in the sink, which is simplest and what step 1 builds.
 - The GUI's folder view never decodes, so its parallelism is untouched; a decode in the detail window takes the degree parallel-decoding.md's decision 2 gives, plus the measurer's thread.
 
@@ -541,65 +770,59 @@ Per measured stream, independent of its length (**estimates** from the sizes, at
 
 ### Synthetic fixtures
 
-Hand-built with the standard library (`make_measurement_fixtures.py`), regenerated and compared in CI, as WAV files (the PCM route) and as FLAC files (`flac` 1.5.0 in CI, the decoder route), each with a manifest from an independent model (`measurement_model.py`: its own DFT and filters, written from the specifications, not from the C# code):
+Hand-built with the standard library (`make_measurement_fixtures.py`), regenerated and compared in CI, as FLAC files (`flac` 1.5.0 in CI, the decoder route) in step 1, and as WAV files too once the PCM route exists (step 3; see [Rollout](#rollout)), each with a manifest from an independent model (`measurement_model.py`: its own DFT and filters, written from the specifications, not from the C# code):
 
 - integer-phase sines at bin centers and between bins, at known levels;
 - a logarithmic sweep, for the spectrogram's columns and rows;
-- noise band-limited exactly at 11, 16, 19 and 20.5 kHz, as sums of sines with fixed random phases at bin centers, at 44.1 and 48 kHz; the same with TPDF dither, and quiet;
-- natural rolloff (cascaded biquads), which must give no cutoff;
+- noise band-limited exactly at 11, 16, 19 and 20.5 kHz, as sums of sines with fixed random phases at bin centers, at 44.1 and 48 kHz; the same with TPDF dither, and quiet (-30, -45 and -60 dB, which the lossy-derived table shows go from found to hidden);
+- natural rolloff (cascaded biquads: one, two and four sections), which must give no cutoff;
+- mixed content (part band-limited, part not), which must give no cutoff, and a band-limited passage followed by digital silence, which must give one;
 - clipping runs of 1, 2, 3 and 100 samples at both extremes, in integers and floats;
-- DC offsets of known size; leading, trailing and inner digital silence;
+- DC offsets of known size; leading, trailing and inner digital silence; **silence after an impulse** (the subnormal case of [Determinism](#determinism), at 48 kHz and at 44.1 kHz);
 - 16-bit audio padded to 24 bits, and floats that hold 16-bit values;
 - true-peak overs: a sine at a quarter of the sample rate with a phase of 45°, whose samples peak at -3.01 dB of its true peak;
-- 5.1 with an LFE that must not set the cutoff; 32-bit integers; floats with NaN and infinities; 192 kHz; a stream shorter than one frame; a stream longer than 512 hops, so columns merge.
+- 5.1 with an LFE that must not set the cutoff, and 7.1 with a rear pair (weight 1.0) against the same signal in a 5.1 with a surround pair (1.41); mono and stereo without a layout, and 5.0 without one (loudness `NotPossible`);
+- 32-bit integers; floats with NaN and infinities; **floats of 1e300** (clamped, counted, no NaN in any figure); 192 kHz; **rates of 2 kHz, 8 kHz and 0 Hz**; a stream shorter than one frame; a stream longer than 1,024 hops, so columns merge;
+- **many channels:** a WAV that declares 65,535 channels with a short data chunk (measured as 32, `measure.channels-limited`, within the memory bound), and one of 33 channels;
+- **gaps:** a FLAC stream with frames removed (the router's `FollowsGap`), a WAV-sized stream whose positions jump, and a jump of 2^40 samples (the grid advances by arithmetic); the expected `Samples`, `LostSamples` and `Gaps`, columns without data, and no frame, gating block or run across the gap;
+- **format change:** a scripted decoder (as `DecodeRouteTests` has) that writes a block with another channel count or sample format after `DeclareOutput`: status `FormatChanged`, `measure.format-changed`, the figures up to the change, verification unchanged; and a TrueHD stream whose channel count changes between access units, which must keep giving `decode.frame-invalid` for the unit and a gap in the measurements, not `FormatChanged` (it holds the guard above);
 - Expected: exact for the integer figures, within a stated tolerance for spectral figures (bin width for frequencies, 0.1 dB for levels) against the model, and exact against the golden.
 
 ### Lossless files from lossy encodes
 
 `make_external_measurement_fixtures.py` encodes a pinned input (generated, a few seconds of stereo pink noise with a tone, at a level that keeps the FLAC files small) with pinned tools, decodes each with the encoder's own decoder where it has one, and commits the FLAC files (about 4 s each, a few MB in all, **estimate**). The manifest records the encoder's stated lowpass: LAME's tag Lowpass and the transition band its `--verbose` output prints; for oggenc and FFmpeg's encoders, the values their sources give (read and cited in that pull request; **unverified** here).
 
-What the prototype measured on 30 s inputs (FFT of 4,096 points, Hann, hop 2,048; LAME 3.100, vorbis-tools 1.4.2, FFmpeg 6.1.1; decoded by `lame --decode` and by FFmpeg):
+The second prototype's runs on 30 s inputs are the table under [Spectral cutoff](#spectral-cutoff) (LAME 3.100, vorbis-tools 1.4.2, FFmpeg 6.1.1, 16-bit quantization). The 4 s fixtures have about a seventh of the frames, so the tests assert the thresholds, not the frame counts.
 
-| Encode | Encoder's lowpass | Step | Edge (cutoff) | Transition from | Frames showing it |
-| --- | --- | --- | --- | --- | --- |
-| LAME `-b 128` | tag 17,000 Hz; band 16,538 to 17,071 Hz | 54.9 dB | 16,914 Hz | 16,559 Hz | 644 of 644 |
-| LAME `-b 192` | tag 18,600 Hz; band 18,671 to 19,205 Hz | 55.7 dB | 18,938 Hz | 18,648 Hz | 644 of 644 |
-| LAME `-b 320` | tag 20,500 Hz; band 20,094 to 20,627 Hz | 56.7 dB | 20,317 Hz | 20,037 Hz | 644 of 644 |
-| LAME `-V 2` | tag 18,500 Hz; band 18,671 to 19,205 Hz | 55.5 dB | 18,982 Hz | 18,626 Hz | 644 of 644 |
-| LAME `-V 5` | tag 17,000 Hz; band 16,538 to 17,071 Hz | 52.0 dB | 16,871 Hz | 16,527 Hz | 643 of 643 |
-| LAME `-V 0` | tag 22,100 Hz; filter disabled | none (2.3 dB) | | | 0 of 644 |
-| LAME `-b 128`, 48 kHz | tag 17,000 Hz; band 16,452 to 17,032 Hz | 54.2 dB | 16,910 Hz | 16,512 Hz | 701 of 701 |
-| oggenc `-q 2` | not read | 62.2 dB | 16,667 Hz | 16,548 Hz | 644 of 644 |
-| oggenc `-q 5` | not read | 60.5 dB | 20,435 Hz | 20,338 Hz | 644 of 644 |
-| oggenc `-q 8` | not read | none (2.4 dB) | | | 0 of 644 |
-| FFmpeg `aac` 96 kbps | not read | 43.1 dB | 16,688 Hz | 15,859 Hz | 645 of 645 |
-| FFmpeg `aac` 128 kbps | not read | 61.5 dB | 17,323 Hz | 17,237 Hz | 645 of 645 |
-| FFmpeg `aac` 192 kbps | not read | 59.2 dB | 19,423 Hz | 19,305 Hz | 645 of 645 |
-| libopus 96 kbps (48 kHz) | not read | 46.6 dB | 20,648 Hz | 20,027 Hz | 702 of 702 |
-
-- Every LAME edge lies inside the transition band LAME prints, and every transition starts within 60 Hz of that band's lower end; the tag's Lowpass is a rounded setting, not the edge (at `-V 2` the tag says 18,500 Hz and the band is the one of `-b 192`).
-- These are the prototype's runs on throwaway files; the articles may state them only once committed fixtures reproduce them, worded as "in Encspect's test files, LAME 3.100 at `-b 128` leaves a spectral cutoff inside the transition band it prints; the analyzer does not name an encoder from a cutoff".
+- These are the prototype's runs on throwaway files; the articles may state them only once committed fixtures reproduce them, worded as "in Encspect's test files, LAME 3.100 at `-b 128` and 44.1 kHz leaves a spectral cutoff inside the transition band it prints; the analyzer does not name an encoder from a cutoff".
 - The tests assert, per fixture, the cutoff within the stated band (LAME) or within a tolerance of the manifest's value, and "none found" where the encoder applies no lowpass.
 
 ### Cross-checks
 
 Black-box, in a CI job on Ubuntu 26.04 (`crosscheck_measurement_fixtures.py`), with each tool's version asserted (`tool_versions.py`):
 
-- **FFmpeg `ebur128`** (`peak=true+sample`): integrated loudness, loudness range, sample and true peak, within EBU Tech 3341's and 3342's tolerances (**unverified** which apply to true peak);
-- **FFmpeg `astats`:** peak level, RMS level, DC offset, and its "Bit depth" (bits used), against the sample statistics;
+- **libebur128 as a tool,** not only its expected values: built from the pinned source (MIT; `COPYING` read) with a driver of about 60 lines that reads float PCM and prints the integrated loudness, the loudness range, the maximum momentary and short-term loudness, and the sample and true peak, with an explicit channel map. Its source is neither committed nor followed; it is a program the job runs, as `mp3guessenc` is. It carries the 7.1, 6.1 and height layouts, where FFmpeg's weights differ from Table 4 (see [Loudness and loudness range](#loudness-and-loudness-range)), and every rate.
+- **FFmpeg `ebur128`** (`peak=true+sample`): integrated loudness, loudness range, sample and true peak, within EBU Tech 3341's and 3342's tolerances (±0.1 LU, ±1 LU) on mono, stereo, 3.0, 5.0, 5.1 and quadraphonic. **True peak:** Tech 3341 gives +0.2/-0.4 dBTP for its signals 15 to 23 (read), but FFmpeg 6.1.1's resampler-based true peak read 0.6 dB over the Annex 2 filter on a quarter-rate sine (see [True peak](#true-peak)), so against FFmpeg the check allows +0.7/-0.1 dB of our figure and the synthetic overs are asserted against the expected values with Tech 3341's tolerance. Both are re-measured with the CI's FFmpeg.
+- **FFmpeg `astats`:** peak level, RMS level, DC offset, and its "Bit depth" (bits used), against the levels.
 - **sox `stats`** where the package is installed (**unverified** in the CI image): the same figures from a second tool;
 - **sox `spectrogram`** and FFmpeg `showspectrumpic`: pictures for a person's review of the synthetic sweeps, not asserted;
-- **the EBU loudness test set** (Tech 3341 and 3342 cases) and **libebur128's test expectations** (MIT): downloaded at pinned SHA-256 and never committed, as the ISO conformance streams are, since the test set's terms of use could not be read for this design (**unverified**); the expected values of each case come from the EBU documents.
+- **the EBU loudness test set** (Tech 3341 and 3342 cases) and **libebur128's test expectations** (MIT): downloaded at pinned SHA-256 and never committed, as the ISO conformance streams are, since the test set's terms of use could not be read for this design (**unverified**); the expected values of each case come from the EBU documents (Tech 3341's Table 1 and Tech 3342's cases, read).
+- **The decoded samples of WAV, AIFF and Wave64** against FFmpeg's MD5 (see [WAV, Wave64 and AIFF: a PCM decoder](#wav-wave64-and-aiff-a-pcm-decoder)).
 - Differences fail the job until explained, as in every cross-check.
 
 ### Tests
 
 - `MeasurementFixtureTests`: every measured fixture against its manifest, and a small `<name>.measure.json` golden of what measuring adds (the measurements with the grids replaced by their SHA-256), rewritten with `ENCSPECT_UPDATE_GOLDEN=1`, as the `.decode.json` goldens are; the tree must equal the one without measuring.
+- **Chunking independence:** the same audio as FLAC at two block sizes, as WavPack, as Monkey's Audio and, from step 3, as WAV gives identical measurements (the figures and the grids' hashes), since the measurer must not depend on how the decoder cuts blocks (a FFT frame spanning two blocks, a gating block, a true-peak window).
+- **Measuring changes nothing else:** verification and every `decode.*` finding are equal with and without `--measure` on every decoded fixture, and also with the measurer's budget lowered so that `measure.limit` fires first.
 - `MeasurementDeterminismTests` (above), `MeasurementWorkTests` (above), `MemoryTests` (above).
+- **CSV:** a test writes a measured file whose peaks and loudness are negative and reads the row back, expecting `-0.3` and not `'-0.3`, and one whose title starts with `=`, expecting the guard.
+- **The decoder invariant of the GUI:** every stream of a fixture of a registered decoder ID has a `Verification` in a default analysis (see [GUI](#gui)).
 - Description and topic tests over the measurements; `FindingCoverageTests` for every `measure.*` code.
-- Cancellation: a cancel inside a large WavPack set and inside a long WAV data chunk ends the analysis promptly; Stop ends measuring with status `Stopped`.
+- Cancellation: a cancel inside a large WavPack set and inside a long WAV data chunk ends the analysis promptly; Stop ends measuring with status `Stopped`; a cancel in the last block never leaves `Complete`.
 - `CorruptFiles` and the fuzzer analyze with `--measure` and lowered `MaxWork` for both budgets, and fail on `measure.failed`.
-- `check_aot.sh` runs with `--measure`; the vector paths run again with `DOTNET_EnableHWIntrinsic=0` in the `rest` shard.
+- **`check_aot.sh` with `--measure`:** the script's reports are about 870 MB already, and the measurements add the grids' hashes and spectra to each, and the time of the measurer (about 4.5 times the decoding's for everything) on top of the verification's; the first implementation pull request times the script with and without `--measure` and decides whether it measures every fixture or the measured ones only.
+- The vector paths run again with `DOTNET_EnableHWIntrinsic=0` in the `rest` shard.
 - GUI: headless tests of the panels, `CapitalizationTests` for their labels.
 - A milestone review of step 1 by an independent agent, as CLAUDE.md requires.
 
@@ -607,43 +830,49 @@ Black-box, in a CI job on Ubuntu 26.04 (`crosscheck_measurement_fixtures.py`), w
 
 Each step is its own pull request, with fixtures, goldens, articles and documentation (`docs/cli.md`, `docs/gui.md`, `docs/development.md`):
 
-1. **Framework and spectrum:** `DecodeOptions.Measure`, `MeasureOptions`, the sink's fan-out, `StreamMeasurements` and its writers (text, JSON, CSV), `--measure`, `--measure-grids`, `--hide measurements`; the deterministic kernel (tables, logarithm, FFT, window), the average spectrum, the spectral cutoff, the spectrogram and waveform grids; the budget, the memory bound, the boundary, the findings; the determinism, work, memory, fixture and fuzz tests; the synthetic and lossy-derived FLAC fixtures; the articles `measurements`, `spectrogram`, `spectral-cutoff` and the updates to `lowpass`, `coded-bandwidth` and `verification`; the `CLAUDE.md` rules; decoders.md's section renamed.
-2. **Sample statistics:** peak, RMS, DC offset, clipping runs, digital silence, bit-depth usage, with their articles and cross-checks (`astats`).
-3. **The PCM route:** the `pcm` decoder in the WAV project; the WAV, Wave64 and AIFF parsers hand their data chunks; the decode goldens of those fixtures change (`decode.no-decoder` goes).
-4. **GUI panels:** Waveform, Spectrogram and Spectrum in the detail window, the decode command (decision 8), the captions before decoding.
-5. **Loudness and true peak:** K-weighting at every rate, gating, loudness range, maxima, the loudness series, true peak; the EBU set and FFmpeg cross-checks; the Loudness panel.
-6. **Later, each its own change:** the measurer on its own thread with parallel decoding; mid/side spectra and spectral holes; the bandwidth figure for upsampled content; the TTA decoder (clean-room), which then needs nothing here.
+1. **Framework and spectrum:** `DecodeOptions.Measure`, `MeasureOptions`, `MeasurementKinds`, the sink's fan-out, `StreamMeasurements` attached to every session and its writers (text, JSON, CSV with the numeric-field exemption), `--measure`, `--measure-grids`, `--hide measurements`; the deterministic kernel (tables, logarithm, `Tan`, `Pow`, FFT, window), the average spectrum, the spectral cutoff with its frame counters, the spectrogram and waveform grids; gaps, format changes and the 32-channel cap; the budget, the memory bound, the boundary, the findings; the determinism, work, memory, fixture and fuzz tests; the synthetic and lossy-derived fixtures **as FLAC files only**; the articles `measurements`, `spectrogram`, `spectral-cutoff` and the updates to `lowpass`, `coded-bandwidth`, `verification`, `bwf-broadcast-extension` and `replaygain`; the `CLAUDE.md` rules; decoders.md's section renamed.
+   - **Why FLAC only:** fixtures as WAV files would go "through the PCM route", which arrives with step 3. Step 1 measures the streams that have decoders (FLAC, and the WavPack, Monkey's Audio and TrueHD fixtures the chunking test needs); the WAV twins of the synthetic fixtures are added in step 3 with the route, and its goldens.
+   - **The alternative** is to move the PCM route (and decision 15's `Verification` for PCM streams) into step 1, so that WAV fixtures are measured from the start; it makes step 1 larger (a decoder, a descriptor, three parsers' goldens). Decision 1 covers it.
+2. **Levels:** peak, RMS, DC offset, clipping runs, digital silence, bit-depth usage, with their articles and cross-checks (`astats`).
+3. **The PCM route:** the `pcm` decoder in the WAV project, `PcmCoding` and `DecodeSetup.Pcm`; the WAV, Wave64 and AIFF parsers start the session and hand their data chunks; the `verification` of their streams; the decode goldens of those fixtures change; the WAV twins of the synthetic fixtures; the FFmpeg MD5 cross-check; `DecoderWorkTests` and the decoder-list test.
+4. **GUI panels:** Waveform, Spectrogram and Spectrum in the detail window, the decode command and everything its rename touches (decision 8, [GUI](#gui)), the captions before decoding.
+5. **Loudness and true peak:** K-weighting at every rate from 8 kHz, gating, loudness range, maxima, the loudness series, true peak; the EBU set, libebur128 and FFmpeg cross-checks; the Loudness panel.
+6. **Later, each its own change:** the measurer on its own thread with parallel decoding (deferred with it); mid/side spectra and spectral holes; the bandwidth figure for upsampled content; a cutoff for mixed content from the frame counters; the TTA decoder (clean-room), which then needs nothing here.
 
+- **PLAN.md, with step 1** (`docs/PLAN.md`): the architecture diagram's arrow `Host -.-> GUI` labeled "decoded PCM for waveform, spectrogram" becomes "measurements of the decoded audio" (the PCM stays in the host; the GUI receives figures and grids); the Decoding row of "Decisions so far" (line 38) names the measurements; the GUI list's "Waveform and spectrogram panels that need decoded audio" (line 804) becomes the Waveform, Spectrogram, Spectrum and Loudness panels drawn from a decode, with the caption for formats without a decoder; "Later" loses "Decoders for waveform and spectrogram, format by format" in its present wording (it becomes the lossy decoders that the measurements wait for) and gains nothing else.
 - **Why this order:** step 1 carries the use case and every risk (determinism, cost, wording), so it is reviewed first; steps 2 and 3 widen what is measured at little risk; the GUI follows once the data are settled, so its panels are drawn from a stable model; loudness and true peak have their own references and come once the framework is proven.
 - **Alternative:** the GUI panels right after step 1, so users see the spectrogram sooner, before WAV files are measured. Decision 1.
 
 ## Open decisions
 
+Each has its options and a recommendation; 15 to 19 are new with the revision.
+
 1. **The first step's scope.**
-   - (a) Framework, average spectrum, spectral cutoff and the grids (the rollout above).
-   - (b) As (a) with the sample statistics, which are cheap and exact.
-   - (c) The framework with the sample statistics only, the spectrum second.
-   - **Recommendation: (a).** It is the prime use case and carries the risks; (b) is acceptable if the pull request stays reviewable.
+   - (a) Framework, average spectrum, spectral cutoff and the grids, on the streams that have decoders, with FLAC fixtures (the rollout above).
+   - (b) As (a) with the levels, which are cheap and exact.
+   - (c) The framework with the levels only, the spectrum second.
+   - (d) As (a) with the PCM route moved into step 1, so that WAV fixtures are measured from the start.
+   - **Recommendation: (a).** It is the prime use case and carries the risks; (b) is acceptable if the pull request stays reviewable; (d) adds a decoder, a descriptor and three parsers' goldens to the riskiest step.
 2. **The name.**
-   - (a) "Measurements": `DecodeOptions.Measure`, `StreamInfo.Measurements`, `--measure`, `measure.*` codes, the `measurements` article; decoders.md's "host-side PCM analyses" renamed.
+   - (a) "Measurements": `DecodeOptions.Measure`, `StreamInfo.Measurements`, `MeasurementKinds`, `--measure`, `measure.*` codes, the `measurements` article, the group "levels"; decoders.md's "host-side PCM analyses" renamed.
    - (b) "PCM analysis": `--pcm-analysis`, `StreamInfo.PcmAnalysis`.
-   - **Recommendation: (a).** "Analysis" already names the whole report (`Analyzer`, `AnalysisOptions`), so a second "analysis" would blur one concept into two.
+   - **Recommendation: (a).** "Analysis" already names the whole report (`Analyzer`, `AnalysisOptions`), so a second "analysis" would blur one concept into two; "levels" avoids "statistics", which names `NodeKind.Statistics` and `--hide statistics`.
 3. **Does measuring imply verification?**
    - (a) Yes: one decode pass, the checksums compared as with `--verify`.
    - (b) No: a decoder option to skip the checksums while measuring.
    - **Recommendation: (a).** No contract change, and the verdict comes almost free.
 4. **The PCM route for WAV, Wave64 and AIFF.**
-   - (a) A `pcm` decoder in the WAV project, by codec ID for every container of PCM.
+   - (a) A `pcm` decoder in the WAV project, by codec ID for every container of PCM, with a neutral `PcmCoding` descriptor in `Core.Abstractions` carried by `DecodeSetup.Pcm`.
    - (b) The host reads the samples.
    - (c) No measurements for PCM files.
    - **Recommendation: (a)** (see [WAV, Wave64 and AIFF: a PCM decoder](#wav-wave64-and-aiff-a-pcm-decoder)).
 5. **The budget.**
-   - (a) A count of its own, as large as the decoders', `measure.limit` stopping only the measurements.
+   - (a) A count of its own, as large as the decoders', `measure.limit` stopping only the measurements, the spectrum's weight by FFT size.
    - (b) Shared with the decoders.
    - (c) None beyond the decoders'.
    - **Recommendation: (a).** Verification never depends on whether a file was measured, and the worst case stays within twice today's.
 6. **Findings.**
-   - (a) None about the audio but `measure.non-finite-samples` (warning); the host's `measure.limit`, `measure.failed`, `measure.streams-limited`.
+   - (a) None about the audio but `measure.non-finite-samples` (warning); the host's `measure.limit`, `measure.failed`, `measure.streams-limited`, `measure.channels-limited` and `measure.format-changed`.
    - (b) Also infos for a found cutoff, clipping runs or unused low bits.
    - **Recommendation: (a).** Figures are not verdicts, and an info through `--fail-on info` would act as one.
 7. **Grids in JSON.**
@@ -652,7 +881,7 @@ Each step is its own pull request, with fixtures, goldens, articles and document
    - (c) Never; the GUI reads them from the library.
    - **Recommendation: (a).** A grid is 683 KiB of base64 per stream, too much for every report, and other programs that read the JSON need a way to get it.
 8. **The GUI's decode command.**
-   - (a) One command that decodes, verifies and measures, labeled "Decode Audio", replacing "Verify Audio".
+   - (a) One command that decodes, verifies and measures, labeled "Decode Audio", replacing "Verify Audio", enabled while a stream's `Verification.Decoding` is `NotRequested` (decision 15 makes that true of PCM streams), with the captions of [GUI](#gui) and the rename list there.
    - (b) Keep "Verify Audio" as the label and let it measure too.
    - (c) Decode automatically in the detail window for files under a size (say 200 MB).
    - **Recommendation: (a).** One decode, one command, and a label that is true for a WAV file, which has nothing to verify; (c) contradicts decoders.md's decision to keep decoding off everywhere and would decode while the user only browses.
@@ -661,10 +890,10 @@ Each step is its own pull request, with fixtures, goldens, articles and document
    - (b) Following KISS FFT or PocketFFT (BSD-3-Clause), with the notice.
    - **Recommendation: (a)** (see [FFT](#fft)).
 10. **Frame size and hop.**
-    - (a) The size by sample rate (about 90 ms, 4,096 points at 44.1 and 48 kHz), hop half a frame.
+    - (a) The size by sample rate (the smallest power of two that is at least 0.085 s of samples, at least 1,024 points; 4,096 at 44.1 and 48 kHz), hop half a frame.
     - (b) 4,096 points at every rate, hop half.
     - (c) As (a) with a whole-frame hop, at half the cost.
-    - **Recommendation: (a).** The same time and frequency resolution at every rate, for about 1.3 times the cost at 192 kHz.
+    - **Recommendation: (a).** The same time and frequency resolution at every common rate, for about 1.2 times the cost of 4,096 points at 96 and 192 kHz (measured, see [Measured](#measured)).
 11. **If an Arm platform's spectra differ.**
     - (a) Find the operation and fix it under the rules (the expected case: a missed FMA or a library call).
     - (b) Compare grids within a tolerance in the goldens.
@@ -674,35 +903,60 @@ Each step is its own pull request, with fixtures, goldens, articles and document
     - (b) Its decoder as a step of this rollout.
     - **Recommendation: (a).** It is a decoder's work with its own clean-room split, and the TTA use case is small next to FLAC and WAV.
 13. **K-weighting at rates other than 48 kHz.**
-    - (a) Derive the coefficients as libebur128 does (MIT), with its notice.
-    - (b) Derive them from the analog filters described in the literature, without following an implementation.
-    - **Recommendation: (a)**, as the most cross-checked derivation, with the notice.
+    - (a) Derive the coefficients as libebur128 does (MIT), with its parameters and its notice: `scripts/release/licenses/libebur128.txt` (its `COPYING`, MIT, Copyright (c) 2011 Jan Kokemüller), fetched and checked by `make_notices.py` at a pinned SHA-256 as libmpcdec's are, a row in `THIRD-PARTY-NOTICES.md`'s table and its section, and the notice in the source file.
+    - (b) Derive them from the Recommendation alone: BS.1770-5 Annex 1 says other rates "should be chosen to provide the same frequency response that the specified filter provides at 48 kHz", and inverting the bilinear transform of its Tables 1 and 2 recovers the analog parameters (the second prototype reproduces libebur128's to 11 to 14 digits), which are then re-applied at the other rate. No implementation is followed, so no notice is needed.
+    - **Recommendation: (a)**, as the most cross-checked derivation, with the notice, as the owner asked for; (b) is the choice if the notice is to be avoided, with libebur128 as the black-box cross-check either way. Both use the Recommendation's own coefficients at 48 kHz and the own `Tan` and `Pow` of [Determinism](#determinism).
 14. **Dynamic range.**
     - (a) EBU loudness range only.
     - (b) Also the "DR" value of the Pleasurize Music Foundation's meter.
     - **Recommendation: (a).** No open specification of (b) was found.
+15. **How a PCM stream states its decoding status** (without a `Verification`, which PCM streams have not today, "Decode Audio" would stay disabled for WAV, AIFF and Wave64, and the GUI could not tell "no decoder" from "nothing to verify").
+    - (a) The PCM parsers start the `pcm` session in every analysis and finish it with no checksums, so the stream carries `Verification { Decoding, Checksums: [] }`; the writers leave the "Verified:" line out where no checksum is declared; the rule is "every stream with a decoder has a session".
+    - (b) A new field on `StreamInfo` for the decoding status of streams that have a decoder.
+    - (c) The GUI treats a missing `Verification` of a PCM format as decodable, by a list of format names.
+    - **Recommendation: (a).** It reuses the one status mechanism (TTA's parser already starts a session only to finish it with its tallies), needs no second source of truth for `DecodeStatus` and leaves the enabling expression as it is; its cost is the `verification` object in the JSON of WAV, Wave64 and AIFF streams. (b) duplicates the status next to `Verification` and every parser would still have to fill it; (c) puts parser knowledge in the GUI, which the plan keeps out.
+16. **Do A-law and mu-law count as `IsLossy`?** (`DecodeSetup.IsLossy` puts "(lossy stream)" after the measured duration.)
+    - (a) Yes: companded 8-bit audio is a lossy coding of the signal, and measurements of it describe a coarser signal than the original.
+    - (b) No: the stream stores its samples as they are, and the flag means that the audio a checksum vouches for is a lossy coding's output.
+    - **Recommendation: (a)**, weakly: the word helps a reader who sees a high noise floor and a low "bit depth" in a telephone recording; the owner may prefer (b) to keep the flag to its decoders.md meaning.
+17. **`--hide measurements` in JSON.**
+    - (a) It leaves `measurements` out of the JSON too, as `--hide` leaves sections out of text and JSON (docs/cli.md).
+    - (b) Text only; measured JSON always has them.
+    - **Recommendation: (a)**, for one rule; `--measure-grids` still decides the grids.
+18. **Loudness when channel positions are not stated** (`ChannelLayout` null, or a `Discrete` channel).
+    - (a) One channel and two channels get weight 1.0; three or more are `NotPossible`.
+    - (b) Assume the WAVE channel mask's order (front left, front right, front center, LFE, back left, back right, …) from the channel count.
+    - (c) Always weight 1.0.
+    - **Recommendation: (a).** A weight would be a guess for (b) and (c), and BS.1770 weights by position.
+19. **How many channels are measured.**
+    - (a) At most 32, `measure.channels-limited` above.
+    - (b) No cap beyond the memory bound.
+    - (c) At most 8.
+    - **Recommendation: (a).** 32 channels cost 26 MiB at the largest FFT size and cover every layout the project reads (22.2 has 24); a header may declare 65,535.
 
 ## Unverified claims and estimates
 
-- The costs of the full measurer, the per-stream memory, the JSON sizes and the work weights are sums of the prototype's kernels and the code's sizes, not measurements of a built measurer.
-- The prototype's FFT and timings ran on one x64 machine. Arm64, macOS and Windows were not measured: neither their speed nor whether their spectra are bit-identical. Whether .NET's Arm64 JIT ever contracts a multiply and an add on its own is **unverified**; so is whether `Math.Cos` and `Math.Log10` differ between the platforms' libraries (the design avoids them either way).
-- The per-frame bandwidth histogram of the cutoff's frame share and the true-peak skipping are designed, not prototyped.
-- The cutoff thresholds (20 dB, half the frames) and the search band come from 20 prototype files; the fixtures set them.
+- The costs of the full measurer, the per-stream memory, the JSON sizes and the work weights are sums of the prototypes' kernels and the sizes of the arrays, not measurements of a built measurer. The weights by FFT size and the frame counters' cost are the second prototype's, JIT with tiering off; the other kernels' are the first prototype's, NativeAOT.
+- The prototypes' FFT and timings ran on one x64 machine. Arm64, macOS and Windows were not measured: neither their speed nor whether their spectra are bit-identical. Whether .NET's Arm64 JIT ever contracts a multiply and an add on its own is **unverified**; so is whether `Math.Cos` and `Math.Log10` differ between the platforms' libraries (the design avoids them either way), and how the `*Native` and `Max` forms behave on Arm. The C# and CLI statements about intermediate precision are quoted from memory.
+- **The cutoff method** was measured on synthetic inputs only: 34 files of pink noise, white and brown noise, and their lossy decodes and filters. No music was among them, so the 2 kHz search start, the 25 dB threshold (3.1 dB above the natural rolloff, 8.5 dB below the weakest lossy case), the behavior on sparse spectra (a solo instrument) and on bass-heavy recordings, and the mixed-content limit are **unverified** on real recordings; the fixtures and a set of real files set them in the first pull request. The true-peak skipping and the row counters at 32 channels are designed, not prototyped.
 - The lowpass of oggenc and FFmpeg's encoders was measured, not read from their sources.
-- BS.1770-5's true-peak oversampling at rates above 48 kHz, its channel weights for height positions, EBU Tech 3341's tolerances for true peak, the terms of use of the EBU loudness test set and libebur128's filter parameters and histogram mode are to be read in the pull request that builds them.
-- The DR meter's specification, the CI image's sox, a published color ramp and its license.
+- **Read for this revision:** BS.1770-5 (Annexes 1 to 3, equations, Tables 1 to 5), EBU R 128, Tech 3341 (Table 1, 2.6) and Tech 3342 (3.1 and the reference code), libebur128's `ebur128.c` and `ebur128.h` (the filter parameters, the channel map, the weights, the histogram, the oversampling factors) and the `colormaps.py` header of BIDS/colormap. **Still unread or unverified:** earlier revisions of BS.1770; the terms of use of the EBU loudness test set; the azimuth of the wide channels in ISO/IEC 23091-3; the G.711 scaling to 16 bits and the placement of valid bits in WAVEFORMATEXTENSIBLE and AIFF; the 2× true-peak filter (the Annex gives none); FFmpeg 8's weights and true peak; the CI image's sox; the DR meter's specification.
 - The 24-bit noise floor per bin and Hann's leakage at 1 kHz from an edge are worked out from formulas.
+- Bounds computed rather than measured: the loudest block (+19 LUFS for 24 channels, about +11 for 5.0), the gate-bin error 4.34 p LU, the channel-count memory of a 65,535-channel header, the two 64 MiB copies of the parallel queue.
 
 ## Sources
 
-- The code at c517387: `Pcm.cs`, `DecodeContext.cs`, `StreamInfo.cs`, `CategorySeries.cs`, `StreamVerification.cs`, the host's `DecodeSession`, `DecodeRun`, `DecodeOptions`, `AnalysisOptions`, `ParserRouter`, the four decoders' `DeclareOutput` calls, the WAV, AIFF and TTA parsers, and the GUI's `GraphView`, `DetailViewModel` and `MainViewModel`.
+- The code at c517387: `Pcm.cs`, `DecodeContext.cs`, `DecodeSetup.cs`, `StreamInfo.cs`, `CategorySeries.cs`, `StreamVerification.cs`, the host's `DecodeSession`, `DecodeRun`, `DecodeOptions`, `AnalysisOptions`, `ParserRouter`, `VerificationText`, `ReportCsvWriter`, the four decoders' `DeclareOutput` calls (TrueHD's `Decoding/StreamDecoder.cs`), the WAV (`DataChunks.cs`, `Chunks.cs`'s `bext` reading, `FormatTags.cs`), AIFF (`AifcTypes.cs`) and TTA parsers, the topic `lowpass.md`, and the GUI's `GraphView`, `DetailViewModel`, `DetailWindow.axaml(.cs)`, `CapitalizationTests` and `VerifyAudioTests`.
 - [decoders.md](decoders.md), [parallel-decoding.md](parallel-decoding.md), [coding-graphs.md](coding-graphs.md), the [plan](../PLAN.md), [cli.md](../cli.md), [gui.md](../gui.md), [development.md](../development.md).
-- ITU-R BS.1770-5 (11/2023), "Algorithms to measure audio programme loudness and true-peak audio level", Annexes 1 and 2 (its listing at itu.int read; the text to be read in step 5).
-- EBU R 128, EBU Tech 3341 (loudness metering, "EBU Mode") and Tech 3342 (loudness range); the EBU loudness test set.
+- ITU-R BS.1770-5 (11/2023), "Algorithms to measure audio programme loudness and true-peak audio level", Annex 1 (K-weighting, Tables 1 to 3, gating, equations 1 to 7), Annex 2 (true peak, the 48-tap filter) and Annex 3 (Tables 4 and 5, position weights), read from itu.int on 2026-10-26.
+- EBU R 128, EBU Tech 3341 (loudness metering, "EBU Mode": Table 1 tolerances, 2.6 true peak) and Tech 3342 (2023: loudness range, 3.1 and the reference code), read from tech.ebu.ch on 2026-10-26; the EBU loudness test set itself was not read.
+- libebur128 (Jan Kokemüller, MIT): `ebur128/ebur128.c`, `ebur128.h` and `COPYING` of the master branch, read on 2026-10-26.
+- BIDS/colormap `colormaps.py` (Nathaniel J. Smith, Stefan van der Walt and Eric Firing; the header releases it under CC0), read on 2026-10-26.
 - J. W. Cooley and J. W. Tukey, "An algorithm for the machine calculation of complex Fourier series", Mathematics of Computation 19 (1965).
 - H. V. Sorensen, D. L. Jones, M. T. Heideman and C. S. Burrus, "Real-valued fast Fourier transform algorithms", IEEE Transactions on Acoustics, Speech, and Signal Processing 35(6) (1987).
 - F. J. Harris, "On the use of windows for harmonic analysis with the discrete Fourier transform", Proceedings of the IEEE 66(1) (1978).
 - P. D. Welch, "The use of fast Fourier transform for the estimation of power spectra", IEEE Transactions on Audio and Electroacoustics 15(2) (1967).
 - G. Heinzel, A. Rüdiger and R. Schilling, "Spectrum and spectral density estimation by the Discrete Fourier transform (DFT)", Max-Planck-Institut für Gravitationsphysik (2002).
 - License texts read on 2026-10-26: KISS FFT (`COPYING`, `LICENSES/BSD-3-Clause`), PocketFFT (`LICENSE.md`), PFFFT (`LICENSE.txt` of marton78/pffft), muFFT (`COPYING`), Math.NET Numerics (`LICENSE.md`), libebur128 (`COPYING`); minimp3's CC0 from `third_party/minimp3`.
-- The tools of the prototype: LAME 3.100, vorbis-tools 1.4.2, FFmpeg 6.1.1 (Ubuntu's 6.1.1-3ubuntu5), flac 1.4.3.
+- The tools of the prototypes: LAME 3.100, vorbis-tools 1.4.2, FFmpeg 6.1.1 (Ubuntu's 6.1.1-3ubuntu5), flac 1.4.3, .NET 10.0.401.
+
