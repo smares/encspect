@@ -230,10 +230,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                         }
                     }
 
-                    // The node AddFrame's entry will have, so findings keep the order they are found in.
-                    var node = new Node("Frame", at, Math.Min(header.FrameLength(freeLength), frameLimit - at), header.Summary) { Kind = NodeKind.Frame };
+                    // The node AddFrame's entry will have, so findings keep the order they are found in; built only for a finding.
+                    Node? node = null;
                     if (resynced is { } change)
                     {
+                        node = new Node("Frame", at, Math.Min(header.FrameLength(freeLength), frameLimit - at), header.Summary) { Kind = NodeKind.Frame };
                         StreamChanged(change.From, change.To, node);
                         FreeFormat(change.To, change.FreeLength);
                         resynced = null;
@@ -242,6 +243,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                     if (previous is { } from)
                     {
                         int to = freeLength;
+                        node ??= new Node("Frame", at, Math.Min(header.FrameLength(freeLength), frameLimit - at), header.Summary) { Kind = NodeKind.Frame };
                         findings.Add(Severity.Warning, "mpeg.free-format-length-changed", node, count =>
                             $"The free-format frame length changes {Times(count)}, first from {from} to {to} bytes plus padding at 0x{at:X}; ISO/IEC 11172-3 requires a fixed bitrate.");
                     }
@@ -456,7 +458,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             ReportVbrHeader(state, index, frame, vbr, midStream);
         }
 
-        if (placement is { } placed)
+        if (placement is { } placed && (placed.Problem != MainDataProblem.None || placed.Overflows))
         {
             ReportPlacement(placed, FindingNode(frame), findings);
         }
@@ -1020,43 +1022,75 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
     }
 
-    // Whether SideInfoProblems yields anything, tested without allocating: nearly every frame of a file has none, and an
-    // iterator with its closures for each of them was a fifth of the time of the frame walk. MpegSpeedPathTests holds the two equal.
-    internal static bool HasSideInfoProblems(Layer3SideInfo info)
+    [Flags]
+    private enum GranuleProblems
     {
-        MpegHeader header = info.Header;
-        for (int gr = 0; gr < info.Granules.Length; gr++)
-        {
-            Layer3Granule[] row = info.Granules[gr];
-            for (int ch = 0; ch < row.Length; ch++)
-            {
-                Layer3Granule g = row[ch];
-                if (g.BigValues.Value > 288
-                    || (g.IsSwitched && g.BlockType.Value == 0)
-                    || info.Part2Bits(gr, ch) > g.Part23Length.Value
-                    || (header.IsMpeg1 && g.IsShort && info.Scfsi[ch].Value != 0))
-                {
-                    return true;
-                }
+        None = 0,
+        BigValues = 1,
+        ReservedBlockType = 2,
+        UndefinedTable = 4,
+        ScalefactorsExceed = 8,
+        ScfsiWithShortBlocks = 16,
+    }
 
-                foreach (BitField table in g.TableSelect)
-                {
-                    if (table.Value is 4 or 14)
-                    {
-                        return true;
-                    }
-                }
+    // The conditions of the side information that are reported, in one place: the checks of a granule and channel as flags, and whether the
+    // channels of a granule differ in block type under joint stereo. Nearly every frame has none, so they are found without allocating;
+    // SideInfoProblems expands what they flag into findings, and IsWellFormedRun asks only whether there is any.
+    private static GranuleProblems GranuleProblemsOf(Layer3SideInfo info, int gr, int ch)
+    {
+        Layer3Granule g = info.Granules[gr][ch];
+        GranuleProblems problems = GranuleProblems.None;
+        if (g.BigValues.Value > 288)
+        {
+            problems |= GranuleProblems.BigValues;
+        }
+
+        if (g.IsSwitched && g.BlockType.Value == 0)
+        {
+            problems |= GranuleProblems.ReservedBlockType;
+        }
+
+        foreach (BitField table in g.TableSelect)
+        {
+            if (table.Value is 4 or 14)
+            {
+                problems |= GranuleProblems.UndefinedTable;
             }
         }
 
-        if (header.ChannelModeBits == 1 && header.ModeExtension != 0)
+        if (info.Part2Bits(gr, ch) > g.Part23Length.Value)
         {
-            foreach (Layer3Granule[] row in info.Granules)
+            problems |= GranuleProblems.ScalefactorsExceed;
+        }
+
+        // libmad rejects these frames; ffmpeg and mpg123 decode them.
+        if (info.Header.IsMpeg1 && g.IsShort && info.Scfsi[ch].Value != 0)
+        {
+            problems |= GranuleProblems.ScfsiWithShortBlocks;
+        }
+
+        return problems;
+    }
+
+    private static bool StereoBlockTypesDiffer(Layer3SideInfo info, Layer3Granule[] row) =>
+        info.Header.ChannelModeBits == 1 && info.Header.ModeExtension != 0 && row.Length == 2
+        && (row[0].BlockTypeValue != row[1].BlockTypeValue || row[0].IsMixed != row[1].IsMixed);
+
+    internal static bool HasSideInfoProblems(Layer3SideInfo info)
+    {
+        for (int gr = 0; gr < info.Granules.Length; gr++)
+        {
+            for (int ch = 0; ch < info.Granules[gr].Length; ch++)
             {
-                if (row.Length == 2 && (row[0].BlockTypeValue != row[1].BlockTypeValue || row[0].IsMixed != row[1].IsMixed))
+                if (GranuleProblemsOf(info, gr, ch) != GranuleProblems.None)
                 {
                     return true;
                 }
+            }
+
+            if (StereoBlockTypesDiffer(info, info.Granules[gr]))
+            {
+                return true;
             }
         }
 
@@ -1065,46 +1099,56 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
     internal static IEnumerable<(string Code, Node Node, Func<int, string> Message)> SideInfoProblems(Layer3SideInfo info, long position, long offset)
     {
-        MpegHeader header = info.Header;
-        foreach ((int gr, int ch, Layer3Granule g) in info.All)
+        for (int gr = 0; gr < info.Granules.Length; gr++)
         {
-            if (g.BigValues.Value > 288)
+            for (int ch = 0; ch < info.Granules[gr].Length; ch++)
             {
-                yield return ("mpeg.big-values-too-large", Field("Big Values", g.BigValues), count =>
-                    $"{Frames(count, "has", "have")} more than 288 big_values pairs, the first {g.BigValues.Value} at 0x{position:X}.");
-            }
+                GranuleProblems problems = GranuleProblemsOf(info, gr, ch);
+                if (problems == GranuleProblems.None)
+                {
+                    continue;
+                }
 
-            if (g.IsSwitched && g.BlockType.Value == 0)
-            {
-                yield return ("mpeg.block-type-reserved", Layer3SideInfo.BlockTypeSpan(offset, g), count =>
-                    $"{Frames(count, "switches", "switch")} windows with block type 0, which is reserved, the first at 0x{position:X}.");
-            }
+                Layer3Granule g = info.Granules[gr][ch];
+                if ((problems & GranuleProblems.BigValues) != 0)
+                {
+                    yield return ("mpeg.big-values-too-large", Field("Big Values", g.BigValues), count =>
+                        $"{Frames(count, "has", "have")} more than 288 big_values pairs, the first {g.BigValues.Value} at 0x{position:X}.");
+                }
 
-            foreach (BitField table in g.TableSelect.Where(t => t.Value is 4 or 14))
-            {
-                yield return ("mpeg.huffman-table-undefined", Layer3SideInfo.TableSelectSpan(offset, g), count =>
-                    $"{Frames(count, "selects", "select")} a Huffman table that does not exist, the first table {table.Value} at 0x{position:X}.");
-            }
+                if ((problems & GranuleProblems.ReservedBlockType) != 0)
+                {
+                    yield return ("mpeg.block-type-reserved", Layer3SideInfo.BlockTypeSpan(offset, g), count =>
+                        $"{Frames(count, "switches", "switch")} windows with block type 0, which is reserved, the first at 0x{position:X}.");
+                }
 
-            int part2 = info.Part2Bits(gr, ch);
-            if (part2 > g.Part23Length.Value)
-            {
-                yield return ("mpeg.scalefactors-exceed-granule", Field("Part 2 and 3 Length", g.Part23Length), count =>
-                    $"{Frames(count, "has", "have")} scalefactors longer than part2_3_length, the first {part2} of {Counts.Of(g.Part23Length.Value, "bit", "bits")} at 0x{position:X}.");
-            }
+                if ((problems & GranuleProblems.UndefinedTable) != 0)
+                {
+                    foreach (BitField table in g.TableSelect.Where(t => t.Value is 4 or 14))
+                    {
+                        yield return ("mpeg.huffman-table-undefined", Layer3SideInfo.TableSelectSpan(offset, g), count =>
+                            $"{Frames(count, "selects", "select")} a Huffman table that does not exist, the first table {table.Value} at 0x{position:X}.");
+                    }
+                }
 
-            // libmad rejects these frames; ffmpeg and mpg123 decode them.
-            if (header.IsMpeg1 && g.IsShort && info.Scfsi[ch].Value != 0)
-            {
-                yield return ("mpeg.scfsi-with-short-blocks", Field($"Channel {ch}", info.Scfsi[ch]), count =>
-                    $"{Frames(count, "sets", "set")} scfsi for a channel with short blocks, which libmad rejects, the first at 0x{position:X}.");
+                if ((problems & GranuleProblems.ScalefactorsExceed) != 0)
+                {
+                    int part2 = info.Part2Bits(gr, ch);
+                    yield return ("mpeg.scalefactors-exceed-granule", Field("Part 2 and 3 Length", g.Part23Length), count =>
+                        $"{Frames(count, "has", "have")} scalefactors longer than part2_3_length, the first {part2} of {Counts.Of(g.Part23Length.Value, "bit", "bits")} at 0x{position:X}.");
+                }
+
+                if ((problems & GranuleProblems.ScfsiWithShortBlocks) != 0)
+                {
+                    yield return ("mpeg.scfsi-with-short-blocks", Field($"Channel {ch}", info.Scfsi[ch]), count =>
+                        $"{Frames(count, "sets", "set")} scfsi for a channel with short blocks, which libmad rejects, the first at 0x{position:X}.");
+                }
             }
         }
 
-        bool jointStereo = header.ChannelModeBits == 1 && header.ModeExtension != 0;
-        foreach (Layer3Granule[] row in info.Granules.Where(row => jointStereo && row.Length == 2))
+        foreach (Layer3Granule[] row in info.Granules)
         {
-            if (row[0].BlockTypeValue != row[1].BlockTypeValue || row[0].IsMixed != row[1].IsMixed)
+            if (StereoBlockTypesDiffer(info, row))
             {
                 yield return ("mpeg.stereo-block-types-differ", Layer3SideInfo.BlockTypeSpan(offset, row[1]), count =>
                     $"{Frames(count, "uses", "use")} mid/side or intensity stereo with a different block type in each channel, which libmad rejects, the first at 0x{position:X}.");

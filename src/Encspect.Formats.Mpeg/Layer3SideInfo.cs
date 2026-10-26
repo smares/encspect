@@ -202,45 +202,45 @@ internal sealed class Layer3SideInfo
         }
 
         bool intensityRight = ch == 1 && Header.ChannelModeBits == 1 && (Header.ModeExtension & 1) == 1;
-        (int[] slen, int table) = LsfSlen(g.ScalefacCompress.Value, intensityRight);
-        int kind = g.IsShort ? (g.IsMixed ? 2 : 1) : 0;
-        return slen.Zip(NrOfSfb[table][kind], (s, n) => s * n).Sum();
+        (int s1, int s2, int s3, int s4, int table) = LsfSlen(g.ScalefacCompress.Value, intensityRight);
+        int[] counts = NrOfSfb[table][g.IsShort ? (g.IsMixed ? 2 : 1) : 0];
+        return (s1 * counts[0]) + (s2 * counts[1]) + (s3 * counts[2]) + (s4 * counts[3]);
     }
 
     // ISO/IEC 13818-3 2.4.3.2: slen1 to slen4 and the scalefactor partition table.
-    private static (int[] Slen, int Table) LsfSlen(int sfc, bool intensityRight)
+    private static (int Slen1, int Slen2, int Slen3, int Slen4, int Table) LsfSlen(int sfc, bool intensityRight)
     {
         if (!intensityRight)
         {
             if (sfc < 400)
             {
-                return ([(sfc >> 4) / 5, (sfc >> 4) % 5, (sfc % 16) >> 2, sfc % 4], 0);
+                return ((sfc >> 4) / 5, (sfc >> 4) % 5, (sfc % 16) >> 2, sfc % 4, 0);
             }
 
             if (sfc < 500)
             {
                 int x = sfc - 400;
-                return ([(x >> 2) / 5, (x >> 2) % 5, x % 4, 0], 1);
+                return ((x >> 2) / 5, (x >> 2) % 5, x % 4, 0, 1);
             }
 
             int y = sfc - 500;
-            return ([y / 3, y % 3, 0, 0], 2);
+            return (y / 3, y % 3, 0, 0, 2);
         }
 
         int i = sfc >> 1;
         if (i < 180)
         {
-            return ([i / 36, i % 36 / 6, i % 36 % 6, 0], 3);
+            return (i / 36, i % 36 / 6, i % 36 % 6, 0, 3);
         }
 
         if (i < 244)
         {
             int x = i - 180;
-            return ([(x % 64) >> 4, (x % 16) >> 2, x % 4, 0], 4);
+            return ((x % 64) >> 4, (x % 16) >> 2, x % 4, 0, 4);
         }
 
         int z = i - 244;
-        return ([z / 3, z % 3, 0, 0], 5);
+        return (z / 3, z % 3, 0, 0, 5);
     }
 
     // reservoirFill: the free bytes after the previous frame's main data that main_data_begin can
