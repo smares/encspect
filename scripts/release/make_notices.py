@@ -235,7 +235,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 | Monkey's Audio SDK 13.42: the code of Encspect's Monkey's Audio parser and decoder derived from it (the header and seek table layouts, the order of the bytes of a frame, the range decoders, the predictors, the neural network filters, the frame checksum and the output of the samples) | 13.42 | BSD 3-Clause | both builds, all platforms |
 | libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
 
-The command line tool contains the .NET runtime and Encspect's own code only.
+The command line tool contains the NativeAOT build of the .NET runtime and the library code of the runtime pack, and Encspect's own code. The packages it is compiled and linked from (`Microsoft.NETCore.App.Runtime.NativeAOT` and `runtime.<rid>.Microsoft.DotNet.ILCompiler`, which holds the native runtime libraries) carry a `THIRD-PARTY-NOTICES.TXT` byte-identical to the runtime pack's, so the .NET runtime row above covers them. On Linux it also links the C start files and the compiler support library (libgcc) of the Ubuntu 18.04 sysroot it is built against, which fall under the GNU runtime library exception and need no notice text, and it loads the system's C library at run time.
 
 The sources in `third_party/` (minimp3, getID3, EncSpot, mp3guessenc) are test tools for the cross-checks. No project references them, and they are in neither build.
 

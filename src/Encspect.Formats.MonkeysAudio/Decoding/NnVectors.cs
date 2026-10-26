@@ -45,6 +45,17 @@ internal static class NnVectors
             total += Vector256.Sum(sum);
         }
 
+        return total + Dot128(ref pa, ref pb, n, i);
+    }
+
+    // The 128-bit loop (or the portable one where there is none) from element i, and the elements after it. Separate so that a test reaches
+    // it on a processor whose Dot takes the wider paths first.
+    internal static int Dot128(ReadOnlySpan<short> a, ReadOnlySpan<short> b) =>
+        Dot128(ref MemoryMarshal.GetReference(a), ref MemoryMarshal.GetReference(b), Math.Min(a.Length, b.Length), 0);
+
+    private static int Dot128(ref short pa, ref short pb, int n, int i)
+    {
+        int total = 0;
         if (Sse2.IsSupported)
         {
             // Four independent sums, so the 128-bit loop (all there is under NativeAOT's x86-64-v2 baseline) is not bound by the
@@ -112,16 +123,27 @@ internal static class NnVectors
         int i = 0;
         if (Vector.IsHardwareAccelerated)
         {
+            // Four independent sums, as in the 16-bit loop: under NativeAOT's x86-64-v2 baseline Vector<T> is 128 bits wide, and one
+            // chain of widening adds bound the loop. The sums are 64 bits, so the order of the additions does not change the result.
             int step = Vector<int>.Count;
-            var sum = Vector<long>.Zero;
-            for (; i <= n - step; i += step)
+            Vector<long> sum0 = Vector<long>.Zero;
+            Vector<long> sum1 = Vector<long>.Zero;
+            Vector<long> sum2 = Vector<long>.Zero;
+            Vector<long> sum3 = Vector<long>.Zero;
+            for (; i <= n - (4 * step); i += 4 * step)
             {
-                Vector<int> product = Vector.LoadUnsafe(ref pa, (nuint)i) * Vector.LoadUnsafe(ref pb, (nuint)i);
-                Vector.Widen(product, out Vector<long> low, out Vector<long> high);
-                sum += low + high;
+                sum0 += Products(ref pa, ref pb, i);
+                sum1 += Products(ref pa, ref pb, i + step);
+                sum2 += Products(ref pa, ref pb, i + (2 * step));
+                sum3 += Products(ref pa, ref pb, i + (3 * step));
             }
 
-            total += Vector.Sum(sum);
+            for (; i <= n - step; i += step)
+            {
+                sum0 += Products(ref pa, ref pb, i);
+            }
+
+            total += Vector.Sum((sum0 + sum1) + (sum2 + sum3));
         }
 
         for (; i < n; i++)
@@ -130,6 +152,15 @@ internal static class NnVectors
         }
 
         return total;
+    }
+
+    // The products of a vector of elements, wrapped to 32 bits, as 64-bit sums of two halves.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector<long> Products(ref int pa, ref int pb, int i)
+    {
+        Vector<int> product = Vector.LoadUnsafe(ref pa, (nuint)i) * Vector.LoadUnsafe(ref pb, (nuint)i);
+        Vector.Widen(product, out Vector<long> low, out Vector<long> high);
+        return low + high;
     }
 
     // weights[i] += delta[i], or -= with isSubtract.
@@ -160,7 +191,18 @@ internal static class NnVectors
                     (isSubtract ? w - d : w + d).StoreUnsafe(ref pw, (nuint)i);
                 }
             }
+        }
 
+        AddOrSubtract128(ref pw, ref pd, n, i, isSubtract);
+    }
+
+    internal static void AddOrSubtract128(Span<short> weights, ReadOnlySpan<short> delta, bool isSubtract) =>
+        AddOrSubtract128(ref MemoryMarshal.GetReference(weights), ref MemoryMarshal.GetReference(delta), Math.Min(weights.Length, delta.Length), 0, isSubtract);
+
+    private static void AddOrSubtract128(ref short pw, ref short pd, int n, int i, bool isSubtract)
+    {
+        if (Vector128.IsHardwareAccelerated)
+        {
             // The direction is tested once, not in the loop, and the loop takes two vectors a step.
             if (isSubtract)
             {
@@ -220,7 +262,18 @@ internal static class NnVectors
                     (isSubtract ? w - d : w + d).StoreUnsafe(ref pw, (nuint)i);
                 }
             }
+        }
 
+        AddOrSubtract128(ref pw, ref pd, n, i, isSubtract);
+    }
+
+    internal static void AddOrSubtract128(Span<int> weights, ReadOnlySpan<int> delta, bool isSubtract) =>
+        AddOrSubtract128(ref MemoryMarshal.GetReference(weights), ref MemoryMarshal.GetReference(delta), Math.Min(weights.Length, delta.Length), 0, isSubtract);
+
+    private static void AddOrSubtract128(ref int pw, ref int pd, int n, int i, bool isSubtract)
+    {
+        if (Vector128.IsHardwareAccelerated)
+        {
             for (; i <= n - 4; i += 4)
             {
                 Vector128<int> w = Vector128.LoadUnsafe(ref pw, (nuint)i);
