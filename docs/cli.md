@@ -70,27 +70,42 @@ Decodes each file's audio while reading it and compares the checksums that cover
 - **Findings:** a stored checksum that differs is a warning, so `--fail-on warning` fails the run. A decoder that fails (`decode.failed`) is an error and a bug.
 - **Output:** the text tree, JSON and CSV carry the verdict (see below). Without `--verify` the tree and every other field are the same.
 
-### `--measure [spectrum]`
+### `--measure [spectrum,levels]`
 
-Decodes, verifies and measures each file's audio, for the codings that have a decoder, in the same pass: the average spectrum and the spectral cutoff of the decoded samples, and the spectrogram and waveform grids behind them (`encspect --learn measurements`). It implies `--verify`: the checksums over decoded audio are compared as with `--verify`, and measuring changes neither the verdict nor a `decode.*` finding.
+Decodes, verifies and measures each file's audio, for the codings that have a decoder, in the same pass: the average spectrum and the spectral cutoff of the decoded samples with the spectrogram and waveform grids behind them, and the levels: sample peak, RMS level, DC offset, clipping runs, digital silence and bit-depth usage (`encspect --learn measurements`, `--learn levels`). It implies `--verify`: the checksums over decoded audio are compared as with `--verify`, and measuring changes neither the verdict nor a `decode.*` finding.
 
-- **Kinds:** a list after the option (`--measure spectrum`, or `--measure=spectrum`) picks measurements by name; today there is one, `spectrum`. A value that is not a kind is taken for a path. The levels, loudness and true peak come in later steps.
-- **Cost:** about 16 to 21 ns for each sample of each channel on the machine the work weights were measured on (`MeasurementWorkTests` prints them), counted in work units of its own, apart from the decoders': past the larger of 2^35 units and the file's size times 2,048 units a byte, measuring stops with an info finding (`measure.limit`) and decoding and verification go on. The state of the measurements of one file is bounded at 64 MiB, and at most 32 channels are measured.
+- **Kinds:** a list after the option (`--measure spectrum,levels`, or `--measure=levels`) picks measurements by name; today they are `spectrum` and `levels`, and without a list every kind the program has is measured. A value that is not a kind is taken for a path. Loudness and true peak come in a later step.
+- **Cost:** about 16 to 21 ns for each sample of each channel for everything on the machine the work weights were measured on (`MeasurementWorkTests` prints them), of which the levels are about 2 ns at 16 and 24 bits (`--measure levels` alone), counted in work units of its own, apart from the decoders': past the larger of 2^35 units and the file's size times 2,048 units a byte, measuring stops with an info finding (`measure.limit`) and decoding and verification go on. The state of the measurements of one file is bounded at 64 MiB, and at most 32 channels are measured.
 - **Formats without a decoder:** the stream says why it has no figures (`not measured (no decoder for tta)`); WAV, AIFF, MPEG audio and the other formats whose parsers start no decode session get no measurements at all. WavPack's DSD is not measured.
 - **Text tree:** lines under the stream's first node, after the `Verified:` line.
 
-      Measured: 1.5 s of 1 channel
-        Spectral Cutoff: 16,021 Hz (a step of 81.6 dB, transition from 16,021 Hz, in 31 of 31 frames with signal)
+      Measured: 1.0 s of 1 channel
+        Spectral Cutoff: 16,796 Hz (a step of 59.1 dB, transition from 16,538 Hz, in 20 of 20 frames with signal)
+        Sample Peak: -8.7 dBFS
+        RMS Level: -20.1 dBFS
+        DC Offset: 0.570796% of full scale (-44.9 dBFS)
+        Clipping: none
+        Digital Silence: 6 samples in all, none at the start, none at the end
+        Low Bits Unused: 0 of 16, the highest magnitude 12,090
 
   - `Measured:` gives the audio measured, `(lossy stream)` after the duration where the verification says so, the channels measured where a stream has more than 32, the gaps skipped, and why measuring stopped early.
   - `Spectral Cutoff: none found (largest step 2.3 dB, at 2,003 Hz)` where no cutoff is found, and `not searched (the sample rate is below 8,000 Hz)` under 8,000 Hz.
   - The frequencies are those of the upper edge of a row of the spectrum (43 Hz wide at 44,100 Hz); the figures are measurements, never verdicts.
+  - **Levels,** each with the figure of each channel in parentheses (named by its speaker where the stream states distinct ones, else `channel 1`, `channel 2`) for a stream of several channels. Levels are in dBFS, tenths with a sign, `-inf` for a channel whose samples are all 0, and a value of -0.0 is written 0.0.
+    - `Sample Peak` is the highest of the channels, the most negative integer code counting as full scale (a float's full scale is 1.0); `RMS Level` covers all channels together, a full-scale square wave reading 0 dBFS (a full-scale sine reads -3.01 dBFS). `DC Offset` is the mean as a percentage of full scale (up to six decimals, signed) with its level in dBFS, the stream's being that of the channel with the largest one.
+    - `Clipping` counts runs of 3 or more consecutive samples at the same extreme code (a float at or beyond full scale): the runs, the samples in them and the longest; three is a convention of this analysis. `none` where there is no run.
+    - `Digital Silence` counts the sample frames in which every channel is exactly 0, in all, at the start and at the end, in samples and (from a tenth of a second) seconds, and the count in all of each channel where the channels differ. The count in all includes zeros anywhere, such as a sine's zero crossings; the start and the end show silence.
+    - `Low Bits Unused` is the low bits that no sample of any channel has set, out of the declared bits, with the highest magnitude reached (and the count of each channel where they differ); `not defined (every sample is 0)` for silence. A float stream has `Has Only 16-Bit Values` and `Has Only 24-Bit Values` instead: whether every sample is a whole multiple of 2^-15 (2^-23) in [-1, 1).
+    - No run and no silent stretch is counted across a gap in the decoded blocks.
   - `--explain` adds each line's description and topic.
-- **JSON:** `measurements` in the stream, after `verification`: `status` (`complete`, `stopped`, `notPossible`, `formatChanged` or `failed`), `reason`, `samples`, `firstPosition`, `lostSamples`, `gaps`, `sampleRate`, `channels`, `channelsMeasured`, `channelLayout`, and the `spectrum`. A field is added and none changes meaning, so `schemaVersion` stays 1.
+- **JSON:** `measurements` in the stream, after `verification`: `status` (`complete`, `stopped`, `notPossible`, `formatChanged` or `failed`), `reason`, `samples`, `firstPosition`, `lostSamples`, `gaps`, `sampleRate`, `channels`, `channelsMeasured`, `channelLayout`, the `spectrum` and the `levels`. A field is added and none changes meaning, so `schemaVersion` stays 1.
   - `spectrum` has `fftSize`, `frames`, `rowCount` (512), `binsPerRow`, `rows` (integers in tenths of a dB: `unit`, `valuesPerUnit`, `combined` and `perChannel`, `null` for a row with no power), `cutoff` and `channelCutoffs`.
   - A cutoff has `isFound`, and where found `frequency` and `transitionStart` as `{value, unit}` in whole hertz, then `stepFrequency`, `step` (`value` in dB with one decimal) and the counts `framesShowing` and `framesWithSignal`; `isSearched: false` under 8,000 Hz.
+  - `levels` has `format` (`integer`, `float32` or `float64`), `bitsPerSample` (integers), and the figures, each with the stream's value and, for a stream of several channels, the same by channel:
+    - `samplePeak`, `rms`, `dcOffset` (in `%`, the value placed from millionths of a percent) and `dcOffsetLevel` as `{value, unit, perChannel}`, with `null` for minus infinity;
+    - `clipping` (`minimumRunLength`, `runs`, `samples`, `longestRun`), `digitalSilence` (`atStart`, `atEnd`, `total`, in samples) and `bitDepth` (`lowBitsUnused`, `null` where every sample is 0, and `highestMagnitude` as an integer code; for floats `hasOnly16BitValues` and `hasOnly24BitValues`) as counts, with a `perChannel` array of objects of the same fields.
   - No number is a floating-point quotient: the row spacing is `sampleRate * binsPerRow / fftSize` hertz and the time of a column is `hopsPerColumn * hopSamples / sampleRate` seconds, from integers the report gives. Column 0 starts at sample `floor(firstPosition / hopSamples) * hopSamples`, so the time of column `c` is `(floor(firstPosition / hopSamples) * hopSamples + c * hopsPerColumn * hopSamples) / sampleRate`.
-- **CSV:** the `Spectral Cutoff (Hz)` column, from the first audio stream's combined spectrum, empty where no cutoff is found and for every file of an analysis without `--measure`; `Is Verified` is filled with `--measure` too. The numeric columns are written as they are, so a negative figure of a later step reads back as `-0.3`, not `'-0.3`. This adds a column to the CSV (a schema change for a reader that counts columns).
+- **CSV:** the `Spectral Cutoff (Hz)` column, from the first audio stream's combined spectrum, empty where no cutoff is found, and the `Sample Peak (dBFS)` column, the highest over the channels of the first audio stream, with one decimal and empty for a stream whose samples are all 0; both are empty for every file of an analysis without `--measure`, and `Is Verified` is filled with `--measure` too. The numeric columns are written as they are, so a negative peak reads back as `-0.3`, not `'-0.3`. Each step adds columns to the CSV (a schema change for a reader that counts columns): `Sample Peak (dBFS)` is the new last column of step 2.
 - **Exit codes:** unchanged; `--fail-on` sees only the host's `measure.*` findings (see below).
 
 ### `--measure-grids`
@@ -285,7 +300,7 @@ The CSV row of a file has:
 - the number of errors, warnings and infos;
 - `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known;
 - `Is Protected`, `true` if any stream is protected and `false` otherwise (empty for a file without a stream), `Is Verified` (see `--verify`), `Protection Scheme`, the schemes of the protected streams, and `DRM Systems`, the systems their files name; several are separated by `; `;
-- `Spectral Cutoff (Hz)` (see `--measure`), empty without a cutoff.
+- `Spectral Cutoff (Hz)` (see `--measure`), empty without a cutoff, and `Sample Peak (dBFS)` (the highest over the channels of the first audio stream; empty without `--measure` and for silence).
 
 ## Exit codes
 

@@ -86,12 +86,12 @@ public static class MeasurementText
         string what = isFloat ? "at or beyond full scale" : "at full scale";
         string clipping = stream.ClippingRuns == 0
             ? "none"
-            : $"{Counts.Of(stream.ClippingRuns, "run", "runs")} of {MeasurementLimits.MinimumClippingRun} or more samples {what}, {Counts.Of(stream.ClippedSamples, "sample", "samples")}, the longest {Grouped(stream.LongestClippingRun)}{PerChannel(names, channels.Select(c => Counts.Of(c.ClippingRuns, "run", "runs")))}";
+            : $"{Plural(stream.ClippingRuns, "run", "runs")} of {MeasurementLimits.MinimumClippingRun} or more samples {what}, {Plural(stream.ClippedSamples, "sample", "samples")}, the longest {Grouped(stream.LongestClippingRun)}{PerChannel(names, channels.Select(c => Plural(c.ClippingRuns, "run", "runs")))}";
         lines.Add(new MeasurementLine("Clipping", clipping, ClippingDescription, ClippingTopic));
 
         string silence = stream.SilentSamples == 0
             ? "none"
-            : $"{Samples(stream.SilentSamples, m.SampleRate)} in all, {Samples(stream.SilentAtStart, m.SampleRate)} at the start, {Samples(stream.SilentAtEnd, m.SampleRate)} at the end"
+            : $"{Samples(stream.SilentSamples, m.SampleRate)} in all, {(stream.SilentAtStart == 0 ? "none" : Samples(stream.SilentAtStart, m.SampleRate))} at the start, {(stream.SilentAtEnd == 0 ? "none" : Samples(stream.SilentAtEnd, m.SampleRate))} at the end"
               + (channels.Any(c => c.SilentSamples != stream.SilentSamples) ? $"; in all by channel: {string.Join(", ", names.Select((n, i) => $"{n} {Grouped(channels[i].SilentSamples)}"))}" : string.Empty);
         lines.Add(new MeasurementLine("Digital Silence", silence, DigitalSilenceDescription, DigitalSilenceTopic));
 
@@ -149,8 +149,11 @@ public static class MeasurementText
 
     private static string Grouped(long value) => value.ToString("N0", CultureInfo.InvariantCulture);
 
+    private static string Plural(long count, string singular, string plural) => $"{Grouped(count)} {(count == 1 ? singular : plural)}";
+
+    // A count of samples and, where the rate is known and the time is at least a tenth of a second, the time.
     private static string Samples(long samples, int rate) =>
-        rate > 0 ? $"{Counts.Of(samples, "sample", "samples")} ({Seconds(samples, rate)} s)" : Counts.Of(samples, "sample", "samples");
+        rate > 0 && samples >= (rate + 9) / 10 ? $"{Plural(samples, "sample", "samples")} ({Seconds(samples, rate)} s)" : Plural(samples, "sample", "samples");
 
     // Millionths of a percent as a percentage with up to six decimals, placing the decimal point and never formatting a double.
     public static string Percent(long micropercent) =>

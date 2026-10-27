@@ -336,6 +336,24 @@ public class MeasurementLevelsTests
         Assert.Equal(asFloats.Stream, asDoubles.Stream);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(7)]
+    [InlineData(1000)]
+    public void TheLevelsOfFloatsDoNotDependOnHowTheDecoderCutsBlocks(int blockSize)
+    {
+        float[] samples = [.. MeasurementSignals.Noise(30_000, 21).Select(v => (float)(v * 1.3))];
+        Array.Fill(samples, 1.0f, 5000, 12);
+        Array.Fill(samples, 0f, 9000, 2000);
+
+        LevelFigures reference = Floats([samples, [.. samples.Select(v => v / 3)]], 4096);
+        LevelFigures other = Floats([samples, [.. samples.Select(v => v / 3)]], blockSize);
+
+        Assert.Equal(reference.Stream, other.Stream);
+        Assert.True(reference.Channels.SequenceEqual(other.Channels));
+        Assert.True(reference.Stream.ClippingRuns > 0);
+    }
+
     [Fact]
     public void AFloatStreamWithTheSpectrumGivesTheSameLevelsAsWithout()
     {
@@ -373,5 +391,28 @@ public class MeasurementLevelsTests
 
         Assert.True(measurer.IsLimited);
         Assert.Null(measurer.Result(MeasurementStatus.Stopped, null).Levels);
+    }
+
+    [Theory]
+    [InlineData(SampleFormat.Integer, false)]
+    [InlineData(SampleFormat.Float32, false)]
+    [InlineData(SampleFormat.Float32, true)]
+    public void TheMemoryEstimateCoversWhatTheLevelsAllocateEvenForAHeaderOf65535Channels(SampleFormat format, bool withSpectrum)
+    {
+        var pcm = new PcmFormat(44100, 65535, 32, format);
+        var options = new MeasureOptions { Include = withSpectrum ? MeasurementSets.All : MeasurementKinds.Levels };
+        long estimate = StreamMeasurer.EstimateBytes(pcm, options);
+        int[] integers = new int[65535 * 8];
+        float[] floats = new float[65535 * 8];
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        var measurer = new StreamMeasurer(pcm, options, CancellationToken.None, _ => true);
+        measurer.Write(format == SampleFormat.Integer ? new PcmBlock(0, 8, 65535, 8, integers) : new PcmBlock(0, 8, 65535, 8, floats));
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.Null(measurer.Failure);
+        Assert.Equal(32, m.Levels!.Channels.Count);
+        Assert.True(allocated < estimate, $"allocated {allocated:N0}, estimated {estimate:N0}");
     }
 }

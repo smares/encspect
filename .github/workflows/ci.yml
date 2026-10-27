@@ -1040,7 +1040,8 @@ jobs:
       - name: Cross-check the FLAC fixtures
         run: python3 scripts/fixtures/crosscheck_flac_fixtures.py
 
-      # The measurement fixtures are FLAC files too: flac and FFmpeg decode the same samples as the model the measurements are checked against.
+      # The measurement fixtures are FLAC files too: flac and FFmpeg decode the same samples as the model the measurements are checked against,
+      # and FFmpeg's astats and silencedetect give the levels the model computes.
       - name: Cross-check the measurement fixtures
         run: python3 scripts/fixtures/crosscheck_measurement_fixtures.py
 

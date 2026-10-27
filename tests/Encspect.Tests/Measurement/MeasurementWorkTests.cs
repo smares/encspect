@@ -50,24 +50,62 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.True(impulse / zeros <= Factor);
     }
 
-    private enum Signal
+    // The levels alone, with the Int128 accumulators: one and two channels at 16, 24 and 32 bits, noise, a full-scale square wave (every piece
+    // scans for runs) and zeros (every piece is silent). The weight of 4 units is the design's estimate; this holds it to the reference.
+    public static TheoryData<int, int, Signal> LevelsCases()
+    {
+        var data = new TheoryData<int, int, Signal>();
+        foreach (int bits in new[] { 16, 24, 32 })
+        {
+            foreach (int channels in new[] { 2, 1 })
+            {
+                data.Add(bits, channels, Signal.Noise);
+            }
+        }
+
+        data.Add(16, 2, Signal.Square);
+        data.Add(24, 2, Signal.Zeros);
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(LevelsCases))]
+    public void TheLevelsTakeAtMostTwiceTheFlacReferencesTimePerUnit(int bits, int channels, Signal signal)
+    {
+        (double ratio, double perUnit, double perSample) = Compare(44100, channels, signal, MeasurementKinds.Levels, bits);
+        output.WriteLine($"levels, {bits} bits, {channels} channel(s), {signal}: {perSample:F2} ns a sample of a channel, {perUnit:F3} ns a unit; ratio to the reference {ratio:F2}");
+        Assert.True(ratio <= Factor, $"The levels take {ratio:F2} times the reference's time per unit, at most {Factor} are allowed. The weight is too low.");
+    }
+
+    [Fact]
+    public void TheLevelsAddLittleToTheSpectrum()
+    {
+        (double both, _, double perSampleBoth) = Compare(44100, 2, Signal.Noise, MeasurementSets.All, 16);
+        (double spectrum, _, double perSampleSpectrum) = Compare(44100, 2, Signal.Noise, MeasurementKinds.Spectrum, 16);
+        output.WriteLine($"spectrum and levels {perSampleBoth:F2} ns a sample of a channel, the spectrum alone {perSampleSpectrum:F2} ns; ratios to the reference {both:F2} and {spectrum:F2}");
+        Assert.True(both <= Factor);
+    }
+
+    public enum Signal
     {
         Noise,
         Zeros,
         Impulse,
+        Square,
     }
 
     private const int Length = 1 << 21;
 
-    private static int[][] Data(int channels, Signal signal)
+    private static int[][] Data(int channels, Signal signal, int bits = 16)
     {
         var data = new int[channels][];
         for (int c = 0; c < channels; c++)
         {
             data[c] = signal switch
             {
-                Signal.Noise => MeasurementSignals.ToIntegers(MeasurementSignals.Noise(Length, (uint)(c + 1)), 16),
+                Signal.Noise => MeasurementSignals.ToIntegers(MeasurementSignals.Noise(Length, (uint)(c + 1)), bits),
                 Signal.Zeros => new int[Length],
+                Signal.Square => [.. Enumerable.Range(0, Length).Select(i => (i / 200) % 2 == 0 ? (1 << (bits - 1)) - 1 : -(1 << (bits - 1)))],
                 _ => Impulse(Length),
             };
         }
@@ -76,18 +114,18 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     }
 
     // The median of the rounds' ratios of the case's time per unit to the reference's of the same round, and the median time per unit and per sample.
-    private static (double Ratio, double PerUnit, double PerSample) Compare(int rate, int channels, Signal signal)
+    private static (double Ratio, double PerUnit, double PerSample) Compare(int rate, int channels, Signal signal, MeasurementKinds? kinds = null, int bits = 16)
     {
-        int[][] data = Data(channels, signal);
+        int[][] data = Data(channels, signal, bits);
         DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
-        RunOnce(rate, channels, data);
+        RunOnce(rate, channels, data, kinds, bits);
         var ratios = new List<double>();
         var perUnits = new List<double>();
         var perSamples = new List<double>();
         for (int round = 0; round < Rounds; round++)
         {
             double reference = DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
-            (double seconds, long units, long samples) = RunOnce(rate, channels, data);
+            (double seconds, long units, long samples) = RunOnce(rate, channels, data, kinds, bits);
             double perUnit = seconds * 1e9 / units;
             ratios.Add(perUnit / reference);
             perUnits.Add(perUnit);
@@ -104,11 +142,11 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         return sorted[sorted.Length / 2];
     }
 
-    private static (double Seconds, long Units, long Samples) RunOnce(int rate, int channels, int[][] data)
+    private static (double Seconds, long Units, long Samples) RunOnce(int rate, int channels, int[][] data, MeasurementKinds? kinds = null, int bits = 16)
     {
         long units = 0;
-        var format = new PcmFormat(rate, channels, 16, SampleFormat.Integer);
-        var measurer = new StreamMeasurer(format, new MeasureOptions(), CancellationToken.None, u =>
+        var format = new PcmFormat(rate, channels, bits, SampleFormat.Integer);
+        var measurer = new StreamMeasurer(format, new MeasureOptions { Include = kinds }, CancellationToken.None, u =>
         {
             units += u;
             return true;
@@ -130,7 +168,8 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         // The figures at the end (the grid's quantization) cost about 20 ms whatever the stream's length and are not timed.
         StreamMeasurements result = measurer.Result(MeasurementStatus.Complete, null);
         Assert.Null(measurer.Failure);
-        Assert.True(result.Spectrum!.Frames > 0);
+        Assert.True(kinds is null || (kinds & MeasurementKinds.Spectrum) == 0 || result.Spectrum!.Frames > 0);
+        Assert.True(kinds is null || (kinds & MeasurementKinds.Levels) == 0 || result.Levels is not null);
         return (seconds, units, (long)Length * channels);
     }
 

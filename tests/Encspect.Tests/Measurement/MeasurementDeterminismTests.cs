@@ -3,6 +3,8 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
+using Encspect.Core;
+using Encspect.Host;
 using Encspect.Host.Measurement;
 
 namespace Encspect.Tests.Measurement;
@@ -38,6 +40,57 @@ public class MeasurementDeterminismTests
         }
 
         return Convert.ToHexStringLower(hash.GetHashAndReset());
+    }
+
+    // Every field of the levels of a stream, as text: integers are exact and the float sums are made in a fixed order, so the text is the same on
+    // every platform.
+    private static string LevelsText(LevelFigures levels)
+    {
+        var text = new System.Text.StringBuilder();
+        foreach (ChannelLevels c in levels.Channels.Prepend(levels.Stream))
+        {
+            text.Append(System.Globalization.CultureInfo.InvariantCulture, $"{c.SamplePeakTenths},{c.RmsTenths},{c.DcOffsetMicropercent},{c.DcOffsetTenths},{c.ClippingRuns},{c.ClippedSamples},{c.LongestClippingRun},{c.SilentAtStart},{c.SilentAtEnd},{c.SilentSamples},{c.LowBitsUnused},{c.HighestMagnitude},{c.HasOnly16BitValues},{c.HasOnly24BitValues};");
+        }
+
+        return Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text.ToString())));
+    }
+
+    // The levels of three synthetic streams, integers at 16 and 24 bits (with runs, silence and a gap) and floats (NaN, huge values, full
+    // scale), hash to constants on every platform, JIT and NativeAOT, with the vector paths on or off.
+    [Fact]
+    public void TheLevelsOfSyntheticStreamsHashToConstants()
+    {
+        int[] a = MeasurementSignals.ToIntegers(MeasurementSignals.Noise(100_000, 7).Select(v => v * 1.4).ToArray(), 16);
+        int[] b = [.. a.Select(v => v / 5)];
+        Array.Fill(a, 32767, 1000, 40);
+        Array.Fill(b, 0, 5000, 9000);
+        var format16 = new PcmFormat(44100, 2, 16, SampleFormat.Integer);
+        var measurer = new StreamMeasurer(format16, new MeasureOptions { Include = MeasurementKinds.Levels }, CancellationToken.None, _ => true);
+        foreach ((int from, int to, long position) in new[] { (0, 60_000, 0L), (60_000, 100_000, 70_000L) })
+        {
+            int[] planar = [.. a.AsSpan(from, to - from), .. b.AsSpan(from, to - from)];
+            measurer.Write(new PcmBlock(position, to - from, 2, to - from, planar));
+        }
+
+        string integers16 = LevelsText(measurer.Result(MeasurementStatus.Complete, null).Levels!);
+
+        int[] wide = MeasurementSignals.ToIntegers(MeasurementSignals.Noise(50_000, 8).Select(v => v * 2.0).ToArray(), 24);
+        int[] shifted = [.. wide.Select(v => v & ~0xFF)];
+        var measurer24 = new StreamMeasurer(new PcmFormat(48000, 2, 24, SampleFormat.Integer), new MeasureOptions { Include = MeasurementKinds.Levels }, CancellationToken.None, _ => true);
+        measurer24.Write(new PcmBlock(0, 50_000, 2, 50_000, [.. wide, .. shifted]));
+        string integers24 = LevelsText(measurer24.Result(MeasurementStatus.Complete, null).Levels!);
+
+        float[] floats = [.. MeasurementSignals.Noise(40_000, 9).Select(v => (float)(v * 1.2))];
+        floats[100] = float.NaN;
+        floats[200] = 1e30f;
+        Array.Fill(floats, 1.0f, 300, 10);
+        Array.Fill(floats, 0f, 2000, 3000);
+        var measurerFloat = new StreamMeasurer(new PcmFormat(44100, 1, 32, SampleFormat.Float32), new MeasureOptions { Include = MeasurementKinds.Levels }, CancellationToken.None, _ => true);
+        measurerFloat.Write(new PcmBlock(0, 40_000, 1, 40_000, floats));
+        string float32 = LevelsText(measurerFloat.Result(MeasurementStatus.Complete, null).Levels!);
+
+        string all = Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(integers16 + integers24 + float32)));
+        Assert.True(LevelsHash == all, $"LevelsHash = {all} (16 bits {integers16[..8]}, 24 bits {integers24[..8]}, floats {float32[..8]})");
     }
 
     [Fact]
@@ -273,6 +326,7 @@ public class MeasurementDeterminismTests
     private const string RowsHash = "f3b5f53bd0bc966cd84a42188592bd0e525b699b681ec7ebc06df6f0a3d1fc41";
     private const string Rows1024Hash = "7b9f9a01c21fcdb6c2e71db025b77d5ed5bacae23ff1b5aea23500e15f67bd83";
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
+    private const string LevelsHash = "f92d52741857da7606e0932e860091e47898d604dbfb1bbd97ffde473c022fbc";
     private const string MathHash = "6654c27b9dc93be9cabd9f70dad935929bf08d83c724028dff4dd2334949a8c1";
 }
 

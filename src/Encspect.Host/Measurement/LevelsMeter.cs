@@ -66,6 +66,7 @@ internal sealed class LevelsMeter
         return bytes;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void AddIntegers(int channel, ReadOnlySpan<int> samples)
     {
         ChannelState state = _channels[channel];
@@ -86,8 +87,7 @@ internal sealed class LevelsMeter
         }
         else
         {
-            state.RunLength = 0;
-            state.RunSign = 0;
+            state.EndRun();
         }
 
         state.Silence.Add(samples);
@@ -95,6 +95,7 @@ internal sealed class LevelsMeter
     }
 
     // Samples already made safe by the stream measurer: finite and at most 1,024 times full scale.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void AddDoubles(int channel, ReadOnlySpan<double> samples)
     {
         if (_flags.Length < samples.Length)
@@ -112,6 +113,9 @@ internal sealed class LevelsMeter
         bool only24 = state.Only24;
         long runLength = state.RunLength;
         int runSign = state.RunSign;
+        long runs = 0;
+        long clipped = 0;
+        long longest = 0;
         for (int i = 0; i < samples.Length; i++)
         {
             double v = samples[i];
@@ -142,29 +146,19 @@ internal sealed class LevelsMeter
             }
             else
             {
+                if (runLength >= MeasurementLimits.MinimumClippingRun)
+                {
+                    runs++;
+                    clipped += runLength;
+                    longest = runLength > longest ? runLength : longest;
+                }
+
                 runSign = sign;
                 runLength = sign != 0 ? 1 : 0;
             }
-
-            if (runLength >= MeasurementLimits.MinimumClippingRun)
-            {
-                if (runLength == MeasurementLimits.MinimumClippingRun)
-                {
-                    state.Runs++;
-                    state.Clipped += MeasurementLimits.MinimumClippingRun;
-                }
-                else
-                {
-                    state.Clipped++;
-                }
-
-                if (runLength > state.Longest)
-                {
-                    state.Longest = runLength;
-                }
-            }
         }
 
+        state.AddRuns(runs, clipped, longest);
         state.Count += samples.Length;
         state.Low = low;
         state.High = high;
@@ -192,14 +186,14 @@ internal sealed class LevelsMeter
     {
         foreach (ChannelState state in _channels)
         {
-            state.RunLength = 0;
-            state.RunSign = 0;
+            state.EndRun();
             state.Silence.Gap();
         }
 
         _joint.Gap();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Combine(int channel, ReadOnlySpan<int> values)
     {
         if (_channels.Length == 1)
@@ -246,6 +240,7 @@ internal sealed class LevelsMeter
         sum = total;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private UInt128 Squares(ReadOnlySpan<int> samples)
     {
         UInt128 total = 0;
@@ -280,44 +275,40 @@ internal sealed class LevelsMeter
         return total;
     }
 
-    // Runs of the same extreme code, carried across pieces; a run is counted when it reaches the minimum length and grows from there.
+    // Runs of the same extreme code, carried across pieces in the state and counted when they end (at a sample that is not the same extreme, at a gap and
+    // at the end), with the counters in locals so that the loop writes no memory.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void ScanClipping(ChannelState state, ReadOnlySpan<int> samples)
     {
         long runLength = state.RunLength;
         int runSign = state.RunSign;
+        long runs = 0;
+        long clipped = 0;
+        long longest = 0;
+        int high = _high;
+        int low = _low;
         for (int i = 0; i < samples.Length; i++)
         {
             int v = samples[i];
-            int sign = v == _high ? 1 : v == _low ? -1 : 0;
+            int sign = v == high ? 1 : v == low ? -1 : 0;
             if (sign != 0 && sign == runSign)
             {
                 runLength++;
-            }
-            else
-            {
-                runSign = sign;
-                runLength = sign != 0 ? 1 : 0;
+                continue;
             }
 
             if (runLength >= MeasurementLimits.MinimumClippingRun)
             {
-                if (runLength == MeasurementLimits.MinimumClippingRun)
-                {
-                    state.Runs++;
-                    state.Clipped += MeasurementLimits.MinimumClippingRun;
-                }
-                else
-                {
-                    state.Clipped++;
-                }
-
-                if (runLength > state.Longest)
-                {
-                    state.Longest = runLength;
-                }
+                runs++;
+                clipped += runLength;
+                longest = runLength > longest ? runLength : longest;
             }
+
+            runSign = sign;
+            runLength = sign != 0 ? 1 : 0;
         }
 
+        state.AddRuns(runs, clipped, longest);
         state.RunLength = runLength;
         state.RunSign = runSign;
     }
@@ -334,6 +325,7 @@ internal sealed class LevelsMeter
         var channels = new List<ChannelLevels>(_channels.Length);
         foreach (ChannelState state in _channels)
         {
+            state.EndRun();
             channels.Add(_isFloat ? FloatLevels(state) : IntegerLevels(state));
         }
 
@@ -491,6 +483,28 @@ internal sealed class LevelsMeter
         public long Clipped;
         public long Longest;
         public SilenceState Silence;
+
+        public void AddRuns(long runs, long clipped, long longest)
+        {
+            Runs += runs;
+            Clipped += clipped;
+            if (longest > Longest)
+            {
+                Longest = longest;
+            }
+        }
+
+        // The run that is still open ends here (at a gap or at the end): it is counted if it is long enough.
+        public void EndRun()
+        {
+            if (RunLength >= MeasurementLimits.MinimumClippingRun)
+            {
+                AddRuns(1, RunLength, RunLength);
+            }
+
+            RunLength = 0;
+            RunSign = 0;
+        }
     }
 
     // Stretches of samples that are exactly 0 (flags that are 0 for a float), as a struct whose methods change it in place.
@@ -502,6 +516,7 @@ internal sealed class LevelsMeter
         public long Trailing;
         public long Total;
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public void Add(ReadOnlySpan<int> values)
         {
             int first = values.IndexOfAnyExcept(0);
