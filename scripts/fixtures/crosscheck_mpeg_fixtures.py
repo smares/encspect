@@ -156,6 +156,10 @@ def ffprobe_stream(path):
     return json.loads(result.stdout)["streams"][0]
 
 
+# Free-format fixtures whose first frame libmad rejects; see the free-format check in check().
+LIBMAD_SKIPS_FIRST_FREE_FRAME = {"external-lame-free-format"}
+
+
 def madplay_output(path):
     result = subprocess.run(["madplay", "-v", "-o", "null:/dev/null", str(path)], capture_output=True, text=True)
     return (result.stdout + result.stderr).replace("\r", "\n").splitlines()
@@ -900,7 +904,7 @@ def guessenc_coding_problems(path, manifest):
         parts = path_.split("/")
         if len(parts) == 4 and parts[1] == "Bitrate Distribution" and parts[3] in ("Unpadded", "Padded"):
             sizes = [(int(n), int(size)) for n, size in re.findall(r"(\d+) frames? of (\d+) bytes", value)]
-            key = "free" if parts[2] == "free" else int(parts[2].split()[0])
+            key = "free" if parts[2].startswith("free") else int(parts[2].split()[0])
             histogram.setdefault(key, {})[parts[3]] = sizes
     for key in set(histogram) | set(actual["histogram"]):
         ours_sizes = histogram.get(key, {}).get("Unpadded", []) + histogram.get(key, {}).get("Padded", [])
@@ -1336,6 +1340,15 @@ def check(path, manifest, tools):
             count = mpg123_frame_count(path, 1152, CHANNELS.get(settings["channel_mode"], 2))
             if count != manifest["mpg123_frames"]:
                 problems.append(f"mpg123 decodes {count} frames, the manifest recorded {manifest['mpg123_frames']}")
+            # libmad reads the bitrate of every free-format fixture from the frames (madplay prints 400 and 640 kbps, mpg123 "cbr400"
+            # and "cbr640"; ffprobe reads none of them and MediaInfo finds no MPEG audio). It skips the first frame of the 400 kbps
+            # stream without a LAME tag ("frame 0: bad audio data length") and decodes all 21 of the others, the 640 kbps one included;
+            # that difference is observed, not explained from libmad's source.
+            skipped = path.stem in LIBMAD_SKIPS_FIRST_FREE_FRAME
+            output = madplay_output(path)
+            mad_count = madplay_frame_count(path)
+            if mad_count != manifest["mpg123_frames"] - (1 if skipped else 0) or skipped != any("bad audio data length" in line for line in output):
+                problems.append(f"libmad decodes {mad_count} frames of the free-format stream, expected {manifest['mpg123_frames'] - (1 if skipped else 0)}")
         else:
             if ffprobe_packets(path) != [tuple(f) for f in manifest["ffprobe_packets"]]:
                 problems.append("ffprobe's packets differ from the ones recorded in the manifest")
