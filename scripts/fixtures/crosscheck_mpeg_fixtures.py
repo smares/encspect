@@ -7,8 +7,8 @@ of each), and for protected frames libmad (madplay) must report a CRC failure fo
 frames the manifest expects one for. libmad is used for CRCs because ffmpeg 6.1 rejects every
 Layer I CRC, correct or not. With "crosscheck": "madplay" or "mpg123", that decoder's count of
 decoded frames is compared instead, where ffmpeg resyncs differently or cannot read the stream at
-all (free format; libmad also skips the first frame of a LAME free-format stream, so mpg123 counts
-those).
+all (free format; libmad also skips the first frame of the untagged 400 kbps stream, whose frame 0 holds sync-like words that libmad
+takes for the next header, so mpg123 counts those).
 
 Layer II and III fixtures are checked whatever their "crosscheck" value:
 
@@ -154,6 +154,10 @@ def ffprobe_stream(path):
         check=True,
     )
     return json.loads(result.stdout)["streams"][0]
+
+
+# Free-format fixtures whose first frame libmad rejects; see the free-format check in check().
+LIBMAD_SKIPS_FIRST_FREE_FRAME = {"external-lame-free-format"}
 
 
 def madplay_output(path):
@@ -900,7 +904,7 @@ def guessenc_coding_problems(path, manifest):
         parts = path_.split("/")
         if len(parts) == 4 and parts[1] == "Bitrate Distribution" and parts[3] in ("Unpadded", "Padded"):
             sizes = [(int(n), int(size)) for n, size in re.findall(r"(\d+) frames? of (\d+) bytes", value)]
-            key = "free" if parts[2] == "free" else int(parts[2].split()[0])
+            key = "free" if parts[2].startswith("free") else int(parts[2].split()[0])
             histogram.setdefault(key, {})[parts[3]] = sizes
     for key in set(histogram) | set(actual["histogram"]):
         ours_sizes = histogram.get(key, {}).get("Unpadded", []) + histogram.get(key, {}).get("Padded", [])
@@ -1336,6 +1340,17 @@ def check(path, manifest, tools):
             count = mpg123_frame_count(path, 1152, CHANNELS.get(settings["channel_mode"], 2))
             if count != manifest["mpg123_frames"]:
                 problems.append(f"mpg123 decodes {count} frames, the manifest recorded {manifest['mpg123_frames']}")
+            # libmad finds a free-format frame's length by scanning forward for the first word that looks like a header of the same layer
+            # and sample rate, and checks no chain of frames. Frame 0 of external-lame-free-format holds such words (FF FB 32 81 at byte
+            # 1095, FF FA 31 60 at 1119, FF FA 20 98 at 1179), so libmad takes it for a frame of about a thousand bytes and rejects it
+            # ("frame 0: bad audio data length"); with those words altered madplay decodes all 21 frames. The -tag fixture is unaffected (its
+            # rate comes from the Info frame) and frame 0 of the 640 kbps one has no such word. ffprobe reads none of the fixtures and
+            # MediaInfo finds no MPEG audio. This is the behavior as observed and checked on the bytes, not copied from libmad's code.
+            skipped = path.stem in LIBMAD_SKIPS_FIRST_FREE_FRAME
+            output = madplay_output(path)
+            mad_count = madplay_frame_count(path)
+            if mad_count != manifest["mpg123_frames"] - (1 if skipped else 0) or skipped != any("bad audio data length" in line for line in output):
+                problems.append(f"libmad decodes {mad_count} frames of the free-format stream, expected {manifest['mpg123_frames'] - (1 if skipped else 0)}")
         else:
             if ffprobe_packets(path) != [tuple(f) for f in manifest["ffprobe_packets"]]:
                 problems.append("ffprobe's packets differ from the ones recorded in the manifest")

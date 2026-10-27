@@ -56,6 +56,7 @@ internal static class Explain
     public const string IsProtected = "Whether a 16-bit CRC follows the header so decoders can detect damaged frames; the stored protection_bit is 0 when it does (ISO/IEC 11172-3 2.4.2.3).";
     public const string Bitrate = "The bitrate bitrate_index gives; with the sample rate and the padding bit it sets the frame's length (ISO/IEC 11172-3 2.4.2.3).";
     public const string FreeBitrate = "bitrate_index 0, free format: the stream has a fixed bitrate that the table does not list, so the frame's length comes from the distance to the next frame.";
+    public const string ComputedBitrate = "The bitrate this frame's length gives: its bytes, padding included, times 8, over the duration of its samples. Derived from the frame length, not a header field; ISO/IEC 11172-3 2.4.2.3 gives the frame length formula this reverses, and ISO/IEC 13818-3 the one for the 576 samples of a frame at the lower sampling frequencies.";
     public const string SampleRate = "Samples per second in each channel, from sampling_frequency and the version (ISO/IEC 11172-3 2.4.2.3).";
     public const string HasPadding = "Whether the frame carries one extra slot (a byte, or 4 bytes in Layer I), which keeps the average bitrate exact where the frame length is not a whole number of slots, as at 44.1 kHz.";
     public const string IsPrivate = "A bit left to applications; the standard gives it no meaning and decoders ignore it.";
@@ -221,7 +222,7 @@ internal static class Explain
     public const string MinimumBitrate = "The lowest bitrate a frame header gives.";
     public const string MaximumBitrate = "The highest bitrate a frame header gives.";
     public const string Distribution = "How many frames use each bitrate.";
-    public const string DistributionEntry = "The frames at this bitrate, with their share of all frames.";
+    public const string DistributionEntry = "The frames at this bitrate, with their share of all frames. For free format, the name carries the average bitrate the frame lengths give.";
     public const string Unpadded = "The frames at this bitrate without a padding slot, by length.";
     public const string Padded = "The frames at this bitrate with a padding slot, by length.";
     public const string MaximumFill = "The largest bit reservoir fill any frame starts with.";

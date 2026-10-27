@@ -606,6 +606,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         fields.Add(HeaderField(position, "IsOriginal", NodeValue.Boolean(header.IsOriginal), Explain.IsOriginal));
         fields.Add(HeaderField(position, "Emphasis", header.Emphasis, Explain.Emphasis, Topics.Emphasis));
 
+        if (header.IsFreeFormat && IsAudio(frame))
+        {
+            children.Add(new Node("Computed Bitrate", position, frame.Length, NodeValue.Decimal(ComputedBitrate(frame, header), 2, "kbps")) { Description = Explain.ComputedBitrate, Topic = Topics.FreeFormat });
+        }
+
         long dataStart = position + 4;
         if (frame.Crc >= 0)
         {

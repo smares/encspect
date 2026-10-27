@@ -5,6 +5,10 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 ## What is read
 
 - **Frames:** sync and resync, every header field, free format and the CRC-16.
+- **Free format:** the frame length is the distance to the next matching header, and each audio frame shows the bitrate its length gives:
+  - The header's **Bitrate** stays "free", the value the header holds.
+  - A **Computed Bitrate** node under the frame (not under the header, since it is no header field) shows the frame's bytes, padding included, times 8, over the duration of its samples, in kbps to two decimals (`399.96 kbps`: 1306 bytes at 44100 Hz and 1152 samples). The JSON report holds the unrounded value; the text report and GUI show two decimals.
+  - It is the value of the stream's "Bitrate" series at that frame, from the same function. Frames with a fixed bitrate have no such node, and neither has a truncated frame, whose length is not the frame's.
 - **Layer III:** the side information of every granule and the bit reservoir. Each frame's bytes are split into its own main data, other frames' main data and ancillary data.
 - **Layer II:** the bit allocation, scfsi and scalefactors, and the MPEG-2 multichannel extension in the ancillary data.
 - **VBR headers:** Xing, Info, LAME and VBRI. The LAME tag's CRC and its music CRC are verified.
@@ -25,6 +29,7 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 Each MPEG Audio region reports:
 
 - duration, a bitrate summary, and the bitrate distribution with the frame sizes of each bitrate;
+  - The free-format entry is named with the average bitrate its frame lengths give, in whole kbps: `free (400 kbps): 21 frames (100.0%)`.
 - the counts a VBR header claims against the ones counted, and the gapless sample count;
 - the coding statistics mp3guessenc and EncSpot print:
   - frames per channel mode;

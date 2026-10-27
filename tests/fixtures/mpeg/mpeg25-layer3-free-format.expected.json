@@ -1,0 +1,159 @@
+{
+ "description": "Free-format MPEG-2.5 Layer III at 11025 Hz with 300-byte frames, 576 samples each (about 46 kbps), some with the padding slot.",
+ "length": 1802,
+ "crosscheck": "mpg123",
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 1802,
+   "statistics": {
+    "Statistics": "6 frames, 0.313 s",
+    "Statistics/Frames": "6",
+    "Statistics/Samples": "3456",
+    "Statistics/Duration": "0.313 s",
+    "Statistics/IsVbr": "false",
+    "Statistics/Average Bitrate": "46.0 kbps",
+    "Statistics/Bitrate Distribution": "1 bitrate",
+    "Statistics/Bitrate Distribution/free (46 kbps)": "6 frames (100.0%)",
+    "Statistics/Maximum Reservoir Fill": "255 bytes",
+    "Statistics/Channel Modes": "1 mode",
+    "Statistics/Channel Modes/Joint stereo": "6 frames (100.0%)",
+    "Statistics/Stereo Coding": "6 frames",
+    "Statistics/Stereo Coding/Left/right stereo": "6 frames (100.0%)",
+    "Statistics/Joint Stereo Modes": "6 frames",
+    "Statistics/Joint Stereo Modes/Left/right stereo": "6 frames (100.0%)",
+    "Statistics/Bitrate Distribution/free (46 kbps)/Unpadded": "4 frames of 300 bytes",
+    "Statistics/Bitrate Distribution/free (46 kbps)/Padded": "2 frames of 301 bytes",
+    "Statistics/Block Usage": "12 granules",
+    "Statistics/Block Usage/Long": "12 granules (100.0%)",
+    "Statistics/Block Sizes": "12 granules",
+    "Statistics/Block Sizes/Long, start and stop": "12 granules (100.0%)",
+    "Statistics/Global Gain/Channel 0/Minimum": "0",
+    "Statistics/Global Gain/Channel 0/Maximum": "0",
+    "Statistics/Global Gain/Channel 1/Minimum": "0",
+    "Statistics/Global Gain/Channel 1/Maximum": "0",
+    "Statistics/Ancillary Data": "1676 bytes",
+    "Statistics/Ancillary Data/Share": "93.0 %",
+    "Statistics/Ancillary Data/Data Rate": "42.8 kbps",
+    "Statistics/Ancillary Data/Smallest Nonzero Amount": "279 bytes",
+    "Statistics/Ancillary Data/Largest Amount": "280 bytes",
+    "Statistics/UsesPadding": "true",
+    "Statistics/UsesScfsi": "false",
+    "Statistics/UsesScalefactorScaling": "false",
+    "Statistics/Scalefactor Scaling": "0.0 %",
+    "Statistics/Average Main Data Begin": "0.0 bytes",
+    "Statistics/Maximum Main Data Begin": "0 bytes"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 301,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "11025 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 301,
+   "length": 300,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "11025 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 601,
+   "length": 300,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "11025 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 901,
+   "length": 301,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "11025 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1202,
+   "length": 300,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "11025 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  },
+  {
+   "offset": 1502,
+   "length": 300,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "11025 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "None"
+   }
+  }
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-2.5 Layer III",
+   "sample_rate": 11025,
+   "samples": 3456,
+   "duration": "0.313 s",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "average_bitrate": "46.0 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "46",
+   "reservoir_fill_over_time": "212"
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg.free-format",
+   "contains": "300"
+  }
+ ]
+}

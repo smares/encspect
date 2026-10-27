@@ -9,4 +9,4 @@ references: ISO/IEC 11172-3 2.4.2.3
 
 **How a decoder copes.** The header does not give a free-format frame's length, so a decoder finds it from the distance to the next frame's header, once, and then expects every frame of the stream to have that length, plus the padding slot where it is set. ISO/IEC 11172-3 requires the bitrate to stay fixed within a free-format stream. Not every decoder supports free format, and some support it only up to a limit.
 
-**What you see.** The Bitrate field shows "free", the analyzer reports the frame length it found, and the bitrate graphs compute each frame's bitrate from its length. A free-format stream whose frame length changes is reported as a warning.
+**What you see.** The Bitrate field shows "free", the analyzer reports the frame length it found, and each audio frame has a Computed Bitrate: the bitrate its length gives, padding included. The bitrate graphs use the same value, and the bitrate distribution names the free entry with the stream's average of it. A free-format stream whose frame length changes is reported as a warning.
