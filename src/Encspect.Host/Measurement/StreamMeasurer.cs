@@ -15,8 +15,11 @@ internal sealed class StreamMeasurer
 
     private const int CheckEvery = 1 << 16;
 
-    // The work per sample of a measured channel for the levels, in the decoders' unit.
-    private const int LevelsWeight = 4;
+    // The work per sample of a measured channel for the levels, in the decoders' unit: 4 for integers (about 2 ns), 14 for floats, which are converted
+    // safely first and checked for the bit-depth grids (7.5 to 10.6 ns a sample measured for doubles of any magnitude, a ratio of 1.0 to 1.3 to the reference).
+    private const int IntegerLevelsWeight = 4;
+
+    private const int FloatLevelsWeight = 14;
 
     private const double SmallestSample = 1e-30;
 
@@ -259,7 +262,7 @@ internal sealed class StreamMeasurer
             return;
         }
 
-        if (!_charge((long)block.Length * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : LevelsWeight))))
+        if (!_charge((long)block.Length * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight))))
         {
             IsLimited = true;
             _isStopped = true;

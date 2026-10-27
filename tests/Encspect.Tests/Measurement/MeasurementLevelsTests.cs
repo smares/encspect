@@ -482,6 +482,20 @@ public class MeasurementLevelsTests
     }
 
     [Fact]
+    public void TheLevelsOfFloatsChargeMoreThanThoseOfIntegers()
+    {
+        long units = 0;
+        var measurer = new StreamMeasurer(new PcmFormat(44100, 2, 32, SampleFormat.Float32), LevelsOnly, CancellationToken.None, u =>
+        {
+            units += u;
+            return true;
+        });
+        measurer.Write(new PcmBlock(0, 1000, 2, 1000, new float[2000]));
+
+        Assert.Equal(1000L * 2 * 14, units);
+    }
+
+    [Fact]
     public void ABudgetThatPassesStopsTheLevelsToo()
     {
         var pcm = new PcmFormat(44100, 1, 16, SampleFormat.Integer);
