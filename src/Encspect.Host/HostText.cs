@@ -18,4 +18,9 @@ internal static class Topics
     public const string Measurements = "measurements";
     public const string Spectrogram = "spectrogram";
     public const string SpectralCutoff = "spectral-cutoff";
+    public const string Levels = "levels";
+    public const string Clipping = "clipping";
+    public const string DcOffset = "dc-offset";
+    public const string DigitalSilence = "digital-silence";
+    public const string BitDepthUsage = "bit-depth-usage";
 }

@@ -40,6 +40,8 @@ public sealed record StreamMeasurements
 
     public SpectrumFigures? Spectrum { get; init; }
 
+    public LevelFigures? Levels { get; init; }
+
     public SpectrogramGrid? Spectrogram { get; init; }
 
     public WaveformGrid? Waveform { get; init; }
@@ -80,6 +82,73 @@ public static class MeasurementLimits
 
     // The sentinel of a spectrum row that holds no power at all.
     public const short NoPower = short.MinValue;
+
+    // The sentinel of a level in tenths of a dB that is minus infinity: a channel whose samples are all 0 has no peak, no RMS level
+    // and a DC offset of exactly 0 has no level.
+    public const int NoLevel = int.MinValue;
+
+    // The shortest run of consecutive samples at an extreme that counts as clipping. A convention of the design, not a specification's.
+    public const int MinimumClippingRun = 3;
+}
+
+// The levels of a stream's decoded audio (the levels topic): sample peak, RMS, DC offset, clipping runs, digital silence and bit-depth
+// usage, per measured channel and for the stream. Integer samples are measured exactly, floats in double. Levels are tenths of a dB
+// relative to full scale (NoLevel for minus infinity), counts are samples, and the DC offset is in millionths of a percent of full
+// scale, so no writer formats a floating-point number.
+public sealed record LevelFigures
+{
+    // Integer or float samples, and for integers the bits of a sample (full scale is 2^(BitsPerSample - 1)); a float's full scale is 1.0.
+    public required SampleFormat Format { get; init; }
+
+    public required int BitsPerSample { get; init; }
+
+    // The stream's figures: the highest peak, the RMS level over all measured channels together, the DC offset of the channel with the
+    // largest one, the clipping runs added up (the longest the longest), the silence of the sample frames in which every measured channel
+    // is 0, and the bit usage of all channels together.
+    public required ChannelLevels Stream { get; init; }
+
+    // The measured channels, in the stream's order.
+    public required IReadOnlyList<ChannelLevels> Channels { get; init; }
+}
+
+// The levels of one channel, or of the stream.
+public sealed record ChannelLevels
+{
+    // The largest sample magnitude in tenths of a dB relative to full scale; the most negative integer code counts as full scale.
+    public int SamplePeakTenths { get; init; } = MeasurementLimits.NoLevel;
+
+    // The root mean square in tenths of a dB relative to full scale, where a full-scale square wave reads 0.
+    public int RmsTenths { get; init; } = MeasurementLimits.NoLevel;
+
+    // The mean of the samples, signed, in millionths of a percent of full scale, and the magnitude of it in tenths of a dB.
+    public long DcOffsetMicropercent { get; init; }
+
+    public int DcOffsetTenths { get; init; } = MeasurementLimits.NoLevel;
+
+    // Runs of at least MinimumClippingRun consecutive samples at the same extreme: how many, the samples in them and the longest.
+    public long ClippingRuns { get; init; }
+
+    public long ClippedSamples { get; init; }
+
+    public long LongestClippingRun { get; init; }
+
+    // Samples that are exactly 0 in a stretch that starts the measured samples, in a stretch that ends them, and in all. When every
+    // sample is 0 the first two equal the third. A stretch ends at a gap.
+    public long SilentAtStart { get; init; }
+
+    public long SilentAtEnd { get; init; }
+
+    public long SilentSamples { get; init; }
+
+    // Integers: the low bits that are 0 in every sample (null where every sample is 0), and the largest sample magnitude as a code.
+    public int? LowBitsUnused { get; init; }
+
+    public long HighestMagnitude { get; init; }
+
+    // Floats: whether every sample is a whole multiple of 2^-15 (2^-23) in [-1, 1).
+    public bool HasOnly16BitValues { get; init; }
+
+    public bool HasOnly24BitValues { get; init; }
 }
 
 public sealed record SpectrumFigures

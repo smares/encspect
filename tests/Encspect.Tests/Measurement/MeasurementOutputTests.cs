@@ -115,14 +115,14 @@ public class MeasurementOutputTests
     {
         (int named, string withKinds, _) = Run("--measure", "spectrum", Brickwall);
         (int inline, string inlineKinds, _) = Run("--measure=spectrum", Brickwall);
-        (int unknown, _, string errors) = Run("--measure=levels", Brickwall);
+        (int unknown, _, string errors) = Run("--measure=loudness", Brickwall);
 
         Assert.Equal(CommandLine.Success, named);
         Assert.Contains("Spectral Cutoff:", withKinds);
         Assert.Equal(CommandLine.Success, inline);
         Assert.Contains("Spectral Cutoff:", inlineKinds);
         Assert.Equal(CommandLine.UsageError, unknown);
-        Assert.Contains("Unknown measurement: levels. Measurements: spectrum.", errors);
+        Assert.Contains("Unknown measurement: loudness. Measurements: spectrum, levels.", errors);
     }
 
     [Fact]

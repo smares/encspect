@@ -70,6 +70,20 @@ public class MeasurementFixtureTests
             }
         }
 
+        // The levels: every count and the DC offset exact, the tenths of a dB within one tenth (the model's logarithm is the C library's).
+        JsonElement levels = model.GetProperty("levels");
+        Assert.Equal(levels.GetProperty("bits").GetInt32(), m.Levels!.BitsPerSample);
+        Assert.Equal(SampleFormat.Integer, m.Levels.Format);
+        AssertLevels(levels.GetProperty("stream"), m.Levels.Stream, $"{name} stream");
+        int channelIndex = 0;
+        foreach (JsonElement channel in levels.GetProperty("channels").EnumerateArray())
+        {
+            AssertLevels(channel, m.Levels.Channels[channelIndex], $"{name} channel {channelIndex}");
+            channelIndex++;
+        }
+
+        Assert.Equal(m.ChannelsMeasured, m.Levels.Channels.Count);
+
         // The grids' time axis and the waveform's extremes, which are exact.
         Assert.Equal(model.GetProperty("spectrogram_columns").GetInt32(), m.Spectrogram!.Columns);
         Assert.Equal(model.GetProperty("hops_per_column").GetInt32(), m.Spectrogram.HopsPerColumn);
@@ -82,6 +96,90 @@ public class MeasurementFixtureTests
             Assert.True(minimum.AsSpan().SequenceEqual(m.Waveform!.Minimum.Span.Slice(index * m.Waveform.Columns, m.Waveform.Columns)), $"{name}: waveform minimum of channel {index}");
             Assert.True(maximum.AsSpan().SequenceEqual(m.Waveform.Maximum.Span.Slice(index * m.Waveform.Columns, m.Waveform.Columns)), $"{name}: waveform maximum of channel {index}");
             index++;
+        }
+    }
+
+    private static void AssertLevels(JsonElement expected, ChannelLevels actual, string where)
+    {
+        void Tenths(string key, int value)
+        {
+            JsonElement e = expected.GetProperty(key);
+            if (e.ValueKind == JsonValueKind.Null)
+            {
+                Assert.True(value == MeasurementLimits.NoLevel, $"{where}: {key} reads {value}, the model has none");
+            }
+            else
+            {
+                Assert.True(value != MeasurementLimits.NoLevel && Math.Abs(value - e.GetInt32()) <= 1, $"{where}: {key} reads {value}, the model {e.GetInt32()}");
+            }
+        }
+
+        void Exact(string key, long value) => Assert.True(expected.GetProperty(key).GetInt64() == value, $"{where}: {key} reads {value}, the model {expected.GetProperty(key).GetInt64()}");
+
+        Tenths("sample_peak_tenths", actual.SamplePeakTenths);
+        Tenths("rms_tenths", actual.RmsTenths);
+        Tenths("dc_tenths", actual.DcOffsetTenths);
+        Exact("dc_micropercent", actual.DcOffsetMicropercent);
+        Exact("clipping_runs", actual.ClippingRuns);
+        Exact("clipped_samples", actual.ClippedSamples);
+        Exact("longest_clipping_run", actual.LongestClippingRun);
+        Exact("silent_at_start", actual.SilentAtStart);
+        Exact("silent_at_end", actual.SilentAtEnd);
+        Exact("silent_samples", actual.SilentSamples);
+        Exact("highest_magnitude", actual.HighestMagnitude);
+        JsonElement bits = expected.GetProperty("low_bits_unused");
+        Assert.Equal(bits.ValueKind == JsonValueKind.Null ? null : bits.GetInt32(), actual.LowBitsUnused);
+    }
+
+    // What the levels fixtures were built to have (construction.levels, exact where the construction fixes a figure), whatever the model says.
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void TheLevelsAreWhatTheSignalWasBuiltToHave(string name)
+    {
+        if (!Manifest(name).TryGetProperty("construction", out JsonElement construction) || !construction.TryGetProperty("levels", out JsonElement built))
+        {
+            return;
+        }
+
+        LevelFigures levels = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Levels!;
+        AssertBuilt(built.GetProperty("stream"), levels.Stream, name + " stream");
+        if (built.TryGetProperty("channels", out JsonElement channels))
+        {
+            int index = 0;
+            foreach (JsonElement channel in channels.EnumerateArray())
+            {
+                AssertBuilt(channel, levels.Channels[index], $"{name} channel {index++}");
+            }
+        }
+    }
+
+    private static void AssertBuilt(JsonElement built, ChannelLevels actual, string where)
+    {
+        foreach (JsonProperty property in built.EnumerateObject())
+        {
+            object? got = property.Name switch
+            {
+                "sample_peak_tenths" => (object?)(actual.SamplePeakTenths == MeasurementLimits.NoLevel ? null : actual.SamplePeakTenths),
+                "rms_tenths" => actual.RmsTenths == MeasurementLimits.NoLevel ? null : actual.RmsTenths,
+                "dc_micropercent" => actual.DcOffsetMicropercent,
+                "clipping_runs" => actual.ClippingRuns,
+                "clipped_samples" => actual.ClippedSamples,
+                "longest_clipping_run" => actual.LongestClippingRun,
+                "silent_at_start" => actual.SilentAtStart,
+                "silent_at_end" => actual.SilentAtEnd,
+                "silent_samples" => actual.SilentSamples,
+                "low_bits_unused" => actual.LowBitsUnused,
+                "highest_magnitude" => actual.HighestMagnitude,
+                _ => throw new InvalidOperationException(property.Name),
+            };
+            if (property.Value.ValueKind == JsonValueKind.Null)
+            {
+                Assert.True(got is null, $"{where}: {property.Name} reads {got}, built to have none");
+            }
+            else
+            {
+                Assert.True(got is not null && Convert.ToInt64(got, System.Globalization.CultureInfo.InvariantCulture) == property.Value.GetInt64(), $"{where}: {property.Name} reads {got}, built to have {property.Value.GetInt64()}");
+            }
         }
     }
 

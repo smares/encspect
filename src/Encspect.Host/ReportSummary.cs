@@ -43,6 +43,10 @@ public sealed record ReportSummary(
     // The spectral cutoff in hertz of the first audio stream's combined spectrum, where measurements found one; null otherwise.
     public int? SpectralCutoff { get; init; }
 
+    // The sample peak in tenths of a dB relative to full scale, the highest over the channels of the first audio stream, where
+    // measurements found one (a stream whose samples are all 0 has none); null otherwise.
+    public int? SamplePeakTenths { get; init; }
+
     // The schemes and systems as lists even for a summary made without them.
     public IReadOnlyList<string> ProtectionSchemes { get; init; } = ProtectionSchemes ?? [];
 
@@ -102,6 +106,7 @@ public sealed record ReportSummary(
         {
             IsVerified = verified,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
+            SamplePeakTenths = first?.Measurements?.Levels?.Stream.SamplePeakTenths is { } peak && peak != MeasurementLimits.NoLevel ? peak : null,
         };
     }
 

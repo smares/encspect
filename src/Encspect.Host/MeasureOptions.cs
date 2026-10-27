@@ -25,10 +25,13 @@ public enum MeasurementKinds
 
     // The average spectrum, the spectral cutoff, and the spectrogram and waveform grids.
     Spectrum = 1,
+
+    // Sample peak, RMS, DC offset, clipping runs, digital silence and bit-depth usage.
+    Levels = 2,
 }
 
 // The kinds the library has, as a property so that it is read when it runs (never a const or a field initializer in a caller).
 public static class MeasurementSets
 {
-    public static MeasurementKinds All => MeasurementKinds.Spectrum;
+    public static MeasurementKinds All => MeasurementKinds.Spectrum | MeasurementKinds.Levels;
 }
