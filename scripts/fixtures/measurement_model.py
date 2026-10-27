@@ -11,7 +11,7 @@ The model follows the design's text:
 - 512 rows of mean power (bins N / 1,024 a row), 0 dB a full-scale sine centered on a bin; the average level of each row in tenths of a dB,
   rounded to the nearest, halves up;
 - the spectral cutoff: the largest step of the mean dB of a band of 1 kHz under a row against the mean above it, from 2 kHz to row 505, and
-  the edge (the highest candidate row at which half of the frames with signal show an own step, less the band's width), the start of the
+  the edge (walking up from the step's row while half of the frames with signal show an own step, the last such row less the band's width minus one), the start of the
   transition and the frames that show an own step of 15 dB at the step's row (the 1 % reference level and the ten levels of 3 dB below it),
   found where the step is 25 dB or more and half of the frames with signal show it.
 
@@ -188,12 +188,13 @@ def find_cutoff(level_tenths, counters, rate, size):
     result = {"is_searched": True, "is_found": False, "frequency": 0, "transition_start": 0, "step_frequency": hertz(r + 1, rate, size, bins),
               "step_tenths": step, "frames_showing": showing, "frames_with_signal": with_signal}
     if step >= 250 and with_signal > 0 and 2 * showing >= with_signal:
-        edge = r
-        for i in range(505, r, -1):
-            signal_i, showing_i = frames_at(counters, i)
-            if signal_i > 0 and 2 * showing_i >= signal_i:
-                edge = max(r, i - w + 1)
+        last = r
+        while last < 505:
+            signal_next, showing_next = frames_at(counters, last + 1)
+            if signal_next == 0 or 2 * showing_next < signal_next:
                 break
+            last += 1
+        edge = max(r, last - w + 1)
         under_sum = prefix[r + 1] - prefix[r - w + 1]
         start = r + 1
         i = r

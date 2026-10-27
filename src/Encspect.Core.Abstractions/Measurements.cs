@@ -113,7 +113,8 @@ public sealed record SpectralCutoff
 
     public bool IsFound { get; init; }
 
-    // The edge: the highest row at which half of the frames with signal show an own step, less the width of the band; 0 where none is found.
+    // The edge, from the frames' own steps: walking up from the step, the last row at which half of the frames with signal show one, less the band's width
+    // plus one row, and never below the step; 0 where none is found.
     public int Frequency { get; init; }
 
     // Where the transition to the edge starts; 0 where none is found.

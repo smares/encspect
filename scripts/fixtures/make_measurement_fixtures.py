@@ -64,9 +64,10 @@ def quantize(values, bits, dither_seed=None, level=1.0):
     return out
 
 
-def lines(rate, highest_hz, rms_db, seed, length, lowest_hz=40.0):
+def lines(rate, highest_hz, rms_db, seed, length, lowest_hz=40.0, slope=None):
     """Lines at the centers of the bins of the frame the analyzer uses at this rate, from lowest_hz to highest_hz, with fixed random
-    phases, repeated to length samples, at the given RMS level in dB relative to full scale."""
+    phases, repeated to length samples, at the given RMS level in dB relative to full scale. slope=(pass_hz, stop_db): the lines above pass_hz
+    fall linearly in dB to stop_db at highest_hz (a sloped lowpass, as a long FIR filter makes); none lie above highest_hz."""
     n = mm.fft_size(rate)
     low = math.ceil(lowest_hz * n / rate)
     high = math.floor(highest_hz * n / rate)
@@ -74,7 +75,10 @@ def lines(rate, highest_hz, rms_db, seed, length, lowest_hz=40.0):
     spectrum = [0j] * n
     for k in range(low, high + 1):
         phase = rng.uniform() * 2 * math.pi
-        spectrum[k] = complex(math.cos(phase), math.sin(phase))
+        gain = 1.0
+        if slope is not None and k * rate / n > slope[0]:
+            gain = 10 ** (slope[1] * ((k * rate / n) - slope[0]) / (highest_hz - slope[0]) / 20)
+        spectrum[k] = gain * complex(math.cos(phase), math.sin(phase))
         spectrum[n - k] = spectrum[k].conjugate()
     period = [v.real for v in mm.fft([c.conjugate() for c in spectrum])]
     rms = math.sqrt(sum(v * v for v in period) / n)
@@ -241,6 +245,9 @@ def build():
         for edge in ((11000, 16000, 19000, 20500) if rate == rate44 else (16000,)):
             add(f"lines-{edge}-{rate}", f"Lines at the bin centers from 40 Hz to {edge} Hz at {rate} Hz with fixed random phases, -20 dBFS RMS{', with TPDF dither of one least significant bit' if not (rate == rate44 and edge == 16000) else ', undithered'}: a brickwall at {edge} Hz.",
                 [lines_q(rate, edge, -20.0, edge + rate, count, dither=not (rate == rate44 and edge == 16000))], rate, 16, {"cutoff_hz": edge})
+    sloped = quantize(lines(rate44, 17000, -20.0, 21, n44, slope=(15000, -90.0)), 16, dither_seed=22)
+    add("lines-slope-15000-17000", "Lines at the bin centers from 40 Hz to 17 kHz, flat to 15 kHz and falling linearly to -90 dB at 17 kHz (a sloped lowpass), with TPDF dither of one least significant bit.",
+        [sloped], rate44, 16, {"cutoff_hz": None, "pass_hz": 15000, "stop_hz": 17000})
     base = lines(rate44, 16000, -20.0, 7, n44)
     add("lines-16000-44100-dithered", "The 16 kHz lines with TPDF dither of one least significant bit.", [quantize(base, 16, dither_seed=11)], rate44, 16, {"cutoff_hz": 16000})
     for db in (30, 45, 60):

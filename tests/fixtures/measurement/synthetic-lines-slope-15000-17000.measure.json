@@ -1,0 +1,87 @@
+{
+  "measurements": {
+    "status": "complete",
+    "samples": 44100,
+    "firstPosition": 0,
+    "lostSamples": 0,
+    "gaps": 0,
+    "sampleRate": 44100,
+    "channels": 1,
+    "channelsMeasured": 1,
+    "channelLayout": ["front center"],
+    "spectrum": {
+      "fftSize": 4096,
+      "frames": 20,
+      "rowCount": 512,
+      "binsPerRow": 4,
+      "rows": {
+        "unit": "dB",
+        "valuesPerUnit": 10,
+        "combined": "sha256:f04aa67dc8be40211cba4e4a12a6c550e0d717d84b36051610e3cb25b4a88465",
+        "perChannel": ["sha256:f04aa67dc8be40211cba4e4a12a6c550e0d717d84b36051610e3cb25b4a88465"]
+      },
+      "cutoff": {
+        "isFound": true,
+        "frequency": {
+          "value": 16193,
+          "unit": "Hz"
+        },
+        "transitionStart": {
+          "value": 15418,
+          "unit": "Hz"
+        },
+        "stepFrequency": {
+          "value": 15848,
+          "unit": "Hz"
+        },
+        "step": {
+          "value": 43.3,
+          "unit": "dB"
+        },
+        "framesShowing": 20,
+        "framesWithSignal": 20
+      },
+      "channelCutoffs": [
+        {
+          "isFound": true,
+          "frequency": {
+            "value": 16193,
+            "unit": "Hz"
+          },
+          "transitionStart": {
+            "value": 15418,
+            "unit": "Hz"
+          },
+          "stepFrequency": {
+            "value": 15848,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 43.3,
+            "unit": "dB"
+          },
+          "framesShowing": 20,
+          "framesWithSignal": 20
+        }
+      ]
+    },
+    "spectrogram": {
+      "columns": 22,
+      "rows": 512,
+      "hopsPerColumn": 1,
+      "hopSamples": 2048,
+      "unit": "dB",
+      "valueOffset": 200,
+      "noData": 0,
+      "power": "sha256:7dc7541a0d76af40c0771c7a0bfe09b04dc751abf4dcb258c757e4970ae5ff35"
+    },
+    "waveform": {
+      "columns": 22,
+      "channels": 1,
+      "unit": "16-bit sample codes",
+      "minimum": "sha256:9883b035b505271b62e680f03160814cbcca08b30e95f6ded05d495fc9628d7a",
+      "maximum": "sha256:dc9d76db1ae9d9df8b4ed102db84272499ae686520c103d408649f9492b6be76"
+    }
+  },
+  "findings": []
+}

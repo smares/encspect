@@ -122,16 +122,23 @@ internal static class CutoffFinder
             return new SpectralCutoff { StepFrequency = stepHertz, StepTenthsOfDb = stepTenths, FramesShowing = showing, FramesWithSignal = withSignal };
         }
 
-        int edge = best;
-        for (int r = CutoffGeometry.LastCandidate; r > best; r--)
+        // The edge: walk up from the step's row while at least half of the frames with signal show their own step, and stop at the first
+        // row that does not, so a tone above the edge cannot set it. The last showing row is one band above the edge for a brickwall (a frame
+        // shows a step while the band under the row still reaches its signal), so the edge is the lowest row of the band under it; where the
+        // shift is not exact the clamp to the step's row decides.
+        int last = best;
+        while (last < CutoffGeometry.LastCandidate)
         {
-            (int signalR, int showingR) = Frames(counters, r);
-            if (signalR > 0 && 2L * showingR >= signalR)
+            (int signalNext, int showingNext) = Frames(counters, last + 1);
+            if (signalNext == 0 || 2L * showingNext < signalNext)
             {
-                edge = Math.Max(best, r - w + 1);
                 break;
             }
+
+            last++;
         }
+
+        int edge = Math.Max(best, last - w + 1);
 
         // The transition starts at the lowest row, walking down from the step, still more than 3 dB below the mean of the band under it.
         long underSum = prefix[best + 1] - prefix[best - w + 1];

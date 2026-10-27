@@ -140,12 +140,23 @@ public class MeasurementFixtureTests
         {
             Assert.False(cutoff.IsFound, name);
         }
+        else if (construction.TryGetProperty("pass_hz", out JsonElement pass))
+        {
+            // A sloped lowpass: the cutoff lies between where the pass band ends and where the stop band starts.
+            Assert.True(cutoff.IsFound, name);
+            Assert.InRange(cutoff.Frequency, pass.GetInt32() - rowHertz, construction.GetProperty("stop_hz").GetInt32() + rowHertz);
+        }
         else if (construction.TryGetProperty("cutoff_hz", out JsonElement hertz) && hertz.ValueKind == JsonValueKind.Number)
         {
             Assert.True(cutoff.IsFound, name);
             int tolerance = construction.TryGetProperty("tolerance_hz", out JsonElement wide) ? wide.GetInt32() : 2 * rowHertz;
             Assert.InRange(cutoff.Frequency, hertz.GetInt32() - rowHertz, hertz.GetInt32() + tolerance);
             Assert.InRange(cutoff.TransitionStart, 1, cutoff.Frequency);
+        }
+
+        if (cutoff.IsFound)
+        {
+            Assert.True(cutoff.Frequency >= cutoff.StepFrequency, $"{name}: the cutoff is never below the step");
         }
 
         Assert.Equal(m.SampleRate >= 8000, cutoff.IsSearched);

@@ -13,7 +13,7 @@ public static class MeasurementText
 {
     public const string MeasuredDescription = "What the host computed from the stream's decoded audio, as the decoder wrote it before any trimming. These figures are measured, not written by the file's creator.";
 
-    public const string SpectralCutoffDescription = "Where the average spectrum of the decoded audio ends: the frequency where the frames' own steps end, with the size of the largest step, where the transition to it starts and how many of the frames with signal show a step there. It is a measured edge, not the lowpass frequency an encoder states.";
+    public const string SpectralCutoffDescription = "The frequency where the frames' own steps end, found by walking up from the largest step of the average spectrum: never below that step, and equal to it on a sharp edge. It comes with the size of the step, where the transition to it starts and how many of the frames with signal show a step there. It is a measured edge, not the lowpass frequency an encoder states.";
 
     public const string MeasuredTopic = Topics.Measurements;
 
