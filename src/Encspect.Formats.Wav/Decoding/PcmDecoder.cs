@@ -97,14 +97,14 @@ public sealed class PcmDecoder : IDecoder
                 throw new InvalidDataException($"The slice holds {Counts.Of(bytes.Length, "byte", "bytes")}, fewer than the {Counts.Of(count, "sample frame", "sample frames")} it states take.");
             }
 
-            _context.AddWork(DecodeWork.ForSample(_outputBytes) * _channels * count);
-            _context.CancellationToken.ThrowIfCancellationRequested();
-
             long total = (long)count * _channels;
             if (total > MaxSamplesPerSlice)
             {
                 throw new InvalidDataException($"The slice holds {Counts.Of(total, "sample", "samples")} over all channels, more than the {MaxSamplesPerSlice} the decoder takes at once.");
             }
+
+            _context.AddWork(DecodeWork.ForSample(_outputBytes) * _channels * count);
+            _context.CancellationToken.ThrowIfCancellationRequested();
 
             PcmCoding coding = _coding;
             _sink ??= _context.DeclareOutput(_format);

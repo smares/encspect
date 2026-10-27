@@ -290,7 +290,7 @@ def pcm_decoding(comm, kind, frame, frames, ssnd, data):
         mode = "float"
     elif name == "raw ":
         mode = "unsigned"
-    elif kind[3] is None and not 1 <= comm["size"] <= 32:
+    elif kind[3] is None and comm["size"] < 1:
         return None
     else:
         mode = "signed"

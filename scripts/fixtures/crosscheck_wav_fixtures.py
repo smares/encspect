@@ -168,7 +168,7 @@ EXPLAINED = {
     "wav/built-iec61937-in-24-bits": {"ffmpeg decoded MD5": "FFmpeg decodes the AC-3 stream it finds in the data (see ffprobe codec); the analyzer decodes the 24-bit samples the fmt chunk states", "ffprobe codec": "ffprobe's WAVE demuxer looks for IEC 61937 bursts at the start of the data whatever the fmt chunk states (24 bits here) and finds AC-3; the analyzer takes only 16-bit stereo PCM for a carrier"},
     "wav/built-iec61937-in-mono": {"ffmpeg decoded MD5": "FFmpeg decodes the AC-3 stream it finds in the data (see ffprobe codec); the analyzer decodes the one channel the fmt chunk states", "ffprobe codec": "ffprobe's WAVE demuxer looks for IEC 61937 bursts at the start of the data whatever the fmt chunk states (one channel here) and finds AC-3; the analyzer takes only 16-bit stereo PCM for a carrier",
                                   "ffprobe channels": "ffprobe gives the AC-3 stream its two channels, not the fmt chunk's one"},
-    "wav/built-iec61937-in-rifx": {"ffprobe codec": "ffprobe's WAVE demuxer finds the bursts in the data of a RIFX file, which are little-endian samples there and no big-endian ones; the analyzer takes only little-endian PCM for a carrier",
+    "wav/built-iec61937-in-rifx": {"ffmpeg decoded MD5": "FFmpeg decodes the AC-3 stream it finds in the data (see ffprobe codec); the analyzer decodes the big-endian samples the file states", "ffprobe codec": "ffprobe's WAVE demuxer finds the bursts in the data of a RIFX file, which are little-endian samples there and no big-endian ones; the analyzer takes only little-endian PCM for a carrier",
                                   "MediaInfo Format": "MediaInfo finds the bursts in the data of a RIFX file too (observed)",
                                   "MediaInfo Duration": "MediaInfo's duration for this RIFX file is 1.248 s for 0.16 s of data (observed)"},
     "wav/built-iec61937-payload-too-long-at-start": {"ffmpeg decoded MD5": "FFmpeg takes the first burst alone for AC-3 (see ffprobe codec) and decodes nothing from it; the analyzer decodes the samples the fmt chunk states", "ffprobe codec": "ffprobe takes the first burst alone for AC-3, whatever its length code states (the analyzer needs a chain of three bursts that fit their period)",
@@ -183,6 +183,9 @@ EXPLAINED = {
     "aiff/built-block-aligned": {"ffmpeg decoded MD5": "FFmpeg decodes all 512 bytes of the sound data; the analyzer decodes the 50 sample frames the Common Chunk states"},
     "aiff/built-sound-data-extra": {"ffmpeg decoded MD5": "FFmpeg decodes all the bytes of the sound data; the analyzer decodes the sample frames the Common Chunk states"},
     "wav/built-pcm-40-bit": {"ffprobe codec": "FFmpeg 6.1.1 gives PCM samples of 40 bits no codec_name (riff.c maps 8, 16, 24, 32 and 64 bits); the analyzer names the coding PCM and refuses to decode integers wider than 32 bits"},
+    "wav/built-riffx-pcm-16": {"ffmpeg decoded MD5": "FFmpeg 6.1.1 reads the samples of a RIFX file as little-endian (ffprobe reports pcm_s16le); the analyzer reads them big-endian, as the file states (observed with 6.1.1; if 8.0.1 agrees, drop this)"},
+    "aiff/built-aifc-sowt-24-bit": {"ffprobe bits": "FFmpeg 6.1.1 reads sowt as 16-bit (see ffmpeg decoded MD5)", "ffmpeg decoded MD5": "FFmpeg 6.1.1 reads sowt as 16-bit little-endian whatever the sample size (aiff.c maps sowt to pcm_s16le); the analyzer reads the 24 bits the Common Chunk states"},
+    "aiff/built-aifc-sowt-32-bit": {"ffprobe bits": "FFmpeg 6.1.1 reads sowt as 16-bit (see ffmpeg decoded MD5)", "ffmpeg decoded MD5": "FFmpeg 6.1.1 reads sowt as 16-bit little-endian whatever the sample size (aiff.c maps sowt to pcm_s16le); the analyzer reads the 32 bits the Common Chunk states"},
 }
 USED = set()
 
@@ -279,9 +282,6 @@ FFMPEG_CANONICAL = {("integer", 8): "pcm_s8", ("integer", 16): "pcm_s16le", ("in
 def check_ffmpeg_md5(name, manifest, path, problems):
     """The MD5 of the samples FFmpeg decodes against the one pcm_model.py gives, both over the canonical layout of docs/design/decoders.md."""
     pcm = (manifest["stream"] or {}).get("pcm")
-    if manifest["container"]["id"] == "RIFX" and pcm is not None:
-        skip(name, "ffmpeg decoded MD5", "FFmpeg 6.1.1 reads the samples of a RIFX file as little-endian (ffprobe reports pcm_s16le); the AIFF files cover big-endian samples")
-        return
     if pcm is None:
         skip(name, "ffmpeg decoded MD5", "the analyzer's decoder takes no samples of this file (not PCM, or a layout it does not describe)")
         return

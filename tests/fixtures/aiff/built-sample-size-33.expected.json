@@ -1,0 +1,47 @@
+{
+ "length": 254,
+ "container": {
+  "id": "FORM",
+  "form": "AIFF",
+  "size": 246,
+  "end": 254
+ },
+ "chunks": [
+  {
+   "id": "COMM",
+   "offset": 12,
+   "end": 38,
+   "size": 18,
+   "length": 18
+  },
+  {
+   "id": "SSND",
+   "offset": 38,
+   "end": 254,
+   "size": 208,
+   "length": 208
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": null,
+  "samples": 20,
+  "duration": 0.00045351473922902497,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 3528.0,
+  "type": "NONE",
+  "pcm": {
+   "not_possible": "integer samples of 40 bits are wider than 32 bits"
+  }
+ },
+ "findings": [
+  {
+   "code": "aiff.sample-size-invalid"
+  }
+ ]
+}

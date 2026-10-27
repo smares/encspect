@@ -203,7 +203,7 @@ internal static class Summary
     }
 
     // The samples as they are stored go to the decoder "pcm" (docs/design/spectral-analysis.md, "WAV, Wave64 and AIFF: a PCM decoder"): the linear types, whose
-    // sample points are output as stored in their bytes, and A-law and mu-law. The packed codings, and a sample size no coding has, are not.
+    // sample points are output as stored in their bytes, and A-law and mu-law. The packed codings, an unlisted type and a sample size of 0 are not; a sample size over 32 bits starts a session the decoder refuses.
     private static StreamVerification? DecodePcm(State s, CommonChunk common, AifcType? type, long frames, int? frameBytes, IReadOnlyList<Speaker>? layout)
     {
         if (type is null || s.Sound is not { } sound || frameBytes is not > 0)
@@ -219,7 +219,7 @@ internal static class Summary
             _ when !type.IsLinear => null,
             _ when type.IsFloat => PcmEncoding.Float,
             _ when type.IsUnsigned => PcmEncoding.UnsignedInteger,
-            _ when type.FixedBits is null && common.SampleSize is < 1 or > 32 => null,
+            _ when type.FixedBits is null && common.SampleSize < 1 => null,
             _ => PcmEncoding.SignedInteger,
         };
         if (encoding is null)

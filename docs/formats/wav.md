@@ -133,7 +133,7 @@ S/PDIF passthrough captured or rendered to a WAVE file (or a Wave64 file) writes
 The samples of a WAVE or Wave64 file are the data, so the decoder `pcm` (`Encspect.Formats.Wav.Decoding`, also used by the AIFF parser) only unpacks them. It is described in [decoders.md](../design/decoders.md) and [spectral-analysis.md](../design/spectral-analysis.md) ("WAV, Wave64 and AIFF: a PCM decoder").
 
 - **Which streams get a session.** The parser starts one for the first `data` chunk of a stream it reports as:
-  - integer PCM of 8 bits (unsigned), 16, 24 and 32 bits (signed), little-endian, or big-endian in RIFX; a container wider than 32 bits (40 or 64 bits) starts a session that the decoder refuses (`decode.not-possible`, info);
+  - integer PCM of 1 to 8 bits (unsigned bytes), and of 9 to 32 bits (signed, in 2 to 4 bytes), little-endian, or big-endian in RIFX; a container wider than 32 bits (40 or 64 bits) starts a session that the decoder refuses (`decode.not-possible`, info);
   - IEEE float of 32 and 64 bits, and A-law and mu-law of 8 bits, expanded to 16-bit integers (ITU-T G.711);
   - the same under the extensible format tag, by the sub-format.
 - **Which do not.** No session, and the stream is reported as before, for:
@@ -144,7 +144,7 @@ The samples of a WAVE or Wave64 file are the data, so the decoder `pcm` (`Encspe
 - **What is output.** The container's value as stored, whatever the valid bits (`wValidBitsPerSample`) say: 20 valid bits in a 24-bit container are output as the 24-bit values, and a file that pads at the low end shows the unused bits in the bit-depth usage. The A-law and mu-law expansion matches FFmpeg's decoders (checked by the MD5 cross-check). They are not marked as lossy streams.
 - **How it is read.** In slices of whole sample frames of 64 KiB (a sample frame of more is read whole: a header may state 65,535 channels), so memory does not grow with the file. Bytes after the last whole sample frame are not decoded (`wav.partial-sample-frame`), and a data chunk cut short by the end of the file is decoded as far as it goes.
 - **Verification.** There is no checksum to compare. The stream has a `verification` in the model, for the front ends, that says whether the audio was decoded; the text report, the JSON report and the GUI's "Verified" line leave out a verification that declares no checksum, so a WAVE file's report does not change. `--verify` alone does not read the samples; `--measure` does.
-- **Cross-check.** `scripts/fixtures/crosscheck_wav_fixtures.py` compares the MD5 of the decoded samples with `ffmpeg -i f -c:a pcm_<format> -f md5 -` (see [development.md](../development.md)); the differences it explains are in its table: RIFX (FFmpeg 6.1.1 reads the samples as little-endian), the data FFmpeg takes for IEC 61937 bursts, 24 valid bits in a 32-bit container, and the files FFmpeg refuses.
+- **Cross-check.** `scripts/fixtures/crosscheck_wav_fixtures.py` compares the MD5 of the decoded samples with `ffmpeg -i f -c:a pcm_<format> -f md5 -` (see [development.md](../development.md)); the differences it explains are in its table, each flagged if the pinned FFmpeg (8.0.1) stops differing: RIFX (FFmpeg 6.1.1 reads the samples as little-endian; 8.0.1 not yet observed), the data FFmpeg takes for IEC 61937 bursts, 24 valid bits in a 32-bit container, and the files FFmpeg refuses.
 
 ## What is not covered
 

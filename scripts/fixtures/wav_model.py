@@ -510,7 +510,7 @@ def pcm_decoding(riff, fmt, chunk, data, base, wavl_bytes, silent):
     if chunk.get("in_wavl") or wavl_bytes or silent or width < 1 or channels < 1 or (fmt["align"] and fmt["align"] != channels * width):
         return None
     if coding == 1:
-        kind = "unsigned" if fmt["bits"] == 8 else "signed"
+        kind = "unsigned" if width == 1 else "signed"
     elif coding == 3 and fmt["bits"] in (32, 64):
         kind = "float"
     elif coding in (6, 7) and fmt["bits"] == 8:
