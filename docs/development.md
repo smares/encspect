@@ -671,9 +671,9 @@ The levels alone (`--measure levels`), with the 128-bit accumulators, in nanosec
 |---|---|---|
 | 16 bits, noise | 2.33 (1.07) | 2.24 (1.02) |
 | 24 bits, noise | 1.97 (0.94) | 2.01 (0.98) |
-| 32 bits, noise | 1.91 (0.98) | 1.78 to 2.65 (1.20) |
+| 32 bits, noise | 1.91 to 2.07 (0.98 to 1.41) | 1.78 to 3.66 (1.20 to 1.40) |
 | 16 bits, a full-scale square wave (every piece scans for runs) | | 2.81 (1.38) |
-| 24 bits, digital silence | | 2.85 to 4.18 (1.50 to 1.98) before the work tests warmed up three times |
+| 24 bits, digital silence | | 2.60 (1.08) after the work tests warm up three times; 2.85 to 4.18 (1.50 to 1.98) before |
 
 The figures were measured with the load average above the 1.5 that earlier steps kept to, so they can read high; a first run of the work tests, before the scan counted its runs in one loop and the kernels were compiled optimized, read 6.4 ns for 32 bits and 6.1 ns for the square wave. The levels' time per sample does not depend on the sample rate; with the spectrum they add 0.6 to 3 ns to a sample of a channel.
 
