@@ -1,0 +1,51 @@
+{
+  "measurements": {
+    "status": "complete",
+    "samples": 4000,
+    "firstPosition": 0,
+    "lostSamples": 0,
+    "gaps": 0,
+    "sampleRate": 2000,
+    "channels": 1,
+    "channelsMeasured": 1,
+    "channelLayout": ["front center"],
+    "spectrum": {
+      "fftSize": 1024,
+      "frames": 6,
+      "rowCount": 512,
+      "binsPerRow": 1,
+      "rows": {
+        "unit": "dB",
+        "valuesPerUnit": 10,
+        "combined": "sha256:b9f27d5ea1b80a8329148f2d675b592556b8ee4d7109c0863bf62af59d0fbbea",
+        "perChannel": ["sha256:b9f27d5ea1b80a8329148f2d675b592556b8ee4d7109c0863bf62af59d0fbbea"]
+      },
+      "cutoff": {
+        "isSearched": false
+      },
+      "channelCutoffs": [
+        {
+          "isSearched": false
+        }
+      ]
+    },
+    "spectrogram": {
+      "columns": 8,
+      "rows": 512,
+      "hopsPerColumn": 1,
+      "hopSamples": 512,
+      "unit": "dB",
+      "valueOffset": 200,
+      "noData": 0,
+      "power": "sha256:40b81664bc0a92a21125b22017d6f70a0ba2126c0a4a928eda51dbf4e11c9cd8"
+    },
+    "waveform": {
+      "columns": 8,
+      "channels": 1,
+      "unit": "16-bit sample codes",
+      "minimum": "sha256:12e651e40306f035f604f7fba7506aba976548374d19bf41e727cf161ada2cca",
+      "maximum": "sha256:2209322d13b4acdaa28f417d6198130dec1dc7273dfa03bc84eeb6bd462fc7a4"
+    }
+  },
+  "findings": []
+}

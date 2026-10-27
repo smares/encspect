@@ -74,9 +74,9 @@ AREAS = {
     },
     "flac-crosscheck": {
         "projects": ["Encspect.Formats.Flac", "Encspect.Tags.VorbisComment"],
-        "fixtures": ["flac"],
-        "scripts": ["crosscheck_flac_fixtures.py"],
-        "globs": ["scripts/fixtures/make_*flac*", "scripts/fixtures/flac_*"],
+        "fixtures": ["flac", "measurement"],
+        "scripts": ["crosscheck_flac_fixtures.py", "crosscheck_measurement_fixtures.py"],
+        "globs": ["scripts/fixtures/make_*flac*", "scripts/fixtures/flac_*", "scripts/fixtures/make_*measurement*", "scripts/fixtures/measurement_model.py"],
     },
     "tta-crosscheck": {
         "projects": ["Encspect.Formats.Tta", "Encspect.Tags.Ape"],

@@ -21,7 +21,7 @@ The output is a text tree by default; `encspect --help` lists the options.
 - `--ndjson`: one compact report per line, which stays usable line by line if a long run stops early.
 - `--csv`: one summary row per file.
 
-Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula.
+Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and `Spectral Cutoff (Hz)`) skip the guard, as a number cannot start one. The CSV has one column more than before, `Spectral Cutoff (Hz)`, at the end: a reader that counts columns must be changed.
 
 ## Options
 
@@ -39,11 +39,12 @@ Adds the byte offset and length of each node, and of the node each finding point
 - **Split nodes:** a node whose bytes are not contiguous in the file, such as a packet that spans the pages of a container, shows the range that covers them and then each range. `[0x1A, 40 bytes in 0x1A 2 bytes, 0x40 2 bytes]` spans 40 bytes from 0x1A but holds only 0x1A to 0x1B and 0x40 to 0x41.
 - **Other formats:** JSON always has these (`offset` and `length`, plus `bitOffset` and `bitLength` for a bit field and `ranges` for a split node), and CSV has none. So `--offsets` with `--json`, `--ndjson` or `--csv` is wrong usage.
 
-### `--hide tags,frames,side-info,statistics`
+### `--hide tags,frames,side-info,statistics,measurements`
 
 Leaves those sections out of the text tree and JSON; it does not apply to `--csv`. Sections are recognized by the kind the parser gives a node, not by its name, so an APE item named `Frame` stays.
 
 - **Paths in JSON** index the tree as written. With sections hidden, a finding's `path` and the paths in a stream's `nodes` count the siblings that are kept, so following them through the written `children` arrays reaches the node they name.
+- **`measurements`** hides the measurement lines of the text tree and the `measurements` object of the JSON (see `--measure`); it is the one section that is not a kind of node.
 - **A path to a hidden node,** or through one, names no node of the output: the finding has no `path` (its `offset` and `length` stay), and the entry in `nodes` is `null`.
 
 ### `--explain`
@@ -68,6 +69,49 @@ Decodes each file's audio while reading it and compares the checksums that cover
   - Streams a container does not hand to a codec parser (FLAC, WavPack and TrueHD in Matroska today, `matroska.codec-not-analyzed`) get no verification either, although a decoder for the coding exists.
 - **Findings:** a stored checksum that differs is a warning, so `--fail-on warning` fails the run. A decoder that fails (`decode.failed`) is an error and a bug.
 - **Output:** the text tree, JSON and CSV carry the verdict (see below). Without `--verify` the tree and every other field are the same.
+
+### `--measure [spectrum]`
+
+Decodes, verifies and measures each file's audio, for the codings that have a decoder, in the same pass: the average spectrum and the spectral cutoff of the decoded samples, and the spectrogram and waveform grids behind them (`encspect --learn measurements`). It implies `--verify`: the checksums over decoded audio are compared as with `--verify`, and measuring changes neither the verdict nor a `decode.*` finding.
+
+- **Kinds:** a list after the option (`--measure spectrum`, or `--measure=spectrum`) picks measurements by name; today there is one, `spectrum`. A value that is not a kind is taken for a path. The levels, loudness and true peak come in later steps.
+- **Cost:** about 16 to 21 ns for each sample of each channel on the machine the work weights were measured on (`MeasurementWorkTests` prints them), counted in work units of its own, apart from the decoders': past the larger of 2^35 units and the file's size times 2,048 units a byte, measuring stops with an info finding (`measure.limit`) and decoding and verification go on. The state of the measurements of one file is bounded at 64 MiB, and at most 32 channels are measured.
+- **Formats without a decoder:** the stream says why it has no figures (`not measured (no decoder for tta)`); WAV, AIFF, MPEG audio and the other formats whose parsers start no decode session get no measurements at all. WavPack's DSD is not measured.
+- **Text tree:** lines under the stream's first node, after the `Verified:` line.
+
+      Measured: 1.5 s of 1 channel
+        Spectral Cutoff: 16,021 Hz (a step of 81.6 dB, transition from 16,021 Hz, in 31 of 31 frames with signal)
+
+  - `Measured:` gives the audio measured, `(lossy stream)` after the duration where the verification says so, the channels measured where a stream has more than 32, the gaps skipped, and why measuring stopped early.
+  - `Spectral Cutoff: none found (largest step 2.3 dB, at 2,003 Hz)` where no cutoff is found, and `not searched (the sample rate is below 8,000 Hz)` under 8,000 Hz.
+  - The frequencies are those of the upper edge of a row of the spectrum (43 Hz wide at 44,100 Hz); the figures are measurements, never verdicts.
+  - `--explain` adds each line's description and topic.
+- **JSON:** `measurements` in the stream, after `verification`: `status` (`complete`, `stopped`, `notPossible`, `formatChanged` or `failed`), `reason`, `samples`, `firstPosition`, `lostSamples`, `gaps`, `sampleRate`, `channels`, `channelsMeasured`, `channelLayout`, and the `spectrum`. A field is added and none changes meaning, so `schemaVersion` stays 1.
+  - `spectrum` has `fftSize`, `frames`, `rowCount` (512), `binsPerRow`, `rows` (integers in tenths of a dB: `unit`, `valuesPerUnit`, `combined` and `perChannel`, `null` for a row with no power), `cutoff` and `channelCutoffs`.
+  - A cutoff has `isFound`, and where found `frequency` and `transitionStart` as `{value, unit}` in whole hertz, then `stepFrequency`, `step` (`value` in dB with one decimal) and the counts `framesShowing` and `framesWithSignal`; `isSearched: false` under 8,000 Hz.
+  - No number is a floating-point quotient: the row spacing is `sampleRate * binsPerRow / fftSize` hertz and the time of a column is `hopsPerColumn * hopSamples / sampleRate` seconds, from integers the report gives. Column 0 starts at sample `floor(firstPosition / hopSamples) * hopSamples`, so the time of column `c` is `(floor(firstPosition / hopSamples) * hopSamples + c * hopsPerColumn * hopSamples) / sampleRate`.
+- **CSV:** the `Spectral Cutoff (Hz)` column, from the first audio stream's combined spectrum, empty where no cutoff is found and for every file of an analysis without `--measure`; `Is Verified` is filled with `--measure` too. The numeric columns are written as they are, so a negative figure of a later step reads back as `-0.3`, not `'-0.3`. This adds a column to the CSV (a schema change for a reader that counts columns).
+- **Exit codes:** unchanged; `--fail-on` sees only the host's `measure.*` findings (see below).
+
+### `--measure-grids`
+
+As `--measure`, and writes the spectrogram and the waveform into the JSON, as base64 of the bytes (the text and CSV never hold them, so `--measure-grids` with either is wrong usage).
+
+- `spectrogram`: `columns`, `rows` (512), `hopsPerColumn`, `hopSamples`, `unit`, `valueOffset` (200), `noData` (0) and `power`, the cells column by column, one byte each (the level in dB plus 200, 1 to 220; 0 is no data).
+- `waveform`: `columns`, `channels`, `unit` and `minimum` and `maximum`, 16-bit little-endian sample codes channel by channel.
+- A grid of 1,024 columns is 512 KiB, 683 KiB as base64.
+
+### The findings of the measurements
+
+Measurements raise no finding about the audio, since a figure is not a verdict; the one exception is a warning for samples that no reader can play as written.
+
+- `measure.non-finite-samples` (warning): float samples that are NaN or infinite; they were measured as 0.
+- `measure.limit` (info): measuring stopped at the budget.
+- `measure.channels-limited` (info): more than 32 channels; the first 32 were measured.
+- `measure.streams-limited` (info): more streams than the memory bound allows were decoded; this one is not measured.
+- `measure.positions-jump` (info): a block's position went back; measuring stopped there.
+- `measure.format-changed` (info): a block's channels or sample format differed from the declared output; measuring stopped there.
+- `measure.failed` (error): a bug in a measurement; that stream's figures are dropped and the analysis goes on.
 
 ### The verification of a stream
 
@@ -240,7 +284,8 @@ The CSV row of a file has:
 - the tags, including those a container holds in its chunks;
 - the number of errors, warnings and infos;
 - `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known;
-- `Is Protected`, `true` if any stream is protected and `false` otherwise (empty for a file without a stream), `Is Verified` (see `--verify`), `Protection Scheme`, the schemes of the protected streams, and `DRM Systems`, the systems their files name; several are separated by `; `.
+- `Is Protected`, `true` if any stream is protected and `false` otherwise (empty for a file without a stream), `Is Verified` (see `--verify`), `Protection Scheme`, the schemes of the protected streams, and `DRM Systems`, the systems their files name; several are separated by `; `;
+- `Spectral Cutoff (Hz)` (see `--measure`), empty without a cutoff.
 
 ## Exit codes
 

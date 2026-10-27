@@ -196,9 +196,10 @@ internal static class CorruptFiles
         if (alsoDecodes)
         {
             // The decoder works on what the parser hands it, damaged frames included: it must give a report as well, and never fail.
-            var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = maxWork } };
+            // The measurements run on what it decodes, with a budget of their own lowered the same way: a bug in them is measure.failed.
+            var options = new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = maxWork, Measure = new MeasureOptions { MaxWork = Math.Min(maxWork, 1L << 26) } } };
             Report decoded = Analyzer.CreateDefault().Analyze("variant", new MemoryStream(data), options);
-            Assert.DoesNotContain(decoded.Findings, f => f.Code is "parse.failed" or "decode.failed");
+            Assert.DoesNotContain(decoded.Findings, f => f.Code is "parse.failed" or "decode.failed" or "measure.failed");
             Assert.All(decoded.Findings, f => Assert.True(f.Path is not null, $"The node of {f.Code} is not in the tree."));
         }
 

@@ -54,7 +54,16 @@ public static class ReportTextWriter
             verified.TryAdd(stream.Nodes[0], VerificationText.Describe(stream.Verification!));
         }
 
-        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified, shares), 0, anchored);
+        Dictionary<Node, IReadOnlyList<MeasurementLine>> measured = new(ReferenceEqualityComparer.Instance);
+        if (filter.ShowsMeasurements)
+        {
+            foreach (StreamInfo stream in report.Streams.Where(s => s.Measurements is not null && s.Nodes.Count > 0))
+            {
+                measured.TryAdd(stream.Nodes[0], MeasurementText.Lines(stream.Measurements!, stream.Verification?.IsLossy == true));
+            }
+        }
+
+        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified, shares) { Measured = measured }, 0, anchored);
 
         if (report.Detection is { } detection)
         {
@@ -119,6 +128,22 @@ public static class ReportTextWriter
             Indent(writer, depth + 1);
             writer.Write("Verified: ");
             writer.WriteLine(Escape(verification));
+        }
+
+        if (options.Measured.TryGetValue(node, out IReadOnlyList<MeasurementLine>? lines))
+        {
+            for (int i = 0; i < lines.Count; i++)
+            {
+                int lineDepth = i == 0 ? depth + 1 : depth + 2;
+                Indent(writer, lineDepth);
+                writer.Write(lines[i].Name);
+                writer.Write(": ");
+                writer.WriteLine(Escape(lines[i].Text));
+                if (options.Explain)
+                {
+                    WriteExplanation(lines[i].Description, lines[i].Topic, writer, lineDepth);
+                }
+            }
         }
 
         if (depth >= Node.MaxDepth)
@@ -278,7 +303,10 @@ public static class ReportTextWriter
         }
     }
 
-    private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter, Dictionary<Node, string> Verified, Dictionary<Node, List<(CategorySeries Series, int Stream)>> Shares);
+    private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter, Dictionary<Node, string> Verified, Dictionary<Node, List<(CategorySeries Series, int Stream)>> Shares)
+    {
+        public Dictionary<Node, IReadOnlyList<MeasurementLine>> Measured { get; init; } = new(ReferenceEqualityComparer.Instance);
+    }
 
     // Values from the file are text and escaped; numbers are written without a string per node.
     private static void WriteValue(NodeValue value, TextWriter writer)

@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -17,7 +18,10 @@ namespace Encspect.Host;
 // has categorySeries after series (name, concept, valueLabel, valuesPerUnit, valueNames, categories with their counts
 // and isReserved, total, uncodedValues, xSeries or x, valueCounts, runs of [code, length], weights, seconds, or groupOf
 // and map for a grouping, which has the x of its source); a series, numeric or category, that belongs to a shared
-// concept also has concept, and a numeric series that is a form of a quantity has quantity.
+// concept also has concept, and a numeric series that is a form of a quantity has quantity. A stream of an analysis that
+// asked for measurements has measurements after verification: status, samples, firstPosition, lostSamples, gaps, sampleRate,
+// channels, channelsMeasured, the spectrum (rows in tenths of a dB, the cutoff in whole hertz and tenths of a dB as
+// {value, unit}) and, with --measure-grids, the spectrogram and waveform grids as base64.
 public static class ReportJsonWriter
 {
     // Raised whenever a field changes meaning or type, or one is removed; added fields keep it.
@@ -327,6 +331,11 @@ public static class ReportJsonWriter
             WriteVerification(writer, verification);
         }
 
+        if (stream.Measurements is { } measurements && filter.ShowsMeasurements)
+        {
+            WriteMeasurements(writer, measurements, filter.WritesGrids, explain);
+        }
+
         if (stream.Encoder is not null)
         {
             writer.WriteString("encoder", stream.Encoder);
@@ -605,6 +614,211 @@ public static class ReportJsonWriter
                 writer.Flush();
             }
         }
+    }
+
+    private static void WriteMeasurements(Utf8JsonWriter writer, StreamMeasurements m, bool includeGrids, bool explain)
+    {
+        writer.WriteStartObject("measurements");
+        writer.WriteString("status", m.Status switch
+        {
+            MeasurementStatus.Complete => "complete",
+            MeasurementStatus.Stopped => "stopped",
+            MeasurementStatus.NotPossible => "notPossible",
+            MeasurementStatus.FormatChanged => "formatChanged",
+            _ => "failed",
+        });
+        if (m.Reason is not null)
+        {
+            writer.WriteString("reason", m.Reason);
+        }
+
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.MeasuredDescription);
+            writer.WriteString("topic", MeasurementText.MeasuredTopic);
+        }
+
+        writer.WriteNumber("samples", m.Samples);
+        writer.WriteNumber("firstPosition", m.FirstPosition);
+        writer.WriteNumber("lostSamples", m.LostSamples);
+        writer.WriteNumber("gaps", m.Gaps);
+        writer.WriteNumber("sampleRate", m.SampleRate);
+        writer.WriteNumber("channels", m.Channels);
+        writer.WriteNumber("channelsMeasured", m.ChannelsMeasured);
+        if (m.ChannelLayout is { } layout)
+        {
+            writer.WriteStartArray("channelLayout");
+            foreach (Speaker speaker in layout)
+            {
+                writer.WriteStringValue(ChannelLayouts.Name(speaker));
+            }
+
+            writer.WriteEndArray();
+        }
+
+        if (m.HasClampedSamples)
+        {
+            writer.WriteBoolean("hasClampedSamples", true);
+        }
+
+        if (m.NonFiniteSamples > 0)
+        {
+            writer.WriteNumber("nonFiniteSamples", m.NonFiniteSamples);
+        }
+
+        if (m.Status != MeasurementStatus.Failed && m.Spectrum is { } spectrum)
+        {
+            writer.WriteStartObject("spectrum");
+            writer.WriteNumber("fftSize", spectrum.FftSize);
+            writer.WriteNumber("frames", spectrum.Frames);
+            writer.WriteNumber("rowCount", MeasurementLimits.Rows);
+            writer.WriteNumber("binsPerRow", spectrum.BinsPerRow);
+            if (explain)
+            {
+                writer.WriteString("description", MeasurementText.SpectrumDescription);
+            }
+
+            writer.WriteStartObject("rows");
+            writer.WriteString("unit", "dB");
+            writer.WriteNumber("valuesPerUnit", 10);
+            WriteRow(writer, "combined", spectrum.Combined.Span);
+            writer.WriteStartArray("perChannel");
+            foreach (ReadOnlyMemory<short> channel in spectrum.PerChannel)
+            {
+                WriteRowValues(writer, channel.Span);
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+            WriteCutoff(writer, "cutoff", spectrum.Cutoff, explain);
+            writer.WriteStartArray("channelCutoffs");
+            foreach (SpectralCutoff channel in spectrum.ChannelCutoffs)
+            {
+                writer.WriteStartObject();
+                WriteCutoffFields(writer, channel);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+
+        if (includeGrids && m.Status != MeasurementStatus.Failed)
+        {
+            if (m.Spectrogram is { } grid)
+            {
+                writer.WriteStartObject("spectrogram");
+                writer.WriteNumber("columns", grid.Columns);
+                writer.WriteNumber("rows", MeasurementLimits.Rows);
+                writer.WriteNumber("hopsPerColumn", grid.HopsPerColumn);
+                writer.WriteNumber("hopSamples", grid.HopSamples);
+                writer.WriteString("unit", "dB");
+                writer.WriteNumber("valueOffset", MeasurementLimits.GridOffset);
+                writer.WriteNumber("noData", 0);
+                writer.WriteBase64String("power", grid.Power.Span);
+                writer.WriteEndObject();
+            }
+
+            if (m.Waveform is { } wave)
+            {
+                writer.WriteStartObject("waveform");
+                writer.WriteNumber("columns", wave.Columns);
+                writer.WriteNumber("channels", wave.Channels);
+                writer.WriteString("unit", "16-bit sample codes");
+                writer.WriteBase64String("minimum", LittleEndian(wave.Minimum.Span));
+                writer.WriteBase64String("maximum", LittleEndian(wave.Maximum.Span));
+                writer.WriteEndObject();
+            }
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static byte[] LittleEndian(ReadOnlySpan<short> values)
+    {
+        byte[] bytes = new byte[values.Length * 2];
+        for (int i = 0; i < values.Length; i++)
+        {
+            BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(i * 2), values[i]);
+        }
+
+        return bytes;
+    }
+
+    private static void WriteRow(Utf8JsonWriter writer, string name, ReadOnlySpan<short> values)
+    {
+        writer.WriteStartArray(name);
+        WriteRowItems(writer, values);
+        writer.WriteEndArray();
+    }
+
+    private static void WriteRowValues(Utf8JsonWriter writer, ReadOnlySpan<short> values)
+    {
+        writer.WriteStartArray();
+        WriteRowItems(writer, values);
+        writer.WriteEndArray();
+    }
+
+    // A row with no power at all is null.
+    private static void WriteRowItems(Utf8JsonWriter writer, ReadOnlySpan<short> values)
+    {
+        foreach (short value in values)
+        {
+            if (value == MeasurementLimits.NoPower)
+            {
+                writer.WriteNullValue();
+            }
+            else
+            {
+                writer.WriteNumberValue(value);
+            }
+        }
+    }
+
+    private static void WriteCutoff(Utf8JsonWriter writer, string name, SpectralCutoff cutoff, bool explain)
+    {
+        writer.WriteStartObject(name);
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.SpectralCutoffDescription);
+            writer.WriteString("topic", MeasurementText.SpectralCutoffTopic);
+        }
+
+        WriteCutoffFields(writer, cutoff);
+        writer.WriteEndObject();
+    }
+
+    // Figures with units as {value, unit}; tenths of a dB as a decimal, placed and not formatted from a double.
+    private static void WriteCutoffFields(Utf8JsonWriter writer, SpectralCutoff cutoff)
+    {
+        if (!cutoff.IsSearched)
+        {
+            writer.WriteBoolean("isSearched", false);
+            return;
+        }
+
+        writer.WriteBoolean("isFound", cutoff.IsFound);
+        if (cutoff.IsFound)
+        {
+            WriteQuantity(writer, "frequency", cutoff.Frequency, "Hz");
+            WriteQuantity(writer, "transitionStart", cutoff.TransitionStart, "Hz");
+        }
+
+        WriteQuantity(writer, "stepFrequency", cutoff.StepFrequency, "Hz");
+        writer.WriteStartObject("step");
+        writer.WriteNumber("value", cutoff.StepTenthsOfDb / 10m);
+        writer.WriteString("unit", "dB");
+        writer.WriteEndObject();
+        writer.WriteNumber("framesShowing", cutoff.FramesShowing);
+        writer.WriteNumber("framesWithSignal", cutoff.FramesWithSignal);
+    }
+
+    private static void WriteQuantity(Utf8JsonWriter writer, string name, int value, string unit)
+    {
+        writer.WriteStartObject(name);
+        writer.WriteNumber("value", value);
+        writer.WriteString("unit", unit);
+        writer.WriteEndObject();
     }
 
     private static void WriteVerification(Utf8JsonWriter writer, StreamVerification verification)

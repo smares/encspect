@@ -31,7 +31,7 @@ internal static class CommandLine
                                 text tree. Not with --json or --ndjson, which always have them,
                                 or --csv.
           --hide <sections>     Leave out sections of the text tree or JSON, comma-separated:
-                                tags, frames, side-info, statistics. Not with --csv.
+                                tags, frames, side-info, statistics, measurements. Not with --csv.
           --explain             Say what each node is: its description, and the topic that
                                 --learn explains, under each node of the text tree, or as
                                 "description" and "topic" in JSON. Not with --csv.
@@ -42,6 +42,14 @@ internal static class CommandLine
                                 decoder. Slower than the default analysis, which compares only the
                                 checksums over coded data. A stream whose coding has no decoder
                                 says so. With --csv, fills Is Verified.
+
+        Measurements:
+          --measure [<kinds>]   Decode, verify and measure each file's audio, for the codings
+                                that have a decoder: the average spectrum and the spectral
+                                cutoff. Kinds, comma-separated: spectrum. Costs more than
+                                --verify. With --csv, fills Is Verified and Spectral Cutoff.
+          --measure-grids       As --measure, and write the spectrogram and waveform grids into
+                                the JSON. The text and CSV never hold them.
 
         Version:
           --version             Print the version, as the JSON reports give it in tool.version.
@@ -86,6 +94,9 @@ internal static class CommandLine
         bool offsets = false;
         bool explain = false;
         bool verify = false;
+        bool measure = false;
+        bool grids = false;
+        MeasurementKinds? kinds = null;
         ReportSections hidden = ReportSections.None;
         var formats = new List<string>();
         string? forcedFormat = null;
@@ -131,6 +142,37 @@ internal static class CommandLine
                     break;
                 case "--verify" when inline is null:
                     verify = true;
+                    break;
+                case "--measure":
+                    measure = true;
+
+                    // The kinds are the next argument if it names only kinds (and is no existing path); otherwise it is a path.
+                    string? kindList = inline ?? (i + 1 < args.Count && !args[i + 1].StartsWith('-') && !IsPath(args[i + 1]) && List(args[i + 1]).All(k => MeasurementNames.ContainsKey(k)) ? args[++i] : null);
+                    if (kindList is not null)
+                    {
+                        MeasurementKinds picked = MeasurementKinds.None;
+                        foreach (string name in List(kindList))
+                        {
+                            if (!MeasurementNames.TryGetValue(name, out MeasurementKinds kind))
+                            {
+                                return Fail(stderr, $"Unknown measurement: {name}. Measurements: {string.Join(", ", MeasurementNames.Keys)}.");
+                            }
+
+                            picked |= kind;
+                        }
+
+                        if (picked == MeasurementKinds.None)
+                        {
+                            return Fail(stderr, "--measure needs a list of measurements, or none.");
+                        }
+
+                        kinds = picked;
+                    }
+
+                    break;
+                case "--measure-grids" when inline is null:
+                    measure = true;
+                    grids = true;
                     break;
                 case "--explain" when inline is null:
                     explain = true;
@@ -277,7 +319,12 @@ internal static class CommandLine
             return Fail(stderr, "--explain is for the text tree and JSON; CSV has one summary row per file.");
         }
 
-        var filter = new ReportFilter(hidden);
+        if (grids && chosenOutput is Output.Text or Output.Csv)
+        {
+            return Fail(stderr, "--measure-grids is for the JSON; the text and CSV never hold the grids.");
+        }
+
+        var filter = new ReportFilter(hidden) { WritesGrids = grids };
         bool unreadable = false;
         Severity? worst = null;
 
@@ -295,7 +342,7 @@ internal static class CommandLine
                 case Output.Csv:
                     using (var writer = new StreamWriter(stream, new UTF8Encoding(false), 1 << 16, leaveOpen: true))
                     {
-                        ReportCsvWriter.Write(Reports(), writer, verify);
+                        ReportCsvWriter.Write(Reports(), writer, verify || measure);
                     }
 
                     break;
@@ -371,7 +418,7 @@ internal static class CommandLine
                     return null;
                 }
 
-                return analyzer.AnalyzeFile(input.Path, forcedFormat is null && !verify ? null : new AnalysisOptions { ForcedFormat = forcedFormat, Decoding = verify ? new DecodeOptions() : null });
+                return analyzer.AnalyzeFile(input.Path, forcedFormat is null && !verify && !measure ? null : new AnalysisOptions { ForcedFormat = forcedFormat, Decoding = verify || measure ? new DecodeOptions { Measure = measure ? new MeasureOptions { Include = kinds } : null } : null });
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -431,6 +478,8 @@ internal static class CommandLine
         stderr.WriteLine("Run encspect --help for the options.");
         return UsageError;
     }
+
+    private static readonly Dictionary<string, MeasurementKinds> MeasurementNames = new(StringComparer.OrdinalIgnoreCase) { ["spectrum"] = MeasurementKinds.Spectrum };
 
     private static IEnumerable<string> KnownFormats => DefaultParsers.Formats.Select(p => p.Name);
 

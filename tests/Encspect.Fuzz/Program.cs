@@ -150,13 +150,14 @@ internal static class Program
 
     private static string? Check(Analyzer analyzer, byte[] input, bool checksCollection)
     {
-        // Decoding runs on the same input with the work budget lowered, so a stream that asks for a lot of work stops early; a decoder that fails is a bug.
-        if (Run(analyzer, input, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1 << 24 } }, out Report? decoded) is { } decodeFailure)
+        // Decoding runs on the same input with the work budget lowered, so a stream that asks for a lot of work stops early; a decoder that fails is a bug,
+        // and so is a measurement (the measurements run too, with a budget of their own lowered the same way).
+        if (Run(analyzer, input, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1 << 24, Measure = new MeasureOptions { MaxWork = 1 << 24 } } }, out Report? decoded) is { } decodeFailure)
         {
             return "decoding: " + decodeFailure;
         }
 
-        if (decoded!.Findings.FirstOrDefault(f => f.Code is "decode.failed" or "parse.failed") is { } decodeFailed)
+        if (decoded!.Findings.FirstOrDefault(f => f.Code is "decode.failed" or "parse.failed" or "measure.failed") is { } decodeFailed)
         {
             return decodeFailed.Message;
         }

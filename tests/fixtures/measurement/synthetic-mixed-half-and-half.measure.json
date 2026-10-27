@@ -1,0 +1,71 @@
+{
+  "measurements": {
+    "status": "complete",
+    "samples": 44100,
+    "firstPosition": 0,
+    "lostSamples": 0,
+    "gaps": 0,
+    "sampleRate": 44100,
+    "channels": 1,
+    "channelsMeasured": 1,
+    "channelLayout": ["front center"],
+    "spectrum": {
+      "fftSize": 4096,
+      "frames": 20,
+      "rowCount": 512,
+      "binsPerRow": 4,
+      "rows": {
+        "unit": "dB",
+        "valuesPerUnit": 10,
+        "combined": "sha256:13fce669beba59247cbafaafb22b83b9b2728a538ed6a21dd24b1da1e26476d4",
+        "perChannel": ["sha256:13fce669beba59247cbafaafb22b83b9b2728a538ed6a21dd24b1da1e26476d4"]
+      },
+      "cutoff": {
+        "isFound": false,
+        "stepFrequency": {
+          "value": 16021,
+          "unit": "Hz"
+        },
+        "step": {
+          "value": 4.1,
+          "unit": "dB"
+        },
+        "framesShowing": 10,
+        "framesWithSignal": 20
+      },
+      "channelCutoffs": [
+        {
+          "isFound": false,
+          "stepFrequency": {
+            "value": 16021,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 4.1,
+            "unit": "dB"
+          },
+          "framesShowing": 10,
+          "framesWithSignal": 20
+        }
+      ]
+    },
+    "spectrogram": {
+      "columns": 22,
+      "rows": 512,
+      "hopsPerColumn": 1,
+      "hopSamples": 2048,
+      "unit": "dB",
+      "valueOffset": 200,
+      "noData": 0,
+      "power": "sha256:429baf8feee7976cef019924222230ca3c302187cd073141a652178b03a30fb2"
+    },
+    "waveform": {
+      "columns": 22,
+      "channels": 1,
+      "unit": "16-bit sample codes",
+      "minimum": "sha256:86c8c0963eae636b74e2976099170909e7b428b290b606ba50b7414d58c02dbb",
+      "maximum": "sha256:20635ae2b111acfe7e61496a9b3925a34aa757bee43420350e936981340162db"
+    }
+  },
+  "findings": []
+}

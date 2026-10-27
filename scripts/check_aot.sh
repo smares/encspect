@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Checks that the NativeAOT build of the CLI reports like the JIT build: both analyze all of tests/fixtures in one process each with
-# `--json --verify`, and the two reports, their standard error and their exit codes must be identical but for the tool version line.
+# `--json --measure` (which decodes, verifies and measures every stream that has a decoder), and the two reports, their standard error and their exit codes must be identical but for the tool version line.
 # CI and the release workflow run it on the CLI they published (-p); without -p it publishes the NativeAOT CLI for this platform first,
 # which needs the platform's native toolchain (clang and a linker, see https://learn.microsoft.com/dotnet/core/deploying/native-aot/).
-# With -p it takes about three minutes, build of the JIT side included; without it about six. Each report is about 870 MB; they are
+# With -p it takes about three minutes, build of the JIT side included; without it about six. Measuring adds under a second to the run over
+# the corpus (19.0 s with --verify, 19.6 s with --measure, JIT, this machine) and about 20 MB to the report. Each report is about 900 MB; they are
 # deleted when the two agree, and the output directory too unless one was named.
 #   scripts/check_aot.sh [-p published/encspect] [output directory]
 set -euo pipefail
@@ -67,8 +68,8 @@ run() {
 }
 
 cd "$root"
-run jit dotnet "$out/jit/encspect.dll" --json --verify tests/fixtures
-run aot "$published" --json --verify tests/fixtures
+run jit dotnet "$out/jit/encspect.dll" --json --measure tests/fixtures
+run aot "$published" --json --measure tests/fixtures
 
 for part in status err json; do
     if ! cmp -s "$out/jit.$part" "$out/aot.$part"; then

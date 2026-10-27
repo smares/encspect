@@ -1,7 +1,7 @@
 ---
 id: verification
 title: Verified streams and stored checksums
-related: crc, flac-streaminfo, flac-frames, wavpack-audio-checksums, monkeys-audio-frames, monkeys-audio-descriptor-md5, tta-stream
+related: measurements, crc, flac-streaminfo, flac-frames, wavpack-audio-checksums, monkeys-audio-frames, monkeys-audio-descriptor-md5, tta-stream
 references: RFC 9639 (FLAC), sections 8.2, 9.1.8 and 9.3; TTA format description
 ---
 
@@ -10,5 +10,7 @@ references: RFC 9639 (FLAC), sections 8.2, 9.1.8 and 9.3; TTA format description
 **What a checksum covers.** A checksum over a header, such as the CRC-8 of a FLAC frame header, says the header is intact and nothing about the audio. A checksum over coded data, such as the CRC-16 of a whole FLAC frame, says those bytes are intact; the analyzer compares it in every analysis because it needs only the coded data. A checksum over decoded audio, such as the MD5 that a FLAC STREAMINFO block stores for all samples, can only be compared after the samples are rebuilt, which takes decoding. A FLAC MD5 of zero means the value is not known (RFC 9639, section 8.2).
 
 **What verified means here.** A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio. A checksum that every frame carries covers all of the audio only where no frame is missing: a file cut after a whole frame, or with frames removed, can pass every frame checksum and still be incomplete. A TTA stream has no checksum over decoded audio, so the CRC-32 of every frame verifies it without decoding, provided the CRC-32s of its header and seek table hold and no frame is missing; in Encspect's test files a frame's CRC-32 covers its coded bytes ([TTA](tta-stream)). A checksum that differs makes the stream not verified; one that was not compared leaves it unknown.
+
+**One pass.** Asking for [measurements](measurements) decodes with the same options, so the checksums over decoded audio are compared in the same pass, and measuring changes neither them nor any decoding finding.
 
 **What you see.** A "Verified" line under the stream, with the checksums and how many values were compared of those stored, and in JSON a verification record. Decoding is off unless you ask for it (the --verify option of the command line), so a checksum over decoded audio then reads "not compared: decoding was not asked for" and the verdict "unknown". Where a stream is verified but its audio is a lossy coding's output, the line says so: a WavPack hybrid file without its correction file is verified by the CRCs of its blocks as the lossy audio it decodes to ([WavPack](wavpack-audio-checksums)).

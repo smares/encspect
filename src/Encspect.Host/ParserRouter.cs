@@ -131,6 +131,11 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
                 caller.AddFinding(Severity.Info, "decode.no-decoder", $"Decoding was asked for, but no decoder handles {codecId}.", setup.Stream);
             }
 
+            if (run is { IsMeasuring: true })
+            {
+                run.AddRecord(setup.Stream, new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = $"no decoder for {Measurement.MeasurementFindings.DisplayName(codecId)}" });
+            }
+
             return new DecodeSession(this, caller, null, codecId, setup, DecodeStatus.NoDecoder);
         }
 

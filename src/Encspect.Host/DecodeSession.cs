@@ -1,5 +1,6 @@
 using System.Globalization;
 using Encspect.Core;
+using Encspect.Host.Measurement;
 
 namespace Encspect.Host;
 
@@ -33,6 +34,7 @@ internal sealed class DecodeSession : IDecodeSession
     private long _decodedSamples;
     private long _work;
     private StreamVerification? _verification;
+    private string? _notPossible;
 
     private sealed class Pending(Severity severity, string code, string message, Node? node, int count)
     {
@@ -327,6 +329,7 @@ internal sealed class DecodeSession : IDecodeSession
         }
 
         _sink?.EndByHost(_decodedSamples);
+        Measure();
 
         foreach (Pending finding in _findings)
         {
@@ -360,6 +363,65 @@ internal sealed class DecodeSession : IDecodeSession
         }
 
         return results;
+    }
+
+    // The measurements of the stream, attached to its StreamInfo by the host when the analysis ends (docs/design/spectral-analysis.md,
+    // "Attaching the result"): the measurer's figures, or why there are none.
+    private void Measure()
+    {
+        if (_run is not { IsMeasuring: true } run)
+        {
+            return;
+        }
+
+        StreamMeasurements record;
+        if (_sink?.Measurer is { } measurer)
+        {
+            record = MeasurementFindings.Finish(measurer, run, _isEnded || _isFailed || _status != DecodeStatus.Decoded, Add);
+
+            // The record stays in the report, so its share of the memory bound stays reserved until the analysis ends.
+            long kept;
+            try
+            {
+                run.Options.Measure?.Probe?.Invoke("bytes");
+                kept = StreamMeasurer.RecordBytes(record);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                record = MeasurementFindings.Failed(ex, _sink.Format, Add);
+                kept = StreamMeasurer.RecordBytes(record);
+            }
+
+            run.ReleaseMeasureMemory(_sink.Reserved - Math.Min(_sink.Reserved, kept));
+            _sink.DropMeasurer();
+        }
+        else if (_sink?.OpenFailure is { } failure)
+        {
+            record = MeasurementFindings.Failed(failure, _sink.Format, Add);
+        }
+        else if (_sink?.Refusal is { } refusal)
+        {
+            if (_sink.IsMemoryLimited)
+            {
+                Add(Severity.Info, "measure.streams-limited", "More streams than the memory bound of the measurements allows were decoded, or their figures fill it; this one is not measured.", null, 1);
+            }
+
+            record = new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = $"not measured: {refusal}" };
+        }
+        else if (_status == DecodeStatus.NotPossible)
+        {
+            record = new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = _notPossible?.TrimEnd('.') };
+        }
+        else if (_status == DecodeStatus.Decoded && _decodedSamples > 0 && !_isFailed)
+        {
+            record = new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = "the stream decodes to DSD, which is not measured" };
+        }
+        else
+        {
+            record = new StreamMeasurements { Status = MeasurementStatus.Stopped };
+        }
+
+        run.AddRecord(_setup.Stream, record);
     }
 
     private bool EndIfAsked()
@@ -397,6 +459,7 @@ internal sealed class DecodeSession : IDecodeSession
     private void NotPossible(string message)
     {
         _status = DecodeStatus.NotPossible;
+        _notPossible = message;
         Add(Severity.Info, "decode.not-possible", $"The stream was not decoded: {message}", null, 1);
     }
 

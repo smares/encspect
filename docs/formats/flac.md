@@ -60,6 +60,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 ## Decoding
 
 - The decoder (`Encspect.Formats.Flac.Decoding`, ID `flac`) runs when the front end asks for it: `--verify` on the command line, "Verify Audio" in the detail window. The tree is the same either way.
+- `--measure` implies this decode: the host hands every block the decoder writes to the stream's measurer too (the average spectrum, the spectral cutoff and the grids; `encspect --learn measurements`), and the positions of the blocks are the frames' sample numbers, so frames lost to a gap are skipped by the measurements as well. Measuring changes neither the checksums compared nor a decoding finding.
 - It reads no coded syntax of its own. The structure pass stores each frame's warm-up samples, residuals and the description of every subframe in buffers the host lends, and the decoder adds what the syntax does not give: the predictors, the wasted bits and the undoing of the channel assignment, then the MD5 of the samples.
 - The MD5 is over the interleaved samples, signed, little-endian, in as many whole bytes as the bit depth needs (RFC 9639, section 8.2). An MD5 of 0 means the encoder did not store one.
 - Three checksums are declared and tallied:

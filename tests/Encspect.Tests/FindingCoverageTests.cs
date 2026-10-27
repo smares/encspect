@@ -327,4 +327,25 @@ public partial class FindingCoverageTests
         string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
         Assert.True(missing.Length == 0, $"No table of crafted inputs or manifest raises: {string.Join(", ", missing)}");
     }
+
+    [GeneratedRegex("\"(measure\\.[a-z-]+)\"")]
+    private static partial Regex MeasureCode();
+
+    // Every measure.* code the host emits is raised by a crafted stream of MeasurementRouteTests, which asserts the finding present.
+    [Fact]
+    public void EveryMeasureCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Host"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => MeasureCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count >= 7, $"Found only {emitted.Count} codes.");
+
+        string tests = File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "Measurement", "MeasurementRouteTests.cs"));
+        string table = tests[tests.IndexOf("Codes() => new()", StringComparison.Ordinal)..tests.IndexOf("private static Report Raise", StringComparison.Ordinal)];
+        var asserted = MeasureCode().Matches(table).Select(m => m.Groups[1].Value).ToHashSet();
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted stream of MeasurementRouteTests raises: {string.Join(", ", missing)}");
+    }
 }

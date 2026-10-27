@@ -1,7 +1,7 @@
 ---
 id: bwf-broadcast-extension
 title: Broadcast Wave Format metadata
-related: riff-chunks, rf64, wave-cue-points
+related: riff-chunks, rf64, wave-cue-points, measurements
 references: EBU Tech 3285 (Broadcast Wave Format) and its supplements 1 to 7; EBU R 128
 ---
 
@@ -11,4 +11,4 @@ references: EBU Tech 3285 (Broadcast Wave Format) and its supplements 1 to 7; EB
 
 Supplements add chunks: a peak envelope, a link to the other files of a recording split in parts, XML metadata (axml), Dolby metadata and the chna chunk, which ties each track to the Audio Definition Model. Other makers add the iXML chunk for production metadata.
 
-**What you see.** The fields of the bext chunk, the loudness values in their units, the coding history as text, and the XML chunks as text. Chunks the analyzer recognizes but does not read are named and sized.
+**What you see.** The fields of the bext chunk, the loudness values in their units (values the file states, written by its creator and not checked here; a loudness the analyzer computed from the decoded audio would be a measured figure, another thing, see [measurements](measurements)), the coding history as text, and the XML chunks as text. Chunks the analyzer recognizes but does not read are named and sized.

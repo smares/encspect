@@ -34,6 +34,8 @@ Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis com
 
 Protection: streams that a container encrypts or locks are reported with their scheme and DRM systems, without decrypting: Common Encryption in MP4, iTunes protection and Audible entries, Windows Media DRM in ASF, and ContentEncryption in Matroska.
 
+Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, Dolby TrueHD and MLP) get the average spectrum and the spectral cutoff of their decoded audio, and the spectrogram and waveform behind them ([details](docs/cli.md)).
+
 Phase 2, the lossy formats, is done. Next: the lossless formats, among them the frames of WMA Lossless.
 
 ## Documentation

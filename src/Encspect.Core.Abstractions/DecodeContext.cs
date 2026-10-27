@@ -64,7 +64,7 @@ public sealed class DecodeContext
     }
 
     // Called once, before the first block: the PCM the decoder will write, and where to write it. The sink is the
-    // host's: it forwards to the front end's sink (DecodeOptions.Output) and later to the host's PCM analyses, and it
+    // host's: it forwards to the front end's sink (DecodeOptions.Output) and to the stream's measurer (docs/design/spectral-analysis.md), and it
     // never throws. The host alone ends it (IPcmSink.End, with the samples it counted); a decoder never calls End, and a call
     // from it is ignored. A coding that decodes to something other than PCM (WavPack's DSD) does not call it.
     public IPcmSink DeclareOutput(PcmFormat format)

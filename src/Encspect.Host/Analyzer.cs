@@ -284,7 +284,14 @@ public sealed class Analyzer
             .OrderBy(f => f.Node?.Offset ?? 0)
             .Select(f => f with { Path = paths.Find(f.Node) })
             .ToList();
-        streams = streams.Select(s => s with { NodePaths = s.Nodes.Select(paths.Find).ToList() }).ToList();
+
+        // The last chance for a cancel that arrived while the last block was measured to end the analysis, before any record is attached.
+        if (decodeRun is { IsMeasuring: true })
+        {
+            options.CancellationToken.ThrowIfCancellationRequested();
+        }
+
+        streams = streams.Select(s => s with { NodePaths = s.Nodes.Select(paths.Find).ToList(), Measurements = decodeRun?.RecordFor(s.Nodes) ?? s.Measurements }).ToList();
         progress?.Report(reader.Length);
         return new Report(source, root, ordered, streams, detection);
     }

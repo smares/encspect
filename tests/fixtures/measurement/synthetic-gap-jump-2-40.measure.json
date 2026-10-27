@@ -1,0 +1,87 @@
+{
+  "measurements": {
+    "status": "complete",
+    "samples": 16384,
+    "firstPosition": 0,
+    "lostSamples": 1099511619584,
+    "gaps": 1,
+    "sampleRate": 44100,
+    "channels": 1,
+    "channelsMeasured": 1,
+    "channelLayout": ["front center"],
+    "spectrum": {
+      "fftSize": 4096,
+      "frames": 6,
+      "rowCount": 512,
+      "binsPerRow": 4,
+      "rows": {
+        "unit": "dB",
+        "valuesPerUnit": 10,
+        "combined": "sha256:e5ef72b69f6296eab3addd37bdbb4387c9e20561cda30211ed11e295415f3d94",
+        "perChannel": ["sha256:e5ef72b69f6296eab3addd37bdbb4387c9e20561cda30211ed11e295415f3d94"]
+      },
+      "cutoff": {
+        "isFound": true,
+        "frequency": {
+          "value": 16021,
+          "unit": "Hz"
+        },
+        "transitionStart": {
+          "value": 16021,
+          "unit": "Hz"
+        },
+        "stepFrequency": {
+          "value": 16021,
+          "unit": "Hz"
+        },
+        "step": {
+          "value": 77.8,
+          "unit": "dB"
+        },
+        "framesShowing": 6,
+        "framesWithSignal": 6
+      },
+      "channelCutoffs": [
+        {
+          "isFound": true,
+          "frequency": {
+            "value": 16021,
+            "unit": "Hz"
+          },
+          "transitionStart": {
+            "value": 16021,
+            "unit": "Hz"
+          },
+          "stepFrequency": {
+            "value": 16021,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 77.8,
+            "unit": "dB"
+          },
+          "framesShowing": 6,
+          "framesWithSignal": 6
+        }
+      ]
+    },
+    "spectrogram": {
+      "columns": 513,
+      "rows": 512,
+      "hopsPerColumn": 1048576,
+      "hopSamples": 2048,
+      "unit": "dB",
+      "valueOffset": 200,
+      "noData": 0,
+      "power": "sha256:10587b17dce90351d1d45565417c57615b0edbda0a80f809504fc6b73b9e78da"
+    },
+    "waveform": {
+      "columns": 513,
+      "channels": 1,
+      "unit": "16-bit sample codes",
+      "minimum": "sha256:43e4ca9934729b11bfa9c28f5c7b9398b7a1ea403cd715999262066a9a996b0e",
+      "maximum": "sha256:29063e4d2c89d42e33949a46fa8a960f0aea72bb1e80ef0dba25d473b7bf00ef"
+    }
+  },
+  "findings": []
+}
