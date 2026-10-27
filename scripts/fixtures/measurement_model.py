@@ -17,7 +17,9 @@ Everything is plain Python (the standard library). The FFT is a complex radix-2 
 real transform with its split step, so the two agree up to rounding (about 1e-12 relative), which the tests allow for.
 """
 
+import json
 import math
+import re
 
 import flac_model as m
 
@@ -25,6 +27,25 @@ ROWS = 512
 TOP_ROW = 506
 OWN_STEP_RATIO = 10 ** 1.5
 MAX_CHANNELS = 32
+
+
+def dumps(value):
+    """JSON indented by one space, as the other manifests are, in which every array of plain values is on one line."""
+    def write(v, depth):
+        pad = " " * (depth + 1)
+        if isinstance(v, dict):
+            if not v:
+                return "{}"
+            items = [f"{pad}{json.dumps(k)}: {write(x, depth + 1)}" for k, x in v.items()]
+            return "{\n" + ",\n".join(items) + "\n" + " " * depth + "}"
+        if isinstance(v, list):
+            if all(not isinstance(x, (dict, list)) for x in v):
+                return json.dumps(v)
+            items = [pad + write(x, depth + 1) for x in v]
+            return "[\n" + ",\n".join(items) + "\n" + " " * depth + "]"
+        return json.dumps(v)
+
+    return write(value, 0) + "\n"
 
 
 def fft_size(rate):
@@ -98,7 +119,7 @@ class Counters:
 
 def count_frame(rows, counters, w, first):
     suffix = [0.0] * (ROWS + 1)
-    for r in range(ROWS - 1, -1, -1):
+    for r in range(TOP_ROW, -1, -1):
         suffix[r] = suffix[r + 1] + rows[r]
     for r in range(first, 506):
         under = suffix[r - w + 1] - suffix[r + 1]
@@ -204,6 +225,7 @@ def measure(data, layout=None):
     frames = 0
     samples = lost = gaps = 0
     first_position = None
+    origin = 0
     expected = None
     mins, maxs = {}, {}
     buffers = [[] for _ in range(measured)]
@@ -227,6 +249,7 @@ def measure(data, layout=None):
     for position, block in segments(stream):
         if expected is None:
             first_position = position
+            origin = position // hop * hop
             expected = position
             segment_start = position
         if position > expected:
@@ -240,7 +263,7 @@ def measure(data, layout=None):
             buffers[c].extend(block[c])
             for i in range(count):
                 v = block[c][i] * scale
-                key = (c, (position + i) // hop)
+                key = (c, (position + i - origin) // hop)
                 if key in mins:
                     mins[key] = min(mins[key], v)
                     maxs[key] = max(maxs[key], v)

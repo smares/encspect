@@ -170,6 +170,21 @@ public class MeasurementTests
     }
 
     [Fact]
+    public void TheGridCountsHopsFromWhereTheStreamStartsNotFromZero()
+    {
+        // Frame numbers that start at sample 2^24: from position 0 that would be 8,192 hops of empty columns, then merged to 513 columns.
+        int[] block = MeasurementSignals.ToIntegers(MeasurementSignals.Noise(20000, 1), 16);
+        var measurer = new StreamMeasurer(new PcmFormat(44100, 1, 16, SampleFormat.Integer), new MeasureOptions(), CancellationToken.None, _ => true);
+        measurer.Write(new PcmBlock((1L << 24) + 700, block.Length, 1, block.Length, block));
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((1L << 24) + 700, m.FirstPosition);
+        Assert.Equal(1, m.Spectrogram!.HopsPerColumn);
+        Assert.InRange(m.Spectrogram.Columns, 1, 12);
+        Assert.NotEqual(0, m.Spectrogram.Power.Span[100]);
+    }
+
+    [Fact]
     public void APositionThatGoesBackStopsTheMeasuring()
     {
         int[] block = new int[5000];

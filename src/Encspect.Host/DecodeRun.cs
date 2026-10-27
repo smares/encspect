@@ -142,6 +142,7 @@ internal sealed class DecodeRun : IDisposable
         StreamMeasurer? measurer = null;
         string? refusal = null;
         bool isMemoryLimited = false;
+        Exception? openFailure = null;
         long reserved = 0;
         if (Options.Measure is { } measure)
         {
@@ -159,7 +160,18 @@ internal sealed class DecodeRun : IDisposable
                 reserved = StreamMeasurer.EstimateBytes(format, measure);
                 if (TryReserveMeasureMemory(reserved))
                 {
-                    measurer = new StreamMeasurer(format, measure, Token, ChargeMeasure);
+                    // A bug in making the measurer must not reach the decoder that called DeclareOutput: it becomes measure.failed.
+                    try
+                    {
+                        measure.Probe?.Invoke("open");
+                        measurer = new StreamMeasurer(format, measure, Token, ChargeMeasure);
+                    }
+                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    {
+                        openFailure = ex;
+                        ReleaseMeasureMemory(reserved);
+                        reserved = 0;
+                    }
                 }
                 else
                 {
@@ -170,7 +182,7 @@ internal sealed class DecodeRun : IDisposable
             }
         }
 
-        return new GuardedSink(this, target, measurer, refusal, reserved) { IsMemoryLimited = isMemoryLimited };
+        return new GuardedSink(this, target, measurer, refusal, reserved) { IsMemoryLimited = isMemoryLimited, OpenFailure = openFailure, Format = stream.Format };
     }
 
     // The decoder writes to it; the host alone ends it (EndByHost), so the front end's sink sees exactly one End, with the
@@ -187,6 +199,11 @@ internal sealed class DecodeRun : IDisposable
         public long Reserved => reserved;
 
         public bool IsMemoryLimited { get; init; }
+
+        // The exception of making the measurer, and the format the stream declared (for the record of a stream that has no measurer).
+        public Exception? OpenFailure { get; init; }
+
+        public PcmFormat? Format { get; init; }
 
         public void Write(PcmBlock block)
         {

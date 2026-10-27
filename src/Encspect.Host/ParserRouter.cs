@@ -133,7 +133,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
 
             if (run is { IsMeasuring: true })
             {
-                run.AddRecord(setup.Stream, new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = $"no decoder for {codecId}" });
+                run.AddRecord(setup.Stream, new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = $"no decoder for {Measurement.MeasurementFindings.DisplayName(codecId)}" });
             }
 
             return new DecodeSession(this, caller, null, codecId, setup, DecodeStatus.NoDecoder);

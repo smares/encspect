@@ -378,13 +378,19 @@ internal sealed class DecodeSession : IDecodeSession
         if (_sink?.Measurer is { } measurer)
         {
             record = MeasurementFindings.Finish(measurer, run, _isEnded || _isFailed || _status != DecodeStatus.Decoded, Add);
-            run.ReleaseMeasureMemory(_sink.Reserved);
+
+            // The record stays in the report, so its share of the memory bound stays reserved until the analysis ends.
+            run.ReleaseMeasureMemory(_sink.Reserved - Math.Min(_sink.Reserved, StreamMeasurer.RecordBytes(record)));
+        }
+        else if (_sink?.OpenFailure is { } failure)
+        {
+            record = MeasurementFindings.Failed(failure, _sink.Format, Add);
         }
         else if (_sink?.Refusal is { } refusal)
         {
             if (_sink.IsMemoryLimited)
             {
-                Add(Severity.Info, "measure.streams-limited", "More streams than the memory bound of the measurements allows were decoded; this one is not measured.", null, 1);
+                Add(Severity.Info, "measure.streams-limited", "More streams than the memory bound of the measurements allows were decoded, or their figures fill it; this one is not measured.", null, 1);
             }
 
             record = new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = $"not measured: {refusal}" };

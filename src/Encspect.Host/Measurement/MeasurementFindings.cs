@@ -55,6 +55,42 @@ internal static class MeasurementFindings
             reason = "measuring failed";
         }
 
-        return measurer.Result(status, reason);
+        // The figures are made once, here, and a bug in making them is the stream's measure.failed like any other.
+        try
+        {
+            return measurer.Result(status, reason);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return Failed(ex, null, add, measurer);
+        }
     }
+
+    // The record of a measurement that failed: no figures, the failure as a finding.
+    public static StreamMeasurements Failed(Exception failure, PcmFormat? format, AddFinding add, StreamMeasurer? measurer = null)
+    {
+        add(Severity.Error, "measure.failed", $"Measuring the stream failed: {failure.GetType().Name}: {failure.Message}", null, 1);
+        return new StreamMeasurements
+        {
+            Status = MeasurementStatus.Failed,
+            Reason = "measuring failed",
+            Samples = measurer?.Samples ?? 0,
+            SampleRate = measurer?.SampleRate ?? format?.SampleRate ?? 0,
+            Channels = measurer?.Channels ?? format?.Channels ?? 0,
+            ChannelsMeasured = measurer?.ChannelsMeasured ?? Math.Min(format?.Channels ?? 0, MeasurementLimits.MaxChannels),
+        };
+    }
+
+    // The name a codec ID has in text for a person.
+    public static string DisplayName(string codecId) => codecId switch
+    {
+        "tta" => "TTA",
+        "alac" => "ALAC",
+        "flac" => "FLAC",
+        "wavpack" => "WavPack",
+        "monkeys-audio" => "Monkey's Audio",
+        "truehd" => "Dolby TrueHD",
+        "mlp" => "MLP",
+        _ => codecId,
+    };
 }

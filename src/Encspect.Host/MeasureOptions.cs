@@ -13,8 +13,9 @@ public sealed class MeasureOptions
     // call, not a setting.
     public long? MaxWork { get; init; }
 
-    // For tests: runs before each block is measured, so a test can raise the exception a bug in a measurement would (measure.failed).
-    internal Action<long>? BeforeBlock { get; init; }
+    // For tests: called with "open" when a stream's measurer is made, "block" before each block is measured and "result" before the figures are
+    // made, so a test can raise the exception a bug in a measurement would (measure.failed) at each of the three.
+    internal Action<string>? Probe { get; init; }
 }
 
 [Flags]

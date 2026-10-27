@@ -14,7 +14,8 @@ internal static class DetMath
 
     public const double HalfPi = 1.5707963267948966;
 
-    // The high and low parts of ln 2 (fdlibm's), so that k * Ln2High is exact for the |k| of a double's exponent.
+    // The high and low parts of ln 2 and of pi / 2 below are the split fdlibm also uses, but they are mathematical constants (the digits of ln 2
+    // and pi / 2, the high part with trailing zero bits), not code taken from it; the split makes k * Ln2High exact for the |k| of a double's exponent.
     private const double Ln2High = 6.93147180369123816490e-01;
 
     private const double Ln2Low = 1.90821492927058770002e-10;

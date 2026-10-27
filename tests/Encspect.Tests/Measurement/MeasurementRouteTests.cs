@@ -72,6 +72,7 @@ public class MeasurementRouteTests
 
         StreamMeasurements m = Assert.Single(report.Streams).Measurements!;
         Assert.Equal((MeasurementStatus.NotPossible, "no decoder for test"), (m.Status, m.Reason));
+        Assert.Equal("no decoder for TTA", Assert.Single(Analyze(new DecodeRouteTests.FrameParser { CodecId = "tta" }, [new EmittingDecoder(null, Silence, "other")]).Streams).Measurements!.Reason);
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("measure.", StringComparison.Ordinal));
     }
 
@@ -154,7 +155,7 @@ public class MeasurementRouteTests
             case "measure.limit":
                 return Analyze(new DecodeRouteTests.FrameParser(), [new EmittingDecoder(format, Silence)], new DecodeOptions { Measure = new MeasureOptions { MaxWork = 1000 } });
             case "measure.failed":
-                return Analyze(new DecodeRouteTests.FrameParser(), [new EmittingDecoder(format, Silence)], new DecodeOptions { Measure = new MeasureOptions { BeforeBlock = _ => throw new InvalidOperationException("test") } });
+                return Analyze(new DecodeRouteTests.FrameParser(), [new EmittingDecoder(format, Silence)], new DecodeOptions { Measure = new MeasureOptions { Probe = stage => { if (stage == "block") { throw new InvalidOperationException("test"); } } } });
             case "measure.channels-limited":
                 int[] wide = new int[100 * 40];
                 return Analyze(new DecodeRouteTests.FrameParser(), [new EmittingDecoder(new PcmFormat(44100, 40, 16, SampleFormat.Integer), (sink, index) => sink.Write(Ints(index * 100, 100, 40, wide)))]);
@@ -275,6 +276,70 @@ public class MeasurementRouteTests
         Assert.Null(m.Spectrum);
         Assert.Equal(400, report.Streams[0].Verification!.DecodedSamples);
         Assert.Contains("InvalidOperationException: test", report.Findings.Single(f => f.Code == "measure.failed").Message);
+    }
+
+    // A bug in making the measurer (called inside DeclareOutput, by the decoder) or in making its figures (at the close) is the stream's
+    // measure.failed too: never a parse.failed or decode.failed, and the verification stays what it is.
+    [Theory]
+    [InlineData("open")]
+    [InlineData("block")]
+    [InlineData("result")]
+    public void AFailureAtAnyStageBecomesMeasureFailedAndLeavesDecodingAlone(string stage)
+    {
+        var format = new PcmFormat(44100, 2, 16, SampleFormat.Integer);
+        Report report = Analyze(new DecodeRouteTests.FrameParser(), [new EmittingDecoder(format, Silence)],
+            new DecodeOptions { Measure = new MeasureOptions { Probe = s => { if (s == stage) { throw new InvalidOperationException("test " + s); } } } });
+
+        StreamMeasurements m = report.Streams[0].Measurements!;
+        Assert.Equal(MeasurementStatus.Failed, m.Status);
+        Assert.Null(m.Spectrum);
+        Assert.Equal((44100, 2), (m.SampleRate, m.Channels));
+        Assert.Contains($"InvalidOperationException: test {stage}", report.Findings.First(f => f.Code == "measure.failed").Message);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Equal(400, report.Streams[0].Verification!.DecodedSamples);
+        Assert.Equal(DecodeStatus.Decoded, report.Streams[0].Verification!.Decoding);
+    }
+
+    // The record stays in the report, so its share stays reserved: 600 streams whose grids hold 512 columns each (0.5 MiB) would keep 300 MB
+    // without the bound, and the bound of 64 MiB lets about a hundred of them be measured; the rest say so.
+    [Fact]
+    public void TheRecordsOfManyStreamsStayWithinTheMemoryBound()
+    {
+        int[] block = new int[4096];
+        var decoder = new EmittingDecoder(new PcmFormat(44100, 1, 16, SampleFormat.Integer), (sink, index) => sink.Write(new PcmBlock(index == 0 ? 0 : 1L << 40, 4096, 1, 4096, block)));
+
+        Report report = new Analyzer([], [new ManyStreams(600)], [], [decoder]).Analyze("sample.bin", new MemoryStream(new byte[64]), new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
+
+        long kept = report.Streams.Sum(s => s.Measurements!.Spectrogram?.Power.Length ?? 0L);
+        int measured = report.Streams.Count(s => s.Measurements!.Status == MeasurementStatus.Complete);
+        Assert.InRange(kept, 1, DecodeRun_MeasureMemoryBound);
+        Assert.InRange(measured, 20, 599);
+        Assert.Equal(600 - measured, report.Findings.Where(f => f.Code == "measure.streams-limited").Sum(f => f.Count));
+    }
+
+    private const long DecodeRun_MeasureMemoryBound = 64L << 20;
+
+    // Streams one after another, each decoded two frames and finished before the next starts.
+    private sealed class ManyStreams(int count) : IFormatParser
+    {
+        public string Name => "Test";
+
+        public SniffResult Sniff(SniffContext context) => new(100);
+
+        public void Parse(ParseContext context)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                Node stream = context.Root.Add("Stream", 0, 64);
+                IDecodeSession session = context.StartDecoding("test", new DecodeSetup { Stream = stream, Channels = 1, BitsPerSample = 16, Samples = 200 });
+                for (int frame = 0; frame < 2 && session.IsDecoding; frame++)
+                {
+                    session.Decode(new CodedFrame(new MappedBytes(new byte[16], 0), "Frame", frame * 100, 100));
+                }
+
+                context.AddStream(new StreamInfo { Nodes = [stream], Codec = "Test", Verification = session.Finish([]) });
+            }
+        }
     }
 
     [Fact]

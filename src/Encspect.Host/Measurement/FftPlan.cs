@@ -98,6 +98,9 @@ internal sealed class FftPlan
 
     public int Size { get; }
 
+    // For tests: false runs the scalar loop of every stage, which must give the same bits as the vector one.
+    internal bool UsesVectors { get; set; } = true;
+
     public int Half { get; }
 
     public int BinsPerRow { get; }
@@ -153,7 +156,7 @@ internal sealed class FftPlan
         ref double stageSin = ref MemoryMarshal.GetArrayDataReference(_stageSin);
         for (int h = 2; h < m; h *= 2)
         {
-            Stage(ref reRef, ref imRef, ref Unsafe.Add(ref stageCos, h - 1), ref Unsafe.Add(ref stageSin, h - 1), m, h);
+            Stage(ref reRef, ref imRef, ref Unsafe.Add(ref stageCos, h - 1), ref Unsafe.Add(ref stageSin, h - 1), m, h, UsesVectors && Vector128.IsHardwareAccelerated);
         }
 
         SplitRows(ref reRef, ref imRef, rows);
@@ -162,12 +165,12 @@ internal sealed class FftPlan
     // The butterflies of one stage with the half-size h >= 2: j runs over the contiguous twiddles of the stage. Two lanes at a time in
     // a Vector128 where the hardware has it, the same operations lane by lane as the scalar loop.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void Stage(ref double re, ref double im, ref double cos, ref double sin, int m, int h)
+    private static void Stage(ref double re, ref double im, ref double cos, ref double sin, int m, int h, bool usesVectors)
     {
         for (int b = 0; b < m; b += 2 * h)
         {
             int j = 0;
-            if (Vector128.IsHardwareAccelerated)
+            if (usesVectors)
             {
                 for (; j < h; j += 2)
                 {

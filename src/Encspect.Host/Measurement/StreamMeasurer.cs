@@ -31,7 +31,8 @@ internal sealed class StreamMeasurer
     private readonly int _hop;
     private readonly double _scale;
     private readonly int _weight;
-    private readonly Action<long>? _beforeBlock;
+    private readonly Action<string>? _probe;
+    private long _origin;
 
     private readonly double[][] _buffers = [];
     private readonly double[] _re = [];
@@ -68,7 +69,7 @@ internal sealed class StreamMeasurer
         _format = format;
         _token = token;
         _charge = charge;
-        _beforeBlock = options.BeforeBlock;
+        _probe = options.Probe;
         _channels = format.Channels;
         _measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
         MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
@@ -199,7 +200,7 @@ internal sealed class StreamMeasurer
 
     private void Process(PcmBlock block)
     {
-        _beforeBlock?.Invoke(block.Position);
+        _probe?.Invoke("block");
         if (_token.IsCancellationRequested)
         {
             IsCanceled = true;
@@ -219,6 +220,9 @@ internal sealed class StreamMeasurer
         {
             _hasStarted = true;
             _firstPosition = block.Position;
+
+            // The grids count hops from the first one the stream touches, so a stream that starts late has no empty columns before it.
+            _origin = block.Position / _hop * _hop;
             _next = block.Position;
             _bufferStart = block.Position;
         }
@@ -281,9 +285,9 @@ internal sealed class StreamMeasurer
         while (count > 0)
         {
             long position = block.Position + start;
-            int toHop = (int)(_hop - (position % _hop));
+            int toHop = (int)(_hop - ((position - _origin) % _hop));
             int piece = Math.Min(Math.Min(count, plan.Size - _fill), toHop);
-            long hopIndex = position / _hop;
+            long hopIndex = (position - _origin) / _hop;
             EnsureColumns(hopIndex);
             int column = (int)(hopIndex >> _shift);
             _used = Math.Max(_used, column + 1);
@@ -408,8 +412,14 @@ internal sealed class StreamMeasurer
             return 0;
         }
 
+        // Too small to count (under 1e-30, -600 dB) is taken as 0 and says nothing; too large is clamped and says so.
+        if (magnitude < SmallestSample)
+        {
+            return 0;
+        }
+
         HasClamped = true;
-        return magnitude > LargestSample ? (v < 0 ? -LargestSample : LargestSample) : 0;
+        return v < 0 ? -LargestSample : LargestSample;
     }
 
     // Merges adjacent columns until the hop's column fits: whenever the columns would pass 1,024, pairs are merged and each column then
@@ -542,7 +552,7 @@ internal sealed class StreamMeasurer
             Count(combined, _counters[_measured]);
         }
 
-        long hopIndex = _bufferStart / _hop;
+        long hopIndex = (_bufferStart - _origin) / _hop;
         EnsureColumns(hopIndex);
         int column = (int)(hopIndex >> _shift);
         _used = Math.Max(_used, column + 1);
@@ -561,17 +571,16 @@ internal sealed class StreamMeasurer
         return true;
     }
 
-    // The counters of one frame's rows: suffix sums from the top row down, so that a band near the edge is not added to the bass.
+    // The counters of one frame's rows: suffix sums from the top row of the search (506) down, so that a band near the edge is not added to the bass.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Count(ReadOnlySpan<double> rows, CutoffCounters counters)
     {
-        int rowCount = MeasurementLimits.Rows;
         double[] suffix = _suffix;
         ref double sfx = ref MemoryMarshal.GetArrayDataReference(suffix);
         ref double source = ref MemoryMarshal.GetReference(rows);
         double sum = 0;
-        Unsafe.Add(ref sfx, rowCount) = 0;
-        for (int r = rowCount - 1; r >= 0; r--)
+        Unsafe.Add(ref sfx, CutoffGeometry.TopRow + 1) = 0;
+        for (int r = CutoffGeometry.TopRow; r >= 0; r--)
         {
             sum += Unsafe.Add(ref source, r);
             Unsafe.Add(ref sfx, r) = sum;
@@ -602,9 +611,30 @@ internal sealed class StreamMeasurer
         }
     }
 
+    // The bytes a record keeps in the report: the grids and the rows. It stays reserved in the memory bound until the analysis ends.
+    public static long RecordBytes(StreamMeasurements record)
+    {
+        long bytes = 512;
+        if (record.Spectrum is { } spectrum)
+        {
+            bytes += 2L * spectrum.Combined.Length;
+            foreach (ReadOnlyMemory<short> channel in spectrum.PerChannel)
+            {
+                bytes += 2L * channel.Length;
+            }
+
+            bytes += 64L * (1 + spectrum.ChannelCutoffs.Count);
+        }
+
+        bytes += record.Spectrogram?.Power.Length ?? 0;
+        bytes += 2L * ((record.Waveform?.Minimum.Length ?? 0) + (record.Waveform?.Maximum.Length ?? 0));
+        return bytes;
+    }
+
     // The record of what was measured. Called once, when the stream's decoding has ended.
     public StreamMeasurements Result(MeasurementStatus status, string? reason)
     {
+        _probe?.Invoke("result");
         var record = new StreamMeasurements
         {
             Status = status,

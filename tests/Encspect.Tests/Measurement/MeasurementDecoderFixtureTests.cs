@@ -209,7 +209,9 @@ public class MeasurementDecoderFixtureTests
 
         Report report = analyzer.Analyze("s.bin", new MemoryStream(new byte[64]), new AnalysisOptions { Decoding = new DecodeOptions { Stop = stop.Token, Measure = new MeasureOptions() } });
 
-        // The stop came after the last block: nothing was cut short.
-        Assert.Equal(400, report.Streams.Single().Measurements!.Samples);
+        // The stop came after the last block: nothing was cut short, and the record says what it measured.
+        StreamMeasurements m = report.Streams.Single().Measurements!;
+        Assert.Equal(400, m.Samples);
+        Assert.Equal(MeasurementStatus.Stopped, m.Status);
     }
 }

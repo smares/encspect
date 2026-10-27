@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
@@ -113,18 +114,21 @@ public class MeasurementDeterminismTests
         Assert.True(MathHash == HashBits(values), "MathHash = " + HashBits(values));
     }
 
-    [Fact]
-    public void TheVectorLoopAndTheScalarLoopAgreeBitForBit()
+    [Theory]
+    [InlineData(1024)]
+    [InlineData(4096)]
+    [InlineData(32768)]
+    public void TheVectorLoopAndTheScalarLoopAgreeBitForBit(int size)
     {
-        // The vector path is taken where the hardware has it; a plan of the same input must equal a direct transform written with scalar
-        // operations only.
-        var plan = new FftPlan(2048);
-        double[] samples = MeasurementSignals.Noise(2048, 3);
-        double[] rows = new double[512];
-        plan.Rows(samples, plan.NewScratch(), plan.NewScratch(), rows);
-        double[] again = new double[512];
-        plan.Rows(samples, plan.NewScratch(), plan.NewScratch(), again);
-        Assert.Equal(HashBits(rows), HashBits(again));
+        // The vector path is taken where the hardware has it; the same plan with its vector loop turned off runs the scalar one.
+        double[] samples = MeasurementSignals.Noise(size, 3);
+        var vector = new FftPlan(size);
+        var scalar = new FftPlan(size) { UsesVectors = false };
+        double[] a = new double[512];
+        double[] b = new double[512];
+        vector.Rows(samples, vector.NewScratch(), vector.NewScratch(), a);
+        scalar.Rows(samples, scalar.NewScratch(), scalar.NewScratch(), b);
+        Assert.Equal(HashBits(a), HashBits(b));
     }
 
     // ---- No operation the platform defines for itself ----
@@ -136,6 +140,44 @@ public class MeasurementDeterminismTests
     ];
 
     private static readonly HashSet<string> BannedLinq = ["Sum", "Average", "Max", "Min", "Aggregate", "MaxBy", "MinBy"];
+
+    private static string TypeName(MetadataReader md, TypeReferenceHandle handle)
+    {
+        TypeReference type = md.GetTypeReference(handle);
+        return md.GetString(type.Namespace) + "." + md.GetString(type.Name);
+    }
+
+    // The name of a generic type instance's definition (System.Numerics.Vector`1 for Vector<double>), which a member reference's parent is.
+    private sealed class NameProvider(MetadataReader md) : System.Reflection.Metadata.ISignatureTypeProvider<string, object?>
+    {
+        public string GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode.ToString();
+
+        public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) => string.Empty;
+
+        public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) => TypeName(md, handle);
+
+        public string GetTypeFromSpecification(MetadataReader reader, object? genericContext, TypeSpecificationHandle handle, byte rawTypeKind) => string.Empty;
+
+        public string GetSZArrayType(string elementType) => elementType + "[]";
+
+        public string GetArrayType(string elementType, ArrayShape shape) => elementType + "[,]";
+
+        public string GetByReferenceType(string elementType) => elementType;
+
+        public string GetPointerType(string elementType) => elementType;
+
+        public string GetPinnedType(string elementType) => elementType;
+
+        public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired) => unmodifiedType;
+
+        public string GetFunctionPointerType(MethodSignature<string> signature) => string.Empty;
+
+        public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments) => genericType;
+
+        public string GetGenericMethodParameter(object? genericContext, int index) => string.Empty;
+
+        public string GetGenericTypeParameter(object? genericContext, int index) => string.Empty;
+    }
 
     internal static IReadOnlyList<string> BannedCalls(Assembly assembly, Func<string, bool> inScope)
     {
@@ -179,15 +221,16 @@ public class MeasurementDeterminismTests
                     string name = md.GetString(member.Name);
                     string parent = member.Parent.Kind switch
                     {
-                        HandleKind.TypeReference => md.GetString(md.GetTypeReference((TypeReferenceHandle)member.Parent).Namespace) + "." + md.GetString(md.GetTypeReference((TypeReferenceHandle)member.Parent).Name),
-                        HandleKind.TypeSpecification => "generic",
+                        HandleKind.TypeReference => TypeName(md, (TypeReferenceHandle)member.Parent),
+                        HandleKind.TypeSpecification => md.GetTypeSpecification((TypeSpecificationHandle)member.Parent).DecodeSignature(new NameProvider(md), null),
                         _ => string.Empty,
                     };
                     bool banned = (parent is "System.Math" or "System.MathF" && BannedMath.Contains(name))
                         || (parent.StartsWith("System.Runtime.Intrinsics", StringComparison.Ordinal) || parent.StartsWith("System.Numerics", StringComparison.Ordinal) || parent is "System.Math" or "System.MathF")
                             && (name.EndsWith("Native", StringComparison.Ordinal) || name.EndsWith("Estimate", StringComparison.Ordinal) || name.Contains("FusedMultiplyAdd", StringComparison.Ordinal))
                         || parent.StartsWith("System.Numerics.Tensors", StringComparison.Ordinal)
-                        || parent == "System.Numerics.Vector`1" || (parent == "System.Numerics.Vector" && name != "get_IsHardwareAccelerated" && false)
+                        || (parent.StartsWith("System.Runtime.Intrinsics", StringComparison.Ordinal) || parent.StartsWith("System.Numerics", StringComparison.Ordinal)) && name is "Sum" or "Dot"
+                        || parent is "System.Numerics.Vector`1" or "System.Numerics.Vector"
                         || (parent == "System.Linq.Enumerable" && BannedLinq.Contains(name))
                         || (parent == "System.MemoryExtensions" && name is "Sum" or "Max" or "Min");
                     if (banned)
@@ -217,7 +260,7 @@ public class MeasurementDeterminismTests
     {
         IReadOnlyList<string> found = BannedCalls(typeof(MeasurementDeterminismTests).Assembly, owner => owner == "Encspect.Tests.Measurement.BannedSamples");
 
-        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Enumerable.Sum" })
+        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
         {
             Assert.Contains(found, f => f.EndsWith(call, StringComparison.Ordinal));
         }
@@ -242,6 +285,9 @@ internal static class BannedSamples
         sum += System.Runtime.Intrinsics.Vector128.ConvertToInt64Native(v)[0];
         sum += System.Runtime.Intrinsics.Vector128.MaxNative(v, w)[0];
         sum += System.Runtime.Intrinsics.Vector128.FusedMultiplyAdd(v, w, v)[0];
+        sum += System.Runtime.Intrinsics.Vector128.Sum(v) + System.Runtime.Intrinsics.Vector128.Dot(v, w);
+        var wide = new System.Numerics.Vector<double>(x);
+        sum += (wide + wide)[0];
         sum += Math.Sqrt(x) + Math.Floor(x) + Math.Min(x, sum);
         return sum;
     }

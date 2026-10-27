@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Writes the lossy-derived measurement fixtures in tests/fixtures/measurement (lossy-*.flac) and their manifests (*.expected.json).
 
-A pinned input (generated here: 2 s of stereo pink noise with a 330 Hz tone at -20 dBFS RMS, 16 bits, from fixed generators) is encoded with
+A pinned input (generated here: 1 s of mono pink noise with a 330 Hz tone at -20 dBFS RMS, 16 bits, from fixed generators) is encoded with
 LAME, oggenc, FFmpeg's aac encoder and opusenc, decoded again with the encoder's own decoder where it has one (lame --decode, oggdec, opusdec;
 FFmpeg for aac), and written as a FLAC file by flac -8: a lossless file made from a lossy encode, which is the use case of the spectral cutoff
-(docs/design/spectral-analysis.md, "Lossless files from lossy encodes").
+(docs/design/spectral-analysis.md, "Lossless files from lossy encodes"). The files are 1 s of mono, for the size of the repository.
 
 The files are committed because the encoders' output depends on their versions (LAME 3.100, vorbis-tools 1.4.2 with libvorbis, FFmpeg 6.1.1
 of Ubuntu 24.04, opus-tools 0.2 with libopus 1.4, flac 1.4.3: the tools that wrote the committed files; CI's Ubuntu 26.04 has newer ones and
@@ -36,35 +36,34 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "measurement"
 
 TOOLS = "LAME 3.100, vorbis-tools 1.4.2 (oggenc, oggdec), FFmpeg 6.1.1-3ubuntu5 (aac), opus-tools 0.2 with libopus 1.4 (opusenc, opusdec), flac 1.4.3 (Ubuntu 24.04)"
-SECONDS = 2
+SECONDS = 1
 
-# name: (encoder, input rate, settings text, arguments, expected: "found" or "none")
+# name: (input rate, settings text, arguments, expected: "found" or "none"). The bitrates are those of a mono stream: half the stereo ones the
+# design's table used (-b 64 for its -b 128), so a channel gets the same bits.
 LAME = {
-    "lame-b128": (44100, "-b 128", ["-b", "128"], "found"),
-    "lame-b192": (44100, "-b 192", ["-b", "192"], "found"),
-    "lame-b320": (44100, "-b 320", ["-b", "320"], "found"),
+    "lame-b64": (44100, "-b 64", ["-b", "64"], "found"),
+    "lame-b96": (44100, "-b 96", ["-b", "96"], "found"),
+    "lame-b160": (44100, "-b 160", ["-b", "160"], "found"),
     "lame-v2": (44100, "-V 2", ["-V", "2"], "found"),
     "lame-v5": (44100, "-V 5", ["-V", "5"], "found"),
     "lame-v0": (44100, "-V 0", ["-V", "0"], "none"),
-    "lame-b128-48000": (48000, "-b 128", ["-b", "128"], "found"),
-    "lame-b64-22050": (22050, "-b 64", ["-b", "64"], "found"),
+    "lame-b64-48000": (48000, "-b 64", ["-b", "64"], "found"),
+    "lame-b32-22050": (22050, "-b 32", ["-b", "32"], "found"),
 }
 VORBIS = {"oggenc-q2": ("-q 2", "2", "found"), "oggenc-q5": ("-q 5", "5", "found"), "oggenc-q8": ("-q 8", "8", "none")}
-AAC = {"aac-96k": "96k", "aac-128k": "128k", "aac-192k": "192k"}
-OPUS = {"opus-96k": "96"}
+AAC = {"aac-48k": "48k", "aac-64k": "64k", "aac-96k": "96k"}
+OPUS = {"opus-48k": "48"}
 
 
 def write_input(path, rate):
-    """2 s of stereo pink noise with a 330 Hz tone, 16 bits."""
-    channels = []
-    for c in range(2):
-        values = pink(rate * SECONDS, 100 + c, -20.0, rate=rate)
-        channels.append([max(-32768, min(32767, math.floor(v * 32768 + 0.5))) for v in values])
+    """1 s of mono pink noise with a 330 Hz tone, 16 bits."""
+    values = pink(rate * SECONDS, 100, -20.0, rate=rate)
+    samples = [max(-32768, min(32767, math.floor(v * 32768 + 0.5))) for v in values]
     with wave.open(str(path), "wb") as w:
-        w.setnchannels(2)
+        w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(rate)
-        w.writeframes(b"".join(struct.pack("<hh", channels[0][i], channels[1][i]) for i in range(rate * SECONDS)))
+        w.writeframes(b"".join(struct.pack("<h", v) for v in samples))
 
 
 def run(*args):
@@ -150,7 +149,7 @@ def write_manifest(name, entry):
     found = entry["model"]["cutoff"]["is_found"]
     if (entry["expect_cutoff"] == "found") != found:
         sys.exit(f"{name}: expected {entry['expect_cutoff']}, the model says {'found' if found else 'none'}")
-    (OUT / f"lossy-{name}.expected.json").write_text(json.dumps(entry, indent=1) + "\n")
+    (OUT / f"lossy-{name}.expected.json").write_text(mm.dumps(entry))
     cutoff = entry["model"]["cutoff"]
     print(name, len(data), cutoff.get("frequency"), cutoff.get("step_tenths"), cutoff.get("frames_showing"), cutoff.get("frames_with_signal"), entry["stated"])
 

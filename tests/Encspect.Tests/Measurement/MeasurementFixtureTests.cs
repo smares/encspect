@@ -149,7 +149,7 @@ public class MeasurementFixtureTests
             Assert.InRange(cutoff.TransitionStart, 1, cutoff.Frequency);
         }
 
-        Assert.Equal(!Has("is_searched") || !construction.GetProperty("is_searched").GetBoolean() ? m.SampleRate >= 8000 : false, cutoff.IsSearched);
+        Assert.Equal(m.SampleRate >= 8000, cutoff.IsSearched);
     }
 
     public static TheoryData<string> LossyNames()
@@ -180,7 +180,7 @@ public class MeasurementFixtureTests
         {
             Assert.True(cutoff.StepTenthsOfDb >= 330, $"{name}: a step of {cutoff.StepTenthsOfDb} tenths");
             Assert.Equal(cutoff.FramesWithSignal, cutoff.FramesShowing);
-            Assert.True(cutoff.FramesWithSignal >= 40);
+            Assert.True(cutoff.FramesWithSignal >= 20);
         }
 
         // The band is checked at the rates of the encoder's usual range; at 22,050 Hz the band reaches Nyquist and the cutoff lies 500 Hz below it.
@@ -223,7 +223,7 @@ public class MeasurementFixtureTests
     [MemberData(nameof(Names))]
     public void TheMeasureGoldenMatches(string name)
     {
-        string actual = Golden(Analyze(name, new MeasureOptions()));
+        string actual = Golden(Analyze(name, new MeasureOptions()), name);
         string path = Path.Combine(Directory_, name + ".measure.json");
         if (Fixtures.UpdateGolden)
         {
@@ -235,21 +235,35 @@ public class MeasurementFixtureTests
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
-    // What measuring adds: the measurements as the JSON writer gives them, with the grids replaced by their SHA-256, and the measure findings.
-    internal static string Golden(Report report)
+    // The fixtures whose goldens keep their rows and grids whole; every other golden holds the SHA-256 of them (the rows are held to the model's within
+    // 0.1 dB by TheMeasurementsAgreeWithTheModelOfTheFile, so a golden needs only to notice a change).
+    private static readonly string[] WholeGoldens = ["synthetic-sine-bin-center", "synthetic-lines-16000-44100", "synthetic-surround-5-1-wideband-lfe", "lossy-lame-b64"];
+
+    // What measuring adds: the measurements as the JSON writer gives them, with the rows and grids replaced by their SHA-256 (but for four
+    // fixtures), and the measure findings.
+    internal static string Golden(Report report, string name)
     {
         using var stream = new MemoryStream();
         ReportJsonWriter.Write([report], stream, new ReportFilter(ReportSections.Frames | ReportSections.Tags | ReportSections.Statistics | ReportSections.SideInfo) { WritesGrids = true });
         JsonNode measurements = JsonNode.Parse(stream.ToArray())![0]!["streams"]![0]!["measurements"]!.DeepClone();
-        if (measurements["spectrogram"] is JsonObject grid)
+        if (!WholeGoldens.Contains(name))
         {
-            grid["power"] = Hash(grid["power"]!.GetValue<string>());
-        }
+            if (measurements["spectrum"]?["rows"] is JsonObject rows)
+            {
+                rows["combined"] = HashRow(rows["combined"]!.AsArray());
+                rows["perChannel"] = new JsonArray([.. rows["perChannel"]!.AsArray().Select(r => (JsonNode)HashRow(r!.AsArray()))]);
+            }
 
-        if (measurements["waveform"] is JsonObject wave)
-        {
-            wave["minimum"] = Hash(wave["minimum"]!.GetValue<string>());
-            wave["maximum"] = Hash(wave["maximum"]!.GetValue<string>());
+            if (measurements["spectrogram"] is JsonObject grid)
+            {
+                grid["power"] = Hash(grid["power"]!.GetValue<string>());
+            }
+
+            if (measurements["waveform"] is JsonObject wave)
+            {
+                wave["minimum"] = Hash(wave["minimum"]!.GetValue<string>());
+                wave["maximum"] = Hash(wave["maximum"]!.GetValue<string>());
+            }
         }
 
         var result = new JsonObject
@@ -257,7 +271,36 @@ public class MeasurementFixtureTests
             ["measurements"] = measurements,
             ["findings"] = new JsonArray([.. report.Findings.Where(f => f.Code.StartsWith("measure.", StringComparison.Ordinal)).Select(f => (JsonNode)new JsonObject { ["code"] = f.Code, ["message"] = f.Message })]),
         };
-        return result.ToJsonString(new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }).ReplaceLineEndings("\n") + "\n";
+        return Write(result, 0) + "\n";
+    }
+
+    // Indented by two spaces, with every array of plain values on one line.
+    private static string Write(JsonNode? node, int depth)
+    {
+        string pad = new(' ', (depth + 1) * 2);
+        switch (node)
+        {
+            case JsonObject obj:
+                return obj.Count == 0 ? "{}" : "{\n" + string.Join(",\n", obj.Select(p => $"{pad}{JsonSerializer.Serialize(p.Key)}: {Write(p.Value, depth + 1)}")) + "\n" + new string(' ', depth * 2) + "}";
+            case JsonArray array when array.All(e => e is not JsonObject and not JsonArray):
+                return "[" + string.Join(", ", array.Select(e => e is null ? "null" : e.ToJsonString())) + "]";
+            case JsonArray array:
+                return "[\n" + string.Join(",\n", array.Select(e => pad + Write(e, depth + 1))) + "\n" + new string(' ', depth * 2) + "]";
+            default:
+                return node is null ? "null" : node.ToJsonString(new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+        }
+    }
+
+    // A row of tenths as 16-bit little-endian values, null as the value of no power.
+    private static string HashRow(JsonArray row)
+    {
+        byte[] bytes = new byte[row.Count * 2];
+        for (int i = 0; i < row.Count; i++)
+        {
+            System.Buffers.Binary.BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(i * 2), row[i] is null ? MeasurementLimits.NoPower : row[i]!.GetValue<short>());
+        }
+
+        return "sha256:" + Convert.ToHexStringLower(SHA256.HashData(bytes));
     }
 
     private static string Hash(string base64) => "sha256:" + Convert.ToHexStringLower(SHA256.HashData(Convert.FromBase64String(base64)));
@@ -269,8 +312,6 @@ public class MeasurementFixtureTests
 
         Assert.Equal(2, m.Spectrogram!.HopsPerColumn);
         Assert.InRange(m.Spectrogram.Columns, 512, 1024);
-        int perSecond = 44100 / (m.Spectrogram.HopSamples * m.Spectrogram.HopsPerColumn / 1) == 0 ? 0 : 0;
-        _ = perSecond;
         foreach (int second in new[] { 10, 25, 40 })
         {
             int column = second * 44100 / (m.Spectrogram.HopSamples * m.Spectrogram.HopsPerColumn);

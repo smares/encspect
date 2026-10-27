@@ -27,8 +27,8 @@ public class MeasurementOutputTests
         Assert.Equal(CommandLine.Success, code);
         string[] lines = output.ReplaceLineEndings("\n").Split('\n');
         int verified = Array.FindIndex(lines, l => l.TrimStart().StartsWith("Verified: ", StringComparison.Ordinal));
-        Assert.StartsWith("Measured: 1.5 s of 1 channel", lines[verified + 1].TrimStart());
-        Assert.Matches(@"^\s+Spectral Cutoff: 16,0\d\d Hz \(a step of 81\.6 dB, transition from 1[56],\d{3} Hz, in 31 of 31 frames with signal\)$", lines[verified + 2]);
+        Assert.StartsWith("Measured: 1.0 s of 1 channel", lines[verified + 1].TrimStart());
+        Assert.Matches(@"^\s+Spectral Cutoff: 16,0\d\d Hz \(a step of 81\.6 dB, transition from 1[56],\d{3} Hz, in 20 of 20 frames with signal\)$", lines[verified + 2]);
         Assert.Equal(lines[verified].Length - lines[verified].TrimStart().Length, lines[verified + 1].Length - lines[verified + 1].TrimStart().Length);
         Assert.Equal(2, lines[verified + 2].Length - lines[verified + 2].TrimStart().Length - (lines[verified + 1].Length - lines[verified + 1].TrimStart().Length));
     }
@@ -69,9 +69,9 @@ public class MeasurementOutputTests
 
         JsonElement measurements = JsonDocument.Parse(output).RootElement[0].GetProperty("streams")[0].GetProperty("measurements");
         Assert.Equal("complete", measurements.GetProperty("status").GetString());
-        Assert.Equal(66150, measurements.GetProperty("samples").GetInt64());
+        Assert.Equal(44100, measurements.GetProperty("samples").GetInt64());
         JsonElement spectrum = measurements.GetProperty("spectrum");
-        Assert.Equal((4096, 512, 4, 31), (spectrum.GetProperty("fftSize").GetInt32(), spectrum.GetProperty("rowCount").GetInt32(), spectrum.GetProperty("binsPerRow").GetInt32(), spectrum.GetProperty("frames").GetInt32()));
+        Assert.Equal((4096, 512, 4, 20), (spectrum.GetProperty("fftSize").GetInt32(), spectrum.GetProperty("rowCount").GetInt32(), spectrum.GetProperty("binsPerRow").GetInt32(), spectrum.GetProperty("frames").GetInt32()));
         Assert.Equal(10, spectrum.GetProperty("rows").GetProperty("valuesPerUnit").GetInt32());
         Assert.Equal(512, spectrum.GetProperty("rows").GetProperty("combined").GetArrayLength());
         Assert.Equal(1, spectrum.GetProperty("rows").GetProperty("perChannel").GetArrayLength());
@@ -209,7 +209,7 @@ public class MeasurementOutputTests
     [Fact]
     public void TheTextNeverCallsACutoffAVerdict()
     {
-        foreach (string name in new[] { "lossy-lame-b128", "lossy-lame-v0", "synthetic-white-44100", "synthetic-white-2000" })
+        foreach (string name in new[] { "lossy-lame-b64", "lossy-lame-v0", "synthetic-white-44100", "synthetic-white-2000" })
         {
             StreamMeasurements m = MeasurementFixtureTests.Analyze(name, new MeasureOptions()).Streams.Single().Measurements!;
             string text = string.Join('\n', MeasurementText.Lines(m, isLossy: false).Select(l => l.Text));
