@@ -13,7 +13,10 @@ rollout has FLAC files only; the WAV twins come with the PCM route (step 3).
     - mixed content (half band-limited, half wideband), band-limited noise followed by digital silence, an impulse then silence;
     - 5.1 with a wideband LFE that must not set the cutoff;
     - a stream shorter than one frame, and one of more than 1,024 hops (the grids merge columns);
-    - gaps: frames removed, and a jump of 2^40 samples; and the same audio at two block sizes.
+    - gaps: frames removed, and a jump of 2^40 samples; and the same audio at two block sizes;
+    - levels (step 2): a full-scale sine, the most negative code (8 bits), a full-scale square wave, DC offsets, clipping runs of 1, 2, 3, 5, 100 and
+      across block boundaries, leading, trailing and middle silence (mono and stereo), 16-bit audio in 24-bit samples, an all-silent stream, runs
+      and silence that a gap must keep apart, and 32-bit samples at full scale (sums wider than 64 bits).
 
 Each manifest is worked out from the file by measurement_model.py (its own FFT, spectrum and waveform; its cutoff method is transliterated from the analyzer), plus what the signal
 was built to have: the cutoff in hertz, or none. MeasurementFixtureTests holds the analyzer to the model and the construction.
@@ -171,17 +174,25 @@ def best_fixed(samples):
     return best[1]
 
 
-def subframe_writer(samples, bits):
+def subframe_writer(samples, bits, wasted=False, verbatim=False):
     if all(s == samples[0] for s in samples):
         return lambda w: m.write_subframe(w, samples, "constant", bits)
+    if verbatim:
+        return lambda w: m.write_subframe(w, samples, "verbatim", bits)
+    shift = 0
+    if wasted:
+        combined = 0
+        for sample in samples:
+            combined |= sample
+        shift = (combined & -combined).bit_length() - 1 if combined else 0
     order = best_fixed(samples)
     partition_order = 0
     while partition_order < 5 and len(samples) % (1 << (partition_order + 1)) == 0 and (len(samples) >> (partition_order + 1)) > order + 16:
         partition_order += 1
-    return lambda w: m.write_subframe(w, samples, "fixed", bits, order=order, partition_order=partition_order, method=1 if bits > 16 else 0)
+    return lambda w: m.write_subframe(w, samples, "fixed", bits, wasted=shift, order=order, partition_order=partition_order, method=1 if bits > 16 else 0)
 
 
-def flac_file(channels, rate, bits, block=4096, numbers=None, drop=(), md5_of=None):
+def flac_file(channels, rate, bits, block=4096, numbers=None, drop=(), md5_of=None, wasted=False, verbatim=False):
     """A FLAC file of the channels (lists of integers). The frames are fixed-size blocks numbered from 0 (numbers: the frame number
     of each block instead), and the blocks whose index is in drop are left out."""
     length = len(channels[0])
@@ -194,7 +205,7 @@ def flac_file(channels, rate, bits, block=4096, numbers=None, drop=(), md5_of=No
         part = [c[span.start:span.stop] for c in channels]
         number = numbers[i] if numbers else i
         header = m.frame_header(number, len(span), rate, len(channels) - 1, bits)
-        frames.append(m.write_frame(header, [subframe_writer(s, bits) for s in part]))
+        frames.append(m.write_frame(header, [subframe_writer(s, bits, wasted, verbatim) for s in part]))
         kept.append(part)
     width = (bits + 7) // 8
     pcm = bytearray()
@@ -311,12 +322,95 @@ def build():
     add("gap-jump-2-40", "Two blocks, then two more numbered 2^28 frames later: the positions jump by about 2^40 samples.", [gap_audio[:16384]], rate44, 16,
         {"cutoff_hz": None, "unspecified": True, "jump": 1 << 40}, numbers=[0, 1, 1 << 28, (1 << 28) + 1])
 
+    add_levels()
+
+
+def small_noise(length, seed, amplitude=300, nonzero=False):
+    """Integers in [-amplitude, amplitude] from the fixed generator; with nonzero, never 0 (so silence is only where it is put)."""
+    rng = Lcg(seed)
+    out = []
+    for _ in range(length):
+        v = math.floor(rng.signed() * amplitude + 0.5)
+        out.append(v if v != 0 or not nonzero else 1)
+    return out
+
+
+def add_levels():
+    """The fixtures of the levels (docs/design/spectral-analysis.md, "Levels"). Each carries what it was built to have in construction["levels"]
+    (stream and channels), exact where the construction fixes a figure; the model's figures are checked against the analyzer as for every fixture."""
+    rate = 44100
+    unspecified = {"cutoff_hz": None, "unspecified": True}
+
+    sine = [max(-32768, min(32767, math.floor(32768 * math.sin(2 * math.pi * (i % 441) / 441) + 0.5))) for i in range(8820)]
+    add("levels-sine-full-scale", "A sine of amplitude 1.0 with a period of 441 samples in 16 bits: its peak is clamped to 32,767.", [sine], rate, 16,
+        dict(unspecified, levels={"stream": {"highest_magnitude": 32768 if min(sine) == -32768 else 32767}}))
+
+    low = small_noise(4096, 3, 60)
+    low[1000:1004] = [-128] * 4
+    low[2000] = 127
+    add("levels-most-negative-8-bits", "8-bit noise with four samples of the most negative code, -128, and one of +127: the most negative code counts as full scale.", [low], rate, 8,
+        dict(unspecified, levels={"stream": {"highest_magnitude": 128, "sample_peak_tenths": 0, "clipping_runs": 1, "clipped_samples": 4, "longest_clipping_run": 4}}))
+
+    square = [32767 if (i // 50) % 2 == 0 else -32768 for i in range(5000)]
+    add("levels-square-full-scale", "A square wave between +32,767 and -32,768 with a half period of 50 samples: RMS and peak read 0 dBFS, every half period is a run.", [square],
+        rate, 16, dict(unspecified, levels={"stream": {"sample_peak_tenths": 0, "rms_tenths": 0, "clipping_runs": 100, "clipped_samples": 5000, "longest_clipping_run": 50}}))
+
+    left = [1000 + (200 if i % 2 == 0 else -200) for i in range(8192)]
+    right = [-300 + (100 if i % 2 == 0 else -100) for i in range(8192)]
+    add("levels-dc-offset", "Two channels alternating around a constant: 1,000 (left) and -300 (right) in 16 bits, so the means are exact.", [left, right], rate, 16,
+        dict(unspecified, levels={"stream": {"dc_micropercent": 3051758}, "channels": [{"dc_micropercent": 3051758, "highest_magnitude": 1200}, {"dc_micropercent": -915527, "highest_magnitude": 400}]}))
+
+    runs = small_noise(8192, 5, 300)
+    runs[0:3] = [32767] * 3
+    runs[100] = 32767
+    runs[200:202] = [32767] * 2
+    runs[300:303] = [32767] * 3
+    runs[400:403] = [-32768] * 3
+    runs[500:600] = [32767] * 100
+    runs[700:704] = [32767, 32767, -32768, -32768]
+    runs[4094:4099] = [-32768] * 5
+    runs[8188:8192] = [32767] * 4
+    add("levels-clipping-runs", "Noise with runs at the extreme codes: 1 and 2 samples (not runs), 3 at the start, 3 at each extreme, 100, two of 2 at opposite extremes side by side, 5 across a block boundary and 4 at the end.",
+        [runs], rate, 16, dict(unspecified, levels={"stream": {"clipping_runs": 6, "clipped_samples": 118, "longest_clipping_run": 100}}))
+
+    mono_silence = [0] * 1000 + small_noise(4000, 7, 299, nonzero=True) + [0] * 500 + small_noise(3000, 8, 299, nonzero=True) + [0] * 2000
+    add("levels-silence-positions", "Noise that never reaches 0 with 1,000 samples of digital silence at the start, 500 in the middle and 2,000 at the end.", [mono_silence], rate, 16,
+        dict(unspecified, levels={"stream": {"silent_at_start": 1000, "silent_at_end": 2000, "silent_samples": 3500, "low_bits_unused": 0}}))
+
+    first = [0] * 3000 + small_noise(5192, 9, 299, nonzero=True)
+    second = [0] * 1000 + small_noise(6692, 10, 299, nonzero=True) + [0] * 500
+    add("levels-silence-stereo", "Two channels of noise that never reaches 0: the left silent for its first 3,000 samples, the right for its first 1,000 and last 500; the sample frames silent in both are the first 1,000.",
+        [first, second], rate, 16, dict(unspecified, levels={"stream": {"silent_at_start": 1000, "silent_at_end": 0, "silent_samples": 1000},
+                                                             "channels": [{"silent_at_start": 3000, "silent_at_end": 0, "silent_samples": 3000}, {"silent_at_start": 1000, "silent_at_end": 500, "silent_samples": 1500}]}))
+
+    audio = small_noise(8192, 11, 20000)
+    add("levels-low-bits-24-in-16", "16-bit noise as 24-bit samples shifted left by 8 (left) and by 12 (right): the low bits that are never set.",
+        [[v << 8 for v in audio], [v << 12 for v in small_noise(8192, 12, 2000)]], rate, 24,
+        dict(unspecified, levels={"stream": {"low_bits_unused": 8}, "channels": [{"low_bits_unused": 8}, {"low_bits_unused": 12}]}), wasted=True)
+
+    add("levels-silent", "8,192 samples of digital silence: no peak, no level, no bit in use.", [[0] * 8192], rate, 16,
+        dict(unspecified, levels={"stream": {"sample_peak_tenths": None, "rms_tenths": None, "dc_micropercent": 0, "silent_at_start": 8192, "silent_at_end": 8192, "silent_samples": 8192, "low_bits_unused": None}}))
+
+    gap_audio = small_noise(8192, 13, 299, nonzero=True)
+    gap_audio[0:200] = [0] * 200
+    gap_audio[1022:1024] = [32767] * 2
+    gap_audio[2048:2050] = [32767] * 2
+    gap_audio[4096 - 300:4096] = [0] * 300
+    gap_audio[6144:6544] = [0] * 400
+    add("levels-gaps", "Blocks of 1,024 samples with the third and sixth removed: two samples at +32,767 before the first gap and two after it (no run), 300 zeros before the second and 400 after it (not one stretch), 200 at the start.",
+        [gap_audio], rate, 16, dict(unspecified, levels={"stream": {"clipping_runs": 0, "silent_at_start": 200, "silent_at_end": 0, "silent_samples": 900}}), block=1024, drop=(2, 5))
+
+    wide = [2147483647 if i % 128 < 96 else -2147483648 for i in range(4096)]
+    add("levels-full-scale-32-bits", "A 32-bit square wave between +2,147,483,647 and -2,147,483,648, high for 96 and low for 32 samples of every 128: the sum of squares passes 2^64 within two samples.",
+        [wide], rate, 32, dict(unspecified, levels={"stream": {"sample_peak_tenths": 0, "clipping_runs": 64, "clipped_samples": 4096, "longest_clipping_run": 96, "highest_magnitude": 2147483648}}), verbatim=True)
+
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     build()
     for name, (description, channels, rate, bits, construction, block, layout, options) in FIXTURES.items():
-        data = flac_file(channels, rate, bits, block=block, numbers=options.get("numbers"), drop=options.get("drop", ()))
+        data = flac_file(channels, rate, bits, block=block, numbers=options.get("numbers"), drop=options.get("drop", ()), wasted=options.get("wasted", False),
+                         verbatim=options.get("verbatim", False))
         stem = OUT / f"synthetic-{name}"
         stem.with_suffix(".flac").write_bytes(data)
         text = mm.dumps(manifest(data, description, construction, layout))

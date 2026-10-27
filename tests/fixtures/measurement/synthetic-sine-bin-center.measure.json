@@ -67,6 +67,41 @@
         }
       ]
     },
+    "levels": {
+      "format": "integer",
+      "bitsPerSample": 16,
+      "samplePeak": {
+        "value": -6,
+        "unit": "dBFS"
+      },
+      "rms": {
+        "value": -9,
+        "unit": "dBFS"
+      },
+      "dcOffset": {
+        "value": 0.004084,
+        "unit": "%"
+      },
+      "dcOffsetLevel": {
+        "value": -87.8,
+        "unit": "dBFS"
+      },
+      "clipping": {
+        "minimumRunLength": 3,
+        "runs": 0,
+        "samples": 0,
+        "longestRun": 0
+      },
+      "digitalSilence": {
+        "atStart": 1,
+        "atEnd": 0,
+        "total": 173
+      },
+      "bitDepth": {
+        "lowBitsUnused": 0,
+        "highestMagnitude": 16384
+      }
+    },
     "spectrogram": {
       "columns": 11,
       "rows": 512,

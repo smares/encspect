@@ -169,6 +169,135 @@
         }
       ]
     },
+    "levels": {
+      "format": "integer",
+      "bitsPerSample": 16,
+      "samplePeak": {
+        "value": -17,
+        "unit": "dBFS",
+        "perChannel": [-18.6, -17, -19.7, -25.2, -17.3, -19.7]
+      },
+      "rms": {
+        "value": -30,
+        "unit": "dBFS",
+        "perChannel": [-30, -30, -30, -30, -30, -30]
+      },
+      "dcOffset": {
+        "value": -0.02132,
+        "unit": "%",
+        "perChannel": [0.000569, -0.001115, 0.001049, -0.02132, 0.000562, 0.000974]
+      },
+      "dcOffsetLevel": {
+        "value": -73.4,
+        "unit": "dBFS",
+        "perChannel": [-104.9, -99.1, -99.6, -73.4, -105, -100.2]
+      },
+      "clipping": {
+        "minimumRunLength": 3,
+        "runs": 0,
+        "samples": 0,
+        "longestRun": 0,
+        "perChannel": [
+          {
+            "runs": 0,
+            "samples": 0,
+            "longestRun": 0
+          },
+          {
+            "runs": 0,
+            "samples": 0,
+            "longestRun": 0
+          },
+          {
+            "runs": 0,
+            "samples": 0,
+            "longestRun": 0
+          },
+          {
+            "runs": 0,
+            "samples": 0,
+            "longestRun": 0
+          },
+          {
+            "runs": 0,
+            "samples": 0,
+            "longestRun": 0
+          },
+          {
+            "runs": 0,
+            "samples": 0,
+            "longestRun": 0
+          }
+        ]
+      },
+      "digitalSilence": {
+        "atStart": 0,
+        "atEnd": 0,
+        "total": 0,
+        "perChannel": [
+          {
+            "atStart": 0,
+            "atEnd": 0,
+            "total": 13
+          },
+          {
+            "atStart": 0,
+            "atEnd": 0,
+            "total": 6
+          },
+          {
+            "atStart": 0,
+            "atEnd": 0,
+            "total": 17
+          },
+          {
+            "atStart": 0,
+            "atEnd": 0,
+            "total": 7
+          },
+          {
+            "atStart": 0,
+            "atEnd": 0,
+            "total": 6
+          },
+          {
+            "atStart": 0,
+            "atEnd": 0,
+            "total": 8
+          }
+        ]
+      },
+      "bitDepth": {
+        "lowBitsUnused": 0,
+        "highestMagnitude": 4633,
+        "perChannel": [
+          {
+            "lowBitsUnused": 0,
+            "highestMagnitude": 3833
+          },
+          {
+            "lowBitsUnused": 0,
+            "highestMagnitude": 4633
+          },
+          {
+            "lowBitsUnused": 0,
+            "highestMagnitude": 3401
+          },
+          {
+            "lowBitsUnused": 0,
+            "highestMagnitude": 1795
+          },
+          {
+            "lowBitsUnused": 0,
+            "highestMagnitude": 4468
+          },
+          {
+            "lowBitsUnused": 0,
+            "highestMagnitude": 3404
+          }
+        ]
+      }
+    },
     "spectrogram": {
       "columns": 22,
       "rows": 512,
