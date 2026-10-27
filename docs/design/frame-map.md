@@ -221,7 +221,7 @@ The channel bit share's diverging scale centered on 50 % stays a [follow-up](#fo
 
 - **Goldens:** every JSON report of an MPEG stream gains the field on two series (three where the stream has the per-second share). By a script over `tests/fixtures`: 478 JSON files hold a stream with an MPEG audio codec, of which 299 are `.report.json` goldens and 179 are `.expected.json`; the 296 reports with a "Bitrate" series are the ones that change. The `.expected.json` files hold no series and do not change. These include a few non-MPEG containers that carry MPEG (WAV 12, MP4 2, Ogg 2, AAC and ADTS 2 each). **About 300 goldens change**, each by added lines only, so the diff is checked by script (a golden's lines minus the added `declaredRange` lines equal the old golden). Inline JSON in `CategorySeriesWriterTests` and `MemoryTests` is checked the same way.
 - **Size:** an MPEG report grows by about 100 bytes per stream (14 numbers and the member names), not per frame.
-- **Docs:** `docs/cli.md` (the JSON section: the field, its two forms, and that `schemaVersion` stays 1), `docs/formats/mpeg.md` (which series declare what), `docs/gui.md` ("Frame Map": the key and the clamp).
+- **Docs:** `docs/cli.md` (the JSON section: the field, its two forms, and that `schemaVersion` stays 1), `docs/formats/mpeg-audio.md` (which series declare what), `docs/gui.md` ("Frame Map": the key and the clamp).
 - **Compatibility:** a reader that ignores unknown members sees no change; one that rejects them already fails on every earlier field addition (cli.md, "Schema version").
 
 ## Categories
@@ -302,7 +302,7 @@ A throwaway Avalonia 12.1.4 control in the scratchpad, on the headless platform 
 
 ## Rollout
 
-0. **Recommended: a small preceding pull request for the declared range,** which can merge before step 4 because nothing in it touches the GUI: `ValueRange` and `Series.DeclaredRange`, the JSON writer, the MPEG opt-in, the model, writer and MPEG tests, `docs/cli.md` and `docs/formats/mpeg.md`, and the roughly 300 re-blessed goldens.
+0. **Recommended: a small preceding pull request for the declared range,** which can merge before step 4 because nothing in it touches the GUI: `ValueRange` and `Series.DeclaredRange`, the JSON writer, the MPEG opt-in, the model, writer and MPEG tests, `docs/cli.md` and `docs/formats/mpeg-audio.md`, and the roughly 300 re-blessed goldens.
    - Reason: the Frame Map pull request should be reviewed for its drawing, not buried under 300 golden files; the preceding one is reviewed for the model and the writer, and its golden diff is checked by script as added lines only.
    - It is also the part with a public contract (the JSON), so it gets its own review and its own green pipeline, and the map then builds on a merged model.
    - If the lead prefers one pull request, the work is the same and goes in the Frame Map pull request after step 4.

@@ -267,8 +267,11 @@ public sealed partial class MpegAudioParser
 
         double[] starts = Enumerable.Range(0, seconds.Count).Select(s => (double)s).ToArray();
         RegionState first = state.Regions[RegionOf(state, firstAudio)];
+        MpegHeader firstHeader = new(frames[firstAudio].Header);
         var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates)
         {
+            // A free-format stream's computed bitrates fall between the table's steps.
+            DeclaredRange = firstHeader.IsFreeFormat ? null : ValueRange.OfSteps(MpegHeader.BitrateSteps(firstHeader.IsMpeg1, firstHeader.Layer)),
             Description = SeriesText.Bitrate,
             Concept = GraphConcept.BitDistribution,
             Quantity = "Bitrate",

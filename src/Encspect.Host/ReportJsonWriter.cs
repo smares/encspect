@@ -375,6 +375,11 @@ public static class ReportJsonWriter
                 writer.WriteString("quantity", quantity);
             }
 
+            if (series.DeclaredRange is { } range)
+            {
+                WriteDeclaredRange(writer, range);
+            }
+
             if (explain && series.Description is { } description)
             {
                 writer.WriteString("description", description);
@@ -940,6 +945,22 @@ public static class ReportJsonWriter
         writer.WriteEndObject();
         writer.WriteNumber("framesShowing", cutoff.FramesShowing);
         writer.WriteNumber("framesWithSignal", cutoff.FramesWithSignal);
+    }
+
+    private static void WriteDeclaredRange(Utf8JsonWriter writer, ValueRange range)
+    {
+        writer.WriteStartObject("declaredRange");
+        if (range.Steps is { } steps)
+        {
+            WriteNumbers(writer, "steps", steps is double[] array ? array : steps.ToArray());
+        }
+        else
+        {
+            writer.WriteNumber("minimum", range.Minimum);
+            writer.WriteNumber("maximum", range.Maximum);
+        }
+
+        writer.WriteEndObject();
     }
 
     private static void WriteQuantity(Utf8JsonWriter writer, string name, int value, string unit)

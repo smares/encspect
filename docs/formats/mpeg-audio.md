@@ -54,6 +54,7 @@ Streams follow the stream rule shared with ADTS, AC-3 and DTS (the [plan](../PLA
 Each stream, which may span regions, reports its codec, duration, average bitrate and encoder, and for graphs:
 
 - the bitrate and the bit reservoir fill per frame and per second, under the heading "Bit Distribution" (concept `bitDistribution`), each pair one `quantity` ("Bitrate", "Reservoir Fill");
+- a **declared range** on two series (JSON `declaredRange`, see `docs/cli.md`): the per-frame "Bitrate" declares the steps of its version and layer's bitrate table (the 14 nonzero, unreserved entries), none for a free-format stream; "Channel Bit Share" and "Channel Bit Share Over Time" declare 0 to 100;
 - the **category series** of the coding, derived at the end from the kept frame records (one code per frame, 4 per Layer III frame of two channels for the block types), with the counts of the tally node each is anchored to, under the same names, and a time index of the seconds:
   - "Channel Modes" (no heading, in "Other");
   - "Stereo Coding", "Joint Stereo Modes" (Layer III) and "Intensity Stereo Bounds" (Layers I and II), under "Stereo Coding";

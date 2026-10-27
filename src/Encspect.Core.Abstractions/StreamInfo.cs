@@ -155,6 +155,74 @@ public sealed class Series
     // series by name. Null for a series that is a quantity of its own.
     public string? Quantity { get; init; }
 
+    // The range the series' format defines for its values, in the series' unit, such as the bitrate table of an MPEG layer or 0 to
+    // 100 for a percentage, so that a front end can shade by it and a color means the same in every file of that kind. Null where
+    // the format defines none; a front end then uses the file's own range. A fact the parser states, not a judgment of the audio.
+    public ValueRange? DeclaredRange { get; init; }
+
     // The shared concept the series shows, which front ends group by; None for a series that belongs to none.
     public GraphConcept Concept { get; init; }
+}
+
+// The range a series declares for its values, in the series' unit: either the steps its format allows or a fixed minimum and
+// maximum. Built with OfSteps or Between, so that a range holds only one of them.
+public sealed class ValueRange
+{
+    private ValueRange(IReadOnlyList<double>? steps, double minimum, double maximum)
+    {
+        Steps = steps;
+        Minimum = minimum;
+        Maximum = maximum;
+    }
+
+    // The steps in ascending order, or null for a range between a minimum and a maximum.
+    public IReadOnlyList<double>? Steps { get; }
+
+    // The first step, or the fixed minimum.
+    public double Minimum { get; }
+
+    // The last step, or the fixed maximum.
+    public double Maximum { get; }
+
+    // The steps a format allows: finite, strictly ascending, at least 2.
+    public static ValueRange OfSteps(IEnumerable<double> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        double[] steps = values.ToArray();
+        if (steps.Length < 2)
+        {
+            throw new ArgumentException("A range of steps needs at least 2 steps.", nameof(values));
+        }
+
+        for (int i = 0; i < steps.Length; i++)
+        {
+            if (!double.IsFinite(steps[i]))
+            {
+                throw new ArgumentException("A step must be finite.", nameof(values));
+            }
+
+            if (i > 0 && steps[i] <= steps[i - 1])
+            {
+                throw new ArgumentException("The steps must be strictly ascending.", nameof(values));
+            }
+        }
+
+        return new ValueRange(steps, steps[0], steps[^1]);
+    }
+
+    // A fixed minimum and maximum: both finite, minimum below maximum.
+    public static ValueRange Between(double minimum, double maximum)
+    {
+        if (!double.IsFinite(minimum) || !double.IsFinite(maximum))
+        {
+            throw new ArgumentException("The minimum and the maximum must be finite.", nameof(minimum));
+        }
+
+        if (minimum >= maximum)
+        {
+            throw new ArgumentException("The minimum must be below the maximum.", nameof(minimum));
+        }
+
+        return new ValueRange(null, minimum, maximum);
+    }
 }

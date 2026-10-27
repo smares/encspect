@@ -73,6 +73,10 @@ internal readonly record struct MpegHeader(uint Raw)
 
     public int Bitrate => (IsMpeg1 ? Mpeg1Bitrates : Mpeg2Bitrates)[Layer][BitrateIndex];
 
+    // The bitrates in kbps that the version and layer's table allows, without the free (0) and reserved (15) indexes.
+    public static IEnumerable<double> BitrateSteps(bool isMpeg1, int layer) =>
+        (isMpeg1 ? Mpeg1Bitrates : Mpeg2Bitrates)[layer].Skip(1).Select(b => (double)b);
+
     public int SlotSize => Layer == 1 ? 4 : 1;
 
     // Layer III in MPEG 2 and 2.5 codes one granule per frame instead of two.
