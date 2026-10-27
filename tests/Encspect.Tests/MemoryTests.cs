@@ -1319,6 +1319,26 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(kept < plainKept + 1_000_000, $"Measuring made the report keep {kept - plainKept} bytes more.");
     }
 
+    // The levels hold a record for each channel and a few counters whatever the length of the stream: the same reading as for the spectrum, with
+    // only the levels asked for.
+    [Fact]
+    public void MeasuringTheLevelsOfManyFlacFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 10_000;
+        const int frames = 40_000;
+        var measure = new MeasureOptions { Include = MeasurementKinds.Levels };
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(FlacFrames(100)), new AnalysisOptions { Decoding = new DecodeOptions { Measure = measure } });
+
+        (long fewerHeld, _) = LastFrameReading("frames.flac", FlacFrames(fewer), fewer, 4096, measure: measure);
+        (long held, long kept) = LastFrameReading("frames.flac", FlacFrames(frames), frames, 4096, measure: measure);
+        (_, long plainKept) = LastFrameReading("frames.flac", FlacFrames(frames), frames, 4096, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with the levels; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Measuring the levels held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+        Assert.True(kept < plainKept + 100_000, $"Measuring the levels made the report keep {kept - plainKept} bytes more.");
+    }
+
     // The records of the measurements stay in the report, so the bound of 64 MiB (docs/design/spectral-analysis.md, "Memory") holds them: 400
     // chained Ogg FLAC streams of 24 s each would keep 400 grids of 0.25 MiB (100 MiB) without it, and the streams past the bound say so.
     [Fact]

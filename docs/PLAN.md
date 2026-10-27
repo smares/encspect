@@ -35,7 +35,7 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 | Parsers | Written ourselves, one project per format | Libraries hide the fields this tool exists to show; TagLib# is used only to cross-check |
 | Playback | None | Pure analyzer; removes BASS, native binaries and licensing questions |
 | Plugins | Build-time modules only | No runtime loading, so no version policy and no publishing restrictions |
-| Decoding | Optional, per format | For checksum verification and for the measurements of the decoded audio (spectral cutoff, spectrogram, waveform, and later levels and loudness; [docs/design/spectral-analysis.md](design/spectral-analysis.md)); formats without a decoder still get the full structure report |
+| Decoding | Optional, per format | For checksum verification and for the measurements of the decoded audio (spectral cutoff, spectrogram, waveform, levels, and later loudness; [docs/design/spectral-analysis.md](design/spectral-analysis.md)); formats without a decoder still get the full structure report |
 | Hosting and CI | GitHub, hosted runners | Covers Windows, macOS (Apple Silicon) and Linux on x64 and ARM64 |
 | Name | Encspect | Detenc and Framescope were already taken; Encspect was free |
 | License | MIT | Default in the .NET ecosystem; each dependency's license is still checked individually |

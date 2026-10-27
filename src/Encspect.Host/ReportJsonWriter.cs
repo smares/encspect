@@ -21,7 +21,9 @@ namespace Encspect.Host;
 // concept also has concept, and a numeric series that is a form of a quantity has quantity. A stream of an analysis that
 // asked for measurements has measurements after verification: status, samples, firstPosition, lostSamples, gaps, sampleRate,
 // channels, channelsMeasured, the spectrum (rows in tenths of a dB, the cutoff in whole hertz and tenths of a dB as
-// {value, unit}) and, with --measure-grids, the spectrogram and waveform grids as base64.
+// {value, unit}), the levels (samplePeak, rms, dcOffset and dcOffsetLevel as {value, unit, perChannel}, null for minus infinity;
+// clipping, digitalSilence and bitDepth as counts, bare, with perChannel objects) and, with --measure-grids, the spectrogram and
+// waveform grids as base64.
 public static class ReportJsonWriter
 {
     // Raised whenever a field changes meaning or type, or one is removed; added fields keep it.
@@ -703,6 +705,11 @@ public static class ReportJsonWriter
             writer.WriteEndObject();
         }
 
+        if (m.Status != MeasurementStatus.Failed && m.Levels is { } levels)
+        {
+            WriteLevels(writer, levels, explain);
+        }
+
         if (includeGrids && m.Status != MeasurementStatus.Failed)
         {
             if (m.Spectrogram is { } grid)
@@ -729,6 +736,128 @@ public static class ReportJsonWriter
                 writer.WriteBase64String("maximum", LittleEndian(wave.Maximum.Span));
                 writer.WriteEndObject();
             }
+        }
+
+        writer.WriteEndObject();
+    }
+
+    // A level in tenths of a dB as a decimal placed and not formatted from a double; minus infinity is null.
+    private static void WriteLevel(Utf8JsonWriter writer, int tenths)
+    {
+        if (tenths == MeasurementLimits.NoLevel)
+        {
+            writer.WriteNullValue();
+        }
+        else
+        {
+            writer.WriteNumberValue(tenths / 10m);
+        }
+    }
+
+    // One figure: { value, unit } and, for a stream of several channels, the same figure by channel in that unit.
+    private static void WriteFigure(Utf8JsonWriter writer, string name, string unit, Action<ChannelLevels> write, LevelFigures levels, string? description, string? topic)
+    {
+        writer.WriteStartObject(name);
+        if (description is not null)
+        {
+            writer.WriteString("description", description);
+            writer.WriteString("topic", topic);
+        }
+
+        writer.WritePropertyName("value");
+        write(levels.Stream);
+        writer.WriteString("unit", unit);
+        if (levels.Channels.Count > 1)
+        {
+            writer.WriteStartArray("perChannel");
+            foreach (ChannelLevels channel in levels.Channels)
+            {
+                write(channel);
+            }
+
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteLevels(Utf8JsonWriter writer, LevelFigures levels, bool explain)
+    {
+        writer.WriteStartObject("levels");
+        writer.WriteString("format", levels.Format switch { SampleFormat.Integer => "integer", SampleFormat.Float32 => "float32", _ => "float64" });
+        if (levels.Format == SampleFormat.Integer)
+        {
+            writer.WriteNumber("bitsPerSample", levels.BitsPerSample);
+        }
+
+        if (explain)
+        {
+            writer.WriteString("topic", MeasurementText.LevelsTopic);
+        }
+
+        WriteFigure(writer, "samplePeak", "dBFS", c => WriteLevel(writer, c.SamplePeakTenths), levels, explain ? MeasurementText.SamplePeakDescription : null, MeasurementText.LevelsTopic);
+        WriteFigure(writer, "rms", "dBFS", c => WriteLevel(writer, c.RmsTenths), levels, explain ? MeasurementText.RmsDescription : null, MeasurementText.LevelsTopic);
+        WriteFigure(writer, "dcOffset", "%", c => writer.WriteNumberValue(c.DcOffsetMicropercent / 1_000_000m), levels, explain ? MeasurementText.DcOffsetDescription : null, MeasurementText.DcOffsetTopic);
+        WriteFigure(writer, "dcOffsetLevel", "dBFS", c => WriteLevel(writer, c.DcOffsetTenths), levels, explain ? MeasurementText.DcOffsetDescription : null, MeasurementText.DcOffsetTopic);
+        WriteGroup(writer, "clipping", levels, explain ? MeasurementText.ClippingDescription : null, MeasurementText.ClippingTopic, (w, c) =>
+        {
+            w.WriteNumber("runs", c.ClippingRuns);
+            w.WriteNumber("samples", c.ClippedSamples);
+            w.WriteNumber("longestRun", c.LongestClippingRun);
+        }, w => w.WriteNumber("minimumRunLength", MeasurementLimits.MinimumClippingRun));
+        WriteGroup(writer, "digitalSilence", levels, explain ? MeasurementText.DigitalSilenceDescription : null, MeasurementText.DigitalSilenceTopic, (w, c) =>
+        {
+            w.WriteNumber("atStart", c.SilentAtStart);
+            w.WriteNumber("atEnd", c.SilentAtEnd);
+        }, null);
+        WriteFigure(writer, "zeroSamples", "samples", c => writer.WriteNumberValue(c.ZeroSamples), levels, explain ? MeasurementText.ZeroSamplesDescription : null, MeasurementText.DigitalSilenceTopic);
+        WriteGroup(writer, "bitDepth", levels, explain ? (levels.Format == SampleFormat.Integer ? MeasurementText.LowBitsUnusedDescription : MeasurementText.HasOnly16BitValuesDescription + " " + MeasurementText.HasOnly24BitValuesDescription) : null, MeasurementText.BitDepthUsageTopic, (w, c) =>
+        {
+            if (levels.Format == SampleFormat.Integer)
+            {
+                if (c.LowBitsUnused is { } unused)
+                {
+                    w.WriteNumber("lowBitsUnused", unused);
+                }
+                else
+                {
+                    w.WriteNull("lowBitsUnused");
+                }
+
+                w.WriteNumber("highestMagnitude", c.HighestMagnitude);
+            }
+            else
+            {
+                w.WriteBoolean("hasOnly16BitValues", c.HasOnly16BitValues);
+                w.WriteBoolean("hasOnly24BitValues", c.HasOnly24BitValues);
+            }
+        }, null);
+        writer.WriteEndObject();
+    }
+
+    // A figure of several fields: those of the stream, and for a stream of several channels the same fields by channel.
+    private static void WriteGroup(Utf8JsonWriter writer, string name, LevelFigures levels, string? description, string topic, Action<Utf8JsonWriter, ChannelLevels> fields, Action<Utf8JsonWriter>? constants)
+    {
+        writer.WriteStartObject(name);
+        if (description is not null)
+        {
+            writer.WriteString("description", description);
+            writer.WriteString("topic", topic);
+        }
+
+        constants?.Invoke(writer);
+        fields(writer, levels.Stream);
+        if (levels.Channels.Count > 1)
+        {
+            writer.WriteStartArray("perChannel");
+            foreach (ChannelLevels channel in levels.Channels)
+            {
+                writer.WriteStartObject();
+                fields(writer, channel);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
         }
 
         writer.WriteEndObject();

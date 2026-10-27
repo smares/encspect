@@ -46,8 +46,10 @@ internal static class CommandLine
         Measurements:
           --measure [<kinds>]   Decode, verify and measure each file's audio, for the codings
                                 that have a decoder: the average spectrum and the spectral
-                                cutoff. Kinds, comma-separated: spectrum. Costs more than
-                                --verify. With --csv, fills Is Verified and Spectral Cutoff.
+                                cutoff, and the levels (sample peak, RMS, DC offset, clipping,
+                                digital silence, bit depth). Kinds, comma-separated: spectrum,
+                                levels. Costs more than --verify. With --csv, fills Is Verified,
+                                Spectral Cutoff and Sample Peak.
           --measure-grids       As --measure, and write the spectrogram and waveform grids into
                                 the JSON. The text and CSV never hold them.
 
@@ -479,7 +481,7 @@ internal static class CommandLine
         return UsageError;
     }
 
-    private static readonly Dictionary<string, MeasurementKinds> MeasurementNames = new(StringComparer.OrdinalIgnoreCase) { ["spectrum"] = MeasurementKinds.Spectrum };
+    private static readonly Dictionary<string, MeasurementKinds> MeasurementNames = new(StringComparer.OrdinalIgnoreCase) { ["spectrum"] = MeasurementKinds.Spectrum, ["levels"] = MeasurementKinds.Levels };
 
     private static IEnumerable<string> KnownFormats => DefaultParsers.Formats.Select(p => p.Name);
 

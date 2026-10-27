@@ -10,11 +10,11 @@ public static class ReportCsvWriter
     [
         "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
         "Channel Layout", "Encoder", "Encoder Confidence", "Writer", "Writer Confidence", "Tags", "Errors", "Warnings", "Infos", "Has Object Audio", "JOC Object Count",
-        "Is Protected", "Is Verified", "Protection Scheme", "DRM Systems", "Spectral Cutoff (Hz)",
+        "Is Protected", "Is Verified", "Protection Scheme", "DRM Systems", "Spectral Cutoff (Hz)", "Sample Peak (dBFS)",
     ];
 
     // The columns the writer formats from numbers: counts, durations, rates and the measured figures; they skip the guard against formulas.
-    private static readonly int[] NumericColumns = [.. new[] { "Streams", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Errors", "Warnings", "Infos", "JOC Object Count", "Spectral Cutoff (Hz)" }.Select(n => Array.IndexOf(Columns, n))];
+    private static readonly int[] NumericColumns = [.. new[] { "Streams", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Errors", "Warnings", "Infos", "JOC Object Count", "Spectral Cutoff (Hz)", "Sample Peak (dBFS)" }.Select(n => Array.IndexOf(Columns, n))];
 
     public static void Write(IEnumerable<Report> reports, TextWriter writer) => Write(reports, writer, isVerifying: false);
 
@@ -38,6 +38,7 @@ public static class ReportCsvWriter
                 s.Streams == 0 ? null : s.HasObjectAudio ? "true" : "false", s.JocObjectCount?.ToString(CultureInfo.InvariantCulture),
                 s.Streams == 0 ? null : s.IsProtected ? "true" : "false", isVerifying && s.IsVerified is { } verified ? (verified ? "true" : "false") : null,
                 string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems), s.SpectralCutoff?.ToString(CultureInfo.InvariantCulture),
+                s.SamplePeakTenths is { } peak ? MeasurementText.Tenths(peak) : null,
             ], numeric: NumericColumns);
             writer.Flush();
         }
@@ -62,9 +63,20 @@ public static class ReportCsvWriter
     // not read as one, goes through the guard.
     internal static string Cell(string? value, bool isNumeric) => isNumeric && IsNumber(value) ? value! : Field(value);
 
-    internal static bool IsNumber(string? value) =>
-        !string.IsNullOrEmpty(value) && (char.IsAsciiDigit(value[0]) || (value[0] == '-' && value.Length > 1 && char.IsAsciiDigit(value[1])))
-        && value.All(c => char.IsAsciiDigit(c) || c is '-' or '.');
+    // An optional minus sign, digits, and optionally a point with digits: nothing a spreadsheet reads as a formula or a date.
+    internal static bool IsNumber(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return false;
+        }
+
+        ReadOnlySpan<char> rest = value.AsSpan(value[0] == '-' ? 1 : 0);
+        int point = rest.IndexOf('.');
+        ReadOnlySpan<char> whole = point < 0 ? rest : rest[..point];
+        ReadOnlySpan<char> fraction = point < 0 ? default : rest[(point + 1)..];
+        return whole.Length > 0 && whole.IndexOfAnyExceptInRange('0', '9') < 0 && (point < 0 || (fraction.Length > 0 && fraction.IndexOfAnyExceptInRange('0', '9') < 0));
+    }
 
     // Encoder and writer names and paths come from files. Quoted where they hold a separator, quote or line
     // break; a leading =, +, -, @ or control character gets an apostrophe, so a spreadsheet shows

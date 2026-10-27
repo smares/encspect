@@ -1,0 +1,95 @@
+{
+ "description": "Blocks of 1,024 samples with the second, fourth and sixth removed: the first block and the start of the third are silent (the stretch at the start ends at the gap), two samples at +32,767 end the third block and one starts the fifth (no run), 300 zeros end the fifth block, and the last two blocks are silent (the stretch at the end starts after the gap).",
+ "length": 2119,
+ "construction": {
+  "cutoff_hz": null,
+  "unspecified": true,
+  "levels": {
+   "stream": {
+    "clipping_runs": 0,
+    "silent_at_start": 1024,
+    "silent_at_end": 2048,
+    "zero_samples": 3572
+   }
+  }
+ },
+ "model": {
+  "sample_rate": 44100,
+  "channels": 1,
+  "channels_measured": 1,
+  "bits": 16,
+  "samples": 5120,
+  "first_position": 0,
+  "lost_samples": 3072,
+  "gaps": 3,
+  "fft_size": 4096,
+  "frames": 1,
+  "combined": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  "per_channel": [
+   [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+  ],
+  "cutoff": {
+   "is_searched": true,
+   "is_found": false,
+   "frequency": 0,
+   "transition_start": 0,
+   "step_frequency": 2024,
+   "step_tenths": 0,
+   "frames_showing": 0,
+   "frames_with_signal": 1
+  },
+  "channel_cutoffs": [
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2024,
+    "step_tenths": 0,
+    "frames_showing": 0,
+    "frames_with_signal": 1
+   }
+  ],
+  "levels": {
+   "bits": 16,
+   "stream": {
+    "sample_peak_tenths": 0,
+    "rms_tenths": -323,
+    "dc_micropercent": 57048,
+    "dc_tenths": -649,
+    "clipping_runs": 0,
+    "clipped_samples": 0,
+    "longest_clipping_run": 0,
+    "silent_at_start": 1024,
+    "silent_at_end": 2048,
+    "zero_samples": 3572,
+    "low_bits_unused": 0,
+    "highest_magnitude": 32767
+   },
+   "channels": [
+    {
+     "sample_peak_tenths": 0,
+     "rms_tenths": -323,
+     "dc_micropercent": 57048,
+     "dc_tenths": -649,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 1024,
+     "silent_at_end": 2048,
+     "zero_samples": 3572,
+     "low_bits_unused": 0,
+     "highest_magnitude": 32767
+    }
+   ]
+  },
+  "spectrogram_columns": 4,
+  "hops_per_column": 1,
+  "waveform": [
+   {
+    "minimum": [0, -298, -299, 0],
+    "maximum": [0, 32767, 32767, 0]
+   }
+  ]
+ }
+}

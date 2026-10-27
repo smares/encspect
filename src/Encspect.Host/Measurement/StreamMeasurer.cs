@@ -15,6 +15,12 @@ internal sealed class StreamMeasurer
 
     private const int CheckEvery = 1 << 16;
 
+    // The work per sample of a measured channel for the levels, in the decoders' unit: 4 for integers (about 2 ns), 14 for floats, which are converted
+    // safely first and checked for the bit-depth grids (7.5 to 10.6 ns a sample measured for doubles of any magnitude, a ratio of 1.0 to 1.3 to the reference).
+    private const int IntegerLevelsWeight = 4;
+
+    private const int FloatLevelsWeight = 14;
+
     private const double SmallestSample = 1e-30;
 
     private const double LargestSample = 1024.0;
@@ -26,6 +32,8 @@ internal sealed class StreamMeasurer
     private readonly int _measured;
     private readonly int[] _combined;
     private readonly bool _isMeasuringSpectrum;
+    private readonly LevelsMeter? _levels;
+    private double[] _scratch = [];
     private readonly FftPlan? _plan;
     private readonly CutoffGeometry _geometry;
     private readonly int _hop;
@@ -74,6 +82,11 @@ internal sealed class StreamMeasurer
         _measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
         MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
         _isMeasuringSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
+        if ((kinds & MeasurementKinds.Levels) != 0)
+        {
+            _levels = new LevelsMeter(_measured, format.Format, format.BitsPerSample);
+        }
+
 
         // The speakers: the combined figures leave out the LFE; a stream without a layout uses every channel.
         var combined = new List<int>();
@@ -126,7 +139,16 @@ internal sealed class StreamMeasurer
         int measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
         long bytes = 64 * 1024;
         MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
-        if ((kinds & MeasurementKinds.Spectrum) == 0 || format.SampleRate <= 0)
+        bool isMeasuringSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
+        if ((kinds & MeasurementKinds.Levels) != 0)
+        {
+            bytes += LevelsMeter.EstimateBytes(measured, format.Format, isMeasuringSpectrum);
+
+            // The figures the record keeps: a record of the levels for each channel and one for the stream.
+            bytes += 256L * (measured + 1);
+        }
+
+        if (!isMeasuringSpectrum)
         {
             return bytes;
         }
@@ -222,7 +244,7 @@ internal sealed class StreamMeasurer
             _firstPosition = block.Position;
 
             // The grids count hops from the first one the stream touches, so a stream that starts late has no empty columns before it.
-            _origin = block.Position / _hop * _hop;
+            _origin = _hop > 0 ? block.Position / _hop * _hop : block.Position;
             _next = block.Position;
             _bufferStart = block.Position;
         }
@@ -240,7 +262,7 @@ internal sealed class StreamMeasurer
             return;
         }
 
-        if (!_charge((long)block.Length * _measured * (_isMeasuringSpectrum ? _weight : 1)))
+        if (!_charge((long)block.Length * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight))))
         {
             IsLimited = true;
             _isStopped = true;
@@ -254,12 +276,27 @@ internal sealed class StreamMeasurer
             _next = block.Position;
             _fill = 0;
             _bufferStart = block.Position;
+            _levels?.Gap();
         }
 
         if (!_isMeasuringSpectrum)
         {
-            _samples += block.Length;
-            _next += block.Length;
+            for (int done = 0; done < block.Length;)
+            {
+                if (done > 0 && _token.IsCancellationRequested)
+                {
+                    IsCanceled = true;
+                    _isStopped = true;
+                    return;
+                }
+
+                int count = Math.Min(LevelsMeter.MaxPiece, block.Length - done);
+                AddLevels(block, done, count);
+                _samples += count;
+                _next += count;
+                done += count;
+            }
+
             return;
         }
 
@@ -304,7 +341,32 @@ internal sealed class StreamMeasurer
                 {
                     _maximum[cell] = high;
                 }
+
+                if (_levels is not null)
+                {
+                    if (block.Format == SampleFormat.Integer)
+                    {
+                        _levels.AddIntegers(c, block.Integers.Slice((c * block.Stride) + start, piece));
+                    }
+                    else
+                    {
+                        _levels.AddDoubles(c, _buffers[c].AsSpan(_fill, piece));
+                    }
+                }
+
+                if (block.Format != SampleFormat.Integer)
+                {
+                    foreach (ref double v in _buffers[c].AsSpan(_fill, piece))
+                    {
+                        if (Math.Abs(v) < SmallestSample)
+                        {
+                            v = 0;
+                        }
+                    }
+                }
             }
+
+            _levels?.EndPiece(piece);
 
             _fill += piece;
             _samples += piece;
@@ -329,8 +391,39 @@ internal sealed class StreamMeasurer
         }
     }
 
+    // The levels of a piece when the spectrum is not measured: a float block goes through the same safe conversion into a scratch array.
+    private void AddLevels(PcmBlock block, int start, int count)
+    {
+        if (_levels is null)
+        {
+            return;
+        }
+
+        for (int c = 0; c < _measured; c++)
+        {
+            if (block.Format == SampleFormat.Integer)
+            {
+                _levels.AddIntegers(c, block.Integers.Slice((c * block.Stride) + start, count));
+            }
+            else
+            {
+                if (_scratch.Length < count)
+                {
+                    _scratch = new double[LevelsMeter.MaxPiece];
+                }
+
+                Span<double> target = _scratch.AsSpan(0, count);
+                Convert(block, c, start, count, target, out _, out _);
+                _levels.AddDoubles(c, target);
+            }
+        }
+
+        _levels.EndPiece(count);
+    }
+
     // Scales a channel's samples to full scale +-1 in doubles, with the minimum and maximum. Non-finite floats are 0 and counted, floats
-    // beyond 1,024 times full scale are clamped, and floats under 1e-30 are 0, before anything reaches the arithmetic.
+    // beyond 1,024 times full scale are clamped, before anything reaches the arithmetic. Floats under 1e-30 are kept in the target, where the levels read
+    // them as samples that are not 0; the minimum and maximum (the waveform) read them as 0, and the spectrum's buffers are flushed after the levels.
     private void Convert(PcmBlock block, int channel, int start, int count, Span<double> target, out double low, out double high)
     {
         low = double.MaxValue;
@@ -360,14 +453,17 @@ internal sealed class StreamMeasurer
                 {
                     double v = Sanitize(floats[i]);
                     target[i] = v;
-                    if (v < low)
+
+                    // The waveform reads a value the spectrum flushes as 0.
+                    double flushed = Math.Abs(v) < SmallestSample ? 0 : v;
+                    if (flushed < low)
                     {
-                        low = v;
+                        low = flushed;
                     }
 
-                    if (v > high)
+                    if (flushed > high)
                     {
-                        high = v;
+                        high = flushed;
                     }
                 }
 
@@ -378,14 +474,17 @@ internal sealed class StreamMeasurer
                 {
                     double v = Sanitize(doubles[i]);
                     target[i] = v;
-                    if (v < low)
+
+                    // The waveform reads a value the spectrum flushes as 0.
+                    double flushed = Math.Abs(v) < SmallestSample ? 0 : v;
+                    if (flushed < low)
                     {
-                        low = v;
+                        low = flushed;
                     }
 
-                    if (v > high)
+                    if (flushed > high)
                     {
-                        high = v;
+                        high = flushed;
                     }
                 }
 
@@ -412,10 +511,11 @@ internal sealed class StreamMeasurer
             return 0;
         }
 
-        // Too small to count (under 1e-30, -600 dB) is taken as 0 and says nothing; too large is clamped and says so.
+        // Too small for the spectrum (under 1e-30, -600 dB) is kept here, since the levels count it as a sample that is not 0; the spectrum's
+        // buffers are flushed after the levels have read them. Too large is clamped and says so.
         if (magnitude < SmallestSample)
         {
-            return 0;
+            return v;
         }
 
         HasClamped = true;
@@ -626,6 +726,7 @@ internal sealed class StreamMeasurer
             bytes += 64L * (1 + spectrum.ChannelCutoffs.Count);
         }
 
+        bytes += record.Levels is { } levels ? 256L * (levels.Channels.Count + 1) : 0;
         bytes += record.Spectrogram?.Power.Length ?? 0;
         bytes += 2L * ((record.Waveform?.Minimum.Length ?? 0) + (record.Waveform?.Maximum.Length ?? 0));
         return bytes;
@@ -650,7 +751,13 @@ internal sealed class StreamMeasurer
             HasClampedSamples = HasClamped,
             NonFiniteSamples = _nonFinite,
         };
-        if (status == MeasurementStatus.Failed || !_isMeasuringSpectrum || !_hasStarted)
+        if (status == MeasurementStatus.Failed || !_hasStarted)
+        {
+            return record;
+        }
+
+        record = record with { Levels = _levels?.Build() };
+        if (!_isMeasuringSpectrum)
         {
             return record;
         }

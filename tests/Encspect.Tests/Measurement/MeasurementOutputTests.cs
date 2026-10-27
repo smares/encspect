@@ -115,14 +115,14 @@ public class MeasurementOutputTests
     {
         (int named, string withKinds, _) = Run("--measure", "spectrum", Brickwall);
         (int inline, string inlineKinds, _) = Run("--measure=spectrum", Brickwall);
-        (int unknown, _, string errors) = Run("--measure=levels", Brickwall);
+        (int unknown, _, string errors) = Run("--measure=loudness", Brickwall);
 
         Assert.Equal(CommandLine.Success, named);
         Assert.Contains("Spectral Cutoff:", withKinds);
         Assert.Equal(CommandLine.Success, inline);
         Assert.Contains("Spectral Cutoff:", inlineKinds);
         Assert.Equal(CommandLine.UsageError, unknown);
-        Assert.Contains("Unknown measurement: levels. Measurements: spectrum.", errors);
+        Assert.Contains("Unknown measurement: loudness. Measurements: spectrum, levels.", errors);
     }
 
     [Fact]
@@ -154,6 +154,91 @@ public class MeasurementOutputTests
         string[] plainRow = plain.Split("\r\n")[1].Split(',');
         Assert.Equal(string.Empty, plainRow[cutoff]);
         Assert.Equal(string.Empty, plainRow[Array.IndexOf(header, "Is Verified")]);
+    }
+
+    // A measured file whose peak is negative reads back as a number (-8.7, not '-8.7), and one whose name starts with = keeps the guard.
+    [Fact]
+    public void TheCsvWritesANegativePeakAsANumberAndGuardsAFormulaInAName()
+    {
+        string path = Path.Combine(Fixtures.FixtureDirectory, "measurement", "lossy-lame-b64.flac");
+        (_, string measured, _) = Run("--measure", "--csv", path);
+        string[] header = measured.Split("\r\n")[0].Split(',');
+        string[] row = measured.Split("\r\n")[1].Split(',');
+        int peak = Array.IndexOf(header, "Sample Peak (dBFS)");
+        Assert.Equal("Sample Peak (dBFS)", header[^1]);
+        Assert.Equal("-8.7", row[peak]);
+        Assert.False(double.IsNaN(double.Parse(row[peak], System.Globalization.CultureInfo.InvariantCulture)));
+
+        using FileStream stream = File.OpenRead(path);
+        Report report = Analyzer.CreateDefault().Analyze("=HYPERLINK(1).flac", stream, new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
+        var csv = new StringWriter();
+        ReportCsvWriter.Write([report], csv, isVerifying: true);
+        string[] lines = csv.ToString().Split("\r\n");
+        Assert.StartsWith("'=HYPERLINK(1).flac,", lines[1]);
+        Assert.EndsWith(",-8.7", lines[1].TrimEnd());
+
+        // Silence has no peak: the cell is empty, and without --measure so are both measured cells.
+        (_, string silent, _) = Run("--measure", "--csv", Path.Combine(Fixtures.FixtureDirectory, "measurement", "synthetic-levels-silent.flac"));
+        Assert.Equal(string.Empty, silent.Split("\r\n")[1].Split(',')[peak]);
+        (_, string plain, _) = Run("--csv", path);
+        Assert.Equal(string.Empty, plain.Split("\r\n")[1].Split(',')[peak]);
+    }
+
+    [Fact]
+    public void TheLevelsLinesAndJsonCarryTheirDescriptionsAndTopics()
+    {
+        string path = Path.Combine(Fixtures.FixtureDirectory, "measurement", "synthetic-levels-dc-offset.flac");
+        (_, string text, _) = Run("--measure=levels", "--explain", "--hide", "frames,tags,statistics", path);
+        (_, string json, _) = Run("--measure=levels", "--json", "--explain", path);
+
+        foreach (string topic in new[] { "levels", "dc-offset", "clipping", "digital-silence", "bit-depth-usage" })
+        {
+            Assert.Contains($"[topic:{topic}]", text);
+        }
+
+        Assert.Contains("Sample Peak: -28.7 dBFS (front left -28.7, front right -38.3)", text);
+        Assert.Contains("DC Offset: 3.051758% of full scale (-30.3 dBFS; front left 3.051758%, front right -0.915527%)", text);
+        JsonElement levels = JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("levels");
+        Assert.Equal("integer", levels.GetProperty("format").GetString());
+        Assert.Equal(3.051758m, levels.GetProperty("dcOffset").GetProperty("value").GetDecimal());
+        Assert.Equal("%", levels.GetProperty("dcOffset").GetProperty("unit").GetString());
+        Assert.Equal(2, levels.GetProperty("dcOffset").GetProperty("perChannel").GetArrayLength());
+        Assert.Equal("dc-offset", levels.GetProperty("dcOffset").GetProperty("topic").GetString());
+        Assert.Equal("dc-offset", levels.GetProperty("dcOffsetLevel").GetProperty("topic").GetString());
+        Assert.False(string.IsNullOrEmpty(levels.GetProperty("dcOffsetLevel").GetProperty("description").GetString()));
+        Assert.Equal("digital-silence", levels.GetProperty("zeroSamples").GetProperty("topic").GetString());
+        Assert.False(JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").TryGetProperty("spectrum", out _));
+    }
+
+    [Fact]
+    public void ASilentChannelsLevelsAreNullInTheJsonAndMinusInfinityInTheText()
+    {
+        string path = Path.Combine(Fixtures.FixtureDirectory, "measurement", "synthetic-levels-silent.flac");
+        (_, string text, _) = Run("--measure=levels", "--hide", "frames,tags,statistics", path);
+        (_, string json, _) = Run("--measure=levels", "--json", path);
+
+        Assert.Contains("Sample Peak: -inf dBFS", text);
+        Assert.Contains("Low Bits Unused: not defined (every sample is 0)", text);
+        JsonElement levels = JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("levels");
+        Assert.Equal(JsonValueKind.Null, levels.GetProperty("samplePeak").GetProperty("value").ValueKind);
+        Assert.Equal(JsonValueKind.Null, levels.GetProperty("bitDepth").GetProperty("lowBitsUnused").ValueKind);
+        Assert.Equal(8192, levels.GetProperty("zeroSamples").GetProperty("value").GetInt64());
+    }
+
+    [Theory]
+    [InlineData("1-2", false)]
+    [InlineData("1.2.3", false)]
+    [InlineData("-", false)]
+    [InlineData("-.5", false)]
+    [InlineData("5.", false)]
+    [InlineData("--1", false)]
+    [InlineData("1e5", false)]
+    [InlineData("-0.3", true)]
+    [InlineData("17054", true)]
+    [InlineData("0.0", true)]
+    public void OnlyAnOptionalMinusDigitsAndAFractionReadAsANumber(string text, bool isNumber)
+    {
+        Assert.Equal(isNumber, ReportCsvWriter.IsNumber(text));
     }
 
     [Fact]

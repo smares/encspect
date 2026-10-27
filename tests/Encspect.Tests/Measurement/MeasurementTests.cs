@@ -72,7 +72,9 @@ public class MeasurementTests
 
     internal static void AssertSame(StreamMeasurements a, StreamMeasurements b)
     {
-        Assert.Equal(a with { Spectrum = null, Spectrogram = null, Waveform = null, ChannelLayout = null }, b with { Spectrum = null, Spectrogram = null, Waveform = null, ChannelLayout = null });
+        Assert.Equal(a with { Spectrum = null, Levels = null, Spectrogram = null, Waveform = null, ChannelLayout = null }, b with { Spectrum = null, Levels = null, Spectrogram = null, Waveform = null, ChannelLayout = null });
+        Assert.Equal(a.Levels?.Stream, b.Levels?.Stream);
+        Assert.True((a.Levels?.Channels ?? []).SequenceEqual(b.Levels?.Channels ?? []));
         Assert.Equal(a.ChannelLayout ?? [], b.ChannelLayout ?? []);
         Assert.Equal(a.Spectrum!.Cutoff, b.Spectrum!.Cutoff);
         Assert.Equal(a.Spectrum.ChannelCutoffs, b.Spectrum.ChannelCutoffs);

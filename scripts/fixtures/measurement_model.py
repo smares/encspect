@@ -1,5 +1,5 @@
-"""A model of the measurements of docs/design/spectral-analysis.md (step 1): the average spectrum, the spectral cutoff and the waveform grid
-of a FLAC file, worked out in Python from the committed bytes with flac_model.py's decoder and this module's own FFT. Only the FFT, the
+"""A model of the measurements of docs/design/spectral-analysis.md (steps 1 and 2): the average spectrum, the spectral cutoff and the waveform grid
+and the levels of a FLAC file, worked out in Python from the committed bytes with flac_model.py's decoder and this module's own FFT. Only the FFT, the
 rows and the waveform are independent of the analyzer; the cutoff code below is transliterated from CutoffFinder.cs (the same rules in the
 same integer arithmetic), so it checks the port, not the rules. make_measurement_fixtures.py and make_external_measurement_fixtures.py write its results into the
 manifests (`<name>.expected.json`); MeasurementFixtureTests holds the analyzer to them.
@@ -19,10 +19,17 @@ What is independent of the analyzer is the FFT, the rows (the window, the scale 
 The cutoff's rules are checked against the construction of the signals (a brickwall at a known edge, none for noise, rolloff and mixed
 content) and against the printed bands of the lossy files, not against a second reading of the rules.
 
+The levels (levels_of) are worked out on Python integers from the decoded samples and the design's text alone, with no code shared with the
+analyzer: the peak, RMS and DC offset from exact sums (the logarithm of a float only at the end), the clipping runs of three or more samples at
+one extreme code, the digital silence of the sample frames that are 0 in every channel (and of each channel), the low bits that are never set, and
+nothing counted across a gap. The model's tenths of a dB are worked out in 60 decimal digits, so they are exact; the analyzer's own series for the logarithm must give the same tenth
+for every fixture; every count and the DC offset in millionths of a percent are exact too.
+
 Everything is plain Python (the standard library). The FFT is a complex radix-2 transform of the full frame, apart from the analyzer's
 real transform with its split step, so the two agree up to rounding (about 1e-12 relative), which the tests allow for.
 """
 
+import decimal
 import json
 import math
 import re
@@ -205,6 +212,97 @@ def find_cutoff(level_tenths, counters, rate, size):
     return result
 
 
+decimal.getcontext().prec = 60
+
+
+def tenths_of_ratio(ratio):
+    """Tenths of a dB of an amplitude ratio, a decimal or None for 0: floor(200 log10 r + 0.5), halves up, the one rounding of every figure, worked
+    out in 60 digits so that it is exact (a tie would need a ratio that is a power of ten to a half)."""
+    return None if ratio == 0 else int((200 * ratio.log10() + decimal.Decimal("0.5")).to_integral_value(decimal.ROUND_FLOOR))
+
+
+def tenths_of_power(power):
+    return None if power == 0 else int((100 * power.log10() + decimal.Decimal("0.5")).to_integral_value(decimal.ROUND_FLOOR))
+
+
+def tz(value):
+    return (value & -value).bit_length() - 1
+
+
+def silence_of(segments):
+    """(start, end, total) of the zero flags of the segments between gaps: the start is the zeros before the first non-zero sample of the first
+    segment, the end the zeros after the last non-zero sample of the last, and the total all zeros; no stretch crosses a gap."""
+    first, last = segments[0], segments[-1]
+    return (next((i for i, z in enumerate(first) if not z), len(first)),
+            next((i for i, z in enumerate(reversed(last)) if not z), len(last)),
+            sum(sum(seg) for seg in segments))
+
+
+def levels_of(runs, channels, bits):
+    """The levels of integer samples. runs: the segments of the stream in order, each a list of channel lists (the samples between two gaps).
+    Returns the stream's figures and each channel's."""
+    full = 1 << (bits - 1)
+    high, low = full - 1, -full
+    count = sum(len(seg[0]) for seg in runs)
+
+    def sums(c):
+        segs = [seg[c] for seg in runs]
+        flat = [v for seg in segs for v in seg]
+        bit_or = 0
+        for v in flat:
+            bit_or |= v
+        clip_runs = clipped = longest = 0
+        for seg in segs:
+            sign, length = 0, 0
+            for v in seg:
+                now = 1 if v == high else -1 if v == low else 0
+                if now != 0 and now == sign:
+                    length += 1
+                else:
+                    sign, length = now, 1 if now else 0
+                if length >= 3:
+                    clipped += 3 if length == 3 else 1
+                    clip_runs += 1 if length == 3 else 0
+                    longest = max(longest, length)
+        return dict(total=sum(flat), squares=sum(v * v for v in flat), bit_or=bit_or, peak=max((abs(v) for v in flat), default=0),
+                    runs=clip_runs, clipped=clipped, longest=longest, silence=silence_of([[v == 0 for v in seg] for seg in segs]))
+
+    def figures(f):
+        denominator = count * full
+        micro = 0
+        if f["total"] != 0:
+            micro = (2 * abs(f["total"]) * 10 ** 8 + denominator) // (2 * denominator)
+            micro = micro if f["total"] > 0 else -micro
+        return {
+            "sample_peak_tenths": tenths_of_ratio(decimal.Decimal(f["peak"]) / full),
+            "rms_tenths": tenths_of_power(decimal.Decimal(f["squares"]) / (count * full * full)),
+            "dc_micropercent": micro,
+            "dc_tenths": tenths_of_ratio(decimal.Decimal(abs(f["total"])) / (count * full)),
+            "clipping_runs": f["runs"], "clipped_samples": f["clipped"], "longest_clipping_run": f["longest"],
+            "silent_at_start": f["silence"][0], "silent_at_end": f["silence"][1], "zero_samples": f["silence"][2],
+            "low_bits_unused": tz(f["bit_or"]) if f["bit_or"] else None, "highest_magnitude": f["peak"],
+        }
+
+    per = [sums(c) for c in range(channels)]
+    result = [figures(f) for f in per]
+    joint = silence_of([[all(seg[c][i] == 0 for c in range(channels)) for i in range(len(seg[0]))] for seg in runs])
+    squares = sum(f["squares"] for f in per)
+    bit_or = 0
+    for f in per:
+        bit_or |= f["bit_or"]
+    biggest = max(range(channels), key=lambda c: abs(per[c]["total"]))
+    stream = {
+        "sample_peak_tenths": max((r["sample_peak_tenths"] for r in result if r["sample_peak_tenths"] is not None), default=None),
+        "rms_tenths": tenths_of_power(decimal.Decimal(squares) / (count * channels * full * full)),
+        "dc_micropercent": result[biggest]["dc_micropercent"], "dc_tenths": result[biggest]["dc_tenths"],
+        "clipping_runs": sum(r["clipping_runs"] for r in result), "clipped_samples": sum(r["clipped_samples"] for r in result),
+        "longest_clipping_run": max(r["longest_clipping_run"] for r in result),
+        "silent_at_start": joint[0], "silent_at_end": joint[1], "zero_samples": joint[2],
+        "low_bits_unused": tz(bit_or) if bit_or else None, "highest_magnitude": max(f["peak"] for f in per),
+    }
+    return {"bits": bits, "stream": stream, "channels": result}
+
+
 def segments(stream):
     """The decoded blocks of a FLAC stream as (position, [channel lists])."""
     out = []
@@ -242,6 +340,7 @@ def measure(data, layout=None):
     mins, maxs = {}, {}
     buffers = [[] for _ in range(measured)]
     segment_start = 0
+    runs = []
 
     def process(frame_samples):
         nonlocal frames
@@ -270,7 +369,12 @@ def measure(data, layout=None):
             expected = position
             buffers = [[] for _ in range(measured)]
             segment_start = position
+            runs.append([[] for _ in range(measured)])
+        elif not runs:
+            runs.append([[] for _ in range(measured)])
         count = len(block[0])
+        for c in range(measured):
+            runs[-1][c].extend(block[c][:count])
         for c in range(measured):
             buffers[c].extend(block[c])
             for i in range(count):
@@ -317,5 +421,5 @@ def measure(data, layout=None):
     return {
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
         "lost_samples": lost, "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
-        "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
+        "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "levels": levels_of(runs, measured, bits), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
     }
