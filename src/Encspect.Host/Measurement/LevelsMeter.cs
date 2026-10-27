@@ -287,25 +287,42 @@ internal sealed class LevelsMeter
         long longest = 0;
         int high = _high;
         int low = _low;
+
+        // The code the open run is made of (meaningless while runLength is 0): inside a run the loop only compares one value and counts.
+        int extreme = runSign > 0 ? high : low;
         for (int i = 0; i < samples.Length; i++)
         {
             int v = samples[i];
-            int sign = v == high ? 1 : v == low ? -1 : 0;
-            if (sign != 0 && sign == runSign)
+            if (runLength > 0)
             {
-                runLength++;
-                continue;
+                if (v == extreme)
+                {
+                    runLength++;
+                    continue;
+                }
+
+                if (runLength >= MeasurementLimits.MinimumClippingRun)
+                {
+                    runs++;
+                    clipped += runLength;
+                    longest = runLength > longest ? runLength : longest;
+                }
+
+                runLength = 0;
             }
 
-            if (runLength >= MeasurementLimits.MinimumClippingRun)
+            if (v == high)
             {
-                runs++;
-                clipped += runLength;
-                longest = runLength > longest ? runLength : longest;
+                extreme = high;
+                runSign = 1;
+                runLength = 1;
             }
-
-            runSign = sign;
-            runLength = sign != 0 ? 1 : 0;
+            else if (v == low)
+            {
+                extreme = low;
+                runSign = -1;
+                runLength = 1;
+            }
         }
 
         state.AddRuns(runs, clipped, longest);

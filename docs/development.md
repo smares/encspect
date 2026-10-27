@@ -654,6 +654,29 @@ Measured on this machine (Intel Xeon at 2.80 GHz, 4 vCPUs, AVX-512, .NET 10.0.40
 
 The weights are the design's, from its second prototype, and no case passes 1.5, so they stay. Run under load, a single stereo round has read 16.2 ns at 4,096 points.
 
+Step 2 added the levels (`--measure` runs both; docs/design/spectral-analysis.md, "As built: step 2"). The same cases with the levels (the weight of each size 4 units higher, 33, 28, 27, 31, 31 and 34), on the same machine but shared with other sessions (load average 1.3 to 2.9), median of five rounds:
+
+| FFT size | Rate | ns a sample, 2 channels | Ratio | ns a sample, 1 channel | Ratio |
+|---|---|---|---|---|---|
+| 1,024 | 8,000 Hz | 19.6 | 1.14 | 21.7 | 1.19 |
+| 2,048 | 22,050 Hz | 16.8 | 1.07 | 18.1 | 1.03 |
+| 4,096 | 44,100 Hz | 16.8 | 1.22 | 16.6 | 1.21 |
+| 8,192 | 88,200 Hz | 19.2 | 1.09 | 18.7 | 1.07 |
+| 16,384 | 176,400 Hz | 19.2 | 1.11 | 19.5 | 1.22 |
+| 32,768 | 352,800 Hz | 20.0 | 1.11 | 19.1 | 1.02 |
+
+The levels alone (`--measure levels`), with the 128-bit accumulators, in nanoseconds for each sample of a channel at 44.1 kHz (the ratio to the reference's time per unit, with a weight of 4):
+
+| Samples | 1 channel | 2 channels |
+|---|---|---|
+| 16 bits, noise | 2.33 (1.07) | 2.24 (1.02) |
+| 24 bits, noise | 1.97 (0.94) | 2.01 (0.98) |
+| 32 bits, noise | 1.91 (0.98) | 1.78 to 2.65 (1.20) |
+| 16 bits, a full-scale square wave (every piece scans for runs) | | 2.81 (1.38) |
+| 24 bits, digital silence | | 2.85 to 4.18 (1.50 to 1.98) before the work tests warmed up three times |
+
+The figures were measured with the load average above the 1.5 that earlier steps kept to, so they can read high; a first run of the work tests, before the scan counted its runs in one loop and the kernels were compiled optimized, read 6.4 ns for 32 bits and 6.1 ns for the square wave. The levels' time per sample does not depend on the sample rate; with the spectrum they add 0.6 to 3 ns to a sample of a channel.
+
 ### TTA
 
 - The 26 encoder-written fixtures (`external-*`) come from two encoders, both run as black boxes (decoders.md, decision 10: their sources are not read). 19 are FFmpeg 6.1.1's TTA encoder and muxer (Ubuntu 24.04's package; CI runs 8.0.1). 7 (`external-libtta-*`) are libtta-c 2.3's `tta` console program, the TTA authors' own encoder, which no Ubuntu series packages: `libtta_tool.py` downloads libtta-c-2.3.tar.gz from SourceForge (SHA-256 68ba6db2…, LGPL, not redistributed; `check_sources.py` checks both addresses) and builds it with its own `configure` and `make`, unpatched. It reads 16 and 24 bit WAVE files (8 and 32 bits are refused) and writes no tag; `-ep <password>` writes audio format 2. The generating script decodes each file again with `tta -d` or `-dp` and requires the input's samples. The libtta inputs are 16 bits stereo at 32,000 Hz and mono at 24,000 Hz, each ending one sample into a frame (66,873 and 50,155 samples: three frames each with truncation, two with rounding), mono at 44,100 Hz with two whole frames, 24 bits stereo at 48,000 Hz, six channels at 22,050 Hz, loud noise, and stereo with the password "secret" (a test value). The inputs of the FFmpeg files are the deterministic signals of `flac_signal.py`: 8, 16 and 24 bits (FFmpeg writes 32-bit input as 24), 1, 2, 3, 6 and 8 channels, 8,000 to 192,000 Hz, silence and loud noise, a stream that ends one sample into a frame (`32000-stereo-last-frame-one-sample`, which shows with libtta's `libtta-16-stereo-32000-last-frame-one-sample` and `libtta-16-mono-24000-last-frame-one-sample` that a frame is the sample rate times 256/245 truncated), whole frames, one frame, tags, and `-fflags +bitexact` for a file without the muxer's APEv2 tag. FFmpeg 6.1.1 writes audio format 1 and appends an APEv2 tag with an `Encoder` item. `--manifests-only` recomputes the manifests without the encoder.

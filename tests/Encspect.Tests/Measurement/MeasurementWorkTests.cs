@@ -41,13 +41,47 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.True(ratio <= Factor, $"The spectrum takes {ratio:F2} times the reference's time per unit, at most {Factor} are allowed. A weight is too low.");
     }
 
+    // The two cases alternate for five rounds and each is taken at its fastest, so that the first round's warm-up and a busy moment of the machine
+    // do not decide the ratio.
     [Fact]
     public void AnImpulseThenSilenceCostsAboutTheSameAsZeros()
     {
-        (double zeros, _, _) = RunOnce(48000, 2, Data(2, Signal.Zeros));
-        (double impulse, _, _) = RunOnce(48000, 2, Data(2, Signal.Impulse));
+        int[][] zeroData = Data(2, Signal.Zeros);
+        int[][] impulseData = Data(2, Signal.Impulse);
+        RunOnce(48000, 2, zeroData);
+        double zeros = double.MaxValue;
+        double impulse = double.MaxValue;
+        for (int round = 0; round < Rounds; round++)
+        {
+            zeros = Math.Min(zeros, RunOnce(48000, 2, zeroData).Seconds);
+            impulse = Math.Min(impulse, RunOnce(48000, 2, impulseData).Seconds);
+        }
+
         output.WriteLine($"zeros {zeros:F3} s, an impulse then silence {impulse:F3} s, ratio {impulse / zeros:F2}");
         Assert.True(impulse / zeros <= Factor);
+    }
+
+    // The levels beside the spectrum at the rates and channel counts where the spectrum alone is slowest per sample.
+    [Theory]
+    [InlineData(22050, 1)]
+    [InlineData(22050, 2)]
+    [InlineData(8000, 1)]
+    [InlineData(44100, 1)]
+    public void TheLevelsAddAboutTwoNanosecondsToTheSpectrumAtAnyRate(int rate, int channels)
+    {
+        int[][] data = Data(channels, Signal.Noise);
+        RunOnce(rate, channels, data, MeasurementKinds.Spectrum);
+        double spectrum = double.MaxValue;
+        double both = double.MaxValue;
+        for (int round = 0; round < Rounds; round++)
+        {
+            spectrum = Math.Min(spectrum, RunOnce(rate, channels, data, MeasurementKinds.Spectrum).Seconds);
+            both = Math.Min(both, RunOnce(rate, channels, data, MeasurementSets.All).Seconds);
+        }
+
+        double perSample = (both - spectrum) * 1e9 / ((long)Length * channels);
+        output.WriteLine($"{rate} Hz, {channels} channel(s): the spectrum alone {spectrum * 1e9 / ((long)Length * channels):F2} ns a sample, with the levels {both * 1e9 / ((long)Length * channels):F2}: the levels add {perSample:F2} ns");
+        Assert.True(perSample < 6, $"The levels add {perSample:F2} ns a sample to the spectrum.");
     }
 
     // The levels alone, with the Int128 accumulators: one and two channels at 16, 24 and 32 bits, noise, a full-scale square wave (every piece
@@ -118,7 +152,14 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     {
         int[][] data = Data(channels, signal, bits);
         DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
-        RunOnce(rate, channels, data, kinds, bits);
+
+        // Three runs before the timed rounds: the library's vector routines (the scan for samples that are not 0) start as precompiled code and are
+        // compiled again once they are hot, which the first two tests of a process would otherwise time.
+        for (int warm = 0; warm < 3; warm++)
+        {
+            RunOnce(rate, channels, data, kinds, bits);
+        }
+
         var ratios = new List<double>();
         var perUnits = new List<double>();
         var perSamples = new List<double>();
