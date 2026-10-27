@@ -11,6 +11,10 @@ manifest rests on the model's reading of the specifications, docs/development.md
   codec's name, sample rate and channels. For IEC 61937 bursts in the samples: the duration, which is the bursts times the repetition period over the
   link rate, and, where FFmpeg finds the bursts (AC-3 and DTS), the codec, sample rate and channels.
   For an AIFF file with a CHAN chunk the speakers of ffprobe's channel_layout (see ffprobe_speakers).
+- FFmpeg 8.0.1 (ffmpeg): the MD5 of the decoded samples against the manifest's pcm.md5 (pcm_model.py), where the analyzer's decoder "pcm" decodes the file:
+  `ffmpeg -i f -map 0:a:0 -c:a pcm_<format> -f md5 -`, the format being the canonical layout of the decoder's output (pcm_s8, pcm_s16le, pcm_s24le,
+  pcm_s32le, pcm_f32le or pcm_f64le; the A-law and mu-law files as pcm_s16le, the scale of FFmpeg's own expansion), so the 12-bit, 20-in-24, `sowt`, `in24`,
+  `raw `, A-law and mu-law cases are compared too.
 - MediaInfo 26.01 (mediainfo_tool.py): the audio stream's format (as MEDIAINFO_FORMATS maps the manifest's codec), sample rate, channels, the bit
   depth of the linear codings, the duration and the speakers of ChannelLayout, where it reports them. For IEC 61937 bursts: the format family and the
   duration, where MediaInfo finds the bursts (AC-3, MPEG audio and AAC in some files).
@@ -135,17 +139,17 @@ EXPLAINED = {
     "wav/built-extensible-ebu-mask": {"MediaInfo ChannelLayout": "MediaInfo lists the two speakers of the mask and none of the discrete channels the mask leaves over"},
     "wav/built-leading-id3v2": {"MediaInfo audio stream": "MediaInfo does not find the RIFF header behind a leading ID3v2 tag and reports no audio stream"},
     "aiff/built-leading-id3v2": {"MediaInfo audio stream": "MediaInfo does not find the FORM header behind a leading ID3v2 tag and reports no audio stream"},
-    "wav/built-pcm-24-bit-extensible-in-32": {"ffprobe codec": "FFmpeg 6.1.1 and 8.0.1 read 24 valid bits in a 32-bit block as pcm_f24le (wavdec.c, wav_read_header: a pcm_s24le coding whose block align is 4 bytes for each channel)",
+    "wav/built-pcm-24-bit-extensible-in-32": {"ffmpeg decoded MD5": "FFmpeg reads the samples as pcm_f24le (see ffprobe codec), a coding that is not the signed 24-bit integers the file states", "ffprobe codec": "FFmpeg 6.1.1 and 8.0.1 read 24 valid bits in a 32-bit block as pcm_f24le (wavdec.c, wav_read_header: a pcm_s24le coding whose block align is 4 bytes for each channel)",
                                              "ffprobe bits": "ffprobe gives that coding a width of 32 bits"},
     "wav/built-dts-format-tag-0008": {"ffprobe codec": "FFmpeg 6.1.1 and 8.0.1 name no codec for the format tag 0x0008 (riff.c maps only 0x2001 to DTS), so ffprobe gives the stream no codec_name"},
     "wav/built-extensible-mask-fewer": {"MediaInfo ChannelLayout": "MediaInfo lists the two speakers of the mask and none of the discrete channels the mask leaves over"},
     "wav/built-extensible-mask-mismatch": {"MediaInfo ChannelLayout": "MediaInfo lists all six speakers of the mask for two channels; Microsoft's rule ignores the extra, most significant bits"},
     "wav/built-extensible-samples-per-block": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 cannot open the IMA ADPCM decoder for an extensible header with a container size of 0: \"unspecified number of channels\""},
-    "wav/built-rf64-table": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"Cannot allocate memory\": the bext chunk of the fixture has the size 0xFFFFFFFF, which its ds64 table resolves, and wavdec.c reads the 32-bit size (wav_parse_bext_tag allocates the coding history by it) and takes only the data size from the ds64 chunk"},
+    "wav/built-rf64-table": {"ffmpeg decoded MD5": "FFmpeg 6.1.1 and 8.0.1 cannot open the file (see ffprobe audio stream), so they decode nothing", "ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"Cannot allocate memory\": the bext chunk of the fixture has the size 0xFFFFFFFF, which its ds64 table resolves, and wavdec.c reads the 32-bit size (wav_parse_bext_tag allocates the coding history by it) and takes only the data size from the ds64 chunk"},
     "wav/built-riffx-pcm-16": {"MediaInfo audio stream": "MediaInfo reports no audio stream for a big-endian RIFX file"},
     "wav/built-wavl-list": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"no 'data' tag found\": wavdec.c looks for a data chunk at the top level and does not enter a wavl list"},
-    "wav/built-bw64-table": {"ffprobe audio stream": "FFmpeg 8.0.1 stops with \"no 'data' tag found\": the axml chunk of the fixture has the size 0xFFFFFFFF, which its ds64 table resolves, and wavdec.c takes the 32-bit size and skips past the end of the file (as for built-rf64-table)"},
-    "wav/built-w64-unknown-chunks": {"ffprobe audio stream": "FFmpeg 8.0.1 refuses a Wave64 file with a chunk of no data (the chunk 'zz  ' of size 24): \"Invalid data found when processing input\" (observed: the same file without that chunk, and with chunks of 3, 5 and 9 bytes or a LIST, is read)"},
+    "wav/built-bw64-table": {"ffmpeg decoded MD5": "FFmpeg 8.0.1 stops with \"no 'data' tag found\" (see ffprobe audio stream), so it decodes nothing", "ffprobe audio stream": "FFmpeg 8.0.1 stops with \"no 'data' tag found\": the axml chunk of the fixture has the size 0xFFFFFFFF, which its ds64 table resolves, and wavdec.c takes the 32-bit size and skips past the end of the file (as for built-rf64-table)"},
+    "wav/built-w64-unknown-chunks": {"ffmpeg decoded MD5": "FFmpeg 8.0.1 refuses the file (see ffprobe audio stream), so it decodes nothing", "ffprobe audio stream": "FFmpeg 8.0.1 refuses a Wave64 file with a chunk of no data (the chunk 'zz  ' of size 24): \"Invalid data found when processing input\" (observed: the same file without that chunk, and with chunks of 3, 5 and 9 bytes or a LIST, is read)"},
     "wav/external-w64-adpcm-ima": {"MediaInfo Duration": "MediaInfo gives 0.706 s for 0.25 s of audio: it does not use the fact chunk of a Wave64 file (observed)"},
     "wav/built-w64-fact-ima-adpcm": {"MediaInfo Duration": "MediaInfo does not use the fact chunk of a Wave64 file (observed, as for external-w64-adpcm-ima)"},
     "wav/external-w64-pcm-u8-mono-8000": {"MediaInfo Duration": "MediaInfo's duration of a Wave64 file is 24 samples too long for 8-bit mono (0.253 s for 2,000 samples at 8,000 Hz): it counts the 24 bytes of the data chunk's header (observed)"},
@@ -161,13 +165,13 @@ EXPLAINED = {
     "wav/built-iec61937-ac3-silence-between": {"ffprobe duration": "ffprobe's duration is that of the whole data chunk, the silent periods included; the analyzer times the bursts",
                                               "MediaInfo Duration": "MediaInfo's duration is that of the whole data chunk, the silent periods included; the analyzer times the bursts"},
     "wav/built-iec61937-ac3-fmt-tag-0092": {"ffprobe codec": "ffprobe gives the format tag 0x0092 no codec_name (it finds the bursts, whose duration it reads)"},
-    "wav/built-iec61937-in-24-bits": {"ffprobe codec": "ffprobe's WAVE demuxer looks for IEC 61937 bursts at the start of the data whatever the fmt chunk states (24 bits here) and finds AC-3; the analyzer takes only 16-bit stereo PCM for a carrier"},
-    "wav/built-iec61937-in-mono": {"ffprobe codec": "ffprobe's WAVE demuxer looks for IEC 61937 bursts at the start of the data whatever the fmt chunk states (one channel here) and finds AC-3; the analyzer takes only 16-bit stereo PCM for a carrier",
+    "wav/built-iec61937-in-24-bits": {"ffmpeg decoded MD5": "FFmpeg decodes the AC-3 stream it finds in the data (see ffprobe codec); the analyzer decodes the 24-bit samples the fmt chunk states", "ffprobe codec": "ffprobe's WAVE demuxer looks for IEC 61937 bursts at the start of the data whatever the fmt chunk states (24 bits here) and finds AC-3; the analyzer takes only 16-bit stereo PCM for a carrier"},
+    "wav/built-iec61937-in-mono": {"ffmpeg decoded MD5": "FFmpeg decodes the AC-3 stream it finds in the data (see ffprobe codec); the analyzer decodes the one channel the fmt chunk states", "ffprobe codec": "ffprobe's WAVE demuxer looks for IEC 61937 bursts at the start of the data whatever the fmt chunk states (one channel here) and finds AC-3; the analyzer takes only 16-bit stereo PCM for a carrier",
                                   "ffprobe channels": "ffprobe gives the AC-3 stream its two channels, not the fmt chunk's one"},
     "wav/built-iec61937-in-rifx": {"ffprobe codec": "ffprobe's WAVE demuxer finds the bursts in the data of a RIFX file, which are little-endian samples there and no big-endian ones; the analyzer takes only little-endian PCM for a carrier",
                                   "MediaInfo Format": "MediaInfo finds the bursts in the data of a RIFX file too (observed)",
                                   "MediaInfo Duration": "MediaInfo's duration for this RIFX file is 1.248 s for 0.16 s of data (observed)"},
-    "wav/built-iec61937-payload-too-long-at-start": {"ffprobe codec": "ffprobe takes the first burst alone for AC-3, whatever its length code states (the analyzer needs a chain of three bursts that fit their period)",
+    "wav/built-iec61937-payload-too-long-at-start": {"ffmpeg decoded MD5": "FFmpeg takes the first burst alone for AC-3 (see ffprobe codec) and decodes nothing from it; the analyzer decodes the samples the fmt chunk states", "ffprobe codec": "ffprobe takes the first burst alone for AC-3, whatever its length code states (the analyzer needs a chain of three bursts that fit their period)",
                                                     "MediaInfo Format": "MediaInfo takes the first burst alone for AC-3, whatever its length code states"},
     "wav/built-iec61937-sync-word-alone": {"MediaInfo Format": "MediaInfo takes the sync words and a burst-info at the start for AC-3; the analyzer needs a chain of three bursts",
                                           "MediaInfo SamplingRate": "MediaInfo reports no rate for that AC-3 stream",
@@ -176,6 +180,9 @@ EXPLAINED = {
     "aiff/built-chan-descriptions-rear-labels": {"ffprobe channel_layout": "ffprobe 8.0.1 gives the channel labels 33 and 34 (RearSurroundLeft and RearSurroundRight) no speaker (UNK); the Core Audio Format Specification lists them"},
     "aiff/built-aifc-ima4": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of packets for a count of sample frames"},
     "aiff/external-ima4-stereo-44100": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of packets for a count of sample frames"},
+    "aiff/built-block-aligned": {"ffmpeg decoded MD5": "FFmpeg decodes all 512 bytes of the sound data; the analyzer decodes the 50 sample frames the Common Chunk states"},
+    "aiff/built-sound-data-extra": {"ffmpeg decoded MD5": "FFmpeg decodes all the bytes of the sound data; the analyzer decodes the sample frames the Common Chunk states"},
+    "wav/built-pcm-40-bit": {"ffprobe codec": "FFmpeg 6.1.1 gives PCM samples of 40 bits no codec_name (riff.c maps 8, 16, 24, 32 and 64 bits); the analyzer names the coding PCM and refuses to decode integers wider than 32 bits"},
 }
 USED = set()
 
@@ -264,6 +271,29 @@ def check_ffprobe(name, manifest, path, problems):
                 f"ffprobe duration is {duration}, the manifest {expected['duration']}")
 
 
+# The encoder FFmpeg writes the canonical layout of a decoded stream with, by the manifest's pcm format and bits.
+FFMPEG_CANONICAL = {("integer", 8): "pcm_s8", ("integer", 16): "pcm_s16le", ("integer", 24): "pcm_s24le", ("integer", 32): "pcm_s32le",
+                    ("float", 32): "pcm_f32le", ("float", 64): "pcm_f64le"}
+
+
+def check_ffmpeg_md5(name, manifest, path, problems):
+    """The MD5 of the samples FFmpeg decodes against the one pcm_model.py gives, both over the canonical layout of docs/design/decoders.md."""
+    pcm = (manifest["stream"] or {}).get("pcm")
+    if manifest["container"]["id"] == "RIFX" and pcm is not None:
+        skip(name, "ffmpeg decoded MD5", "FFmpeg 6.1.1 reads the samples of a RIFX file as little-endian (ffprobe reports pcm_s16le); the AIFF files cover big-endian samples")
+        return
+    if pcm is None:
+        skip(name, "ffmpeg decoded MD5", "the analyzer's decoder takes no samples of this file (not PCM, or a layout it does not describe)")
+        return
+    if "not_possible" in pcm or pcm["samples"] == 0:
+        skip(name, "ffmpeg decoded MD5", "the analyzer decodes no sample of this file (a width it refuses, or no sample frame)")
+        return
+    run = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a:0", "-c:a", FFMPEG_CANONICAL[(pcm["format"], pcm["bits"])], "-f", "md5", "-"],
+                         capture_output=True, text=True, errors="replace")
+    found = run.stdout.strip().removeprefix("MD5=")
+    differs(name, "ffmpeg decoded MD5", found, pcm["md5"], problems, f"FFmpeg's decoded MD5 is {found or run.stderr.strip()[:120]!r}, the manifest's {pcm['md5']}")
+
+
 def check_iec_ffprobe(name, manifest, stream, document, problems):
     """Bursts of IEC 61937 in the samples: the length is the bursts' (the carrier's too), and AC-3 and DTS bursts are found by the WAVE demuxer."""
     iec = manifest["iec61937"]
@@ -346,7 +376,7 @@ def check_mediainfo(name, manifest, path, problems):
 
 
 def main():
-    tool_versions.require("ffprobe")
+    tool_versions.require("ffmpeg", "ffprobe")
     mi.require()
     chosen = set(a for a in sys.argv[1:] if not a.startswith("-"))
     informational = information_codes()
@@ -365,6 +395,7 @@ def main():
             problems = []
             check_ffprobe(name, manifest, path, problems)
             check_mediainfo(name, manifest, path, problems)
+            check_ffmpeg_md5(name, manifest, path, problems)
             checked += 1
             if problems:
                 failures += 1

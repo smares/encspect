@@ -20,6 +20,10 @@ public class AiffFixtureTests
 
     [Theory]
     [MemberData(nameof(Names))]
+    public void DecodedAudioMatchesManifest(string name) => ChunkFixtureChecks.DecodedAudioMatchesManifest(name);
+
+    [Theory]
+    [MemberData(nameof(Names))]
     public void TheFormatIsDetectedAsAiff(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
