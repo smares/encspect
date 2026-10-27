@@ -387,6 +387,75 @@ public class MpegCodingSeriesTests
             && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(share.X, out ArraySegment<double> second) && ReferenceEquals(first.Array, second.Array));
     }
 
+    // The bitrate tables of ISO/IEC 11172-3 (Table 3-B.2) and 13818-3 as the specifications print them, apart from the parser's.
+    private static readonly Dictionary<string, double[]> BitrateTables = new()
+    {
+        ["MPEG-1 Layer I"] = [32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448],
+        ["MPEG-1 Layer II"] = [32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384],
+        ["MPEG-1 Layer III"] = [32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320],
+        ["MPEG-2 Layer I"] = [32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256],
+        ["MPEG-2 Layer II"] = [8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+        ["MPEG-2 Layer III"] = [8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+        ["MPEG-2.5 Layer I"] = [32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256],
+        ["MPEG-2.5 Layer II"] = [8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+        ["MPEG-2.5 Layer III"] = [8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+    };
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void The_bitrate_declares_the_table_of_its_version_and_layer_and_free_format_none(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        foreach (StreamInfo stream in report.Streams.Where(s => s.Series.Any(x => x.Name == "Bitrate")))
+        {
+            Series bitrate = stream.Series.First(s => s.Name == "Bitrate");
+            bool isFreeFormat = Field(AudioFrames(stream)[0], "Header/Bitrate") == "free";
+            if (isFreeFormat)
+            {
+                Assert.Null(bitrate.DeclaredRange);
+            }
+            else
+            {
+                Assert.Equal(BitrateTables[stream.Codec], bitrate.DeclaredRange?.Steps.ToArray());
+            }
+
+            Assert.Null(stream.Series.First(s => s.Name == "Bitrate Over Time").DeclaredRange);
+            foreach (Series other in stream.Series.Where(s => s.Name is not ("Bitrate" or "Channel Bit Share" or "Channel Bit Share Over Time")))
+            {
+                Assert.Null(other.DeclaredRange);
+            }
+
+            foreach (Series share in stream.Series.Where(s => s.Name.StartsWith("Channel Bit Share", StringComparison.Ordinal)))
+            {
+                Assert.False(share.DeclaredRange!.HasSteps);
+                Assert.Equal(0, share.DeclaredRange.Minimum);
+                Assert.Equal(100, share.DeclaredRange.Maximum);
+            }
+        }
+    }
+
+    // No fixture is an MPEG-2.5 Layer I stream (the only such header is junk inside an AC-3 fixture, which MPEG audio does not claim); that table is the shared Mpeg2Bitrates row.
+    [Fact]
+    public void The_fixtures_cover_every_table_and_the_free_format_case()
+    {
+        HashSet<string> codecs = [];
+        bool hasFree = false;
+        bool hasShare = false;
+        foreach (string name in Fixtures.MpegFixtures())
+        {
+            foreach (StreamInfo stream in Fixtures.AnalyzeMpeg(name).Streams.Where(s => s.Series.Any(x => x.Name == "Bitrate")))
+            {
+                codecs.Add(stream.Codec);
+                hasFree |= Field(AudioFrames(stream)[0], "Header/Bitrate") == "free";
+                hasShare |= stream.Series.Any(s => s.Name == "Channel Bit Share Over Time");
+            }
+        }
+
+        Assert.Empty(new[] { "MPEG-1 Layer I", "MPEG-1 Layer II", "MPEG-1 Layer III", "MPEG-2 Layer I", "MPEG-2 Layer II", "MPEG-2 Layer III", "MPEG-2.5 Layer II", "MPEG-2.5 Layer III" }.Except(codecs));
+        Assert.True(hasFree);
+        Assert.True(hasShare);
+    }
+
     private static CategorySeries? Series(StreamInfo stream, string name) => stream.CategorySeries.FirstOrDefault(s => s.Name == name);
 
     private static string? Field(Node node, string path) => Fixtures.Resolve(node, path).FirstOrDefault()?.Value?.ToString();

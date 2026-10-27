@@ -1,3 +1,5 @@
+using Encspect.Core;
+
 namespace Encspect.Formats.Mpeg;
 
 // The 32-bit MPEG audio frame header (ISO/IEC 11172-3 section 2.4.1.3, ISO/IEC 13818-3 for the
@@ -29,6 +31,11 @@ internal readonly record struct MpegHeader(uint Raw)
         [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
         [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
     ];
+
+    // Indexed by layer (index 0 unused). Layers II and III of MPEG-2 and 2.5 have the same table and share one instance.
+    private static readonly ValueRange[] Mpeg1Ranges = [null!, StepsOf(Mpeg1Bitrates[1]), StepsOf(Mpeg1Bitrates[2]), StepsOf(Mpeg1Bitrates[3])];
+
+    private static readonly ValueRange[] Mpeg2Ranges = CreateMpeg2Ranges();
 
     public static readonly string[] ChannelModes = ["Stereo", "Joint stereo", "Dual channel", "Mono"];
     private static readonly string[] Emphases = ["None", "50/15 µs", "Reserved", "CCITT J.17"];
@@ -72,6 +79,18 @@ internal readonly record struct MpegHeader(uint Raw)
     public int SampleRate => SampleRates[VersionBits][SampleRateIndex];
 
     public int Bitrate => (IsMpeg1 ? Mpeg1Bitrates : Mpeg2Bitrates)[Layer][BitrateIndex];
+
+    // The bitrates in kbps that the version and layer's table allows, without the free (0) and reserved (15) indexes; one shared
+    // instance per table.
+    public static ValueRange BitrateRange(bool isMpeg1, int layer) => (isMpeg1 ? Mpeg1Ranges : Mpeg2Ranges)[layer];
+
+    private static ValueRange[] CreateMpeg2Ranges()
+    {
+        ValueRange layer23 = StepsOf(Mpeg2Bitrates[2]);
+        return [null!, StepsOf(Mpeg2Bitrates[1]), layer23, layer23];
+    }
+
+    private static ValueRange StepsOf(int[] table) => ValueRange.OfSteps(table.Skip(1).Select(b => (double)b));
 
     public int SlotSize => Layer == 1 ? 4 : 1;
 

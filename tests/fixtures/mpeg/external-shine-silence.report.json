@@ -12153,6 +12153,24 @@
             "axis": "frameOffset",
             "concept": "bitDistribution",
             "quantity": "Bitrate",
+            "declaredRange": {
+              "steps": [
+                32,
+                40,
+                48,
+                56,
+                64,
+                80,
+                96,
+                112,
+                128,
+                160,
+                192,
+                224,
+                256,
+                320
+              ]
+            },
             "x": [
               0,
               418,
@@ -12281,6 +12299,10 @@
             "axis": "frameOffset",
             "concept": "bitDistribution",
             "quantity": "Channel Bit Share",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
             "x": [
               0,
               418,
@@ -12332,6 +12354,10 @@
             "axis": "seconds",
             "concept": "bitDistribution",
             "quantity": "Channel Bit Share",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
             "x": [
               0
             ],

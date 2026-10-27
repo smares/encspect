@@ -1,6 +1,6 @@
 # Frame Map: one square per frame
 
-Status: approved by the project lead on 2026-10-27, decision 6 amended twice as described under [Numeric shading](#numeric-shading); the second amendment (declared ranges, 2026-10-27) is a design change awaiting a build; nothing built yet. Claims about the code were checked at e8f51bc, and those of the second amendment (`Series`, the JSON writer, the MPEG parser) at c666406; figures that were worked out rather than measured are marked **estimate**, and claims no source read for this design confirms are marked **unverified**. One throwaway prototype outside the repository measured the drawing cost (see [Speed and memory](#speed-and-memory)); nothing of it is committed. The decisions are collected under [Decisions](#decisions).
+Status: approved by the project lead on 2026-10-27, decision 6 amended twice as described under [Numeric shading](#numeric-shading); the second amendment (declared ranges, 2026-10-27) is built as rollout step 0 (`ValueRange`, `Series.DeclaredRange`, the JSON member, the MPEG opt-in); the map itself is not built yet. Claims about the code were checked at e8f51bc, and those of the second amendment (`Series`, the JSON writer, the MPEG parser) at c666406; figures that were worked out rather than measured are marked **estimate**, and claims no source read for this design confirms are marked **unverified**. One throwaway prototype outside the repository measured the drawing cost (see [Speed and memory](#speed-and-memory)); nothing of it is committed. The decisions are collected under [Decisions](#decisions).
 
 - An interactive mockup was shown to the lead. It was built from Encspect's JSON report of a damaged LAME `-V2` MP3. It is a private page and is not linked here.
 
@@ -219,9 +219,9 @@ The channel bit share's diverging scale centered on 50 % stays a [follow-up](#fo
 
 #### The costs
 
-- **Goldens:** every JSON report of an MPEG stream gains the field on two series (three where the stream has the per-second share). By a script over `tests/fixtures`: 478 JSON files hold a stream with an MPEG audio codec, of which 299 are `.report.json` goldens and 179 are `.expected.json`; the 296 reports with a "Bitrate" series are the ones that change. The `.expected.json` files hold no series and do not change. These include a few non-MPEG containers that carry MPEG (WAV 12, MP4 2, Ogg 2, AAC and ADTS 2 each). **About 300 goldens change**, each by added lines only, so the diff is checked by script (a golden's lines minus the added `declaredRange` lines equal the old golden). Inline JSON in `CategorySeriesWriterTests` and `MemoryTests` is checked the same way.
+- **Goldens:** every JSON report of an MPEG stream with a bitrate table gains the field: on 1 series for mono, 3 for two channels, and 0 for free-format mono. By a script over `tests/fixtures`: 478 JSON files hold a stream with an MPEG audio codec, of which 299 are `.report.json` goldens and 179 are `.expected.json`; the 300 reports with an MPEG "Bitrate" series are the ones that could change, and 294 do. The other 6 are free-format streams with no channel bit share (`stats/free-format-statistics`, `layer3/free-format-no-main-data`, `mpeg/{mpeg1,mpeg2,mpeg25}-layer3-free-format` and `mpeg/free-format-length-change`). The `.expected.json` files hold no series and do not change. These include a few non-MPEG containers that carry MPEG (WAV 12, MP4 2, Ogg 2, AAC and ADTS 2 each). **294 goldens change**, each by added lines only, so the diff is checked by script (a golden's lines minus the added `declaredRange` lines equal the old golden). Inline JSON in `CategorySeriesWriterTests` and `MemoryTests` is checked the same way.
 - **Size:** an MPEG report grows by about 100 bytes per stream (14 numbers and the member names), not per frame.
-- **Docs:** `docs/cli.md` (the JSON section: the field, its two forms, and that `schemaVersion` stays 1), `docs/formats/mpeg.md` (which series declare what), `docs/gui.md` ("Frame Map": the key and the clamp).
+- **Docs:** `docs/cli.md` (the JSON section: the field, its two forms, and that `schemaVersion` stays 1), `docs/formats/mpeg-audio.md` (which series declare what), `docs/gui.md` ("Frame Map": the key and the clamp).
 - **Compatibility:** a reader that ignores unknown members sees no change; one that rejects them already fails on every earlier field addition (cli.md, "Schema version").
 
 ## Categories
@@ -294,7 +294,7 @@ A throwaway Avalonia 12.1.4 control in the scratchpad, on the headless platform 
 - **`CapitalizationTests`:** unchanged; "Frame Map" is checked with the other buttons.
 - **Declared ranges (the second amendment):**
   - **Model test** (`SeriesRangeTests`): `OfSteps` and `Between` accept valid input and keep the members; they throw for unsorted, repeated, non-finite or fewer than 2 steps and for `minimum >= maximum`; a series without a range has null.
-  - **Writer test** (next to `CategorySeriesWriterTests`): `declaredRange` is written with `steps` or with `minimum` and `maximum` only when set, after `quantity`, and is absent from every other series; the text tree is unchanged.
+  - **Writer test** (in `SeriesRangeTests`): `declaredRange` is written with `steps` or with `minimum` and `maximum` only when set, after `quantity`, and is absent from every other series; the text tree is unchanged.
   - **MPEG tests** (`MpegCodingSeriesTests`): the bitrate declares the 14 steps of MPEG-1 Layer III and of MPEG-2 Layer III, the table of Layers I and II, and none for a free-format stream; the channel bit share declares 0 to 100; and the declared steps equal the nonzero, unreserved entries of the header tables.
   - **Map test** (`FrameMapGraphTests`): the same bitrate has the same color in two files with different ranges (a CBR file at 128 kbps and a VBR file from 32 to 320 kbps), a step a file does not use is absent from its squares and dimmed in the key, a fixed range spans the declared ends where the file's values are few, and the key's ends are the declared ones.
   - **Clamp test** (`FrameMapGraphTests`): a value below, above and between the steps goes to the end class or the nearest step, and the hover says so; a file that breaks its format draws without a ring.
@@ -302,7 +302,7 @@ A throwaway Avalonia 12.1.4 control in the scratchpad, on the headless platform 
 
 ## Rollout
 
-0. **Recommended: a small preceding pull request for the declared range,** which can merge before step 4 because nothing in it touches the GUI: `ValueRange` and `Series.DeclaredRange`, the JSON writer, the MPEG opt-in, the model, writer and MPEG tests, `docs/cli.md` and `docs/formats/mpeg.md`, and the roughly 300 re-blessed goldens.
+0. **Recommended: a small preceding pull request for the declared range,** which can merge before step 4 because nothing in it touches the GUI: `ValueRange` and `Series.DeclaredRange`, the JSON writer, the MPEG opt-in, the model, writer and MPEG tests, `docs/cli.md` and `docs/formats/mpeg-audio.md`, and the roughly 300 re-blessed goldens.
    - Reason: the Frame Map pull request should be reviewed for its drawing, not buried under 300 golden files; the preceding one is reviewed for the model and the writer, and its golden diff is checked by script as added lines only.
    - It is also the part with a public contract (the JSON), so it gets its own review and its own green pipeline, and the map then builds on a merged model.
    - If the lead prefers one pull request, the work is the same and goes in the Frame Map pull request after step 4.

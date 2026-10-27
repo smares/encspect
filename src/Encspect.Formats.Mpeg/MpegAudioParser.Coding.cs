@@ -273,11 +273,13 @@ public sealed partial class MpegAudioParser
                     shareX = bandwidthSeries.X;
                 }
 
-                series.Add(_share.PerFrame("Channel Bit Share", "%", SeriesText.ChannelBitShare, GraphConcept.BitDistribution, "Channel Bit Share", null, shareX));
+                series.Add(_share.PerFrame("Channel Bit Share", "%", SeriesText.ChannelBitShare, GraphConcept.BitDistribution, "Channel Bit Share", null, shareX, ShareRange));
                 series.Add(_share.PerSecond("Channel Bit Share Over Time", "%", SeriesText.ChannelBitShareOverTime, GraphConcept.BitDistribution, "Channel Bit Share", secondStarts,
-                    anchor, share: true));
+                    anchor, share: true, ShareRange));
             }
         }
+
+        private static readonly ValueRange ShareRange = ValueRange.Between(0, 100);
 
         // The tally node of the first of the stream's regions that has one.
         private Node? Anchor(Func<RegionState, Node?> node) => _regions.Select(node).FirstOrDefault(n => n is not null);
@@ -333,12 +335,12 @@ public sealed partial class MpegAudioParser
 
         private ReadOnlyMemory<double> Values => Count == _values.Length ? _values : _values.AsSpan(0, Count).ToArray();
 
-        public Series PerFrame(string name, string unit, string description, GraphConcept concept, string quantity, Node? anchor, ReadOnlyMemory<double> x) =>
-            new(name, unit, SeriesAxis.FrameOffset, x, Values, anchor) { Description = description, Concept = concept, Quantity = quantity };
+        public Series PerFrame(string name, string unit, string description, GraphConcept concept, string quantity, Node? anchor, ReadOnlyMemory<double> x, ValueRange? range = null) =>
+            new(name, unit, SeriesAxis.FrameOffset, x, Values, anchor) { Description = description, Concept = concept, Quantity = quantity, DeclaredRange = range };
 
         // Each second's highest value, or its share over the bits of the frames that start in it; seconds without a value have
         // no point.
-        public Series PerSecond(string name, string unit, string description, GraphConcept concept, string quantity, double[] secondStarts, Node? anchor, bool share)
+        public Series PerSecond(string name, string unit, string description, GraphConcept concept, string quantity, double[] secondStarts, Node? anchor, bool share, ValueRange? range = null)
         {
             var x = new List<double>();
             var values = new List<double>();
@@ -352,7 +354,7 @@ public sealed partial class MpegAudioParser
                 }
             }
 
-            return new Series(name, unit, SeriesAxis.Seconds, x.ToArray(), values.ToArray(), anchor) { Description = description, Concept = concept, Quantity = quantity };
+            return new Series(name, unit, SeriesAxis.Seconds, x.ToArray(), values.ToArray(), anchor) { Description = description, Concept = concept, Quantity = quantity, DeclaredRange = range };
         }
     }
 }
