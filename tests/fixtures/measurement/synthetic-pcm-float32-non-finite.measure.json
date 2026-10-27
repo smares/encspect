@@ -1,0 +1,115 @@
+{
+  "measurements": {
+    "status": "complete",
+    "samples": 8192,
+    "firstPosition": 0,
+    "lostSamples": 0,
+    "gaps": 0,
+    "sampleRate": 44100,
+    "channels": 1,
+    "channelsMeasured": 1,
+    "channelLayout": ["front center"],
+    "hasClampedSamples": true,
+    "nonFiniteSamples": 5,
+    "spectrum": {
+      "fftSize": 4096,
+      "frames": 3,
+      "rowCount": 512,
+      "binsPerRow": 4,
+      "rows": {
+        "unit": "dB",
+        "valuesPerUnit": 10,
+        "combined": "sha256:6dc17d3756f174d8a36c678a414c6bb660d4dd9a183c9a70c837bfff5043ef37",
+        "perChannel": ["sha256:6dc17d3756f174d8a36c678a414c6bb660d4dd9a183c9a70c837bfff5043ef37"]
+      },
+      "cutoff": {
+        "isFound": false,
+        "stepFrequency": {
+          "value": 4350,
+          "unit": "Hz"
+        },
+        "step": {
+          "value": 0.1,
+          "unit": "dB"
+        },
+        "framesShowing": 1,
+        "framesWithSignal": 3
+      },
+      "channelCutoffs": [
+        {
+          "isFound": false,
+          "stepFrequency": {
+            "value": 4350,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 0.1,
+            "unit": "dB"
+          },
+          "framesShowing": 1,
+          "framesWithSignal": 3
+        }
+      ]
+    },
+    "levels": {
+      "format": "float32",
+      "samplePeak": {
+        "value": 60.2,
+        "unit": "dBFS"
+      },
+      "rms": {
+        "value": 21.1,
+        "unit": "dBFS"
+      },
+      "dcOffset": {
+        "value": 12.504399,
+        "unit": "%"
+      },
+      "dcOffsetLevel": {
+        "value": -18.1,
+        "unit": "dBFS"
+      },
+      "clipping": {
+        "minimumRunLength": 3,
+        "runs": 0,
+        "samples": 0,
+        "longestRun": 0
+      },
+      "digitalSilence": {
+        "atStart": 1,
+        "atEnd": 0
+      },
+      "zeroSamples": {
+        "value": 37,
+        "unit": "samples"
+      },
+      "bitDepth": {
+        "hasOnly16BitValues": false,
+        "hasOnly24BitValues": false
+      }
+    },
+    "spectrogram": {
+      "columns": 4,
+      "rows": 512,
+      "hopsPerColumn": 1,
+      "hopSamples": 2048,
+      "unit": "dB",
+      "valueOffset": 200,
+      "noData": 0,
+      "power": "sha256:c40cbafd69c1822ab680ad3f4757d0f6da807330038b42d508e16e2030bb3e3e"
+    },
+    "waveform": {
+      "columns": 4,
+      "channels": 1,
+      "unit": "16-bit sample codes",
+      "minimum": "sha256:4313b075d442b79b8cd825b80157df68d7b584fba602d2ea591118840b9691c2",
+      "maximum": "sha256:c7325641276e1f0fc59ae98a1f3827d924511e180af0323f9ff9c5485ae53125"
+    }
+  },
+  "findings": [
+    {
+      "code": "measure.non-finite-samples",
+      "message": "The stream holds 5 float samples that are NaN or infinite; they were measured as 0."
+    }
+  ]
+}

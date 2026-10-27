@@ -1,0 +1,9 @@
+{
+ "description": "32-bit floats with three NaN, +infinity and -infinity, and one sample of 1e30: the non-finite ones are counted and measured as 0, the large one is clamped.",
+ "length": 32836,
+ "construction": {
+  "samples": 8192,
+  "non_finite": 5,
+  "clamped": true
+ }
+}
