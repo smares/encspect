@@ -203,17 +203,64 @@ public class MeasurementLevelsTests
         Assert.Equal((0, 3, 5), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.ZeroSamples));
     }
 
-    [Fact]
-    public void ASampleBeyondTheDeclaredBitsDoesNotWrapTheSumOfSquares()
+    [Theory]
+    [InlineData(8, 1445)]
+    [InlineData(16, 963)]
+    [InlineData(24, 482)]
+    public void ASampleBeyondTheDeclaredBitsDoesNotWrapTheSumOfSquares(int bits, int tenths)
     {
-        // A decoder that does not clamp (FLAC's restore on a corrupt frame) can write 32-bit values in a 16-bit stream; their squares pass the
-        // 64-bit partial sum sized for 16 bits within a few samples.
+        // A decoder that does not clamp (FLAC's restore on a corrupt frame) can write 32-bit values in a narrower stream; their squares pass the
+        // 64-bit partial sum sized for the declared bits within a few samples. Ten samples of -2^31 against a full scale of 2^(bits - 1) are
+        // 20 log10 2^(33 - bits) dB, as a peak and as an RMS level.
         int[] wild = [.. Enumerable.Repeat(int.MinValue, 10)];
-        ChannelLevels stream = Levels(16, [wild]).Stream;
+        ChannelLevels stream = Levels(bits, [wild]).Stream;
 
-        // 10 * 2^62 over 10 samples against 2^30: 2^32 as a power, 96.3 dB.
-        Assert.Equal(963, stream.RmsTenths);
-        Assert.Equal(963, stream.SamplePeakTenths);
+        Assert.Equal(tenths, stream.RmsTenths);
+        Assert.Equal(tenths, stream.SamplePeakTenths);
+    }
+
+    [Fact]
+    public void TheJointStretchesOfSeveralChannelsEndAtAGap()
+    {
+        int[][] zeros = [[0, 0, 0], [0, 0, 0]];
+        int[][] endsWithSignal = [[0, 0, 5], [0, 0, 5]];
+        int[][] startsWithSignal = [[5, 0, 0], [5, 0, 0]];
+
+        LevelFigures leading = Run(16, 2, LevelsOnly, 44100, (0, zeros), (50, endsWithSignal)).Levels!;
+        LevelFigures trailing = Run(16, 2, LevelsOnly, 44100, (0, startsWithSignal), (50, zeros)).Levels!;
+
+        Assert.Equal((3, 0, 5), (leading.Stream.SilentAtStart, leading.Stream.SilentAtEnd, leading.Stream.ZeroSamples));
+        Assert.Equal((0, 3, 5), (trailing.Stream.SilentAtStart, trailing.Stream.SilentAtEnd, trailing.Stream.ZeroSamples));
+    }
+
+    [Fact]
+    public void TheStreamsDcOffsetIsThatOfTheChannelWithTheLargestSumEvenWhereEveryFigureRoundsTo0()
+    {
+        // The first channel has no offset at all (no level); the second has one sample of 1 in 100,000, which rounds to 0 millionths of a percent.
+        int[] flat = new int[100_000];
+        int[] one = new int[100_000];
+        one[7] = 1;
+
+        ChannelLevels stream = Levels(16, [flat, one]).Stream;
+
+        Assert.Equal(0, stream.DcOffsetMicropercent);
+        Assert.NotEqual(MeasurementLimits.NoLevel, stream.DcOffsetTenths);
+    }
+
+    [Fact]
+    public void SubnormalDoublesAreSamplesThatAreNot0AndTakePartInNoSum()
+    {
+        double[] samples = [.. Enumerable.Repeat(1e-310, 100), .. Enumerable.Repeat(0.5, 100)];
+        var measurer = new StreamMeasurer(new PcmFormat(44100, 1, 64, SampleFormat.Float64), LevelsOnly, CancellationToken.None, _ => true);
+        measurer.Write(new PcmBlock(0, 200, 1, 200, samples));
+        ChannelLevels stream = measurer.Result(MeasurementStatus.Complete, null).Levels!.Stream;
+
+        Assert.Equal(0, stream.ZeroSamples);
+        Assert.Equal(-60, stream.SamplePeakTenths);
+        Assert.False(stream.HasOnly24BitValues);
+
+        // The mean square of the 100 samples of 0.5 over 200: 0.125, -9.0 dB.
+        Assert.Equal(-90, stream.RmsTenths);
     }
 
     [Fact]

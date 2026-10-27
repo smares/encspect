@@ -92,12 +92,11 @@ public static class MeasurementText
         lines.Add(new MeasurementLine("Clipping", clipping, ClippingDescription, ClippingTopic));
 
         string silence = stream.SilentAtStart == 0 && stream.SilentAtEnd == 0
-            ? "none at the start or at the end"
+            ? "none"
             : $"{(stream.SilentAtStart == 0 ? "none" : Samples(stream.SilentAtStart, m.SampleRate))} at the start, {(stream.SilentAtEnd == 0 ? "none" : Samples(stream.SilentAtEnd, m.SampleRate))} at the end";
         lines.Add(new MeasurementLine("Digital Silence", silence, DigitalSilenceDescription, DigitalSilenceTopic));
 
-        string zeros = $"{Samples(stream.ZeroSamples, m.SampleRate)}"
-            + (channels.Count > 1 && channels.Any(c => c.ZeroSamples != stream.ZeroSamples) ? $" ({string.Join(", ", names.Select((n, i) => $"{n} {Grouped(channels[i].ZeroSamples)}"))} for the channels)" : string.Empty);
+        string zeros = $"{Plural(stream.ZeroSamples, "sample", "samples")}{PerChannel(names, channels.Select(c => Plural(c.ZeroSamples, "sample", "samples")))}";
         lines.Add(new MeasurementLine("Zero Samples", zeros, ZeroSamplesDescription, DigitalSilenceTopic));
 
         if (isFloat)

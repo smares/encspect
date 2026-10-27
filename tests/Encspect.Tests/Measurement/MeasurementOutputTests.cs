@@ -204,6 +204,9 @@ public class MeasurementOutputTests
         Assert.Equal("%", levels.GetProperty("dcOffset").GetProperty("unit").GetString());
         Assert.Equal(2, levels.GetProperty("dcOffset").GetProperty("perChannel").GetArrayLength());
         Assert.Equal("dc-offset", levels.GetProperty("dcOffset").GetProperty("topic").GetString());
+        Assert.Equal("dc-offset", levels.GetProperty("dcOffsetLevel").GetProperty("topic").GetString());
+        Assert.False(string.IsNullOrEmpty(levels.GetProperty("dcOffsetLevel").GetProperty("description").GetString()));
+        Assert.Equal("digital-silence", levels.GetProperty("zeroSamples").GetProperty("topic").GetString());
         Assert.False(JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").TryGetProperty("spectrum", out _));
     }
 
@@ -219,7 +222,7 @@ public class MeasurementOutputTests
         JsonElement levels = JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("levels");
         Assert.Equal(JsonValueKind.Null, levels.GetProperty("samplePeak").GetProperty("value").ValueKind);
         Assert.Equal(JsonValueKind.Null, levels.GetProperty("bitDepth").GetProperty("lowBitsUnused").ValueKind);
-        Assert.Equal(8192, levels.GetProperty("digitalSilence").GetProperty("zeroSamples").GetInt64());
+        Assert.Equal(8192, levels.GetProperty("zeroSamples").GetProperty("value").GetInt64());
     }
 
     [Theory]

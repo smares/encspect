@@ -120,6 +120,58 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.True(both <= Factor);
     }
 
+    // A crafted Float64 stream of subnormal numbers (the PCM route of step 3 carries them): every arithmetic operation on one costs 20 to 30 times a
+    // normal one, so the levels take no part of their sums (below 1e-150); the time per unit stays within twice the FLAC reference's, as normal
+    // values' does.
+    [Theory]
+    [InlineData(1e-310)]
+    [InlineData(1e-160)]
+    [InlineData(0.5)]
+    public void TheLevelsOfDoublesOfAnyMagnitudeTakeAtMostTwiceTheFlacReferencesTimePerUnit(double scale)
+    {
+        double[] data = [.. MeasurementSignals.Noise(Length, 5).Select(v => v * scale)];
+        DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
+        for (int warm = 0; warm < 3; warm++)
+        {
+            RunDoubles(data);
+        }
+
+        var ratios = new List<double>();
+        var perSamples = new List<double>();
+        for (int round = 0; round < Rounds; round++)
+        {
+            double reference = DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
+            (double seconds, long units) = RunDoubles(data);
+            ratios.Add(seconds * 1e9 / units / reference);
+            perSamples.Add(seconds * 1e9 / Length);
+        }
+
+        DecoderWorkTests.ReleaseReference();
+        output.WriteLine($"levels of doubles around {scale:E1}: {Median(perSamples):F2} ns a sample, ratio to the reference {Median(ratios):F2}");
+        Assert.True(Median(ratios) <= Factor, $"The levels of doubles around {scale:E1} take {Median(ratios):F2} times the reference's time per unit.");
+    }
+
+    private static (double Seconds, long Units) RunDoubles(double[] data)
+    {
+        long units = 0;
+        var format = new PcmFormat(44100, 1, 64, SampleFormat.Float64);
+        var measurer = new StreamMeasurer(format, new MeasureOptions { Include = MeasurementKinds.Levels }, CancellationToken.None, u =>
+        {
+            units += u;
+            return true;
+        });
+        long start = Stopwatch.GetTimestamp();
+        for (int at = 0; at < Length; at += 4096)
+        {
+            measurer.Write(new PcmBlock(at, 4096, 1, 4096, data.AsSpan(at, 4096)));
+        }
+
+        double seconds = Stopwatch.GetElapsedTime(start).TotalSeconds;
+        Assert.Null(measurer.Failure);
+        Assert.NotNull(measurer.Result(MeasurementStatus.Complete, null).Levels);
+        return (seconds, units);
+    }
+
     public enum Signal
     {
         Noise,

@@ -419,7 +419,8 @@ internal sealed class StreamMeasurer
     }
 
     // Scales a channel's samples to full scale +-1 in doubles, with the minimum and maximum. Non-finite floats are 0 and counted, floats
-    // beyond 1,024 times full scale are clamped, and floats under 1e-30 are 0, before anything reaches the arithmetic.
+    // beyond 1,024 times full scale are clamped, before anything reaches the arithmetic. Floats under 1e-30 are kept in the target, where the levels read
+    // them as samples that are not 0; the minimum and maximum (the waveform) read them as 0, and the spectrum's buffers are flushed after the levels.
     private void Convert(PcmBlock block, int channel, int start, int count, Span<double> target, out double low, out double high)
     {
         low = double.MaxValue;
@@ -449,14 +450,17 @@ internal sealed class StreamMeasurer
                 {
                     double v = Sanitize(floats[i]);
                     target[i] = v;
-                    if (v < low)
+
+                    // The waveform reads a value the spectrum flushes as 0.
+                    double flushed = Math.Abs(v) < SmallestSample ? 0 : v;
+                    if (flushed < low)
                     {
-                        low = v;
+                        low = flushed;
                     }
 
-                    if (v > high)
+                    if (flushed > high)
                     {
-                        high = v;
+                        high = flushed;
                     }
                 }
 
@@ -467,14 +471,17 @@ internal sealed class StreamMeasurer
                 {
                     double v = Sanitize(doubles[i]);
                     target[i] = v;
-                    if (v < low)
+
+                    // The waveform reads a value the spectrum flushes as 0.
+                    double flushed = Math.Abs(v) < SmallestSample ? 0 : v;
+                    if (flushed < low)
                     {
-                        low = v;
+                        low = flushed;
                     }
 
-                    if (v > high)
+                    if (flushed > high)
                     {
-                        high = v;
+                        high = flushed;
                     }
                 }
 

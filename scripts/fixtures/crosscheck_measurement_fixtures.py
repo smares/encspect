@@ -8,7 +8,7 @@ make_external_measurement_fixtures.py):
   left out (their frame numbers jump, which flac -t reports); their reason is printed.
 - flac -d: the decoded samples (little-endian signed integers of as many whole bytes as the bit depth needs) have the MD5 of the samples that
   flac_model.py's decoder gives, the audio the measurements are made of, and FFmpeg 8.0.1 decodes the same samples (read as 32-bit integers).
-- ffprobe: the sample rate, channels and bit depth are the model's.
+- ffprobe: the sample rate and the channels are the model's.
 
 - FFmpeg's astats (docs/design/spectral-analysis.md, "Cross-checks"): the levels in the committed manifest (measurement_model.py's, which
   MeasurementFixtureTests holds the analyzer to) against what astats prints for each channel and for the file ("Overall"):
@@ -78,7 +78,13 @@ def astats(path):
 
 
 def number(value):
-    return None if value is None else float(value)
+    """A printed figure as a float (NaN where it cannot be read, which no comparison accepts), None where it is not printed."""
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        return math.nan
 
 
 def tenths_to_db(tenths):
@@ -115,9 +121,9 @@ def check_astats(path, expected, info, found):
         compared += 1
         got_db = level(text)
         if tenths is None:
-            if got_db is not None and got_db > -200:
+            if got_db is not None:
                 found.append(f"astats {what} is {got_db:.2f} dB, the model has none")
-        elif got_db is None or abs(got_db * 10 - tenths) > 1.0:
+        elif got_db is None or not (abs(got_db * 10 - tenths) <= 1.0):
             found.append(f"astats {what} is {got_db} dB, the model {tenths / 10}")
 
     pairs = [(f"channel {i + 1}", channels[i], levels["channels"][i]) for i in range(len(channels))] + [("overall", overall, levels["stream"])]
@@ -127,7 +133,7 @@ def check_astats(path, expected, info, found):
         dc = number(figure(got, "DC offset", name))
         if dc is not None:
             compared += 1
-            if abs(dc * scale - want["dc_micropercent"] / 1e8) > 3e-6:
+            if not (abs(dc * scale - want["dc_micropercent"] / 1e8) <= 3e-6):
                 found.append(f"astats {name} DC offset is {dc}, the model {want['dc_micropercent'] / 1e8}")
     for name, got, want in pairs[:-1]:
         if want["low_bits_unused"] is None:
@@ -137,12 +143,12 @@ def check_astats(path, expected, info, found):
             found.append(f"astats prints the bit depth of {name} as {got.get('Bit depth')!r}, not four numbers")
             continue
         compared += 1
-        if int(depth[2]) != levels["bits"] - want["low_bits_unused"]:
+        if not depth[2].isdigit() or int(depth[2]) != levels["bits"] - want["low_bits_unused"]:
             found.append(f"astats {name} bit depth is {got['Bit depth']}, the model {levels['bits']} less {want['low_bits_unused']} low bits unused")
     samples = number(figure(overall, "Number of samples", "overall"))
     if samples is not None:
         compared += 1
-        if int(samples) != expected["model"]["samples"]:
+        if not math.isfinite(samples) or int(samples) != expected["model"]["samples"]:
             found.append(f"astats counts {int(samples)} samples, the model {expected['model']['samples']}")
     if compared == 0:
         found.append("astats: no figure compared")
@@ -177,8 +183,12 @@ def check_silence(path, stream, info, found):
     if result.returncode != 0:
         found.append(f"silencedetect: ffmpeg fails: {text.strip()[-200:]}")
         return
-    starts = [float(x) for x in re.findall(r"silence_start: (-?[0-9.e+-]+)", text)]
-    ends = [float(x) for x in re.findall(r"silence_end: ([0-9.e+-]+)", text)]
+    try:
+        starts = [float(x) for x in re.findall(r"silence_start: (\S+)", text)]
+        ends = [float(x) for x in re.findall(r"silence_end: (\S+)", text)]
+    except ValueError as error:
+        found.append(f"silencedetect prints a figure that cannot be read: {error}")
+        return
     if len(starts) != len(ends):
         found.append(f"silencedetect printed {len(starts)} starts and {len(ends)} ends")
         return
@@ -232,9 +242,13 @@ def main():
                     if hashlib.md5(shifted).hexdigest() != want:
                         found.append("ffmpeg decodes other samples than the model")
             expected = json.loads(path.with_suffix(".expected.json").read_text())
-            if "levels" in expected.get("model", {}):
+            if "levels" not in expected.get("model", {}):
+                found.append("the manifest has no levels")
+            else:
                 check_astats(path, expected, info, found)
-            if path.stem not in GAPS and path.stem.startswith("synthetic-levels-") and info["bits"] <= 16:
+            if path.stem in GAPS and path.stem.startswith("synthetic-levels-"):
+                skipped.append(f"{path.stem}: silencedetect (it follows the timestamps and counts a gap in the frame numbers as silence, so its stretches cross the gaps the levels keep apart)")
+            elif path.stem.startswith("synthetic-levels-") and info["bits"] <= 16:
                 check_silence(path, stream, info, found)
             probe = run(["ffprobe", "-v", "error", "-show_streams", "-of", "json", str(path)])
             streams = json.loads(probe.stdout or b"{}").get("streams", [])

@@ -15,6 +15,10 @@ internal sealed class LevelsMeter
     // The most samples of a channel given to AddIntegers or AddDoubles at once; the scratch arrays are this long.
     public const int MaxPiece = 16384;
 
+    // Under this magnitude a float sample takes no part in the sums: 1e-150 squared is 1e-300, still a normal number (the smallest is 2.2e-308), so
+    // the squares and their sum never go subnormal, and a subnormal input never reaches the DC sum.
+    private const double TinyLimit = 1e-150;
+
     private readonly ChannelState[] _channels;
     private readonly bool _isFloat;
     private readonly SampleFormat _format;
@@ -123,21 +127,35 @@ internal sealed class LevelsMeter
             double v = samples[i];
             low = v < low ? v : low;
             high = v > high ? v : high;
-            sum += v;
-            squares += v * v;
             flags[i] = v != 0 ? 1 : 0;
-            if (only24)
+            if (Math.Abs(v) < TinyLimit)
             {
-                double y = v * 8388608.0;
-                if (y != Math.Floor(y) || y < -8388608.0 || y > 8388607.0)
+                // No arithmetic on a value this small: its square would be subnormal (or 0) and every operation on a subnormal number costs 20 to
+                // 30 times a normal one, a crafted Float64 stream's price. It is a sample that is not 0 for the comparisons (peak, zero samples,
+                // clipping) and not a multiple of 2^-23; its contribution to the sums is under 1e-300 and is left out.
+                if (v != 0)
                 {
                     only24 = false;
                     only16 = false;
                 }
-                else if (only16)
+            }
+            else
+            {
+                sum += v;
+                squares += v * v;
+                if (only24)
                 {
-                    double z = v * 32768.0;
-                    only16 = z == Math.Floor(z) && z >= -32768.0 && z <= 32767.0;
+                    double y = v * 8388608.0;
+                    if (y != Math.Floor(y) || y < -8388608.0 || y > 8388607.0)
+                    {
+                        only24 = false;
+                        only16 = false;
+                    }
+                    else if (only16)
+                    {
+                        double z = v * 32768.0;
+                        only16 = z == Math.Floor(z) && z >= -32768.0 && z <= 32767.0;
+                    }
                 }
             }
 

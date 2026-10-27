@@ -805,12 +805,12 @@ public static class ReportJsonWriter
             w.WriteNumber("samples", c.ClippedSamples);
             w.WriteNumber("longestRun", c.LongestClippingRun);
         }, w => w.WriteNumber("minimumRunLength", MeasurementLimits.MinimumClippingRun));
-        WriteGroup(writer, "digitalSilence", levels, explain ? MeasurementText.DigitalSilenceDescription + " " + MeasurementText.ZeroSamplesDescription : null, MeasurementText.DigitalSilenceTopic, (w, c) =>
+        WriteGroup(writer, "digitalSilence", levels, explain ? MeasurementText.DigitalSilenceDescription : null, MeasurementText.DigitalSilenceTopic, (w, c) =>
         {
             w.WriteNumber("atStart", c.SilentAtStart);
             w.WriteNumber("atEnd", c.SilentAtEnd);
-            w.WriteNumber("zeroSamples", c.ZeroSamples);
         }, null);
+        WriteFigure(writer, "zeroSamples", "samples", c => writer.WriteNumberValue(c.ZeroSamples), levels, explain ? MeasurementText.ZeroSamplesDescription : null, MeasurementText.DigitalSilenceTopic);
         WriteGroup(writer, "bitDepth", levels, explain ? (levels.Format == SampleFormat.Integer ? MeasurementText.LowBitsUnusedDescription : MeasurementText.HasOnly16BitValuesDescription + " " + MeasurementText.HasOnly24BitValuesDescription) : null, MeasurementText.BitDepthUsageTopic, (w, c) =>
         {
             if (levels.Format == SampleFormat.Integer)

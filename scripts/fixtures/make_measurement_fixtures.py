@@ -392,13 +392,14 @@ def add_levels():
         dict(unspecified, levels={"stream": {"sample_peak_tenths": None, "rms_tenths": None, "dc_micropercent": 0, "silent_at_start": 8192, "silent_at_end": 8192, "zero_samples": 8192, "low_bits_unused": None}}))
 
     gap_audio = small_noise(8192, 13, 299, nonzero=True)
-    gap_audio[0:200] = [0] * 200
-    gap_audio[1022:1024] = [32767] * 2
-    gap_audio[2048:2050] = [32767] * 2
+    gap_audio[0:1024] = [0] * 1024
+    gap_audio[2048:2248] = [0] * 200
+    gap_audio[3070:3072] = [32767] * 2
+    gap_audio[4096] = 32767
     gap_audio[4820:5120] = [0] * 300
-    gap_audio[6144:6544] = [0] * 400
-    add("levels-gaps", "Blocks of 1,024 samples with the second and sixth removed: two samples at +32,767 before the first gap and two after it (no run), 300 zeros before the second and 400 after it (not one stretch), 200 at the start.",
-        [gap_audio], rate, 16, dict(unspecified, levels={"stream": {"clipping_runs": 0, "silent_at_start": 200, "silent_at_end": 0, "zero_samples": 900}}), block=1024, drop=(1, 5))
+    gap_audio[6144:8192] = [0] * 2048
+    add("levels-gaps", "Blocks of 1,024 samples with the second, fourth and sixth removed: the first block and the start of the third are silent (the stretch at the start ends at the gap), two samples at +32,767 end the third block and one starts the fifth (no run), 300 zeros end the fifth block, and the last two blocks are silent (the stretch at the end starts after the gap).",
+        [gap_audio], rate, 16, dict(unspecified, levels={"stream": {"clipping_runs": 0, "silent_at_start": 1024, "silent_at_end": 2048, "zero_samples": 3572}}), block=1024, drop=(1, 3, 5))
 
     wide = [2147483647 if i % 128 < 96 else -2147483648 for i in range(4096)]
     add("levels-full-scale-32-bits", "A 32-bit square wave between +2,147,483,647 and -2,147,483,648, high for 96 and low for 32 samples of every 128: the sum of squares passes 2^64 within two samples.",

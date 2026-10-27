@@ -106,19 +106,21 @@
       "digitalSilence": {
         "atStart": 0,
         "atEnd": 0,
-        "zeroSamples": 0,
         "perChannel": [
           {
             "atStart": 0,
-            "atEnd": 0,
-            "zeroSamples": 0
+            "atEnd": 0
           },
           {
             "atStart": 0,
-            "atEnd": 0,
-            "zeroSamples": 0
+            "atEnd": 0
           }
         ]
+      },
+      "zeroSamples": {
+        "value": 0,
+        "unit": "samples",
+        "perChannel": [0, 0]
       },
       "bitDepth": {
         "lowBitsUnused": 3,

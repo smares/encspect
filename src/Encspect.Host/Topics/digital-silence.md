@@ -11,6 +11,6 @@ references: Encspect design, docs/design/spectral-analysis.md (Levels)
 
 **Gaps.** Nothing is counted across a gap in the decoded blocks, where frames were lost: a stretch of zeros before a gap and one after it are two stretches, and a stretch at the start ends at the gap.
 
-**What you see.** Digital Silence and Zero Samples in samples and, where the sample rate is known, in seconds. In Encspect's test files, 8,192 zero samples read 8,192 at the start, at the end and in all, noise that never reaches 0 with 1,000 zeros at the start, 500 in the middle and 2,000 at the end reads 1,000, 2,000 and 3,500, and the dithered 16 kHz lines 60 dB down read 5,122 zero samples with no silence at either end.
+**What you see.** Digital Silence in samples and, where the sample rate is known, in seconds, and Zero Samples as a count. In Encspect's test files, 8,192 zero samples read 8,192 at the start, at the end and as Zero Samples, noise that never reaches 0 with 1,000 zeros at the start, 500 in the middle and 2,000 at the end reads 1,000 at the start, 2,000 at the end and 3,500 Zero Samples, and the dithered 16 kHz lines 60 dB down read 5,122 zero samples with no silence at either end.
 
 **What it shows.** Where the stream carries no signal in the samples it was decoded to. The figure does not say whether the silence was in the source or was made later.
