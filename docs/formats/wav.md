@@ -2,7 +2,7 @@
 
 Two format parsers in `src/Encspect.Formats.Wav`: "WAV" for WAVE files in a RIFF container and "Wave64" for Sony's Wave64 (`.w64`, see [Wave64](#wave64)). They share the readers of the `fmt `, `fact` and `data` chunks, the routes to the codec parsers and the checks over the stream.
 
-WAVE files in a RIFF container (`.wav`, `.wave`): RIFF for little-endian integers, RIFX for big-endian ones, and RF64 and BW64 for sizes of 64 bits. There is no decoder; the audio is not decoded.
+WAVE files in a RIFF container (`.wav`, `.wave`): RIFF for little-endian integers, RIFX for big-endian ones, and RF64 and BW64 for sizes of 64 bits. The `pcm` decoder reads the samples of PCM, floating-point, A-law and mu-law data (see [Decoding](#decoding)); it is used for measurements only, since WAVE stores no checksum.
 
 Sources:
 
@@ -126,14 +126,32 @@ S/PDIF passthrough captured or rendered to a WAVE file (or a Wave64 file) writes
 
 - The `ISFT` chunk of `LIST INFO` (Software) is a claim of the writer, with the weight a tag text has. It is shown as "Writer" with its source. An ID3v2 or APEv2 tag that names another writer gives `wav.writer-claim-differs`.
 - The `bext` originator and the `iXML` text are shown but not used as evidence.
-- No audio encoder is detected: the samples are not read, and a compressed stream's encoder is the codec parser's business.
+- No audio encoder is detected: the samples are read only to be decoded for measurements, and a compressed stream's encoder is the codec parser's business.
+
+## Decoding
+
+The samples of a WAVE or Wave64 file are the data, so the decoder `pcm` (`Encspect.Formats.Wav.Decoding`, also used by the AIFF parser) only unpacks them. It is described in [decoders.md](../design/decoders.md) and [spectral-analysis.md](../design/spectral-analysis.md) ("WAV, Wave64 and AIFF: a PCM decoder").
+
+- **Which streams get a session.** The parser starts one for the first `data` chunk of a stream it reports as:
+  - integer PCM of 1 to 8 bits (unsigned bytes), and of 9 to 32 bits (signed, in 2 to 4 bytes), little-endian, or big-endian in RIFX; a container wider than 32 bits (40 or 64 bits) starts a session that the decoder refuses (`decode.not-possible`, info);
+  - IEEE float of 32 and 64 bits, and A-law and mu-law of 8 bits, expanded to 16-bit integers (ITU-T G.711);
+  - the same under the extensible format tag, by the sub-format.
+- **Which do not.** No session, and the stream is reported as before, for:
+  - a coding that stores no samples as they are (ADPCM, GSM and the rest) and data that goes to a codec parser (MPEG audio, AC-3, E-AC-3, DTS), including DTS in 16-bit stereo samples and IEC 61937 bursts, recognized or not;
+  - a width the coding does not have (`wav.float-bits`, `wav.companded-bits`, no bits per sample);
+  - a block alignment that is not the channels times the bytes of a sample (`wav.block-align-mismatch` where it applies), so the layout of the frames is not known;
+  - samples in the pieces of a `wavl` list, whose silence the stream counts.
+- **What is output.** The container's value as stored, whatever the valid bits (`wValidBitsPerSample`) say: 20 valid bits in a 24-bit container are output as the 24-bit values, and a file that pads at the low end shows the unused bits in the bit-depth usage. Microsoft's specification ("Data Packing for PCM WAVE Files", read for this) puts the amplitude bits in the most significant bits of the sample's integer and zeros below; the decoder does not rely on it. The A-law and mu-law expansion matches FFmpeg's decoders (checked by the MD5 cross-check). They are not marked as lossy streams.
+- **How it is read.** In slices of whole sample frames of 64 KiB (a sample frame of more is read whole: a header may state 65,535 channels), so memory does not grow with the file. Bytes after the last whole sample frame are not decoded (`wav.partial-sample-frame`), and a data chunk cut short by the end of the file is decoded as far as it goes.
+- **Verification.** There is no checksum to compare. The stream has a `verification` in the model, for the front ends, that says whether the audio was decoded; the text report, the JSON report and the GUI's "Verified" line leave out a verification that declares no checksum, so a WAVE file's report does not change. `--verify` alone does not read the samples; `--measure` does.
+- **Cross-check.** `scripts/fixtures/crosscheck_wav_fixtures.py` compares the MD5 of the decoded samples with `ffmpeg -i f -c:a pcm_<format> -f md5 -` (see [development.md](../development.md)); the differences it explains are in its table, each flagged if the pinned FFmpeg (8.0.1) stops differing: RIFX (FFmpeg 6.1.1 reads the samples as little-endian; 8.0.1 not yet observed), the data FFmpeg takes for IEC 61937 bursts, 24 valid bits in a 32-bit container, and the files FFmpeg refuses.
 
 ## What is not covered
 
 - The sub-chunks of `sxml`, the XML of the Audio Definition Model (its IDs against `chna`) and `ubxt`.
 - IEC 61937 bursts of MPEG audio, ATRAC, WMA Professional, MAT and the other codings that have no codec parser here (the stream is named and sized, not analyzed), bursts under the `-0cea-` sub-format GUIDs of Microsoft's list, and bursts in samples that are not 16-bit stereo (24-bit carriers, HBR formats over several channels).
 - The `CHAN`-style channel descriptions of other containers, and the contents of `levl`, `link`, `dbmd`, `qlty` and `r64m`.
-- Decoding, and a check of the samples. A WAVE file is verified by nothing but its headers.
+- A check of the samples: WAVE stores no checksum, so a file is verified by nothing but its headers.
 - sox was not used for the cross-check: FFmpeg writes the fixtures and ffprobe and MediaInfo read them (sox is not installed on the development machines).
 
 ## Wave64

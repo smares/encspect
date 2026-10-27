@@ -63,14 +63,14 @@ internal static class CorruptFiles
         Prefix,
     }
 
-    // The fixtures of these families are also decoded. FLAC decodes every variant. A Monkey's Audio frame costs a thousand times what a FLAC frame does, so
+    // The fixtures of these families are also decoded. FLAC, WAV, Wave64 and AIFF decode every variant (PCM costs a few microseconds a frame). A Monkey's Audio frame costs a thousand times what a FLAC frame does, so
     // only some variants are decoded: every third of the byte changes (the damage the decoder meets), the prefixed ones, and one truncation in 64.
     // Each is decoded for up to 2^28 units of work: the fixtures of the lower levels are decoded to their last frame, so damage in a later frame is
     // decoded too, and at the highest levels the budget ends the decoding of a variant early.
     private const long MonkeysAudioBudget = 1L << 28;
 
     private static bool IsDecoded(string name) =>
-        name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/legacy-", StringComparison.Ordinal);
+        name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("wav/", StringComparison.Ordinal) || name.StartsWith("aiff/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/legacy-", StringComparison.Ordinal);
 
     private static bool IsDecoded(string name, VariantKind kind, int number) =>
         IsDecoded(name) && (!name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || kind switch

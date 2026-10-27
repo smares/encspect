@@ -2,8 +2,9 @@
 """Writes the synthetic measurement fixtures in tests/fixtures/measurement (synthetic-*.flac) and their manifests (*.expected.json).
 
 The signals are made here with the standard library (docs/design/spectral-analysis.md, "Synthetic fixtures") and written as FLAC files with
-flac_model.py's writer, so the files are reproducible byte for byte on every machine and CI regenerates and compares them. Step 1 of the
-rollout has FLAC files only; the WAV twins come with the PCM route (step 3).
+flac_model.py's writer, so the files are reproducible byte for byte on every machine and CI regenerates and compares them. Step 3 of the rollout
+(the PCM route) adds twins of some of them as WAV files, and of two as Wave64 and AIFF files, which hold the same integers (the measurements and the
+decoded audio of a twin equal its FLAC file's), and fixtures that only WAV can hold (floats, non-finite samples, 33 and 65,535 channels).
 
     - sines at a bin center and between bins, a logarithmic sweep, and sines of 8, 24 and 32 bits;
     - noise band-limited exactly at 11, 16, 19 and 20.5 kHz at 44.1 kHz and at 16 kHz also at 48 kHz (lines at bin centers with fixed random phases, repeating
@@ -28,8 +29,10 @@ import math
 import pathlib
 import struct
 
+import aiff_model as aiff
 import flac_model as m
 import measurement_model as mm
+import wav_model as wav
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "measurement"
@@ -406,6 +409,97 @@ def add_levels():
         [wide], rate, 32, dict(unspecified, levels={"stream": {"sample_peak_tenths": 0, "clipping_runs": 64, "clipped_samples": 4096, "longest_clipping_run": 96, "highest_magnitude": 2147483648}}), verbatim=True)
 
 
+# ---- The twins: the same integers in WAV, Wave64 and AIFF files ----
+
+# The fixtures that also exist as WAV files, chosen to cover each width, the channel layout with an LFE, the rates below and above 44.1 kHz, the stretches of
+# silence and the clipping runs; the gap fixtures cannot be (the positions of a WAV file are contiguous), and the 48 s file would take 4 MB.
+WAV_TWINS = ["sine-bin-center", "sine-8-bits", "sine-24-bits", "sine-32-bits", "lines-16000-44100", "lines-16000-then-silence", "lines-3200-8000", "lines-8000-22050",
+             "lines-20000-192000", "white-2000", "short-1000-samples", "surround-5-1-wideband-lfe", "levels-sine-full-scale",
+             "levels-most-negative-8-bits", "levels-square-full-scale", "levels-dc-offset", "levels-clipping-runs", "levels-silence-positions", "levels-silence-stereo",
+             "levels-low-bits-24-in-16", "levels-silent", "levels-full-scale-32-bits"]
+
+# The WAVE channel mask of a channel count that has a layout (KSAUDIO_SPEAKER_5POINT1): front left and right, center, LFE, back left and right.
+MASKS = {6: 0x3F}
+
+
+def interleave(channels, bits, big=False, unsigned=False):
+    """The samples of the channels one sample frame after another, each of ceil(bits / 8) bytes."""
+    width = (bits + 7) // 8
+    out = bytearray()
+    for frame in zip(*channels):
+        for v in frame:
+            if unsigned:
+                v += 1 << (bits - 1)
+            out += (v & ((1 << (8 * width)) - 1)).to_bytes(width, "big" if big else "little")
+    return bytes(out)
+
+
+def wav_fmt(channels, rate, bits, tag=1, mask=None):
+    """A fmt chunk body: WAVEFORMATEX for one or two channels and 8, 16 bits; the extensible form where there is a mask or the width is not 8 or 16 bits."""
+    if mask is None and tag == 1 and bits in (8, 16) and channels <= 2:
+        return wav.fmt_body(tag, channels, rate, bits)
+    return wav.extensible(channels, rate, bits, mask=mask if mask is not None else (3 if channels == 2 else 4 if channels == 1 else 0), coding=tag)
+
+
+def wav_file(channels, rate, bits):
+    body = interleave(channels, bits, unsigned=bits == 8)
+    return wav.riff([wav.chunk("fmt ", wav_fmt(len(channels), rate, bits, mask=MASKS.get(len(channels)))), wav.chunk("data", body)])
+
+
+def w64_chunk(guid, body):
+    out = guid + struct.pack("<Q", 24 + len(body)) + body
+    return out + b"\0" * (-len(out) % 8)
+
+
+def w64_file(channels, rate, bits):
+    fmt = w64_chunk(b"fmt " + wav.W64_TAIL, wav_fmt(len(channels), rate, bits, mask=MASKS.get(len(channels))))
+    data = w64_chunk(b"data" + wav.W64_TAIL, interleave(channels, bits, unsigned=bits == 8))
+    return wav.W64_RIFF + struct.pack("<Q", 40 + len(fmt) + len(data)) + wav.W64_WAVE + fmt + data
+
+
+def aiff_file(channels, rate, bits):
+    """AIFF, big-endian signed samples left-justified in their bytes."""
+    comm = aiff.comm(len(channels), len(channels[0]), bits, rate)
+    return aiff.form([aiff.chunk("COMM", comm), aiff.chunk("SSND", aiff.ssnd(interleave(channels, bits, big=True)))])
+
+
+# The fixtures only WAV can hold, each built with the figures in construction: (name, description, bytes, construction).
+def float_sine(count, amplitude=0.5):
+    return [amplitude * math.sin(2 * math.pi * ((400 * i) % 4096) / 4096) for i in range(count)]
+
+
+def float_wav(channels, rate, bits, mask=None):
+    code = "f" if bits == 32 else "d"
+    body = b"".join(struct.pack("<" + code, v) for frame in zip(*channels) for v in frame)
+    return wav.riff([wav.chunk("fmt ", wav_fmt(len(channels), rate, bits, tag=3, mask=mask)), wav.chunk("data", body)])
+
+
+def wav_only():
+    rate = 44100
+    items = []
+    sine = float_sine(16384)
+    items.append(("pcm-float32-sine", "A sine at the center of bin 400, amplitude 0.5, as 32-bit floats: the floats are taken as they are.", float_wav([sine], rate, 32),
+                  {"samples": 16384, "float_values": True}))
+    items.append(("pcm-float64-sine", "The same sine as 64-bit floats.", float_wav([sine], rate, 64), {"samples": 16384, "float_values": True}))
+    odd = float_sine(8192)
+    inf = float("inf")
+    for index, value in ((10, float("nan")), (11, float("nan")), (100, inf), (101, -inf), (2000, float("nan"))):
+        odd[index] = value
+    odd[3000] = 1e30
+    items.append(("pcm-float32-non-finite", "32-bit floats with three NaN, +infinity and -infinity, and one sample of 1e30: the non-finite ones are counted and measured as 0, the large one is clamped.",
+                  float_wav([odd], rate, 32), {"samples": 8192, "non_finite": 5, "clamped": True}))
+    huge = float_sine(8192)
+    huge[50], huge[51], huge[52], huge[900] = 1e300, -1e300, 5e-324, 1e-310
+    items.append(("pcm-float64-huge", "64-bit floats with samples of 1e300 and -1e300 (clamped), a subnormal 5e-324 and a very small 1e-310: no figure is NaN.",
+                  float_wav([huge], rate, 64), {"samples": 8192, "non_finite": 0, "clamped": True}))
+    # Channels: the first 32 are measured.
+    many = [[((c * 997 + i * 31) % 2001) - 1000 for i in range(1024)] for c in range(33)]
+    items.append(("pcm-channels-33", "33 channels of 1,024 samples without a channel mask: 32 are measured.", wav_file(many, rate, 16), {"channels": 33, "measured": 32}))
+    header = wav.riff([wav.chunk("fmt ", wav.fmt_body(1, 65535, rate, 8)), wav.chunk("data", bytes((i * 7) % 256 for i in range(65535)))])
+    items.append(("pcm-channels-65535", "A header that declares 65,535 channels of 8-bit samples and a data chunk of one sample frame: 32 are measured.", header, {"channels": 65535, "measured": 32}))
+    return items
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     build()
@@ -416,6 +510,18 @@ def main():
         stem.with_suffix(".flac").write_bytes(data)
         text = mm.dumps(manifest(data, description, construction, layout))
         stem.with_suffix(".expected.json").write_text(text)
+        print(name, len(data))
+        if name in WAV_TWINS:
+            stem.with_suffix(".wav").write_bytes(wav_file(channels, rate, bits))
+        if name == "sine-bin-center":
+            stem.with_suffix(".w64").write_bytes(w64_file(channels, rate, bits))
+            stem.with_suffix(".aiff").write_bytes(aiff_file(channels, rate, bits))
+        if name == "sine-24-bits":
+            stem.with_suffix(".aiff").write_bytes(aiff_file(channels, rate, bits))
+    for name, description, data, construction in wav_only():
+        stem = OUT / f"synthetic-{name}"
+        stem.with_suffix(".wav").write_bytes(data)
+        stem.with_suffix(".expected.json").write_text(mm.dumps({"description": description, "length": len(data), "construction": construction}))
         print(name, len(data))
 
 

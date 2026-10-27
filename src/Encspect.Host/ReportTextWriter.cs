@@ -49,7 +49,7 @@ public static class ReportTextWriter
         }
 
         Dictionary<Node, string> verified = new(ReferenceEqualityComparer.Instance);
-        foreach (StreamInfo stream in report.Streams.Where(s => s.Verification is not null && s.Nodes.Count > 0))
+        foreach (StreamInfo stream in report.Streams.Where(s => s.Verification is { HasChecksums: true } && s.Nodes.Count > 0))
         {
             verified.TryAdd(stream.Nodes[0], VerificationText.Describe(stream.Verification!));
         }

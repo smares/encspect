@@ -133,7 +133,16 @@ internal static class ChunkFixtureChecks
 
         Assert.Equal(expected.GetProperty("layout").EnumerateArray().Select(s => s.GetString()), stream.ChannelLayout?.Select(ChannelLayouts.Name) ?? []);
         Assert.All(stream.NodePaths, path => Assert.NotNull(path));
-        Assert.Null(stream.Verification);
+
+        // A stream whose samples the decoder "pcm" takes has a session in every analysis, which decodes nothing unless measuring or output is asked for.
+        if (expected.TryGetProperty("pcm", out _))
+        {
+            Assert.True(stream.Verification is { Decoding: DecodeStatus.NotRequested, HasChecksums: false, DecodedSamples: 0 }, $"{where}: the verification is {stream.Verification}.");
+        }
+        else
+        {
+            Assert.Null(stream.Verification);
+        }
     }
 
     // The data-bursts of IEC 61937 the model found in the samples: how many of the stream's data type, where the first of them start, and the pause and null bursts that are counted and not listed.
@@ -181,5 +190,78 @@ internal static class ChunkFixtureChecks
         Assert.True(wanted.SequenceEqual(found), $"Expected findings {string.Join(", ", wanted.Select(w => $"{w.Key} x{w.Value}"))}; found {string.Join("; ", report.Findings.Select(f => $"{f.Code} x{f.Count}: {f.Message}"))}");
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed");
         Assert.All(report.Findings, f => Assert.True(f.Path is not null, $"The node of {f.Code} is not in the tree."));
+    }
+
+    // What decoding adds to the report of a fixture the decoder "pcm" takes: the verification (the status and the samples decoded, no checksum) and the
+    // decode.* findings, in <name>.decode.json as for the other decoded formats (rewritten with ENCSPECT_UPDATE_GOLDEN=1). A fixture without a session has none.
+    public static void DecodeGoldenMatches(string name)
+    {
+        JsonElement stream = Fixtures.LoadMpegManifest(name).GetProperty("stream");
+        string path = Fixtures.MpegCompanion(name, ".decode.json");
+        if (stream.ValueKind != JsonValueKind.Object || !stream.TryGetProperty("pcm", out _))
+        {
+            Assert.False(File.Exists(path), $"{path} exists for a fixture whose stream the decoder does not take.");
+            return;
+        }
+
+        var sink = new PcmHashingSink();
+        using FileStream file = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), file, new AnalysisOptions { Decoding = new DecodeOptions { Output = sink.Declare } });
+        string actual = DecoderFixtureTests.Golden(report);
+        if (Fixtures.UpdateGolden)
+        {
+            File.WriteAllText(path, actual);
+            return;
+        }
+
+        Assert.True(File.Exists(path), $"Missing golden file {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
+        Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
+    }
+
+    // Decodes the file with a hashing sink and holds the decoder "pcm" to the manifest: the samples and the MD5 of the canonical layout that pcm_model.py works out
+    // from the specifications, which crosscheck_wav_fixtures.py confirms with FFmpeg; a file whose manifest has no pcm is not decoded.
+    public static void DecodedAudioMatchesManifest(string name)
+    {
+        JsonElement manifest = Fixtures.LoadMpegManifest(name);
+        var sink = new PcmHashingSink();
+        using FileStream file = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), file, new AnalysisOptions { Decoding = new DecodeOptions { Output = stream => sink.Declare(stream) } });
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed" or "decode.no-decoder");
+        JsonElement stream = manifest.GetProperty("stream");
+        if (stream.ValueKind != JsonValueKind.Object || !stream.TryGetProperty("pcm", out JsonElement pcm))
+        {
+            Assert.Equal(0, sink.Samples);
+            Assert.All(report.Streams, s => Assert.Null(s.Verification));
+            return;
+        }
+
+        StreamVerification verification = report.Streams[0].Verification!;
+        Assert.False(verification.HasChecksums);
+        Assert.Null(verification.IsVerified);
+        if (pcm.TryGetProperty("not_possible", out _))
+        {
+            Assert.Equal(DecodeStatus.NotPossible, verification.Decoding);
+            Assert.Contains(report.Findings, f => f.Code == "decode.not-possible");
+            Assert.Equal(0, sink.Samples);
+            return;
+        }
+
+        Assert.Equal(DecodeStatus.Decoded, verification.Decoding);
+        Assert.Equal(pcm.GetProperty("samples").GetInt64(), verification.DecodedSamples);
+        Assert.Equal(verification.DecodedSamples, sink.Samples);
+        Assert.Equal(pcm.GetProperty("md5").GetString(), sink.Hash());
+        if (verification.DecodedSamples == 0)
+        {
+            // No sample frame: the decoder declares no output.
+            Assert.Equal(0, sink.Declared);
+            return;
+        }
+
+        Assert.Equal(pcm.GetProperty("bits").GetInt32(), sink.Bits);
+        Assert.Equal(pcm.GetProperty("format").GetString() == "float" ? (pcm.GetProperty("bits").GetInt32() == 32 ? SampleFormat.Float32 : SampleFormat.Float64) : SampleFormat.Integer, sink.Format);
+        Assert.Equal(stream.GetProperty("sample_rate").GetInt32(), sink.SampleRate);
+        Assert.Equal(stream.GetProperty("channels").GetInt32(), sink.Channels);
+        Assert.Equal(1, sink.Declared);
     }
 }

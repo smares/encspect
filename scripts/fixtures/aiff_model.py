@@ -13,6 +13,8 @@ analyzer: the chunk tree and the stream a manifest states come from here. The by
 import math
 import struct
 
+import pcm_model
+
 # compression type: (codec, bytes per sample for the codings that store samples one after another, or None, whether a sample's width follows the
 # sample size, bits fixed by the type or None).
 TYPES = {
@@ -264,7 +266,36 @@ def manifest(data, base=0):
         "average_bitrate": bitrate,
         "type": comm["type"],
     }
+    pcm = pcm_decoding(comm, kind, frame, frames, ssnd, data[base:])
+    if pcm is not None:
+        result["stream"]["pcm"] = pcm
     return result
+
+
+def pcm_decoding(comm, kind, frame, frames, ssnd, data):
+    """What the decoder "pcm" outputs for the sound data (pcm_model.decode), or None where no session is started: the packed codings, and a sample size no
+    linear type has. The samples are the bytes as stored, whatever the sample size says."""
+    if kind is None or ssnd is None or not frame:
+        return None
+    channels = comm["channels"]
+    width = frame // channels
+    name = comm["type"]
+    if name == "alaw":
+        mode = "alaw"
+    elif name == "ulaw":
+        mode = "mulaw"
+    elif not kind[2]:
+        return None
+    elif name in ("fl32", "fl64"):
+        mode = "float"
+    elif name == "raw ":
+        mode = "unsigned"
+    elif kind[3] is None and comm["size"] < 1:
+        return None
+    else:
+        mode = "signed"
+    start = ssnd["chunk"]["offset"] + 8 + 8 + ssnd["offset"]
+    return pcm_model.decode(mode, width, channels, name != "sowt", data[start:start + frames * frame])
 
 
 # Builders for the hand-built fixtures.

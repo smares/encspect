@@ -16,6 +16,8 @@ import math
 import struct
 import uuid
 
+import pcm_model
+
 SPEAKERS = [
     "front left", "front right", "front center", "LFE", "back left", "back right", "front left of center", "front right of center", "back center",
     "side left", "side right", "top center", "top front left", "top front center", "top front right", "top back left", "top back center", "top back right",
@@ -254,6 +256,7 @@ def data_info(riff):
             if c.get("key", c["id"]) == "data":
                 if first is None:
                     first = (c, in_wavl)
+                    c["in_wavl"] = in_wavl
                 elif in_wavl and first[1]:
                     extra += c["length"]
             elif c["id"] == "slnt" and in_wavl and c["length"] >= 4:
@@ -470,11 +473,13 @@ def manifest(data, extra_codec=None, base=0, carried=None):
         # The codec parser describes the audio (its samples include the padding of the last frame), so only what the fmt chunk states is expected.
         result["stream"] = {"routed": routed, "sample_rate": fmt["rate"], "channels": fmt["channels"]}
         return result
+    pcm = None
     if coding in LINEAR:
         align = fmt["align"] or fmt["channels"] * ((fmt["bits"] + 7) // 8)
         samples = (chunk["length"] + wavl_bytes) // align + silent
         bits = (fmt["valid"] if fmt["tag"] == 0xFFFE and fmt["valid"] and fmt["valid"] <= fmt["bits"] else fmt["bits"]) or None
         codec = CODECS[coding]
+        pcm = pcm_decoding(riff, fmt, chunk, data, base, wavl_bytes, silent)
     else:
         samples = riff.get("fact", 0)
         bits = None
@@ -490,7 +495,30 @@ def manifest(data, extra_codec=None, base=0, carried=None):
         "layout": layout(fmt),
         "average_bitrate": (chunk["length"] + wavl_bytes) * 8 / duration / 1000 if duration > 0 else (fmt["average"] * 8 / 1000 if fmt["average"] else None),
     }
+    if pcm is not None:
+        result["stream"]["pcm"] = pcm
     return result
+
+
+def pcm_decoding(riff, fmt, chunk, data, base, wavl_bytes, silent):
+    """What the decoder "pcm" outputs for the first data chunk (pcm_model.decode), or None where no session is started: samples spread over a wavl list, a
+    container that is not a whole number of bytes per sample frame (the block alignment must be the channels times the sample width), a float of other than
+    32 or 64 bits and a companded coding of other than 8."""
+    coding = fmt["coding"]
+    width = (fmt["bits"] + 7) // 8
+    channels = fmt["channels"]
+    if chunk.get("in_wavl") or wavl_bytes or silent or width < 1 or channels < 1 or (fmt["align"] and fmt["align"] != channels * width):
+        return None
+    if coding == 1:
+        kind = "unsigned" if width == 1 else "signed"
+    elif coding == 3 and fmt["bits"] in (32, 64):
+        kind = "float"
+    elif coding in (6, 7) and fmt["bits"] == 8:
+        kind = "alaw" if coding == 6 else "mulaw"
+    else:
+        return None
+    start = base + chunk["offset"] + (24 if riff["magic"] == "Wave64" else 8)
+    return pcm_model.decode(kind, width, channels, riff["big"], data[start:start + chunk["length"]])
 
 
 def tree(chunks):

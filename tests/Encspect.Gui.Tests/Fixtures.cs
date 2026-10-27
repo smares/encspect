@@ -14,6 +14,8 @@ internal static class Fixtures
 
     public static string Ogg(string name) => Path.Combine(Directory, "ogg", name);
 
+    public static string Wav(string name) => Path.Combine(Directory, "wav", name);
+
     public static string Flac(string name) => Path.Combine(Directory, "flac", name);
 
     private static string FindRepositoryRoot()

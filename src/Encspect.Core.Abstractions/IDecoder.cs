@@ -14,6 +14,11 @@ public interface IDecoder
     // with the derivation of its worst legitimate case in its "As built" section of docs/design/decoders.md.
     long WorkPerInputByte => DecodeWork.DefaultPerInputByte;
 
+    // False for a decoder that stores no checksum to compare (PCM): the host opens it only where the front end asks for measurements or output
+    // (DecodeOptions.Measure, DecodeOptions.Output), since decoding alone would compare nothing; otherwise its session stays NotRequested and
+    // the parser reads no audio.
+    bool DeclaresChecksums => true;
+
     // Reads the configuration and returns the decoder of one stream. InvalidDataException means the stream cannot be
     // decoded as configured (the report says why); the parser has reported the configuration's faults already.
     IFrameDecoder Open(DecodeContext context);

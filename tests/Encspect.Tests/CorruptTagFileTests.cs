@@ -219,7 +219,7 @@ public class CorruptMonkeysAudioBuiltFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The WAV fixtures written by FFmpeg.
+// The WAV fixtures written by FFmpeg, each analyzed with and without decoding and measuring.
 public class CorruptWavFileTests
 {
     public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("wav/external-", StringComparison.Ordinal));
@@ -229,7 +229,7 @@ public class CorruptWavFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The hand-built WAV fixtures.
+// The hand-built WAV fixtures, each analyzed with and without decoding and measuring.
 public class CorruptWavBuiltFileTests
 {
     public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("wav/built-", StringComparison.Ordinal));
@@ -239,7 +239,7 @@ public class CorruptWavBuiltFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The AIFF and AIFF-C fixtures, FFmpeg-written and hand-built.
+// The AIFF and AIFF-C fixtures, FFmpeg-written and hand-built, each analyzed with and without decoding and measuring.
 public class CorruptAiffFileTests
 {
     public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("aiff/", StringComparison.Ordinal));

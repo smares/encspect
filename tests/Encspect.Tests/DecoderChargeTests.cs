@@ -16,18 +16,42 @@ public class DecoderChargeTests
     private static long Units(byte[] data, string name, bool lends = true)
     {
         IDecoder inner = name.EndsWith(".flac", StringComparison.Ordinal) ? new FlacDecoder()
-            : name.EndsWith(".thd", StringComparison.Ordinal) ? Formats.TrueHd.Decoding.TrueHdDecoder.TrueHd : new WavPackDecoder();
+            : name.EndsWith(".thd", StringComparison.Ordinal) ? Formats.TrueHd.Decoding.TrueHdDecoder.TrueHd
+            : name.EndsWith(".wav", StringComparison.Ordinal) || name.EndsWith(".aiff", StringComparison.Ordinal) ? new Formats.Wav.Decoding.PcmDecoder() : new WavPackDecoder();
         var counting = new CountingDecoder(inner);
         IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(p => !lends && p is FlacParser ? new FlacParser { LendsBuffers = false } : !lends && p is TrueHdParser ? new TrueHdParser { LendsBuffers = false } : p);
         var analyzer = new Analyzer(DefaultParsers.Tags, formats, DefaultParsers.Codecs, [counting]);
 
-        Report report = analyzer.Analyze(name, new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue } });
+        Report report = analyzer.Analyze(name, new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = inner.DeclaresChecksums ? null : _ => new DecoderWorkTests.NullSink() } });
 
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "decode.limit");
         return counting.Units;
     }
 
     private const int FlacHeaderBytes = 4 + 4 + 34;
+
+    // PCM.
+
+    [Fact]
+    public void PcmChargesTheFixedWorkOfEverySampleOfEachChannelAndNothingMore()
+    {
+        // 16 units a sample of each channel at 16 bits, 19 at 24 bits, 22 at 32 bits, 34 for 64-bit floats, and 16 for A-law, which is expanded to 16 bits.
+        foreach ((byte[] file, string name, long perSample) in new (byte[], string, long)[]
+        {
+            (DecoderWorkTests.PcmCases.Wav(1, 2, 16, 1L << 22), "pcm16.wav", 16 * 2),
+            (DecoderWorkTests.PcmCases.Wav(1, 3, 8, 1L << 22), "pcm8.wav", 13 * 3),
+            (DecoderWorkTests.PcmCases.Wav(1, 2, 32, 1L << 22), "pcm32.wav", 22 * 2),
+            (DecoderWorkTests.PcmCases.Wav(3, 1, 32, 1L << 22), "float32.wav", 22),
+            (DecoderWorkTests.PcmCases.Wav(3, 1, 64, 1L << 22), "float64.wav", 34),
+            (DecoderWorkTests.PcmCases.Wav(6, 2, 8, 1L << 22), "alaw.wav", 16 * 2),
+            (DecoderWorkTests.PcmCases.Aiff(6, 24, 1L << 22), "pcm24.aiff", 19 * 6),
+        })
+        {
+            long units = Units(file, name);
+            Assert.True(units > 0, name);
+            Assert.True(units % perSample == 0, $"{name} charged {units}, not a multiple of {perSample}");
+        }
+    }
 
     // FLAC.
 

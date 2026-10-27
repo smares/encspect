@@ -135,7 +135,7 @@ public class DecoderFixtureTests
     }
 
     // The verification of the stream and the findings the decoder and the decode route add.
-    private static string Golden(Report report)
+    internal static string Golden(Report report)
     {
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))

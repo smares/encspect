@@ -74,6 +74,10 @@ public sealed record StreamVerification
 
     public IReadOnlyList<ChecksumTally> Checksums { get; init; } = [];
 
+    // False for a stream of a coding that stores no checksum at all (PCM), whose verification only says whether the audio was decoded: the text
+    // and JSON reports and the front ends' "Verified" line leave such a verification out.
+    public bool HasChecksums => Checksums.Count > 0;
+
     // False where a stored checksum differs. True where every stored checksum was compared and holds, and at least one
     // that was compared covers all of the stream's audio. Null otherwise.
     public bool? IsVerified =>

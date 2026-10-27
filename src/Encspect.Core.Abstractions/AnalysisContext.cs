@@ -146,7 +146,8 @@ public abstract class AnalysisContext
     }
 
     // Starts the decoding of one stream by the decoder with that codec ID. Never null: where decoding was not asked for,
-    // or no decoder has the ID, the session decodes nothing and its Finish says so. The parser hands the session each
+    // or no decoder has the ID, or the decoder declares no checksum (IDecoder.DeclaresChecksums) and neither measurements nor
+    // output were asked for, the session decodes nothing and its Finish says so. The parser hands the session each
     // frame it reads and ends it with Finish; a session it leaves open is ended when its route or the format parser
     // returns (docs/design/decoders.md, "Ending sessions").
     // A stream whose channels or sample width the decoder cannot take (below 1, or above 64 bits) is not decoded and the host reports

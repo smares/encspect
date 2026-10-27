@@ -1319,6 +1319,60 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(kept < plainKept + 1_000_000, $"Measuring made the report keep {kept - plainKept} bytes more.");
     }
 
+    // A long WAVE file is read in slices of 64 KiB, each unpacked into the same arrays: decoding it and measuring it hold nothing per slice, the same reading as
+    // for the FLAC frames, and the report keeps the rows and grids and no more. A slice is 16,384 sample frames of 16-bit stereo.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DecodingAndMeasuringALongWaveFileHoldsNothingPerSlice(bool isMeasuring)
+    {
+        const int fewer = 160;
+        const int slices = 640;
+        const int sliceBytes = 64 * 1024;
+        var measure = isMeasuring ? new MeasureOptions() : null;
+        var warmUp = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink(), Measure = measure } };
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(LongInputs.WavWithSamples(sliceBytes * 3)), warmUp);
+
+        (long fewerHeld, _) = LastFrameReading("slices.wav", LongInputs.WavWithSamples(fewer * sliceBytes), fewer, 16384, measure: measure);
+        (long held, long kept) = LastFrameReading("slices.wav", LongInputs.WavWithSamples(slices * sliceBytes), slices, 16384, measure: measure);
+        (_, long plainKept) = LastFrameReading("slices.wav", LongInputs.WavWithSamples(slices * sliceBytes), slices, 16384, isDecoding: false);
+
+        double heldPerSlice = (held - fewerHeld) / (double)(slices - fewer);
+        output.WriteLine($"{kept} bytes kept {(isMeasuring ? "with measuring" : "with decoding")} and {plainKept} without; held above the end state at the last slice: {fewerHeld} at {fewer} slices and {held} at {slices} ({Hundredths(heldPerSlice)} per further slice)");
+        Assert.True(heldPerSlice < DecodingFrameBound, $"The analysis held {heldPerSlice:F2} more bytes per further slice at the last slice than it ends with. {RuntimeSettings()}");
+        Assert.True(kept < plainKept + (isMeasuring ? 1_000_000 : 100_000), $"The report keeps {kept - plainKept} bytes more.");
+    }
+
+    // The allocations of one analysis do not grow with the slices beyond the little each slice's frame takes (its mapped bytes and the host's bookkeeping):
+    // the samples are read into one buffer and unpacked into the same arrays.
+    [Fact]
+    public void ALongWaveFileAllocatesNoBufferPerSlice()
+    {
+        const int sliceBytes = 64 * 1024;
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } };
+        long Allocate(int slices)
+        {
+            byte[] data = LongInputs.WavWithSamples(slices * sliceBytes);
+            var analyzer = Analyzer.CreateDefault();
+            analyzer.Analyze("slices.wav", new MemoryStream(data), options);
+            long least = long.MaxValue;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                long before = GC.GetTotalAllocatedBytes(precise: true);
+                GC.KeepAlive(analyzer.Analyze("slices.wav", new MemoryStream(data), options));
+                least = Math.Min(least, GC.GetTotalAllocatedBytes(precise: true) - before);
+            }
+
+            return least;
+        }
+
+        long small = Allocate(100);
+        long large = Allocate(600);
+        double perSlice = (large - small) / 500.0;
+        output.WriteLine($"{small} bytes allocated for 100 slices and {large} for 600 ({Hundredths(perSlice)} per further slice)");
+        Assert.True(perSlice < 2048, $"The analysis allocated {perSlice:F0} bytes per further slice of 64 KiB.");
+    }
+
     // The levels hold a record for each channel and a few counters whatever the length of the stream: the same reading as for the spectrum, with
     // only the levels asked for.
     [Fact]

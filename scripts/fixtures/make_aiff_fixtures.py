@@ -103,6 +103,9 @@ fixture("built-id3v1-inside-sound", form([chunk("COMM", comm(1, 600, 8, 8000)), 
 fixture("built-aifc-none", aifc([chunk("COMM", comm(2, 50, 16, 44100, "NONE", "not compressed")), chunk("SSND", ssnd(sound()))]), extension="aifc")
 for kind, size, bytes_per in (("twos", 16, 2), ("sowt", 16, 2), ("in24", 24, 3), ("in32", 32, 4), ("raw ", 8, 1)):
     fixture(f"built-aifc-{kind.strip()}", aifc([chunk("COMM", comm(2, 30, size, 44100, kind, "")), chunk("SSND", ssnd(b"\1" * (30 * 2 * bytes_per)))]), extension="aifc")
+# sowt is little-endian at whatever width the sample size states: the analyzer reads 24 and 32 bits, where FFmpeg reads only 16.
+for size, bytes_per in ((24, 3), (32, 4)):
+    fixture(f"built-aifc-sowt-{size}-bit", aifc([chunk("COMM", comm(2, 30, size, 44100, "sowt", "")), chunk("SSND", ssnd(bytes((i * 7 + 3) % 256 for i in range(30 * 2 * bytes_per))))]), extension="aifc")
 fixture("built-aifc-fl32", aifc([chunk("COMM", comm(2, 30, 32, 44100, "fl32", "32-bit floating point")), chunk("SSND", ssnd(b"\0" * 240))]), extension="aifc")
 fixture("built-aifc-fl64", aifc([chunk("COMM", comm(1, 30, 64, 48000, "fl64", "64-bit floating point")), chunk("SSND", ssnd(b"\0" * 240))]), extension="aifc")
 fixture("built-aifc-alaw", aifc([chunk("COMM", comm(1, 80, 16, 8000, "alaw", "ALaw 2:1")), chunk("SSND", ssnd(b"\xd5" * 80))]), extension="aifc")
@@ -128,6 +131,7 @@ fixture("built-sample-rate-below-one", form([chunk("COMM", comm(2, 50, 16, 0.5))
 fixture("built-sample-rate-infinite", form([chunk("COMM", comm(2, 50, 16, b"\x7f\xff\x80\x00\x00\x00\x00\x00\x00\x00")), chunk("SSND", ssnd(sound()))]), ["aiff.sample-rate-invalid"])
 fixture("built-sample-rate-negative", form([chunk("COMM", comm(2, 50, 16, b"\xc0\x0e\xac\x44\x00\x00\x00\x00\x00\x00")), chunk("SSND", ssnd(sound()))]), ["aiff.sample-rate-invalid"])
 fixture("built-sample-size-zero", form([chunk("COMM", comm(2, 50, 0, 44100)), chunk("SSND", ssnd(sound()))]), ["aiff.sample-size-invalid"])
+fixture("built-sample-size-33", form([chunk("COMM", comm(2, 20, 33, 44100)), chunk("SSND", ssnd(bytes(range(200))))]), ["aiff.sample-size-invalid"])
 fixture("built-sample-size-mismatch", aifc([chunk("COMM", comm(2, 30, 16, 44100, "fl32", "32-bit floating point")), chunk("SSND", ssnd(b"\0" * 240))]), ["aiff.sample-size-mismatch"], extension="aifc")
 fixture("built-sound-data-short", form([chunk("COMM", comm(2, 100, 16, 44100)), chunk("SSND", ssnd(sound(50)))]), ["aiff.sound-data-short"])
 fixture("built-sound-data-extra", form([chunk("COMM", comm(2, 50, 16, 44100)), chunk("SSND", ssnd(sound(60)))]), ["aiff.sound-data-extra"])

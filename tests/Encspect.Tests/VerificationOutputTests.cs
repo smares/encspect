@@ -174,6 +174,22 @@ public class VerificationOutputTests
         Assert.DoesNotContain("Verified", Text(ReportWith((StreamVerification?)null)));
     }
 
+    // PCM stores no checksum: its verification says only whether the audio was decoded, for the front ends, and no report shows it.
+    [Fact]
+    public void AVerificationWithoutAnyChecksumIsLeftOutOfTheTextAndTheJson()
+    {
+        foreach (DecodeStatus status in new[] { DecodeStatus.NotRequested, DecodeStatus.Decoded, DecodeStatus.NotPossible })
+        {
+            Report report = ReportWith(new StreamVerification { Decoding = status });
+
+            Assert.DoesNotContain("Verified", Text(report));
+            Assert.False(StreamJson(report).TryGetProperty("verification", out _));
+        }
+
+        Assert.False(new StreamVerification { Decoding = DecodeStatus.Decoded }.HasChecksums);
+        Assert.True(Holds.HasChecksums);
+    }
+
     private static JsonElement StreamJson(Report report)
     {
         using var stream = new MemoryStream();
@@ -252,7 +268,7 @@ public class VerificationOutputTests
             (DecodeStatus.Failed, "failed"),
         })
         {
-            JsonElement verification = StreamJson(ReportWith(new StreamVerification { Decoding = status })).GetProperty("verification");
+            JsonElement verification = StreamJson(ReportWith(new StreamVerification { Decoding = status, Checksums = [new ChecksumTally { Name = "CRC", Covers = ChecksumCoverage.CodedData, Stored = 1 }] })).GetProperty("verification");
             Assert.Equal(name, verification.GetProperty("decoding").GetString());
         }
     }

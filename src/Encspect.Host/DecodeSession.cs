@@ -416,6 +416,11 @@ internal sealed class DecodeSession : IDecodeSession
         {
             record = new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = "the stream decodes to DSD, which is not measured" };
         }
+        else if (_status == DecodeStatus.Decoded && _setup.Samples is 0 && _framesDecoded == 0 && _framesNotDecoded == 0 && !_isEnded && !_isFailed && !run.IsStopRequested && !run.IsOutOfBudget && !run.HasSinkFailure)
+        {
+            // The parser states 0 samples and handed no frame (a data chunk with no whole sample frame); a stream whose frames all failed stays Stopped.
+            record = new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = "the stream holds no samples" };
+        }
         else
         {
             record = new StreamMeasurements { Status = MeasurementStatus.Stopped };

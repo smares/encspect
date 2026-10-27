@@ -105,14 +105,14 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     public bool IsProgressShown => _isLoading || _isVerifying;
 
     // A stream of the report has checksums over its decoded audio that were not compared because decoding was not asked for.
-    public bool CanVerifyAudio => _report is not null && !_isLoading && !_isVerifying && _report.Streams.Any(s => s.Verification is { Decoding: DecodeStatus.NotRequested });
+    public bool CanVerifyAudio => _report is not null && !_isLoading && !_isVerifying && _report.Streams.Any(s => s.Verification is { Decoding: DecodeStatus.NotRequested, HasChecksums: true });
 
     // "Verified: yes (frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)", a line for each stream with a verification; null where none has.
     public string? VerificationText
     {
         get
         {
-            string[] lines = _report is null ? [] : [.. _report.Streams.Where(s => s.Verification is not null).Select(s => "Verified: " + Encspect.Host.VerificationText.Describe(s.Verification!))];
+            string[] lines = _report is null ? [] : [.. _report.Streams.Where(s => s.Verification is { HasChecksums: true }).Select(s => "Verified: " + Encspect.Host.VerificationText.Describe(s.Verification!))];
             return lines.Length == 0 ? null : string.Join(Environment.NewLine, lines);
         }
     }

@@ -62,5 +62,5 @@ public static class DefaultParsers
 
     // The decoders of the codecs the formats above read, by the same IDs the parsers start their sessions with. Each
     // lives in its format's project; a format without one is not listed, and its streams report that no decoder exists.
-    public static IReadOnlyList<IDecoder> Decoders { get; } = [new Encspect.Formats.Flac.Decoding.FlacDecoder(), new Encspect.Formats.WavPack.Decoding.WavPackDecoder(), new Encspect.Formats.MonkeysAudio.Decoding.MonkeysAudioDecoder(), Encspect.Formats.TrueHd.Decoding.TrueHdDecoder.TrueHd, Encspect.Formats.TrueHd.Decoding.TrueHdDecoder.Mlp];
+    public static IReadOnlyList<IDecoder> Decoders { get; } = [new Encspect.Formats.Flac.Decoding.FlacDecoder(), new Encspect.Formats.WavPack.Decoding.WavPackDecoder(), new Encspect.Formats.MonkeysAudio.Decoding.MonkeysAudioDecoder(), Encspect.Formats.TrueHd.Decoding.TrueHdDecoder.TrueHd, Encspect.Formats.TrueHd.Decoding.TrueHdDecoder.Mlp, new Encspect.Formats.Wav.Decoding.PcmDecoder()];
 }

@@ -1,6 +1,6 @@
 # AIFF
 
-AIFF and AIFF-C files (`.aif`, `.aiff`, `.aifc`): an IFF `FORM` chunk of the form type `AIFF` or `AIFC`, with big-endian integers. There is no decoder; the audio is not decoded.
+AIFF and AIFF-C files (`.aif`, `.aiff`, `.aifc`): an IFF `FORM` chunk of the form type `AIFF` or `AIFC`, with big-endian integers. The `pcm` decoder (in the WAV project) reads the samples of the uncompressed and the A-law and mu-law types (see [Decoding](#decoding)); it is used for measurements only, since AIFF stores no checksum.
 
 Sources:
 
@@ -14,7 +14,7 @@ Sources:
 - The FORM header: the chunk ID, the size and the form type.
 - Every chunk is a node: a 4-character ID, a 32-bit size, the data and, for an odd size, a pad byte. A chunk the parser does not know is named by its ID and size.
 - `COMM` (Common Chunk): channels, sample frames, sample size, the sample rate as an 80-bit extended number and, in AIFF-C, the compression type and its name.
-- `SSND` (Sound Data Chunk): the offset and block size; the samples are not read.
+- `SSND` (Sound Data Chunk): the offset and block size; the samples are read only to be decoded for measurements.
 - `FVER` (AIFF-C format version): the timestamp, which must be 2726318400 (23 May 1990), the version of the draft.
 - `MARK` (markers), `INST` (instrument: base note, detune, gains, sustain and release loops), `COMT` (comments with a time stamp, a marker ID and text), `AESD` (audio recording), `MIDI` and `APPL` (application specific, with the signature).
 - `NAME`, `AUTH`, `(c) ` and `ANNO`: text chunks.
@@ -74,9 +74,19 @@ A file with a Common Chunk reports a stream: codec, sample rate, channels, layou
 
 None. AIFF has no field for the writer; the text chunks (`ANNO`, `AUTH`) are shown as the file states them and are not evidence. An ID3v2 tag in the `ID3 ` chunk is read by the tag parser as any other, and its claims are weighed there.
 
+## Decoding
+
+The AIFF parser starts a `pcm` session (the decoder is the one WAV uses, described in [wav.md](wav.md#decoding)) for the types that store samples one after another, and hands over the sound data from its offset in slices of whole sample frames.
+
+- **Types decoded:** `NONE` and `twos` (big-endian signed integers of 1 to 32 bits, in the whole bytes that hold the sample size), `sowt` (little-endian), `in24` and `in32`, `raw ` (unsigned 8 bits), `fl32` and `fl64` (big-endian floats), and `alaw` and `ulaw` (8 bits, expanded to 16-bit integers).
+- **Sample points are left-justified in their bytes with the rest zero** (AIFF 1.3, "Sample Points", read for this) and are output as stored, whatever the sample size says: a 12-bit file's samples are the 16-bit values stored, and its bit-depth usage shows the low bits that are never set (in `built-12-bit.aiff`, which pads at the low end: 4).
+- **No session** for the packed codings (`ima4`, `GSM `, ACE, MACE), an unlisted type, a sample size of 0 for the types that follow it, or a file with no Sound Data Chunk. A sample size over 32 bits starts a session the decoder refuses (`decode.not-possible`), as for WAV; `sowt` is read at the stated width (24 and 32 bits too, where FFmpeg 6.1.1 reads 16).
+- The sample frames are the Common Chunk's count, cut to those the sound data holds (`aiff.sound-data-short`); bytes after them are not decoded (`aiff.sound-data-extra`), where FFmpeg decodes them.
+- The report shows no verification, as for WAV; `--verify` alone reads no samples.
+
 ## What is not covered
 
-- Decoding, and any check of the samples.
+- A check of the samples: AIFF stores no checksum.
 - The contents of the packed codings (IMA, GSM, ACE and MACE blocks).
 - Other chunks Apple's tools add: they are listed by their ID and size. The coordinates of a channel description are shown, not interpreted, and `CHAN` chunks written by Apple's tools were not checked, and nothing read says that Apple's tools write the chunk into AIFF files.
 - sox was not used for the cross-check.
