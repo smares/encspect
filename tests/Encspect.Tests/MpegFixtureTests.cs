@@ -268,6 +268,21 @@ public class MpegFixtureTests
                 string? actual = Fixtures.Resolve(frame, path).FirstOrDefault()?.Value?.ToString();
                 Assert.True(value == actual, $"Frame at {frame.Offset}, field {path}: \"{actual}\", expected \"{value}\"");
             }
+
+            // A free-format frame also shows the bitrate its length gives; a fixed-bitrate one has no such node.
+            string? computed = Fixtures.Resolve(frame, "Computed Bitrate").FirstOrDefault()?.Value?.ToString();
+            if (expected.GetValueOrDefault("Header/Bitrate") == "free")
+            {
+                int samples = encoder.GetProperty("layer").GetInt32() switch { 1 => 384, 3 when version != "MPEG-1" => 576, _ => 1152 };
+                Assert.EndsWith(" kbps", computed);
+                Assert.True(
+                    Agrees(computed![..^5], (Int128)frame.Length * 8 * encoder.GetProperty("sample_rate").GetInt32(), (Int128)samples * 1000, 100),
+                    $"Frame at {frame.Offset}: Computed Bitrate {computed}");
+            }
+            else
+            {
+                Assert.Null(computed);
+            }
         }
 
         HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();

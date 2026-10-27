@@ -194,6 +194,9 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False)),
     ("external-lame-free-format", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "--freeformat", "-b", "400", "-m", "s"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, free_format=True, info_frame=False)),
+    # 640 kbps is the highest rate LAME accepts for free format; the frames are about 2090 bytes.
+    ("external-lame-free-format-640", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "--freeformat", "-b", "640", "-m", "s"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, free_format=True, info_frame=False)),
     ("external-lame-vbr-old-mono", ".mp3", 44100, 1, ["lame", "--quiet", "--vbr-old", "-V", "4", "-m", "m"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Mono", bitrate=None, info_frame=True)),
     ("external-lame-v0-replaygain", ".mp3", 44100, 2, ["lame", "--quiet", "-V", "0", "--replaygain-accurate"],

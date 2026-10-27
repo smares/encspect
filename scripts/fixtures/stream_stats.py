@@ -154,6 +154,14 @@ def kbps_tenths_text(bits, ticks):
     return f"{tenths // 10}.{tenths % 10} kbps"
 
 
+def bitrate_name(bitrate, audio):
+    """The Bitrate Distribution entry's name; a free-format entry carries the average bitrate its frame lengths give, in whole kbps."""
+    if bitrate is not None:
+        return f"{bitrate} kbps"
+    free = [f for f in audio if f.bitrate is None]
+    return f"free ({rounded(Fraction(sum(f.length * 8 for f in free) * CLOCK, sum(f.ticks for f in free) * 1000))} kbps)"
+
+
 def frames_text(count):
     return "1 frame" if count == 1 else f"{count} frames"
 
@@ -185,7 +193,7 @@ def region_fields(frames, all_frames):
     fields["Statistics/Bitrate Distribution"] = f"{len(counts)} bitrates" if len(counts) != 1 else "1 bitrate"
     for bitrate in sorted(counts, key=lambda b: (b is None, b or 0)):
         tenths = rounded(Fraction(counts[bitrate] * 1000, len(audio)))
-        name = "free" if bitrate is None else f"{bitrate} kbps"
+        name = bitrate_name(bitrate, audio)
         fields[f"Statistics/Bitrate Distribution/{name}"] = f"{frames_text(counts[bitrate])} ({tenths // 10}.{tenths % 10}%)"
 
     if all(f.layer == "III" for f in audio):
@@ -609,7 +617,7 @@ def coding_fields(frames, audio, ticks):
         key = (f.bitrate, f.coding["padding"], f.length)
         sizes[key] = sizes.get(key, 0) + 1
     for bitrate in {b for b, _, _ in sizes}:
-        name = "free" if bitrate is None else f"{bitrate} kbps"
+        name = bitrate_name(bitrate, audio)
         for padding, label in [(0, "Unpadded"), (1, "Padded")]:
             lengths = sorted((length, count) for (b, p, length), count in sizes.items() if b == bitrate and p == padding)
             if lengths:

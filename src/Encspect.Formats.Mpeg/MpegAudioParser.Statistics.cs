@@ -45,6 +45,8 @@ public sealed partial class MpegAudioParser
         bool hasSideInfo = true;
         int maximumFill = 0;
         int free = 0;
+        long freeBits = 0;
+        long freeTicks = 0;
         var fixedRates = new SortedDictionary<int, int>();
         for (int i = region.First; i < end; i++)
         {
@@ -69,6 +71,8 @@ public sealed partial class MpegAudioParser
             else
             {
                 free++;
+                freeBits += frame.Length * 8;
+                freeTicks += Ticks(frame);
             }
         }
 
@@ -99,7 +103,7 @@ public sealed partial class MpegAudioParser
         foreach ((int? rate, int count) in counts)
         {
             long tenths = RoundHalfEven(count * 1000L, audio);
-            Node entry = region.Distribution.Add(rate is { } kbps ? $"{Number(kbps)} kbps" : "free", start, length,
+            Node entry = region.Distribution.Add(rate is { } kbps ? $"{Number(kbps)} kbps" : $"free ({Number(RoundHalfEven((Int128)freeBits * Clock, (Int128)freeTicks * 1000))} kbps)", start, length,
                 $"{FramesText(count)} ({TenthsText(tenths)}%)", Explain.DistributionEntry);
             AddFrameSizes(entry, region.Tally, rate);
         }
@@ -309,6 +313,9 @@ public sealed partial class MpegAudioParser
         var header = new MpegHeader(frame.Header);
         return header.IsFreeFormat ? null : header.Bitrate;
     }
+
+    // The bitrate a free-format frame's length gives: its bytes over its duration, padding included (ISO/IEC 11172-3 2.4.2.3 turned around).
+    private static double ComputedBitrate(in Entry frame, MpegHeader header) => frame.Length * 8.0 * header.SampleRate / header.Samples / 1000;
 
     private static long Ticks(in Entry frame)
     {
