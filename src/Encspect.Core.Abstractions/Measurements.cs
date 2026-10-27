@@ -32,8 +32,7 @@ public sealed record StreamMeasurements
 
     public int ChannelsMeasured { get; init; }
 
-    // True where a float sample beyond 1,024 times full scale was clamped to that, or a float sample was too small to count (below
-    // 1e-30) and was taken as 0; a peak that reads +60.2 dBFS is the clamp, not the file.
+    // True where a float sample beyond 1,024 times full scale was clamped to that; a peak that reads +60.2 dBFS is the clamp, not the file.
     public bool HasClampedSamples { get; init; }
 
     // Float samples that were NaN or infinite; they were measured as 0.

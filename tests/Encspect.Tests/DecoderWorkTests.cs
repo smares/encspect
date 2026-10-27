@@ -98,17 +98,22 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Assert.InRange(units, Target * 0.9, Target * 1.1);
     }
 
-    // The time per work unit of the FLAC reference, which MeasurementWorkTests holds the measurements to.
-    internal static double ReferenceNanosecondsPerUnit()
+    // One round of the FLAC reference: its time per work unit, decoding less the hollow decoder's, for MeasurementWorkTests to take beside each of
+    // its cases in the same round (a load that comes and goes then moves both). The built reference stays until ReleaseReference.
+    internal static double ReferenceRoundNanosecondsPerUnit()
     {
         Case reference = Cases["flac-reference"]();
-        double result = Measure(reference, reference).Reference.NanosecondsPerUnit;
+        (double off, _, _) = Run(reference, decode: true, isHollow: true);
+        (double on, long units, _) = Run(reference, decode: true);
+        return (on - off) * 1e9 / units;
+    }
+
+    internal static void ReleaseReference()
+    {
         lock (Built)
         {
             Built.Clear();
         }
-
-        return result;
     }
 
     // ----- The measurement -----

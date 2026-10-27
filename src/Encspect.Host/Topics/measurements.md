@@ -13,4 +13,4 @@ references: P. D. Welch, The use of fast Fourier transform for the estimation of
 
 **Stated and measured.** A figure computed here is measured. A figure that the file writes about itself, such as the loudness of a Broadcast Wave bext chunk or a ReplayGain value, is stated. The two are different things and are never compared or called right or wrong.
 
-**Limits.** Measuring has a work budget and a memory bound of its own. Past either, measuring stops with a finding and decoding goes on. It is off unless asked for: the command line's --measure.
+**Limits.** Measuring has a work budget and a memory bound of its own. Past the work budget, measuring stops with a finding and decoding goes on; past the memory bound, the streams that no longer fit are not measured, and say so. It is off unless asked for: the command line's --measure.

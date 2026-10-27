@@ -13,6 +13,10 @@ The model follows the design's text:
   the edge, the start of the transition and the frames that show an own step of 15 dB at the step's row (the 1 % reference level and the
   ten levels of 3 dB below it), found where the step is 25 dB or more and half of the frames with signal show it.
 
+What is independent of the analyzer is the FFT, the rows (the window, the scale and the normalization), the waveform and the stream figures. The cutoff's search, edge and counters
+are the design's rules written out again in Python with the same names and integer fractions, so they are checked against the construction of the signals
+(a brickwall at a known edge, none for noise, rolloff and mixed content) and not against a second reading of the rules.
+
 Everything is plain Python (the standard library). The FFT is a complex radix-2 transform of the full frame, apart from the analyzer's
 real transform with its split step, so the two agree up to rounding (about 1e-12 relative), which the tests allow for.
 """

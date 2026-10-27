@@ -21,7 +21,7 @@ The output is a text tree by default; `encspect --help` lists the options.
 - `--ndjson`: one compact report per line, which stays usable line by line if a long run stops early.
 - `--csv`: one summary row per file.
 
-Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the fields the writer formats from numbers (counts, durations, the measured figures) skip the guard, as a number cannot start one.
+Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and `Spectral Cutoff (Hz)`) skip the guard, as a number cannot start one. The CSV has one column more than before, `Spectral Cutoff (Hz)`, at the end: a reader that counts columns must be changed.
 
 ## Options
 
@@ -90,7 +90,7 @@ Decodes, verifies and measures each file's audio, for the codings that have a de
   - `spectrum` has `fftSize`, `frames`, `rowCount` (512), `binsPerRow`, `rows` (integers in tenths of a dB: `unit`, `valuesPerUnit`, `combined` and `perChannel`, `null` for a row with no power), `cutoff` and `channelCutoffs`.
   - A cutoff has `isFound`, and where found `frequency` and `transitionStart` as `{value, unit}` in whole hertz, then `stepFrequency`, `step` (`value` in dB with one decimal) and the counts `framesShowing` and `framesWithSignal`; `isSearched: false` under 8,000 Hz.
   - No number is a floating-point quotient: the row spacing is `sampleRate * binsPerRow / fftSize` hertz and the time of a column is `hopsPerColumn * hopSamples / sampleRate` seconds, from integers the report gives.
-- **CSV:** the `Spectral Cutoff (Hz)` column, from the first audio stream's combined spectrum, empty where no cutoff is found and for every file of an analysis without `--measure`; `Is Verified` is filled with `--measure` too. A column the writer formats from a number is written as it is, so a negative figure of a later step reads back as `-0.3`, not `'-0.3`.
+- **CSV:** the `Spectral Cutoff (Hz)` column, from the first audio stream's combined spectrum, empty where no cutoff is found and for every file of an analysis without `--measure`; `Is Verified` is filled with `--measure` too. The numeric columns are written as they are, so a negative figure of a later step reads back as `-0.3`, not `'-0.3`. This adds a column to the CSV (a schema change for a reader that counts columns).
 - **Exit codes:** unchanged; `--fail-on` sees only the host's `measure.*` findings (see below).
 
 ### `--measure-grids`

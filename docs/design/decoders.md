@@ -43,7 +43,7 @@ Sources read for this design, all pinned or public:
 - A parser hands each frame to a decode session through a new route on its context, `StartDecoding`, in the same pass in which it reads the frame. The host serves the route: it finds the decoder, runs it inside an exception boundary and a work budget, and ends the session with the stream's verdict.
 - The parser declares every checksum the stream stores, of either kind, with how many values it stores. It compares the ones over coded data in every analysis; the decoder compares the ones over decoded audio. Both end up in one record on the stream, `StreamInfo.Verification`, with a tri-state `IsVerified`.
 - Decoding is off unless a front end asks for it: `AnalysisOptions.Decoding` in the library, `--verify` in the CLI, a "Verify Audio" command in the GUI's detail window. The file list never decodes, and no verdict over decoded audio is cached.
-- Decoding never changes the parser's nodes: it adds findings, the stream's verification and, its measurements' figures on the stream (once "host-side PCM analyses").
+- Decoding never changes the parser's nodes: it adds findings, the stream's verification and the figures of its measurements (once "host-side PCM analyses").
 
 ## Where decoders live
 

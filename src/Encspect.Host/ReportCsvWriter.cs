@@ -13,6 +13,9 @@ public static class ReportCsvWriter
         "Is Protected", "Is Verified", "Protection Scheme", "DRM Systems", "Spectral Cutoff (Hz)",
     ];
 
+    // The columns the writer formats from numbers: counts, durations, rates and the measured figures; they skip the guard against formulas.
+    private static readonly int[] NumericColumns = [.. new[] { "Streams", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Errors", "Warnings", "Infos", "JOC Object Count", "Spectral Cutoff (Hz)" }.Select(n => Array.IndexOf(Columns, n))];
+
     public static void Write(IEnumerable<Report> reports, TextWriter writer) => Write(reports, writer, isVerifying: false);
 
     // isVerifying: the analysis asked for decoding (--verify or --measure), so Is Verified holds its verdict; otherwise it is empty for
@@ -35,7 +38,7 @@ public static class ReportCsvWriter
                 s.Streams == 0 ? null : s.HasObjectAudio ? "true" : "false", s.JocObjectCount?.ToString(CultureInfo.InvariantCulture),
                 s.Streams == 0 ? null : s.IsProtected ? "true" : "false", isVerifying && s.IsVerified is { } verified ? (verified ? "true" : "false") : null,
                 string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems), s.SpectralCutoff?.ToString(CultureInfo.InvariantCulture),
-            ], numeric: [Columns.Length - 1]);
+            ], numeric: NumericColumns);
             writer.Flush();
         }
     }
