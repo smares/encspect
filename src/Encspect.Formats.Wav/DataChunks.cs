@@ -265,9 +265,11 @@ internal static class DataChunks
             node.Add(writer);
         }
 
+        StreamVerification? verification = PcmRoute.Run(s, format, data);
         context.AddStream(new StreamInfo
         {
             Nodes = [node],
+            Verification = verification,
             Codec = CodecName(format),
             SampleRate = (int)Math.Min(rate, int.MaxValue),
             Channels = channels,

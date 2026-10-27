@@ -19,6 +19,8 @@ public class DecodeRouteTests
     {
         public bool ChargesNothing { get; init; }
 
+        public bool DeclaresChecksums { get; init; } = true;
+
         public long? WorkPerByte { get; init; }
 
         public long WorkPerInputByte => WorkPerByte ?? DecodeWork.DefaultPerInputByte;
@@ -1696,8 +1698,55 @@ public class DecodeRouteTests
     [Fact]
     public void ADefaultAnalyzerSaysSoWhenDecodingIsAskedForAndNoDecoderHasTheCodec()
     {
-        Assert.Equal(["flac", "wavpack", "monkeys-audio", "truehd", "mlp"], DefaultParsers.Decoders.Select(d => d.Id));
+        Assert.Equal(["flac", "wavpack", "monkeys-audio", "truehd", "mlp", "pcm"], DefaultParsers.Decoders.Select(d => d.Id));
         Report report = Analyze(new FrameParser(), DefaultParsers.Decoders, Verify);
         Assert.Contains(report.Findings, f => f.Code == "decode.no-decoder");
+    }
+
+    // A decoder that declares no checksum (PCM) is opened only for a front end that wants the samples: decoding alone would compare nothing.
+    [Fact]
+    public void ADecoderWithoutChecksumsOpensOnlyForMeasurementsOrOutput()
+    {
+        IReadOnlyList<ChecksumTally> none = [];
+        foreach ((AnalysisOptions? options, bool opens) in new (AnalysisOptions?, bool)[]
+        {
+            (null, false),
+            (Verify, false),
+            (new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } }, true),
+            (new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new CountingSink() } }, true),
+        })
+        {
+            var decoder = new ScriptedDecoder { DeclaresChecksums = false };
+            var parser = new FrameParser { Stored = none };
+            Report report = Analyze(parser, [decoder], options);
+
+            Assert.Equal(opens ? 1 : 0, decoder.Opens);
+            Assert.Equal(opens ? DecodeStatus.Decoded : DecodeStatus.NotRequested, parser.Verification!.Decoding);
+            Assert.Equal(opens ? 400 : 0, parser.Verification.DecodedSamples);
+            Assert.Equal(opens ? 4 : 0, decoder.FirstSamples.Count);
+            Assert.DoesNotContain(report.Findings, f => f.Code is "decode.no-decoder" or "decode.failed" or "parse.failed");
+        }
+    }
+
+    [Fact]
+    public void ADecoderWithChecksumsStillOpensForVerificationAlone()
+    {
+        var decoder = new ScriptedDecoder();
+        var parser = new FrameParser();
+        Analyze(parser, [decoder], Verify);
+
+        Assert.Equal(1, decoder.Opens);
+        Assert.Equal(DecodeStatus.Decoded, parser.Verification!.Decoding);
+    }
+
+    private sealed class CountingSink : IPcmSink
+    {
+        public void Write(PcmBlock block)
+        {
+        }
+
+        public void End(long samples)
+        {
+        }
     }
 }

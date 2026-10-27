@@ -328,7 +328,7 @@ public static class ReportJsonWriter
             writer.WriteEndObject();
         }
 
-        if (stream.Verification is { } verification)
+        if (stream.Verification is { HasChecksums: true } verification)
         {
             WriteVerification(writer, verification);
         }

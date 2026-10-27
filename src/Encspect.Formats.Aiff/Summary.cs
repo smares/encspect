@@ -185,9 +185,11 @@ internal static class Summary
         }
 
         node.Add(statistics);
+        StreamVerification? verification = DecodePcm(s, common, type, frames, frameBytes, layout);
         context.AddStream(new StreamInfo
         {
             Nodes = [node],
+            Verification = verification,
             Codec = codec,
             SampleRate = common.IsRateValid ? (int)Math.Min(Math.Round(common.SampleRate), int.MaxValue) : 0,
             Channels = common.Channels,
@@ -198,5 +200,59 @@ internal static class Summary
             Duration = duration,
             AverageBitrate = bitrate,
         });
+    }
+
+    // The samples as they are stored go to the decoder "pcm" (docs/design/spectral-analysis.md, "WAV, Wave64 and AIFF: a PCM decoder"): the linear types, whose
+    // sample points are left-justified in their bytes (AIFF-C, section 5.0), and A-law and mu-law. The packed codings, and a sample size no coding has, are not.
+    private static StreamVerification? DecodePcm(State s, CommonChunk common, AifcType? type, long frames, int? frameBytes, IReadOnlyList<Speaker>? layout)
+    {
+        if (type is null || s.Sound is not { } sound || frameBytes is not > 0)
+        {
+            return null;
+        }
+
+        int bytes = frameBytes.Value / common.Channels;
+        PcmEncoding? encoding = type.Id switch
+        {
+            "alaw" => PcmEncoding.ALaw,
+            "ulaw" => PcmEncoding.MuLaw,
+            _ when !type.IsLinear => null,
+            _ when type.IsFloat => PcmEncoding.Float,
+            _ when type.IsUnsigned => PcmEncoding.UnsignedInteger,
+            _ when type.FixedBits is null && common.SampleSize is < 1 or > 32 => null,
+            _ => PcmEncoding.SignedInteger,
+        };
+        if (encoding is null)
+        {
+            return null;
+        }
+
+        var coding = new PcmCoding
+        {
+            Encoding = encoding.Value,
+            IsBigEndian = !type.IsLittleEndian,
+            ContainerBits = bytes * 8,
+            SampleRate = common.IsRateValid ? (int)Math.Min(Math.Round(common.SampleRate), int.MaxValue) : 0,
+            ChannelLayout = layout,
+        };
+        IDecodeSession session = s.Context.StartDecoding(PcmCoding.CodecId, new DecodeSetup
+        {
+            Stream = sound.Node,
+            Channels = common.Channels,
+            BitsPerSample = coding.OutputBits,
+            Samples = frames,
+            Pcm = coding,
+        });
+        if (session.IsDecoding)
+        {
+            long start = sound.Start + 8 + sound.Offset;
+            long available = Math.Min(frames * frameBytes.Value, s.Reader.End - start);
+            if (available > 0)
+            {
+                PcmFeed.Run(session, s.Reader.Slice(start, available), start, frames, frameBytes.Value, sound.Node.Name);
+            }
+        }
+
+        return session.Finish([]);
     }
 }

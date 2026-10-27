@@ -139,7 +139,8 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
             return new DecodeSession(this, caller, null, codecId, setup, DecodeStatus.NoDecoder);
         }
 
-        if (run is null)
+        // A decoder with no checksum to compare decodes only for a front end that wants the samples (measurements, output); otherwise the audio is not read.
+        if (run is null || (!decoder.DeclaresChecksums && !run.IsMeasuring && run.Options.Output is null))
         {
             return new DecodeSession(this, caller, null, codecId, setup, DecodeStatus.NotRequested);
         }

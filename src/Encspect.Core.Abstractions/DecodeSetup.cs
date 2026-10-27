@@ -22,6 +22,9 @@ public sealed record DecodeSetup
     // The WAVEFORMATEX a container states (ASF's WMA Lossless, WAV's PCM), or null.
     public AudioFormat? Format { get; init; }
 
+    // How the samples of a PCM data chunk are laid out (WAV, Wave64, AIFF), for the decoder "pcm"; null for every other coding.
+    public PcmCoding? Pcm { get; init; }
+
     // True where the stream's decoded audio is a lossy coding's output (a WavPack hybrid file without its correction
     // file); the host copies it into StreamVerification.IsLossy.
     public bool IsLossy { get; init; }

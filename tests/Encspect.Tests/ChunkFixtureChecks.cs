@@ -133,7 +133,7 @@ internal static class ChunkFixtureChecks
 
         Assert.Equal(expected.GetProperty("layout").EnumerateArray().Select(s => s.GetString()), stream.ChannelLayout?.Select(ChannelLayouts.Name) ?? []);
         Assert.All(stream.NodePaths, path => Assert.NotNull(path));
-        Assert.Null(stream.Verification);
+        Assert.True(stream.Verification is null or { Decoding: DecodeStatus.NotRequested, HasChecksums: false });
     }
 
     // The data-bursts of IEC 61937 the model found in the samples: how many of the stream's data type, where the first of them start, and the pause and null bursts that are counted and not listed.
