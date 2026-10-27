@@ -271,7 +271,7 @@ public sealed partial class MpegAudioParser
         var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates)
         {
             // A free-format stream's computed bitrates fall between the table's steps.
-            DeclaredRange = firstHeader.IsFreeFormat ? null : ValueRange.OfSteps(MpegHeader.BitrateSteps(firstHeader.IsMpeg1, firstHeader.Layer)),
+            DeclaredRange = firstHeader.IsFreeFormat ? null : MpegHeader.BitrateRange(firstHeader.IsMpeg1, firstHeader.Layer),
             Description = SeriesText.Bitrate,
             Concept = GraphConcept.BitDistribution,
             Quantity = "Bitrate",

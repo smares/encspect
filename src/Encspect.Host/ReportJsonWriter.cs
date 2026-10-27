@@ -950,9 +950,9 @@ public static class ReportJsonWriter
     private static void WriteDeclaredRange(Utf8JsonWriter writer, ValueRange range)
     {
         writer.WriteStartObject("declaredRange");
-        if (range.Steps is { } steps)
+        if (range.HasSteps)
         {
-            WriteNumbers(writer, "steps", steps is double[] array ? array : steps.ToArray());
+            WriteNumbers(writer, "steps", range.Steps.Span);
         }
         else
         {

@@ -416,7 +416,7 @@ public class MpegCodingSeriesTests
             }
             else
             {
-                Assert.Equal(BitrateTables[stream.Codec], bitrate.DeclaredRange?.Steps);
+                Assert.Equal(BitrateTables[stream.Codec], bitrate.DeclaredRange?.Steps.ToArray());
             }
 
             Assert.Null(stream.Series.First(s => s.Name == "Bitrate Over Time").DeclaredRange);
@@ -427,13 +427,14 @@ public class MpegCodingSeriesTests
 
             foreach (Series share in stream.Series.Where(s => s.Name.StartsWith("Channel Bit Share", StringComparison.Ordinal)))
             {
-                Assert.Null(share.DeclaredRange!.Steps);
+                Assert.False(share.DeclaredRange!.HasSteps);
                 Assert.Equal(0, share.DeclaredRange.Minimum);
                 Assert.Equal(100, share.DeclaredRange.Maximum);
             }
         }
     }
 
+    // No fixture is an MPEG-2.5 Layer I stream (the only such header is junk inside an AC-3 fixture, which MPEG audio does not claim); that table is the shared Mpeg2Bitrates row.
     [Fact]
     public void The_fixtures_cover_every_table_and_the_free_format_case()
     {

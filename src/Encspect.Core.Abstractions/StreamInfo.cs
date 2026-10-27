@@ -168,15 +168,18 @@ public sealed class Series
 // maximum. Built with OfSteps or Between, so that a range holds only one of them.
 public sealed class ValueRange
 {
-    private ValueRange(IReadOnlyList<double>? steps, double minimum, double maximum)
+    private ValueRange(ReadOnlyMemory<double> steps, double minimum, double maximum)
     {
         Steps = steps;
         Minimum = minimum;
         Maximum = maximum;
     }
 
-    // The steps in ascending order, or null for a range between a minimum and a maximum.
-    public IReadOnlyList<double>? Steps { get; }
+    // The steps in ascending order; empty for a range between a minimum and a maximum.
+    public ReadOnlyMemory<double> Steps { get; }
+
+    // Whether the range is a list of steps rather than a fixed minimum and maximum.
+    public bool HasSteps => !Steps.IsEmpty;
 
     // The first step, or the fixed minimum.
     public double Minimum { get; }
@@ -223,6 +226,6 @@ public sealed class ValueRange
             throw new ArgumentException("The minimum must be below the maximum.", nameof(minimum));
         }
 
-        return new ValueRange(null, minimum, maximum);
+        return new ValueRange(ReadOnlyMemory<double>.Empty, minimum, maximum);
     }
 }

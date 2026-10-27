@@ -12,12 +12,14 @@ public class SeriesRangeTests
     public void Steps_and_a_fixed_range_keep_their_members()
     {
         ValueRange steps = ValueRange.OfSteps([32, 40, 48]);
-        Assert.Equal([32, 40, 48], steps.Steps);
+        Assert.True(steps.HasSteps);
+        Assert.Equal([32, 40, 48], steps.Steps.ToArray());
         Assert.Equal(32, steps.Minimum);
         Assert.Equal(48, steps.Maximum);
 
         ValueRange between = ValueRange.Between(0, 100);
-        Assert.Null(between.Steps);
+        Assert.False(between.HasSteps);
+        Assert.True(between.Steps.IsEmpty);
         Assert.Equal(0, between.Minimum);
         Assert.Equal(100, between.Maximum);
     }
@@ -73,6 +75,13 @@ public class SeriesRangeTests
         Assert.Equal(2, fixedRange.EnumerateObject().Count());
         Assert.False(written[2].TryGetProperty("declaredRange", out _));
         Assert.Equal(["name", "unit", "axis", "quantity", "declaredRange", "x", "values"], written[0].EnumerateObject().Select(p => p.Name));
+
+        using var explained = new MemoryStream();
+        ReportJsonWriter.Write([report], explained, ReportFilter.All, explain: true);
+        using JsonDocument explainedDocument = JsonDocument.Parse(explained.ToArray());
+        string[] names = explainedDocument.RootElement[0].GetProperty("streams")[0].GetProperty("series")[0].EnumerateObject().Select(p => p.Name).ToArray();
+        Assert.True(Array.IndexOf(names, "declaredRange") > Array.IndexOf(names, "quantity"));
+        Assert.True(Array.IndexOf(names, "declaredRange") < Array.IndexOf(names, "x"));
         Assert.Contains("\"schemaVersion\": 1", text, StringComparison.Ordinal);
     }
 
