@@ -185,7 +185,7 @@ public class MeasurementFixtureTests
         // The band is checked at the rates of the encoder's usual range; at 22,050 Hz the band reaches Nyquist and the cutoff lies 500 Hz below it.
         if (m.SampleRate >= 44100 && manifest.GetProperty("stated").ValueKind == JsonValueKind.Object && manifest.GetProperty("stated").GetProperty("transition_band_hz") is { ValueKind: JsonValueKind.Array } band)
         {
-            Assert.InRange(cutoff.Frequency, band[0].GetInt32() - rowHertz, band[1].GetInt32() + (3 * rowHertz));
+            Assert.InRange(cutoff.Frequency, band[0].GetInt32() - rowHertz, band[1].GetInt32() + rowHertz);
         }
     }
 
