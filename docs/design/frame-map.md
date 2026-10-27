@@ -1,6 +1,6 @@
 # Frame Map: one square per frame
 
-Status: approved by the project lead on 2026-10-27, decision 6 amended as described under [Numeric shading](#numeric-shading); nothing built yet. Claims about the code were checked at e8f51bc; figures that were worked out rather than measured are marked **estimate**, and claims no source read for this design confirms are marked **unverified**. One throwaway prototype outside the repository measured the drawing cost (see [Speed and memory](#speed-and-memory)); nothing of it is committed. The decisions are collected under [Decisions](#decisions).
+Status: approved by the project lead on 2026-10-27, decision 6 amended twice as described under [Numeric shading](#numeric-shading); the second amendment (declared ranges, 2026-10-27) is a design change awaiting a build; nothing built yet. Claims about the code were checked at e8f51bc, and those of the second amendment (`Series`, the JSON writer, the MPEG parser) at c666406; figures that were worked out rather than measured are marked **estimate**, and claims no source read for this design confirms are marked **unverified**. One throwaway prototype outside the repository measured the drawing cost (see [Speed and memory](#speed-and-memory)); nothing of it is committed. The decisions are collected under [Decisions](#decisions).
 
 - An interactive mockup was shown to the lead. It was built from Encspect's JSON report of a damaged LAME `-V2` MP3. It is a private page and is not linked here.
 
@@ -23,16 +23,18 @@ What the plan and the earlier designs settle, and this design keeps:
 - The Graphs tab's list, view switcher, palette, hover, click, keyboard and automation behavior ([gui.md](../gui.md), "Graphs" and "Category series"; [coding-graphs.md](coding-graphs.md)).
 - Step 4 of the [measurements rollout](spectral-analysis.md#rollout) adds the entries "Waveform", "Spectrogram" and "Spectrum" under a heading "Audio" in the same tab ([spectral-analysis.md](spectral-analysis.md#gui)).
 
-Not in scope: new series, any parser or result-model change, the CLI (the map is a picture of series the JSON already writes).
+Not in scope: new series, and any parser or result-model change other than the optional declared range of [Numeric shading](#declared-ranges-the-second-amendment) (one property of `Series`, one JSON field, and the MPEG series that opt in); the CLI gains no option (the map is a picture of series the JSON already writes).
+
+Sources read for the second amendment: `StreamInfo.cs` (`Series`), the series output of `ReportJsonWriter.cs`, `MpegHeader.cs` (the bitrate tables), `MpegAudioParser.Streams.cs` (the "Bitrate" series and how streams are split) and `MpegAudioParser.Coding.cs` ("Channel Bit Share"), `docs/cli.md`, and the fixture folders, counted by script.
 
 Sources read: `CLAUDE.md`, `docs/PLAN.md`, `docs/gui.md`, the two designs above; `Graph.cs`, `GraphsViewModel.cs`, `CategoryGraphs.cs`, `DetailViewModel.cs`, `FrameLocator.cs`, `GraphView.cs`, `GraphView.Categories.cs`, `CategoryColors.cs`, `Palette.cs`, `Styles.axaml` and `DetailWindow.axaml` of the GUI; `StreamInfo.cs`, `CategorySeries.cs` and `Finding.cs` of `Core.Abstractions`; every parser's construction of `Series` and `CategorySeriesBuilder`; the finding collectors of the parsers; `GraphViewTests` and `CategoryViewTests`; the `dataviz` skill's color formula.
 
 ## The design in short
 
 - **A form, not a window.** "Frame Map" is one more form in the view switcher of every entry that has a per-unit series, next to "Over Time", "Smoothed", "Frames", "Summary" and "Per Frame", "Over Time", "Distribution". Picking another entry in the list is what toggles what the map shows, and the form is remembered as the others are.
-- **Any per-unit series.** It is offered for every `Series` on the `FrameOffset` axis and every `CategorySeries`, by type alone, so a series a parser adds later appears with no GUI change. No parser or model change is needed; this was checked against the code (see [What it reads](#what-it-reads)).
+- **Any per-unit series.** It is offered for every `Series` on the `FrameOffset` axis and every `CategorySeries`, by type alone, so a series a parser adds later appears with no GUI change. The map itself needs no parser or model change (checked against the code, see [What it reads](#what-it-reads)); only the optional [declared range](#declared-ranges-the-second-amendment) does, and a series without one is shaded from the file's own range.
 - **Squares of one size,** 10 device-independent pixels with a gap of 2, in rows like text, as many columns as fit in steps of 10; only the rows on screen are drawn.
-- **Numbers as one color per value** where a series has at most 16 distinct values (a single-hue ramp up to 8, a multi-hue ramp for 9 to 16), else 8 classes of equal width; **categories in the strip's colors**, a unit of several values as a split square or a share mix.
+- **Numbers as one color per value** where a series has at most 16 distinct values (a single-hue ramp up to 8, a multi-hue ramp for 9 to 16), else 8 classes of equal width, over the file's own range; a series that **declares a range** (MPEG's bitrate steps, a percentage's 0 to 100) is shaded from the declared steps or ends instead, so colors compare across files; **categories in the strip's colors**, a unit of several values as a split square or a share mix.
 - **Findings as rings** around the square their node lies in, with marks beside the scrollbar; clicking a square selects its frame, and selecting a frame in the tree rings its square.
 
 ## What it reads
@@ -41,7 +43,7 @@ Sources read: `CLAUDE.md`, `docs/PLAN.md`, `docs/gui.md`, the two designs above;
 
 - The map needs, per unit, a byte offset and a value or a category. Every per-unit series has both: `Series.X` holds "the byte offset of each frame" on the `FrameOffset` axis (`StreamInfo.cs`), and `CategorySeries.X` "the byte offset of each unit", with the codes read through `CategorySeries.Reader(firstUnit)`, which starts at any unit (`CategorySeries.cs`).
 - Clicking already works by offset: `Graph.FrameAt` returns an offset, `GraphsViewModel.FrameRequested` hands it to `DetailViewModel.SelectFrameAt`, which finds the frame through the tree's containment (`FrameLocator`). Marking already works too: `DetailViewModel.SelectedNode` calls `Graphs.MarkFrame` with the offset of the selected row's frame, and each `Graph` answers `IndexOfFrame`.
-- So the map is a new `Graph` subclass (`FrameMapGraph`, beside `LineGraph` and `CategoryGraph`) and a new `GraphForm` value; no type of `Core.Abstractions`, no writer and no parser changes.
+- So the map is a new `Graph` subclass (`FrameMapGraph`, beside `LineGraph` and `CategoryGraph`) and a new `GraphForm` value. The map reads existing members only; the one addition, the optional declared range, is below.
 
 ### What a square is
 
@@ -148,7 +150,7 @@ Chosen: **one color per value up to 16 distinct values, else 8 classes of equal 
   - 9 to 16 distinct values: a multi-hue sequential ramp, so that 14 to 16 neighboring steps stay distinguishable. Neighboring steps of one hue would differ too little in contrast.
   - The multi-hue ramp's exact colors are chosen in the build. They are checked with the `dataviz` skill's validator in light and dark mode, and higher values keep more contrast against the surface (decision 7).
   - The mockup used ColorBrewer's YlGnBu as a stand-in. That is an observation about the mockup, not a choice.
-- **More than 16 distinct values** (computed bitrates of AAC, FLAC or DTS from each unit's size, the reservoir fill, the channel bit share): 8 classes of equal width from the stream's smallest value to its largest, on the 8-step single-hue ramp.
+- **More than 16 distinct values** (computed bitrates of AAC, FLAC or DTS from each unit's size, the reservoir fill, the channel bit share): 8 classes of equal width from the stream's smallest value to its largest, on the 8-step single-hue ramp, unless the series declares a range (below).
 - **Direction:** a higher value has more contrast against the surface: darker in light mode, lighter in dark mode, where the ramp is reversed (the `dataviz` skill's sequential rule, "flips anchor in dark"). The ordered category series do not flip today, so decision 7 settles this for the map only.
 - **Key, not a list** (the lead, 2026-10-27: a shaded series needs no legend list): one thin line under the map, the smallest value, a row of swatches from low to high, the largest value with its unit ("32 kbps ▮▮▮▮▮▮▮▮▮▮▮▮▮▮ 320 kbps"); for classes of equal width the ends are the stream's range. It stays because the direction flips between light and dark mode (decision 7), the range differs per series, and automation text needs the colors in words.
   - The hover gives each square's exact value, and a swatch's tooltip its value or range and its count ("128 kbps · 1,263 frames"); the counts per value are also in the Distribution form.
@@ -156,7 +158,71 @@ Chosen: **one color per value up to 16 distinct values, else 8 classes of equal 
   - "No value" follows the key with its count where the series has such frames. A single value is one line, "Every frame 128 kbps", which is what a CBR stream's map shows: one even color.
   - Category series keep their named legend (see [Categories](#categories)), since a color does not name a category.
 - **No value:** a frame the series has no value for, or a value that is not finite, is an empty square with a hairline outline in the grid color (`Palette.Grid`), so that its place is seen; the hover says "no value".
-- **Diverging quantities** (the channel bit share around 50%) get the same ramp; a scale with a midpoint would need the series to say so, a model change left as a follow-up.
+- **Diverging quantities** (the channel bit share around 50%) get the same ramp in this build; a scale with a midpoint would need the series to say so, a model change left as a follow-up. The [declared range](#declared-ranges-the-second-amendment) below is its first half: it fixes the ends at 0 and 100, and the midpoint would be one more optional member of the same property.
+
+### Declared ranges: the second amendment
+
+Decided by the project lead on 2026-10-27, after the first build was designed. The reasons, from the discussion:
+
+- The default scale runs from the file's lowest to its highest value, and that stays the default.
+- Starting at 0 would waste shades wherever a series has a high floor: FLAC's bitrate at about 600 to 1,400 kbps, the global gain, the frame size.
+- One absolute scale across formats is impossible.
+- A series whose format defines a natural range can declare it, so that a color means the same in every file of that kind.
+
+#### The result model: one optional property
+
+- **`Series.DeclaredRange`**, of a new type `ValueRange` in `Core.Abstractions` (`StreamInfo.cs`, beside `Series`), `init`-only and null by default, so every series that sets nothing behaves as today. Two forms, built by factory methods so that a range cannot hold both:
+  - `ValueRange.OfSteps(values)`: the steps the format allows, such as the MPEG bitrate table, in the series' unit. Strictly ascending, finite, at least 2.
+  - `ValueRange.Between(minimum, maximum)`: a fixed minimum and maximum, in the series' unit, such as 0 and 100 for a percentage. `minimum < maximum`, both finite.
+- The constructor throws `ArgumentException` for a range that breaks these rules, as `Series` does for mismatched lengths; a parser builds its table from constants, so this is a programming error, not an input error.
+- The name follows the lead's "declared ranges". `Range` is avoided because it is `System.Range`; the property says what the parser does (declares), and a front end reads it as a fact the parser states, not a judgment about the audio.
+- **The JSON** gets one optional member on a numeric series, written after `quantity` and only when set:
+  - `"declaredRange": { "steps": [32, 40, 48, ...] }` or `"declaredRange": { "minimum": 0, "maximum": 100 }`. The numbers are in the series' `unit`, written as the `x` and `values` are.
+  - A field is added and none changes meaning, so `schemaVersion` stays 1 (`docs/cli.md`, "Schema version").
+  - With `--explain` there is no separate text: the series' own `description` says what the range is. The field is documented in the JSON section of `docs/cli.md`, and `Series.DeclaredRange` has a comment in the style of its neighbors.
+- **The text tree does not print it:** it prints a series' values only, and a declared range is a hint for a front end's shading, not a figure of the file.
+
+#### What the map does with it
+
+- **Steps** (`OfSteps`): one color per declared step, whether or not the file uses it.
+  - The color is fixed by the step's position in the declared list, on the ramps of this section: a single-hue ramp for up to 8 steps, the multi-hue ramp for 9 to 16. The one-color-per-value rule above applies to the declared steps, not to the file's distinct values. More than 16 steps would use 8 classes of equal width from the first step to the last; no series declares that many.
+  - The same step has the same color in every file of that kind: 128 kbps is the same shade in a CBR file and in a VBR file whose lowest step is 32.
+  - A file's map shows only the steps it uses; the others are absent from the squares.
+  - **The key line shows every declared step and dims the swatches of unused steps** (reduced opacity, tooltip "0 frames"), with the declared ends as its smallest and largest value. The alternative, omitting them, would make the key's length and ends depend on the file, which is what the declaration is there to avoid, and a dimmed gap also shows which steps an encoder never used. The key stays thin: 14 swatches fit the line, as the 14 steps of today's key do.
+  - The colors depend on the position, so a table of another version or layer has other values at the same position (MPEG-2 Layer III's step 3 is 24 kbps, MPEG-1's is 48); comparability holds between files of the same kind, and the key names the ends.
+- **A fixed range** (`Between`): the shades are 8 classes of equal width over the declared minimum to the declared maximum, not over the file's values, on the 8-step single-hue ramp.
+  - This holds even where the file has at most 16 distinct values: one color per value would give a value a color that depends on the file, which defeats the declaration.
+  - The key's ends read the declared minimum and maximum with the unit ("0 % ▮▮▮▮▮▮▮▮ 100 %").
+- **Values outside the range clamp** to the end class (below the minimum or the first step to the first; above the maximum or the last step to the last) and are marked in the hover: "Frame 1,234 · 0x1A2B · 512 kbps (above the declared range of 32 to 320 kbps)". A value inside the span of steps but not on one goes to the nearest step and is marked "not a declared step". The key line gives the count of such squares after "No value", where there are any.
+  - A file can break its format, and saying so is a finding's job, not the map's; the map neither rings the square nor words a verdict.
+- **A series without a declared range** is shaded as before: one color per value up to 16 distinct values, else 8 classes from the file's lowest to its highest value, and a key from the smallest to the largest value.
+
+#### Who declares what in the first build
+
+Declared:
+
+- **MPEG "Bitrate" (per frame):** the bitrate table of the stream's version and layer, in kbps, without the free (0) and reserved (15) indexes: 14 steps for MPEG-1 Layer I, II and III, and for MPEG-2 and 2.5 Layer I and II/III. The tables are `Mpeg1Bitrates` and `Mpeg2Bitrates` in `MpegHeader.cs`, indexed by layer; the parser takes the step list from the same arrays, so there is one table.
+  - A **free-format** stream declares none: its bitrates are computed from the frame lengths (`MpegAudioParser.Streams.cs`) and fall between steps.
+  - **A change of version or layer mid-stream** does not arise within a stream: the parser starts another stream at each change of version, layer, sample rate or free format (`MpegAudioParser.Streams.cs`, the `MaxStreams` finding), so each stream has one table. A stream that could mix would declare none.
+- **MPEG "Channel Bit Share" (per frame):** 0 to 100 %. Its per-second form, "Channel Bit Share Over Time", declares the same range, since it is the same quantity; it has no map, but the line views may use it later.
+- **Other percentage series:** none. A search of the series built in `src` (unit `"%"`) finds only these two; the other percentages in reports are figures of nodes (`Share`, `Overall`) and of the measurements, not series.
+
+Not declared; each keeps the file's own range:
+
+- **MPEG "Bitrate Over Time"** and the other per-second series: an average over a second falls between steps, and they have no map.
+- **Reservoir Fill and Bit Reservoir** (bytes): the bound depends on the main data begin field and the stream's bitrate, so no table or percentage is natural; the file's range shows what the stream used.
+- **Coded bandwidth** (Hz): the ceiling is the sample rate's half, but the floor is what an encoder chose, and the shades should resolve that choice, not the whole band.
+- **Computed bitrates** of AAC, FLAC, Opus, Vorbis, Speex, DTS, WavPack, Monkey's Audio, Musepack, TTA, TrueHD and WMA: no table; each is a size over a duration, with floors that differ by an order of magnitude between files (FLAC about 600 to 1,400 kbps).
+- **Frame size and global gain** (follow-ups, not built): a high floor, and the range is a property of the encoder's settings, not of the format.
+
+The channel bit share's diverging scale centered on 50 % stays a [follow-up](#follow-ups-per-unit-series-worth-adding), as before; the declared range is its first half.
+
+#### The costs
+
+- **Goldens:** every JSON report of an MPEG stream gains the field on two series (three where the stream has the per-second share). By a script over `tests/fixtures`: 478 JSON files hold a stream with an MPEG audio codec, of which 299 are `.report.json` goldens and 179 are `.expected.json`; the 296 reports with a "Bitrate" series are the ones that change. The `.expected.json` files hold no series and do not change. These include a few non-MPEG containers that carry MPEG (WAV 12, MP4 2, Ogg 2, AAC and ADTS 2 each). **About 300 goldens change**, each by added lines only, so the diff is checked by script (a golden's lines minus the added `declaredRange` lines equal the old golden). Inline JSON in `CategorySeriesWriterTests` and `MemoryTests` is checked the same way.
+- **Size:** an MPEG report grows by about 100 bytes per stream (14 numbers and the member names), not per frame.
+- **Docs:** `docs/cli.md` (the JSON section: the field, its two forms, and that `schemaVersion` stays 1), `docs/formats/mpeg.md` (which series declare what), `docs/gui.md` ("Frame Map": the key and the clamp).
+- **Compatibility:** a reader that ignores unknown members sees no change; one that rejects them already fails on every earlier field addition (cli.md, "Schema version").
 
 ## Categories
 
@@ -226,11 +292,21 @@ A throwaway Avalonia 12.1.4 control in the scratchpad, on the headless platform 
 - **Multi-hue ramp:** a validator check with the `dataviz` skill's validator, run on its colors in light and dark mode, requiring that higher values keep more contrast against the surface.
 - **`ScreenshotTests`,** light and dark, saved with `ENCSPECT_SCREENSHOTS` for review: the block usage of an MPEG fixture with short blocks (split squares), the bitrate of a VBR fixture, an AC-3 flag series (share mix) and a damaged fixture whose findings point at frames, each found by script from the goldens rather than assumed.
 - **`CapitalizationTests`:** unchanged; "Frame Map" is checked with the other buttons.
-- No fixture or golden changes: the map writes nothing.
+- **Declared ranges (the second amendment):**
+  - **Model test** (`SeriesRangeTests`): `OfSteps` and `Between` accept valid input and keep the members; they throw for unsorted, repeated, non-finite or fewer than 2 steps and for `minimum >= maximum`; a series without a range has null.
+  - **Writer test** (next to `CategorySeriesWriterTests`): `declaredRange` is written with `steps` or with `minimum` and `maximum` only when set, after `quantity`, and is absent from every other series; the text tree is unchanged.
+  - **MPEG tests** (`MpegCodingSeriesTests`): the bitrate declares the 14 steps of MPEG-1 Layer III and of MPEG-2 Layer III, the table of Layers I and II, and none for a free-format stream; the channel bit share declares 0 to 100; and the declared steps equal the nonzero, unreserved entries of the header tables.
+  - **Map test** (`FrameMapGraphTests`): the same bitrate has the same color in two files with different ranges (a CBR file at 128 kbps and a VBR file from 32 to 320 kbps), a step a file does not use is absent from its squares and dimmed in the key, a fixed range spans the declared ends where the file's values are few, and the key's ends are the declared ones.
+  - **Clamp test** (`FrameMapGraphTests`): a value below, above and between the steps goes to the end class or the nearest step, and the hover says so; a file that breaks its format draws without a ring.
+- **Goldens:** about 300 MPEG `.report.json` goldens change by the added field only, checked by script; no other golden changes. The map itself writes nothing.
 
 ## Rollout
 
-1. **One pull request after step 4 of the measurements merges:** `GraphForm.Map`, `FrameMapGraph`, the map's drawing in `GraphView` (a partial file of its own, as the category views are), the mark lane, the tests above; `docs/gui.md` ("Graphs": the form, and a "Frame Map" section); `docs/PLAN.md` (the GUI list's graphs). An independent review on Opus with high effort follows, as after each milestone.
+0. **Recommended: a small preceding pull request for the declared range,** which can merge before step 4 because nothing in it touches the GUI: `ValueRange` and `Series.DeclaredRange`, the JSON writer, the MPEG opt-in, the model, writer and MPEG tests, `docs/cli.md` and `docs/formats/mpeg.md`, and the roughly 300 re-blessed goldens.
+   - Reason: the Frame Map pull request should be reviewed for its drawing, not buried under 300 golden files; the preceding one is reviewed for the model and the writer, and its golden diff is checked by script as added lines only.
+   - It is also the part with a public contract (the JSON), so it gets its own review and its own green pipeline, and the map then builds on a merged model.
+   - If the lead prefers one pull request, the work is the same and goes in the Frame Map pull request after step 4.
+1. **One pull request after step 4 of the measurements merges:** `GraphForm.Map`, `FrameMapGraph`, the map's drawing in `GraphView` (a partial file of its own, as the category views are), the mark lane, the tests above (the map and clamp tests of the declared range, if step 0 was separate); `docs/gui.md` ("Graphs": the form, and a "Frame Map" section); `docs/PLAN.md` (the GUI list's graphs). An independent review on Opus with high effort follows, as after each milestone.
 2. **Follow-ups the lead picks,** each a pull request of its format with its fixtures, goldens and cross-checks, as coding-graphs.md's waves are: the map shows each new series on the day it merges.
 
 ## Follow-ups: per-unit series worth adding
@@ -271,25 +347,25 @@ New candidates, for the lead to pick:
 
 ## Decisions
 
-The project lead approved all 12 on 2026-10-27, as recommended, with one change to decision 6.
+The project lead approved all 12 on 2026-10-27, as recommended, with one change to decision 6; later the same day the lead amended decision 6 a second time (declared ranges).
 
 1. **Placement:** (approved) a form "Frame Map" in each entry's view switcher, remembered as the other forms are; toggling what it shows is picking the entry. Alternative: an entry of its own with a picker; a tab of its own.
-2. **Any per-unit series, no model change:** (approved) offered for every `FrameOffset` series and every category series by type; squares on the stream's frame offsets so they stay in place between entries, a series of other units on squares of its own. Alternative: a list of supported series, which every new series would have to join.
+2. **Any per-unit series, no model change for the map:** (approved; the optional declared range of decision 6 is the one addition) offered for every `FrameOffset` series and every category series by type; squares on the stream's frame offsets so they stay in place between entries, a series of other units on squares of its own. Alternative: a list of supported series, which every new series would have to join.
 3. **Square size:** (approved) 10 by 10 device-independent pixels with a 2-pixel gap, rounded to whole physical pixels; no zoom in this build. Alternative: 8 with 1 (more squares, no 2 × 2 split), 12 with 2; zoom in three steps.
 4. **Columns:** (approved) row-major, the largest multiple of 10 that fits, frame numbers every fifth row in the margin, no times. Alternative: as many as fit; a fixed 50 or 100; one row per second.
 5. **Several values per unit:** (approved) split squares in reading order for fixed layouts of 2 to 4 values; a share mix for more and for variable layouts; the hover lists every value. Alternative: one value at a time; a share mix everywhere.
-6. **Numeric shading** (approved, amended): one color per value where a series has at most 16 distinct values (single-hue ramp up to 8, multi-hue sequential ramp for 9 to 16, colors chosen and validated in the build); otherwise 8 classes of equal width over the stream's range; a thin key line from the smallest to the largest value instead of a legend list (the lead, 2026-10-27), each swatch's count in its tooltip, clicking a swatch steps through its frames; empty outlined squares for no value. Amended on the lead's question why bitrate steps should be grouped when a frame has one bitrate. Alternative: linear and continuous; quantiles.
+6. **Numeric shading** (approved, amended twice): one color per value where a series has at most 16 distinct values (single-hue ramp up to 8, multi-hue sequential ramp for 9 to 16, colors chosen and validated in the build); otherwise 8 classes of equal width over the stream's range; a thin key line from the smallest to the largest value instead of a legend list (the lead, 2026-10-27), each swatch's count in its tooltip, clicking a swatch steps through its frames; empty outlined squares for no value. Amended on the lead's question why bitrate steps should be grouped when a frame has one bitrate. **Second amendment (2026-10-27, declared ranges):** a series may declare its range, `Series.DeclaredRange`, either the steps the format allows or a fixed minimum and maximum, written in the JSON only when set. Steps get one color each, fixed across files, with unused steps dimmed in the key; a fixed range spans the declared ends; values outside clamp to the end class and are marked in the hover. In the first build the MPEG bitrate declares its table (14 steps) and the MPEG channel bit share declares 0 to 100 %; everything else keeps the file's range. Costs: about 300 MPEG goldens change, and the JSON gains one optional field. Alternative: the file's range everywhere; linear and continuous; quantiles.
 7. **Ramp direction in dark mode:** (approved) flip it so a higher value has more contrast against the surface, in the map only, as the `dataviz` rule says. Alternative: flip the ordered category series too, for one rule; flip neither.
 8. **Categories:** (approved) the strip's colors per category, hatching and "Other" unchanged, no new colors and no new validator run. Alternative: the stack's colors of the over-time form.
 9. **Findings:** (approved) a ring in the text color with a surface line inside it, on the square of the frame each finding points at, labeled as the first case; no toggle, the Findings tab's severity filters apply. Alternative: rings in the severity's color; a "Findings" checkbox of its own.
 10. **Scroll marks:** (approved) a lane of the map's own beside the scrollbar, findings in the severity brushes and the selected frame in the text color, clickable. Alternative: marks inside `ScrollBar`'s template (**unverified** in Avalonia 12).
 11. **Selection:** (approved) the selected frame has an accent ring outside its square and is scrolled into view only when off screen. Alternative: the text color, as the strip's marker line uses.
-12. **Rollout:** (approved) one pull request after measurements step 4, with a review; follow-up series as pull requests of their formats, chosen from the [list](#follow-ups-per-unit-series-worth-adding), the per-unit frame checks first since they make the findings overlay complete. Alternative: before step 4, rebasing step 4 onto it.
+12. **Rollout:** (approved; the declared range recommended as a small preceding pull request, step 0 of the [rollout](#rollout), for the lead to confirm) one pull request after measurements step 4, with a review; follow-up series as pull requests of their formats, chosen from the [list](#follow-ups-per-unit-series-worth-adding), the per-unit frame checks first since they make the findings overlay complete. Alternative: before step 4, rebasing step 4 onto it.
 
 ## Unverified claims and estimates
 
 - **Unverified:** how Avalonia 12 snaps rectangles to physical pixels at fractional scaling; whether its `ScrollBar` template can carry marks.
 - **Unverified:** which CRC verdicts DTS, TrueHD and MLP and AAC keep per unit, and whether AAC, AC-3 and DTS keep their gaps per unit, for the follow-ups.
 - **Unverified:** the multi-hue ramp's validator figures (contrast against the surface and between neighbors, light and dark) are not measured yet.
-- **Estimates:** the ramp's contrast figures (from the code's formula, not read from a running theme); the 2-million-unit content height; the class pass's cost.
+- **Estimates:** the golden count of the second amendment (about 300, counted by script over the fixture folders, to be confirmed when the goldens are re-blessed); the ramp's contrast figures (from the code's formula, not read from a running theme); the 2-million-unit content height; the class pass's cost.
 - **Measured once,** on a shared machine: the drawing figures above. The tests set the bounds that hold.
