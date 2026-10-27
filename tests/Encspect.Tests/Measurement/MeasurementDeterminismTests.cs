@@ -49,7 +49,7 @@ public class MeasurementDeterminismTests
         var text = new System.Text.StringBuilder();
         foreach (ChannelLevels c in levels.Channels.Prepend(levels.Stream))
         {
-            text.Append(System.Globalization.CultureInfo.InvariantCulture, $"{c.SamplePeakTenths},{c.RmsTenths},{c.DcOffsetMicropercent},{c.DcOffsetTenths},{c.ClippingRuns},{c.ClippedSamples},{c.LongestClippingRun},{c.SilentAtStart},{c.SilentAtEnd},{c.SilentSamples},{c.LowBitsUnused},{c.HighestMagnitude},{c.HasOnly16BitValues},{c.HasOnly24BitValues};");
+            text.Append(System.Globalization.CultureInfo.InvariantCulture, $"{c.SamplePeakTenths},{c.RmsTenths},{c.DcOffsetMicropercent},{c.DcOffsetTenths},{c.ClippingRuns},{c.ClippedSamples},{c.LongestClippingRun},{c.SilentAtStart},{c.SilentAtEnd},{c.ZeroSamples},{c.LowBitsUnused},{c.HighestMagnitude},{c.HasOnly16BitValues},{c.HasOnly24BitValues};");
         }
 
         return Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text.ToString())));

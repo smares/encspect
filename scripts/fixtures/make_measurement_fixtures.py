@@ -375,13 +375,13 @@ def add_levels():
 
     mono_silence = [0] * 1000 + small_noise(4000, 7, 299, nonzero=True) + [0] * 500 + small_noise(3000, 8, 299, nonzero=True) + [0] * 2000
     add("levels-silence-positions", "Noise that never reaches 0 with 1,000 samples of digital silence at the start, 500 in the middle and 2,000 at the end.", [mono_silence], rate, 16,
-        dict(unspecified, levels={"stream": {"silent_at_start": 1000, "silent_at_end": 2000, "silent_samples": 3500, "low_bits_unused": 0}}))
+        dict(unspecified, levels={"stream": {"silent_at_start": 1000, "silent_at_end": 2000, "zero_samples": 3500, "low_bits_unused": 0}}))
 
     first = [0] * 3000 + small_noise(5192, 9, 299, nonzero=True)
     second = [0] * 1000 + small_noise(6692, 10, 299, nonzero=True) + [0] * 500
     add("levels-silence-stereo", "Two channels of noise that never reaches 0: the left silent for its first 3,000 samples, the right for its first 1,000 and last 500; the sample frames silent in both are the first 1,000.",
-        [first, second], rate, 16, dict(unspecified, levels={"stream": {"silent_at_start": 1000, "silent_at_end": 0, "silent_samples": 1000},
-                                                             "channels": [{"silent_at_start": 3000, "silent_at_end": 0, "silent_samples": 3000}, {"silent_at_start": 1000, "silent_at_end": 500, "silent_samples": 1500}]}))
+        [first, second], rate, 16, dict(unspecified, levels={"stream": {"silent_at_start": 1000, "silent_at_end": 0, "zero_samples": 1000},
+                                                             "channels": [{"silent_at_start": 3000, "silent_at_end": 0, "zero_samples": 3000}, {"silent_at_start": 1000, "silent_at_end": 500, "zero_samples": 1500}]}))
 
     audio = small_noise(8192, 11, 20000)
     add("levels-low-bits-24-in-16", "16-bit noise as 24-bit samples shifted left by 8 (left) and by 12 (right): the low bits that are never set.",
@@ -389,16 +389,16 @@ def add_levels():
         dict(unspecified, levels={"stream": {"low_bits_unused": 8}, "channels": [{"low_bits_unused": 8}, {"low_bits_unused": 12}]}), wasted=True)
 
     add("levels-silent", "8,192 samples of digital silence: no peak, no level, no bit in use.", [[0] * 8192], rate, 16,
-        dict(unspecified, levels={"stream": {"sample_peak_tenths": None, "rms_tenths": None, "dc_micropercent": 0, "silent_at_start": 8192, "silent_at_end": 8192, "silent_samples": 8192, "low_bits_unused": None}}))
+        dict(unspecified, levels={"stream": {"sample_peak_tenths": None, "rms_tenths": None, "dc_micropercent": 0, "silent_at_start": 8192, "silent_at_end": 8192, "zero_samples": 8192, "low_bits_unused": None}}))
 
     gap_audio = small_noise(8192, 13, 299, nonzero=True)
     gap_audio[0:200] = [0] * 200
     gap_audio[1022:1024] = [32767] * 2
     gap_audio[2048:2050] = [32767] * 2
-    gap_audio[4096 - 300:4096] = [0] * 300
+    gap_audio[4820:5120] = [0] * 300
     gap_audio[6144:6544] = [0] * 400
-    add("levels-gaps", "Blocks of 1,024 samples with the third and sixth removed: two samples at +32,767 before the first gap and two after it (no run), 300 zeros before the second and 400 after it (not one stretch), 200 at the start.",
-        [gap_audio], rate, 16, dict(unspecified, levels={"stream": {"clipping_runs": 0, "silent_at_start": 200, "silent_at_end": 0, "silent_samples": 900}}), block=1024, drop=(2, 5))
+    add("levels-gaps", "Blocks of 1,024 samples with the second and sixth removed: two samples at +32,767 before the first gap and two after it (no run), 300 zeros before the second and 400 after it (not one stretch), 200 at the start.",
+        [gap_audio], rate, 16, dict(unspecified, levels={"stream": {"clipping_runs": 0, "silent_at_start": 200, "silent_at_end": 0, "zero_samples": 900}}), block=1024, drop=(1, 5))
 
     wide = [2147483647 if i % 128 < 96 else -2147483648 for i in range(4096)]
     add("levels-full-scale-32-bits", "A 32-bit square wave between +2,147,483,647 and -2,147,483,648, high for 96 and low for 32 samples of every 128: the sum of squares passes 2^64 within two samples.",

@@ -798,18 +798,18 @@ public static class ReportJsonWriter
         WriteFigure(writer, "samplePeak", "dBFS", c => WriteLevel(writer, c.SamplePeakTenths), levels, explain ? MeasurementText.SamplePeakDescription : null, MeasurementText.LevelsTopic);
         WriteFigure(writer, "rms", "dBFS", c => WriteLevel(writer, c.RmsTenths), levels, explain ? MeasurementText.RmsDescription : null, MeasurementText.LevelsTopic);
         WriteFigure(writer, "dcOffset", "%", c => writer.WriteNumberValue(c.DcOffsetMicropercent / 1_000_000m), levels, explain ? MeasurementText.DcOffsetDescription : null, MeasurementText.DcOffsetTopic);
-        WriteFigure(writer, "dcOffsetLevel", "dBFS", c => WriteLevel(writer, c.DcOffsetTenths), levels, null, null);
+        WriteFigure(writer, "dcOffsetLevel", "dBFS", c => WriteLevel(writer, c.DcOffsetTenths), levels, explain ? MeasurementText.DcOffsetDescription : null, MeasurementText.DcOffsetTopic);
         WriteGroup(writer, "clipping", levels, explain ? MeasurementText.ClippingDescription : null, MeasurementText.ClippingTopic, (w, c) =>
         {
             w.WriteNumber("runs", c.ClippingRuns);
             w.WriteNumber("samples", c.ClippedSamples);
             w.WriteNumber("longestRun", c.LongestClippingRun);
         }, w => w.WriteNumber("minimumRunLength", MeasurementLimits.MinimumClippingRun));
-        WriteGroup(writer, "digitalSilence", levels, explain ? MeasurementText.DigitalSilenceDescription : null, MeasurementText.DigitalSilenceTopic, (w, c) =>
+        WriteGroup(writer, "digitalSilence", levels, explain ? MeasurementText.DigitalSilenceDescription + " " + MeasurementText.ZeroSamplesDescription : null, MeasurementText.DigitalSilenceTopic, (w, c) =>
         {
             w.WriteNumber("atStart", c.SilentAtStart);
             w.WriteNumber("atEnd", c.SilentAtEnd);
-            w.WriteNumber("total", c.SilentSamples);
+            w.WriteNumber("zeroSamples", c.ZeroSamples);
         }, null);
         WriteGroup(writer, "bitDepth", levels, explain ? (levels.Format == SampleFormat.Integer ? MeasurementText.LowBitsUnusedDescription : MeasurementText.HasOnly16BitValuesDescription + " " + MeasurementText.HasOnly24BitValuesDescription) : null, MeasurementText.BitDepthUsageTopic, (w, c) =>
         {

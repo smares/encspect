@@ -70,7 +70,7 @@ public class MeasurementFixtureTests
             }
         }
 
-        // The levels: every count and the DC offset exact, the tenths of a dB within one tenth (the model's logarithm is the C library's).
+        // The levels: every count and the DC offset exact, the tenths of a dB exactly (the model works them out in 60 decimal digits).
         JsonElement levels = model.GetProperty("levels");
         Assert.Equal(levels.GetProperty("bits").GetInt32(), m.Levels!.BitsPerSample);
         Assert.Equal(SampleFormat.Integer, m.Levels.Format);
@@ -110,7 +110,7 @@ public class MeasurementFixtureTests
             }
             else
             {
-                Assert.True(value != MeasurementLimits.NoLevel && Math.Abs(value - e.GetInt32()) <= 1, $"{where}: {key} reads {value}, the model {e.GetInt32()}");
+                Assert.True(value != MeasurementLimits.NoLevel && value == e.GetInt32(), $"{where}: {key} reads {value}, the model {e.GetInt32()}");
             }
         }
 
@@ -125,7 +125,7 @@ public class MeasurementFixtureTests
         Exact("longest_clipping_run", actual.LongestClippingRun);
         Exact("silent_at_start", actual.SilentAtStart);
         Exact("silent_at_end", actual.SilentAtEnd);
-        Exact("silent_samples", actual.SilentSamples);
+        Exact("zero_samples", actual.ZeroSamples);
         Exact("highest_magnitude", actual.HighestMagnitude);
         JsonElement bits = expected.GetProperty("low_bits_unused");
         Assert.Equal(bits.ValueKind == JsonValueKind.Null ? null : bits.GetInt32(), actual.LowBitsUnused);
@@ -167,7 +167,7 @@ public class MeasurementFixtureTests
                 "longest_clipping_run" => actual.LongestClippingRun,
                 "silent_at_start" => actual.SilentAtStart,
                 "silent_at_end" => actual.SilentAtEnd,
-                "silent_samples" => actual.SilentSamples,
+                "zero_samples" => actual.ZeroSamples,
                 "low_bits_unused" => actual.LowBitsUnused,
                 "highest_magnitude" => actual.HighestMagnitude,
                 _ => throw new InvalidOperationException(property.Name),

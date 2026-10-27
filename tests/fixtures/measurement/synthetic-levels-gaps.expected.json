@@ -1,6 +1,6 @@
 {
- "description": "Blocks of 1,024 samples with the third and sixth removed: two samples at +32,767 before the first gap and two after it (no run), 300 zeros before the second and 400 after it (not one stretch), 200 at the start.",
- "length": 6718,
+ "description": "Blocks of 1,024 samples with the second and sixth removed: two samples at +32,767 before the first gap and two after it (no run), 300 zeros before the second and 400 after it (not one stretch), 200 at the start.",
+ "length": 6737,
  "construction": {
   "cutoff_hz": null,
   "unspecified": true,
@@ -9,7 +9,7 @@
     "clipping_runs": 0,
     "silent_at_start": 200,
     "silent_at_end": 0,
-    "silent_samples": 900
+    "zero_samples": 900
    }
   }
  },
@@ -54,30 +54,30 @@
    "bits": 16,
    "stream": {
     "sample_peak_tenths": 0,
-    "rms_tenths": -346,
-    "dc_micropercent": 15883,
-    "dc_tenths": -760,
+    "rms_tenths": -317,
+    "dc_micropercent": 54862,
+    "dc_tenths": -652,
     "clipping_runs": 0,
     "clipped_samples": 0,
     "longest_clipping_run": 0,
     "silent_at_start": 200,
     "silent_at_end": 0,
-    "silent_samples": 900,
+    "zero_samples": 900,
     "low_bits_unused": 0,
     "highest_magnitude": 32767
    },
    "channels": [
     {
      "sample_peak_tenths": 0,
-     "rms_tenths": -346,
-     "dc_micropercent": 15883,
-     "dc_tenths": -760,
+     "rms_tenths": -317,
+     "dc_micropercent": 54862,
+     "dc_tenths": -652,
      "clipping_runs": 0,
      "clipped_samples": 0,
      "longest_clipping_run": 0,
      "silent_at_start": 200,
      "silent_at_end": 0,
-     "silent_samples": 900,
+     "zero_samples": 900,
      "low_bits_unused": 0,
      "highest_magnitude": 32767
     }
@@ -87,8 +87,8 @@
   "hops_per_column": 1,
   "waveform": [
    {
-    "minimum": [-299, -298, -299, -299],
-    "maximum": [32767, 298, 299, 298]
+    "minimum": [-298, -298, -299, -299],
+    "maximum": [32767, 32767, 298, 298]
    }
   ]
  }

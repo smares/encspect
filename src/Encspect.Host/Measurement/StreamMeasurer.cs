@@ -350,6 +350,17 @@ internal sealed class StreamMeasurer
                         _levels.AddDoubles(c, _buffers[c].AsSpan(_fill, piece));
                     }
                 }
+
+                if (block.Format != SampleFormat.Integer)
+                {
+                    foreach (ref double v in _buffers[c].AsSpan(_fill, piece))
+                    {
+                        if (Math.Abs(v) < SmallestSample)
+                        {
+                            v = 0;
+                        }
+                    }
+                }
             }
 
             _levels?.EndPiece(piece);
@@ -490,10 +501,11 @@ internal sealed class StreamMeasurer
             return 0;
         }
 
-        // Too small to count (under 1e-30, -600 dB) is taken as 0 and says nothing; too large is clamped and says so.
+        // Too small for the spectrum (under 1e-30, -600 dB) is kept here, since the levels count it as a sample that is not 0; the spectrum's
+        // buffers are flushed after the levels have read them. Too large is clamped and says so.
         if (magnitude < SmallestSample)
         {
-            return 0;
+            return v;
         }
 
         HasClamped = true;

@@ -29,9 +29,9 @@ make_external_measurement_fixtures.py):
   the file's samples of magnitude 1 may join a stretch): every stretch of 442 samples or more it prints for a file of up to 16 bits and up to 10 s
   (it prints six digits) lies between the stretch of exact zeros and the stretch of samples of magnitude 1 or less that the decoded samples have,
   in every channel at once, which checks the digital silence's positions and lengths where they are long.
-The measurements themselves are checked against measurement_model.py by MeasurementFixtureTests; FFmpeg's showspectrum is not needed. Every skip
-prints its reason; a disagreement fails the run. astats and silencedetect print their figures in the form of FFmpeg 6.1.1; the script reads them by
-name and reports a field it cannot find as a skip.
+The measurements themselves are checked against measurement_model.py by MeasurementFixtureTests; FFmpeg's showspectrum is not needed. The tools' versions are pinned, so a field they do not print is a failure, as is a
+file for which no figure was compared; the flac -t skip of the gap files is the one skip left. astats and silencedetect print their figures in the form of FFmpeg 6.1.1; the script reads them by
+name and reports a field it cannot find as a failure.
 
     python3 scripts/fixtures/crosscheck_measurement_fixtures.py [name ...]
 """
@@ -85,22 +85,35 @@ def tenths_to_db(tenths):
     return None if tenths is None else tenths / 10
 
 
-def check_astats(path, expected, info, found, skipped):
-    """The levels of the manifest against astats."""
+def check_astats(path, expected, info, found):
+    """The levels of the manifest against astats; returns the number of figures compared. Every figure that astats does not print, as the tools'
+    versions are pinned, is a failure."""
     levels = expected["model"]["levels"]
     channels, overall = astats(path)
     if len(channels) != len(levels["channels"]) or not overall:
-        skipped.append(f"{path.stem}: astats (no per-channel figures to read)")
-        return
+        found.append(f"astats printed {len(channels)} channels and {'an' if overall else 'no'} overall section for {len(levels['channels'])} channels")
+        return 0
     container = 16 if info["bits"] <= 16 else 32
     scale = ((1 << (container - 1)) - 1) / (1 << (container - 1))
     correction = 20 * math.log10(scale)
+    compared = 0
+
+    def figure(got, key, name):
+        value = got.get(key)
+        if value is None:
+            found.append(f"astats prints no {key} for {name}")
+        return value
 
     def level(text):
         value = number(text)
         return None if value is None else (None if value == -math.inf else value + correction)
 
-    def compare(what, got_db, tenths):
+    def compare(what, text, tenths):
+        nonlocal compared
+        if text is None:
+            return
+        compared += 1
+        got_db = level(text)
         if tenths is None:
             if got_db is not None and got_db > -200:
                 found.append(f"astats {what} is {got_db:.2f} dB, the model has none")
@@ -109,23 +122,31 @@ def check_astats(path, expected, info, found, skipped):
 
     pairs = [(f"channel {i + 1}", channels[i], levels["channels"][i]) for i in range(len(channels))] + [("overall", overall, levels["stream"])]
     for name, got, want in pairs:
-        compare(f"{name} peak", level(got.get("Peak level dB")), want["sample_peak_tenths"])
-        compare(f"{name} RMS", level(got.get("RMS level dB")), want["rms_tenths"])
-        dc = number(got.get("DC offset"))
-        if dc is None:
-            skipped.append(f"{path.stem}: astats {name} DC offset (not printed)")
-        elif abs(dc * scale - want["dc_micropercent"] / 1e8) > 3e-6:
-            found.append(f"astats {name} DC offset is {dc}, the model {want['dc_micropercent'] / 1e8}")
+        compare(f"{name} peak", figure(got, "Peak level dB", name), want["sample_peak_tenths"])
+        compare(f"{name} RMS", figure(got, "RMS level dB", name), want["rms_tenths"])
+        dc = number(figure(got, "DC offset", name))
+        if dc is not None:
+            compared += 1
+            if abs(dc * scale - want["dc_micropercent"] / 1e8) > 3e-6:
+                found.append(f"astats {name} DC offset is {dc}, the model {want['dc_micropercent'] / 1e8}")
     for name, got, want in pairs[:-1]:
-        depth = (got.get("Bit depth") or "").split("/")
-        if len(depth) == 4 and want["low_bits_unused"] is not None:
-            if int(depth[2]) != levels["bits"] - want["low_bits_unused"]:
-                found.append(f"astats {name} bit depth is {got['Bit depth']}, the model {levels['bits']} less {want['low_bits_unused']} low bits unused")
-        elif want["low_bits_unused"] is not None:
-            skipped.append(f"{path.stem}: astats {name} bit depth (not printed as four numbers)")
-    samples = number(overall.get("Number of samples"))
-    if samples is not None and int(samples) != expected["model"]["samples"]:
-        found.append(f"astats counts {int(samples)} samples, the model {expected['model']['samples']}")
+        if want["low_bits_unused"] is None:
+            continue
+        depth = (figure(got, "Bit depth", name) or "").split("/")
+        if len(depth) != 4:
+            found.append(f"astats prints the bit depth of {name} as {got.get('Bit depth')!r}, not four numbers")
+            continue
+        compared += 1
+        if int(depth[2]) != levels["bits"] - want["low_bits_unused"]:
+            found.append(f"astats {name} bit depth is {got['Bit depth']}, the model {levels['bits']} less {want['low_bits_unused']} low bits unused")
+    samples = number(figure(overall, "Number of samples", "overall"))
+    if samples is not None:
+        compared += 1
+        if int(samples) != expected["model"]["samples"]:
+            found.append(f"astats counts {int(samples)} samples, the model {expected['model']['samples']}")
+    if compared == 0:
+        found.append("astats: no figure compared")
+    return compared
 
 
 def silence_runs(pcm_channels, threshold):
@@ -143,7 +164,7 @@ def silence_runs(pcm_channels, threshold):
     return [r for r in runs if r[1] >= 442]
 
 
-def check_silence(path, stream, info, found, skipped):
+def check_silence(path, stream, info, found):
     """silencedetect's stretches against the decoded samples' stretches of exact zeros (inside) and of magnitude 1 or less (outside)."""
     rate = info["sample_rate"]
     samples = [[] for _ in range(info["channels"])]
@@ -153,6 +174,9 @@ def check_silence(path, stream, info, found, skipped):
                 samples[c].extend(frame["channels"][c])
     result = run(["ffmpeg", "-hide_banner", "-i", str(path), "-af", "silencedetect=n=3.06e-5:d=0.01", "-f", "null", "-"])
     text = result.stderr.decode(errors="replace")
+    if result.returncode != 0:
+        found.append(f"silencedetect: ffmpeg fails: {text.strip()[-200:]}")
+        return
     starts = [float(x) for x in re.findall(r"silence_start: (-?[0-9.e+-]+)", text)]
     ends = [float(x) for x in re.findall(r"silence_end: ([0-9.e+-]+)", text)]
     if len(starts) != len(ends):
@@ -208,10 +232,10 @@ def main():
                     if hashlib.md5(shifted).hexdigest() != want:
                         found.append("ffmpeg decodes other samples than the model")
             expected = json.loads(path.with_suffix(".expected.json").read_text())
-            if path.stem not in GAPS and "levels" in expected.get("model", {}):
-                check_astats(path, expected, info, found, skipped)
+            if "levels" in expected.get("model", {}):
+                check_astats(path, expected, info, found)
             if path.stem not in GAPS and path.stem.startswith("synthetic-levels-") and info["bits"] <= 16:
-                check_silence(path, stream, info, found, skipped)
+                check_silence(path, stream, info, found)
             probe = run(["ffprobe", "-v", "error", "-show_streams", "-of", "json", str(path)])
             streams = json.loads(probe.stdout or b"{}").get("streams", [])
             if not streams:

@@ -80,7 +80,9 @@ internal sealed class LevelsMeter
             state.PeakMagnitude = peak;
         }
 
-        state.SumSquares += Squares(samples);
+        // A decoder that does not clamp (FLAC's restore on a corrupt frame) can write a sample beyond the declared bits, which would wrap the
+        // 64-bit partial sum sized from them: such a piece goes into the 128-bit sum square by square.
+        state.SumSquares += Squares(samples, high > _high || low < _low);
         if (high >= _high || low <= _low)
         {
             ScanClipping(state, samples);
@@ -241,10 +243,10 @@ internal sealed class LevelsMeter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private UInt128 Squares(ReadOnlySpan<int> samples)
+    private UInt128 Squares(ReadOnlySpan<int> samples, bool isWide)
     {
         UInt128 total = 0;
-        if (_chunk == 0)
+        if (_chunk == 0 || isWide)
         {
             foreach (int v in samples)
             {
@@ -352,6 +354,7 @@ internal sealed class LevelsMeter
         long highest = 0;
         int peak = MeasurementLimits.NoLevel;
         ChannelLevels? dc = null;
+        ChannelState? dcState = null;
         long runs = 0;
         long clipped = 0;
         long longest = 0;
@@ -364,9 +367,10 @@ internal sealed class LevelsMeter
             orBits |= state.Or;
             highest = Math.Max(highest, state.PeakMagnitude);
             peak = Math.Max(peak, levels.SamplePeakTenths);
-            if (dc is null || Math.Abs(levels.DcOffsetMicropercent) > Math.Abs(dc.DcOffsetMicropercent))
+            if (dcState is null || LargerOffset(state, dcState))
             {
                 dc = levels;
+                dcState = state;
             }
 
             runs += levels.ClippingRuns;
@@ -387,7 +391,7 @@ internal sealed class LevelsMeter
             LongestClippingRun = longest,
             SilentAtStart = joint.Leading,
             SilentAtEnd = joint.Trailing,
-            SilentSamples = joint.Total,
+            ZeroSamples = joint.Total,
             LowBitsUnused = !_isFloat && orBits != 0 ? BitOperations.TrailingZeroCount(orBits) : null,
             HighestMagnitude = highest,
             HasOnly16BitValues = only16,
@@ -395,6 +399,13 @@ internal sealed class LevelsMeter
         };
         return new LevelFigures { Format = _format, BitsPerSample = _isFloat ? 0 : _bits, Stream = stream, Channels = channels };
     }
+
+    // The mean of a is farther from 0 than b's (the channels have the same number of samples, so the sums compare): from the sums, not from the
+    // rounded figures, so that a channel with an offset of its own always beats one with none.
+    private bool LargerOffset(ChannelState a, ChannelState b) =>
+        _isFloat ? Math.Abs(a.SumDouble) > Math.Abs(b.SumDouble) : Abs(a.Sum) > Abs(b.Sum);
+
+    private static UInt128 Abs(Int128 value) => value < 0 ? (UInt128)(-value) : (UInt128)value;
 
     private ChannelLevels IntegerLevels(ChannelState state)
     {
@@ -418,7 +429,7 @@ internal sealed class LevelsMeter
             LongestClippingRun = state.Longest,
             SilentAtStart = state.Silence.Leading,
             SilentAtEnd = state.Silence.Trailing,
-            SilentSamples = state.Silence.Total,
+            ZeroSamples = state.Silence.Total,
             LowBitsUnused = state.Or != 0 ? BitOperations.TrailingZeroCount(state.Or) : null,
             HighestMagnitude = state.PeakMagnitude,
         };
@@ -441,7 +452,7 @@ internal sealed class LevelsMeter
             LongestClippingRun = state.Longest,
             SilentAtStart = state.Silence.Leading,
             SilentAtEnd = state.Silence.Trailing,
-            SilentSamples = state.Silence.Total,
+            ZeroSamples = state.Silence.Total,
             HasOnly16BitValues = state.Only16,
             HasOnly24BitValues = state.Only24,
         };

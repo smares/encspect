@@ -104,11 +104,11 @@ public class MeasurementLevelsTests
         Assert.Equal(MeasurementLimits.NoLevel, silent.RmsTenths);
         Assert.Equal(MeasurementLimits.NoLevel, silent.DcOffsetTenths);
         Assert.Null(silent.LowBitsUnused);
-        Assert.Equal((1000, 1000, 1000), (silent.SilentAtStart, silent.SilentAtEnd, silent.SilentSamples));
+        Assert.Equal((1000, 1000, 1000), (silent.SilentAtStart, silent.SilentAtEnd, silent.ZeroSamples));
 
         // The stream's figures are the other channel's where this one has none; its sample frames are not silent.
         Assert.Equal(levels.Channels[1].SamplePeakTenths, levels.Stream.SamplePeakTenths);
-        Assert.Equal(0, levels.Stream.SilentSamples);
+        Assert.Equal(0, levels.Stream.ZeroSamples);
         Assert.Equal(2, levels.Stream.LowBitsUnused);
     }
 
@@ -169,14 +169,66 @@ public class MeasurementLevelsTests
 
         Assert.Equal(0, together.ClippingRuns);
         Assert.Equal(0, apart.ClippingRuns);
-        Assert.Equal((5, 5), (together.SilentSamples, apart.SilentSamples));
+        Assert.Equal((5, 5), (together.ZeroSamples, apart.ZeroSamples));
         Assert.Equal(0, together.SilentAtStart);
 
         // The silent stretch at the end is the one after the gap's last sample; the one before the gap does not join it.
         int[] silenceBeforeAndAfter = [.. new int[10], 7, 7, .. new int[10]];
         StreamMeasurements gap = Run(16, 4, LevelsOnly, 44100, (0, [silenceBeforeAndAfter[..12]]), (100, [silenceBeforeAndAfter[12..]]));
-        Assert.Equal((10, 10, 20), (gap.Levels!.Stream.SilentAtStart, gap.Levels.Stream.SilentAtEnd, gap.Levels.Stream.SilentSamples));
+        Assert.Equal((10, 10, 20), (gap.Levels!.Stream.SilentAtStart, gap.Levels.Stream.SilentAtEnd, gap.Levels.Stream.ZeroSamples));
         Assert.Equal(1, gap.Gaps);
+    }
+
+    [Fact]
+    public void ARunThatWouldReachThreeSamplesOnlyAcrossAGapIsNoRun()
+    {
+        int[] before = [5, 5, 32767, 32767];
+        int[] after = [32767, 5, 5];
+        int[] negative = [-32768, -32768, 5];
+        int[] negativeAfter = [-32768, 5];
+
+        Assert.Equal(0, Run(16, 2, LevelsOnly, 44100, (0, [before]), (50, [after])).Levels!.Stream.ClippingRuns);
+        Assert.Equal(0, Run(16, 100, LevelsOnly, 44100, (0, [negative]), (50, [negativeAfter])).Levels!.Stream.ClippingRuns);
+        Assert.Equal(1, Run(16, 2, LevelsOnly, 44100, (0, [before]), (4, [after])).Levels!.Stream.ClippingRuns);
+    }
+
+    [Fact]
+    public void ASilentStretchDoesNotJoinAcrossAGap()
+    {
+        // Both stretches end at the gap: the leading one is closed there, and the trailing one starts again after it.
+        LevelFigures levels = Run(16, 2, LevelsOnly, 44100, (0, [[0, 0, 0]]), (50, [[0, 0, 5]])).Levels!;
+        Assert.Equal((3, 0, 5), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.ZeroSamples));
+
+        levels = Run(16, 2, LevelsOnly, 44100, (0, [[5, 0, 0]]), (50, [[0, 0, 0]])).Levels!;
+        Assert.Equal((0, 3, 5), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.ZeroSamples));
+    }
+
+    [Fact]
+    public void ASampleBeyondTheDeclaredBitsDoesNotWrapTheSumOfSquares()
+    {
+        // A decoder that does not clamp (FLAC's restore on a corrupt frame) can write 32-bit values in a 16-bit stream; their squares pass the
+        // 64-bit partial sum sized for 16 bits within a few samples.
+        int[] wild = [.. Enumerable.Repeat(int.MinValue, 10)];
+        ChannelLevels stream = Levels(16, [wild]).Stream;
+
+        // 10 * 2^62 over 10 samples against 2^30: 2^32 as a power, 96.3 dB.
+        Assert.Equal(963, stream.RmsTenths);
+        Assert.Equal(963, stream.SamplePeakTenths);
+    }
+
+    [Fact]
+    public void FloatsUnderTheSpectrumsFlushLimitAreSamplesThatAreNot0()
+    {
+        float[] tiny = [.. Enumerable.Repeat(1e-35f, 100)];
+
+        foreach (MeasureOptions options in new[] { LevelsOnly, new MeasureOptions() })
+        {
+            ChannelLevels stream = Floats([tiny], 50, options: options).Stream;
+            Assert.Equal(0, stream.ZeroSamples);
+            Assert.Equal(0, stream.SilentAtStart);
+            Assert.NotEqual(MeasurementLimits.NoLevel, stream.SamplePeakTenths);
+            Assert.True(stream.SamplePeakTenths < -6000);
+        }
     }
 
     [Fact]
@@ -184,7 +236,7 @@ public class MeasurementLevelsTests
     {
         StreamMeasurements gap = Run(16, 4, LevelsOnly, 44100, (0, [new int[10]]), (50, [new int[10]]));
 
-        Assert.Equal((10, 10, 20), (gap.Levels!.Stream.SilentAtStart, gap.Levels.Stream.SilentAtEnd, gap.Levels.Stream.SilentSamples));
+        Assert.Equal((10, 10, 20), (gap.Levels!.Stream.SilentAtStart, gap.Levels.Stream.SilentAtEnd, gap.Levels.Stream.ZeroSamples));
     }
 
     [Theory]
@@ -257,9 +309,9 @@ public class MeasurementLevelsTests
         int[] b = [.. new int[100], .. Enumerable.Repeat(9, 800), .. new int[100]];
         LevelFigures levels = Levels(16, [a, b]);
 
-        Assert.Equal((100, 0, 100), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.SilentSamples));
-        Assert.Equal((300, 0, 300), (levels.Channels[0].SilentAtStart, levels.Channels[0].SilentAtEnd, levels.Channels[0].SilentSamples));
-        Assert.Equal((100, 100, 200), (levels.Channels[1].SilentAtStart, levels.Channels[1].SilentAtEnd, levels.Channels[1].SilentSamples));
+        Assert.Equal((100, 0, 100), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.ZeroSamples));
+        Assert.Equal((300, 0, 300), (levels.Channels[0].SilentAtStart, levels.Channels[0].SilentAtEnd, levels.Channels[0].ZeroSamples));
+        Assert.Equal((100, 100, 200), (levels.Channels[1].SilentAtStart, levels.Channels[1].SilentAtEnd, levels.Channels[1].ZeroSamples));
     }
 
     [Fact]
@@ -285,7 +337,7 @@ public class MeasurementLevelsTests
         Assert.Equal(SampleFormat.Float32, levels.Format);
         Assert.Equal(35, levels.Stream.SamplePeakTenths);
         Assert.Equal((1, 3, 3), (levels.Stream.ClippingRuns, levels.Stream.ClippedSamples, levels.Stream.LongestClippingRun));
-        Assert.Equal((0, 0, 2), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.SilentSamples));
+        Assert.Equal((0, 0, 2), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.ZeroSamples));
         Assert.False(levels.Stream.HasOnly16BitValues);
         Assert.Null(levels.Stream.LowBitsUnused);
     }
@@ -319,10 +371,10 @@ public class MeasurementLevelsTests
         Assert.Equal(2, m.NonFiniteSamples);
         Assert.True(m.HasClampedSamples);
 
-        // 1,024 times full scale is +60.2 dB; the two huge samples are a run of two, the other three are 0 and 0.5 only.
+        // 1,024 times full scale is +60.2 dB; the two huge samples have opposite signs, so they are no run, and the other three are 0 and 0.5 only.
         Assert.Equal(602, m.Levels!.Stream.SamplePeakTenths);
         Assert.Equal(0, m.Levels.Stream.ClippingRuns);
-        Assert.Equal(2, m.Levels.Stream.SilentSamples);
+        Assert.Equal(2, m.Levels.Stream.ZeroSamples);
     }
 
     [Fact]

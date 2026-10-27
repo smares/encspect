@@ -219,7 +219,23 @@ public class MeasurementOutputTests
         JsonElement levels = JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("levels");
         Assert.Equal(JsonValueKind.Null, levels.GetProperty("samplePeak").GetProperty("value").ValueKind);
         Assert.Equal(JsonValueKind.Null, levels.GetProperty("bitDepth").GetProperty("lowBitsUnused").ValueKind);
-        Assert.Equal(8192, levels.GetProperty("digitalSilence").GetProperty("total").GetInt64());
+        Assert.Equal(8192, levels.GetProperty("digitalSilence").GetProperty("zeroSamples").GetInt64());
+    }
+
+    [Theory]
+    [InlineData("1-2", false)]
+    [InlineData("1.2.3", false)]
+    [InlineData("-", false)]
+    [InlineData("-.5", false)]
+    [InlineData("5.", false)]
+    [InlineData("--1", false)]
+    [InlineData("1e5", false)]
+    [InlineData("-0.3", true)]
+    [InlineData("17054", true)]
+    [InlineData("0.0", true)]
+    public void OnlyAnOptionalMinusDigitsAndAFractionReadAsANumber(string text, bool isNumber)
+    {
+        Assert.Equal(isNumber, ReportCsvWriter.IsNumber(text));
     }
 
     [Fact]

@@ -35,7 +35,9 @@ public static class MeasurementText
 
     public const string ClippingDescription = "Runs of at least 3 consecutive samples at the same extreme: the most positive or the most negative integer code, or a float at or beyond full scale. Three is a convention of this analysis, not of a specification, and a run ends at a gap.";
 
-    public const string DigitalSilenceDescription = "Sample frames in which every channel is exactly 0: those that start the measured samples without a break, those that end them, and all of them. Nothing is counted across a gap in the decoded blocks.";
+    public const string DigitalSilenceDescription = "The sample frames in which every channel is exactly 0 and that start the measured samples without a break, and those that end them. A stretch ends at a gap in the decoded blocks.";
+
+    public const string ZeroSamplesDescription = "All the sample frames in which every channel is exactly 0, wherever they are: the digital silence, and also the zeros of quiet audio and of a sine's zero crossings. It is a count of samples, not a stretch of silence.";
 
     public const string LowBitsUnusedDescription = "The low bits that are 0 in every sample of the stream, found from the OR of all samples, and the largest sample magnitude reached. It is a figure of the samples, not of the file's header.";
 
@@ -89,11 +91,14 @@ public static class MeasurementText
             : $"{Plural(stream.ClippingRuns, "run", "runs")} of {MeasurementLimits.MinimumClippingRun} or more samples {what}, {Plural(stream.ClippedSamples, "sample", "samples")}, the longest {Grouped(stream.LongestClippingRun)}{PerChannel(names, channels.Select(c => Plural(c.ClippingRuns, "run", "runs")))}";
         lines.Add(new MeasurementLine("Clipping", clipping, ClippingDescription, ClippingTopic));
 
-        string silence = stream.SilentSamples == 0
-            ? "none"
-            : $"{Samples(stream.SilentSamples, m.SampleRate)} in all, {(stream.SilentAtStart == 0 ? "none" : Samples(stream.SilentAtStart, m.SampleRate))} at the start, {(stream.SilentAtEnd == 0 ? "none" : Samples(stream.SilentAtEnd, m.SampleRate))} at the end"
-              + (channels.Any(c => c.SilentSamples != stream.SilentSamples) ? $"; in all by channel: {string.Join(", ", names.Select((n, i) => $"{n} {Grouped(channels[i].SilentSamples)}"))}" : string.Empty);
+        string silence = stream.SilentAtStart == 0 && stream.SilentAtEnd == 0
+            ? "none at the start or at the end"
+            : $"{(stream.SilentAtStart == 0 ? "none" : Samples(stream.SilentAtStart, m.SampleRate))} at the start, {(stream.SilentAtEnd == 0 ? "none" : Samples(stream.SilentAtEnd, m.SampleRate))} at the end";
         lines.Add(new MeasurementLine("Digital Silence", silence, DigitalSilenceDescription, DigitalSilenceTopic));
+
+        string zeros = $"{Samples(stream.ZeroSamples, m.SampleRate)}"
+            + (channels.Count > 1 && channels.Any(c => c.ZeroSamples != stream.ZeroSamples) ? $" ({string.Join(", ", names.Select((n, i) => $"{n} {Grouped(channels[i].ZeroSamples)}"))} for the channels)" : string.Empty);
+        lines.Add(new MeasurementLine("Zero Samples", zeros, ZeroSamplesDescription, DigitalSilenceTopic));
 
         if (isFloat)
         {

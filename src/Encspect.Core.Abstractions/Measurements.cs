@@ -132,13 +132,14 @@ public sealed record ChannelLevels
 
     public long LongestClippingRun { get; init; }
 
-    // Samples that are exactly 0 in a stretch that starts the measured samples, in a stretch that ends them, and in all. When every
-    // sample is 0 the first two equal the third. A stretch ends at a gap.
+    // Sample frames that are exactly 0 in every channel (for a channel, samples that are 0): in the stretch that starts the measured samples
+    // and in the one that ends them (the digital silence), and in all, wherever they are (the zero samples, which include a sine's zero crossings
+    // and the zeros of quiet audio). When every sample is 0 the three are equal. A stretch ends at a gap.
     public long SilentAtStart { get; init; }
 
     public long SilentAtEnd { get; init; }
 
-    public long SilentSamples { get; init; }
+    public long ZeroSamples { get; init; }
 
     // Integers: the low bits that are 0 in every sample (null where every sample is 0), and the largest sample magnitude as a code.
     public int? LowBitsUnused { get; init; }

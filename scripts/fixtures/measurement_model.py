@@ -22,13 +22,14 @@ content) and against the printed bands of the lossy files, not against a second 
 The levels (levels_of) are worked out on Python integers from the decoded samples and the design's text alone, with no code shared with the
 analyzer: the peak, RMS and DC offset from exact sums (the logarithm of a float only at the end), the clipping runs of three or more samples at
 one extreme code, the digital silence of the sample frames that are 0 in every channel (and of each channel), the low bits that are never set, and
-nothing counted across a gap. The analyzer's logarithm is its own series and the model's is the C library's, so the model's tenths of a dB are
-compared to within one tenth; every count and the DC offset in millionths of a percent are exact.
+nothing counted across a gap. The model's tenths of a dB are worked out in 60 decimal digits, so they are exact; the analyzer's own series for the logarithm must give the same tenth
+for every fixture; every count and the DC offset in millionths of a percent are exact too.
 
 Everything is plain Python (the standard library). The FFT is a complex radix-2 transform of the full frame, apart from the analyzer's
 real transform with its split step, so the two agree up to rounding (about 1e-12 relative), which the tests allow for.
 """
 
+import decimal
 import json
 import math
 import re
@@ -211,9 +212,17 @@ def find_cutoff(level_tenths, counters, rate, size):
     return result
 
 
+decimal.getcontext().prec = 60
+
+
 def tenths_of_ratio(ratio):
-    """Tenths of a dB of an amplitude ratio (None for 0): floor(200 log10 r + 0.5), halves up, the one rounding of every figure."""
-    return None if ratio == 0 else math.floor(200 * math.log10(ratio) + 0.5)
+    """Tenths of a dB of an amplitude ratio, a decimal or None for 0: floor(200 log10 r + 0.5), halves up, the one rounding of every figure, worked
+    out in 60 digits so that it is exact (a tie would need a ratio that is a power of ten to a half)."""
+    return None if ratio == 0 else int((200 * ratio.log10() + decimal.Decimal("0.5")).to_integral_value(decimal.ROUND_FLOOR))
+
+
+def tenths_of_power(power):
+    return None if power == 0 else int((100 * power.log10() + decimal.Decimal("0.5")).to_integral_value(decimal.ROUND_FLOOR))
 
 
 def tz(value):
@@ -265,12 +274,12 @@ def levels_of(runs, channels, bits):
             micro = (2 * abs(f["total"]) * 10 ** 8 + denominator) // (2 * denominator)
             micro = micro if f["total"] > 0 else -micro
         return {
-            "sample_peak_tenths": tenths_of_ratio(f["peak"] / full),
-            "rms_tenths": None if f["squares"] == 0 else math.floor(100 * math.log10(f["squares"] / (count * full * full)) + 0.5),
+            "sample_peak_tenths": tenths_of_ratio(decimal.Decimal(f["peak"]) / full),
+            "rms_tenths": tenths_of_power(decimal.Decimal(f["squares"]) / (count * full * full)),
             "dc_micropercent": micro,
-            "dc_tenths": tenths_of_ratio(abs(f["total"]) / count / full),
+            "dc_tenths": tenths_of_ratio(decimal.Decimal(abs(f["total"])) / (count * full)),
             "clipping_runs": f["runs"], "clipped_samples": f["clipped"], "longest_clipping_run": f["longest"],
-            "silent_at_start": f["silence"][0], "silent_at_end": f["silence"][1], "silent_samples": f["silence"][2],
+            "silent_at_start": f["silence"][0], "silent_at_end": f["silence"][1], "zero_samples": f["silence"][2],
             "low_bits_unused": tz(f["bit_or"]) if f["bit_or"] else None, "highest_magnitude": f["peak"],
         }
 
@@ -281,14 +290,14 @@ def levels_of(runs, channels, bits):
     bit_or = 0
     for f in per:
         bit_or |= f["bit_or"]
-    biggest = max(range(channels), key=lambda c: abs(result[c]["dc_micropercent"]))
+    biggest = max(range(channels), key=lambda c: abs(per[c]["total"]))
     stream = {
         "sample_peak_tenths": max((r["sample_peak_tenths"] for r in result if r["sample_peak_tenths"] is not None), default=None),
-        "rms_tenths": None if squares == 0 else math.floor(100 * math.log10(squares / (count * channels * full * full)) + 0.5),
+        "rms_tenths": tenths_of_power(decimal.Decimal(squares) / (count * channels * full * full)),
         "dc_micropercent": result[biggest]["dc_micropercent"], "dc_tenths": result[biggest]["dc_tenths"],
         "clipping_runs": sum(r["clipping_runs"] for r in result), "clipped_samples": sum(r["clipped_samples"] for r in result),
         "longest_clipping_run": max(r["longest_clipping_run"] for r in result),
-        "silent_at_start": joint[0], "silent_at_end": joint[1], "silent_samples": joint[2],
+        "silent_at_start": joint[0], "silent_at_end": joint[1], "zero_samples": joint[2],
         "low_bits_unused": tz(bit_or) if bit_or else None, "highest_magnitude": max(f["peak"] for f in per),
     }
     return {"bits": bits, "stream": stream, "channels": result}

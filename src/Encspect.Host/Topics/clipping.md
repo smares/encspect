@@ -11,4 +11,6 @@ references: Encspect design, docs/design/spectral-analysis.md (Levels)
 
 **What you see.** Clipping in the report and the clipping object in JSON. In Encspect's test files, a square wave that alternates every 50 samples between +32,767 and -32,768 reads 100 runs of 50 over 5,000 samples, and noise with one run of 100 samples, five of 3 to 5 samples, and runs of 1 and 2 samples that are not counted reads 6 runs, 118 samples and a longest of 100.
 
+**Low bits unused.** The limits are those of the declared bits. Audio with low bits unused is asymmetric: 16-bit audio stored in 24-bit samples tops out at 0x7FFF00, never at the largest code 0x7FFFFF, so only runs at the most negative code count.
+
 **What it shows.** Runs at the limit are consistent with a signal that was limited or cut at that level, and a legitimate full-scale square wave reads the same. The figure does not say where the cut was made or by what, and a signal cut before a later gain change leaves no run at the limit.
