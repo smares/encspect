@@ -581,6 +581,42 @@ def free_format_layer1_unprotected():
 
 
 @fixture
+def free_format_mpeg2_layer3():
+    f = Fixture(
+        "mpeg2-layer3-free-format",
+        ".mp3",
+        "Free-format MPEG-2 Layer III at 22050 Hz with 480-byte frames, 576 samples each (about 147 kbps), some with the padding slot.",
+        crosscheck="mpg123",
+    )
+    f.add_frames([Frame(version="2", bitrate=None, rate=22050, free_length=480, padding=i % 3 == 0) for i in range(6)])
+    return f.finding("mpeg.free-format", "480")
+
+
+@fixture
+def free_format_mpeg25_layer3():
+    f = Fixture(
+        "mpeg25-layer3-free-format",
+        ".mp3",
+        "Free-format MPEG-2.5 Layer III at 11025 Hz with 300-byte frames, 576 samples each (about 46 kbps), some with the padding slot.",
+        crosscheck="mpg123",
+    )
+    f.add_frames([Frame(version="2.5", bitrate=None, rate=11025, free_length=300, padding=i % 3 == 0) for i in range(6)])
+    return f.finding("mpeg.free-format", "300")
+
+
+@fixture
+def free_format_layer1_padded():
+    f = Fixture(
+        "mpeg1-layer1-free-format-padded",
+        ".mp1",
+        "Free-format MPEG-1 Layer I at 44100 Hz with 1000-byte frames, some with the padding slot of 4 bytes (1004 bytes).",
+        crosscheck="mpg123",
+    )
+    f.add_frames([Frame(layer=1, bitrate=None, rate=44100, free_length=1000, padding=i % 2) for i in range(6)])
+    return f.finding("mpeg.free-format", "1000")
+
+
+@fixture
 def mpeg25_layer2():
     f = Fixture(
         "mpeg25-layer2-mono",

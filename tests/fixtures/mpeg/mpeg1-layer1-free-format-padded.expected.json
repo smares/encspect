@@ -1,0 +1,150 @@
+{
+ "description": "Free-format MPEG-1 Layer I at 44100 Hz with 1000-byte frames, some with the padding slot of 4 bytes (1004 bytes).",
+ "length": 6012,
+ "crosscheck": "mpg123",
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 6012,
+   "statistics": {
+    "Statistics": "6 frames, 0.052 s",
+    "Statistics/Frames": "6",
+    "Statistics/Samples": "2304",
+    "Statistics/Duration": "0.052 s",
+    "Statistics/IsVbr": "false",
+    "Statistics/Average Bitrate": "920.6 kbps",
+    "Statistics/Bitrate Distribution": "1 bitrate",
+    "Statistics/Bitrate Distribution/free (921 kbps)": "6 frames (100.0%)",
+    "Statistics/Channel Modes": "1 mode",
+    "Statistics/Channel Modes/Joint stereo": "6 frames (100.0%)",
+    "Statistics/Stereo Coding": "6 frames",
+    "Statistics/Stereo Coding/Intensity stereo": "6 frames (100.0%)",
+    "Statistics/Intensity Stereo Bounds": "6 frames",
+    "Statistics/Intensity Stereo Bounds/Bands 4 to 31": "6 frames (100.0%)",
+    "Statistics/Bitrate Distribution/free (921 kbps)/Unpadded": "3 frames of 1000 bytes",
+    "Statistics/Bitrate Distribution/free (921 kbps)/Padded": "3 frames of 1004 bytes",
+    "Statistics/Coded Bandwidth/Lowest": "0 Hz",
+    "Statistics/Coded Bandwidth/Most Common": "0 Hz",
+    "Statistics/Coded Bandwidth/Highest": "0 Hz",
+    "Statistics/Channel Bit Share/Lowest": "50.0 %",
+    "Statistics/Channel Bit Share/Overall": "50.0 %",
+    "Statistics/Channel Bit Share/Highest": "50.0 %",
+    "Statistics/Ancillary Data": "5868 bytes",
+    "Statistics/Ancillary Data/Share": "97.6 %",
+    "Statistics/Ancillary Data/Data Rate": "898.5 kbps",
+    "Statistics/Ancillary Data/Smallest Nonzero Amount": "978 bytes",
+    "Statistics/Ancillary Data/Largest Amount": "978 bytes",
+    "Statistics/UsesPadding": "true"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 1000,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 1000,
+   "length": 1004,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 2004,
+   "length": 1000,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 3004,
+   "length": 1004,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 4008,
+   "length": 1000,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  },
+  {
+   "offset": 5008,
+   "length": 1004,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "I",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Joint stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false",
+    "Header/Mode Extension": "Bands 4 to 31"
+   }
+  }
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer I",
+   "sample_rate": 44100,
+   "samples": 2304,
+   "duration": "0.052 s",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "average_bitrate": "920.6 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "921"
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg.free-format",
+   "contains": "1000"
+  }
+ ]
+}

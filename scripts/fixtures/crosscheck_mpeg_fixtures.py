@@ -7,8 +7,8 @@ of each), and for protected frames libmad (madplay) must report a CRC failure fo
 frames the manifest expects one for. libmad is used for CRCs because ffmpeg 6.1 rejects every
 Layer I CRC, correct or not. With "crosscheck": "madplay" or "mpg123", that decoder's count of
 decoded frames is compared instead, where ffmpeg resyncs differently or cannot read the stream at
-all (free format; libmad also skips the first frame of a LAME free-format stream, so mpg123 counts
-those).
+all (free format; libmad also skips the first frame of the untagged 400 kbps stream, whose frame 0 holds sync-like words that libmad
+takes for the next header, so mpg123 counts those).
 
 Layer II and III fixtures are checked whatever their "crosscheck" value:
 
@@ -1340,10 +1340,12 @@ def check(path, manifest, tools):
             count = mpg123_frame_count(path, 1152, CHANNELS.get(settings["channel_mode"], 2))
             if count != manifest["mpg123_frames"]:
                 problems.append(f"mpg123 decodes {count} frames, the manifest recorded {manifest['mpg123_frames']}")
-            # libmad reads the bitrate of every free-format fixture from the frames (madplay prints 400 and 640 kbps, mpg123 "cbr400"
-            # and "cbr640"; ffprobe reads none of them and MediaInfo finds no MPEG audio). It skips the first frame of the 400 kbps
-            # stream without a LAME tag ("frame 0: bad audio data length") and decodes all 21 of the others, the 640 kbps one included;
-            # that difference is observed, not explained from libmad's source.
+            # libmad finds a free-format frame's length by scanning forward for the first word that looks like a header of the same layer
+            # and sample rate, and checks no chain of frames. Frame 0 of external-lame-free-format holds such words (FF FB 32 81 at byte
+            # 1095, FF FA 31 60 at 1119, FF FA 20 98 at 1179), so libmad takes it for a frame of about a thousand bytes and rejects it
+            # ("frame 0: bad audio data length"); with those words altered madplay decodes all 21 frames. The -tag fixture is unaffected (its
+            # rate comes from the Info frame) and frame 0 of the 640 kbps one has no such word. ffprobe reads none of the fixtures and
+            # MediaInfo finds no MPEG audio. This is the behavior as observed and checked on the bytes, not copied from libmad's code.
             skipped = path.stem in LIBMAD_SKIPS_FIRST_FREE_FRAME
             output = madplay_output(path)
             mad_count = madplay_frame_count(path)

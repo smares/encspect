@@ -18,8 +18,8 @@ Each <name>.expected.json manifest records the exact command, the settings hande
 reference from an independent decoder. Packets, not decoded frames: ffmpeg skips the encoder delay
 when decoding, which drops whole MPEG-2 frames from its frame list. ffprobe does not list the
 Info/Xing frame LAME writes first, so the manifest says whether there is one. ffmpeg does not read free format and libmad skips the first
-frame of a LAME free-format stream ("bad audio data length"), so that fixture records the frame
-count mpg123 decodes instead.
+frame of the untagged 400 kbps one ("bad audio data length": its frame 0 holds words that look like the next header), so the free-format
+fixtures record the frame count mpg123 decodes instead.
 
 Where the first frame holds a VBR header (LAME's Xing/Info and LAME tag, or the one ffmpeg's muxer
 writes with its own encoder string), "vbr_header" records its raw values as vbr_tags.py reads them,

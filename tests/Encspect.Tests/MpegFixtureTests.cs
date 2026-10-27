@@ -33,6 +33,35 @@ public class MpegFixtureTests
         }
     }
 
+    // The samples per frame are the ones of the frame's own header (384, 576 for MPEG-2 and 2.5 Layer III, else 1152), so a
+    // wrong constant fails on the MPEG-2, MPEG-2.5 and Layer I free-format fixtures.
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void OnlyFreeFormatAudioFramesShowTheBitrateTheirLengthGives(string fileName)
+    {
+        Report report = Fixtures.AnalyzeMpeg(fileName);
+        HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();
+        foreach (Node frame in Streams(report).SelectMany(s => s.Children).Where(c => c.Name == "Frame" && !IsVbrHeaderFrame(c) && !truncated.Contains(c.Offset)))
+        {
+            string? computed = Fixtures.Resolve(frame, "Computed Bitrate").FirstOrDefault()?.Value?.ToString();
+            if (Fixtures.Resolve(frame, "Header/Bitrate").FirstOrDefault()?.Value?.ToString() != "free")
+            {
+                Assert.Null(computed);
+                continue;
+            }
+
+            int samples = (Fixtures.Resolve(frame, "Header/Layer").First().Value!.ToString(), Fixtures.Resolve(frame, "Header/Version").First().Value!.ToString()) switch
+            {
+                ("I", _) => 384,
+                ("III", not "MPEG-1") => 576,
+                _ => 1152,
+            };
+            long rate = long.Parse(Fixtures.Resolve(frame, "Header/Sample Rate").First().Value!.ToString()!.Split(' ')[0], CultureInfo.InvariantCulture);
+            Assert.EndsWith(" kbps", computed);
+            Assert.True(Agrees(computed![..^5], (Int128)frame.Length * 8 * rate, (Int128)samples * 1000, 100), $"Frame at {frame.Offset}: Computed Bitrate {computed}");
+        }
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void ReportMatchesManifest(string fileName)
