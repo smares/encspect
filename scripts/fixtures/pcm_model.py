@@ -41,7 +41,7 @@ def decode(kind, width, channels, big, body):
     body = bytes(body[:frames * frame])
     if kind in ("signed", "unsigned"):
         if width > 4:
-            return {"not_possible": f"integer samples of {width * 8} bits are wider than 32 bits"}
+            return {"not_possible": f"integer samples stored in {width * 8} bits are wider than 32 bits"}
         out = bytearray(len(body))
         for k in range(width):
             out[k::width] = body[width - 1 - k::width] if big else body[k::width]

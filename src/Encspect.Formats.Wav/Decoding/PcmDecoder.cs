@@ -24,12 +24,12 @@ public sealed class PcmDecoder : IDecoder
             case PcmEncoding.SignedInteger or PcmEncoding.UnsignedInteger:
                 if (bits > 32)
                 {
-                    throw new InvalidDataException($"Integer samples of {bits} bits are wider than the 32 bits the decoder's output holds.");
+                    throw new InvalidDataException($"Integer samples stored in {bits} bits are wider than the 32 bits the decoder's output holds.");
                 }
 
                 if (bits is not (8 or 16 or 24 or 32))
                 {
-                    throw new InvalidDataException($"Integer samples of {bits} bits are not a width of 8, 16, 24 or 32 bits.");
+                    throw new InvalidDataException($"Integer samples stored in {bits} bits are not a width of 8, 16, 24 or 32 bits.");
                 }
 
                 break;

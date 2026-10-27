@@ -211,8 +211,8 @@ public class MeasurementPcmTests
     }
 
     // Streams that decode no frame but whose parser states samples (a frame that differs from STREAMINFO, a bad first block, a cut seek table, a header
-    // that states too much data) or states none and holds none in a FLAC or Monkey's Audio file are `Stopped`, as before the PCM route: only a PCM stream the parser
-    // counts at 0 sample frames says "holds no samples".
+    // that states too much data) or hold none in a FLAC or Monkey's Audio file are `Stopped`, as before the PCM route: only a stream whose setup states
+    // 0 samples and which was handed no frame says "holds no samples" (a PCM stream with no sample frame).
     [Theory]
     [InlineData("flac/built-frame-differs-from-streaminfo.flac")]
     [InlineData("flac/built-metadata-truncated.flac")]
@@ -221,7 +221,7 @@ public class MeasurementPcmTests
     [InlineData("monkeys-audio/built-cut-in-seek-table.ape")]
     [InlineData("monkeys-audio/built-header-data-too-large.ape")]
     [InlineData("monkeys-audio/built-total-frames-zero.ape")]
-    public void AStreamThatDecodedNoFrameStaysStoppedUnlessItIsAPcmStreamWithNoSampleFrame(string fixture)
+    public void AStreamThatDecodedNoFrameStaysStoppedUnlessItsSetupStatesNoSamples(string fixture)
     {
         using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, fixture));
         Report report = Analyzer.CreateDefault().Analyze(fixture, stream, new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
