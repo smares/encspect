@@ -192,6 +192,32 @@ internal static class ChunkFixtureChecks
         Assert.All(report.Findings, f => Assert.True(f.Path is not null, $"The node of {f.Code} is not in the tree."));
     }
 
+    // What decoding adds to the report of a fixture the decoder "pcm" takes: the verification (the status and the samples decoded, no checksum) and the
+    // decode.* findings, in <name>.decode.json as for the other decoded formats (rewritten with ENCSPECT_UPDATE_GOLDEN=1). A fixture without a session has none.
+    public static void DecodeGoldenMatches(string name)
+    {
+        JsonElement stream = Fixtures.LoadMpegManifest(name).GetProperty("stream");
+        string path = Fixtures.MpegCompanion(name, ".decode.json");
+        if (stream.ValueKind != JsonValueKind.Object || !stream.TryGetProperty("pcm", out _))
+        {
+            Assert.False(File.Exists(path), $"{path} exists for a fixture whose stream the decoder does not take.");
+            return;
+        }
+
+        var sink = new PcmHashingSink();
+        using FileStream file = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), file, new AnalysisOptions { Decoding = new DecodeOptions { Output = sink.Declare } });
+        string actual = DecoderFixtureTests.Golden(report);
+        if (Fixtures.UpdateGolden)
+        {
+            File.WriteAllText(path, actual);
+            return;
+        }
+
+        Assert.True(File.Exists(path), $"Missing golden file {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
+        Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
+    }
+
     // Decodes the file with a hashing sink and holds the decoder "pcm" to the manifest: the samples and the MD5 of the canonical layout that pcm_model.py works out
     // from the specifications, which crosscheck_wav_fixtures.py confirms with FFmpeg; a file whose manifest has no pcm is not decoded.
     public static void DecodedAudioMatchesManifest(string name)

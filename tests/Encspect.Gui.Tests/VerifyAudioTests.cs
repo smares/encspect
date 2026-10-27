@@ -48,6 +48,24 @@ public class VerifyAudioTests
         Assert.Contains("STREAMINFO MD5 1 of 1 differ", model.VerificationText, StringComparison.Ordinal);
     }
 
+    // WAV, Wave64 and AIFF streams have a verification in the model (the status of their decoding), and no checksum: no "Verified" line, no command.
+    [Fact]
+    public void A_stream_of_PCM_has_no_checksum_to_verify_and_no_verified_line()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        Task load = model.LoadAsync(Fixtures.Wav("external-pcm-s16-stereo-44100.wav"));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.True(model.Report!.Streams.Single().Verification is { Decoding: DecodeStatus.NotRequested, HasChecksums: false });
+        Assert.False(model.CanVerifyAudio);
+        Assert.Null(model.VerificationText);
+        Assert.False(model.HasVerificationText);
+        Task verify = model.VerifyAudioAsync();
+        Assert.True(verify.IsCompleted);
+        Assert.False(model.IsVerifying);
+    }
+
     [Fact]
     public void A_file_without_a_decoder_has_nothing_to_verify()
     {

@@ -24,6 +24,10 @@ public class AiffFixtureTests
 
     [Theory]
     [MemberData(nameof(Names))]
+    public void DecodingAddsWhatTheDecodeGoldenHolds(string name) => ChunkFixtureChecks.DecodeGoldenMatches(name);
+
+    [Theory]
+    [MemberData(nameof(Names))]
     public void TheFormatIsDetectedAsAiff(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);

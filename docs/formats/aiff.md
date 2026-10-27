@@ -79,7 +79,7 @@ None. AIFF has no field for the writer; the text chunks (`ANNO`, `AUTH`) are sho
 The AIFF parser starts a `pcm` session (the decoder is the one WAV uses, described in [wav.md](wav.md#decoding)) for the types that store samples one after another, and hands over the sound data from its offset in slices of whole sample frames.
 
 - **Types decoded:** `NONE` and `twos` (big-endian signed integers of 1 to 32 bits, in the whole bytes that hold the sample size), `sowt` (little-endian), `in24` and `in32`, `raw ` (unsigned 8 bits), `fl32` and `fl64` (big-endian floats), and `alaw` and `ulaw` (8 bits, expanded to 16-bit integers).
-- **Sample points are left-justified in their bytes** (AIFF-C draft, section 5.0), so a 12-bit file's samples are output as the 16-bit values stored and its bit-depth usage shows 4 unused low bits.
+- **Sample points are output as stored in their bytes**, whatever the sample size says: a 12-bit file's samples are the 16-bit values stored, and its bit-depth usage shows the low bits that are never set (in `built-12-bit.aiff`, which pads at the low end: 4).
 - **No session** for the packed codings (`ima4`, `GSM `, ACE, MACE), an unlisted type, a sample size that is 0 or over 32 for the types that follow it, or a file with no Sound Data Chunk.
 - The sample frames are the Common Chunk's count, cut to those the sound data holds (`aiff.sound-data-short`); bytes after them are not decoded (`aiff.sound-data-extra`), where FFmpeg decodes them.
 - The report shows no verification, as for WAV; `--verify` alone reads no samples.

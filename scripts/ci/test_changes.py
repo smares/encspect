@@ -72,9 +72,12 @@ class ChangesTests(unittest.TestCase):
 
     def test_wav_and_aiff_parsers_scripts_and_fixtures_belong_to_the_wav_job(self):
         for path in ("src/Encspect.Formats.Wav/WavParser.cs", "src/Encspect.Formats.Aiff/AiffParser.cs", "tests/fixtures/wav/a.wav", "tests/fixtures/aiff/a.aiff",
-                     "scripts/fixtures/wav_model.py", "scripts/fixtures/aiff_model.py", "scripts/fixtures/make_wav_fixtures.py",
+                     "scripts/fixtures/wav_model.py", "scripts/fixtures/aiff_model.py", "scripts/fixtures/pcm_model.py", "scripts/fixtures/make_wav_fixtures.py",
                      "scripts/fixtures/make_external_aiff_fixtures.py"):
             self.assertIn("wav-crosscheck", run(path), path)
+        # The measurement cross-check reads the PCM files through the same models.
+        for path in ("scripts/fixtures/pcm_model.py", "scripts/fixtures/wav_model.py", "scripts/fixtures/aiff_model.py"):
+            self.assertIn("flac-crosscheck", run(path), path)
         self.assertNotIn("wavpack-crosscheck", run("scripts/fixtures/make_wav_fixtures.py"))
         self.assertEqual(run("scripts/fixtures/crosscheck_wav_fixtures.py"), {"wav-crosscheck", "fixtures"})
 

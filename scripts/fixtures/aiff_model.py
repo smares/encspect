@@ -274,7 +274,7 @@ def manifest(data, base=0):
 
 def pcm_decoding(comm, kind, frame, frames, ssnd, data):
     """What the decoder "pcm" outputs for the sound data (pcm_model.decode), or None where no session is started: the packed codings, and a sample size no
-    linear type has. The sample points are left-justified in their bytes (AIFF-C draft, section 5.0), so the bytes are the samples."""
+    linear type has. The samples are the bytes as stored, whatever the sample size says."""
     if kind is None or ssnd is None or not frame:
         return None
     channels = comm["channels"]

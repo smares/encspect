@@ -29,6 +29,9 @@ make_external_measurement_fixtures.py):
   the file's samples of magnitude 1 may join a stretch): every stretch of 442 samples or more it prints for a file of up to 16 bits and up to 10 s
   (it prints six digits) lies between the stretch of exact zeros and the stretch of samples of magnitude 1 or less that the decoded samples have,
   in every channel at once, which checks the digital silence's positions and lengths where they are long.
+- The PCM files (the WAV, Wave64 and AIFF twins and the fixtures only WAV can hold, step 3 of the rollout): FFmpeg decodes them to the MD5 of the canonical layout
+  that pcm_model.py gives (the samples of the 16-bit twins, the floats, the NaN and the samples of 1e300 included); a twin's samples are also the FLAC
+  file's, which MeasurementPcmTests holds the analyzer to. The header of 65,535 channels is skipped: FFmpeg refuses more channels than it has layouts for.
 The measurements themselves are checked against measurement_model.py by MeasurementFixtureTests; FFmpeg's showspectrum is not needed. The tools' versions are pinned, so a field they do not print is a failure, as is a
 file for which no figure was compared; the flac -t skip of the gap files is the one skip left. astats and silencedetect print their figures in the form of FFmpeg 6.1.1; the script reads them by
 name and reports a field it cannot find as a failure.
@@ -45,8 +48,10 @@ import subprocess
 import sys
 import tempfile
 
+import aiff_model
 import flac_model as m
 import tool_versions
+import wav_model
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIRECTORY = ROOT / "tests" / "fixtures" / "measurement"
@@ -203,6 +208,31 @@ def check_silence(path, stream, info, found):
             found.append(f"silencedetect prints {a} to {b}, which lies in no stretch of samples of magnitude 1 or less")
 
 
+# The encoder FFmpeg writes the canonical layout of a decoded stream with, by pcm_model.py's format and bits.
+FFMPEG_CANONICAL = {("integer", 8): "pcm_s8", ("integer", 16): "pcm_s16le", ("integer", 24): "pcm_s24le", ("integer", 32): "pcm_s32le",
+                    ("float", 32): "pcm_f32le", ("float", 64): "pcm_f64le"}
+
+
+def check_pcm_files(names, problems, skipped):
+    """FFmpeg's decoded MD5 of each WAV, Wave64 and AIFF file against pcm_model.py's, for the files in the directory; returns how many were compared."""
+    compared = 0
+    for path in sorted(p for suffix in ("*.wav", "*.w64", "*.aiff") for p in DIRECTORY.glob(suffix) if not names or p.stem in names):
+        data = path.read_bytes()
+        pcm = ((aiff_model if path.suffix == ".aiff" else wav_model).manifest(data)["stream"] or {}).get("pcm")
+        if pcm is None or "md5" not in pcm:
+            problems.append(f"{path.name}: pcm_model.py gives no decoded samples for the file")
+            continue
+        if path.stem == "synthetic-pcm-channels-65535":
+            skipped.append(f"{path.name}: ffmpeg (it refuses 65,535 channels)")
+            continue
+        result = run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a:0", "-c:a", FFMPEG_CANONICAL[(pcm["format"], pcm["bits"])], "-f", "md5", "-"])
+        found = result.stdout.decode(errors="replace").strip().removeprefix("MD5=")
+        compared += 1
+        if found != pcm["md5"]:
+            problems.append(f"{path.name}: FFmpeg's decoded MD5 is {found or result.stderr.decode(errors='replace').strip()[:120]!r}, pcm_model.py's {pcm['md5']}")
+    return compared
+
+
 def main():
     tool_versions.require("flac", "ffmpeg", "ffprobe")
     names = sys.argv[1:]
@@ -259,7 +289,8 @@ def main():
                     if str(streams[0].get(key)) != str(want_value):
                         found.append(f"ffprobe {key} is {streams[0].get(key)}, the model {want_value}")
             problems += [f"{path.stem}: {f}" for f in found]
-    print(f"{len(files)} files checked")
+    pcm_files = check_pcm_files(names, problems, skipped)
+    print(f"{len(files)} files checked, {pcm_files} PCM files compared with ffmpeg")
     for line in skipped:
         print("skipped", line)
     for problem in problems:
