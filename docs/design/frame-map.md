@@ -1,6 +1,8 @@
 # Frame Map: one square per frame
 
-Status: a draft for the project lead, not approved. Nothing of it is built. Claims about the code were checked at e8f51bc; figures that were worked out rather than measured are marked **estimate**, and claims no source read for this design confirms are marked **unverified**. One throwaway prototype outside the repository measured the drawing cost (see [Speed and memory](#speed-and-memory)); nothing of it is committed. The decisions for the lead are collected under [Decisions](#decisions).
+Status: approved by the project lead on 2026-10-27, decision 6 amended as described under [Numeric shading](#numeric-shading); nothing built yet. Claims about the code were checked at e8f51bc; figures that were worked out rather than measured are marked **estimate**, and claims no source read for this design confirms are marked **unverified**. One throwaway prototype outside the repository measured the drawing cost (see [Speed and memory](#speed-and-memory)); nothing of it is committed. The decisions are collected under [Decisions](#decisions).
+
+- An interactive mockup was shown to the lead. It was built from Encspect's JSON report of a damaged LAME `-V2` MP3. It is a private page and is not linked here.
 
 ## Scope
 
@@ -30,7 +32,7 @@ Sources read: `CLAUDE.md`, `docs/PLAN.md`, `docs/gui.md`, the two designs above;
 - **A form, not a window.** "Frame Map" is one more form in the view switcher of every entry that has a per-unit series, next to "Over Time", "Smoothed", "Frames", "Summary" and "Per Frame", "Over Time", "Distribution". Picking another entry in the list is what toggles what the map shows, and the form is remembered as the others are.
 - **Any per-unit series.** It is offered for every `Series` on the `FrameOffset` axis and every `CategorySeries`, by type alone, so a series a parser adds later appears with no GUI change. No parser or model change is needed; this was checked against the code (see [What it reads](#what-it-reads)).
 - **Squares of one size,** 10 device-independent pixels with a gap of 2, in rows like text, as many columns as fit in steps of 10; only the rows on screen are drawn.
-- **Numbers as shades** of one hue in 8 classes, **categories in the strip's colors**, a unit of several values as a split square or a share mix.
+- **Numbers as one color per value** where a series has at most 16 distinct values (a single-hue ramp up to 8, a multi-hue ramp for 9 to 16), else 8 classes of equal width; **categories in the strip's colors**, a unit of several values as a split square or a share mix.
 - **Findings as rings** around the square their node lies in, with marks beside the scrollbar; clicking a square selects its frame, and selecting a frame in the tree rings its square.
 
 ## What it reads
@@ -136,13 +138,19 @@ Options for the mapping:
 - **Quantiles:** every shade used equally, but the steps are odd numbers and the shade no longer reads as an amount.
 - **The format's own steps** (MPEG's bitrate indexes): not generic, which the lead's "any series" rules out.
 - **A few classes of equal width,** or one class per value where there are few.
+- **One color per value up to 16, else classes of equal width:** the chosen option, below.
 
-Recommended: **8 classes on a ramp of the first hue:**
+Chosen: **one color per value up to 16 distinct values, else 8 classes of equal width.**
 
-- **Classes:** where the series has at most 8 distinct values, one class per value (a CBR stream, a free choice of a few sizes); otherwise 8 classes of equal width from the stream's smallest value to its largest. MPEG's per-frame bitrate is the header's (`MpegAudioParser.Streams.cs`), so a VBR stream of 14 bitrate indexes falls in the second case; AAC's, FLAC's or DTS's, computed from each unit's size, usually do.
-- **Ramp:** `CategoryColors.Ramp` of the first hue, the ramp ordered category series already use (gui.md, "Palette"). Its 8 steps are 1.71 to 10.1 : 1 against the white surface and 1.25 to 1.32 between neighbors (computed for this design from the code's formula; **estimate** until a test reads them).
-- **Direction:** a higher value has more contrast against the surface: darker in light mode, lighter in dark mode, where the ramp is reversed (the `dataviz` skill's sequential rule, "flips anchor in dark"). The ordered category series do not flip today, so this is the lead's call: flip both, flip only the map, or flip neither.
-- **Legend:** one swatch per class with its range and the frames in it ("128–160 kbps · 2,412 frames"), "No value" with its count, and, for a single value, one line, "Every frame 128 kbps", which is what a CBR stream's map shows: one even shade.
+- **Reason (the lead's):** a frame has one bitrate, so grouping bitrates in ranges (32 to 64 as one class) hides steps the file really has. Each step (32, 48, 64, ...) gets its own color.
+- **Up to 16 distinct values:** one color per value. An MPEG VBR stream's header bitrates (`MpegAudioParser.Streams.cs`, 14 indexes) get one color per step, and a CBR stream gets one even color.
+  - Up to 8 distinct values: one step each on `CategoryColors.Ramp` of the first hue, the ramp ordered category series already use (gui.md, "Palette"). Its 8 steps are 1.71 to 10.1 : 1 against the white surface and 1.25 to 1.32 between neighbors (computed for this design from the code's formula; **estimate** until a test reads them).
+  - 9 to 16 distinct values: a multi-hue sequential ramp, so that 14 to 16 neighboring steps stay distinguishable. Neighboring steps of one hue would differ too little in contrast.
+  - The multi-hue ramp's exact colors are chosen in the build. They are checked with the `dataviz` skill's validator in light and dark mode, and higher values keep more contrast against the surface (decision 7).
+  - The mockup used ColorBrewer's YlGnBu as a stand-in. That is an observation about the mockup, not a choice.
+- **More than 16 distinct values** (computed bitrates of AAC, FLAC or DTS from each unit's size, the reservoir fill, the channel bit share): 8 classes of equal width from the stream's smallest value to its largest, on the 8-step single-hue ramp.
+- **Direction:** a higher value has more contrast against the surface: darker in light mode, lighter in dark mode, where the ramp is reversed (the `dataviz` skill's sequential rule, "flips anchor in dark"). The ordered category series do not flip today, so decision 7 settles this for the map only.
+- **Legend:** every value with its count ("128 kbps · 1,263 frames"), and clicking an entry steps through its frames. For classes of equal width, one swatch per class with its range and count ("128–160 kbps · 2,412 frames"). "No value" has its count. For a single value, one line, "Every frame 128 kbps", which is what a CBR stream's map shows: one even color.
 - **No value:** a frame the series has no value for, or a value that is not finite, is an empty square with a hairline outline in the grid color (`Palette.Grid`), so that its place is seen; the hover says "no value".
 - **Diverging quantities** (the channel bit share around 50%) get the same ramp; a scale with a midpoint would need the series to say so, a model change left as a follow-up.
 
@@ -190,7 +198,7 @@ The strip's patterns, with the grid's two dimensions:
 
 - The longest streams are 1 to 2 million units: a 10-hour MP3 (38.28 frames a second at 44.1 kHz) has about 1.38 million frames, a 10-hour Opus stream of 20 ms packets 1.8 million, and the AAC and TrueHD records stop at 2,097,152 (`aac.frames-limit`, `truehd.units-limit`). At 80 columns 2 million squares are 25,000 rows, 300,000 pixels of content (**estimate**, from the pitch).
 - **Drawing:** one rectangle per square on screen, four for a split square, and at most one band per category for a share mix; nothing per unit off screen.
-- **Memory:** no array per unit. The classes need one pass over the values when a series is first drawn (smallest, largest, up to 9 distinct values); the findings a list of their squares; the mark lane one entry per pixel of its height. The series themselves are already held by the report.
+- **Memory:** no array per unit. The classes need one pass over the values when a series is first drawn (smallest, largest, up to 17 distinct values); the findings a list of their squares; the mark lane one entry per pixel of its height. The series themselves are already held by the report.
 
 ### Measured
 
@@ -207,10 +215,11 @@ A throwaway Avalonia 12.1.4 control in the scratchpad, on the headless platform 
 
 ## Tests
 
-- **`FrameMapGraphTests`** (view model): the classes (8 or fewer distinct values, equal width, one value, values that are not finite), a series with x values of its own on the stream's squares and one with units of its own, the square of a finding found through its path (a finding on a gap, the stream or the root has none), the columns rule, the unit at a point and the point of a unit, the next frame of a legend entry.
+- **`FrameMapGraphTests`** (view model): the classes (a series of 8, 9, 16 and 17 distinct values: one color per value at 8, 9 and 16, equal-width classes at 17; one value; values that are not finite), a series with x values of its own on the stream's squares and one with units of its own, the square of a finding found through its path (a finding on a gap, the stream or the root has none), the columns rule, the unit at a point and the point of a unit, the next frame of a legend entry.
 - **`FrameMapViewTests`** (headless): a click selects the frame, a frame selected in the tree is ringed and scrolled into view, the keys, the hover text, a click on the mark lane, the automation help text, the form remembered across entries, and no "Frame Map" on an entry without units.
 - **Speed and memory:** 2,000,000 numeric units, and 200,000 units of 4 values, drawn while scrolling to far rows and resizing, under the 500 ms a frame of the existing tests; the rectangles drawn are counted and must stay below the squares on screen times the cells of a square, which fails if the drawing stops skipping rows; the managed heap grows by less than a bound set from the first run with the map open, which fails if a per-unit array appears.
-- **Colors:** a pixel test samples squares of a scripted series and requires the palette's colors (`CategoryColors.For`) and the ramp's steps, in light and dark mode.
+- **Colors:** a pixel test samples squares of a scripted series and requires the palette's colors (`CategoryColors.For`) and the steps of both ramps (single-hue and multi-hue), in light and dark mode.
+- **Multi-hue ramp:** a validator check with the `dataviz` skill's validator, run on its colors in light and dark mode, requiring that higher values keep more contrast against the surface.
 - **`ScreenshotTests`,** light and dark, saved with `ENCSPECT_SCREENSHOTS` for review: the block usage of an MPEG fixture with short blocks (split squares), the bitrate of a VBR fixture, an AC-3 flag series (share mix) and a damaged fixture whose findings point at frames, each found by script from the goldens rather than assumed.
 - **`CapitalizationTests`:** unchanged; "Frame Map" is checked with the other buttons.
 - No fixture or golden changes: the map writes nothing.
@@ -258,24 +267,25 @@ New candidates, for the lead to pick:
 
 ## Decisions
 
-Each is the lead's to approve, item by item.
+The project lead approved all 12 on 2026-10-27, as recommended, with one change to decision 6.
 
-1. **Placement:** a form "Frame Map" in each entry's view switcher, remembered as the other forms are; toggling what it shows is picking the entry. Alternative: an entry of its own with a picker; a tab of its own.
-2. **Any per-unit series, no model change:** offered for every `FrameOffset` series and every category series by type; squares on the stream's frame offsets so they stay in place between entries, a series of other units on squares of its own. Alternative: a list of supported series, which every new series would have to join.
-3. **Square size:** 10 by 10 device-independent pixels with a 2-pixel gap, rounded to whole physical pixels; no zoom in this build. Alternative: 8 with 1 (more squares, no 2 × 2 split), 12 with 2; zoom in three steps.
-4. **Columns:** row-major, the largest multiple of 10 that fits, frame numbers every fifth row in the margin, no times. Alternative: as many as fit; a fixed 50 or 100; one row per second.
-5. **Several values per unit:** split squares in reading order for fixed layouts of 2 to 4 values; a share mix for more and for variable layouts; the hover lists every value. Alternative: one value at a time; a share mix everywhere.
-6. **Numeric shading:** 8 classes on the first hue's ramp, one per value where there are 8 or fewer, else equal width over the stream's range; a legend of ranges and counts; empty outlined squares for no value. Alternative: linear and continuous; quantiles.
-7. **Ramp direction in dark mode:** flip it so a higher value has more contrast against the surface, in the map only, as the `dataviz` rule says. Alternative: flip the ordered category series too, for one rule; flip neither.
-8. **Categories:** the strip's colors per category, hatching and "Other" unchanged, no new colors and no new validator run. Alternative: the stack's colors of the over-time form.
-9. **Findings:** a ring in the text color with a surface line inside it, on the square of the frame each finding points at, labeled as the first case; no toggle, the Findings tab's severity filters apply. Alternative: rings in the severity's color; a "Findings" checkbox of its own.
-10. **Scroll marks:** a lane of the map's own beside the scrollbar, findings in the severity brushes and the selected frame in the text color, clickable. Alternative: marks inside `ScrollBar`'s template (**unverified** in Avalonia 12).
-11. **Selection:** the selected frame has an accent ring outside its square and is scrolled into view only when off screen. Alternative: the text color, as the strip's marker line uses.
-12. **Rollout:** one pull request after measurements step 4, with a review; follow-up series as pull requests of their formats, chosen from the [list](#follow-ups-per-unit-series-worth-adding), the per-unit frame checks first since they make the findings overlay complete. Alternative: before step 4, rebasing step 4 onto it.
+1. **Placement:** (approved) a form "Frame Map" in each entry's view switcher, remembered as the other forms are; toggling what it shows is picking the entry. Alternative: an entry of its own with a picker; a tab of its own.
+2. **Any per-unit series, no model change:** (approved) offered for every `FrameOffset` series and every category series by type; squares on the stream's frame offsets so they stay in place between entries, a series of other units on squares of its own. Alternative: a list of supported series, which every new series would have to join.
+3. **Square size:** (approved) 10 by 10 device-independent pixels with a 2-pixel gap, rounded to whole physical pixels; no zoom in this build. Alternative: 8 with 1 (more squares, no 2 × 2 split), 12 with 2; zoom in three steps.
+4. **Columns:** (approved) row-major, the largest multiple of 10 that fits, frame numbers every fifth row in the margin, no times. Alternative: as many as fit; a fixed 50 or 100; one row per second.
+5. **Several values per unit:** (approved) split squares in reading order for fixed layouts of 2 to 4 values; a share mix for more and for variable layouts; the hover lists every value. Alternative: one value at a time; a share mix everywhere.
+6. **Numeric shading** (approved, amended): one color per value where a series has at most 16 distinct values (single-hue ramp up to 8, multi-hue sequential ramp for 9 to 16, colors chosen and validated in the build); otherwise 8 classes of equal width over the stream's range; a legend of every value or range with its count, clicking an entry steps through its frames; empty outlined squares for no value. Amended on the lead's question why bitrate steps should be grouped when a frame has one bitrate. Alternative: linear and continuous; quantiles.
+7. **Ramp direction in dark mode:** (approved) flip it so a higher value has more contrast against the surface, in the map only, as the `dataviz` rule says. Alternative: flip the ordered category series too, for one rule; flip neither.
+8. **Categories:** (approved) the strip's colors per category, hatching and "Other" unchanged, no new colors and no new validator run. Alternative: the stack's colors of the over-time form.
+9. **Findings:** (approved) a ring in the text color with a surface line inside it, on the square of the frame each finding points at, labeled as the first case; no toggle, the Findings tab's severity filters apply. Alternative: rings in the severity's color; a "Findings" checkbox of its own.
+10. **Scroll marks:** (approved) a lane of the map's own beside the scrollbar, findings in the severity brushes and the selected frame in the text color, clickable. Alternative: marks inside `ScrollBar`'s template (**unverified** in Avalonia 12).
+11. **Selection:** (approved) the selected frame has an accent ring outside its square and is scrolled into view only when off screen. Alternative: the text color, as the strip's marker line uses.
+12. **Rollout:** (approved) one pull request after measurements step 4, with a review; follow-up series as pull requests of their formats, chosen from the [list](#follow-ups-per-unit-series-worth-adding), the per-unit frame checks first since they make the findings overlay complete. Alternative: before step 4, rebasing step 4 onto it.
 
 ## Unverified claims and estimates
 
 - **Unverified:** how Avalonia 12 snaps rectangles to physical pixels at fractional scaling; whether its `ScrollBar` template can carry marks.
 - **Unverified:** which CRC verdicts DTS, TrueHD and MLP and AAC keep per unit, and whether AAC, AC-3 and DTS keep their gaps per unit, for the follow-ups.
+- **Unverified:** the multi-hue ramp's validator figures (contrast against the surface and between neighbors, light and dark) are not measured yet.
 - **Estimates:** the ramp's contrast figures (from the code's formula, not read from a running theme); the 2-million-unit content height; the class pass's cost.
 - **Measured once,** on a shared machine: the drawing figures above. The tests set the bounds that hold.
