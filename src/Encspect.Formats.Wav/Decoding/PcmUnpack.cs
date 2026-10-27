@@ -7,8 +7,9 @@ namespace Encspect.Formats.Wav.Decoding;
 // The unpacking loops: sample frames in, planar samples out (channel c at c * count, count samples each). The bytes hold count whole sample frames.
 internal static class PcmUnpack
 {
-    // The value of a companded byte as the 16-bit sample, by the expansion ITU-T G.711 gives (the 13-bit and 14-bit codes of the A-law and mu-law
-    // decoders scaled to 16 bits as Sun's g711.c and FFmpeg's pcm_alaw and pcm_mulaw decoders do): format data, built from the segment formulas.
+    // The 16-bit sample of a companded byte: the A-law and mu-law expansions as the segment formulas of G.711 give them (a sign, a 3-bit segment and a
+    // 4-bit step), in the scale of 16-bit samples that FFmpeg's decoders output. Format data built from the formulas, no table copied; the expansion of all
+    // 256 codes of each is checked against FFmpeg's decoded MD5 (built-alaw-all-codes.wav, built-mulaw-all-codes.wav, docs/development.md).
     private static readonly short[] ALawTable = BuildTable(ALawValue);
 
     private static readonly short[] MuLawTable = BuildTable(MuLawValue);
@@ -24,7 +25,7 @@ internal static class PcmUnpack
         return table;
     }
 
-    // A-law: the even bits are inverted (XOR 0x55), then sign, a 3-bit segment and a 4-bit step (G.711 table 1a).
+    // A-law: the even bits are inverted (XOR 0x55), then a sign, a 3-bit segment and a 4-bit step.
     private static int ALawValue(int code)
     {
         int a = code ^ 0x55;
@@ -39,7 +40,7 @@ internal static class PcmUnpack
         return (a & 0x80) != 0 ? magnitude : -magnitude;
     }
 
-    // mu-law: all bits are inverted, then sign, a 3-bit segment and a 4-bit step, with the bias of 33 in 14 bits (0x84 in 16) (G.711 table 2a).
+    // mu-law: all bits are inverted, then a sign, a 3-bit segment and a 4-bit step, with a bias of 33 in 14 bits (0x84 in 16).
     private static int MuLawValue(int code)
     {
         int u = ~code & 0xFF;

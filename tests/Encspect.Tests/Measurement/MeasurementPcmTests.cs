@@ -193,6 +193,23 @@ public class MeasurementPcmTests
         Assert.Contains(m.Spectrum!.Combined.ToArray(), v => v != MeasurementLimits.NoPower);
     }
 
+    // A data chunk without a whole sample frame holds nothing to measure; it is not a stop.
+    [Theory]
+    [InlineData("wav/built-empty-data.wav")]
+    [InlineData("aiff/built-sound-offset-past-end.aiff")]
+    public void AStreamWithNoSampleFrameSaysSo(string fixture)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, fixture));
+        Report report = Analyzer.CreateDefault().Analyze(fixture, stream, new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
+
+        StreamInfo info = Assert.Single(report.Streams);
+        Assert.Equal(DecodeStatus.Decoded, info.Verification!.Decoding);
+        Assert.Equal(0, info.Verification.DecodedSamples);
+        Assert.Equal(MeasurementStatus.NotPossible, info.Measurements!.Status);
+        Assert.Equal("the stream holds no samples", info.Measurements.Reason);
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("measure.", StringComparison.Ordinal) || f.Code.StartsWith("decode.", StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData("synthetic-pcm-channels-33.wav", 33)]
     [InlineData("synthetic-pcm-channels-65535.wav", 65535)]

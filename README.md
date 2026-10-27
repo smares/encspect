@@ -27,14 +27,14 @@ Formats read so far ([details](docs/formats/README.md)):
 - TTA (`.tta`), verified by the CRC-32s of its header, seek table and frames
 - Dolby TrueHD and MLP (`.thd`, `.mlp`), with an optional decode that verifies the lossless checks of the audio
 - ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio versions 1 and 2, Professional and Voice, and Lossless at header level
-- WAV (`.wav`; RIFF, RIFX, RF64 and BW64), Wave64 (`.w64`) and AIFF (`.aif`, `.aiff`, `.aifc`) with all their chunks; PCM, floating-point and compressed formats at header level, and MPEG audio, AC-3, E-AC-3 and DTS in WAV read by their parsers, and AC-3, E-AC-3, DTS and AAC also as IEC 61937 bursts in the samples
+- WAV (`.wav`; RIFF, RIFX, RF64 and BW64), Wave64 (`.w64`) and AIFF (`.aif`, `.aiff`, `.aifc`) with all their chunks; PCM, floating-point and compressed formats at header level (PCM, floating-point, A-law and mu-law samples are decoded for `--measure`), and MPEG audio, AC-3, E-AC-3 and DTS in WAV read by their parsers, and AC-3, E-AC-3, DTS and AAC also as IEC 61937 bursts in the samples
 - Matroska and WebM (`.mka`, `.mkv`, `.webm`) with AAC, AC-3, E-AC-3, DTS, Vorbis and Opus audio read by their parsers
 
 Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis comments.
 
 Protection: streams that a container encrypts or locks are reported with their scheme and DRM systems, without decrypting: Common Encryption in MP4, iTunes protection and Audible entries, Windows Media DRM in ASF, and ContentEncryption in Matroska.
 
-Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, Dolby TrueHD and MLP) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, and the levels (sample peak, RMS, DC offset, clipping, digital silence, bit depth) ([details](docs/cli.md)).
+Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, Dolby TrueHD and MLP, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, and the levels (sample peak, RMS, DC offset, clipping, digital silence, bit depth) ([details](docs/cli.md)).
 
 Phase 2, the lossy formats, is done. Next: the lossless formats, among them the frames of WMA Lossless.
 

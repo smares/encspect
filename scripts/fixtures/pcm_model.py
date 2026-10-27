@@ -1,7 +1,7 @@
 """An independent reading of the samples WAV, Wave64 and AIFF store as they are, for the manifests' decoded_pcm_md5 and their cross-check.
 
 Written from the specifications of the sample layouts (Microsoft's WAVEFORMATEX documentation for PCM and IEEE float, the AIFF-C draft and Apple's
-QuickTime File Format Specification for the types of AIFF-C, ITU-T G.711 for the companded codings), apart from the analyzer. What the analyzer's decoder
+QuickTime File Format Specification for the types of AIFF-C), apart from the analyzer; the companded codings are the G.711 segment formulas, checked against FFmpeg. What the analyzer's decoder
 "pcm" outputs is the canonical layout of docs/design/decoders.md ("The PCM path"): the samples interleaved, signed, little-endian, ceil(bits / 8) bytes each
 (floats as their IEEE 754 bytes), 8-bit unsigned samples minus 128, and A-law and mu-law expanded to 16 bits.
 
@@ -15,8 +15,8 @@ import struct
 
 
 def alaw(code):
-    """The 16-bit value of an A-law byte (G.711, table 1a, in the scale of 13-bit codes shifted left by 3): the even bits of the byte are inverted, then a sign,
-    a 3-bit segment and a 4-bit step."""
+    """The 16-bit value of an A-law byte: the even bits of the byte are inverted, then a sign, a 3-bit segment and a 4-bit step (the segment formulas of
+    G.711, in the scale of 16-bit samples that FFmpeg's decoder outputs, which built-alaw-all-codes.wav checks for all 256 codes)."""
     a = code ^ 0x55
     step = (a & 0x0F) << 4
     segment = (a >> 4) & 7
@@ -28,8 +28,8 @@ def alaw(code):
 
 
 def mulaw(code):
-    """The 16-bit value of a mu-law byte (G.711, table 2a, in the scale of 14-bit codes shifted left by 2): all bits are inverted, then a sign, a 3-bit segment
-    and a 4-bit step, with a bias of 33 in 14 bits."""
+    """The 16-bit value of a mu-law byte: all bits are inverted, then a sign, a 3-bit segment and a 4-bit step, with a bias of 33 in 14 bits (the segment
+    formulas of G.711, in the scale of 16-bit samples that FFmpeg's decoder outputs, which built-mulaw-all-codes.wav checks for all 256 codes)."""
     u = ~code & 0xFF
     magnitude = (((u & 0x0F) << 3) + 0x84) << ((u >> 4) & 7)
     return 0x84 - magnitude if u & 0x80 else magnitude - 0x84

@@ -140,6 +140,8 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
         public long WorkPerInputByte => real.WorkPerInputByte;
 
+        public bool DeclaresChecksums => real.DeclaresChecksums;
+
         public IFrameDecoder Open(DecodeContext context) => new Frames(context);
 
         private sealed class Frames(DecodeContext context) : IFrameDecoder
@@ -160,7 +162,8 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         var counting = new CountingDecoder(isHollow ? new HollowDecoder(real) : real);
         IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(p => p is FlacParser && !work.LendsBuffers ? new FlacParser { LendsBuffers = false } : p);
         var analyzer = new Analyzer(DefaultParsers.Tags, formats, DefaultParsers.Codecs, [counting]);
-        var options = new AnalysisOptions { Decoding = decode ? new DecodeOptions { MaxWork = long.MaxValue } : null };
+        // A decoder with no checksum decodes only for a front end that wants the samples: the sink of a PCM case takes them and does nothing.
+        var options = new AnalysisOptions { Decoding = decode ? new DecodeOptions { MaxWork = long.MaxValue, Output = real.DeclaresChecksums ? null : _ => new NullSink() } : null };
         using var stream = new MemoryStream(work.Data, writable: false);
 
         long start = Stopwatch.GetTimestamp();
@@ -169,8 +172,20 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         return (seconds, counting.Units, report);
     }
 
+    internal sealed class NullSink : IPcmSink
+    {
+        public void Write(PcmBlock block)
+        {
+        }
+
+        public void End(long samples)
+        {
+        }
+    }
+
     private static IDecoder DecoderOf(string name) => name switch
     {
+        _ when name.StartsWith("pcm", StringComparison.Ordinal) => new Encspect.Formats.Wav.Decoding.PcmDecoder(),
         _ when name.StartsWith("flac", StringComparison.Ordinal) => new FlacDecoder(),
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => new MonkeysAudioDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
@@ -184,6 +199,8 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => ".ape",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
+        _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
+        _ when name.StartsWith("pcm", StringComparison.Ordinal) => ".wav",
         _ => ".wv",
     };
 
@@ -346,7 +363,72 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Add("truehd-crafted-8-matrices", () => new Case("truehd-crafted-8-matrices", TrueHdCases.Crafted(0, 0, 8)));
         Add("truehd-crafted-fir-4-iir-4-8-matrices", () => new Case("truehd-crafted-fir-4-iir-4-8-matrices", TrueHdCases.Crafted(4, 4, 8)));
 
+        // PCM: the samples of a WAV or AIFF file unpacked, one case of integers (16-bit little-endian, and 24-bit big-endian, which takes the three-byte path with
+        // the swap), one of floats and one of A-law, each of pseudo-random bytes so that no path is cheaper for its content.
+        Add("pcm-integers-16-bit-stereo", () => new Case("pcm-integers-16-bit-stereo", PcmCases.Wav(tag: 1, channels: 2, bits: 16)));
+        Add("pcm-aiff-integers-24-bit-6-channels", () => new Case("pcm-aiff-integers-24-bit-6-channels", PcmCases.Aiff(channels: 6, bits: 24)));
+        Add("pcm-floats-32-bit-stereo", () => new Case("pcm-floats-32-bit-stereo", PcmCases.Wav(tag: 3, channels: 2, bits: 32)));
+        Add("pcm-floats-64-bit-mono", () => new Case("pcm-floats-64-bit-mono", PcmCases.Wav(tag: 3, channels: 1, bits: 64)));
+        Add("pcm-a-law-mono", () => new Case("pcm-a-law-mono", PcmCases.Wav(tag: 6, channels: 1, bits: 8)));
+
         return cases;
+    }
+
+    // WAV and AIFF files of pseudo-random samples that charge about Target units.
+    internal static class PcmCases
+    {
+        private static byte[] Samples(int channels, int bits, long frames)
+        {
+            var bytes = new byte[frames * channels * (bits / 8)];
+            new Random(20261027).NextBytes(bytes);
+            return bytes;
+        }
+
+        // The frames that make Target units at DecodeWork.ForSample of the decoder's output width.
+        private static long Frames(int channels, int outputBits, long target) => target / (DecodeWork.ForSample(CanonicalPcm.BytesPerSample(outputBits)) * channels);
+
+        public static byte[] Wav(int tag, int channels, int bits, long target = Target)
+        {
+            long frames = Frames(channels, tag is 6 or 7 ? 16 : bits, target);
+            byte[] samples = Samples(channels, bits, frames);
+            var file = new List<byte>();
+            file.AddRange("RIFF"u8.ToArray());
+            file.AddRange(BitConverter.GetBytes((uint)(4 + 24 + 8 + samples.Length)));
+            file.AddRange("WAVEfmt "u8.ToArray());
+            file.AddRange(BitConverter.GetBytes(16u));
+            file.AddRange(BitConverter.GetBytes((ushort)tag));
+            file.AddRange(BitConverter.GetBytes((ushort)channels));
+            file.AddRange(BitConverter.GetBytes(44100u));
+            file.AddRange(BitConverter.GetBytes((uint)(44100 * channels * (bits / 8))));
+            file.AddRange(BitConverter.GetBytes((ushort)(channels * (bits / 8))));
+            file.AddRange(BitConverter.GetBytes((ushort)bits));
+            file.AddRange("data"u8.ToArray());
+            file.AddRange(BitConverter.GetBytes((uint)samples.Length));
+            file.AddRange(samples);
+            return [.. file];
+        }
+
+        public static byte[] Aiff(int channels, int bits, long target = Target)
+        {
+            long frames = Frames(channels, bits, target);
+            byte[] samples = Samples(channels, bits, frames);
+            var file = new List<byte>();
+            void Be32(uint value) => file.AddRange([(byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value]);
+            file.AddRange("FORM"u8.ToArray());
+            Be32((uint)(4 + 8 + 18 + 8 + 8 + samples.Length));
+            file.AddRange("AIFFCOMM"u8.ToArray());
+            Be32(18);
+            file.AddRange([(byte)(channels >> 8), (byte)channels]);
+            Be32((uint)frames);
+            file.AddRange([(byte)(bits >> 8), (byte)bits]);
+            file.AddRange([0x40, 0x0E, 0xAC, 0x44, 0, 0, 0, 0, 0, 0]);
+            file.AddRange("SSND"u8.ToArray());
+            Be32((uint)(8 + samples.Length));
+            Be32(0);
+            Be32(0);
+            file.AddRange(samples);
+            return [.. file];
+        }
     }
 
     // A reader and writer of bits, most significant first, for the FLAC frames.

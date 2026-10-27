@@ -63,9 +63,9 @@ Decodes each file's audio while reading it and compares the checksums that cover
 
 - **Cost:** decoding runs in the same pass over the file and costs time for every sample, much more than the structure analysis alone. Each decoder counts the work it does in work units (one unit is a predictor or filter tap on one sample of one channel, about 0.6 ns on the machines it was measured on), and decoding stops with an info finding (`decode.limit`) past the larger of 2^35 units, about 21 seconds, and the file's size times 2,048 units a byte, about 1.2 seconds a megabyte. A stream that stops is verified as unknown unless a checksum compared before the stop failed, which makes it "no"; the structure analysis carries on.
 - **Formats without a decoder:** the report is the same as without `--verify`.
-  - FLAC (native and in Ogg), WavPack, Monkey's Audio, and TrueHD and MLP have decoders.
-  - `decode.no-decoder` (info) is raised only where a parser starts a decode session for a codec ID that no decoder has. Of the formats today that is TTA.
-  - Formats whose parsers start no session (WAV, AIFF, MPEG audio and the others) get neither the finding nor a `verification`.
+  - FLAC (native and in Ogg), WavPack, Monkey's Audio, and TrueHD and MLP have decoders that compare checksums. WAV, Wave64 and AIFF have the `pcm` decoder, which stores no checksum to compare: `--verify` alone opens no PCM session, reads none of the samples (so it costs a folder of WAV files nothing) and adds nothing to the report; `--measure` decodes them.
+  - `decode.no-decoder` (info) is raised only where a parser starts a decode session for a codec ID that no decoder has. Of the formats today that is TTA; WAV, Wave64 and AIFF do not raise it.
+  - Formats whose parsers start no session (MPEG audio and the others) get neither the finding nor a `verification`.
   - Streams a container does not hand to a codec parser (FLAC, WavPack and TrueHD in Matroska today, `matroska.codec-not-analyzed`) get no verification either, although a decoder for the coding exists.
 - **Findings:** a stored checksum that differs is a warning, so `--fail-on warning` fails the run. A decoder that fails (`decode.failed`) is an error and a bug.
 - **Output:** the text tree, JSON and CSV carry the verdict (see below). Without `--verify` the tree and every other field are the same.
@@ -76,7 +76,8 @@ Decodes, verifies and measures each file's audio, for the codings that have a de
 
 - **Kinds:** a list after the option (`--measure spectrum,levels`, or `--measure=levels`) picks measurements by name; today they are `spectrum` and `levels`, and without a list every kind the program has is measured. A value that is not a kind is taken for a path. Loudness and true peak come in a later step.
 - **Cost:** about 16 to 21 ns for each sample of each channel for everything on the machine the work weights were measured on (`MeasurementWorkTests` prints them), of which the levels are about 2 ns at 16 and 24 bits (`--measure levels` alone), counted in work units of its own, apart from the decoders': past the larger of 2^35 units and the file's size times 2,048 units a byte, measuring stops with an info finding (`measure.limit`) and decoding and verification go on. The state of the measurements of one file is bounded at 64 MiB, and at most 32 channels are measured.
-- **Formats without a decoder:** the stream says why it has no figures (`not measured (no decoder for tta)`); WAV, AIFF, MPEG audio and the other formats whose parsers start no decode session get no measurements at all. WavPack's DSD is not measured.
+- **PCM files:** WAV, Wave64 and AIFF (including AIFF-C `sowt`, `in24`, `in32`, `raw `, `fl32`, `fl64`, `alaw` and `ulaw`) are decoded by the `pcm` decoder for the measurements, which read the container's samples as stored (see [wav.md](formats/wav.md#decoding)). A file of integers wider than 32 bits says `not measured` with the reason, and the stream has `decode.not-possible` (info).
+- **Formats without a decoder:** the stream says why it has no figures (`not measured (no decoder for tta)`); MPEG audio and the other formats whose parsers start no decode session get no measurements at all, and so do WAV and AIFF streams that are not PCM (ADPCM, a codec parser's data, IEC 61937 bursts). WavPack's DSD is not measured.
 - **Text tree:** lines under the stream's first node, after the `Verified:` line.
 
       Measured: 1.0 s of 1 channel
@@ -131,7 +132,7 @@ Measurements raise no finding about the audio, since a figure is not a verdict; 
 
 ### The verification of a stream
 
-A stream of a coding that declares its checksums has a verification, with or without `--verify`. FLAC declares them (frame header CRC-8, frame CRC-16 and STREAMINFO MD5); the other codings do so as their decoders land. A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio (`encspect --learn verification` explains it).
+A stream of a coding that declares its checksums has a verification, with or without `--verify`. FLAC declares them (frame header CRC-8, frame CRC-16 and STREAMINFO MD5); the other codings do so as their decoders land. The model also carries a verification for the streams of WAV, Wave64 and AIFF, which declare no checksum: it says only whether the audio was decoded (`notRequested`, or `decoded` with `--measure`), the front ends read it, and the text tree, the JSON and the GUI's `Verified` line leave out a verification that declares no checksum, so those reports are the same with and without it. A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio (`encspect --learn verification` explains it).
 
 - **Text tree:** a line under the stream's first node.
   - `Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)`: each checksum with the values compared of those stored.

@@ -13,6 +13,8 @@ internal sealed class CountingDecoder(IDecoder real) : IDecoder
 
     public long WorkPerInputByte => real.WorkPerInputByte;
 
+    public bool DeclaresChecksums => real.DeclaresChecksums;
+
     public IFrameDecoder Open(DecodeContext context)
     {
         var counting = new DecodeContext(

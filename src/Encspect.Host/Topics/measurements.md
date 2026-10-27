@@ -1,7 +1,7 @@
 ---
 id: measurements
 title: Measurements of decoded audio
-related: spectral-cutoff, spectrogram, levels, verification, lowpass, coded-bandwidth, bwf-broadcast-extension, replaygain
+related: spectral-cutoff, spectrogram, levels, verification, pcm-samples, lowpass, coded-bandwidth, bwf-broadcast-extension, replaygain
 references: P. D. Welch, The use of fast Fourier transform for the estimation of power spectra, IEEE Trans. Audio Electroacoust. 15(2), 1967; F. J. Harris, On the use of windows for harmonic analysis with the discrete Fourier transform, Proc. IEEE 66(1), 1978
 ---
 
@@ -9,7 +9,7 @@ references: P. D. Welch, The use of fast Fourier transform for the estimation of
 
 **How it works.** When the analysis decodes a stream, the host hands every block of decoded samples both to the front end and to a measurer. One decoding pass therefore verifies the checksums and measures, and measuring never changes a verification or a decoding finding. The measurer keeps one frame of overlap and arrays of a fixed size, so a long stream costs time and no more memory. Its figures are integers in fixed units, whole hertz and tenths of a decibel, and its arithmetic does not depend on the platform, so a report reads the same on every machine.
 
-**Which samples.** The samples the decoder wrote, before any trimming: samples that a format drops at the start are measured too, a TrueHD stream is measured as the presentation the decoder decodes, and a WavPack hybrid file without its correction file as the lossy audio it decodes to. Nothing is measured across a gap where frames were lost; the figures say how many samples were skipped. At most 32 channels are measured, and the combined figures leave out the LFE channel.
+**Which samples.** The samples the decoder wrote, before any trimming (for a WAV, Wave64 or AIFF file, the [samples as stored](pcm-samples)): samples that a format drops at the start are measured too, a TrueHD stream is measured as the presentation the decoder decodes, and a WavPack hybrid file without its correction file as the lossy audio it decodes to. Nothing is measured across a gap where frames were lost; the figures say how many samples were skipped. At most 32 channels are measured, and the combined figures leave out the LFE channel.
 
 **Which figures.** The spectrum and its cutoff, and the [levels](levels): sample peak, RMS, DC offset, clipping runs, digital silence and bit-depth usage. --measure takes either by name.
 
