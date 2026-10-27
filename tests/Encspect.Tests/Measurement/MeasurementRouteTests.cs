@@ -281,9 +281,11 @@ public class MeasurementRouteTests
     // A bug in making the measurer (called inside DeclareOutput, by the decoder) or in making its figures (at the close) is the stream's
     // measure.failed too: never a parse.failed or decode.failed, and the verification stays what it is.
     [Theory]
+    [InlineData("estimate")]
     [InlineData("open")]
     [InlineData("block")]
     [InlineData("result")]
+    [InlineData("bytes")]
     public void AFailureAtAnyStageBecomesMeasureFailedAndLeavesDecodingAlone(string stage)
     {
         var format = new PcmFormat(44100, 2, 16, SampleFormat.Integer);
@@ -300,8 +302,8 @@ public class MeasurementRouteTests
         Assert.Equal(DecodeStatus.Decoded, report.Streams[0].Verification!.Decoding);
     }
 
-    // The record stays in the report, so its share stays reserved: 600 streams whose grids hold 512 columns each (0.5 MiB) would keep 300 MB
-    // without the bound, and the bound of 64 MiB lets about a hundred of them be measured; the rest say so.
+    // The record stays in the report, so its share stays reserved: 600 streams whose grids hold 513 columns each (0.25 MiB) would keep 150 MB
+    // without the bound, and the bound of 64 MiB lets about 250 of them be measured; the rest say so.
     [Fact]
     public void TheRecordsOfManyStreamsStayWithinTheMemoryBound()
     {

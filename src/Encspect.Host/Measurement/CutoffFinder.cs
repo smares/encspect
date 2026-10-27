@@ -113,9 +113,51 @@ internal static class CutoffFinder
 
         int stepTenths = (int)FloorDivide((2 * bestNumerator) + bestDenominator, 2 * bestDenominator);
 
-        // The frames: the reference level at the step's row is the highest level that at least 1 % of its frames reach; frames with
-        // signal are those at most ten levels (30.1 dB) below it.
-        int baseIndex = best * CutoffCounters.Levels;
+        (int withSignal, int showing) = Frames(counters, best);
+
+        int stepHertz = geometry.Hertz(best + 1);
+        bool isFound = stepTenths >= StepThresholdTenths && withSignal > 0 && 2L * showing >= withSignal;
+        if (!isFound)
+        {
+            return new SpectralCutoff { StepFrequency = stepHertz, StepTenthsOfDb = stepTenths, FramesShowing = showing, FramesWithSignal = withSignal };
+        }
+
+        int edge = best;
+        for (int r = CutoffGeometry.LastCandidate; r > best; r--)
+        {
+            (int signalR, int showingR) = Frames(counters, r);
+            if (signalR > 0 && 2L * showingR >= signalR)
+            {
+                edge = Math.Max(best, r - w + 1);
+                break;
+            }
+        }
+
+        // The transition starts at the lowest row, walking down from the step, still more than 3 dB below the mean of the band under it.
+        long underSum = prefix[best + 1] - prefix[best - w + 1];
+        int start = best + 1;
+        for (int r = best; r >= 0 && (long)level[r] * w < underSum - (30L * w); r--)
+        {
+            start = r;
+        }
+
+        return new SpectralCutoff
+        {
+            IsFound = true,
+            Frequency = geometry.Hertz(edge + 1),
+            TransitionStart = geometry.Hertz(start),
+            StepFrequency = stepHertz,
+            StepTenthsOfDb = stepTenths,
+            FramesShowing = showing,
+            FramesWithSignal = withSignal,
+        };
+    }
+
+    // The frames at a row: the reference level is the highest level that at least 1 % of the row's frames reach; frames with signal are
+    // those at most ten levels (30.1 dB) below it; the second figure counts those that show their own step there.
+    private static (int WithSignal, int Showing) Frames(CutoffCounters counters, int row)
+    {
+        int baseIndex = row * CutoffCounters.Levels;
         long total = 0;
         for (int l = 0; l < CutoffCounters.Levels; l++)
         {
@@ -145,44 +187,7 @@ internal static class CutoffFinder
             }
         }
 
-        int stepHertz = geometry.Hertz(best + 1);
-        bool isFound = stepTenths >= StepThresholdTenths && withSignal > 0 && 2L * showing >= withSignal;
-        if (!isFound)
-        {
-            return new SpectralCutoff { StepFrequency = stepHertz, StepTenthsOfDb = stepTenths, FramesShowing = showing, FramesWithSignal = withSignal };
-        }
-
-        // The edge: the highest row, from the step's row up, more than 6 dB above the mean level of everything above the step.
-        int aboveCount = CutoffGeometry.TopRow - best;
-        long aboveSum = prefix[CutoffGeometry.TopRow + 1] - prefix[best + 1];
-        int edge = best;
-        for (int r = CutoffGeometry.TopRow; r >= best; r--)
-        {
-            if ((long)level[r] * aboveCount > aboveSum + (60L * aboveCount))
-            {
-                edge = r;
-                break;
-            }
-        }
-
-        // The transition starts at the lowest row, walking down from the step, still more than 3 dB below the mean of the band under it.
-        long underSum = prefix[best + 1] - prefix[best - w + 1];
-        int start = best + 1;
-        for (int r = best; r >= 0 && (long)level[r] * w < underSum - (30L * w); r--)
-        {
-            start = r;
-        }
-
-        return new SpectralCutoff
-        {
-            IsFound = true,
-            Frequency = geometry.Hertz(edge + 1),
-            TransitionStart = geometry.Hertz(start),
-            StepFrequency = stepHertz,
-            StepTenthsOfDb = stepTenths,
-            FramesShowing = showing,
-            FramesWithSignal = withSignal,
-        };
+        return (withSignal, showing);
     }
 
     private static long FloorDivide(long a, long b)

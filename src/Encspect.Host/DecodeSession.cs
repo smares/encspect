@@ -380,7 +380,20 @@ internal sealed class DecodeSession : IDecodeSession
             record = MeasurementFindings.Finish(measurer, run, _isEnded || _isFailed || _status != DecodeStatus.Decoded, Add);
 
             // The record stays in the report, so its share of the memory bound stays reserved until the analysis ends.
-            run.ReleaseMeasureMemory(_sink.Reserved - Math.Min(_sink.Reserved, StreamMeasurer.RecordBytes(record)));
+            long kept;
+            try
+            {
+                run.Options.Measure?.Probe?.Invoke("bytes");
+                kept = StreamMeasurer.RecordBytes(record);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                record = MeasurementFindings.Failed(ex, _sink.Format, Add);
+                kept = StreamMeasurer.RecordBytes(record);
+            }
+
+            run.ReleaseMeasureMemory(_sink.Reserved - Math.Min(_sink.Reserved, kept));
+            _sink.DropMeasurer();
         }
         else if (_sink?.OpenFailure is { } failure)
         {

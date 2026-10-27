@@ -1,6 +1,7 @@
-"""An independent model of the measurements of docs/design/spectral-analysis.md (step 1): the average spectrum, the spectral cutoff and the
-waveform grid of a FLAC file, worked out in Python from the committed bytes with flac_model.py's decoder and this module's own FFT and
-filters, not from the analyzer's code. make_measurement_fixtures.py and make_external_measurement_fixtures.py write its results into the
+"""A model of the measurements of docs/design/spectral-analysis.md (step 1): the average spectrum, the spectral cutoff and the waveform grid
+of a FLAC file, worked out in Python from the committed bytes with flac_model.py's decoder and this module's own FFT. Only the FFT, the
+rows and the waveform are independent of the analyzer; the cutoff code below is transliterated from CutoffFinder.cs (the same rules in the
+same integer arithmetic), so it checks the port, not the rules. make_measurement_fixtures.py and make_external_measurement_fixtures.py write its results into the
 manifests (`<name>.expected.json`); MeasurementFixtureTests holds the analyzer to them.
 
 The model follows the design's text:
@@ -10,12 +11,13 @@ The model follows the design's text:
 - 512 rows of mean power (bins N / 1,024 a row), 0 dB a full-scale sine centered on a bin; the average level of each row in tenths of a dB,
   rounded to the nearest, halves up;
 - the spectral cutoff: the largest step of the mean dB of a band of 1 kHz under a row against the mean above it, from 2 kHz to row 505, and
-  the edge, the start of the transition and the frames that show an own step of 15 dB at the step's row (the 1 % reference level and the
-  ten levels of 3 dB below it), found where the step is 25 dB or more and half of the frames with signal show it.
+  the edge (the highest candidate row at which half of the frames with signal show an own step, less the band's width), the start of the
+  transition and the frames that show an own step of 15 dB at the step's row (the 1 % reference level and the ten levels of 3 dB below it),
+  found where the step is 25 dB or more and half of the frames with signal show it.
 
-What is independent of the analyzer is the FFT, the rows (the window, the scale and the normalization), the waveform and the stream figures. The cutoff's search, edge and counters
-are the design's rules written out again in Python with the same names and integer fractions, so they are checked against the construction of the signals
-(a brickwall at a known edge, none for noise, rolloff and mixed content) and not against a second reading of the rules.
+What is independent of the analyzer is the FFT, the rows (the window, the scale and the normalization), the waveform and the stream figures.
+The cutoff's rules are checked against the construction of the signals (a brickwall at a known edge, none for noise, rolloff and mixed
+content) and against the printed bands of the lossy files, not against a second reading of the rules.
 
 Everything is plain Python (the standard library). The FFT is a complex radix-2 transform of the full frame, apart from the analyzer's
 real transform with its split step, so the two agree up to rounding (about 1e-12 relative), which the tests allow for.
@@ -143,6 +145,24 @@ def floor_div(a, b):
     return a // b
 
 
+def frames_at(counters, r):
+    """(frames with signal, frames that show an own step) at a row: signal is within ten levels of the level 1 % of the frames reach."""
+    total = sum(counters.all[r])
+    with_signal = showing = 0
+    if total:
+        cumulative = 0
+        reference = 0
+        for l in range(71, -1, -1):
+            cumulative += counters.all[r][l]
+            if cumulative * 100 >= total:
+                reference = l
+                break
+        for l in range(max(0, reference - 10), 72):
+            with_signal += counters.all[r][l]
+            showing += counters.show[r][l]
+    return with_signal, showing
+
+
 def find_cutoff(level_tenths, counters, rate, size):
     """The spectral cutoff of a spectrum given as 512 tenths of a dB (None for a row without power) and its counters."""
     if rate < 8000:
@@ -164,28 +184,15 @@ def find_cutoff(level_tenths, counters, rate, size):
             best = (r, numerator, denominator)
     r, numerator, denominator = best
     step = floor_div(2 * numerator + denominator, 2 * denominator)
-    total = sum(counters.all[r])
-    with_signal = showing = 0
-    if total:
-        cumulative = 0
-        reference = 0
-        for l in range(71, -1, -1):
-            cumulative += counters.all[r][l]
-            if cumulative * 100 >= total:
-                reference = l
-                break
-        for l in range(max(0, reference - 10), 72):
-            with_signal += counters.all[r][l]
-            showing += counters.show[r][l]
+    with_signal, showing = frames_at(counters, r)
     result = {"is_searched": True, "is_found": False, "frequency": 0, "transition_start": 0, "step_frequency": hertz(r + 1, rate, size, bins),
               "step_tenths": step, "frames_showing": showing, "frames_with_signal": with_signal}
     if step >= 250 and with_signal > 0 and 2 * showing >= with_signal:
-        above_count = TOP_ROW - r
-        above_sum = prefix[TOP_ROW + 1] - prefix[r + 1]
         edge = r
-        for i in range(TOP_ROW, r - 1, -1):
-            if level[i] * above_count > above_sum + 60 * above_count:
-                edge = i
+        for i in range(505, r, -1):
+            signal_i, showing_i = frames_at(counters, i)
+            if signal_i > 0 and 2 * showing_i >= signal_i:
+                edge = max(r, i - w + 1)
                 break
         under_sum = prefix[r + 1] - prefix[r - w + 1]
         start = r + 1

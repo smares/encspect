@@ -6,7 +6,7 @@ flac_model.py's writer, so the files are reproducible byte for byte on every mac
 rollout has FLAC files only; the WAV twins come with the PCM route (step 3).
 
     - sines at a bin center and between bins, a logarithmic sweep, and sines of 8, 24 and 32 bits;
-    - noise band-limited exactly at 11, 16, 19 and 20.5 kHz at 44.1 and 48 kHz (lines at bin centers with fixed random phases, repeating
+    - noise band-limited exactly at 11, 16, 19 and 20.5 kHz at 44.1 kHz and at 16 kHz also at 48 kHz (lines at bin centers with fixed random phases, repeating
       with the period of the frame, so the edge is as sharp as the bins), the 16 kHz one with TPDF dither and quiet (-30, -45 and -60 dB,
       with dither), and at 8, 11.025 and 192 kHz; white noise at 2 kHz (the cutoff is not searched under 8 kHz);
     - natural rolloff: white noise through one, two and four cascaded biquad lowpass sections at 16 kHz;
@@ -15,7 +15,7 @@ rollout has FLAC files only; the WAV twins come with the PCM route (step 3).
     - a stream shorter than one frame, and one of more than 1,024 hops (the grids merge columns);
     - gaps: frames removed, and a jump of 2^40 samples; and the same audio at two block sizes.
 
-Each manifest is worked out from the file by measurement_model.py (its own FFT, spectrum, cutoff method and waveform), plus what the signal
+Each manifest is worked out from the file by measurement_model.py (its own FFT, spectrum and waveform; its cutoff method is transliterated from the analyzer), plus what the signal
 was built to have: the cutoff in hertz, or none. MeasurementFixtureTests holds the analyzer to the model and the construction.
 """
 
@@ -271,7 +271,7 @@ def build():
         {"cutoff_hz": None, "no_cutoff": True})
     with_silence = lines_q(rate44, 16000, -20.0, 33, int(rate44 * 0.5)) + [0] * int(rate44 * 0.5)
     add("lines-16000-then-silence", "Half a second of 16 kHz lines and as much digital silence: the silent frames count as without signal.", [with_silence], rate44, 16,
-        {"cutoff_hz": 16000, "tolerance_hz": 1500, "tolerance_note": "the cut from lines to silence inside a frame splatters above the edge"})
+        {"cutoff_hz": 16000})
 
     # Silence after an impulse.
     for rate in (rate44, rate48):

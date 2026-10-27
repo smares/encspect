@@ -157,27 +157,28 @@ internal sealed class DecodeRun : IDisposable
             }
             else
             {
-                reserved = StreamMeasurer.EstimateBytes(format, measure);
-                if (TryReserveMeasureMemory(reserved))
+                // A bug in estimating or in making the measurer must not reach the decoder that called DeclareOutput: it becomes measure.failed.
+                try
                 {
-                    // A bug in making the measurer must not reach the decoder that called DeclareOutput: it becomes measure.failed.
-                    try
+                    measure.Probe?.Invoke("estimate");
+                    reserved = StreamMeasurer.EstimateBytes(format, measure);
+                    if (TryReserveMeasureMemory(reserved))
                     {
                         measure.Probe?.Invoke("open");
                         measurer = new StreamMeasurer(format, measure, Token, ChargeMeasure);
                     }
-                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    else
                     {
-                        openFailure = ex;
-                        ReleaseMeasureMemory(reserved);
                         reserved = 0;
+                        isMemoryLimited = true;
+                        refusal = "the memory bound of the measurements allows no further stream";
                     }
                 }
-                else
+                catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
+                    openFailure = ex;
+                    ReleaseMeasureMemory(reserved);
                     reserved = 0;
-                    isMemoryLimited = true;
-                    refusal = "the memory bound of the measurements allows no further stream";
                 }
             }
         }
@@ -190,8 +191,12 @@ internal sealed class DecodeRun : IDisposable
     internal sealed class GuardedSink(DecodeRun run, IPcmSink? target, StreamMeasurer? measurer, string? refusal, long reserved) : IPcmSink
     {
         private bool _isEnded;
+        private StreamMeasurer? _measurer = measurer;
 
-        public StreamMeasurer? Measurer => measurer;
+        public StreamMeasurer? Measurer => _measurer;
+
+        // Called when the record is made: the measurer's working state is freed whenever the parser lets go of the session.
+        public void DropMeasurer() => _measurer = null;
 
         // Why the stream is not measured though measuring was asked for (a rate of 0 Hz, the memory bound), or null.
         public string? Refusal => refusal;
@@ -207,7 +212,7 @@ internal sealed class DecodeRun : IDisposable
 
         public void Write(PcmBlock block)
         {
-            measurer?.Write(block);
+            _measurer?.Write(block);
             if (target is null || run.HasSinkFailure)
             {
                 return;

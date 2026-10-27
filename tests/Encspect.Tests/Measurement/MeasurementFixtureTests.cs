@@ -62,11 +62,11 @@ public class MeasurementFixtureTests
         bool reliable = !(manifest.TryGetProperty("construction", out JsonElement built) && built.TryGetProperty("unspecified", out JsonElement unspecified) && unspecified.GetBoolean());
         if (reliable)
         {
-            AssertCutoff(model.GetProperty("cutoff"), m.Spectrum.Cutoff, m.SampleRate, m.Spectrum.FftSize, name);
+            AssertCutoff(model.GetProperty("cutoff"), m.Spectrum.Cutoff, m.SampleRate, m.Spectrum.FftSize);
             int channel = 0;
             foreach (JsonElement cutoff in model.GetProperty("channel_cutoffs").EnumerateArray().Take(m.ChannelsMeasured))
             {
-                AssertCutoff(cutoff, m.Spectrum.ChannelCutoffs[channel++], m.SampleRate, m.Spectrum.FftSize, name);
+                AssertCutoff(cutoff, m.Spectrum.ChannelCutoffs[channel++], m.SampleRate, m.Spectrum.FftSize);
             }
         }
 
@@ -100,7 +100,7 @@ public class MeasurementFixtureTests
         }
     }
 
-    private static void AssertCutoff(JsonElement model, SpectralCutoff actual, int rate, int size, string name)
+    private static void AssertCutoff(JsonElement model, SpectralCutoff actual, int rate, int size)
     {
         if (!model.GetProperty("is_searched").GetBoolean())
         {
@@ -120,7 +120,6 @@ public class MeasurementFixtureTests
             Assert.InRange(actual.TransitionStart, model.GetProperty("transition_start").GetInt32() - rowHertz, model.GetProperty("transition_start").GetInt32() + rowHertz);
         }
 
-        _ = name;
     }
 
     [Theory]

@@ -1319,6 +1319,52 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(kept < plainKept + 1_000_000, $"Measuring made the report keep {kept - plainKept} bytes more.");
     }
 
+    // The records of the measurements stay in the report, so the bound of 64 MiB (docs/design/spectral-analysis.md, "Memory") holds them: 400
+    // chained Ogg FLAC streams of 24 s each would keep 400 grids of 0.25 MiB (100 MiB) without it, and the streams past the bound say so.
+    [Fact]
+    public void MeasuringManyChainedStreamsStaysWithinTheBound()
+    {
+        const int streams = 400;
+        const int frames = 65;
+        var measure = new MeasureOptions();
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = measure } };
+        byte[] data = ChainedOggFlac(streams, frames);
+
+        (_, long plainKept, long plainPeak) = Measure("chain.oga", data, ChainedOggFlac(2, 4), new AnalysisOptions { Decoding = new DecodeOptions() });
+        (Report report, long kept, long peak) = Measure("chain.oga", data, ChainedOggFlac(2, 4), options);
+
+        int measured = report.Streams.Count(s => s.Measurements?.Status == MeasurementStatus.Complete);
+        long records = report.Streams.Sum(s => s.Measurements?.Spectrogram?.Power.Length ?? 0L);
+        output.WriteLine($"{report.Streams.Count} streams, {measured} measured, {records} bytes of grids, {kept} bytes kept and {peak} bytes peak, without measuring {plainKept} and {plainPeak}");
+        Assert.Equal(streams, report.Streams.Count);
+        Assert.InRange(measured, 100, streams - 1);
+        Assert.Equal(streams - measured, report.Findings.Where(f => f.Code == "measure.streams-limited").Sum(f => f.Count));
+        Assert.True(records <= MeasureMemoryBound, $"The grids hold {records} bytes.");
+        Assert.True(kept - plainKept < MeasureMemoryBound + (4L << 20), $"Measuring made the report keep {kept - plainKept} bytes more.");
+        Assert.True(peak - plainPeak < MeasureMemoryBound + (8L << 20), $"Measuring made the live heap grow by {peak - plainPeak} bytes more.");
+        GC.KeepAlive(data);
+    }
+
+    private const long MeasureMemoryBound = 64L << 20;
+
+    // Mono streams of 8 kHz (a grid of 513 columns takes 33 s), one after another in one file, each a first page, then a page for each frame of 4,096 samples.
+    private static byte[] ChainedOggFlac(int streams, int frames)
+    {
+        var ogg = new OggBuilder();
+        for (uint stream = 0; stream < streams; stream++)
+        {
+            uint serial = 0x464C4143 + stream;
+            byte[] info = FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 8000, 1, 16, 4096L * frames), isLast: true);
+            ogg.Page(serial, 0, 2, [0x7F, .. "FLAC"u8, 1, 0, 0, 0, .. "fLaC"u8, .. info]);
+            for (int i = 0; i < frames; i++)
+            {
+                ogg.Page(serial, 4096L * (i + 1), (byte)(i == frames - 1 ? 4 : 0), FlacBuilder.ConstantFrame(i, 4096, 8000, 1, 16));
+            }
+        }
+
+        return ogg.Bytes;
+    }
+
     // The live heap read inside the sink's Write of the last frame less the live heap with the report alive after the analysis, and
     // what the report keeps (alive less dropped); each the smaller of two analyses, as for Measure.
     private static (long Held, long Kept) LastFrameReading(string name, byte[] data, int frames, long samplesPerFrame, bool isDecoding = true, MeasureOptions? measure = null)

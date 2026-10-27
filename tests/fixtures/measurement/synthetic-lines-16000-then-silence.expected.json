@@ -2,9 +2,7 @@
  "description": "Half a second of 16 kHz lines and as much digital silence: the silent frames count as without signal.",
  "length": 38796,
  "construction": {
-  "cutoff_hz": 16000,
-  "tolerance_hz": 1500,
-  "tolerance_note": "the cut from lines to silence inside a frame splatters above the edge"
+  "cutoff_hz": 16000
  },
  "model": {
   "sample_rate": 44100,
@@ -24,7 +22,7 @@
   "cutoff": {
    "is_searched": true,
    "is_found": true,
-   "frequency": 17140,
+   "frequency": 16021,
    "transition_start": 16021,
    "step_frequency": 16021,
    "step_tenths": 390,
@@ -35,7 +33,7 @@
    {
     "is_searched": true,
     "is_found": true,
-    "frequency": 17140,
+    "frequency": 16021,
     "transition_start": 16021,
     "step_frequency": 16021,
     "step_tenths": 390,
