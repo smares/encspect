@@ -37,7 +37,7 @@ public sealed partial class GraphView : Control
 
     static GraphView()
     {
-        AffectsRender<GraphView>(GraphProperty, MarkedIndexProperty);
+        AffectsRender<GraphView>(GraphProperty, MarkedIndexProperty, ShownSeveritiesProperty);
         FocusableProperty.OverrideDefaultValue<GraphView>(true);
     }
 
@@ -47,6 +47,7 @@ public sealed partial class GraphView : Control
         Cursor = new Cursor(StandardCursorType.Hand);
         RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
         ActualThemeVariantChanged += (_, _) => InvalidateVisual();
+        InitializeMap();
     }
 
     public event EventHandler<int>? PointClicked;
@@ -78,6 +79,11 @@ public sealed partial class GraphView : Control
         if (Graph is not { Count: > 0 } graph)
         {
             return null;
+        }
+
+        if (graph is FrameMapGraph map)
+        {
+            return MapSquareAt(map, point);
         }
 
         if (IsCategory(graph))
@@ -124,6 +130,12 @@ public sealed partial class GraphView : Control
         context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
         if (Graph is not { Count: > 0 } graph || Bounds.Width < 80 || Bounds.Height < 60)
         {
+            return;
+        }
+
+        if (graph is FrameMapGraph map)
+        {
+            RenderMap(context, map);
             return;
         }
 
@@ -187,6 +199,7 @@ public sealed partial class GraphView : Control
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
+        MapPropertyChanged(change);
         if (change.Property == GraphProperty)
         {
             _hover = null;
@@ -218,6 +231,12 @@ public sealed partial class GraphView : Control
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
+        if (Graph is FrameMapGraph { Count: > 0 } map)
+        {
+            MapPointerMoved(map, e.GetPosition(this));
+            return;
+        }
+
         if (Graph is { Count: > 0 } graph && IsCategory(graph))
         {
             SetCategoryHit(CategoryHitAt(e.GetPosition(this)));
@@ -236,6 +255,13 @@ public sealed partial class GraphView : Control
     protected override void OnPointerExited(PointerEventArgs e)
     {
         base.OnPointerExited(e);
+        if (Graph is FrameMapGraph map && !_mapKeyboard)
+        {
+            _mapPointer = null;
+            SetMapHover(map, null);
+            return;
+        }
+
         _audioRow = -1;
         SetHover(null);
         _hoverText = null;
@@ -250,6 +276,12 @@ public sealed partial class GraphView : Control
         }
 
         Focus();
+        if (Graph is FrameMapGraph { Count: > 0 } map)
+        {
+            e.Handled = MapPointerPressed(map, e);
+            return;
+        }
+
         if (Graph is { Count: > 0 } graph && IsCategory(graph))
         {
             CategoryHit? hit = CategoryHitAt(e.GetPosition(this), stepping: true);
