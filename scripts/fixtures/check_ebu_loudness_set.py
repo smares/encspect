@@ -2,8 +2,9 @@
 """Runs the analyzer on the EBU loudness test set (the minimum-requirements signals of EBU Tech 3341 and Tech 3342) and holds the loudness, the loudness
 range, the maxima of the momentary and short-term loudness and the true peak to the tolerances of the two documents' tables.
 
-The set is the EBU's download (https://tech.ebu.ch/loudness), 48 kHz WAV files. It is fetched at a pinned SHA-256 and never committed: the terms of use of
-the set could not be read when this was written (docs/design/spectral-analysis.md, "Cross-checks"). The expected values are those of the documents' Table 1
+The set is the EBU's download (https://tech.ebu.ch/loudness), version 5 of 30 March 2016: 70 WAV files at 48 kHz and a readme. The readme allows the material
+to be used "only for technical testing purposes", so it is fetched at a pinned SHA-256 and never committed. The EBU's site serves the zip to a browser and
+answers scripted requests with 403, so its only address here is the private repository's copy, which needs ENCSPECT_PRIVATE_TOKEN. The expected values are those of the documents' Table 1
 (read from tech.ebu.ch on 2026-10-28); LoudnessEbuTests synthesizes every case that can be synthesized, so these files add the two authentic programmes
 (Tech 3341 cases 7 and 8, Tech 3342 cases 5 and 6) and the EBU's own rendering of the rest.
 
@@ -11,9 +12,8 @@ the set could not be read when this was written (docs/design/spectral-analysis.m
 
 --analyzer is the CLI (default src/Encspect.Cli/bin/Release/net10.0/encspect); --directory uses a set that is already extracted instead of downloading it.
 
-SHA256 is empty until someone downloads the zip once and pins it (the EBU's server answers the build machines of this repository's authors with 403 for the zip
-only; the Tech 3341 PDF downloads). Without a pin nothing is checked: the script prints a GitHub ::warning:: saying so and exits with 0, and
-`--is-pinned` prints that warning and exits with 1 for the workflow, which then builds nothing and skips the check.
+Without a pin (SHA256 empty) nothing is checked: the script prints a GitHub ::warning:: saying so and exits with 0, and `--is-pinned` prints that warning
+and exits with 1 for the workflow, which then builds nothing and skips the check.
 """
 
 import json
@@ -27,12 +27,11 @@ import zipfile
 import downloads
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-URL = "https://tech.ebu.ch/files/live/sites/tech/files/shared/testmaterial/ebu-loudness-test-setv05.zip"
-SHA256 = ""
+URLS = [downloads.private("loudness/ebu-loudness-test-setv05.zip")]
+SHA256 = "9cc500b4df83f7c21855c74dce795ef5209a752bf884253ae57d0ce512efb062"
 
 # (file name pattern, figure, expected value, tolerance up, tolerance down). Figures: I, LRA, M, S (maxima) and TP. Patterns are matched against the lower-case
-# names of the files in the set, which end in .wav (the true-peak files in .wav.wav). The file names of cases 9, 11, 12 and 14 are NOT VERIFIED (they follow the
-# pattern of the others; no copy of the set was seen); the others were checked against libebur128's tests.c, which names the files of its test set.
+# names of the files in version 5 of the set, which end in .wav (the true-peak files and most of case 13 in .wav.wav).
 CASES = [
     (r"seq-3341-1-16bit", "I", -23.0, 0.1, 0.1), (r"seq-3341-1-16bit", "M", -23.0, 0.1, 0.1), (r"seq-3341-1-16bit", "S", -23.0, 0.1, 0.1),
     (r"seq-3341-2-16bit", "I", -33.0, 0.1, 0.1), (r"seq-3341-2-16bit", "M", -33.0, 0.1, 0.1), (r"seq-3341-2-16bit", "S", -33.0, 0.1, 0.1),
@@ -54,7 +53,7 @@ CASES = [
 ]
 MINIMUM_FIGURES = 20
 NOT_PINNED = (f"::warning title=EBU loudness test set not pinned::The EBU loudness test set is not pinned (SHA256 is empty in {pathlib.Path(__file__).name}); nothing was checked. "
-              f"Download {URL} once, check it, and set SHA256 to its digest.")
+              f"Add the zip to the private repository and set SHA256 to its digest.")
 
 
 def measure(analyzer, path):
@@ -91,7 +90,7 @@ def main():
                 print(NOT_PINNED)
                 return
             archive = pathlib.Path(work) / "set.zip"
-            downloads.fetch([URL], SHA256, archive)
+            downloads.fetch(URLS, SHA256, archive)
             directory = pathlib.Path(work) / "set"
             with zipfile.ZipFile(archive) as zipped:
                 zipped.extractall(directory)

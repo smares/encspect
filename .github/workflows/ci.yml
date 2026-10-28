@@ -1047,8 +1047,8 @@ jobs:
       - name: Cross-check the measurement fixtures
         run: python3 scripts/fixtures/crosscheck_measurement_fixtures.py
 
-      # The EBU loudness test set is downloaded at a pinned SHA-256 and never committed; its expected values are Tech 3341's and 3342's tables. While the
-      # script's SHA256 is empty, the first step warns that nothing is checked, and the CLI is neither built nor run.
+      # The EBU loudness test set is fetched from the private repository at a pinned SHA-256 and never committed (its readme allows technical testing only);
+      # its expected values are Tech 3341's and 3342's tables. Were the script's SHA256 empty, the first step would warn that nothing is checked and skip the rest.
       - name: Is the EBU loudness test set pinned
         id: ebu
         run: |
@@ -1069,6 +1069,8 @@ jobs:
 
       - name: Check the analyzer against the EBU loudness test set
         if: steps.ebu.outputs.pinned == 'true'
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/check_ebu_loudness_set.py
 
   tta-crosscheck:
