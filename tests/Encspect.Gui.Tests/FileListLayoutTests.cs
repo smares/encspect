@@ -306,8 +306,7 @@ public sealed class FileListLayoutTests : IDisposable
         {
             UiPump.Until(() => true);
             AvaloniaHeadlessPlatform.ForceRenderTimerTick(2);
-            Directory.CreateDirectory(folder);
-            _main!.CaptureRenderedFrame()!.Save(Path.Combine(folder, "file-list-" + name), new PngBitmapEncoderOptions());
+            ScreenshotTests.WritePng(_main!.CaptureRenderedFrame()!, folder, "file-list-" + name);
         }
     }
 }
