@@ -86,6 +86,22 @@ public class MeasurementLevelsTests
         Assert.Equal(32768, stream.HighestMagnitude);
     }
 
+    // Runs of 16 or more are skipped with a vectorized search: lengths around the switch, one that ends exactly at the end of the block, and one
+    // longer than a piece of 16,384 samples, which the block's pieces cut in two.
+    [Theory]
+    [InlineData(15)]
+    [InlineData(16)]
+    [InlineData(17)]
+    [InlineData(300)]
+    [InlineData(40000)]
+    public void ARunOfAnyLengthIsCountedOnceWhereverItEnds(int length)
+    {
+        int[] block = [.. Enumerable.Repeat(7, 5), .. Enumerable.Repeat(-32768, length), 7, 7, .. Enumerable.Repeat(32767, length)];
+        ChannelLevels stream = Levels(16, [block]).Stream;
+
+        Assert.Equal((2, 2L * length, (long)length), (stream.ClippingRuns, stream.ClippedSamples, stream.LongestClippingRun));
+    }
+
     [Fact]
     public void TheMostNegativeCodeCountsAsFullScaleAndTheMostPositiveDoesNot()
     {
