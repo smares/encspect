@@ -40,7 +40,8 @@ make_external_measurement_fixtures.py):
       analyzer with the 48-tap filter of BS.1770-5 Annex 2: on a sine at a quarter of the rate they differ by up to 0.3 dB, and on wideband noise up to 0.6 dB);
     - FFmpeg's ebur128 (peak=true+sample), for the layouts where FFmpeg's channel weights are Table 4's (mono, stereo, 3.0, 5.0, 5.1): integrated loudness
       within 0.1 LU, the loudness range within 1 LU, the sample peak within 0.1 dB and the true peak with the tolerance of the design, FFmpeg's figure
-      between 0.3 dB under and 0.7 dB over the analyzer's (FFmpeg's resampler-based true peak reads up to 0.6 dB over the Annex 2 filter on a sine at a
+      between 0.3 dB under and 0.7 dB over the analyzer's, both limits included (the difference is taken in whole tenths of a dB, as FFmpeg prints one decimal; the
+      version of FFmpeg and the difference are printed for each fixture, so the log shows the margin) (FFmpeg's resampler-based true peak reads up to 0.6 dB over the Annex 2 filter on a sine at a
       quarter of the rate, and 0.2 dB under it on a sine at 4 kHz, where the Annex 2 filter's ripple lifts its figure above the sine's amplitude). Fixtures with a back and a side pair are left out for FFmpeg and printed.
   A fixture whose model has no figure (too short, or not measured) is compared on the figures it has.
 The measurements themselves are checked against measurement_model.py by MeasurementFixtureTests; FFmpeg's showspectrum is not needed. The tools' versions are pinned, so a field they do not print is a failure, as is a
@@ -260,6 +261,13 @@ def ebur128_map(layout):
 
 # The largest difference seen for each figure, printed at the end.
 WORST = {}
+RANGES = {"libebur128": [], "FFmpeg": []}
+TRUE_PEAK_LINES = []
+
+# FFmpeg's true peak minus the analyzer's, in tenths of a dB: FFmpeg prints one decimal and the manifests hold tenths, so the difference is a whole
+# number of tenths (computed in integers: the comparison is exact), and the limits are inclusive.
+FFMPEG_TRUE_PEAK_UNDER_TENTHS = -3
+FFMPEG_TRUE_PEAK_OVER_TENTHS = 7
 
 
 def tenths_close(figure, value, tolerance, what="figure"):
@@ -308,6 +316,7 @@ def check_libebur128(path, expected, driver, found):
     compare("maximum short-term loudness", loud["short_term"]["tenths"], values.get("short_term_max"), 0.1)
     if loud["range"]["tenths"] is not None and loud["short_term_values"] >= LRA_VALUES:
         compare("loudness range", loud["range"]["tenths"], values.get("range"), 1.0)
+        RANGES["libebur128"].append(path.stem)
     if "channels" in peak:
         for c, tenths in enumerate(peak["channels"]):
             compare(f"true peak of channel {c}", tenths, values.get(f"true_peak{c}"), 0.7)
@@ -326,8 +335,14 @@ def parse_ffmpeg_ebur128(text):
 # a window that is not yet full, the analyzer every 100 ms once 3 s are in): compared from 4 s of values (40 at 10 a second), 7 s of audio.
 LRA_VALUES = 40
 
+# The files that must reach the rule, for each tool (the two range fixtures and the two that were there before).
+MINIMUM_RANGE_FILES = 4
+
 # The layouts whose channel weights FFmpeg's ebur128 gives as Table 4 does (a back or side pair is 1.41 in both).
 FFMPEG_LAYOUT_CHANNELS = {1, 2, 3, 5, 6}
+
+
+FFMPEG_VERSION = "unknown"
 
 
 def check_ffmpeg_ebur128(path, expected, info, found, skipped):
@@ -346,21 +361,27 @@ def check_ffmpeg_ebur128(path, expected, info, found, skipped):
         return
     if loud["integrated"]["tenths"] is not None and not tenths_close(loud["integrated"]["tenths"], got["I"], 0.1, "FFmpeg integrated loudness"):
         found.append(f"integrated loudness: FFmpeg {got['I']}, the model {loud['integrated']['tenths'] / 10.0}")
-    if loud["range"]["tenths"] is not None and loud["short_term_values"] >= LRA_VALUES and not tenths_close(loud["range"]["tenths"], got["LRA"], 1.0, "FFmpeg loudness range"):
-        found.append(f"loudness range: FFmpeg {got['LRA']}, the model {loud['range']['tenths'] / 10.0}")
+    if loud["range"]["tenths"] is not None and loud["short_term_values"] >= LRA_VALUES:
+        RANGES["FFmpeg"].append(path.stem)
+        if not tenths_close(loud["range"]["tenths"], got["LRA"], 1.0, "FFmpeg loudness range"):
+            found.append(f"loudness range: FFmpeg {got['LRA']}, the model {loud['range']['tenths'] / 10.0}")
     levels = expected["model"]["levels"]["stream"]["sample_peak_tenths"]
     if levels is not None and got["sample"] is not None and not tenths_close(levels, got["sample"], 0.1, "FFmpeg sample peak"):
         found.append(f"sample peak: FFmpeg {got['sample']}, the model {levels / 10.0}")
     if peak.get("stream") is not None and got["true"] is not None:
-        difference = got["true"] - peak["stream"] / 10.0
-        WORST["FFmpeg true peak over the model"] = max(WORST.get("FFmpeg true peak over the model", -9.0), difference)
-        WORST["FFmpeg true peak under the model"] = min(WORST.get("FFmpeg true peak under the model", 9.0), difference)
-        if not -0.3 - 1e-9 <= difference <= 0.7 + 1e-9:
-            found.append(f"true peak: FFmpeg {got['true']}, the model {peak['stream'] / 10.0} (FFmpeg minus the model must lie between -0.3 and +0.7 dB)")
+        difference = round(got["true"] * 10) - peak["stream"]
+        WORST["FFmpeg true peak over the model"] = max(WORST.get("FFmpeg true peak over the model", -9.0), difference / 10.0)
+        WORST["FFmpeg true peak under the model"] = min(WORST.get("FFmpeg true peak under the model", 9.0), difference / 10.0)
+        margin = min(difference - FFMPEG_TRUE_PEAK_UNDER_TENTHS, FFMPEG_TRUE_PEAK_OVER_TENTHS - difference)
+        TRUE_PEAK_LINES.append(f"{path.stem}: FFmpeg {FFMPEG_VERSION} true peak {got['true']:+.1f} dBTP, the model {peak['stream'] / 10.0:+.1f}, difference {difference / 10.0:+.1f} dB (margin {margin / 10.0:.1f} dB)")
+        if not FFMPEG_TRUE_PEAK_UNDER_TENTHS <= difference <= FFMPEG_TRUE_PEAK_OVER_TENTHS:
+            found.append(f"true peak: FFmpeg {got['true']}, the model {peak['stream'] / 10.0} (FFmpeg minus the model must lie between -0.3 and +0.7 dB, both included, in tenths)")
 
 
 def main():
     tool_versions.require("flac", "ffmpeg", "ffprobe")
+    global FFMPEG_VERSION
+    FFMPEG_VERSION = tool_versions.program_version("ffmpeg")[0] or "unknown"
     driver = ebur128_tool.build(pathlib.Path(os.environ.get("EBUR128_DIR", ROOT / ".cache" / "ebur128")))
     os.environ["PATH"] = str(driver.parent) + os.pathsep + os.environ["PATH"]
     tool_versions.require("ebur128_driver")
@@ -428,6 +449,13 @@ def main():
     print(f"{len(files)} files checked, {compared_loudness} compared with libebur128, {pcm_files} PCM files compared with ffmpeg")
     for what, value in sorted(WORST.items()):
         print(f"largest difference, {what}: {value:.2f}")
+    print(f"FFmpeg {FFMPEG_VERSION}: true peak minus the model's, the limits -0.3 and +0.7 dB inclusive (one decimal, compared in tenths), for each fixture:")
+    for line in TRUE_PEAK_LINES:
+        print("  " + line)
+    for tool, stems in RANGES.items():
+        print(f"loudness range compared with {tool}: {len(stems)} files ({', '.join(stems)})")
+        if len(stems) < MINIMUM_RANGE_FILES and not names:
+            problems.append(f"only {len(stems)} files compare their loudness range with {tool}; at least {MINIMUM_RANGE_FILES} are expected")
     for line in skipped:
         print("skipped", line)
     for problem in problems:

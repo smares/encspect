@@ -203,6 +203,13 @@ public class MeasurementFixtureTests
             LoudnessSignals.AssertNear(l.RangeTenths, range.GetDouble(), built.GetProperty("range_tolerance").GetDouble(), name + " LRA");
         }
 
+        if (built.TryGetProperty("short_term_values_at_least", out JsonElement values))
+        {
+            // The loudness range is compared with the other tools from this many short-term values on (the cross-check's LRA_VALUES).
+            Assert.Equal(LoudnessAbsence.None, l.RangeAbsence);
+            Assert.True(l.ShortTerm!.Values.Length * l.StepsPerPoint >= values.GetInt32());
+        }
+
         if (built.TryGetProperty("weights", out JsonElement weights))
         {
             Assert.Equal(weights.EnumerateArray().Select(w => w.GetInt32()), l.ChannelWeights);

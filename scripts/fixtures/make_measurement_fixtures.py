@@ -439,6 +439,19 @@ def add_loudness():
     add("loudness-steps-8000", "A mono sine of 125 Hz at 8 kHz: 4 s at -20 dBFS and then 4 s at -30 dBFS (Tech 3342 case 1 shortened): a loudness range of 10 LU.", [steps], r8, 16,
         dict(unspecified, loudness={"range": 10.0, "range_tolerance": 1.0, "source": "EBU Tech 3342 Table 1, case 1"}))
 
+    # A loudness range over 30 s, so that the 40-value rule of the cross-check holds (271 short-term values): six tones of 5 s with levels 15 LU apart at the
+    # extremes. The 95th percentile lies on the -20 dBFS plateaus (40 values, 15 %) and the 10th on the -35 dBFS ones (40 values, 15 %): 15 LU (+-1).
+    staircase = [lvl for level in (-20.0, -35.0, -25.0, -35.0, -30.0, -20.0) for lvl in quantize(tone(r8, 5.0, level, low), 16)]
+    add("loudness-range-steps-8000", "A mono sine of 125 Hz at 8 kHz for 30 s in six steps of 5 s at -20, -35, -25, -35, -30 and -20 dBFS: 271 short-term values, a loudness range of 15 LU.", [staircase], r8, 16,
+        dict(unspecified, loudness={"range": 15.0, "range_tolerance": 1.0, "short_term_values_at_least": 40}))
+
+    # Both gates in one range, over 45 s: 5 s each at -18, -50 (more than 20 LU under the mean of the rest: below the relative gate), -24 and -85 dBFS (below
+    # the absolute gate), then 20 s at -30 and 5 s at -18. The low end of the range lies on the long -30 plateau and the high end on the -18 ones, whether the
+    # short-term loudness is taken every 100 ms (the analyzer, FFmpeg) or once a second (libebur128), which a range across short steps is not.
+    gated = [v for level, seconds in ((-18.0, 5.0), (-50.0, 5.0), (-24.0, 5.0), (-85.0, 5.0), (-30.0, 20.0), (-18.0, 5.0)) for v in quantize(tone(r8, seconds, level, low), 16)]
+    add("loudness-range-gates-8000", "A mono sine of 125 Hz at 8 kHz for 45 s: 5 s each at -18, -50, -24 and -85 dBFS, 20 s at -30 and 5 s at -18 dBFS: the -50 dBFS tone is below the relative gate of the loudness range and the -85 dBFS one below the absolute gate.",
+        [gated], r8, 16, dict(unspecified, loudness={"short_term_values_at_least": 40}))
+
     # The gates: a loud tone, digital silence (below the absolute gate) and a tone 38 dB lower (below the relative gate): only the loud tone counts.
     gates = quantize(tone(r8, 2.0, -12.0, low) + [0.0] * (2 * r8) + tone(r8, 2.0, -50.0, low), 16)
     add("loudness-gates-8000", "A mono sine of 125 Hz at 8 kHz: 2 s at -12 dBFS, 2 s of digital silence, 2 s at -50 dBFS: the silence is below the absolute gate and the quiet tone below the relative gate, so only the loud tone's blocks count.",
