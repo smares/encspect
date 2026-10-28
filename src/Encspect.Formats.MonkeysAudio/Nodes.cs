@@ -53,18 +53,18 @@ internal static class Nodes
     public static Node CrcField(Records r, int index)
     {
         Entry e = r.Entries[index];
-        return Field("Frame CRC", r.DataStart, e.Start, e.Start + 4, NodeValue.Hex(e.Crc, 8), Explain.FrameCrc, Topics.Frames);
+        return Field("Frame CRC", r.DataStart, e.Start + (e.StartBit >> 3), e.Start + ((e.StartBit + 31) >> 3) + 1, NodeValue.Hex(e.Crc, 8), Explain.FrameCrc, Topics.Frames);
     }
 
     // The CRC field of the frame whose bytes are given, equal to the node the parser builds, for a finding of the decoder. dataStart is the file offset of
     // the first frame's first byte.
-    public static Node CrcOfFrame(MappedBytes frame, long dataStart, uint crc)
+    public static Node CrcOfFrame(MappedBytes frame, long dataStart, uint crc, int bit = 0)
     {
         ByteRange first = frame.FileRanges()[0];
         long groupEnd = Math.Min(first.End, dataStart + ((((first.Offset - dataStart) >> 2) + 1) << 2));
         long firstByte = groupEnd - 1;
         long start = (((firstByte - dataStart) >> 2) << 2) + (3 - ((firstByte - dataStart) & 3));
-        return Field("Frame CRC", dataStart, start, start + 4, NodeValue.Hex(crc, 8), Explain.FrameCrc, Topics.Frames);
+        return Field("Frame CRC", dataStart, start + (bit >> 3), start + ((bit + 31) >> 3) + 1, NodeValue.Hex(crc, 8), Explain.FrameCrc, Topics.Frames);
     }
 
     private static IReadOnlyList<Node> FrameChildren(Records r, int index)
@@ -76,13 +76,17 @@ internal static class Nodes
         long at = start;
         if ((e.Status & EntryStatus.NoStartFields) == 0 && r.HasFrameFields)
         {
-            children.Add(Field("Frame CRC", r.DataStart, at, at + 4, NodeValue.Hex(e.Crc, 8), Explain.FrameCrc, Topics.Frames));
-            at += 4;
-            if ((e.Status & EntryStatus.HasSpecialCodes) != 0 && at + 4 <= end)
+            // In a file of version 3.80 a frame may start inside a byte, so a field is over the bytes its bits touch; the other versions start on a byte.
+            int bit = e.StartBit;
+            children.Add(Field("Frame CRC", r.DataStart, at + (bit >> 3), at + ((bit + 31) >> 3) + 1, NodeValue.Hex(e.Crc, 8), Explain.FrameCrc, Topics.Frames));
+            bit += 32;
+            if ((e.Status & EntryStatus.HasSpecialCodes) != 0 && start + ((bit + 31) >> 3) < end)
             {
-                children.Add(Field("Special Frame Codes", r.DataStart, at, at + 4, SpecialCodes(e.Special, r.Channels), Explain.SpecialCodes, Topics.Frames));
-                at += 4;
+                children.Add(Field("Special Frame Codes", r.DataStart, start + (bit >> 3), start + ((bit + 31) >> 3) + 1, SpecialCodes(e.Special, r.Channels), Explain.SpecialCodes, Topics.Frames));
+                bit += 32;
             }
+
+            at = start + (bit >> 3);
         }
 
         if (end > at)

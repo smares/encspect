@@ -1,0 +1,94 @@
+{
+ "length": 11440,
+ "file_version": 3910,
+ "seek_entries": 1,
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 11440
+  }
+ ],
+ "frames": [
+  {
+   "index": 0,
+   "offset": 36,
+   "length": 11404,
+   "samples": 3000,
+   "crc": "0x58814C15",
+   "special": null,
+   "start": 0,
+   "end": 11404
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Mid/side stereo",
+   "samples": 3000,
+   "duration": 0.06802721088435375,
+   "bits_per_sample": 24,
+   "average_bitrate": 1341.1103999999998,
+   "encoder": "Monkey's Audio (file version 3.91)"
+  }
+ ],
+ "decoded_samples": 0,
+ "pcm_samples": 0,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": null,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 1,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [
+  {
+   "code": "decode.frame-invalid",
+   "count": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "monkeys-audio.old-format",
+   "contains": ""
+  }
+ ],
+ "encoder": {
+  "tool": "monkeys_audio_old.py, from the frames of a file it wrote"
+ },
+ "crosscheck": {
+  "mac_verify": false
+ },
+ "header": {
+  "flags": 42
+ }
+}

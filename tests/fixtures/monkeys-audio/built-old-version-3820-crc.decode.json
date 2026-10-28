@@ -1,23 +1,29 @@
 {
   "verification": {
-    "decoding": "NotPossible",
-    "decodedSamples": 0,
-    "isVerified": null,
+    "decoding": "Decoded",
+    "decodedSamples": 18432,
+    "isVerified": false,
     "checksums": [
       {
         "name": "frame CRC-32",
         "stored": 3,
-        "checked": 0,
-        "failed": 0
+        "checked": 2,
+        "failed": 2
       }
     ]
   },
   "findings": [
     {
-      "code": "decode.not-possible",
-      "severity": "Info",
+      "code": "monkeys-audio.frame-crc-mismatch",
+      "severity": "Warning",
+      "count": 2,
+      "message": "The CRC of the decoded audio of the frame at 0x58 is 0x58C45803, but the frame stores 0x08FC16BB: the decoded samples differ from what the encoder read."
+    },
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
       "count": 1,
-      "message": "The stream was not decoded: The file is of version 3.82, whose frames are not decoded; the decoder takes versions 3.93 to 3.99 and 4.11"
+      "message": "The monkeys-audio decoder could not decode the frame at 0x1BBB0: The frame holds 12544 samples; the decoder takes 1 to 9216 in a file of version 3.82."
     }
   ]
 }

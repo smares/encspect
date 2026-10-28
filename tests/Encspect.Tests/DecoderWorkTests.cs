@@ -299,6 +299,27 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             Add("monkeys-audio-" + label, () => new Case("monkeys-audio-" + label, MonkeysAudioCases.Repeated(file)));
         }
 
+        // Monkey's Audio before version 3.93, whose decoder is another (Old/UnMACOld.cpp): each bit coding (the Rice coding up to 3.85, from 3.86, with the overflow cap
+        // of 3.89, the range coder of 3.90 to 3.92) at the level whose predictor costs the most, and every predictor. Each case repeats the first frame of a fixture, a
+        // whole frame of the version.
+        foreach ((string label, string file) in new[]
+        {
+            ("old-rice-3.81-high-mono", "legacy-3810-high-16-mono.ape"),
+            ("old-rice-3.84-normal-8-bit", "legacy-3840-normal-8-stereo.ape"),
+            ("old-rice-3.84-extra-high", "legacy-3840-extra-high-16-stereo-frames.ape"),
+            ("old-rice-3.86-normal", "legacy-3860-normal-16-stereo-frames.ape"),
+            ("old-rice-3.88-fast-spikes", "legacy-3880-fast-16-stereo-spikes.ape"),
+            ("old-rice-3.89-normal-spikes", "legacy-3890-normal-16-stereo-spikes.ape"),
+            ("old-range-3.91-normal", "legacy-3910-normal-16-stereo-frames.ape"),
+            ("old-range-3.92-extra-high", "legacy-3920-extra-high-16-stereo-frames.ape"),
+        })
+        {
+            Add("monkeys-audio-" + label, () => new Case("monkeys-audio-" + label, MonkeysAudioCases.RepeatedOld(file)));
+        }
+
+        // A frame of 73,728 samples flagged silent codes nothing and is charged the fixed work of its samples and the silent frames' share, as in the later versions.
+        Add("monkeys-audio-old-range-3.92-silent-frames", () => new Case("monkeys-audio-old-range-3.92-silent-frames", MonkeysAudioCases.RepeatedOld("legacy-3920-extra-high-16-stereo-silent-then-tone.ape")));
+
         // Frames flagged silent charge the fixed work of their samples and no more, at the level whose coded frames cost the most.
         Add("monkeys-audio-insane-silent-frames", () => new Case("monkeys-audio-insane-silent-frames", MonkeysAudioCases.Repeated("external-silent-stereo.ape", level: 5000)));
 
@@ -672,6 +693,16 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             long perCopy = Math.Max(1, Units(probe) / 2);
             int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
             return MonkeysAudioBuilder.Build(header, headerData, [.. Enumerable.Repeat(frames[frame], copies)], blocks, blocks, level);
+        }
+
+        public static byte[] RepeatedOld(string fixture, long target = Target)
+        {
+            (byte[] header, int version, List<byte[]> frames) = MonkeysAudioBuilder.TakeOld(fixture);
+            uint blocks = MonkeysAudioBuilder.OldBlocksPerFrame(version, BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(6)));
+            byte[] probe = MonkeysAudioBuilder.BuildOld(header, [frames[0], frames[0]], blocks);
+            long perCopy = Math.Max(1, Units(probe) / 2);
+            int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
+            return MonkeysAudioBuilder.BuildOld(header, [.. Enumerable.Repeat(frames[0], copies)], blocks);
         }
 
         public static long Units(byte[] file)

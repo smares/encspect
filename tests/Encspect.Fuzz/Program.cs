@@ -78,7 +78,7 @@ internal static class Program
         long? only = Option(args, "--iteration") is { } i ? long.Parse(i, CultureInfo.InvariantCulture) : null;
 
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
-            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" or ".flac" or ".tta" or ".thd" or ".mlp" or ".dts" or ".dtshd" or ".mka" or ".mkv" or ".webm" or ".wav" or ".w64" or ".aiff" or ".aifc" && new FileInfo(f).Length <= MaxCorpusFileSize)
+            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" or ".flac" or ".tta" or ".thd" or ".mlp" or ".dts" or ".dtshd" or ".mka" or ".mkv" or ".webm" or ".wav" or ".w64" or ".aiff" or ".aifc" or ".ape" && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
             .Select(File.ReadAllBytes)
             .ToArray();

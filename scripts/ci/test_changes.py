@@ -56,7 +56,7 @@ class ChangesTests(unittest.TestCase):
         for path in ("src/Encspect.Formats.MonkeysAudio/MonkeysAudioParser.cs", "src/Encspect.Formats.MonkeysAudio/Decoding/RangeDecoder.cs",
                      "tests/fixtures/monkeys-audio/a.ape", "scripts/fixtures/monkeys_audio_model.py", "scripts/fixtures/make_monkeys_audio_fixtures.py",
                      "scripts/fixtures/make_external_monkeys_audio_fixtures.py", "scripts/fixtures/make_legacy_monkeys_audio_fixtures.py",
-                     "scripts/fixtures/make_interim_monkeys_audio_fixture.py", "scripts/fixtures/monkeys_audio_legacy.py",
+                     "scripts/fixtures/make_interim_monkeys_audio_fixture.py", "scripts/fixtures/monkeys_audio_legacy.py", "scripts/fixtures/monkeys_audio_old.py",
                      "scripts/fixtures/check_monkeys_audio_samples.py", "tests/conformance/monkeys-audio-samples.json"):
             self.assertIn("monkeys-audio-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/crosscheck_monkeys_audio_fixtures.py"), {"monkeys-audio-crosscheck", "fixtures"})

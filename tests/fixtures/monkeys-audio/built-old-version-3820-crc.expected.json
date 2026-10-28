@@ -57,8 +57,8 @@
    "encoder": "Monkey's Audio (file version 3.82)"
   }
  ],
- "decoded_samples": 0,
- "pcm_samples": 0,
+ "decoded_samples": 18432,
+ "pcm_samples": 18432,
  "verification": {
   "default": {
    "isVerified": null,
@@ -75,23 +75,27 @@
    ]
   },
   "verify": {
-   "isVerified": null,
-   "decoding": "notPossible",
+   "isVerified": false,
+   "decoding": "decoded",
    "checksums": [
     {
      "name": "frame CRC-32",
      "covers": "decodedAudio",
      "coversAllAudio": true,
      "stored": 3,
-     "checked": 0,
-     "failed": 0
+     "checked": 2,
+     "failed": 2
     }
    ]
   }
  },
  "decode_findings": [
   {
-   "code": "decode.not-possible",
+   "code": "monkeys-audio.frame-crc-mismatch",
+   "count": 2
+  },
+  {
+   "code": "decode.frame-invalid",
    "count": 1
   }
  ],
@@ -109,7 +113,7 @@
   "tool": "monkeys_audio_model.py, from the frames of a file mac wrote"
  },
  "crosscheck": {
-  "mac_verify": null
+  "mac_verify": false
  },
  "header": {
   "flags": 2

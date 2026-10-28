@@ -10,8 +10,11 @@ make_legacy_monkeys_audio_fixtures.py, make_monkeys_audio_fixtures.py):
   The SDK's own decoder skips the seventh channel of a seven-channel file, so mac -V fails for it, as the analyzer's decoder does.
 - mac -d, on the fixtures mac -V accepts: the decoded samples, in the layout of the manifest's decoded_pcm_md5 (little-endian signed integers of as many whole
   bytes as the bit depth needs; the unsigned bytes of an 8-bit WAV file made signed), have that MD5, which the signal that went into the encoder gives.
-- FFmpeg 8.0.1: the same fixtures decode to the same samples where FFmpeg reads them (mono and stereo of 8, 16 and 24 bits, files of versions 3.93 to 3.99 that
-  start with their descriptor or, before 3.98, with the old header); ffprobe gives the codec, the sample rate, the channels and the duration.
+- FFmpeg 8.0.1: the same fixtures decode to the same samples where FFmpeg reads them (mono and stereo of 8, 16 and 24 bits, files of versions 3.80 to 3.99 that
+  start with their descriptor or, before 3.98, with the old header); ffprobe gives the codec, the sample rate, the channels and the duration. FFmpeg compares the
+  frame CRC only from version 3.90, so before that (and in files without the CRC flag) it decodes other samples without saying so wherever its decoder differs from
+  the SDK's: FFMPEG_DIFFERS lists the fixtures of versions before 3.93 where it did, each with what was seen, and the run fails when a listed fixture decodes to the
+  samples after all or an unlisted one does not.
 - MediaInfo 26.01 (mediainfo_tool.py): the audio stream's format, sample rate, channels, bit depth and duration, where it reads the file.
 - The descriptor MD5 is worked out again here with hashlib in the SDK's order (MACLib.cpp, VerifyFileW2) and compared with the manifest's.
 
@@ -35,6 +38,27 @@ import tool_versions
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIRECTORY = ROOT / "tests" / "fixtures" / "monkeys-audio"
 SKIPS = {}
+
+# The fixtures of versions before 3.93 that FFmpeg 8.0.1 does not decode to the SDK's samples, with what it does instead. None of its errors is a CRC mismatch
+# (it compares the CRC from 3.90, and not in a file without the CRC flag); these are the differences between its decoder and the SDK's, seen on the legacy-* fixtures of versions 3.80 to 3.92 and not examined further.
+OTHER_SAMPLES = "decodes other samples than the SDK and reports no error"
+FEWER_SAMPLES = "decodes fewer samples than the SDK, without an error"
+FFMPEG_DIFFERS = {
+    # The levels fast (1000) and extra high (4000): every fixture of them.
+    **{f"legacy-{name}": f"{OTHER_SAMPLES} (level fast or extra high)" for name in (
+        "3800-extra-high-16-stereo-frames", "3800-fast-8-mono", "3820-extra-high-8-stereo", "3830-extra-high-16-stereo", "3840-extra-high-16-stereo-frames",
+        "3840-fast-16-mono-silent-then-tone", "3850-extra-high-24-stereo", "3880-extra-high-16-stereo", "3880-fast-16-stereo-spikes",
+        "3890-extra-high-16-stereo-checksum", "3900-fast-16-mono-spikes", "3900-fast-16-mono-spikes-unpadded", "3910-fast-8-mono", "3910-fast-8-mono-unpadded",
+        "3920-extra-high-16-stereo-frames", "3920-extra-high-16-stereo-silent-then-tone")},
+    # Files without the CRC flag, whose frames start with a checksum: it drops frames or decodes other samples.
+    "legacy-3800-normal-16-stereo-checksum": f"{FEWER_SAMPLES} (a file without the CRC flag)",
+    "legacy-3850-normal-16-stereo-silent-then-tone-checksum": f"{FEWER_SAMPLES} (a file without the CRC flag)",
+    "legacy-3890-high-8-mono-checksum": f"{OTHER_SAMPLES} (a file without the CRC flag)",
+    "legacy-3830-normal-8-stereo-silent-then-tone": f"{FEWER_SAMPLES} (a silent frame of 8-bit audio)",
+    "legacy-3890-normal-16-stereo-spikes": f"{OTHER_SAMPLES} (values far above the size the coding has adapted to)",
+    "legacy-3840-high-16-pseudo-stereo": "fails with \"Error decoding frame\" (pseudo-stereo frames of 3.84)",
+    "legacy-3900-normal-16-stereo-checksum-not-decoded": "fails with \"Error decoding frame\" (no CRC flag in a file of 3.90 to 3.92)",
+}
 
 
 def skip(name, check, reason):
@@ -140,8 +164,8 @@ def ffmpeg_reads(manifest, data):
     if manifest["header"]["flags"] & 4096 or data[:4] == b"MACF":
         return "FFmpeg does not read floating-point files"
     version = manifest["descriptor"]["version"] if "descriptor" in manifest else manifest["file_version"]
-    if version < 3930 or 3990 < version:
-        return "FFmpeg decodes files of versions 3.93 to 3.99 (the versions the decoder reads) and refuses the others it is given, or decodes other audio than the SDK"
+    if version < 3800 or 3990 < version:
+        return "FFmpeg decodes files of versions 3.80 to 3.99 (APE_MIN_VERSION and APE_MAX_VERSION) and refuses the others it is given, or decodes other audio than the SDK"
     if info["sample_rate"] == 0:
         return "FFmpeg refuses a file with no sample rate"
     if "descriptor" in manifest and (manifest["descriptor"]["descriptor_bytes"] != 52 or manifest["descriptor"]["header_bytes"] != 24):
@@ -158,15 +182,26 @@ def check_ffmpeg(name, manifest, path, problems):
     if reason:
         skip(name, "FFmpeg", reason)
         return
+    listed = FFMPEG_DIFFERS.get(name)
     result = run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a:0", "-f", "s32le", "-"])
     if result.returncode != 0:
-        problems.append(f"ffmpeg fails: {result.stderr.decode(errors='replace').strip()[:200]}")
+        if listed and listed.startswith("fails"):
+            skip(name, "FFmpeg samples", f"FFmpeg {listed}")
+        else:
+            problems.append(f"ffmpeg fails: {result.stderr.decode(errors='replace').strip()[:200]}")
         return
     shift = 32 - bits
     width = (bits + 7) // 8
     values = [int.from_bytes(result.stdout[i:i + 4], "little", signed=True) >> shift for i in range(0, len(result.stdout), 4)]
     raw = b"".join(v.to_bytes(width, "little", signed=True) for v in values)
-    if hashlib.md5(raw).hexdigest() != manifest["decoded_pcm_md5"]:
+    same = hashlib.md5(raw).hexdigest() == manifest["decoded_pcm_md5"]
+    if listed and listed.startswith("fails"):
+        problems.append(f"ffmpeg is listed as failing ({listed}) and decodes the file")
+    elif listed and not same:
+        skip(name, "FFmpeg samples", f"FFmpeg {listed}")
+    elif listed:
+        problems.append(f"ffmpeg is listed as differing ({listed}) and decodes the manifest's samples")
+    elif not same:
         problems.append("ffmpeg decodes samples that differ from the manifest's")
     probe = run(["ffprobe", "-v", "error", "-show_streams", "-of", "json", str(path)])
     stream = next((s for s in json.loads(probe.stdout or b"{}").get("streams", []) if s.get("codec_type") == "audio"), None)

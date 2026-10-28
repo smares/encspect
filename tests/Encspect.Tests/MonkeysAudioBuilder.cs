@@ -104,6 +104,65 @@ internal static class MonkeysAudioBuilder
         return frame == count - 1 ? final : perFrame;
     }
 
+    // A fixture of the format before version 3.98 (one header of 32 bytes, an optional peak level and element count, the seek table, the frames), taken apart: its header
+    // up to the seek table, and its frames in the order of the stream. Versions up to 3.80, whose frames follow each other bit by bit, are not taken.
+    public static (byte[] Header, int Version, List<byte[]> Frames) TakeOld(string name)
+    {
+        byte[] file = File.ReadAllBytes(FixturePath(name));
+        int version = BinaryPrimitives.ReadUInt16LittleEndian(file.AsSpan(4));
+        Assert.True(version > 3800 && version < 3980, $"{name} is of version {version}.");
+        ushort flags = BinaryPrimitives.ReadUInt16LittleEndian(file.AsSpan(8));
+        int headerBytes = 32 + ((flags & 4) != 0 ? 4 : 0) + ((flags & 16) != 0 ? 4 : 0);
+        uint headerData = (flags & 32) != 0 ? 0 : BinaryPrimitives.ReadUInt32LittleEndian(file.AsSpan(16));
+        uint terminating = BinaryPrimitives.ReadUInt32LittleEndian(file.AsSpan(20));
+        int count = (int)BinaryPrimitives.ReadUInt32LittleEndian(file.AsSpan(24));
+        int seekAt = headerBytes + (int)headerData;
+        int dataStart = seekAt + (4 * count);
+        long dataEnd = file.Length - terminating;
+        var frames = new List<byte[]>();
+        for (int f = 0; f < count; f++)
+        {
+            long start = BinaryPrimitives.ReadUInt32LittleEndian(file.AsSpan(seekAt + (4 * f))) - dataStart;
+            long end = f + 1 < count ? BinaryPrimitives.ReadUInt32LittleEndian(file.AsSpan(seekAt + (4 * (f + 1)))) - dataStart : dataEnd - dataStart;
+            var frame = new byte[end - start];
+            for (long j = start; j < end; j++)
+            {
+                frame[j - start] = file[dataStart + ((j >> 2) << 2) + 3 - (j & 3)];
+            }
+
+            frames.Add(frame);
+        }
+
+        return (file[..headerBytes], version, frames);
+    }
+
+    // The samples of a frame of a file of the format before version 3.98, the whole frame but the last of a file.
+    public static uint OldBlocksPerFrame(int version, int level) => version >= 3900 || (version >= 3800 && level == 4000) ? 73728u : 9216u;
+
+    // A file of the format before 3.98 of the frames given, all of OldBlocksPerFrame samples but the last, which has finalBlocks.
+    public static byte[] BuildOld(byte[] header, IReadOnlyList<byte[]> frames, uint finalBlocks)
+    {
+        byte[] own = [.. header];
+        BinaryPrimitives.WriteUInt32LittleEndian(own.AsSpan(24), (uint)frames.Count);
+        BinaryPrimitives.WriteUInt32LittleEndian(own.AsSpan(28), finalBlocks);
+        int dataStart = own.Length + (4 * frames.Count);
+        long total = frames.Sum(f => (long)f.Length);
+        var body = new byte[(total + 3) / 4 * 4];
+        var seek = new byte[4 * frames.Count];
+        long position = 0;
+        for (int f = 0; f < frames.Count; f++)
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(seek.AsSpan(4 * f), (uint)(dataStart + position));
+            foreach (byte b in frames[f])
+            {
+                body[(int)((position >> 2 << 2) + 3 - (position & 3))] = b;
+                position++;
+            }
+        }
+
+        return [.. own, .. seek, .. body];
+    }
+
     // A frame of digital silence in two channels of 16 bits: the CRC of the zero samples with the bit that flags the special codes, and the code for
     // both channels silent (APEDecompressCore.cpp). It has no coded samples, and it decodes.
     public static byte[] SilentFrame(int blocks)
