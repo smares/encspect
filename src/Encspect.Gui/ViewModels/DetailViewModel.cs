@@ -250,12 +250,19 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         IsTopicOpen = true;
     }
 
-    // Closes the pane, or opens it on the selected node's topic, or the list where it has none.
-    public void ToggleTopics()
+    // Closes the pane, or opens it on the selected node's topic, or the list where it has none. With a preferred topic (the
+    // selected graph's) it opens on that, or moves an open pane to it, and closes only a pane that shows it already.
+    public void ToggleTopics(Topic? preferred = null)
     {
+        if (preferred is not null && _isTopicOpen && _shownTopic != preferred)
+        {
+            ShownTopic = preferred;
+            return;
+        }
+
         if (!_isTopicOpen)
         {
-            ShownTopic = SelectionTopic;
+            ShownTopic = preferred ?? SelectionTopic;
         }
 
         IsTopicOpen = !_isTopicOpen;

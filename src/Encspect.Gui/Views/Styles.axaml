@@ -62,6 +62,21 @@
   <Style Selector="TextBlock.link:pointerover">
     <Setter Property="TextDecorations" Value="Underline" />
   </Style>
+  <!-- A link to a background article that is a button, so that Tab reaches it and Enter opens it. -->
+  <Style Selector="Button.link">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="2,1" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
+  </Style>
+  <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.link:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.link:focus-visible TextBlock">
+    <Setter Property="TextDecorations" Value="Underline" />
+  </Style>
   <!-- A button whose pane is open. -->
   <Style Selector="Button.active">
     <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />

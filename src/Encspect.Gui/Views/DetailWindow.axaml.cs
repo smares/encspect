@@ -58,7 +58,7 @@ public partial class DetailWindow : Window
         // The menu shows in macOS's menu bar; elsewhere the window has no menu bar, which would
         // only repeat its buttons, and the menu's shortcuts still work.
         Shortcuts.Bind(this, new KeyGesture(Key.Escape), Close);
-        Shortcuts.Bind(this, new KeyGesture(Key.F1), Model.ToggleTopics);
+        Shortcuts.Bind(this, new KeyGesture(Key.F1), OnTopicsKey);
         NativeMenu.SetMenu(this, CreateMenu());
 
         string modifier = OperatingSystem.IsMacOS() ? "⌘" : "Ctrl+";
@@ -223,6 +223,13 @@ public partial class DetailWindow : Window
         }
     }
 
+    // F1 opens the article of the selected node, or of the selected graph while the focus is in the graph area.
+    private void OnTopicsKey()
+    {
+        bool inGraphs = Model.IsGraphsShown && GetTopLevel(this)?.FocusManager?.GetFocusedElement() is Visual focus && (ReferenceEquals(focus, GraphArea) || focus.GetVisualAncestors().Contains(GraphArea));
+        Model.ToggleTopics(inGraphs ? Model.Graphs.Topic : null);
+    }
+
     private void OnTopics(object? sender, RoutedEventArgs e) => Model.ToggleTopics();
 
     private void OnDecodeAudio(object? sender, RoutedEventArgs e) => _ = Model.DecodeAudioAsync();
@@ -234,6 +241,16 @@ public partial class DetailWindow : Window
     private void OnCloseTopic(object? sender, RoutedEventArgs e) => Model.IsTopicOpen = false;
 
     private void OnLearnMore(object? sender, TappedEventArgs e) => Model.ShowTopic(Model.SelectionTopic?.Id);
+
+    private void OnGraphLearnMore(object? sender, RoutedEventArgs e) => Model.ShowTopic(Model.Graphs.Topic?.Id);
+
+    private void OnFigureLearnMore(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: MeasurementLine line })
+        {
+            Model.ShowTopic(line.Topic);
+        }
+    }
 
     // The selected entry of the list comes into view, whatever selected it (a click, the remembered title of the last file, a key).
     private void OnGraphsChanged(object? sender, PropertyChangedEventArgs e)

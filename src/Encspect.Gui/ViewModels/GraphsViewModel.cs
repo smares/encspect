@@ -59,6 +59,11 @@ public sealed class GraphChoice : ObservableObject
 
     public GraphFormChoice Form => _form;
 
+    // The background article of the graph drawn now, or null where it has none.
+    public Topic? Topic => TopicLibrary.Find(Graph.Topic);
+
+    public string? LearnMoreText => Topic is { } topic ? $"Learn More: {topic.Title}" : null;
+
     public Graph Graph => _form.Graph;
 
     public bool IsSelected
@@ -84,6 +89,8 @@ public sealed class GraphChoice : ObservableObject
         _form.IsSelected = true;
         Raise(nameof(Form));
         Raise(nameof(Graph));
+        Raise(nameof(Topic));
+        Raise(nameof(LearnMoreText));
         return true;
     }
 }
@@ -250,6 +257,11 @@ public sealed class GraphsViewModel : ObservableObject
     public GraphForm? Form => _selected?.Form.Kind;
 
     public Graph? Graph => _selected?.Graph;
+
+    // The background article of the chosen graph, or null where it has none (a numeric series, the Coding Summary).
+    public Topic? Topic => _selected?.Topic;
+
+    public string? LearnMoreText => _selected?.LearnMoreText;
 
     // The severities whose findings the Frame Map rings and marks; the Findings tab's filters.
     public SeverityMask ShownSeverities
@@ -572,6 +584,8 @@ public sealed class GraphsViewModel : ObservableObject
         Raise(nameof(EmptyNote));
         Raise(nameof(HasEmptyNote));
         Raise(nameof(Figures));
+        Raise(nameof(Topic));
+        Raise(nameof(LearnMoreText));
         Raise(nameof(IsChartShown));
         Raise(nameof(IsFiguresShown));
     }

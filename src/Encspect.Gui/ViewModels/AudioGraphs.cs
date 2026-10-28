@@ -147,6 +147,8 @@ public sealed class WaveformGraph : TimeGraph
 
     public override string? Description => MeasurementText.WaveformDescription;
 
+    public override string? Topic => MeasurementText.MeasuredTopic;
+
     public override double Maximum => 32768;
 
     public short Minimum(int channel, int column) => Grid.Minimum.Span[(channel * Columns) + column];
@@ -195,6 +197,8 @@ public sealed class SpectrogramGraph : TimeGraph
     public SpectrogramGrid Grid { get; }
 
     public override string? Description => MeasurementText.SpectrogramDescription;
+
+    public override string? Topic => MeasurementText.SpectrogramTopic;
 
     public override double Maximum => 20;
 
@@ -269,6 +273,9 @@ public sealed class SpectrumGraph : AudioGraph
     public GraphForm View { get; }
 
     public override string? Description => MeasurementText.SpectrumDescription;
+
+    // The article that defines the average spectrum; the spectral cutoff is a figure read from it.
+    public override string? Topic => MeasurementText.SpectrogramTopic;
 
     public override int Count => MeasurementLimits.Rows;
 
@@ -372,6 +379,8 @@ public sealed class LoudnessGraph : AudioGraph
 
     public override string? Description => MeasurementText.LoudnessPanelDescription;
 
+    public override string? Topic => MeasurementText.LoudnessTopic;
+
     public override int Count => Series.Values.Length;
 
     public override double Maximum => AxisTop;
@@ -445,6 +454,8 @@ public sealed class FiguresGraph : AudioGraph
     public IReadOnlyList<MeasurementLine> Lines { get; }
 
     public override string? Description => "The figures measured from the decoded audio: the spectral cutoff, the levels, the loudness and the true peak, each worded as the command line prints it.";
+
+    public override string? Topic => MeasurementText.MeasuredTopic;
 
     // The list is no chart: it has no points.
     public override int Count => 0;
