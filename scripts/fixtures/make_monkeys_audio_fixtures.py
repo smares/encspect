@@ -6,7 +6,8 @@ Each case changes one thing and says what the analyzer must make of it: a frame 
 right again (so that only the frame CRC can tell), a descriptor MD5 that is changed, files cut inside each of their parts, seek tables that put frames
 where they are not, header fields no encoder writes, a version the decoder does not read, bytes before and after the file, files of the format before
 version 3.98 with the frames of a 3.99 file under their header (which their decoders read as damaged), and damaged copies of the legacy-* files of versions 3.80
-to 3.92 (a bit of a residual flipped, a CRC or a checksum changed, the last frame cut). The manifests are worked out by monkeys_audio_model.py; crosscheck_monkeys_audio_fixtures.py confirms them with mac, ffmpeg and MediaInfo.
+to 3.92 (a bit of a residual flipped, a CRC or a checksum changed, the last frame cut, a start bit outside its word; their manifests name monkeys_audio_old.py as the
+tool). The manifests are worked out by monkeys_audio_model.py; crosscheck_monkeys_audio_fixtures.py confirms them with mac, ffmpeg and MediaInfo.
 
 The files are reproducible from the committed external ones, so CI runs this script and fails if anything differs.
 """
@@ -24,6 +25,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "monkeys-audio"
 
 TOOL = "monkeys_audio_model.py, from the frames of a file mac wrote"
+TOOL_OLD = "monkeys_audio_old.py, from the frames of a file it wrote"
 
 
 def load(name):
@@ -200,6 +202,11 @@ D3830, A3830, AT3830 = legacy("3830-high-16-stereo-silent-then-tone")
 add("old-3830-crc-changed", flip_at(D3830, AT3830(A3830.frames[1]["start"] + 3)))
 D3800, A3800, AT3800 = legacy("3800-normal-16-stereo-frames")
 add("old-3800-residual-bit-flipped", flip_at(D3800, AT3800(A3800.frames[1]["start"] + 2000), 0x20))
+# The table of start bits puts the second frame 32 bits further into its word than any encoder does (a bit of 32 or more is a bit of a later word): the
+# analyzer reads the frame from there, so its CRC and values are not its own, and says so with monkeys-audio.frame-start-bit. mac -V passes the file: the SDK seeks
+# only to the first frame or after a gap and reads the others where the frame before ended, so it never looks at the table (docs/formats/monkeys-audio.md, "Decoding").
+BITS3800 = A3800.seek_at + 4 * A3800.seek_entries
+add("old-3800-start-bit-outside-word", D3800[:BITS3800 + 1] + bytes([A3800.start_bits[1] + 32]) + D3800[BITS3800 + 2:])
 D3910, A3910, AT3910 = legacy("3910-high-24-stereo")
 add("old-3910-residual-bit-flipped", flip_at(D3910, AT3910(A3910.frames[0]["start"] + 2000), 0x08))
 add("old-3910-last-frame-cut", D3910[:AT3910(A3910.frames[0]["start"] + 1800)])
@@ -269,8 +276,8 @@ EXPECT = {
     "24-bit-frame-crc-changed": {"mac": False, "decode": ("decoded", 4, 1, 32000, ["monkeys-audio.frame-crc-mismatch"]), "pcm": "loud24", "prefix": True},
 }
 # The files with the old header: whether the frames store a CRC (the flag), what decoding does (status, frames whose CRC or checksum was compared, those that
-# differ, samples written, the findings it adds with their counts) and whether mac -V accepts the file. The decoders read the frames that are not 3.99's as the
-# damaged ones they are.
+# differ, samples written, the findings it adds with their counts) and whether mac -V accepts the file (None: not compared). The decoders read the frames that are
+# not 3.99's as the damaged ones they are.
 OLD = {
     "old-version-3900": (True, ("decoded", 0, 0, 0, [("decode.frame-invalid", 3)]), False, []),
     "old-version-3850": (False, ("decoded", 2, 2, 18432, [("monkeys-audio.frame-checksum-mismatch", 2), ("decode.frame-invalid", 1)]), False, []),
@@ -282,6 +289,7 @@ OLD = {
     "old-3850-checksum-changed": (False, ("decoded", 2, 1, 12216, [("monkeys-audio.frame-checksum-mismatch", 1)]), False, []),
     "old-3830-crc-changed": (True, ("decoded", 2, 1, 12216, [("monkeys-audio.frame-crc-mismatch", 1)]), False, []),
     "old-3800-residual-bit-flipped": (True, ("decoded", 2, 0, 10784, [("decode.frame-invalid", 1)]), False, []),
+    "old-3800-start-bit-outside-word": (True, ("decoded", 2, 0, 10784, [("decode.frame-invalid", 1)]), None, ["monkeys-audio.frame-start-bit"]),
     "old-3910-residual-bit-flipped": (True, ("decoded", 0, 0, 0, [("decode.frame-invalid", 1)]), False, []),
     "old-3910-last-frame-cut": (True, ("decoded", 0, 0, 0, [("decode.frame-invalid", 1)]), False, ["monkeys-audio.frame-cut"]),
 }
@@ -336,7 +344,7 @@ def old_manifest(name, data):
             "frames": frames, "stream_infos": [m.old_stream_info(a, bits, samples)], "decoded_samples": written, "pcm_samples": written,
             "verification": {"default": {"isVerified": m.verdict(default), "decoding": "notRequested", "checksums": default},
                              "verify": {"isVerified": m.verdict(verify), "decoding": status, "checksums": verify}},
-            "decode_findings": [{"code": code, "count": count} for code, count in found], "findings": [finding(c) for c in findings], "encoder": {"tool": TOOL},
+            "decode_findings": [{"code": code, "count": count} for code, count in found], "findings": [finding(c) for c in findings], "encoder": {"tool": TOOL if name.startswith("old-version-") else TOOL_OLD},
             "crosscheck": {"mac_verify": mac}, "header": {"flags": a.flags}}
 
 

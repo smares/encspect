@@ -19,6 +19,9 @@ internal enum EntryStatus : byte
 
     // The frame is too short to hold the fields the format starts it with.
     NoStartFields = 8,
+
+    // The table of start bits of a file of version 3.80 puts the frame at bit 32 or more of its word, which no encoder writes.
+    StartBitOutsideWord = 16,
 }
 
 // A frame in 32 bytes. Start and End count bytes of the stream the frames make, from the first frame's first byte (see WordOrder).

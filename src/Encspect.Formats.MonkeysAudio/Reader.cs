@@ -374,7 +374,7 @@ internal static class Reader
 
             uint blocks = f == h.TotalFrames - 1 ? h.FinalFrameBlocks : h.BlocksPerFrame;
             int startBit = f < seekBits.Length ? seekBits[f] : 0;
-            var status = EntryStatus.None;
+            var status = startBit >= 32 ? EntryStatus.StartBitOutsideWord : EntryStatus.None;
             uint crc = 0;
             uint special = 0;
             if (start < 0 || start > dataSpan || end < start || end > dataSpan)
@@ -477,6 +477,13 @@ internal static class Reader
         {
             s.Findings.Add(Severity.Warning, "monkeys-audio.frame-cut", () => Nodes.Frame(records, index), count =>
                 $"The frame data ends inside frame {index}{(count > 1 ? $", and {Counts.Of(count - 1, "more frame lies", "more frames lie")} past its end" : string.Empty)}; a frame is read only as far as the file holds whole words of it.");
+        }
+
+        if ((status & EntryStatus.StartBitOutsideWord) != 0)
+        {
+            int bit = s.SeekBits[index];
+            s.Findings.Add(Severity.Warning, "monkeys-audio.frame-start-bit", () => Nodes.Frame(records, index), count =>
+                $"The table of start bits puts frame {index} at bit {bit} of the word its seek entry names, but a word holds 32 bits; the decoder, like the SDK, starts the frame that many bits into the bytes from that word on{(count > 1 ? $", and {Counts.Of(count - 1, "more frame is", "more frames are")} placed the same way" : string.Empty)}.");
         }
 
         if ((status & EntryStatus.NoStartFields) != 0)
