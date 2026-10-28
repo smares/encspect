@@ -148,18 +148,20 @@ public class GraphTests
         Assert.Equal(["Per Frame", "Over Time"], reservoir.Forms.Select(f => f.Title));
         Assert.Same(graphs.Choices[0], graphs.Selected);
         Assert.True(graphs.Choices[0].IsSelected);
-        Assert.Equal("Waveform and spectrogram need a decoder, which MPEG Audio does not have yet.", graphs.DecoderNote);
+        // The Audio heading has no panel and says the audio is not decoded here, with the codec's name, and offers no command.
+        Assert.Equal("The audio of this MPEG-1 Layer III stream is not decoded here.", graphs.SelectedStream!.Caption!.Text);
+        Assert.False(graphs.SelectedStream.Caption.OffersDecode);
 
         // The choice holds for the next file that has a graph of that title.
         graphs.Selected = reservoir;
         graphs.Load(Analyzer.CreateDefault().AnalyzeFile(Fixtures.Mpeg("external-lame-vbr-v2.mp3")));
         Assert.Equal("Reservoir Fill", graphs.Selected!.Title);
 
-        // A file without streams has neither graphs nor the note.
+        // A file without streams has neither graphs nor the caption.
         graphs.Load(Analyzer.CreateDefault().Analyze("notes.txt", new MemoryStream("not audio"u8.ToArray())));
         Assert.False(graphs.HasGraphs);
         Assert.Null(graphs.Graph);
-        Assert.Null(graphs.DecoderNote);
+        Assert.Null(graphs.EmptyNote);
     }
 
     [Fact]

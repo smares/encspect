@@ -215,12 +215,12 @@ public class MpegGraphLayoutTests
         }
     }
 
-    // Every heading and entry is inside the viewport whole or outside it altogether, and the last one inside ends the viewport.
+    // Every heading, entry, caption and command is inside the viewport whole or outside it altogether, and the last one inside ends the viewport.
     private static void AssertWholeItems(DetailWindow window, ScrollViewer list, string where)
     {
         double viewport = list.Viewport.Height;
         var items = window.GraphChoices.GetVisualDescendants().OfType<Control>()
-            .Where(c => (c is TextBlock t && t.Classes.Contains("heading")) || (c is Button b && b.Classes.Contains("entry")))
+            .Where(c => c.IsEffectivelyVisible && ((c is TextBlock t && (t.Classes.Contains("heading") || t.Classes.Contains("caption"))) || (c is Button b && (b.Classes.Contains("entry") || b.Classes.Contains("decode")))))
             .Select(c => (Top: c.TranslatePoint(default, list)!.Value.Y, Bottom: c.TranslatePoint(new Point(0, c.Bounds.Height), list)!.Value.Y, Control: c))
             .ToList();
         foreach ((double top, double bottom, Control control) in items)

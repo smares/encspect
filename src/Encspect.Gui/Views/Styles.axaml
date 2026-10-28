@@ -195,6 +195,15 @@
   <Style Selector="ItemsControl#GraphChoices > ContentPresenter:nth-child(1) TextBlock.heading">
     <Setter Property="Margin" Value="8,0,0,1" />
   </Style>
+  <!-- The line under the heading "Audio" that says why its panels are missing, and the command under it. -->
+  <Style Selector="TextBlock.caption">
+    <Setter Property="Margin" Value="8,2,4,4" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+  <Style Selector="Button.decode">
+    <Setter Property="Margin" Value="8,0,0,6" />
+    <Setter Property="Padding" Value="10,3" />
+  </Style>
   <Style Selector="Button.entry">
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />

@@ -25,8 +25,7 @@ public class GraphViewTests
         AvaloniaHeadlessPlatform.ForceRenderTimerTick();
         Assert.True(window.Graph.IsEffectivelyVisible);
         Assert.False(window.FindingList.IsEffectivelyVisible);
-        Assert.True(window.DecoderNote.IsEffectivelyVisible);
-        Assert.Equal("Waveform and spectrogram need a decoder, which MPEG Audio does not have yet.", window.DecoderNote.Text);
+        Assert.Equal("The audio of this MPEG-1 Layer III stream is not decoded here.", window.Model.Graphs.SelectedStream!.Caption!.Text);
         window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == "Bitrate");
         UiPump.Until(() => true);
         AvaloniaHeadlessPlatform.ForceRenderTimerTick();

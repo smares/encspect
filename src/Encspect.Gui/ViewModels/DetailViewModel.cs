@@ -47,6 +47,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         _analyzer = analyzer;
         _post = post ?? UiThread.Post;
         Graphs.FrameRequested += (_, offset) => SelectFrameAt(offset);
+        Graphs.DecodeRequested += (_, _) => _ = DecodeAudioAsync();
     }
 
     public GraphsViewModel Graphs { get; } = new();
@@ -83,7 +84,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             if (Set(ref _isLoading, value))
             {
                 Raise(nameof(IsProgressShown));
-                Raise(nameof(CanDecodeAudio));
+                RaiseCanDecode();
             }
         }
     }
@@ -97,7 +98,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             if (Set(ref _isDecoding, value))
             {
                 Raise(nameof(IsProgressShown));
-                Raise(nameof(CanDecodeAudio));
+                RaiseCanDecode();
             }
         }
     }
@@ -135,7 +136,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             if (Set(ref _report, value))
             {
                 Raise(nameof(HasReport));
-                Raise(nameof(CanDecodeAudio));
+                RaiseCanDecode();
                 Raise(nameof(VerificationText));
                 Raise(nameof(HasVerificationText));
             }
@@ -562,7 +563,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                     }
                     else
                     {
-                        Show(report, document, keep);
+                        Show(report, document, keep, showAudio: decode && keepShown);
                         _isDecodeRequested = decode;
                     }
 
@@ -747,7 +748,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return false;
     }
 
-    private void Show(Report report, HexDocument? document, IReadOnlyList<int>? keep)
+    private void Show(Report report, HexDocument? document, IReadOnlyList<int>? keep, bool showAudio = false)
     {
         if (_document is not null && !ReferenceEquals(_document, document))
         {
@@ -766,7 +767,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Progress = 1;
         Streams = report.Streams.Select(s => new StreamItem(s)).ToList();
         Raise(nameof(StreamsText));
-        Graphs.Load(report);
+        Graphs.Load(report, showAudio);
         Raise(nameof(HasNoGraphs));
         RaiseDetection();
         SelectedNode = keep is { Count: > 0 } && Tree.Reveal(keep) is { } kept ? kept : Tree.Root;
@@ -819,6 +820,13 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         }
 
         return node;
+    }
+
+    // The command's enabling, here and on the Audio heading's button.
+    private void RaiseCanDecode()
+    {
+        Raise(nameof(CanDecodeAudio));
+        Graphs.CanDecode = CanDecodeAudio;
     }
 
     private void RaiseDetection()

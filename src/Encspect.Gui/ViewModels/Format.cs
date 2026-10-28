@@ -35,6 +35,18 @@ public static class Format
             : time.ToString(@"m\:ss", Invariant);
     }
 
+    // A point in time in tenths of a second, for the hover text of the audio panels: "0:05.3", "3:25.0", "1:02:03.4". Truncated, so a
+    // point just under a minute never reads as "0:60.0".
+    public static string Timestamp(double seconds)
+    {
+        long tenths = (long)Math.Floor((Math.Max(0, seconds) * 10) + 1e-6);
+        long whole = tenths / 10;
+        string fraction = "." + (tenths % 10).ToString(Invariant);
+        return whole >= 3600
+            ? $"{(whole / 3600).ToString(Invariant)}:{(whole / 60 % 60).ToString("00", Invariant)}:{(whole % 60).ToString("00", Invariant)}{fraction}"
+            : $"{(whole / 60).ToString(Invariant)}:{(whole % 60).ToString("00", Invariant)}{fraction}";
+    }
+
     public static string Bitrate(double kbps, bool? isVbr)
     {
         string text = Math.Round(kbps).ToString("0", Invariant) + " kbps";

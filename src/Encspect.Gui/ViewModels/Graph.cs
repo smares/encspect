@@ -420,8 +420,11 @@ public static class GraphHeadings
     public const string BitDistribution = "Bit Distribution";
     public const string Other = "Other";
 
+    // The panels drawn from the decoded audio's measurements; the last heading, under the graphs of the coded data.
+    public const string Audio = "Audio";
+
     // In the order the tab lists them.
-    public static IReadOnlyList<string> All { get; } = [Summary, StereoCoding, BlockSwitching, CodedBandwidth, BitDistribution, Other];
+    public static IReadOnlyList<string> All { get; } = [Summary, StereoCoding, BlockSwitching, CodedBandwidth, BitDistribution, Other, Audio];
 
     public static string Of(GraphConcept concept) => concept switch
     {
