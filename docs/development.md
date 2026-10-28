@@ -243,6 +243,24 @@ The GUI stays a self-contained single file (`PublishSingleFile`, no ReadyToRun, 
 - **Measurements:** the spectrum's FFT uses `Vector128` for its butterflies, lane by lane as the scalar loop, so it needs no other path ('Determinism' under 'Measurements' below).
 - **CI:** the `rest` shard on ubuntu-26.04 runs those three classes and `NnVectorsTests` once more for each of `DOTNET_EnableAVX512=0`, `DOTNET_EnableAVX2=0` and `DOTNET_EnableHWIntrinsic=0`, with trx results in the failed-test summary; the Arm runners take the `AdvSimd` paths in every run, and the x64 runners the paths their processor has.
 
+### Monkey's Audio before 3.93
+
+- **Where:** `OldBits` reads each value with one eight-byte load and a shift, and finds a unary run with a leading-zero count (it falls back to the byte loop for a run past 56 bits and near the end of the buffer); `OldVectors` holds the filters of 16 taps (`HighPredictor`) and 8 taps (`ExtraHighPredictor`) in `Vector256`, `Vector128` or scalar code, branch-free on the coded value's sign. The 8-tap filter reads its history from the array of values itself (zeros before the first value) instead of shifting a history array every sample.
+- **Tests:** `OldVectorsTests` compares every entry (256-bit, 128-bit, scalar) with a plain loop, and the bit reader with a bit-by-bit one at every position, width and length.
+- **Whole files** (NativeAOT x86-64-v2, `--csv --verify`, one pinned core, minimum of 5 interleaved rounds, 120 to 150 s of stereo 16-bit; seconds):
+
+| File | Before | Bit reader | + 16 taps | + 8 taps |
+|---|---|---|---|---|
+| 3.80 fast | 0.44 | 0.36 | 0.38 | 0.35 |
+| 3.89 normal (Rice) | 0.47 | 0.41 | 0.41 | 0.39 |
+| 3.89 high | 0.66 | 0.65 | 0.56 | 0.58 |
+| 3.92 normal (range coder) | 0.51 | 0.47 | 0.47 | 0.46 |
+| 3.92 high | 0.75 | 0.73 | 0.62 | 0.59 |
+| 3.88 extra high | 0.74 | 0.75 | 0.73 | 0.71 |
+| 3.92 extra high | 0.85 | 0.86 | 0.80 | 0.72 |
+
+- **Kernels** (JIT, AVX2, steady state, ns a call): 8-tap filter 11.5 to 3.8, 16-tap filter 17.1 to 4.5, unary run plus 9-bit read 9.1 to 6.6. The extra high files are dominated by the neural network filters, so the 8-tap filter's gain shows in a whole file only at 3.92 (-10% after the 16 taps).
+
 ## CLI runtime settings
 
 The release CLI is NativeAOT ("NativeAOT" above), which has no tiering and no ReadyToRun image, so none of the settings below apply to it. The CLI project still sets `TieredPGO=false` and `System.Runtime.TieredCompilation.CallCountingDelayMs=20` for the JIT build (`dotnet run`, the cross-check scripts); the `PublishReadyToRun` settings of the earlier releases are gone. The measurements below were made when the release was ReadyToRun and are the reason for the two knobs, and the history of the choice. The GUI keeps the defaults: it was not measured.
