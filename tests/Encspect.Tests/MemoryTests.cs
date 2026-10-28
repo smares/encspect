@@ -1395,10 +1395,10 @@ public class MemoryTests(ITestOutputHelper output)
 
     // The records of the measurements stay in the report, so the bound of 64 MiB (docs/design/spectral-analysis.md, "Memory") holds them: 400
     // chained Ogg FLAC streams of 24 s each would keep 400 grids of 0.25 MiB (100 MiB) without it, and the streams past the bound say so.
-    // The peak growth reads 61.3 MB (limit 75.5 MB: 64 MiB of records and 8 MiB of working state): five runs under a parallel build (load average 6.6 on
-    // 4 cores) read 61.25 to 61.39 MB, and the end state of the report is 76.5 MB with 14.7 MB without measuring. One earlier run read 76.7 MB, which no later
-    // run reproduced and whose cause is not known; it is treated as a transient of the shared runner's heap, and the bound is not raised on that one reading.
-    // A failure now prints where the probe saw the highest heap.
+    // Two bounds: the report keeps at most 64 MiB of records (and 4 MiB of other state) more than without measuring, and the analysis holds at most 8 MiB
+    // of working state above the heap it starts and ends with. A bound on the peak less the peak without measuring could not hold either: each peak is
+    // read from the heap before its analysis, which the leftovers of earlier work make differ by more than the bound's margin between runs (the plain
+    // peak read 15.3 MB here and 1.1 MB on ubuntu-26.04, below the 14.7 MB its report keeps, so the same 76.8 MB failed there and passed here).
     [Fact]
     public void MeasuringManyChainedStreamsStaysWithinTheBound()
     {
@@ -1408,24 +1408,18 @@ public class MemoryTests(ITestOutputHelper output)
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = measure } };
         byte[] data = ChainedOggFlac(streams, frames);
 
-        (_, long plainKept, long plainPeak) = Measure("chain.oga", data, ChainedOggFlac(2, 4), new AnalysisOptions { Decoding = new DecodeOptions() });
-        (Report report, long kept, long peak) = Measure("chain.oga", data, ChainedOggFlac(2, 4), options);
+        (_, long plainKept, _) = Measure("chain.oga", data, ChainedOggFlac(2, 4), new AnalysisOptions { Decoding = new DecodeOptions() });
+        (Report report, long kept, long excess, string where) = MeasureExcess("chain.oga", data, ChainedOggFlac(2, 4), options);
 
         int measured = report.Streams.Count(s => s.Measurements?.Status == MeasurementStatus.Complete);
         long records = report.Streams.Sum(s => s.Measurements?.Spectrogram?.Power.Length ?? 0L);
-        output.WriteLine($"{report.Streams.Count} streams, {measured} measured, {records} bytes of grids, {kept} bytes kept and {peak} bytes peak, without measuring {plainKept} and {plainPeak}; peak growth {peak - plainPeak} (limit {MeasureMemoryBound + (8L << 20)})");
+        output.WriteLine($"{report.Streams.Count} streams, {measured} measured, {records} bytes of grids, {kept} bytes kept ({plainKept} without measuring), {excess} bytes above the heap before and after");
         Assert.Equal(streams, report.Streams.Count);
         Assert.InRange(measured, 100, streams - 1);
         Assert.Equal(streams - measured, report.Findings.Where(f => f.Code == "measure.streams-limited").Sum(f => f.Count));
         Assert.True(records <= MeasureMemoryBound, $"The grids hold {records} bytes.");
         Assert.True(kept - plainKept < MeasureMemoryBound + (4L << 20), $"Measuring made the report keep {kept - plainKept} bytes more.");
-        long limit = MeasureMemoryBound + (8L << 20);
-        if (peak - plainPeak >= limit)
-        {
-            // Where the highest live heap was seen, from the probe of the other memory tests (places in the input, the sampler thread and the end).
-            (_, _, long excess, string where) = MeasureExcess("chain.oga", data, ChainedOggFlac(2, 4), options);
-            Assert.Fail($"Measuring made the live heap grow by {peak - plainPeak} bytes more, the limit is {limit}. The probe read {excess} bytes above the heap before and after the analysis, {where}. {RuntimeSettings()}");
-        }
+        Assert.True(excess < 8L << 20, $"Measuring held {excess} bytes above the heap before and after the analysis, {where}. {RuntimeSettings()}");
 
         GC.KeepAlive(data);
     }
