@@ -1,0 +1,114 @@
+{
+ "length": 38827,
+ "file_version": 3800,
+ "seek_entries": 3,
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 38827
+  }
+ ],
+ "frames": [
+  {
+   "index": 0,
+   "offset": 47,
+   "length": 9420,
+   "samples": 9216,
+   "crc": "0x81883D2E",
+   "special": null,
+   "start": 0,
+   "end": 9420
+  },
+  {
+   "index": 1,
+   "offset": 9467,
+   "length": 23548,
+   "samples": 9216,
+   "crc": "0x6E6CC0B7",
+   "special": null,
+   "start": 9420,
+   "end": 32968
+  },
+  {
+   "index": 2,
+   "offset": 33015,
+   "length": 5812,
+   "samples": 1568,
+   "crc": "0xF95032E2",
+   "special": null,
+   "start": 32968,
+   "end": 38780
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Mid/side stereo",
+   "samples": 20000,
+   "duration": 0.45351473922902497,
+   "bits_per_sample": 16,
+   "average_bitrate": 684.0791999999999,
+   "encoder": "Monkey's Audio (file version 3.80)"
+  }
+ ],
+ "decoded_samples": 10784,
+ "pcm_samples": 10784,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": null,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 2,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [
+  {
+   "code": "decode.frame-invalid",
+   "count": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "monkeys-audio.old-format",
+   "contains": ""
+  }
+ ],
+ "encoder": {
+  "tool": "monkeys_audio_model.py, from the frames of a file mac wrote"
+ },
+ "crosscheck": {
+  "mac_verify": false
+ },
+ "header": {
+  "flags": 34
+ }
+}

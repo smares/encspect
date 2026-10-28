@@ -1,0 +1,23 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 12216,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "frame CRC-32",
+        "stored": 2,
+        "checked": 2,
+        "failed": 1
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "monkeys-audio.frame-crc-mismatch",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The CRC of the decoded audio of the frame at 0x30 is 0x1C63B2CB, but the frame stores 0x1C63B2CA: the decoded samples differ from what the encoder read."
+    }
+  ]
+}

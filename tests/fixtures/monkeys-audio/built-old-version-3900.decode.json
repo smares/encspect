@@ -1,6 +1,6 @@
 {
   "verification": {
-    "decoding": "NotPossible",
+    "decoding": "Decoded",
     "decodedSamples": 0,
     "isVerified": null,
     "checksums": [
@@ -14,10 +14,10 @@
   },
   "findings": [
     {
-      "code": "decode.not-possible",
-      "severity": "Info",
-      "count": 1,
-      "message": "The stream was not decoded: The file is of version 3.90, whose frames are not decoded; the decoder takes versions 3.93 to 3.99 and 4.11"
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 3,
+      "message": "The monkeys-audio decoder could not decode the frame at 0x58: The coded data holds a value the model cannot code."
     }
   ]
 }

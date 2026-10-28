@@ -1,0 +1,118 @@
+{
+ "length": 34757,
+ "file_version": 3860,
+ "seek_entries": 3,
+ "regions": [
+  {
+   "name": "Monkey's Audio",
+   "offset": 0,
+   "length": 34757
+  }
+ ],
+ "frames": [
+  {
+   "index": 0,
+   "offset": 44,
+   "length": 9448,
+   "samples": 9216,
+   "crc": "0x40C41E97",
+   "special": null,
+   "start": 0,
+   "end": 9448
+  },
+  {
+   "index": 1,
+   "offset": 9492,
+   "length": 24568,
+   "samples": 9216,
+   "crc": "0x3736605B",
+   "special": null,
+   "start": 9448,
+   "end": 34014
+  },
+  {
+   "index": 2,
+   "offset": 34056,
+   "length": 700,
+   "samples": 1568,
+   "crc": "0x7CA81971",
+   "special": null,
+   "start": 34014,
+   "end": 34713
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Monkey's Audio",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Mid/side stereo",
+   "samples": 20000,
+   "duration": 0.45351473922902497,
+   "bits_per_sample": 16,
+   "average_bitrate": 612.33732,
+   "encoder": "Monkey's Audio (file version 3.86)"
+  }
+ ],
+ "decoded_samples": 18432,
+ "pcm_samples": 18432,
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 3,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": null,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "frame CRC-32",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 3,
+     "checked": 2,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [
+  {
+   "code": "decode.frame-invalid",
+   "count": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "monkeys-audio.old-format",
+   "contains": ""
+  },
+  {
+   "code": "monkeys-audio.frame-cut",
+   "contains": ""
+  }
+ ],
+ "encoder": {
+  "tool": "monkeys_audio_model.py, from the frames of a file mac wrote"
+ },
+ "crosscheck": {
+  "mac_verify": false
+ },
+ "header": {
+  "flags": 34
+ }
+}

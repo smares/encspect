@@ -4,8 +4,9 @@
 
 Each case changes one thing and says what the analyzer must make of it: a frame CRC or a byte of the audio that is changed with the descriptor MD5 made
 right again (so that only the frame CRC can tell), a descriptor MD5 that is changed, files cut inside each of their parts, seek tables that put frames
-where they are not, header fields no encoder writes, a version the decoder does not read, bytes before and after the file, and files of the format before
-version 3.98. The manifests are worked out by monkeys_audio_model.py; crosscheck_monkeys_audio_fixtures.py confirms them with mac, ffmpeg and MediaInfo.
+where they are not, header fields no encoder writes, a version the decoder does not read, bytes before and after the file, files of the format before
+version 3.98 with the frames of a 3.99 file under their header (which their decoders read as damaged), and damaged copies of the legacy-* files of versions 3.80
+to 3.92 (a bit of a residual flipped, a CRC or a checksum changed, the last frame cut). The manifests are worked out by monkeys_audio_model.py; crosscheck_monkeys_audio_fixtures.py confirms them with mac, ffmpeg and MediaInfo.
 
 The files are reproducible from the committed external ones, so CI runs this script and fails if anything differs.
 """
@@ -167,12 +168,41 @@ tiny[2] = b"\x01\x02\x03"
 add("frame-too-short-for-crc", rebuild(MONO, MONO_A, tiny))
 
 # --- the format before version 3.98
-# These carry the frames of a 3.99 file under an older header, which is all the parser reads of them: versions up to 3.92 are not decoded, and the files
-# of 3.93 to 3.98 that are decoded are the legacy-* fixtures (make_legacy_monkeys_audio_fixtures.py).
+# The first four carry the frames of a 3.99 file under an older header. The decoders of those versions read them as the damaged files they are: the frames do not
+# give the CRC or the checksum they store, or no value at all, and the last frame has more samples than a frame of those versions can.
 add("old-version-3900", m.build_old(frames, 3900, 2000, 2, 1, 44100, 12544, header_data=MONO_A.header_data))
 add("old-version-3850", m.build_old(frames, 3850, 2000, 0, 1, 44100, 12544, header_data=MONO_A.header_data))
 add("old-version-3820-crc", m.build_old(frames, 3820, 2000, 2, 1, 44100, 12544, header_data=MONO_A.header_data))
 add("old-version-3800", m.build_old(frames, 3800, 2000, 0, 1, 44100, 12544, header_data=MONO_A.header_data))
+
+
+def legacy(name):
+    """A committed legacy-* fixture of a version before 3.93 (make_legacy_monkeys_audio_fixtures.py), what the model reads of it, and the file offset of the byte
+    of the frames' stream at an index."""
+    data = (OUT / f"legacy-{name}.ape").read_bytes()
+    a = m.parse_old(data)
+    return data, a, lambda index: m.stream_offset(a.data_start, index)
+
+
+def flip_at(data, offset, mask=1):
+    return data[:offset] + bytes([data[offset] ^ mask]) + data[offset + 1:]
+
+
+# Damaged copies of the files of versions 3.80 to 3.92: a bit of the coded values flipped, the CRC or the checksum of a frame changed, the last frame cut. mac -V
+# rejects each of them; the analyzer decodes the frames it can and reports the ones that differ.
+D3860, A3860, AT3860 = legacy("3860-normal-16-stereo-frames")
+add("old-3860-residual-bit-flipped", flip_at(D3860, AT3860(A3860.frames[1]["start"] + 3000), 0x10))
+add("old-3860-crc-changed", flip_at(D3860, AT3860(A3860.frames[1]["start"] + 3)))
+add("old-3860-last-frame-cut", D3860[:AT3860(A3860.frames[2]["start"] + 700)])
+D3850, A3850, AT3850 = legacy("3850-normal-16-stereo-silent-then-tone-checksum")
+add("old-3850-checksum-changed", flip_at(D3850, AT3850(A3850.frames[1]["start"] + 3), 0x02))
+D3830, A3830, AT3830 = legacy("3830-high-16-stereo-silent-then-tone")
+add("old-3830-crc-changed", flip_at(D3830, AT3830(A3830.frames[1]["start"] + 3)))
+D3800, A3800, AT3800 = legacy("3800-normal-16-stereo-frames")
+add("old-3800-residual-bit-flipped", flip_at(D3800, AT3800(A3800.frames[1]["start"] + 2000), 0x20))
+D3910, A3910, AT3910 = legacy("3910-high-24-stereo")
+add("old-3910-residual-bit-flipped", flip_at(D3910, AT3910(A3910.frames[0]["start"] + 2000), 0x08))
+add("old-3910-last-frame-cut", D3910[:AT3910(A3910.frames[0]["start"] + 1800)])
 
 # --- a damaged frame of 24-bit audio among good ones: the frames after it must verify. The audio is loud enough that the first stage of the predictor
 # overflows 32 bits, so a decoder that stayed in the interim mode after the damaged frame would fail the frames that follow it.
@@ -238,11 +268,22 @@ EXPECT = {
     "frame-too-short-for-crc": {"findings": ["monkeys-audio.frame-too-short"], "decode": ("decoded", 2, 0, 147456, []), "complete": False, "crcs": 2},
     "24-bit-frame-crc-changed": {"mac": False, "decode": ("decoded", 4, 1, 32000, ["monkeys-audio.frame-crc-mismatch"]), "pcm": "loud24", "prefix": True},
 }
-OLD = {  # name: whether the frames store a CRC (the flag, or version 3.93 and later)
-    "old-version-3900": True,
-    "old-version-3850": False,
-    "old-version-3820-crc": True,
-    "old-version-3800": False,
+# The files with the old header: whether the frames store a CRC (the flag), what decoding does (status, frames whose CRC or checksum was compared, those that
+# differ, samples written, the findings it adds with their counts) and whether mac -V accepts the file. The decoders read the frames that are not 3.99's as the
+# damaged ones they are.
+OLD = {
+    "old-version-3900": (True, ("decoded", 0, 0, 0, [("decode.frame-invalid", 3)]), False, []),
+    "old-version-3850": (False, ("decoded", 2, 2, 18432, [("monkeys-audio.frame-checksum-mismatch", 2), ("decode.frame-invalid", 1)]), False, []),
+    "old-version-3820-crc": (True, ("decoded", 2, 2, 18432, [("monkeys-audio.frame-crc-mismatch", 2), ("decode.frame-invalid", 1)]), False, []),
+    "old-version-3800": (False, ("decoded", 2, 2, 18432, [("monkeys-audio.frame-checksum-mismatch", 2), ("decode.frame-invalid", 1)]), False, []),
+    "old-3860-residual-bit-flipped": (True, ("decoded", 3, 1, 20000, [("monkeys-audio.frame-crc-mismatch", 1)]), False, []),
+    "old-3860-crc-changed": (True, ("decoded", 3, 1, 20000, [("monkeys-audio.frame-crc-mismatch", 1)]), False, []),
+    "old-3860-last-frame-cut": (True, ("decoded", 2, 0, 18432, [("decode.frame-invalid", 1)]), False, ["monkeys-audio.frame-cut"]),
+    "old-3850-checksum-changed": (False, ("decoded", 2, 1, 12216, [("monkeys-audio.frame-checksum-mismatch", 1)]), False, []),
+    "old-3830-crc-changed": (True, ("decoded", 2, 1, 12216, [("monkeys-audio.frame-crc-mismatch", 1)]), False, []),
+    "old-3800-residual-bit-flipped": (True, ("decoded", 2, 0, 10784, [("decode.frame-invalid", 1)]), False, []),
+    "old-3910-residual-bit-flipped": (True, ("decoded", 0, 0, 0, [("decode.frame-invalid", 1)]), False, []),
+    "old-3910-last-frame-cut": (True, ("decoded", 0, 0, 0, [("decode.frame-invalid", 1)]), False, ["monkeys-audio.frame-cut"]),
 }
 PCM = {"mono": MONO_PCM, "chunks": STEREO_PCM, "loud24": LOUD24_PCM}
 TOTAL = {"mono": FULL, "chunks": 24000, "loud24": 32000}
@@ -279,22 +320,24 @@ def manifest_of(name, data):
 
 
 def old_manifest(name, data):
-    """A file with the old header whose frames the decoder does not read: versions before 3.93, where the frames are 3.99's under another header."""
+    """A file with the old header whose frames are damaged: the structure is the model's, what decoding does is the table's."""
     a = m.parse_old(data)
-    has_crc = OLD[name]
+    has_crc, (status, checked, failed, written, found), mac, extra = OLD[name]
     samples = (a.total_frames - 1) * a.blocks_per_frame + a.final_blocks
     frames = m.old_frame_entries(data, a)
     bits = sum((f["end"] - f["start"]) * 8 for f in a.frames)
     n = len(a.frames)
-    # Without the CRC flag a frame starts with a checksum of 30 bits, Rice-coded, that is no CRC: it is declared under its own name and never compared.
-    checks = [{"name": "frame CRC-32" if has_crc else "frame checksum", "covers": "decodedAudio", "coversAllAudio": has_crc, "stored": n, "checked": 0, "failed": 0}]
-    findings = ["monkeys-audio.old-format"] + (["monkeys-audio.final-frame-blocks"] if a.final_blocks > a.blocks_per_frame else [])
+    complete = "monkeys-audio.frame-cut" not in extra  # a frame cut by the end of the data leaves the stream's audio not all covered
+    base = {"name": "frame CRC-32" if has_crc else "frame checksum", "covers": "decodedAudio", "coversAllAudio": complete, "stored": n}
+    default = [{**base, "checked": 0, "failed": 0}]
+    verify = [{**base, "checked": checked, "failed": failed}]
+    findings = ["monkeys-audio.old-format"] + (["monkeys-audio.final-frame-blocks"] if a.final_blocks > a.blocks_per_frame else []) + extra
     return {"length": len(data), "file_version": a.version, "seek_entries": a.seek_entries, "regions": [{"name": "Monkey's Audio", "offset": 0, "length": len(data)}],
-            "frames": frames, "stream_infos": [m.old_stream_info(a, bits, samples)], "decoded_samples": 0, "pcm_samples": 0,
-            "verification": {"default": {"isVerified": None, "decoding": "notRequested", "checksums": checks},
-                             "verify": {"isVerified": None, "decoding": "notPossible", "checksums": checks}},
-            "decode_findings": [{"code": "decode.not-possible", "count": 1}], "findings": [finding(c) for c in findings], "encoder": {"tool": TOOL},
-            "crosscheck": {"mac_verify": None}, "header": {"flags": a.flags}}
+            "frames": frames, "stream_infos": [m.old_stream_info(a, bits, samples)], "decoded_samples": written, "pcm_samples": written,
+            "verification": {"default": {"isVerified": m.verdict(default), "decoding": "notRequested", "checksums": default},
+                             "verify": {"isVerified": m.verdict(verify), "decoding": status, "checksums": verify}},
+            "decode_findings": [{"code": code, "count": count} for code, count in found], "findings": [finding(c) for c in findings], "encoder": {"tool": TOOL},
+            "crosscheck": {"mac_verify": mac}, "header": {"flags": a.flags}}
 
 
 def main():

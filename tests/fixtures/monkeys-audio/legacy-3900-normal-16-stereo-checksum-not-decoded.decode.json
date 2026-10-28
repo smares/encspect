@@ -1,0 +1,23 @@
+{
+  "verification": {
+    "decoding": "NotPossible",
+    "decodedSamples": 0,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "frame checksum",
+        "stored": 1,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.not-possible",
+      "severity": "Info",
+      "count": 1,
+      "message": "The stream was not decoded: The file is of version 3.90 and has no CRC flag; the SDK\u0027s decoder reads no checksum from such a file and gives silence, so the audio is not decoded"
+    }
+  ]
+}

@@ -314,6 +314,8 @@ def parse_old(data):
     a.has_crc = bool(a.flags & 2) or a.version >= 3930
     a.has_special = a.has_crc and a.version > 3820
     seek = [u32(data, a.seek_at + 4 * i) for i in range(elements)]
+    bits_at = a.seek_at + 4 * elements
+    a.start_bits = list(data[bits_at:bits_at + elements]) if a.version <= 3800 else [0] * elements
     a.frames = []
     for f in range(a.total_frames):
         start = seek[f] - a.data_start
@@ -324,21 +326,25 @@ def parse_old(data):
 
 def old_frame_entries(data, a):
     """The manifest's entry for each frame of a file with the old header: where it lies, its stored CRC and special codes where the version has them (all
-    32 bits are the CRC up to version 3.82, and a file without the CRC flag has a Rice-coded checksum instead, which the analyzer does not read)."""
+    32 bits are the CRC up to version 3.82, and a file without the CRC flag has a Rice-coded checksum instead, which the analyzer does not read). In a file of
+    version 3.80 a frame starts at a bit of the word its seek entry names."""
     entries = []
+    available = max(0, min(len(data), a.data_end) - a.data_start) // 4 * 4
     for index, frame in enumerate(a.frames):
-        rs = ranges(a.data_start, frame["start"], frame["end"])
+        rs = ranges(a.data_start, frame["start"], min(frame["end"], available))
         offset, length = extent(rs)
         crc = special = None
-        first = stream_bytes(data, a.data_start, frame["start"], frame["start"] + 8)
+        bit = a.start_bits[index] if index < len(a.start_bits) else 0
+        first = stream_bytes(data, a.data_start, frame["start"], frame["start"] + 12)
         if a.has_crc and len(first) >= 4:
-            word = struct.unpack(">I", first[:4])[0]
+            window = int.from_bytes(first.ljust(12, b"\0"), "big")
+            word = (window >> (96 - bit - 32)) & 0xFFFFFFFF
             if not a.has_special:
                 crc = word
             else:
                 crc = word & 0x7FFFFFFF
                 if word & 0x80000000 and len(first) >= 8:
-                    special = struct.unpack(">I", first[4:8])[0]
+                    special = (window >> (96 - bit - 64)) & 0xFFFFFFFF
         entries.append({"index": index, "offset": offset, "length": length, "samples": frame["blocks"], "crc": None if crc is None else f"0x{crc:08X}",
                         "special": None if special is None else f"0x{special:08X}", "start": frame["start"], "end": frame["end"]})
     return entries

@@ -1,0 +1,23 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 12216,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "frame checksum",
+        "stored": 2,
+        "checked": 2,
+        "failed": 1
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "monkeys-audio.frame-checksum-mismatch",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The checksum of the decoded audio of the frame at 0x2C is 23657866, but the frame stores 23657867: the decoded samples differ from what the encoder read."
+    }
+  ]
+}
