@@ -287,16 +287,51 @@ public class AudioPanelTests
             Assert.True(offset > previous);
             previous = offset;
 
-            // The frame is marked on the picture, in the column its first sample falls in (a frame is two or three hops long here).
-            int marked = window.Graph.MarkedIndex!.Value;
-            Assert.InRange(column - marked, 0, 3);
+            // The mark is the column that was clicked, not the column an estimate of the frame's first sample falls in.
+            Assert.Equal(column, window.Graph.MarkedIndex);
         }
 
-        // Selecting a frame in the tree marks its column.
+        // Selecting a frame in the tree marks the column of its estimated first sample, and no longer the clicked one.
         long second = (long)window.Model.Report!.Streams[0].Series[0].X.Span[2];
         window.Model.SelectFrameAt(second);
         Assert.Equal(graph.IndexOfFrame(second), window.Graph.MarkedIndex);
         window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData("flac", "built-first-frame-removed-md5-zero.flac", 4096)]
+    [InlineData("monkeys-audio", "built-seek-first-entry-off.ape", 0)]
+    public void A_stream_whose_frames_start_late_or_lose_the_first_is_located_from_where_its_frames_start(string folder, string name, long origin)
+    {
+        DetailWindow window = Open(Path.Combine(Fixtures.Directory, folder, name));
+        var graph = (SpectrogramGraph)window.Graph.Graph!;
+        SampleLocator locator = graph.Locator!;
+        Assert.Equal(origin, locator.Base);
+        Assert.Equal(locator.Base, graph.Measurements.FirstPosition + graph.Measurements.Samples + graph.Measurements.LostSamples - locator.Total);
+
+        // The first column leads to the first frame and the last to the last.
+        long firstFrame = (long)graph.Stream.Series.First(s => s.Axis == SeriesAxis.FrameOffset).X.Span[0];
+        Assert.Equal(origin > 0 ? firstFrame : graph.Locator!.FrameOffsetAt(graph.PositionOfColumn(0)), graph.FrameAt(0, null));
+        Assert.True(origin == 0 || graph.FrameAt(0, null) == firstFrame);
+        Assert.Equal(locator.Count - 1, locator.FrameIndexAt(locator.Base + locator.Total - 1));
+        Assert.Equal(0, locator.FrameIndexAt(locator.Base + 1));
+        window.Close();
+    }
+
+    [Fact]
+    public void A_grid_without_columns_has_no_panel()
+    {
+        var measurements = new StreamMeasurements
+        {
+            Status = MeasurementStatus.Complete,
+            SampleRate = 44100,
+            Channels = 1,
+            ChannelsMeasured = 1,
+            Spectrogram = new SpectrogramGrid { Columns = 0, HopsPerColumn = 1, HopSamples = 2048, Power = Array.Empty<byte>() },
+            Waveform = new WaveformGrid { Columns = 0, Channels = 1, Minimum = Array.Empty<short>(), Maximum = Array.Empty<short>() },
+        };
+        var stream = new StreamInfo { Nodes = [], Codec = "FLAC", SampleRate = 44100, Measurements = measurements };
+        Assert.Empty(AudioPanels.EntriesFor(stream));
     }
 
     [AvaloniaFact]
@@ -431,6 +466,19 @@ public class AudioPanelTests
         window.MouseMove(Window(window, window.Graph.PointOfCell(40)));
         Assert.Contains("front left", window.Graph.HoverText, StringComparison.Ordinal);
         Assert.Contains("front right", window.Graph.HoverText, StringComparison.Ordinal);
+
+        // The text names every line, so every line has its dot, each at its own level.
+        Rect plot = window.Graph.AudioPlotArea()!.Value;
+        IReadOnlyList<Point> dots = window.Graph.SpectrumDotsOf(40)!;
+        Assert.Equal(6, dots.Count);
+        for (int line = 0; line < dots.Count; line++)
+        {
+            double level = spectrum.ValueAt(line, 40);
+            double expected = plot.Bottom - ((level - spectrum.AxisBottom) / (spectrum.AxisTop - spectrum.AxisBottom) * plot.Height);
+            Assert.Equal(expected, dots[line].Y, 6);
+        }
+
+        Assert.True(dots.Select(d => d.Y).Distinct().Count() > 1);
         Assert.Contains("Legend: front left, front right", AutomationProperties.GetHelpText(window.Graph), StringComparison.Ordinal);
 
         window.Close();
@@ -499,7 +547,79 @@ public class AudioPanelTests
         int y = (int)(point.Y * scale);
         byte[] pixel = new byte[4];
         System.Runtime.InteropServices.Marshal.Copy(buffer.Address + (y * buffer.RowBytes) + (x * 4), pixel, 0, 4);
-        return Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0]);
+        return frame.Format == Avalonia.Platform.PixelFormat.Bgra8888
+            ? Color.FromArgb(pixel[3], pixel[2], pixel[1], pixel[0])
+            : Color.FromArgb(pixel[3], pixel[0], pixel[1], pixel[2]);
+    }
+
+    // A spectrogram of the given columns whose cells are the byte for each (column, row), shown in a window of 1000 by 500.
+    private static (Window Window, GraphView View) ShowGrid(int columns, Func<int, int, byte> cell)
+    {
+        byte[] power = new byte[columns * MeasurementLimits.Rows];
+        for (int c = 0; c < columns; c++)
+        {
+            for (int r = 0; r < MeasurementLimits.Rows; r++)
+            {
+                power[(c * MeasurementLimits.Rows) + r] = cell(c, r);
+            }
+        }
+
+        var measurements = new StreamMeasurements
+        {
+            Status = MeasurementStatus.Complete,
+            Samples = 2048L * columns,
+            SampleRate = 44100,
+            Channels = 1,
+            ChannelsMeasured = 1,
+            Spectrogram = new SpectrogramGrid { Columns = columns, HopsPerColumn = 1, HopSamples = 2048, Power = power },
+        };
+        var stream = new StreamInfo { Nodes = [], Codec = "FLAC", SampleRate = 44100, Samples = measurements.Samples, Measurements = measurements };
+        var view = new GraphView { Graph = new SpectrogramGraph(stream, measurements) };
+        var window = new Window { Width = 1000, Height = 500, Content = view };
+        window.Show();
+        Settle();
+        return (window, view);
+    }
+
+    private static Color PixelOf(Window window, GraphView view, Point inView)
+    {
+        Avalonia.Media.Imaging.WriteableBitmap frame = window.CaptureRenderedFrame()!;
+        return PixelAt(frame, view.TranslatePoint(inView, window)!.Value, window);
+    }
+
+    [AvaloniaFact]
+    public void The_spectrogram_puts_low_frequencies_at_the_bottom()
+    {
+        // One band of rows (96 to 111, in the lower fifth of the frequencies) at full level, the rest with no data. A flipped axis lights the mirrored rows.
+        (Window window, GraphView view) = ShowGrid(8, (_, row) => row is >= 96 and < 112 ? (byte)220 : (byte)0);
+        Rect plot = view.AudioPlotArea()!.Value;
+        double Y(int row) => plot.Bottom - ((row + 0.5) * plot.Height / MeasurementLimits.Rows);
+
+        Color lit = PixelOf(window, view, new Point(plot.Left + (plot.Width * 0.3), Y(104)));
+        Color mirrored = PixelOf(window, view, new Point(plot.Left + (plot.Width * 0.3), Y(MeasurementLimits.Rows - 1 - 104)));
+        Assert.True(lit.R > 200 && lit.G > 200, $"the band is pale yellow, was {lit}");
+        Assert.True(mirrored.R < 10 && mirrored.G < 10 && mirrored.B < 10, $"the mirrored position is empty, was {mirrored}");
+
+        // Above the band and below it, the picture is black too.
+        Assert.True(PixelOf(window, view, new Point(plot.Left + (plot.Width * 0.3), Y(150))) is { R: < 10 });
+        Assert.True(PixelOf(window, view, new Point(plot.Left + (plot.Width * 0.3), Y(20))) is { R: < 10 });
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void A_spectrogram_with_few_columns_draws_blocks_not_a_fade()
+    {
+        // Two columns, the first at full level and the second empty, across 800 pixels: a smoothed picture would blend them over hundreds of pixels.
+        (Window window, GraphView view) = ShowGrid(2, (column, _) => column == 0 ? (byte)220 : (byte)0);
+        Rect plot = view.AudioPlotArea()!.Value;
+        double middle = plot.Left + (plot.Width / 2);
+        double y = plot.Center.Y;
+        Color expected = GraphView.RampColor(220);
+        Assert.Equal(expected, PixelOf(window, view, new Point(middle - 3, y)));
+        Assert.Equal(expected, PixelOf(window, view, new Point(middle - 40, y)));
+        Assert.True(PixelOf(window, view, new Point(middle + 3, y)) is { R: 0, G: 0, B: 0 });
+        Assert.True(PixelOf(window, view, new Point(middle + 40, y)) is { R: 0, G: 0, B: 0 });
+        window.Close();
     }
 
     [AvaloniaFact]
@@ -563,6 +683,7 @@ public class AudioPanelTests
                 window.MouseMove(view.TranslatePoint(view.PointOfCell((i * 5) % columns % graph.Count, i % 512)!.Value, window)!.Value);
             }
 
+            // The design's speed target for a pointer move is a quarter of a second, half the bound of a frame: a move draws one.
             Assert.True(clock.Elapsed.TotalMilliseconds / 200 < 250, $"{graph.Title}: {clock.Elapsed.TotalMilliseconds / 200} ms a move");
             window.Close();
         }

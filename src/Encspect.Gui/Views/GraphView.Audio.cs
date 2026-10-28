@@ -25,12 +25,21 @@ public sealed partial class GraphView
 
     private const double AxisLabelGap = 8;
     private const double ColorBarWidth = 10;
+    internal const double GuideHaloWidth = 5;
     private const double ColorBarLabels = 40;
 
     // The spectrogram's bytes to colors, as premultiplied BGRA: one entry for each byte of the grid, the fixed ramp indexed by level.
     private static readonly int[] RampColors = BuildRampColors();
 
     private int _audioRow = -1;
+
+    // Fewer columns than pixels are drawn as blocks: smoothing would fade a column that holds data into one that holds none. The mode is the
+    // view's (a mode pushed on the drawing context for one image is not honored by the renderer), so it follows the graph and the size.
+    private void UpdateInterpolation()
+    {
+        bool isBlocks = Graph is SpectrogramGraph graph && Bounds.Width >= 80 && Bounds.Height >= 60 && graph.Columns < AudioLayoutFor(graph).Plot.Width;
+        RenderOptions.SetBitmapInterpolationMode(this, isBlocks ? BitmapInterpolationMode.None : BitmapInterpolationMode.HighQuality);
+    }
     private WriteableBitmap? _spectrogramBitmap;
     private SpectrogramGraph? _spectrogramBitmapGraph;
 
@@ -507,10 +516,12 @@ public sealed partial class GraphView
         }
     }
 
-    // A line over a picture of any brightness: white on a dark halo, so it needs no color of its own.
+    // A line over a picture of any brightness: white on a dark halo, so it needs no color of its own. The halo is 5 px wide, 1.75 px
+    // beyond the line on each side, so that it shows at 1x scaling; against the ramp's palest entry (#FCFDBF) the white line alone is 1.05:1
+    // and the halo's black (85% over that entry) is 5.4:1.
     private static void DrawGuide(DrawingContext context, Point from, Point to, bool dashed)
     {
-        context.DrawLine(new ImmutablePen(new ImmutableSolidColorBrush(Colors.Black, 0.55), 3), from, to);
+        context.DrawLine(new ImmutablePen(new ImmutableSolidColorBrush(Colors.Black, 0.85), GuideHaloWidth), from, to);
         context.DrawLine(new ImmutablePen(new ImmutableSolidColorBrush(Colors.White, 0.95), 1.5, dashed ? new ImmutableDashStyle([4, 3], 0) : null), from, to);
     }
 
@@ -666,6 +677,26 @@ public sealed partial class GraphView
         }
     }
 
+    // The point of each line of the spectrum at a row, in the view's coordinates; a row with no power sits on the axis.
+    private static List<Point> SpectrumDots(SpectrumGraph graph, Rect plot, int row)
+    {
+        double range = graph.AxisTop - graph.AxisBottom;
+        var dots = new List<Point>(graph.Lines);
+        for (int line = 0; line < graph.Lines; line++)
+        {
+            double value = graph.ValueAt(line, row);
+            double y = double.IsNaN(value) ? plot.Bottom : plot.Bottom - (Math.Clamp(value - graph.AxisBottom, 0, range) / range * plot.Height);
+            dots.Add(new Point(plot.Left + ((row + 0.5) * plot.Width / graph.Count), y));
+        }
+
+        return dots;
+    }
+
+    // Where the dots of a spectrum row are drawn, for tests; null for any other graph.
+    public IReadOnlyList<Point>? SpectrumDotsOf(int row) => Graph is SpectrumGraph graph && Bounds.Width >= 80 && Bounds.Height >= 60 ? SpectrumDots(graph, AudioLayoutFor(graph).Plot, row) : null;
+
+    private Color LineColor(int line) => line < CategoryColors.Hues ? (IsDark ? CategoryColors.Dark : CategoryColors.Light)[line] : IsDark ? Color.Parse("#9a9a9a") : Color.Parse("#8a8a8a");
+
     private bool IsDark => ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
 
     private void DrawAudioHover(DrawingContext context, AudioGraph graph, Rect plot, int hover)
@@ -684,12 +715,16 @@ public sealed partial class GraphView
                 break;
             case SpectrumGraph spectrum:
                 {
-                    double value = spectrum.ValueAt(hover);
-                    double range = spectrum.AxisTop - spectrum.AxisBottom;
-                    double y = double.IsNaN(value) ? plot.Bottom : plot.Bottom - (Math.Clamp(value - spectrum.AxisBottom, 0, range) / range * plot.Height);
-                    at = new Point(plot.Left + ((hover + 0.5) * plot.Width / spectrum.Count), y);
+                    // The text names the level of every line, so every line has its dot.
+                    IReadOnlyList<Point> dots = SpectrumDots(spectrum, plot, hover);
+                    at = new Point(plot.Left + ((hover + 0.5) * plot.Width / spectrum.Count), dots.Count > 0 ? dots.Min(d => d.Y) : plot.Bottom);
                     context.DrawLine(new Pen(Palette.Grid(this, 0.45), 1), new Point(Math.Round(at.X) + 0.5, plot.Top), new Point(Math.Round(at.X) + 0.5, plot.Bottom));
-                    context.DrawEllipse(new ImmutableSolidColorBrush(Palette.Accent(this)), new Pen(Palette.Surface(this), 2), at, 4.5, 4.5);
+                    for (int line = 0; line < dots.Count; line++)
+                    {
+                        Color color = spectrum.View == GraphForm.PerChannel ? LineColor(line) : Palette.Accent(this);
+                        context.DrawEllipse(new ImmutableSolidColorBrush(color), new Pen(Palette.Surface(this), 2), dots[line], 4.5, 4.5);
+                    }
+
                     break;
                 }
 

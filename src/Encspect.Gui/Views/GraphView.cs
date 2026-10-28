@@ -208,6 +208,11 @@ public sealed partial class GraphView : Control
                 AutomationProperties.SetHelpText(this, null);
             }
         }
+
+        if (change.Property == GraphProperty || change.Property == BoundsProperty)
+        {
+            UpdateInterpolation();
+        }
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
