@@ -1,5 +1,6 @@
 // Follows the Monkey's Audio SDK 13.42 (Old/UnBitArrayOld.cpp, UnBitArrayBase.cpp), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
+using System.Buffers.Binary;
 using System.Numerics;
 
 namespace Encspect.Formats.MonkeysAudio.Decoding;
@@ -46,6 +47,14 @@ internal sealed class OldBits
 
         int first = (int)(_position >> 3);
         int offset = (int)(_position & 7);
+        if (first + 8 <= _data.Length)
+        {
+            // One load of eight bytes holds the offset and the 32 bits; the bytes past the frame's length are never part of the bits (end is checked).
+            ulong word = BinaryPrimitives.ReadUInt64BigEndian(_data.AsSpan(first, 8)) << offset;
+            _position = end;
+            return (uint)(word >> (64 - bits));
+        }
+
         ulong window = 0;
         int needed = (offset + bits + 7) >> 3;
         for (int i = 0; i < needed; i++)
@@ -63,6 +72,23 @@ internal sealed class OldBits
     {
         long start = _position;
         long position = start;
+        int at = (int)(position >> 3);
+        if (position < _length && at + 8 <= _data.Length)
+        {
+            ulong word = BinaryPrimitives.ReadUInt64BigEndian(_data.AsSpan(at, 8)) << (int)(position & 7);
+            if (word != 0)
+            {
+                int run = BitOperations.LeadingZeroCount(word);
+                if (position + run >= _length)
+                {
+                    throw new InvalidDataException("The coded data ends before the samples do");
+                }
+
+                _position = position + run + 1;
+                return run;
+            }
+        }
+
         while (true)
         {
             if (position >= _length)
