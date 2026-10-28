@@ -50,8 +50,11 @@ internal sealed class LoudnessMeter
     private long[] _shortCounts = [];
     private double[] _shortSums = [];
 
-    // The energy at and above which a block is above the absolute gate of -70 LUFS.
-    private readonly double _absoluteGate = DetMath.Pow(10.0, -6.9309);
+    // The energy of -70 LUFS; a block or a short-term value passes the absolute gate when it is above it (BS.1770-5 and Tech 3342 both
+    // say "above"), one exactly at it does not.
+    internal static readonly double AbsoluteGate = DetMath.Pow(10.0, -6.9309);
+
+    internal static bool IsAboveAbsoluteGate(double energy) => energy > AbsoluteGate;
 
     private readonly long[] _pointMilliseconds = new long[MeasurementLimits.MaxSeriesPoints];
     private readonly double[] _pointEnergy = new double[MeasurementLimits.MaxSeriesPoints];
@@ -92,6 +95,11 @@ internal sealed class LoudnessMeter
     }
 
     public int Measured => _measured;
+
+    // For tests: every closed granule's weighted sum of squares, the raw doubles, in order.
+    internal List<double>? GranuleTrace { get; set; }
+
+    internal double RawMaximumMomentary => _maxMomentary;
 
     // The stream's first block, or the first one after a gap: nothing carries over, and no block spans it.
     public void Start(long position)
@@ -229,6 +237,7 @@ internal sealed class LoudnessMeter
         int slot = (int)((granule - 1) % Ring);
         _ring[slot] = z;
         _ringSamples[slot] = samples;
+        GranuleTrace?.Add(z);
         long filled = Math.Min(granule, Ring);
         if (filled < BlockGranules)
         {
@@ -252,7 +261,7 @@ internal sealed class LoudnessMeter
             Allocate();
         }
 
-        if (momentary > _absoluteGate)
+        if (IsAboveAbsoluteGate(momentary))
         {
             _blocksAbove++;
             Add(_blockCounts, _blockSums, momentary);
@@ -269,7 +278,7 @@ internal sealed class LoudnessMeter
             _maxShortTerm = shortTerm;
         }
 
-        if (shortTerm >= _absoluteGate)
+        if (IsAboveAbsoluteGate(shortTerm))
         {
             Add(_shortCounts, _shortSums, shortTerm);
         }

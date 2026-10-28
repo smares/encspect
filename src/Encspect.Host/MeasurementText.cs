@@ -49,9 +49,9 @@ public static class MeasurementText
 
     public const string IntegratedLoudnessDescription = "The loudness of the whole stream (BS.1770-5 equation 5): blocks of 400 ms every 100 ms, K-weighted and channel-weighted, keeping those above -70 LUFS and above a gate 10 LU below the average loudness of those. It is computed from the decoded audio, not written by the file's creator.";
 
-    public const string LoudnessRangeDescription = "The spread of the short-term loudness (3 s windows every 100 ms) between its 10th and its 95th percentile, after gating at -70 LUFS and 20 LU below the average, as EBU Tech 3342 defines it. It is computed from the decoded audio, not written by the file's creator.";
+    public const string LoudnessRangeDescription = "The spread of the short-term loudness (3 s windows every 100 ms) between its 10th and its 95th percentile, after gating at -70 LUFS and 20 LU below the average, as EBU Tech 3342 defines it. A short-term loudness above +30 LUFS counts as +30 LUFS in the percentiles. It is computed from the decoded audio, not written by the file's creator.";
 
-    public const string MaximumMomentaryLoudnessDescription = "The highest momentary loudness: the loudness of 400 ms blocks, rectangular, taken every 100 ms (EBU R 128). It is computed from the decoded audio, not written by the file's creator.";
+    public const string MaximumMomentaryLoudnessDescription = "The highest momentary loudness: the loudness of 400 ms blocks, rectangular, taken every 20 ms (EBU R 128). It is computed from the decoded audio, not written by the file's creator.";
 
     public const string MaximumShortTermLoudnessDescription = "The highest short-term loudness: the loudness of 3 s windows taken every 100 ms (EBU R 128). It is computed from the decoded audio, not written by the file's creator.";
 
@@ -126,7 +126,7 @@ public static class MeasurementText
         if (!isMaxima)
         {
             lines.Add(new MeasurementLine("Integrated Loudness", Loudness(l.IntegratedTenths, l.IntegratedAbsence, "LUFS", block), IntegratedLoudnessDescription, LoudnessTopic));
-            lines.Add(new MeasurementLine("Loudness Range", Loudness(l.RangeTenths, l.RangeAbsence, "LU", window), LoudnessRangeDescription, LoudnessRangeTopic));
+            lines.Add(new MeasurementLine("Loudness Range", Loudness(l.RangeTenths, l.RangeAbsence, "LU", window, "short-term value"), LoudnessRangeDescription, LoudnessRangeTopic));
             return;
         }
 
@@ -152,14 +152,17 @@ public static class MeasurementText
         lines.Add(new MeasurementLine("Maximum True Peak Level", $"{SignedTenths(t.StreamTenths)} dBTP{PerChannel(names, t.ChannelTenths.Select(SignedTenths))}{basis}", TruePeakDescription, TruePeakTopic));
     }
 
-    // Why a stream has no block: it is shorter than the block, or no stretch between gaps is.
+    // Why a stream has no block: no stretch between gaps lasts the block, or what was measured does (the stream itself, or the part of it
+    // before a stop or a budget ended the measuring).
     private static string ShortStretch(StreamMeasurements m, string length) =>
-        m.Gaps == 0 ? $"the stream is shorter than {length}" : $"no stretch between gaps lasts {length}";
+        m.Gaps > 0 ? $"no stretch between gaps lasts {length}"
+        : m.Status == MeasurementStatus.Complete ? $"the stream is shorter than {length}"
+        : $"the part of the stream that was measured is shorter than {length}";
 
-    private static string Loudness(int tenths, LoudnessAbsence absence, string unit, string shortReason) => absence switch
+    private static string Loudness(int tenths, LoudnessAbsence absence, string unit, string shortReason, string values = "block") => absence switch
     {
         LoudnessAbsence.TooShort => $"none ({shortReason})",
-        LoudnessAbsence.BelowGate => "none (every block is below the absolute gate of -70 LUFS)",
+        LoudnessAbsence.BelowGate => $"none (every {values} is below the absolute gate of -70 LUFS)",
         _ => $"{Tenths(tenths)} {unit}",
     };
 

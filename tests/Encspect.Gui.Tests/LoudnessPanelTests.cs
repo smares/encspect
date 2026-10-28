@@ -111,4 +111,61 @@ public class LoudnessPanelTests
         Assert.Contains("(average of 8 values)", graph.Describe(1), StringComparison.Ordinal);
         Assert.Equal(3.8 + 0.8, graph.EndSeconds, 3);
     }
+
+    private static LoudnessGraph GraphWithAGap()
+    {
+        // Three values 0.1 s apart, a gap of 4.7 s, then two more.
+        var series = new Series("Short-Term Loudness", "LUFS", SeriesAxis.Seconds, new double[] { 3.0, 3.1, 3.2, 7.9, 8.0 }, new double[] { -23.0, -23.1, -23.2, -30.0, -30.1 });
+        var measurements = new StreamMeasurements
+        {
+            Status = MeasurementStatus.Complete,
+            SampleRate = 48000,
+            Samples = 480_000,
+            Loudness = new LoudnessFigures { ShortTerm = series, StepsPerPoint = 1, IntegratedTenths = -260, ChannelWeights = [100] },
+        };
+        return new LoudnessGraph(new StreamInfo { Nodes = [], Codec = "FLAC", SampleRate = 48000 }, measurements);
+    }
+
+    [Fact]
+    public void The_points_sit_at_their_times_so_a_gap_is_a_longer_step_and_the_nearest_point_is_found_by_time()
+    {
+        LoudnessGraph graph = GraphWithAGap();
+        double span = graph.EndSeconds - graph.StartSeconds;
+        Assert.Equal(5.1, span, 6);
+        for (int i = 0; i < graph.Count; i++)
+        {
+            Assert.Equal((graph.TimeAt(i) + 0.05 - graph.StartSeconds) / span, graph.FractionAt(i), 9);
+            Assert.Equal(i, graph.IndexAtFraction(graph.FractionAt(i)));
+        }
+
+        Assert.True(graph.FractionAt(3) - graph.FractionAt(2) > 40 * (graph.FractionAt(1) - graph.FractionAt(0)));
+
+        // In the middle of the gap the nearer side wins; at either end of the axis the end points do.
+        Assert.Equal(2, graph.IndexAtFraction(graph.FractionAt(2) + 0.1));
+        Assert.Equal(3, graph.IndexAtFraction(graph.FractionAt(3) - 0.1));
+        Assert.Equal(0, graph.IndexAtFraction(0));
+        Assert.Equal(4, graph.IndexAtFraction(1));
+    }
+
+    [AvaloniaFact]
+    public void The_drawn_points_and_the_hover_follow_the_time_axis_over_a_gap()
+    {
+        LoudnessGraph graph = GraphWithAGap();
+        var view = new GraphView { Graph = graph };
+        var window = new Avalonia.Controls.Window { Width = 900, Height = 400, Content = view };
+        window.Show();
+        AudioPanelTests.Settle();
+
+        Point[] dots = [.. Enumerable.Range(0, graph.Count).Select(i => view.LoudnessDotOf(i)!.Value)];
+        double step = dots[1].X - dots[0].X;
+        double gap = dots[3].X - dots[2].X;
+        Assert.True(step > 0);
+        Assert.Equal(50 * step, dots[4].X - dots[0].X, 1.0);
+        Assert.InRange(gap / step, 46.0, 48.0);
+
+        window.MouseMove(view.TranslatePoint(new Point(dots[3].X + 3, dots[3].Y), window)!.Value, RawInputModifiers.None);
+        AudioPanelTests.Settle();
+        Assert.Equal(3, view.HoverIndex);
+        window.Close();
+    }
 }

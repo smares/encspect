@@ -290,4 +290,58 @@ public class LoudnessMeterTests
         Assert.True(l.StepsPerPoint >= 128);
         Assert.Equal(LoudnessAbsence.None, l.RangeAbsence);
     }
+
+    private static string LineText(StreamMeasurements m, string name) => MeasurementText.Lines(m, isLossy: false).Single(l => l.Name == name).Text;
+
+    [Fact]
+    public void ABlockExactlyAtTheAbsoluteGateDoesNotPassButTheNextEnergyUpDoes()
+    {
+        double gate = LoudnessMeter.AbsoluteGate;
+        Assert.False(LoudnessMeter.IsAboveAbsoluteGate(gate));
+        Assert.False(LoudnessMeter.IsAboveAbsoluteGate(Math.BitDecrement(gate)));
+        Assert.True(LoudnessMeter.IsAboveAbsoluteGate(Math.BitIncrement(gate)));
+        Assert.Equal(-700, LoudnessMeter.Tenths(gate));
+    }
+
+    [Fact]
+    public void AStreamBelowTheGateNamesTheValuesThatAreBelowItAndAShortOneTheStretch()
+    {
+        StreamMeasurements quiet = Measure(Stereo(Tone(48000, 5, -75)), 48000, kinds: MeasurementKinds.Loudness);
+        Assert.Equal("none (every block is below the absolute gate of -70 LUFS)", LineText(quiet, "Integrated Loudness"));
+        Assert.Equal("none (every short-term value is below the absolute gate of -70 LUFS)", LineText(quiet, "Loudness Range"));
+
+        StreamMeasurements shortStream = Measure(Stereo(Tone(48000, 0.2, -20)), 48000, kinds: MeasurementKinds.Loudness);
+        Assert.Equal("none (the stream is shorter than 400 ms)", LineText(shortStream, "Integrated Loudness"));
+        Assert.Equal("none (the stream is shorter than 3 s)", LineText(shortStream, "Loudness Range"));
+    }
+
+    [Fact]
+    public void AStreamThatWasStoppedEarlyDoesNotSayTheStreamIsShort()
+    {
+        StreamMeasurements stopped = Measure(Stereo(Tone(48000, 0.2, -20)), 48000, kinds: MeasurementKinds.Loudness) with { Status = MeasurementStatus.Stopped };
+        Assert.Equal("none (the part of the stream that was measured is shorter than 400 ms)", LineText(stopped, "Integrated Loudness"));
+        Assert.Equal("none (the part of the stream that was measured is shorter than 3 s)", LineText(stopped, "Maximum Short-Term Loudness"));
+
+        StreamMeasurements gaps = Measure(Stereo(Tone(48000, 2, -20)), 48000, kinds: MeasurementKinds.Loudness, removed: [(48000, 4800)]) with { Status = MeasurementStatus.Stopped };
+        Assert.Equal("none (no stretch between gaps lasts 3 s)", LineText(gaps, "Loudness Range"));
+    }
+
+    [Fact]
+    public void AnInputAboveThe30LufsTopOfTheHistogramReadsThatTopInThePercentilesAndTheDescriptionSaysSo()
+    {
+        LoudnessFigures l = Measure([Tone(48000, 5, 40)], 48000, kinds: MeasurementKinds.Loudness).Loudness!;
+        Assert.True(l.IntegratedTenths > 300);
+        Assert.Equal(300, l.RangeLowTenths);
+        Assert.Equal(300, l.RangeHighTenths);
+        Assert.Equal(0, l.RangeTenths);
+        Assert.Contains("above +30 LUFS counts as +30 LUFS", MeasurementText.LoudnessRangeDescription);
+    }
+
+    [Fact]
+    public void TheMomentaryLoudnessDescriptionsSayEvery20Milliseconds()
+    {
+        Assert.Contains("every 20 ms", MeasurementText.MaximumMomentaryLoudnessDescription);
+        Assert.DoesNotContain("100 ms", MeasurementText.MaximumMomentaryLoudnessDescription);
+        Assert.Contains("every 100 ms", MeasurementText.MaximumShortTermLoudnessDescription);
+    }
 }

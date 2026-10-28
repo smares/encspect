@@ -134,6 +134,51 @@ public class MeasurementDeterminismTests
         Assert.True(LoudnessHash == hash, "LoudnessHash = " + hash);
     }
 
+    // The K-weighted sums of squares of every granule and the maximum momentary energy, the raw doubles, for noise, an impulse and then silence: the
+    // filter states fall under the flush threshold during the silence, and where they are set to zero decides the last bits of the sums.
+    // The flush is at stream positions that are multiples of 4,096, so cutting the stream in other blocks must not change a bit.
+    private static (string Hash, int Granules) LoudnessRawHash(int rate, int block)
+    {
+        double[] noise = MeasurementSignals.Noise(rate / 2, 41);
+        var signal = new double[(rate * 5) / 2];
+        for (int i = 0; i < noise.Length; i++)
+        {
+            signal[i] = noise[i] * 0.2;
+        }
+
+        signal[(rate / 2) + 100] = 1.0;
+        var meter = new LoudnessMeter(rate, [100]) { GranuleTrace = [] };
+        meter.Start(0);
+        for (int start = 0; start < signal.Length; start += block)
+        {
+            int n = Math.Min(block, signal.Length - start);
+            meter.AddChannel(0, signal.AsSpan(start, n));
+            meter.EndPiece(n);
+        }
+
+        return (HashBits(meter.GranuleTrace!.Append(meter.RawMaximumMomentary)), meter.GranuleTrace!.Count);
+    }
+
+    [Fact]
+    public void TheRawGranuleSumsOfAnImpulseAndSilenceDoNotDependOnTheBlocksAndHashToAConstant()
+    {
+        var hashes = new List<string>();
+        foreach (int rate in new[] { 48000, 44100 })
+        {
+            (string reference, int granules) = LoudnessRawHash(rate, 4096);
+            Assert.True(granules >= 120);
+            foreach (int block in new[] { 777, 1000, 5000, 16384 })
+            {
+                Assert.True(reference == LoudnessRawHash(rate, block).Hash, $"the raw sums at {rate} Hz differ between blocks of 4096 and {block}");
+            }
+
+            hashes.Add(reference);
+        }
+
+        string all = string.Join('|', hashes);
+        Assert.True(LoudnessRawHashes == all, "LoudnessRawHashes = " + all);
+    }
+
     // The raw interpolated peaks (the maximum of the filter's outputs, the double itself) of a noise signal at the three oversamplings, cut in blocks of 777.
     [Fact]
     public void TheTruePeakOfSyntheticStreamsHashesToAConstant()
@@ -389,6 +434,7 @@ public class MeasurementDeterminismTests
     private const string LevelsHash = "f92d52741857da7606e0932e860091e47898d604dbfb1bbd97ffde473c022fbc";
     private const string KWeightingHash = "f6048a6ea38eab1d0c9da05b4f9590e11f6090e6ad1942b442b98b24b94e44f6";
     private const string LoudnessHash = "436f003bd4cbd71d3728431622583423b26e3917f29dd4544a7be3bf929f9b12";
+    private const string LoudnessRawHashes = "fbe68095d1d1bf5f4db95b77e1d2f3449f85cff5b687dcf8812f47d63fbfd44e|f82afd7a3245c2a833c86bd213284821b58ad0b680534ee7175b6cc3ac0c7eb7";
     private const string TruePeakHash = "0461b026bc6590cab1f7574b47c344005fa715234296d6fc59f01b111b7c612f";
     private const string MathHash = "6654c27b9dc93be9cabd9f70dad935929bf08d83c724028dff4dd2334949a8c1";
 }

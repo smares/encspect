@@ -188,6 +188,12 @@ public class ScreenshotTests
         Save(window, $"audio-spectrogram-sweep-{variant}.png");
         window.Close();
 
+        window = AudioPanelTests.Open(Fixtures.Measurement("synthetic-loudness-steps-8000.flac"));
+        AudioPanelTests.Choose(window, "Loudness");
+        window.MouseMove(window.Graph.TranslatePoint(window.Graph.LoudnessDotOf(20)!.Value, window)!.Value);
+        Save(window, $"audio-loudness-{variant}.png");
+        window.Close();
+
         Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
     }
 

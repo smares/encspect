@@ -21,7 +21,7 @@ The output is a text tree by default; `encspect --help` lists the options.
 - `--ndjson`: one compact report per line, which stays usable line by line if a long run stops early.
 - `--csv`: one summary row per file.
 
-Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and the measured columns) skip the guard, as a number cannot start one. The CSV has one column more than before, `Spectral Cutoff (Hz)`, at the end: a reader that counts columns must be changed.
+Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and the measured columns) skip the guard, as a number cannot start one. The CSV has five columns more than before, at the end: `Spectral Cutoff (Hz)`, `Sample Peak (dBFS)`, `Maximum True Peak Level (dBTP)`, `Integrated Loudness (LUFS)` and `Loudness Range (LU)`: a reader that counts columns must be changed.
 
 ## Options
 

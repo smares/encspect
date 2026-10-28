@@ -5,7 +5,7 @@ using Encspect.Gui.ViewModels;
 
 namespace Encspect.Gui.Views;
 
-// The Loudness panel: the short-term loudness as a line over time (the points spread evenly over the width), the integrated loudness as a
+// The Loudness panel: the short-term loudness as a line over time (the points placed by their time, so a gap in the stream shows as a gap), the integrated loudness as a
 // dashed line, and the loudness figures in a header. Kept apart from the other audio panels' drawing.
 public sealed partial class GraphView
 {
@@ -16,7 +16,7 @@ public sealed partial class GraphView
     {
         double range = graph.AxisTop - graph.AxisBottom;
         double y = plot.Bottom - (Math.Clamp(graph.ValueAt(index) - graph.AxisBottom, 0, range) / range * plot.Height);
-        return new Point(plot.Left + ((index + 0.5) * plot.Width / graph.Count), y);
+        return new Point(plot.Left + (graph.FractionAt(index) * plot.Width), y);
     }
 
     // Where the line of the loudness is drawn at a point, in the view's coordinates, for tests; null for any other graph.

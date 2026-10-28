@@ -128,7 +128,8 @@ public sealed partial class GraphView
             return null;
         }
 
-        return Math.Clamp((int)((point.X - plot.Left) / plot.Width * graph.Count), 0, graph.Count - 1);
+        double fraction = (point.X - plot.Left) / plot.Width;
+        return graph is LoudnessGraph loudness ? loudness.IndexAtFraction(fraction) : Math.Clamp((int)(fraction * graph.Count), 0, graph.Count - 1);
     }
 
     // Hover for the audio panels: the column (waveform), the cell (spectrogram) or the row (spectrum) under the pointer.

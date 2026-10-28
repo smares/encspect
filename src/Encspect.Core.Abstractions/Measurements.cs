@@ -277,7 +277,7 @@ public sealed record LoudnessFigures
 
     public LoudnessAbsence RangeAbsence { get; init; }
 
-    // The highest momentary (400 ms) and short-term (3 s) loudness, taken every 100 ms, and why one is missing.
+    // The highest momentary (400 ms) and short-term (3 s) loudness (the first every 20 ms, the second every 100 ms), and why one is missing.
     public int MaximumMomentaryTenths { get; init; } = MeasurementLimits.NoLevel;
 
     public LoudnessAbsence MomentaryAbsence { get; init; }

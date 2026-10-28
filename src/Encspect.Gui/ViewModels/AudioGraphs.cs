@@ -379,6 +379,31 @@ public sealed class LoudnessGraph : AudioGraph
     // The end of the last point: the values it covers last StepsPerPoint steps of 0.1 s.
     public double EndSeconds => TimeAt(Count - 1) + (Loudness.StepsPerPoint * 0.1);
 
+    // Where a point sits on the time axis, from 0 at the start to 1 at the end: the middle of the stretch its values cover, so a gap in
+    // the stream shows as a gap in the line.
+    public double FractionAt(int index) => (TimeAt(index) + (Loudness.StepsPerPoint * 0.05) - StartSeconds) / (EndSeconds - StartSeconds);
+
+    // The point nearest to a fraction of the time axis.
+    public int IndexAtFraction(double fraction)
+    {
+        int low = 0;
+        int high = Count - 1;
+        while (low < high)
+        {
+            int middle = (low + high) / 2;
+            if (FractionAt(middle) < fraction)
+            {
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle;
+            }
+        }
+
+        return low > 0 && fraction - FractionAt(low - 1) <= FractionAt(low) - fraction ? low - 1 : low;
+    }
+
     public override double ValueAt(int index) => Series.Values.Span[index];
 
     // "0:12.4 · short-term loudness -23.1 LUFS", with the number of values a merged point averages.

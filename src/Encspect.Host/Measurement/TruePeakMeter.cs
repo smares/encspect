@@ -108,6 +108,9 @@ internal sealed class TruePeakMeter
         all.Slice(samples.Length, History).CopyTo(history);
     }
 
+    // The highest interpolated output so far (no sample peak), for the tests that hold the loops to each other.
+    internal double InterpolatedPeak(int channel) => _peak[channel];
+
     // The highest magnitude so far, as the double itself, for the tests that pin the raw output.
     internal double RawPeak(int channel) => Math.Max(_peak[channel], _samplePeak[channel]);
 

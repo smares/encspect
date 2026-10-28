@@ -15,4 +15,4 @@ references: EBU Tech 3342 (Loudness Range, 2023); EBU Tech 3341; ITU-R BS.1770-5
 
 The analyzer keeps the values in bins of 0.01 LU, so its percentiles are exact to that resolution; Tech 3342 allows a tolerance of 1 LU.
 
-**What you see.** Loudness Range in LU, computed from the decoded audio. A stream shorter than 3 s has none, and a short program with leading or trailing silence can read misleadingly high. It is a measured figure; a Broadcast Wave bext chunk states its own loudness range, which is another figure. It is not the DR value of other meters, which has no open specification.
+**What you see.** Loudness Range in LU, computed from the decoded audio. A stream shorter than 3 s has none; a stream whose short-term loudness is above +30 LUFS reads +30 LUFS for both percentiles, the top of the analyzer's bins. It is a measured figure; a Broadcast Wave bext chunk states its own loudness range, which is another figure. It is not the DR value of other meters, which Encspect does not measure.

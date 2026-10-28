@@ -178,13 +178,72 @@ public class LoudnessTruePeakTests(Xunit.Abstractions.ITestOutputHelper output)
         Assert.Equal(MeasurementLimits.NoLevel, t.StreamTenths);
     }
 
+    // Quiet noise (so that a peak exists and silent windows are skipped), digital silence, then a short fs/4 sine at 45 degrees: its samples are
+    // all +-0.707 and the interpolated peak is about 1.0, above every sample. A window wrongly skipped after a skipped one loses it.
+    private static double[] QuietThenBurst(int quiet, int silence, int burst, double phaseDegrees)
+    {
+        double[] noise = MeasurementSignals.Noise(quiet, 5);
+        var signal = new double[quiet + silence + burst + 300];
+        for (int i = 0; i < quiet; i++)
+        {
+            signal[i] = noise[i] * 0.001;
+        }
+
+        for (int i = 0; i < burst; i++)
+        {
+            signal[quiet + silence + i] = Math.Sin((Math.PI / 2 * i) + (phaseDegrees * Math.PI / 180));
+        }
+
+        return signal;
+    }
+
     [Theory]
     [InlineData(4)]
     [InlineData(2)]
-    public void TheVectorLoopTheScalarLoopAndTheSkippingAgreeBitForBit(int factor)
+    public void TheVectorLoopTheScalarLoopAndTheSkippingAgreeOnTheInterpolatedPeakBitForBit(int factor)
+    {
+        int rate = factor == 4 ? 48000 : 96000;
+        int checkedCases = 0;
+        foreach (int silence in new[] { 600, 1000, 1500 })
+        {
+            foreach (int burst in new[] { 12, 20, 40 })
+            {
+                for (int offset = 0; offset < 128; offset += 9)
+                {
+                    double[] signal = QuietThenBurst(300 + offset, silence, burst, 45);
+                    foreach (int block in new[] { 128, 777, 1000, 16384 })
+                    {
+                        double[] peaks = new double[3];
+                        for (int variant = 0; variant < 3; variant++)
+                        {
+                            var meter = new TruePeakMeter(1, rate) { UsesVectors = variant != 1, Skips = variant == 0 };
+                            for (int start = 0; start < signal.Length; start += block)
+                            {
+                                meter.AddChannel(0, signal.AsSpan(start, Math.Min(block, signal.Length - start)));
+                            }
+
+                            peaks[variant] = meter.InterpolatedPeak(0);
+                        }
+
+                        string what = $"factor {factor}, silence {silence}, burst {burst}, offset {offset}, block {block}";
+                        Assert.True(peaks[0] > 0.9, what + $": the interpolated peak is {peaks[0]}");
+                        Assert.True(BitConverter.DoubleToInt64Bits(peaks[0]) == BitConverter.DoubleToInt64Bits(peaks[1]), what + ": skipping and vectors differ from the scalar loop");
+                        Assert.True(BitConverter.DoubleToInt64Bits(peaks[2]) == BitConverter.DoubleToInt64Bits(peaks[1]), what + ": vectors without skipping differ from the scalar loop");
+                        checkedCases++;
+                    }
+                }
+            }
+        }
+
+        Assert.True(checkedCases > 400);
+    }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(2)]
+    public void TheVectorLoopTheScalarLoopAndTheSkippingAgreeOnNoiseWithALateClick(int factor)
     {
         double[] noise = MeasurementSignals.Noise(100_000, 11);
-        // Loud at the start so that most windows after it can be skipped, then quiet noise with a late short click.
         for (int i = 0; i < noise.Length; i++)
         {
             noise[i] *= i < 3000 ? 0.9 : 0.1;
@@ -201,11 +260,11 @@ public class LoudnessTruePeakTests(Xunit.Abstractions.ITestOutputHelper output)
                 meter.AddChannel(0, noise.AsSpan(start, Math.Min(777, noise.Length - start)));
             }
 
-            results[variant] = meter.Tenths(0);
+            results[variant] = meter.InterpolatedPeak(0);
         }
 
-        Assert.Equal(results[0], results[1]);
-        Assert.Equal(results[0], results[2]);
+        Assert.Equal(BitConverter.DoubleToInt64Bits(results[1]), BitConverter.DoubleToInt64Bits(results[0]));
+        Assert.Equal(BitConverter.DoubleToInt64Bits(results[1]), BitConverter.DoubleToInt64Bits(results[2]));
     }
 
     [Fact]
