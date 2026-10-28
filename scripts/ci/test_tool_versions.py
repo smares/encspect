@@ -42,6 +42,7 @@ class ProgramTests(unittest.TestCase):
             "ogginfo": "ogginfo from vorbis-tools 1.4.3\n",
             "flac": "flac 1.5.0\n",
             "metaflac": "metaflac 1.5.0\n",
+            "ebur128_driver": "ebur128_driver libebur128 1.2.6\n",
         }
         self.assertEqual(set(outputs), set(tool_versions.PROGRAMS))
         for name, output in outputs.items():
