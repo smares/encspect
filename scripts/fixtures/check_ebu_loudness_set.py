@@ -11,8 +11,9 @@ the set could not be read when this was written (docs/design/spectral-analysis.m
 
 --analyzer is the CLI (default src/Encspect.Cli/bin/Release/net10.0/encspect); --directory uses a set that is already extracted instead of downloading it.
 
-SHA256 is empty until someone with access to the EBU's site (it refuses the build machines of this repository's authors) downloads the file once and pins it;
-without a pin the script says so and does nothing.
+SHA256 is empty until someone downloads the zip once and pins it (the EBU's server answers the build machines of this repository's authors with 403 for the zip
+only; the Tech 3341 PDF downloads). Without a pin nothing is checked: the script prints a GitHub ::warning:: saying so and exits with 0, and
+`--is-pinned` prints that warning and exits with 1 for the workflow, which then builds nothing and skips the check.
 """
 
 import json
@@ -30,7 +31,8 @@ URL = "https://tech.ebu.ch/files/live/sites/tech/files/shared/testmaterial/ebu-l
 SHA256 = ""
 
 # (file name pattern, figure, expected value, tolerance up, tolerance down). Figures: I, LRA, M, S (maxima) and TP. Patterns are matched against the lower-case
-# names of the files in the set, which end in .wav (the true-peak files in .wav.wav).
+# names of the files in the set, which end in .wav (the true-peak files in .wav.wav). The file names of cases 9, 11, 12 and 14 are NOT VERIFIED (they follow the
+# pattern of the others; no copy of the set was seen); the others were checked against libebur128's tests.c, which names the files of its test set.
 CASES = [
     (r"seq-3341-1-16bit", "I", -23.0, 0.1, 0.1), (r"seq-3341-1-16bit", "M", -23.0, 0.1, 0.1), (r"seq-3341-1-16bit", "S", -23.0, 0.1, 0.1),
     (r"seq-3341-2-16bit", "I", -33.0, 0.1, 0.1), (r"seq-3341-2-16bit", "M", -33.0, 0.1, 0.1), (r"seq-3341-2-16bit", "S", -33.0, 0.1, 0.1),
@@ -50,7 +52,9 @@ CASES = [
     (r"seq-3342-1-16bit", "LRA", 10.0, 1.0, 1.0), (r"seq-3342-2-16bit", "LRA", 5.0, 1.0, 1.0), (r"seq-3342-3-16bit", "LRA", 20.0, 1.0, 1.0),
     (r"seq-3342-4-16bit", "LRA", 15.0, 1.0, 1.0),
 ]
-MINIMUM_FILES = 20
+MINIMUM_FIGURES = 20
+NOT_PINNED = (f"::warning title=EBU loudness test set not pinned::The EBU loudness test set is not pinned (SHA256 is empty in {pathlib.Path(__file__).name}); nothing was checked. "
+              f"Download {URL} once, check it, and set SHA256 to its digest.")
 
 
 def measure(analyzer, path):
@@ -71,6 +75,10 @@ def main():
     directory = None
     while arguments:
         flag = arguments.pop(0)
+        if flag == "--is-pinned":
+            if not SHA256:
+                print(NOT_PINNED)
+            sys.exit(0 if SHA256 else 1)
         if flag == "--analyzer":
             analyzer = pathlib.Path(arguments.pop(0))
         elif flag == "--directory":
@@ -80,8 +88,7 @@ def main():
     with tempfile.TemporaryDirectory() as work:
         if directory is None:
             if not SHA256:
-                print(f"The EBU loudness test set is not pinned (SHA256 is empty in {pathlib.Path(__file__).name}); nothing was checked. Download {URL} once, "
-                      "check it, and set SHA256 to its digest.")
+                print(NOT_PINNED)
                 return
             archive = pathlib.Path(work) / "set.zip"
             downloads.fetch([URL], SHA256, archive)
@@ -100,7 +107,7 @@ def main():
                 if value is None or not expected - down - 1e-9 <= value <= expected + up + 1e-9:
                     problems.append(f"{path.name}: {figure} reads {value}, expected {expected} +{up}/-{down}")
         print(f"{len(files)} files in the set, {compared} figures compared")
-        if compared < MINIMUM_FILES:
+        if compared < MINIMUM_FIGURES:
             problems.append(f"only {compared} figures were compared; the set's file names may differ from the patterns")
         for problem in problems:
             print("FAIL", problem)

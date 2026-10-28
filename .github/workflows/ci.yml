@@ -1047,16 +1047,28 @@ jobs:
       - name: Cross-check the measurement fixtures
         run: python3 scripts/fixtures/crosscheck_measurement_fixtures.py
 
+      # The EBU loudness test set is downloaded at a pinned SHA-256 and never committed; its expected values are Tech 3341's and 3342's tables. While the
+      # script's SHA256 is empty, the first step warns that nothing is checked, and the CLI is neither built nor run.
+      - name: Is the EBU loudness test set pinned
+        id: ebu
+        run: |
+          if python3 scripts/fixtures/check_ebu_loudness_set.py --is-pinned; then
+            echo "pinned=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pinned=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-dotnet@v5
+        if: steps.ebu.outputs.pinned == 'true'
         with:
           dotnet-version: 10.0.x
 
       - name: Build the CLI
+        if: steps.ebu.outputs.pinned == 'true'
         run: dotnet build --configuration Release src/Encspect.Cli
 
-      # The EBU loudness test set is downloaded at a pinned SHA-256 and never committed; its expected values are Tech 3341's and 3342's tables. While the
-      # script's SHA256 is empty it says so and checks nothing.
       - name: Check the analyzer against the EBU loudness test set
+        if: steps.ebu.outputs.pinned == 'true'
         run: python3 scripts/fixtures/check_ebu_loudness_set.py
 
   tta-crosscheck:
