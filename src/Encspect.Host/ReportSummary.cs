@@ -47,6 +47,14 @@ public sealed record ReportSummary(
     // measurements found one (a stream whose samples are all 0 has none); null otherwise.
     public int? SamplePeakTenths { get; init; }
 
+    // The highest true peak over the channels of the first audio stream in tenths of a dBTP, the stream's integrated loudness in tenths of a
+    // LUFS and its loudness range in tenths of a LU, where measurements have them (none for silence, a stream too short or one not measured).
+    public int? TruePeakTenths { get; init; }
+
+    public int? IntegratedLoudnessTenths { get; init; }
+
+    public int? LoudnessRangeTenths { get; init; }
+
     // The schemes and systems as lists even for a summary made without them.
     public IReadOnlyList<string> ProtectionSchemes { get; init; } = ProtectionSchemes ?? [];
 
@@ -107,6 +115,9 @@ public sealed record ReportSummary(
             IsVerified = verified,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
             SamplePeakTenths = first?.Measurements?.Levels?.Stream.SamplePeakTenths is { } peak && peak != MeasurementLimits.NoLevel ? peak : null,
+            TruePeakTenths = first?.Measurements?.TruePeak is { NotMeasured: null, StreamTenths: var truePeak } && truePeak != MeasurementLimits.NoLevel ? truePeak : null,
+            IntegratedLoudnessTenths = first?.Measurements?.Loudness is { NotMeasured: null, IntegratedAbsence: LoudnessAbsence.None, IntegratedTenths: var integrated } && integrated != MeasurementLimits.NoLevel ? integrated : null,
+            LoudnessRangeTenths = first?.Measurements?.Loudness is { NotMeasured: null, RangeAbsence: LoudnessAbsence.None, RangeTenths: var range } ? range : null,
         };
     }
 

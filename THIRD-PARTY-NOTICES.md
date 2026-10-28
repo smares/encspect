@@ -8,6 +8,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 - **libwavpack:** the `COPYING` of libwavpack 5.6.0, extracted from `wavpack-5.6.0.tar.bz2`, the archive `scripts/fixtures/wavpack_tool.py` pins by SHA-256 (`8cbfa15927d29bcf953db35c0cfca7424344ff43ebe4083daf161577fb839cc1`); `scripts/release/make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libwavpack.txt`.
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.42, extracted from `MAC_1342_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0a763b3592d13183bbd6c04b12eb637d364de16791602733a897b72df8e87326`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
+- **libebur128:** the `COPYING` (MIT) of libebur128 v1.2.6, pinned by its SHA-256 (`d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/libebur128.txt`.
 - **matplotlib colormaps:** the license comment at the top of `colormaps.py` of BIDS/colormap, the file the GUI's color ramp for the spectrogram (the 256 entries of `magma`, `src/Encspect.Gui/Views/MagmaRamp.cs`) is taken from, pinned by its SHA-256 (`b7478d10e2ccfdb22128867e137f16f55b687e9c225065e91bcbd6bb9e6c0352`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/matplotlib-colormaps.txt`.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
 - **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version 10.0.13.
@@ -31,6 +32,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 | libwavpack 5.6.0: the code of Encspect's WavPack decoder derived from it (the entropy decoder, the decorrelation passes, the float restore, the DSD decoders, the sub-block reading) | 5.6.0 | BSD 3-Clause | both builds, all platforms |
 | Monkey's Audio SDK 13.42: the code of Encspect's Monkey's Audio parser and decoder derived from it (the header and seek table layouts, the order of the bytes of a frame, the range decoders, the predictors, the neural network filters, the frame checksum and the output of the samples) | 13.42 | BSD 3-Clause | both builds, all platforms |
 | libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
+| libebur128 v1.2.6: the derivation of the K-weighting filter's coefficients for sample rates other than 48 kHz in Encspect's loudness measurement (the filters' parameters and the bilinear transforms) | v1.2.6 | MIT | both builds, all platforms |
 | matplotlib's "magma" colormap, from BIDS/colormap: the 256 colors of the GUI's spectrogram ramp (format data) | colormaps.py, SHA-256 b7478d10 | CC0 1.0 (public domain dedication), with a request for credit | GUI |
 
 The command line tool contains the NativeAOT build of the .NET runtime and the library code of the runtime pack, and Encspect's own code. The packages it is compiled and linked from (`Microsoft.NETCore.App.Runtime.NativeAOT` and `runtime.<rid>.Microsoft.DotNet.ILCompiler`, which holds the native runtime libraries) carry a `THIRD-PARTY-NOTICES.TXT` byte-identical to the runtime pack's, so the .NET runtime row above covers them. On Linux it also links a few objects of the Ubuntu 18.04 sysroot it is built against (found in the binary's symbols and its `.comment` section): glibc's start files `crt1.o`, `crti.o` and `crtn.o` and the `__libc_csu_init`, `__libc_csu_fini` and `atexit` pieces of `libc_nonshared.a`, under glibc's license (LGPL 2.1 or later) with the linking exception glibc gives these start-up objects, which does not make the program a work covered by the LGPL; and GCC 7's `crtbegin.o` and `crtend.o`, under GPL 3 or later with the GCC Runtime Library Exception 3.1. None of `libgcc.a` is linked in. The program loads the system's C library at run time.
@@ -3096,6 +3098,32 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+## libebur128: the K-weighting filter of the loudness measurement
+
+The derivation of the K-weighting filter's coefficients for sample rates other than 48 kHz in `src/Encspect.Host/Measurement/KWeighting.cs` follows libebur128 v1.2.6 (`ebur128_init_filter`): the parameters of the two filters and the bilinear transforms. The tangent and the powers are Encspect's own deterministic functions. The `COPYING` of libebur128, Copyright (c) 2011 Jan Kokemüller:
+
+```
+Copyright (c) 2011 Jan Kokemüller
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 ```
 
 ## matplotlib colormaps: the spectrogram's color ramp

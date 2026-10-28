@@ -1,7 +1,7 @@
 ---
 id: dialogue-normalization
 title: Dialogue normalization and dynamic range control
-related: ac3-frames-and-bsi, dts-core-frames, replaygain
+related: ac3-frames-and-bsi, dts-core-frames, replaygain, loudness
 references: ATSC A/52:2018 5.4.2.8 to 5.4.2.10, 5.4.3.3 to 5.4.3.6, 7.6, 7.7; ETSI TS 102 114 5.4.2 Tables 5-8 and 5-20
 ---
 
@@ -13,4 +13,4 @@ references: ATSC A/52:2018 5.4.2.8 to 5.4.2.10, 5.4.3.3 to 5.4.3.6, 7.6, 7.7; ET
 
 **In DTS.** DIALNORM and VERNUM together give the gain DNG: 0 to -15 dB for VERNUM 7, -16 to -31 dB for VERNUM 6, and 0 dB, no normalization, for other revisions. It scales the decoder's output. With the DYNF flag, each subframe also carries a dynamic range coefficient.
 
-**What you see.** dialnorm and compr in each frame's bit stream information, dynrng in the blocks that carry it, with their gains in dB. The statistics list the dialnorm values and count the frames with compr and the blocks with dynrng. Unlike [ReplayGain](replaygain), which a tag adds after encoding, these values are part of the coding and travel with every frame.
+**What you see.** dialnorm and compr in each frame's bit stream information, dynrng in the blocks that carry it, with their gains in dB. The statistics list the dialnorm values and count the frames with compr and the blocks with dynrng. Unlike [ReplayGain](replaygain), which a tag adds after encoding, these values are part of the coding and travel with every frame. The dialnorm value is stated by whoever encoded the stream; the [loudness](loudness) the analyzer computes from the decoded audio is another figure, and neither is called right or wrong.

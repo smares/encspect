@@ -46,10 +46,13 @@ internal static class CommandLine
         Measurements:
           --measure [<kinds>]   Decode, verify and measure each file's audio, for the codings
                                 that have a decoder: the average spectrum and the spectral
-                                cutoff, and the levels (sample peak, RMS, DC offset, clipping,
-                                digital silence, bit depth). Kinds, comma-separated: spectrum,
-                                levels. Costs more than --verify. With --csv, fills Is Verified,
-                                Spectral Cutoff and Sample Peak.
+                                cutoff, the levels (sample peak, RMS, DC offset, clipping,
+                                digital silence, bit depth), the loudness (integrated loudness,
+                                loudness range, maximum momentary and short-term loudness) and
+                                the true peak. Kinds, comma-separated: spectrum, levels,
+                                loudness, true-peak. Costs more than --verify. With --csv, fills
+                                Is Verified, Spectral Cutoff, Sample Peak, Maximum True Peak
+                                Level, Integrated Loudness and Loudness Range.
           --measure-grids       As --measure, and write the spectrogram and waveform grids into
                                 the JSON. The text and CSV never hold them.
 
@@ -481,7 +484,7 @@ internal static class CommandLine
         return UsageError;
     }
 
-    private static readonly Dictionary<string, MeasurementKinds> MeasurementNames = new(StringComparer.OrdinalIgnoreCase) { ["spectrum"] = MeasurementKinds.Spectrum, ["levels"] = MeasurementKinds.Levels };
+    private static readonly Dictionary<string, MeasurementKinds> MeasurementNames = new(StringComparer.OrdinalIgnoreCase) { ["spectrum"] = MeasurementKinds.Spectrum, ["levels"] = MeasurementKinds.Levels, ["loudness"] = MeasurementKinds.Loudness, ["true-peak"] = MeasurementKinds.TruePeak };
 
     private static IEnumerable<string> KnownFormats => DefaultParsers.Formats.Select(p => p.Name);
 

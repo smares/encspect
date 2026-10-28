@@ -25,6 +25,12 @@ one extreme code, the digital silence of the sample frames that are 0 in every c
 nothing counted across a gap. The model's tenths of a dB are worked out in 60 decimal digits, so they are exact; the analyzer's own series for the logarithm must give the same tenth
 for every fixture; every count and the DC offset in millionths of a percent are exact too.
 
+The loudness (loudness_of) and the true peak (true_peak_of) follow ITU-R BS.1770-5 and EBU Tech 3341 and 3342 as the design reads them, with no code shared with
+the analyzer and the C# bins left out: the K-weighting by the Recommendation's 48 kHz coefficients (Tables 1 and 2) or, at other rates, derived with the C library's
+tan and pow from the filters' analog parameters; granules of a fifth of 100 ms, gating blocks of 400 ms every 100 ms (the momentary loudness every granule), short-term
+values of 3 s every 100 ms, the gates applied to the whole lists and the percentiles read from the sorted values (Tech 3342's reference code); the Annex 2 filter in plain
+loops with the sample peak included. The analyzer's bins of 0.01 LU and its tenths of a LU are held to this within a tenth.
+
 Everything is plain Python (the standard library). The FFT is a complex radix-2 transform of the full frame, apart from the analyzer's
 real transform with its split step, so the two agree up to rounding (about 1e-12 relative), which the tests allow for.
 """
@@ -303,6 +309,189 @@ def levels_of(runs, channels, bits):
     return {"bits": bits, "stream": stream, "channels": result}
 
 
+# ---- Loudness and true peak (step 5) ----
+
+LUFS_OFFSET = -0.691
+SPEAKER_SURROUND = {"side left", "side right"}
+LFE_NAMES = {"LFE", "LFE 2"}
+TRUE_PEAK_PHASES = [
+    [0.0017089843750, 0.0109863281250, -0.0196533203125, 0.0332031250000, -0.0594482421875, 0.1373291015625, 0.9721679687500, -0.1022949218750, 0.0476074218750, -0.0266113281250, 0.0148925781250, -0.0083007812500],
+    [-0.0291748046875, 0.0292968750000, -0.0517578125000, 0.0891113281250, -0.1665039062500, 0.4650878906250, 0.7797851562500, -0.2003173828125, 0.1015625000000, -0.0582275390625, 0.0330810546875, -0.0189208984375],
+    [-0.0189208984375, 0.0330810546875, -0.0582275390625, 0.1015625000000, -0.2003173828125, 0.7797851562500, 0.4650878906250, -0.1665039062500, 0.0891113281250, -0.0517578125000, 0.0292968750000, -0.0291748046875],
+    [-0.0083007812500, 0.0148925781250, -0.0266113281250, 0.0476074218750, -0.1022949218750, 0.9721679687500, 0.1373291015625, -0.0594482421875, 0.0332031250000, -0.0196533203125, 0.0109863281250, 0.0017089843750],
+]
+
+
+def kweighting(rate):
+    """(b0, b1, b2, a1, a2, h1, h2): the two sections; BS.1770-5 Tables 1 and 2 at 48 kHz, else the same analog filters at the rate."""
+    if rate == 48000:
+        return 1.53512485958697, -2.69169618940638, 1.19839281085285, -1.69065929318241, 0.73248077421585, -1.99004745483398, 0.99007225036621
+    f0, gain, q = 1681.974450955533, 3.999843853973347, 0.7071752369554196
+    k = math.tan(math.pi * f0 / rate)
+    vh = 10 ** (gain / 20)
+    vb = vh ** 0.4996667741545416
+    a0 = 1 + k / q + k * k
+    f1, q1 = 38.13547087602444, 0.5003270373238773
+    k1 = math.tan(math.pi * f1 / rate)
+    d = 1 + k1 / q1 + k1 * k1
+    return ((vh + vb * k / q + k * k) / a0, 2 * (k * k - vh) / a0, (vh - vb * k / q + k * k) / a0, 2 * (k * k - 1) / a0, (1 - k / q + k * k) / a0,
+            2 * (k1 * k1 - 1) / d, (1 - k1 / q1 + k1 * k1) / d)
+
+
+def loudness_weights(layout, measured):
+    """The channel weights in hundredths, or (None, reason). BS.1770-5 Annex 3 Table 4: 1.41 for the surround positions, the LFE left out; the back pair is
+    the rear pair of a 7.1 (1.0) beside a side pair, else the surround pair. Positions that are not stated: one channel, or two (left and right)."""
+    if layout is None or len(layout) < measured or any(l == "discrete" for l in layout[:measured]):
+        if measured <= 2:
+            return [100] * measured, None
+        return None, "the channel positions are not stated"
+    names = layout[:measured]
+    sides = "side left" in names and "side right" in names
+    weights = []
+    for name in names:
+        if name in LFE_NAMES:
+            weights.append(0)
+        elif name in SPEAKER_SURROUND:
+            weights.append(141)
+        elif name in ("back left", "back right"):
+            weights.append(100 if sides else 141)
+        else:
+            weights.append(100)
+    if not any(weights):
+        return None, "the stream holds no channel that loudness includes"
+    return weights, None
+
+
+def lufs(energy):
+    return LUFS_OFFSET + 10 * math.log10(energy)
+
+
+def tenths_of_lufs(energy):
+    return int(math.floor(10 * lufs(energy) + 0.5))
+
+
+def tenths_of_value(value):
+    return int(math.floor(10 * value + 0.5))
+
+
+def loudness_of(runs, measured, bits, rate, layout):
+    """The loudness of integer samples. runs: the segments between gaps, each a list of channel lists. Returns the figures as tenths (None where there is
+    none) and why a figure is missing: 'too_short' or 'below_gate'."""
+    if rate < 8000:
+        return {"not_measured": "the sample rate is not stated" if rate <= 0 else "loudness needs a sample rate of 8,000 Hz or more"}
+    weights, reason = loudness_weights(layout, measured)
+    if weights is None:
+        return {"not_measured": reason}
+    scale = 1.0 / (1 << (bits - 1))
+    b0, b1, b2, a1, a2, h1, h2 = kweighting(rate)
+    step = (rate + 5) // 10
+    momentary_all, blocks, shorts, short_times = [], [], [], []
+    position = 0
+    for seg in runs:
+        length = len(seg[0])
+        squares = []
+        for c in range(measured):
+            if not weights[c]:
+                continue
+            s1 = s2 = t1 = t2 = 0.0
+            sq = []
+            for v in seg[c]:
+                x = v * scale
+                y = b0 * x + s1
+                s1 = b1 * x - a1 * y + s2
+                s2 = b2 * x - a2 * y
+                z = y + t1
+                t1 = -2.0 * y - h1 * z + t2
+                t2 = y - h2 * z
+                sq.append(z * z)
+            squares.append((weights[c] / 100.0, sq))
+        # The granule k ends at (k * step + 2) // 5 samples from the start of the run.
+        granules = []
+        k = 0
+        while True:
+            start, end = (k * step + 2) // 5, ((k + 1) * step + 2) // 5
+            if end > length:
+                break
+            z = 0.0
+            for w, sq in squares:
+                z += w * sum(sq[start:end])
+            granules.append((z, end - start, end))
+            k += 1
+        for g in range(19, len(granules)):
+            window = granules[g - 19:g + 1]
+            m = sum(w[0] for w in window) / sum(w[1] for w in window)
+            momentary_all.append(m)
+            if (g + 1) % 5 == 0:
+                blocks.append(m)
+                if g >= 149:
+                    window = granules[g - 149:g + 1]
+                    shorts.append(sum(w[0] for w in window) / sum(w[1] for w in window))
+        position += length
+    result = {"weights": weights, "blocks": len(blocks)}
+    gate_abs = 10 ** ((-70 - LUFS_OFFSET) / 10)
+
+    def figure(value, absence):
+        return {"tenths": value, "absence": absence}
+
+    result["momentary"] = figure(tenths_of_lufs(max(momentary_all)) if momentary_all and max(momentary_all) > 0 else None, "too_short" if not momentary_all else "none")
+    result["short_term"] = figure(tenths_of_lufs(max(shorts)) if shorts and max(shorts) > 0 else None, "too_short" if not shorts else "none")
+    above = [b for b in blocks if b > gate_abs]
+    result["blocks_above_absolute_gate"] = len(above)
+    if not blocks:
+        result["integrated"] = figure(None, "too_short")
+    elif not above:
+        result["integrated"] = figure(None, "below_gate")
+    else:
+        gate = sum(above) / len(above) / 10
+        rel = [b for b in above if b > gate]
+        result["blocks_above_relative_gate"] = len(rel)
+        result["integrated"] = figure(tenths_of_lufs(sum(rel) / len(rel)), "none")
+    above = [v for v in shorts if v >= gate_abs]
+    if not shorts:
+        result["range"] = figure(None, "too_short")
+    elif not above:
+        result["range"] = figure(None, "below_gate")
+    else:
+        gate = sum(above) / len(above) / 100
+        rel = sorted(v for v in above if v >= gate)
+        n = len(rel)
+        low = rel[int(math.floor((n - 1) * 10 / 100 + 0.5))]
+        high = rel[int(math.floor((n - 1) * 95 / 100 + 0.5))]
+        result["range"] = figure(tenths_of_value(lufs(high) - lufs(low)), "none")
+        result["range_low_tenths"] = tenths_of_lufs(low)
+        result["range_high_tenths"] = tenths_of_lufs(high)
+    result["short_term_values"] = len(shorts)
+    result["short_term_first_tenths"] = tenths_of_lufs(shorts[0]) if shorts and shorts[0] > 0 else None
+    return result
+
+
+def true_peak_of(runs, measured, bits, rate):
+    """The true peak per channel in tenths of a dB (None for silence), by Annex 2's filter with the oversampling the rate gives, and the sample peak
+    always included; the filter reads no sample from before the start of a run."""
+    if rate <= 0:
+        return {"not_measured": "the sample rate is not stated"}
+    factor = 4 if rate < 96000 else 2 if rate < 192000 else 1
+    phases = TRUE_PEAK_PHASES if factor == 4 else [TRUE_PEAK_PHASES[0], TRUE_PEAK_PHASES[2]] if factor == 2 else []
+    scale = 1.0 / (1 << (bits - 1))
+    peaks = []
+    for c in range(measured):
+        peak = 0.0
+        for seg in runs:
+            x = [v * scale for v in seg[c]]
+            peak = max([peak] + [abs(v) for v in x])
+            for n in range(len(x)):
+                if not any(x[max(0, n - 11):n + 1]):
+                    continue
+                for phase in phases:
+                    total = 0.0
+                    for k in range(12):
+                        if n - k >= 0:
+                            total += phase[k] * x[n - k]
+                    peak = max(peak, abs(total))
+        peaks.append(None if peak == 0 else tenths_of_ratio(decimal.Decimal(peak)))
+    return {"oversampling": factor, "channels": peaks, "stream": max((p for p in peaks if p is not None), default=None)}
+
+
 def segments(stream):
     """The decoded blocks of a FLAC stream as (position, [channel lists])."""
     out = []
@@ -421,5 +610,6 @@ def measure(data, layout=None):
     return {
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
         "lost_samples": lost, "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
-        "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "levels": levels_of(runs, measured, bits), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
+        "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "levels": levels_of(runs, measured, bits),
+        "loudness": loudness_of(runs, measured, bits, rate, layout), "true_peak": true_peak_of(runs, measured, bits, rate), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
     }

@@ -83,6 +83,35 @@
     }
    ]
   },
+  "loudness": {
+   "weights": [100],
+   "blocks": 7,
+   "momentary": {
+    "tenths": -204,
+    "absence": "none"
+   },
+   "short_term": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "blocks_above_absolute_gate": 7,
+   "blocks_above_relative_gate": 7,
+   "integrated": {
+    "tenths": -205,
+    "absence": "none"
+   },
+   "range": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "short_term_values": 0,
+   "short_term_first_tenths": null
+  },
+  "true_peak": {
+   "oversampling": 4,
+   "channels": [-84],
+   "stream": -84
+  },
   "spectrogram_columns": 22,
   "hops_per_column": 1,
   "waveform": [

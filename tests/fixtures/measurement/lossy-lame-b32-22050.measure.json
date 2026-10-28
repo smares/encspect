@@ -103,6 +103,37 @@
         "highestMagnitude": 12933
       }
     },
+    "loudness": {
+      "channelWeights": [1],
+      "integratedLoudness": {
+        "value": -21.1,
+        "unit": "LUFS"
+      },
+      "loudnessRange": {
+        "absence": "tooShort",
+        "unit": "LU"
+      },
+      "maximumMomentaryLoudness": {
+        "value": -20.9,
+        "unit": "LUFS"
+      },
+      "maximumShortTermLoudness": {
+        "absence": "tooShort",
+        "unit": "LUFS"
+      },
+      "gatingBlocks": {
+        "total": 7,
+        "aboveAbsoluteGate": 7,
+        "aboveRelativeGate": 7
+      }
+    },
+    "truePeak": {
+      "oversampling": 4,
+      "maximumTruePeakLevel": {
+        "value": -7.9,
+        "unit": "dBTP"
+      }
+    },
     "spectrogram": {
       "columns": 23,
       "rows": 512,

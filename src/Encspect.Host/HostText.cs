@@ -23,4 +23,7 @@ internal static class Topics
     public const string DcOffset = "dc-offset";
     public const string DigitalSilence = "digital-silence";
     public const string BitDepthUsage = "bit-depth-usage";
+    public const string Loudness = "loudness";
+    public const string LoudnessRange = "loudness-range";
+    public const string TruePeak = "sample-peak-and-true-peak";
 }

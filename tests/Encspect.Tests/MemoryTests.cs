@@ -1321,13 +1321,20 @@ public class MemoryTests(ITestOutputHelper output)
 
     // A long WAVE file is read in slices of 64 KiB, each unpacked into the same arrays: decoding it and measuring it hold nothing per slice, the same reading as
     // for the FLAC frames, and the report keeps the rows and grids and no more. A slice is 16,384 sample frames of 16-bit stereo.
+    //
+    // The two lengths are a power of two apart: the bounded structures (the grids that merge their columns when they pass 1,024, the series that merge
+    // pairs) are in the same phase at both, which they are not at other ratios (what the state holds at the last slice and what moves into the report
+    // differ by up to 350 KB between 40 and 960 slices, the sum is constant). The span is wide because the readings of CI runners differ by up to
+    // about 13 KB from one analysis to the next for no length-dependent reason (docs/design/spectral-analysis.md, "As built: step 5"): over 480
+    // further slices the bound of 8 bytes is 3.8 KB, below that; over 2,400 it is 19 KB, above it, and a list that gains 8 bytes per slice reads 13 bytes per further slice.
+    // The state held at the last slice is also bounded alone, so that a leak the span's allowance would hide is still a bound.
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void DecodingAndMeasuringALongWaveFileHoldsNothingPerSlice(bool isMeasuring)
     {
         const int fewer = 160;
-        const int slices = 640;
+        const int slices = 2560;
         const int sliceBytes = 64 * 1024;
         var measure = isMeasuring ? new MeasureOptions() : null;
         var warmUp = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink(), Measure = measure } };
@@ -1340,6 +1347,7 @@ public class MemoryTests(ITestOutputHelper output)
         double heldPerSlice = (held - fewerHeld) / (double)(slices - fewer);
         output.WriteLine($"{kept} bytes kept {(isMeasuring ? "with measuring" : "with decoding")} and {plainKept} without; held above the end state at the last slice: {fewerHeld} at {fewer} slices and {held} at {slices} ({Hundredths(heldPerSlice)} per further slice)");
         Assert.True(heldPerSlice < DecodingFrameBound, $"The analysis held {heldPerSlice:F2} more bytes per further slice at the last slice than it ends with. {RuntimeSettings()}");
+        Assert.True(held < (isMeasuring ? 5_000_000 : 500_000), $"The analysis held {held} bytes at the last slice above what it ends with.");
         Assert.True(kept < plainKept + (isMeasuring ? 1_000_000 : 100_000), $"The report keeps {kept - plainKept} bytes more.");
     }
 
@@ -1395,6 +1403,10 @@ public class MemoryTests(ITestOutputHelper output)
 
     // The records of the measurements stay in the report, so the bound of 64 MiB (docs/design/spectral-analysis.md, "Memory") holds them: 400
     // chained Ogg FLAC streams of 24 s each would keep 400 grids of 0.25 MiB (100 MiB) without it, and the streams past the bound say so.
+    // Two bounds: the report keeps at most 64 MiB of records (and 4 MiB of other state) more than without measuring, and the analysis holds at most 8 MiB
+    // of working state above the heap it starts and ends with. A bound on the peak less the peak without measuring could not hold either: each peak is
+    // read from the heap before its analysis, which the leftovers of earlier work make differ by more than the bound's margin between runs (the plain
+    // peak read 15.3 MB here and 1.1 MB on ubuntu-26.04, below the 14.7 MB its report keeps, so the same 76.8 MB failed there and passed here).
     [Fact]
     public void MeasuringManyChainedStreamsStaysWithinTheBound()
     {
@@ -1404,18 +1416,19 @@ public class MemoryTests(ITestOutputHelper output)
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = measure } };
         byte[] data = ChainedOggFlac(streams, frames);
 
-        (_, long plainKept, long plainPeak) = Measure("chain.oga", data, ChainedOggFlac(2, 4), new AnalysisOptions { Decoding = new DecodeOptions() });
-        (Report report, long kept, long peak) = Measure("chain.oga", data, ChainedOggFlac(2, 4), options);
+        (_, long plainKept, _) = Measure("chain.oga", data, ChainedOggFlac(2, 4), new AnalysisOptions { Decoding = new DecodeOptions() });
+        (Report report, long kept, long excess, string where) = MeasureExcess("chain.oga", data, ChainedOggFlac(2, 4), options);
 
         int measured = report.Streams.Count(s => s.Measurements?.Status == MeasurementStatus.Complete);
         long records = report.Streams.Sum(s => s.Measurements?.Spectrogram?.Power.Length ?? 0L);
-        output.WriteLine($"{report.Streams.Count} streams, {measured} measured, {records} bytes of grids, {kept} bytes kept and {peak} bytes peak, without measuring {plainKept} and {plainPeak}");
+        output.WriteLine($"{report.Streams.Count} streams, {measured} measured, {records} bytes of grids, {kept} bytes kept ({plainKept} without measuring), {excess} bytes above the heap before and after");
         Assert.Equal(streams, report.Streams.Count);
         Assert.InRange(measured, 100, streams - 1);
         Assert.Equal(streams - measured, report.Findings.Where(f => f.Code == "measure.streams-limited").Sum(f => f.Count));
         Assert.True(records <= MeasureMemoryBound, $"The grids hold {records} bytes.");
         Assert.True(kept - plainKept < MeasureMemoryBound + (4L << 20), $"Measuring made the report keep {kept - plainKept} bytes more.");
-        Assert.True(peak - plainPeak < MeasureMemoryBound + (8L << 20), $"Measuring made the live heap grow by {peak - plainPeak} bytes more.");
+        Assert.True(excess < 8L << 20, $"Measuring held {excess} bytes above the heap before and after the analysis, {where}. {RuntimeSettings()}");
+
         GC.KeepAlive(data);
     }
 

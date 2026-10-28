@@ -75,7 +75,7 @@ AREAS = {
     "flac-crosscheck": {
         "projects": ["Encspect.Formats.Flac", "Encspect.Tags.VorbisComment"],
         "fixtures": ["flac", "measurement"],
-        "scripts": ["crosscheck_flac_fixtures.py", "crosscheck_measurement_fixtures.py"],
+        "scripts": ["crosscheck_flac_fixtures.py", "crosscheck_measurement_fixtures.py", "ebur128_tool.py", "ebur128_driver.c", "check_ebu_loudness_set.py"],
         "globs": ["scripts/fixtures/make_*flac*", "scripts/fixtures/flac_*", "scripts/fixtures/make_*measurement*", "scripts/fixtures/measurement_model.py"],
     },
     "tta-crosscheck": {

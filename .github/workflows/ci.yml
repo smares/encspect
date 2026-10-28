@@ -1042,8 +1042,36 @@ jobs:
 
       # The measurement fixtures are FLAC files too: flac and FFmpeg decode the same samples as the model the measurements are checked against,
       # and FFmpeg's astats and silencedetect give the levels the model computes.
+      # The loudness and true-peak figures of the manifests are compared with libebur128 v1.2.6, built here from its pinned tag (commit checked) with
+      # a small driver of ours, and with FFmpeg's ebur128. The source of libebur128 is neither committed nor followed; the program is a tool.
       - name: Cross-check the measurement fixtures
         run: python3 scripts/fixtures/crosscheck_measurement_fixtures.py
+
+      # The EBU loudness test set is fetched from the private repository at a pinned SHA-256 and never committed (its readme allows technical testing only);
+      # its expected values are Tech 3341's and 3342's tables. Were the script's SHA256 empty, the first step would warn that nothing is checked and skip the rest.
+      - name: Is the EBU loudness test set pinned
+        id: ebu
+        run: |
+          if python3 scripts/fixtures/check_ebu_loudness_set.py --is-pinned; then
+            echo "pinned=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pinned=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-dotnet@v5
+        if: steps.ebu.outputs.pinned == 'true'
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the CLI
+        if: steps.ebu.outputs.pinned == 'true'
+        run: dotnet build --configuration Release src/Encspect.Cli
+
+      - name: Check the analyzer against the EBU loudness test set
+        if: steps.ebu.outputs.pinned == 'true'
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 scripts/fixtures/check_ebu_loudness_set.py
 
   tta-crosscheck:
     name: TTA fixtures agree with FFmpeg and MediaInfo

@@ -172,6 +172,15 @@ jobs:
         with:
           dotnet-version: 10.0.402
 
+      # Without a global.json the dotnet command runs the newest SDK on the runner, not the one installed above, and the runner images
+      # began to carry 10.0.403 (runtime 10.0.14): the build then bundled another runtime than the notices name, on some runners only.
+      - name: Make the build use the pinned SDK
+        shell: bash
+        run: |
+          sdk=$(sed -n 's/^sdk=//p' scripts/release/dotnet-pin.txt)
+          printf '{ "sdk": { "version": "%s", "rollForward": "disable" } }\n' "$sdk" > global.json
+          dotnet --version
+
       # No cache is restored in a release: what is compiled into it is downloaded fresh (NuGet from nuget.org, the sysroot by its
       # digest below), so nothing a cache entry holds can reach a release. CI caches both.
       - name: Restore

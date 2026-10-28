@@ -110,13 +110,14 @@ public sealed partial class GraphView
             SpectrogramGraph spectrogram => new Point(plot.Left + ((index + 0.5) * plot.Width / spectrogram.Columns), plot.Bottom - ((row + 0.5) * plot.Height / spectrogram.Rows)),
             WaveformGraph waveform => new Point(plot.Left + ((index + 0.5) * plot.Width / waveform.Columns), plot.Top + (plot.Height / 2)),
             SpectrumGraph spectrum => new Point(plot.Left + ((index + 0.5) * plot.Width / spectrum.Count), plot.Bottom - (plot.Height / 2)),
+            LoudnessGraph loudness => LoudnessDot(loudness, plot, index),
             _ => null,
         };
     }
 
     private int? AudioIndexAt(Point point)
     {
-        if (Graph is not AudioGraph graph || Bounds.Width < 80 || Bounds.Height < 60)
+        if (Graph is not AudioGraph graph || graph.Count == 0 || Bounds.Width < 80 || Bounds.Height < 60)
         {
             return null;
         }
@@ -127,7 +128,8 @@ public sealed partial class GraphView
             return null;
         }
 
-        return Math.Clamp((int)((point.X - plot.Left) / plot.Width * graph.Count), 0, graph.Count - 1);
+        double fraction = (point.X - plot.Left) / plot.Width;
+        return graph is LoudnessGraph loudness ? loudness.IndexAtFraction(fraction) : Math.Clamp((int)(fraction * graph.Count), 0, graph.Count - 1);
     }
 
     // Hover for the audio panels: the column (waveform), the cell (spectrogram) or the row (spectrum) under the pointer.
@@ -213,9 +215,10 @@ public sealed partial class GraphView
             WaveformGraph waveform => $"{Format.Count(waveform.Channels, "channel", "channels")} over {Format.Timestamp(waveform.EndSeconds - waveform.StartSeconds)}, in 16-bit sample codes",
             SpectrogramGraph spectrogram => $"Time from {Format.Timestamp(spectrogram.StartSeconds)} to {Format.Timestamp(spectrogram.EndSeconds)}, frequency from 0 Hz to {AudioGraph.Hertz(spectrogram.NyquistHertz)}, level from {RampBottomDb} to {RampTopDb} dB",
             SpectrumGraph spectrum => $"Level in dB from 0 Hz to {AudioGraph.Hertz(spectrum.NyquistHertz)}" + (spectrum.View == GraphForm.PerChannel ? "; Legend: " + string.Join(", ", Enumerable.Range(0, spectrum.Lines).Select(spectrum.LineName)) : string.Empty),
+            LoudnessGraph loudness => $"Short-term loudness in LUFS from {Format.Timestamp(loudness.StartSeconds)} to {Format.Timestamp(loudness.EndSeconds)}",
             _ => string.Empty,
         };
-        return string.Join(". ", new[] { what, graph is WaveformGraph or SpectrogramGraph or SpectrumGraph ? graph.CutoffText ?? string.Empty : string.Empty, HoverText ?? string.Empty }.Where(t => t.Length > 0));
+        return string.Join(". ", new[] { what, graph is LoudnessGraph figures ? string.Join(", ", figures.Figures.Select(f => $"{f.Name} {f.Text}")) : string.Empty, graph is WaveformGraph or SpectrogramGraph or SpectrumGraph ? graph.CutoffText ?? string.Empty : string.Empty, HoverText ?? string.Empty }.Where(t => t.Length > 0));
     }
 
     private void ResetAudio()
@@ -240,7 +243,7 @@ public sealed partial class GraphView
             return cached.Layout;
         }
 
-        const double top = 22;
+        double top = 22;
         double bottom = Bounds.Height - 24;
         double left;
         double right = 16;
@@ -258,6 +261,11 @@ public sealed partial class GraphView
                 break;
             case WaveformGraph waveform:
                 left = 12 + waveform.Names.Max(n => Text(n, AxisSize, Brushes.Black).Width) + AxisLabelGap;
+                break;
+            case LoudnessGraph loudness:
+                top = 22 + LoudnessHeaderHeight;
+                ticks = [.. DbTicks(loudness.AxisBottom, loudness.AxisTop, bottom - top)];
+                left = 12 + ticks.Max(t => Text(DbLabel(t), AxisSize, Brushes.Black).Width) + AxisLabelGap;
                 break;
             default:
                 left = 12;
@@ -323,6 +331,9 @@ public sealed partial class GraphView
             case SpectrumGraph spectrum:
                 DrawSpectrum(context, spectrum, layout, secondary, grid, accent);
                 break;
+            case LoudnessGraph loudness:
+                DrawLoudness(context, loudness, layout, secondary, grid, accent);
+                break;
         }
 
         if (_hover is { } hover && hover < graph.Count)
@@ -331,9 +342,11 @@ public sealed partial class GraphView
         }
     }
 
-    private void DrawTimeAxis(DrawingContext context, TimeGraph graph, Rect plot, IBrush secondary)
+    private void DrawTimeAxis(DrawingContext context, TimeGraph graph, Rect plot, IBrush secondary) => DrawTimeAxis(context, graph.StartSeconds, graph.EndSeconds, plot, secondary);
+
+    private void DrawTimeAxis(DrawingContext context, double startSeconds, double endSeconds, Rect plot, IBrush secondary)
     {
-        double span = graph.EndSeconds - graph.StartSeconds;
+        double span = endSeconds - startSeconds;
         if (span <= 0)
         {
             return;
@@ -342,10 +355,10 @@ public sealed partial class GraphView
         double step = AudioTimeSteps.FirstOrDefault(s => span / s <= plot.Width / 90, AudioTimeSteps[^1] * Math.Ceiling(span / AudioTimeSteps[^1] / Math.Max(1, plot.Width / 90)));
         double y = plot.Bottom + 4;
         double lastEnd = double.NegativeInfinity;
-        for (double time = Math.Ceiling(graph.StartSeconds / step) * step; time <= graph.EndSeconds + 1e-9; time += step)
+        for (double time = Math.Ceiling(startSeconds / step) * step; time <= endSeconds + 1e-9; time += step)
         {
             FormattedText label = Text(step < 1 ? Format.Timestamp(time) : Format.Clock(time), AxisSize, secondary);
-            double x = plot.Left + ((time - graph.StartSeconds) / span * plot.Width);
+            double x = plot.Left + ((time - startSeconds) / span * plot.Width);
             double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12)
             {
@@ -727,6 +740,12 @@ public sealed partial class GraphView
 
                     break;
                 }
+
+            case LoudnessGraph loudness:
+                at = LoudnessDot(loudness, plot, hover);
+                context.DrawLine(new Pen(Palette.Grid(this, 0.45), 1), new Point(Math.Round(at.X) + 0.5, plot.Top), new Point(Math.Round(at.X) + 0.5, plot.Bottom));
+                context.DrawEllipse(new ImmutableSolidColorBrush(Palette.Accent(this)), new Pen(Palette.Surface(this), 2), at, 4.5, 4.5);
+                break;
 
             default:
                 return;

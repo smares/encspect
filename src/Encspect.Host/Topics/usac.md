@@ -9,7 +9,7 @@ references: ISO/IEC 23003-3 5.2, 6.1; exhale 1.2.2 source (bitStreamWriter.cpp);
 
 **Tools.** Beside the switching core, USAC brings an enhanced [SBR](sbr), with frame lengths and ratios of its own (a 2:1, 8:3 or 4:1 relation between output and core rate), and a stereo coding based on MPEG Surround, which works on a downmix and parameters much as [parametric stereo](parametric-stereo) does.
 
-**Configuration.** The [AudioSpecificConfig](audio-specific-config) carries a UsacConfig: the output sample rate, an index for the core's frame length and the SBR ratio, the channel configuration, and the list of elements every frame holds, single channel, channel pair, LFE or extension elements, each with its settings. Configuration extensions add information such as loudness.
+**Configuration.** The [AudioSpecificConfig](audio-specific-config) carries a UsacConfig: the output sample rate, an index for the core's frame length and the SBR ratio, the channel configuration, and the list of elements every frame holds, single channel, channel pair, LFE or extension elements, each with its settings. Configuration extensions add information such as loudness, which the stream states; a [loudness](loudness) measured from the decoded audio is another figure.
 
 **Independent frames.** Each access unit starts with a flag that says whether it can be decoded without the frames before it. Where playback starts or a stream switches, an audio pre-roll extension can carry the configuration and the frames before it, so the decoder's output is complete from that frame on.
 

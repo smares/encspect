@@ -16,6 +16,9 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
 {
     private const int Rounds = 5;
 
+    // The measurements of steps 1 and 2, which the tests of their weights time without the loudness and the true peak of step 5.
+    private const MeasurementKinds SpectrumAndLevels = MeasurementKinds.Spectrum | MeasurementKinds.Levels;
+
     private const double Factor = 2.0;
 
     public static TheoryData<int, int> Cases()
@@ -73,7 +76,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         for (int warm = 0; warm < 3; warm++)
         {
             RunOnce(rate, channels, data, MeasurementKinds.Spectrum);
-            RunOnce(rate, channels, data, MeasurementSets.All);
+            RunOnce(rate, channels, data, SpectrumAndLevels);
         }
 
         double spectrum = double.MaxValue;
@@ -81,7 +84,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         for (int round = 0; round < Rounds; round++)
         {
             spectrum = Math.Min(spectrum, RunOnce(rate, channels, data, MeasurementKinds.Spectrum).Seconds);
-            both = Math.Min(both, RunOnce(rate, channels, data, MeasurementSets.All).Seconds);
+            both = Math.Min(both, RunOnce(rate, channels, data, SpectrumAndLevels).Seconds);
         }
 
         double perSample = (both - spectrum) * 1e9 / ((long)Length * channels);
@@ -119,7 +122,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     [Fact]
     public void TheLevelsAddLittleToTheSpectrum()
     {
-        (double both, _, double perSampleBoth) = Compare(44100, 2, Signal.Noise, MeasurementSets.All, 16);
+        (double both, _, double perSampleBoth) = Compare(44100, 2, Signal.Noise, SpectrumAndLevels, 16);
         (double spectrum, _, double perSampleSpectrum) = Compare(44100, 2, Signal.Noise, MeasurementKinds.Spectrum, 16);
         output.WriteLine($"spectrum and levels {perSampleBoth:F2} ns a sample of a channel, the spectrum alone {perSampleSpectrum:F2} ns; ratios to the reference {both:F2} and {spectrum:F2}");
         Assert.True(both <= Factor);
@@ -175,6 +178,42 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.Null(measurer.Failure);
         Assert.NotNull(measurer.Result(MeasurementStatus.Complete, null).Levels);
         return (seconds, units);
+    }
+
+    // The loudness (K-weighting and squares) and the true peak (the Annex 2 filter by oversampling) alone, against the weights of the budget: at the rates
+    // where they run in the most common ways, for noise, the worst case of the true peak (nothing can be skipped), a full-scale square wave and zeros.
+    public static TheoryData<MeasurementKinds, int, int, Signal> StepFiveCases()
+    {
+        var data = new TheoryData<MeasurementKinds, int, int, Signal>();
+        foreach (int rate in new[] { 8000, 44100, 48000, 96000, 192000 })
+        {
+            foreach (Signal signal in new[] { Signal.Noise, Signal.Square, Signal.Zeros })
+            {
+                data.Add(MeasurementKinds.Loudness, rate, 2, signal);
+                data.Add(MeasurementKinds.TruePeak, rate, 2, signal);
+            }
+        }
+
+        data.Add(MeasurementKinds.TruePeak, 48000, 6, Signal.Noise);
+        data.Add(MeasurementKinds.Loudness, 48000, 1, Signal.Impulse);
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(StepFiveCases))]
+    public void TheLoudnessAndTheTruePeakTakeAtMostTwiceTheFlacReferencesTimePerUnit(MeasurementKinds kind, int rate, int channels, Signal signal)
+    {
+        (double ratio, double perUnit, double perSample) = Compare(rate, channels, signal, kind);
+        output.WriteLine($"{kind}, {rate} Hz, {channels} channel(s), {signal}: {perSample:F2} ns a sample of a channel, {perUnit:F3} ns a unit; ratio to the reference {ratio:F2}");
+        Assert.True(ratio <= Factor, $"{kind} takes {ratio:F2} times the reference's time per unit, at most {Factor} are allowed. The weight is too low.");
+    }
+
+    [Fact]
+    public void AllTheKindsTogetherStayWithinTwiceTheReference()
+    {
+        (double ratio, double perUnit, double perSample) = Compare(44100, 2, Signal.Noise, MeasurementSets.All);
+        output.WriteLine($"everything, 44.1 kHz stereo noise: {perSample:F2} ns a sample of a channel, {perUnit:F3} ns a unit; ratio to the reference {ratio:F2}");
+        Assert.True(ratio <= Factor);
     }
 
     public enum Signal

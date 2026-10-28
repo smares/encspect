@@ -313,6 +313,115 @@ public sealed class SpectrumGraph : AudioGraph
     public bool IsOnCutoff(int row) => Cutoff is { } cutoff && Math.Abs(row - RowOfHertz(Math.Max(0, cutoff.Frequency - 1))) <= 2;
 }
 
+// The short-term loudness over time as one line (the loudness series of the measurements), with the integrated loudness as a reference
+// line and the loudness figures in the hover text and the automation text. The series is spread evenly over the width, as the spectrum's
+// rows are; a stretch lost to a gap is not marked.
+public sealed class LoudnessGraph : AudioGraph
+{
+    // The figures the header and the automation text name, in the order the command line prints them.
+    private static readonly string[] FigureNames = ["Integrated Loudness", "Loudness Range", "Maximum True Peak Level", "Maximum Momentary Loudness", "Maximum Short-Term Loudness"];
+
+    public LoudnessGraph(StreamInfo stream, StreamMeasurements measurements)
+        : base("Loudness", "LUFS", stream, measurements)
+    {
+        Loudness = measurements.Loudness ?? throw new ArgumentException("No loudness was measured.");
+        Series = Loudness.ShortTerm ?? throw new ArgumentException("No short-term loudness was measured.");
+        Figures = [.. MeasurementText.Lines(measurements, stream.Verification?.IsLossy == true).Where(l => FigureNames.Contains(l.Name))];
+        ReadOnlySpan<double> values = Series.Values.Span;
+        double high = values[0];
+        double low = values[0];
+        foreach (double value in values)
+        {
+            high = Math.Max(high, value);
+            low = Math.Min(low, value);
+        }
+
+        if (IntegratedTenths is { } integrated)
+        {
+            high = Math.Max(high, integrated / 10.0);
+            low = Math.Min(low, integrated / 10.0);
+        }
+
+        // Multiples of 5 LU at both ends, at least 20 LU apart, so a steady signal still has an axis.
+        AxisTop = (int)Math.Ceiling(high / 5.0) * 5;
+        AxisBottom = Math.Max(-70, Math.Min((int)Math.Floor(low / 5.0) * 5, AxisTop - 20));
+        AxisTop = Math.Max(AxisTop, AxisBottom + 20);
+    }
+
+    public LoudnessFigures Loudness { get; }
+
+    public Series Series { get; }
+
+    // The loudness lines, as the command line words them.
+    public IReadOnlyList<MeasurementLine> Figures { get; }
+
+    public int AxisTop { get; }
+
+    public int AxisBottom { get; }
+
+    public override string? Description => MeasurementText.LoudnessPanelDescription;
+
+    public override int Count => Series.Values.Length;
+
+    public override double Maximum => AxisTop;
+
+    // The integrated loudness in tenths of a LUFS, where there is one (not for silence or a stream without a gated block).
+    public int? IntegratedTenths => Loudness.IntegratedAbsence == LoudnessAbsence.None && Loudness.IntegratedTenths != MeasurementLimits.NoLevel ? Loudness.IntegratedTenths : null;
+
+    // The stream's position of the first measured sample in seconds: the series counts from there.
+    public double OffsetSeconds => SampleRate > 0 ? Measurements.FirstPosition / (double)SampleRate : 0;
+
+    // The time of a point: the end of the window of the first value it covers.
+    public double TimeAt(int index) => OffsetSeconds + Series.X.Span[index];
+
+    public double StartSeconds => TimeAt(0);
+
+    // The end of the last point: the values it covers last StepsPerPoint steps of 0.1 s.
+    public double EndSeconds => TimeAt(Count - 1) + (Loudness.StepsPerPoint * 0.1);
+
+    // Where a point sits on the time axis, from 0 at the start to 1 at the end: the middle of the stretch its values cover, so a gap in
+    // the stream shows as a gap in the line.
+    public double FractionAt(int index) => (TimeAt(index) + (Loudness.StepsPerPoint * 0.05) - StartSeconds) / (EndSeconds - StartSeconds);
+
+    // The point nearest to a fraction of the time axis.
+    public int IndexAtFraction(double fraction)
+    {
+        int low = 0;
+        int high = Count - 1;
+        while (low < high)
+        {
+            int middle = (low + high) / 2;
+            if (FractionAt(middle) < fraction)
+            {
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle;
+            }
+        }
+
+        return low > 0 && fraction - FractionAt(low - 1) <= FractionAt(low) - fraction ? low - 1 : low;
+    }
+
+    public override double ValueAt(int index) => Series.Values.Span[index];
+
+    // "0:12.4 · short-term loudness -23.1 LUFS", with the number of values a merged point averages.
+    public override string Describe(int index)
+    {
+        string text = $"{Format.Timestamp(TimeAt(index))} · short-term loudness {ValueAt(index).ToString("0.0", CultureInfo.InvariantCulture)} LUFS";
+        return Loudness.StepsPerPoint > 1 ? text + $" (average of {Format.Count(Loudness.StepsPerPoint, "value", "values")})" : text;
+    }
+
+    public override long? FrameAt(int index, long? selected) => null;
+
+    public override int? IndexOfFrame(long offset) => null;
+
+    // "Integrated Loudness: -23.0 LUFS · Loudness Range: 5.2 LU", the figures a header can fit.
+    public string Header(bool isShort) =>
+        string.Join(" · ", Figures.Where(f => isShort ? f.Name is "Integrated Loudness" or "Loudness Range" : true).Select(f => $"{f.Name}: {f.Text}"));
+}
+
 // The measured figures as lines of text ("Spectral Cutoff: …", "Sample Peak: …"), each with its description; drawn by the window's list.
 public sealed class FiguresGraph : AudioGraph
 {
@@ -324,7 +433,7 @@ public sealed class FiguresGraph : AudioGraph
 
     public IReadOnlyList<MeasurementLine> Lines { get; }
 
-    public override string? Description => "The figures measured from the decoded audio: the spectral cutoff and the levels, each worded as the command line prints it.";
+    public override string? Description => "The figures measured from the decoded audio: the spectral cutoff, the levels, the loudness and the true peak, each worded as the command line prints it.";
 
     // The list is no chart: it has no points.
     public override int Count => 0;
@@ -348,6 +457,7 @@ public static class AudioPanels
     public const string WaveformTitle = "Waveform";
     public const string SpectrogramTitle = "Spectrogram";
     public const string SpectrumTitle = "Spectrum";
+    public const string LoudnessTitle = "Loudness";
     public const string FiguresTitle = "Figures";
 
     // "Decode the audio to see its waveform and spectrogram."
@@ -388,7 +498,13 @@ public static class AudioPanels
             entries.Add(new GraphChoice(SpectrumTitle, GraphHeadings.Audio, combined.Description, forms));
         }
 
-        if (m.Spectrum is not null || m.Levels is not null)
+        if (m.Loudness is { NotMeasured: null, ShortTerm: not null })
+        {
+            Graph graph = new LoudnessGraph(stream, m);
+            entries.Add(new GraphChoice(LoudnessTitle, GraphHeadings.Audio, graph.Description, [new GraphFormChoice(GraphForm.Audio, LoudnessTitle, graph.Description!, graph)]));
+        }
+
+        if (m.Spectrum is not null || m.Levels is not null || m.Loudness is not null || m.TruePeak is not null)
         {
             Graph graph = new FiguresGraph(stream, m);
             entries.Add(new GraphChoice(FiguresTitle, GraphHeadings.Audio, graph.Description, [new GraphFormChoice(GraphForm.Audio, FiguresTitle, graph.Description!, graph)]));

@@ -1,0 +1,154 @@
+{
+  "measurements": {
+    "status": "complete",
+    "samples": 64000,
+    "firstPosition": 0,
+    "lostSamples": 0,
+    "gaps": 0,
+    "sampleRate": 8000,
+    "channels": 1,
+    "channelsMeasured": 1,
+    "channelLayout": ["front center"],
+    "spectrum": {
+      "fftSize": 1024,
+      "frames": 124,
+      "rowCount": 512,
+      "binsPerRow": 1,
+      "rows": {
+        "unit": "dB",
+        "valuesPerUnit": 10,
+        "combined": "sha256:35ea048736c030a8cb2cef90061a151586104417a40c2557b1a71eef8a8afea0",
+        "perChannel": ["sha256:35ea048736c030a8cb2cef90061a151586104417a40c2557b1a71eef8a8afea0"]
+      },
+      "cutoff": {
+        "isFound": false,
+        "stepFrequency": {
+          "value": 2000,
+          "unit": "Hz"
+        },
+        "step": {
+          "value": 6.6,
+          "unit": "dB"
+        },
+        "framesShowing": 0,
+        "framesWithSignal": 63
+      },
+      "channelCutoffs": [
+        {
+          "isFound": false,
+          "stepFrequency": {
+            "value": 2000,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 6.6,
+            "unit": "dB"
+          },
+          "framesShowing": 0,
+          "framesWithSignal": 63
+        }
+      ]
+    },
+    "levels": {
+      "format": "integer",
+      "bitsPerSample": 16,
+      "samplePeak": {
+        "value": -20,
+        "unit": "dBFS"
+      },
+      "rms": {
+        "value": -25.6,
+        "unit": "dBFS"
+      },
+      "dcOffset": {
+        "value": 0,
+        "unit": "%"
+      },
+      "dcOffsetLevel": {
+        "value": null,
+        "unit": "dBFS"
+      },
+      "clipping": {
+        "minimumRunLength": 3,
+        "runs": 0,
+        "samples": 0,
+        "longestRun": 0
+      },
+      "digitalSilence": {
+        "atStart": 1,
+        "atEnd": 0
+      },
+      "zeroSamples": {
+        "value": 2000,
+        "unit": "samples"
+      },
+      "bitDepth": {
+        "lowBitsUnused": 0,
+        "highestMagnitude": 3277
+      }
+    },
+    "loudness": {
+      "channelWeights": [1],
+      "integratedLoudness": {
+        "value": -26.8,
+        "unit": "LUFS"
+      },
+      "loudnessRange": {
+        "value": 10,
+        "unit": "LU",
+        "low": {
+          "value": -34.2,
+          "unit": "LUFS"
+        },
+        "high": {
+          "value": -24.2,
+          "unit": "LUFS"
+        }
+      },
+      "maximumMomentaryLoudness": {
+        "value": -24.2,
+        "unit": "LUFS"
+      },
+      "maximumShortTermLoudness": {
+        "value": -24.2,
+        "unit": "LUFS"
+      },
+      "gatingBlocks": {
+        "total": 77,
+        "aboveAbsoluteGate": 77,
+        "aboveRelativeGate": 77
+      },
+      "shortTerm": {
+        "unit": "LUFS",
+        "stepsPerPoint": 1,
+        "x": [3, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 6, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 6.8, 6.9, 7, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 8],
+        "values": [-24.2, -24.2, -24.2, -24.2, -24.2, -24.2, -24.2, -24.2, -24.2, -24.2, -24.2, -24.3, -24.5, -24.6, -24.8, -24.9, -25.1, -25.2, -25.4, -25.6, -25.8, -26, -26.1, -26.4, -26.6, -26.8, -27.1, -27.3, -27.6, -27.9, -28.2, -28.5, -28.9, -29.3, -29.7, -30.2, -30.8, -31.4, -32.2, -33.1, -34.2, -34.2, -34.2, -34.2, -34.2, -34.2, -34.2, -34.2, -34.2, -34.2, -34.2]
+      }
+    },
+    "truePeak": {
+      "oversampling": 4,
+      "maximumTruePeakLevel": {
+        "value": -20,
+        "unit": "dBTP"
+      }
+    },
+    "spectrogram": {
+      "columns": 125,
+      "rows": 512,
+      "hopsPerColumn": 1,
+      "hopSamples": 512,
+      "unit": "dB",
+      "valueOffset": 200,
+      "noData": 0,
+      "power": "sha256:b4caa5888efa3bad00cb5be309b646078e877d5954238eb2fbffc335f6f7aed3"
+    },
+    "waveform": {
+      "columns": 125,
+      "channels": 1,
+      "unit": "16-bit sample codes",
+      "minimum": "sha256:0332d2eb116f2ea883ce788034b2877253ed74bc1a9357752a768752cb9353ab",
+      "maximum": "sha256:6ccfe3868578f650522c7a6b1d702d4b8976330865c6ccf80ef17fd5325aeaf7"
+    }
+  },
+  "findings": []
+}

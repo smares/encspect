@@ -15,6 +15,9 @@ decoded audio of a twin equal its FLAC file's), and fixtures that only WAV can h
     - 5.1 with a wideband LFE that must not set the cutoff;
     - a stream shorter than one frame, and one of more than 1,024 hops (the grids merge columns);
     - gaps: frames removed, and a jump of 2^40 samples; and the same audio at two block sizes;
+    - loudness and true peak (step 5): 1 kHz sines at known levels (EBU Tech 3341's case 1 at 48 kHz, two levels 10 LU apart, a tone between silence and
+      a quiet tone for the gates), 5.1 and 7.1 with the same tone in the back pair (weights 1.41 and 1.0), a gap, and sines at a quarter of the rate whose peaks
+      lie between samples (44.1, 96 and 192 kHz: oversampling 4, 2 and none);
     - levels (step 2): a full-scale sine, the most negative code (8 bits), a full-scale square wave, DC offsets, clipping runs of 1, 2, 3, 5, 100 and
       across block boundaries, leading, trailing and middle silence (mono and stereo), 16-bit audio in 24-bit samples, an all-silent stream, runs
       and silence that a gap must keep apart, and 32-bit samples at full scale (sums wider than 64 bits).
@@ -326,6 +329,7 @@ def build():
         {"cutoff_hz": None, "unspecified": True, "jump": 1 << 40}, numbers=[0, 1, 1 << 28, (1 << 28) + 1])
 
     add_levels()
+    add_loudness()
 
 
 def small_noise(length, seed, amplitude=300, nonzero=False):
@@ -407,6 +411,76 @@ def add_levels():
     wide = [2147483647 if i % 128 < 96 else -2147483648 for i in range(4096)]
     add("levels-full-scale-32-bits", "A 32-bit square wave between +2,147,483,647 and -2,147,483,648, high for 96 and low for 32 samples of every 128: the sum of squares passes 2^64 within two samples.",
         [wide], rate, 32, dict(unspecified, levels={"stream": {"sample_peak_tenths": 0, "clipping_runs": 64, "clipped_samples": 4096, "longest_clipping_run": 96, "highest_magnitude": 2147483648}}), verbatim=True)
+
+
+def tone(rate, seconds, dbfs, hertz=1000.0, phase_degrees=0.0, count=None):
+    """A sine with the given peak level in dBFS: whole samples (the length is seconds * rate) and the phase in degrees."""
+    length = count if count is not None else int(round(seconds * rate))
+    amplitude = 10 ** (dbfs / 20)
+    return [amplitude * math.sin(2 * math.pi * hertz * i / rate + math.radians(phase_degrees)) for i in range(length)]
+
+
+def add_loudness():
+    """The fixtures of the loudness and the true peak (docs/design/spectral-analysis.md, "Loudness and loudness range" and "True peak"). construction["loudness"]
+    holds what each was built to read, in LUFS or LU, with the tolerance of the document it follows where there is one; the model's figures are checked
+    against the analyzer as for every fixture."""
+    unspecified = {"cutoff_hz": None, "unspecified": True}
+    r48, r8 = 48000, 8000
+    low = r8 / 64
+
+    # EBU Tech 3341 case 1 has a stereo sine of 1 kHz at -23.0 dBFS in both channels; in one channel the same loudness is a sine at -20.0 dBFS, which keeps the file
+    # half the size (the stereo signal is a test of the program, in LoudnessEbuTests). M, S and I read -23.0 LUFS (+-0.1) at 48 kHz.
+    ebu = quantize(tone(r48, 3.05, -20.0), 16)
+    add("loudness-sine-mono-48000", "Tech 3341 case 1 as one channel: a sine of 1 kHz at -20.0 dBFS peak at 48 kHz for 3.05 s, which reads the loudness of the stereo sine at -23.0 dBFS.", [ebu], r48, 16,
+        dict(unspecified, loudness={"integrated": -23.0, "momentary": -23.0, "short_term": -23.0, "tolerance": 0.1, "source": "EBU Tech 3341 Table 1, case 1"}))
+
+    # Tech 3342 case 1 in miniature: two tones 10 dB apart (125 Hz, a period of 64 samples, which the fixed predictors of the writer code in few bits).
+    steps = quantize(tone(r8, 4.0, -20.0, low) + tone(r8, 4.0, -30.0, low), 16)
+    add("loudness-steps-8000", "A mono sine of 125 Hz at 8 kHz: 4 s at -20 dBFS and then 4 s at -30 dBFS (Tech 3342 case 1 shortened): a loudness range of 10 LU.", [steps], r8, 16,
+        dict(unspecified, loudness={"range": 10.0, "range_tolerance": 1.0, "source": "EBU Tech 3342 Table 1, case 1"}))
+
+    # A loudness range over 30 s, so that the 40-value rule of the cross-check holds (271 short-term values): six tones of 5 s with levels 15 LU apart at the
+    # extremes. The 95th percentile lies on the -20 dBFS plateaus (40 values, 15 %) and the 10th on the -35 dBFS ones (40 values, 15 %): 15 LU (+-1).
+    staircase = [lvl for level in (-20.0, -35.0, -25.0, -35.0, -30.0, -20.0) for lvl in quantize(tone(r8, 5.0, level, low), 16)]
+    add("loudness-range-steps-8000", "A mono sine of 125 Hz at 8 kHz for 30 s in six steps of 5 s at -20, -35, -25, -35, -30 and -20 dBFS: 271 short-term values, a loudness range of 15 LU.", [staircase], r8, 16,
+        dict(unspecified, loudness={"range": 15.0, "range_tolerance": 1.0, "short_term_values_at_least": 40}))
+
+    # Both gates in one range, over 45 s: 5 s each at -18, -50 (more than 20 LU under the mean of the rest: below the relative gate), -24 and -85 dBFS (below
+    # the absolute gate), then 20 s at -30 and 5 s at -18. The low end of the range lies on the long -30 plateau and the high end on the -18 ones, whether the
+    # short-term loudness is taken every 100 ms (the analyzer, FFmpeg) or once a second (libebur128), which a range across short steps is not.
+    gated = [v for level, seconds in ((-18.0, 5.0), (-50.0, 5.0), (-24.0, 5.0), (-85.0, 5.0), (-30.0, 20.0), (-18.0, 5.0)) for v in quantize(tone(r8, seconds, level, low), 16)]
+    add("loudness-range-gates-8000", "A mono sine of 125 Hz at 8 kHz for 45 s: 5 s each at -18, -50, -24 and -85 dBFS, 20 s at -30 and 5 s at -18 dBFS: the -50 dBFS tone is below the relative gate of the loudness range and the -85 dBFS one below the absolute gate.",
+        [gated], r8, 16, dict(unspecified, loudness={"short_term_values_at_least": 40}))
+
+    # The gates: a loud tone, digital silence (below the absolute gate) and a tone 38 dB lower (below the relative gate): only the loud tone counts.
+    gates = quantize(tone(r8, 2.0, -12.0, low) + [0.0] * (2 * r8) + tone(r8, 2.0, -50.0, low), 16)
+    add("loudness-gates-8000", "A mono sine of 125 Hz at 8 kHz: 2 s at -12 dBFS, 2 s of digital silence, 2 s at -50 dBFS: the silence is below the absolute gate and the quiet tone below the relative gate, so only the loud tone's blocks count.",
+        [gates], r8, 16, dict(unspecified, loudness={"gated_out": True}))
+
+    # Back channels: 7.1 has a rear pair (weight 1.00) beside its side pair, 5.1 a surround pair (1.41); the same tone in the back pair reads 1.49 dB louder in 5.1.
+    back = quantize(tone(r8, 0.8, -20.0, low), 16)
+    silent = [0] * len(back)
+    add("loudness-7-1-rear-pair-8000", "Eight channels (front left and right, center, LFE, back left and right, side left and right) at 8 kHz: a sine of 125 Hz at -20 dBFS in the back pair, silence elsewhere. The back pair is the rear pair of a 7.1 (weight 1.00).",
+        [silent, silent, silent, silent, back, back, silent, silent], r8, 16, dict(unspecified, loudness={"weights": [100, 100, 100, 0, 100, 100, 141, 141]}))
+    add("loudness-5-1-surround-pair-8000", "Six channels (front left and right, center, LFE, back left and right) at 8 kHz: the same sine in the back pair, which is the surround pair of a 5.1 (weight 1.41).",
+        [silent, silent, silent, silent, back, back], r8, 16, dict(unspecified, loudness={"weights": [100, 100, 100, 0, 141, 141]}))
+    add("loudness-5-1-lfe-only-8000", "Six channels at 8 kHz: a sine of 125 Hz at -20 dBFS in the LFE alone, which loudness leaves out: no block is above the absolute gate.",
+        [silent, silent, silent, back, silent, silent], r8, 16, dict(unspecified, loudness={"weights": [100, 100, 100, 0, 141, 141], "below_gate": True}))
+
+    # A gap: 3 s of the sine in blocks of 1,024 samples with four blocks removed from the middle: no 400 ms block spans the gap.
+    gap = quantize(tone(r8, 3.0, -20.0, low), 16)
+    add("loudness-gap-8000", "A mono sine of 125 Hz at 8 kHz for 3 s in blocks of 1,024 samples with four blocks removed from the middle: the gating blocks do not span the gap.", [gap], r8, 16,
+        dict(unspecified, loudness={"gap": True}), block=1024, drop=(8, 9, 10, 11))
+
+    # True peak: a sine at a quarter of the rate with its peaks between the samples (phase 45 degrees: the samples read 0.707 of the amplitude).
+    quarter44 = quantize(tone(44100, 0.25, -0.9151, 11025.0, 45.0), 16)
+    other44 = quantize(tone(44100, 0.25, -6.0206, 44100 / 6, 60.0), 16)
+    add("truepeak-fs4-44100", "Two channels at 44.1 kHz: left a sine at a quarter of the rate, phase 45 degrees, peak -0.9151 dBFS (0.9 of full scale): its samples reach only -3.9 dBFS, its true peak about -0.9 dBTP; right a sine at a sixth of the rate at -6.02 dBFS, phase 60 degrees.",
+        [quarter44, other44], 44100, 16, dict(unspecified, loudness={"true_peak_left": -0.9, "true_peak_tolerance": 0.4}))
+    add("truepeak-fs4-96000", "Two channels at 96 kHz (oversampling by 2): the same sine at a quarter of the rate in the left, silence in the right.",
+        [quantize(tone(96000, 0.15, -0.9151, 24000.0, 45.0), 16), [0] * int(96000 * 0.15)], 96000, 16, dict(unspecified, loudness={"true_peak_left": -0.9, "true_peak_tolerance": 0.4}))
+    add("truepeak-fs4-192000", "One channel at 192 kHz (the true peak is the sample peak): a sine at a quarter of the rate, phase 45 degrees, peak 0.9 of full scale.",
+        [quantize(tone(192000, 0.08, -0.9151, 48000.0, 45.0), 16)], 192000, 16, dict(unspecified, loudness={"true_peak_equals_sample_peak": True}))
 
 
 # ---- The twins: the same integers in WAV, Wave64 and AIFF files ----
