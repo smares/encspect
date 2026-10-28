@@ -504,7 +504,7 @@ public sealed partial class GraphView
         {
             SummaryLayout summary = SummaryRows(graph, Bounds.Width);
             SummaryRow row = summary.Rows[index];
-            _scroll = Math.Clamp(_scroll, Math.Max(0, row.Rect.Bottom - (Bounds.Height - 30)), row.Rect.Y);
+            _scroll = Within(_scroll, Math.Max(0, row.Rect.Bottom - (Bounds.Height - 30)), row.Rect.Y);
             var area = new Rect(row.Rect.X, row.Rect.Y - _scroll + 24, row.Rect.Width, row.Rect.Height);
             return new CategoryHit(index, graph.Describe(index), area);
         }
@@ -749,7 +749,7 @@ public sealed partial class GraphView
             double y = Math.Round(plot.Bottom - (plot.Height * percent / 100.0)) + 0.5;
             context.DrawLine(grid, new Point(plot.Left, y), new Point(plot.Right, y));
             FormattedText label = Text(percent + "%", AxisSize, secondary);
-            context.DrawText(label, new Point(plot.Left - 8 - label.Width, Math.Clamp(y - (label.Height / 2), plot.Top - 4, plot.Bottom - label.Height + 4)));
+            context.DrawText(label, new Point(plot.Left - 8 - label.Width, Within(y - (label.Height / 2), plot.Top - 4, plot.Bottom - label.Height + 4)));
         }
     }
 
@@ -1108,7 +1108,7 @@ public sealed partial class GraphView
         {
             FormattedText label = Text(Format.Clock(starts[firstOf(column)]), AxisSize, secondary);
             double x = slots.X(column);
-            double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
+            double start = Within(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12)
             {
                 continue;
@@ -1130,7 +1130,7 @@ public sealed partial class GraphView
         {
             FormattedText label = Text(position.ToString("N0", CultureInfo.InvariantCulture), AxisSize, secondary);
             double x = plot.Left + (position * plot.Width / count);
-            double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
+            double start = Within(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12 || start + label.Width > limit)
             {
                 continue;

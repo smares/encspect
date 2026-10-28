@@ -15,6 +15,10 @@ namespace Encspect.Gui.Views;
 // shows its value; clicking it raises PointClicked, which selects its frame.
 public sealed partial class GraphView : Control
 {
+    // Math.Clamp for bounds that come from the pane's size: it throws when the minimum is above the maximum, as a label wider than a narrow
+    // plot makes them; here the minimum wins, so the label starts at the plot's left edge.
+    private static double Within(double value, double minimum, double maximum) => Math.Max(minimum, Math.Min(value, maximum));
+
     public static readonly StyledProperty<Graph?> GraphProperty =
         AvaloniaProperty.Register<GraphView, Graph?>(nameof(Graph));
 
@@ -482,7 +486,7 @@ public sealed partial class GraphView : Control
         {
             FormattedText label = Text(line.AxisLabel(position), AxisSize, secondary);
             double x = plot.Left + (position * plot.Width / count);
-            double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
+            double start = Within(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12 || start + label.Width > limit)
             {
                 continue;

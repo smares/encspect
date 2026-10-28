@@ -15,8 +15,10 @@ public sealed partial class GraphView
     private static Point LoudnessDot(LoudnessGraph graph, Rect plot, int index)
     {
         double range = graph.AxisTop - graph.AxisBottom;
-        double y = plot.Bottom - (Math.Clamp(graph.ValueAt(index) - graph.AxisBottom, 0, range) / range * plot.Height);
-        return new Point(plot.Left + (graph.FractionAt(index) * plot.Width), y);
+        double value = graph.ValueAt(index);
+        double y = plot.Bottom - (double.IsNaN(value) ? 0 : Math.Clamp(value - graph.AxisBottom, 0, range) / range * plot.Height);
+        double fraction = graph.FractionAt(index);
+        return new Point(plot.Left + ((double.IsNaN(fraction) ? 0 : fraction) * plot.Width), y);
     }
 
     // Where the line of the loudness is drawn at a point, in the view's coordinates, for tests; null for any other graph.

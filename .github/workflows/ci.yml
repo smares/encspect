@@ -159,10 +159,13 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      # The GUI tests; Encspect.Tests runs in the unit-tests job, in shards.
+      # The GUI tests; Encspect.Tests runs in the unit-tests job, in shards. The whole project takes about two minutes, so a
+      # test that runs ten minutes is hung: the blame option stops the test host then and names the test (and the tests that
+      # ran before it) in Sequence_*.xml next to the results, which the artifact below keeps. No dump: a hang is a loop or a
+      # wait that the name finds, and a full dump of the Avalonia process is hundreds of megabytes.
       - name: Test the GUI
         id: gui-tests
-        run: dotnet test tests/Encspect.Gui.Tests --no-build --configuration Release --logger "trx;LogFileName=gui.trx" --results-directory "${{ runner.temp }}/trx"
+        run: dotnet test tests/Encspect.Gui.Tests --no-build --configuration Release --blame-hang-timeout 10m --blame-hang-dump-type none --logger "trx;LogFileName=gui.trx" --results-directory "${{ runner.temp }}/trx"
 
       - name: Summarize the failed GUI tests
         if: failure() && steps.gui-tests.outcome == 'failure'

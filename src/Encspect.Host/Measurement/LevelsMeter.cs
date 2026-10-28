@@ -295,6 +295,8 @@ internal sealed class LevelsMeter
         return total;
     }
 
+    private const int LongRun = 16;
+
     // Runs of the same extreme code, carried across pieces in the state and counted when they end (at a sample that is not the same extreme, at a gap and
     // at the end), with the counters in locals so that the loop writes no memory.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -318,6 +320,17 @@ internal sealed class LevelsMeter
                 if (v == extreme)
                 {
                     runLength++;
+
+                    // A long run (a square wave, a hard-clipped peak) is skipped with the library's integer search, which is vectorized on every
+                    // platform; a short one stays in this loop, where a call would cost more than it saves.
+                    if (runLength >= LongRun)
+                    {
+                        int rest = samples[(i + 1)..].IndexOfAnyExcept(extreme);
+                        rest = rest < 0 ? samples.Length - i - 1 : rest;
+                        runLength += rest;
+                        i += rest;
+                    }
+
                     continue;
                 }
 

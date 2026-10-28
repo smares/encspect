@@ -347,7 +347,7 @@ public sealed partial class GraphView
     private void DrawTimeAxis(DrawingContext context, double startSeconds, double endSeconds, Rect plot, IBrush secondary)
     {
         double span = endSeconds - startSeconds;
-        if (span <= 0)
+        if (!(span > 0) || double.IsInfinity(span))
         {
             return;
         }
@@ -359,7 +359,7 @@ public sealed partial class GraphView
         {
             FormattedText label = Text(step < 1 ? Format.Timestamp(time) : Format.Clock(time), AxisSize, secondary);
             double x = plot.Left + ((time - startSeconds) / span * plot.Width);
-            double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
+            double start = Within(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
             if (start < lastEnd + 12)
             {
                 continue;
@@ -525,7 +525,7 @@ public sealed partial class GraphView
         {
             double y = bar.Top + ((RampTopDb - decibels) / (double)(RampTopDb - RampBottomDb) * bar.Height);
             FormattedText label = Text(decibels.ToString("0", CultureInfo.InvariantCulture), AxisSize, secondary);
-            context.DrawText(label, new Point(bar.Right + 4, Math.Clamp(y - (label.Height / 2), plot.Top - 4, plot.Bottom - label.Height + 4)));
+            context.DrawText(label, new Point(bar.Right + 4, Within(y - (label.Height / 2), plot.Top - 4, plot.Bottom - label.Height + 4)));
         }
     }
 
@@ -565,7 +565,7 @@ public sealed partial class GraphView
         {
             double x = plot.Left + (hertz / Math.Max(1, graph.NyquistHertz) * plot.Width);
             FormattedText label = Text(KiloHertzLabel(hertz) + (hertz == 0 ? string.Empty : " kHz"), AxisSize, secondary);
-            context.DrawText(label, new Point(Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width), plot.Bottom + 4));
+            context.DrawText(label, new Point(Within(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width), plot.Bottom + 4));
         }
 
         bool isPerChannel = graph.View == GraphForm.PerChannel;

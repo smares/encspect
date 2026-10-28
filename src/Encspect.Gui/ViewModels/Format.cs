@@ -27,19 +27,26 @@ public static class Format
     }
 
     // A point in time on a graph's axis, in whole seconds: "0:05", "3:25", "1:02:03".
+    // The longest time the clock formats, 99,999 hours; a NaN or a negative time reads 0 and a longer one reads this, so no value throws.
+    private const double MaximumSeconds = 359_999_999;
+
+    private static double WholeSeconds(double seconds) => Math.Floor(WholeSecondsOrMore(seconds));
+
+    private static double WholeSecondsOrMore(double seconds) => double.IsNaN(seconds) ? 0 : Math.Clamp(seconds, 0, MaximumSeconds);
+
     public static string Clock(double seconds)
     {
-        var time = TimeSpan.FromSeconds(Math.Max(0, Math.Floor(seconds)));
-        return time.TotalHours >= 1
-            ? ((int)time.TotalHours).ToString(Invariant) + time.ToString(@"\:mm\:ss", Invariant)
-            : time.ToString(@"m\:ss", Invariant);
+        long whole = (long)WholeSeconds(seconds);
+        return whole >= 3600
+            ? $"{(whole / 3600).ToString(Invariant)}:{(whole / 60 % 60).ToString("00", Invariant)}:{(whole % 60).ToString("00", Invariant)}"
+            : $"{(whole / 60).ToString(Invariant)}:{(whole % 60).ToString("00", Invariant)}";
     }
 
     // A point in time in tenths of a second, for the hover text of the audio panels: "0:05.3", "3:25.0", "1:02:03.4". Truncated, so a
     // point just under a minute never reads as "0:60.0".
     public static string Timestamp(double seconds)
     {
-        long tenths = (long)Math.Floor((Math.Max(0, seconds) * 10) + 1e-6);
+        long tenths = (long)Math.Floor((WholeSecondsOrMore(seconds) * 10) + 1e-6);
         long whole = tenths / 10;
         string fraction = "." + (tenths % 10).ToString(Invariant);
         return whole >= 3600
