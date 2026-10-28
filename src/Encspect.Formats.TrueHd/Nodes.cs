@@ -59,7 +59,20 @@ internal static class Nodes
         }
 
         Entry e = r.Entries[index];
-        return new Node(MajorSyncName, e.Offset + 4, e.SyncLength == 0 ? MajorSyncLengthOf(r, index) : e.SyncLength) { Description = Explain.MajorSync, Topic = Topics.AccessUnits };
+        int length = MajorSyncLengthIn(r, index);
+        if (length <= 0)
+        {
+            return Unit(r, index);
+        }
+
+        return new Node(MajorSyncName, e.Offset + 4, length) { Description = Explain.MajorSync, Topic = Topics.AccessUnits };
+    }
+
+    // A major sync cut short by the end of its unit is a node of the bytes the unit has after its header.
+    private static int MajorSyncLengthIn(Records r, int index)
+    {
+        Entry e = r.Entries[index];
+        return Math.Min(e.SyncLength == 0 ? MajorSyncLengthOf(r, index) : e.SyncLength, UnitLength(r, index) - UnitHeaderLength);
     }
 
     private static int MajorSyncLengthOf(Records r, int index) => MajorSync28;
@@ -139,7 +152,7 @@ internal static class Nodes
         UnitDetail? detail = r.DetailOf(index);
         if (detail is null || length < 8)
         {
-            if (e.SyncLength > 0 && length >= 4 + e.SyncLength)
+            if (e.SyncLength > 0 && MajorSyncLengthIn(r, index) > 0)
             {
                 children.Add(MajorSyncOf(r, index));
             }

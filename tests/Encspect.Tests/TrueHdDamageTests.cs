@@ -57,6 +57,32 @@ public class TrueHdDamageTests
         return (report, [.. sink.Bytes]);
     }
 
+    // A unit whose length field leaves 6 bytes after its header, which a major sync (28 bytes) does not fit: the finding about the sync points to a node
+    // of the 6 bytes there are, which the unit lists.
+    [Fact]
+    public void AMajorSyncCutShortByItsUnitIsFoundInTheTree()
+    {
+        byte[] original = Fixture("external-truehd-stereo-48k-24-odd-length.thd");
+        (int offset, int length) = Units(original)[6];
+        Assert.True(length > 10);
+        byte[] data = [.. original[..(offset + 10)], .. original[(offset + length)..]];
+        data[offset + 1] = 5;
+        data[offset + 4] = 0xF8;
+        data[offset + 5] = 0x72;
+        data[offset + 6] = 0x6F;
+        data[offset + 7] = 0xBA;
+
+        Report report = Analyzer.CreateDefault().Analyze("cut.thd", new MemoryStream(data));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "truehd.major-sync-invalid");
+        Assert.NotNull(finding.Path);
+        Assert.Equal("Major Sync", finding.Node!.Name);
+        Assert.Equal(offset + 4, finding.Node.Offset);
+        Assert.Equal(6, finding.Node.Length);
+        Assert.DoesNotContain(report.Findings, f => f.Node is not null && f.Path is null);
+    }
+
     // A 5.1 stream, then a 4.0 stream at the same rate (both of two substreams), then the 5.1 stream again, each cut before its end of stream marker: the
     // decoder, opened for six channels, rejects the 4.0 units after it has read their restart headers, which must leave no accumulator behind that a
     // later restart header compares.
