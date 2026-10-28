@@ -91,11 +91,22 @@ public sealed class MonkeysAudioDecoder : IDecoder
         return new FrameDecoder(context, header, dataStart);
     }
 
-    // Files before 3.93, which the SDK reads with the decoder of Old/UnMACOld.cpp: what that decoder refuses is refused here with its reason.
+    // Files before 3.93, which the SDK reads with the decoder of Old/UnMACOld.cpp: what that decoder cannot decode is left undecoded here with its reason.
     private static OldFrameDecoder OpenOld(DecodeContext context, ApeHeader header, long dataStart, ReadOnlySpan<byte> configuration)
     {
         int version = header.FileVersion;
         string text = ApeHeader.VersionText(version);
+        // CUnBitArrayOld::GenerateArray reads nothing in a file of 3.89 above 3.890, and CAPEDecompressOld refuses a file above 3920 (the file versions are the numbers the header stores: 3.92 is 3920).
+        if (version is > 3890 and < 3900)
+        {
+            throw new InvalidDataException($"The file is of version {text} (file version {version}); the SDK's bit array for files before 3.90 reads no values from a file of a version above 3890, so the audio is not decoded");
+        }
+
+        if (version > 3920)
+        {
+            throw new InvalidDataException($"The file is of version {text} (file version {version}); the SDK's decoder of versions before 3.93 refuses a file of a version above 3920, so the audio is not decoded");
+        }
+
         if (header.CompressionLevel is not (1000 or 2000 or 3000 or 4000))
         {
             throw new InvalidDataException($"The file states the compression level {header.CompressionLevel}; the SDK's decoder of versions before 3.93 reads the levels 1000 to 4000 and fails on any other");
@@ -103,7 +114,7 @@ public sealed class MonkeysAudioDecoder : IDecoder
 
         if (header.Channels is not (1 or 2))
         {
-            throw new InvalidDataException($"The header states {header.Channels} channels; the SDK's decoder of versions before 3.93 reads one or two");
+            throw new InvalidDataException($"The header states {header.Channels} channels; the SDK's decoder of versions before 3.93 decodes samples for one or two channels only, so the audio is not decoded");
         }
 
         if (version >= 3900 && !header.HasStoredCrc)

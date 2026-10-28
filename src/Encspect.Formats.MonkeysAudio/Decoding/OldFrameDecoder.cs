@@ -66,7 +66,7 @@ internal sealed class OldFrameDecoder : IFrameDecoder
         _arrays = [new int[capacity], new int[capacity]];
         _temporary = new int[capacity];
         _pcm = new byte[_channels * FrameDecoder.Chunk * (_bits / 8)];
-        _array = _version < 3860 ? new RiceUpTo385() : _version < 3900 ? new RiceFrom386(_version >= 3890) : new RangeArray(_version);
+        _array = _version < 3860 ? new RiceUpTo385() : _version < 3900 ? new RiceFrom386(_version > 3880) : new RangeArray(_version);
         _predictors = [OldPredictor.Create(header.CompressionLevel, _version), OldPredictor.Create(header.CompressionLevel, _version)];
         _bitUnits = _version >= 3900 ? RangeUnits : RiceUnits;
         _predictorUnits = PredictorUnits(header.CompressionLevel, _version);

@@ -268,8 +268,8 @@ internal sealed class RiceUpTo385 : OldArrayDecoder
     }
 }
 
-// From version 3.86 to 3.89 (CUnBitArrayOld::GenerateArrayRice, DecodeValueNew): one Rice parameter that follows a running sum; from 3.89 an overflow of 16 or more
-// adds 4 to the parameter for each 16.
+// From version 3.86 to 3.89 (CUnBitArrayOld::GenerateArrayRice, DecodeValueNew): one Rice parameter that follows a running sum; above version 3880 an overflow of 16
+// or more adds 4 to the parameter for each 16.
 internal sealed class RiceFrom386 : OldArrayDecoder
 {
     private static readonly uint[] KSumMaximum = BuildMaximum();

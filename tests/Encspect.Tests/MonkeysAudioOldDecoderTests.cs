@@ -16,6 +16,23 @@ public class MonkeysAudioOldDecoderTests
         { Stereo385, 6, 1234, "levels 1000 to 4000" },
         { Stereo385, 10, 3, "one or two" },
         { Stereo385, 4, 3700, "takes versions 3.80 to 3.99" },
+        // The SDK's bit array of the versions before 3.90 reads nothing above 3890, and its decoder of those versions refuses a file above 3920.
+        { Stereo385, 4, 3891, "reads no values" },
+        { Stereo385, 4, 3899, "reads no values" },
+        { Stereo385, 4, 3921, "refuses a file of a version above 3920" },
+        { Stereo385, 4, 3929, "refuses a file of a version above 3920" },
+    };
+
+    // The overflow of a Rice value is capped above version 3880 (CUnBitArrayOld::GenerateArrayRice): the file of exactly 16 and 32 and the one of spikes carry the coding
+    // of 3.89, and the versions in between read it the same way.
+    public static TheoryData<string, int, bool> CapBoundary => new()
+    {
+        { "legacy-3890-normal-16-mono-overflow-exactly-16.ape", 3890, true },
+        { "legacy-3890-normal-16-mono-overflow-exactly-16.ape", 3889, true },
+        { "legacy-3890-normal-16-mono-overflow-exactly-16.ape", 3881, true },
+        { "legacy-3890-normal-16-mono-overflow-exactly-16.ape", 3880, false },
+        { "legacy-3890-normal-16-stereo-spikes.ape", 3881, true },
+        { "legacy-3890-normal-16-stereo-spikes.ape", 3880, false },
     };
 
     private static Report Decode(byte[] file) =>
@@ -35,6 +52,19 @@ public class MonkeysAudioOldDecoderTests
         Assert.Contains(reason, finding.Message, StringComparison.Ordinal);
         Assert.Equal(DecodeStatus.NotPossible, report.Streams.Single().Verification!.Decoding);
         Assert.NotNull(finding.Path);
+    }
+
+    [Theory]
+    [MemberData(nameof(CapBoundary))]
+    public void TheOverflowOfARiceValueIsCappedAboveVersion3880(string fixture, int version, bool isVerified)
+    {
+        byte[] file = File.ReadAllBytes(MonkeysAudioBuilder.FixturePath(fixture));
+        BinaryPrimitives.WriteUInt16LittleEndian(file.AsSpan(4), (ushort)version);
+
+        Report report = Decode(file);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Equal(isVerified, report.Streams.Single().Verification!.IsVerified == true);
     }
 
     [Fact]
