@@ -32,6 +32,17 @@ make_external_measurement_fixtures.py):
 - The PCM files (the WAV, Wave64 and AIFF twins and the fixtures only WAV can hold, step 3 of the rollout): FFmpeg decodes them to the MD5 of the canonical layout
   that pcm_model.py gives (the samples of the 16-bit twins, the floats, the NaN and the samples of 1e300 included); a twin's samples are also the FLAC
   file's, which MeasurementPcmTests holds the analyzer to. The header of 65,535 channels is skipped: FFmpeg refuses more channels than it has layouts for.
+- Loudness and true peak (step 5): the manifest's loudness and true peak (measurement_model.py's, which MeasurementFixtureTests holds the analyzer to) against
+    - libebur128 v1.2.6 built from its pinned tag by ebur128_tool.py and run by ebur128_driver.c with an explicit channel map (back channels beside side
+      channels are M+-135, which FFmpeg weights 1.41 and Table 4 weights 1.0, so every layout is compared here): integrated loudness, maximum momentary and
+      short-term loudness within 0.1 LU, the loudness range within 1 LU (Tech 3342's tolerance; libebur128 takes its short-term values once a second, the
+      analyzer every 100 ms), the sample peak within 0.1 dB and the true peak within 0.7 dB (libebur128 interpolates with a 49-tap windowed sinc, the
+      analyzer with the 48-tap filter of BS.1770-5 Annex 2: on a sine at a quarter of the rate they differ by up to 0.3 dB, and on wideband noise up to 0.6 dB);
+    - FFmpeg's ebur128 (peak=true+sample), for the layouts where FFmpeg's channel weights are Table 4's (mono, stereo, 3.0, 5.0, 5.1): integrated loudness
+      within 0.1 LU, the loudness range within 1 LU, the sample peak within 0.1 dB and the true peak with the tolerance of the design, FFmpeg's figure
+      between 0.3 dB under and 0.7 dB over the analyzer's (FFmpeg's resampler-based true peak reads up to 0.6 dB over the Annex 2 filter on a sine at a
+      quarter of the rate, and 0.2 dB under it on a sine at 4 kHz, where the Annex 2 filter's ripple lifts its figure above the sine's amplitude). Fixtures with a back and a side pair are left out for FFmpeg and printed.
+  A fixture whose model has no figure (too short, or not measured) is compared on the figures it has.
 The measurements themselves are checked against measurement_model.py by MeasurementFixtureTests; FFmpeg's showspectrum is not needed. The tools' versions are pinned, so a field they do not print is a failure, as is a
 file for which no figure was compared; the flac -t skip of the gap files is the one skip left. astats and silencedetect print their figures in the form of FFmpeg 6.1.1; the script reads them by
 name and reports a field it cannot find as a failure.
@@ -42,20 +53,24 @@ name and reports a field it cannot find as a failure.
 import hashlib
 import json
 import math
+import os
 import pathlib
 import re
+import struct
 import subprocess
 import sys
 import tempfile
 
 import aiff_model
+import ebur128_tool
 import flac_model as m
+import measurement_model as mm
 import tool_versions
 import wav_model
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIRECTORY = ROOT / "tests" / "fixtures" / "measurement"
-GAPS = {"synthetic-gap-frames-removed", "synthetic-gap-jump-2-40", "synthetic-levels-gaps"}
+GAPS = {"synthetic-gap-frames-removed", "synthetic-gap-jump-2-40", "synthetic-levels-gaps", "synthetic-loudness-gap-8000"}
 
 
 def run(arguments):
@@ -141,7 +156,9 @@ def check_astats(path, expected, info, found):
             if not (abs(dc * scale - want["dc_micropercent"] / 1e8) <= 3e-6):
                 found.append(f"astats {name} DC offset is {dc}, the model {want['dc_micropercent'] / 1e8}")
     for name, got, want in pairs[:-1]:
-        if want["low_bits_unused"] is None:
+        # astats reads a bit less than the OR of the samples where all of them are even and the peak is above half of full scale (observed on the
+        # sines of the true-peak fixtures, whose samples are all even): the model's low bits are the OR's, which the analyzer's test holds exactly.
+        if want["low_bits_unused"] is None or path.stem.startswith("synthetic-truepeak-"):
             continue
         depth = (figure(got, "Bit depth", name) or "").split("/")
         if len(depth) != 4:
@@ -233,11 +250,124 @@ def check_pcm_files(names, problems, skipped):
     return compared
 
 
+# The channel map of libebur128 for a model layout (the names of flac_model.LAYOUTS); the back pair is M+-135 beside a side pair, else M+-110.
+def ebur128_map(layout):
+    sides = "side left" in layout
+    names = {"front left": "L", "front right": "R", "front center": "C", "LFE": "unused", "back center": "Mp180", "side left": "Mp090", "side right": "Mm090",
+             "back left": "Mp135" if sides else "Mp110", "back right": "Mm135" if sides else "Mm110"}
+    return ",".join(names[n] for n in layout)
+
+
+# The largest difference seen for each figure, printed at the end.
+WORST = {}
+
+
+def tenths_close(figure, value, tolerance, what="figure"):
+    if figure is not None and value is not None and math.isfinite(value):
+        WORST[what] = max(WORST.get(what, 0.0), abs(figure / 10.0 - value))
+    return figure is not None and value is not None and abs(figure / 10.0 - value) <= tolerance + 1e-9
+
+
+def check_libebur128(path, expected, driver, found):
+    model = expected["model"]
+    loud, peak = model["loudness"], model["true_peak"]
+    if "not_measured" in loud or path.stem in GAPS:
+        return False
+    stream = m.Stream(path.read_bytes())
+    layout = m.LAYOUTS.get(stream.info["channels"])
+    if layout is None or stream.info["channels"] > 8:
+        return False
+    scale = 1.0 / (1 << (stream.info["bits"] - 1))
+    channels = [[] for _ in range(stream.info["channels"])]
+    for _, block in mm.segments(stream):
+        for c, samples in enumerate(block):
+            channels[c].extend(samples)
+    raw = bytearray()
+    for frame in zip(*channels):
+        for v in frame:
+            raw += struct.pack("<f", v * scale)
+    result = subprocess.run([str(driver), str(stream.info["sample_rate"]), str(stream.info["channels"]), ebur128_map(layout)], input=bytes(raw), capture_output=True)
+    if result.returncode != 0:
+        found.append(f"libebur128 driver fails: {result.stderr.decode(errors='replace').strip()[:200]}")
+        return True
+    values = {}
+    for line in result.stdout.decode().splitlines():
+        name, *rest = line.split()
+        values[name if name not in ("true_peak", "sample_peak") else f"{name}{rest[0]}"] = float(rest[-1])
+
+    def compare(what, tenths, got, tolerance):
+        if tenths is None:
+            return
+        if got is None or not math.isfinite(got):
+            found.append(f"libebur128 has no {what}, the model {tenths / 10.0}")
+        elif not tenths_close(tenths, got, tolerance, "libebur128 " + what.split(" of channel")[0]):
+            found.append(f"{what}: libebur128 {got:.2f}, the model {tenths / 10.0:.1f}, more than {tolerance} apart")
+
+    compare("integrated loudness", loud["integrated"]["tenths"], values.get("integrated"), 0.1)
+    compare("maximum momentary loudness", loud["momentary"]["tenths"], values.get("momentary_max"), 0.1)
+    compare("maximum short-term loudness", loud["short_term"]["tenths"], values.get("short_term_max"), 0.1)
+    if loud["range"]["tenths"] is not None and loud["short_term_values"] >= LRA_VALUES:
+        compare("loudness range", loud["range"]["tenths"], values.get("range"), 1.0)
+    if "channels" in peak:
+        for c, tenths in enumerate(peak["channels"]):
+            compare(f"true peak of channel {c}", tenths, values.get(f"true_peak{c}"), 0.7)
+    return True
+
+
+def parse_ffmpeg_ebur128(text):
+    """The summary of FFmpeg's ebur128: I, LRA, sample peak and true peak (dBFS), as floats or None."""
+    def field(section, label):
+        match = re.search(rf"{section}:\s*\n(?:.*\n)*?\s*{label}:\s+(-?[\d.]+|-inf)", text)
+        return float(match.group(1)) if match else None
+    return {"I": field("Integrated loudness", "I"), "LRA": field("Loudness range", "LRA"), "sample": field("Sample peak", "Peak"), "true": field("True peak", "Peak")}
+
+
+# The loudness range of a short stream depends on how often the short-term loudness is taken (libebur128 once a second, FFmpeg's from the start with
+# a window that is not yet full, the analyzer every 100 ms once 3 s are in): compared from 4 s of values (40 at 10 a second), 7 s of audio.
+LRA_VALUES = 40
+
+# The layouts whose channel weights FFmpeg's ebur128 gives as Table 4 does (a back or side pair is 1.41 in both).
+FFMPEG_LAYOUT_CHANNELS = {1, 2, 3, 5, 6}
+
+
+def check_ffmpeg_ebur128(path, expected, info, found, skipped):
+    model = expected["model"]
+    loud, peak = model["loudness"], model["true_peak"]
+    if "not_measured" in loud or path.stem in GAPS:
+        return
+    if info["channels"] not in FFMPEG_LAYOUT_CHANNELS:
+        skipped.append(f"{path.stem}: FFmpeg's ebur128 (its channel weights for {info['channels']} channels differ from Table 4's)")
+        return
+    result = run(["ffmpeg", "-nostats", "-hide_banner", "-i", str(path), "-af", "ebur128=peak=true+sample", "-f", "null", "-"])
+    text = result.stderr.decode(errors="replace")
+    got = parse_ffmpeg_ebur128(text.split("Summary:")[-1])
+    if got["I"] is None:
+        found.append("FFmpeg's ebur128 prints no summary")
+        return
+    if loud["integrated"]["tenths"] is not None and not tenths_close(loud["integrated"]["tenths"], got["I"], 0.1, "FFmpeg integrated loudness"):
+        found.append(f"integrated loudness: FFmpeg {got['I']}, the model {loud['integrated']['tenths'] / 10.0}")
+    if loud["range"]["tenths"] is not None and loud["short_term_values"] >= LRA_VALUES and not tenths_close(loud["range"]["tenths"], got["LRA"], 1.0, "FFmpeg loudness range"):
+        found.append(f"loudness range: FFmpeg {got['LRA']}, the model {loud['range']['tenths'] / 10.0}")
+    levels = expected["model"]["levels"]["stream"]["sample_peak_tenths"]
+    if levels is not None and got["sample"] is not None and not tenths_close(levels, got["sample"], 0.1, "FFmpeg sample peak"):
+        found.append(f"sample peak: FFmpeg {got['sample']}, the model {levels / 10.0}")
+    if peak.get("stream") is not None and got["true"] is not None:
+        difference = got["true"] - peak["stream"] / 10.0
+        WORST["FFmpeg true peak over the model"] = max(WORST.get("FFmpeg true peak over the model", -9.0), difference)
+        WORST["FFmpeg true peak under the model"] = min(WORST.get("FFmpeg true peak under the model", 9.0), difference)
+        if not -0.3 - 1e-9 <= difference <= 0.7 + 1e-9:
+            found.append(f"true peak: FFmpeg {got['true']}, the model {peak['stream'] / 10.0} (FFmpeg minus the model must lie between -0.3 and +0.7 dB)")
+
+
 def main():
     tool_versions.require("flac", "ffmpeg", "ffprobe")
+    driver = ebur128_tool.build(pathlib.Path(os.environ.get("EBUR128_DIR", ROOT / ".cache" / "ebur128")))
+    os.environ["PATH"] = str(driver.parent) + os.pathsep + os.environ["PATH"]
+    tool_versions.require("ebur128_driver")
     names = sys.argv[1:]
     problems = []
     skipped = []
+    compared_loudness = 0
     files = sorted(p for p in DIRECTORY.glob("*.flac") if not names or p.stem in names)
     with tempfile.TemporaryDirectory() as work:
         work = pathlib.Path(work)
@@ -276,6 +406,11 @@ def main():
                 found.append("the manifest has no levels")
             else:
                 check_astats(path, expected, info, found)
+            if "loudness" not in expected.get("model", {}):
+                found.append("the manifest has no loudness")
+            else:
+                compared_loudness += 1 if check_libebur128(path, expected, driver, found) else 0
+                check_ffmpeg_ebur128(path, expected, info, found, skipped)
             if path.stem in GAPS and path.stem.startswith("synthetic-levels-"):
                 skipped.append(f"{path.stem}: silencedetect (it follows the timestamps and counts a gap in the frame numbers as silence, so its stretches cross the gaps the levels keep apart)")
             elif path.stem.startswith("synthetic-levels-") and info["bits"] <= 16:
@@ -290,7 +425,9 @@ def main():
                         found.append(f"ffprobe {key} is {streams[0].get(key)}, the model {want_value}")
             problems += [f"{path.stem}: {f}" for f in found]
     pcm_files = check_pcm_files(names, problems, skipped)
-    print(f"{len(files)} files checked, {pcm_files} PCM files compared with ffmpeg")
+    print(f"{len(files)} files checked, {compared_loudness} compared with libebur128, {pcm_files} PCM files compared with ffmpeg")
+    for what, value in sorted(WORST.items()):
+        print(f"largest difference, {what}: {value:.2f}")
     for line in skipped:
         print("skipped", line)
     for problem in problems:

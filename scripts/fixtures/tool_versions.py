@@ -28,6 +28,8 @@ PROGRAMS = {
     "ogginfo": (["ogginfo", "-V"], r"^ogginfo from vorbis-tools (\S+)", "1.4.3"),
     "flac": (["flac", "--version"], r"^flac (\S+)", "1.5.0"),
     "metaflac": (["metaflac", "--version"], r"^metaflac (\S+)", "1.5.0"),
+    # Built by ebur128_tool.py from the pinned tag of libebur128, with scripts/fixtures/ebur128_driver.c; found on PATH.
+    "ebur128_driver": (["ebur128_driver", "--version"], r"libebur128 (\S+)", "1.2.6"),
 }
 
 # name: (dpkg package, expected upstream version).
