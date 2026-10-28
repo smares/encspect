@@ -286,7 +286,10 @@ public sealed class SpectrumGraph : AudioGraph
     public string LineName(int index) => View == GraphForm.PerChannel ? Names[Math.Min(index, Names.Count - 1)] : "all channels but the LFE";
 
     // The row's level in dB, or NaN for a row with no power.
-    public override double ValueAt(int index) => Line(0).Span[index] is var tenths && tenths != MeasurementLimits.NoPower ? tenths / 10.0 : double.NaN;
+    public override double ValueAt(int index) => ValueAt(0, index);
+
+    // The level of a line at a row in dB, or NaN for a row with no power.
+    public double ValueAt(int line, int index) => Line(line).Span[index] is var tenths && tenths != MeasurementLimits.NoPower ? tenths / 10.0 : double.NaN;
 
     public override long? FrameAt(int index, long? selected) => null;
 
@@ -361,13 +364,13 @@ public static class AudioPanels
             return entries;
         }
 
-        if (m.Waveform is not null)
+        if (m.Waveform is { Columns: > 0 })
         {
             Graph graph = new WaveformGraph(stream, m);
             entries.Add(new GraphChoice(WaveformTitle, GraphHeadings.Audio, graph.Description, [new GraphFormChoice(GraphForm.Audio, WaveformTitle, graph.Description!, graph)]));
         }
 
-        if (m.Spectrogram is not null)
+        if (m.Spectrogram is { Columns: > 0 })
         {
             Graph graph = new SpectrogramGraph(stream, m);
             entries.Add(new GraphChoice(SpectrogramTitle, GraphHeadings.Audio, graph.Description, [new GraphFormChoice(GraphForm.Audio, SpectrogramTitle, graph.Description!, graph)]));
