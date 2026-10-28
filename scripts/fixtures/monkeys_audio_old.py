@@ -11,8 +11,8 @@ versions are rare; the encoder makes the combinations of version, level, sample 
 
 What the versions change (SDK 13.42):
   - Bit coding. Up to 3.85 (GenerateArrayOld): the first five values of a channel's array coded with Rice parameter 10, the next 59 with a parameter that follows the
-    mean so far, the rest with one that follows a sum over the last 64 values. 3.86 to 3.89 (GenerateArrayRice): one parameter that follows a running sum, from 3.89
-    with the overflow capped at 16 (each 16 more add 4 to the parameter). 3.90 to 3.92: the range coder of 3.93 and later, an array at a time.
+    mean so far, the rest with one that follows a sum over the last 64 values. 3.86 to 3.89 (GenerateArrayRice): one parameter that follows a running sum, above version
+    3880 with the overflow capped at 16 (each 16 more add 4 to the parameter). 3.90 to 3.92: the range coder of 3.93 and later, an array at a time.
   - Frames. Up to 3.80 frames follow each other bit by bit and the file holds the bit where each starts (a table of bytes beside the table of byte offsets); from 3.81
     a frame starts on a byte boundary. The channel's whole array is coded, then the next channel's (the mid channel X, then the side channel Y).
   - The word in front of a frame. With the CRC flag: the CRC of the audio in all 32 bits up to 3.82; from 3.83 31 bits, the top bit flagging 32 bits of special
@@ -320,16 +320,22 @@ def encode_array_up_to_385(w, values):
             kmax, kmin = K_SUM_MAX_OLD[k], K_SUM_MIN_OLD[k]
 
 
-def encode_array_rice(w, values, is_capped):
-    """CUnBitArrayOld::GenerateArrayRice with DecodeValueNew, backwards."""
+def encode_array_rice(w, values, is_capped, forced=None):
+    """CUnBitArrayOld::GenerateArrayRice with DecodeValueNew, backwards. forced maps the index of a value to a number of steps of 4 that the parameter is raised by
+    although the value is small enough for the parameter it has: the overflow is then exactly 16 times the steps (16, 32), which this encoder otherwise never writes
+    (its overflow is the quotient of 16 or more that is left plus 16 times the steps), and which the decoder reads as the steps and a zero overflow."""
     k = 10
     ksum = 1024 * 16
-    for value in values:
+    for index, value in enumerate(values):
         u = unsigned(value)
         if is_capped:
             extra = 0
-            while (u >> (k + 4 * extra)) >= 16 and k + 4 * extra < 31:
-                extra += 1
+            if forced and index in forced:
+                extra = forced[index]
+                assert u >> (k + 4 * extra) == 0 and k + 4 * extra <= 31, "the value does not fit the parameter forced"
+            else:
+                while (u >> (k + 4 * extra)) >= 16 and k + 4 * extra < 31:
+                    extra += 1
             k += 4 * extra
             w.unary((u >> k) + 16 * extra)
         else:
@@ -433,7 +439,7 @@ def special_codes(arrays, channels):
     return 1 if all(v == 0 for v in arrays[0]) else 0
 
 
-def encode_frame(samples, pcm, channels, bits, level, version, has_crc, special_override=None):
+def encode_frame(samples, pcm, channels, bits, level, version, has_crc, special_override=None, forced=None):
     """(the stream bytes of a frame, their length in bits). pcm is the frame's audio in WAV layout. Up to 3.80 the bits run on into the next frame."""
     arrays = prepare(samples, channels, bits, version)
     special = 0
@@ -471,7 +477,7 @@ def encode_frame(samples, pcm, channels, bits, level, version, has_crc, special_
         if version < 3860:
             encode_array_up_to_385(w, r)
         else:
-            encode_array_rice(w, r, version >= 3890)
+            encode_array_rice(w, r, version > 3880, forced)
     if version > 3800:
         w.align()
         return bytes(w.out), len(w.out) * 8
@@ -507,16 +513,17 @@ def build_3800(frames, level, flags, channels, rate, final_blocks, header_data=b
     return header + extra + header_data + seek + table + bytes(body) + terminating
 
 
-def encode(samples, version, level, channels, bits, rate, pcm, flags=0, peak=None, header_data=b"", terminating=b"", has_crc=True, per_frame=None):
+def encode(samples, version, level, channels, bits, rate, pcm, flags=0, peak=None, header_data=b"", terminating=b"", has_crc=True, per_frame=None, padded=True, forced=None):
     """A file of the given version from samples (a list of frames of channel values) and their WAV-layout bytes. Returns (file bytes, frames, blocks of
-    each frame)."""
+    each frame). padded=False leaves off the four zero bytes the last frame of 3.81 and later gets after its coded data (3.80 keeps its padding, which closes
+    the table of bits): the file then ends where the coded data does, up to the word it ends in, and the decoder of 3.90 to 3.92 reads past it."""
     per_frame = per_frame or blocks_per_frame(version, level)
     width = channels * bits // 8
     frames = []
     counts = []
     for start in range(0, len(samples), per_frame):
         chunk = samples[start:start + per_frame]
-        frames.append(encode_frame(chunk, pcm[start * width:(start + len(chunk)) * width], channels, bits, level, version, has_crc))
+        frames.append(encode_frame(chunk, pcm[start * width:(start + len(chunk)) * width], channels, bits, level, version, has_crc, forced=forced))
         counts.append(len(chunk))
     flags |= 2 if has_crc else 0
     if bits == 8:
@@ -527,6 +534,6 @@ def encode(samples, version, level, channels, bits, rate, pcm, flags=0, peak=Non
         data = build_3800(frames, level, flags, channels, rate, counts[-1], header_data, terminating, peak, version)
     else:
         streams = [f[0] for f in frames]
-        streams[-1] += b"\0" * 4
+        streams[-1] += b"\0" * 4 if padded else b""
         data = m.build_old(streams, version, level, flags | (4 if peak is not None else 0), channels, rate, counts[-1], header_data=header_data, terminating=terminating, peak=peak)
     return data, frames, counts

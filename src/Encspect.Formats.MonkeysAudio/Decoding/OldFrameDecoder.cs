@@ -18,6 +18,9 @@ internal sealed class OldFrameDecoder : IFrameDecoder
     // sample-by-sample zeros (FrameDecoder.SilentUnits).
     internal const long SilentUnits = 10;
 
+    // The zero bytes the range coder may read past the data of the last frame: the two the SDK takes after an array, with room for the reads that follow.
+    private const int EndPadding = 4;
+
     private enum Mode
     {
         Normal,
@@ -92,11 +95,14 @@ internal sealed class OldFrameDecoder : IFrameDecoder
             throw new InvalidDataException("The frame is too short for its CRC");
         }
 
-        // The decoders of versions 3.80 and 3.90 to 3.92 read on into the bytes after the frame, as the SDK's read from the next one.
-        int length = frameLength + (frame.Following?.Length ?? 0);
-        if (_stream.Length < length)
+        // The decoders of versions 3.80 and 3.90 to 3.92 read on into the bytes after the frame, as the SDK's read from the next one. Where the data ends in an undamaged
+        // frame, the range coder of 3.90 to 3.92 reads zeros past it (the SDK's bit array zero-fills what the file does not hold, UnBitArrayBase.cpp, FillBitArray).
+        int followingLength = frame.Following?.Length ?? 0;
+        int padding = _version >= 3900 && !frame.IsDamaged && followingLength < EndPadding ? EndPadding - followingLength : 0;
+        int length = frameLength + followingLength;
+        if (_stream.Length < length + padding)
         {
-            _stream = new byte[Math.Max(length, _stream.Length * 2)];
+            _stream = new byte[Math.Max(length + padding, _stream.Length * 2)];
         }
 
         WordOrder.ToStream(frame.Bytes, _dataStart, _stream);
@@ -104,6 +110,9 @@ internal sealed class OldFrameDecoder : IFrameDecoder
         {
             WordOrder.ToStream(following, _dataStart, _stream, frameLength);
         }
+
+        Array.Clear(_stream, length, padding);
+        length += padding;
 
         long startBit = 0;
         if (_version <= 3800)

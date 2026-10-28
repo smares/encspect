@@ -37,8 +37,12 @@ FRAME_90 = 73728
 FRAME_FAST = 9216
 
 # name: (version, level, channels, bits, signal, samples, peak level[, options]). A signal is a kind of monkeys_audio_signal.py or "spikes", or (silent samples,
-# kind) for silence followed by that kind. The options: "crc": False for a file without the CRC flag (the frames then start with a checksum).
+# kind) for silence followed by that kind. The options: "crc": False for a file without the CRC flag (the frames then start with a checksum); "padded": False for a
+# file of 3.81 or later that ends where the coded data of its last frame does, without the four zero bytes the encoder script appends (the SDK's bit array reads zeros
+# past the end of the file, which the range coder of 3.90 to 3.92 does for its last two bytes); "forced": the values of every array of the Rice coding of 3.89 whose
+# overflow is exactly 16 or 32 (monkeys_audio_old.encode_array_rice).
 NO_CRC = {"crc": False}
+UNPADDED = {"padded": False}
 FIXTURES = {
     # Version 3.80: frames that follow each other bit by bit, a table of the bit each starts at, the CRC in 32 bits, the Rice coding up to 3.85, the extra high
     # predictor with 128 taps.
@@ -66,12 +70,20 @@ FIXTURES = {
     "legacy-3860-normal-16-stereo-frames": (3860, 2000, 2, 16, "music", 20000, None),
     "legacy-3880-high-24-mono-peak-level": (3880, 3000, 1, 24, "music", 12000, 777777),
     "legacy-3880-fast-16-stereo-spikes": (3880, 1000, 2, 16, "small-spikes", 10000, None),
+    "legacy-3880-extra-high-16-stereo": (3880, 4000, 2, 16, "music", 3000, None),
     "legacy-3890-normal-16-stereo-spikes": (3890, 2000, 2, 16, "spikes", 10000, None),
+    # An overflow of exactly 16 and 32, which the cap of 3.89 reads as a raised parameter and an overflow of 0 (the encoder never writes one: a hand-made coding of values
+    # that would fit the parameter they had).
+    "legacy-3890-normal-16-mono-overflow-exactly-16": (3890, 2000, 1, 16, "music", 12000, None, {"forced": {100: 1, 700: 2, 3000: 1, 5000: 1}}),
     "legacy-3890-extra-high-16-stereo-checksum": (3890, 4000, 2, 16, "music", 3000, None, NO_CRC),
     "legacy-3890-high-8-mono-checksum": (3890, 3000, 1, 8, "music", 12000, None, NO_CRC),
     # 3.90 to 3.92: the range coder, an array at a time.
     "legacy-3900-normal-16-stereo": (3900, 2000, 2, 16, "music", 4000, None),
     "legacy-3900-fast-16-mono-spikes": (3900, 1000, 1, 16, "spikes", 10000, None),
+    # Files that end where the coded data of the last frame does: the range coder reads two bytes past it, which the SDK's bit array gives as zeros.
+    "legacy-3900-fast-16-mono-spikes-unpadded": (3900, 1000, 1, 16, "spikes", 10000, None, UNPADDED),
+    "legacy-3910-fast-8-mono-unpadded": (3910, 1000, 1, 8, "music", 3000, None, UNPADDED),
+    "legacy-3920-normal-16-pseudo-stereo-unpadded": (3920, 2000, 2, 16, "pseudo", 3000, None, UNPADDED),
     "legacy-3910-high-24-stereo": (3910, 3000, 2, 24, "music", 3000, None),
     "legacy-3910-normal-24-stereo-spikes": (3910, 2000, 2, 24, "spikes", 6000, None),
     "legacy-3910-fast-8-mono": (3910, 1000, 1, 8, "music", 3000, None),
@@ -147,7 +159,8 @@ def encode(name):
     version, level, channels, bits, _signal, _count, peak = spec[:7]
     samples = samples_of(spec)
     if version < 3930:
-        data, frames, counts = old.encode(samples, version, level, channels, bits, RATE, wav_pcm(samples, bits), flags=32, peak=peak, has_crc=options_of(spec).get("crc", True))
+        data, frames, counts = old.encode(samples, version, level, channels, bits, RATE, wav_pcm(samples, bits), flags=32, peak=peak, has_crc=options_of(spec).get("crc", True),
+                                    padded=options_of(spec).get("padded", True), forced=options_of(spec).get("forced"))
     else:
         data, frames, counts = legacy.encode(samples, version, level, channels, bits, RATE, wav_pcm(samples, bits), flags=32, peak=peak)
     return data, canonical_pcm(samples, bits)

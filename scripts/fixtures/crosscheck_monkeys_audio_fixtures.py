@@ -47,8 +47,9 @@ FFMPEG_DIFFERS = {
     # The levels fast (1000) and extra high (4000): every fixture of them.
     **{f"legacy-{name}": f"{OTHER_SAMPLES} (level fast or extra high)" for name in (
         "3800-extra-high-16-stereo-frames", "3800-fast-8-mono", "3820-extra-high-8-stereo", "3830-extra-high-16-stereo", "3840-extra-high-16-stereo-frames",
-        "3840-fast-16-mono-silent-then-tone", "3850-extra-high-24-stereo", "3880-fast-16-stereo-spikes", "3890-extra-high-16-stereo-checksum",
-        "3900-fast-16-mono-spikes", "3910-fast-8-mono", "3920-extra-high-16-stereo-frames", "3920-extra-high-16-stereo-silent-then-tone")},
+        "3840-fast-16-mono-silent-then-tone", "3850-extra-high-24-stereo", "3880-extra-high-16-stereo", "3880-fast-16-stereo-spikes",
+        "3890-extra-high-16-stereo-checksum", "3900-fast-16-mono-spikes", "3900-fast-16-mono-spikes-unpadded", "3910-fast-8-mono", "3910-fast-8-mono-unpadded",
+        "3920-extra-high-16-stereo-frames", "3920-extra-high-16-stereo-silent-then-tone")},
     # Files without the CRC flag, whose frames start with a checksum: it drops frames or decodes other samples.
     "legacy-3800-normal-16-stereo-checksum": f"{FEWER_SAMPLES} (a file without the CRC flag)",
     "legacy-3850-normal-16-stereo-silent-then-tone-checksum": f"{FEWER_SAMPLES} (a file without the CRC flag)",
