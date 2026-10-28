@@ -1321,13 +1321,20 @@ public class MemoryTests(ITestOutputHelper output)
 
     // A long WAVE file is read in slices of 64 KiB, each unpacked into the same arrays: decoding it and measuring it hold nothing per slice, the same reading as
     // for the FLAC frames, and the report keeps the rows and grids and no more. A slice is 16,384 sample frames of 16-bit stereo.
+    //
+    // The two lengths are a power of two apart: the bounded structures (the grids that merge their columns when they pass 1,024, the series that merge
+    // pairs) are in the same phase at both, which they are not at other ratios (what the state holds at the last slice and what moves into the report
+    // differ by up to 350 KB between 40 and 960 slices, the sum is constant). The span is wide because the readings of CI runners differ by up to
+    // about 13 KB from one analysis to the next for no length-dependent reason (docs/design/spectral-analysis.md, "As built: step 5"): over 480
+    // further slices the bound of 8 bytes is 3.8 KB, below that; over 2,400 it is 19 KB, above it, and a list that gains 8 bytes per slice reads 13 bytes per further slice.
+    // The state held at the last slice is also bounded alone, so that a leak the span's allowance would hide is still a bound.
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void DecodingAndMeasuringALongWaveFileHoldsNothingPerSlice(bool isMeasuring)
     {
         const int fewer = 160;
-        const int slices = 640;
+        const int slices = 2560;
         const int sliceBytes = 64 * 1024;
         var measure = isMeasuring ? new MeasureOptions() : null;
         var warmUp = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink(), Measure = measure } };
@@ -1340,6 +1347,7 @@ public class MemoryTests(ITestOutputHelper output)
         double heldPerSlice = (held - fewerHeld) / (double)(slices - fewer);
         output.WriteLine($"{kept} bytes kept {(isMeasuring ? "with measuring" : "with decoding")} and {plainKept} without; held above the end state at the last slice: {fewerHeld} at {fewer} slices and {held} at {slices} ({Hundredths(heldPerSlice)} per further slice)");
         Assert.True(heldPerSlice < DecodingFrameBound, $"The analysis held {heldPerSlice:F2} more bytes per further slice at the last slice than it ends with. {RuntimeSettings()}");
+        Assert.True(held < (isMeasuring ? 5_000_000 : 500_000), $"The analysis held {held} bytes at the last slice above what it ends with.");
         Assert.True(kept < plainKept + (isMeasuring ? 1_000_000 : 100_000), $"The report keeps {kept - plainKept} bytes more.");
     }
 
