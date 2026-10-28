@@ -103,6 +103,8 @@ public sealed class FrameMapGraph : Graph
 
     public override string? Description => _numbers?.Description ?? _categories!.Description;
 
+    public override string? Topic => _categories?.Topic;
+
     public override int Count
     {
         get

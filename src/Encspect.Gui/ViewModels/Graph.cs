@@ -24,6 +24,9 @@ public abstract class Graph
     // What the chart shows, for its chip's tooltip; from the series, as its parser describes it.
     public abstract string? Description { get; }
 
+    // The ID of the background article on what the graph shows, or null where it has none.
+    public virtual string? Topic => null;
+
     public abstract int Count { get; }
 
     public abstract double Maximum { get; }

@@ -437,6 +437,8 @@ public sealed class CategoryGraph : Graph, ISummaryGraph
 
     public override string? Description => Series.Description;
 
+    public override string? Topic => Series.Topic;
+
     public override int Count => View switch
     {
         GraphForm.Frames => Series.Count,

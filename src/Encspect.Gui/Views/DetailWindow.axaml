@@ -188,7 +188,7 @@
             </ListBox>
           </Panel>
 
-          <DockPanel IsVisible="{Binding IsGraphsShown}">
+          <DockPanel Name="GraphArea" IsVisible="{Binding IsGraphsShown}">
             <Grid ColumnDefinitions="Auto,1,*">
               <ScrollViewer Name="GraphList" Width="210" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" AllowAutoHide="False">
                 <ItemsControl Name="GraphChoices" ItemsSource="{Binding Graphs.ChoiceGroups}" Margin="6,0,6,4">
@@ -216,7 +216,14 @@
                 </ItemsControl>
               </ScrollViewer>
               <Border Grid.Column="1" Classes="divider" BorderThickness="1,0,0,0" />
-              <Panel Grid.Column="2">
+              <DockPanel Grid.Column="2">
+                <Button Name="GraphLearnMore" DockPanel.Dock="Bottom" Classes="link" HorizontalAlignment="Left" Margin="14,0,8,4" Click="OnGraphLearnMore"
+                        IsVisible="{Binding Graphs.LearnMoreText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        AutomationProperties.Name="{Binding Graphs.LearnMoreText}"
+                        ToolTip.Tip="Open the background article in a side pane.">
+                  <TextBlock Text="{Binding Graphs.LearnMoreText}" Classes="link" />
+                </Button>
+                <Panel>
                 <TextBlock Name="EmptyNote" Text="{Binding Graphs.EmptyNote}" Classes="secondary" TextWrapping="Wrap" Margin="14,6" VerticalAlignment="Top"
                            IsVisible="{Binding Graphs.HasEmptyNote}" />
                 <TextBlock Text="No graphs: the file has no stream with figures over time." Classes="secondary" Margin="14,6" VerticalAlignment="Top"
@@ -227,7 +234,14 @@
                       <DataTemplate DataType="host:MeasurementLine">
                         <Grid ColumnDefinitions="190,*" Margin="0,2" ToolTip.Tip="{Binding Description}" AutomationProperties.Name="{Binding Name}"
                               AutomationProperties.HelpText="{Binding Text}">
-                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Classes="secondary" TextWrapping="Wrap" />
+                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Classes="secondary" TextWrapping="Wrap"
+                                     IsVisible="{Binding Topic, Converter={x:Static views:TopicLinks.IsUnknown}}" />
+                          <Button Name="FigureLearnMore" Classes="link name" HorizontalAlignment="Left" Click="OnFigureLearnMore"
+                                  IsVisible="{Binding Topic, Converter={x:Static views:TopicLinks.IsKnown}}"
+                                  AutomationProperties.Name="{Binding Topic, Converter={x:Static views:TopicLinks.LearnMore}}"
+                                  ToolTip.Tip="{Binding Topic, Converter={x:Static views:TopicLinks.LearnMore}}">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Classes="secondary" TextWrapping="Wrap" />
+                          </Button>
                           <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
                         </Grid>
                       </DataTemplate>
@@ -235,7 +249,8 @@
                   </ItemsControl>
                 </ScrollViewer>
                 <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" ShownSeverities="{Binding Graphs.ShownSeverities}" Margin="6,2,8,4" IsVisible="{Binding Graphs.IsChartShown}" />
-              </Panel>
+                </Panel>
+              </DockPanel>
             </Grid>
           </DockPanel>
         </DockPanel>

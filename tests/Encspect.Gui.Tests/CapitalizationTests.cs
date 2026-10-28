@@ -243,6 +243,8 @@ public sealed class CapitalizationTests
         window.Close();
     }
 
+    private const string LearnMorePrefix = "Learn More: ";
+
     private static IEnumerable<string> ControlLabels(Visual root)
     {
         foreach (Visual visual in root.GetVisualDescendants())
@@ -252,8 +254,9 @@ public sealed class CapitalizationTests
                 case ContentControl { Content: string text } and (Button or CheckBox or RadioButton or ToggleButton):
                     yield return text;
                     break;
+                // The article's title in a "Learn More: <title>" link is the article's own, which keeps its spelling.
                 case Button { Content: TextBlock { Text: string wrapped } }:
-                    yield return wrapped;
+                    yield return wrapped.StartsWith(LearnMorePrefix, StringComparison.Ordinal) ? "Learn More" : wrapped;
                     break;
                 case MenuItem { Header: string header }:
                     yield return header;
