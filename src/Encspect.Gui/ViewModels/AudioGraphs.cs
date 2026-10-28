@@ -321,25 +321,36 @@ public sealed class LoudnessGraph : AudioGraph
     // The figures the header and the automation text name, in the order the command line prints them.
     private static readonly string[] FigureNames = ["Integrated Loudness", "Loudness Range", "Maximum True Peak Level", "Maximum Momentary Loudness", "Maximum Short-Term Loudness"];
 
+    private const double MaximumAxisLufs = 1000;
+
     public LoudnessGraph(StreamInfo stream, StreamMeasurements measurements)
         : base("Loudness", "LUFS", stream, measurements)
     {
         Loudness = measurements.Loudness ?? throw new ArgumentException("No loudness was measured.");
         Series = Loudness.ShortTerm ?? throw new ArgumentException("No short-term loudness was measured.");
         Figures = [.. MeasurementText.Lines(measurements, stream.Verification?.IsLossy == true).Where(l => FigureNames.Contains(l.Name))];
-        ReadOnlySpan<double> values = Series.Values.Span;
-        double high = values[0];
-        double low = values[0];
-        foreach (double value in values)
+        // The measurer's values lie between -70 and a few LUFS; the clamp and the NaN check keep the axis whole for any series, since the ticks
+        // are counted in integers.
+        double high = double.NegativeInfinity;
+        double low = double.PositiveInfinity;
+        foreach (double value in Series.Values.Span)
         {
-            high = Math.Max(high, value);
-            low = Math.Min(low, value);
+            if (!double.IsNaN(value))
+            {
+                high = Math.Max(high, Math.Clamp(value, -MaximumAxisLufs, MaximumAxisLufs));
+                low = Math.Min(low, Math.Clamp(value, -MaximumAxisLufs, MaximumAxisLufs));
+            }
         }
 
         if (IntegratedTenths is { } integrated)
         {
-            high = Math.Max(high, integrated / 10.0);
-            low = Math.Min(low, integrated / 10.0);
+            high = Math.Max(high, Math.Clamp(integrated / 10.0, -MaximumAxisLufs, MaximumAxisLufs));
+            low = Math.Min(low, Math.Clamp(integrated / 10.0, -MaximumAxisLufs, MaximumAxisLufs));
+        }
+
+        if (high < low)
+        {
+            high = low = -23;
         }
 
         // Multiples of 5 LU at both ends, at least 20 LU apart, so a steady signal still has an axis.

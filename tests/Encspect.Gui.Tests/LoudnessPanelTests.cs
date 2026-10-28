@@ -168,4 +168,54 @@ public class LoudnessPanelTests
         Assert.Equal(3, view.HoverIndex);
         window.Close();
     }
+
+    // Series no measurement makes (it clamps to -70 LUFS at the bottom and counts non-finite samples apart), but the graph is public: the
+    // axis once took (int)Ceiling(infinity), and the loop over its ticks then ran past int.MaxValue and grew a list until memory ran out.
+    public static TheoryData<string, double[]> OutOfRangeSeries() => new()
+    {
+        { "infinite", [double.PositiveInfinity, -20, double.NegativeInfinity] },
+        { "huge", [1e300, -20, -1e300] },
+        { "NaN", [double.NaN, -20, double.NaN] },
+        { "all NaN", [double.NaN, double.NaN, double.NaN] },
+    };
+
+    [Theory]
+    [MemberData(nameof(OutOfRangeSeries))]
+    public void The_axis_stays_small_and_whole_for_any_values(string name, double[] values)
+    {
+        LoudnessGraph graph = Make([3.0, 3.1, 3.2], values);
+
+        Assert.InRange(graph.AxisTop - graph.AxisBottom, 20, 2100);
+        Assert.Equal(0, graph.AxisTop % 5);
+        Assert.NotEmpty(name);
+    }
+
+    [AvaloniaTheory(Timeout = 60000)]
+    [MemberData(nameof(OutOfRangeSeries))]
+    public void Drawing_values_out_of_range_or_a_time_axis_that_is_not_a_number_finishes(string name, double[] values)
+    {
+        foreach (LoudnessGraph graph in new[] { Make([3.0, 3.1, 3.2], values), Make([double.NaN, 3.1, 3.2], [-20, -21, -22]), Make([0, 1e12, 3e15], [-20, -21, -22]) })
+        {
+            var view = new GraphView { Graph = graph };
+            var window = new Avalonia.Controls.Window { Width = 123.37, Height = 200.25, Content = view };
+            window.Show();
+            AudioPanelTests.Settle();
+            window.CaptureRenderedFrame();
+            Assert.NotEmpty(name);
+            window.Close();
+        }
+    }
+
+    private static LoudnessGraph Make(double[] x, double[] values)
+    {
+        var series = new Series("Short-Term Loudness", "LUFS", SeriesAxis.Seconds, x, values);
+        var measurements = new StreamMeasurements
+        {
+            Status = MeasurementStatus.Complete,
+            SampleRate = 48000,
+            Samples = 480_000,
+            Loudness = new LoudnessFigures { ShortTerm = series, StepsPerPoint = 1, IntegratedTenths = -230, ChannelWeights = [100] },
+        };
+        return new LoudnessGraph(new StreamInfo { Nodes = [], Codec = "FLAC", SampleRate = 48000 }, measurements);
+    }
 }

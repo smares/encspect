@@ -347,7 +347,7 @@ public sealed partial class GraphView
     private void DrawTimeAxis(DrawingContext context, double startSeconds, double endSeconds, Rect plot, IBrush secondary)
     {
         double span = endSeconds - startSeconds;
-        if (span <= 0)
+        if (!(span > 0) || double.IsInfinity(span))
         {
             return;
         }
@@ -359,7 +359,7 @@ public sealed partial class GraphView
         {
             FormattedText label = Text(step < 1 ? Format.Timestamp(time) : Format.Clock(time), AxisSize, secondary);
             double x = plot.Left + ((time - startSeconds) / span * plot.Width);
-            double start = Math.Clamp(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width);
+            double start = Math.Max(plot.Left - 4, Math.Min(x - (label.Width / 2), plot.Right - label.Width));
             if (start < lastEnd + 12)
             {
                 continue;
