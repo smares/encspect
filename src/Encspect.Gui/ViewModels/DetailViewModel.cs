@@ -15,9 +15,9 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     private int _generation;
     private string? _path;
     private bool _isLoading;
-    private bool _isVerifying;
+    private bool _isDecoding;
     // The audio of the file shown was decoded: a reload or another format keeps decoding it. A verification that is still running does not count.
-    private bool _isVerifyRequested;
+    private bool _isDecodeRequested;
     private double _progress;
     private Report? _report;
     private StructureTree? _tree;
@@ -83,29 +83,30 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             if (Set(ref _isLoading, value))
             {
                 Raise(nameof(IsProgressShown));
-                Raise(nameof(CanVerifyAudio));
+                Raise(nameof(CanDecodeAudio));
             }
         }
     }
 
-    // Decoding the audio to compare the checksums over it, which the file shown stays on screen for.
-    public bool IsVerifying
+    // Decoding the audio, to compare the checksums over it and to measure it, which the file shown stays on screen for.
+    public bool IsDecoding
     {
-        get => _isVerifying;
+        get => _isDecoding;
         private set
         {
-            if (Set(ref _isVerifying, value))
+            if (Set(ref _isDecoding, value))
             {
                 Raise(nameof(IsProgressShown));
-                Raise(nameof(CanVerifyAudio));
+                Raise(nameof(CanDecodeAudio));
             }
         }
     }
 
-    public bool IsProgressShown => _isLoading || _isVerifying;
+    public bool IsProgressShown => _isLoading || _isDecoding;
 
-    // A stream of the report has checksums over its decoded audio that were not compared because decoding was not asked for.
-    public bool CanVerifyAudio => _report is not null && !_isLoading && !_isVerifying && _report.Streams.Any(s => s.Verification is { Decoding: DecodeStatus.NotRequested, HasChecksums: true });
+    // A stream of the report has a decoder that did not run because decoding was not asked for (a PCM stream, which declares no
+    // checksum, included: its decoding is for the measurements).
+    public bool CanDecodeAudio => _report is not null && !_isLoading && !_isDecoding && _report.Streams.Any(s => s.Verification is { Decoding: DecodeStatus.NotRequested });
 
     // "Verified: yes (frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)", a line for each stream with a verification; null where none has.
     public string? VerificationText
@@ -134,7 +135,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             if (Set(ref _report, value))
             {
                 Raise(nameof(HasReport));
-                Raise(nameof(CanVerifyAudio));
+                Raise(nameof(CanDecodeAudio));
                 Raise(nameof(VerificationText));
                 Raise(nameof(HasVerificationText));
             }
@@ -391,7 +392,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         set => Set(ref _canGoNext, value);
     }
 
-    // Why the last export or verification failed, until the next one or the next file.
+    // Why the last export or decoding failed, until the next one or the next file.
     public string? CommandError
     {
         get => _commandError;
@@ -400,7 +401,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
     // Analyzes the file on a background thread; a folder that could not be listed shows why. The
     // task ends once the result is shown, or at once when another load replaced this one.
-    public Task LoadAsync(string path, string? folderError = null) => Load(path, folderError, keep: null, forced: null, verify: false, keepShown: false);
+    public Task LoadAsync(string path, string? folderError = null) => Load(path, folderError, keep: null, forced: null, decode: false, keepShown: false);
 
     // Analyzes the file shown again, as it is on disk now, and selects the node at the place the
     // selected one was (its child indexes), or the root when the new tree has none there.
@@ -417,7 +418,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             keep.Insert(0, row.ChildIndex);
         }
 
-        return Load(path, _folderError, keep, _forcedFormat, _isVerifyRequested, keepShown: false);
+        return Load(path, _folderError, keep, _forcedFormat, _isDecodeRequested, keepShown: false);
     }
 
     // Analyzes the file shown again as the given format (the name of one of FormatNames), or by
@@ -436,15 +437,15 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             keep.Insert(0, row.ChildIndex);
         }
 
-        return Load(path, _folderError, keep, format, _isVerifyRequested, keepShown: false);
+        return Load(path, _folderError, keep, format, _isDecodeRequested, keepShown: false);
     }
 
-    // Analyzes the file shown again with its audio decoded, which compares the checksums over the samples (Verify Audio). The file
-    // stays on screen while it runs and is replaced when it ends; StopVerifying leaves it as it is. A reload keeps the request
+    // Analyzes the file shown again with its audio decoded, which compares the checksums over the samples and measures them (Decode
+    // Audio). The file stays on screen while it runs and is replaced when it ends; StopDecoding leaves it as it is. A reload keeps the request
     // until another file is loaded.
-    public Task VerifyAudioAsync()
+    public Task DecodeAudioAsync()
     {
-        if (_path is not { } path || !CanVerifyAudio)
+        if (_path is not { } path || !CanDecodeAudio)
         {
             return Task.CompletedTask;
         }
@@ -455,19 +456,19 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             keep.Insert(0, row.ChildIndex);
         }
 
-        return Load(path, _folderError, keep, _forcedFormat, verify: true, keepShown: true);
+        return Load(path, _folderError, keep, _forcedFormat, decode: true, keepShown: true);
     }
 
-    // Cancels a Verify Audio that is running, which leaves the analysis shown as it was.
-    public void StopVerifying()
+    // Cancels a Decode Audio that is running, which leaves the analysis shown as it was.
+    public void StopDecoding()
     {
-        if (_isVerifying)
+        if (_isDecoding)
         {
             _loading?.Cancel();
         }
     }
 
-    private Task Load(string path, string? folderError, IReadOnlyList<int>? keep, string? forced, bool verify, bool keepShown)
+    private Task Load(string path, string? folderError, IReadOnlyList<int>? keep, string? forced, bool decode, bool keepShown)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
@@ -476,9 +477,9 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         _loading = cancellation;
         int generation = ++_generation;
 
-        if (!keepShown && !verify)
+        if (!keepShown && !decode)
         {
-            _isVerifyRequested = false;
+            _isDecodeRequested = false;
         }
 
         _path = path;
@@ -491,12 +492,12 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         if (keepShown)
         {
             CommandError = null;
-            IsVerifying = true;
+            IsDecoding = true;
         }
         else
         {
             Clear();
-            IsVerifying = false;
+            IsDecoding = false;
             IsLoading = true;
         }
 
@@ -517,7 +518,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             CancellationToken = cancellation.Token,
             BytesRead = bytesRead,
             ForcedFormat = forced,
-            Decoding = verify ? new DecodeOptions() : null,
+            Decoding = decode ? new DecodeOptions { Measure = new MeasureOptions() } : null,
         };
 
         Task.Run(() =>
@@ -552,17 +553,17 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                         document?.Dispose();
                         if (keepShown && generation == _generation)
                         {
-                            IsVerifying = false;
+                            IsDecoding = false;
                             if (failure is not null)
                             {
-                                CommandError = "Not verified: " + failure;
+                                CommandError = "Not decoded: " + failure;
                             }
                         }
                     }
                     else
                     {
                         Show(report, document, keep);
-                        _isVerifyRequested = verify;
+                        _isDecodeRequested = decode;
                     }
 
                     shown.TrySetResult();
@@ -754,7 +755,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         }
 
         SelectedFinding = null;
-        IsVerifying = false;
+        IsDecoding = false;
         Document = document;
         Report = report;
         Tree = new StructureTree(report.Root);
