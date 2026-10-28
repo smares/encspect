@@ -144,6 +144,7 @@ public sealed class GraphsViewModel : ObservableObject
     private bool _canDecode;
     private int? _markedIndex;
     private long? _markedFrame;
+    private (Graph Graph, int Index, long Offset)? _click;
 
     // Asks the window to select the frame at an offset in the structure tree and hex view.
     public event EventHandler<long>? FrameRequested;
@@ -385,6 +386,7 @@ public sealed class GraphsViewModel : ObservableObject
         }
 
         _markedFrame = null;
+        _click = null;
         Streams = streams;
         SelectedStream = streams.FirstOrDefault();
         if (showAudio)
@@ -405,6 +407,7 @@ public sealed class GraphsViewModel : ObservableObject
     public void Clear()
     {
         _markedFrame = null;
+        _click = null;
         Streams = [];
         SelectedStream = null;
     }
@@ -412,8 +415,9 @@ public sealed class GraphsViewModel : ObservableObject
     // A click on a point: selects its frame, if it leads to one.
     public void Activate(int index)
     {
-        if (Graph?.FrameAt(index, _markedFrame) is { } offset)
+        if (Graph is { } graph && graph.FrameAt(index, _markedFrame) is { } offset)
         {
+            _click = (graph, index, offset);
             FrameRequested?.Invoke(this, offset);
         }
     }
@@ -442,7 +446,7 @@ public sealed class GraphsViewModel : ObservableObject
             Raise(nameof(Form));
             Raise(nameof(Graph));
             RaiseChart();
-            MarkedIndex = _markedFrame is { } at ? Graph?.IndexOfFrame(at) : null;
+            MarkedIndex = IndexOfMarked();
         }
     }
 
@@ -450,7 +454,26 @@ public sealed class GraphsViewModel : ObservableObject
     public void MarkFrame(long? offset)
     {
         _markedFrame = offset;
-        MarkedIndex = offset is { } at ? Graph?.IndexOfFrame(at) : null;
+        if (_click is { } click && click.Offset != offset)
+        {
+            _click = null;
+        }
+
+        MarkedIndex = IndexOfMarked();
+    }
+
+    // The column of the marked frame. A time graph finds a frame by an estimate of its sample position (SampleLocator), which can
+    // place a frame's start early, so the frame that a click on the panel selected keeps the column that was clicked.
+    private int? IndexOfMarked()
+    {
+        if (_markedFrame is not { } at)
+        {
+            return null;
+        }
+
+        return _click is { } click && click.Offset == at && click.Graph is TimeGraph && ReferenceEquals(click.Graph, Graph)
+            ? click.Index
+            : Graph?.IndexOfFrame(at);
     }
 
     private void Choose(GraphChoice? choice)
@@ -474,7 +497,7 @@ public sealed class GraphsViewModel : ObservableObject
         Raise(nameof(Graph));
         Raise(nameof(Form));
         RaiseChart();
-        MarkedIndex = _markedFrame is { } at ? Graph?.IndexOfFrame(at) : null;
+        MarkedIndex = IndexOfMarked();
     }
 
     private void RaiseChart()
