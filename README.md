@@ -34,7 +34,7 @@ Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis com
 
 Protection: streams that a container encrypts or locks are reported with their scheme and DRM systems, without decrypting: Common Encryption in MP4, iTunes protection and Audible entries, Windows Media DRM in ASF, and ContentEncryption in Matroska.
 
-Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, Dolby TrueHD and MLP, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, and the levels (sample peak, RMS, DC offset, clipping, digital silence, bit depth) ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram and the spectrum under the heading Audio of its Graphs tab ([details](docs/gui.md)).
+Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, Dolby TrueHD and MLP, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS, DC offset, clipping, digital silence, bit depth), the loudness (integrated, range, maxima; ITU-R BS.1770 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
 
 Phase 2, the lossy formats, is done. Next: the lossless formats, among them the frames of WMA Lossless.
 
