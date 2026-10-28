@@ -16,7 +16,7 @@ internal struct ChannelState
 }
 
 // The range decoder, reading the bytes of a frame in stream order (WordOrder). Files of version 3.99 and later code a value as an overflow, a symbol
-// of a fixed 64-symbol model, and a base below a pivot that follows the average size of the values of its channel. Files from 3.91 to 3.98 use the
+// of a fixed 64-symbol model, and a base below a pivot that follows the average size of the values of its channel. Files from 3.90 to 3.98 use the
 // same range coder with another model and code the value as the symbol and the bits of a width that follows the average (CUnBitArray3891To3989).
 internal sealed class RangeDecoder
 {
@@ -221,7 +221,7 @@ internal sealed class RangeDecoder
     // One value of a channel, signed (UnBitArray.cpp, DecodeValueRange).
     public long DecodeValue(ref ChannelState state) => IsLegacy ? DecodeLegacyValue(ref state) : DecodeCurrentValue(ref state);
 
-    // One value of a file from 3.91 to 3.98 (Old/UnBitArrayOld.cpp, CUnBitArray3891To3989::DecodeValueRange): the model's symbol is the overflow, or
+    // One value of a file from 3.90 to 3.98 (Old/UnBitArrayOld.cpp, CUnBitArray3891To3989::DecodeValueRange): the model's symbol is the overflow, or
     // for its last symbol the width of the bits that follow, and the working width k follows the average.
     private long DecodeLegacyValue(ref ChannelState state)
     {
