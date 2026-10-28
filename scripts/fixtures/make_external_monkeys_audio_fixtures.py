@@ -2,7 +2,7 @@
 """Writes the encoder-made Monkey's Audio fixtures in tests/fixtures/monkeys-audio (external-*.ape).
 
 They come from mac, the console tool of the Monkey's Audio SDK 13.42, built from the pinned source (monkeys_audio_tool.py): every compression level
-(fast to insane), 8, 16, 24 and 32-bit integer and 32-bit floating point audio, 1 to 9 channels, several sample rates, frames of every size the levels
+(fast to insane), 8, 16, 24 and 32-bit integer and 32-bit floating point audio, 1 to 9 channels with the channel masks of the stored WAV header, several sample rates, frames of every size the levels
 use (a file with a full frame of the highest level holds 1,179,648 samples), digital silence and identical channels (which the encoder stores as special
 frames), a silent channel, WAV headers with chunks before and after the audio, an AIFF source, and an APEv2 and an ID3v1 tag. The inputs are
 deterministic signals written by monkeys_audio_signal.py.
@@ -29,6 +29,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "monkeys-audio"
 
 SHORT = 24000
+MASKED = 8000
 LIST_BEFORE = sig.chunk(b"LIST", b"INFOISFT" + (14).to_bytes(4, "little") + b"Lavf60.16.100\0" + b"\0")
 LIST_AFTER = sig.chunk(b"LIST", b"INFOIART" + (6).to_bytes(4, "little") + b"Name\0\0")
 TAGS = "Artist=Fixture artist|Title=Fixture title|Album=Fixture album"
@@ -65,6 +66,14 @@ FIXTURES = {
     "normal-16-7ch": (("wav", "music", 48000, 7, 16, 12000, 0x13F), ["-c2000"]),
     "normal-24-7.1": (("wav", "music", 48000, 8, 24, 12000, 0x63F), ["-c2000"]),
     "normal-16-9ch": (("wav", "music", 48000, 9, 16, 12000, 0), ["-c2000"]),
+    # The channel mask of the stored WAV header sets the layout: 5.1 with the surround pair at the sides, a mask with fewer bits than channels, one with
+    # more, mask 0, and a six-channel header of format tag 1, which has no mask. (The masks 0x33, 0x3F and 0x63F are in normal-16-4ch, normal-16-5.1 and
+    # normal-24-7.1, 0x13F in normal-16-7ch and mask 0 with nine channels in normal-16-9ch.)
+    "mask-5.1-sides": (("wav", "music", 48000, 6, 16, MASKED, 0x60F), ["-c2000"]),
+    "mask-fewer-bits-than-channels": (("wav", "music", 48000, 6, 16, MASKED, 0x7), ["-c2000"]),
+    "mask-more-bits-than-channels": (("wav", "music", 48000, 4, 16, MASKED, 0x3F), ["-c2000"]),
+    "mask-zero-6ch": (("wav", "music", 48000, 6, 16, MASKED, 0), ["-c2000"]),
+    "plain-format-6ch": (("wav", "music", 48000, 6, 16, MASKED, "plain"), ["-c2000"]),
     "rate-8000-mono-8": (("wav", "music", 8000, 1, 8, 8000), ["-c2000"]),
     "rate-12345-stereo": (("wav", "music", 12345, 2, 16, 12000), ["-c2000"]),
     "rate-96000-mono-24": (("wav", "music", 96000, 1, 24, SHORT), ["-c2000"]),

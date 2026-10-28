@@ -15,6 +15,9 @@ make_legacy_monkeys_audio_fixtures.py, make_monkeys_audio_fixtures.py):
   frame CRC only from version 3.90, so before that (and in files without the CRC flag) it decodes other samples without saying so wherever its decoder differs from
   the SDK's: FFMPEG_DIFFERS lists the fixtures of versions before 3.93 where it did, each with what was seen, and the run fails when a listed fixture decodes to the
   samples after all or an unlisted one does not.
+- The channel mask of the WAVE file mac -d writes, which starts with the header data the fixture stores: the manifest's layout is the one that mask gives (the default one
+  of a mono or stereo file, none for more channels, where there is no mask). Neither ffprobe nor MediaInfo reports channel positions for a Monkey's Audio file (ffprobe
+  decodes mono and stereo only and names the layout of those by their count; MediaInfo gives the number of channels), so the layout is not compared with theirs.
 - MediaInfo 26.01 (mediainfo_tool.py): the audio stream's format, sample rate, channels, bit depth and duration, where it reads the file.
 - The descriptor MD5 is worked out again here with hashlib in the SDK's order (MACLib.cpp, VerifyFileW2) and compared with the manifest's.
 
@@ -85,6 +88,23 @@ def wav_data(raw):
     raise ValueError("the WAVE file has no data chunk")
 
 
+def wav_mask(raw):
+    """The channel mask of the fmt chunk of a RIFF/WAVE file (None where the format is not WAVE_FORMAT_EXTENSIBLE with a cbSize of 22 or more, or the file
+    has no complete fmt chunk), found by walking its chunks."""
+    at = 12
+    while at + 8 <= len(raw):
+        size = int.from_bytes(raw[at + 4:at + 8], "little")
+        if raw[at:at + 4] == b"fmt ":
+            body = raw[at + 8:at + 8 + size]
+            if len(body) >= 40 and int.from_bytes(body[0:2], "little") == 0xFFFE and int.from_bytes(body[16:18], "little") >= 22:
+                return int.from_bytes(body[20:24], "little")
+            return None
+        if raw[at:at + 4] == b"data":
+            return None
+        at += 8 + size + (size & 1)
+    return None
+
+
 def aiff_data(raw, bits):
     """The samples of the SSND chunk of an AIFF file (mac writes the format the audio came from), made little-endian."""
     at = 12
@@ -145,10 +165,22 @@ def check_decode(name, manifest, path, mac, work, problems):
     is_float = bool(manifest["header"]["flags"] & 4096)
     try:
         written = out.read_bytes()
-        raw = canonical(aiff_data(written, info["bits_per_sample"]) if written[:4] == b"FORM" else wav_data(written), info["bits_per_sample"], is_float)
+        if name == "built-wav-header-cut-in-fmt":
+            # The stored header data is cut, so what mac writes is that and the samples; the samples follow it.
+            samples = written[manifest["descriptor"]["header_data_bytes"]:]
+            raw = canonical(samples, info["bits_per_sample"], is_float)
+        else:
+            raw = canonical(aiff_data(written, info["bits_per_sample"]) if written[:4] == b"FORM" else wav_data(written), info["bits_per_sample"], is_float)
     except ValueError as error:
         problems.append(f"mac -d writes a file that is no WAVE file with samples: {error}")
         return
+    if written[:4] == b"RIFF" and name != "built-wav-header-cut-in-fmt":
+        # The WAVE file mac writes starts with the header data the file stores, so its channel mask is the one the manifest's layout must follow.
+        mask = wav_mask(written)
+        default = {1: ["front center"], 2: ["front left", "front right"]}.get(info["channels"])
+        expected = m.mask_layout(mask, info["channels"]) if mask else default
+        if info["layout"] != expected:
+            problems.append(f"the WAVE file mac -d writes has the channel mask {mask if mask is None else hex(mask)}, which gives the layout {expected}; the manifest says {info['layout']}")
     digest = hashlib.md5(raw).hexdigest()
     if digest != manifest["decoded_pcm_md5"]:
         problems.append(f"mac -d decodes to {digest}, the manifest says {manifest['decoded_pcm_md5']}")

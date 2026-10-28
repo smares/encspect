@@ -14,6 +14,8 @@ internal static class Topics
     public const string Verification = "verification";
     public const string Channels = "channel-layouts";
     public const string BitrateModes = "bitrate-modes";
+    public const string WaveFormat = "waveformatex";
+    public const string WaveFormatExtensible = "wave-format-extensible";
 }
 
 // What each Monkey's Audio node is, in the words the report shows next to it. Constants only: the frames of a long file are built by the hundred
@@ -55,7 +57,11 @@ internal static class Explain
 
     public const string SeekTable = "The offset of the first byte of each frame, 4 bytes for each frame, counted from the start of the descriptor (MACLib.h, APEHeader.cpp).";
     public const string SeekEntry = "Where one frame starts, as an unsigned 32-bit offset. The SDK adds 2^32 whenever an offset is lower than the one before it, so that files over 4 GiB work (APEHeader.cpp, Convert32BitSeekTable).";
-    public const string HeaderData = "The header of the WAV file that was compressed, which a decoder gives back before the samples. Files of other kinds (AIFF, CAF) keep their own header here.";
+    public const string HeaderData = "The header of the WAV file that was compressed, which a decoder gives back before the samples. Files of other kinds (AIFF, CAF) keep their own header here; the analyzer reads only the fmt chunk of a RIFF or RF64 WAVE header.";
+    public const string WavFormatTag = "The format tag of the fmt chunk in the stored WAV header, wFormatTag: 1 is PCM, 3 IEEE floating point, 0xFFFE the extensible format (mmreg.h). The analyzer reads the chunk only for its channels and channel mask.";
+    public const string WavChannels = "The number of channels the stored fmt chunk states, nChannels of the WAVEFORMATEX. The header's own count decides how the frames are decoded.";
+    public const string WavChannelMask = "Which speakers the channels feed: a bit for each speaker position, dwChannelMask of the WAVEFORMATEXTENSIBLE in the stored fmt chunk. The channels are in the order of the bits. The Monkey's Audio header states no positions itself.";
+    public const string WavSpeakers = "The speakers the set bits stand for, in the order of the channels in the data.";
     public const string TerminatingData = "The bytes that followed the audio in the compressed file, kept so that a decoder can give them back after the samples.";
     public const string TrailingData = "Bytes after the terminating data that no tag claims. The descriptor does not count them.";
 
@@ -72,7 +78,7 @@ internal static class Explain
     public const string StatDuration = "The duration of the samples at the sample rate.";
     public const string StatRate = "The sample rate of the audio, from the header.";
     public const string StatChannels = "The number of channels, from the header.";
-    public const string StatLayout = "The speakers the channels feed. The format does not state positions; one channel is taken as the center and two as left and right.";
+    public const string StatLayout = "The speakers the channels feed, from the channel mask of the stored WAV header where it has one; the format itself states no positions, so without a mask one channel is taken as the center and two as left and right.";
     public const string StatBits = "The bits of each sample, from the header.";
     public const string StatLevel = "The compression level, from the header.";
     public const string StatSilentFrames = "The frames flagged as silent in every channel they code (both channels of a stereo file, the only channel of a mono file), which hold no coded samples.";

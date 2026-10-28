@@ -197,7 +197,7 @@ def old_manifest(data, name, pcm):
         "decode_findings": [] if is_decoded else [{"code": "decode.not-possible", "count": 1}],
         "regions": [{"name": "Monkey's Audio", "offset": 0, "length": len(data)}],
         "encoder": {"tool": TOOL_OLD if a.version < 3930 else TOOL},
-        "findings": [{"code": "monkeys-audio.old-format", "contains": ""}],
+        "findings": [{"code": "monkeys-audio.old-format", "contains": ""}, *m.wav_header(a.header_data, a.channels)[1]],
         **({"decoded_pcm_md5": hashlib.md5(pcm).hexdigest()} if is_decoded else {}),
         "crosscheck": {"mac_verify": True if is_decoded else None, "samples": samples},
         "header": {"flags": a.flags},

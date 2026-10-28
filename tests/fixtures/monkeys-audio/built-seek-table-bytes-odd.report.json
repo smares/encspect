@@ -204,7 +204,22 @@
               "name": "WAV Header Data",
               "value": "44 bytes, a RIFF WAVE header",
               "offset": 89,
-              "length": 44
+              "length": 44,
+              "children": [
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 109,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 111,
+                  "length": 2
+                }
+              ]
             },
             {
               "name": "Encoder",

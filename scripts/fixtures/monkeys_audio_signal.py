@@ -92,11 +92,11 @@ def chunk(name, payload):
 
 
 def wav(kind, rate, channels, count, bits, mask=None, is_float=False, before=b"", after=b""):
-    """A WAVE file; with a channel mask (or more than 2 channels, or more than 16 bits) the format is WAVE_FORMAT_EXTENSIBLE. before and after are
-    chunks put before the data chunk and after it."""
+    """A WAVE file; with a channel mask (or more than 2 channels, or more than 16 bits) the format is WAVE_FORMAT_EXTENSIBLE, except for the mask "plain",
+    which writes the 16-byte format of tag 1 whatever the channel count. before and after are chunks put before the data chunk and after it."""
     body = floats(kind, rate, channels, count) if is_float else pcm(kind, rate, channels, count, bits)
     align = channels * bits // 8
-    if mask is None and channels <= 2 and bits <= 16 and not is_float:
+    if mask == "plain" or (mask is None and channels <= 2 and bits <= 16 and not is_float):
         fmt = struct.pack("<HHIIHH", 1, channels, rate, rate * align, align, bits)
     else:
         if mask is None:

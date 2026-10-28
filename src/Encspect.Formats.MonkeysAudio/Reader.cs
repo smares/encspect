@@ -111,6 +111,7 @@ internal static class Reader
         }
 
         context.Root.Add(s.Stream);
+        ReadWavFormat(s, h, reader);
         HeaderNodes(s, h, headerAt, reader);
         CheckHeader(s, h);
         StartSession(s, h, reader, headerAt);
@@ -283,6 +284,24 @@ internal static class Reader
         }
     }
 
+    // The header data lies before the frames, so its fmt chunk is read here and its nodes are added with the header data after them.
+    private static void ReadWavFormat(State s, ApeHeader h, ByteReader reader)
+    {
+        if (h.HeaderDataBytes == 0 || s.HeaderDataAt >= reader.End)
+        {
+            return;
+        }
+
+        try
+        {
+            s.Wav = WavHeader.Read(reader, s.HeaderDataAt, Math.Min(h.HeaderDataBytes, reader.End - s.HeaderDataAt));
+        }
+        catch (EndOfStreamException)
+        {
+            s.Wav = null;
+        }
+    }
+
     private static void StartSession(State s, ApeHeader h, ByteReader reader, long headerAt)
     {
         MappedBytes configuration;
@@ -322,6 +341,9 @@ internal static class Reader
             BitsPerSample = h.BitsPerSample,
             Samples = h.TotalFrames == 0 ? null : h.TotalBlocks,
             Configuration = configuration,
+            Format = s.Wav is { Mask: not null and not 0 } wav
+                ? new AudioFormat(wav.Tag, wav.Channels, wav.SampleRate, wav.BytesPerSecond, wav.BlockAlign, wav.BitsPerSample) { ChannelMask = wav.Mask }
+                : null,
         });
     }
 
@@ -730,6 +752,11 @@ internal static class Reader
         if (container is not null)
         {
             data.Value = $"{Counts.Of(length, "byte", "bytes")}, {container}";
+        }
+
+        if (s.Wav is { } wav)
+        {
+            WavHeader.AddNodes(s, wav, data, h.Channels);
         }
 
         s.AddLeading(data);

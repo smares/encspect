@@ -12,6 +12,10 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 - Where a frame starts with a CRC word: in every file of version 3.93 and later whatever the format flags say, and in an older file only when its CRC flag is set (`Old/UnMACOld.cpp`). All 32 bits of the word are the CRC up to version 3.82, and bit 31 flags the special frame codes from 3.83. An older file without the flag starts each frame with a checksum of 30 bits, Rice-coded, that is no CRC: the parser reads no CRC and no special codes there, and declares the checksum as "frame checksum", which the decoder compares (see "Decoding"). In a file of 3.90 to 3.92 the SDK reads no checksum from such a frame, so the checksum is declared as not stored there.
 - The **seek table**: one 32-bit offset for each frame. Entries are made 64 bits wide where a value is lower than the one before it, as the SDK does for files over 4 GiB.
 - The **WAV header data** (the header of the compressed WAV file, kept so that decompressing gives it back) and the **terminating data** (what followed the samples in the WAV file, such as a LIST chunk). The terminating data is a region of its own in the tree.
+- From the WAV header data the parser reads only the `fmt ` chunk, for the channel layout (see "Channel layout"):
+  - it applies to a RIFF or RF64 WAVE header; the chunks before `fmt ` are skipped by their sizes, in at most 64 steps, and no read goes past the header data;
+  - the nodes under "WAV Header Data" are Format Tag, Channels and, for WAVE_FORMAT_EXTENSIBLE (0xFFFE) with a cbSize of at least 22, Channel Mask with its Speakers, named as in the WAV parser;
+  - an AIFF or CAF header (`FORM`, `caff`) is named in the node's value and its content is not read, so such a file keeps the default layout.
 - Every **frame**, found by the seek table:
   - the samples it holds (the header's count, the final frame's own);
   - the stored CRC of the decoded audio (31 bits) and, where the top bit of the CRC says so, the special frame codes: silent left channel (the only channel of a mono file, where this is the one code that counts), silent right channel, pseudo-stereo;
@@ -29,8 +33,13 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 
 ## Channel layout
 
-- One channel is front center; two are front left and front right. The channel mode of a pair is reported as mid/side stereo, since the encoder always codes a pair as a mid and a side channel.
-- A file of more channels has no layout. The header counts the channels and says nothing of their positions; the WAV header data may hold a channel mask, which the analyzer does not read. The channels are shown in the order of the file.
+- The Monkey's Audio header counts the channels and states no positions. The channel mask of the WAV header data does, and the parser takes the layout from it:
+  - a nonzero Channel Mask sets the stream's layout and the "Channel Layout" statistic for any number of channels, mono and stereo included, from the header's channel count (`ChannelLayouts.FromWaveMask`, the mapping the WAV and WavPack parsers use): the channels follow the order of the mask's bits, extra high bits are ignored, extra channels are assigned to no speaker, and bits from 18 up stand for channels without a position;
+  - the decoder declares the same layout for the audio it writes, so the measurements of a multichannel file know which channel is the LFE.
+- Without a nonzero mask the layout is the default one: one channel is front center, two are front left and front right, and a file of more channels has no layout. This is the case for mask 0, a header of format tag 1 with more than two channels, an AIFF or CAF header, a header the walk could not read, and a file that keeps no header data (the flag for a WAV header created on decompression).
+- The channel mode of a pair is reported as mid/side stereo, since the encoder always codes a pair as a mid and a side channel; more channels are "Multichannel". The channels are shown in the order of the file.
+- In the SDK's test files the stored mask is the one of the WAV the encoder was given: 0x33 for quadraphonic, 0x3F for 5.1 at the back, 0x60F for 5.1 at the sides, 0x63F for 7.1. A WAV of six channels with format tag 1, or an extensible one with mask 0, is stored as it is and gives no layout.
+- Findings: `monkeys-audio.wav-channels-differ` (Warning: the fmt chunk states other channels than the header), `monkeys-audio.channel-mask-mismatch` (Info, as the WAV parser's `wav.channel-mask-mismatch`: the mask names more or fewer speakers than the header states channels), `monkeys-audio.wav-header-damaged` (Warning: the header data ends inside a chunk or inside the fmt chunk, holds no fmt chunk before its data chunk or its end, states a fmt chunk of less than 16 bytes, or holds more than 64 chunks before it). A damaged header data never stops decoding: the frames do not depend on it.
 
 ## Encoder detection
 
@@ -121,6 +130,7 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 
 - A code that stands for several problems is reported once for each kind, with its count.
 - Container: `monkeys-audio.no-descriptor`, `monkeys-audio.header-cut`, `monkeys-audio.junk-before-descriptor`, `monkeys-audio.old-format`, `monkeys-audio.version`, `monkeys-audio.descriptor-size`, `monkeys-audio.header-data-size`, `monkeys-audio.terminating-data-size`, `monkeys-audio.data-cut`, `monkeys-audio.trailing-data`, `monkeys-audio.data-after-tag`.
+- WAV header data: `monkeys-audio.wav-header-damaged`, `monkeys-audio.wav-channels-differ`, `monkeys-audio.channel-mask-mismatch`.
 - Header fields: `monkeys-audio.compression-level`, `monkeys-audio.channels`, `monkeys-audio.bits-per-sample`, `monkeys-audio.sample-rate`, `monkeys-audio.blocks-per-frame`, `monkeys-audio.final-frame-blocks`, `monkeys-audio.no-frames`.
 - Seek table and frames: `monkeys-audio.seek-table-size`, `monkeys-audio.seek-table-cut`, `monkeys-audio.seek-table-start`, `monkeys-audio.frame-misplaced`, `monkeys-audio.frame-cut`, `monkeys-audio.frame-too-short`, `monkeys-audio.frame-start-bit` (3.80), `monkeys-audio.frames-not-listed`.
 - Checksums: `monkeys-audio.md5-mismatch`, `monkeys-audio.md5-not-compared`, `monkeys-audio.frame-crc-mismatch` (decoding), `monkeys-audio.frame-checksum-mismatch` (decoding), `monkeys-audio.frame-not-decoded` (decoding).
@@ -132,6 +142,6 @@ The descriptor MD5 is worked out over the layout the descriptor states, as `Veri
 
 - Playback and any output other than the checksum comparison (the PCM sink is for tests and a later export).
 - Decoding of files before version 3.80 and of the files named under "Files it does not decode"; they are parsed in full.
-- The channel positions of files with more than two channels (the WAV header data's channel mask).
+- The rest of the WAV header data: only the fmt chunk's format tag, channels and channel mask are read. An AIFF or CAF header's channel information (the `chan` chunk, the `CHAN` chunk) is not read.
 - The APEv2 tag's own content beyond what the tag parser reads; the Monkey's Audio link files (`.apl`).
 - Monkey's Audio inside other containers (Matroska, MP4): none of the container parsers routes to it.

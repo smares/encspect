@@ -204,7 +204,22 @@
               "name": "WAV Header Data",
               "value": "44 bytes, a RIFF WAVE header",
               "offset": 88,
-              "length": 44
+              "length": 44,
+              "children": [
+                {
+                  "name": "Format Tag",
+                  "value": "0x0001 (PCM)",
+                  "offset": 108,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 110,
+                  "length": 2
+                }
+              ]
             },
             {
               "name": "Encoder",
@@ -607,6 +622,19 @@
           0,
           1,
           7
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "monkeys-audio.wav-channels-differ",
+        "message": "The fmt chunk in the WAV header data states 1 channel, but the Monkey's Audio header states 33 channels; the header data a decoder gives back does not describe the audio it writes.",
+        "offset": 110,
+        "length": 2,
+        "path": [
+          0,
+          3,
+          1
         ],
         "count": 1
       }
