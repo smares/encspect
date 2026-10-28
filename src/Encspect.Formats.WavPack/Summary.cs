@@ -233,7 +233,7 @@ internal static partial class Summary
         if (channels > 0)
         {
             uint mask = s.ChannelInfo?.Value.Mask ?? (channels == 1 ? 4u : channels == 2 ? 3u : 0u);
-            layout = Decode.Layout(mask, channels);
+            layout = ChannelLayouts.FromWaveMask(mask, channels);
         }
 
         // A shift that leaves no bits is a finding (wavpack.flags-invalid); the depth is then unknown.

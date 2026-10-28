@@ -109,6 +109,41 @@ public static class ChannelLayouts
     // The common name with a capital, as formats report a channel mode: "Stereo", "5.1"; null where the layout has none.
     public static string? ModeName(IReadOnlyList<Speaker> layout) => CommonName(layout) is { Length: > 0 } name ? char.ToUpperInvariant(name[0]) + name[1..] : null;
 
+    // The speakers a WAVE channel mask names, in the order of its bits, which is the order of the channels in the data. The bits past the eighteen
+    // positions of the WAVE channel mask (the EBU's additions, Tech 3306-2009 section 3, and SPEAKER_ALL) stand for channels without a position.
+    public static List<Speaker> WaveMaskSpeakers(uint mask)
+    {
+        var speakers = new List<Speaker>();
+        for (int bit = 0; bit < 32; bit++)
+        {
+            if ((mask & (1u << bit)) != 0)
+            {
+                speakers.Add(bit < 18 ? (Speaker)(bit + 1) : Speaker.Discrete);
+            }
+        }
+
+        return speakers;
+    }
+
+    // The speakers of the channels of a stream with a WAVE channel mask: with fewer channels than the mask has bits the extra, most significant bits
+    // are ignored, and with more the remaining channels are assigned to no speaker (Microsoft, "Multiple channel audio data and WAVE files",
+    // "Details about dwChannelMask").
+    public static List<Speaker> FromWaveMask(uint mask, int channels)
+    {
+        List<Speaker> speakers = WaveMaskSpeakers(mask);
+        if (speakers.Count > channels)
+        {
+            speakers.RemoveRange(Math.Max(channels, 0), speakers.Count - Math.Max(channels, 0));
+        }
+
+        while (speakers.Count < channels)
+        {
+            speakers.Add(Speaker.Discrete);
+        }
+
+        return speakers;
+    }
+
     // Channels without speaker positions, such as the two programs of MPEG dual channel.
     public static IReadOnlyList<Speaker> Discrete(int count) => [.. Enumerable.Repeat(Speaker.Discrete, count)];
 

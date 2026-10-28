@@ -392,7 +392,7 @@ internal sealed class StreamDecoder : IFrameDecoder
             {
                 _sink = _context.DeclareOutput(new PcmFormat(_sampleRate, _channels, _isFloat ? 32 : _bytesPerSample * 8, _isFloat ? SampleFormat.Float32 : SampleFormat.Integer)
                 {
-                    ChannelLayout = Syntax.Layout(_channelInfo?.Mask ?? (uint)(0x5 - Math.Min(_channels, 2)), _channels),
+                    ChannelLayout = ChannelLayouts.FromWaveMask(_channelInfo?.Mask ?? (uint)(0x5 - Math.Min(_channels, 2)), _channels),
                 });
             }
 
