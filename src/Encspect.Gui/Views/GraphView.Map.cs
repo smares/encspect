@@ -226,7 +226,8 @@ public sealed partial class GraphView
         double barX = size.Width - 8 - BarWidth;
         double laneX = barX - 4 - LaneWidth;
         double gridRight = laneX - 8;
-        int available = (int)Math.Floor(Math.Max(0, gridRight - left) * scale);
+        // From the square's snapped left edge, as MapSquareRect places it, so a fractional label width cannot lose a step of columns.
+        int available = Math.Max(0, (int)Math.Floor(gridRight * scale) - (int)Math.Round(left * scale));
         int columns = Math.Max(10, (available + gapPx) / pitchPx / 10 * 10);
         int rows = (count + columns - 1) / columns;
 
