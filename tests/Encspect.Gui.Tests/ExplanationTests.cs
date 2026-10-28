@@ -252,8 +252,7 @@ public sealed class ExplanationTests : IDisposable
         Assert.NotNull(frame);
         if (Environment.GetEnvironmentVariable("ENCSPECT_SCREENSHOTS") is { Length: > 0 } folder)
         {
-            Directory.CreateDirectory(folder);
-            frame.Save(Path.Combine(folder, name), new PngBitmapEncoderOptions());
+            ScreenshotTests.WritePng(frame, folder, name);
         }
     }
 }

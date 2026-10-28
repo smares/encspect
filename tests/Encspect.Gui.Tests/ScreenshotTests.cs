@@ -218,8 +218,26 @@ public class ScreenshotTests
         Assert.NotNull(frame);
         if (Environment.GetEnvironmentVariable("ENCSPECT_SCREENSHOTS") is { Length: > 0 } folder)
         {
-            Directory.CreateDirectory(folder);
-            frame.Save(Path.Combine(folder, name), new PngBitmapEncoderOptions());
+            WritePng(frame, folder, name);
+        }
+    }
+
+    // Encodes on another thread and waits a bounded time, so that an encoder or a file system that stalls fails the test
+    // with the file's name instead of hanging the run. The file appears under its name only once complete, so a stalled
+    // write never leaves an empty PNG there.
+    internal static void WritePng(WriteableBitmap frame, string folder, string name, int timeoutMilliseconds = 60000)
+    {
+        Directory.CreateDirectory(folder);
+        string path = Path.Combine(folder, name);
+        string partial = path + ".partial";
+        Task write = Task.Run(() =>
+        {
+            frame.Save(partial, new PngBitmapEncoderOptions());
+            File.Move(partial, path, overwrite: true);
+        });
+        if (!write.Wait(timeoutMilliseconds))
+        {
+            throw new TimeoutException($"Saving the screenshot {path} did not finish in {timeoutMilliseconds} ms.");
         }
     }
 }
