@@ -11,13 +11,13 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 - **libebur128:** the `COPYING` (MIT) of libebur128 v1.2.6, pinned by its SHA-256 (`d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/libebur128.txt`.
 - **matplotlib colormaps:** the license comment at the top of `colormaps.py` of BIDS/colormap, the file the GUI's color ramp for the spectrogram (the 256 entries of `magma`, `src/Encspect.Gui/Views/MagmaRamp.cs`) is taken from, pinned by its SHA-256 (`b7478d10e2ccfdb22128867e137f16f55b687e9c225065e91bcbd6bb9e6c0352`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/matplotlib-colormaps.txt`.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
-- **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version 10.0.14.
+- **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version 10.0.13.
 
 ## Components
 
 | Component | Version | License | In |
 |---|---|---|---|
-| .NET runtime and base class libraries | 10.0.14 | MIT, with the notices of its own third-party code | both builds, all platforms |
+| .NET runtime and base class libraries | 10.0.13 | MIT, with the notices of its own third-party code | both builds, all platforms |
 | Avalonia (Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent, Avalonia.Skia, Avalonia.HarfBuzz, Avalonia.Win32, Avalonia.X11, Avalonia.FreeDesktop, Avalonia.FreeDesktop.AtSpi, Avalonia.Remote.Protocol) | 12.1.4 | MIT | GUI |
 | Avalonia.Wayland | 12.1.4 | MIT | GUI |
 | Avalonia.Native: the managed `Avalonia.Native.dll` | 12.1.4 | MIT | GUI, all platforms |
