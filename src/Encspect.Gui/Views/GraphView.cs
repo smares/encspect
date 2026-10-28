@@ -257,6 +257,7 @@ public sealed partial class GraphView : Control
         base.OnPointerExited(e);
         if (Graph is FrameMapGraph map && !_mapKeyboard)
         {
+            _mapPointer = null;
             SetMapHover(map, null);
             return;
         }

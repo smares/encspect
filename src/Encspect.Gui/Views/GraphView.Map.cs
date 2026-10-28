@@ -29,9 +29,9 @@ public sealed partial class GraphView
     private const double MapPad = 4;
     private const double LaneWidth = 8;
     private const double BarWidth = 14;
+    private const string NarrowCaption = "Widen the pane to see 10 columns";
     private const double MarkHeight = 3;
     private const double SwatchWidth = 14;
-    private const double UnusedOpacity = 0.35;
 
     private readonly ScrollBar _mapBar = new() { Orientation = Orientation.Vertical, AllowAutoHide = false, IsVisible = false, Width = BarWidth };
     private double _mapScroll;
@@ -42,6 +42,8 @@ public sealed partial class GraphView
     private int _mapHelpColumns = -1;
     private (FrameMapGraph Graph, Size Size, double Scale, SeverityMask Shown, MapLayout Layout)? _mapCache;
     private Rect _mapHoverItem;
+    private Point? _mapPointer;
+    private (int Columns, double Pitch, double ViewHeight)? _mapPrevious;
 
     // The severities whose findings the map rings and marks.
     public SeverityMask ShownSeverities
@@ -56,7 +58,7 @@ public sealed partial class GraphView
         Swatch,
         Legend,
         NoValue,
-        OffScale,
+        OutsideRange,
         Finding,
     }
 
@@ -76,11 +78,15 @@ public sealed partial class GraphView
         Rect Lane,
         double BarX,
         double ContentHeight,
+        bool IsNarrow,
         IReadOnlyList<MapItem> Items)
     {
         public double Pitch => PitchPx / Scale;
 
         public double MaxScroll => Math.Max(0, ContentHeight - ViewHeight);
+
+        // The right edge of the squares: they are clipped here, so that a pane too narrow for 10 columns never reaches the lane.
+        public double ClipRight => GridRight + 2;
     }
 
     // The answer to a position in the map: a square, an item of the line below, or the lane.
@@ -96,6 +102,7 @@ public sealed partial class GraphView
             {
                 _mapScroll = e.NewValue;
                 InvalidateVisual();
+                RefreshMapHover();
             }
         };
     }
@@ -111,6 +118,7 @@ public sealed partial class GraphView
         if (Graph is FrameMapGraph map && finalSize.Width >= 80 && finalSize.Height >= 60)
         {
             MapLayout layout = MapLayoutFor(map, finalSize);
+            AnchorMapScroll(map, layout);
             if (_mapRevealPending)
             {
                 RevealMarked(map, layout);
@@ -127,6 +135,7 @@ public sealed partial class GraphView
         {
             _mapBar.IsVisible = false;
             _mapBar.Arrange(default);
+            _mapPrevious = null;
         }
 
         return finalSize;
@@ -191,7 +200,8 @@ public sealed partial class GraphView
 
     // ---- Layout
 
-    private double RenderScale => (VisualRoot as TopLevel)?.RenderScaling ?? 1;
+    // Avalonia 12's visual root is a presentation source, not the top level, so the top level is asked for.
+    private double RenderScale => TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
 
     private MapLayout MapLayoutFor(FrameMapGraph map, Size size)
     {
@@ -227,7 +237,8 @@ public sealed partial class GraphView
         double lineTop = viewTop + viewHeight + 6;
         var placed = items.Select(i => i with { Rect = new Rect(i.Rect.X, lineTop + i.Rect.Y, i.Rect.Width, i.Rect.Height) }).ToList();
         double content = MapPad + (rows * (pitchPx / scale)) + MapPad;
-        return new MapLayout(scale, pitchPx, gapPx, columns, rows, left, viewTop, viewHeight, gridRight, new Rect(laneX, viewTop, LaneWidth, viewHeight), barX, content, placed);
+        bool isNarrow = (columns * pitchPx) - gapPx > available;
+        return new MapLayout(scale, pitchPx, gapPx, columns, rows, left, viewTop, viewHeight, gridRight, new Rect(laneX, viewTop, LaneWidth, viewHeight), barX, content, isNarrow, placed);
     }
 
     // The key or legend and its extras as items, in lines of LegendLine from y 0, at most three; each line starts at x 12.
@@ -270,10 +281,10 @@ public sealed partial class GraphView
                 }
             }
 
-            int empty = map.Count - series.Count;
+            long empty = map.EmptyCount;
             if (empty > 0)
             {
-                Entry(MapItemKind.NoValue, -1, "No value");
+                Entry(MapItemKind.NoValue, -1, $"No value · {Format.Count(empty, "frame", "frames")}");
             }
         }
         else
@@ -286,13 +297,13 @@ public sealed partial class GraphView
 
             if (map.ClampedCount > 0)
             {
-                Entry(MapItemKind.OffScale, -1, $"Off the declared scale · {Format.Count(map.ClampedCount, "frame", "frames")}");
+                Entry(MapItemKind.OutsideRange, -1, $"Outside the declared range · {Format.Count(map.ClampedCount, "frame", "frames")}");
             }
         }
 
         if (map.FindingSquares(ShownSeverities).Length > 0)
         {
-            Entry(MapItemKind.Finding, -1, "Finding (first case)");
+            Entry(MapItemKind.Finding, FrameMapGraph.FindingEntry, "Finding (first case)");
         }
 
         return (items, Math.Min(MaxLegendLines, line + 1));
@@ -352,8 +363,10 @@ public sealed partial class GraphView
 
     private double LaneY(MapLayout layout, int square)
     {
-        double fraction = layout.Rows == 0 ? 0 : (double)(square / layout.Columns) / layout.Rows;
-        return Math.Clamp(fraction * layout.Lane.Height, 0, Math.Max(0, layout.Lane.Height - MarkHeight));
+        // The lane is as high as the pane, so a file that fits in it is marked where its rows are.
+        double top = MapPad + ((square / layout.Columns) * layout.Pitch);
+        double extent = Math.Max(layout.ContentHeight, layout.ViewHeight);
+        return Math.Clamp(top / extent * layout.Lane.Height, 0, Math.Max(0, layout.Lane.Height - MarkHeight));
     }
 
     // ---- Scrolling
@@ -386,10 +399,12 @@ public sealed partial class GraphView
             _mapScroll = next;
             SyncMapBar(layout);
             InvalidateVisual();
+            RefreshMapHover();
         }
     }
 
-    // Scrolls the row of a square into view: when it is not wholly on screen, to the middle (centered) or by the least.
+    // Scrolls the row of a square into view: when it is not wholly on screen, by the least; a row off screen altogether goes to
+    // the middle if centered. A row partly on screen never recenters the map, as a click on a half-visible square would.
     private void EnsureMapVisible(MapLayout layout, int square, bool centered)
     {
         double top = MapPad + ((square / layout.Columns) * layout.Pitch);
@@ -399,7 +414,8 @@ public sealed partial class GraphView
             return;
         }
 
-        if (centered)
+        bool isPartlyOnScreen = bottom > _mapScroll && top < _mapScroll + layout.ViewHeight;
+        if (centered && !isPartlyOnScreen)
         {
             SetMapScroll(layout, top - ((layout.ViewHeight - layout.Pitch) / 2));
         }
@@ -427,11 +443,14 @@ public sealed partial class GraphView
             _mapCache = null;
             _mapHelpColumns = -1;
             _mapRevealPending = Graph is FrameMapGraph;
+            _mapPointer = null;
+            _mapPrevious = null;
             if (Graph is FrameMapGraph map && Bounds.Width >= 80 && Bounds.Height >= 60)
             {
                 MapLayout layout = MapLayoutFor(map, Bounds.Size);
                 RevealMarked(map, layout);
                 SyncMapBar(layout);
+                _mapPrevious = (layout.Columns, layout.Pitch, layout.ViewHeight);
             }
             else
             {
@@ -451,6 +470,42 @@ public sealed partial class GraphView
         else if (change.Property == ShownSeveritiesProperty && Graph is FrameMapGraph shown)
         {
             UpdateAutomation(shown);
+        }
+    }
+
+    // A resize keeps the top row's first frame at the top, and a selected frame that was on screen on screen.
+    private void AnchorMapScroll(FrameMapGraph map, MapLayout layout)
+    {
+        if (_mapPrevious is { } old && (old.Columns != layout.Columns || old.Pitch != layout.Pitch || old.ViewHeight != layout.ViewHeight))
+        {
+            int topFrame = Math.Max(0, (int)Math.Round(_mapScroll / old.Pitch)) * old.Columns;
+            int? selected = null;
+            if (MarkedIndex is { } marked && marked < map.Count)
+            {
+                double top = MapPad + ((marked / old.Columns) * old.Pitch);
+                if (top + old.Pitch > _mapScroll && top < _mapScroll + old.ViewHeight)
+                {
+                    selected = marked;
+                }
+            }
+
+            _mapScroll = Math.Clamp(topFrame / layout.Columns * layout.Pitch, 0, layout.MaxScroll);
+            SyncMapBar(layout);
+            if (selected is { } keep)
+            {
+                EnsureMapVisible(layout, keep, centered: false);
+            }
+        }
+
+        _mapPrevious = (layout.Columns, layout.Pitch, layout.ViewHeight);
+    }
+
+    // The square under a pointer that has not moved changes when the rows move under it.
+    private void RefreshMapHover()
+    {
+        if (Graph is FrameMapGraph { Count: > 0 } map && !_mapKeyboard && _mapPointer is { } point)
+        {
+            UpdateMapHover(map, point);
         }
     }
 
@@ -477,7 +532,7 @@ public sealed partial class GraphView
             return new MapHit(-1, null, true, (point.Y - layout.Lane.Y) / layout.Lane.Height);
         }
 
-        if (point.Y < layout.ViewTop || point.Y >= layout.ViewTop + layout.ViewHeight || point.X < layout.Left || point.X >= layout.Left + (layout.Columns * layout.Pitch))
+        if (point.Y < layout.ViewTop || point.Y >= layout.ViewTop + layout.ViewHeight || point.X < layout.Left || point.X >= Math.Min(layout.Left + (layout.Columns * layout.Pitch), layout.ClipRight))
         {
             return null;
         }
@@ -495,8 +550,8 @@ public sealed partial class GraphView
         MapItemKind.Swatch => map.DescribeKeyEntry(item.Entry),
         MapItemKind.Legend => CategoryGraph.DescribeCategory(map.CategorySeries!, item.Entry),
         MapItemKind.NoValue => item.Label,
-        MapItemKind.OffScale => item.Label + ". A value outside the declared range goes to the end class, one between steps to the nearest step",
-        MapItemKind.Finding => "A ring marks the square of the first case of a finding. The Findings tab lists them all",
+        MapItemKind.OutsideRange => item.Label + ". A value outside the declared range goes to the end class, one between declared steps to the nearest step",
+        MapItemKind.Finding => "A ring marks the square of the first case of a finding; clicking steps through the rings. The Findings tab lists them all",
         _ => string.Empty,
     };
 
@@ -515,6 +570,12 @@ public sealed partial class GraphView
     private void MapPointerMoved(FrameMapGraph map, Point point)
     {
         _mapKeyboard = false;
+        _mapPointer = point;
+        UpdateMapHover(map, point);
+    }
+
+    private void UpdateMapHover(FrameMapGraph map, Point point)
+    {
         MapHit? hit = MapHitAt(map, point);
         if (hit is { Square: >= 0 } square)
         {
@@ -548,14 +609,14 @@ public sealed partial class GraphView
         if (hit.Value.IsLane)
         {
             MapLayout layout = MapLayoutFor(map, Bounds.Size);
-            double row = hit.Value.LaneFraction * layout.Rows;
-            SetMapScroll(layout, MapPad + (row * layout.Pitch) - (layout.ViewHeight / 2));
+            double y = hit.Value.LaneFraction * Math.Max(layout.ContentHeight, layout.ViewHeight);
+            SetMapScroll(layout, y - (layout.ViewHeight / 2));
             return true;
         }
 
         if (hit.Value.Item is { } item)
         {
-            if (item.Kind is MapItemKind.Swatch or MapItemKind.Legend)
+            if (item.Kind is MapItemKind.Swatch or MapItemKind.Legend or MapItemKind.Finding)
             {
                 CategoryClicked?.Invoke(this, item.Entry);
             }
@@ -657,6 +718,10 @@ public sealed partial class GraphView
             MapLayout layout = MapLayoutFor(map, size);
             _mapHelpColumns = layout.Columns;
             parts.Add($"Frame map of {frames}, {layout.Columns} to a row");
+            if (layout.IsNarrow)
+            {
+                parts.Add(NarrowCaption);
+            }
         }
         else
         {
@@ -676,11 +741,11 @@ public sealed partial class GraphView
             }
             else if (map.UsesRange)
             {
-                parts.Add($"{map.KeyLow} to {map.KeyHigh}, {direction} is higher, {map.ClassCount} classes of equal width");
+                parts.Add($"{map.KeyRange}, {direction} is higher, {map.ClassCount} classes of equal width");
             }
             else
             {
-                parts.Add($"{map.KeyLow} to {map.KeyHigh}, {direction} is higher, {map.ClassCount} values");
+                parts.Add($"{map.KeyRange}, {direction} is higher, {map.ClassCount} values");
             }
         }
 
@@ -716,8 +781,8 @@ public sealed partial class GraphView
         IBrush secondary = Palette.Secondary(this);
         IBrush foreground = Palette.Foreground(this);
 
-        context.DrawText(Text(map.Caption, TextSize, secondary), new Point(4, 2));
-        var view = new Rect(0, layout.ViewTop, Bounds.Width, layout.ViewHeight);
+        context.DrawText(Text(layout.IsNarrow ? NarrowCaption : map.Caption, TextSize, secondary), new Point(4, 2));
+        var view = new Rect(0, layout.ViewTop, Math.Max(0, layout.ClipRight), layout.ViewHeight);
         int scrollPx = (int)Math.Round(_mapScroll * layout.Scale);
         IBrush[] classBrushes = [];
         IBrush[] categoryBrushes = [];
@@ -739,16 +804,82 @@ public sealed partial class GraphView
 
         DrawMapLane(context, map, layout, foreground);
         DrawMapItems(context, map, layout, classBrushes, categoryBrushes, styles, surface, secondary, foreground);
-        if (_hover is { } hover && hover < map.Count && _hoverText is { } text)
+        if (MapTooltipFor(map, layout, scrollPx) is var (label, box))
         {
-            Rect rect = SquareRect(layout, hover, scrollPx);
-            DrawTooltip(context, text, rect.Center, view);
-        }
-        else if (_hoverText is { } itemText)
-        {
-            DrawTooltip(context, itemText, new Point(_mapHoverItem.Center.X, _mapHoverItem.Y), view);
+            context.DrawRectangle(Palette.TooltipBackground(this), new Pen(Palette.Grid(this, 0.3), 1), box, 4, 4);
+            context.DrawText(label, new Point(box.X + 8, box.Y + 4));
         }
     }
+
+    // What the pointer rests on says, in a box above the square or the key's swatch, below it where there is no room above, else
+    // beside it; never over the thing it describes.
+    private (FormattedText Label, Rect Box)? MapTooltipFor(FrameMapGraph map, MapLayout layout, int scrollPx)
+    {
+        if (_hoverText is not { } text)
+        {
+            return null;
+        }
+
+        Rect target;
+        if (_hover is { } hover && hover < map.Count)
+        {
+            target = SquareRect(layout, hover, scrollPx);
+        }
+        else if (_hover is null)
+        {
+            target = _mapHoverItem;
+        }
+        else
+        {
+            return null;
+        }
+
+        FormattedText label = Text(text, TextSize, Palette.Foreground(this));
+        label.MaxTextWidth = Math.Max(160, Bounds.Width - 40);
+        return (label, PlaceTooltip(new Size(label.Width + 16, label.Height + 8), target, Bounds.Size));
+    }
+
+    // The box of a tooltip of this size for a target: above it when that fits in the view, else below, else to the right or left.
+    // Its left edge follows the target's and it stays inside the bounds; it never intersects the target.
+    internal static Rect PlaceTooltip(Size size, Rect target, Size bounds)
+    {
+        const double Gap = 4;
+        const double Margin = 2;
+        double x = Math.Clamp(target.X, Margin, Math.Max(Margin, bounds.Width - Margin - size.Width));
+        double above = target.Y - Gap - size.Height;
+        if (above >= Margin)
+        {
+            return new Rect(new Point(x, above), size);
+        }
+
+        double below = target.Bottom + Gap;
+        if (below + size.Height <= bounds.Height - Margin)
+        {
+            return new Rect(new Point(x, below), size);
+        }
+
+        double y = Math.Clamp(target.Y, Margin, Math.Max(Margin, bounds.Height - Margin - size.Height));
+        return target.Right + Gap + size.Width <= bounds.Width - Margin
+            ? new Rect(new Point(target.Right + Gap, y), size)
+            : new Rect(new Point(Math.Max(Margin, target.X - Gap - size.Width), y), size);
+    }
+
+    // The tooltip box now shown, for tests; null when there is none.
+    internal Rect? MapTooltipRect()
+    {
+        if (Graph is not FrameMapGraph map || Bounds.Width < 80 || Bounds.Height < 60)
+        {
+            return null;
+        }
+
+        MapLayout layout = MapLayoutFor(map, Bounds.Size);
+        return MapTooltipFor(map, layout, (int)Math.Round(_mapScroll * layout.Scale))?.Box;
+    }
+
+    // The line above the squares, for tests.
+    internal string? MapCaption => Graph is FrameMapGraph map && Bounds.Width >= 80 && Bounds.Height >= 60
+        ? (MapLayoutFor(map, Bounds.Size).IsNarrow ? NarrowCaption : map.Caption)
+        : null;
 
     private void DrawMapCells(DrawingContext context, FrameMapGraph map, MapLayout layout, int scrollPx, IBrush[] classBrushes, IBrush[] categoryBrushes, CategoryStyle[] styles, Color surface, IBrush secondary, IBrush foreground)
     {
@@ -844,28 +975,31 @@ public sealed partial class GraphView
             return;
         }
 
+        if (!FrameMapGraph.HasCategory(n, codes))
+        {
+            DrawEmptyCell(context, rect, outline);
+            return;
+        }
+
         CategorySeries series = map.CategorySeries!;
         bool Hatched(int code) => styles[code].IsHatched || (highContrast && code % 2 == 1);
         if (n == 1)
         {
-            if (codes[0] == CategorySeries.None)
-            {
-                DrawEmptyCell(context, rect, outline);
-                return;
-            }
-
             FillCategory(context, rect, codes[0], brushes, Hatched(codes[0]), surface);
             return;
         }
 
         if (map.Layout == FrameMapGraph.CellLayout.Split && n == series.ValuesPerUnit)
         {
-            // Two values side by side, three in a row, four as 2 x 2 in reading order, a pixel apart.
+            // Two values side by side, three in a row, four as 2 x 2 in reading order, a physical pixel apart; the cells of a row
+            // and of a column differ by at most one pixel.
             int columns = n == 4 ? 2 : n;
             int rows = n == 4 ? 2 : 1;
-            double gap = 1 / scale;
-            double cellWidth = Math.Floor(((rect.Width - ((columns - 1) * gap)) / columns) * scale) / scale;
-            double cellHeight = Math.Floor(((rect.Height - ((rows - 1) * gap)) / rows) * scale) / scale;
+            int leftPx = (int)Math.Round(rect.X * scale);
+            int topPx = (int)Math.Round(rect.Y * scale);
+            int widthPx = (int)Math.Round(rect.Width * scale);
+            int heightPx = (int)Math.Round(rect.Height * scale);
+            int gapPx = widthPx >= (3 * columns) - 1 && heightPx >= (3 * rows) - 1 ? 1 : 0;
             for (int i = 0; i < n; i++)
             {
                 if (codes[i] == CategorySeries.None)
@@ -873,13 +1007,9 @@ public sealed partial class GraphView
                     continue;
                 }
 
-                int column = i % columns;
-                int row = i / columns;
-                double x = rect.X + (column * (cellWidth + gap));
-                double y = rect.Y + (row * (cellHeight + gap));
-                double width = column == columns - 1 ? rect.Right - x : cellWidth;
-                double height = row == rows - 1 ? rect.Bottom - y : cellHeight;
-                FillCategory(context, new Rect(x, y, width, height), codes[i], brushes, Hatched(codes[i]), surface);
+                (int x, int width) = SplitCell(widthPx, columns, i % columns, gapPx);
+                (int y, int height) = SplitCell(heightPx, rows, i / columns, gapPx);
+                FillCategory(context, new Rect((leftPx + x) / scale, (topPx + y) / scale, width / scale, height / scale), codes[i], brushes, Hatched(codes[i]), surface);
             }
 
             return;
@@ -908,6 +1038,17 @@ public sealed partial class GraphView
             FillCategory(context, new Rect(rect.X, top, rect.Width, bottom - top), c, brushes, Hatched(c), surface);
             bottom = top;
         }
+    }
+
+    // Where cell index of cells starts and how wide it is, in physical pixels, in a run of sizePx with gapPx between cells: the
+    // sizes differ by at most one pixel, the wider cells last.
+    internal static (int Start, int Size) SplitCell(int sizePx, int cells, int index, int gapPx)
+    {
+        int total = sizePx - ((cells - 1) * gapPx);
+        int basis = total / cells;
+        int extra = total % cells;
+        int firstWide = cells - extra;
+        return ((index * (basis + gapPx)) + Math.Max(0, index - firstWide), basis + (index >= firstWide ? 1 : 0));
     }
 
     private void FillCategory(DrawingContext context, Rect rect, int code, IBrush[] brushes, bool isHatched, Color surface)
@@ -955,9 +1096,16 @@ public sealed partial class GraphView
 
                 case MapItemKind.Swatch:
                     {
-                        bool isUnused = map.IsDeclared && key[item.Entry].Count == 0;
-                        IBrush brush = isUnused ? new ImmutableSolidColorBrush(((ISolidColorBrush)classBrushes[item.Entry]).Color, UnusedOpacity) : classBrushes[item.Entry];
-                        context.FillRectangle(brush, swatch, 2f);
+                        // A declared step the file does not use is an outline of its color with nothing inside.
+                        if (map.IsDeclared && key[item.Entry].Count == 0)
+                        {
+                            context.DrawRectangle(null, new Pen(classBrushes[item.Entry], 1.5), swatch.Deflate(0.75), 2, 2);
+                        }
+                        else
+                        {
+                            context.FillRectangle(classBrushes[item.Entry], swatch, 2f);
+                        }
+
                         break;
                     }
 

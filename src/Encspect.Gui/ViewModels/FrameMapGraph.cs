@@ -50,6 +50,9 @@ public sealed class FrameMapGraph : Graph
     // The values of a unit the hover lists.
     public const int MaxHoverValues = 32;
 
+    // The entry of the key's "Finding (first case)": a click steps through the ringed squares.
+    public const int FindingEntry = -2;
+
     private readonly Series? _numbers;
     private readonly CategorySeries? _categories;
     private readonly ReadOnlyMemory<double> _frameOffsets;
@@ -60,6 +63,7 @@ public sealed class FrameMapGraph : Graph
     private bool _isResolved;
     private Scale? _scale;
     private ResolvedFinding[]? _resolved;
+    private long? _emptyCount;
 
     public FrameMapGraph(Series series, ReadOnlyMemory<double> frameOffsets, IReadOnlyList<MapFinding>? findings = null)
         : base(series.Name, series.Unit)
@@ -209,6 +213,11 @@ public sealed class FrameMapGraph : Graph
     public string KeyLow => EnsureScale() is { Classes: > 0 } s ? FormatValue(s.IsRange ? s.Min : s.Points[0], Unit) : string.Empty;
 
     public string KeyHigh => EnsureScale() is { Classes: > 0 } s ? FormatValue(s.IsRange ? s.Max : s.Points[^1], Unit) : string.Empty;
+
+    // The ends of the key as one phrase with the unit once: "32 to 320 kbps".
+    public string KeyRange => EnsureScale() is { Classes: > 0 } s
+        ? $"{FormatValue(s.IsRange ? s.Min : s.Points[0], string.Empty)} to {FormatValue(s.IsRange ? s.Max : s.Points[^1], Unit)}"
+        : string.Empty;
 
     // One swatch for each class, lowest first, with the squares that have it. A declared step the file does not use has a count of 0.
     public IReadOnlyList<MapKeyEntry> Key
@@ -477,6 +486,51 @@ public sealed class FrameMapGraph : Graph
 
     public CellReader Reader() => new(this);
 
+    // The squares a category map draws empty: those with no unit, no values, or only values without a category. Counted once, in
+    // a pass over the units that keeps nothing.
+    public long EmptyCount
+    {
+        get
+        {
+            if (_emptyCount is { } known)
+            {
+                return known;
+            }
+
+            long empty = 0;
+            if (_categories is not null)
+            {
+                Span<byte> codes = stackalloc byte[CategorySeries.MaxValuesPerUnit];
+                CellReader reader = Reader();
+                int count = Count;
+                for (int square = 0; square < count; square++)
+                {
+                    if (!HasCategory(reader.Read(square, codes), codes))
+                    {
+                        empty++;
+                    }
+                }
+            }
+
+            _emptyCount = empty;
+            return empty;
+        }
+    }
+
+    // True when at least one of the n values read has a category.
+    public static bool HasCategory(int n, ReadOnlySpan<byte> codes)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            if (codes[i] != CategorySeries.None)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // ---- Findings
 
     private readonly record struct ResolvedFinding(int Square, Severity Severity, string Message, int Count);
@@ -617,8 +671,13 @@ public sealed class FrameMapGraph : Graph
     // The frame after the selected one (the first when none is selected) whose square has the key's class, or holds the category
     // in any value; wraps around the end; null when none does. A swatch or legend entry steps through its frames as a bar of the
     // distribution does.
-    public long? NextFrameOf(int entry, long? selected)
+    public long? NextFrameOf(int entry, long? selected, SeverityMask shown = SeverityMask.All)
     {
+        if (entry == FindingEntry)
+        {
+            return NextFinding(selected, shown);
+        }
+
         if (_categories is { } series)
         {
             return CategoryGraph.NextUnit(series, entry, selected);
@@ -656,6 +715,26 @@ public sealed class FrameMapGraph : Graph
         }
 
         return null;
+    }
+
+    // The ringed frame after the selected one, wrapping around; null when no finding is shown.
+    private long? NextFinding(long? selected, SeverityMask shown)
+    {
+        int[] squares = FindingSquares(shown);
+        if (squares.Length == 0)
+        {
+            return null;
+        }
+
+        foreach (int square in squares)
+        {
+            if (selected is not { } at || OffsetOf(square) > at)
+            {
+                return OffsetOf(square);
+            }
+        }
+
+        return OffsetOf(squares[0]);
     }
 
     // What a swatch of the key says on hover: "128 kbps · 1,263 frames".

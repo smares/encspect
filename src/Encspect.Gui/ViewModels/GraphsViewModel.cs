@@ -484,7 +484,7 @@ public sealed class GraphsViewModel : ObservableObject
     {
         if (Graph is FrameMapGraph map)
         {
-            if (map.NextFrameOf(category, _markedFrame) is { } next)
+            if (map.NextFrameOf(category, _markedFrame, _shownSeverities) is { } next)
             {
                 FrameRequested?.Invoke(this, next);
             }

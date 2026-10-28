@@ -347,4 +347,62 @@ public class FrameMapGraphTests
         Assert.All(map.FindingSquares(), s => Assert.Contains(map.OffsetOf(s), findings.Select(f => f.Offset)));
         Assert.All(map.FindingSquares(), s => Assert.Matches(" · (Warning|Error|Info): ", map.Describe(s)));
     }
+
+    [Fact]
+    public void The_key_range_names_the_unit_once()
+    {
+        FrameMapGraph steps = Map(Numbers([32, 320, 128], range: ValueRange.OfSteps(Mpeg1Layer3)));
+        Assert.Equal("32 to 320 kbps", steps.KeyRange);
+        Assert.Equal("32 kbps", steps.KeyLow);
+        Assert.Equal("0 to 100 %", Map(Numbers([5, 50], "%", ValueRange.Between(0, 100))).KeyRange);
+    }
+
+    [Fact]
+    public void A_click_on_the_finding_entry_steps_through_the_ringed_frames_of_the_shown_severities_and_wraps_around()
+    {
+        long[] offsets = [.. Offsets(10).Select(o => (long)o)];
+        MapFinding[] findings =
+        [
+            new(offsets[7], Severity.Warning, "Odd.", 3),
+            new(offsets[2], Severity.Error, "Bad.", 1),
+            new(offsets[5], Severity.Info, "Note.", 1),
+        ];
+        FrameMapGraph map = Map(Numbers([.. Enumerable.Repeat(128.0, 10)]), findings: findings);
+
+        Assert.Equal(offsets[2], map.NextFrameOf(FrameMapGraph.FindingEntry, null));
+        Assert.Equal(offsets[5], map.NextFrameOf(FrameMapGraph.FindingEntry, offsets[2]));
+        Assert.Equal(offsets[7], map.NextFrameOf(FrameMapGraph.FindingEntry, offsets[5]));
+        Assert.Equal(offsets[2], map.NextFrameOf(FrameMapGraph.FindingEntry, offsets[7]));
+        Assert.Equal(offsets[7], map.NextFrameOf(FrameMapGraph.FindingEntry, offsets[2], SeverityMask.Warning));
+        Assert.Equal(offsets[7], map.NextFrameOf(FrameMapGraph.FindingEntry, offsets[7], SeverityMask.Warning));
+        Assert.Null(map.NextFrameOf(FrameMapGraph.FindingEntry, null, SeverityMask.None));
+    }
+
+    [Fact]
+    public void The_no_value_entry_of_a_category_map_counts_the_squares_drawn_empty()
+    {
+        // Frames 0 to 5: a coded unit, a value without a category, a unit of two values with none coded, a unit of two values with one
+        // coded, a frame the series skips, a coded unit, and a last frame it skips.
+        double[] frames = Offsets(6);
+        var builder = new CategorySeriesBuilder("Block Usage", CategoryTestData.BlockTypes, "granule", 2);
+        builder.Add([0, 0]);
+        builder.Add([CategorySeries.None, CategorySeries.None]);
+        builder.Add([CategorySeries.None, 1]);
+        builder.Add([2, 2]);
+        CategorySeries series = builder.Build(new[] { frames[0], frames[1], frames[2], frames[4] }, null, null, "d");
+        var map = new FrameMapGraph(series, frames);
+
+        Assert.Equal(6, map.Count);
+        Assert.Equal(3, map.EmptyCount);
+
+        var single = new CategorySeriesBuilder("Modes", CategoryTestData.StereoCodings, "frame", 1);
+        single.Add(0);
+        single.Add(CategorySeries.None);
+        single.Add(1);
+        CategorySeries ones = single.Build(new[] { frames[0], frames[1], frames[3] }, null, null, "d");
+        var skipping = new FrameMapGraph(ones, frames);
+        Assert.Equal(1 + 3, skipping.EmptyCount);
+        Assert.Equal("no category", skipping.Describe(1).Split(" · ")[^1]);
+        Assert.Equal("no value", skipping.Describe(2).Split(" · ")[^1]);
+    }
 }
