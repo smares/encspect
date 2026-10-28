@@ -72,7 +72,15 @@ public class MeasurementTests
 
     internal static void AssertSame(StreamMeasurements a, StreamMeasurements b)
     {
-        Assert.Equal(a with { Spectrum = null, Levels = null, Spectrogram = null, Waveform = null, ChannelLayout = null }, b with { Spectrum = null, Levels = null, Spectrogram = null, Waveform = null, ChannelLayout = null });
+        Assert.Equal(a with { Spectrum = null, Levels = null, Loudness = null, TruePeak = null, Spectrogram = null, Waveform = null, ChannelLayout = null }, b with { Spectrum = null, Levels = null, Loudness = null, TruePeak = null, Spectrogram = null, Waveform = null, ChannelLayout = null });
+        AssertSameLoudness(a.Loudness, b.Loudness);
+        Assert.Equal(a.TruePeak is null, b.TruePeak is null);
+        if (a.TruePeak is not null)
+        {
+            Assert.Equal(a.TruePeak with { ChannelTenths = [] }, b.TruePeak! with { ChannelTenths = [] });
+            Assert.Equal(a.TruePeak.ChannelTenths, b.TruePeak.ChannelTenths);
+        }
+
         Assert.Equal(a.Levels?.Stream, b.Levels?.Stream);
         Assert.True((a.Levels?.Channels ?? []).SequenceEqual(b.Levels?.Channels ?? []));
         Assert.Equal(a.ChannelLayout ?? [], b.ChannelLayout ?? []);
@@ -89,6 +97,25 @@ public class MeasurementTests
         Assert.True(a.Spectrogram.Power.Span.SequenceEqual(b.Spectrogram.Power.Span));
         Assert.True(a.Waveform!.Minimum.Span.SequenceEqual(b.Waveform!.Minimum.Span));
         Assert.True(a.Waveform.Maximum.Span.SequenceEqual(b.Waveform.Maximum.Span));
+    }
+
+    // Every figure of the loudness, the arrays and the series by their values (a record compares its arrays by reference).
+    internal static void AssertSameLoudness(LoudnessFigures? a, LoudnessFigures? b)
+    {
+        Assert.Equal(a is null, b is null);
+        if (a is null || b is null)
+        {
+            return;
+        }
+
+        Assert.Equal(a with { ChannelWeights = [], ShortTerm = null }, b with { ChannelWeights = [], ShortTerm = null });
+        Assert.Equal(a.ChannelWeights, b.ChannelWeights);
+        Assert.Equal(a.ShortTerm is null, b.ShortTerm is null);
+        if (a.ShortTerm is not null)
+        {
+            Assert.True(a.ShortTerm.X.Span.SequenceEqual(b.ShortTerm!.X.Span));
+            Assert.True(a.ShortTerm.Values.Span.SequenceEqual(b.ShortTerm.Values.Span));
+        }
     }
 
     [Fact]

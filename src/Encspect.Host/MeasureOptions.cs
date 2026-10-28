@@ -28,10 +28,16 @@ public enum MeasurementKinds
 
     // Sample peak, RMS, DC offset, clipping runs, digital silence and bit-depth usage.
     Levels = 2,
+
+    // Integrated loudness, loudness range, and the highest momentary and short-term loudness (ITU-R BS.1770-5, EBU Tech 3341 and 3342).
+    Loudness = 4,
+
+    // The true peak of each channel (ITU-R BS.1770-5 Annex 2).
+    TruePeak = 8,
 }
 
 // The kinds the library has, as a property so that it is read when it runs (never a const or a field initializer in a caller).
 public static class MeasurementSets
 {
-    public static MeasurementKinds All => MeasurementKinds.Spectrum | MeasurementKinds.Levels;
+    public static MeasurementKinds All => MeasurementKinds.Spectrum | MeasurementKinds.Levels | MeasurementKinds.Loudness | MeasurementKinds.TruePeak;
 }

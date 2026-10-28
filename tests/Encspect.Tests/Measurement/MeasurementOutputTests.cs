@@ -115,14 +115,14 @@ public class MeasurementOutputTests
     {
         (int named, string withKinds, _) = Run("--measure", "spectrum", Brickwall);
         (int inline, string inlineKinds, _) = Run("--measure=spectrum", Brickwall);
-        (int unknown, _, string errors) = Run("--measure=loudness", Brickwall);
+        (int unknown, _, string errors) = Run("--measure=timbre", Brickwall);
 
         Assert.Equal(CommandLine.Success, named);
         Assert.Contains("Spectral Cutoff:", withKinds);
         Assert.Equal(CommandLine.Success, inline);
         Assert.Contains("Spectral Cutoff:", inlineKinds);
         Assert.Equal(CommandLine.UsageError, unknown);
-        Assert.Contains("Unknown measurement: loudness. Measurements: spectrum, levels.", errors);
+        Assert.Contains("Unknown measurement: timbre. Measurements: spectrum, levels, loudness, true-peak.", errors);
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public class MeasurementOutputTests
         string[] header = measured.Split("\r\n")[0].Split(',');
         string[] row = measured.Split("\r\n")[1].Split(',');
         int peak = Array.IndexOf(header, "Sample Peak (dBFS)");
-        Assert.Equal("Sample Peak (dBFS)", header[^1]);
+        Assert.Equal(new[] { "Sample Peak (dBFS)", "Maximum True Peak Level (dBTP)", "Integrated Loudness (LUFS)", "Loudness Range (LU)" }, header[peak..]);
         Assert.Equal("-8.7", row[peak]);
         Assert.False(double.IsNaN(double.Parse(row[peak], System.Globalization.CultureInfo.InvariantCulture)));
 
@@ -175,7 +175,7 @@ public class MeasurementOutputTests
         ReportCsvWriter.Write([report], csv, isVerifying: true);
         string[] lines = csv.ToString().Split("\r\n");
         Assert.StartsWith("'=HYPERLINK(1).flac,", lines[1]);
-        Assert.EndsWith(",-8.7", lines[1].TrimEnd());
+        Assert.Contains(",-8.7,", lines[1]);
 
         // Silence has no peak: the cell is empty, and without --measure so are both measured cells.
         (_, string silent, _) = Run("--measure", "--csv", Path.Combine(Fixtures.FixtureDirectory, "measurement", "synthetic-levels-silent.flac"));

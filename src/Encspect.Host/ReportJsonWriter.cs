@@ -22,8 +22,10 @@ namespace Encspect.Host;
 // asked for measurements has measurements after verification: status, samples, firstPosition, lostSamples, gaps, sampleRate,
 // channels, channelsMeasured, the spectrum (rows in tenths of a dB, the cutoff in whole hertz and tenths of a dB as
 // {value, unit}), the levels (samplePeak, rms, dcOffset and dcOffsetLevel as {value, unit, perChannel}, null for minus infinity;
-// clipping, digitalSilence and bitDepth as counts, bare, with perChannel objects) and, with --measure-grids, the spectrogram and
-// waveform grids as base64.
+// clipping, digitalSilence and bitDepth as counts, bare, with perChannel objects), the loudness (integratedLoudness, loudnessRange,
+// maximumMomentaryLoudness and maximumShortTermLoudness as {value, unit}, or the unit and an absence where there is no value; the
+// channel weights, the gating blocks and the short-term series) and the truePeak (oversampling and maximumTruePeakLevel as
+// {value, unit, perChannel}) and, with --measure-grids, the spectrogram and waveform grids as base64.
 public static class ReportJsonWriter
 {
     // Raised whenever a field changes meaning or type, or one is removed; added fields keep it.
@@ -715,6 +717,16 @@ public static class ReportJsonWriter
             WriteLevels(writer, levels, explain);
         }
 
+        if (m.Status != MeasurementStatus.Failed && m.Loudness is { } loudness)
+        {
+            WriteLoudness(writer, loudness, explain);
+        }
+
+        if (m.Status != MeasurementStatus.Failed && m.TruePeak is { } truePeak)
+        {
+            WriteTruePeak(writer, truePeak, explain);
+        }
+
         if (includeGrids && m.Status != MeasurementStatus.Failed)
         {
             if (m.Spectrogram is { } grid)
@@ -743,6 +755,127 @@ public static class ReportJsonWriter
             }
         }
 
+        writer.WriteEndObject();
+    }
+
+    private static void WriteDescribed(Utf8JsonWriter writer, bool explain, string description, string topic)
+    {
+        if (explain)
+        {
+            writer.WriteString("description", description);
+            writer.WriteString("topic", topic);
+        }
+    }
+
+    // A loudness figure: { value, unit } with a null value for minus infinity, or the unit and why there is no value.
+    private static void WriteLoudnessFigure(Utf8JsonWriter writer, string name, int tenths, LoudnessAbsence absence, string unit, bool explain, string description, string topic, Action<Utf8JsonWriter>? more = null)
+    {
+        writer.WriteStartObject(name);
+        WriteDescribed(writer, explain, description, topic);
+        if (absence == LoudnessAbsence.None)
+        {
+            writer.WritePropertyName("value");
+            WriteLevel(writer, tenths);
+        }
+        else
+        {
+            writer.WriteString("absence", absence == LoudnessAbsence.TooShort ? "tooShort" : "belowAbsoluteGate");
+        }
+
+        writer.WriteString("unit", unit);
+        if (absence == LoudnessAbsence.None)
+        {
+            more?.Invoke(writer);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteLoudness(Utf8JsonWriter writer, LoudnessFigures l, bool explain)
+    {
+        writer.WriteStartObject("loudness");
+        WriteDescribed(writer, explain, MeasurementText.LoudnessDescription, MeasurementText.LoudnessTopic);
+        if (l.NotMeasured is { } reason)
+        {
+            writer.WriteString("notMeasured", reason);
+            writer.WriteEndObject();
+            return;
+        }
+
+        writer.WriteStartArray("channelWeights");
+        foreach (int weight in l.ChannelWeights)
+        {
+            writer.WriteNumberValue(weight / 100m);
+        }
+
+        writer.WriteEndArray();
+        WriteLoudnessFigure(writer, "integratedLoudness", l.IntegratedTenths, l.IntegratedAbsence, "LUFS", explain, MeasurementText.IntegratedLoudnessDescription, MeasurementText.LoudnessTopic);
+        WriteLoudnessFigure(writer, "loudnessRange", l.RangeTenths, l.RangeAbsence, "LU", explain, MeasurementText.LoudnessRangeDescription, MeasurementText.LoudnessRangeTopic, w =>
+        {
+            w.WriteStartObject("low");
+            w.WritePropertyName("value");
+            WriteLevel(w, l.RangeLowTenths);
+            w.WriteString("unit", "LUFS");
+            w.WriteEndObject();
+            w.WriteStartObject("high");
+            w.WritePropertyName("value");
+            WriteLevel(w, l.RangeHighTenths);
+            w.WriteString("unit", "LUFS");
+            w.WriteEndObject();
+        });
+        WriteLoudnessFigure(writer, "maximumMomentaryLoudness", l.MaximumMomentaryTenths, l.MomentaryAbsence, "LUFS", explain, MeasurementText.MaximumMomentaryLoudnessDescription, MeasurementText.LoudnessTopic);
+        WriteLoudnessFigure(writer, "maximumShortTermLoudness", l.MaximumShortTermTenths, l.ShortTermAbsence, "LUFS", explain, MeasurementText.MaximumShortTermLoudnessDescription, MeasurementText.LoudnessTopic);
+        writer.WriteStartObject("gatingBlocks");
+        writer.WriteNumber("total", l.Blocks);
+        writer.WriteNumber("aboveAbsoluteGate", l.BlocksAboveAbsoluteGate);
+        writer.WriteNumber("aboveRelativeGate", l.BlocksAboveRelativeGate);
+        writer.WriteEndObject();
+        if (l.ShortTerm is { } series)
+        {
+            writer.WriteStartObject("shortTerm");
+            writer.WriteString("unit", series.Unit);
+            writer.WriteNumber("stepsPerPoint", l.StepsPerPoint);
+            if (explain)
+            {
+                writer.WriteString("description", series.Description);
+            }
+
+            WriteNumbers(writer, "x", series.X.Span);
+            WriteNumbers(writer, "values", series.Values.Span);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteTruePeak(Utf8JsonWriter writer, TruePeakFigures t, bool explain)
+    {
+        writer.WriteStartObject("truePeak");
+        WriteDescribed(writer, explain, MeasurementText.TruePeakDescription, MeasurementText.TruePeakTopic);
+        if (t.NotMeasured is { } reason)
+        {
+            writer.WriteString("notMeasured", reason);
+            writer.WriteEndObject();
+            return;
+        }
+
+        writer.WriteNumber("oversampling", t.Oversampling);
+        writer.WriteStartObject("maximumTruePeakLevel");
+        writer.WritePropertyName("value");
+        WriteLevel(writer, t.StreamTenths);
+        writer.WriteString("unit", "dBTP");
+        if (t.ChannelTenths.Count > 1)
+        {
+            writer.WriteStartArray("perChannel");
+            foreach (int tenths in t.ChannelTenths)
+            {
+                WriteLevel(writer, tenths);
+            }
+
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndObject();
         writer.WriteEndObject();
     }
 

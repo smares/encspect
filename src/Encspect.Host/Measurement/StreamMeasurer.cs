@@ -21,6 +21,12 @@ internal sealed class StreamMeasurer
 
     private const int FloatLevelsWeight = 14;
 
+    // The work per sample of a measured channel for loudness (the K-weighting and the squares, about 5 ns) and for the true peak by oversampling
+    // (4, 2 and none: the sample peak).
+    private const int LoudnessWeight = 8;
+
+    private static readonly int[] TruePeakWeights = [1, 22, 38];
+
     private const double SmallestSample = 1e-30;
 
     private const double LargestSample = 1024.0;
@@ -33,6 +39,13 @@ internal sealed class StreamMeasurer
     private readonly int[] _combined;
     private readonly bool _isMeasuringSpectrum;
     private readonly LevelsMeter? _levels;
+    private readonly LoudnessMeter? _loudness;
+    private readonly TruePeakMeter? _truePeak;
+    private readonly int[]? _loudnessWeights;
+    private readonly string? _loudnessNotMeasured;
+    private readonly string? _truePeakNotMeasured;
+    private readonly bool _isMeasuringLoudness;
+    private readonly bool _isMeasuringTruePeak;
     private double[] _scratch = [];
     private readonly FftPlan? _plan;
     private readonly CutoffGeometry _geometry;
@@ -85,6 +98,37 @@ internal sealed class StreamMeasurer
         if ((kinds & MeasurementKinds.Levels) != 0)
         {
             _levels = new LevelsMeter(_measured, format.Format, format.BitsPerSample);
+        }
+
+        _isMeasuringLoudness = (kinds & MeasurementKinds.Loudness) != 0;
+        if (_isMeasuringLoudness)
+        {
+            if (format.SampleRate < MeasurementLimits.MinimumLoudnessRate)
+            {
+                _loudnessNotMeasured = format.SampleRate <= 0 ? "the sample rate is not stated" : "loudness needs a sample rate of 8,000 Hz or more";
+            }
+            else if (LoudnessWeights.For(format.ChannelLayout, _measured, out string? reason) is { } weights)
+            {
+                _loudnessWeights = weights;
+                _loudness = new LoudnessMeter(format.SampleRate, weights);
+            }
+            else
+            {
+                _loudnessNotMeasured = reason;
+            }
+        }
+
+        _isMeasuringTruePeak = (kinds & MeasurementKinds.TruePeak) != 0;
+        if (_isMeasuringTruePeak)
+        {
+            if (format.SampleRate <= 0)
+            {
+                _truePeakNotMeasured = "the sample rate is not stated";
+            }
+            else
+            {
+                _truePeak = new TruePeakMeter(_measured, format.SampleRate);
+            }
         }
 
 
@@ -148,6 +192,24 @@ internal sealed class StreamMeasurer
             bytes += 256L * (measured + 1);
         }
 
+        bool needsDoubles = (kinds & (MeasurementKinds.Loudness | MeasurementKinds.TruePeak)) != 0 && format.SampleRate > 0;
+        if ((kinds & MeasurementKinds.Loudness) != 0 && format.SampleRate >= MeasurementLimits.MinimumLoudnessRate)
+        {
+            bytes += LoudnessMeter.EstimateBytes(measured, format.SampleRate);
+        }
+
+        if ((kinds & MeasurementKinds.TruePeak) != 0 && format.SampleRate > 0)
+        {
+            bytes += TruePeakMeter.EstimateBytes(measured, format.SampleRate);
+        }
+
+        if (needsDoubles && !isMeasuringSpectrum && !((kinds & MeasurementKinds.Levels) != 0 && format.Format != SampleFormat.Integer))
+        {
+            bytes += 8L * LevelsMeter.MaxPiece;
+        }
+
+        // The figures the record keeps: a weight and a peak for each channel, the series of the short-term loudness.
+        bytes += 16L * (measured + 1) + (needsDoubles ? 24L * MeasurementLimits.MaxSeriesPoints : 0);
         if (!isMeasuringSpectrum)
         {
             return bytes;
@@ -247,6 +309,7 @@ internal sealed class StreamMeasurer
             _origin = _hop > 0 ? block.Position / _hop * _hop : block.Position;
             _next = block.Position;
             _bufferStart = block.Position;
+            _loudness?.Start(block.Position);
         }
 
         if (block.Position < _next)
@@ -262,7 +325,7 @@ internal sealed class StreamMeasurer
             return;
         }
 
-        if (!_charge((long)block.Length * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight))))
+        if (!_charge((long)block.Length * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight) + (_loudness is null ? 0 : LoudnessWeight) + (_truePeak is null ? 0 : TruePeakWeights[BitOperationsLog2(_truePeak.Oversampling)]))))
         {
             IsLimited = true;
             _isStopped = true;
@@ -277,6 +340,8 @@ internal sealed class StreamMeasurer
             _fill = 0;
             _bufferStart = block.Position;
             _levels?.Gap();
+            _loudness?.Start(block.Position);
+            _truePeak?.Gap();
         }
 
         if (!_isMeasuringSpectrum)
@@ -291,7 +356,7 @@ internal sealed class StreamMeasurer
                 }
 
                 int count = Math.Min(LevelsMeter.MaxPiece, block.Length - done);
-                AddLevels(block, done, count);
+                AddPiece(block, done, count);
                 _samples += count;
                 _next += count;
                 done += count;
@@ -364,9 +429,13 @@ internal sealed class StreamMeasurer
                         }
                     }
                 }
+
+                _loudness?.AddChannel(c, _buffers[c].AsSpan(_fill, piece));
+                _truePeak?.AddChannel(c, _buffers[c].AsSpan(_fill, piece));
             }
 
             _levels?.EndPiece(piece);
+            _loudness?.EndPiece(piece);
 
             _fill += piece;
             _samples += piece;
@@ -391,21 +460,20 @@ internal sealed class StreamMeasurer
         }
     }
 
-    // The levels of a piece when the spectrum is not measured: a float block goes through the same safe conversion into a scratch array.
-    private void AddLevels(PcmBlock block, int start, int count)
+    // A piece when the spectrum is not measured: the levels read the integers as they are and a float block through the same safe conversion into a
+    // scratch array; loudness and the true peak read the converted samples, with those under 1e-30 flushed to 0 as the spectrum's buffers are.
+    private void AddPiece(PcmBlock block, int start, int count)
     {
-        if (_levels is null)
-        {
-            return;
-        }
-
+        bool isInteger = block.Format == SampleFormat.Integer;
+        bool needsDoubles = _loudness is not null || _truePeak is not null;
         for (int c = 0; c < _measured; c++)
         {
-            if (block.Format == SampleFormat.Integer)
+            if (isInteger && _levels is not null)
             {
                 _levels.AddIntegers(c, block.Integers.Slice((c * block.Stride) + start, count));
             }
-            else
+
+            if (!isInteger || needsDoubles)
             {
                 if (_scratch.Length < count)
                 {
@@ -414,11 +482,25 @@ internal sealed class StreamMeasurer
 
                 Span<double> target = _scratch.AsSpan(0, count);
                 Convert(block, c, start, count, target, out _, out _);
-                _levels.AddDoubles(c, target);
+                if (!isInteger)
+                {
+                    _levels?.AddDoubles(c, target);
+                    foreach (ref double v in target)
+                    {
+                        if (Math.Abs(v) < SmallestSample)
+                        {
+                            v = 0;
+                        }
+                    }
+                }
+
+                _loudness?.AddChannel(c, target);
+                _truePeak?.AddChannel(c, target);
             }
         }
 
-        _levels.EndPiece(count);
+        _levels?.EndPiece(count);
+        _loudness?.EndPiece(count);
     }
 
     // Scales a channel's samples to full scale +-1 in doubles, with the minimum and maximum. Non-finite floats are 0 and counted, floats
@@ -727,6 +809,8 @@ internal sealed class StreamMeasurer
         }
 
         bytes += record.Levels is { } levels ? 256L * (levels.Channels.Count + 1) : 0;
+        bytes += record.Loudness is { } loudness ? 256L + (24L * (loudness.ShortTerm?.Values.Length ?? 0)) + (4L * loudness.ChannelWeights.Count) : 0;
+        bytes += record.TruePeak is { } truePeak ? 128L + (4L * truePeak.ChannelTenths.Count) : 0;
         bytes += record.Spectrogram?.Power.Length ?? 0;
         bytes += 2L * ((record.Waveform?.Minimum.Length ?? 0) + (record.Waveform?.Maximum.Length ?? 0));
         return bytes;
@@ -756,7 +840,7 @@ internal sealed class StreamMeasurer
             return record;
         }
 
-        record = record with { Levels = _levels?.Build() };
+        record = record with { Levels = _levels?.Build(), Loudness = BuildLoudness(), TruePeak = BuildTruePeak() };
         if (!_isMeasuringSpectrum)
         {
             return record;
@@ -799,6 +883,16 @@ internal sealed class StreamMeasurer
             Waveform = Wave(),
         };
     }
+
+    private LoudnessFigures? BuildLoudness() =>
+        !_isMeasuringLoudness ? null
+        : _loudness is not null ? _loudness.Build(_loudnessWeights!)
+        : new LoudnessFigures { NotMeasured = _loudnessNotMeasured };
+
+    private TruePeakFigures? BuildTruePeak() =>
+        !_isMeasuringTruePeak ? null
+        : _truePeak is not null ? _truePeak.Build(_measured)
+        : new TruePeakFigures { NotMeasured = _truePeakNotMeasured };
 
     private short[] Levels(ReadOnlySpan<double> sums)
     {

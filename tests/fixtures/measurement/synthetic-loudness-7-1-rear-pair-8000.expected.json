@@ -1,0 +1,322 @@
+{
+ "description": "Eight channels (front left and right, center, LFE, back left and right, side left and right) at 8 kHz: a sine of 125 Hz at -20 dBFS in the back pair, silence elsewhere. The back pair is the rear pair of a 7.1 (weight 1.00).",
+ "length": 5519,
+ "construction": {
+  "cutoff_hz": null,
+  "unspecified": true,
+  "loudness": {
+   "weights": [100, 100, 100, 0, 100, 100, 141, 141]
+  }
+ },
+ "model": {
+  "sample_rate": 8000,
+  "channels": 8,
+  "channels_measured": 8,
+  "bits": 16,
+  "samples": 6400,
+  "first_position": 0,
+  "lost_samples": 0,
+  "gaps": 0,
+  "fft_size": 1024,
+  "frames": 11,
+  "combined": [-3685, -3595, -3732, -3617, -3769, -3711, -3695, -3585, -3616, -3796, -3773, -3590, -3817, -3558, -3598, -315, -254, -315, -3611, -3631, -3671, -3609, -3689, -3621, -3641, -3668, -3683, -3644, -3733, -3632, -3758, -3521, -3639, -3687, -3778, -3715, -3771, -3717, -3760, -3650, -3629, -3719, -3781, -3775, -3681, -3783, -3727, -1254, -1194, -1254, -3727, -3700, -3760, -3817, -3690, -3664, -3699, -3611, -3760, -3671, -3638, -3637, -3778, -3658, -3670, -3645, -3756, -3782, -3728, -3676, -3690, -3642, -3667, -3729, -3800, -3795, -3649, -3787, -3661, -1243, -1183, -1243, -3671, -3702, -3666, -3787, -3749, -3647, -3667, -3688, -3707, -3765, -3710, -3679, -3702, -3624, -3654, -3649, -3704, -3824, -3802, -3736, -3772, -3600, -3677, -3624, -3760, -3702, -3664, -3701, -3658, -1282, -1222, -1282, -3667, -3726, -3661, -3759, -3754, -3659, -3678, -3634, -3720, -3809, -3765, -3684, -3732, -3618, -3715, -3667, -3698, -3709, -3745, -3733, -3918, -3621, -3786, -3623, -3816, -3764, -3625, -3715, -3771, -1375, -1315, -1375, -3824, -3704, -3801, -3796, -3703, -3775, -3760, -3717, -3769, -3762, -3689, -3794, -3764, -3629, -3642, -3721, -3707, -3928, -3680, -3677, -3637, -3719, -3590, -3616, -3687, -3670, -3610, -3732, -3732, -1206, -1146, -1206, -3874, -3809, -3910, -3734, -3739, -3671, -3671, -3636, -3772, -3680, -3740, -3780, -3680, -3684, -3649, -3631, -3690, -3663, -3695, -3697, -3652, -3637, -3592, -3640, -3663, -3799, -3666, -3858, -3693, -1225, -1165, -1225, -3720, -3721, -3798, -3669, -3809, -3678, -3666, -3637, -3762, -3734, -3759, -3792, -3721, -3607, -3837, -3650, -3692, -3718, -3749, -3807, -3774, -3788, -3713, -3669, -3733, -3636, -3678, -3734, -3686, -1239, -1178, -1239, -3762, -3750, -3703, -3752, -3722, -3667, -3727, -3715, -3716, -3648, -3718, -3865, -3657, -3666, -3612, -3626, -3642, -3673, -3740, -3668, -3604, -3545, -3559, -3551, -3633, -3708, -3667, -3744, -3643, -1303, -1243, -1303, -3751, -3666, -3791, -3813, -3784, -3663, -3663, -3688, -3647, -3700, -3685, -3674, -3652, -3689, -3600, -3663, -3652, -3755, -3705, -3669, -3599, -3563, -3566, -3560, -3623, -3633, -3658, -3680, -3681, -1231, -1171, -1231, -3706, -3608, -3693, -3663, -3758, -3631, -3640, -3666, -3716, -3771, -3916, -3685, -3700, -3683, -3671, -3708, -3777, -3833, -3708, -3807, -3875, -3771, -3754, -3713, -3751, -3696, -3702, -3709, -3764, -1198, -1138, -1198, -3659, -3722, -3651, -3771, -3731, -3774, -3648, -3657, -3771, -3697, -3717, -3721, -3751, -3747, -3757, -3763, -3686, -3707, -3701, -3659, -3630, -3760, -3654, -3729, -3710, -3731, -3788, -3682, -3744, -1155, -1095, -1155, -3683, -3696, -3745, -3734, -3701, -3714, -3648, -3676, -3761, -3712, -3771, -3655, -3687, -3654, -3834, -3677, -3681, -3648, -3761, -3714, -3651, -3678, -3637, -3721, -3670, -3721, -3660, -3769, -3698, -1304, -1244, -1304, -3797, -3728, -3686, -3784, -3723, -3667, -3685, -3676, -3958, -3704, -3729, -3716, -3858, -3686, -3740, -3647, -3727, -3636, -3776, -3712, -3784, -3678, -3704, -3657, -3786, -3691, -3739, -3829, -3702, -1369, -1309, -1369, -3742, -3721, -3793, -3750, -3642, -3750, -3655, -3783, -3663, -3656, -3697, -3680, -3673, -3605, -3623, -3748, -3601, -3714, -3648, -3741, -3678, -3682, -3620, -3662, -3667, -3698, -3743, -3724, -3730, -1220, -1159, -1220, -3718, -3719, -3719, -3699, -3697, -3661, -3678, -3671, -3715, -3681, -3716, -3730, -3686, -3629, -3595, -3712, -3606, -3643, -3703, -3802, -3715, -3737, -3615, -3655, -3635, -3796, -3744, -3712, -3671, -1235, -1175, -1235, -3802, -3773, -3725, -4022, -3789, -3818, -3752, -3825, -3666, -3720, -3678, -3739, -3839, -3709],
+  "per_channel": [
+   [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+   [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+   [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+   [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+   [-3630, -3540, -3677, -3562, -3714, -3657, -3640, -3531, -3562, -3742, -3718, -3535, -3763, -3504, -3543, -260, -200, -260, -3556, -3576, -3616, -3555, -3634, -3567, -3586, -3614, -3628, -3590, -3679, -3578, -3703, -3466, -3585, -3633, -3724, -3661, -3717, -3663, -3706, -3595, -3574, -3664, -3726, -3721, -3626, -3729, -3672, -1199, -1139, -1199, -3673, -3646, -3705, -3763, -3636, -3610, -3645, -3557, -3706, -3616, -3583, -3582, -3724, -3604, -3615, -3590, -3701, -3728, -3674, -3622, -3636, -3588, -3613, -3675, -3746, -3741, -3595, -3732, -3606, -1189, -1129, -1189, -3617, -3647, -3612, -3732, -3694, -3592, -3612, -3634, -3652, -3710, -3656, -3625, -3648, -3570, -3599, -3594, -3650, -3769, -3747, -3682, -3718, -3546, -3622, -3570, -3706, -3647, -3610, -3646, -3604, -1228, -1168, -1228, -3613, -3672, -3607, -3705, -3699, -3605, -3623, -3580, -3666, -3754, -3711, -3630, -3678, -3563, -3660, -3612, -3643, -3655, -3691, -3679, -3864, -3566, -3732, -3568, -3761, -3710, -3570, -3660, -3717, -1321, -1261, -1321, -3770, -3650, -3747, -3741, -3649, -3720, -3705, -3663, -3714, -3707, -3634, -3739, -3710, -3574, -3588, -3666, -3653, -3873, -3626, -3623, -3583, -3665, -3535, -3561, -3632, -3615, -3556, -3677, -3678, -1152, -1092, -1152, -3819, -3755, -3855, -3679, -3685, -3617, -3617, -3581, -3718, -3625, -3685, -3725, -3626, -3630, -3595, -3577, -3635, -3609, -3641, -3643, -3597, -3582, -3538, -3586, -3608, -3744, -3611, -3803, -3638, -1170, -1110, -1170, -3666, -3666, -3744, -3615, -3755, -3623, -3612, -3582, -3708, -3679, -3705, -3738, -3667, -3552, -3782, -3596, -3637, -3664, -3694, -3753, -3719, -3733, -3658, -3615, -3678, -3582, -3624, -3680, -3631, -1184, -1124, -1184, -3708, -3696, -3649, -3698, -3667, -3612, -3672, -3661, -3662, -3593, -3664, -3811, -3603, -3611, -3558, -3571, -3588, -3619, -3685, -3614, -3549, -3490, -3505, -3497, -3579, -3653, -3613, -3690, -3589, -1248, -1188, -1248, -3697, -3612, -3736, -3758, -3730, -3609, -3609, -3633, -3593, -3645, -3631, -3620, -3598, -3635, -3546, -3608, -3597, -3701, -3651, -3615, -3545, -3509, -3511, -3506, -3568, -3579, -3604, -3626, -3627, -1176, -1116, -1176, -3652, -3554, -3638, -3609, -3703, -3577, -3585, -3611, -3662, -3716, -3862, -3630, -3646, -3629, -3617, -3654, -3723, -3779, -3654, -3753, -3821, -3716, -3700, -3658, -3696, -3641, -3647, -3655, -3710, -1143, -1083, -1143, -3605, -3668, -3596, -3717, -3676, -3720, -3593, -3603, -3716, -3642, -3662, -3667, -3697, -3693, -3703, -3709, -3631, -3652, -3646, -3605, -3576, -3705, -3600, -3675, -3655, -3677, -3733, -3627, -3690, -1101, -1041, -1101, -3628, -3641, -3691, -3679, -3646, -3660, -3593, -3622, -3706, -3658, -3717, -3601, -3633, -3599, -3780, -3623, -3627, -3594, -3706, -3659, -3597, -3623, -3583, -3667, -3615, -3667, -3606, -3715, -3644, -1250, -1189, -1250, -3742, -3673, -3631, -3730, -3669, -3612, -3630, -3622, -3904, -3649, -3674, -3662, -3804, -3631, -3686, -3593, -3673, -3582, -3722, -3657, -3730, -3624, -3649, -3603, -3732, -3637, -3684, -3775, -3648, -1315, -1255, -1315, -3688, -3667, -3738, -3696, -3588, -3695, -3601, -3728, -3608, -3601, -3643, -3625, -3619, -3551, -3569, -3694, -3547, -3660, -3593, -3687, -3624, -3628, -3566, -3608, -3613, -3644, -3689, -3669, -3675, -1165, -1105, -1165, -3663, -3664, -3665, -3645, -3643, -3607, -3624, -3617, -3660, -3627, -3661, -3675, -3631, -3574, -3541, -3658, -3551, -3589, -3649, -3748, -3661, -3683, -3561, -3601, -3580, -3741, -3690, -3658, -3617, -1181, -1121, -1181, -3747, -3719, -3671, -3967, -3734, -3764, -3697, -3770, -3611, -3666, -3624, -3684, -3785, -3655],
+   [-3630, -3540, -3677, -3562, -3714, -3657, -3640, -3531, -3562, -3742, -3718, -3535, -3763, -3504, -3543, -260, -200, -260, -3556, -3576, -3616, -3555, -3634, -3567, -3586, -3614, -3628, -3590, -3679, -3578, -3703, -3466, -3585, -3633, -3724, -3661, -3717, -3663, -3706, -3595, -3574, -3664, -3726, -3721, -3626, -3729, -3672, -1199, -1139, -1199, -3673, -3646, -3705, -3763, -3636, -3610, -3645, -3557, -3706, -3616, -3583, -3582, -3724, -3604, -3615, -3590, -3701, -3728, -3674, -3622, -3636, -3588, -3613, -3675, -3746, -3741, -3595, -3732, -3606, -1189, -1129, -1189, -3617, -3647, -3612, -3732, -3694, -3592, -3612, -3634, -3652, -3710, -3656, -3625, -3648, -3570, -3599, -3594, -3650, -3769, -3747, -3682, -3718, -3546, -3622, -3570, -3706, -3647, -3610, -3646, -3604, -1228, -1168, -1228, -3613, -3672, -3607, -3705, -3699, -3605, -3623, -3580, -3666, -3754, -3711, -3630, -3678, -3563, -3660, -3612, -3643, -3655, -3691, -3679, -3864, -3566, -3732, -3568, -3761, -3710, -3570, -3660, -3717, -1321, -1261, -1321, -3770, -3650, -3747, -3741, -3649, -3720, -3705, -3663, -3714, -3707, -3634, -3739, -3710, -3574, -3588, -3666, -3653, -3873, -3626, -3623, -3583, -3665, -3535, -3561, -3632, -3615, -3556, -3677, -3678, -1152, -1092, -1152, -3819, -3755, -3855, -3679, -3685, -3617, -3617, -3581, -3718, -3625, -3685, -3725, -3626, -3630, -3595, -3577, -3635, -3609, -3641, -3643, -3597, -3582, -3538, -3586, -3608, -3744, -3611, -3803, -3638, -1170, -1110, -1170, -3666, -3666, -3744, -3615, -3755, -3623, -3612, -3582, -3708, -3679, -3705, -3738, -3667, -3552, -3782, -3596, -3637, -3664, -3694, -3753, -3719, -3733, -3658, -3615, -3678, -3582, -3624, -3680, -3631, -1184, -1124, -1184, -3708, -3696, -3649, -3698, -3667, -3612, -3672, -3661, -3662, -3593, -3664, -3811, -3603, -3611, -3558, -3571, -3588, -3619, -3685, -3614, -3549, -3490, -3505, -3497, -3579, -3653, -3613, -3690, -3589, -1248, -1188, -1248, -3697, -3612, -3736, -3758, -3730, -3609, -3609, -3633, -3593, -3645, -3631, -3620, -3598, -3635, -3546, -3608, -3597, -3701, -3651, -3615, -3545, -3509, -3511, -3506, -3568, -3579, -3604, -3626, -3627, -1176, -1116, -1176, -3652, -3554, -3638, -3609, -3703, -3577, -3585, -3611, -3662, -3716, -3862, -3630, -3646, -3629, -3617, -3654, -3723, -3779, -3654, -3753, -3821, -3716, -3700, -3658, -3696, -3641, -3647, -3655, -3710, -1143, -1083, -1143, -3605, -3668, -3596, -3717, -3676, -3720, -3593, -3603, -3716, -3642, -3662, -3667, -3697, -3693, -3703, -3709, -3631, -3652, -3646, -3605, -3576, -3705, -3600, -3675, -3655, -3677, -3733, -3627, -3690, -1101, -1041, -1101, -3628, -3641, -3691, -3679, -3646, -3660, -3593, -3622, -3706, -3658, -3717, -3601, -3633, -3599, -3780, -3623, -3627, -3594, -3706, -3659, -3597, -3623, -3583, -3667, -3615, -3667, -3606, -3715, -3644, -1250, -1189, -1250, -3742, -3673, -3631, -3730, -3669, -3612, -3630, -3622, -3904, -3649, -3674, -3662, -3804, -3631, -3686, -3593, -3673, -3582, -3722, -3657, -3730, -3624, -3649, -3603, -3732, -3637, -3684, -3775, -3648, -1315, -1255, -1315, -3688, -3667, -3738, -3696, -3588, -3695, -3601, -3728, -3608, -3601, -3643, -3625, -3619, -3551, -3569, -3694, -3547, -3660, -3593, -3687, -3624, -3628, -3566, -3608, -3613, -3644, -3689, -3669, -3675, -1165, -1105, -1165, -3663, -3664, -3665, -3645, -3643, -3607, -3624, -3617, -3660, -3627, -3661, -3675, -3631, -3574, -3541, -3658, -3551, -3589, -3649, -3748, -3661, -3683, -3561, -3601, -3580, -3741, -3690, -3658, -3617, -1181, -1121, -1181, -3747, -3719, -3671, -3967, -3734, -3764, -3697, -3770, -3611, -3666, -3624, -3684, -3785, -3655],
+   [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+   [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+  ],
+  "cutoff": {
+   "is_searched": true,
+   "is_found": true,
+   "frequency": 3914,
+   "transition_start": 3891,
+   "step_frequency": 3914,
+   "step_tenths": 335,
+   "frames_showing": 11,
+   "frames_with_signal": 11
+  },
+  "channel_cutoffs": [
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2000,
+    "step_tenths": 0,
+    "frames_showing": 0,
+    "frames_with_signal": 11
+   },
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2000,
+    "step_tenths": 0,
+    "frames_showing": 0,
+    "frames_with_signal": 11
+   },
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2000,
+    "step_tenths": 0,
+    "frames_showing": 0,
+    "frames_with_signal": 11
+   },
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2000,
+    "step_tenths": 0,
+    "frames_showing": 0,
+    "frames_with_signal": 11
+   },
+   {
+    "is_searched": true,
+    "is_found": true,
+    "frequency": 3914,
+    "transition_start": 3891,
+    "step_frequency": 3914,
+    "step_tenths": 335,
+    "frames_showing": 11,
+    "frames_with_signal": 11
+   },
+   {
+    "is_searched": true,
+    "is_found": true,
+    "frequency": 3914,
+    "transition_start": 3891,
+    "step_frequency": 3914,
+    "step_tenths": 335,
+    "frames_showing": 11,
+    "frames_with_signal": 11
+   },
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2000,
+    "step_tenths": 0,
+    "frames_showing": 0,
+    "frames_with_signal": 11
+   },
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2000,
+    "step_tenths": 0,
+    "frames_showing": 0,
+    "frames_with_signal": 11
+   }
+  ],
+  "levels": {
+   "bits": 16,
+   "stream": {
+    "sample_peak_tenths": -200,
+    "rms_tenths": -290,
+    "dc_micropercent": 0,
+    "dc_tenths": null,
+    "clipping_runs": 0,
+    "clipped_samples": 0,
+    "longest_clipping_run": 0,
+    "silent_at_start": 1,
+    "silent_at_end": 0,
+    "zero_samples": 200,
+    "low_bits_unused": 0,
+    "highest_magnitude": 3277
+   },
+   "channels": [
+    {
+     "sample_peak_tenths": null,
+     "rms_tenths": null,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 6400,
+     "silent_at_end": 6400,
+     "zero_samples": 6400,
+     "low_bits_unused": null,
+     "highest_magnitude": 0
+    },
+    {
+     "sample_peak_tenths": null,
+     "rms_tenths": null,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 6400,
+     "silent_at_end": 6400,
+     "zero_samples": 6400,
+     "low_bits_unused": null,
+     "highest_magnitude": 0
+    },
+    {
+     "sample_peak_tenths": null,
+     "rms_tenths": null,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 6400,
+     "silent_at_end": 6400,
+     "zero_samples": 6400,
+     "low_bits_unused": null,
+     "highest_magnitude": 0
+    },
+    {
+     "sample_peak_tenths": null,
+     "rms_tenths": null,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 6400,
+     "silent_at_end": 6400,
+     "zero_samples": 6400,
+     "low_bits_unused": null,
+     "highest_magnitude": 0
+    },
+    {
+     "sample_peak_tenths": -200,
+     "rms_tenths": -230,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 1,
+     "silent_at_end": 0,
+     "zero_samples": 200,
+     "low_bits_unused": 0,
+     "highest_magnitude": 3277
+    },
+    {
+     "sample_peak_tenths": -200,
+     "rms_tenths": -230,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 1,
+     "silent_at_end": 0,
+     "zero_samples": 200,
+     "low_bits_unused": 0,
+     "highest_magnitude": 3277
+    },
+    {
+     "sample_peak_tenths": null,
+     "rms_tenths": null,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 6400,
+     "silent_at_end": 6400,
+     "zero_samples": 6400,
+     "low_bits_unused": null,
+     "highest_magnitude": 0
+    },
+    {
+     "sample_peak_tenths": null,
+     "rms_tenths": null,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 6400,
+     "silent_at_end": 6400,
+     "zero_samples": 6400,
+     "low_bits_unused": null,
+     "highest_magnitude": 0
+    }
+   ]
+  },
+  "loudness": {
+   "weights": [100, 100, 100, 0, 100, 100, 141, 141],
+   "blocks": 5,
+   "momentary": {
+    "tenths": -212,
+    "absence": "none"
+   },
+   "short_term": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "blocks_above_absolute_gate": 5,
+   "blocks_above_relative_gate": 5,
+   "integrated": {
+    "tenths": -212,
+    "absence": "none"
+   },
+   "range": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "short_term_values": 0,
+   "short_term_first_tenths": null
+  },
+  "true_peak": {
+   "oversampling": 4,
+   "channels": [null, null, null, null, -200, -200, null, null],
+   "stream": -200
+  },
+  "spectrogram_columns": 13,
+  "hops_per_column": 1,
+  "waveform": [
+   {
+    "minimum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "maximum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   {
+    "minimum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "maximum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   {
+    "minimum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "maximum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   {
+    "minimum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "maximum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   {
+    "minimum": [-3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277],
+    "maximum": [3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277]
+   },
+   {
+    "minimum": [-3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277, -3277],
+    "maximum": [3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277, 3277]
+   },
+   {
+    "minimum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "maximum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   },
+   {
+    "minimum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "maximum": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   }
+  ]
+ }
+}

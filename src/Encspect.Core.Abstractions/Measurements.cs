@@ -42,6 +42,10 @@ public sealed record StreamMeasurements
 
     public LevelFigures? Levels { get; init; }
 
+    public LoudnessFigures? Loudness { get; init; }
+
+    public TruePeakFigures? TruePeak { get; init; }
+
     public SpectrogramGrid? Spectrogram { get; init; }
 
     public WaveformGrid? Waveform { get; init; }
@@ -89,6 +93,13 @@ public static class MeasurementLimits
 
     // The shortest run of consecutive samples at an extreme that counts as clipping. A convention of the design, not a specification's.
     public const int MinimumClippingRun = 3;
+
+    // The lowest sample rate loudness is measured at: the K-weighting derived for other rates drifts from the 48 kHz response by 0.5 dB at
+    // 8,000 Hz and is unstable below 3,364 Hz.
+    public const int MinimumLoudnessRate = 8000;
+
+    // The most points of the short-term loudness series; adjacent points are merged as the stream grows.
+    public const int MaxSeriesPoints = 1024;
 }
 
 // The levels of a stream's decoded audio (the levels topic): sample peak, RMS, DC offset, clipping runs, digital silence and bit-depth
@@ -226,4 +237,81 @@ public sealed record WaveformGrid
     public required ReadOnlyMemory<short> Minimum { get; init; }
 
     public required ReadOnlyMemory<short> Maximum { get; init; }
+}
+
+// Why a loudness figure has no value although the stream was measured.
+public enum LoudnessAbsence
+{
+    // The figure has a value (or is minus infinity, a level of digital silence).
+    None,
+
+    // Not one complete block: the stream is shorter than 400 ms (momentary loudness, integrated loudness) or than 3 s (short-term
+    // loudness, loudness range), or every stretch between gaps is.
+    TooShort,
+
+    // Blocks exist, but none is above the absolute gate of -70 LUFS.
+    BelowGate,
+}
+
+// The loudness of a stream (ITU-R BS.1770-5 and EBU Tech 3341/3342; the loudness and loudness-range topics), measured from the decoded
+// audio. Levels are tenths of a LUFS or of a LU (MeasurementLimits.NoLevel for minus infinity), rounded to the nearest with halves up.
+public sealed record LoudnessFigures
+{
+    // Why nothing was measured (the rate is below 8,000 Hz or not stated, the channel positions are not stated); null where loudness was measured.
+    public string? NotMeasured { get; init; }
+
+    // The weight of each measured channel in hundredths (100 and 141; 0 for an LFE, which BS.1770 leaves out).
+    public IReadOnlyList<int> ChannelWeights { get; init; } = [];
+
+    // Gated loudness over the whole stream (BS.1770-5 equation 5) and why it is missing.
+    public int IntegratedTenths { get; init; } = MeasurementLimits.NoLevel;
+
+    public LoudnessAbsence IntegratedAbsence { get; init; }
+
+    // The spread of the short-term loudness between its 10th and 95th percentile (Tech 3342), and the two percentiles in LUFS.
+    public int RangeTenths { get; init; }
+
+    public int RangeLowTenths { get; init; } = MeasurementLimits.NoLevel;
+
+    public int RangeHighTenths { get; init; } = MeasurementLimits.NoLevel;
+
+    public LoudnessAbsence RangeAbsence { get; init; }
+
+    // The highest momentary (400 ms) and short-term (3 s) loudness, taken every 100 ms, and why one is missing.
+    public int MaximumMomentaryTenths { get; init; } = MeasurementLimits.NoLevel;
+
+    public LoudnessAbsence MomentaryAbsence { get; init; }
+
+    public int MaximumShortTermTenths { get; init; } = MeasurementLimits.NoLevel;
+
+    public LoudnessAbsence ShortTermAbsence { get; init; }
+
+    // The gating blocks (400 ms every 100 ms), those above the absolute gate and those above both gates.
+    public long Blocks { get; init; }
+
+    public long BlocksAboveAbsoluteGate { get; init; }
+
+    public long BlocksAboveRelativeGate { get; init; }
+
+    // The short-term loudness over the stream in LUFS at most MaxSeriesPoints points (x: seconds since the first measured sample at the
+    // end of the 3 s window of the first value a point covers; adjacent values are averaged in energy as the stream grows); null where none.
+    public Series? ShortTerm { get; init; }
+
+    // How many 100 ms steps each point of the series covers (a power of 2).
+    public int StepsPerPoint { get; init; } = 1;
+}
+
+// The true peak of a stream (ITU-R BS.1770-5 Annex 2): the highest value of the oversampled waveform, in tenths of a dB relative to
+// full scale (dBTP), per measured channel and for the stream.
+public sealed record TruePeakFigures
+{
+    // Why nothing was measured (the sample rate is not stated); null where the true peak was measured.
+    public string? NotMeasured { get; init; }
+
+    // The oversampling: 4 below 96 kHz, 2 from 96 kHz up to 192 kHz, and 1 (the sample peak) from 192 kHz.
+    public int Oversampling { get; init; } = 4;
+
+    public int StreamTenths { get; init; } = MeasurementLimits.NoLevel;
+
+    public IReadOnlyList<int> ChannelTenths { get; init; } = [];
 }

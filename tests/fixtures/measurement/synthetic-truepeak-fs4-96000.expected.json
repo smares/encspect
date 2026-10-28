@@ -1,0 +1,148 @@
+{
+ "description": "Two channels at 96 kHz (oversampling by 2): the same sine at a quarter of the rate in the left, silence in the right.",
+ "length": 31660,
+ "construction": {
+  "cutoff_hz": null,
+  "unspecified": true,
+  "loudness": {
+   "true_peak_left": -0.9,
+   "true_peak_tolerance": 0.4
+  }
+ },
+ "model": {
+  "sample_rate": 96000,
+  "channels": 2,
+  "channels_measured": 2,
+  "bits": 16,
+  "samples": 14400,
+  "first_position": 0,
+  "lost_samples": 0,
+  "gaps": 0,
+  "fft_size": 8192,
+  "frames": 2,
+  "combined": [-3608, -3556, -3563, -3593, -3582, -3561, -3568, -3551, -3576, -3601, -3599, -3557, -3605, -3531, -3577, -3544, -3498, -3564, -3558, -3550, -3557, -3548, -3484, -3451, -3522, -3570, -3559, -3578, -3573, -3561, -3555, -3576, -3516, -3557, -3573, -3621, -3596, -3562, -3554, -3537, -3546, -3559, -3554, -3523, -3559, -3571, -3559, -3535, -3480, -3568, -3580, -3572, -3546, -3534, -3556, -3536, -3548, -3565, -3604, -3572, -3572, -3563, -3602, -3380, -3481, -3516, -3550, -3531, -3529, -3444, -3457, -3517, -3514, -3575, -3545, -3562, -3543, -3566, -3542, -3570, -3526, -3583, -3557, -3582, -3576, -3576, -3560, -3541, -3594, -3574, -3593, -3559, -3593, -3621, -3587, -3590, -3555, -3551, -3551, -3589, -3535, -3571, -3552, -3589, -3551, -3582, -3559, -3571, -3564, -3531, -3546, -3528, -3535, -3563, -3548, -3491, -3488, -3550, -3558, -3528, -3542, -3565, -3584, -3595, -3552, -3559, -3573, -3432, -3445, -3527, -3567, -3581, -3575, -3572, -3587, -3521, -3513, -3563, -3588, -3547, -3553, -3560, -3560, -3468, -3541, -3552, -3583, -3598, -3561, -3543, -3549, -3590, -3546, -3559, -3581, -3553, -3605, -3547, -3563, -3530, -3491, -3524, -3412, -3396, -3549, -3567, -3559, -3537, -3537, -3574, -3552, -3519, -3580, -3567, -3577, -3543, -3580, -3562, -3565, -3561, -3552, -3580, -3556, -3574, -3581, -3602, -3590, -3540, -3566, -3583, -3540, -3356, -3491, -3560, -3595, -3567, -3556, -3536, -3580, -3507, -3568, -3574, -3570, -3563, -3560, -3561, -3576, -3524, -3513, -3497, -3532, -3546, -3604, -3549, -3572, -3560, -3541, -3586, -3560, -3552, -3559, -3554, -3595, -3520, -3481, -3567, -3563, -3531, -3530, -3560, -3562, -3563, -3616, -3560, -3583, -3536, -3550, -3568, -3579, -3540, -3523, -3536, -3554, -3491, -3557, -3541, -3576, -3535, -3506, -3470, -3542, -3406, -3563, -3375, -3449, -190, -120, -3384, -3520, -3417, -3502, -3492, -3566, -3485, -3508, -3501, -3583, -3509, -3574, -3549, -3540, -3493, -3533, -3577, -3571, -3531, -3541, -3575, -3546, -3564, -3572, -3557, -3549, -3552, -3518, -3559, -3583, -3489, -3460, -3587, -3553, -3562, -3552, -3582, -3606, -3552, -3556, -3592, -3563, -3544, -3562, -3516, -3507, -3489, -3505, -3573, -3613, -3537, -3578, -3607, -3565, -3541, -3557, -3582, -3550, -3561, -3565, -3566, -3553, -3401, -3469, -3572, -3603, -3569, -3583, -3605, -3601, -3575, -3541, -3537, -3558, -3567, -3553, -3583, -3556, -3527, -3506, -3608, -3562, -3506, -3556, -3557, -3567, -3502, -3529, -3565, -3533, -3517, -3411, -3404, -3534, -3490, -3470, -3548, -3534, -3541, -3565, -3572, -3568, -3534, -3569, -3563, -3600, -3564, -3586, -3541, -3545, -3482, -3485, -3571, -3578, -3520, -3551, -3561, -3580, -3520, -3529, -3549, -3569, -3563, -3536, -3554, -3554, -3505, -3517, -3561, -3555, -3532, -3575, -3595, -3603, -3548, -3514, -3575, -3527, -3489, -3482, -3548, -3543, -3555, -3508, -3535, -3569, -3570, -3547, -3556, -3572, -3561, -3554, -3564, -3571, -3572, -3542, -3580, -3609, -3552, -3529, -3579, -3543, -3589, -3563, -3575, -3607, -3571, -3554, -3536, -3565, -3593, -3577, -3557, -3582, -3565, -3503, -3604, -3586, -3560, -3563, -3560, -3541, -3500, -3546, -3444, -3443, -3537, -3533, -3579, -3592, -3480, -3449, -3553, -3550, -3525, -3586, -3563, -3552, -3494, -3533, -3600, -3600, -3565, -3561, -3551, -3569, -3532, -3526, -3605, -3585, -3553, -3565, -3555, -3576, -3571, -3586, -3544, -3581, -3561, -3563, -3579, -3576, -3505, -3535, -3590, -3569, -3518, -3569, -3533, -3575, -3474, -3475, -3464, -3519, -3572, -3551, -3575, -3572, -3513, -3495, -3592, -3546, -3535, -3592, -3547, -3580, -3530, -3556, -3600, -3605, -3580, -3547, -3610, -3551, -3623],
+  "per_channel": [
+   [-3578, -3526, -3533, -3563, -3552, -3531, -3538, -3521, -3546, -3571, -3569, -3527, -3575, -3501, -3547, -3514, -3468, -3534, -3528, -3520, -3527, -3518, -3453, -3421, -3492, -3539, -3529, -3548, -3543, -3531, -3525, -3546, -3486, -3526, -3543, -3591, -3566, -3532, -3524, -3507, -3516, -3529, -3524, -3493, -3529, -3541, -3529, -3505, -3450, -3538, -3550, -3542, -3516, -3504, -3526, -3506, -3518, -3534, -3574, -3542, -3542, -3533, -3572, -3350, -3451, -3486, -3520, -3500, -3499, -3414, -3427, -3487, -3484, -3545, -3515, -3532, -3513, -3536, -3512, -3539, -3496, -3553, -3527, -3552, -3546, -3546, -3530, -3511, -3564, -3544, -3563, -3529, -3563, -3591, -3556, -3560, -3525, -3521, -3521, -3559, -3505, -3541, -3522, -3559, -3521, -3552, -3529, -3541, -3534, -3500, -3516, -3497, -3505, -3532, -3518, -3461, -3458, -3520, -3528, -3497, -3512, -3535, -3554, -3565, -3522, -3529, -3543, -3402, -3415, -3497, -3537, -3551, -3545, -3542, -3556, -3491, -3483, -3533, -3558, -3517, -3523, -3530, -3530, -3438, -3511, -3522, -3553, -3568, -3531, -3513, -3519, -3560, -3516, -3529, -3550, -3523, -3575, -3517, -3533, -3500, -3461, -3494, -3382, -3366, -3519, -3537, -3528, -3507, -3507, -3544, -3522, -3489, -3550, -3537, -3547, -3513, -3550, -3532, -3535, -3531, -3521, -3550, -3526, -3543, -3551, -3572, -3559, -3510, -3536, -3553, -3510, -3326, -3461, -3530, -3565, -3537, -3526, -3506, -3550, -3476, -3538, -3544, -3540, -3533, -3530, -3531, -3546, -3494, -3483, -3467, -3501, -3516, -3574, -3519, -3542, -3530, -3510, -3556, -3530, -3521, -3529, -3524, -3565, -3490, -3451, -3536, -3533, -3501, -3500, -3530, -3532, -3533, -3586, -3530, -3553, -3506, -3520, -3538, -3549, -3510, -3493, -3506, -3524, -3460, -3527, -3511, -3546, -3504, -3476, -3440, -3512, -3376, -3533, -3344, -3419, -160, -90, -3354, -3490, -3387, -3472, -3462, -3536, -3455, -3478, -3470, -3552, -3479, -3544, -3519, -3510, -3463, -3503, -3547, -3541, -3501, -3511, -3545, -3516, -3534, -3542, -3527, -3519, -3522, -3488, -3529, -3553, -3459, -3430, -3557, -3523, -3532, -3522, -3552, -3576, -3522, -3526, -3562, -3533, -3513, -3532, -3486, -3477, -3459, -3475, -3543, -3583, -3507, -3548, -3577, -3535, -3511, -3527, -3552, -3520, -3531, -3535, -3536, -3523, -3370, -3439, -3542, -3573, -3539, -3553, -3575, -3571, -3545, -3511, -3507, -3528, -3537, -3523, -3552, -3526, -3497, -3476, -3577, -3532, -3476, -3526, -3527, -3537, -3472, -3499, -3534, -3502, -3487, -3381, -3374, -3504, -3460, -3440, -3518, -3504, -3511, -3535, -3542, -3538, -3504, -3539, -3533, -3570, -3534, -3556, -3510, -3515, -3452, -3455, -3540, -3548, -3490, -3520, -3530, -3549, -3490, -3498, -3519, -3539, -3533, -3506, -3524, -3524, -3475, -3487, -3531, -3525, -3502, -3545, -3565, -3573, -3518, -3484, -3545, -3496, -3459, -3452, -3518, -3513, -3525, -3478, -3505, -3539, -3540, -3517, -3526, -3542, -3531, -3524, -3534, -3540, -3542, -3512, -3550, -3579, -3522, -3499, -3549, -3513, -3559, -3533, -3544, -3577, -3541, -3524, -3506, -3535, -3563, -3547, -3527, -3552, -3535, -3473, -3574, -3556, -3530, -3533, -3530, -3511, -3470, -3516, -3414, -3413, -3507, -3503, -3549, -3562, -3450, -3419, -3523, -3520, -3494, -3556, -3533, -3521, -3463, -3503, -3570, -3570, -3535, -3531, -3521, -3539, -3502, -3496, -3575, -3555, -3522, -3535, -3525, -3546, -3541, -3556, -3514, -3551, -3531, -3533, -3549, -3546, -3475, -3505, -3560, -3539, -3488, -3539, -3502, -3545, -3444, -3445, -3434, -3489, -3542, -3520, -3545, -3542, -3483, -3465, -3561, -3515, -3505, -3562, -3517, -3550, -3500, -3526, -3569, -3575, -3550, -3517, -3580, -3521, -3593],
+   [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+  ],
+  "cutoff": {
+   "is_searched": true,
+   "is_found": true,
+   "frequency": 24750,
+   "transition_start": 24094,
+   "step_frequency": 24750,
+   "step_tenths": 676,
+   "frames_showing": 2,
+   "frames_with_signal": 2
+  },
+  "channel_cutoffs": [
+   {
+    "is_searched": true,
+    "is_found": true,
+    "frequency": 24750,
+    "transition_start": 24094,
+    "step_frequency": 24750,
+    "step_tenths": 676,
+    "frames_showing": 2,
+    "frames_with_signal": 2
+   },
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2063,
+    "step_tenths": 0,
+    "frames_showing": 0,
+    "frames_with_signal": 2
+   }
+  ],
+  "levels": {
+   "bits": 16,
+   "stream": {
+    "sample_peak_tenths": -39,
+    "rms_tenths": -69,
+    "dc_micropercent": 0,
+    "dc_tenths": null,
+    "clipping_runs": 0,
+    "clipped_samples": 0,
+    "longest_clipping_run": 0,
+    "silent_at_start": 0,
+    "silent_at_end": 0,
+    "zero_samples": 0,
+    "low_bits_unused": 1,
+    "highest_magnitude": 20854
+   },
+   "channels": [
+    {
+     "sample_peak_tenths": -39,
+     "rms_tenths": -39,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 0,
+     "silent_at_end": 0,
+     "zero_samples": 0,
+     "low_bits_unused": 1,
+     "highest_magnitude": 20854
+    },
+    {
+     "sample_peak_tenths": null,
+     "rms_tenths": null,
+     "dc_micropercent": 0,
+     "dc_tenths": null,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 14400,
+     "silent_at_end": 14400,
+     "zero_samples": 14400,
+     "low_bits_unused": null,
+     "highest_magnitude": 0
+    }
+   ]
+  },
+  "loudness": {
+   "weights": [100, 100],
+   "blocks": 0,
+   "momentary": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "short_term": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "blocks_above_absolute_gate": 0,
+   "integrated": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "range": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "short_term_values": 0,
+   "short_term_first_tenths": null
+  },
+  "true_peak": {
+   "oversampling": 2,
+   "channels": [-9, null],
+   "stream": -9
+  },
+  "spectrogram_columns": 4,
+  "hops_per_column": 1,
+  "waveform": [
+   {
+    "minimum": [-20854, -20854, -20854, -20854],
+    "maximum": [20854, 20854, 20854, 20854]
+   },
+   {
+    "minimum": [0, 0, 0, 0],
+    "maximum": [0, 0, 0, 0]
+   }
+  ]
+ }
+}

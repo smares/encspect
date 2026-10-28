@@ -16,6 +16,9 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
 {
     private const int Rounds = 5;
 
+    // The measurements of steps 1 and 2, which the tests of their weights time without the loudness and the true peak of step 5.
+    private const MeasurementKinds SpectrumAndLevels = MeasurementKinds.Spectrum | MeasurementKinds.Levels;
+
     private const double Factor = 2.0;
 
     public static TheoryData<int, int> Cases()
@@ -73,7 +76,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         for (int warm = 0; warm < 3; warm++)
         {
             RunOnce(rate, channels, data, MeasurementKinds.Spectrum);
-            RunOnce(rate, channels, data, MeasurementSets.All);
+            RunOnce(rate, channels, data, SpectrumAndLevels);
         }
 
         double spectrum = double.MaxValue;
@@ -81,7 +84,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         for (int round = 0; round < Rounds; round++)
         {
             spectrum = Math.Min(spectrum, RunOnce(rate, channels, data, MeasurementKinds.Spectrum).Seconds);
-            both = Math.Min(both, RunOnce(rate, channels, data, MeasurementSets.All).Seconds);
+            both = Math.Min(both, RunOnce(rate, channels, data, SpectrumAndLevels).Seconds);
         }
 
         double perSample = (both - spectrum) * 1e9 / ((long)Length * channels);
@@ -119,7 +122,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     [Fact]
     public void TheLevelsAddLittleToTheSpectrum()
     {
-        (double both, _, double perSampleBoth) = Compare(44100, 2, Signal.Noise, MeasurementSets.All, 16);
+        (double both, _, double perSampleBoth) = Compare(44100, 2, Signal.Noise, SpectrumAndLevels, 16);
         (double spectrum, _, double perSampleSpectrum) = Compare(44100, 2, Signal.Noise, MeasurementKinds.Spectrum, 16);
         output.WriteLine($"spectrum and levels {perSampleBoth:F2} ns a sample of a channel, the spectrum alone {perSampleSpectrum:F2} ns; ratios to the reference {both:F2} and {spectrum:F2}");
         Assert.True(both <= Factor);
