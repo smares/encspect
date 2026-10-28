@@ -374,8 +374,9 @@ public sealed partial class GraphView
                 context.DrawText(name, new Point(plot.Left - AxisLabelGap - name.Width, middle - (name.Height / 2)));
             }
 
-            var top = new List<Point>(bins);
-            var bottom = new List<Point>(bins);
+            // Each bin is a step from its left edge to its right edge, so a stream of few columns fills the plot as a long one does.
+            var top = new List<Point>(bins * 2);
+            var bottom = new List<Point>(bins * 2);
             for (int bin = 0; bin < bins; bin++)
             {
                 int first = (int)((long)bin * columns / bins);
@@ -388,12 +389,16 @@ public sealed partial class GraphView
                     high = Math.Max(high, graph.Peak(channel, c));
                 }
 
-                double x = plot.Left + ((bin + 0.5) * plot.Width / bins);
-                top.Add(new Point(x, middle - (Math.Clamp(high, -32768, 32767) / 32768.0 * lane.Height / 2)));
-                bottom.Add(new Point(x, middle - (Math.Clamp(low, -32768, 32767) / 32768.0 * lane.Height / 2)));
+                double yHigh = middle - (Math.Clamp(high, -32768, 32767) / 32768.0 * lane.Height / 2);
+                double yLow = middle - (Math.Clamp(low, -32768, 32767) / 32768.0 * lane.Height / 2);
+                double left = plot.Left + (bin * plot.Width / bins);
+                double right = plot.Left + ((bin + 1) * plot.Width / bins);
+                top.Add(new Point(left, yHigh));
+                top.Add(new Point(right, yHigh));
+                bottom.Add(new Point(left, yLow));
+                bottom.Add(new Point(right, yLow));
             }
 
-            // At least a hairline where the signal is silent, so the lane is never empty.
             var area = new StreamGeometry();
             using (StreamGeometryContext geometry = area.Open())
             {
@@ -521,7 +526,7 @@ public sealed partial class GraphView
     private void DrawSpectrum(DrawingContext context, SpectrumGraph graph, AudioLayout layout, IBrush secondary, IPen grid, Color accent)
     {
         Rect plot = layout.Plot;
-        context.DrawText(Text("dB · Hz", TextSize, secondary), new Point(4, 2));
+        context.DrawText(Text("dB", TextSize, secondary), new Point(4, 2));
         double range = graph.AxisTop - graph.AxisBottom;
         double Y(double decibels) => plot.Bottom - (Math.Clamp(decibels - graph.AxisBottom, 0, range) / range * plot.Height);
         foreach (double tick in layout.Ticks)
