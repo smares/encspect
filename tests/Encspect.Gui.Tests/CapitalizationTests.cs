@@ -294,6 +294,42 @@ public sealed class CapitalizationTests
         }
     }
 
+    // The Audio heading, its entries and forms, the command under its caption and the names of the measured figures, before and after decoding.
+    [AvaloniaFact]
+    public void Labels_of_the_audio_panels_are_in_title_case()
+    {
+        DetailWindow window = AudioPanelTests.Open(Fixtures.Flac("external-16-6ch.flac"), decode: false);
+        List<string> labels = [.. ControlLabels(window)];
+        labels.AddRange(window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("heading")).Select(t => t.Text!));
+        Assert.Contains("Decode Audio", labels);
+
+        Task decode = window.Model.DecodeAudioAsync();
+        UiPump.Until(() => decode.IsCompleted);
+        AudioPanelTests.Settle();
+        labels.AddRange(window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("heading")).Select(t => t.Text!));
+        foreach (GraphChoice choice in window.Model.Graphs.Choices)
+        {
+            window.Model.Graphs.Selected = choice;
+            foreach (GraphFormChoice form in choice.Forms)
+            {
+                window.Model.Graphs.SelectForm(form.Kind);
+                AudioPanelTests.Settle();
+                labels.AddRange(ControlLabels(window));
+            }
+        }
+
+        AudioPanelTests.Choose(window, "Figures");
+        labels.AddRange(window.Model.Graphs.Figures!.Select(l => l.Name));
+
+        foreach (string expected in new[] { "Audio", "Waveform", "Spectrogram", "Spectrum", "Figures", "Combined", "Per Channel", "Spectral Cutoff", "Sample Peak" })
+        {
+            Assert.Contains(expected, labels);
+        }
+
+        AssertTitleCase(labels);
+        window.Close();
+    }
+
     // The forms of a category chart, among them the smoothed one that only a stream longer than the threshold offers.
     [Fact]
     public void The_forms_of_a_long_category_series_are_in_title_case()

@@ -159,7 +159,7 @@ public partial class DetailWindow : Window
         Shortcuts.Submenu(
             "File",
             Shortcuts.Item(this, "Export Report…", Shortcuts.WithCommand(Key.S), () => _ = ExportAsync()),
-            Shortcuts.Item(this, "Verify Audio", null, () => _ = Model.VerifyAudioAsync()),
+            Shortcuts.Item(this, "Decode Audio", null, () => _ = Model.DecodeAudioAsync()),
             Shortcuts.Submenu("Analyze as", [Shortcuts.Item(this, "Detect Automatically", null, () => _ = Model.AnalyzeAsAsync(null)), new NativeMenuItemSeparator(), .. Model.FormatNames.Select(name => Shortcuts.Item(this, name, null, () => _ = Model.AnalyzeAsAsync(name)))]),
             new NativeMenuItemSeparator(),
             Shortcuts.Item(this, "Close", Shortcuts.WithCommand(Key.W), Close)),
@@ -225,9 +225,11 @@ public partial class DetailWindow : Window
 
     private void OnTopics(object? sender, RoutedEventArgs e) => Model.ToggleTopics();
 
-    private void OnVerifyAudio(object? sender, RoutedEventArgs e) => _ = Model.VerifyAudioAsync();
+    private void OnDecodeAudio(object? sender, RoutedEventArgs e) => _ = Model.DecodeAudioAsync();
 
-    private void OnStopVerifying(object? sender, RoutedEventArgs e) => Model.StopVerifying();
+    private void OnGraphDecode(object? sender, RoutedEventArgs e) => Model.Graphs.RequestDecode();
+
+    private void OnStopDecoding(object? sender, RoutedEventArgs e) => Model.StopDecoding();
 
     private void OnCloseTopic(object? sender, RoutedEventArgs e) => Model.IsTopicOpen = false;
 
@@ -309,7 +311,7 @@ public partial class DetailWindow : Window
     private static bool IsOnExpander(object? source) =>
         source is Avalonia.Visual visual && visual.GetSelfAndVisualAncestors().Any(v => v is Border { Name: "Expander" });
 
-    // The list of graphs shows whole items only: headings and entries are never cut by its edges. Its viewport is as high as the
+    // The list of graphs shows whole items only: headings, entries, and the caption and command under the heading "Audio" are never cut by its edges. Its viewport is as high as the
     // whole items that fit in the room it has (the rest stays empty below it), and it scrolls from the top of one item to the top
     // of another, down to the last position whose items all fit. Where all of them fit it has no scrollbar.
     private bool _snapping;
@@ -331,7 +333,7 @@ public partial class DetailWindow : Window
     private List<(double Top, double Bottom)> ListItems() =>
     [
         .. GraphChoices.GetVisualDescendants().OfType<Control>()
-            .Where(c => (c is TextBlock t && t.Classes.Contains("heading")) || (c is Button b && b.Classes.Contains("entry")))
+            .Where(c => c.IsEffectivelyVisible && ((c is TextBlock t && (t.Classes.Contains("heading") || t.Classes.Contains("caption"))) || (c is Button b && (b.Classes.Contains("entry") || b.Classes.Contains("decode")))))
             .Select(c => (Top: c.TranslatePoint(default, GraphChoices)!.Value.Y - c.Margin.Top + GraphChoices.Margin.Top, Bottom: c.TranslatePoint(new Point(0, c.Bounds.Height), GraphChoices)!.Value.Y + c.Margin.Bottom + GraphChoices.Margin.Top))
             .OrderBy(i => i.Top),
     ];

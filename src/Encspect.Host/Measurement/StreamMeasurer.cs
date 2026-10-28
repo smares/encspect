@@ -811,8 +811,14 @@ internal sealed class StreamMeasurer
         return result;
     }
 
-    private SpectrogramGrid Grid()
+    // A stream whose blocks were all empty touched no hop: it has no grid, as a stream without a spectrum has none.
+    private SpectrogramGrid? Grid()
     {
+        if (_used == 0)
+        {
+            return null;
+        }
+
         int rows = MeasurementLimits.Rows;
         byte[] power = new byte[_used * rows];
         for (int column = 0; column < _used; column++)
@@ -834,8 +840,13 @@ internal sealed class StreamMeasurer
         return new SpectrogramGrid { Columns = _used, HopsPerColumn = 1 << _shift, HopSamples = _hop, Power = power };
     }
 
-    private WaveformGrid Wave()
+    private WaveformGrid? Wave()
     {
+        if (_used == 0)
+        {
+            return null;
+        }
+
         short[] minimum = new short[_measured * _used];
         short[] maximum = new short[_measured * _used];
         for (int c = 0; c < _measured; c++)

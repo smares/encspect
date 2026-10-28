@@ -4,6 +4,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Media.Immutable;
 using Encspect.Gui.ViewModels;
 
@@ -44,6 +45,7 @@ public sealed partial class GraphView : Control
     {
         ClipToBounds = true;
         Cursor = new Cursor(StandardCursorType.Hand);
+        RenderOptions.SetBitmapInterpolationMode(this, BitmapInterpolationMode.HighQuality);
         ActualThemeVariantChanged += (_, _) => InvalidateVisual();
     }
 
@@ -81,6 +83,11 @@ public sealed partial class GraphView : Control
         if (IsCategory(graph))
         {
             return CategoryHitAt(point, withText: false) is { Index: >= 0 } hit ? hit.Index : null;
+        }
+
+        if (IsAudio(graph))
+        {
+            return AudioIndexAt(point);
         }
 
         Layout layout = LayoutFor(graph);
@@ -123,6 +130,12 @@ public sealed partial class GraphView : Control
         if (IsCategory(graph))
         {
             RenderCategory(context, graph);
+            return;
+        }
+
+        if (graph is AudioGraph audio && IsAudio(graph))
+        {
+            RenderAudio(context, audio);
             return;
         }
 
@@ -184,6 +197,7 @@ public sealed partial class GraphView : Control
             _layoutCache = null;
             _hoverArea = default;
             _hoverLane = -1;
+            ResetAudio();
             if (Graph is { } graph)
             {
                 UpdateAutomation(graph);
@@ -193,6 +207,11 @@ public sealed partial class GraphView : Control
                 AutomationProperties.SetName(this, null);
                 AutomationProperties.SetHelpText(this, null);
             }
+        }
+
+        if (change.Property == GraphProperty || change.Property == BoundsProperty)
+        {
+            UpdateInterpolation();
         }
     }
 
@@ -205,12 +224,19 @@ public sealed partial class GraphView : Control
             return;
         }
 
+        if (Graph is AudioGraph audio && IsAudio(audio))
+        {
+            AudioPointerMoved(audio, e.GetPosition(this));
+            return;
+        }
+
         SetHover(IndexAt(e.GetPosition(this)));
     }
 
     protected override void OnPointerExited(PointerEventArgs e)
     {
         base.OnPointerExited(e);
+        _audioRow = -1;
         SetHover(null);
         _hoverText = null;
     }
@@ -239,6 +265,14 @@ public sealed partial class GraphView : Control
                 e.Handled = true;
             }
 
+            return;
+        }
+
+        if (Graph is SpectrogramGraph && CellAt(e.GetPosition(this)) is { } cell)
+        {
+            SetCell(cell.Column, cell.Row);
+            PointClicked?.Invoke(this, cell.Column);
+            e.Handled = true;
             return;
         }
 
@@ -277,6 +311,11 @@ public sealed partial class GraphView : Control
         {
             _hover = index;
             _hoverText = null;
+            if (Graph is AudioGraph audio && IsAudio(audio))
+            {
+                UpdateAutomation(audio);
+            }
+
             InvalidateVisual();
         }
     }

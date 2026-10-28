@@ -155,6 +155,19 @@ public class MeasurementTests
     }
 
     [Fact]
+    public void ABlockOfNoSamplesLeavesNoGrids()
+    {
+        var measurer = new StreamMeasurer(new PcmFormat(44100, 1, 16, SampleFormat.Integer), new MeasureOptions(), CancellationToken.None, _ => true);
+        measurer.Write(new PcmBlock(0, 0, 1, 0, Array.Empty<int>()));
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Null(measurer.Failure);
+        Assert.Equal(0, m.Samples);
+        Assert.Null(m.Spectrogram);
+        Assert.Null(m.Waveform);
+    }
+
+    [Fact]
     public void AGapOfTwoToTheFortiethSamplesCostsNoLoop()
     {
         int[] block = MeasurementSignals.ToIntegers(MeasurementSignals.Noise(10000, 1), 16);

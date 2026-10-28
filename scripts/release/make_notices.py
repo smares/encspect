@@ -14,6 +14,8 @@ Every text comes from a file, never from memory:
   archives scripts/fixtures/musepack_tool.py pins by SHA-256.
 - scripts/release/licenses/monkeys-audio.txt: the License.txt of the Monkey's Audio SDK 13.42, whose code the Monkey's Audio decoder is derived from.
   --fetch extracts it from the archive scripts/fixtures/monkeys_audio_tool.py pins by SHA-256, so the text is the SDK's own and the hash is checked.
+- scripts/release/licenses/matplotlib-colormaps.txt: the license comment at the top of colormaps.py of github.com/BIDS/colormap (CC0, with a request for
+  credit), whose table of matplotlib's magma colormap is the spectrogram's color ramp. --fetch reads the file and checks its SHA-256.
 
 Versions of the packages come from src/Encspect.Gui/obj/project.assets.json (run dotnet restore first).
 
@@ -37,6 +39,9 @@ LIBWAVPACK_COPYING = LICENSES / "libwavpack.txt"
 LIBMPCDEC_COPYING = LICENSES / "libmpcdec.txt"
 LIBMPCDEC_HEADER = LICENSES / "libmpcdec-r495-header.txt"
 MONKEYS_AUDIO_LICENSE = LICENSES / "monkeys-audio.txt"
+COLORMAPS_LICENSE = LICENSES / "matplotlib-colormaps.txt"
+COLORMAPS_URL = "https://raw.githubusercontent.com/BIDS/colormap/master/colormaps.py"
+COLORMAPS_SHA256 = "b7478d10e2ccfdb22128867e137f16f55b687e9c225065e91bcbd6bb9e6c0352"
 
 # Package whose nuspec names the repository commit, the license file in that repository, and the committed copy.
 FETCHED = [
@@ -171,8 +176,21 @@ def fetch_monkeys_audio():
     print(f"Monkey's Audio: License.txt of {monkeys_audio_tool.NAME} (SHA-256 {monkeys_audio_tool.SHA256})")
 
 
+def fetch_colormaps():
+    """The license comment of BIDS/colormap's colormaps.py, which comes before its first line of code; the file's SHA-256 is checked."""
+    import hashlib
+    with urllib.request.urlopen(COLORMAPS_URL, timeout=60) as response:
+        data = response.read()
+    if hashlib.sha256(data).hexdigest() != COLORMAPS_SHA256:
+        raise SystemExit(f"colormaps.py differs from the file the notices and src/Encspect.Gui/Views/MagmaRamp.cs were made from ({COLORMAPS_SHA256}).")
+    source = data.decode("utf-8")
+    COLORMAPS_LICENSE.write_text(source.split("__all__")[0].rstrip() + "\n", encoding="utf-8", newline="\n")
+    print(f"matplotlib colormaps: the license comment of {COLORMAPS_URL} (SHA-256 {COLORMAPS_SHA256})")
+
+
 def fetch(packages, version_of):
     LICENSES.mkdir(parents=True, exist_ok=True)
+    fetch_colormaps()
     fetch_libwavpack()
     fetch_libmpcdec()
     fetch_monkeys_audio()
@@ -202,6 +220,7 @@ def build(packages, version_of, runtime_deps):
     libmpcdec = read(LIBMPCDEC_COPYING)
     libmpcdec_header = read(LIBMPCDEC_HEADER)
     monkeys_audio = read(MONKEYS_AUDIO_LICENSE)
+    colormaps = read(COLORMAPS_LICENSE)
     def copyright_line(package):
         line = nuspec_field(nuspec(packages, package, v[package]), "copyright")
         return f"Package copyright line: {line}\n\n" if line else ""
@@ -220,6 +239,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 - **libwavpack:** the `COPYING` of libwavpack 5.6.0, extracted from `wavpack-5.6.0.tar.bz2`, the archive `scripts/fixtures/wavpack_tool.py` pins by SHA-256 (`8cbfa15927d29bcf953db35c0cfca7424344ff43ebe4083daf161577fb839cc1`); `scripts/release/make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libwavpack.txt`.
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.42, extracted from `MAC_1342_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0a763b3592d13183bbd6c04b12eb637d364de16791602733a897b72df8e87326`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
+- **matplotlib colormaps:** the license comment at the top of `colormaps.py` of BIDS/colormap, the file the GUI's color ramp for the spectrogram (the 256 entries of `magma`, `src/Encspect.Gui/Views/MagmaRamp.cs`) is taken from, pinned by its SHA-256 (`b7478d10e2ccfdb22128867e137f16f55b687e9c225065e91bcbd6bb9e6c0352`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/matplotlib-colormaps.txt`.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
 - **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version {runtime_version}.
 
@@ -242,6 +262,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 | libwavpack 5.6.0: the code of Encspect's WavPack decoder derived from it (the entropy decoder, the decorrelation passes, the float restore, the DSD decoders, the sub-block reading) | 5.6.0 | BSD 3-Clause | both builds, all platforms |
 | Monkey's Audio SDK 13.42: the code of Encspect's Monkey's Audio parser and decoder derived from it (the header and seek table layouts, the order of the bytes of a frame, the range decoders, the predictors, the neural network filters, the frame checksum and the output of the samples) | 13.42 | BSD 3-Clause | both builds, all platforms |
 | libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
+| matplotlib's "magma" colormap, from BIDS/colormap: the 256 colors of the GUI's spectrogram ramp (format data) | colormaps.py, SHA-256 b7478d10 | CC0 1.0 (public domain dedication), with a request for credit | GUI |
 
 The command line tool contains the NativeAOT build of the .NET runtime and the library code of the runtime pack, and Encspect's own code. The packages it is compiled and linked from (`Microsoft.NETCore.App.Runtime.NativeAOT` and `runtime.<rid>.Microsoft.DotNet.ILCompiler`, which holds the native runtime libraries) carry a `THIRD-PARTY-NOTICES.TXT` byte-identical to the runtime pack's, so the .NET runtime row above covers them. On Linux it also links a few objects of the Ubuntu 18.04 sysroot it is built against (found in the binary's symbols and its `.comment` section): glibc's start files `crt1.o`, `crti.o` and `crtn.o` and the `__libc_csu_init`, `__libc_csu_fini` and `atexit` pieces of `libc_nonshared.a`, under glibc's license (LGPL 2.1 or later) with the linking exception glibc gives these start-up objects, which does not make the program a work covered by the LGPL; and GCC 7's `crtbegin.o` and `crtend.o`, under GPL 3 or later with the GCC Runtime Library Exception 3.1. None of `libgcc.a` is linked in. The program loads the system's C library at run time.
 
@@ -326,6 +347,13 @@ The license comment at the top of the source files of r495:
 
 ```
 {libmpcdec_header}```
+
+## matplotlib colormaps: the spectrogram's color ramp
+
+The 256 colors of the GUI's spectrogram (`src/Encspect.Gui/Views/MagmaRamp.cs`) are the entries of the "magma" colormap that Nathaniel J. Smith and Stefan van der Walt made for matplotlib (Eric Firing joined them for "viridis"), from `colormaps.py` of github.com/BIDS/colormap. The file releases the colormaps under the CC0 license (a public domain dedication) and asks for credit, which is given here. The license comment at the top of the file:
+
+```
+{colormaps}```
 
 ## .NET runtime
 

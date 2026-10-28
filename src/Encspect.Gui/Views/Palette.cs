@@ -12,6 +12,8 @@ internal static class Palette
 {
     public static IBrush Foreground(Control control) => control.GetValue(TextElement.ForegroundProperty) ?? Brushes.Black;
 
+    public static Color ForegroundColor(Control control) => Foreground(control) is ISolidColorBrush solid ? solid.Color : Colors.Black;
+
     public static IBrush Secondary(Control control) => WithOpacity(Foreground(control), 0.55);
 
     // Hairlines such as a chart's grid: the text color, faint.

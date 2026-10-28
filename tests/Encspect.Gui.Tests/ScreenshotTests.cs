@@ -144,6 +144,53 @@ public class ScreenshotTests
         Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
     }
 
+    // The Audio panels: the caption and the command before decoding, then the spectrogram (hovered at the cutoff, with a frame selected), the
+    // spectrum with its cutoff, the waveform and the figures, the waveform of six channels and the spectrum of each, and a sweep.
+    [AvaloniaTheory]
+    [InlineData("light")]
+    [InlineData("dark")]
+    public void RendersTheAudioPanels(string variant)
+    {
+        Application.Current!.RequestedThemeVariant = variant == "dark" ? ThemeVariant.Dark : ThemeVariant.Light;
+
+        DetailWindow window = AudioPanelTests.Open(Fixtures.Flac("external-16-stereo-l5.flac"), decode: false);
+        Save(window, $"audio-before-decoding-{variant}.png");
+        window.Close();
+
+        window = AudioPanelTests.Open(Fixtures.Measurement("lossy-lame-b64.flac"));
+        var spectrogram = (SpectrogramGraph)window.Graph.Graph!;
+        int cutoffRow = spectrogram.RowOfHertz(spectrogram.Cutoff!.Frequency - 1);
+        Point click = window.Graph.TranslatePoint(window.Graph.PointOfCell(spectrogram.Columns / 3, 300)!.Value, window)!.Value;
+        window.MouseDown(click, MouseButton.Left);
+        window.MouseUp(click, MouseButton.Left);
+        window.MouseMove(window.Graph.TranslatePoint(window.Graph.PointOfCell(spectrogram.Columns / 2, cutoffRow)!.Value, window)!.Value);
+        Save(window, $"audio-spectrogram-{variant}.png");
+
+        AudioPanelTests.Choose(window, "Spectrum");
+        window.MouseMove(window.Graph.TranslatePoint(window.Graph.PointOfCell(cutoffRow)!.Value, window)!.Value);
+        Save(window, $"audio-spectrum-{variant}.png");
+        AudioPanelTests.Choose(window, "Waveform");
+        Save(window, $"audio-waveform-{variant}.png");
+        AudioPanelTests.Choose(window, "Figures");
+        Save(window, $"audio-figures-{variant}.png");
+        window.Close();
+
+        window = AudioPanelTests.Open(Fixtures.Flac("external-16-6ch.flac"));
+        AudioPanelTests.Choose(window, "Waveform");
+        window.MouseMove(window.Graph.TranslatePoint(new Point(window.Graph.AudioPlotArea()!.Value.Center.X, window.Graph.WaveformLanes()![1].Center.Y), window)!.Value);
+        Save(window, $"audio-waveform-channels-{variant}.png");
+        AudioPanelTests.Choose(window, "Spectrum", GraphForm.PerChannel);
+        window.MouseMove(window.Graph.TranslatePoint(window.Graph.PointOfCell(150)!.Value, window)!.Value);
+        Save(window, $"audio-spectrum-channels-{variant}.png");
+        window.Close();
+
+        window = AudioPanelTests.Open(Fixtures.Measurement("synthetic-sweep.flac"));
+        Save(window, $"audio-spectrogram-sweep-{variant}.png");
+        window.Close();
+
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Default;
+    }
+
     // A point in the window over the chart's point or bar at index, at the height of its value.
     internal static Point PointOver(DetailWindow window, int index)
     {

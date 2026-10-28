@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Encspect.Gui.ViewModels"
         xmlns:views="using:Encspect.Gui.Views"
+        xmlns:host="using:Encspect.Host"
         x:Class="Encspect.Gui.Views.DetailWindow"
         x:DataType="vm:DetailViewModel"
         Title="{Binding Title}"
@@ -16,7 +17,7 @@
                      ToolTip.Tip="Each line is one audio stream: its codec, sample rate, channel mode, channel layout with the speakers in the stream's channel order, playing time, average bitrate with CBR or VBR, object audio with its object count where the stream carries it, the encoder with how sure the analysis is, and the software that wrote the file, which need not be the encoder, with how sure the analysis is." />
           <TextBlock Name="VerificationText" Text="{Binding VerificationText}" Classes="secondary" TextWrapping="Wrap"
                      IsVisible="{Binding HasVerificationText}"
-                     ToolTip.Tip="Whether the checksums the stream stores hold. A checksum over the decoded audio is compared only when the audio is decoded: choose Verify Audio." />
+                     ToolTip.Tip="Whether the checksums the stream stores hold. A checksum over the decoded audio is compared only when the audio is decoded: choose Decode Audio." />
           <StackPanel Name="DetectionRow" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasDetectionText}">
             <TextBlock Name="DetectionText" Text="{Binding DetectionText}" Classes="secondary" VerticalAlignment="Center"
                        ToolTip.Tip="Besides the format the analysis ran, other formats have real evidence in the data: a chain of frames, or frames that pass their checksum. Choose one to analyze the file as that format." />
@@ -48,9 +49,9 @@
             <PathIcon Width="12" Height="12" Data="{x:Static views:Icons.Down}" />
           </Button>
           <Button Name="TopicsButton" Content="Topics" Classes.active="{Binding IsTopicOpen}" Click="OnTopics" Margin="6,0,0,0" />
-          <Button Name="VerifyAudioButton" Content="Verify Audio" Click="OnVerifyAudio" IsEnabled="{Binding CanVerifyAudio}" IsVisible="{Binding !IsVerifying}"
-                  ToolTip.Tip="Decode the audio to compare the checksums over it, such as FLAC's MD5 of the samples. It reads the whole file again and takes longer than the analysis." />
-          <Button Name="StopVerifyingButton" Content="Stop" Click="OnStopVerifying" IsVisible="{Binding IsVerifying}"
+          <Button Name="DecodeAudioButton" Content="Decode Audio" Click="OnDecodeAudio" IsEnabled="{Binding CanDecodeAudio}" IsVisible="{Binding !IsDecoding}"
+                  ToolTip.Tip="Decode the audio to compare the checksums over it, such as FLAC's MD5 of the samples, and to measure it: the waveform, the spectrogram, the spectrum, the spectral cutoff and the levels. It reads the whole file again and takes longer than the analysis." />
+          <Button Name="StopDecodingButton" Content="Stop" Click="OnStopDecoding" IsVisible="{Binding IsDecoding}"
                   ToolTip.Tip="Stop decoding; the analysis stays as it is." />
           <Button Name="AnalyzeAsButton" Content="Analyze as…" IsEnabled="{Binding HasReport}"
                   ToolTip.Tip="Analyze the file as a format of your choice, for a file whose format is not detected or is detected wrongly." />
@@ -195,6 +196,9 @@
                     <DataTemplate DataType="vm:GraphChoiceGroup">
                       <StackPanel>
                         <TextBlock Text="{Binding Heading}" Classes="secondary heading" />
+                        <TextBlock Text="{Binding Caption}" Classes="secondary caption" IsVisible="{Binding HasCaption}" AutomationProperties.Name="{Binding Caption}" />
+                        <Button Content="Decode Audio" Classes="decode" IsVisible="{Binding OffersDecode}" IsEnabled="{Binding Owner.CanDecode}" Click="OnGraphDecode"
+                                ToolTip.Tip="Decode the audio to measure it: the waveform, the spectrogram, the spectrum, the spectral cutoff and the levels. It reads the whole file again and takes longer than the analysis." />
                         <ItemsControl ItemsSource="{Binding Choices}">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:GraphChoice">
@@ -212,16 +216,26 @@
                 </ItemsControl>
               </ScrollViewer>
               <Border Grid.Column="1" Classes="divider" BorderThickness="1,0,0,0" />
-              <!-- The note about the decoder sits under the chart and not under the list, which keeps its height for its entries. -->
-              <DockPanel Grid.Column="2">
-                <TextBlock Name="DecoderNote" DockPanel.Dock="Bottom" Text="{Binding Graphs.DecoderNote}" Classes="secondary"
-                           Margin="8,0,12,6" TextTrimming="CharacterEllipsis" IsVisible="{Binding Graphs.DecoderNote, Converter={x:Static ObjectConverters.IsNotNull}}" />
-                <Panel>
-                  <TextBlock Text="No graphs: the file has no stream with figures over time." Classes="secondary" Margin="14,6" VerticalAlignment="Top"
-                             IsVisible="{Binding HasNoGraphs}" />
-                  <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" Margin="6,2,8,4" />
-                </Panel>
-              </DockPanel>
+              <Panel Grid.Column="2">
+                <TextBlock Name="EmptyNote" Text="{Binding Graphs.EmptyNote}" Classes="secondary" TextWrapping="Wrap" Margin="14,6" VerticalAlignment="Top"
+                           IsVisible="{Binding Graphs.HasEmptyNote}" />
+                <TextBlock Text="No graphs: the file has no stream with figures over time." Classes="secondary" Margin="14,6" VerticalAlignment="Top"
+                           IsVisible="{Binding HasNoGraphs}" />
+                <ScrollViewer Name="FiguresScroll" IsVisible="{Binding Graphs.IsFiguresShown}" HorizontalScrollBarVisibility="Disabled" Margin="6,2,8,4">
+                  <ItemsControl Name="FigureLines" ItemsSource="{Binding Graphs.Figures}" Margin="8,4">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="host:MeasurementLine">
+                        <Grid ColumnDefinitions="190,*" Margin="0,2" ToolTip.Tip="{Binding Description}" AutomationProperties.Name="{Binding Name}"
+                              AutomationProperties.HelpText="{Binding Text}">
+                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Classes="secondary" TextWrapping="Wrap" />
+                          <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+                <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" Margin="6,2,8,4" IsVisible="{Binding Graphs.IsChartShown}" />
+              </Panel>
             </Grid>
           </DockPanel>
         </DockPanel>

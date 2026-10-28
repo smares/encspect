@@ -23,6 +23,13 @@ public enum GraphForm
 
     // A category series' share over time as a stepped stacked area (OverTime) with each interval averaged with its neighbors.
     Smoothed,
+
+    // The one form of a panel drawn from the measurements of the decoded audio (the waveform, the spectrogram, the figures).
+    Audio,
+
+    // The average spectrum of all channels together (all but the LFE), or one line for each channel.
+    Combined,
+    PerChannel,
 }
 
 // A graph that draws tables of categories with counts and shares.

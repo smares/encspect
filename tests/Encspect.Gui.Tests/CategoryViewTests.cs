@@ -51,7 +51,7 @@ public class CategoryViewTests
     {
         DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"));
 
-        Assert.Equal(["Summary", "Stereo Coding", "Block Switching", "Bit Distribution", "Other"], window.Model.Graphs.ChoiceGroups.Select(g => g.Heading));
+        Assert.Equal(["Summary", "Stereo Coding", "Block Switching", "Bit Distribution", "Other", "Audio"], window.Model.Graphs.ChoiceGroups.Select(g => g.Heading));
         Assert.True(window.GraphChoices.IsEffectivelyVisible);
         Assert.False(window.GraphFormChoices.IsEffectivelyVisible);
         Choose(window, "Block Usage");

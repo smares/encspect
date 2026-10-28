@@ -18,6 +18,14 @@ internal static class Fixtures
 
     public static string Flac(string name) => Path.Combine(Directory, "flac", name);
 
+    public static string WavPack(string name) => Path.Combine(Directory, "wavpack", name);
+
+    public static string Tta(string name) => Path.Combine(Directory, "tta", name);
+
+    public static string Measurement(string name) => Path.Combine(Directory, "measurement", name);
+
+    public static string Matroska(string name) => Path.Combine(Directory, "matroska", name);
+
     private static string FindRepositoryRoot()
     {
         for (string? directory = AppContext.BaseDirectory; directory is not null; directory = Path.GetDirectoryName(directory))

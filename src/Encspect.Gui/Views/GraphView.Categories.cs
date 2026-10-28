@@ -105,6 +105,12 @@ public sealed partial class GraphView
             return;
         }
 
+        if (IsAudio(graph) && AudioKey((AudioGraph)graph, e))
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key is Key.Enter or Key.Space)
         {
             if (_hover is { } chosen)
@@ -195,7 +201,9 @@ public sealed partial class GraphView
             _ => string.Empty,
         };
         AutomationProperties.SetName(this, graph.Title);
-        AutomationProperties.SetHelpText(this, string.Join(". ", new[] { legend, _hoverText ?? string.Empty }.Where(t => t.Length > 0)));
+        AutomationProperties.SetHelpText(this, graph is AudioGraph audio && IsAudio(graph)
+            ? AudioHelp(audio)
+            : string.Join(". ", new[] { legend, _hoverText ?? string.Empty }.Where(t => t.Length > 0)));
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)

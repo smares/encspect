@@ -39,7 +39,7 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 
 ## Decoding
 
-- The decoder (`Encspect.Formats.MonkeysAudio.Decoding`, ID `monkeys-audio`) runs when the front end asks for it: `--verify` on the command line, "Verify Audio" in the detail window. The tree is the same either way.
+- The decoder (`Encspect.Formats.MonkeysAudio.Decoding`, ID `monkeys-audio`) runs when the front end asks for it: `--verify` on the command line, "Decode Audio" in the detail window (which also measures the audio). The tree is the same either way.
 - It decodes files of versions 3.93 to 3.99 and 4.11 at all five levels (the predictor of 3.93 and 3.94 has no insane level), with 8, 16, 24 and 32 bits per sample (the old header's flags name 8, 16 and 24 only), floating point (`MACF`) and 1 to 32 channels. The parser's code reads the descriptor or header, the seek table and the start of each frame; the decoder adds the range decoder, the predictors with their neural network filters, the undoing of the mid/side coding of channel pairs, the silent and pseudo-stereo frames and the CRC over the decoded audio.
 - What each version changes, from the SDK 13.42 (the decoder follows its code, version by version):
 

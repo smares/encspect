@@ -1,4 +1,5 @@
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Gui.ViewModels;
 
@@ -87,12 +88,23 @@ public sealed class GraphChoice : ObservableObject
     }
 }
 
-// The entries of one heading ("Stereo Coding"), one under the other.
-public sealed class GraphChoiceGroup(string heading, IReadOnlyList<GraphChoice> choices)
+// The entries of one heading ("Stereo Coding"), one under the other. The heading "Audio" may also have a caption, one line that says
+// why its panels are missing or incomplete, and the command to decode.
+public sealed class GraphChoiceGroup(string heading, IReadOnlyList<GraphChoice> choices, AudioCaption? caption = null, GraphsViewModel? owner = null)
 {
     public string Heading { get; } = heading;
 
     public IReadOnlyList<GraphChoice> Choices { get; } = choices;
+
+    public string? Caption { get; } = caption?.Text;
+
+    public bool HasCaption => Caption is not null;
+
+    // Whether the Decode Audio command is offered under the caption.
+    public bool OffersDecode { get; } = caption?.OffersDecode == true;
+
+    // The view model whose CanDecode enables the command and whose RequestDecode runs it.
+    public GraphsViewModel? Owner { get; } = owner;
 }
 
 // A stream that has graphs, as a choice when a file has several: "Stream 2: 48 kHz · 0:00.5".
@@ -102,6 +114,9 @@ public sealed class GraphStream(int number, StreamInfo stream, IReadOnlyList<Gra
     public StreamInfo Stream { get; } = stream;
 
     public IReadOnlyList<GraphChoice> Graphs { get; } = graphs;
+
+    // The line under the heading "Audio", or null where the stream is not audio or its panels are complete.
+    public AudioCaption? Caption { get; } = AudioPanels.CaptionFor(stream);
 
     public string Text { get; } = $"Stream {number}: " + string.Join(" · ", Parts(stream));
 
@@ -126,12 +141,16 @@ public sealed class GraphsViewModel : ObservableObject
     private GraphChoice? _selected;
     private string? _preferredTitle;
     private GraphForm? _preferredForm;
-    private string? _decoderNote;
+    private bool _canDecode;
     private int? _markedIndex;
     private long? _markedFrame;
+    private (Graph Graph, int Index, long Offset)? _click;
 
     // Asks the window to select the frame at an offset in the structure tree and hex view.
     public event EventHandler<long>? FrameRequested;
+
+    // Asks the window to decode the audio, from the command under the caption of the heading "Audio".
+    public event EventHandler? DecodeRequested;
 
     public IReadOnlyList<GraphStream> Streams
     {
@@ -159,6 +178,7 @@ public sealed class GraphsViewModel : ObservableObject
             {
                 Raise(nameof(Choices));
                 Raise(nameof(ChoiceGroups));
+                RaiseChart();
                 Choose(value?.Graphs.FirstOrDefault(g => g.Title == _preferredTitle) ?? value?.Graphs.FirstOrDefault());
             }
         }
@@ -166,20 +186,49 @@ public sealed class GraphsViewModel : ObservableObject
 
     public IReadOnlyList<GraphChoice> Choices => _selectedStream?.Graphs ?? [];
 
-    // The entries under the headings of their concepts; a heading without an entry for the stream is not listed.
+    // The entries under the headings of their concepts; a heading without an entry for the stream is not listed, except "Audio" when it
+    // has a caption to show.
     public IReadOnlyList<GraphChoiceGroup> ChoiceGroups
     {
         get
         {
             var groups = new List<GraphChoiceGroup>();
+            AudioCaption? caption = _selectedStream?.Caption;
             foreach (IGrouping<string, GraphChoice> group in Choices.GroupBy(c => c.Heading))
             {
-                groups.Add(new GraphChoiceGroup(group.Key, [.. group]));
+                groups.Add(new GraphChoiceGroup(group.Key, [.. group], group.Key == GraphHeadings.Audio ? caption : null, this));
+            }
+
+            if (caption is not null && groups.All(g => g.Heading != GraphHeadings.Audio))
+            {
+                groups.Add(new GraphChoiceGroup(GraphHeadings.Audio, [], caption, this));
             }
 
             return groups;
         }
     }
+
+    // Whether the window can decode the audio now (a report is shown and nothing is loading or decoding); set by the window's model.
+    public bool CanDecode
+    {
+        get => _canDecode;
+        set => Set(ref _canDecode, value);
+    }
+
+    // The line in place of the chart where the stream has no panel to draw, which is the caption of its audio.
+    public string? EmptyNote => _selected is null ? _selectedStream?.Caption?.Text : null;
+
+    public bool HasEmptyNote => EmptyNote is not null;
+
+    // The measured figures as lines, while the entry "Figures" is chosen; null for every other entry.
+    public IReadOnlyList<MeasurementLine>? Figures => (_selected?.Graph as FiguresGraph)?.Lines;
+
+    public bool IsChartShown => _selected is not null && _selected.Graph is not FiguresGraph;
+
+    public bool IsFiguresShown => _selected?.Graph is FiguresGraph;
+
+    // Asks for the audio to be decoded.
+    public void RequestDecode() => DecodeRequested?.Invoke(this, EventArgs.Empty);
 
     public GraphChoice? Selected
     {
@@ -206,13 +255,6 @@ public sealed class GraphsViewModel : ObservableObject
     {
         get => _markedIndex;
         private set => Set(ref _markedIndex, value);
-    }
-
-    // One quiet line where the waveform and spectrogram would be: no format has a decoder yet.
-    public string? DecoderNote
-    {
-        get => _decoderNote;
-        private set => Set(ref _decoderNote, value);
     }
 
     // The entries of a stream, from its series alone, in the order of the headings. A category series is one entry with
@@ -255,6 +297,7 @@ public sealed class GraphsViewModel : ObservableObject
             entries.Add(Entry(quantity, frameOffsets, stream.Duration));
         }
 
+        entries.AddRange(AudioPanels.EntriesFor(stream));
         return GraphHeadings.Order(entries, e => e.Heading);
     }
 
@@ -325,7 +368,9 @@ public sealed class GraphsViewModel : ObservableObject
         return new GraphChoice(first.Quantity ?? first.Name, GraphHeadings.Of(first), first.Description, forms);
     }
 
-    public void Load(Report report)
+    // Lists the streams that have graphs or an audio caption. With showAudio, the first audio panel of the first stream that has one
+    // is chosen (the spectrogram, which comes after the decode command that asked for it), instead of the entry chosen before.
+    public void Load(Report report, bool showAudio = false)
     {
         ArgumentNullException.ThrowIfNull(report);
 
@@ -333,33 +378,46 @@ public sealed class GraphsViewModel : ObservableObject
         for (int i = 0; i < report.Streams.Count; i++)
         {
             IReadOnlyList<GraphChoice> entries = For(report.Streams[i]);
-            if (entries.Count > 0)
+            var stream = new GraphStream(i + 1, report.Streams[i], entries);
+            if (entries.Count > 0 || stream.Caption is not null)
             {
-                streams.Add(new GraphStream(i + 1, report.Streams[i], entries));
+                streams.Add(stream);
             }
         }
 
         _markedFrame = null;
+        _click = null;
         Streams = streams;
         SelectedStream = streams.FirstOrDefault();
-        DecoderNote = report.Streams.Count > 0
-            ? $"Waveform and spectrogram need a decoder, which {report.Root.Value?.ToString() ?? report.Streams[0].Codec} does not have yet."
-            : null;
+        if (showAudio)
+        {
+            foreach (GraphStream stream in streams)
+            {
+                GraphChoice? panel = stream.Graphs.FirstOrDefault(g => g.Title == AudioPanels.SpectrogramTitle) ?? stream.Graphs.FirstOrDefault(g => g.Heading == GraphHeadings.Audio);
+                if (panel is not null)
+                {
+                    SelectedStream = stream;
+                    Selected = panel;
+                    break;
+                }
+            }
+        }
     }
 
     public void Clear()
     {
         _markedFrame = null;
+        _click = null;
         Streams = [];
         SelectedStream = null;
-        DecoderNote = null;
     }
 
     // A click on a point: selects its frame, if it leads to one.
     public void Activate(int index)
     {
-        if (Graph?.FrameAt(index, _markedFrame) is { } offset)
+        if (Graph is { } graph && graph.FrameAt(index, _markedFrame) is { } offset)
         {
+            _click = (graph, index, offset);
             FrameRequested?.Invoke(this, offset);
         }
     }
@@ -387,7 +445,8 @@ public sealed class GraphsViewModel : ObservableObject
         {
             Raise(nameof(Form));
             Raise(nameof(Graph));
-            MarkedIndex = _markedFrame is { } at ? Graph?.IndexOfFrame(at) : null;
+            RaiseChart();
+            MarkedIndex = IndexOfMarked();
         }
     }
 
@@ -395,7 +454,26 @@ public sealed class GraphsViewModel : ObservableObject
     public void MarkFrame(long? offset)
     {
         _markedFrame = offset;
-        MarkedIndex = offset is { } at ? Graph?.IndexOfFrame(at) : null;
+        if (_click is { } click && click.Offset != offset)
+        {
+            _click = null;
+        }
+
+        MarkedIndex = IndexOfMarked();
+    }
+
+    // The column of the marked frame. A time graph finds a frame by an estimate of its sample position (SampleLocator), which can
+    // place a frame's start early, so the frame that a click on the panel selected keeps the column that was clicked.
+    private int? IndexOfMarked()
+    {
+        if (_markedFrame is not { } at)
+        {
+            return null;
+        }
+
+        return _click is { } click && click.Offset == at && click.Graph is TimeGraph && ReferenceEquals(click.Graph, Graph)
+            ? click.Index
+            : Graph?.IndexOfFrame(at);
     }
 
     private void Choose(GraphChoice? choice)
@@ -418,6 +496,16 @@ public sealed class GraphsViewModel : ObservableObject
         Raise(nameof(Selected));
         Raise(nameof(Graph));
         Raise(nameof(Form));
-        MarkedIndex = _markedFrame is { } at ? Graph?.IndexOfFrame(at) : null;
+        RaiseChart();
+        MarkedIndex = IndexOfMarked();
+    }
+
+    private void RaiseChart()
+    {
+        Raise(nameof(EmptyNote));
+        Raise(nameof(HasEmptyNote));
+        Raise(nameof(Figures));
+        Raise(nameof(IsChartShown));
+        Raise(nameof(IsFiguresShown));
     }
 }

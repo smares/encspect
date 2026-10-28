@@ -65,7 +65,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 ## Decoding
 
-- The decoder (`Encspect.Formats.WavPack.Decoding`, ID `wavpack`) runs when the front end asks for it: `--verify` on the command line, "Verify Audio" in the detail window. The tree is the same either way.
+- The decoder (`Encspect.Formats.WavPack.Decoding`, ID `wavpack`) runs when the front end asks for it: `--verify` on the command line, "Decode Audio" in the detail window (which also measures the audio). The tree is the same either way.
 - It decodes lossless and hybrid streams (integers of 1 to 32 bits, floats, up to the channels a stream may have) and DSD (stored, fast and high modes). The syntax of the sub-blocks is read by the parser's code (`BlockContents`); the decoder adds the entropy decoding, the decorrelation passes, joint stereo, the shift and the sent, zero, one and duplicate bits, the restoring of floats, and the checksums.
 - A hybrid file is decoded without its `.wvc` to the lossy audio the main file holds; the analyzer does not look for the correction file.
 - Four checksums are declared and tallied:

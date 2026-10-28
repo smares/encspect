@@ -2,6 +2,8 @@
 
 Status: approved by the project lead on 2026-10-26 with every recommendation of [Decisions](#decisions) as listed; not built yet. On 2026-10-26 the owner deferred building it in favor of new formats and deeper analysis such as [spectral analysis](spectral-analysis.md). It stays approved and ready to build. The `CLAUDE.md` sentences of [The rules in CLAUDE.md](#the-rules-in-claudemd) take effect with the first implementation pull request.
 
+Renamed with step 4 of [the measurements](spectral-analysis.md): the GUI command "Verify Audio" is "Decode Audio" (it also measures the audio); this text says so wherever the command is named.
+
 - It designs option B of the second speed pass ("Decode independent units in parallel"), the one that needs a change of the decoder contract in [decoders.md](decoders.md).
 - A throwaway prototype outside the repository measured the gains (see [Expected gains](#expected-gains)); nothing of it is committed.
 - The decisions are under [Decisions](#decisions).
@@ -33,7 +35,7 @@ Status: approved by the project lead on 2026-10-26 with every recommendation of 
 
 ## Goal and expected gains
 
-The goal is a faster `--verify` (and "Verify Audio") on a machine with free cores, for the formats where decoding is most of the run. The library's analysis without decoding is not changed.
+The goal is a faster `--verify` (and "Decode Audio") on a machine with free cores, for the formats where decoding is most of the run. The library's analysis without decoding is not changed.
 
 ### What stays serial
 
@@ -447,7 +449,7 @@ For the replay to know where a serial run would stop, a worker looks at cancella
 ### With the GUI and the CLI
 
 - **CLI:** analyzes one file at a time (`CommandLine`, `InputWalker`), so it passes a degree from `Environment.ProcessorCount` with `--verify` (decision 2 below), and 1 without decoding, where nothing is decoded anyway.
-- **GUI:** the file list analyzes `Parallelism` files at once (`MainViewModel`: `Math.Clamp(Environment.ProcessorCount / 2, 1, 4)`), and never decodes. "Verify Audio" analyzes one file in the detail window (`DetailViewModel`, `new DecodeOptions()`), which may run while the list's background analysis is busy. The GUI passes `Environment.ProcessorCount` minus the list's `Parallelism` while the list is analyzing, and `Environment.ProcessorCount` otherwise, at least 1 (decided when the analysis starts). It is capped at 8 like the CLI's (decision 2), since both run in the range this design measured and in none beyond it.
+- **GUI:** the file list analyzes `Parallelism` files at once (`MainViewModel`: `Math.Clamp(Environment.ProcessorCount / 2, 1, 4)`), and never decodes. "Decode Audio" analyzes one file in the detail window (`DetailViewModel`, `new DecodeOptions()`), which may run while the list's background analysis is busy. The GUI passes `Environment.ProcessorCount` minus the list's `Parallelism` while the list is analyzing, and `Environment.ProcessorCount` otherwise, at least 1 (decided when the analysis starts). It is capped at 8 like the CLI's (decision 2), since both run in the range this design measured and in none beyond it.
 - **A library caller** gets serial decoding unless it asks; a server that analyzes many files at once keeps 1, since its files are its parallelism.
 
 ### Threads, batches and back-pressure
@@ -549,7 +551,7 @@ Each step is a pull request with its own review, and each decoder's step keeps i
    - The host: the frame pipeline in `DecodeSession` (copy of the bytes that keeps the ranges, `IsOpaque`, `FollowsGap` and `EndPosition`; plan, batches, window, memory bound, scratch pool, replan, the check of an unexplained cancel, replay, commit; stream-order counts of unreadable frames and gaps), the pool of lent buffers, the budget replay and the workers' cancellation in `DecodeRun`, the join in `DecodeRun.Dispose`, the drain in `EndUnfinished`, the one-session-at-a-time invariant, the degree's resolution.
    - Monkey's Audio split into plan, worker, replan and commit, with the replan for interim mode and, as decision 11 settles it, the parser change or the session member for `monkeys-audio.frame-not-decoded`.
    - Tests: `ParallelDecodingMatchTests`, `FrameWorkerPurityTests`, the `DecodeRouteTests` cases, the memory and thread cases; the interim fixtures (`external-interim-24-stereo`, the `legacy-*` fixtures) are the replan's cases.
-   - The CLI's degree with `--verify` and the GUI's for "Verify Audio" (or behind the owner's default, decision 1), `docs/cli.md` and `docs/gui.md`; the `CLAUDE.md` sentences; this document's "As built".
+   - The CLI's degree with `--verify` and the GUI's for "Decode Audio" (or behind the owner's default, decision 1), `docs/cli.md` and `docs/gui.md`; the `CLAUDE.md` sentences; this document's "As built".
 2. **WavPack:** the plan (settle, set position, mute decision), the replan of the set logic (decision 8), the block worker (its samples written through the journal), the commit (set assembly, `AudioDigest`); the checks in `ReadWords` and the DSD loops become the block's charge point (decision 9). Its fixtures cover sets of several blocks (5.1, `external-from-caf-51-md5`), DSD, hybrid files and the sets that never complete.
 3. **FLAC** (decision 7): the pool of lent buffers' first user, the frame worker (restore, recombination, and possibly the canonical bytes), the MD5 in `Output`; batches of frames. Its gain is the smallest of the three (1.1 to 1.25 times measured, about 1.4 estimated), so it comes last, and in the form decision 7 settles (on B alone, or together with option C, which is a later and separate design, or not at all).
 4. **Later, separate designs:** option A for TrueHD and MLP, option C, and the CLI's file-level parallelism.
@@ -619,12 +621,12 @@ Minimum wall time in seconds, first run (all configurations of a file in the sam
 The project lead approved the recommendation of each decision below: 1(a), 2(a), 3(a), 4(a), 5(a), 6(a), 7(b), 8(a), 9(a), 10(a), 11(b) and 12(a). The options are kept for the record.
 
 1. **Parallel decoding on by default?**
-   - (a) The library stays serial unless `MaxParallelism` is set; the CLI with `--verify` and the GUI's "Verify Audio" set it (the degrees above).
+   - (a) The library stays serial unless `MaxParallelism` is set; the CLI with `--verify` and the GUI's "Decode Audio" set it (the degrees above).
    - (b) The library decodes in parallel by default too.
    - (c) Off everywhere until a front-end option asks for it.
    - **Recommendation: (a).** A library that starts threads unasked surprises a caller who runs its own parallelism (a server, the GUI's own list); the two front ends know their situation, and the report is the same either way.
 2. **The default degree with `--verify`, in the CLI and the GUI.**
-   - (a) `Environment.ProcessorCount`, at most 8 (on four cores: three workers and the analysis thread helping), for the CLI and for the GUI's "Verify Audio" alike (the GUI's degree is the processor count minus the list's `Parallelism` while the list analyzes, within the same cap).
+   - (a) `Environment.ProcessorCount`, at most 8 (on four cores: three workers and the analysis thread helping), for the CLI and for the GUI's "Decode Audio" alike (the GUI's degree is the processor count minus the list's `Parallelism` while the list analyzes, within the same cap).
    - (b) `Environment.ProcessorCount`, unlimited.
    - (c) A fixed 4.
    - **Recommendation: (a).** On four cores it was within about 7% of the best fixed number of workers for every file measured. The gains flatten where the analysis thread and the frame count bind (FLAC, Monkey's Audio at insane), and memory is bounded by decision 5; the cap of 8 is to be confirmed on a machine with more cores, which this design did not have.
