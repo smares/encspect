@@ -232,16 +232,17 @@
                   <ItemsControl Name="FigureLines" ItemsSource="{Binding Graphs.Figures}" Margin="8,4">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate DataType="host:MeasurementLine">
-                        <Grid ColumnDefinitions="190,*,Auto" Margin="0,2" ToolTip.Tip="{Binding Description}" AutomationProperties.Name="{Binding Name}"
+                        <Grid ColumnDefinitions="190,*" Margin="0,2" ToolTip.Tip="{Binding Description}" AutomationProperties.Name="{Binding Name}"
                               AutomationProperties.HelpText="{Binding Text}">
-                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Classes="secondary" TextWrapping="Wrap" />
-                          <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
-                          <Button Grid.Column="2" Name="FigureLearnMore" Classes="link" VerticalAlignment="Top" Margin="12,0,0,0" Click="OnFigureLearnMore"
+                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Classes="secondary" TextWrapping="Wrap"
+                                     IsVisible="{Binding Topic, Converter={x:Static views:TopicLinks.IsUnknown}}" />
+                          <Button Name="FigureLearnMore" Classes="link name" HorizontalAlignment="Left" Click="OnFigureLearnMore"
                                   IsVisible="{Binding Topic, Converter={x:Static views:TopicLinks.IsKnown}}"
                                   AutomationProperties.Name="{Binding Topic, Converter={x:Static views:TopicLinks.LearnMore}}"
-                                  ToolTip.Tip="{Binding Topic, Converter={x:Static views:TopicLinks.Title}}">
-                            <TextBlock Text="Learn More" Classes="link" />
+                                  ToolTip.Tip="{Binding Topic, Converter={x:Static views:TopicLinks.LearnMore}}">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Classes="secondary" TextWrapping="Wrap" />
                           </Button>
+                          <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" />
                         </Grid>
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>

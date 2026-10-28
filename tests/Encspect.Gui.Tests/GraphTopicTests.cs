@@ -129,8 +129,8 @@ public class GraphTopicTests
             Topic topic = TopicLibrary.Find(lines[i].Topic)!;
             Assert.Same(lines[i], links[i].DataContext);
             Assert.True(links[i].IsEffectivelyVisible, lines[i].Name);
-            Assert.Equal("Learn More", ((TextBlock)links[i].Content!).Text);
-            Assert.Equal(topic.Title, ToolTip.GetTip(links[i]));
+            Assert.Equal(lines[i].Name, ((TextBlock)links[i].Content!).Text);
+            Assert.Equal($"Learn More: {topic.Title}", ToolTip.GetTip(links[i]));
             Assert.Equal($"Learn More: {topic.Title}", AutomationProperties.GetName(links[i]));
         }
 
