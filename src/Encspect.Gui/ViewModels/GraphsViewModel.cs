@@ -145,6 +145,7 @@ public sealed class GraphsViewModel : ObservableObject
     private int? _markedIndex;
     private long? _markedFrame;
     private (Graph Graph, int Index, long Offset)? _click;
+    private SeverityMask _shownSeverities = SeverityMask.All;
 
     // Asks the window to select the frame at an offset in the structure tree and hex view.
     public event EventHandler<long>? FrameRequested;
@@ -250,6 +251,48 @@ public sealed class GraphsViewModel : ObservableObject
 
     public Graph? Graph => _selected?.Graph;
 
+    // The severities whose findings the Frame Map rings and marks; the Findings tab's filters.
+    public SeverityMask ShownSeverities
+    {
+        get => _shownSeverities;
+        set => Set(ref _shownSeverities, value);
+    }
+
+    // The findings that lie in a frame, each with the offset of the first frame node along its path: the squares the Frame Map
+    // rings. A finding on the stream, a tag, a gap or the root lies in no frame and is left out.
+    public static IReadOnlyList<MapFinding> MapFindings(Report report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+
+        var result = new List<MapFinding>();
+        foreach (Finding finding in report.Findings)
+        {
+            if (finding.Path is not { } path)
+            {
+                continue;
+            }
+
+            Node node = report.Root;
+            foreach (int index in path)
+            {
+                IReadOnlyList<Node> children = node.Children;
+                if ((uint)index >= (uint)children.Count)
+                {
+                    break;
+                }
+
+                node = children[index];
+                if (node.Kind == NodeKind.Frame)
+                {
+                    result.Add(new MapFinding(node.Offset, finding.Severity, finding.Message, finding.Count));
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
     // The point of the frame selected in the tree, marked on the chart.
     public int? MarkedIndex
     {
@@ -261,7 +304,7 @@ public sealed class GraphsViewModel : ObservableObject
     // its forms, and so is each quantity: the series that carry the same Quantity are its forms (per frame, per second of
     // audio). Series that name none are paired by what they are, never by name: the one per-frame and the one per-second
     // series in kbps are the bitrate, and the same two in bytes the bit reservoir, until their formats set a Quantity.
-    public static IReadOnlyList<GraphChoice> For(StreamInfo stream)
+    public static IReadOnlyList<GraphChoice> For(StreamInfo stream, IReadOnlyList<MapFinding>? findings = null)
     {
         ArgumentNullException.ThrowIfNull(stream);
 
@@ -276,7 +319,7 @@ public sealed class GraphsViewModel : ObservableObject
 
         foreach (CategorySeries series in categories)
         {
-            GraphFormChoice[] forms = [.. CategoryGraph.FormsOf(series).Select(f => new GraphFormChoice(f, f switch
+            List<GraphFormChoice> forms = [.. CategoryGraph.FormsOf(series).Select(f => new GraphFormChoice(f, f switch
             {
                 GraphForm.OverTime => "Over Time",
                 GraphForm.Smoothed => "Smoothed",
@@ -289,12 +332,17 @@ public sealed class GraphsViewModel : ObservableObject
                 GraphForm.Frames => "The category of every frame, one cell each",
                 _ => "The count and share of each category over the whole stream",
             }, new CategoryGraph(series, f) { Duration = stream.Duration }))];
+            if (series.Count > 0)
+            {
+                forms.Add(MapForm(new FrameMapGraph(series, frameOffsets, findings)));
+            }
+
             entries.Add(new GraphChoice(series.Name, GraphHeadings.Of(series.Concept), series.Description, forms));
         }
 
         foreach (List<Series> quantity in Quantities(stream.Series.Where(s => s.Values.Length > 0)))
         {
-            entries.Add(Entry(quantity, frameOffsets, stream.Duration));
+            entries.Add(Entry(quantity, frameOffsets, stream.Duration, findings));
         }
 
         entries.AddRange(AudioPanels.EntriesFor(stream));
@@ -339,7 +387,10 @@ public sealed class GraphsViewModel : ObservableObject
         return groups;
     }
 
-    private static GraphChoice Entry(List<Series> quantity, ReadOnlyMemory<double> frameOffsets, double duration)
+    private static GraphFormChoice MapForm(FrameMapGraph graph) =>
+        new(GraphForm.Map, "Frame Map", "Every frame as a square, in rows like text", graph);
+
+    private static GraphChoice Entry(List<Series> quantity, ReadOnlyMemory<double> frameOffsets, double duration, IReadOnlyList<MapFinding>? findings)
     {
         Series? perFrame = quantity.FirstOrDefault(s => s.Axis == SeriesAxis.FrameOffset);
         Series? perSecond = quantity.FirstOrDefault(s => s.Axis == SeriesAxis.Seconds);
@@ -365,6 +416,11 @@ public sealed class GraphsViewModel : ObservableObject
             forms.Add(new GraphFormChoice(GraphForm.Summary, "Distribution", "How many frames have each value", new DistributionGraph(perFrame)));
         }
 
+        if (perFrame is not null)
+        {
+            forms.Add(MapForm(new FrameMapGraph(perFrame, frameOffsets, findings)));
+        }
+
         return new GraphChoice(first.Quantity ?? first.Name, GraphHeadings.Of(first), first.Description, forms);
     }
 
@@ -375,9 +431,10 @@ public sealed class GraphsViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(report);
 
         var streams = new List<GraphStream>();
+        IReadOnlyList<MapFinding> findings = MapFindings(report);
         for (int i = 0; i < report.Streams.Count; i++)
         {
-            IReadOnlyList<GraphChoice> entries = For(report.Streams[i]);
+            IReadOnlyList<GraphChoice> entries = For(report.Streams[i], findings);
             var stream = new GraphStream(i + 1, report.Streams[i], entries);
             if (entries.Count > 0 || stream.Caption is not null)
             {
@@ -425,6 +482,16 @@ public sealed class GraphsViewModel : ObservableObject
     // A click on a legend entry of a category series: selects the next frame after the selected one that holds the category.
     public void ActivateCategory(int category)
     {
+        if (Graph is FrameMapGraph map)
+        {
+            if (map.NextFrameOf(category, _markedFrame, _shownSeverities) is { } next)
+            {
+                FrameRequested?.Invoke(this, next);
+            }
+
+            return;
+        }
+
         if (Graph is CategoryGraph graph && CategoryGraph.NextUnit(graph.Series, category, _markedFrame) is { } offset)
         {
             FrameRequested?.Invoke(this, offset);

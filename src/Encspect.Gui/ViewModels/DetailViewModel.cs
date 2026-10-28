@@ -846,6 +846,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
     private void FilterFindings()
     {
+        Graphs.ShownSeverities = (_showErrors ? SeverityMask.Error : 0) | (_showWarnings ? SeverityMask.Warning : 0) | (_showInfos ? SeverityMask.Info : 0);
         Findings.Clear();
         foreach (FindingItem finding in _allFindings)
         {

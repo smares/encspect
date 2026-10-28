@@ -58,8 +58,8 @@ public class MpegGraphsTests
                 ("Other", "Channel Modes"),
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
-        Assert.Equal(["Per Frame", "Over Time", "First and Second"], window.Model.Graphs.Choices.Single(c => c.Title == "Channel Bit Share").Forms.Select(f => f.Title));
-        Assert.Equal(["Over Time", "Frames", "Summary"], window.Model.Graphs.Choices.Single(c => c.Title == "Block Usage").Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time", "First and Second", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Channel Bit Share").Forms.Select(f => f.Title));
+        Assert.Equal(["Over Time", "Frames", "Summary", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Block Usage").Forms.Select(f => f.Title));
         window.Close();
     }
 

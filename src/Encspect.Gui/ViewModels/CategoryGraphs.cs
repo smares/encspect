@@ -30,6 +30,9 @@ public enum GraphForm
     // The average spectrum of all channels together (all but the LFE), or one line for each channel.
     Combined,
     PerChannel,
+
+    // Every unit of a series as a square, in rows like text (FrameMapGraph).
+    Map,
 }
 
 // A graph that draws tables of categories with counts and shares.

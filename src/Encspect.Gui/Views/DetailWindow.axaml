@@ -234,7 +234,7 @@
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
                 </ScrollViewer>
-                <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" Margin="6,2,8,4" IsVisible="{Binding Graphs.IsChartShown}" />
+                <views:GraphView Name="Graph" Graph="{Binding Graphs.Graph}" MarkedIndex="{Binding Graphs.MarkedIndex}" ShownSeverities="{Binding Graphs.ShownSeverities}" Margin="6,2,8,4" IsVisible="{Binding Graphs.IsChartShown}" />
               </Panel>
             </Grid>
           </DockPanel>

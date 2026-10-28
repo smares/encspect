@@ -31,7 +31,7 @@ public class Ac3GraphsTests
                 ("Bit Distribution", "Bitrate"),
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
-        Assert.Equal(["Over Time", "Frames", "Summary"], window.Model.Graphs.Choices.Single(c => c.Title == "Blocks With Coupling").Forms.Select(f => f.Title));
+        Assert.Equal(["Over Time", "Frames", "Summary", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Blocks With Coupling").Forms.Select(f => f.Title));
         window.Close();
     }
 
