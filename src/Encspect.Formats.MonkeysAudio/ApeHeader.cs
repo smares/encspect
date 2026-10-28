@@ -114,6 +114,10 @@ internal readonly struct ApeHeader
 
     public bool HasStoredCrc => (Flags & FormatFlags.HasCrc) != 0 || FileVersion >= 3930;
 
+    // Whether the SDK reads a checksum from the frames: the CRC where there is one, and otherwise the Rice-coded sum of the versions before 3.90. Its bit array
+    // from 3.90 to 3.92 answers only the 32-bit reads (UnBitArrayBase.cpp, DecodeValue), so a file of those versions without the CRC flag gives it no checksum.
+    public bool ReadsChecksum => HasStoredCrc || FileVersion < 3900;
+
     // Frames start on byte boundaries from 3.81, and special frame codes follow the CRC word from 3.83 (APEInfo.h
     // APE_GET_FRAMES_START_ON_BYTES_BOUNDARIES and APE_GET_USES_SPECIAL_FRAMES). In files up to 3.82 all 32 bits of the word are the CRC.
     public bool FramesStartOnBytes => FileVersion > 3800;

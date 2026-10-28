@@ -175,8 +175,11 @@ def old_manifest(data, name, pcm):
     is_decoded = not (a.version >= 3900 and not a.has_crc)
     checksum = "frame CRC-32" if a.has_crc else "frame checksum"
 
+    # The SDK's bit array of 3.90 to 3.92 reads no checksum where the CRC flag is absent, so the frames store none it can read.
+    reads = a.has_crc or a.version < 3900
+
     def tally(checked):
-        return [{"name": checksum, "covers": "decodedAudio", "coversAllAudio": True, "stored": n, "checked": checked, "failed": 0}]
+        return [{"name": checksum, "covers": "decodedAudio", "coversAllAudio": reads, "stored": n if reads else 0, "checked": checked, "failed": 0}]
 
     result = {
         "length": len(data),

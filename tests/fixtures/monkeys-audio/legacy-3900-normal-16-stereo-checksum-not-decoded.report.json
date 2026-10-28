@@ -195,7 +195,7 @@
                 },
                 {
                   "name": "Stored Frame Checksums",
-                  "value": 1,
+                  "value": 0,
                   "unit": "frames",
                   "offset": 0,
                   "length": 6304
@@ -305,8 +305,8 @@
             {
               "name": "frame checksum",
               "covers": "decodedAudio",
-              "coversAllAudio": true,
-              "stored": 1,
+              "coversAllAudio": false,
+              "stored": 0,
               "checked": 0,
               "failed": 0
             }
