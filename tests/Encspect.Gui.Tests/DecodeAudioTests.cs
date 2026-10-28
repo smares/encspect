@@ -32,6 +32,10 @@ public class DecodeAudioTests
         Assert.Contains("STREAMINFO MD5 1 of 1", model.VerificationText, StringComparison.Ordinal);
         Assert.False(model.CanDecodeAudio);
         Assert.Null(model.CommandError);
+
+        // One decode both verifies and measures, and the spectrogram is chosen once it ends.
+        Assert.Equal(MeasurementStatus.Complete, model.Report.Streams.Single().Measurements!.Status);
+        Assert.Equal("Spectrogram", model.Graphs.Selected!.Title);
     }
 
     [Fact]

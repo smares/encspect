@@ -10,7 +10,7 @@ namespace Encspect.Gui.ViewModels;
 // size), WavPack, Monkey's Audio and TrueHD write, and what the graphs' per-second series already assume. A position p of a stream
 // of `total` samples in `count` frames is then in frame floor(p * count / total). The true frame length F satisfies
 // (count - 1) * F < total <= count * F, so the estimate is exact when the last frame is full (total = count * F) and otherwise
-// at most one frame early, and a stream whose frames differ in length (FLAC's variable block size) can be off by more. The answer
+// at most one frame late (p * count / total exceeds p / F by less than one), and a stream whose frames differ in length (FLAC's variable block size) can be off by more. The answer
 // is a frame that is near the time, not a claim about which samples a frame holds; nothing is shown that says it is exact.
 public sealed class SampleLocator
 {

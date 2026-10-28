@@ -431,7 +431,17 @@ public static class AudioPanels
     public static string NotDecodedHere(string codec) =>
         codec.Length > 0 ? $"The audio of this {codec} stream is not decoded here." : "The audio of this stream is not decoded here.";
 
-    private static string Cannot(string reason) => $"The audio cannot be decoded: {reason.TrimEnd('.')}.";
+    // The reason as a clause after the colon: a decoder's refusal starts with a capital, which an acronym ("DSD", "TTA") keeps.
+    private static string Cannot(string reason)
+    {
+        string clause = reason.TrimEnd('.');
+        if (clause.Length > 1 && char.IsUpper(clause[0]) && char.IsLower(clause[1]))
+        {
+            clause = char.ToLowerInvariant(clause[0]) + clause[1..];
+        }
+
+        return $"The audio cannot be decoded: {clause}.";
+    }
 
     private static string StoppedText(StreamMeasurements m) => m.Samples == 0
         ? "Decoding stopped before any audio was measured."
