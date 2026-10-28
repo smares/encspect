@@ -30,7 +30,8 @@ import monkeys_audio_signal as sig
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "monkeys-audio"
 RATE = 44100
-TOOL = "monkeys_audio_legacy.py and monkeys_audio_old.py, encoders of the coding of versions 3.80 to 3.98 that mac -V verifies"
+TOOL = "monkeys_audio_legacy.py, an encoder of the coding of versions 3.93 to 3.98 that mac -V verifies"
+TOOL_OLD = "monkeys_audio_old.py, an encoder of the coding of versions 3.80 to 3.92 that mac -V verifies"
 FRAME_95 = 73728 * 4
 FRAME_90 = 73728
 FRAME_FAST = 9216
@@ -179,13 +180,12 @@ def old_manifest(data, name, pcm):
         },
         "decode_findings": [] if is_decoded else [{"code": "decode.not-possible", "count": 1}],
         "regions": [{"name": "Monkey's Audio", "offset": 0, "length": len(data)}],
-        "encoder": {"tool": TOOL},
+        "encoder": {"tool": TOOL_OLD if a.version < 3930 else TOOL},
         "findings": [{"code": "monkeys-audio.old-format", "contains": ""}],
+        **({"decoded_pcm_md5": hashlib.md5(pcm).hexdigest()} if is_decoded else {}),
         "crosscheck": {"mac_verify": True if is_decoded else None, "samples": samples},
         "header": {"flags": a.flags},
     }
-    if is_decoded:
-        result["decoded_pcm_md5"] = hashlib.md5(pcm).hexdigest()
     return result
 
 
