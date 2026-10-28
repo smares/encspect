@@ -22,10 +22,10 @@ internal sealed class StreamMeasurer
     private const int FloatLevelsWeight = 14;
 
     // The work per sample of a measured channel for loudness (the K-weighting and the squares, about 5 ns) and for the true peak by oversampling
-    // (4, 2 and none: the sample peak).
+    // (4, 2 and none: the sample peak, whose weight is the conversion to doubles and the scan).
     private const int LoudnessWeight = 8;
 
-    private static readonly int[] TruePeakWeights = [1, 22, 38];
+    private static readonly int[] TruePeakWeights = [4, 22, 38];
 
     private const double SmallestSample = 1e-30;
 
@@ -83,6 +83,7 @@ internal sealed class StreamMeasurer
     private long _lost;
     private int _gaps;
     private bool _isStopped;
+    private bool _isLoudnessCharged;
     private long _nonFinite;
 
     public StreamMeasurer(PcmFormat format, MeasureOptions options, CancellationToken token, Func<long, bool> charge)
@@ -330,6 +331,18 @@ internal sealed class StreamMeasurer
             IsLimited = true;
             _isStopped = true;
             return;
+        }
+
+        if (_loudness is { HasAllocated: false } && block.Length > 0 && !_isLoudnessCharged)
+        {
+            // The histograms are made when the first 400 ms are in; the work of making them is charged with the stream's first samples.
+            _isLoudnessCharged = true;
+            if (!_charge(LoudnessMeter.AllocationUnits))
+            {
+                IsLimited = true;
+                _isStopped = true;
+                return;
+            }
         }
 
         if (block.Position > _next)

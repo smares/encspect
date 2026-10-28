@@ -41,7 +41,7 @@ internal sealed class TruePeakMeter
 
     private readonly int _factor;
     private readonly double[] _history;
-    private readonly double[] _window;
+    private double[] _window = [];
     private readonly double[] _peak;
     private readonly double[] _samplePeak;
 
@@ -49,7 +49,6 @@ internal sealed class TruePeakMeter
     {
         _factor = FactorFor(rate);
         _history = new double[measured * History];
-        _window = _factor > 1 ? new double[History + MaxPiece] : [];
         _peak = new double[measured];
         _samplePeak = new double[measured];
     }
@@ -85,7 +84,12 @@ internal sealed class TruePeakMeter
             return;
         }
 
-        // The twelve samples before the piece, then the piece: the window the filter reads.
+        // The twelve samples before the piece, then the piece: the window the filter reads (made with the first piece).
+        if (_window.Length == 0)
+        {
+            _window = new double[History + MaxPiece];
+        }
+
         Span<double> history = _history.AsSpan(channel * History, History);
         history.CopyTo(_window);
         samples.CopyTo(_window.AsSpan(History));
@@ -103,6 +107,9 @@ internal sealed class TruePeakMeter
         _peak[channel] = peak;
         all.Slice(samples.Length, History).CopyTo(history);
     }
+
+    // The highest magnitude so far, as the double itself, for the tests that pin the raw output.
+    internal double RawPeak(int channel) => Math.Max(_peak[channel], _samplePeak[channel]);
 
     // The highest magnitude in tenths of a dB of a channel: the larger of the sample peak and the interpolated ones.
     public int Tenths(int channel)

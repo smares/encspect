@@ -14,13 +14,11 @@ internal readonly record struct KWeighting(double B0, double B1, double B2, doub
     // Table 1 and Table 2 of BS.1770-5 (the highpass numerator is 1, -2, 1).
     public static readonly KWeighting At48000 = new(1.53512485958697, -2.69169618940638, 1.19839281085285, -1.69065929318241, 0.73248077421585, -1.99004745483398, 0.99007225036621);
 
-    public static KWeighting For(int rate)
-    {
-        if (rate == 48000)
-        {
-            return At48000;
-        }
+    public static KWeighting For(int rate) => rate == 48000 ? At48000 : Derive(rate);
 
+    // The coefficients for a rate from the analog parameters, also at 48 kHz (where they match the published ones to about 1e-14).
+    public static KWeighting Derive(int rate)
+    {
         double f0 = 1681.974450955533;
         double gain = 3.999843853973347;
         double q = 0.7071752369554196;

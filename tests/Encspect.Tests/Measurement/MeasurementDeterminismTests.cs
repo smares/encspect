@@ -93,6 +93,66 @@ public class MeasurementDeterminismTests
         Assert.True(LevelsHash == all, $"LevelsHash = {all} (16 bits {integers16[..8]}, 24 bits {integers24[..8]}, floats {float32[..8]})");
     }
 
+    // The K-weighting coefficients of every rate the tests use (the derived ones come from DetMath's tangent and power).
+    [Fact]
+    public void TheDerivedKWeightingCoefficientsHashToAConstant()
+    {
+        var values = new List<double>();
+        foreach (int rate in new[] { 8000, 11025, 16000, 22050, 32000, 44100, 48000, 88200, 96000, 176400, 192000, 384000 })
+        {
+            KWeighting k = KWeighting.Derive(rate);
+            values.AddRange([k.B0, k.B1, k.B2, k.A1, k.A2, k.HighpassA1, k.HighpassA2]);
+        }
+
+        Assert.True(KWeightingHash == HashBits(values), "KWeightingHash = " + HashBits(values));
+    }
+
+    // The loudness meter's raw output on a program-like signal with an impulse followed by silence (the flush of the filter states), at three rates: the
+    // figures, the series and the gating counts are exact integers and hash to a constant on every platform.
+    [Fact]
+    public void TheLoudnessOfSyntheticStreamsHashToAConstant()
+    {
+        var text = new System.Text.StringBuilder();
+        foreach (int rate in new[] { 48000, 44100, 11025 })
+        {
+            double[] noise = MeasurementSignals.Noise(rate * 12, 21);
+            var signal = new double[noise.Length];
+            for (int i = 0; i < signal.Length; i++)
+            {
+                double t = (double)i / rate;
+                signal[i] = noise[i] * (0.05 + (0.04 * ((i / (rate / 4)) % 5)));
+            }
+
+            signal[rate * 8] = 1.5;
+            Array.Clear(signal, (rate * 8) + 1, rate * 2);
+            LoudnessFigures l = LoudnessSignals.Measure([signal, signal.Select(v => -v * 0.5).ToArray()], rate, blockSize: 7777, kinds: MeasurementKinds.Loudness | MeasurementKinds.TruePeak).Loudness!;
+            text.Append(System.Globalization.CultureInfo.InvariantCulture, $"{rate}:{l.IntegratedTenths},{l.RangeTenths},{l.RangeLowTenths},{l.RangeHighTenths},{l.MaximumMomentaryTenths},{l.MaximumShortTermTenths},{l.Blocks},{l.BlocksAboveAbsoluteGate},{l.BlocksAboveRelativeGate};");
+            text.Append(string.Join(',', l.ShortTerm!.Values.ToArray().Select(v => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture)))).Append(';');
+        }
+
+        string hash = Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text.ToString())));
+        Assert.True(LoudnessHash == hash, "LoudnessHash = " + hash);
+    }
+
+    // The raw interpolated peaks (the maximum of the filter's outputs, the double itself) of a noise signal at the three oversamplings, cut in blocks of 777.
+    [Fact]
+    public void TheTruePeakOfSyntheticStreamsHashesToAConstant()
+    {
+        var peaks = new List<double>();
+        foreach (int rate in new[] { 48000, 96000, 192000 })
+        {
+            double[] signal = MeasurementSignals.Noise(300_000, 31);
+            var meter = new TruePeakMeter(1, rate);
+            for (int start = 0; start < signal.Length; start += 777)
+            {
+                meter.AddChannel(0, signal.AsSpan(start, Math.Min(777, signal.Length - start)));
+                peaks.Add(meter.RawPeak(0));
+            }
+        }
+
+        Assert.True(TruePeakHash == HashBits(peaks), "TruePeakHash = " + HashBits(peaks));
+    }
+
     [Fact]
     public void TheRawRowsOfASyntheticSignalHashToAConstant()
     {
@@ -327,6 +387,9 @@ public class MeasurementDeterminismTests
     private const string Rows1024Hash = "7b9f9a01c21fcdb6c2e71db025b77d5ed5bacae23ff1b5aea23500e15f67bd83";
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
     private const string LevelsHash = "f92d52741857da7606e0932e860091e47898d604dbfb1bbd97ffde473c022fbc";
+    private const string KWeightingHash = "f6048a6ea38eab1d0c9da05b4f9590e11f6090e6ad1942b442b98b24b94e44f6";
+    private const string LoudnessHash = "436f003bd4cbd71d3728431622583423b26e3917f29dd4544a7be3bf929f9b12";
+    private const string TruePeakHash = "0461b026bc6590cab1f7574b47c344005fa715234296d6fc59f01b111b7c612f";
     private const string MathHash = "6654c27b9dc93be9cabd9f70dad935929bf08d83c724028dff4dd2334949a8c1";
 }
 

@@ -44,10 +44,11 @@ internal sealed class LoudnessMeter
     private readonly double[] _ring = new double[Ring];
     private readonly long[] _ringSamples = new long[Ring];
 
-    private readonly long[] _blockCounts = new long[Bins];
-    private readonly double[] _blockSums = new double[Bins];
-    private readonly long[] _shortCounts = new long[Bins];
-    private readonly double[] _shortSums = new double[Bins];
+    // The histograms (320 KB) are made with the first block, so a stream that never fills 400 ms costs nothing.
+    private long[] _blockCounts = [];
+    private double[] _blockSums = [];
+    private long[] _shortCounts = [];
+    private double[] _shortSums = [];
 
     // The energy at and above which a block is above the absolute gate of -70 LUFS.
     private readonly double _absoluteGate = DetMath.Pow(10.0, -6.9309);
@@ -246,6 +247,11 @@ internal sealed class LoudnessMeter
         }
 
         _blocks++;
+        if (_blockCounts.Length == 0)
+        {
+            Allocate();
+        }
+
         if (momentary > _absoluteGate)
         {
             _blocksAbove++;
@@ -287,6 +293,19 @@ internal sealed class LoudnessMeter
     }
 
     private static int Bin(double energy) => (int)Math.Clamp(Math.Floor((1000.0 * DetMath.Log10(energy)) + BinOffset), 0, Bins - 1);
+
+    private void Allocate()
+    {
+        _blockCounts = new long[Bins];
+        _blockSums = new double[Bins];
+        _shortCounts = new long[Bins];
+        _shortSums = new double[Bins];
+    }
+
+    // The work the histograms are charged as, once, when the first of them is made: a few tenths of a millisecond.
+    public const long AllocationUnits = 1 << 18;
+
+    public bool HasAllocated => _blockCounts.Length > 0;
 
     private static void Add(long[] counts, double[] sums, double energy)
     {
@@ -402,7 +421,7 @@ internal sealed class LoudnessMeter
     {
         long count = 0;
         double sum = 0;
-        for (int b = 0; b < Bins; b++)
+        for (int b = 0; b < counts.Length; b++)
         {
             count += counts[b];
             sum += sums[b];
@@ -426,7 +445,7 @@ internal sealed class LoudnessMeter
         int gateBin = GateBin(gate);
         long count = 0;
         double sum = 0;
-        for (int b = Math.Max(gateBin, 0); b < Bins; b++)
+        for (int b = Math.Max(gateBin, 0); b < counts.Length; b++)
         {
             if (Passes(b, gateBin, counts, sums, gate))
             {
@@ -444,7 +463,7 @@ internal sealed class LoudnessMeter
         long rank = (((passed - 1) * p) + 50) / 100;
         int gateBin = GateBin(gate);
         long seen = 0;
-        for (int b = Math.Max(gateBin, 0); b < Bins; b++)
+        for (int b = Math.Max(gateBin, 0); b < counts.Length; b++)
         {
             if (!Passes(b, gateBin, counts, sums, gate))
             {

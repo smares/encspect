@@ -84,6 +84,9 @@ public class MeasurementFixtureTests
 
         Assert.Equal(m.ChannelsMeasured, m.Levels.Channels.Count);
 
+        AssertLoudness(model.GetProperty("loudness"), m.Loudness!, name);
+        AssertTruePeak(model.GetProperty("true_peak"), m.TruePeak!, name);
+
         // The grids' time axis and the waveform's extremes, which are exact.
         Assert.Equal(model.GetProperty("spectrogram_columns").GetInt32(), m.Spectrogram!.Columns);
         Assert.Equal(model.GetProperty("hops_per_column").GetInt32(), m.Spectrogram.HopsPerColumn);
@@ -96,6 +99,176 @@ public class MeasurementFixtureTests
             Assert.True(minimum.AsSpan().SequenceEqual(m.Waveform!.Minimum.Span.Slice(index * m.Waveform.Columns, m.Waveform.Columns)), $"{name}: waveform minimum of channel {index}");
             Assert.True(maximum.AsSpan().SequenceEqual(m.Waveform.Maximum.Span.Slice(index * m.Waveform.Columns, m.Waveform.Columns)), $"{name}: waveform maximum of channel {index}");
             index++;
+        }
+    }
+
+    // The model works the loudness out from the definitions on the whole lists of blocks in doubles; the analyzer keeps histograms of 0.01 LU, so a figure may
+    // differ by a tenth where the model's value lies at a rounding boundary.
+    private static void AssertFigure(JsonElement expected, int tenths, LoudnessAbsence absence, string what)
+    {
+        JsonElement value = expected.GetProperty("tenths");
+        if (value.ValueKind == JsonValueKind.Null)
+        {
+            string kind = expected.GetProperty("absence").GetString()!;
+            if (kind == "none")
+            {
+                Assert.True(absence == LoudnessAbsence.None && tenths == MeasurementLimits.NoLevel, $"{what}: reads {tenths} ({absence}), the model has minus infinity");
+            }
+            else
+            {
+                Assert.True(absence == (kind == "too_short" ? LoudnessAbsence.TooShort : LoudnessAbsence.BelowGate), $"{what}: {absence}, the model {kind}");
+            }
+        }
+        else
+        {
+            Assert.True(absence == LoudnessAbsence.None && Math.Abs(tenths - value.GetInt32()) <= 1, $"{what}: reads {tenths} ({absence}), the model {value.GetInt32()}");
+        }
+    }
+
+    private static void AssertLoudness(JsonElement model, LoudnessFigures actual, string name)
+    {
+        if (model.TryGetProperty("not_measured", out JsonElement reason))
+        {
+            Assert.Equal(reason.GetString(), actual.NotMeasured);
+            return;
+        }
+
+        Assert.Null(actual.NotMeasured);
+        Assert.Equal(model.GetProperty("weights").EnumerateArray().Select(w => w.GetInt32()), actual.ChannelWeights);
+        Assert.Equal(model.GetProperty("blocks").GetInt64(), actual.Blocks);
+        Assert.Equal(model.GetProperty("blocks_above_absolute_gate").GetInt64(), actual.BlocksAboveAbsoluteGate);
+        AssertFigure(model.GetProperty("integrated"), actual.IntegratedTenths, actual.IntegratedAbsence, $"{name} integrated loudness");
+        AssertFigure(model.GetProperty("momentary"), actual.MaximumMomentaryTenths, actual.MomentaryAbsence, $"{name} maximum momentary loudness");
+        AssertFigure(model.GetProperty("short_term"), actual.MaximumShortTermTenths, actual.ShortTermAbsence, $"{name} maximum short-term loudness");
+        JsonElement range = model.GetProperty("range");
+        if (range.GetProperty("tenths").ValueKind == JsonValueKind.Null)
+        {
+            AssertFigure(range, actual.RangeTenths, actual.RangeAbsence, $"{name} loudness range");
+        }
+        else
+        {
+            Assert.Equal(LoudnessAbsence.None, actual.RangeAbsence);
+            Assert.True(Math.Abs(actual.RangeTenths - range.GetProperty("tenths").GetInt32()) <= 1, $"{name}: loudness range {actual.RangeTenths}, the model {range.GetProperty("tenths").GetInt32()}");
+            Assert.True(Math.Abs(actual.RangeLowTenths - model.GetProperty("range_low_tenths").GetInt32()) <= 1, $"{name}: range low");
+            Assert.True(Math.Abs(actual.RangeHighTenths - model.GetProperty("range_high_tenths").GetInt32()) <= 1, $"{name}: range high");
+        }
+
+        Assert.Equal(model.GetProperty("short_term_values").GetInt32() > 0, actual.ShortTerm is not null);
+        if (actual.ShortTerm is not null && actual.StepsPerPoint == 1)
+        {
+            Assert.Equal(model.GetProperty("short_term_values").GetInt32(), actual.ShortTerm.Values.Length);
+            JsonElement first = model.GetProperty("short_term_first_tenths");
+            double expected = first.ValueKind == JsonValueKind.Null ? -700 : first.GetInt32();
+            Assert.True(Math.Abs((actual.ShortTerm.Values.Span[0] * 10) - expected) <= 1.01, $"{name}: first short-term value");
+        }
+    }
+
+    public static TheoryData<string> LoudnessNames()
+    {
+        var data = new TheoryData<string>();
+        foreach (string path in Directory.EnumerateFiles(Directory_, "synthetic-loudness-*.flac").Concat(Directory.EnumerateFiles(Directory_, "synthetic-truepeak-*.flac")).Order(StringComparer.Ordinal))
+        {
+            data.Add(Path.GetFileNameWithoutExtension(path));
+        }
+
+        return data;
+    }
+
+    // What the loudness fixtures were built to read (construction.loudness), whatever the model says: the document's figures with its tolerance.
+    [Theory]
+    [MemberData(nameof(LoudnessNames))]
+    public void TheLoudnessIsWhatTheSignalWasBuiltToHave(string name)
+    {
+        JsonElement built = Manifest(name).GetProperty("construction").GetProperty("loudness");
+        StreamMeasurements m = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!;
+        LoudnessFigures l = m.Loudness!;
+        double tolerance = built.TryGetProperty("tolerance", out JsonElement t) ? t.GetDouble() : 0.1;
+        if (built.TryGetProperty("integrated", out JsonElement integrated))
+        {
+            LoudnessSignals.AssertNear(l.IntegratedTenths, integrated.GetDouble(), tolerance, name + " I");
+        }
+
+        if (built.TryGetProperty("momentary", out JsonElement momentary))
+        {
+            LoudnessSignals.AssertNear(l.MaximumMomentaryTenths, momentary.GetDouble(), tolerance, name + " M");
+        }
+
+        if (built.TryGetProperty("short_term", out JsonElement shortTerm))
+        {
+            LoudnessSignals.AssertNear(l.MaximumShortTermTenths, shortTerm.GetDouble(), tolerance, name + " S");
+        }
+
+        if (built.TryGetProperty("range", out JsonElement range))
+        {
+            LoudnessSignals.AssertNear(l.RangeTenths, range.GetDouble(), built.GetProperty("range_tolerance").GetDouble(), name + " LRA");
+        }
+
+        if (built.TryGetProperty("weights", out JsonElement weights))
+        {
+            Assert.Equal(weights.EnumerateArray().Select(w => w.GetInt32()), l.ChannelWeights);
+        }
+
+        if (built.TryGetProperty("below_gate", out _))
+        {
+            Assert.Equal(LoudnessAbsence.BelowGate, l.IntegratedAbsence);
+        }
+
+        if (built.TryGetProperty("gated_out", out _))
+        {
+            // The loud tone's 17 blocks and those that overlap its end pass both gates; the quiet tone's pass only the absolute one.
+            Assert.InRange(l.BlocksAboveRelativeGate, 17, 20);
+            Assert.True(l.BlocksAboveAbsoluteGate > l.BlocksAboveRelativeGate + 10);
+        }
+
+        if (built.TryGetProperty("gap", out _))
+        {
+            // Runs of 8,192 and 11,712 samples, and no block of 3,200 samples spans the gap: 7 + 11 blocks, not the 23 of the unbroken signal.
+            Assert.Equal(1, m.Gaps);
+            Assert.Equal(18, l.Blocks);
+        }
+
+        if (built.TryGetProperty("true_peak_left", out JsonElement peak))
+        {
+            LoudnessSignals.AssertNear(m.TruePeak!.ChannelTenths[0], peak.GetDouble(), built.GetProperty("true_peak_tolerance").GetDouble(), name + " true peak");
+            Assert.True(m.TruePeak.ChannelTenths[0] > m.Levels!.Channels[0].SamplePeakTenths + 20, "the true peak is above the sample peak");
+        }
+
+        if (built.TryGetProperty("true_peak_equals_sample_peak", out _))
+        {
+            Assert.Equal(1, m.TruePeak!.Oversampling);
+            Assert.Equal(m.Levels!.Stream.SamplePeakTenths, m.TruePeak.StreamTenths);
+        }
+    }
+
+    [Fact]
+    public void TheSamePairIsOneAndAHalfDecibelsLouderAsASurroundPairThanAsARearPair()
+    {
+        int rear = Analyze("synthetic-loudness-7-1-rear-pair-8000", new MeasureOptions()).Streams.Single().Measurements!.Loudness!.IntegratedTenths;
+        int surround = Analyze("synthetic-loudness-5-1-surround-pair-8000", new MeasureOptions()).Streams.Single().Measurements!.Loudness!.IntegratedTenths;
+        Assert.InRange(surround - rear, 14, 16);
+    }
+
+    private static void AssertTruePeak(JsonElement model, TruePeakFigures actual, string name)
+    {
+        if (model.TryGetProperty("not_measured", out JsonElement reason))
+        {
+            Assert.Equal(reason.GetString(), actual.NotMeasured);
+            return;
+        }
+
+        Assert.Equal(model.GetProperty("oversampling").GetInt32(), actual.Oversampling);
+        int channel = 0;
+        foreach (JsonElement expected in model.GetProperty("channels").EnumerateArray())
+        {
+            int tenths = actual.ChannelTenths[channel++];
+            if (expected.ValueKind == JsonValueKind.Null)
+            {
+                Assert.Equal(MeasurementLimits.NoLevel, tenths);
+            }
+            else
+            {
+                Assert.True(tenths != MeasurementLimits.NoLevel && Math.Abs(tenths - expected.GetInt32()) <= 1, $"{name} channel {channel}: true peak {tenths}, the model {expected.GetInt32()}");
+            }
         }
     }
 

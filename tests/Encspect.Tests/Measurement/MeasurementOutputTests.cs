@@ -184,6 +184,120 @@ public class MeasurementOutputTests
         Assert.Equal(string.Empty, plain.Split("\r\n")[1].Split(',')[peak]);
     }
 
+
+    private static string Fixture(string name) => Path.Combine(Fixtures.FixtureDirectory, "measurement", name);
+
+    [Fact]
+    public void LoudnessAndTruePeakHaveTheirOwnKindsAndLines()
+    {
+        (int code, string output, _) = Run("--measure", "loudness,true-peak", "--hide", "frames,tags,statistics", Fixture("synthetic-loudness-sine-mono-48000.flac"));
+
+        Assert.Equal(CommandLine.Success, code);
+        Assert.DoesNotContain("Spectral Cutoff", output);
+        Assert.DoesNotContain("Sample Peak", output);
+        Assert.Matches(@"Integrated Loudness: -23\.0 LUFS", output);
+        Assert.Matches(@"Loudness Range: 0\.0 LU", output);
+        Assert.Matches(@"Maximum True Peak Level: -20\.0 dBTP", output);
+        Assert.Matches(@"Maximum Momentary Loudness: -23\.0 LUFS", output);
+        Assert.Matches(@"Maximum Short-Term Loudness: -23\.0 LUFS", output);
+
+        // The bext chunk's order: integrated loudness, loudness range, true peak, then the maxima.
+        Assert.True(output.IndexOf("Loudness Range", StringComparison.Ordinal) < output.IndexOf("Maximum True Peak Level", StringComparison.Ordinal));
+        Assert.True(output.IndexOf("Maximum True Peak Level", StringComparison.Ordinal) < output.IndexOf("Maximum Momentary Loudness", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void AStreamTooShortSaysWhyAndATruePeakAboveFullScaleCarriesASign()
+    {
+        (_, string output, _) = Run("--measure", "--hide", "frames,tags,statistics", Fixture("synthetic-sine-bin-center.flac"));
+        Assert.Contains("Loudness Range: none (the stream is shorter than 3 s)", output);
+        Assert.Contains("Maximum Short-Term Loudness: none (the stream is shorter than 3 s)", output);
+        Assert.Equal("+0.4", MeasurementText.SignedTenths(4));
+        Assert.Equal("0.0", MeasurementText.SignedTenths(0));
+        Assert.Equal("-0.4", MeasurementText.SignedTenths(-4));
+        Assert.Equal("-inf", MeasurementText.SignedTenths(MeasurementLimits.NoLevel));
+    }
+
+    [Fact]
+    public void ARateBelow8kHzAndUnstatedPositionsAreSaidInPlaceOfTheLoudness()
+    {
+        (_, string low, _) = Run("--measure", "--hide", "frames,tags,statistics", Fixture("synthetic-white-2000.flac"));
+        Assert.Contains("Loudness: not measured (loudness needs a sample rate of 8,000 Hz or more)", low);
+        Assert.Contains("Maximum True Peak Level:", low);
+        (_, string many, _) = Run("--measure", "--hide", "frames,tags,statistics", Fixture("synthetic-pcm-channels-33.wav"));
+        Assert.Contains("Loudness: not measured (the channel positions are not stated)", many);
+    }
+
+    [Fact]
+    public void TheJsonCarriesTheLoudnessWithItsSeriesAndTheTruePeak()
+    {
+        (_, string json, _) = Run("--measure", "--json", "--explain", Fixture("synthetic-loudness-steps-8000.flac"));
+        JsonElement m = JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements");
+        JsonElement loudness = m.GetProperty("loudness");
+
+        Assert.Equal(1.0m, loudness.GetProperty("channelWeights")[0].GetDecimal());
+        Assert.Equal("LUFS", loudness.GetProperty("integratedLoudness").GetProperty("unit").GetString());
+        Assert.Equal("loudness", loudness.GetProperty("integratedLoudness").GetProperty("topic").GetString());
+        Assert.Equal("loudness-range", loudness.GetProperty("loudnessRange").GetProperty("topic").GetString());
+        Assert.InRange(loudness.GetProperty("loudnessRange").GetProperty("value").GetDecimal(), 9.0m, 11.0m);
+        Assert.Equal("LU", loudness.GetProperty("loudnessRange").GetProperty("unit").GetString());
+        JsonElement series = loudness.GetProperty("shortTerm");
+        Assert.Equal(1, series.GetProperty("stepsPerPoint").GetInt32());
+        Assert.Equal(series.GetProperty("x").GetArrayLength(), series.GetProperty("values").GetArrayLength());
+        Assert.Equal(3.0m, series.GetProperty("x")[0].GetDecimal());
+        Assert.False(string.IsNullOrEmpty(series.GetProperty("description").GetString()));
+        Assert.True(loudness.GetProperty("gatingBlocks").GetProperty("aboveAbsoluteGate").GetInt64() > 0);
+        JsonElement truePeak = m.GetProperty("truePeak");
+        Assert.Equal(4, truePeak.GetProperty("oversampling").GetInt32());
+        Assert.Equal("dBTP", truePeak.GetProperty("maximumTruePeakLevel").GetProperty("unit").GetString());
+        Assert.Equal("sample-peak-and-true-peak", truePeak.GetProperty("topic").GetString());
+
+        (_, string brief, _) = Run("--measure", "--json", Fixture("synthetic-sine-bin-center.flac"));
+        JsonElement shortLoudness = JsonDocument.Parse(brief).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("loudness");
+        Assert.Equal("tooShort", shortLoudness.GetProperty("loudnessRange").GetProperty("absence").GetString());
+        Assert.False(shortLoudness.TryGetProperty("shortTerm", out _));
+        (_, string low, _) = Run("--measure", "--json", Fixture("synthetic-white-2000.flac"));
+        Assert.Equal("loudness needs a sample rate of 8,000 Hz or more", JsonDocument.Parse(low).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("loudness").GetProperty("notMeasured").GetString());
+    }
+
+    [Fact]
+    public void TheCsvWritesTheLoudnessColumnsAsNumbersAndLeavesThemEmptyWithoutMeasure()
+    {
+        string path = Fixture("synthetic-loudness-sine-mono-48000.flac");
+        (_, string measured, _) = Run("--measure", "--csv", path);
+        string[] header = measured.Split("\r\n")[0].Split(',');
+        string[] row = measured.Split("\r\n")[1].Split(',');
+        Assert.Equal("-23.0", row[Array.IndexOf(header, "Integrated Loudness (LUFS)")]);
+        Assert.Equal("-20.0", row[Array.IndexOf(header, "Maximum True Peak Level (dBTP)")]);
+        Assert.Equal("0.0", row[Array.IndexOf(header, "Loudness Range (LU)")]);
+
+        (_, string levels, _) = Run("--measure=levels", "--csv", path);
+        Assert.Equal(string.Empty, levels.Split("\r\n")[1].Split(',')[Array.IndexOf(header, "Integrated Loudness (LUFS)")]);
+        (_, string silent, _) = Run("--measure", "--csv", Fixture("synthetic-levels-silent.flac"));
+        string[] silentRow = silent.Split("\r\n")[1].Split(',');
+        Assert.Equal(string.Empty, silentRow[Array.IndexOf(header, "Integrated Loudness (LUFS)")]);
+        Assert.Equal(string.Empty, silentRow[Array.IndexOf(header, "Maximum True Peak Level (dBTP)")]);
+    }
+
+    [Fact]
+    public void ExplainNamesTheTopicsOfTheLoudnessLines()
+    {
+        (_, string text, _) = Run("--measure", "--explain", "--hide", "frames,tags,statistics", Fixture("synthetic-loudness-sine-mono-48000.flac"));
+        foreach (string topic in new[] { "loudness", "loudness-range", "sample-peak-and-true-peak" })
+        {
+            Assert.Contains($"[topic:{topic}]", text);
+            Assert.False(string.IsNullOrEmpty(TopicLibrary.Find(topic)?.Title), topic);
+        }
+    }
+
+    [Fact]
+    public void ChannelsOfAFivePointOneAreWeightedAndTheLfeIsLeftOut()
+    {
+        (_, string json, _) = Run("--measure", "--json", Fixture("synthetic-loudness-5-1-surround-pair-8000.flac"));
+        JsonElement weights = JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("loudness").GetProperty("channelWeights");
+        Assert.Equal([1.0m, 1.0m, 1.0m, 0m, 1.41m, 1.41m], weights.EnumerateArray().Select(w => w.GetDecimal()));
+    }
+
     [Fact]
     public void TheLevelsLinesAndJsonCarryTheirDescriptionsAndTopics()
     {
