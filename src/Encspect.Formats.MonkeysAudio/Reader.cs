@@ -1,4 +1,4 @@
-// Follows the Monkey's Audio SDK 13.42 (APEHeader.cpp, APEInfo.cpp, MACLib.cpp, APEDecompress.cpp, APEDecompressCore.cpp), 3-clause BSD license:
+// Follows the Monkey's Audio SDK 13.42 (APEHeader.cpp, APEInfo.cpp, MACLib.cpp, APEDecompress.cpp, APEDecompressCore.cpp, Old/UnMACOld.cpp), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 using System.Buffers.Binary;
 using System.Globalization;
@@ -288,9 +288,27 @@ internal static class Reader
         MappedBytes configuration;
         try
         {
-            configuration = h.HasDescriptor
-                ? MappedBytes.Read(reader, [new ByteRange(s.Junk, ApeHeader.DescriptorLength), new ByteRange(headerAt, ApeHeader.HeaderLength)])
-                : MappedBytes.Read(reader, [new ByteRange(s.Junk, h.OldHeaderBytes)]);
+            if (h.HasDescriptor)
+            {
+                configuration = MappedBytes.Read(reader, [new ByteRange(s.Junk, ApeHeader.DescriptorLength), new ByteRange(headerAt, ApeHeader.HeaderLength)]);
+            }
+            else
+            {
+                // A file of version 3.80 also gives the decoder the table of the bits its frames start at, which follows the seek table.
+                var ranges = new List<ByteRange> { new(s.Junk, h.OldHeaderBytes) };
+                long elements = h.SeekElementCount;
+                long bitsAt = s.SeekTableAt + (4 * elements);
+                if (h.FileVersion <= 3800 && elements > 0 && elements <= State.MaxSeekBits && bitsAt + elements <= reader.End)
+                {
+                    ranges.Add(new ByteRange(bitsAt, elements));
+                }
+
+                configuration = MappedBytes.Read(reader, ranges);
+                if (ranges.Count > 1)
+                {
+                    s.SeekBits = configuration.Span[h.OldHeaderBytes..].ToArray();
+                }
+            }
         }
         catch (EndOfStreamException)
         {
@@ -322,6 +340,7 @@ internal static class Reader
         bool canFields = records.HasFrameFields;
         long previousEnd = -1;
         bool followsGap = false;
+        byte[] seekBits = s.SeekBits;
         var seek = new SeekReader(reader, s.SeekTableAt, present);
         long next = frameCount > 0 ? seek.Next() : 0;
         long expectedFirst = frameCount > 0 ? next + s.Junk - s.DataStart : 0;
@@ -354,6 +373,7 @@ internal static class Reader
             }
 
             uint blocks = f == h.TotalFrames - 1 ? h.FinalFrameBlocks : h.BlocksPerFrame;
+            int startBit = f < seekBits.Length ? seekBits[f] : 0;
             var status = EntryStatus.None;
             uint crc = 0;
             uint special = 0;
@@ -375,7 +395,7 @@ internal static class Reader
                 {
                     if (usable - start >= 4)
                     {
-                        (crc, special, bool hasSpecial) = ReadStart(source, s.DataStart, start, usable, h.HasSpecialFrames);
+                        (crc, special, bool hasSpecial) = ReadStart(source, s.DataStart, start, usable, h.HasSpecialFrames, startBit);
                         s.StoredCrcs++;
                         if (hasSpecial)
                         {
@@ -405,7 +425,7 @@ internal static class Reader
             }
 
             previousEnd = end;
-            var entry = new Entry { Start = start, End = end, Blocks = blocks, Crc = crc, Special = special, Status = status };
+            var entry = new Entry { Start = start, End = end, Blocks = blocks, Crc = crc, Special = special, Status = status, StartBit = (byte)startBit };
             int index = records.Entries.Count;
             if (index < State.MaxListedFrames)
             {
@@ -467,11 +487,11 @@ internal static class Reader
     }
 
     // The stored CRC (31 bits) and, where its bit 31 flags them, the special frame codes: the first four stream bytes of the frame, then four more.
-    private static (uint Crc, uint Special, bool HasSpecial) ReadStart(Source source, long dataStart, long start, long usable, bool hasSpecialFrames)
+    private static (uint Crc, uint Special, bool HasSpecial) ReadStart(Source source, long dataStart, long start, long usable, bool hasSpecialFrames, int bit)
     {
         long firstWord = start >> 2;
         ReadOnlySpan<byte> words = source.Window(dataStart + (firstWord << 2), 12);
-        uint word = Word(words, firstWord, start);
+        uint word = Shifted(words, firstWord, start, bit);
         if (!hasSpecialFrames)
         {
             return (word, 0, false);
@@ -482,8 +502,16 @@ internal static class Reader
             return (word, 0, false);
         }
 
-        uint special = usable - start >= 8 ? Word(words, firstWord, start + 4) : 0;
+        uint special = usable - start >= 8 ? Shifted(words, firstWord, start + 4, bit) : 0;
         return (word & 0x7FFFFFFF, special, true);
+    }
+
+    // The 32 stream bits that start at bit of the byte index: a frame of version 3.80 may start inside a byte.
+    private static uint Shifted(ReadOnlySpan<byte> words, long firstWord, long index, int bit)
+    {
+        index += (bit >> 5) << 2;
+        bit &= 31;
+        return bit == 0 ? Word(words, firstWord, index) : (Word(words, firstWord, index) << bit) | (Word(words, firstWord, index + 4) >> (32 - bit));
     }
 
     // The four stream bytes from index, most significant first, out of the words that start with word firstWord.
@@ -527,8 +555,23 @@ internal static class Reader
         {
             IsDamaged = (e.Status & EntryStatus.Cut) != 0,
             FollowsGap = followsGap,
+            Following = Following(s, records, e),
         });
         return false;
+    }
+
+    // The four bytes after a frame, where the decoder of its version reads ahead of the frame's end: the range coder of versions 3.90 to 3.92 takes two bytes after an array
+    // (the SDK reads them from the next frame), and the frames of version 3.80 follow each other bit by bit.
+    private static MappedBytes? Following(State s, Records records, in Entry e)
+    {
+        int version = s.Header.FileVersion;
+        long limit = Nodes.Available(records);
+        if (s.Header.HasDescriptor || (version > 3800 && version is < 3900 or >= 3930) || e.End >= limit)
+        {
+            return null;
+        }
+
+        return MappedBytes.Read(s.Reader, WordOrder.Ranges(records.DataStart, e.End, Math.Min(limit, e.End + 4)));
     }
 
     // The digest of the coded data that the descriptor stores (APEHeader.h and MACLib.cpp, VerifyFileW2): the WAV header data, then the frame data and

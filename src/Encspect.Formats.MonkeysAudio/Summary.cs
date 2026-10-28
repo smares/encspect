@@ -62,7 +62,7 @@ internal static class Summary
         {
             Name = h.HasStoredCrc ? ChecksumNames.FrameCrc : ChecksumNames.FrameChecksum,
             Covers = ChecksumCoverage.DecodedAudio,
-            CoversAllAudio = h.HasStoredCrc && framesComplete && s.StoredCrcs == s.Frames,
+            CoversAllAudio = framesComplete && (!h.HasStoredCrc || s.StoredCrcs == s.Frames),
             Stored = h.HasStoredCrc ? s.StoredCrcs : s.Frames,
         });
         return session.Finish(tallies);

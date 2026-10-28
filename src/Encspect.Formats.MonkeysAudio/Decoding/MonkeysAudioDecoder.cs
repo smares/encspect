@@ -2,14 +2,16 @@ using Encspect.Core;
 
 namespace Encspect.Formats.MonkeysAudio.Decoding;
 
-// The decoder of Monkey's Audio files of versions 3.93 to 3.99 (and 4.11, which the SDK reads the same way), after the SDK 13.42's: the range decoders
+// The decoder of Monkey's Audio files of versions 3.80 to 3.99 and 4.11 (which the SDK reads like 3.99), after the SDK 13.42's: the range decoders
 // of 3.91 on, the predictors with their neural network filters, the undoing of the mid/side coding of channel pairs and the CRC over the decoded audio.
 // The parser finds the frames, reads each one's CRC and special codes and hands the frame's bytes; this decoder reads the coded samples from there.
-// Files before 3.93 use another core of the SDK (Old/UnMACOld.cpp) and are not decoded yet (docs/formats/monkeys-audio.md, "Decoding").
+// Files before 3.93 use another core of the SDK (Old/UnMACOld.cpp), which OldFrameDecoder follows (docs/formats/monkeys-audio.md, "Decoding").
 public sealed class MonkeysAudioDecoder : IDecoder
 {
-    // The first file version whose frames the decoder reads: the SDK's current decoder starts at 3.93; older files use the one of Old/UnMACOld.cpp.
+    // The first file version the SDK's current decoder reads; older files use the one of Old/UnMACOld.cpp, down to the oldest the parser reads.
     private const int FirstVersion = 3930;
+
+    private const int FirstOldVersion = 3800;
 
     // Units of work a byte of the file may take. A sample of the highest level costs 1,032 units a channel (16 for the sample, 192 for the range
     // decoder, 48 for the predictor and 776 for the filters; 1,426 at 32 bits: 22, 192, 48 and 1,164) and the cheapest symbol of the range coder
@@ -29,9 +31,9 @@ public sealed class MonkeysAudioDecoder : IDecoder
             ?? throw new InvalidDataException("The stream has no header, so the format of its frames is not known");
         ReadOnlySpan<byte> bytes = configuration.Span;
         int version = ApeHeader.VersionOf(bytes);
-        if (version is < FirstVersion or > 3990 && version != 4110)
+        if (version is < FirstOldVersion or > 3990 && version != 4110)
         {
-            throw new InvalidDataException($"The file is of version {ApeHeader.VersionText(version)}, whose frames are not decoded; the decoder takes versions 3.93 to 3.99 and 4.11");
+            throw new InvalidDataException($"The file is of version {ApeHeader.VersionText(version)}, whose frames are not decoded; the decoder takes versions 3.80 to 3.99 and 4.11");
         }
 
         ApeHeader header;
@@ -59,6 +61,11 @@ public sealed class MonkeysAudioDecoder : IDecoder
             {
                 throw new InvalidDataException($"The compression level {header.CompressionLevel} did not exist in files of version {ApeHeader.VersionText(version)}");
             }
+
+            if (version < FirstVersion)
+            {
+                return OpenOld(context, header, dataStart, bytes);
+            }
         }
 
         if (!ApeHeader.IsKnownLevel(header.CompressionLevel))
@@ -82,5 +89,46 @@ public sealed class MonkeysAudioDecoder : IDecoder
         }
 
         return new FrameDecoder(context, header, dataStart);
+    }
+
+    // Files before 3.93, which the SDK reads with the decoder of Old/UnMACOld.cpp: what that decoder refuses is refused here with its reason.
+    private static OldFrameDecoder OpenOld(DecodeContext context, ApeHeader header, long dataStart, ReadOnlySpan<byte> configuration)
+    {
+        int version = header.FileVersion;
+        string text = ApeHeader.VersionText(version);
+        if (header.CompressionLevel is not (1000 or 2000 or 3000 or 4000))
+        {
+            throw new InvalidDataException($"The file states the compression level {header.CompressionLevel}; the SDK's decoder of versions before 3.93 reads the levels 1000 to 4000 and fails on any other");
+        }
+
+        if (header.Channels is not (1 or 2))
+        {
+            throw new InvalidDataException($"The header states {header.Channels} channels; the SDK's decoder of versions before 3.93 reads one or two");
+        }
+
+        if (version >= 3900 && !header.HasStoredCrc)
+        {
+            throw new InvalidDataException($"The file is of version {text} and has no CRC flag; the SDK's decoder reads no checksum from such a file and gives silence, so the audio is not decoded");
+        }
+
+        if (header.BlocksPerFrame == 0)
+        {
+            throw new InvalidDataException("The file has no samples in a frame");
+        }
+
+        byte[] seekBits = [];
+        if (version <= 3800)
+        {
+            long elements = header.SeekElementCount;
+            ReadOnlySpan<byte> table = configuration[Math.Min(configuration.Length, header.OldHeaderBytes)..];
+            if (table.Length < elements)
+            {
+                throw new InvalidDataException("The table of the bits the frames start at is not available");
+            }
+
+            seekBits = table[..(int)elements].ToArray();
+        }
+
+        return new OldFrameDecoder(context, header, dataStart, seekBits);
     }
 }

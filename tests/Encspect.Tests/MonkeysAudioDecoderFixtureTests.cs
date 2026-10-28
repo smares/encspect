@@ -76,7 +76,7 @@ public class MonkeysAudioDecoderFixtureTests
         }
 
         var actual = new SortedDictionary<string, int>(StringComparer.Ordinal);
-        foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code == "monkeys-audio.frame-crc-mismatch"))
+        foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "monkeys-audio.frame-crc-mismatch" or "monkeys-audio.frame-checksum-mismatch"))
         {
             actual[finding.Code] = finding.Count;
         }
@@ -168,7 +168,7 @@ public class MonkeysAudioDecoderFixtureTests
             }
 
             writer.WriteStartArray("findings");
-            foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code == "monkeys-audio.frame-crc-mismatch"))
+            foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "monkeys-audio.frame-crc-mismatch" or "monkeys-audio.frame-checksum-mismatch"))
             {
                 writer.WriteStartObject();
                 writer.WriteString("code", finding.Code);

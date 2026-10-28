@@ -38,6 +38,11 @@ public sealed record DecodeSetup
 // FirstSample: the unit's position in the stream in samples per channel. Samples: how many the parser says it codes.
 public readonly record struct CodedFrame(MappedBytes Bytes, string NodeName, long FirstSample, int Samples)
 {
+    // A few bytes of the stream that follow the unit, for a decoder that reads ahead of the end of its unit: the range coder of Monkey's Audio's older versions takes the two
+    // bytes after an array, and the frames of version 3.80 follow each other bit by bit, so the last bits of a frame are in the first word of the next. Null where the parser gives
+    // none or the data ends with the unit. Valid only during the call, like Bytes.
+    public MappedBytes? Following { get; init; }
+
     // The parser found the frame damaged: a checksum over its coded data fails, or the data ends inside it. The decoder
     // still decodes what it can, so a whole-stream checksum then says the audio differs.
     public bool IsDamaged { get; init; }

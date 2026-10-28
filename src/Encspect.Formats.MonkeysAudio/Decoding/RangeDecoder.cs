@@ -107,6 +107,25 @@ internal sealed class RangeDecoder
         _range = 1u << ExtraBits;
     }
 
+    // Where the next array starts once the values of one are decoded (CUnBitArray3891To3989::Finalize): the position steps over a byte for each shift the range
+    // still needs to be above the bottom value, and back over the last two bytes up to version 3.95, which the encoder of those versions left to the next array.
+    public int Finalize()
+    {
+        uint range = _range;
+        int position = _position;
+        while (range <= BottomValue)
+        {
+            position++;
+            range <<= 8;
+            if (range == 0)
+            {
+                return position;
+            }
+        }
+
+        return _version <= 3950 ? position - 2 : position;
+    }
+
     private uint ReadByte()
     {
         if (_position >= _length)

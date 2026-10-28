@@ -55,8 +55,9 @@ internal static class WordOrder
     }
 
     // The stream bytes of a frame (its bytes in file order, from the ranges of its node) in stream order: each piece of a word reversed. start is the file
-    // offset of the first frame's first byte, which fixes where the words are. destination holds at least bytes.Length bytes.
-    public static void ToStream(MappedBytes bytes, long start, byte[] destination)
+    // offset of the first frame's first byte, which fixes where the words are. destination holds at least offset + bytes.Length bytes, and the stream bytes go
+    // from index offset on.
+    public static void ToStream(MappedBytes bytes, long start, byte[] destination, int offset = 0)
     {
         ReadOnlySpan<byte> data = bytes.Span;
         int at = 0;
@@ -74,7 +75,7 @@ internal static class WordOrder
                     for (int w = 0; w < words; w++)
                     {
                         uint value = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(at + (w * 4)));
-                        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(destination.AsSpan(at + (w * 4)), value);
+                        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(destination.AsSpan(offset + at + (w * 4)), value);
                     }
 
                     at += words * 4;
@@ -85,7 +86,7 @@ internal static class WordOrder
                 int piece = (int)(Math.Min(end, wordEnd) - position);
                 for (int i = 0; i < piece; i++)
                 {
-                    destination[at + i] = data[at + piece - 1 - i];
+                    destination[offset + at + i] = data[at + piece - 1 - i];
                 }
 
                 at += piece;

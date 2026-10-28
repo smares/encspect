@@ -38,6 +38,9 @@ internal readonly struct Entry
 
     public EntryStatus Status { get; init; }
 
+    // Version 3.80 only: the bit of the word at Start that the frame begins at (the file's table of bits), where frames follow each other bit by bit.
+    public byte StartBit { get; init; }
+
     public long Length => End - Start;
 }
 
