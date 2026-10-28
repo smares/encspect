@@ -62,10 +62,10 @@ public class GraphTests
 
         // One entry for each quantity: the per-frame and per-second series in the same unit are its forms.
         Assert.Equal(["Bitrate", "Reservoir Fill"], entries.Select(e => e.Title));
-        Assert.Equal([GraphForm.Frames, GraphForm.OverTime, GraphForm.Summary], entries[0].Forms.Select(f => f.Kind));
-        Assert.Equal(["Per Frame", "Over Time", "Distribution"], entries[0].Forms.Select(f => f.Title));
-        Assert.Equal([GraphForm.Frames], entries[1].Forms.Select(f => f.Kind));
-        Assert.False(entries[1].HasForms);
+        Assert.Equal([GraphForm.Frames, GraphForm.OverTime, GraphForm.Summary, GraphForm.Map], entries[0].Forms.Select(f => f.Kind));
+        Assert.Equal(["Per Frame", "Over Time", "Distribution", "Frame Map"], entries[0].Forms.Select(f => f.Title));
+        Assert.Equal([GraphForm.Frames, GraphForm.Map], entries[1].Forms.Select(f => f.Kind));
+        Assert.True(entries[1].HasForms);
         Graph[] graphs = [entries[0].Forms[0].Graph, entries[0].Forms[2].Graph, entries[0].Forms[1].Graph, entries[1].Graph];
         var line = (LineGraph)graphs[0];
         Assert.Equal(100_000, line.Count);
@@ -144,8 +144,8 @@ public class GraphTests
             graphs.Choices.Select(c => c.Title));
         GraphChoice bitrate = graphs.Choices.Single(c => c.Title == "Bitrate");
         GraphChoice reservoir = graphs.Choices.Single(c => c.Title == "Reservoir Fill");
-        Assert.Equal(["Per Frame", "Over Time", "Distribution"], bitrate.Forms.Select(f => f.Title));
-        Assert.Equal(["Per Frame", "Over Time"], reservoir.Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time", "Distribution", "Frame Map"], bitrate.Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time", "Frame Map"], reservoir.Forms.Select(f => f.Title));
         Assert.Same(graphs.Choices[0], graphs.Selected);
         Assert.True(graphs.Choices[0].IsSelected);
         // The Audio heading has no panel and says the audio is not decoded here, with the codec's name, and offers no command.

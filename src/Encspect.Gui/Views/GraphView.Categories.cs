@@ -105,6 +105,12 @@ public sealed partial class GraphView
             return;
         }
 
+        if (graph is FrameMapGraph map)
+        {
+            e.Handled = MapKey(map, e);
+            return;
+        }
+
         if (IsAudio(graph) && AudioKey((AudioGraph)graph, e))
         {
             e.Handled = true;
@@ -201,14 +207,23 @@ public sealed partial class GraphView
             _ => string.Empty,
         };
         AutomationProperties.SetName(this, graph.Title);
-        AutomationProperties.SetHelpText(this, graph is AudioGraph audio && IsAudio(graph)
-            ? AudioHelp(audio)
-            : string.Join(". ", new[] { legend, _hoverText ?? string.Empty }.Where(t => t.Length > 0)));
+        AutomationProperties.SetHelpText(this, graph switch
+        {
+            FrameMapGraph map => MapHelp(map, Bounds.Size),
+            AudioGraph audio when IsAudio(graph) => AudioHelp(audio),
+            _ => string.Join(". ", new[] { legend, _hoverText ?? string.Empty }.Where(t => t.Length > 0)),
+        });
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         base.OnPointerWheelChanged(e);
+        if (Graph is FrameMapGraph map)
+        {
+            MapWheel(map, e);
+            return;
+        }
+
         if (Graph is { } graph && IsCategory(graph))
         {
             double max = Math.Max(0, ContentHeightOf(graph) - Bounds.Height);

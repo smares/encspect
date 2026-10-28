@@ -399,7 +399,7 @@ public class CategoryViewTests
 
         // Headings, entries and the view switcher are one size; a heading differs by weight.
         var forms = window.GraphFormChoices.GetVisualDescendants().OfType<Button>().ToList();
-        Assert.Equal(3, forms.Count);
+        Assert.Equal(4, forms.Count);
         double size = entries[0].FontSize;
         Assert.All(entries.Concat(forms), b => Assert.Equal(size, b.FontSize));
         Assert.All(headings, h => Assert.Equal(size, h.FontSize));
@@ -414,7 +414,7 @@ public class CategoryViewTests
         DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"));
         Choose(window, "Bitrate", GraphForm.Frames);
 
-        Assert.Equal(["Per Frame", "Over Time", "Distribution"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time", "Distribution", "Frame Map"], window.Model.Graphs.Forms.Select(f => f.Title));
         Assert.Equal(SeriesAxis.FrameOffset, ((LineGraph)window.Graph.Graph!).Axis);
         Choose(window, "Bitrate", GraphForm.OverTime);
         Assert.Equal(SeriesAxis.Seconds, ((LineGraph)window.Graph.Graph!).Axis);
@@ -580,7 +580,7 @@ public class CategoryViewTests
         DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"));
         Choose(window, "Channel Bit Share", GraphForm.Split);
         var graph = (ShareSplitGraph)window.Graph.Graph!;
-        Assert.Equal(["Per Frame", "Over Time", "First and Second"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time", "First and Second", "Frame Map"], window.Model.Graphs.Forms.Select(f => f.Title));
         Assert.Equal("Bit Distribution", graph.Heading);
 
         Point point = ScreenshotTests.PointOver(window, 2);

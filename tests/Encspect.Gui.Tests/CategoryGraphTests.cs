@@ -370,8 +370,8 @@ public class CategoryGraphTests
 
         // The two that name the quantity are one entry; the two that name none stay as they are, since a unit other than kbps and bytes pairs nothing.
         Assert.Equal(["Coded Bandwidth", "Reach", "Highest in each second"], entries.Select(e => e.Title));
-        Assert.Equal([GraphForm.Frames, GraphForm.OverTime], entries[0].Forms.Select(f => f.Kind));
-        Assert.Single(entries[1].Forms);
+        Assert.Equal([GraphForm.Frames, GraphForm.OverTime, GraphForm.Map], entries[0].Forms.Select(f => f.Kind));
+        Assert.Equal([GraphForm.Frames, GraphForm.Map], entries[1].Forms.Select(f => f.Kind));
     }
 
     // Smoothed is a form of the long series only; an entry without it takes Over Time, the form it smooths.
@@ -414,7 +414,7 @@ public class CategoryGraphTests
         graphs.Load(report);
         graphs.Selected = graphs.Choices.Single(c => c.Title == "Stereo Coding");
         Assert.Equal(GraphForm.OverTime, graphs.Form);
-        Assert.Equal(["Over Time", "Frames", "Summary"], graphs.Forms.Select(v => v.Title));
+        Assert.Equal(["Over Time", "Frames", "Summary", "Frame Map"], graphs.Forms.Select(v => v.Title));
         Assert.True(graphs.HasForms);
 
         long offset = (long)report.Streams[0].Series[0].X.Span[77];
@@ -422,7 +422,7 @@ public class CategoryGraphTests
         int interval = graphs.MarkedIndex!.Value;
         graphs.SelectForm(GraphForm.Frames);
         Assert.Equal(77, graphs.MarkedIndex);
-        Assert.Equal([false, true, false], graphs.Forms.Select(v => v.IsSelected));
+        Assert.Equal([false, true, false, false], graphs.Forms.Select(v => v.IsSelected));
 
         graphs.Selected = graphs.Choices.Single(c => c.Title == "Window Sequences");
         Assert.Equal(GraphForm.Frames, graphs.Form);

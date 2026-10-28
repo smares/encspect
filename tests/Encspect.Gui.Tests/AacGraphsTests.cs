@@ -57,8 +57,8 @@ public class AacGraphsTests
                 ("Bit Distribution", "Bitrate"),
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
-        Assert.Equal(["Over Time", "Frames", "Summary"], window.Model.Graphs.Choices.Single(c => c.Title == "Window Sequences").Forms.Select(f => f.Title));
-        Assert.Equal(["Per Frame", "Over Time"], window.Model.Graphs.Choices.Single(c => c.Title == "Coded Bandwidth").Forms.Select(f => f.Title));
+        Assert.Equal(["Over Time", "Frames", "Summary", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Window Sequences").Forms.Select(f => f.Title));
+        Assert.Equal(["Per Frame", "Over Time", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Coded Bandwidth").Forms.Select(f => f.Title));
         window.Close();
     }
 

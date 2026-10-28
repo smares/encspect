@@ -25,6 +25,18 @@ internal static class Palette
 
     public static Color SurfaceColor(Control control) => Surface(control) is ISolidColorBrush solid ? solid.Color : Colors.White;
 
+    // The findings list's colors for a severity, which the Frame Map's marks use.
+    public static IBrush SeverityBrush(Control control, Encspect.Core.Severity severity)
+    {
+        string key = severity switch
+        {
+            Encspect.Core.Severity.Error => "ErrorBrush",
+            Encspect.Core.Severity.Warning => "WarningBrush",
+            _ => "InfoBrush",
+        };
+        return control.TryFindResource(key, control.ActualThemeVariant, out object? value) && value is IBrush brush ? brush : Foreground(control);
+    }
+
     public static IBrush TooltipBackground(Control control) =>
         control.TryFindResource("ToolTipBackground", control.ActualThemeVariant, out object? value) && value is IBrush brush ? brush : Surface(control);
 
