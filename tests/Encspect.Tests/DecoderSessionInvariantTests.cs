@@ -24,16 +24,21 @@ public class DecoderSessionInvariantTests
         ["MLP"] = "mlp",
         ["PCM"] = "pcm",
         ["PCM (floating-point)"] = "pcm",
+        [CodecNames.ALaw] = "pcm",
+        [CodecNames.MuLaw] = "pcm",
     };
 
     // Streams of these fixtures are reported as PCM and have no session, although no finding says a container did not hand them over: the
     // parser starts the `pcm` session only where `PcmCoding` can describe the stream (docs/design/spectral-analysis.md, "Data that is not PCM
     // stays out"), and these files declare a format or data it cannot: a block alignment that does not fit the format, a float of 16 bits,
-    // a 14-byte format chunk, a list of wave data, a sample size of 0, a data chunk or sound chunk that is missing or has no frames.
+    // a 14-byte format chunk, a list of wave data, a sample size of 0, a data chunk or sound chunk that is missing or has no frames, A-law with a sample size other than 8 bits or none.
     private const string NotDescribable = "PcmCoding cannot describe the stream";
+    private const string CompandedWidth = "PcmCoding cannot describe the stream: A-law and mu-law have 8 bits, and the file states another width (wav.companded-bits) or none (a 14-byte format chunk)";
 
     private static readonly Dictionary<string, string> Excluded = new(StringComparer.Ordinal)
     {
+        ["wav/built-alaw-16-bits.wav"] = CompandedWidth,
+        ["wav/built-format-14-bytes-alaw.wav"] = CompandedWidth,
         ["wav/built-block-align-mismatch.wav"] = NotDescribable,
         ["wav/built-float-16-bits.wav"] = NotDescribable,
         ["wav/built-format-14-bytes-pcm.wav"] = NotDescribable,
@@ -63,7 +68,11 @@ public class DecoderSessionInvariantTests
                 .Where(p => Path.GetExtension(p) is not (".json" or ".md" or ".txt" or ".py")))
             {
                 Report report = analyzer.AnalyzeFile(path);
-                bool isNotAnalyzed = report.Findings.Any(f => f.Code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal));
+
+                // A container states the finding once for each stream it does not hand over, at the track's sample entry, which no node of
+                // the stream's own covers: the findings are a budget of streams that may lack a session, not a pass for the whole file.
+                int notAnalyzed = report.Findings.Count(f => f.Code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal));
+                var withoutSession = new List<string>();
                 foreach (StreamInfo stream in report.Streams.Where(s => DecoderOfCodec.ContainsKey(s.Codec)))
                 {
                     string id = DecoderOfCodec[stream.Codec];
@@ -72,10 +81,15 @@ public class DecoderSessionInvariantTests
                     {
                         checkedStreams[id] = checkedStreams.GetValueOrDefault(id) + 1;
                     }
-                    else if (!isNotAnalyzed && !Excluded.ContainsKey(name))
+                    else if (!Excluded.ContainsKey(name))
                     {
-                        failures.Add($"{name}: a {stream.Codec} stream has {(stream.Verification is null ? "no verification" : stream.Verification.Decoding.ToString())}");
+                        withoutSession.Add($"{name}: a {stream.Codec} stream has {(stream.Verification is null ? "no verification" : stream.Verification.Decoding.ToString())}");
                     }
+                }
+
+                if (withoutSession.Count > notAnalyzed)
+                {
+                    failures.AddRange(withoutSession);
                 }
             }
         }
