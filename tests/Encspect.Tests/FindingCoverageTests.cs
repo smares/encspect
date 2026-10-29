@@ -175,6 +175,34 @@ public partial class FindingCoverageTests
         Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
     }
 
+    [GeneratedRegex("\"(alac\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    private static partial Regex AlacCode();
+
+    // Every code the ALAC parser emits is listed by a fixture's manifest or raised by a crafted file of AlacCodecParserTests or MemoryTests.
+    [Fact]
+    public void EveryAlacCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Formats.Alac"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => AlacCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count > 15, $"Found only {emitted.Count} codes.");
+
+        var asserted = new HashSet<string>();
+        foreach (string file in new[] { "AlacCodecParserTests.cs", "MemoryTests.cs" })
+        {
+            asserted.UnionWith(AlacCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", file))).Select(m => m.Groups[1].Value));
+        }
+
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "alac"), "*.expected.json"))
+        {
+            asserted.UnionWith(AlacCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value));
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted file or manifest raises: {string.Join(", ", missing)}");
+    }
+
     [GeneratedRegex("\"(tta\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex TtaCode();
 

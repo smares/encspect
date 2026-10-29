@@ -156,6 +156,26 @@ public class CorruptTtaBuiltFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
+// The ALAC fixtures written by FFmpeg, Apple's alacconvert, mkvmerge and afconvert, and the CAF files of afconvert (which no parser reads).
+public class CorruptAlacFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("alac/", StringComparison.Ordinal) && !n.StartsWith("alac/built-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The hand-built ALAC fixtures.
+public class CorruptAlacBuiltFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("alac/built-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
 // The hand-built FLAC fixtures, each analyzed with and without decoding.
 public class CorruptFlacBuiltFileTests
 {
