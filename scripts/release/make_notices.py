@@ -9,6 +9,8 @@ Every text comes from a file, never from memory:
   fetched by --fetch from the repository commit the package's nuspec names, and committed so a run needs no network;
 - scripts/release/licenses/libwavpack.txt: the COPYING of libwavpack 5.6.0, whose code the WavPack decoder is derived from. --fetch extracts it
   from the archive scripts/fixtures/wavpack_tool.py pins by SHA-256, so the text is libwavpack's own and the hash is checked;
+- scripts/release/licenses/libspeex.txt: the COPYING of libspeex 1.2.1, whose frame walk the Speex parser follows. --fetch extracts it from the
+  archive scripts/fixtures/speex_tool.py pins by SHA-256, so the text is libspeex's own and the hash is checked.
 - scripts/release/licenses/libmpcdec.txt and libmpcdec-r495-header.txt: the COPYING of libmpcdec 1.2.6 (identical to that of musepack_src r495,
   which --fetch checks) and the license comment of r495's huffman.c, which carries another copyright line. --fetch extracts them from the two
   archives scripts/fixtures/musepack_tool.py pins by SHA-256.
@@ -38,6 +40,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 LICENSES = ROOT / "scripts" / "release" / "licenses"
 OUTPUT = ROOT / "THIRD-PARTY-NOTICES.md"
 LIBWAVPACK_COPYING = LICENSES / "libwavpack.txt"
+LIBSPEEX_COPYING = LICENSES / "libspeex.txt"
 LIBMPCDEC_COPYING = LICENSES / "libmpcdec.txt"
 LIBMPCDEC_HEADER = LICENSES / "libmpcdec-r495-header.txt"
 MONKEYS_AUDIO_LICENSE = LICENSES / "monkeys-audio.txt"
@@ -151,6 +154,18 @@ def fetch_libwavpack():
     print(f"libwavpack: wavpack-5.6.0/COPYING of {wavpack_tool.WAVPACK[0]} (SHA-256 {wavpack_tool.WAVPACK[1]})")
 
 
+def fetch_libspeex():
+    """COPYING of the pinned libspeex archive; speex_tool.fetch checks the archive's SHA-256."""
+    import tarfile
+    import tempfile
+    sys.path.insert(0, str(ROOT / "scripts" / "fixtures"))
+    import speex_tool
+    with tempfile.TemporaryDirectory(prefix="libspeex-") as directory:
+        with tarfile.open(speex_tool.fetch(directory)) as tar:
+            LIBSPEEX_COPYING.write_bytes(tar.extractfile("speex-1.2.1/COPYING").read())
+    print(f"libspeex: speex-1.2.1/COPYING of {speex_tool.NAME} (SHA-256 {speex_tool.SHA256})")
+
+
 def fetch_libmpcdec():
     """COPYING of libmpcdec 1.2.6 and the license comment of r495's huffman.c; musepack_tool.fetch checks both archives' SHA-256."""
     import tarfile
@@ -209,6 +224,7 @@ def fetch(packages, version_of):
     fetch_libebur128()
     fetch_colormaps()
     fetch_libwavpack()
+    fetch_libspeex()
     fetch_libmpcdec()
     fetch_monkeys_audio()
     for name, package, source in FETCHED:
@@ -234,6 +250,7 @@ def build(packages, version_of, runtime_deps):
     angle = read(packages / "avalonia.angle.windows.natives" / v["Avalonia.Angle.Windows.Natives"] / "LICENSE")
     licenses = {name: read(LICENSES / f"{name}.txt") for name, _, _ in FETCHED}
     libwavpack = read(LIBWAVPACK_COPYING)
+    libspeex = read(LIBSPEEX_COPYING)
     libmpcdec = read(LIBMPCDEC_COPYING)
     libmpcdec_header = read(LIBMPCDEC_HEADER)
     monkeys_audio = read(MONKEYS_AUDIO_LICENSE)
@@ -251,10 +268,11 @@ def build(packages, version_of, runtime_deps):
 
 Encspect is released under the [MIT License](LICENSE). The published builds, the command line tool `encspect` (a native executable, compiled ahead of time) and the GUI `encspect-gui` (a self-contained single file), carry the components below. This file is shipped with each build and shown by the GUI's About window.
 
-Each text below is copied from a file, never written by hand; `scripts/release/make_notices.py` regenerates this file and the release workflow fails when it differs:
+Each license text below is copied from a file, never written by hand (the attribution of the Matroska element registry, which is licensed by reference, is the one short text written here); `scripts/release/make_notices.py` regenerates this file and the release workflow fails when it differs:
 
 - **Licensors' own license files:** for the packages that carry only a license expression (`MIT`), the license file of the licensor's repository at the commit the package's nuspec names: Avalonia and Avalonia.Controls.DataGrid (`licence.md`), NWayland (`licence.md`), Tmds.DBus (`COPYING`) and MicroCom (`LICENSE`). The copyright line of the package's nuspec is given as well where the package has one.
 - **libwavpack:** the `COPYING` of libwavpack 5.6.0, extracted from `wavpack-5.6.0.tar.bz2`, the archive `scripts/fixtures/wavpack_tool.py` pins by SHA-256 (`8cbfa15927d29bcf953db35c0cfca7424344ff43ebe4083daf161577fb839cc1`); `scripts/release/make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libwavpack.txt`.
+- **libspeex:** the `COPYING` of libspeex 1.2.1, extracted from `speex-1.2.1.tar.gz`, the archive `scripts/fixtures/speex_tool.py` pins by SHA-256 (`4b44d4f2b38a370a2d98a78329fefc56a0cf93d1c1be70029217baae6628feea`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libspeex.txt`.
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.44, extracted from `MAC_1344_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0c5c16432552f30ba715de44358b43accdf99b1a81546cd467cd32410f9d954e`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
 - **libebur128:** the `COPYING` (MIT) of libebur128 v1.2.6, pinned by its SHA-256 (`d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/libebur128.txt`.
@@ -280,8 +298,10 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 | HarfBuzzSharp, with the HarfBuzz native library | {v["HarfBuzzSharp"]} | MIT (HarfBuzzSharp); HarfBuzz is "Old MIT", see the notices of HarfBuzzSharp below | GUI |
 | libwavpack 5.6.0: the code of Encspect's WavPack decoder derived from it (the entropy decoder, the decorrelation passes, the float restore, the DSD decoders, the sub-block reading) | 5.6.0 | BSD 3-Clause | both builds, all platforms |
 | Monkey's Audio SDK 13.44: the code of Encspect's Monkey's Audio parser and decoder derived from it (the header and seek table layouts, the order of the bytes of a frame, the range decoders and Rice codes, the predictors of every version, the neural network filters, the frame checksum and the output of the samples) | 13.44 | BSD 3-Clause | both builds, all platforms |
-| libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
+| libspeex 1.2.1: the code of Encspect's Speex parser derived from it (the walk over a packet's frames: the narrowband decoder's reading of the submodes, the skip of wideband layers, the in-band handling) and the tables of bits per submode | 1.2.1 | BSD 3-Clause | both builds, all platforms |
+| libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources, and its reading of the frame headers of stream versions 4 to 7 | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
 | libebur128 v1.2.6: the derivation of the K-weighting filter's coefficients for sample rates other than 48 kHz in Encspect's loudness measurement (the filters' parameters and the bilinear transforms) | v1.2.6 | MIT | both builds, all platforms |
+| The Matroska element registry (`ebml_matroska.xml`): the default values of the elements and the descriptions of the elements RFC 9559 does not list, in `src/Encspect.Formats.Matroska/Elements.cs` (format data) | commit 1a943ead9bb4 | CC BY 4.0 | both builds, all platforms |
 | matplotlib's "magma" colormap, from BIDS/colormap: the 256 colors of the GUI's spectrogram ramp (format data) | colormaps.py, SHA-256 b7478d10 | CC0 1.0 (public domain dedication), with a request for credit | GUI |
 
 The command line tool contains the NativeAOT build of the .NET runtime and the library code of the runtime pack, and Encspect's own code. The packages it is compiled and linked from (`Microsoft.NETCore.App.Runtime.NativeAOT` and `runtime.<rid>.Microsoft.DotNet.ILCompiler`, which holds the native runtime libraries) carry a `THIRD-PARTY-NOTICES.TXT` byte-identical to the runtime pack's, so the .NET runtime row above covers them. On Linux it also links a few objects of the Ubuntu 18.04 sysroot it is built against (found in the binary's symbols and its `.comment` section): glibc's start files `crt1.o`, `crti.o` and `crtn.o` and the `__libc_csu_init`, `__libc_csu_fini` and `atexit` pieces of `libc_nonshared.a`, under glibc's license (LGPL 2.1 or later) with the linking exception glibc gives these start-up objects, which does not make the program a work covered by the LGPL; and GCC 7's `crtbegin.o` and `crtend.o`, under GPL 3 or later with the GCC Runtime Library Exception 3.1. None of `libgcc.a` is linked in. The program loads the system's C library at run time.
@@ -356,9 +376,16 @@ Encspect's Monkey's Audio decoder is written in C#; the parts derived from the M
 ```
 {monkeys_audio}```
 
+## libspeex
+
+Encspect's Speex parser is written in C#; the walk over a packet's frames (`src/Encspect.Formats.Speex/SpeexFrames.cs`) follows libspeex 1.2.1 (`nb_decode` of `nb_celp.c`, `wb_skip_table` and the in-band handler of `speex_callbacks.c`) and says so in its source file. The `COPYING` of libspeex, which names Jean-Marc Valin, the Xiph.org Foundation and the other copyright holders:
+
+```
+{libspeex}```
+
 ## libmpcdec
 
-The tables of Encspect's Musepack parser (`src/Encspect.Formats.Musepack`: the Huffman code tables and resolution tables of stream versions 4 to 7) are taken from libmpcdec 1.2.6 and from `musepack_src` r495, whose files carry two copyright lines. The `COPYING` of libmpcdec 1.2.6 (the file of r495 is the same):
+The tables of Encspect's Musepack parser (`src/Encspect.Formats.Musepack`: the Huffman code tables and resolution tables of stream versions 4 to 7, and the reading of their frame headers in `Sv7Parser.cs` and `OldStreamParser.cs`) are taken from or follow libmpcdec 1.2.6 and from `musepack_src` r495, whose files carry two copyright lines. The `COPYING` of libmpcdec 1.2.6 (the file of r495 is the same):
 
 ```
 {libmpcdec}```
@@ -367,6 +394,10 @@ The license comment at the top of the source files of r495:
 
 ```
 {libmpcdec_header}```
+
+## The Matroska element registry
+
+`src/Encspect.Formats.Matroska/Elements.cs` is generated from RFC 9559 and RFC 8794 and from the Matroska element registry (`ebml_matroska.xml` of github.com/ietf-wg-cellar/matroska-specification, at commit 1a943ead9bb4c67b02b966cebafe51c8c074e703, pinned by SHA-256 in `scripts/fixtures/matroska_specs.py`), a work of the IETF CELLAR working group and the Matroska project. It takes the default value of every element and the descriptions of the elements RFC 9559 does not list from the registry, each description reduced to the first sentence of the registry's definition with its references written as plain text. The registry is licensed under the Creative Commons Attribution 4.0 International license (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/legalcode), as the `LICENSE.md` of that repository says. The changes are the ones named here.
 
 ## libebur128: the K-weighting filter of the loudness measurement
 
