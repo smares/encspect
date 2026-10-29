@@ -297,4 +297,16 @@ public class MonkeysAudioWavHeaderTests
         Assert.Empty(Find(report.Root, "Channel Mask"));
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("monkeys-audio.wav-", StringComparison.Ordinal) && f.Code != "monkeys-audio.wav-header-unused");
     }
+
+    // The format tag is shown as the WAV parser shows it: in hexadecimal with the name of the table both use, or "unlisted".
+    [Theory]
+    [InlineData(1, "0x0001 (PCM)")]
+    [InlineData(2, "0x0002 (Microsoft ADPCM)")]
+    [InlineData(0x1234, "0x1234 (unlisted)")]
+    public void TheFormatTagIsNamedAsTheWavParserNamesIt(int tag, string expected)
+    {
+        Report report = Analyze(Riff(Fmt(2, tag), Chunk("data", 0, 0)));
+
+        Assert.Equal(expected, Find(report.Root, "Format Tag").Single().Value?.ToString());
+    }
 }
