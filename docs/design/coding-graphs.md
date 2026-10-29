@@ -303,6 +303,8 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 ### WMA standard, Pro and Voice
 
+The readers behind this table were removed on 2026-10-29 for their provenance (see docs/development.md); the table stays as the plan for the graphs when the frames return from the clean-room rewrites, and the `wma-frames-and-blocks` article it names went with the readers.
+
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
 | Block sizes, standard | block length per block, from frame length >> n (FFmpeg 6.1.1 `wmadec.c` `wma_decode_block`) | yes, `BlockRecord.BlockBits` | "Block Sizes" | 1 byte per block, derived | code | 2 |
