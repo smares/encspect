@@ -142,7 +142,7 @@ public class AsfFixtureTests
     }
 
     // WM/ToolName holds ffmpeg's encoder ID: an encoder claim, and no writer. A claim of ffmpeg's names the encoder only where the stream shows ffmpeg's,
-    // and the frames are not read, so no encoder is named.
+    // which this stream does by the padding of its superframes.
     [Fact]
     public void ALibavcodecToolNameIsEncoderEvidenceAndNoWriter()
     {
@@ -150,7 +150,7 @@ public class AsfFixtureTests
         Report report = Analyzer.CreateDefault().Analyze(path, new MemoryStream(File.ReadAllBytes(path)));
 
         StreamInfo stream = Assert.Single(report.Streams);
-        Assert.Null(stream.Encoder);
+        Assert.Equal("FFmpeg (wmav2 encoder)", stream.Encoder);
         Assert.Null(stream.Writer);
         Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
     }
@@ -169,7 +169,7 @@ public class AsfFixtureTests
         Report report = Analyzer.CreateDefault().Analyze("version.asf", new MemoryStream(data));
 
         StreamInfo stream = Assert.Single(report.Streams);
-        Assert.Null(stream.Encoder);
+        Assert.Equal("FFmpeg (wmav2 encoder)", stream.Encoder);
         Assert.Equal(writer, stream.Writer);
     }
 
