@@ -275,10 +275,103 @@ def individual_channel_stream(w, ics, object_type, rate_index, common, short_fra
 
 # --- SBR -----------------------------------------------------------------------------------------
 
+SBR_RATE_ROWS = {16000: 0, 22050: 1, 24000: 2, 32000: 3, 44100: 4, 48000: 4, 64000: 4,
+                 88200: 5, 96000: 5, 128000: 5, 176400: 5, 192000: 5}
+
+
+def _nint(x):
+    return math.floor(x + 0.5)
+
+
+def _log_widths(a, b, n):
+    """L(a, b, n) of 4.6.18.3.2: the n widths between the boundaries NINT(a * (b / a) ** (j / n))."""
+    p = [_nint(a * (b / a) ** (j / n)) for j in range(n + 1)]
+    p[0], p[n] = a, b
+    return [p[j + 1] - p[j] for j in range(n)]
+
+
+def _master_widths(k0, k2, scale, alter):
+    if scale == 0:
+        d = k2 - k0
+        dk = 2 if alter else 1
+        n = 2 * ((d + 2) // 4) if alter else 2 * (d // 2)
+        if n == 0:
+            raise ValueError("the SBR master frequency table is empty")
+        widths = [dk] * n
+        r = d - n * dk
+        if r < 0:
+            for i in range(-r):
+                widths[i] -= 1
+        elif r == 1:
+            widths[-1] += 1
+        return widths
+    per_octave = {1: 12, 2: 10, 3: 8}[scale]
+    two_regions = k2 * 10000 > 22449 * k0
+    k1 = 2 * k0 if two_regions else k2
+    n0 = 2 * _nint(per_octave / 2 * math.log2(k1 / k0))
+    if n0 <= 0:
+        raise ValueError("the SBR master frequency table's first region is empty")
+    first = sorted(_log_widths(k0, k1, n0))
+    if first[0] <= 0:
+        raise ValueError("the SBR master frequency table has a band of no width")
+    if not two_regions:
+        return first
+    warp = 1.3 if alter else 1
+    n1 = 2 * _nint(per_octave / 2 * math.log2(k2 / k1) / warp)
+    if n1 <= 0:
+        raise ValueError("the SBR master frequency table's second region is empty")
+    second = sorted(_log_widths(k1, k2, n1))
+    if second[0] < first[-1]:
+        c = min(first[-1] - second[0], (second[-1] - second[0]) // 2)
+        second[0] += c
+        second[-1] -= c
+    second.sort()
+    if second[0] <= 0:
+        raise ValueError("the SBR master frequency table has a band of no width")
+    return first + second
+
+
 def sbr_bands(header, rate):
-    """The high and low resolution band counts and the noise floor bands, (high, low, noise), that an SBR header gives at an output rate."""
-    # Clean-room rewrite pending: docs/design/aac-sbr-frequency-tables.md
-    raise NotImplementedError
+    """The high and low resolution band counts and the noise floor bands, (high, low, noise), that an SBR header gives at an output rate.
+    Raises ValueError, with the analyzer's wording, for a header whose frequency tables cannot be built (4.6.18.3)."""
+    if rate not in SBR_RATE_ROWS:
+        raise ValueError(f"SBR has no frequency tables for an output rate of {rate} Hz")
+    scale = header.get("freq_scale", 2)
+    alter = header.get("alter_scale", 1)
+    noise_bands = header.get("noise_bands", 2)
+    base = 3000 if rate < 32000 else 4000 if rate < 64000 else 5000
+    start_min = (base * 256 + rate) // (2 * rate)
+    stop_min = (base * 512 + rate) // (2 * rate)
+    k0 = start_min + T.SBR_OFFSET[SBR_RATE_ROWS[rate]][header["start"]]
+    stop = header["stop"]
+    if stop < 14:
+        k2 = stop_min + sum(sorted(_log_widths(stop_min, 64, 13))[:stop])
+    else:
+        k2 = (2 if stop == 14 else 3) * k0
+    k2 = min(k2, 64)
+    limit = 48 if rate <= 32000 else 35 if rate == 44100 else 32
+    if k2 - k0 > limit:
+        raise ValueError(f"the SBR range spans {k2 - k0} QMF bands, more than the {limit} allowed at {rate} Hz")
+    if k0 >= k2:
+        raise ValueError(f"the SBR range would start at QMF band {k0} and end at {k2}")
+    master = [k0]
+    for width in _master_widths(k0, k2, scale, alter):
+        master.append(master[-1] + width)
+    n_master = len(master) - 1
+    xover = header["xover"]
+    if xover >= n_master:
+        raise ValueError(f"bs_xover_band {xover} lies beyond the {n_master} band{'' if n_master == 1 else 's'} of the master frequency table")
+    kx, end = master[xover], master[n_master]
+    if end > 64:
+        raise ValueError(f"the SBR range ends at QMF band {end}, beyond 64")
+    if kx > 32:
+        raise ValueError(f"the SBR range starts at QMF band {kx}, beyond 32")
+    high = n_master - xover
+    low = (high + 1) // 2
+    noise = max(1, _nint(noise_bands * math.log2(k2 / kx)))
+    if noise > 5:
+        raise ValueError(f"the header gives {noise} noise floor bands, more than 5")
+    return high, low, noise
 
 
 def sbr_header(w, header):
