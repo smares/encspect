@@ -14,6 +14,8 @@ Every text comes from a file, never from memory:
   archives scripts/fixtures/musepack_tool.py pins by SHA-256.
 - scripts/release/licenses/monkeys-audio.txt: the License.txt of the Monkey's Audio SDK 13.42, whose code the Monkey's Audio decoder is derived from.
   --fetch extracts it from the archive scripts/fixtures/monkeys_audio_tool.py pins by SHA-256, so the text is the SDK's own and the hash is checked.
+- scripts/release/licenses/alac.txt: the LICENSE (Apache License 2.0) of Apple's ALAC reference implementation (github.com/macosforge/alac), whose code the ALAC parser
+  follows. --fetch reads it from the commit scripts/fixtures/alac_tool.py pins, which git checks against the tree.
 - scripts/release/licenses/matplotlib-colormaps.txt: the license comment at the top of colormaps.py of github.com/BIDS/colormap (CC0, with a request for
   credit), whose table of matplotlib's magma colormap is the spectrogram's color ramp. --fetch reads the file and checks its SHA-256.
 - scripts/release/licenses/libebur128.txt: the COPYING (MIT) of libebur128 v1.2.6, whose derivation of the K-weighting coefficients the loudness measurement follows.
@@ -41,6 +43,7 @@ LIBWAVPACK_COPYING = LICENSES / "libwavpack.txt"
 LIBMPCDEC_COPYING = LICENSES / "libmpcdec.txt"
 LIBMPCDEC_HEADER = LICENSES / "libmpcdec-r495-header.txt"
 MONKEYS_AUDIO_LICENSE = LICENSES / "monkeys-audio.txt"
+ALAC_LICENSE = LICENSES / "alac.txt"
 LIBEBUR128_LICENSE = LICENSES / "libebur128.txt"
 LIBEBUR128_URL = "https://raw.githubusercontent.com/jiixyj/libebur128/v1.2.6/COPYING"
 LIBEBUR128_SHA256 = "d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c"
@@ -181,6 +184,16 @@ def fetch_monkeys_audio():
     print(f"Monkey's Audio: License.txt of {monkeys_audio_tool.NAME} (SHA-256 {monkeys_audio_tool.SHA256})")
 
 
+def fetch_alac():
+    """LICENSE of Apple's ALAC source at the pinned commit; alac_tool.fetch checks the tree against the commit."""
+    import tempfile
+    sys.path.insert(0, str(ROOT / "scripts" / "fixtures"))
+    import alac_tool
+    with tempfile.TemporaryDirectory(prefix="alac-") as directory:
+        ALAC_LICENSE.write_text(alac_tool.license_text(directory), encoding="utf-8", newline="\n")
+    print(f"ALAC: LICENSE of {alac_tool.REPOSITORY} at {alac_tool.COMMIT}")
+
+
 def fetch_colormaps():
     """The license comment of BIDS/colormap's colormaps.py, which comes before its first line of code; the file's SHA-256 is checked."""
     import hashlib
@@ -211,6 +224,7 @@ def fetch(packages, version_of):
     fetch_libwavpack()
     fetch_libmpcdec()
     fetch_monkeys_audio()
+    fetch_alac()
     for name, package, source in FETCHED:
         url, commit = nuspec_commit(nuspec(packages, package, version_of[package]))
         base = url.rstrip("/")
@@ -237,6 +251,7 @@ def build(packages, version_of, runtime_deps):
     libmpcdec = read(LIBMPCDEC_COPYING)
     libmpcdec_header = read(LIBMPCDEC_HEADER)
     monkeys_audio = read(MONKEYS_AUDIO_LICENSE)
+    alac = read(ALAC_LICENSE)
     colormaps = read(COLORMAPS_LICENSE)
     libebur128 = read(LIBEBUR128_LICENSE)
     def copyright_line(package):
@@ -257,6 +272,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 - **libwavpack:** the `COPYING` of libwavpack 5.6.0, extracted from `wavpack-5.6.0.tar.bz2`, the archive `scripts/fixtures/wavpack_tool.py` pins by SHA-256 (`8cbfa15927d29bcf953db35c0cfca7424344ff43ebe4083daf161577fb839cc1`); `scripts/release/make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libwavpack.txt`.
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.42, extracted from `MAC_1342_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0a763b3592d13183bbd6c04b12eb637d364de16791602733a897b72df8e87326`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
+- **Apple's ALAC reference implementation:** the `LICENSE` (Apache License 2.0) of github.com/macosforge/alac at the commit `scripts/fixtures/alac_tool.py` pins (`c38887c5c5e64a4b31108733bd79ca9b2496d987`), which git checks against the tree; `make_notices.py --fetch` refreshes the committed copy `scripts/release/licenses/alac.txt`.
 - **libebur128:** the `COPYING` (MIT) of libebur128 v1.2.6, pinned by its SHA-256 (`d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/libebur128.txt`.
 - **matplotlib colormaps:** the license comment at the top of `colormaps.py` of BIDS/colormap, the file the GUI's color ramp for the spectrogram (the 256 entries of `magma`, `src/Encspect.Gui/Views/MagmaRamp.cs`) is taken from, pinned by its SHA-256 (`b7478d10e2ccfdb22128867e137f16f55b687e9c225065e91bcbd6bb9e6c0352`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/matplotlib-colormaps.txt`.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
@@ -280,6 +296,7 @@ Each text below is copied from a file, never written by hand; `scripts/release/m
 | HarfBuzzSharp, with the HarfBuzz native library | {v["HarfBuzzSharp"]} | MIT (HarfBuzzSharp); HarfBuzz is "Old MIT", see the notices of HarfBuzzSharp below | GUI |
 | libwavpack 5.6.0: the code of Encspect's WavPack decoder derived from it (the entropy decoder, the decorrelation passes, the float restore, the DSD decoders, the sub-block reading) | 5.6.0 | BSD 3-Clause | both builds, all platforms |
 | Monkey's Audio SDK 13.42: the code of Encspect's Monkey's Audio parser and decoder derived from it (the header and seek table layouts, the order of the bytes of a frame, the range decoders and Rice codes, the predictors of every version, the neural network filters, the frame checksum and the output of the samples) | 13.42 | BSD 3-Clause | both builds, all platforms |
+| Apple's ALAC reference implementation (commit c38887c5): the code of Encspect's ALAC parser derived from it (the magic cookie layout, the syntax of a frame's elements and the adaptive Golomb code of the residuals, which the walk of a frame follows) | c38887c5 | Apache License 2.0 | both builds, all platforms |
 | libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
 | libebur128 v1.2.6: the derivation of the K-weighting filter's coefficients for sample rates other than 48 kHz in Encspect's loudness measurement (the filters' parameters and the bilinear transforms) | v1.2.6 | MIT | both builds, all platforms |
 | matplotlib's "magma" colormap, from BIDS/colormap: the 256 colors of the GUI's spectrogram ramp (format data) | colormaps.py, SHA-256 b7478d10 | CC0 1.0 (public domain dedication), with a request for credit | GUI |
@@ -355,6 +372,13 @@ Encspect's Monkey's Audio decoder is written in C#; the parts derived from the M
 
 ```
 {monkeys_audio}```
+
+## Apple's ALAC reference implementation
+
+Encspect's ALAC parser is written in C#; the parts derived from Apple's ALAC reference implementation (github.com/macosforge/alac, commit c38887c5c5e64a4b31108733bd79ca9b2496d987; `src/Encspect.Formats.Alac`) say so in their source files. The source files of the implementation carry the Copyright (c) 2011 Apple Inc. notice and the Apache License header; the `LICENSE` of the repository:
+
+```
+{alac}```
 
 ## libmpcdec
 
