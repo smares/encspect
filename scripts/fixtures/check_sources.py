@@ -4,7 +4,11 @@ and checks its SHA-256 (and that FFmpeg's release holds every file ffmpeg_source
 of its copies stops serving it, before the fallback is all that is left. FAAC's releases are pinned by
 the commits of their tags (faac_tool.py), which it asks both repositories for.
 
-Usage: python3 scripts/fixtures/check_sources.py
+Usage: python3 scripts/fixtures/check_sources.py [--list | --only FILE]
+  --list       prints every (name, SHA-256, address, kind) as sorted JSON, without downloading; the LAME svn trees
+               (tree digest), FAAC's tags (commit, one entry per repository) and each file of FFmpeg's release that
+               ffmpeg_sources.py extracts (name "<archive>/<member>", the archive's digest and address) are entries too
+  --only FILE  checks only the entries in FILE, in that form (the pull request check passes the ones it adds or changes)
 """
 
 import json
@@ -102,7 +106,54 @@ def sources():
     yield dashif_systems.NAME, dashif_systems.SHA256, dashif_systems.ADDRESSES
 
 
+def member_name(member):
+    return f"{ffmpeg_sources.ARCHIVE}/{member}"
+
+
+def entries():
+    """(kind, name, SHA-256 or commit, address) of everything the full run checks: "download" for a file,
+    "member" for a file of FFmpeg's release that must be in the archive (the archive's digest and address),
+    "svn" for a LAME tree (its digest is the tree digest), "tag" for a FAAC tag in one repository."""
+    for name, digest, addresses in sources():
+        for address in addresses:
+            yield "download", name, digest, address
+    for member in ffmpeg_sources.FILES:
+        for address in ffmpeg_sources.ADDRESSES:
+            yield "member", member_name(member), ffmpeg_sources.SHA256, address
+    for version, (tag, digest) in old_lame_tool.SVN_TREES.items():
+        yield "svn", tag, digest, old_lame_tool.svn_url(version)
+    for faac_tag, commit, _, _ in faac_tool.RELEASES.values():
+        for repository in faac_tool.REPOSITORIES:
+            yield "tag", faac_tag, f"commit:{commit}", f"{repository} refs/tags/{faac_tag}"
+
+
+def listing(selected=None):
+    """The entries as sorted, unique dicts, the form --list prints and --only reads."""
+    found = {}
+    for kind, name, digest, address in entries():
+        found.setdefault((name, digest, address), kind)
+    return [{"name": name, "sha256": digest, "address": address, "kind": found[name, digest, address]}
+            for name, digest, address in sorted(found) if selected is None or (name, digest, address) in selected]
+
+
 def main():
+    args = sys.argv[1:]
+    if args == ["--list"]:
+        print(json.dumps(listing(), indent=1))
+        return
+    selected = None
+    if len(args) == 2 and args[0] == "--only":
+        wanted = json.loads(pathlib.Path(args[1]).read_text(encoding="utf-8"))
+        selected = {(item["name"], item["sha256"], item["address"]) for item in wanted}
+        unknown = selected - {(name, digest, address) for _, name, digest, address in entries()}
+        if unknown:
+            sys.exit("--only lists entries that --list does not hold: " + ", ".join(sorted(f"{n} {a}" for n, _, a in unknown)))
+    elif args:
+        sys.exit("usage: check_sources.py [--list | --only FILE]")
+
+    def wanted_entry(name, digest, address):
+        return selected is None or (name, digest, address) in selected
+
     problems = 0
     checked = 0
     skipped = 0
@@ -110,10 +161,15 @@ def main():
         path = pathlib.Path(temp) / "download"
         for name, digest, addresses in sources():
             for address in addresses:
+                wanted_file = wanted_entry(name, digest, address)
+                # The archive is the one the scripts extract FILES from: each must be in it.
+                members = [m for m in ffmpeg_sources.FILES if name == ffmpeg_sources.ARCHIVE and wanted_entry(member_name(m), digest, address)]
+                if not wanted_file and not members:
+                    continue
                 if not downloads.has_token(address):
                     skipped += 1
                     continue
-                checked += 1
+                checked += int(wanted_file) + len(members)
                 # The Wayback Machine limits how fast one client may download.
                 if address.startswith("https://web.archive.org/"):
                     time.sleep(ARCHIVE_PAUSE)
@@ -123,9 +179,8 @@ def main():
                 elif downloads.sha256(path) != digest:
                     problem = f"serves SHA-256 {downloads.sha256(path)}"
                 else:
-                    # The archive is the one the scripts extract FILES from: each must be in it.
-                    if name == ffmpeg_sources.ARCHIVE:
-                        for absent in ffmpeg_sources.missing(path):
+                    if members:
+                        for absent in ffmpeg_sources.missing(path, members):
                             problems += 1
                             print(f"{name}: {address} does not hold {absent}")
                     continue
@@ -135,6 +190,8 @@ def main():
     note = f"; {skipped} in the private repository skipped, {downloads.TOKEN} is not set" if skipped else ""
     # LAME's betas, its alpha and 3.99.5 are trees of files in svn, checked by their digests.
     for version, (tag, expected) in old_lame_tool.SVN_TREES.items():
+        if not wanted_entry(tag, expected, old_lame_tool.svn_url(version)):
+            continue
         with tempfile.TemporaryDirectory() as temp:
             checked += 1
             tree = pathlib.Path(temp)
@@ -148,11 +205,13 @@ def main():
                 print(f"{tag}: {old_lame_tool.svn_url(version)} holds tree digest {digest}")
     # FAAC's releases are pinned by their commits, which git checks against the tree: each repository must
     # still serve each tag with its commit.
-    checked += len(faac_tool.RELEASES) * len(faac_tool.REPOSITORIES)
-    for problem in faac_tool.tag_problems():
+    faac_wanted = {(tag, repository) for tag, commit, _, _ in faac_tool.RELEASES.values() for repository in faac_tool.REPOSITORIES
+                   if wanted_entry(tag, f"commit:{commit}", f"{repository} refs/tags/{tag}")}
+    checked += len(faac_wanted)
+    for problem in faac_tool.tag_problems(faac_wanted):
         problems += 1
         print(problem)
-    print(f"Checked {checked} addresses, {problems} problems{note}.", file=sys.stderr)
+    print(f"Checked {checked} entries, {problems} problems{note}.", file=sys.stderr)
     sys.exit(1 if problems else 0)
 
 
