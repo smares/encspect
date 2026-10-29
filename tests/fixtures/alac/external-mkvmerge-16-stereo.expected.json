@@ -1,0 +1,1121 @@
+{
+ "container": "mka",
+ "length": 95186,
+ "encoder": {
+  "tool": "mkvmerge v82.0 ('I'm The President') 64-bit (mkvtoolnix package of Ubuntu 24.04)",
+  "arguments": [
+   "--deterministic",
+   "encspect",
+   "external-alacconvert-16-stereo.m4a"
+  ],
+  "source": "external-alacconvert-16-stereo.m4a"
+ },
+ "input": {
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 50000,
+  "width": 2,
+  "left_shift": 0,
+  "decoders": [
+   "ffmpeg",
+   "alacconvert"
+  ],
+  "channel_md5": [
+   "04f51087c6e958f77e76912b01920117",
+   "f4db01d3ad60b0194f8792671e1c6358"
+  ]
+ },
+ "cookie": {
+  "length": 24,
+  "format_atom": null,
+  "config_atom": null,
+  "layout": null,
+  "terminator": null,
+  "extra": 0,
+  "config_at": 0,
+  "complete": true,
+  "frame_length": 4096,
+  "version": 0,
+  "bit_depth": 16,
+  "pb": 40,
+  "mb": 10,
+  "kb": 14,
+  "channels": 2,
+  "max_run": 255,
+  "max_frame_bytes": 0,
+  "average_bitrate": 0,
+  "rate": 44100
+ },
+ "frames": [
+  {
+   "offset": 5464,
+   "size": 4538,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 4538,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 36299,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 4,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1266,
+        -844,
+        -2,
+        18
+       ],
+       "zero_runs": 0,
+       "long_codes": 3,
+       "residual_end": 18766
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1270,
+        -858,
+        -13,
+        45
+       ],
+       "zero_runs": 1,
+       "long_codes": 2,
+       "residual_end": 36299
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 36299,
+     "end": 36302
+    }
+   ]
+  },
+  {
+   "offset": 10002,
+   "size": 4071,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 4071,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 32562,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 4,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        1251,
+        -821,
+        -23,
+        102,
+        2,
+        -55,
+        -11,
+        128
+       ],
+       "zero_runs": 0,
+       "long_codes": 2,
+       "residual_end": 16443
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        1270,
+        -840,
+        -17,
+        43,
+        -8,
+        76,
+        -19,
+        41
+       ],
+       "zero_runs": 0,
+       "long_codes": 4,
+       "residual_end": 32562
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 32562,
+     "end": 32565
+    }
+   ]
+  },
+  {
+   "offset": 14073,
+   "size": 2985,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 2985,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 23876,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 4,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        1267,
+        -784,
+        -52,
+        47,
+        -80,
+        -14,
+        96,
+        211
+       ],
+       "zero_runs": 59,
+       "long_codes": 1,
+       "residual_end": 11778
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1315,
+        -921,
+        -64,
+        168
+       ],
+       "zero_runs": 30,
+       "long_codes": 3,
+       "residual_end": 23876
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 23876,
+     "end": 23879
+    }
+   ]
+  },
+  {
+   "offset": 17058,
+   "size": 3805,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 3805,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 30434,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 4,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1301,
+        -885,
+        -6,
+        8
+       ],
+       "zero_runs": 0,
+       "long_codes": 1,
+       "residual_end": 15361
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1282,
+        -871,
+        -52,
+        113
+       ],
+       "zero_runs": 0,
+       "long_codes": 1,
+       "residual_end": 30434
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 30434,
+     "end": 30437
+    }
+   ]
+  },
+  {
+   "offset": 20863,
+   "size": 4538,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 4538,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 36299,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 3,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1287,
+        -904,
+        -8,
+        108
+       ],
+       "zero_runs": 0,
+       "long_codes": 3,
+       "residual_end": 18361
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1294,
+        -894,
+        -56,
+        140
+       ],
+       "zero_runs": 0,
+       "long_codes": 1,
+       "residual_end": 36299
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 36299,
+     "end": 36302
+    }
+   ]
+  },
+  {
+   "offset": 25401,
+   "size": 3563,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 3563,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 28494,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 4,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        1245,
+        -739,
+        -60,
+        54,
+        -83,
+        -70,
+        101,
+        250
+       ],
+       "zero_runs": 0,
+       "long_codes": 1,
+       "residual_end": 13661
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1305,
+        -916,
+        -92,
+        200
+       ],
+       "zero_runs": 0,
+       "long_codes": 1,
+       "residual_end": 28494
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 28494,
+     "end": 28497
+    }
+   ]
+  },
+  {
+   "offset": 28964,
+   "size": 2960,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 2960,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 23675,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 0,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1341,
+        -996,
+        -26,
+        240
+       ],
+       "zero_runs": 10,
+       "long_codes": 1,
+       "residual_end": 11561
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1301,
+        -911,
+        -93,
+        267
+       ],
+       "zero_runs": 6,
+       "long_codes": 1,
+       "residual_end": 23675
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 23675,
+     "end": 23678
+    }
+   ]
+  },
+  {
+   "offset": 31924,
+   "size": 4269,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 4269,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 34146,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 4,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1342,
+        -974,
+        -41,
+        200
+       ],
+       "zero_runs": 0,
+       "long_codes": 2,
+       "residual_end": 17266
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1296,
+        -877,
+        -109,
+        199
+       ],
+       "zero_runs": 0,
+       "long_codes": 5,
+       "residual_end": 34146
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 34146,
+     "end": 34149
+    }
+   ]
+  },
+  {
+   "offset": 36218,
+   "size": 13424,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 13424,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 107383,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 4,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        1230,
+        -693,
+        -109,
+        72,
+        -85,
+        -74,
+        94,
+        286
+       ],
+       "zero_runs": 0,
+       "long_codes": 3,
+       "residual_end": 54743
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1327,
+        -930,
+        -125,
+        272
+       ],
+       "zero_runs": 0,
+       "long_codes": 6,
+       "residual_end": 107383
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 107383,
+     "end": 107386
+    }
+   ]
+  },
+  {
+   "offset": 49642,
+   "size": 14097,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 14097,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 112773,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 4,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        126,
+        74,
+        52,
+        69,
+        45,
+        34,
+        43,
+        39
+       ],
+       "zero_runs": 0,
+       "long_codes": 4,
+       "residual_end": 58086
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        210,
+        -64,
+        -8,
+        162
+       ],
+       "zero_runs": 0,
+       "long_codes": 2,
+       "residual_end": 112773
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 112773,
+     "end": 112776
+    }
+   ]
+  },
+  {
+   "offset": 63739,
+   "size": 14058,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 14058,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 112456,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 3,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        -9,
+        149,
+        118,
+        130,
+        79,
+        117,
+        -88,
+        7
+       ],
+       "zero_runs": 0,
+       "long_codes": 4,
+       "residual_end": 57925
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        69,
+        128,
+        41,
+        150
+       ],
+       "zero_runs": 0,
+       "long_codes": 2,
+       "residual_end": 112456
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 112456,
+     "end": 112459
+    }
+   ]
+  },
+  {
+   "offset": 77797,
+   "size": 14067,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 14067,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 112532,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 2,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        114,
+        4,
+        0,
+        129,
+        13,
+        164,
+        -25,
+        101
+       ],
+       "zero_runs": 0,
+       "long_codes": 2,
+       "residual_end": 57809
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        155,
+        133,
+        92,
+        124
+       ],
+       "zero_runs": 0,
+       "long_codes": 3,
+       "residual_end": 112532
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 112532,
+     "end": 112535
+    }
+   ]
+  },
+  {
+   "offset": 91874,
+   "size": 2990,
+   "status": "ok",
+   "samples": 848,
+   "walked": 2990,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 23911,
+     "instance": 0,
+     "partial": true,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 848,
+     "mix_bits": 2,
+     "mix_res": 4,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        494,
+        -147,
+        -20,
+        137
+       ],
+       "zero_runs": 0,
+       "long_codes": 4,
+       "residual_end": 12539
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        124,
+        101,
+        65,
+        106
+       ],
+       "zero_runs": 0,
+       "long_codes": 3,
+       "residual_end": 23911
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 23911,
+     "end": 23914
+    }
+   ]
+  }
+ ],
+ "frame_count": 13,
+ "statistics": {
+  "frames": 13,
+  "partial_frames": 1,
+  "uncompressed_frames": 0,
+  "unreadable_frames": 0,
+  "elements": [
+   0,
+   13,
+   0,
+   0,
+   0,
+   0,
+   0,
+   13
+  ],
+  "compressed": 13,
+  "uncompressed": 0,
+  "pairs": 13,
+  "mixed_pairs": 12,
+  "channels": 26,
+  "types": [
+   26,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "orders": [
+   0,
+   0,
+   0,
+   0,
+   18,
+   0,
+   0,
+   0,
+   8,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "shifts": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   26,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "weights": [
+   0,
+   0,
+   0,
+   0,
+   26,
+   0,
+   0,
+   0
+  ],
+  "bytes_shifted": [
+   13,
+   0,
+   0
+  ],
+  "zero_runs": 106,
+  "long_codes": 65,
+  "fill_bytes": 0,
+  "data_stream_bytes": 0
+ },
+ "findings": [],
+ "stream_infos": [
+  {
+   "codec": "Apple Lossless",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 50000,
+   "duration": 1.1337868480725624,
+   "bits_per_sample": 16,
+   "average_bitrate": 630.55944,
+   "is_vbr": true,
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "units": 13,
+   "pair_codes": [
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     0
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ]
+   ],
+   "element_codes": [
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ]
+   ]
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": []
+  }
+ }
+}

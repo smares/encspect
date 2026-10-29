@@ -1,0 +1,185 @@
+{
+ "container": "mp4",
+ "length": 20947,
+ "description": "A cookie that states 0 channels: the stream's channels are unknown and its frames are not read.",
+ "cookie": {
+  "length": 24,
+  "format_atom": null,
+  "config_atom": null,
+  "layout": null,
+  "terminator": null,
+  "extra": 0,
+  "config_at": 0,
+  "complete": true,
+  "frame_length": 4096,
+  "version": 0,
+  "bit_depth": 16,
+  "pb": 40,
+  "mb": 10,
+  "kb": 14,
+  "channels": 0,
+  "max_run": 255,
+  "max_frame_bytes": 0,
+  "average_bitrate": 0,
+  "rate": 44100
+ },
+ "frames": [
+  {
+   "offset": 605,
+   "size": 4775,
+   "status": "not-walked",
+   "samples": 0
+  },
+  {
+   "offset": 5380,
+   "size": 8900,
+   "status": "not-walked",
+   "samples": 0
+  },
+  {
+   "offset": 14280,
+   "size": 6667,
+   "status": "not-walked",
+   "samples": 0
+  }
+ ],
+ "frame_count": 3,
+ "statistics": {
+  "frames": 3,
+  "partial_frames": 0,
+  "uncompressed_frames": 0,
+  "unreadable_frames": 0,
+  "elements": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "compressed": 0,
+  "uncompressed": 0,
+  "pairs": 0,
+  "mixed_pairs": 0,
+  "channels": 0,
+  "types": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "orders": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "shifts": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "weights": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "bytes_shifted": [
+   0,
+   0,
+   0
+  ],
+  "zero_runs": 0,
+  "long_codes": 0,
+  "fill_bytes": 0,
+  "data_stream_bytes": 0
+ },
+ "findings": [
+  {
+   "code": "alac.channels-invalid"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Apple Lossless",
+   "sample_rate": 44100,
+   "channels": 0,
+   "samples": 0,
+   "duration": 0.0,
+   "bits_per_sample": 16,
+   "average_bitrate": null,
+   "is_vbr": false,
+   "layout": [],
+   "units": 0,
+   "pair_codes": [],
+   "element_codes": []
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": []
+  }
+ }
+}

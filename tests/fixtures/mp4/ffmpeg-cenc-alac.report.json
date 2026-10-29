@@ -124,9 +124,94 @@
                   "length": 55025,
                   "children": [
                     {
-                      "name": "Apple Lossless",
+                      "name": "Writer",
+                      "value": "FFmpeg (Lavf60.16.100)",
+                      "offset": 44,
+                      "length": 55025,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 44,
+                          "length": 55025
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "MP4 ©too atom at 0xDAFC names \"Lavf60.16.100\"",
+                          "offset": 44,
+                          "length": 55025
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "offset": 44,
+                      "length": 55025,
+                      "children": [
+                        {
+                          "name": "Frames",
+                          "value": 0,
+                          "unit": "frames",
+                          "offset": 44,
+                          "length": 55025
+                        },
+                        {
+                          "name": "Samples",
+                          "value": 66150,
+                          "unit": "samples",
+                          "offset": 44,
+                          "length": 55025
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 1.5,
+                          "unit": "s",
+                          "offset": 44,
+                          "length": 55025
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 44100,
+                          "unit": "Hz",
+                          "offset": 44,
+                          "length": 55025
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 2,
+                          "unit": "channels",
+                          "offset": 44,
+                          "length": 55025
+                        },
+                        {
+                          "name": "Bit Depth",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 44,
+                          "length": 55025
+                        },
+                        {
+                          "name": "Frame Length",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 44,
+                          "length": 55025
+                        },
+                        {
+                          "name": "Elements",
+                          "value": 0,
+                          "unit": "elements",
+                          "offset": 44,
+                          "length": 55025
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Frames",
                       "kind": "Stream",
-                      "value": "frames not read: encrypted",
+                      "value": 0,
+                      "unit": "frames",
                       "offset": 44,
                       "length": 55025
                     }
@@ -880,6 +965,8 @@
                                         },
                                         {
                                           "name": "alac",
+                                          "value": 24,
+                                          "unit": "bytes",
                                           "offset": 55526,
                                           "length": 36,
                                           "children": [
@@ -897,11 +984,102 @@
                                               "length": 4
                                             },
                                             {
-                                              "name": "Data",
-                                              "value": 28,
-                                              "unit": "bytes",
+                                              "name": "Version",
+                                              "value": 0,
                                               "offset": 55534,
-                                              "length": 28
+                                              "length": 1
+                                            },
+                                            {
+                                              "name": "Flags",
+                                              "value": 0,
+                                              "offset": 55535,
+                                              "length": 3
+                                            },
+                                            {
+                                              "name": "Magic Cookie",
+                                              "offset": 55538,
+                                              "length": 24,
+                                              "children": [
+                                                {
+                                                  "name": "Specific Config",
+                                                  "offset": 55538,
+                                                  "length": 24,
+                                                  "children": [
+                                                    {
+                                                      "name": "Frame Length",
+                                                      "value": 4096,
+                                                      "unit": "samples",
+                                                      "offset": 55538,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "Compatible Version",
+                                                      "value": 0,
+                                                      "offset": 55542,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Bit Depth",
+                                                      "value": 16,
+                                                      "unit": "bits",
+                                                      "offset": 55543,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "History Weight (pb)",
+                                                      "value": 40,
+                                                      "offset": 55544,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Initial History (mb)",
+                                                      "value": 10,
+                                                      "offset": 55545,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Maximum Golomb Parameter (kb)",
+                                                      "value": 14,
+                                                      "offset": 55546,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Channels",
+                                                      "value": 2,
+                                                      "unit": "channels",
+                                                      "offset": 55547,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Maximum Run",
+                                                      "value": 0,
+                                                      "offset": 55548,
+                                                      "length": 2
+                                                    },
+                                                    {
+                                                      "name": "Maximum Frame Size",
+                                                      "value": 16388,
+                                                      "unit": "bytes",
+                                                      "offset": 55550,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "Average Bitrate",
+                                                      "value": 1411200,
+                                                      "unit": "bit/s",
+                                                      "offset": 55554,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "Sample Rate",
+                                                      "value": 44100,
+                                                      "unit": "Hz",
+                                                      "offset": 55558,
+                                                      "length": 4
+                                                    }
+                                                  ]
+                                                }
+                                              ]
                                             }
                                           ]
                                         },
@@ -1828,16 +2006,21 @@
           [
             0,
             2,
-            3,
-            0
+            3
           ]
         ],
         "codec": "Apple Lossless",
         "sampleRate": 44100,
         "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
         "samples": 66150,
         "duration": 1.5,
-        "averageBitrate": 293.4666666666667,
         "isVbr": false,
         "playbackGroup": 1,
         "isProtected": true,
@@ -1846,6 +2029,8 @@
           "isEncrypted": true,
           "systems": []
         },
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
         "series": []
       }
     ],
@@ -1859,24 +2044,6 @@
         "path": [
           0,
           3
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Info",
-        "code": "mp4.codec-not-analyzed",
-        "message": "The audio track 1 holds protected alac (Apple Lossless), whose samples are not analyzed yet.",
-        "offset": 55490,
-        "length": 152,
-        "path": [
-          0,
-          3,
-          3,
-          4,
-          4,
-          4,
-          2,
-          5
         ],
         "count": 1
       },

@@ -1,0 +1,4170 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-ffmpeg-16-3ch.m4a",
+    "root": {
+      "name": "File",
+      "value": "MP4",
+      "offset": 0,
+      "length": 62203,
+      "children": [
+        {
+          "name": "MP4",
+          "value": "M4A (Apple audio)",
+          "offset": 0,
+          "length": 62203,
+          "children": [
+            {
+              "name": "ftyp",
+              "value": "M4A (Apple audio)",
+              "offset": 0,
+              "length": 28,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "ftyp",
+                  "offset": 4,
+                  "length": 4
+                },
+                {
+                  "name": "Major Brand",
+                  "value": "M4A ",
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Minor Version",
+                  "value": 512,
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "M4A ",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "isom",
+                  "offset": 20,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "iso2",
+                  "offset": 24,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "free",
+              "value": "Free Space",
+              "offset": 28,
+              "length": 8,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "free",
+                  "offset": 32,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "mdat",
+              "value": "Media Data",
+              "offset": 36,
+              "length": 61481,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 61481,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "mdat",
+                  "offset": 40,
+                  "length": 4
+                },
+                {
+                  "name": "Data",
+                  "value": 61473,
+                  "unit": "bytes",
+                  "offset": 44,
+                  "length": 61473
+                },
+                {
+                  "name": "Track 1 Samples",
+                  "value": 8,
+                  "unit": "samples",
+                  "offset": 44,
+                  "length": 61473,
+                  "children": [
+                    {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "offset": 44,
+                      "length": 61473,
+                      "children": [
+                        {
+                          "name": "Frames",
+                          "value": 8,
+                          "unit": "frames",
+                          "offset": 44,
+                          "length": 61473,
+                          "children": [
+                            {
+                              "name": "Partial Frames",
+                              "value": "1 frame (12.5%)",
+                              "offset": 44,
+                              "length": 61473
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Samples",
+                          "value": 30000,
+                          "unit": "samples",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 1.3605442176870748,
+                          "unit": "s",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 22050,
+                          "unit": "Hz",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 2,
+                          "unit": "channels",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Bit Depth",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Frame Length",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Elements",
+                          "value": 16,
+                          "unit": "elements",
+                          "offset": 44,
+                          "length": 61473,
+                          "children": [
+                            {
+                              "name": "Channel Pair Element",
+                              "value": 8,
+                              "unit": "elements",
+                              "offset": 44,
+                              "length": 61473
+                            },
+                            {
+                              "name": "End",
+                              "value": 8,
+                              "unit": "elements",
+                              "offset": 44,
+                              "length": 61473
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Element Coding",
+                          "value": 8,
+                          "unit": "elements",
+                          "offset": 44,
+                          "length": 61473,
+                          "children": [
+                            {
+                              "name": "Compressed",
+                              "value": "8 elements (100.0%)",
+                              "offset": 44,
+                              "length": 61473
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Stereo Coding",
+                          "value": 8,
+                          "unit": "channel pairs",
+                          "offset": 44,
+                          "length": 61473,
+                          "children": [
+                            {
+                              "name": "Left/right stereo",
+                              "value": "4 channel pairs (50.0%)",
+                              "offset": 44,
+                              "length": 61473
+                            },
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "4 channel pairs (50.0%)",
+                              "offset": 44,
+                              "length": 61473
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Compressed Channels",
+                          "value": 16,
+                          "unit": "channels",
+                          "offset": 44,
+                          "length": 61473,
+                          "children": [
+                            {
+                              "name": "Prediction Types",
+                              "value": 16,
+                              "unit": "channels",
+                              "offset": 44,
+                              "length": 61473,
+                              "children": [
+                                {
+                                  "name": "Type 0",
+                                  "value": "16 channels (100.0%)",
+                                  "offset": 44,
+                                  "length": 61473
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Predictor Orders",
+                              "value": 16,
+                              "unit": "channels",
+                              "offset": 44,
+                              "length": 61473,
+                              "children": [
+                                {
+                                  "name": "Order 4",
+                                  "value": "6 channels (37.5%)",
+                                  "offset": 44,
+                                  "length": 61473
+                                },
+                                {
+                                  "name": "Order 6",
+                                  "value": "10 channels (62.5%)",
+                                  "offset": 44,
+                                  "length": 61473
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Predictor Shifts",
+                              "value": 16,
+                              "unit": "channels",
+                              "offset": 44,
+                              "length": 61473,
+                              "children": [
+                                {
+                                  "name": "Shift 6",
+                                  "value": "8 channels (50.0%)",
+                                  "offset": 44,
+                                  "length": 61473
+                                },
+                                {
+                                  "name": "Shift 7",
+                                  "value": "2 channels (12.5%)",
+                                  "offset": 44,
+                                  "length": 61473
+                                },
+                                {
+                                  "name": "Shift 9",
+                                  "value": "6 channels (37.5%)",
+                                  "offset": 44,
+                                  "length": 61473
+                                }
+                              ]
+                            },
+                            {
+                              "name": "History Weight Factors",
+                              "value": 16,
+                              "unit": "channels",
+                              "offset": 44,
+                              "length": 61473,
+                              "children": [
+                                {
+                                  "name": "Factor 4",
+                                  "value": "16 channels (100.0%)",
+                                  "offset": 44,
+                                  "length": 61473
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Zero Runs",
+                              "value": 23,
+                              "unit": "runs",
+                              "offset": 44,
+                              "length": 61473
+                            },
+                            {
+                              "name": "Long Codes",
+                              "value": 53,
+                              "unit": "codes",
+                              "offset": 44,
+                              "length": 61473
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Bytes Shifted",
+                          "value": 8,
+                          "unit": "elements",
+                          "offset": 44,
+                          "length": 61473,
+                          "children": [
+                            {
+                              "name": "0 bytes",
+                              "value": "8 elements (100.0%)",
+                              "offset": 44,
+                              "length": 61473
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 361.46124,
+                          "unit": "kbps",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Smallest Frame",
+                          "value": 4474,
+                          "unit": "bytes",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Largest Frame",
+                          "value": 14100,
+                          "unit": "bytes",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Minimum Bitrate",
+                          "value": 192.6791015625,
+                          "unit": "kbps",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Maximum Bitrate",
+                          "value": 611.555421686747,
+                          "unit": "kbps",
+                          "offset": 44,
+                          "length": 61473
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 44,
+                          "length": 61473,
+                          "children": [
+                            {
+                              "name": "192 to 223 kbps",
+                              "value": "2 frames (25.0%)",
+                              "offset": 44,
+                              "length": 61473
+                            },
+                            {
+                              "name": "224 to 255 kbps",
+                              "value": "1 frame (12.5%)",
+                              "offset": 44,
+                              "length": 61473
+                            },
+                            {
+                              "name": "256 to 287 kbps",
+                              "value": "1 frame (12.5%)",
+                              "offset": 44,
+                              "length": 61473
+                            },
+                            {
+                              "name": "288 to 319 kbps",
+                              "value": "1 frame (12.5%)",
+                              "offset": 44,
+                              "length": 61473
+                            },
+                            {
+                              "name": "576 to 607 kbps",
+                              "value": "2 frames (25.0%)",
+                              "offset": 44,
+                              "length": 61473
+                            },
+                            {
+                              "name": "608 to 639 kbps",
+                              "value": "1 frame (12.5%)",
+                              "offset": 44,
+                              "length": 61473
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Frames",
+                      "kind": "Stream",
+                      "value": 8,
+                      "unit": "frames",
+                      "offset": 44,
+                      "length": 61473,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "kind": "Frame",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 44,
+                          "length": 6082,
+                          "children": [
+                            {
+                              "name": "Channel Pair Element",
+                              "value": 4096,
+                              "unit": "samples",
+                              "offset": 44,
+                              "length": 6082,
+                              "bitOffset": 0,
+                              "bitLength": 48652,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "channel pair",
+                                  "offset": 44,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Instance Tag",
+                                  "value": 0,
+                                  "offset": 44,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Reserved Bits",
+                                  "value": 0,
+                                  "offset": 44,
+                                  "length": 3,
+                                  "bitOffset": 7,
+                                  "bitLength": 12
+                                },
+                                {
+                                  "name": "IsPartialFrame",
+                                  "value": false,
+                                  "offset": 46,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Bytes Shifted",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 46,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsUncompressed",
+                                  "value": false,
+                                  "offset": 46,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Mix Bits",
+                                  "value": 0,
+                                  "unit": "bits",
+                                  "offset": 46,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "Mix Resolution",
+                                  "value": 0,
+                                  "offset": 47,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "First Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 48,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 48,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 6,
+                                      "unit": "bits",
+                                      "offset": 49,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 49,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 50,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "171, -100, -68, 36, 61, -36",
+                                      "offset": 50,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 62,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 62,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 6,
+                                      "unit": "bits",
+                                      "offset": 63,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 63,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 64,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "176, -123, -47, 52, 32, -26",
+                                      "offset": 64,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "First Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 76,
+                                  "length": 2853,
+                                  "bitOffset": 7,
+                                  "bitLength": 22813,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 76,
+                                      "length": 2853,
+                                      "bitOffset": 7,
+                                      "bitLength": 22813
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 4,
+                                      "unit": "codes",
+                                      "offset": 76,
+                                      "length": 2853,
+                                      "bitOffset": 7,
+                                      "bitLength": 22813
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 2928,
+                                  "length": 3198,
+                                  "bitOffset": 4,
+                                  "bitLength": 25576,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 2928,
+                                      "length": 3198,
+                                      "bitOffset": 4,
+                                      "bitLength": 25576
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 6,
+                                      "unit": "codes",
+                                      "offset": 2928,
+                                      "length": 3198,
+                                      "bitOffset": 4,
+                                      "bitLength": 25576
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "End",
+                              "offset": 6125,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "end",
+                                  "offset": 6125,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Padding",
+                              "value": 1,
+                              "unit": "bits",
+                              "offset": 6125,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "kind": "Frame",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 6126,
+                          "length": 4474,
+                          "children": [
+                            {
+                              "name": "Channel Pair Element",
+                              "value": 4096,
+                              "unit": "samples",
+                              "offset": 6126,
+                              "length": 4474,
+                              "bitOffset": 0,
+                              "bitLength": 35787,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "channel pair",
+                                  "offset": 6126,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Instance Tag",
+                                  "value": 0,
+                                  "offset": 6126,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Reserved Bits",
+                                  "value": 0,
+                                  "offset": 6126,
+                                  "length": 3,
+                                  "bitOffset": 7,
+                                  "bitLength": 12
+                                },
+                                {
+                                  "name": "IsPartialFrame",
+                                  "value": false,
+                                  "offset": 6128,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Bytes Shifted",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 6128,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsUncompressed",
+                                  "value": false,
+                                  "offset": 6128,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Mix Bits",
+                                  "value": 0,
+                                  "unit": "bits",
+                                  "offset": 6128,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "Mix Resolution",
+                                  "value": 0,
+                                  "offset": 6129,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "First Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 6130,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 6130,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 6,
+                                      "unit": "bits",
+                                      "offset": 6131,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 6131,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 6132,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "166, -88, -71, 20, 78, -41",
+                                      "offset": 6132,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 6144,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 6144,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 6,
+                                      "unit": "bits",
+                                      "offset": 6145,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 6145,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 6146,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "164, -93, -54, 8, 81, -42",
+                                      "offset": 6146,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "First Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 6158,
+                                  "length": 2144,
+                                  "bitOffset": 7,
+                                  "bitLength": 17145,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 5,
+                                      "unit": "runs",
+                                      "offset": 6158,
+                                      "length": 2144,
+                                      "bitOffset": 7,
+                                      "bitLength": 17145
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 1,
+                                      "unit": "codes",
+                                      "offset": 6158,
+                                      "length": 2144,
+                                      "bitOffset": 7,
+                                      "bitLength": 17145
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 8302,
+                                  "length": 2298,
+                                  "bitOffset": 0,
+                                  "bitLength": 18379,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 2,
+                                      "unit": "runs",
+                                      "offset": 8302,
+                                      "length": 2298,
+                                      "bitOffset": 0,
+                                      "bitLength": 18379
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 1,
+                                      "unit": "codes",
+                                      "offset": 8302,
+                                      "length": 2298,
+                                      "bitOffset": 0,
+                                      "bitLength": 18379
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "End",
+                              "offset": 10599,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "end",
+                                  "offset": 10599,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Padding",
+                              "value": 2,
+                              "unit": "bits",
+                              "offset": 10599,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "kind": "Frame",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 10600,
+                          "length": 5836,
+                          "children": [
+                            {
+                              "name": "Channel Pair Element",
+                              "value": 4096,
+                              "unit": "samples",
+                              "offset": 10600,
+                              "length": 5836,
+                              "bitOffset": 0,
+                              "bitLength": 46684,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "channel pair",
+                                  "offset": 10600,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Instance Tag",
+                                  "value": 0,
+                                  "offset": 10600,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Reserved Bits",
+                                  "value": 0,
+                                  "offset": 10600,
+                                  "length": 3,
+                                  "bitOffset": 7,
+                                  "bitLength": 12
+                                },
+                                {
+                                  "name": "IsPartialFrame",
+                                  "value": false,
+                                  "offset": 10602,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Bytes Shifted",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 10602,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsUncompressed",
+                                  "value": false,
+                                  "offset": 10602,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Mix Bits",
+                                  "value": 0,
+                                  "unit": "bits",
+                                  "offset": 10602,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "Mix Resolution",
+                                  "value": 0,
+                                  "offset": 10603,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "First Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 10604,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 10604,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 6,
+                                      "unit": "bits",
+                                      "offset": 10605,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 10605,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 10606,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "170, -100, -61, 23, 70, -38",
+                                      "offset": 10606,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 10618,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 10618,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 6,
+                                      "unit": "bits",
+                                      "offset": 10619,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 10619,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 10620,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "174, -122, -34, 25, 53, -32",
+                                      "offset": 10620,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "First Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 10632,
+                                  "length": 2734,
+                                  "bitOffset": 7,
+                                  "bitLength": 21862,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 10632,
+                                      "length": 2734,
+                                      "bitOffset": 7,
+                                      "bitLength": 21862
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 3,
+                                      "unit": "codes",
+                                      "offset": 10632,
+                                      "length": 2734,
+                                      "bitOffset": 7,
+                                      "bitLength": 21862
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 13365,
+                                  "length": 3071,
+                                  "bitOffset": 5,
+                                  "bitLength": 24559,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 13365,
+                                      "length": 3071,
+                                      "bitOffset": 5,
+                                      "bitLength": 24559
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 3,
+                                      "unit": "codes",
+                                      "offset": 13365,
+                                      "length": 3071,
+                                      "bitOffset": 5,
+                                      "bitLength": 24559
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "End",
+                              "offset": 16435,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "end",
+                                  "offset": 16435,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Padding",
+                              "value": 1,
+                              "unit": "bits",
+                              "offset": 16435,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "kind": "Frame",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 16436,
+                          "length": 4959,
+                          "children": [
+                            {
+                              "name": "Channel Pair Element",
+                              "value": 4096,
+                              "unit": "samples",
+                              "offset": 16436,
+                              "length": 4958,
+                              "bitOffset": 0,
+                              "bitLength": 39663,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "channel pair",
+                                  "offset": 16436,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Instance Tag",
+                                  "value": 0,
+                                  "offset": 16436,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Reserved Bits",
+                                  "value": 0,
+                                  "offset": 16436,
+                                  "length": 3,
+                                  "bitOffset": 7,
+                                  "bitLength": 12
+                                },
+                                {
+                                  "name": "IsPartialFrame",
+                                  "value": false,
+                                  "offset": 16438,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Bytes Shifted",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 16438,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsUncompressed",
+                                  "value": false,
+                                  "offset": 16438,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Mix Bits",
+                                  "value": 0,
+                                  "unit": "bits",
+                                  "offset": 16438,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "Mix Resolution",
+                                  "value": 0,
+                                  "offset": 16439,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "First Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 16440,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 16440,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 6,
+                                      "unit": "bits",
+                                      "offset": 16441,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 16441,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 16442,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "165, -84, -78, 26, 76, -41",
+                                      "offset": 16442,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 16454,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 16454,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 6,
+                                      "unit": "bits",
+                                      "offset": 16455,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 16455,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 16456,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "165, -93, -63, 25, 69, -39",
+                                      "offset": 16456,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "First Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 16468,
+                                  "length": 2299,
+                                  "bitOffset": 7,
+                                  "bitLength": 18383,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 9,
+                                      "unit": "runs",
+                                      "offset": 16468,
+                                      "length": 2299,
+                                      "bitOffset": 7,
+                                      "bitLength": 18383
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 3,
+                                      "unit": "codes",
+                                      "offset": 16468,
+                                      "length": 2299,
+                                      "bitOffset": 7,
+                                      "bitLength": 18383
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 18766,
+                                  "length": 2628,
+                                  "bitOffset": 6,
+                                  "bitLength": 21017,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 7,
+                                      "unit": "runs",
+                                      "offset": 18766,
+                                      "length": 2628,
+                                      "bitOffset": 6,
+                                      "bitLength": 21017
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 2,
+                                      "unit": "codes",
+                                      "offset": 18766,
+                                      "length": 2628,
+                                      "bitOffset": 6,
+                                      "bitLength": 21017
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "End",
+                              "offset": 21393,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "end",
+                                  "offset": 21393,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Padding",
+                              "value": 6,
+                              "unit": "bits",
+                              "offset": 21394,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 6
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "kind": "Frame",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 21395,
+                          "length": 7359,
+                          "children": [
+                            {
+                              "name": "Channel Pair Element",
+                              "value": 4096,
+                              "unit": "samples",
+                              "offset": 21395,
+                              "length": 7358,
+                              "bitOffset": 0,
+                              "bitLength": 58863,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "channel pair",
+                                  "offset": 21395,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Instance Tag",
+                                  "value": 0,
+                                  "offset": 21395,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Reserved Bits",
+                                  "value": 0,
+                                  "offset": 21395,
+                                  "length": 3,
+                                  "bitOffset": 7,
+                                  "bitLength": 12
+                                },
+                                {
+                                  "name": "IsPartialFrame",
+                                  "value": false,
+                                  "offset": 21397,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Bytes Shifted",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 21397,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsUncompressed",
+                                  "value": false,
+                                  "offset": 21397,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Mix Bits",
+                                  "value": 1,
+                                  "unit": "bits",
+                                  "offset": 21397,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "Mix Resolution",
+                                  "value": 1,
+                                  "offset": 21398,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "First Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 21399,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 21399,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 7,
+                                      "unit": "bits",
+                                      "offset": 21400,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 21400,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 21401,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "197, 1, -59, -36, -1, 25",
+                                      "offset": 21401,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Predictor",
+                                  "value": 6,
+                                  "unit": "coefficients",
+                                  "offset": 21413,
+                                  "length": 15,
+                                  "bitOffset": 7,
+                                  "bitLength": 112,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 21413,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 7,
+                                      "unit": "bits",
+                                      "offset": 21414,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 21414,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 6,
+                                      "offset": 21415,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "195, -25, -45, -33, 8, 16",
+                                      "offset": 21415,
+                                      "length": 13,
+                                      "bitOffset": 7,
+                                      "bitLength": 96
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "First Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 21427,
+                                  "length": 3715,
+                                  "bitOffset": 7,
+                                  "bitLength": 29710,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 21427,
+                                      "length": 3715,
+                                      "bitOffset": 7,
+                                      "bitLength": 29710
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 7,
+                                      "unit": "codes",
+                                      "offset": 21427,
+                                      "length": 3715,
+                                      "bitOffset": 7,
+                                      "bitLength": 29710
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 25141,
+                                  "length": 3612,
+                                  "bitOffset": 5,
+                                  "bitLength": 28890,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 25141,
+                                      "length": 3612,
+                                      "bitOffset": 5,
+                                      "bitLength": 28890
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 4,
+                                      "unit": "codes",
+                                      "offset": 25141,
+                                      "length": 3612,
+                                      "bitOffset": 5,
+                                      "bitLength": 28890
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "End",
+                              "offset": 28752,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "end",
+                                  "offset": 28752,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Padding",
+                              "value": 6,
+                              "unit": "bits",
+                              "offset": 28753,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 6
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "kind": "Frame",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 28754,
+                          "length": 14059,
+                          "children": [
+                            {
+                              "name": "Channel Pair Element",
+                              "value": 4096,
+                              "unit": "samples",
+                              "offset": 28754,
+                              "length": 14058,
+                              "bitOffset": 0,
+                              "bitLength": 112462,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "channel pair",
+                                  "offset": 28754,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Instance Tag",
+                                  "value": 0,
+                                  "offset": 28754,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Reserved Bits",
+                                  "value": 0,
+                                  "offset": 28754,
+                                  "length": 3,
+                                  "bitOffset": 7,
+                                  "bitLength": 12
+                                },
+                                {
+                                  "name": "IsPartialFrame",
+                                  "value": false,
+                                  "offset": 28756,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Bytes Shifted",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 28756,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsUncompressed",
+                                  "value": false,
+                                  "offset": 28756,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Mix Bits",
+                                  "value": 1,
+                                  "unit": "bits",
+                                  "offset": 28756,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "Mix Resolution",
+                                  "value": 1,
+                                  "offset": 28757,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "First Channel Predictor",
+                                  "value": 4,
+                                  "unit": "coefficients",
+                                  "offset": 28758,
+                                  "length": 11,
+                                  "bitOffset": 7,
+                                  "bitLength": 80,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 28758,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 9,
+                                      "unit": "bits",
+                                      "offset": 28759,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 28759,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 4,
+                                      "offset": 28760,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "-15, 5, -15, -13",
+                                      "offset": 28760,
+                                      "length": 9,
+                                      "bitOffset": 7,
+                                      "bitLength": 64
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Predictor",
+                                  "value": 4,
+                                  "unit": "coefficients",
+                                  "offset": 28768,
+                                  "length": 11,
+                                  "bitOffset": 7,
+                                  "bitLength": 80,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 28768,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 9,
+                                      "unit": "bits",
+                                      "offset": 28769,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 28769,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 4,
+                                      "offset": 28770,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "-5, -1, -13, 9",
+                                      "offset": 28770,
+                                      "length": 9,
+                                      "bitOffset": 7,
+                                      "bitLength": 64
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "First Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 28778,
+                                  "length": 7218,
+                                  "bitOffset": 7,
+                                  "bitLength": 57736,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 28778,
+                                      "length": 7218,
+                                      "bitOffset": 7,
+                                      "bitLength": 57736
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 3,
+                                      "unit": "codes",
+                                      "offset": 28778,
+                                      "length": 7218,
+                                      "bitOffset": 7,
+                                      "bitLength": 57736
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 35995,
+                                  "length": 6817,
+                                  "bitOffset": 7,
+                                  "bitLength": 54527,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 35995,
+                                      "length": 6817,
+                                      "bitOffset": 7,
+                                      "bitLength": 54527
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 4,
+                                      "unit": "codes",
+                                      "offset": 35995,
+                                      "length": 6817,
+                                      "bitOffset": 7,
+                                      "bitLength": 54527
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "End",
+                              "offset": 42811,
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "end",
+                                  "offset": 42811,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Padding",
+                              "value": 7,
+                              "unit": "bits",
+                              "offset": 42812,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 7
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "kind": "Frame",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 42813,
+                          "length": 14100,
+                          "children": [
+                            {
+                              "name": "Channel Pair Element",
+                              "value": 4096,
+                              "unit": "samples",
+                              "offset": 42813,
+                              "length": 14100,
+                              "bitOffset": 0,
+                              "bitLength": 112796,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "channel pair",
+                                  "offset": 42813,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Instance Tag",
+                                  "value": 0,
+                                  "offset": 42813,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Reserved Bits",
+                                  "value": 0,
+                                  "offset": 42813,
+                                  "length": 3,
+                                  "bitOffset": 7,
+                                  "bitLength": 12
+                                },
+                                {
+                                  "name": "IsPartialFrame",
+                                  "value": false,
+                                  "offset": 42815,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Bytes Shifted",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 42815,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsUncompressed",
+                                  "value": false,
+                                  "offset": 42815,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Mix Bits",
+                                  "value": 1,
+                                  "unit": "bits",
+                                  "offset": 42815,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "Mix Resolution",
+                                  "value": 1,
+                                  "offset": 42816,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "First Channel Predictor",
+                                  "value": 4,
+                                  "unit": "coefficients",
+                                  "offset": 42817,
+                                  "length": 11,
+                                  "bitOffset": 7,
+                                  "bitLength": 80,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 42817,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 9,
+                                      "unit": "bits",
+                                      "offset": 42818,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 42818,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 4,
+                                      "offset": 42819,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "-10, -5, 0, 7",
+                                      "offset": 42819,
+                                      "length": 9,
+                                      "bitOffset": 7,
+                                      "bitLength": 64
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Predictor",
+                                  "value": 4,
+                                  "unit": "coefficients",
+                                  "offset": 42827,
+                                  "length": 11,
+                                  "bitOffset": 7,
+                                  "bitLength": 80,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 42827,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 9,
+                                      "unit": "bits",
+                                      "offset": 42828,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 42828,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 4,
+                                      "offset": 42829,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "-24, -5, 4, -15",
+                                      "offset": 42829,
+                                      "length": 9,
+                                      "bitOffset": 7,
+                                      "bitLength": 64
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "First Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 42837,
+                                  "length": 7228,
+                                  "bitOffset": 7,
+                                  "bitLength": 57815,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 42837,
+                                      "length": 7228,
+                                      "bitOffset": 7,
+                                      "bitLength": 57815
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 2,
+                                      "unit": "codes",
+                                      "offset": 42837,
+                                      "length": 7228,
+                                      "bitOffset": 7,
+                                      "bitLength": 57815
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Residuals",
+                                  "value": 4096,
+                                  "unit": "samples",
+                                  "offset": 50064,
+                                  "length": 6849,
+                                  "bitOffset": 6,
+                                  "bitLength": 54782,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 50064,
+                                      "length": 6849,
+                                      "bitOffset": 6,
+                                      "bitLength": 54782
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 3,
+                                      "unit": "codes",
+                                      "offset": 50064,
+                                      "length": 6849,
+                                      "bitOffset": 6,
+                                      "bitLength": 54782
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "End",
+                              "offset": 56912,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "end",
+                                  "offset": 56912,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Padding",
+                              "value": 1,
+                              "unit": "bits",
+                              "offset": 56912,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "kind": "Frame",
+                          "value": 1328,
+                          "unit": "samples",
+                          "offset": 56913,
+                          "length": 4604,
+                          "children": [
+                            {
+                              "name": "Channel Pair Element",
+                              "value": 1328,
+                              "unit": "samples",
+                              "offset": 56913,
+                              "length": 4604,
+                              "bitOffset": 0,
+                              "bitLength": 36825,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "channel pair",
+                                  "offset": 56913,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Instance Tag",
+                                  "value": 0,
+                                  "offset": 56913,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Reserved Bits",
+                                  "value": 0,
+                                  "offset": 56913,
+                                  "length": 3,
+                                  "bitOffset": 7,
+                                  "bitLength": 12
+                                },
+                                {
+                                  "name": "IsPartialFrame",
+                                  "value": true,
+                                  "offset": 56915,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Bytes Shifted",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 56915,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "IsUncompressed",
+                                  "value": false,
+                                  "offset": 56915,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Sample Count",
+                                  "value": 1328,
+                                  "unit": "samples",
+                                  "offset": 56915,
+                                  "length": 5,
+                                  "bitOffset": 7,
+                                  "bitLength": 32
+                                },
+                                {
+                                  "name": "Mix Bits",
+                                  "value": 1,
+                                  "unit": "bits",
+                                  "offset": 56919,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "Mix Resolution",
+                                  "value": 1,
+                                  "offset": 56920,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 8
+                                },
+                                {
+                                  "name": "First Channel Predictor",
+                                  "value": 4,
+                                  "unit": "coefficients",
+                                  "offset": 56921,
+                                  "length": 11,
+                                  "bitOffset": 7,
+                                  "bitLength": 80,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 56921,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 9,
+                                      "unit": "bits",
+                                      "offset": 56922,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 56922,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 4,
+                                      "offset": 56923,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "-21, -17, -29, 4",
+                                      "offset": 56923,
+                                      "length": 9,
+                                      "bitOffset": 7,
+                                      "bitLength": 64
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Predictor",
+                                  "value": 4,
+                                  "unit": "coefficients",
+                                  "offset": 56931,
+                                  "length": 11,
+                                  "bitOffset": 7,
+                                  "bitLength": 80,
+                                  "children": [
+                                    {
+                                      "name": "Prediction Type",
+                                      "value": 0,
+                                      "offset": 56931,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "Predictor Shift",
+                                      "value": 9,
+                                      "unit": "bits",
+                                      "offset": 56932,
+                                      "length": 1,
+                                      "bitOffset": 3,
+                                      "bitLength": 4
+                                    },
+                                    {
+                                      "name": "History Weight Factor",
+                                      "value": 4,
+                                      "offset": 56932,
+                                      "length": 2,
+                                      "bitOffset": 7,
+                                      "bitLength": 3
+                                    },
+                                    {
+                                      "name": "Predictor Order",
+                                      "value": 4,
+                                      "offset": 56933,
+                                      "length": 1,
+                                      "bitOffset": 2,
+                                      "bitLength": 5
+                                    },
+                                    {
+                                      "name": "Predictor Coefficients",
+                                      "value": "9, 35, -1, 0",
+                                      "offset": 56933,
+                                      "length": 9,
+                                      "bitOffset": 7,
+                                      "bitLength": 64
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "First Channel Residuals",
+                                  "value": 1328,
+                                  "unit": "samples",
+                                  "offset": 56941,
+                                  "length": 2358,
+                                  "bitOffset": 7,
+                                  "bitLength": 18856,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 56941,
+                                      "length": 2358,
+                                      "bitOffset": 7,
+                                      "bitLength": 18856
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 3,
+                                      "unit": "codes",
+                                      "offset": 56941,
+                                      "length": 2358,
+                                      "bitOffset": 7,
+                                      "bitLength": 18856
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "Second Channel Residuals",
+                                  "value": 1328,
+                                  "unit": "samples",
+                                  "offset": 59298,
+                                  "length": 2219,
+                                  "bitOffset": 7,
+                                  "bitLength": 17738,
+                                  "children": [
+                                    {
+                                      "name": "Zero Runs",
+                                      "value": 0,
+                                      "unit": "runs",
+                                      "offset": 59298,
+                                      "length": 2219,
+                                      "bitOffset": 7,
+                                      "bitLength": 17738
+                                    },
+                                    {
+                                      "name": "Long Codes",
+                                      "value": 4,
+                                      "unit": "codes",
+                                      "offset": 59298,
+                                      "length": 2219,
+                                      "bitOffset": 7,
+                                      "bitLength": 17738
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "End",
+                              "offset": 61516,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3,
+                              "children": [
+                                {
+                                  "name": "Element Tag",
+                                  "value": "end",
+                                  "offset": 61516,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Padding",
+                              "value": 4,
+                              "unit": "bits",
+                              "offset": 61516,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 4
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "moov",
+              "value": "Movie",
+              "offset": 61517,
+              "length": 686,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 686,
+                  "unit": "bytes",
+                  "offset": 61517,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "moov",
+                  "offset": 61521,
+                  "length": 4
+                },
+                {
+                  "name": "mvhd",
+                  "value": "Movie Header",
+                  "offset": 61525,
+                  "length": 108,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 108,
+                      "unit": "bytes",
+                      "offset": 61525,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "mvhd",
+                      "offset": 61529,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 61533,
+                      "length": 1
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 61534,
+                      "length": 3
+                    },
+                    {
+                      "name": "Creation Time",
+                      "value": "0 (not set)",
+                      "offset": 61537,
+                      "length": 4
+                    },
+                    {
+                      "name": "Modification Time",
+                      "value": "0 (not set)",
+                      "offset": 61541,
+                      "length": 4
+                    },
+                    {
+                      "name": "Timescale",
+                      "value": 1000,
+                      "unit": "units per second",
+                      "offset": 61545,
+                      "length": 4
+                    },
+                    {
+                      "name": "Duration",
+                      "value": "1361 (1.361 s)",
+                      "offset": 61549,
+                      "length": 4
+                    },
+                    {
+                      "name": "Rate",
+                      "value": 1,
+                      "offset": 61553,
+                      "length": 4
+                    },
+                    {
+                      "name": "Volume",
+                      "value": 1,
+                      "offset": 61557,
+                      "length": 2
+                    },
+                    {
+                      "name": "Matrix",
+                      "value": 36,
+                      "unit": "bytes",
+                      "offset": 61569,
+                      "length": 36
+                    },
+                    {
+                      "name": "Next Track ID",
+                      "value": 2,
+                      "offset": 61629,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "trak",
+                  "value": "Track",
+                  "offset": 61633,
+                  "length": 509,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 509,
+                      "unit": "bytes",
+                      "offset": 61633,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "trak",
+                      "offset": 61637,
+                      "length": 4
+                    },
+                    {
+                      "name": "tkhd",
+                      "value": "Track Header, track 1",
+                      "offset": 61641,
+                      "length": 92,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 92,
+                          "unit": "bytes",
+                          "offset": 61641,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "tkhd",
+                          "offset": 61645,
+                          "length": 4
+                        },
+                        {
+                          "name": "Version",
+                          "value": 0,
+                          "offset": 61649,
+                          "length": 1
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 3,
+                          "offset": 61650,
+                          "length": 3
+                        },
+                        {
+                          "name": "IsEnabled",
+                          "value": true,
+                          "offset": 61652,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "Creation Time",
+                          "value": "0 (not set)",
+                          "offset": 61653,
+                          "length": 4
+                        },
+                        {
+                          "name": "Modification Time",
+                          "value": "0 (not set)",
+                          "offset": 61657,
+                          "length": 4
+                        },
+                        {
+                          "name": "Track ID",
+                          "value": 1,
+                          "offset": 61661,
+                          "length": 4
+                        },
+                        {
+                          "name": "Duration",
+                          "value": "1361 (1.361 s)",
+                          "offset": 61669,
+                          "length": 4
+                        },
+                        {
+                          "name": "Layer",
+                          "value": 0,
+                          "offset": 61681,
+                          "length": 2
+                        },
+                        {
+                          "name": "Alternate Group",
+                          "value": 1,
+                          "offset": 61683,
+                          "length": 2
+                        },
+                        {
+                          "name": "Volume",
+                          "value": 1,
+                          "offset": 61685,
+                          "length": 2
+                        },
+                        {
+                          "name": "Matrix",
+                          "value": 36,
+                          "unit": "bytes",
+                          "offset": 61689,
+                          "length": 36
+                        },
+                        {
+                          "name": "Width",
+                          "value": 0,
+                          "offset": 61725,
+                          "length": 4
+                        },
+                        {
+                          "name": "Height",
+                          "value": 0,
+                          "offset": 61729,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "edts",
+                      "value": "Edit",
+                      "offset": 61733,
+                      "length": 36,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 36,
+                          "unit": "bytes",
+                          "offset": 61733,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "edts",
+                          "offset": 61737,
+                          "length": 4
+                        },
+                        {
+                          "name": "elst",
+                          "value": "Edit List",
+                          "offset": 61741,
+                          "length": 28,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 28,
+                              "unit": "bytes",
+                              "offset": 61741,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "elst",
+                              "offset": 61745,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 61749,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 61750,
+                              "length": 3
+                            },
+                            {
+                              "name": "Entries",
+                              "value": 1,
+                              "offset": 61753,
+                              "length": 4
+                            },
+                            {
+                              "name": "Edit",
+                              "offset": 61757,
+                              "length": 12,
+                              "children": [
+                                {
+                                  "name": "Segment Duration",
+                                  "value": "1361 (1.361 s)",
+                                  "offset": 61757,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Media Time",
+                                  "value": 0,
+                                  "unit": "units of the media's timescale",
+                                  "offset": 61761,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Media Rate",
+                                  "value": 1,
+                                  "offset": 61765,
+                                  "length": 4
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "mdia",
+                      "value": "Media",
+                      "offset": 61769,
+                      "length": 373,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 373,
+                          "unit": "bytes",
+                          "offset": 61769,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "mdia",
+                          "offset": 61773,
+                          "length": 4
+                        },
+                        {
+                          "name": "mdhd",
+                          "value": "Media Header",
+                          "offset": 61777,
+                          "length": 32,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 32,
+                              "unit": "bytes",
+                              "offset": 61777,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "mdhd",
+                              "offset": 61781,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 61785,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 61786,
+                              "length": 3
+                            },
+                            {
+                              "name": "Creation Time",
+                              "value": "0 (not set)",
+                              "offset": 61789,
+                              "length": 4
+                            },
+                            {
+                              "name": "Modification Time",
+                              "value": "0 (not set)",
+                              "offset": 61793,
+                              "length": 4
+                            },
+                            {
+                              "name": "Timescale",
+                              "value": 22050,
+                              "unit": "units per second",
+                              "offset": 61797,
+                              "length": 4
+                            },
+                            {
+                              "name": "Duration",
+                              "value": "30000 (1.361 s)",
+                              "offset": 61801,
+                              "length": 4
+                            },
+                            {
+                              "name": "Language",
+                              "value": "und",
+                              "offset": 61805,
+                              "length": 2
+                            },
+                            {
+                              "name": "Quality",
+                              "value": 0,
+                              "offset": 61807,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "hdlr",
+                          "value": "soun (sound)",
+                          "offset": 61809,
+                          "length": 45,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 45,
+                              "unit": "bytes",
+                              "offset": 61809,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "hdlr",
+                              "offset": 61813,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 61817,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 61818,
+                              "length": 3
+                            },
+                            {
+                              "name": "Component Type",
+                              "value": "....",
+                              "offset": 61821,
+                              "length": 4
+                            },
+                            {
+                              "name": "Handler Type",
+                              "value": "soun",
+                              "offset": 61825,
+                              "length": 4
+                            },
+                            {
+                              "name": "Name",
+                              "value": "SoundHandler",
+                              "offset": 61841,
+                              "length": 13
+                            }
+                          ]
+                        },
+                        {
+                          "name": "minf",
+                          "value": "Media Information",
+                          "offset": 61854,
+                          "length": 288,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 288,
+                              "unit": "bytes",
+                              "offset": 61854,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "minf",
+                              "offset": 61858,
+                              "length": 4
+                            },
+                            {
+                              "name": "smhd",
+                              "value": "Sound Media Header",
+                              "offset": 61862,
+                              "length": 16,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 16,
+                                  "unit": "bytes",
+                                  "offset": 61862,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "smhd",
+                                  "offset": 61866,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Version",
+                                  "value": 0,
+                                  "offset": 61870,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Flags",
+                                  "value": 0,
+                                  "offset": 61871,
+                                  "length": 3
+                                },
+                                {
+                                  "name": "Balance",
+                                  "value": 0,
+                                  "offset": 61874,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Reserved",
+                                  "value": 0,
+                                  "offset": 61876,
+                                  "length": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "dinf",
+                              "value": "Data Information",
+                              "offset": 61878,
+                              "length": 36,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 36,
+                                  "unit": "bytes",
+                                  "offset": 61878,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "dinf",
+                                  "offset": 61882,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "dref",
+                                  "value": "Data Reference",
+                                  "offset": 61886,
+                                  "length": 28,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 28,
+                                      "unit": "bytes",
+                                      "offset": 61886,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "dref",
+                                      "offset": 61890,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 61894,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 61895,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 61898,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "url ",
+                                      "value": "media data in this file",
+                                      "offset": 61902,
+                                      "length": 12,
+                                      "children": [
+                                        {
+                                          "name": "Size",
+                                          "value": 12,
+                                          "unit": "bytes",
+                                          "offset": 61902,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Type",
+                                          "value": "url ",
+                                          "offset": 61906,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Version",
+                                          "value": 0,
+                                          "offset": 61910,
+                                          "length": 1
+                                        },
+                                        {
+                                          "name": "Flags",
+                                          "value": 1,
+                                          "offset": 61911,
+                                          "length": 3
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "stbl",
+                              "value": "Sample Table",
+                              "offset": 61914,
+                              "length": 228,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 228,
+                                  "unit": "bytes",
+                                  "offset": 61914,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "stbl",
+                                  "offset": 61918,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "stsd",
+                                  "value": "Sample Description",
+                                  "offset": 61922,
+                                  "length": 88,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 88,
+                                      "unit": "bytes",
+                                      "offset": 61922,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stsd",
+                                      "offset": 61926,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 61930,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 61931,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 61934,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "alac",
+                                      "value": "alac (Apple Lossless)",
+                                      "offset": 61938,
+                                      "length": 72,
+                                      "children": [
+                                        {
+                                          "name": "Size",
+                                          "value": 72,
+                                          "unit": "bytes",
+                                          "offset": 61938,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Type",
+                                          "value": "alac",
+                                          "offset": 61942,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Reserved",
+                                          "value": 6,
+                                          "unit": "bytes",
+                                          "offset": 61946,
+                                          "length": 6
+                                        },
+                                        {
+                                          "name": "Data Reference Index",
+                                          "value": 1,
+                                          "offset": 61952,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Version",
+                                          "value": 0,
+                                          "offset": 61954,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Revision Level",
+                                          "value": 0,
+                                          "offset": 61956,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Vendor",
+                                          "value": "....",
+                                          "offset": 61958,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Channels",
+                                          "value": 2,
+                                          "offset": 61962,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Sample Size",
+                                          "value": 16,
+                                          "unit": "bits",
+                                          "offset": 61964,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Compression ID",
+                                          "value": 0,
+                                          "offset": 61966,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Packet Size",
+                                          "value": 0,
+                                          "offset": 61968,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Sample Rate",
+                                          "value": 22050,
+                                          "unit": "Hz",
+                                          "offset": 61970,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "alac",
+                                          "value": 24,
+                                          "unit": "bytes",
+                                          "offset": 61974,
+                                          "length": 36,
+                                          "children": [
+                                            {
+                                              "name": "Size",
+                                              "value": 36,
+                                              "unit": "bytes",
+                                              "offset": 61974,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Type",
+                                              "value": "alac",
+                                              "offset": 61978,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Version",
+                                              "value": 0,
+                                              "offset": 61982,
+                                              "length": 1
+                                            },
+                                            {
+                                              "name": "Flags",
+                                              "value": 0,
+                                              "offset": 61983,
+                                              "length": 3
+                                            },
+                                            {
+                                              "name": "Magic Cookie",
+                                              "offset": 61986,
+                                              "length": 24,
+                                              "children": [
+                                                {
+                                                  "name": "Specific Config",
+                                                  "offset": 61986,
+                                                  "length": 24,
+                                                  "children": [
+                                                    {
+                                                      "name": "Frame Length",
+                                                      "value": 4096,
+                                                      "unit": "samples",
+                                                      "offset": 61986,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "Compatible Version",
+                                                      "value": 0,
+                                                      "offset": 61990,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Bit Depth",
+                                                      "value": 16,
+                                                      "unit": "bits",
+                                                      "offset": 61991,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "History Weight (pb)",
+                                                      "value": 40,
+                                                      "offset": 61992,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Initial History (mb)",
+                                                      "value": 10,
+                                                      "offset": 61993,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Maximum Golomb Parameter (kb)",
+                                                      "value": 14,
+                                                      "offset": 61994,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Channels",
+                                                      "value": 2,
+                                                      "unit": "channels",
+                                                      "offset": 61995,
+                                                      "length": 1
+                                                    },
+                                                    {
+                                                      "name": "Maximum Run",
+                                                      "value": 0,
+                                                      "offset": 61996,
+                                                      "length": 2
+                                                    },
+                                                    {
+                                                      "name": "Maximum Frame Size",
+                                                      "value": 16388,
+                                                      "unit": "bytes",
+                                                      "offset": 61998,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "Average Bitrate",
+                                                      "value": 705600,
+                                                      "unit": "bit/s",
+                                                      "offset": 62002,
+                                                      "length": 4
+                                                    },
+                                                    {
+                                                      "name": "Sample Rate",
+                                                      "value": 22050,
+                                                      "unit": "Hz",
+                                                      "offset": 62006,
+                                                      "length": 4
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stts",
+                                  "value": "8 samples, 30000 (1.361 s)",
+                                  "offset": 62010,
+                                  "length": 32,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 32,
+                                      "unit": "bytes",
+                                      "offset": 62010,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stts",
+                                      "offset": 62014,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 62018,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 62019,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 2,
+                                      "offset": 62022,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": "7 × 4096",
+                                      "offset": 62026,
+                                      "length": 8,
+                                      "children": [
+                                        {
+                                          "name": "Sample Count",
+                                          "value": 7,
+                                          "offset": 62026,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Sample Delta",
+                                          "value": 4096,
+                                          "offset": 62030,
+                                          "length": 4
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": "1 × 1328",
+                                      "offset": 62034,
+                                      "length": 8,
+                                      "children": [
+                                        {
+                                          "name": "Sample Count",
+                                          "value": 1,
+                                          "offset": 62034,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Sample Delta",
+                                          "value": 1328,
+                                          "offset": 62038,
+                                          "length": 4
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stsc",
+                                  "value": "Sample to Chunk",
+                                  "offset": 62042,
+                                  "length": 28,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 28,
+                                      "unit": "bytes",
+                                      "offset": 62042,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stsc",
+                                      "offset": 62046,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 62050,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 62051,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 62054,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": "from chunk 1: 8 samples, description 1",
+                                      "offset": 62058,
+                                      "length": 12,
+                                      "children": [
+                                        {
+                                          "name": "First Chunk",
+                                          "value": 1,
+                                          "offset": 62058,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Samples Per Chunk",
+                                          "value": 8,
+                                          "offset": 62062,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Sample Description Index",
+                                          "value": 1,
+                                          "offset": 62066,
+                                          "length": 4
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stsz",
+                                  "value": 8,
+                                  "unit": "samples",
+                                  "offset": 62070,
+                                  "length": 52,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 52,
+                                      "unit": "bytes",
+                                      "offset": 62070,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stsz",
+                                      "offset": 62074,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 62078,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 62079,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Sample Size",
+                                      "value": 0,
+                                      "unit": "bytes",
+                                      "offset": 62082,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Sample Count",
+                                      "value": 8,
+                                      "offset": 62086,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 6082,
+                                      "unit": "bytes",
+                                      "offset": 62090,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 4474,
+                                      "unit": "bytes",
+                                      "offset": 62094,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 5836,
+                                      "unit": "bytes",
+                                      "offset": 62098,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 4959,
+                                      "unit": "bytes",
+                                      "offset": 62102,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 7359,
+                                      "unit": "bytes",
+                                      "offset": 62106,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 14059,
+                                      "unit": "bytes",
+                                      "offset": 62110,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 14100,
+                                      "unit": "bytes",
+                                      "offset": 62114,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry Size",
+                                      "value": 4604,
+                                      "unit": "bytes",
+                                      "offset": 62118,
+                                      "length": 4
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stco",
+                                  "value": 1,
+                                  "unit": "chunks",
+                                  "offset": 62122,
+                                  "length": 20,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 20,
+                                      "unit": "bytes",
+                                      "offset": 62122,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stco",
+                                      "offset": 62126,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 62130,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 62131,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 62134,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Chunk Offset",
+                                      "value": 44,
+                                      "offset": 62138,
+                                      "length": 4
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 61633,
+                      "length": 509,
+                      "children": [
+                        {
+                          "name": "Encoder Delay (Edit List)",
+                          "value": 0,
+                          "unit": "samples",
+                          "offset": 61633,
+                          "length": 509
+                        },
+                        {
+                          "name": "Samples (Edit List)",
+                          "value": 30010,
+                          "unit": "samples",
+                          "offset": 61633,
+                          "length": 509
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "udta",
+                  "value": "User Data",
+                  "offset": 62142,
+                  "length": 61,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 61,
+                      "unit": "bytes",
+                      "offset": 62142,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "udta",
+                      "offset": 62146,
+                      "length": 4
+                    },
+                    {
+                      "name": "meta",
+                      "value": "Metadata",
+                      "offset": 62150,
+                      "length": 53,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 53,
+                          "unit": "bytes",
+                          "offset": 62150,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "meta",
+                          "offset": 62154,
+                          "length": 4
+                        },
+                        {
+                          "name": "Version",
+                          "value": 0,
+                          "offset": 62158,
+                          "length": 1
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 0,
+                          "offset": 62159,
+                          "length": 3
+                        },
+                        {
+                          "name": "hdlr",
+                          "value": "mdir (iTunes metadata)",
+                          "offset": 62162,
+                          "length": 33,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 33,
+                              "unit": "bytes",
+                              "offset": 62162,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "hdlr",
+                              "offset": 62166,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 62170,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 62171,
+                              "length": 3
+                            },
+                            {
+                              "name": "Component Type",
+                              "value": "....",
+                              "offset": 62174,
+                              "length": 4
+                            },
+                            {
+                              "name": "Handler Type",
+                              "value": "mdir",
+                              "offset": 62178,
+                              "length": 4
+                            },
+                            {
+                              "name": "Name",
+                              "value": "",
+                              "offset": 62194,
+                              "length": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "iTunes Metadata",
+                          "kind": "Tag",
+                          "value": 0,
+                          "unit": "items",
+                          "offset": 62195,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 62195,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "ilst",
+                              "offset": 62199,
+                              "length": 4
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "codec": "Apple Lossless",
+        "sampleRate": 22050,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 30000,
+        "duration": 1.3605442176870748,
+        "averageBitrate": 361.46124,
+        "isVbr": true,
+        "playbackGroup": 1,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
+            "x": [
+              44,
+              6126,
+              10600,
+              16436,
+              21395,
+              28754,
+              42813,
+              56913
+            ],
+            "values": [
+              261.9298828125,
+              192.6791015625,
+              251.335546875,
+              213.56630859375,
+              316.92568359375,
+              605.47060546875,
+              607.236328125,
+              611.555421686747
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              307,
+              608
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "channel pair",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 4
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 4
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                8
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                4
+              ]
+            ],
+            "seconds": [
+              0,
+              6
+            ]
+          },
+          {
+            "name": "Element Coding",
+            "valueLabel": "element",
+            "categories": [
+              {
+                "name": "Compressed",
+                "count": 8
+              },
+              {
+                "name": "Uncompressed",
+                "count": 0
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                8
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                8
+              ]
+            ],
+            "seconds": [
+              0,
+              6
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "mp4.moov-after-mdat",
+        "message": "The moov box follows the mdat box, so a player must read to the end of the file before it can play it (not optimized for streaming, no fast start).",
+        "offset": 61517,
+        "length": 686,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "mp4.edit-beyond-media",
+        "message": "An edit of track 1 plays media up to 30010 units, past the media's 30000.",
+        "offset": 61757,
+        "length": 12,
+        "path": [
+          0,
+          3,
+          3,
+          3,
+          2,
+          5
+        ],
+        "count": 1
+      }
+    ]
+  }
+]
