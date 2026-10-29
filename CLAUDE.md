@@ -60,4 +60,5 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 ## Git
 
 - Push every commit to its own branch right after making it, so work survives a lost session or container. Never push to `main` directly.
+- Work that is not committed, such as a review, keeps a short checkpoint file in the session's scratchpad: its findings, finished checks and results, and the next step. Agents append to it inside a command they run anyway, right before each long step (a build, a test run, a cross-check, a timing run) and after each finished phase, so a resumed agent continues where the last one stopped.
 - A pushed branch is not a request to merge: a pull request opens when the work is reviewed and ready, and nothing merges with a red pipeline.
