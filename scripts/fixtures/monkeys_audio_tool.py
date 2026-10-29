@@ -13,6 +13,8 @@
 - build_interim_mac builds a second mac from the same source with one line of the encoder changed, so that it writes 24-bit files the way the encoders
   of Monkey's Audio 5.01 to 8.51 did (their predictor summed the first stage in 64 bits, which the decoder's "interim mode" undoes,
   Interim.cpp). The unchanged mac verifies and decodes those files through that mode; no unchanged encoder can write one.
+- build_w64_mac builds a third mac with one line of the SDK's GUID structure changed (its first field is 32 bits wide), so that the SDK's Wave64 reader
+  accepts files on 64-bit Linux and macOS, where the unchanged reader refuses every Wave64 file; the files it writes are read by the unchanged mac.
 
 Usage: python3 scripts/fixtures/monkeys_audio_tool.py [directory]    builds mac in the directory and prints its path.
 """
@@ -112,8 +114,8 @@ def build_interim_mac(directory=None):
 
 
 # The SDK's Wave64 reader (WAVInputSource.cpp, CW64InputSource) reads and compares GUIDs as the 16-byte structure of Windows, whose first field is a 32-bit
-# unsigned long. NoWindows.h, which the SDK uses elsewhere, declares that field as a unsigned long too, which is 64 bits on 64-bit Linux and macOS: the structure
-# is 24 bytes there, and the reader refuses every Wave64 file with error 1002. The patch gives the field the 32 bits it has on Windows.
+# unsigned long. NoWindows.h, the SDK's header for platforms other than Windows, declares that field as an unsigned long too, which is 64 bits on LP64 platforms
+# (64-bit Linux and macOS): the structure is 24 bytes there, and the reader refuses every Wave64 file with error 1002. The patch gives the field the 32 bits it has on Windows.
 GUID_LINE = "    unsigned long  Data1;"
 GUID_PATCHED = "    unsigned int   Data1;"
 

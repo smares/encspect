@@ -121,6 +121,11 @@ internal static class FormatChunk
                 f.Bytes("Codec Specific Data", extraEnd - f.Position, Explain.CodecSpecificData, Topics.WaveCompressed);
             }
         }
+        else if (tag == FormatTags.Extensible && length >= 16)
+        {
+            s.Findings.Add(Severity.Warning, "wav.extensible-incomplete", chunk.Children[^1], _ =>
+                "The format tag is 0xFFFE (WAVEFORMATEXTENSIBLE), whose cbSize is at least 22 for the valid bits, the channel mask and the sub-format, but the fmt chunk holds no cbSize.");
+        }
 
         if (f.Remaining > 0)
         {

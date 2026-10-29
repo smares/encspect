@@ -225,6 +225,51 @@ public class MonkeysAudioWavHeaderTests
 
         Finding finding = Assert.Single(report.Findings, f => f.Code == "monkeys-audio.wav-header-damaged");
         Assert.Contains("ends inside the junk chunk", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("which states 976 bytes", finding.Message, StringComparison.Ordinal);
+    }
+
+    // The fmt chunk size counts the 24 bytes of its header: a header data that ends right after the chunk holds all of it.
+    [Fact]
+    public void AWave64FormatChunkAtTheEndOfTheHeaderDataIsRead()
+    {
+        Report report = Analyze(Wave64(W64Fmt(2, 0x600)));
+
+        Assert.Equal(Sides, report.Streams.Single().ChannelLayout);
+        Assert.Single(Find(report.Root, "Channel Mask"));
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("monkeys-audio.wav-", StringComparison.Ordinal));
+    }
+
+    // The ds64 chunk of RF64 and BW64 is longer than its 28 bytes where it has a table, and is skipped by its own size.
+    [Theory]
+    [InlineData("RF64")]
+    [InlineData("BW64")]
+    public void ADs64ChunkWithATableIsSkippedByItsSize(string id)
+    {
+        byte[] ds64 = Chunk("ds64", 28 + 12 * 2, 28 + 12 * 2);
+        BinaryPrimitives.WriteUInt32LittleEndian(ds64.AsSpan(8 + 24), 2);
+        ds64.AsSpan(8 + 28).Fill(0xFF);
+        byte[] header = [.. System.Text.Encoding.ASCII.GetBytes(id), .. BitConverter.GetBytes(uint.MaxValue), .. "WAVE"u8, .. ds64, .. Extensible(2, 0x600), .. Chunk("data", -1, 0)];
+
+        Report report = Analyze(header);
+
+        Assert.Equal(Sides, report.Streams.Single().ChannelLayout);
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("monkeys-audio.wav-", StringComparison.Ordinal));
+    }
+
+    // The same chunk of 16 or 17 bytes ends before the cbSize.
+    [Theory]
+    [InlineData(16)]
+    [InlineData(17)]
+    public void AnExtensibleFormatChunkWithoutACbSizeHasNoMask(int size)
+    {
+        Report report = Analyze(Riff(Fmt(2, tag: 0xFFFE, declared: size, present: size), Chunk("data", 0, 0)));
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "monkeys-audio.wav-extensible-incomplete");
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Contains("holds no cbSize", finding.Message, StringComparison.Ordinal);
+        Assert.Equal(LeftRight, report.Streams.Single().ChannelLayout);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "monkeys-audio.wav-header-damaged");
+        Assert.NotNull(finding.Path);
     }
 
     // Like the WAV parser's wav.extensible-incomplete, at the same severity: a cbSize under the 22 bytes of valid bits, mask and sub-format leaves no mask to read.

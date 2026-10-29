@@ -31,6 +31,9 @@ internal sealed record WavFormat
 
     public long ExtraHeld { get; init; }
 
+    // An extensible fmt chunk of 16 or 17 bytes, which ends before the cbSize.
+    public bool IsCbSizeMissing { get; init; }
+
     public long ChannelsAt { get; init; }
 
     public uint? Mask { get; init; }
@@ -277,6 +280,11 @@ internal static class WavHeader
             }
         }
 
+        if (format.Tag == WaveExtensible && held is >= 16 and < 18)
+        {
+            format = format with { IsCbSizeMissing = true };
+        }
+
         return format;
     }
 
@@ -330,7 +338,7 @@ internal static class WavHeader
                 break;
             case WavProblem.ChunkSizeInvalid:
                 findings.Add(Severity.Warning, "monkeys-audio.wav-header-damaged", data, _ =>
-                    $"The Wave64 chunk at 0x{format.ProblemAt:X} states {format.ProblemSize}, but a size counts the 24 bytes of the chunk's own header, so none is under 24; the channels and the channel mask are not read.", "chunk-size");
+                    $"The Wave64 chunk at 0x{format.ProblemAt:X} states {Counts.Of(format.ProblemSize, "byte", "bytes")}, but a size counts the 24 bytes of the chunk's own header, so none is under 24; the channels and the channel mask are not read.", "chunk-size");
                 break;
             case WavProblem.TooManyChunks:
                 findings.Add(Severity.Warning, "monkeys-audio.wav-header-damaged", data, _ =>
@@ -345,6 +353,12 @@ internal static class WavHeader
             findings.Add(Severity.Warning, "monkeys-audio.wav-extensible-incomplete", tag, _ => stated > held
                 ? $"The format tag is 0xFFFE (WAVEFORMATEXTENSIBLE), whose cbSize is at least 22 for the valid bits, the channel mask and the sub-format, but it states {Counts.Of(stated, "byte", "bytes")} and the fmt chunk holds only {held} after it, so the channel mask is not read."
                 : $"The format tag is 0xFFFE (WAVEFORMATEXTENSIBLE), whose cbSize is at least 22 for the valid bits, the channel mask and the sub-format, but it states {Counts.Of(stated, "byte", "bytes")}, so the channel mask is not read.", stated > held ? "cut" : "short");
+        }
+
+        if (tag is not null && format.IsCbSizeMissing)
+        {
+            findings.Add(Severity.Warning, "monkeys-audio.wav-extensible-incomplete", tag, _ =>
+                "The format tag is 0xFFFE (WAVEFORMATEXTENSIBLE), whose cbSize is at least 22 for the valid bits, the channel mask and the sub-format, but the fmt chunk holds no cbSize, so the channel mask is not read.", "no-cbsize");
         }
 
         if (count is not null && format.Channels != channels && channels > 0)

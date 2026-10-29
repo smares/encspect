@@ -46,7 +46,7 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 - Findings:
   - `monkeys-audio.wav-channels-differ` (Warning): the fmt chunk states other channels than the header;
   - `monkeys-audio.channel-mask-mismatch` (Info, as the WAV parser's `wav.channel-mask-mismatch`): the mask names more or fewer speakers than the header states channels; a mask with bit 31 (`SPEAKER_ALL`) is no count of speakers and is not compared;
-  - `monkeys-audio.wav-extensible-incomplete` (Warning, as the WAV parser's `wav.extensible-incomplete`): the format tag is 0xFFFE and the cbSize, cut to the bytes the fmt chunk holds after it, is under the 22 bytes of valid bits, mask and sub-format, so there is no mask to read;
+  - `monkeys-audio.wav-extensible-incomplete` (Warning, as the WAV parser's `wav.extensible-incomplete`): the format tag is 0xFFFE and the cbSize, cut to the bytes the fmt chunk holds after it, is under the 22 bytes of valid bits, mask and sub-format, or the fmt chunk (16 or 17 bytes) ends before the cbSize, so there is no mask to read;
   - `monkeys-audio.wav-header-damaged` (Warning): the header data ends inside a chunk or inside the fmt chunk, holds no fmt chunk before its data chunk or its end, states a fmt chunk of less than 16 bytes, holds a Wave64 chunk of a size under 24, or holds more than 64 chunks before the fmt chunk;
   - `monkeys-audio.wav-header-unused` (Info): the flag for a header created on decompression is set, and the descriptor still counts header data.
 - A damaged header data never stops decoding: the frames do not depend on it.

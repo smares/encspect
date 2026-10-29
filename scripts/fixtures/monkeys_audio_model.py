@@ -146,6 +146,8 @@ def wav_header(header_data, channels):
             mask = u32(data, body + 20)
         else:
             found.append({"code": "monkeys-audio.wav-extensible-incomplete", "contains": f"states {stated} byte"})
+    elif tag == 0xFFFE and held >= 16:
+        found.append({"code": "monkeys-audio.wav-extensible-incomplete", "contains": "holds no cbSize"})
     if count != channels and channels > 0:
         found.append({"code": "monkeys-audio.wav-channels-differ", "contains": f"states {count} channel"})
     if mask:
