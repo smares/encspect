@@ -510,10 +510,6 @@ def finish_header(bits, crc_start):
 # of XLL's channel sets use (FFmpeg's DCA_SPEAKER_*): each pair of Table 7-10 is two bits there.
 MASK_7_10_TO_6_22 = [(0,), (1, 2), (3, 4), (5,), (6,), (13, 15), (7, 8), (14,), (19,), (11, 12), (17, 18), (9, 10), (16,), (20, 21), (22,), (23, 24)]
 
-# FFmpeg's ff_dca_dmix_primary_nch: the channels each primary downmix type (Table 8-8) mixes to.
-DMIX_PRIMARY_CHANNELS = [1, 2, 2, 3, 3, 4, 4, 0]
-
-
 def mask_to_speakers(mask):
     """Table 7-10's activity mask as the mask of Table 6-22."""
     result = 0
@@ -541,77 +537,8 @@ def _bands_of(s):
 
 
 def _set_header(s, hier_ofs, mask_bits, size_bits, scalable):
-    """A channel set sub-header as bytes, with its size and CRC-16 (Table 8-4); fields are written as FFmpeg's chs_parse_header reads them."""
-    b = Bits()
-    b.put(0, 10)  # nChSetHeaderSize - 1, filled in below
-    n = s["channels"]
-    b.put(n - 1, 4)
-    b.put(s["residual"], n)
-    b.put(s["bit_res"] - 1, 5)
-    b.put(s["storage"] - 1, 5)
-    b.put(MAX_SAMPLE_RATE_CODES[s["rate"]], 4)
-    b.put(s["interp"], 2)
-    b.put(s["replacement"], 2)
-    if s["replacement"]:
-        b.put(1 if s["active"] else 0, 1)
-    if s["one_to_one"]:
-        b.put(1 if s["primary"] else 0, 1)
-        dmix = s["dmix"]
-        b.put(1 if dmix else 0, 1)
-        if dmix:
-            b.put(1 if dmix.get("embedded") else 0, 1)
-            if s["primary"]:
-                b.put(dmix.get("type", 1), 3)
-        b.put(1 if s["hier"] else 0, 1)
-        if dmix:
-            if s["primary"]:
-                for _ in range(DMIX_PRIMARY_CHANNELS[dmix.get("type", 1)] * n):
-                    b.put(0, 9)
-            else:
-                for _ in range(hier_ofs):
-                    b.put(0x40, 9)  # the scale: a code FFmpeg's table accepts
-                    for _ in range(n):
-                        b.put(0, 9)
-        b.put(0 if s["polar"] else 1, 1)
-        if s["polar"]:
-            for _ in range(n):
-                b.put(0, 25)
-        else:
-            b.put(s["mask"], mask_bits)
-    else:
-        b.put(0, 1)  # bMappingCoeffsPresent
-    bands = _bands_of(s)
-    if s["rate"] > 96000:
-        b.put(1 if s["extra_bands"] else 0, 1)
-    for band in range(bands):
-        b.put(0, 1)  # no pairwise channel decorrelation
-        for _ in range(n):
-            b.put(0, 4)  # adaptive predictor order
-        for _ in range(n):
-            b.put(0, 2)  # fixed predictor order
-        if band == 0:
-            if scalable:
-                b.put(0, size_bits)
-                b.put(0, 4 * n)
-                b.put(0, 4 * n)
-        else:
-            if s["one_to_one"] and s["dmix"] and s["dmix"].get("embedded"):
-                b.put(0, 1)
-            b.put(0, 1)  # no MSB/LSB split
-            b.put(0, 1)  # no scalable resolution
-    b.put(0, s["header_pad"] * 8)
-    b.align()
-    b.put(0, 16)
-    raw = bytearray(b.bytes())
-    size = len(raw)
-    assert size <= 1024, size
-    stated = s["size_override"] or size
-    raw[0] = (stated - 1) >> 2
-    raw[1] = (raw[1] & 0x3F) | (((stated - 1) & 3) << 6)
-    raw[-2:] = crc16(bytes(raw[:-2])).to_bytes(2, "big")
-    if s["bad_crc"]:
-        raw[-1] ^= 0xFF
-    return bytes(raw)
+    # Clean-room rewrite pending: docs/design/dts-extension-checks.md
+    raise NotImplementedError
 
 
 def xll_frame(size, sets=None, core_rate=48000, core_samples=512, segments_log=None, samples_log=None, scalable=False, size_bits=8, band_crc=0,

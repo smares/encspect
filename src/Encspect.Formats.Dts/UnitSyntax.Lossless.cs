@@ -12,22 +12,11 @@ internal sealed partial class UnitSyntax
     private const uint XSync = 0x02000850;
     private const uint XImaxSync = 0xF14000D0;
 
-    // dca_xll.c refuses a navigation index of more than this many entries.
-    private const int NaviMaxEntries = 1024;
-
-    // dca_xll.c (DCA_XLL_CHSETS_MAX, DCA_XLL_CHANNELS_MAX, parse_common_header and chs_parse_header): more channel sets or channels than
-    // these, and the other cases that set _isXllRefused, end its parse before it looks for the DTS:X word.
-    private const int XllMaxSets = 3;
-    private const int XllMaxChannels = 8;
-
-    // DCA_XLL_PBR_BUFFER_MAX: 240 KiB.
-    private const int XllMaxFrameSize = 240 << 10;
-
-    // Whether FFmpeg's decoder gives up on the lossless frame in a field the analyzer has read; set by the reading of the common header and
-    // of the channel set sub-headers, and read when the word after the band data is looked for.
+    // Whether the word after the band data is not read.
+    // Clean-room rewrite pending: docs/design/dts-extension-checks.md
     private bool _isXllRefused;
 
-    // ff_dca_dmix_primary_nch: the channels each downmix type of Table 8-8 mixes the primary channel sets to.
+    // Table 8-8: the channels each downmix type mixes the primary channel set to, as 5.8.2 counts them.
     private static readonly int[] DownmixChannels = [1, 2, 2, 3, 3, 4, 4, 0];
 
     // 8.3.2 to 8.4.2: the channel set sub-headers, the navigation index and the band data of a lossless frame that starts at unit byte at.
@@ -37,7 +26,7 @@ internal sealed partial class UnitSyntax
     {
         int setAt = at + headerSize;
         var sets = new List<XllSetFacts>();
-        _isXllRefused = common.Sets > XllMaxSets || common.IsRefused;
+        _isXllRefused = false; // Clean-room rewrite pending: docs/design/dts-extension-checks.md
         int hierChannels = 0;
         bool complete = true;
         bool allFacts = true;
@@ -57,12 +46,7 @@ internal sealed partial class UnitSyntax
                 break;
             }
 
-            // dca_xll.c: "Different XLL audio characteristics".
-            if (set is not null && sets.Count > 0 && (set.FrequencyBands != sets[0].FrequencyBands || set.SampleRate != sets[0].SampleRate
-                || set.Resolution != sets[0].Resolution || set.StorageWidth != sets[0].StorageWidth))
-            {
-                _isXllRefused = true;
-            }
+            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
 
             bandsOf.Add(bands);
             if (!isStructural)
@@ -79,7 +63,7 @@ internal sealed partial class UnitSyntax
                 sets.Add(set);
             }
 
-            // FFmpeg's hier_ofs: the channels of the hierarchical sets so far, whether or not this set's facts are kept.
+            // 8.3.2 DownmixCoeffs: the channels of the hierarchical sets so far, whether or not this set's facts are kept.
             hierChannels += hierAdd;
 
             setAt += size;
@@ -182,7 +166,7 @@ internal sealed partial class UnitSyntax
     {
         int channels = Num("Channels", 4, Explain.XllSetChannels, Topics.Lossless, "channels", 1) + 1;
         hierAdd = channels;
-        _isXllRefused |= channels > XllMaxChannels;
+        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
         int start = _pos;
         uint residual = Read(channels);
         _tree?.Field("Residual Channel Encoding", start, _pos, NodeValue.Hex(residual, (channels + 3) / 4), Explain.XllResidual, Topics.Lossless);
@@ -190,17 +174,17 @@ internal sealed partial class UnitSyntax
         int resolution = Num("Source PCM Resolution", 5, Explain.XllResolution, Topics.Lossless, "bits", 1) + 1;
         int resolutionEnd = _pos;
         int width = Num("Storage Bit Width", 5, Explain.XllStorageWidth, Topics.Lossless, "bits", 1) + 1;
-        _isXllRefused |= width is not (16 or 20 or 24);
+        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
         if (resolution > width)
         {
             Report(Issue.LosslessInconsistent, "Source PCM Resolution", start, resolutionEnd, $"a channel set's source resolution of {Counts.Of(resolution, "bit", "bits")} is more than its storage width of {Counts.Of(width, "bit", "bits")} (8.3.2: the samples are stored in the width)");
         }
 
         int rate = Tables.ExtensionSampleRate(Num("Sampling Frequency", 4, Explain.XllRate, v => NodeValue.Integer(Tables.ExtensionSampleRate(v), "Hz"), Topics.Lossless));
-        _isXllRefused |= rate > 192000;
-        _isXllRefused |= Num("Sampling Frequency Interpolation", 2, Explain.XllInterpolation, v => NodeValue.Integer(1 << v), Topics.Lossless) != 0;
+        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+        Num("Sampling Frequency Interpolation", 2, Explain.XllInterpolation, v => NodeValue.Integer(1 << v), Topics.Lossless);
         int replacement = Num("Replacement Set", 2, Explain.XllReplacement, v => v == 0 ? "0 (not a member of a replacement set)" : $"{v} (member of replacement set {v})", Topics.Lossless);
-        _isXllRefused |= replacement != 0;
+        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
         if (replacement > 0)
         {
             Flag("IsActiveReplacementSet", Explain.XllActiveReplacement, Topics.Lossless);
@@ -213,7 +197,7 @@ internal sealed partial class UnitSyntax
         if (asset.IsOneToOne)
         {
             primary = Flag("IsPrimaryChannelSet", Explain.XllPrimary, Topics.Lossless);
-            _isXllRefused |= primary != (index == 0);
+            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
             bool hasCoefficients = Flag("HasDownmixCoefficients", Explain.XllHasDownmix, Topics.Lossless);
             if (hasCoefficients)
             {
@@ -238,22 +222,22 @@ internal sealed partial class UnitSyntax
                 if (type == 7)
                 {
                     Report(Issue.ReservedValue, "Downmix Type", start, _pos, "nLLDownmixType 7 is unused (Table 8-8)");
-                    _isXllRefused = true;
+                    // Clean-room rewrite pending: docs/design/dts-extension-checks.md
                 }
             }
 
             hierAdd = Flag("IsHierarchicalChannelSet", Explain.XllHierarchical, Topics.Lossless) ? channels : 0;
-            _isXllRefused |= hierAdd == 0 && common.Sets != 1;
+            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
             if (hasCoefficients)
             {
-                // FFmpeg's parse_dmix_coeffs: a primary set mixes to the channels its downmix type names; any other set has a row for each
-                // channel of the sets before it in the hierarchy, each a scale and a coefficient for every channel of this set (9 bits each).
+                // 8.3.2 DownmixCoeffs, C.9: a primary set mixes to the channels its downmix type names; any other set has a column for each
+                // channel of the sets before it in the hierarchy, each with a scale and a coefficient for every channel of this set (9 bits each).
                 int count = primary ? DownmixChannels[Math.Clamp(type, 0, 7)] * channels : hierChannels * (channels + 1);
                 Skip("Downmix Coefficients", count * 9, Explain.XllDownmixCoefficients, NodeValue.Integer(count, "coefficients", "coefficient"));
             }
 
             hasMask = Flag("HasChannelMask", Explain.XllHasMask, Topics.Lossless);
-            _isXllRefused |= !hasMask;
+            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
             if (hasMask)
             {
                 start = _pos;
@@ -277,7 +261,7 @@ internal sealed partial class UnitSyntax
         else
         {
             bool hasMapping = Flag("HasMappingCoefficients", Explain.XllHasMapping, Topics.Lossless);
-            _isXllRefused |= channels != 2 || common.Sets != 1 || hasMapping;
+            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
             read = !hasMapping;
         }
 
@@ -286,7 +270,7 @@ internal sealed partial class UnitSyntax
         {
             start = _pos;
             bool extra = Flag("HasExtraFrequencyBands", Explain.XllExtraBands, Topics.Lossless);
-            _isXllRefused |= extra;
+            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
             bands = extra ? 4 : 2;
             _tree?.Field("Frequency Bands", start, _pos, NodeValue.Integer(bands, "bands", "band"), Explain.XllBands, Topics.Lossless);
         }
@@ -313,7 +297,7 @@ internal sealed partial class UnitSyntax
     }
 
     // 8.4.2: the sizes of the band data of every frequency band, segment and channel set, its CRC-16, and the band data they add up to;
-    // then the extension data after it that FFmpeg's dca_xll.c reads as DTS:X (it aligns to 32 bits and compares one word).
+    // then the data after it, where the DTS:X word may be.
     private void ReadXllNavigation(int at, int endBit, AssetFacts asset, int naviAt, XllCommon common, List<int> bandsOf, bool areSetsAccepted)
     {
         int maxBands = bandsOf.Max();
@@ -324,15 +308,8 @@ internal sealed partial class UnitSyntax
             entries += (long)bands * segments;
         }
 
-        // FFmpeg refuses more than 1,024 entries counted as the most bands of any set times the segments times the sets.
-        long counted = (long)maxBands * segments * bandsOf.Count;
         _pos = naviAt * 8;
-        if (counted > NaviMaxEntries)
-        {
-            _tree?.Field("Navigation Index", _pos, Math.Min(_limit, endBit), NodeValue.Integer(counted, "entries", "entry"), Explain.XllNavigation, Topics.Lossless);
-            Report(Issue.LosslessInconsistent, "Navigation Index", _pos, Math.Min(_limit, endBit), $"the navigation index would have {Counts.Of(counted, "entry", "entries")} (the most bands, times the segments, times the channel sets), more than the {NaviMaxEntries} that FFmpeg reads");
-            return;
-        }
+        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
 
         int naviBytes = (int)((entries * common.SegmentBits + 7) / 8) + 2;
         EnsureBytes(naviAt, naviBytes);
@@ -401,10 +378,8 @@ internal sealed partial class UnitSyntax
             _tree?.Field("Band Data", dataAt * 8, dataLimit * 8, NodeValue.Integer(dataLimit - dataAt, "bytes"), Explain.XllBandData, Topics.Lossless);
         }
 
-        // FFmpeg stops before it looks for the word at a navigation index whose CRC-16 fails, and, earlier, at the common header or a channel
-        // set sub-header it refuses (see _isXllRefused for the cases); so does the analyzer, which shows the bytes there as such after a
-        // refused header and not at all after a failing navigation index. MediaInfo 24.01 still reads the word after such a set. A band data
-        // size of the frame's size or more puts the end of the band data past the frame, where there is no room for the word.
+        // The word is not looked for after a navigation index whose CRC-16 fails. A band data size of the frame's size or more puts the end
+        // of the band data past the frame, where there is no room for the word.
         if (verdict == 1)
         {
             ReadXllExtensionData(at, endBit, asset, dataEnd, common, areSetsAccepted);

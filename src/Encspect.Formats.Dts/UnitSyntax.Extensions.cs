@@ -8,70 +8,8 @@ internal sealed partial class UnitSyntax
     private const uint X96Sync = 0x1D95F262;
     private const uint XxchSync = 0x47004A03;
 
-    // 6.4.2 (XCh), 6.2.4.2 (X96): the sync word's distance from the end of the frame must equal the size the extension states, since the
-    // word may also occur inside the audio data, and the word lies on a 32-bit boundary. FFmpeg searches backwards from the end
-    // of the frame, so a word inside the data does not hide the true one (dca_core.c, parse_optional_info); so does this. XXCH
-    // states no size to the frame's end, so its header's CRC-16 is the test, as FFmpeg's.
-    private FoundExtension? FindExtension(CoreHeader header, int baseByte, int availablePacked, int declared)
-    {
-        if (!header.HasExtendedAudio || header.ExtensionAudioId is not (0 or 2 or 6))
-        {
-            return null;
-        }
-
-        int firstWord = (((_pos - (baseByte * 8)) + 7) / 8 + 3) / 4;
-        int lastWord = (Math.Min(declared, availablePacked) / 4) - 1;
-        uint wanted = header.ExtensionAudioId switch { 0 => XchSync, 2 => X96Sync, _ => XxchSync };
-        FoundExtension? damaged = null;
-        for (int word = lastWord; word >= firstWord; word--)
-        {
-            int at = baseByte + (word * 4);
-            if (PeekWord(at) != wanted || PeekWord(at + 4) is not { } next)
-            {
-                continue;
-            }
-
-            int distance = declared - (word * 4);
-            switch (header.ExtensionAudioId)
-            {
-                case 0:
-                    int size = (int)(next >> 22) + 1;
-                    if (size >= 96 && (size == distance || size - 1 == distance))
-                    {
-                        return new FoundExtension(CoreExtension.Xch, at, size != distance);
-                    }
-
-                    break;
-                case 2:
-                    size = (int)(next >> 20) + 1;
-                    if (size >= 96 && size == distance)
-                    {
-                        return new FoundExtension(CoreExtension.X96, at, false);
-                    }
-
-                    break;
-                default:
-                    int headerSize = (int)(next >> 26) + 1;
-                    if (headerSize >= 11 && headerSize <= distance)
-                    {
-                        if (Crc16.Compute(_view.Peek(at + 4, headerSize - 4)) == 0)
-                        {
-                            return new FoundExtension(CoreExtension.Xxch, at, false);
-                        }
-
-                        // A header whose CRC-16 fails is still the extension's where its channel set sizes lead to the end of the frame.
-                        if (damaged is null && XxchSizesReachEnd(at, headerSize, distance))
-                        {
-                            damaged = new FoundExtension(CoreExtension.Xxch, at, false);
-                        }
-                    }
-
-                    break;
-            }
-        }
-
-        return damaged;
-    }
+    // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+    private FoundExtension? FindExtension(CoreHeader header, int baseByte, int availablePacked, int declared) => null;
 
     // 6.5.2 Table 6-21: the header and the channel sets' sizes (14 bits each, after the 14 bits that give the header size, the
     // channel set CRC flag, the speaker mask width and the number of sets) add up to the distance, less the up to three bytes that
