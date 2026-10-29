@@ -222,7 +222,6 @@ public sealed class Id3v2TagParser : ITagParser
             long? declaredPadding = null;
             if (major >= 3 && (flags & 0x40) != 0 && FollowsDirectly(reader, bodyStart, bodyEnd))
             {
-                // Some taggers set the flag without writing an extended header (mutagen, _tags.py).
                 state.Findings.Add(new Finding(
                     Severity.Warning,
                     "id3v2.extended-header-missing",
@@ -1336,51 +1335,14 @@ public sealed class Id3v2TagParser : ITagParser
         public List<Node> Frames { get; } = [];
     }
 
-    // The frame IDs ID3v2.3 and 2.4 declare, and those common writers add (mutagen, _frames.py).
-    private static readonly HashSet<string> FrameIds =
-    [
-        "AENC", "APIC", "ASPI", "CHAP", "COMM", "COMR", "CTOC", "ENCR", "EQU2", "EQUA", "ETCO", "GEOB", "GRID", "GRP1",
-        "IPLS", "LINK", "MCDI", "MLLT", "MVIN", "MVNM", "OWNE", "PCNT", "PCST", "POPM", "POSS", "PRIV", "RBUF", "RVA2",
-        "RVAD", "RVRB", "SEEK", "SIGN", "SYLT", "SYTC", "TALB", "TBPM", "TCAT", "TCMP", "TCOM", "TCON", "TCOP", "TDAT",
-        "TDEN", "TDES", "TDLY", "TDOR", "TDRC", "TDRL", "TDTG", "TENC", "TEXT", "TFLT", "TGID", "TIME", "TIPL", "TIT1",
-        "TIT2", "TIT3", "TKEY", "TKWD", "TLAN", "TLEN", "TMCL", "TMED", "TMOO", "TOAL", "TOFN", "TOLY", "TOPE", "TORY",
-        "TOWN", "TPE1", "TPE2", "TPE3", "TPE4", "TPOS", "TPRO", "TPUB", "TRCK", "TRDA", "TRSN", "TRSO", "TSIZ", "TSO2",
-        "TSOA", "TSOC", "TSOP", "TSOT", "TSRC", "TSSE", "TSST", "TXXX", "TYER", "UFID", "USER", "USLT", "WCOM", "WCOP",
-        "WFED", "WOAF", "WOAR", "WOAS", "WORS", "WPAY", "WPUB", "WXXX",
-    ];
+    // Clean-room rewrite pending: docs/design/id3v2-frame-size-encoding.md
+    private static readonly HashSet<string> FrameIds = [];
 
-    private static bool FollowsDirectly(ByteReader reader, long bodyStart, long bodyEnd) =>
-        bodyEnd - bodyStart >= 4 && FrameIds.Contains(Encoding.Latin1.GetString(reader.ReadBytesAt(bodyStart, 4)));
+    // Clean-room rewrite pending: docs/design/id3v2-frame-size-encoding.md
+    private static bool FollowsDirectly(ByteReader reader, long bodyStart, long bodyEnd) => false;
 
-    // Old iTunes versions wrote ID3v2.4 frame sizes as plain integers. The frames are walked with
-    // both readings, counting the declared frame IDs each finds; plain wins with more of them, or
-    // with as many when the syncsafe walk overshoots the tag and the plain one does not
-    // (mutagen, _tags.py, determine_bpi).
-    private static bool HasPlainFrameSizes(ByteReader reader, long start, long end)
-    {
-        (int syncsafeFound, long syncsafeOver) = Walk(syncsafe: true);
-        (int plainFound, long plainOver) = Walk(syncsafe: false);
-        return plainFound > syncsafeFound || (plainFound == syncsafeFound && syncsafeOver >= 1 && plainOver <= 1);
-
-        (int Found, long Overshoot) Walk(bool syncsafe)
-        {
-            int found = 0;
-            long at = start;
-            while (at < end - 10)
-            {
-                byte[] header = reader.ReadBytesAt(at, 10);
-                if (header.All(b => b == 0))
-                {
-                    return (found, -((end - at) % 10));
-                }
-
-                at += 10 + (syncsafe ? Syncsafe(header, 4) : BinaryPrimitives.ReadUInt32BigEndian(header.AsSpan(4)));
-                found += FrameIds.Contains(Encoding.Latin1.GetString(header, 0, 4)) ? 1 : 0;
-            }
-
-            return (found, at - end);
-        }
-    }
+    // Clean-room rewrite pending: docs/design/id3v2-frame-size-encoding.md
+    private static bool HasPlainFrameSizes(ByteReader reader, long start, long end) => false;
 
     private readonly struct FrameExtras
     {
