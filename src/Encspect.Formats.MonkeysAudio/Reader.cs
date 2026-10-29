@@ -287,7 +287,9 @@ internal static class Reader
     // The header data lies before the frames, so its fmt chunk is read here and its nodes are added with the header data after them.
     private static void ReadWavFormat(State s, ApeHeader h, ByteReader reader)
     {
-        if (h.HeaderDataBytes == 0 || s.HeaderDataAt >= reader.End)
+        // With the flag for a header created on decompression, the SDK reads no stored header data and writes a header of its own (APEHeader.cpp, the
+        // descriptor's nWAVHeaderBytes), so the bytes a file stores in spite of it say nothing about the audio.
+        if (h.HeaderDataBytes == 0 || s.HeaderDataAt >= reader.End || h.CreatesWavHeader)
         {
             return;
         }
@@ -757,6 +759,12 @@ internal static class Reader
         if (s.Wav is { } wav)
         {
             WavHeader.AddNodes(s, wav, data, h.Channels);
+        }
+
+        if (h.CreatesWavHeader)
+        {
+            s.Findings.Add(Severity.Info, "monkeys-audio.wav-header-unused", data, _ =>
+                $"The header flags a WAV header created on decompression, so the SDK ignores the {Counts.Of(length, "byte", "bytes")} of WAV header data stored in the file and writes a header of its own; the analyzer reads no format or channel mask from them.");
         }
 
         s.AddLeading(data);
