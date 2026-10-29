@@ -224,5 +224,12 @@ public class ChannelLayoutTests
         Assert.Equal([X, X], ChannelLayouts.FromWaveMask(0, 2));
         Assert.Empty(ChannelLayouts.FromWaveMask(0x3F, 0));
         Assert.Equal([L, R, X], ChannelLayouts.WaveMaskSpeakers(0x80003));
+
+        // Bit 17 is the last position of the WAVE channel mask (top back right); bit 18 is the first without one. With one bit more than the channels the extra bit goes.
+        Assert.Equal([Speaker.TopBackRight], ChannelLayouts.FromWaveMask(1u << 17, 1));
+        Assert.Equal([Speaker.TopBackRight], ChannelLayouts.WaveMaskSpeakers(1u << 17));
+        Assert.Equal([X], ChannelLayouts.WaveMaskSpeakers(1u << 18));
+        Assert.Equal([L, R], ChannelLayouts.FromWaveMask(0x7, 2));
+        Assert.Equal([L, R, C, Lfe, Bl], ChannelLayouts.FromWaveMask(0x3F, 5));
     }
 }

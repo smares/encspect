@@ -2,9 +2,9 @@
 """Writes the encoder-made Monkey's Audio fixtures in tests/fixtures/monkeys-audio (external-*.ape).
 
 They come from mac, the console tool of the Monkey's Audio SDK 13.42, built from the pinned source (monkeys_audio_tool.py): every compression level
-(fast to insane), 8, 16, 24 and 32-bit integer and 32-bit floating point audio, 1 to 9 channels with the channel masks of the stored WAV header, several sample rates, frames of every size the levels
-use (a file with a full frame of the highest level holds 1,179,648 samples), digital silence and identical channels (which the encoder stores as special
-frames), a silent channel, WAV headers with chunks before and after the audio, an AIFF source, and an APEv2 and an ID3v1 tag. The inputs are
+(fast to insane), 8, 16, 24 and 32-bit integer and 32-bit floating point audio, 1 to 9 channels with the channel masks of the stored WAV header, several sample
+rates, frames of every size the levels use (a file with a full frame of the highest level holds 1,179,648 samples), digital silence and identical channels (which the encoder stores as special
+frames), a silent channel, WAV headers with chunks before and after the audio, an AIFF, a BW64 and a Wave64 source, and an APEv2 and an ID3v1 tag. The inputs are
 deterministic signals written by monkeys_audio_signal.py.
 
 The encoder's output depends on its version, so the files are committed and --manifests-only recomputes the manifests from them without the encoder.
@@ -34,7 +34,7 @@ LIST_BEFORE = sig.chunk(b"LIST", b"INFOISFT" + (14).to_bytes(4, "little") + b"La
 LIST_AFTER = sig.chunk(b"LIST", b"INFOIART" + (6).to_bytes(4, "little") + b"Name\0\0")
 TAGS = "Artist=Fixture artist|Title=Fixture title|Album=Fixture album"
 
-# name: (input, mac arguments). An input is (kind, signal, rate, channels, bits, samples, options): kind is wav, float, aiff or caf.
+# name: (input, mac arguments). An input is (kind, signal, rate, channels, bits, samples, options): kind is wav, bw64, w64, float, aiff or caf.
 FIXTURES = {
     "level-fast-16-stereo": (("wav", "music", 44100, 2, 16, SHORT), ["-c1000"]),
     "level-normal-16-stereo": (("wav", "music", 44100, 2, 16, SHORT), ["-c2000"]),
@@ -74,6 +74,10 @@ FIXTURES = {
     "mask-more-bits-than-channels": (("wav", "music", 48000, 4, 16, MASKED, 0x3F), ["-c2000"]),
     "mask-zero-6ch": (("wav", "music", 48000, 6, 16, MASKED, 0), ["-c2000"]),
     "plain-format-6ch": (("wav", "music", 48000, 6, 16, MASKED, "plain"), ["-c2000"]),
+    # The other WAVE-like headers the SDK stores (WAVInputSource.cpp): BW64 with its ds64 chunk (the data chunk's size is 0xFFFFFFFF, the ds64 chunk has it) and
+    # Sony Wave64 (APE_FORMAT_FLAG_W64), both with an extensible format and a mask.
+    "bw64-5.1-sides": (("bw64", "music", 48000, 6, 16, MASKED, 0x60F), ["-c2000"]),
+    "w64-5.1-back": (("w64", "music", 48000, 6, 16, MASKED, 0x3F), ["-c2000"]),
     "rate-8000-mono-8": (("wav", "music", 8000, 1, 8, 8000), ["-c2000"]),
     "rate-12345-stereo": (("wav", "music", 12345, 2, 16, 12000), ["-c2000"]),
     "rate-96000-mono-24": (("wav", "music", 96000, 1, 24, SHORT), ["-c2000"]),
@@ -104,6 +108,8 @@ def make_input(spec, work):
         mask = rest[0] if rest else None
         before, after = (rest[1], rest[2]) if len(rest) > 2 else (b"", b"")
         return work / "in.wav", sig.wav(signal, rate, channels, count, bits, mask, False, before, after)
+    if kind in ("bw64", "w64"):
+        return work / ("in.wav" if kind == "bw64" else "in.w64"), (sig.bw64 if kind == "bw64" else sig.w64)(signal, rate, channels, count, bits, rest[0])
     if kind == "float":
         return work / "in.wav", sig.wav(signal, rate, channels, count, 32, None, True)
     if kind == "aiff":
@@ -122,6 +128,7 @@ def describe(spec):
 
 
 def encode(name, spec, arguments, work):
+    mac = MAC_W64 if spec[0] == "w64" else MAC
     for old in OUT.glob(f"external-{name}.*"):
         old.unlink()
     path, data = make_input(spec, work)
@@ -129,7 +136,7 @@ def encode(name, spec, arguments, work):
     target = work / "out.ape"
     target.unlink(missing_ok=True)
     plain = [a for a in arguments if a != "TAGONLY-L"]
-    code, text = monkeys_audio_tool.run(MAC, path, target, *plain)
+    code, text = monkeys_audio_tool.run(mac, path, target, *plain)
     if code != 0 or not target.exists():
         raise SystemExit(f"mac failed for {name}: {text.strip().splitlines()[-1] if text.strip() else code}")
     if "TAGONLY-L" in arguments:
@@ -186,13 +193,16 @@ def findings_of(name):
 
 
 def main():
-    global MAC
+    global MAC, MAC_W64
     only_manifests = "--manifests-only" in sys.argv
     chosen = [a for a in sys.argv[1:] if not a.startswith("--")]
     OUT.mkdir(parents=True, exist_ok=True)
-    MAC = None
+    MAC = MAC_W64 = None
     if not only_manifests:
         MAC = monkeys_audio_tool.build_mac(pathlib.Path(tempfile.gettempdir()) / "monkeys-audio-sdk")
+        # The SDK's Wave64 reader needs a one-line patch to work on 64-bit Linux (monkeys_audio_tool.build_w64_mac); it is built only when a Wave64 input is encoded.
+        if any(spec[0] == "w64" for name, (spec, _) in FIXTURES.items() if not chosen or name in chosen):
+            MAC_W64 = monkeys_audio_tool.build_w64_mac(pathlib.Path(tempfile.gettempdir()) / "monkeys-audio-sdk-w64")
     count = 0
     with tempfile.TemporaryDirectory() as work:
         for name, (spec, arguments) in FIXTURES.items():
