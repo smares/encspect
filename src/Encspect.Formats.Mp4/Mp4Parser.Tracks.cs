@@ -32,7 +32,7 @@ public sealed partial class Mp4Parser
     // The sample entry's coding as the codec route names it: MPEG-4 audio by its esds box's object
     // type (ISO/IEC 14496-1 Table 5, ISO/IEC 14496-14 5.6), QuickTime's ".mp3", AC-3 and E-AC-3
     // (ETSI TS 102 366 F.3, F.5), and DTS (ETSI TS 102 114 E.2.2.1, and object type 0xA9, which FFmpeg's
-    // mp4 object type table gives for DTS).
+    // mp4 object type table gives for DTS). ALAC is read when the entry has its alac box, which holds the magic cookie that reading a frame needs.
     // A protected entry is read as the original format its sinf box names.
     private static string? CodecOf(SampleEntry entry) => entry.EffectiveFormat switch
     {
@@ -44,6 +44,7 @@ public sealed partial class Mp4Parser
             _ => null,
         },
         ".mp3" => "mpeg-audio",
+        "alac" when entry.DecoderSpecificInfo is not null => "alac",
         "ac-3" => "ac-3",
         "ec-3" => "e-ac-3",
         "dtsc" or "dtsh" or "dtsl" or "dtse" => "dts",

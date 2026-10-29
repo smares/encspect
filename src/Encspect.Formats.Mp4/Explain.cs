@@ -16,6 +16,7 @@ internal static class Topics
     public const string ChannelLayouts = "channel-layouts";
     public const string CommonEncryption = "common-encryption";
     public const string ItunesAndAudibleProtection = "itunes-and-audible-protection";
+    public const string Alac = "alac";
 }
 
 // What each MP4 node is, in the words the report shows next to it. Constants only, picked per box
@@ -23,6 +24,7 @@ internal static class Topics
 internal static class Explain
 {
     public const string File = "An ISO base media file: a run of boxes, each a size, a four-character type and its contents. MP4, M4A, M4B and QuickTime .mov files share this structure (ISO/IEC 14496-12 4.2).";
+    public const string AlacSpecificBox = "ALAC specific box: version and flags, then ALAC's magic cookie, the codec's configuration: the frame length, bit depth, channels, tuning parameters and sample rate, and for more than two channels the channel layout (ALACMagicCookieDescription.txt in Apple's ALAC source).";
     public const string TrailingData = "Bytes after the last box that do not start another box, such as a tag appended to the file or the rest of a damaged box.";
 
     public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies inside MP4 data without a declared end, which the tag breaks; the analyzer does not read them as boxes.";

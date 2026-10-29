@@ -1,0 +1,141 @@
+namespace Encspect.Formats.Alac;
+
+// What each ALAC node is, in the words the report shows next to it. Constants only: the elements of a long file are built by the hundred thousand, so
+// a description picks one of these and never allocates. The sources are the files of Apple's ALAC reference implementation (macosforge/alac:
+// ALACMagicCookieDescription.txt, ALACAudioTypes.h, ALACDecoder.cpp, ag_dec.c, dp_dec.c and matrix_dec.c), named where a description rests on one, and
+// the files Apple's and FFmpeg's encoders wrote. The format has no published specification beyond them.
+internal static class Explain
+{
+    public const string Cookie = "ALAC's magic cookie: the configuration of the codec, which a container stores apart from the frames. It holds the ALACSpecificConfig and, optionally, the channel layout info (ALACMagicCookieDescription.txt).";
+    public const string FormatAtom = "The atom that older encoders' cookies begin with: it names the format of the stream. Apple's decoder skips it when it is there (ALACMagicCookieDescription.txt, \"Compatibility\").";
+    public const string FormatAtomType = "The type of the atom, \"frma\".";
+    public const string FormatAtomFormat = "The format the atom names, \"alac\" in a cookie of an ALAC stream.";
+    public const string AtomSize = "The size of the atom in bytes, as it states it.";
+    public const string ConfigAtom = "The atom header of 12 bytes in front of the ALACSpecificConfig: its size, the type \"alac\" and version flags. Apple's decoder skips it when it is there; in an MP4 file the box that holds the cookie has it.";
+    public const string ConfigAtomType = "The type of the atom, \"alac\".";
+    public const string ConfigAtomFlags = "The version and flags of the atom, 0 in the description (ALACMagicCookieDescription.txt).";
+    public const string SpecificConfig = "The ALACSpecificConfig: 24 bytes that set up the decoder with the frame length, the bit depth, three tuning parameters, the number of channels, the sizes and the sample rate (ALACMagicCookieDescription.txt).";
+    public const string ShortConfig = "The bytes of the cookie that are fewer than the 24 of the ALACSpecificConfig.";
+    public const string FrameLength = "The number of samples in each channel of a frame that does not state its own count (ALACMagicCookieDescription.txt, frameLength). Apple's encoder writes 4,096 (ALACAudioTypes.h, kALACDefaultFrameSize).";
+    public const string CompatibleVersion = "The version of the format a decoder must understand; the description says to write 0, and Apple's decoder refuses a cookie with a larger value (ALACDecoder.cpp, Init).";
+    public const string BitDepth = "The bit depth of the source samples, at most 32 (ALACAudioTypes.h). Apple's encoder takes 16, 20, 24 and 32 bits (ALACEncoder.cpp).";
+    public const string HistoryWeight = "The weight, in units of 1/512, with which each residual enters the running mean that steers the Golomb parameter; each channel's History Weight Factor scales it by that factor over 4 (ALACDecoder.cpp, ag_dec.c). The description calls it unused, but the reference decoder takes it. Apple's encoder writes 40.";
+    public const string InitialHistory = "The value the running mean starts at for every channel of every element; the Golomb parameter follows the mean divided by 512 (ag_dec.c). Apple's encoder writes 10.";
+    public const string MaximumParameter = "The largest Golomb parameter the residual code uses (ag_dec.c). Apple's encoder writes 14.";
+    public const string Channels = "The number of channels (ALACMagicCookieDescription.txt, numChannels). Without channel layout info, one is mono, two are left and right, and more have no specific designation.";
+    public const string MaximumRun = "The maximum run, listed in the description as unused with the value 255 for the encoder to write; the reference decoder stores it and reads it nowhere (ag_dec.c).";
+    public const string MaximumFrameSize = "The size in bytes of the largest packet of the stream, as the encoder states it (ALACMagicCookieDescription.txt, maxFrameBytes).";
+    public const string MaximumFrameSizeUnknown = "The size of the largest packet is 0, which means the encoder did not know it (ALACMagicCookieDescription.txt, maxFrameBytes).";
+    public const string AverageBitRate = "The average bit rate of the stream in bits per second, as the encoder states it (ALACMagicCookieDescription.txt, avgBitRate).";
+    public const string AverageBitRateUnknown = "The average bit rate is 0, which means the encoder did not know it (ALACMagicCookieDescription.txt, avgBitRate).";
+    public const string SampleRate = "The sample rate of the stream in Hz (ALACMagicCookieDescription.txt, sampleRate).";
+    public const string LayoutInfo = "The channel layout info: 24 bytes that name where the channels belong, which the description requires for layouts of more than two channels (ALACMagicCookieDescription.txt).";
+    public const string LayoutSize = "The size of the layout info in bytes; the description says 24.";
+    public const string LayoutType = "The type of the layout info, \"chan\".";
+    public const string LayoutFlags = "The version and flags of the layout info, 0 in the description.";
+    public const string LayoutTag = "The channel layout as one of Core Audio's layout tags: the upper 16 bits name the layout and the lower 16 the number of channels. ALAC defines eight, one for each channel count from 1 to 8 (ALACAudioTypes.h).";
+    public const string LayoutBitmap = "A word the description lists as reserved with the value 0; it is the channel bitmap of Core Audio's AudioChannelLayout (ALACAudioTypes.h).";
+    public const string LayoutDescriptions = "A word the description lists as reserved with the value 0; it is the number of channel descriptions of Core Audio's AudioChannelLayout (ALACAudioTypes.h).";
+    public const string TerminatorAtom = "The atom of 8 bytes that ends an older encoder's cookie (ALACMagicCookieDescription.txt, \"Compatibility\").";
+    public const string TerminatorType = "The type of the terminator atom, 0.";
+    public const string CookieExtra = "Bytes of the cookie after the fields the description defines; the analyzer does not read them.";
+
+    public const string ContainedFrames = "The ALAC frames the container holds, one to a packet.";
+    public const string Frame = "One frame: the elements that code the samples of every channel for a number of samples, then an end tag (ALACDecoder.cpp). A frame does not depend on the one before it.";
+    public const string UnwalkedFrameData = "The bytes of a frame that the analyzer did not read, because the magic cookie is missing or cannot be used to read it.";
+    public const string UndetailedFrameData = "The bytes of a frame the analyzer read to its end; the report lists the elements of the first 4,096 frames only.";
+    public const string FurtherElements = "More elements of the frame, which the analyzer reads but does not list one by one, up to and including the end tag.";
+    public const string Padding = "Bits that bring the next field or the end of the frame to a byte boundary; Apple's encoder writes zeros (ALACBitUtilities.c, BitBufferByteAlign).";
+    public const string TrailingData = "Bytes of the packet after the frame's end tag and its padding; a decoder does not read them.";
+    public const string UnreadData = "The bits of the packet after the last element the analyzer could read.";
+
+    public const string SingleChannelElement = "A single channel element: one channel, compressed or uncompressed (ALACDecoder.cpp, ID_SCE).";
+    public const string ChannelPairElement = "A channel pair element: two channels coded together, compressed with an optional mixing of the pair or uncompressed (ALACDecoder.cpp, ID_CPE).";
+    public const string CouplingElement = "A coupling channel element, tag 2. ALAC defines no syntax for it; the reference decoder refuses a frame that has one (ALACDecoder.cpp).";
+    public const string LfeElement = "A low frequency effects element: one channel coded as a single channel element is (ALACDecoder.cpp, ID_LFE).";
+    public const string DataStreamElement = "A data stream element: bytes of data that the decoder skips (ALACDecoder.cpp, DataStreamElement).";
+    public const string ProgramConfigElement = "A program config element, tag 5. ALAC defines no syntax for it; the reference decoder refuses a frame that has one (ALACDecoder.cpp).";
+    public const string FillElement = "A fill element: bytes of filler that the decoder skips (ALACDecoder.cpp, FillElement).";
+    public const string EndElement = "The end tag that closes the frame; the frame's bytes then continue to a byte boundary (ALACDecoder.cpp, ID_END).";
+    public const string ElementTag = "The 3-bit tag that opens an element: 0 single channel, 1 channel pair, 2 coupling channel, 3 LFE, 4 data stream, 5 program config, 6 fill, 7 end (ALACAudioTypes.h).";
+    public const string InstanceTag = "The 4-bit instance tag of the element, which tells elements of one type apart. Apple's encoder numbers them from 0; the reference decoder only notes which occurred.";
+    public const string ReservedBits = "Twelve bits the element header reserves; they are 0 (ALACDecoder.cpp: the decoder refuses an element where they are not).";
+    public const string ReservedBitsSet = "Twelve bits the element header reserves, which are not all 0; the reference decoder refuses such an element (ALACDecoder.cpp).";
+    public const string PartialFrame = "The element states its own sample count, in the 32 bits that follow the header, instead of using the frame length of the cookie. Apple's encoder sets it for a frame with fewer samples, such as the last one (ALACEncoder.cpp).";
+    public const string WholeFrame = "The element has the frame length of the cookie as its sample count.";
+    public const string NoBytesShifted = "No bytes are shifted out of the samples: the predictor and the residuals carry their whole width.";
+    public const string BytesShifted = "The number of low bytes of each sample that are stored apart, after the prediction parameters, instead of being predicted; Apple's encoder shifts 1 byte for 24-bit samples and 2 for 32-bit ones (ALACEncoder.cpp).";
+    public const string BytesShiftedInvalid = "The value 3, which the field can hold but the reference decoder refuses (ALACDecoder.cpp).";
+    public const string Compressed = "The element holds a predictor and Golomb-coded residuals for each channel.";
+    public const string Uncompressed = "The element holds its samples as they are, because the compressed form would not be smaller (the \"escape\" flag of the element header; ALACEncoder.cpp).";
+    public const string SampleCount = "The number of samples in each channel of the element.";
+    public const string UncompressedSamples = "The samples of the element, each as many bits wide as the bit depth, the channels of a pair alternating.";
+    public const string MixBits = "The number of bits of the mixing weights of a channel pair: with the mixing resolution it gives how the first channel mixes left and right (matrix_dec.c).";
+    public const string MixBitsMono = "A byte the header of a single channel element carries, which the decoder reads and does not use.";
+    public const string MixResolutionMixed = "The weight of the left channel in the first channel's mix, out of 2 to the power of the mix bits; the second channel is left less right (matrix_dec.c). Mid/side stereo has the two weights equal.";
+    public const string MixResolutionPlain = "The mixing resolution is 0: the two channels are coded as they are, left and right (matrix_dec.c).";
+    public const string MixResolutionMono = "A byte the header of a single channel element carries, which the decoder reads and does not use.";
+    public const string Predictor = "The prediction parameters of a channel: the type, the shift, the weight factor and the coefficients of its adaptive filter (ALACDecoder.cpp).";
+    public const string PredictionTypePlain = "The type is 0: the channel is rebuilt with the adaptive filter alone (ALACDecoder.cpp).";
+    public const string PredictionTypeFirstOrder = "The type is not 0: the decoder first undoes a first-order difference, adding each residual to the sample before, and then applies the adaptive filter (ALACDecoder.cpp: the \"numActive == 31\" pass).";
+    public const string PredictorShift = "The shift that scales the filter's sum back to the sample's size; the coefficients are fractions of 2 to the power of the shift (dp_dec.c).";
+    public const string WeightFactor = "The factor, out of 4, that scales the history weight of the cookie for this channel (ALACDecoder.cpp: pb times the factor over 4).";
+    public const string PredictorOrder = "The number of coefficients of the filter, 0 to 31 (the field is 5 bits); Apple's encoder writes up to 16 (ALACAudioTypes.h, kALACMaxCoefs).";
+    public const string PredictorCoefficients = "The starting values of the filter's coefficients, signed 16-bit numbers; the decoder adapts them sample by sample (dp_dec.c).";
+    public const string ShiftedBits = "The low bytes shifted out of every sample of the element, stored apart in sample order, the channels of a pair alternating (ALACDecoder.cpp).";
+    public const string Residuals = "The residuals of a channel: what is left of each sample after the prediction, coded with the adaptive Golomb code (ag_dec.c).";
+    public const string ZeroRuns = "The number of runs of zero residuals that the code stores as one count each (ag_dec.c).";
+    public const string LongCodes = "The number of residuals written with the long prefix: nine ones, then the value as it is (ag_dec.c).";
+    public const string DataStreamInstanceTag = "The 4-bit instance tag of the data stream element, which ties it to an audio element (ALACDecoder.cpp).";
+    public const string DataStreamAligned = "Whether the data starts on a byte boundary of the frame (ALACDecoder.cpp, DataStreamElement).";
+    public const string DataStreamCount = "The number of data bytes: 8 bits, and 8 more when those are 255 (ALACDecoder.cpp, DataStreamElement).";
+    public const string DataStreamData = "The data bytes of the element, which the decoder skips.";
+    public const string FillCount = "The number of filler bytes: 4 bits, and when those are 15, 8 more less 1 added (ALACDecoder.cpp, FillElement).";
+    public const string FillData = "The filler bytes of the element, which the decoder skips.";
+
+    public const string Statistics = "Figures computed over the frames of the stream.";
+    public const string StatFrames = "The number of frames in the stream.";
+    public const string StatPartialFrames = "The frames with an element that states its own sample count.";
+    public const string StatUncompressedFrames = "The frames with an element that holds its samples uncompressed.";
+    public const string StatUnreadableFrames = "The frames the analyzer could not read to their end.";
+    public const string StatSamples = "The samples of each channel the frames hold, added up; a frame that was not read, or whose first element is cut off, adds none.";
+    public const string StatDuration = "The duration of the samples at the sample rate.";
+    public const string StatRate = "The sample rate of the audio, from the magic cookie.";
+    public const string StatChannels = "The number of channels, from the magic cookie.";
+    public const string StatBits = "The bit depth of the audio, from the magic cookie.";
+    public const string StatFrameLength = "The samples in every frame that does not state its own count, from the magic cookie.";
+    public const string StatElements = "The elements of all the frames, by their tags.";
+    public const string StatElementCount = "The number of elements with this tag.";
+    public const string StatElementCoding = "How the audio elements are coded: with a predictor and Golomb-coded residuals, or uncompressed.";
+    public const string StatStereoCoding = "How the channel pairs are coded: mixed as mid/side stereo, or as they are, left and right. An uncompressed pair is left/right.";
+    public const string StatChannelsCompressed = "The channels of compressed elements, which have a predictor.";
+    public const string StatPredictionTypes = "The channels by the prediction type they state.";
+    public const string StatPredictorOrders = "The channels by the number of coefficients of their filter.";
+    public const string StatPredictorShifts = "The channels by the predictor shift they state.";
+    public const string StatWeightFactors = "The channels by the history weight factor they state.";
+    public const string StatBytesShifted = "The compressed audio elements by the number of low bytes shifted out of their samples.";
+    public const string StatZeroRuns = "The runs of zero residuals that the code stores as one count each, over all channels.";
+    public const string StatLongCodes = "The residuals written with the long prefix, over all channels.";
+    public const string StatFillBytes = "The bytes of the fill elements.";
+    public const string StatDataStreamBytes = "The bytes of the data stream elements.";
+    public const string StatCategory = "The share of the audio elements, or of the channel pairs, coded this way.";
+    public const string StatCount = "The number of channels or elements with this value, and their share.";
+
+    public const string CodingLeftRight = "A channel pair coded as left and right: its mixing resolution is 0 or its samples are uncompressed (matrix_dec.c).";
+    public const string CodingMidSide = "A channel pair whose channels are mixed: the first is a weighted mix of left and right, the second their difference; with equal weights that is mid/side stereo (matrix_dec.c).";
+    public const string CodingCompressed = "An audio element coded with a predictor and Golomb-coded residuals.";
+    public const string CodingUncompressed = "An audio element that holds its samples as they are, which Apple's encoder does when the compressed form would not be smaller (ALACEncoder.cpp).";
+    public const string StereoCodingSeries = "How each channel pair of each frame is coded: left/right, or mixed as mid/side stereo.";
+    public const string ElementCodingSeries = "How each audio element of each frame is coded: compressed or uncompressed.";
+
+    public const string AverageBitrate = "The bits of the frames over the time their samples last.";
+    public const string MinimumBitrate = "The bitrate of the frame with the lowest bitrate.";
+    public const string MaximumBitrate = "The bitrate of the frame with the highest bitrate.";
+    public const string Smallest = "The smallest frame.";
+    public const string Largest = "The largest frame.";
+    public const string BitrateMode = "Whether the frames all have the same bitrate: variable where they differ, constant where they do not, and unknown for a single frame, since one frame shows no variation. Lossless frames are as long as their audio needs.";
+    public const string Distribution = "How many frames fall in each bitrate range of 32 kbps.";
+    public const string DistributionBin = "The frames whose bitrate falls in this range, and their share.";
+    public const string BitrateSeries = "The bitrate of each frame: its bits over the time its samples last.";
+    public const string BitrateOverTimeSeries = "The bitrate of each second of audio: the bits of the frames that start in that second over the time their samples last.";
+}
