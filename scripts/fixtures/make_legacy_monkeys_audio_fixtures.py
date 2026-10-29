@@ -40,7 +40,8 @@ FRAME_FAST = 9216
 # kind) for silence followed by that kind. The options: "crc": False for a file without the CRC flag (the frames then start with a checksum); "padded": False for a
 # file of 3.81 or later that ends where the coded data of its last frame does, without the four zero bytes the encoder script appends (the SDK's bit array reads zeros
 # past the end of the file, which the range coder of 3.90 to 3.92 does for its last two bytes); "forced": the values of every array of the Rice coding of 3.89 whose
-# overflow is exactly 16 or 32 (monkeys_audio_old.encode_array_rice).
+# overflow is exactly 16 or 32 (monkeys_audio_old.encode_array_rice); "mask": the channel mask of the extensible WAV header the file stores (the files otherwise leave
+# the header to the decompressor, with the flag for it).
 NO_CRC = {"crc": False}
 UNPADDED = {"padded": False}
 FIXTURES = {
@@ -108,6 +109,10 @@ FIXTURES = {
     "legacy-3970-high-24-stereo": (3970, 3000, 2, 24, "music", 3000, None),
     "legacy-3970-normal-16-mono": (3970, 2000, 1, 16, "music", 4000, None),
     "legacy-3970-normal-16-silent-then-tone-mono": (3970, 2000, 1, 16, (FRAME_95, "music"), 4000, None),
+    # A WAV header with a channel mask stored in the file (the decoder's output layout and the stream's follow it): the speakers at the sides in place of left and right, in a
+    # file whose decoder is the one of 3.80 to 3.92 and in one of the decoder of 3.93 to 3.98 with the old header.
+    "legacy-3910-normal-16-stereo-mask-sides": (3910, 2000, 2, 16, "music", 4000, None, {"mask": 0x600}),
+    "legacy-3950-normal-16-stereo-mask-center-lfe": (3950, 2000, 2, 16, "music", 4000, None, {"mask": 0xC}),
     "legacy-3980-normal-16-stereo": (3980, 2000, 2, 16, "music", 4000, None),
     "legacy-3980-extra-high-8-mono": (3980, 4000, 1, 8, "music", 3000, None),
 }
@@ -154,15 +159,26 @@ def canonical_pcm(samples, bits):
     return bytes(out)
 
 
+def stored_header(spec):
+    """The header data a file with a mask stores: the WAVE file's bytes up to the audio. (Without one, the file sets the flag for a header the decompressor creates.)"""
+    _version, _level, channels, bits, _signal, count, _peak = spec[:7]
+    mask = options_of(spec).get("mask")
+    if mask is None:
+        return 32, b""
+    wave = sig.wav("music", RATE, channels, len(samples_of(spec)), bits, mask)
+    return 0, wave[:wave.index(b"data") + 8]
+
+
 def encode(name):
     spec = FIXTURES[name]
     version, level, channels, bits, _signal, _count, peak = spec[:7]
     samples = samples_of(spec)
+    flags, header = stored_header(spec)
     if version < 3930:
-        data, frames, counts = old.encode(samples, version, level, channels, bits, RATE, wav_pcm(samples, bits), flags=32, peak=peak, has_crc=options_of(spec).get("crc", True),
-                                    padded=options_of(spec).get("padded", True), forced=options_of(spec).get("forced"))
+        data, frames, counts = old.encode(samples, version, level, channels, bits, RATE, wav_pcm(samples, bits), flags=flags, peak=peak, has_crc=options_of(spec).get("crc", True),
+                                    padded=options_of(spec).get("padded", True), forced=options_of(spec).get("forced"), header_data=header)
     else:
-        data, frames, counts = legacy.encode(samples, version, level, channels, bits, RATE, wav_pcm(samples, bits), flags=32, peak=peak)
+        data, frames, counts = legacy.encode(samples, version, level, channels, bits, RATE, wav_pcm(samples, bits), flags=flags, peak=peak, header_data=header)
     return data, canonical_pcm(samples, bits)
 
 
@@ -197,7 +213,7 @@ def old_manifest(data, name, pcm):
         "decode_findings": [] if is_decoded else [{"code": "decode.not-possible", "count": 1}],
         "regions": [{"name": "Monkey's Audio", "offset": 0, "length": len(data)}],
         "encoder": {"tool": TOOL_OLD if a.version < 3930 else TOOL},
-        "findings": [{"code": "monkeys-audio.old-format", "contains": ""}],
+        "findings": [{"code": "monkeys-audio.old-format", "contains": ""}, *m.wav_header(a.header_data, a.channels)[1]],
         **({"decoded_pcm_md5": hashlib.md5(pcm).hexdigest()} if is_decoded else {}),
         "crosscheck": {"mac_verify": True if is_decoded else None, "samples": samples},
         "header": {"flags": a.flags},

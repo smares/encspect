@@ -190,7 +190,36 @@
               "name": "WAV Header Data",
               "value": "68 bytes, a RIFF WAVE header",
               "offset": 80,
-              "length": 68
+              "length": 68,
+              "children": [
+                {
+                  "name": "Format Tag",
+                  "value": "0xFFFE (extensible)",
+                  "offset": 100,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 8,
+                  "unit": "channels",
+                  "offset": 102,
+                  "length": 2
+                },
+                {
+                  "name": "Channel Mask",
+                  "value": 1599,
+                  "offset": 120,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Speakers",
+                      "value": "front left, front right, front center, LFE, back left, back right, side left, side right",
+                      "offset": 120,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Encoder",
@@ -250,6 +279,12 @@
                   "name": "Channels",
                   "value": 8,
                   "unit": "channels",
+                  "offset": 0,
+                  "length": 194864
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "7.1 (front left, front right, front center, LFE, back left, back right, side left, side right)",
                   "offset": 0,
                   "length": 194864
                 },
@@ -373,6 +408,17 @@
         "sampleRate": 48000,
         "channels": 8,
         "channelMode": "Multichannel",
+        "channelLayout": [
+          "front left",
+          "front right",
+          "front center",
+          "LFE",
+          "back left",
+          "back right",
+          "side left",
+          "side right"
+        ],
+        "channelLayoutName": "7.1",
         "bitsPerSample": 24,
         "samples": 12000,
         "duration": 0.25,

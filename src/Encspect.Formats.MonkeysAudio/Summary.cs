@@ -11,6 +11,10 @@ internal static class Summary
     // The speakers of one or two channels; the format states no positions for more.
     public static IReadOnlyList<Speaker>? Layout(int channels) => channels is 1 or 2 ? Layouts[channels - 1] : null;
 
+    // The speakers the channel mask of the stored WAV header assigns, for any number of channels; without a mask, the layout of one or two channels.
+    public static IReadOnlyList<Speaker>? Layout(int channels, uint? mask) =>
+        mask is { } value and not 0 && channels is >= 1 and <= ApeHeader.MaximumChannels ? ChannelLayouts.FromWaveMask(value, channels) : Layout(channels);
+
     public static void Finish(State s)
     {
         ApeHeader h = s.Header;
@@ -98,7 +102,7 @@ internal static class Summary
         long samples = h.TotalFrames == 0 ? 0 : h.TotalBlocks;
         int rate = (int)Math.Min(h.SampleRate, int.MaxValue);
         double duration = rate > 0 ? samples / (double)rate : 0;
-        IReadOnlyList<Speaker>? layout = Layout(h.Channels);
+        IReadOnlyList<Speaker>? layout = Layout(h.Channels, s.Wav?.Mask);
         statistics.Add(Cover("Frames", NodeValue.Integer(s.Frames, "frames", "frame"), Explain.StatFrames, Topics.Frames));
         statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));

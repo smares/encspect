@@ -21,7 +21,13 @@ public class MonkeysAudioDecoderFixtureTests
 
         public long Samples { get; private set; }
 
-        public void Format(PcmFormat format) => _bits = format.BitsPerSample;
+        public PcmFormat? Declared { get; private set; }
+
+        public void Format(PcmFormat format)
+        {
+            _bits = format.BitsPerSample;
+            Declared = format;
+        }
 
         public void Write(PcmBlock block)
         {
@@ -67,6 +73,12 @@ public class MonkeysAudioDecoderFixtureTests
         if (manifest.TryGetProperty("decoded_pcm_md5", out JsonElement md5))
         {
             Assert.Equal(md5.GetString(), sink.Hash());
+        }
+
+        // The layout the decoder tells its sink is the stream's.
+        if (sink.Declared is { } declared)
+        {
+            Assert.Equal(report.Streams.Single().ChannelLayout, declared.ChannelLayout);
         }
 
         var wanted = new SortedDictionary<string, int>(StringComparer.Ordinal);
@@ -183,5 +195,33 @@ public class MonkeysAudioDecoderFixtureTests
         }
 
         return Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings("\n") + "\n";
+    }
+
+    private static readonly Speaker[] LeftRight = [Speaker.FrontLeft, Speaker.FrontRight];
+
+    // What the decoder tells its sink about the channels, from the channel mask of the stored WAV header: the decoder of the current format (a file with a
+    // descriptor, and one of 3.95 with the old header), the decoder of 3.80 to 3.92, and the defaults where the header has no mask.
+    public static TheoryData<string, Speaker[]?> DeclaredLayouts => new()
+    {
+        { "monkeys-audio/external-mask-5.1-sides.ape", [Speaker.FrontLeft, Speaker.FrontRight, Speaker.FrontCenter, Speaker.LowFrequency, Speaker.SideLeft, Speaker.SideRight] },
+        { "monkeys-audio/external-bw64-5.1-sides.ape", [Speaker.FrontLeft, Speaker.FrontRight, Speaker.FrontCenter, Speaker.LowFrequency, Speaker.SideLeft, Speaker.SideRight] },
+        { "monkeys-audio/external-w64-5.1-back.ape", [Speaker.FrontLeft, Speaker.FrontRight, Speaker.FrontCenter, Speaker.LowFrequency, Speaker.BackLeft, Speaker.BackRight] },
+        { "monkeys-audio/legacy-3950-normal-16-stereo-mask-center-lfe.ape", [Speaker.FrontCenter, Speaker.LowFrequency] },
+        { "monkeys-audio/legacy-3910-normal-16-stereo-mask-sides.ape", [Speaker.SideLeft, Speaker.SideRight] },
+        { "monkeys-audio/external-level-normal-16-stereo.ape", LeftRight },
+        { "monkeys-audio/external-normal-16-mono.ape", [Speaker.FrontCenter] },
+        { "monkeys-audio/legacy-3910-fast-8-mono.ape", [Speaker.FrontCenter] },
+        { "monkeys-audio/external-plain-format-6ch.ape", null },
+    };
+
+    [Theory]
+    [MemberData(nameof(DeclaredLayouts))]
+    public void TheDecoderDeclaresTheLayoutTheMaskGives(string name, Speaker[]? expected)
+    {
+        (Report report, HashingSink sink) = Decode(name);
+
+        Assert.NotNull(sink.Declared);
+        Assert.Equal(expected, sink.Declared.ChannelLayout);
+        Assert.Equal(expected, report.Streams.Single().ChannelLayout);
     }
 }

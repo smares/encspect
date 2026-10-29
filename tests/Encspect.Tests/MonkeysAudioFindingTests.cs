@@ -25,6 +25,8 @@ public class MonkeysAudioFindingTests
             return [.. seek, .. file[..at], .. inner, .. file[at..]];
         },
         ["monkeys-audio.frames-not-listed"] = () => MonkeysAudioBuilder.Silence((1 << 20) + 8),
+        ["monkeys-audio.wav-extensible-incomplete"] = MonkeysAudioWavHeaderTests.IncompleteExtensibleFile,
+        ["monkeys-audio.wav-header-unused"] = MonkeysAudioWavHeaderTests.UnusedHeaderDataFile,
     };
 
     // Findings that decoding raises, and the crafted file that raises each.

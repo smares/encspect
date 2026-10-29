@@ -310,6 +310,31 @@ public class WavFixtureTests
         Assert.Equal("A-law", Assert.Single(Fixtures.AnalyzeMpeg("wav/built-format-14-bytes-alaw.wav").Streams).Codec);
     }
 
+    // An extensible format chunk that ends before its cbSize has no mask to read, and says so.
+    [Theory]
+    [InlineData(16)]
+    [InlineData(17)]
+    public void AnExtensibleFormatChunkWithoutACbSizeIsIncomplete(int size)
+    {
+        byte[] fmt = new byte[size];
+        BinaryPrimitives.WriteUInt16LittleEndian(fmt.AsSpan(0), 0xFFFE);
+        BinaryPrimitives.WriteUInt16LittleEndian(fmt.AsSpan(2), 2);
+        BinaryPrimitives.WriteUInt32LittleEndian(fmt.AsSpan(4), 44100);
+        BinaryPrimitives.WriteUInt32LittleEndian(fmt.AsSpan(8), 176400);
+        BinaryPrimitives.WriteUInt16LittleEndian(fmt.AsSpan(12), 4);
+        BinaryPrimitives.WriteUInt16LittleEndian(fmt.AsSpan(14), 16);
+        byte[] data = [.. "data"u8, .. BitConverter.GetBytes(4), 0, 0, 0, 0];
+        byte[] body = [.. "WAVE"u8, .. "fmt "u8, .. BitConverter.GetBytes(size), .. fmt, .. new byte[size & 1], .. data];
+        byte[] file = [.. "RIFF"u8, .. BitConverter.GetBytes(body.Length), .. body];
+
+        Report report = Analyzer.CreateDefault().Analyze("crafted.wav", new MemoryStream(file), AnalysisOptions.Default);
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wav.extensible-incomplete");
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Contains("holds no cbSize", finding.Message, StringComparison.Ordinal);
+        Assert.NotNull(finding.Path);
+    }
+
     [Fact]
     public void ADs64ChunkWithoutATableLengthStillGivesItsSizes()
     {

@@ -267,7 +267,7 @@ internal static partial class Nodes
 
         if (info.Mask != 0)
         {
-            data.Add(Field(at, info.Length, "Channel Layout", ChannelLayouts.Describe(Decode.Layout(info.Mask, info.Channels)), Explain.ChannelLayoutField, Topics.Channels));
+            data.Add(Field(at, info.Length, "Channel Layout", ChannelLayouts.Describe(ChannelLayouts.FromWaveMask(info.Mask, info.Channels)), Explain.ChannelLayoutField, Topics.Channels));
         }
     }
 

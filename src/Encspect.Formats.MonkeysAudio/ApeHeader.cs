@@ -112,6 +112,9 @@ internal readonly struct ApeHeader
         return headerAt + OldHeaderBytes + HeaderDataBytes + (4 * elements) + (FileVersion <= 3800 ? elements : 0);
     }
 
+    // The flag for a WAV header the decompressor writes itself, so that the file keeps none (an old header states 0 bytes of header data with it).
+    public bool CreatesWavHeader => (Flags & FormatFlags.CreatesWavHeader) != 0;
+
     public bool HasStoredCrc => (Flags & FormatFlags.HasCrc) != 0 || FileVersion >= 3930;
 
     // Whether the SDK reads a checksum from the frames: the CRC where there is one, and otherwise the Rice-coded sum of the versions before 3.90. Its bit array

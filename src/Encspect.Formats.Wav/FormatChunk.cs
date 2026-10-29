@@ -87,7 +87,7 @@ internal static class FormatChunk
                     if (mask != 0)
                     {
                         long maskAt = f.Position - 4;
-                        string speakers = ChannelLayouts.Speakers(MaskSpeakers(mask.Value));
+                        string speakers = ChannelLayouts.Speakers(ChannelLayouts.WaveMaskSpeakers(mask.Value));
                         chunk.Children[^1].Add("Speakers", maskAt, 4, speakers, Explain.MaskSpeakers, Topics.ChannelLayouts);
                     }
 
@@ -120,6 +120,11 @@ internal static class FormatChunk
             {
                 f.Bytes("Codec Specific Data", extraEnd - f.Position, Explain.CodecSpecificData, Topics.WaveCompressed);
             }
+        }
+        else if (tag == FormatTags.Extensible && length >= 16)
+        {
+            s.Findings.Add(Severity.Warning, "wav.extensible-incomplete", chunk.Children[^1], _ =>
+                "The format tag is 0xFFFE (WAVEFORMATEXTENSIBLE), whose cbSize is at least 22 for the valid bits, the channel mask and the sub-format, but the fmt chunk holds no cbSize.");
         }
 
         if (f.Remaining > 0)
@@ -237,40 +242,6 @@ internal static class FormatChunk
         4 => "4 (CCITT J.17)",
         _ => value.ToString(System.Globalization.CultureInfo.InvariantCulture),
     };
-
-    // The speakers of a channel mask in the order of its bits, which is the order of the channels in the data. The bits past the eighteen
-    // positions of the WAVE channel mask are the EBU's additions (Tech 3306-2009 section 3) and SPEAKER_ALL; they stand for channels without a position.
-    public static List<Speaker> MaskSpeakers(uint mask)
-    {
-        var speakers = new List<Speaker>();
-        for (int bit = 0; bit < 32; bit++)
-        {
-            if ((mask & (1u << bit)) != 0)
-            {
-                speakers.Add(bit < 18 ? (Speaker)(bit + 1) : Speaker.Discrete);
-            }
-        }
-
-        return speakers;
-    }
-
-    // The speakers of the channels of a stream: with fewer channels than the mask has bits the extra, most significant bits are ignored, and with
-    // more the remaining channels are assigned to no speaker (Microsoft, "Multiple channel audio data and WAVE files", "Details about dwChannelMask").
-    public static IReadOnlyList<Speaker> Layout(uint mask, int channels)
-    {
-        List<Speaker> speakers = MaskSpeakers(mask);
-        if (speakers.Count > channels)
-        {
-            speakers.RemoveRange(channels, speakers.Count - channels);
-        }
-
-        while (speakers.Count < channels)
-        {
-            speakers.Add(Speaker.Discrete);
-        }
-
-        return speakers;
-    }
 
     private static void Validate(State s, WaveFormat format, Node chunk)
     {

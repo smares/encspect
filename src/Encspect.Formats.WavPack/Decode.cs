@@ -134,28 +134,6 @@ internal static class Decode
         return new ChannelInfoValue(channels, streams, mask, data.Length);
     }
 
-    // The mask's speakers in the order of its bits, which is the order of the channels in the file
-    // (WAVEFORMATEXTENSIBLE's), then channels without a position up to the count. Positions above
-    // the 18 the WAVE format names are channels without one too.
-    public static List<Speaker> Layout(uint mask, int channels)
-    {
-        var layout = new List<Speaker>();
-        for (int bit = 0; bit < 32 && layout.Count < channels; bit++)
-        {
-            if ((mask & (1u << bit)) != 0)
-            {
-                layout.Add(bit <= (int)Speaker.TopBackRight - 1 ? (Speaker)(bit + 1) : Speaker.Discrete);
-            }
-        }
-
-        while (layout.Count < channels)
-        {
-            layout.Add(Speaker.Discrete);
-        }
-
-        return layout;
-    }
-
     // ID_CONFIG_BLOCK: the config flags from bit 8 up in three bytes, then the level of extra
     // processing where the flags say it was used (read_config_info). Null for fewer than 3 bytes,
     // which libwavpack skips.

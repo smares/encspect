@@ -38,6 +38,9 @@ internal sealed class State
 
     public ApeHeader Header { get; set; }
 
+    // The fmt chunk of the stored WAV header, read before the frames so the decoder can be given its channel mask; null where the header data is no WAVE header.
+    public WavFormat? Wav { get; set; }
+
     public bool HasHeader { get; set; }
 
     // Where the structures lie in the file.

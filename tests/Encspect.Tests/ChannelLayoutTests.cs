@@ -210,4 +210,26 @@ public class ChannelLayoutTests
         Assert.Contains("\"channelLayoutName\": \"5.0\"", json, StringComparison.Ordinal);
         Assert.Contains("\"multilingualChannels\": 7", json, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void WaveMaskAssignsTheChannelsInTheOrderOfItsBits()
+    {
+        Assert.Equal([L, R, C, Lfe, Bl, Br], ChannelLayouts.FromWaveMask(0x3F, 6));
+        Assert.Equal([L, R, C, Lfe, Sl, Sr], ChannelLayouts.FromWaveMask(0x60F, 6));
+
+        // Extra high bits are ignored, extra channels have no position, and bits from 18 up stand for channels without one.
+        Assert.Equal([L, R, C], ChannelLayouts.FromWaveMask(0x3F, 3));
+        Assert.Equal([L, R, X, X], ChannelLayouts.FromWaveMask(0x3, 4));
+        Assert.Equal([L, X], ChannelLayouts.FromWaveMask(0x40001, 2));
+        Assert.Equal([X, X], ChannelLayouts.FromWaveMask(0, 2));
+        Assert.Empty(ChannelLayouts.FromWaveMask(0x3F, 0));
+        Assert.Equal([L, R, X], ChannelLayouts.WaveMaskSpeakers(0x80003));
+
+        // Bit 17 is the last position of the WAVE channel mask (top back right); bit 18 is the first without one. With one bit more than the channels the extra bit goes.
+        Assert.Equal([Speaker.TopBackRight], ChannelLayouts.FromWaveMask(1u << 17, 1));
+        Assert.Equal([Speaker.TopBackRight], ChannelLayouts.WaveMaskSpeakers(1u << 17));
+        Assert.Equal([X], ChannelLayouts.WaveMaskSpeakers(1u << 18));
+        Assert.Equal([L, R], ChannelLayouts.FromWaveMask(0x7, 2));
+        Assert.Equal([L, R, C, Lfe, Bl], ChannelLayouts.FromWaveMask(0x3F, 5));
+    }
 }
