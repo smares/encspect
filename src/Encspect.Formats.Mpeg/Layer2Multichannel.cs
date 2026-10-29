@@ -15,14 +15,93 @@ internal sealed class Layer2Multichannel
     private static readonly string[] CenterNames = ["None", "Present", "Reserved", "Phantom"];
     private static readonly string[] SurroundNames = ["None", "Mono", "Stereo", "Second stereo programme"];
 
-    // Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
-    private static readonly (int Channels, int TcBits, int DynBits, int Prediction)[][] Shapes = [];
+    // By surround, then whether a center is coded: the additional channels, the bits of
+    // tc_allocation and of dyn_cross_mode, and the row of Predictors (ISO/IEC 13818-3, the syntax
+    // of mc_composite_status_info). The tables below follow the standard and the conformance
+    // streams of ISO/IEC 13818-4; docs/development.md names the check.
+    private static readonly (int Channels, int TcBits, int DynBits, int Prediction)[][] Shapes =
+    [
+        [(0, 0, 0, 3), (1, 2, 1, 2)],
+        [(1, 2, 1, 2), (2, 3, 3, 1)],
+        [(2, 2, 3, 1), (3, 3, 4, 0)],
+        [(2, 0, 0, 3), (3, 2, 1, 2)],
+    ];
 
-    // Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
-    private static readonly int[][] Predictors = [];
+    // The number of 2-bit predsi fields of a subband group with prediction, by dyn_cross_mode: rows
+    // for 3/2, for 3/1 and 2/2, for 3/0, 2/1 and 3/0 + 2/0, and for 2/0 and 2/0 + 2/0.
+    private static readonly int[][] Predictors =
+    [
+        [6, 4, 4, 4, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0],
+        [4, 2, 2, 0, 0, 0, 0, 0],
+        [2, 0],
+        [0],
+    ];
 
-    // Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
-    private static readonly int[] Groups = [];
+    // The subband group of each subband: 0 to 7 alone, 8 and 9, 10 and 11, 12 to 15, then 16 and above.
+    private static readonly int[] Groups =
+        [.. Enumerable.Range(0, 30).Select(sb => sb < 8 ? sb : sb < 10 ? 8 : sb < 12 ? 9 : sb < 16 ? 10 : 11)];
+
+    // How a mode fills an additional channel: read from the bitstream, copied from a base channel
+    // chosen by what the channel carries, copied from T0, T1, T2 or T3, or zero.
+    private enum Source
+    {
+        Read,
+        Base,
+        T0,
+        T1,
+        T2,
+        T3,
+        Zero,
+    }
+
+    private const Source R = Source.Read;
+    private const Source B = Source.Base;
+
+    // 3/2, by dyn_cross_mode: T2, T3, T4.
+    private static readonly Source[][] Modes32 =
+    [
+        [R, R, R],
+        [R, R, Source.T1],
+        [R, Source.T0, R],
+        [B, R, R],
+        [R, Source.T0, Source.T1],
+        [B, R, Source.T1],
+        [B, Source.T0, R],
+        [B, Source.T0, Source.T1],
+        [R, R, Source.T3],
+        [R, Source.T2, R],
+        [R, R, Source.T2],
+        [R, Source.T2, Source.T1],
+        [R, Source.T0, Source.T2],
+        [B, R, Source.T3],
+        [R, Source.T2, Source.T2],
+        [Source.Zero, Source.Zero, Source.Zero],
+    ];
+
+    // 3/1 and 2/2, by dyn_cross_mode: T2, T3.
+    private static readonly Source[][] Modes31 =
+    [
+        [R, R],
+        [R, B],
+        [B, R],
+        [B, B],
+        [R, Source.T2],
+        [B, B],
+        [B, B],
+        [B, B],
+    ];
+
+    // What T2 and T3 carry for each tc_allocation (13818-3, semantics of tc_allocation): L for a left
+    // or left surround channel, R for the right ones, any other letter for a channel that is neither
+    // (center, surround, not assigned).
+    private static string[] Carries(int surround, bool centerCoded) => (surround, centerCoded) switch
+    {
+        (2, true) => ["CLRCCCRL"],
+        (1, true) => ["CLRCCL--", "SSSLRR--"],
+        (2, false) => ["LLLL", "RRRR"],
+        (1, false) => ["SLR-"],
+        _ => ["CLR-"],
+    };
 
     private readonly List<(string Name, int Bit, int Length, NodeValue Value, string Description)> _header = [];
     private readonly List<(string Name, int Bit, int Length, NodeValue Value, string Description)> _status = [];
@@ -238,7 +317,7 @@ internal sealed class Layer2Multichannel
                 return value;
             }
 
-            Allocate(mc, allocation, sb, channels, dynBits, dynMode[g], secondStereo[g], tc[g], dynLeftRight, left, right, Transmit);
+            Allocate(mc, allocation, sb, channels, dynMode[g], secondStereo[g], tc[g], dynLeftRight, left, right, Transmit);
         }
 
         mc.ScfsiStart = bits.Position;
@@ -258,10 +337,62 @@ internal sealed class Layer2Multichannel
         return mc;
     }
 
-    // Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
-    private static void Allocate(Layer2Multichannel mc, int[,] a, int sb, int channels, int dynBits, int mode, int second,
-        int tc, int fromRight, int left, int right, Func<int, int> transmit) =>
-        throw new NotImplementedException();
+    // Decides the allocation index of T2 to T4 in one subband, reading the fields the bitstream
+    // carries in channel order; the rules are those of the clean-room description.
+    private static void Allocate(Layer2Multichannel mc, int[,] a, int sb, int channels, int mode, int second,
+        int tc, int fromRight, int left, int right, Func<int, int> transmit)
+    {
+        bool centerCoded = mc.Center is 1 or 3;
+        Source[] plan;
+        if (mc.Surround == 3)
+        {
+            // The second programme occupies the last two channels; its right channel may copy its left.
+            Source copy = second == 1 ? (centerCoded ? Source.T3 : Source.T2) : Source.Read;
+            plan = centerCoded ? [mode == 1 ? B : R, R, copy] : [R, copy];
+        }
+        else if (channels == 3)
+        {
+            plan = Modes32[mode];
+        }
+        else if (channels == 2)
+        {
+            plan = Modes31[mode];
+        }
+        else
+        {
+            plan = [mode == 1 ? B : R];
+        }
+
+        string[] carries = Carries(mc.Surround, centerCoded);
+        for (int i = 0; i < channels; i++)
+        {
+            int value;
+            if (i == 0 && mc.Center == 3 && sb >= 12)
+            {
+                value = 0;
+            }
+            else
+            {
+                value = plan[i] switch
+                {
+                    Source.Read => transmit(2 + i),
+                    Source.Base => carries[i][tc] switch
+                    {
+                        'L' => left,
+                        'R' => right,
+                        _ => fromRight == 1 ? right : left,
+                    },
+                    Source.T0 => left,
+                    Source.T1 => right,
+                    Source.T2 => a[2, sb],
+                    Source.T3 => a[3, sb],
+                    _ => 0,
+                };
+            }
+
+            a[2 + i, sb] = value;
+        }
+    }
 
     // fileOffset is where data starts in the file.
     public Node ToNode(long fileOffset, int rate)

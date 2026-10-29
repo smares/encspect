@@ -83,8 +83,35 @@ internal sealed class Layer2AudioData
 
     public static int SubbandCount(int table) => Tables[table].Length;
 
-    // Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
-    public static int TableFor(MpegHeader header) => throw new NotImplementedException();
+    // The frame does not name its table: the sampling frequency and the bitrate per channel select it
+    // (ISO/IEC 11172-3 2.4.3.3.1 and the captions of Tables 3-B.2a to 3-B.2d). The classes extend the
+    // captions to the bitrate and mode combinations the standard does not allow.
+    public static int TableFor(MpegHeader header)
+    {
+        if (!header.IsMpeg1)
+        {
+            return 4;
+        }
+
+        int rate = header.SampleRate;
+        if (header.IsFreeFormat)
+        {
+            return rate == 48000 ? 0 : 1;
+        }
+
+        int perChannel = header.Bitrate / (header.IsMono ? 1 : 2);
+        if (perChannel <= 48)
+        {
+            return rate == 32000 ? 3 : 2;
+        }
+
+        if (perChannel <= 80 || rate == 48000)
+        {
+            return 0;
+        }
+
+        return 1;
+    }
 
     // Bits of three samples: one codeword for 3, 5 or 9 levels, three otherwise.
     public static int SampleBits(int levels) => levels switch

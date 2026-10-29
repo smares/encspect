@@ -60,15 +60,36 @@ SCALEFACTORS_PER_SCFSI = {0: 3, 1: 2, 2: 1, 3: 2}
 
 CENTER = ["None", "Present", "Reserved", "Phantom"]
 SURROUND = ["None", "Mono", "Stereo", "Second stereo programme"]
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
-MC_SHAPE = {}
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
-PREDICTORS = []
+# (surround, center coded) -> (additional channels, tc_allocation bits, dyn_cross_mode bits, 2-bit
+# predsi fields per group at dyn_cross_mode 0); ISO/IEC 13818-3, the syntax of mc_composite_status_info.
+MC_SHAPE = {
+    (0, 0): (0, 0, 0, 0),
+    (0, 1): (1, 2, 1, 2),
+    (1, 0): (1, 2, 1, 2),
+    (1, 1): (2, 3, 3, 4),
+    (2, 0): (2, 2, 3, 4),
+    (2, 1): (3, 3, 4, 6),
+    (3, 0): (2, 0, 0, 0),
+    (3, 1): (3, 2, 1, 2),
+}
 
 
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def table_for(version, rate, bitrate, channels):
-    raise NotImplementedError
+    """The allocation table index: 0 to 3 for B.2a to B.2d, 4 for the MPEG-2 table.
+
+    The sampling frequency and the bitrate per channel select it (ISO/IEC 11172-3 2.4.3.3.1);
+    bitrate is None for free format.
+    """
+    if version != "1":
+        return 4
+    if bitrate is None:
+        return 0 if rate == 48000 else 1
+    per_channel = bitrate // channels
+    if per_channel <= 48:
+        return 3 if rate == 32000 else 2
+    if per_channel <= 80 or rate == 48000:
+        return 0
+    return 1
 
 
 def zero_code(levels):
@@ -153,7 +174,7 @@ class Multichannel:
         self.declared_ad_bytes = declared_ad_bytes
         # No allocation in the additional channels, so the extension takes only a few bytes.
         self.empty = empty
-        self.channels, self.tc_bits, _, self.pred_table = MC_SHAPE[(surround, center & 1)]
+        self.channels, self.tc_bits, _, self.predictors = MC_SHAPE[(surround, center & 1)]
 
     def configuration(self):
         front = 3 if self.center in (1, 3) else 2
@@ -190,7 +211,7 @@ class Multichannel:
             for group in self.prediction:
                 covered.put(1 if group is not None else 0, 1)
                 if group is not None:
-                    assert len(group) == PREDICTORS[self.pred_table]
+                    assert len(group) == self.predictors
                     for predsi in group:
                         covered.put(predsi, 2)
         if self.lfe:
