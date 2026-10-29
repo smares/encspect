@@ -19,18 +19,18 @@ internal static class Topics
 }
 
 // What each Monkey's Audio node is, in the words the report shows next to it. Constants only: the frames of a long file are built by the hundred
-// thousand, so a description picks one of these and never allocates. The source is the Monkey's Audio SDK 13.42 (MACLib.h, APEHeader.cpp,
+// thousand, so a description picks one of these and never allocates. The source is the Monkey's Audio SDK 13.44 (MACLib.h, APEHeader.cpp,
 // APEInfo.cpp, APEDecompress.cpp, APEDecompressCore.cpp, APECompressCreate.cpp, BitArray.cpp, UnBitArray.cpp, NewPredictor.cpp, Prepare.h), and the
 // files its mac tool wrote.
 internal static class Explain
 {
-    public const string Stream = "A Monkey's Audio file: a descriptor and a header, a seek table, the header of the WAV file that was compressed, the compressed frames, and the bytes that followed the audio in the WAV file (Monkey's Audio SDK 13.42, MACLib.h, \"APE File Format Overview\").";
+    public const string Stream = "A Monkey's Audio file: a descriptor and a header, a seek table, the header of the WAV file that was compressed, the compressed frames, and the bytes that followed the audio in the WAV file (Monkey's Audio SDK 13.44, MACLib.h, \"APE File Format Overview\").";
     public const string Junk = "Bytes before the descriptor. The SDK scans up to 1 MiB for it, to get past an ID3v2 tag (APEHeader.cpp, FindDescriptor).";
 
     public const string Descriptor = "The 52-byte descriptor that files of version 3.98 and later start with: the sizes of everything that follows it, and the MD5 of the coded data (MACLib.h, APE_DESCRIPTOR).";
     public const string Signature = "\"MAC \" for integer audio and \"MACF\" for floating-point audio, the four characters every Monkey's Audio file starts with (APEHeader.cpp).";
     public const string FileVersion = "The version of the file format the encoder wrote, stored times 1000: 3.99 is 3990. It decides how the frames are coded, so a decoder must follow it.";
-    public const string ProgramVersion = "The version of the program that wrote the file, stored times 1000 (13.42 is 13420). Monkey's Audio has stored it since 13.17; earlier files store 0.";
+    public const string ProgramVersion = "The version of the program that wrote the file, stored times 1000 (13.44 is 13440). Monkey's Audio has stored it since 13.17; earlier files store 0.";
     public const string DescriptorBytes = "The size of the descriptor, 52. A larger value leaves room for fields added later: the SDK reads the header after that many bytes (APEHeader.cpp, AnalyzeCurrent).";
     public const string HeaderBytes = "The size of the header that follows the descriptor, 24.";
     public const string SeekTableBytes = "The size of the seek table in bytes, 4 for each frame.";

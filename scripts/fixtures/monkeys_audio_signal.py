@@ -27,7 +27,7 @@ def samples(kind, rate, channels, count, bits):
                 value = tone if i < count * 2 // 3 else noise
             elif kind == "quiet":
                 # A triangle wave that moves one step a sample: the predictors follow it almost exactly, so every sample costs about the least the
-                # range coder spends on one (1.74 bits, Monkey's Audio SDK 13.42, UnBitArrayBase.h, RANGE_WIDTH_2), and frames of a million samples
+                # range coder spends on one (1.74 bits, Monkey's Audio SDK 13.44, UnBitArrayBase.h, RANGE_WIDTH_2), and frames of a million samples
                 # code in a few hundred kilobytes.
                 phase = (i + 500 * channel) % 2000
                 value = ((phase if phase < 1000 else 2000 - phase) - 500) / scale

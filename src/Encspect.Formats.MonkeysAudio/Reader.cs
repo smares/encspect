@@ -1,4 +1,4 @@
-// Follows the Monkey's Audio SDK 13.42 (APEHeader.cpp, APEInfo.cpp, MACLib.cpp, APEDecompress.cpp, APEDecompressCore.cpp, Old/UnMACOld.cpp), 3-clause BSD license:
+// Follows the Monkey's Audio SDK 13.44 (APEHeader.cpp, APEInfo.cpp, MACLib.cpp, APEDecompress.cpp, APEDecompressCore.cpp, Old/UnMACOld.cpp), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 using System.Buffers.Binary;
 using System.Globalization;
@@ -7,7 +7,7 @@ using Encspect.Core;
 namespace Encspect.Formats.MonkeysAudio;
 
 // Reads a Monkey's Audio file: the descriptor and header (or the old header), the seek table, the WAV header data, then the frames by the
-// seek table, and the terminating data (Monkey's Audio SDK 13.42, MACLib.h "APE File Format Overview", APEHeader.cpp, APEInfo.cpp). The coded
+// seek table, and the terminating data (Monkey's Audio SDK 13.44, MACLib.h "APE File Format Overview", APEHeader.cpp, APEInfo.cpp). The coded
 // samples are not read here: a frame is located, its stored CRC and special frame codes are read, and with decoding on the decoder takes it from there.
 internal static class Reader
 {
@@ -188,7 +188,7 @@ internal static class Reader
         {
             int version = h.FileVersion;
             f.Add(Severity.Warning, "monkeys-audio.version", () => h.HasDescriptor ? Descriptor("File Version") : Field("File Version"), _ =>
-                $"The file states version {ApeHeader.VersionText(version)}, which is not one the SDK 13.42 reads (3.00 to 3.99 and 4.11); the fields are read as the newest layout defines them.");
+                $"The file states version {ApeHeader.VersionText(version)}, which is not one the SDK 13.44 reads (3.00 to 3.99 and 4.11); the fields are read as the newest layout defines them.");
         }
 
         if (!h.HasDescriptor)

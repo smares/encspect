@@ -2,7 +2,7 @@
 id: monkeys-audio-range-coding
 title: Monkey's Audio range coding
 related: monkeys-audio-frames, monkeys-audio-prediction, rice-coding, huffman-coding
-references: Monkey's Audio SDK 13.42, Source/MACLib/UnBitArray.cpp, UnBitArrayBase.h, BitArray.cpp and Old/UnBitArrayOld.cpp
+references: Monkey's Audio SDK 13.44, Source/MACLib/UnBitArray.cpp, UnBitArrayBase.h, BitArray.cpp and Old/UnBitArrayOld.cpp
 ---
 
 **The problem.** After prediction, what is left of each sample is a small signed number that is usually near zero, and the number of bits it takes should follow how large it is.

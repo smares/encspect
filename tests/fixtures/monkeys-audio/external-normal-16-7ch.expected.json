@@ -1,16 +1,16 @@
 {
- "length": 124852,
+ "length": 83008,
  "descriptor": {
   "version": 3990,
-  "program": 13420,
+  "program": 13440,
   "descriptor_bytes": 52,
   "header_bytes": 24,
   "seek_table_bytes": 4,
   "header_data_bytes": 68,
-  "frame_data_bytes": 124704,
+  "frame_data_bytes": 82860,
   "terminating_bytes": 0,
-  "md5": "1778a2405b0788f8f6bdcf9ee845967b",
-  "md5_computed": "1778a2405b0788f8f6bdcf9ee845967b"
+  "md5": "f78babe5af5875cfdcdc400ac0af9f64",
+  "md5_computed": "f78babe5af5875cfdcdc400ac0af9f64"
  },
  "header": {
   "level": 2000,
@@ -27,12 +27,12 @@
   {
    "index": 0,
    "offset": 148,
-   "length": 124704,
+   "length": 82860,
    "samples": 12000,
    "crc": "0x33D1E384",
    "special": null,
    "start": 0,
-   "end": 124704
+   "end": 82860
   }
  ],
  "stream_infos": [
@@ -53,8 +53,8 @@
    "samples": 12000,
    "duration": 0.25,
    "bits_per_sample": 16,
-   "average_bitrate": 3990.528,
-   "encoder": "Monkey's Audio 13.42"
+   "average_bitrate": 2651.52,
+   "encoder": "Monkey's Audio 13.44"
   }
  ],
  "decoded_samples": 12000,
@@ -83,7 +83,7 @@
    ]
   },
   "verify": {
-   "isVerified": false,
+   "isVerified": true,
    "decoding": "decoded",
    "checksums": [
     {
@@ -100,26 +100,21 @@
      "coversAllAudio": true,
      "stored": 1,
      "checked": 1,
-     "failed": 1
+     "failed": 0
     }
    ]
   }
  },
- "decode_findings": [
-  {
-   "code": "monkeys-audio.frame-crc-mismatch",
-   "count": 1
-  }
- ],
+ "decode_findings": [],
  "regions": [
   {
    "name": "Monkey's Audio",
    "offset": 0,
-   "length": 124852
+   "length": 83008
   }
  ],
  "encoder": {
-  "tool": "mac, the console tool of the Monkey's Audio SDK 13.42, built from MAC_1342_SDK.zip",
+  "tool": "mac, the console tool of the Monkey's Audio SDK 13.44, built from MAC_1344_SDK.zip",
   "arguments": [
    "-c2000"
   ],
@@ -133,8 +128,9 @@
   }
  },
  "findings": [],
+ "decoded_pcm_md5": "8ce1e5fa11812f16def93b70ae0a32bc",
  "crosscheck": {
-  "mac_verify": false,
+  "mac_verify": true,
   "samples": 12000
  }
 }

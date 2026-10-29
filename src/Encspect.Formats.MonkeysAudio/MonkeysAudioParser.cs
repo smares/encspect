@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.MonkeysAudio;
 
 // Monkey's Audio files (.ape, .mac): a descriptor and header, a seek table, the WAV header data, frames of range-coded residuals and the WAV
-// terminating data (Monkey's Audio SDK 13.42). Files before version 3.98 have a header of their own and no descriptor. Tags after the data (APEv2,
+// terminating data (Monkey's Audio SDK 13.44). Files before version 3.98 have a header of their own and no descriptor. Tags after the data (APEv2,
 // ID3v1) are the host's; an ID3v2 tag before it too. The coded samples are decoded only with decoding on (docs/formats/monkeys-audio.md).
 public sealed class MonkeysAudioParser : IFormatParser
 {

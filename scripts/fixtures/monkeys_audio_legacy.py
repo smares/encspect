@@ -1,6 +1,6 @@
-"""Follows the Monkey's Audio SDK 13.42 (BSD 3-clause license, Copyright 2000-2026 Matthew T. Ashland; THIRD-PARTY-NOTICES.md).
+"""Follows the Monkey's Audio SDK 13.44 (BSD 3-clause license, Copyright 2000-2026 Matthew T. Ashland; THIRD-PARTY-NOTICES.md).
 
-An encoder for the coding of Monkey's Audio files from version 3.93 to 3.98, which the SDK 13.42 can only decode (it writes the current format), written
+An encoder for the coding of Monkey's Audio files from version 3.93 to 3.98, which the SDK 13.44 can only decode (it writes the current format), written
 as the inverse of what its decoder does (NewPredictor.cpp, Old/NewPredictorOld.cpp, NNFilterGeneric.cpp, Old/UnBitArrayOld.cpp, CUnBitArray3891To3989) and of
 the encoder of the current format (BitArray.cpp, Prepare.cpp) for everything the versions share.
 
@@ -8,7 +8,7 @@ The files it writes are held to the SDK, not to this script: `mac -V` decodes ea
 CRC, so a file that verifies is valid by that decoder's reading, and `mac -d` gives the audio the analyzer's decoder must reproduce. Real files of these
 versions are rare; the encoder makes the combinations of version, level, sample size and special frames that no public file has.
 
-What a version changes (SDK 13.42):
+What a version changes (SDK 13.44):
   - 3.93 and 3.94: one adaptive filter of four taps over the last values, and neural network filters that update their deltas the old way; the two
     channels of a pair are predicted on their own, the first one's value coded first (APEDecompressCore.cpp, DecodeBlocksToFrameBuffer).
   - 3.95 to 3.97: the predictors of the current format with the old delta; the stereo pair is predicted as in the current format.

@@ -2,7 +2,7 @@
 id: monkeys-audio-prediction
 title: Monkey's Audio prediction
 related: monkeys-audio-file, monkeys-audio-frames, monkeys-audio-range-coding, linear-prediction, mid-side-stereo, wavpack-decorrelation
-references: Monkey's Audio SDK 13.42, Source/MACLib/NewPredictor.cpp, NNFilter.cpp, NNFilterGeneric.cpp, NNFilterCommon.h, Prepare.cpp, Interim.cpp, Old/NewPredictorOld.cpp and Old/AntiPredictor*Old.cpp
+references: Monkey's Audio SDK 13.44, Source/MACLib/NewPredictor.cpp, NNFilter.cpp, NNFilterGeneric.cpp, NNFilterCommon.h, Prepare.cpp, Interim.cpp, Old/NewPredictorOld.cpp and Old/AntiPredictor*Old.cpp
 ---
 
 **The problem.** Audio is predictable from what came before it, and the better the prediction, the less is left to code. A better prediction costs more time on both sides.
