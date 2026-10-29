@@ -27,7 +27,7 @@ internal sealed partial class UnitSyntax
     // of the channel set sub-headers, and read when the word after the band data is looked for.
     private bool _isXllRefused;
 
-    // ff_dca_dmix_primary_nch: the channels each downmix type of Table 8-8 mixes the primary channel sets to.
+    // ETSI TS 102 114 Table 8-8: the channels each downmix type (1/0, Lo/Ro, Lt/Rt, 3/0, 2/1, 2/2, 3/1, unused) mixes the primary channel sets to.
     private static readonly int[] DownmixChannels = [1, 2, 2, 3, 3, 4, 4, 0];
 
     // 8.3.2 to 8.4.2: the channel set sub-headers, the navigation index and the band data of a lossless frame that starts at unit byte at.

@@ -506,11 +506,11 @@ def finish_header(bits, crc_start):
     return raw
 
 
-# Table 7-10's bits (nuSpkrActivityMask) as the bits of Table 6-22, the order of one bit for each speaker that the channel masks of XXCH and
-# of XLL's channel sets use (FFmpeg's DCA_SPEAKER_*): each pair of Table 7-10 is two bits there.
+# Table 7-10's bits (nuSpkrActivityMask) as the bits of Table 6-22 (ETSI TS 102 114 V1.6.1, checked against the pinned PDF), the order of one bit for
+# each speaker that the channel masks of XXCH and of XLL's channel sets use: each pair of Table 7-10 is two bits there.
 MASK_7_10_TO_6_22 = [(0,), (1, 2), (3, 4), (5,), (6,), (13, 15), (7, 8), (14,), (19,), (11, 12), (17, 18), (9, 10), (16,), (20, 21), (22,), (23, 24)]
 
-# FFmpeg's ff_dca_dmix_primary_nch: the channels each primary downmix type (Table 8-8) mixes to.
+# ETSI TS 102 114 Table 8-8: the channels each primary downmix type (1/0, Lo/Ro, Lt/Rt, 3/0, 2/1, 2/2, 3/1, unused) mixes to.
 DMIX_PRIMARY_CHANNELS = [1, 2, 2, 3, 3, 4, 4, 0]
 
 
