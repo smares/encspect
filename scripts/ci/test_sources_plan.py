@@ -321,5 +321,32 @@ class TagProblemTests(unittest.TestCase):
             self.assertEqual(len(asked), len(faac.RELEASES) * len(faac.REPOSITORIES))
 
 
+class MissingTests(unittest.TestCase):
+    """ffmpeg_sources.missing on a real archive: the MainTests stub it."""
+
+    def archive(self, directory, held):
+        import tarfile
+        path = pathlib.Path(directory) / "release.tar"
+        with tarfile.open(path, "w") as tar:
+            for name in held:
+                data = b"x"
+                info = tarfile.TarInfo(f"ffmpeg-{check_sources.ffmpeg_sources.VERSION}/{name}")
+                info.size = len(data)
+                tar.addfile(info, io.BytesIO(data))
+        return path
+
+    def test_only_the_asked_names_that_the_archive_lacks_are_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.archive(directory, ["libavcodec/a.c", "libavcodec/b.c", "libavcodec/c.c"])
+            self.assertEqual(check_sources.ffmpeg_sources.missing(path, ["libavcodec/a.c", "libavcodec/z.c"]), ["libavcodec/z.c"])
+            self.assertEqual(check_sources.ffmpeg_sources.missing(path, ["libavcodec/b.c"]), [])
+
+    def test_without_names_the_pinned_files_are_checked(self):
+        files = check_sources.ffmpeg_sources.FILES
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.archive(directory, files[1:])
+            self.assertEqual(check_sources.ffmpeg_sources.missing(path), files[:1])
+
+
 if __name__ == "__main__":
     unittest.main()

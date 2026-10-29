@@ -77,8 +77,8 @@ FILES = [
 def missing(archive, names=None):
     """The names in FILES (or in names, if given) that the archive at this path does not hold, so a pinned list cannot name a file the release lacks."""
     with tarfile.open(archive) as tar:
-        names = set(tar.getnames())
-    return [name for name in (FILES if names is None else names) if f"ffmpeg-{VERSION}/{name}" not in names]
+        held = set(tar.getnames())
+    return [name for name in (FILES if names is None else names) if f"ffmpeg-{VERSION}/{name}" not in held]
 
 
 def fetch(directory):
