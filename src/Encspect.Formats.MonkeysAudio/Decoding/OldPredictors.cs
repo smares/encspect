@@ -236,35 +236,8 @@ internal sealed class HighPredictor : OldPredictor
         int[] weights = _weights;
         for (int q = Math.Max(from, Taps); q < to; q++)
         {
-            int dot = 0;
-            int at = q - Taps;
             int i = input[q];
-            if (i > 0)
-            {
-                for (int j = 0; j < Taps; j++)
-                {
-                    int value = input[at + j];
-                    dot += value * weights[j];
-                    weights[j] += ((value >> 30) & 2) - 1;
-                }
-            }
-            else if (i < 0)
-            {
-                for (int j = 0; j < Taps; j++)
-                {
-                    int value = input[at + j];
-                    dot += value * weights[j];
-                    weights[j] -= ((value >> 30) & 2) - 1;
-                }
-            }
-            else
-            {
-                for (int j = 0; j < Taps; j++)
-                {
-                    dot += input[at + j] * weights[j];
-                }
-            }
-
+            int dot = OldVectors.HighTaps(input.AsSpan(q - Taps, Taps), weights, Math.Sign(i));
             i -= dot >> 9;
             input[q] = i;
             output[q] = _stages.Step(i, output[q - 1]);

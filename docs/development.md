@@ -241,7 +241,28 @@ The GUI stays a self-contained single file (`PublishSingleFile`, no ReadyToRun, 
 - **Arm:** FLAC's wide predictor (64-bit sums) has an AdvSimd path; the narrow one (32-bit sums, the common case) stays scalar there, since it needs 256-bit vectors. A 128-bit version was not measured on Arm, so it is not written; add it only with a measured gain.
 - **`NnVectorsTests`:** the loops of the neural network filters against plain loops on every length from 0 to 300 (every remainder of 8, 16 and 32), at misaligned offsets, with the extremes (int16 minimum and maximum, `-32768 * -32768` pairs, int32 wraparound), with spans of different lengths and in both directions of the step. Each is called through its public entry and through an internal `Dot128` or `AddOrSubtract128`, the 128-bit part that a processor with AVX2 does not reach from the public one (the only part NativeAOT has on x64), so the default run covers it; the 32-bit dot product is `Vector<T>` and reaches 128 bits under `DOTNET_EnableAVX2=0`, which the step below sets.
 - **Measurements:** the spectrum's FFT uses `Vector128` for its butterflies, lane by lane as the scalar loop, so it needs no other path ('Determinism' under 'Measurements' below).
-- **CI:** the `rest` shard on ubuntu-26.04 runs those three classes and `NnVectorsTests` once more for each of `DOTNET_EnableAVX512=0`, `DOTNET_EnableAVX2=0` and `DOTNET_EnableHWIntrinsic=0`, with trx results in the failed-test summary; the Arm runners take the `AdvSimd` paths in every run, and the x64 runners the paths their processor has.
+- **CI:** the `rest` shard on ubuntu-26.04 runs those three classes `NnVectorsTests` and `OldVectorsTests` once more for each of `DOTNET_EnableAVX512=0`, `DOTNET_EnableAVX2=0` and `DOTNET_EnableHWIntrinsic=0`, with trx results in the failed-test summary; the Arm runners take the `AdvSimd` paths in every run, and the x64 runners the paths their processor has.
+
+### Monkey's Audio before 3.93
+
+- **Where:** `OldVectors` holds the filter of 16 taps of `HighPredictor` in `Vector256`, `Vector128` or scalar code. The vector paths are branch-free on the coded value's sign; the scalar one branches on it.
+- **Tests:** `OldVectorsTests` compares every entry (256-bit, 128-bit, scalar) with a plain loop.
+- **Rule:** a speed change stays only if it cuts a whole file's time by 15% or more. Only the filter of 16 taps cleared that bar and was kept.
+- **Dropped:** a bit reader with one eight-byte load and a leading-zero count, and a vector filter of 8 taps for `ExtraHighPredictor`, were measured and removed.
+- **Method:** NativeAOT, minimum of 7 rounds, pinned to one core, under an exclusive lock; two runs on x86-64-v2 agreed within 2%, one run on x86-64-v3. Seconds:
+
+| Change | File | Before | After | Change |
+|---|---|---|---|---|
+| Bit reader (dropped) | 3.80 fast | 0.476 | 0.415 | -13% |
+| | 3.89 normal | 0.580 | 0.528 | -9% |
+| | 3.89 high | | | -4% |
+| | 3.92 files | | | 0 to +4% (the reader only reads the frame CRC there; the arrays are read from `bits.Data`) |
+| 16 taps (kept) | 3.89 high | 0.847 | 0.710 | -16% (v3 -18%) |
+| | 3.92 high | 1.018 | 0.839 | -18% (v3 -14%) |
+| 8 taps (dropped) | 3.88 extra high | 0.995 | 0.961 | -3% (v3 -2.5%) |
+| | 3.92 extra high | 1.083 | 1.052 | -3% (v3 -5.7%) |
+
+- **Why the 8 taps gain little:** the extra high files are dominated by the neural network filters.
 
 ## CLI runtime settings
 
