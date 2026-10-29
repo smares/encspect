@@ -416,7 +416,12 @@
   "max_packet": 168,
   "max_bitrate": 0
  },
- "findings": [],
+ "findings": [
+  {
+   "code": "wma.voice-not-read",
+   "contains": "Windows Media Audio Voice are not read"
+  }
+ ],
  "crosscheck": {
   "ffprobe": true,
   "decode": "ok"

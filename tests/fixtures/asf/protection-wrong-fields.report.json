@@ -331,76 +331,7 @@
                           "value": 10,
                           "unit": "bytes",
                           "offset": 230,
-                          "length": 10,
-                          "children": [
-                            {
-                              "name": "Samples Per Block",
-                              "value": 0,
-                              "unit": "samples",
-                              "offset": 230,
-                              "length": 4
-                            },
-                            {
-                              "name": "Encode Options",
-                              "value": 0,
-                              "offset": 234,
-                              "length": 2,
-                              "children": [
-                                {
-                                  "name": "Uses Exponent VLC",
-                                  "value": false,
-                                  "offset": 234,
-                                  "length": 1,
-                                  "bitOffset": 0,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "Uses Bit Reservoir",
-                                  "value": false,
-                                  "offset": 234,
-                                  "length": 1,
-                                  "bitOffset": 1,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "Uses Variable Block Length",
-                                  "value": false,
-                                  "offset": 234,
-                                  "length": 1,
-                                  "bitOffset": 2,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "Block Size Count Code",
-                                  "value": 0,
-                                  "offset": 234,
-                                  "length": 1,
-                                  "bitOffset": 3,
-                                  "bitLength": 2,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "Other Options",
-                                  "value": 0,
-                                  "offset": 234,
-                                  "length": 2,
-                                  "bitOffset": 5,
-                                  "bitLength": 11,
-                                  "bitOrder": "leastSignificantFirst"
-                                }
-                              ]
-                            },
-                            {
-                              "name": "Super Block Align",
-                              "value": 0,
-                              "unit": "bytes",
-                              "offset": 236,
-                              "length": 4
-                            }
-                          ]
+                          "length": 10
                         }
                       ]
                     }
