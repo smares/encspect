@@ -14,6 +14,6 @@ public sealed class WmaVoiceParser : ICodecParser
     {
         ArgumentNullException.ThrowIfNull(context);
         WmaHeaderOnly.Parse(context, "Windows Media Audio Voice", Topics.WmaVoice, "wma.voice-not-read",
-            "The frames of Windows Media Audio Voice are not read: the stream is described by what the container states, and its packets are counted.", null);
+            "The frames of Windows Media Audio Voice are not read: the stream is described by what the container states, and its packets are counted.", null, channelMaskInData: true);
     }
 }

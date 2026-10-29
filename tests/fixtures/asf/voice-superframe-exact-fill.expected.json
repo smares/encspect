@@ -1,5 +1,5 @@
 {
- "description": "Mono at 8 kHz in blocks of 120 bytes; the header of the first packet counts three superframes, and the two that it holds fill it to its last bit. A decoder goes on with the next packet without looking for the third, and the analysis reports no superframe running past the packet.",
+ "description": "Mono at 8 kHz in blocks of 120 bytes; the header of the first packet counts three superframes, and the two that it holds fill it to its last bit. A decoder goes on with the next packet without looking for the third.",
  "format": "ASF",
  "length": 884,
  "objects": [
@@ -154,7 +154,11 @@
  ],
  "crosscheck": {
   "ffprobe": true,
-  "decode": "ok"
+  "decode": "ok",
+  "ffmpeg": {
+   "samples": 2880,
+   "superframes": 6
+  }
  },
  "voice": {
   "superframes": [

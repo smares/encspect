@@ -58,9 +58,15 @@ Protection is reported on the streams (`StreamInfo.Protection`), in the JSON, th
 
 Format tags 0x0160 and 0x0161 (the codec "wma"), 0x0162 ("wma-pro") and 0x000A ("wma-voice"). Header level until the clean-room rewrites, as Lossless is:
 
-- The codec-specific data is shown as the container's bytes and nothing is read from it.
-- The packets are counted, with their total, smallest and largest size, the block alignment and the nominal bitrate the container states.
+- The codec-specific data (the type-specific data after the WAVEFORMATEX):
+  - **Version 2** (0x0161): the three fields of the ASF specification's section 11.1.1 are shown as plain values: Samples Per Block, Encode Options (as a 16-bit value, since the specification gives its bits no meaning) and Super Block Align. Bytes after them are an Extra Data node.
+  - **Version 1** (0x0160): the specification has no layout for it, so its bytes stay the container's bytes.
+  - **Professional:** the 18 bytes are shown the way Lossless's are (below).
+  - **Voice:** the bytes stay the container's bytes; its channel mask is read from them (see "Channel layout").
+- The packets are counted, with their total, smallest and largest size, the block alignment, the nominal bitrate the container states and the average bitrate.
 - The length comes from the container (the play duration less the preroll), and the stream's samples are that length at the sample rate.
+- The stream's average bitrate is the bytes of the packets over that length. The nominal bitrate (the WAVEFORMATEX's nAvgBytesPerSec) is shown apart in the statistics, since it can differ much for a variable bitrate stream. Where the stream starts with a preroll, the packets cover the preroll as well and the figure is a little high. A stream with encrypted samples counts no packets and reports the nominal bitrate.
+- The channel mode is Mono for one channel and Stereo for two, and has no value for other counts.
 - One info finding per stream says the frames are not read: `wma.standard-not-read` (versions 1 and 2), `wma.pro-not-read` and `wma.voice-not-read`.
 - The encoder and writer are named from the file's metadata and layout only (see below); a stream's frames name no encoder.
 - A stream whose samples are encrypted is shown as "frames not read: encrypted", with no finding of its own.
@@ -71,11 +77,11 @@ Format tags 0x0160 and 0x0161 (the codec "wma"), 0x0162 ("wma-pro") and 0x000A (
 Format tag 0x0163, routed as the codec "wma-lossless".
 
 - The 18 bytes of codec data (the sample size of 16 or 24 bits, the channel mask, the decode flags) are shown, the packets are counted, and the length is the container's. The frames are not read yet; a finding says so.
-- The length comes from the container (the play duration less the preroll) and the bitrate is the nominal one it states, since the packets reach beyond the duration where the stream starts with a preroll.
+- The length comes from the container (the play duration less the preroll) and the average bitrate is the packets' bytes over it, as for the other codecs above.
 
 ## Channel layout
 
-- The speakers come from the channel mask of the WAVEFORMATEXTENSIBLE or, where the codec data holds 18 bytes or more, from its bytes 2 to 5 (where Professional and Lossless keep it), in the order of the mask's bits, so a mask of 0x3F is 5.1 (front left and right, center, low-frequency, back left and right). The mask counts only where it names as many speakers as the stream has channels.
+- The speakers come from the channel mask of the WAVEFORMATEXTENSIBLE or, for Professional, Lossless and Voice with 18 bytes or more of codec data, from its bytes 2 to 5 (where they keep it; versions 1 and 2 have other fields there, section 11.1.1 of the ASF specification), in the order of the mask's bits, so a mask of 0x3F is 5.1 (front left and right, center, low-frequency, back left and right). The mask counts only where it names as many speakers as the stream has channels.
 - Without a usable mask, one channel is mono and two are stereo (left and right); other counts have no layout.
 
 ## Encoder detection

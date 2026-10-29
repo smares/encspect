@@ -1325,7 +1325,93 @@
                           "value": 18,
                           "unit": "bytes",
                           "offset": 4941,
-                          "length": 18
+                          "length": 18,
+                          "children": [
+                            {
+                              "name": "Bits Per Sample",
+                              "value": 24,
+                              "unit": "bits",
+                              "offset": 4941,
+                              "length": 2
+                            },
+                            {
+                              "name": "Channel Mask",
+                              "value": 63,
+                              "offset": 4943,
+                              "length": 4
+                            },
+                            {
+                              "name": "Unknown 1",
+                              "value": 0,
+                              "offset": 4947,
+                              "length": 8
+                            },
+                            {
+                              "name": "Decode Flags",
+                              "value": 224,
+                              "offset": 4955,
+                              "length": 2,
+                              "children": [
+                                {
+                                  "name": "Unread Flag",
+                                  "value": 0,
+                                  "offset": 4955,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Frame Length Adjustment",
+                                  "value": 0,
+                                  "offset": 4955,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Subframe Count Code",
+                                  "value": 4,
+                                  "offset": 4955,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Has Length Prefix",
+                                  "value": true,
+                                  "offset": 4955,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Uses Dynamic Range Compression",
+                                  "value": true,
+                                  "offset": 4955,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Other Flags",
+                                  "value": 0,
+                                  "offset": 4956,
+                                  "length": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Unknown 2",
+                              "value": 0,
+                              "offset": 4957,
+                              "length": 2
+                            }
+                          ]
                         }
                       ]
                     },
@@ -3153,6 +3239,13 @@
                           "unit": "kbps",
                           "offset": 4999,
                           "length": 54820
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 143.62919132149904,
+                          "unit": "kbps",
+                          "offset": 4999,
+                          "length": 54820
                         }
                       ]
                     }
@@ -3429,7 +3522,7 @@
         "channelLayoutName": "5.1",
         "samples": 146016,
         "duration": 3.042,
-        "averageBitrate": 256,
+        "averageBitrate": 143.62919132149904,
         "isVbr": true,
         "playbackGroup": 1,
         "writer": "Windows Media Format SDK 12.0.26100.33438",

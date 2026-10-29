@@ -358,8 +358,9 @@ public sealed partial class AsfParser
             return null;
         }
 
-        double seconds = (state.PlayDuration / 10_000_000.0) - (state.Preroll / 1000.0);
-        return seconds > 0 ? seconds : null;
+        // In 100 ns ticks and integers until the one division, so the figure carries no rounding noise.
+        ulong preroll = state.Preroll > ulong.MaxValue / 10_000 ? ulong.MaxValue : state.Preroll * 10_000;
+        return state.PlayDuration > preroll ? (state.PlayDuration - preroll) / 10_000_000.0 : null;
     }
 
     private static CodecConfiguration? ConfigurationOf(State state, StreamEntry stream, WaveFormat format)

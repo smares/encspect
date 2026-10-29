@@ -623,8 +623,9 @@ public class MemoryTests(ITestOutputHelper output)
 
     // An ASF file keeps a compact record per packet and per payload (the nodes are built when read), and its media
     // objects, which go to the codec parser one at a time and are never kept (plan, "Large inputs"). Measured over
-    // a Windows Media Audio stream of ffmpeg's encoder, a 185-byte superframe repeated, and over PCM payloads: the
-    // bounds are far below what keeping each media object's bytes or nodes would cost.
+    // a Windows Media Audio stream of ffmpeg's encoder, a 185-byte superframe repeated (the frames are not read), and
+    // over PCM payloads: 94 bytes kept and 94 peak per packet on linux-x64, so the bounds leave about twice that and
+    // more for the peak (macOS on arm64), and are far below what keeping each media object's bytes or nodes would cost.
     [Fact]
     public void ManyAsfPacketsStayCompact()
     {
@@ -642,8 +643,8 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
-    private const long AsfWmaKeptBound = 550;
-    private const long AsfWmaPeakBound = 550;
+    private const long AsfWmaKeptBound = 200;
+    private const long AsfWmaPeakBound = 250;
 
     // Objects that state millions of entries, in files of tens of megabytes: each list becomes nodes only up to a
     // count, so the heap stays a small fraction of what a node for every entry would take (gigabytes).

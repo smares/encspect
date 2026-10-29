@@ -5907,6 +5907,13 @@
                           "unit": "kbps",
                           "offset": 354,
                           "length": 16050
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 48.95247623811906,
+                          "unit": "kbps",
+                          "offset": 354,
+                          "length": 16050
                         }
                       ]
                     }
@@ -5930,6 +5937,7 @@
         "codec": "Windows Media Audio 1",
         "sampleRate": 44100,
         "channels": 2,
+        "channelMode": "Stereo",
         "channelLayout": [
           "front left",
           "front right"
@@ -5937,7 +5945,7 @@
         "channelLayoutName": "stereo",
         "samples": 88156,
         "duration": 1.999,
-        "averageBitrate": 48,
+        "averageBitrate": 48.95247623811906,
         "isVbr": false,
         "playbackGroup": 1,
         "series": []
@@ -5947,7 +5955,7 @@
       {
         "severity": "Info",
         "code": "wma.standard-not-read",
-        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container states, and its packets are counted.",
+        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container and the type-specific data state, and its packets are counted.",
         "offset": 354,
         "length": 16050,
         "path": [

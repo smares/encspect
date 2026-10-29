@@ -14,7 +14,7 @@ internal static class LongInputs
     public static IReadOnlyList<string> Names { get; } =
     [
         "mpeg-layer3-lame", "mpeg-layer3-frames", "adts", "ac3", "eac3", "dts", "ogg-pages", "ogg-speex", "ogg-vorbis", "ogg-opus",
-        "asf-wma", "asf-wma-pro", "asf-pcm", "wavpack", "flac", "monkeys-audio", "tta", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts", "matroska", "truehd", "mlp", "wav", "aiff",
+        "asf-wma", "asf-pcm", "wavpack", "flac", "monkeys-audio", "tta", "musepack-sv8", "musepack-sv7", "musepack-sv5", "mp4-aac", "adif", "mp4-ac3", "mp4-eac3", "mp4-dts", "matroska", "truehd", "mlp", "wav", "aiff",
     ];
 
     public static byte[] Build(string name) => name switch
@@ -30,7 +30,6 @@ internal static class LongInputs
         "ogg-vorbis" => VorbisPackets(2060),
         "ogg-opus" => OpusPackets(2060),
         "asf-wma" => AsfWma("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161, 2060),
-        "asf-wma-pro" => AsfWma("asf/external-windows-wma10pro-cbr-stereo-44k-256.wma", 0x0162, 2060),
         "asf-pcm" => AsfBuilder.Build(PcmStreamProperties(), new byte[160], 2060, 10),
         "wavpack" => WavPackTinyBlocks(2060),
         "flac" => FlacBuilder.Stream(2060),

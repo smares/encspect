@@ -141,10 +141,10 @@ public class AsfFixtureTests
         Assert.NotNull(rejected.Path);
     }
 
-    // WM/ToolName holds ffmpeg's encoder ID: an encoder claim, and no writer. A claim of ffmpeg's names the encoder only where the stream shows ffmpeg's,
+    // WM/ToolName holds ffmpeg's encoder ID: an encoder claim, which names no encoder here, and no writer. A claim of ffmpeg's names the encoder only where the stream shows ffmpeg's,
     // and the frames are not read, so no encoder is named.
     [Fact]
-    public void ALibavcodecToolNameIsEncoderEvidenceAndNoWriter()
+    public void ALibavcodecToolNameNamesNeitherEncoderNorWriter()
     {
         string path = Path.Combine(Fixtures.FixtureDirectory, "asf/derived-ffmpeg-wmav2-tool-name-lavc.asf");
         Report report = Analyzer.CreateDefault().Analyze(path, new MemoryStream(File.ReadAllBytes(path)));

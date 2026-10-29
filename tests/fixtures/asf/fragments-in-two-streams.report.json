@@ -331,7 +331,28 @@
                           "value": 10,
                           "unit": "bytes",
                           "offset": 230,
-                          "length": 10
+                          "length": 10,
+                          "children": [
+                            {
+                              "name": "Samples Per Block",
+                              "value": 34816,
+                              "unit": "samples",
+                              "offset": 230,
+                              "length": 4
+                            },
+                            {
+                              "name": "Encode Options",
+                              "value": 15,
+                              "offset": 234,
+                              "length": 2
+                            },
+                            {
+                              "name": "Super Block Align",
+                              "value": 0,
+                              "offset": 236,
+                              "length": 4
+                            }
+                          ]
                         }
                       ]
                     }
@@ -489,7 +510,28 @@
                           "value": 10,
                           "unit": "bytes",
                           "offset": 336,
-                          "length": 10
+                          "length": 10,
+                          "children": [
+                            {
+                              "name": "Samples Per Block",
+                              "value": 34816,
+                              "unit": "samples",
+                              "offset": 336,
+                              "length": 4
+                            },
+                            {
+                              "name": "Encode Options",
+                              "value": 15,
+                              "offset": 340,
+                              "length": 2
+                            },
+                            {
+                              "name": "Super Block Align",
+                              "value": 0,
+                              "offset": 342,
+                              "length": 4
+                            }
+                          ]
                         }
                       ]
                     }
@@ -2096,6 +2138,13 @@
                           "unit": "kbps",
                           "offset": 392,
                           "length": 1586
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 1.6,
+                          "unit": "kbps",
+                          "offset": 392,
+                          "length": 1586
                         }
                       ]
                     }
@@ -2162,6 +2211,13 @@
                           "unit": "kbps",
                           "offset": 392,
                           "length": 1586
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 0.8,
+                          "unit": "kbps",
+                          "offset": 392,
+                          "length": 1586
                         }
                       ]
                     }
@@ -2185,6 +2241,7 @@
         "codec": "Windows Media Audio 2",
         "sampleRate": 44100,
         "channels": 2,
+        "channelMode": "Stereo",
         "channelLayout": [
           "front left",
           "front right"
@@ -2192,7 +2249,7 @@
         "channelLayoutName": "stereo",
         "samples": 44100,
         "duration": 1,
-        "averageBitrate": 128,
+        "averageBitrate": 1.6,
         "isVbr": false,
         "playbackGroup": 1,
         "series": []
@@ -2208,6 +2265,7 @@
         "codec": "Windows Media Audio 2",
         "sampleRate": 44100,
         "channels": 2,
+        "channelMode": "Stereo",
         "channelLayout": [
           "front left",
           "front right"
@@ -2215,7 +2273,7 @@
         "channelLayoutName": "stereo",
         "samples": 44100,
         "duration": 1,
-        "averageBitrate": 128,
+        "averageBitrate": 0.8,
         "isVbr": false,
         "playbackGroup": 1,
         "series": []
@@ -2225,7 +2283,7 @@
       {
         "severity": "Info",
         "code": "wma.standard-not-read",
-        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container states, and its packets are counted.",
+        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container and the type-specific data state, and its packets are counted.",
         "offset": 392,
         "length": 1586,
         "path": [
@@ -2238,7 +2296,7 @@
       {
         "severity": "Info",
         "code": "wma.standard-not-read",
-        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container states, and its packets are counted.",
+        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container and the type-specific data state, and its packets are counted.",
         "offset": 392,
         "length": 1586,
         "path": [

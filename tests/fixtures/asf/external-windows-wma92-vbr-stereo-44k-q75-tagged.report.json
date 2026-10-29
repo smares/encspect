@@ -1186,7 +1186,28 @@
                           "value": 10,
                           "unit": "bytes",
                           "offset": 4983,
-                          "length": 10
+                          "length": 10,
+                          "children": [
+                            {
+                              "name": "Samples Per Block",
+                              "value": 34816,
+                              "unit": "samples",
+                              "offset": 4983,
+                              "length": 4
+                            },
+                            {
+                              "name": "Encode Options",
+                              "value": 15,
+                              "offset": 4987,
+                              "length": 2
+                            },
+                            {
+                              "name": "Super Block Align",
+                              "value": 0,
+                              "offset": 4989,
+                              "length": 4
+                            }
+                          ]
                         }
                       ]
                     },
@@ -3298,6 +3319,13 @@
                           "unit": "kbps",
                           "offset": 5033,
                           "length": 26990
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 104.76358296622612,
+                          "unit": "kbps",
+                          "offset": 5033,
+                          "length": 26990
                         }
                       ]
                     }
@@ -3548,6 +3576,7 @@
         "codec": "Windows Media Audio 2",
         "sampleRate": 44100,
         "channels": 2,
+        "channelMode": "Stereo",
         "channelLayout": [
           "front left",
           "front right"
@@ -3555,7 +3584,7 @@
         "channelLayoutName": "stereo",
         "samples": 90096,
         "duration": 2.043,
-        "averageBitrate": 104.744,
+        "averageBitrate": 104.76358296622612,
         "isVbr": true,
         "playbackGroup": 1,
         "writer": "Windows Media Format SDK 12.0.26100.33438",
@@ -3567,7 +3596,7 @@
       {
         "severity": "Info",
         "code": "wma.standard-not-read",
-        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container states, and its packets are counted.",
+        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container and the type-specific data state, and its packets are counted.",
         "offset": 5033,
         "length": 26990,
         "path": [

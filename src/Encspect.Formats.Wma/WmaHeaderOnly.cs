@@ -7,7 +7,7 @@ namespace Encspect.Formats.Wma;
 // container and the codec-specific data say (and its packets counted); the frames are not read.
 internal static class WmaHeaderOnly
 {
-    public static void Parse(CodecContext context, string codecName, string topic, string notReadCode, string notReadMessage, Action<CodecConfiguration, FindingCollector>? configuration)
+    public static void Parse(CodecContext context, string codecName, string topic, string notReadCode, string notReadMessage, Action<CodecConfiguration, FindingCollector>? configuration, bool channelMaskInData = false)
     {
         if (context.Packets is not { } packets)
         {
@@ -56,7 +56,7 @@ internal static class WmaHeaderOnly
             Topic = topic,
         });
 
-        WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings, []);
+        WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
         double? duration = config.Duration;
         Node statistics = stream.Add(new Node("Statistics", parent.Offset, parent.Length, Count(count, "packet", "packets"))
         {
@@ -84,12 +84,19 @@ internal static class WmaHeaderOnly
             statistics.Add("Nominal Bitrate", parent.Offset, parent.Length, NodeValue.Decimal(nominal, 1, "kbps"), Explain.StatNominalBitrate);
         }
 
+        double? average = duration is > 0 && count > 0 ? bytes * 8.0 / duration.Value / 1000 : null;
+        if (average is { } measured)
+        {
+            statistics.Add("Average Bitrate", parent.Offset, parent.Length, NodeValue.Decimal(measured, 1, "kbps"), Explain.StatAverageBitrate);
+        }
+
         findings.AddNow(Severity.Info, notReadCode, notReadMessage, stream);
 
         IReadOnlyList<Speaker>? layout = null;
         int channels = format.Channels;
-        // The mask is in the format's extensible header or, as in Professional, at byte 2 of the 18 bytes of codec data.
-        uint? stated = format.ChannelMask ?? (config.Data.Length >= 18 ? System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(config.Data.Span[2..]) : null);
+        // The mask is in the format's extensible header or, for the codecs that opt in (Professional, Lossless, Voice), at byte 2 of their codec data.
+        // The type-specific data of versions 1 and 2 has other fields there (ASF specification, section 11.1.1).
+        uint? stated = format.ChannelMask ?? (channelMaskInData && config.Data.Length >= 18 ? System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(config.Data.Span[2..]) : null);
         if (stated is { } mask && mask != 0 && System.Numerics.BitOperations.PopCount(mask) == channels && (mask >> 18) == 0)
         {
             layout = [.. Enumerable.Range(0, 18).Where(bit => (mask & (1u << bit)) != 0).Select(bit => (Speaker)(bit + 1))];
@@ -105,11 +112,12 @@ internal static class WmaHeaderOnly
             Codec = codecName,
             SampleRate = format.SampleRate,
             Channels = channels,
+            ChannelMode = channels == 1 ? "Mono" : channels == 2 ? "Stereo" : null,
             ChannelLayout = layout,
             BitsPerSample = null,
             Samples = duration is > 0 ? (long)Math.Round(duration.Value * format.SampleRate) : 0,
             Duration = duration ?? 0,
-            AverageBitrate = nominal > 0 ? nominal : null,
+            AverageBitrate = average,
             IsVbr = context.Configuration?.IsVbr ?? false,
             Encoder = detected.Encoder,
             EncoderConfidence = detected.EncoderConfidence,
@@ -120,7 +128,7 @@ internal static class WmaHeaderOnly
         findings.Flush(context);
     }
 
-    // A stream whose samples are encrypted takes the container's duration and the nominal bitrate of the format.
+    // A stream whose samples are encrypted takes the container's duration and the nominal bitrate of the format; its packets are not counted.
     private static void AddEncryptedStream(CodecContext context, string codec, AudioFormat format, CodecConfiguration configuration, string topic)
     {
         Node parent = context.Parent;

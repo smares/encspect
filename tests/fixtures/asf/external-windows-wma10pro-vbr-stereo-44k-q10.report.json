@@ -1325,7 +1325,93 @@
                           "value": 18,
                           "unit": "bytes",
                           "offset": 4937,
-                          "length": 18
+                          "length": 18,
+                          "children": [
+                            {
+                              "name": "Bits Per Sample",
+                              "value": 24,
+                              "unit": "bits",
+                              "offset": 4937,
+                              "length": 2
+                            },
+                            {
+                              "name": "Channel Mask",
+                              "value": 3,
+                              "offset": 4939,
+                              "length": 4
+                            },
+                            {
+                              "name": "Unknown 1",
+                              "value": 0,
+                              "offset": 4943,
+                              "length": 8
+                            },
+                            {
+                              "name": "Decode Flags",
+                              "value": 224,
+                              "offset": 4951,
+                              "length": 2,
+                              "children": [
+                                {
+                                  "name": "Unread Flag",
+                                  "value": 0,
+                                  "offset": 4951,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Frame Length Adjustment",
+                                  "value": 0,
+                                  "offset": 4951,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Subframe Count Code",
+                                  "value": 4,
+                                  "offset": 4951,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Has Length Prefix",
+                                  "value": true,
+                                  "offset": 4951,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Uses Dynamic Range Compression",
+                                  "value": true,
+                                  "offset": 4951,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Other Flags",
+                                  "value": 0,
+                                  "offset": 4952,
+                                  "length": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Unknown 2",
+                              "value": 49218,
+                              "offset": 4953,
+                              "length": 2
+                            }
+                          ]
                         }
                       ]
                     },
@@ -4005,6 +4091,13 @@
                           "unit": "kbps",
                           "offset": 4995,
                           "length": 24082
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 62.71324983520106,
+                          "unit": "kbps",
+                          "offset": 4995,
+                          "length": 24082
                         }
                       ]
                     }
@@ -4270,6 +4363,7 @@
         "codec": "Windows Media Audio Professional",
         "sampleRate": 44100,
         "channels": 2,
+        "channelMode": "Stereo",
         "channelLayout": [
           "front left",
           "front right"
@@ -4277,7 +4371,7 @@
         "channelLayoutName": "stereo",
         "samples": 133799,
         "duration": 3.034,
-        "averageBitrate": 64,
+        "averageBitrate": 62.71324983520106,
         "isVbr": true,
         "playbackGroup": 1,
         "writer": "Windows Media Format SDK 12.0.26100.33438",

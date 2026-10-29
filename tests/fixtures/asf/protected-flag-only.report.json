@@ -331,7 +331,28 @@
                           "value": 10,
                           "unit": "bytes",
                           "offset": 230,
-                          "length": 10
+                          "length": 10,
+                          "children": [
+                            {
+                              "name": "Samples Per Block",
+                              "value": 0,
+                              "unit": "samples",
+                              "offset": 230,
+                              "length": 4
+                            },
+                            {
+                              "name": "Encode Options",
+                              "value": 0,
+                              "offset": 234,
+                              "length": 2
+                            },
+                            {
+                              "name": "Super Block Align",
+                              "value": 0,
+                              "offset": 236,
+                              "length": 4
+                            }
+                          ]
                         }
                       ]
                     }

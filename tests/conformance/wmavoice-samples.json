@@ -383,7 +383,7 @@
     "Channels": "1",
     "SamplingRate": "16000"
    },
-   "sampling_count_differs": "The file's header states a play duration that its data does not reach (the analyzer reports asf.file-size, asf.packet-count and others), and MediaInfo's sampling count is that duration times the rate; the analyzer's samples are those of the superframes, which ffmpeg decodes to the same number."
+   "sampling_count_differs": "The file's header states a play duration that its data does not reach (the analyzer reports asf.file-size, asf.packet-count and others), and MediaInfo's sampling count is that duration times the rate; ffmpeg decodes the superframes to the number of samples the manifest pins."
   },
   {
    "file": "wmav_8.wma",
@@ -427,7 +427,7 @@
     "Channels": "1",
     "SamplingRate": "8000"
    },
-   "sampling_count_differs": "The container states 14.4 s, and about half of the superframes hold music, which FFmpeg's decoder does not support and no sample counts; the analyzer's samples are those of the speech superframes, which ffmpeg decodes to the same number."
+   "sampling_count_differs": "The container states 14.4 s, and about half of the superframes hold music, which FFmpeg's decoder does not support and no sample counts; ffmpeg decodes the speech superframes to the number of samples the manifest pins."
   },
   {
    "file": "wmv3-wmaspeeech.wmv",

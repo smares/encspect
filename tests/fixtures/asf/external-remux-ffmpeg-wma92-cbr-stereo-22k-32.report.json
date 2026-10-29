@@ -738,7 +738,28 @@
                           "value": 10,
                           "unit": "bytes",
                           "offset": 583,
-                          "length": 10
+                          "length": 10,
+                          "children": [
+                            {
+                              "name": "Samples Per Block",
+                              "value": 17408,
+                              "unit": "samples",
+                              "offset": 583,
+                              "length": 4
+                            },
+                            {
+                              "name": "Encode Options",
+                              "value": 23,
+                              "offset": 587,
+                              "length": 2
+                            },
+                            {
+                              "name": "Super Block Align",
+                              "value": 0,
+                              "offset": 589,
+                              "length": 4
+                            }
+                          ]
                         }
                       ]
                     },
@@ -3188,7 +3209,7 @@
                         },
                         {
                           "name": "Duration",
-                          "value": 3.2239999999999998,
+                          "value": 3.224,
                           "unit": "s",
                           "offset": 701,
                           "length": 16050
@@ -3196,6 +3217,13 @@
                         {
                           "name": "Nominal Bitrate",
                           "value": 32.024,
+                          "unit": "kbps",
+                          "offset": 701,
+                          "length": 16050
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 36.89826302729528,
                           "unit": "kbps",
                           "offset": 701,
                           "length": 16050
@@ -3222,14 +3250,15 @@
         "codec": "Windows Media Audio 2",
         "sampleRate": 22050,
         "channels": 2,
+        "channelMode": "Stereo",
         "channelLayout": [
           "front left",
           "front right"
         ],
         "channelLayoutName": "stereo",
         "samples": 71089,
-        "duration": 3.2239999999999998,
-        "averageBitrate": 32.024,
+        "duration": 3.224,
+        "averageBitrate": 36.89826302729528,
         "isVbr": false,
         "playbackGroup": 1,
         "writer": "FFmpeg (Lavf60.16.100)",
@@ -3256,7 +3285,7 @@
       {
         "severity": "Info",
         "code": "wma.standard-not-read",
-        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container states, and its packets are counted.",
+        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container and the type-specific data state, and its packets are counted.",
         "offset": 701,
         "length": 16050,
         "path": [
