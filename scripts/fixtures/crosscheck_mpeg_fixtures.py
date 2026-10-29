@@ -936,6 +936,8 @@ ENCSPOT_MODES = ["stereo", "joint stereo", "dual channel", "mono"]
 XHEADDATA_SIZE, VBRIDATA_SIZE = 96, 1048
 
 
+# encspot_header, encspot_seek and encspot_frames follow EncSpot 2.01 (Mp3File.cpp: MakeHeader, SeekNextHeader and the frame loop), Copyright (c) 2001-2002 GuerillaSoft,
+# under the BSD 3-clause license; its license text is third_party/encspot/LICENSE.
 def encspot_header(data, pos):
     """EncSpot's MakeHeader: (frame length, id, layer, channels, frequency, bitrate index, mode) of
     the header at pos, or None where it takes none there."""

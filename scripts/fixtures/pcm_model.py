@@ -1,7 +1,7 @@
 """An independent reading of the samples WAV, Wave64 and AIFF store as they are, for the manifests' decoded_pcm_md5 and their cross-check.
 
 Written from the specifications of the sample layouts (Microsoft's WAVEFORMATEX documentation for PCM and IEEE float, the AIFF-C draft and Apple's
-QuickTime File Format Specification for the types of AIFF-C), apart from the analyzer; the companded codings are the G.711 segment formulas, checked against FFmpeg. What the analyzer's decoder
+QuickTime File Format Specification for the types of AIFF-C), apart from the analyzer; the companded codings are the G.711 segment formulas as Sun Microsystems' public g711.c (alaw2linear, ulaw2linear; unrestricted use) gives them, checked against FFmpeg. What the analyzer's decoder
 "pcm" outputs is the canonical layout of docs/design/decoders.md ("The PCM path"): the samples interleaved, signed, little-endian, ceil(bits / 8) bytes each
 (floats as their IEEE 754 bytes), 8-bit unsigned samples minus 128, and A-law and mu-law expanded to 16 bits.
 
