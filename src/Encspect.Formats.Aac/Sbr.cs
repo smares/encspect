@@ -1,3 +1,4 @@
+using System.Globalization;
 using Encspect.Core;
 namespace Encspect.Formats.Aac;
 
@@ -59,8 +60,214 @@ internal static class Sbr
     // ceil(log2(envelopes + 1)): the bits of bs_pointer.
     private static readonly int[] PointerBits = [0, 1, 2, 2, 3, 3];
 
-    // Clean-room rewrite pending: docs/design/aac-sbr-frequency-tables.md
-    public static (SbrBands? Bands, string? Error) Derive(SbrHeader header, int rate) => throw new NotImplementedException();
+    private const int MaxMasterBands = 64;
+
+    // The frequency band tables of ISO/IEC 14496-3 4.6.18.3 for a header and the SBR output rate.
+    public static (SbrBands? Bands, string? Error) Derive(SbrHeader header, int rate)
+    {
+        int row = rate switch
+        {
+            16000 => 0,
+            22050 => 1,
+            24000 => 2,
+            32000 => 3,
+            44100 or 48000 or 64000 => 4,
+            88200 or 96000 or 128000 or 176400 or 192000 => 5,
+            _ => -1,
+        };
+        if (row < 0)
+        {
+            return (null, string.Create(CultureInfo.InvariantCulture, $"SBR has no frequency tables for an output rate of {rate} Hz"));
+        }
+
+        int baseFrequency = rate < 32000 ? 3000 : rate < 64000 ? 4000 : 5000;
+        int startMin = Nearest(baseFrequency * 128.0 / rate);
+        int stopMin = Nearest(baseFrequency * 256.0 / rate);
+        int k0 = startMin + HuffmanData.SbrOffset[row][header.StartFrequency];
+        int k2;
+        if (header.StopFrequency <= 13)
+        {
+            int[] widths = LogWidths(stopMin, MaxMasterBands, 13);
+            Array.Sort(widths);
+            k2 = stopMin;
+            for (int i = 0; i < header.StopFrequency; i++)
+            {
+                k2 += widths[i];
+            }
+        }
+        else
+        {
+            k2 = header.StopFrequency == 14 ? 2 * k0 : 3 * k0;
+        }
+
+        k2 = Math.Min(k2, MaxMasterBands);
+        int limit = rate <= 32000 ? 48 : rate == 44100 ? 35 : 32;
+        if (k2 - k0 > limit)
+        {
+            return (null, string.Create(CultureInfo.InvariantCulture, $"the SBR range spans {k2 - k0} QMF bands, more than the {limit} allowed at {rate} Hz"));
+        }
+
+        if (k0 >= k2)
+        {
+            return (null, string.Create(CultureInfo.InvariantCulture, $"the SBR range would start at QMF band {k0} and end at {k2}"));
+        }
+
+        int[] master;
+        string? error;
+        if (header.FrequencyScale == 0)
+        {
+            (master, error) = LinearMaster(k0, k2, header.AlterScale);
+        }
+        else
+        {
+            (master, error) = LogarithmicMaster(k0, k2, header.FrequencyScale, header.AlterScale != 0);
+        }
+
+        if (error is not null)
+        {
+            return (null, error);
+        }
+
+        int bandCount = master.Length - 1;
+        if (header.XoverBand >= bandCount)
+        {
+            return (null, string.Create(CultureInfo.InvariantCulture, $"bs_xover_band {header.XoverBand} lies beyond the {Counts.Of(bandCount, "band", "bands")} of the master frequency table"));
+        }
+
+        int kx = master[header.XoverBand];
+        int end = master[bandCount];
+        if (end > MaxMasterBands)
+        {
+            return (null, string.Create(CultureInfo.InvariantCulture, $"the SBR range ends at QMF band {end}, beyond 64"));
+        }
+
+        if (kx > 32)
+        {
+            return (null, string.Create(CultureInfo.InvariantCulture, $"the SBR range starts at QMF band {kx}, beyond 32"));
+        }
+
+        int high = bandCount - header.XoverBand;
+        int low = (high + 1) / 2;
+        int noise = Math.Max(1, Nearest(header.NoiseBands * Math.Log2((double)end / kx)));
+        if (noise > 5)
+        {
+            return (null, string.Create(CultureInfo.InvariantCulture, $"the header gives {noise} noise floor bands, more than 5"));
+        }
+
+        return (new SbrBands(kx, end, high, low, noise), null);
+    }
+
+    private static int Nearest(double value) => (int)Math.Floor(value + 0.5);
+
+    // The widths of n bands from a to b on a logarithmic scale: the boundaries are the nearest integers to a * (b / a)^(j / n).
+    private static int[] LogWidths(int a, int b, int n)
+    {
+        int[] widths = new int[n];
+        int previous = a;
+        double ratio = (double)b / a;
+        for (int j = 1; j <= n; j++)
+        {
+            int boundary = j == n ? b : Nearest(a * Math.Pow(ratio, (double)j / n));
+            widths[j - 1] = boundary - previous;
+            previous = boundary;
+        }
+
+        return widths;
+    }
+
+    private static int[] Boundaries(int start, int[] firstWidths, int[] secondWidths)
+    {
+        int[] table = new int[firstWidths.Length + secondWidths.Length + 1];
+        table[0] = start;
+        int at = 0;
+        foreach (int width in firstWidths)
+        {
+            table[at + 1] = table[at] + width;
+            at++;
+        }
+
+        foreach (int width in secondWidths)
+        {
+            table[at + 1] = table[at] + width;
+            at++;
+        }
+
+        return table;
+    }
+
+    private static (int[] Master, string? Error) LinearMaster(int k0, int k2, int alterScale)
+    {
+        int span = k2 - k0;
+        int step = alterScale != 0 ? 2 : 1;
+        int count = alterScale != 0 ? 2 * ((span + 2) / 4) : 2 * (span / 2);
+        if (count == 0)
+        {
+            return ([], "the SBR master frequency table is empty");
+        }
+
+        int[] widths = new int[count];
+        Array.Fill(widths, step);
+        int rest = span - (count * step);
+        for (int i = 0; i < -rest; i++)
+        {
+            widths[i]--;
+        }
+
+        if (rest > 0)
+        {
+            widths[count - 1] += rest;
+        }
+
+        return (Boundaries(k0, widths, []), null);
+    }
+
+    private static (int[] Master, string? Error) LogarithmicMaster(int k0, int k2, int scale, bool warped)
+    {
+        int bandsPerOctave = scale == 1 ? 12 : scale == 2 ? 10 : 8;
+        bool twoRegions = (double)k2 / k0 > 2.2449;
+        int k1 = twoRegions ? 2 * k0 : k2;
+        int firstCount = 2 * Nearest(bandsPerOctave / 2.0 * Math.Log2((double)k1 / k0));
+        if (firstCount <= 0)
+        {
+            return ([], "the SBR master frequency table's first region is empty");
+        }
+
+        int[] first = LogWidths(k0, k1, firstCount);
+        Array.Sort(first);
+        if (first[0] <= 0)
+        {
+            return ([], "the SBR master frequency table has a band of no width");
+        }
+
+        int[] second = [];
+        if (twoRegions)
+        {
+            double warp = warped ? 1.3 : 1.0;
+            int secondCount = 2 * Nearest(bandsPerOctave / 2.0 * Math.Log2((double)k2 / k1) / warp);
+            if (secondCount <= 0)
+            {
+                return ([], "the SBR master frequency table's second region is empty");
+            }
+
+            second = LogWidths(k1, k2, secondCount);
+            Array.Sort(second);
+            int firstMax = first[^1];
+            if (second[0] < firstMax)
+            {
+                int shift = Math.Min(firstMax - second[0], (second[^1] - second[0]) / 2);
+                second[0] += shift;
+                second[^1] -= shift;
+            }
+
+            Array.Sort(second);
+            if (second[0] <= 0)
+            {
+                return ([], "the SBR master frequency table has a band of no width");
+            }
+        }
+
+        return (Boundaries(k0, first, second), null);
+    }
 
     // sbr_data (ISO/IEC 14496-3 4.4.2): sbr_single_channel_element or
     // sbr_channel_pair_element, then the extended data, whose extensions are read up to their ID:
@@ -195,8 +402,17 @@ internal static class Sbr
         {
             case 0:
                 count = 1 << (int)bits.Read(2);
+                if (count > 4)
+                {
+                    return string.Create(CultureInfo.InvariantCulture, $"an SBR frame of class FIXFIX with {count} envelopes, more than 4");
+                }
 
-                // Clean-room rewrite pending: docs/design/aac-sbr-frequency-tables.md (the envelope limit and the amplitude resolution)
+                // The syntax table fixes the amplitude resolution of a single envelope at 1.5 dB steps.
+                if (count == 1)
+                {
+                    ampRes[channel] = 0;
+                }
+
                 byte shared = (byte)bits.Read(1);
                 for (int e = 0; e < count; e++)
                 {
@@ -219,14 +435,20 @@ internal static class Sbr
                 int lead = (int)bits.Read(2);
                 int trail = (int)bits.Read(2);
                 count = lead + trail + 1;
+                if (count > MaxEnvelopes)
+                {
+                    return string.Create(CultureInfo.InvariantCulture, $"an SBR frame of class VARVAR with {count} envelopes, more than {MaxEnvelopes}");
+                }
 
-                // Clean-room rewrite pending: docs/design/aac-sbr-frequency-tables.md (the envelope limit)
                 bits.Skip(2 * (lead + trail));
                 break;
         }
 
         int pointer = (int)bits.Read(PointerBits[count]);
-        _ = pointer; // Clean-room rewrite pending: docs/design/aac-sbr-frequency-tables.md (the range of bs_pointer)
+        if (pointer > count + 1)
+        {
+            return string.Create(CultureInfo.InvariantCulture, $"bs_pointer {pointer} points past the {Counts.Of(count, "envelope", "envelopes")} of the SBR frame");
+        }
 
         // bs_freq_res of a FIXVAR frame is sent for the last envelope first (4.4.2.8, sbr_grid).
         for (int e = 0; e < count; e++)
