@@ -425,7 +425,7 @@ internal sealed partial class UnitSyntax
             return;
         }
 
-        bool refused = false; // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+        bool refused = IsXllCommonRefused(sets, frameSize, segmentsLog, samplesLog);
         ReadXllFrame(at, endBit, asset, headerSize, new XllCommon(sets, frameSize, segmentsLog, segmentBits, scalable, maskBits, frameSizeStart, frameSizeEnd, refused));
     }
 }

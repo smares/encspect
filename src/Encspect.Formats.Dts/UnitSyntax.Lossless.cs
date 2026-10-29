@@ -12,9 +12,23 @@ internal sealed partial class UnitSyntax
     private const uint XSync = 0x02000850;
     private const uint XImaxSync = 0xF14000D0;
 
-    // Whether the word after the band data is not read.
-    // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+    // Whether a header value of the frame is one that the word after the band data is not read for: the analyzer follows the reference
+    // decoder, which gives up on such a frame before it reaches the word (docs/design/dts-extension-checks.md). The common header's
+    // part is XllCommon.IsRefused; the sets' part is collected here, as the sets are read.
     private bool _isXllRefused;
+
+    private const int XllMaxFrameSize = 245760;
+    private const int XllMaxSegmentsLog = 10;
+    private const int XllMaxSamplesLog = 9;
+    private const int XllMaxSamplesInFrameLog = 16;
+    private const int XllMaxSets = 3;
+    private const int XllMaxSetChannels = 8;
+    private const int XllMaxSampleRate = 192000;
+    private const int MaxNavigationEntries = 1024;
+
+    private static bool IsXllCommonRefused(int sets, int frameSize, int segmentsLog, int samplesLog) =>
+        frameSize > XllMaxFrameSize || segmentsLog > XllMaxSegmentsLog || samplesLog is 0 or > XllMaxSamplesLog
+        || segmentsLog + samplesLog > XllMaxSamplesInFrameLog || sets > XllMaxSets;
 
     // Table 8-8: the channels each downmix type mixes the primary channel set to, as 5.8.2 counts them.
     private static readonly int[] DownmixChannels = [1, 2, 2, 3, 3, 4, 4, 0];
@@ -26,7 +40,7 @@ internal sealed partial class UnitSyntax
     {
         int setAt = at + headerSize;
         var sets = new List<XllSetFacts>();
-        _isXllRefused = false; // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+        _isXllRefused = common.IsRefused;
         int hierChannels = 0;
         bool complete = true;
         bool allFacts = true;
@@ -45,8 +59,6 @@ internal sealed partial class UnitSyntax
                 complete = false;
                 break;
             }
-
-            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
 
             bandsOf.Add(bands);
             if (!isStructural)
@@ -67,6 +79,16 @@ internal sealed partial class UnitSyntax
             hierChannels += hierAdd;
 
             setAt += size;
+        }
+
+        for (int i = 1; i < sets.Count; i++)
+        {
+            XllSetFacts first = sets[0];
+            XllSetFacts other = sets[i];
+            if (other.FrequencyBands != first.FrequencyBands || other.SampleRate != first.SampleRate || other.Resolution != first.Resolution || other.StorageWidth != first.StorageWidth)
+            {
+                _isXllRefused = true;
+            }
         }
 
         if (!complete || bandsOf.Count != common.Sets)
@@ -166,7 +188,11 @@ internal sealed partial class UnitSyntax
     {
         int channels = Num("Channels", 4, Explain.XllSetChannels, Topics.Lossless, "channels", 1) + 1;
         hierAdd = channels;
-        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+        if (channels > XllMaxSetChannels)
+        {
+            _isXllRefused = true;
+        }
+
         int start = _pos;
         uint residual = Read(channels);
         _tree?.Field("Residual Channel Encoding", start, _pos, NodeValue.Hex(residual, (channels + 3) / 4), Explain.XllResidual, Topics.Lossless);
@@ -174,19 +200,31 @@ internal sealed partial class UnitSyntax
         int resolution = Num("Source PCM Resolution", 5, Explain.XllResolution, Topics.Lossless, "bits", 1) + 1;
         int resolutionEnd = _pos;
         int width = Num("Storage Bit Width", 5, Explain.XllStorageWidth, Topics.Lossless, "bits", 1) + 1;
-        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+        if (width is not (16 or 20 or 24))
+        {
+            _isXllRefused = true;
+        }
+
         if (resolution > width)
         {
             Report(Issue.LosslessInconsistent, "Source PCM Resolution", start, resolutionEnd, $"a channel set's source resolution of {Counts.Of(resolution, "bit", "bits")} is more than its storage width of {Counts.Of(width, "bit", "bits")} (8.3.2: the samples are stored in the width)");
         }
 
         int rate = Tables.ExtensionSampleRate(Num("Sampling Frequency", 4, Explain.XllRate, v => NodeValue.Integer(Tables.ExtensionSampleRate(v), "Hz"), Topics.Lossless));
-        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
-        Num("Sampling Frequency Interpolation", 2, Explain.XllInterpolation, v => NodeValue.Integer(1 << v), Topics.Lossless);
+        if (rate > XllMaxSampleRate)
+        {
+            _isXllRefused = true;
+        }
+
+        if (Num("Sampling Frequency Interpolation", 2, Explain.XllInterpolation, v => NodeValue.Integer(1 << v), Topics.Lossless) != 0)
+        {
+            _isXllRefused = true;
+        }
+
         int replacement = Num("Replacement Set", 2, Explain.XllReplacement, v => v == 0 ? "0 (not a member of a replacement set)" : $"{v} (member of replacement set {v})", Topics.Lossless);
-        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
         if (replacement > 0)
         {
+            _isXllRefused = true;
             Flag("IsActiveReplacementSet", Explain.XllActiveReplacement, Topics.Lossless);
         }
 
@@ -197,7 +235,11 @@ internal sealed partial class UnitSyntax
         if (asset.IsOneToOne)
         {
             primary = Flag("IsPrimaryChannelSet", Explain.XllPrimary, Topics.Lossless);
-            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+            if (primary != (index == 0))
+            {
+                _isXllRefused = true;
+            }
+
             bool hasCoefficients = Flag("HasDownmixCoefficients", Explain.XllHasDownmix, Topics.Lossless);
             if (hasCoefficients)
             {
@@ -222,12 +264,17 @@ internal sealed partial class UnitSyntax
                 if (type == 7)
                 {
                     Report(Issue.ReservedValue, "Downmix Type", start, _pos, "nLLDownmixType 7 is unused (Table 8-8)");
-                    // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+                    _isXllRefused = true;
                 }
             }
 
-            hierAdd = Flag("IsHierarchicalChannelSet", Explain.XllHierarchical, Topics.Lossless) ? channels : 0;
-            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+            bool isHierarchical = Flag("IsHierarchicalChannelSet", Explain.XllHierarchical, Topics.Lossless);
+            hierAdd = isHierarchical ? channels : 0;
+            if (!isHierarchical && common.Sets != 1)
+            {
+                _isXllRefused = true;
+            }
+
             if (hasCoefficients)
             {
                 // 8.3.2 DownmixCoeffs, C.9: a primary set mixes to the channels its downmix type names; any other set has a column for each
@@ -237,7 +284,11 @@ internal sealed partial class UnitSyntax
             }
 
             hasMask = Flag("HasChannelMask", Explain.XllHasMask, Topics.Lossless);
-            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+            if (!hasMask)
+            {
+                _isXllRefused = true;
+            }
+
             if (hasMask)
             {
                 start = _pos;
@@ -261,7 +312,11 @@ internal sealed partial class UnitSyntax
         else
         {
             bool hasMapping = Flag("HasMappingCoefficients", Explain.XllHasMapping, Topics.Lossless);
-            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+            if (hasMapping || channels != 2 || common.Sets != 1)
+            {
+                _isXllRefused = true;
+            }
+
             read = !hasMapping;
         }
 
@@ -270,7 +325,11 @@ internal sealed partial class UnitSyntax
         {
             start = _pos;
             bool extra = Flag("HasExtraFrequencyBands", Explain.XllExtraBands, Topics.Lossless);
-            // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+            if (extra)
+            {
+                _isXllRefused = true;
+            }
+
             bands = extra ? 4 : 2;
             _tree?.Field("Frequency Bands", start, _pos, NodeValue.Integer(bands, "bands", "band"), Explain.XllBands, Topics.Lossless);
         }
@@ -309,7 +368,16 @@ internal sealed partial class UnitSyntax
         }
 
         _pos = naviAt * 8;
-        // Clean-room rewrite pending: docs/design/dts-extension-checks.md
+        long bound = (long)maxBands * segments * common.Sets;
+        if (bound > MaxNavigationEntries)
+        {
+            // The count the reference decoder bounds the index by (the most bands, times the segments, times the channel sets) can be larger
+            // than the entries the sets' own bands give; it is the bound that decides whether the index is read.
+            int endOfIndex = Math.Min(_limit, endBit);
+            _tree?.Field("Navigation Index", _pos, endOfIndex, NodeValue.Integer(bound, "entries", "entry"), Explain.XllNavigation, Topics.Lossless);
+            Report(Issue.LosslessInconsistent, "Navigation Index", _pos, endOfIndex, $"the navigation index would have {bound} entries (the most bands, times the segments, times the channel sets), more than the {MaxNavigationEntries} that FFmpeg reads");
+            return;
+        }
 
         int naviBytes = (int)((entries * common.SegmentBits + 7) / 8) + 2;
         EnsureBytes(naviAt, naviBytes);

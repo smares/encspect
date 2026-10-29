@@ -8,8 +8,70 @@ internal sealed partial class UnitSyntax
     private const uint X96Sync = 0x1D95F262;
     private const uint XxchSync = 0x47004A03;
 
-    // Clean-room rewrite pending: docs/design/dts-extension-checks.md
-    private FoundExtension? FindExtension(CoreHeader header, int baseByte, int availablePacked, int declared) => null;
+    // 6.4.2, 6.2.4.2, 6.5.2: the extension's sync word is aligned to 32 bits from the frame's start and the extension runs to the end of
+    // the frame as FSIZE gives it. Searching from the end of the frame means a pseudo sync word inside the audio data cannot hide the real one.
+    private FoundExtension? FindExtension(CoreHeader header, int baseByte, int availablePacked, int declared)
+    {
+        if (!header.HasExtendedAudio || header.ExtensionAudioId is not (0 or 2 or 6))
+        {
+            return null;
+        }
+
+        int id = header.ExtensionAudioId;
+        uint sync = id switch { 0 => XchSync, 2 => X96Sync, _ => XxchSync };
+        int first = (((_pos + 7) / 8) - baseByte + 3) & ~3;
+        int last = Math.Min(declared, availablePacked) - 4;
+        int fallback = -1;
+        for (int offset = last & ~3; offset >= first; offset -= 4)
+        {
+            int at = baseByte + offset;
+            if (PeekWord(at) != sync || PeekWord(at + 4) is not uint next)
+            {
+                continue;
+            }
+
+            int distance = declared - offset;
+            switch (id)
+            {
+                case 0:
+                    int xchSize = (int)(next >> 22);
+                    if (xchSize + 1 >= 96 && (distance == xchSize + 1 || distance == xchSize))
+                    {
+                        return new FoundExtension(CoreExtension.Xch, at, distance == xchSize);
+                    }
+
+                    break;
+                case 2:
+                    int size96 = (int)(next >> 20) + 1;
+                    if (size96 >= 96 && distance == size96)
+                    {
+                        return new FoundExtension(CoreExtension.X96, at, false);
+                    }
+
+                    break;
+                default:
+                    int headerSize = (int)(next >> 26) + 1;
+                    if (headerSize < 11 || headerSize > distance)
+                    {
+                        break;
+                    }
+
+                    if (Crc16.Compute(_view.Peek(at + 4, headerSize - 4)) == 0)
+                    {
+                        return new FoundExtension(CoreExtension.Xxch, at, false);
+                    }
+
+                    if (fallback < 0 && XxchSizesReachEnd(at, headerSize, distance))
+                    {
+                        fallback = at;
+                    }
+
+                    break;
+            }
+        }
+
+        return fallback >= 0 ? new FoundExtension(CoreExtension.Xxch, fallback, false) : null;
+    }
 
     // 6.5.2 Table 6-21: the header and the channel sets' sizes (14 bits each, after the 14 bits that give the header size, the
     // channel set CRC flag, the speaker mask width and the number of sets) add up to the distance, less the up to three bytes that
