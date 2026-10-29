@@ -143,7 +143,7 @@ Sources read for this design:
   - the FLAC parser (`Model.cs`, `State.cs`, `Summary.cs`, `StreamFigures.cs`, `SubframeSyntax.cs`, `Nodes.cs`), `MemoryTests.ManyFlacFramesStayCompact`, `crosscheck_flac_fixtures.py` and the FLAC goldens;
   - RFC 9639, sections 4.1, 4.2, 9.1.1, 9.1.3, 9.1.6, 9.2.1, 9.2.2, 9.2.5, 9.2.6 and 9.2.7;
   - FFmpeg 6.1.1 from the archive `ffmpeg_sources.py` pins: `apedec.c`, `libavformat/ape.c`, `tta.c` (6.1.1 has no `ttadec.c`; the TTA decoder is `libavcodec/tta.c`) and `libavformat/tta.c` from its list, and `adpcm.c`, `adpcm_data.c`, `riff.c` and `aiffdec.c` extracted from the same archive, which its list does not hold;
-  - Monkey's Audio SDK 13.44 (the archive the decoder design pins, SHA-256 0c5c1643…): `Prepare.h`, `Prepare.cpp`, `APECompressCore.cpp`, `APECompressCreate.cpp`, `APEDecompressCore.cpp`, `APEHeader.cpp`, `APEInfo.h`, `Old/UnMACOld.cpp`;
+  - Monkey's Audio SDK 13.42 (the archive the decoder design pinned then, SHA-256 0a763b35…; `Prepare.cpp` was re-read in 13.44, SHA-256 0c5c1643…, which the decoder now follows): `Prepare.h`, `Prepare.cpp`, `APECompressCore.cpp`, `APECompressCreate.cpp`, `APEDecompressCore.cpp`, `APEHeader.cpp`, `APEInfo.h`, `Old/UnMACOld.cpp`;
   - libtta-c 2.3 (SHA-256 68ba6db2…): `libtta.c`, `libtta.h`;
   - `flac -a` of flac 1.4.3, run for this design on three committed fixtures; CI pins flac 1.5.0, whose output was not run here.
 

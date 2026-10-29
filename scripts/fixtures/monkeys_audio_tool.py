@@ -13,15 +13,16 @@
 - build_interim_mac builds a second mac from the same source with one line of the encoder changed, so that it writes 24-bit files the way the encoders
   of Monkey's Audio 5.01 to 8.51 did (their predictor summed the first stage in 64 bits, which the decoder's "interim mode" undoes,
   Interim.cpp). The unchanged mac verifies and decodes those files through that mode; no unchanged encoder can write one.
-- SDK 13.44 fixed two bugs that matter here: its Wave64 reader works on 64-bit Linux and macOS (13.42 declared the first field of its GUID structure
-  as an unsigned long, 64 bits there, and refused every Wave64 file), and it codes the seventh channel of a seven-channel file (13.42 and earlier never
-  stored it, so their files fail their checksum). build_mac_1342 builds the previous release, SDK 13.42 (MAC_1342_SDK.zip), for the one fixture of that
+- SDK 13.44 fixed two bugs that matter here: its Wave64 reader works on 64-bit Linux and macOS (13.42 and 13.43 declared the first field of its GUID
+  structure as an unsigned long, 64 bits there, and refused every Wave64 file), and it codes the seventh channel of a seven-channel file (before 13.44 the
+  encoder never coded it, so their files fail their frame CRC-32). build_mac_1342 builds the previous release, SDK 13.42 (MAC_1342_SDK.zip), for the one fixture of that
   behavior.
 
 Usage: python3 scripts/fixtures/monkeys_audio_tool.py [directory]    builds mac in the directory and prints its path.
 """
 
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -56,16 +57,29 @@ def fetch(directory, old=False):
     return path
 
 
+def check_version(source, old=False):
+    """Raises if the SDK extracted to source is not the release wanted (the revision in Source/Shared/Version.h), so that a folder left by another release is never reused."""
+    text = (pathlib.Path(source) / "Source" / "Shared" / "Version.h").read_text(encoding="utf-8", errors="replace")
+    major = re.search(r"#define\s+APE_VERSION_MAJOR\s+(\d+)", text)
+    revision = re.search(r"#define\s+APE_VERSION_REVISION\s+(\d+)", text)
+    found = f"{major.group(1)}.{revision.group(1)}" if major and revision else "unknown"
+    wanted = VERSION_1342 if old else VERSION
+    if found != wanted:
+        raise RuntimeError(f"{source} holds SDK {found}, not {wanted}")
+
+
 def extract(directory, old=False):
-    """The directory the SDK is extracted to (a folder in directory), after the archive's names are checked to stay inside it."""
+    """The directory the SDK is extracted to (a folder named by the release in directory, so that a folder of another release is never reused), after the
+    archive's names are checked to stay inside it and its version is checked."""
     directory = pathlib.Path(directory)
-    target = directory / "sdk"
+    target = directory / f"sdk-{VERSION_1342 if old else VERSION}"
     if not target.exists():
         with zipfile.ZipFile(fetch(directory, old)) as archive:
             for member in archive.namelist():
                 if not (target / member).resolve().is_relative_to(target.resolve()):
                     raise ValueError(f"{member} is outside the SDK folder")
             archive.extractall(target)
+    check_version(target, old)
     return target
 
 
@@ -79,11 +93,11 @@ def build_mac(directory=None, old=False):
     """The path of mac, built in directory (a new temporary one by default) from the SDK with CMake and the system compiler; old builds SDK 13.42."""
     directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="mac-"))
     directory.mkdir(parents=True, exist_ok=True)
-    binary = directory / "build" / "mac"
+    build = directory / f"build-{VERSION_1342 if old else VERSION}"
+    binary = build / "mac"
     if binary.exists():
         return binary
     source = extract(directory, old)
-    build = directory / "build"
     subprocess.run(["cmake", "-S", str(source), "-B", str(build), "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED=OFF"], check=True, stdout=subprocess.DEVNULL)
     subprocess.run(["cmake", "--build", str(build), "--parallel", "4"], check=True, stdout=subprocess.DEVNULL)
     return binary
@@ -106,17 +120,17 @@ def build_patched_mac(directory, path, line, replacement):
     The source files have CRLF line ends; the line is matched without its end."""
     directory = pathlib.Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-    binary = directory / "build" / "mac"
+    build = directory / f"build-{VERSION}"
+    binary = build / "mac"
     if binary.exists():
         return binary
-    source = directory / "sdk"
+    source = directory / f"sdk-{VERSION}"
     shutil.copytree(extract(directory / "original"), source, dirs_exist_ok=True)
     file = source / "Source" / path
     text = file.read_bytes().decode("utf-8")
     if text.count(line) != 1:
         raise RuntimeError("the line of the source to change is not in the SDK source exactly once")
     file.write_bytes(text.replace(line, replacement).encode("utf-8"))
-    build = directory / "build"
     subprocess.run(["cmake", "-S", str(source), "-B", str(build), "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED=OFF"], check=True, stdout=subprocess.DEVNULL)
     subprocess.run(["cmake", "--build", str(build), "--parallel", "4"], check=True, stdout=subprocess.DEVNULL)
     return binary

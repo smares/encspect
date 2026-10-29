@@ -64,7 +64,7 @@ FIXTURES = {
     "normal-16-5.1": (("wav", "music", 48000, 6, 16, SHORT, 0x3F), ["-c2000"]),
     "high-16-5.1": (("wav", "music", 48000, 6, 16, SHORT, 0x3F), ["-c3000"]),
     "normal-16-7ch": (("wav", "music", 48000, 7, 16, 12000, 0x13F), ["-c2000"]),
-    # The same file from SDK 13.42, whose encoder never stored the seventh channel (13.44 does): the file fails its checksum, as 13.44's mac -V says.
+    # The same file from SDK 13.42, whose encoder never stored the seventh channel (13.44 does): the file fails its frame CRC-32, as 13.44's mac -V says.
     "normal-16-7ch-sdk-1342": (("wav", "music", 48000, 7, 16, 12000, 0x13F), ["-c2000"]),
     "normal-24-7.1": (("wav", "music", 48000, 8, 24, 12000, 0x63F), ["-c2000"]),
     "normal-16-9ch": (("wav", "music", 48000, 9, 16, 12000, 0), ["-c2000"]),
@@ -103,7 +103,7 @@ FIXTURES = {
 
 TOOL = f"mac, the console tool of the Monkey's Audio SDK {monkeys_audio_tool.VERSION}, built from {monkeys_audio_tool.NAME}"
 TOOL_1342 = f"mac, the console tool of the Monkey's Audio SDK {monkeys_audio_tool.VERSION_1342}, built from {monkeys_audio_tool.NAME_1342}"
-# Fixtures written by SDK 13.42, which did not code the seventh channel of a file of seven channels.
+# Fixtures written by SDK 13.42, which (as every SDK before 13.44) did not code the seventh channel of a file of seven channels.
 FROM_1342 = {"normal-16-7ch-sdk-1342"}
 
 
@@ -154,8 +154,8 @@ def encode(name, spec, arguments, work):
 
 
 def decode_outcome(a, data, spec, old=False):
-    """What decoding the file does: version 3.99 files decode every frame and the CRC of each holds, except in the seven-channel case of SDK 13.42 and
-    earlier (old), which did not code the seventh channel (13.44's tool reports error 1009 for such a file)."""
+    """What decoding the file does: version 3.99 files decode every frame and the CRC of each holds, except in the seven-channel case of SDK 13.42 (old),
+    like every SDK before 13.44, which did not code the seventh channel (13.44's tool reports error 1009 for such a file)."""
     kind, signal, rate, channels, bits, count, *rest = spec
     frames = len(a.frames)
     failed = 1 if old and channels == 7 else 0

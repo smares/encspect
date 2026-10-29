@@ -7,7 +7,7 @@ make_legacy_monkeys_audio_fixtures.py, make_monkeys_audio_fixtures.py):
 - mac -V (the console tool of the Monkey's Audio SDK 13.44, built from the pinned source by monkeys_audio_tool.py): verifies the file, decoding every frame and
   comparing its CRC. It succeeds or fails as the manifest's crosscheck.mac_verify says; a null there means the fixture's fault is none that mac -V reports
   the way the analyzer does (the descriptor MD5, which mac -V does not compare, or a header the SDK refuses where the analyzer still reads the file): not compared.
-  SDK 13.42 and earlier did not code the seventh channel of a seven-channel file, so mac 13.44's -V fails the one fixture they wrote, as the analyzer's decoder does.
+  SDKs before 13.44 did not code the seventh channel of a seven-channel file, so mac 13.44's -V fails the one fixture 13.42 wrote, as the analyzer's decoder does.
 - mac -d, on the fixtures mac -V accepts: the decoded samples, in the layout of the manifest's decoded_pcm_md5 (little-endian signed integers of as many whole
   bytes as the bit depth needs; the unsigned bytes of an 8-bit WAV file made signed), have that MD5, which the signal that went into the encoder gives.
 - FFmpeg 8.0.1: the same fixtures decode to the same samples where FFmpeg reads them (mono and stereo of 8, 16 and 24 bits, files of versions 3.80 to 3.99 that

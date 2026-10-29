@@ -4,7 +4,7 @@ namespace Encspect.Formats.MonkeysAudio.Decoding;
 
 // How the values the predictors give become the samples of the WAV data: which channels are a mid and a side channel that give a pair of
 // samples and how each sample takes its bytes. The seventh channel of a seven-channel file is a plain sample like the others of the remaining
-// channels (Prepare.cpp: nStartChannel is 6 for 7 channels from SDK 13.44 on; 13.42 and earlier started at 7 and never stored it).
+// channels (Prepare.cpp: nStartChannel is 6 for 7 channels from SDK 13.44 on; before 13.44 it started at 7, so the channel was never coded and the others were read from shifted samples).
 internal sealed class Unprepare
 {
     private enum Kind : byte
