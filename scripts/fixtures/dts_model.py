@@ -536,9 +536,82 @@ def _bands_of(s):
     return 1
 
 
+# Table 8-8: the channels each nLLDownmixType mixes to (type 7 is unused).
+DMIX_PRIMARY_CHANNELS = [1, 2, 2, 3, 3, 4, 4, 0]
+
+
 def _set_header(s, hier_ofs, mask_bits, size_bits, scalable):
-    # Clean-room rewrite pending: docs/design/dts-extension-checks.md
-    raise NotImplementedError
+    """One channel set sub-header (8.3.2, Table 8-4) as bytes, with its size and its CRC-16."""
+    n = s["channels"]
+    dmix = s["dmix"]
+    one_to_one = s["one_to_one"]
+    bits = Bits()
+    bits.put(0, 10)  # nChSetHeaderSize - 1, filled in below
+    bits.put(n - 1, 4)
+    bits.put(s["residual"], n)
+    bits.put(s["bit_res"] - 1, 5)
+    bits.put(s["storage"] - 1, 5)
+    bits.put(MAX_SAMPLE_RATE_CODES[s["rate"]], 4)
+    bits.put(s["interp"], 2)
+    bits.put(s["replacement"], 2)
+    if s["replacement"] != 0:
+        bits.put(1 if s["active"] else 0, 1)
+    if one_to_one:
+        bits.put(1 if s["primary"] else 0, 1)
+        bits.put(1 if dmix else 0, 1)
+        if dmix:
+            bits.put(1 if dmix["embedded"] else 0, 1)
+            if s["primary"]:
+                bits.put(dmix.get("type", 1), 3)
+        bits.put(1 if s["hier"] else 0, 1)
+        if dmix:
+            # DownmixCoeffs (C.9): 9 bits each.
+            if s["primary"]:
+                count = DMIX_PRIMARY_CHANNELS[dmix.get("type", 1)] * n
+                for _ in range(count):
+                    bits.put(0, 9)
+            else:
+                for _ in range(hier_ofs):
+                    bits.put(0x040, 9)
+                    for _ in range(n):
+                        bits.put(0, 9)
+        bits.put(0 if s["polar"] else 1, 1)
+        if s["polar"]:
+            for _ in range(n):
+                bits.put(0, 25)
+        else:
+            bits.put(s["mask"], mask_bits)
+    else:
+        bits.put(0, 1)  # bMappingCoeffsPresent
+    if s["rate"] > 96000:
+        bits.put(1 if s["extra_bands"] else 0, 1)
+    for band in range(_bands_of(s)):
+        bits.put(0, 1)  # bPWChDecorEnabled
+        for _ in range(n):
+            bits.put(0, 4)
+        for _ in range(n):
+            bits.put(0, 2)
+        if band == 0:
+            if scalable:
+                bits.put(0, size_bits)
+                for _ in range(2 * n):
+                    bits.put(0, 4)
+        else:
+            if one_to_one and dmix and dmix["embedded"]:
+                bits.put(0, 1)  # bEmbDMixInExtBand
+            bits.put(0, 1)  # bMSBLSBSplitEnInExtBands
+            bits.put(0, 1)  # bFlagScalableResExtBand
+    bits.put(0, s["header_pad"] * 8)
+    bits.align()
+    raw = bytearray(bits.bytes() + b"\0\0")
+    assert len(raw) <= 1024, len(raw)
+    stated = (s["size_override"] if s["size_override"] is not None else len(raw)) - 1
+    raw[0] = stated >> 2
+    raw[1] = (raw[1] & 0x3F) | ((stated & 3) << 6)
+    raw[-2:] = crc16(bytes(raw[:-2])).to_bytes(2, "big")
+    if s["bad_crc"]:
+        raw[-1] ^= 0xFF
+    return bytes(raw)
 
 
 def xll_frame(size, sets=None, core_rate=48000, core_samples=512, segments_log=None, samples_log=None, scalable=False, size_bits=8, band_crc=0,
@@ -592,7 +665,7 @@ def xll_frame(size, sets=None, core_rate=48000, core_samples=512, segments_log=N
                 if _bands_of(s) <= band:
                     continue
                 nabits = 5 if s["storage"] > 16 else 4 if s["storage"] > 8 else 3
-                if (len(sets) > 1 or _bands_of(s) > 1) and nabits < 5:
+                if len(sets) > 1 and nabits < 5:
                     nabits += 1
                 bits = Bits()
                 if seg == 0:
