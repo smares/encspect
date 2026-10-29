@@ -66,6 +66,10 @@ FIXTURES = {
     "normal-16-7ch": (("wav", "music", 48000, 7, 16, 12000, 0x13F), ["-c2000"]),
     # The same file from SDK 13.42, whose encoder never stored the seventh channel (13.44 does): the file fails its frame CRC-32, as 13.44's mac -V says.
     "normal-16-7ch-sdk-1342": (("wav", "music", 48000, 7, 16, 12000, 0x13F), ["-c2000"]),
+    # SDK 13.44 codes the seventh channel of seven-channel files at every depth; the 24-bit branch of Prepare.cpp has its own loop over the remaining channels.
+    "normal-24-7ch": (("wav", "music", 48000, 7, 24, 6000, 0x13F), ["-c2000"]),
+    # Files of 8 bits and more than two channels keep every channel as a plain sample (Prepare.cpp pairs none of them).
+    "normal-8-6ch": (("wav", "music", 48000, 6, 8, MASKED, 0x3F), ["-c2000"]),
     "normal-24-7.1": (("wav", "music", 48000, 8, 24, 12000, 0x63F), ["-c2000"]),
     "normal-16-9ch": (("wav", "music", 48000, 9, 16, 12000, 0), ["-c2000"]),
     # The channel mask of the stored WAV header sets the layout: 5.1 with the surround pair at the sides, a mask with fewer bits than channels, one with
