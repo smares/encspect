@@ -1,9 +1,10 @@
-// Follows the Monkey's Audio SDK 13.42 (Prepare.cpp, CPrepare::Unprepare), 3-clause BSD license:
+// Follows the Monkey's Audio SDK 13.44 (Prepare.cpp, CPrepare::Unprepare), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 namespace Encspect.Formats.MonkeysAudio.Decoding;
 
 // How the values the predictors give become the samples of the WAV data: which channels are a mid and a side channel that give a pair of
-// samples, how each sample takes its bytes, and what the SDK leaves out.
+// samples and how each sample takes its bytes. The seventh channel of a seven-channel file is a plain sample like the others of the remaining
+// channels (Prepare.cpp: nStartChannel is 6 for 7 channels from SDK 13.44 on; 13.42 and earlier started at 7 and never stored it).
 internal sealed class Unprepare
 {
     private enum Kind : byte
@@ -14,9 +15,6 @@ internal sealed class Unprepare
 
         // The center and subwoofer channels of a file of six channels or more, which are plain samples that the SDK checks for 16 bits like a pair's.
         RawChecked,
-
-        // The seventh channel of a seven-channel file, which the SDK's code neither writes nor reads (Prepare.cpp: nStartChannel is 7 for 7 channels).
-        Skipped,
     }
 
     private readonly Kind[] _kinds;
@@ -58,11 +56,6 @@ internal sealed class Unprepare
                     {
                         Pair(6);
                     }
-
-                    if (channels == 7)
-                    {
-                        _kinds[6] = Kind.Skipped;
-                    }
                 }
             }
         }
@@ -92,10 +85,6 @@ internal sealed class Unprepare
                 case Kind.PairSecond:
                     x = values[c - 1] - (values[c] / 2) + values[c];
                     break;
-                case Kind.Skipped:
-                    samples[(c * stride) + i] = 0;
-                    at += width;
-                    continue;
                 default:
                     x = values[c];
                     break;
