@@ -290,8 +290,11 @@ def check_scale_info(path, manifest, dumper):
     return problems
 
 
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
-GUESSENC_MODES_BY_MISC = {}
+# mp3guessenc's name for the stereo mode of the LAME tag (misc bits 2 to 4); the other values are not modeled
+# because no fixture holds them.
+GUESSENC_MODES_BY_MISC = {0: "mono", 1: "simple LR stereo", 3: "joint stereo", 4: "forced MS stereo", 7: "other"}
+GUESSENC_SOURCE_FREQUENCIES = {0: "32 kHz or below", 1: "44.1 kHz", 2: "48 kHz"}
+GUESSENC_STRATEGY_PREFIXES = {0: "", 1: "CBR, ", 2: "ABR, ", 3: "VBR method old/rh, min ", 4: "VBR method mtrh, min "}
 
 
 def guessenc_tag_lines(path):
@@ -311,34 +314,143 @@ def guessenc_tag_lines(path):
     return lines
 
 
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def guessenc_lame_recognized(encoder):
-    raise NotImplementedError
+    """Whether mp3guessenc takes the tag for a LAME tag: "LAME...", "L3.99a12" and the like, and "Lavc" (not "Lavf")."""
+    return encoder.startswith(("LAME", "Lavc")) or re.match(r"L\d\.\d\d", encoder) is not None
 
 
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def guessenc_preset(value):
-    raise NotImplementedError
+    """mp3guessenc's text for the low 11 bits of the preset field, or None for the values no fixture holds."""
+    if value == 0:
+        return "No preset."
+    if 8 <= value <= 320:
+        return f"{value} kbps"
+    if 410 <= value <= 500 and value % 10 == 0:
+        return f"V{(500 - value) // 10} / VBR_{value - 400}"
+    if value == 1001:
+        return "Standard."
+    return None
 
 
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def guessenc_strategy(method, bitrate):
-    raise NotImplementedError
+    """mp3guessenc's "Bitrate strategy" for the VBR methods 0 to 4, the only ones fixtures hold; None otherwise."""
+    if method not in GUESSENC_STRATEGY_PREFIXES:
+        return None
+    text = "unknown" if bitrate == 0 else f"{bitrate} kbps" + (" or higher" if bitrate == 255 else "")
+    return GUESSENC_STRATEGY_PREFIXES[method] + text
 
 
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def expected_guessenc(tag, music_crc):
-    raise NotImplementedError
+    """What mp3guessenc prints for the header, by label, from the manifest's raw tag; labels without an
+    entry (values no fixture shows) are not compared. Quality is "" where mp3guessenc leaves the line out."""
+    if tag["type"] == "VBRI":
+        entries = tag["toc_entries"]
+        size = tag["entry_size"]
+        return {
+            "detected": "VBRI",
+            "Tag version": str(tag["version"]),
+            "Encoder delay": f"{tag['delay']} samples",
+            "File size": f"{tag['bytes']} bytes",
+            "Number of frames": str(tag["frames"]),
+            "Quality": str(tag["quality"]),
+            "TOC": f"{size * entries} bytes ({entries} entries, {size} byte{'s' if size > 1 else ''} each)",
+        }
+    quality = tag["quality"]
+    expected = {
+        "detected": "Xing",
+        "File size": f"{tag['bytes'] or 0} bytes",
+        "Number of frames": str(tag["frames"] or 0),
+        "TOC": "100 bytes (100 entries, 1 byte each)" if tag["toc"] else "no",
+        "Quality": "" if quality in (None, 0xFFFFFFFF, 0x474F474F) else str(quality),
+    }
+    lame = tag.get("lame")
+    expected["Lame tag"] = "yes" if lame and guessenc_lame_recognized(lame["encoder"]) else "no"
+    if expected["Lame tag"] == "no":
+        return expected
+    flags, misc = lame["flags"], lame["misc"]
+    yes_no = lambda bit: "yes" if flags & bit else "no"
+    expected.update({
+        "Lame short string": lame["encoder"].rstrip(" "),
+        "Tag revision": str(lame["revision"]),
+        "Bitrate strategy": guessenc_strategy(lame["method"], lame["bitrate"]),
+        "Lowpass value": "unknown" if lame["lowpass"] == 0 else str(lame["lowpass"] * 100),
+        "nspsytune": yes_no(0x10),
+        "nssafejoint": yes_no(0x20),
+        "nogap continued": yes_no(0x40),
+        "nogap continuation": yes_no(0x80),
+        "ATH type": str(flags & 15),
+        "Encoder delay (start)": f"{lame['delay']} samples",
+        "Encoder padding (end)": f"{lame['padding']} samples",
+        "Encoding mode": GUESSENC_MODES_BY_MISC.get((misc >> 2) & 7),
+        "Unwise settings": "used" if misc & 0x20 else "not used",
+        "Source frequency": GUESSENC_SOURCE_FREQUENCIES.get(misc >> 6),
+        "Preset": guessenc_preset(lame["preset_surround"] & 0x7FF),
+        "Originally encoded": f"{lame['music_length']} bytes",
+    })
+    tag_ok = lame["tag_crc"] == lame["tag_crc_computed"]
+    expected["Tag verification"] = "passed" if tag_ok else "failed"
+    expected["music crc"] = "performed" if not tag_ok else "passed" if lame["music_crc"] == music_crc else "failed"
+    return {key: value for key, value in expected.items() if value is not None}
 
 
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
+def mpg123_gain(value, encoder):
+    """mpg123's text for a ReplayGain field of the LAME tag: tenths of a dB, 6 dB more for an automatic
+    gain from LAME before 3.95 (it prints "Old LAME detected" and corrects for the 83 dB reference)."""
+    originator = (value >> 10) & 7
+    if originator == 0:
+        return "0.0"
+    tenths = -(value & 0x1FF) if value & 0x200 else value & 0x1FF
+    version = re.match(r"LAME(\d+)\.(\d+)", encoder)
+    if originator == 3 and version and (int(version[1]), int(version[2])) < (3, 95):
+        tenths += 60
+    return f"{'-' if tenths < 0 else ''}{abs(tenths) // 10}.{abs(tenths) % 10}"
+
+
 def expected_mpg123(tag):
-    raise NotImplementedError
+    """The notes ("Xing...", "Info: ..." and "Encoder delay...") mpg123 prints for a Xing or Info header, in order."""
+    notes = ["Xing/Lame/Info header detected"]
+    for key, label in (("frames", "frames"), ("bytes", "bytes")):
+        if tag[key] is not None:
+            notes.append(f"Xing: {tag[key]} {label}")
+    if tag["quality"] is not None:
+        notes.append(f"Xing: quality = {tag['quality']}")
+    lame = tag.get("lame")
+    if lame:
+        encoder = lame["encoder"]
+        notes.append(f"Info: Encoder: {encoder}")
+        if encoder.startswith("LAME") and not re.match(r"LAME\d+\.\d+", encoder):
+            notes.append("Info: Cannot determine LAME version.")
+        notes.append(f"Info: vbr mode {lame['method']}")
+        notes.append(f"Info: Radio Gain = {mpg123_gain(lame['radio_gain'], encoder)}dB")
+        notes.append(f"Info: Audiophile Gain = {mpg123_gain(lame['audiophile_gain'], encoder)}dB")
+        if lame["method"] == 2:
+            notes.append(f"Info: ABR rate = {lame['bitrate']}")
+        notes.append(f"Encoder delay = {lame['delay']}; padding = {lame['padding']}")
+    return notes
 
 
-# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def frames_after_tag(manifest):
-    raise NotImplementedError
+    """(offset, length) of the complete frames after the header's frame, up to the first one whose MPEG version
+    or sample rate differs: from the manifest's frames, else ffprobe's packets, else none (free format)."""
+    tag = manifest["vbr_header"]
+    if tag is None:
+        return []
+    start = tag["frame_offset"]
+    end = manifest.get("length")
+    if "frames" in manifest:
+        first = manifest["frames"][0]["fields"] if manifest["frames"] else {}
+        result = []
+        for frame in manifest["frames"]:
+            fields = frame["fields"]
+            if frame["offset"] <= start:
+                first = fields
+                continue
+            if (fields.get("Header/Version"), fields.get("Header/Sample Rate")) != (first.get("Header/Version"), first.get("Header/Sample Rate")):
+                break
+            result.append((frame["offset"], frame["length"]))
+    else:
+        result = [(offset, length) for offset, length in manifest.get("ffprobe_packets", []) if offset > start]
+    return [(offset, length) for offset, length in result if end is None or offset + length <= end]
 
 
 def check_vbr_header(path, manifest):
