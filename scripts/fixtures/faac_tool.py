@@ -42,11 +42,14 @@ RELEASES = {
 }
 
 
-def tag_problems():
-    """For check_sources.py: the repositories that do not serve a tag with its pinned commit."""
+def tag_problems(only=None):
+    """For check_sources.py: the repositories that do not serve a tag with its pinned commit; only, if given,
+    is a set of (tag, repository) to check."""
     problems = []
     for tag, commit, _, _ in RELEASES.values():
         for repository in REPOSITORIES:
+            if only is not None and (tag, repository) not in only:
+                continue
             result = subprocess.run(["git", "ls-remote", repository, f"refs/tags/{tag}", f"refs/tags/{tag}^{{}}"], capture_output=True, text=True)
             if result.returncode != 0:
                 problems.append(f"{repository} {tag}: {result.stderr.strip().splitlines()[-1] if result.stderr.strip() else f'git exit {result.returncode}'}")
