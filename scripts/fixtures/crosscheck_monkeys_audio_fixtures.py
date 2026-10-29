@@ -15,9 +15,11 @@ make_legacy_monkeys_audio_fixtures.py, make_monkeys_audio_fixtures.py):
   frame CRC only from version 3.90, so before that (and in files without the CRC flag) it decodes other samples without saying so wherever its decoder differs from
   the SDK's: FFMPEG_DIFFERS lists the fixtures of versions before 3.93 where it did, each with what was seen, and the run fails when a listed fixture decodes to the
   samples after all or an unlisted one does not.
-- The channel mask of the WAVE file mac -d writes, which starts with the header data the fixture stores: the manifest's layout is the one that mask gives (the default one
-  of a mono or stereo file, none for more channels, where there is no mask). Neither ffprobe nor MediaInfo reports channel positions for a Monkey's Audio file (ffprobe
-  decodes mono and stereo only and names the layout of those by their count; MediaInfo gives the number of channels), so the layout is not compared with theirs.
+- The channel mask of the file mac -d writes, which starts with the header data the fixture stores (a RIFF, RF64, BW64 or Wave64 header), read by wav_mask below, a
+  parser of this script: the layout the rule gives for it (the set bits in order, bits from 18 up without a position, cut or filled to the channel count; without a mask
+  the default of one or two channels, none for more) is the channelLayout of Encspect's committed report of the fixture (<name>.report.json), which the golden tests keep
+  equal to what the analyzer reports. Neither ffprobe nor MediaInfo reports channel positions for a Monkey's Audio file (ffprobe 8.0.1 decodes mono and stereo only and
+  names the layout of those by their count; MediaInfo 26.01 gives the number of channels), so the layout is not compared with theirs.
 - MediaInfo 26.01 (mediainfo_tool.py): the audio stream's format, sample rate, channels, bit depth and duration, where it reads the file.
 - The descriptor MD5 is worked out again here with hashlib in the SDK's order (MACLib.cpp, VerifyFileW2) and compared with the manifest's.
 
@@ -77,32 +79,74 @@ def find(manifest):
     return next(p for p in DIRECTORY.glob(stem + ".*") if not p.name.endswith(".json"))
 
 
+W64_RIFF = bytes.fromhex("726966662E91CF11A5D628DB04C10000")
+W64_WAVE = bytes.fromhex("77617665F3ACD3118CD100C04F8EDB8A")
+W64_TEXT_TAIL = bytes.fromhex("F3ACD3118CD100C04F8EDB8A")
+SPEAKER_NAMES = ["front left", "front right", "front center", "LFE", "back left", "back right", "front left of center", "front right of center", "back center",
+                 "side left", "side right", "top center", "top front left", "top front center", "top front right", "top back left", "top back center",
+                 "top back right"]
+
+
+def wave_chunks(raw):
+    """The chunks of a RIFF, RF64 or BW64 file (32-bit sizes, chunks padded to an even length, 0xFFFFFFFF for a size the file does not state) or of a Wave64 file (GUIDs
+    for IDs, 64-bit sizes that count the chunk's 24 bytes of header, chunks padded to 8 bytes) as (ID, start, end) of each chunk's data, up to the data chunk. Empty
+    for any other file."""
+    chunks = []
+    if raw[:4] in (b"RIFF", b"RF64", b"BW64") and raw[8:12] == b"WAVE":
+        at = 12
+        while at + 8 <= len(raw):
+            size = int.from_bytes(raw[at + 4:at + 8], "little")
+            chunks.append((raw[at:at + 4], at + 8, len(raw) if size == 0xFFFFFFFF else min(at + 8 + size, len(raw))))
+            if raw[at:at + 4] == b"data":
+                break
+            at += 8 + size + (size & 1)
+    elif raw[:16] == W64_RIFF and raw[24:40] == W64_WAVE:
+        at = 40
+        while at + 24 <= len(raw):
+            size = int.from_bytes(raw[at + 16:at + 24], "little")
+            if size < 24:
+                break
+            name = raw[at:at + 4] if raw[at + 4:at + 16] == W64_TEXT_TAIL else None
+            chunks.append((name, at + 24, min(at + size, len(raw))))
+            if name == b"data":
+                break
+            at += (size + 7) & ~7
+    return chunks
+
+
 def wav_data(raw):
-    """The data chunk of a RIFF/WAVE file, found by walking its chunks (a chunk ID can also occur inside another chunk)."""
-    at = 12
-    while at + 8 <= len(raw):
-        size = int.from_bytes(raw[at + 4:at + 8], "little")
-        if raw[at:at + 4] == b"data":
-            return raw[at + 8:at + 8 + size] if size != 0xFFFFFFFF else raw[at + 8:]
-        at += 8 + size + (size & 1)
+    """The data chunk of a RIFF/RF64/BW64 or Wave64 file, found by walking its chunks (a chunk ID can also occur inside another chunk)."""
+    for name, start, end in wave_chunks(raw):
+        if name == b"data":
+            return raw[start:end]
     raise ValueError("the WAVE file has no data chunk")
 
 
 def wav_mask(raw):
-    """The channel mask of the fmt chunk of a RIFF/WAVE file (None where the format is not WAVE_FORMAT_EXTENSIBLE with a cbSize of 22 or more, or the file
-    has no complete fmt chunk), found by walking its chunks."""
-    at = 12
-    while at + 8 <= len(raw):
-        size = int.from_bytes(raw[at + 4:at + 8], "little")
-        if raw[at:at + 4] == b"fmt ":
-            body = raw[at + 8:at + 8 + size]
+    """The channel mask of the fmt chunk of a WAVE file (None where the file is no RIFF, RF64, BW64 or Wave64 file, the format is not WAVE_FORMAT_EXTENSIBLE with a
+    cbSize of 22 or more, or there is no complete fmt chunk before the data chunk)."""
+    for name, start, end in wave_chunks(raw):
+        if name == b"fmt ":
+            body = raw[start:end]
             if len(body) >= 40 and int.from_bytes(body[0:2], "little") == 0xFFFE and int.from_bytes(body[16:18], "little") >= 22:
                 return int.from_bytes(body[20:24], "little")
             return None
-        if raw[at:at + 4] == b"data":
-            return None
-        at += 8 + size + (size & 1)
     return None
+
+
+def mask_layout(mask, channels):
+    """The speakers of the channels for a WAVE channel mask (Microsoft, "Multiple channel audio data and WAVE files"): the set bits in order, bits from 18 up for
+    channels without a position, cut or filled with such channels to the channel count. Without a mask, the default of one or two channels, and none for more."""
+    if not mask:
+        return {1: ["front center"], 2: ["front left", "front right"]}.get(channels)
+    names = [SPEAKER_NAMES[bit] if bit < 18 else "discrete" for bit in range(32) if mask >> bit & 1]
+    return (names + ["discrete"] * channels)[:channels]
+
+
+def reported_layout(path):
+    """The channelLayout of the stream in Encspect's committed report of the fixture, or None where the report has none."""
+    reports = json.loads(path.with_name(path.name.rsplit(".", 1)[0] + ".report.json").read_text(encoding="utf-8"))
+    return reports[0]["streams"][0].get("channelLayout")
 
 
 def aiff_data(raw, bits):
@@ -165,22 +209,24 @@ def check_decode(name, manifest, path, mac, work, problems):
     is_float = bool(manifest["header"]["flags"] & 4096)
     try:
         written = out.read_bytes()
-        if name == "built-wav-header-cut-in-fmt":
-            # The stored header data is cut, so what mac writes is that and the samples; the samples follow it.
-            samples = written[manifest["descriptor"]["header_data_bytes"]:]
-            raw = canonical(samples, info["bits_per_sample"], is_float)
+        if any(f["code"] == "monkeys-audio.wav-header-damaged" for f in manifest["findings"]):
+            # The stored header data is no complete WAVE header, so what mac writes is that and the samples, which follow it.
+            raw = canonical(written[manifest["descriptor"]["header_data_bytes"]:], info["bits_per_sample"], is_float)
         else:
             raw = canonical(aiff_data(written, info["bits_per_sample"]) if written[:4] == b"FORM" else wav_data(written), info["bits_per_sample"], is_float)
     except ValueError as error:
         problems.append(f"mac -d writes a file that is no WAVE file with samples: {error}")
         return
-    if written[:4] == b"RIFF" and name != "built-wav-header-cut-in-fmt":
-        # The WAVE file mac writes starts with the header data the file stores, so its channel mask is the one the manifest's layout must follow.
-        mask = wav_mask(written)
-        default = {1: ["front center"], 2: ["front left", "front right"]}.get(info["channels"])
-        expected = m.mask_layout(mask, info["channels"]) if mask else default
-        if info["layout"] != expected:
-            problems.append(f"the WAVE file mac -d writes has the channel mask {mask if mask is None else hex(mask)}, which gives the layout {expected}; the manifest says {info['layout']}")
+    if manifest["stream_infos"] and (path.with_name(path.name.rsplit(".", 1)[0] + ".report.json")).exists():
+        # The file mac writes starts with the header data the file stores (or, with the flag for a created header, one of its own), so its channel mask is the one the
+        # layout in Encspect's report must follow.
+        # A descriptor file with stored header data begins with exactly those bytes; the walk stops there, since a damaged header is followed by samples.
+        stored = manifest["descriptor"]["header_data_bytes"] if "descriptor" in manifest and not manifest["header"]["flags"] & 32 else len(written)
+        mask = wav_mask(written[:stored])
+        expected = mask_layout(mask, info["channels"])
+        reported = reported_layout(path)
+        if reported != expected:
+            problems.append(f"the file mac -d writes has the channel mask {mask if mask is None else hex(mask)}, which gives the layout {expected}; Encspect's report says {reported}")
     digest = hashlib.md5(raw).hexdigest()
     if digest != manifest["decoded_pcm_md5"]:
         problems.append(f"mac -d decodes to {digest}, the manifest says {manifest['decoded_pcm_md5']}")
