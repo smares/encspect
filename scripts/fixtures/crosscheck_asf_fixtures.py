@@ -10,12 +10,11 @@ For every manifest in tests/fixtures/asf:
   For an ffmpeg-encoded WMA file they are the superframes the manifest records.
 - ffmpeg decoding to PCM: no error, and for the WMA files the sample count the manifest records. For
   the Lossless fixtures of Microsoft's encoder (external-windows-*), the decoded samples equal the
-  input signal bit for bit. For Windows Media Audio Voice, the samples ffmpeg decodes equal the
-  analyzer's (the golden report's) for every fixture: the hand-built ones (voice-*, from
-  voice_model.py) too, damaged as they are, where ffmpeg must print the errors the manifest names
-  (a configuration it rejects, a music superframe, a frame type code or a sample count it refuses) and
-  drop the same packets and superframes as the analyzer does; that agreement of the sample counts is
-  the independent check of the superframe boundaries, the spillover and the packets' resync.
+  input signal bit for bit. The hand-built Voice fixtures (voice-*, made by a writer that was removed
+  for its provenance) are held to their manifests: where ffmpeg must print the errors the manifest
+  names (a configuration it rejects, a music superframe, a frame type code or a sample count it
+  refuses), and the samples and frames it decodes. The analyzer reads Voice at header level, so its
+  report is not compared with the decoder's samples.
 - MediaInfo (26.01): the format, the codec ID, the channels, the sampling rate and the duration of
   the WMA files against ffprobe's; and against the analyzer's golden report: the bit rate mode (the
   IsVBR attribute), the description of the codec (the Codec List), the format profile, title and
@@ -37,10 +36,8 @@ Disagreements fail the run (exit status 1).
 
     python3 scripts/fixtures/crosscheck_asf_fixtures.py [name ...]
 
-What no tool at hand gives: the frame boundaries inside a WMA superframe. ffmpeg's decoder does not
-expose them and no other decoder is available, so they rest on the encoder's own padding (ffmpeg's
-fills each superframe with 'N' bytes, which WmaFixtureTests checks) and, for Microsoft's files, on
-the decoder reading every superframe without error.
+The frames of WMA versions 1 and 2, Professional and Voice are not read by the analyzer (header level
+until clean-room rewrites), so nothing here compares the analyzer's frame boundaries with a decoder's.
 """
 
 import json
@@ -93,66 +90,32 @@ def decode(path, fmt="s16le", level="error"):
     return code, pcm, "\n".join(lines).strip()
 
 
-def analyzer_samples(path):
-    report = golden_report(path)
-    return report["streams"][0]["samples"] if report and report["streams"] else None
-
-
-def analyzer_statistic(path, name):
-    """A statistic of the Voice stream in the golden report."""
-    report = golden_report(path)
-    voice = next((n for n in nodes_of(report["root"]) if n["name"] == "Windows Media Audio Voice"), None) if report else None
-    stats = next((c for c in voice["children"] if c["name"] == "Statistics"), None) if voice else None
-    return next((c.get("value") for c in stats["children"] if c["name"] == name), None) if stats else None
-
-
-def check_voice_frames(path, problems, pinned=None):
-    """ffprobe -count_frames decodes the stream: each superframe it decodes is a frame, so the count is the analyzer's superframes (and
-    the manifest's, where it pins the count)."""
-    code, data = ffprobe_json(path, "-count_frames", "-select_streams", "a:0", "-show_entries", "stream=nb_read_frames")
-    counted = int(data["streams"][0].get("nb_read_frames", 0)) if code == 0 and data.get("streams") else None
-    if counted != analyzer_statistic(path, "Superframes"):
-        problems.append(f"ffprobe decodes {counted} frames, the analyzer's golden report has {analyzer_statistic(path, 'Superframes')} superframes")
-    if pinned is not None and counted != pinned:
-        problems.append(f"ffprobe decodes {counted} frames, the manifest pins {pinned}")
-
-
 def check_voice_decode(name, manifest, path, problems):
-    """ffmpeg's decoder against the manifest and the analyzer's report, for a hand-built Voice fixture."""
+    """ffmpeg's decoder against the manifest, for a hand-built Voice fixture: the writer that made the files was removed, so what it put in is
+    held to what ffmpeg decodes, not to the analyzer, which reads Voice at header level."""
     crosscheck = manifest["crosscheck"]
     mode = crosscheck["decode"]
     code, pcm, errors = decode(path, level="warning")
     samples = len(pcm) // 2
-    analyzed = analyzer_samples(path)
     pins = crosscheck.get("ffmpeg", {})
-    if mode != "error":
-        check_voice_frames(path, problems, pins.get("superframes"))
+    if mode != "error" and "superframes" in pins:
+        code_frames, data = ffprobe_json(path, "-count_frames", "-select_streams", "a:0", "-show_entries", "stream=nb_read_frames")
+        counted = int(data["streams"][0].get("nb_read_frames", 0)) if code_frames == 0 and data.get("streams") else None
+        if counted != pins["superframes"]:
+            problems.append(f"ffprobe decodes {counted} frames, the manifest pins {pins['superframes']}")
     if "samples" in pins and samples != pins["samples"]:
         problems.append(f"ffmpeg decodes {samples} samples, the manifest pins {pins['samples']}")
-    if mode == "clean":
-        # No error at all, though the stream is not what the writer put in: the analysis must agree with what the decoder makes of it.
+    if mode in ("clean", "ok"):
         if errors:
             problems.append(f"ffmpeg decoding: {errors.splitlines()[0]}")
-        if analyzed != samples:
-            problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
-        return
-    if mode == "ok":
-        if errors:
-            problems.append(f"ffmpeg decoding: {errors.splitlines()[0]}")
-        if samples != manifest["voice"]["decoded_samples"]:
+        if mode == "ok" and samples != manifest["voice"]["decoded_samples"]:
             problems.append(f"ffmpeg decodes {samples} samples, the writer put in {manifest['voice']['decoded_samples']}")
-        if analyzed != samples:
-            problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
         return
     for message in crosscheck.get("messages", []):
         if message not in errors:
             problems.append(f"ffmpeg does not report {message!r}; it says {errors.splitlines()[:2]}")
-    if mode == "error":
-        # The decoder does not open: nothing is decoded, and the analyzer states what the container says.
-        if samples != 0 or code == 0:
-            problems.append(f"ffmpeg decodes {samples} samples (exit status {code}) where it should refuse the configuration")
-    elif analyzed != samples:
-        problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
+    if mode == "error" and (samples != 0 or code == 0):
+        problems.append(f"ffmpeg decodes {samples} samples (exit status {code}) where it should refuse the configuration")
 
 
 # What ffprobe's wmavoice decoder says of each damaged configuration (wmavoice.c, wmavoice_decode_init), which it opens to read the stream.
@@ -406,10 +369,6 @@ def check_windows(name, provenance, path, problems):
         code, pcm, errors = decode(path)
         if code != 0 or errors:
             problems.append(f"ffmpeg decoding: {errors or code}")
-        elif stream["codec_name"] == "wmavoice":
-            if analyzer_samples(path) != len(pcm) // 2:
-                problems.append(f"the analyzer's golden report has {analyzer_samples(path)} samples, ffmpeg decodes {len(pcm) // 2}")
-            check_voice_frames(path, problems)
     check_mediainfo(name, path, stream, problems, golden_report(path))
 
 
