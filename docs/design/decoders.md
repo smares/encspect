@@ -1291,7 +1291,7 @@ Lowpass detection and its kin are analysis results, so they belong in the librar
    - TrueHD and MLP, parser and decoder, raw files first, on the work contract, with its cases in `DecoderWorkTests`, built clean-room (decision 10): the format description [docs/design/truehd-format.md](truehd-format.md) comes first, written by an agent that reads FFmpeg's `mlpdec.c`, `mlp.c`, `mlp_parse.c` and `mlpdsp.c` and includes no code, and the parser and decoder are written by an agent that has not read them, from that description, the plan and the test vectors, with FFmpeg only as a black-box cross-check;
    - TTA as a format parser and a "tta" codec parser for Matroska's frames, which carry no header (FFmpeg builds it from the track, `matroskadec.c` 2700 and on), without a decoder;
    - WAV and AIFF parsers, without decoders;
-   - ALAC's codec parser and WMA Lossless's frames, without decoders if the scope decision moves them.
+   - ALAC's codec parser and WMA Lossless's frames, without decoders if the scope decision moves them. WMA Lossless is built clean-room (decision 10): the parser is written by an agent that has not read FFmpeg's `wmalosslessdec.c`, from the format description [docs/design/wma-lossless-format.md](wma-lossless-format.md), the plan and the test files it lists, with FFmpeg only as a black-box cross-check.
 4. **Containers, one at a time:** each container's routes are their own pull request, after the codec parsers they route to.
    - MP4: FLAC's `fLaC` entry, `alac`, `mlpa`.
    - Matroska: `A_FLAC`, `A_ALAC`, `A_TRUEHD`, `A_MLP`, `A_TTA1`, `A_WAVPACK4`.
