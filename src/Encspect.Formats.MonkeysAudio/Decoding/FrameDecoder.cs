@@ -1,4 +1,4 @@
-// Follows the Monkey's Audio SDK 13.42 (APEDecompressCore.cpp, UnBitArray.cpp, NewPredictor.cpp, Prepare.cpp, Old/NewPredictorOld.cpp, Old/UnBitArrayOld.cpp), 3-clause BSD license:
+// Follows the Monkey's Audio SDK 13.44 (APEDecompressCore.cpp, UnBitArray.cpp, NewPredictor.cpp, Prepare.cpp, Old/NewPredictorOld.cpp, Old/UnBitArrayOld.cpp), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 using System.Buffers.Binary;
 using Encspect.Core;

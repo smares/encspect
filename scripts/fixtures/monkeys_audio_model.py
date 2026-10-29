@@ -1,4 +1,4 @@
-"""A second reading of Monkey's Audio files, written from the SDK 13.42's description of the format (MACLib.h, APEHeader.cpp, APECompressCreate.cpp,
+"""A second reading of Monkey's Audio files, written from the SDK 13.44's description of the format (MACLib.h, APEHeader.cpp, APECompressCreate.cpp,
 APEDecompress.cpp) and not from the analyzer, and the writer that assembles a file from its parts, which the hand-built fixtures use.
 
 A file is a descriptor, a header, a seek table, the WAV header data, the frames and the terminating data. The frames are one stream of bytes that the

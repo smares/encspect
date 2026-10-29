@@ -2,8 +2,8 @@
 """Writes tests/fixtures/monkeys-audio/external-interim-24-stereo.ape, a 24-bit file in the "interim" coding of Monkey's Audio 5.01 to 8.51.
 
 Those encoders summed the first stage of the predictor in 64 bits for samples over 16 bits; the SDK's decoder undoes that in its "interim mode", which it
-enters when a frame of a 24-bit file fails its CRC (APEDecompressCore.cpp, DecodeFrame; Interim.cpp). The SDK 13.42 encoder no longer writes such files, so
-the fixture comes from mac built with the one line of its encoder changed back (monkeys_audio_tool.build_interim_mac). The unchanged mac 13.42 verifies and
+enters when a frame of a 24-bit file fails its CRC (APEDecompressCore.cpp, DecodeFrame; Interim.cpp). The SDK 13.44 encoder no longer writes such files, so
+the fixture comes from mac built with the one line of its encoder changed back (monkeys_audio_tool.build_interim_mac). The unchanged mac 13.44 verifies and
 decodes the file through its interim mode (crosscheck_monkeys_audio_fixtures.py), and the analyzer must do the same.
 
 The signal is a loud sine with noise (monkeys_audio_signal.py, "loud-sine-noise"), whose first stage overflows 32 bits on some samples. --manifests-only recomputes the manifest from the committed file.

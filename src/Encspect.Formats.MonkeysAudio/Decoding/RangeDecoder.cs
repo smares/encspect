@@ -1,4 +1,4 @@
-// Follows the Monkey's Audio SDK 13.42 (UnBitArray.cpp, UnBitArrayBase.h, UnBitArrayBase.cpp, Old/UnBitArrayOld.cpp), 3-clause BSD license:
+// Follows the Monkey's Audio SDK 13.44 (UnBitArray.cpp, UnBitArrayBase.h, UnBitArrayBase.cpp, Old/UnBitArrayOld.cpp), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 namespace Encspect.Formats.MonkeysAudio.Decoding;
 

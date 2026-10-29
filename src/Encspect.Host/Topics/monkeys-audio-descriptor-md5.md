@@ -2,7 +2,7 @@
 id: monkeys-audio-descriptor-md5
 title: The Monkey's Audio descriptor MD5
 related: monkeys-audio-file, monkeys-audio-frames, verification, crc
-references: Monkey's Audio SDK 13.42, Source/MACLib/MACLib.cpp (VerifyFileW2) and APEHeader.cpp; MACLib.h (APE_DESCRIPTOR)
+references: Monkey's Audio SDK 13.44, Source/MACLib/MACLib.cpp (VerifyFileW2) and APEHeader.cpp; MACLib.h (APE_DESCRIPTOR)
 ---
 
 **The problem.** A CRC in each frame shows that the audio of that frame decoded right. It does not show that every frame is there, nor that the header, seek table and WAV data around them are unchanged.

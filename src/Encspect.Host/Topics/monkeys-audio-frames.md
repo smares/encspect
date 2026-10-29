@@ -2,7 +2,7 @@
 id: monkeys-audio-frames
 title: Monkey's Audio frames
 related: monkeys-audio-file, monkeys-audio-seek-table, monkeys-audio-range-coding, monkeys-audio-prediction, crc, mid-side-stereo
-references: Monkey's Audio SDK 13.42, Source/MACLib/APEDecompress.cpp, APEDecompressCore.cpp, UnBitArray.cpp, Prepare.cpp and BitArray.cpp (the encoder's side), and Old/UnMACOld.cpp, Old/APEDecompressCoreOld.cpp for the versions before 3.93
+references: Monkey's Audio SDK 13.44, Source/MACLib/APEDecompress.cpp, APEDecompressCore.cpp, UnBitArray.cpp, Prepare.cpp and BitArray.cpp (the encoder's side), and Old/UnMACOld.cpp, Old/APEDecompressCoreOld.cpp for the versions before 3.93
 ---
 
 **The problem.** The audio is coded in pieces so that a reader can start at any one of them, and each piece has to say whether it decoded to what the encoder saw.

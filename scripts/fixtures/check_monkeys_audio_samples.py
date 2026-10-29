@@ -2,7 +2,7 @@
 """Checks tests/conformance/monkeys-audio-samples.json against real Monkey's Audio files of version 3.97 from the FFmpeg sample archive, which this
 repository does not commit. The script downloads them into a cache directory and checks each file's SHA-256 against the manifest before using it.
 
-The SDK 13.42 decodes the versions before 3.99 and no longer writes them, so a file an encoder of the time wrote is the one reference for the coding
+The SDK 13.44 decodes the versions before 3.99 and no longer writes them, so a file an encoder of the time wrote is the one reference for the coding
 of these versions that does not come from monkeys_audio_legacy.py (whose files are held to the SDK's decoder, not to an encoder). Per file:
 
 - mac -V (built from the pinned SDK, monkeys_audio_tool.py) decodes every frame with the SDK's decoder of the version and compares its CRC, and the audio

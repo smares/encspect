@@ -2,7 +2,7 @@
 id: monkeys-audio-seek-table
 title: The Monkey's Audio seek table
 related: monkeys-audio-file, monkeys-audio-frames, flac-seek-table
-references: Monkey's Audio SDK 13.42, Source/MACLib/APEHeader.cpp (Analyze, AnalyzeCurrent) and APEInfo.cpp; MACLib.h (APE_DESCRIPTOR)
+references: Monkey's Audio SDK 13.44, Source/MACLib/APEHeader.cpp (Analyze, AnalyzeCurrent) and APEInfo.cpp; MACLib.h (APE_DESCRIPTOR)
 ---
 
 **The problem.** Frames have no sync pattern and differ in length, so a player cannot find the one it wants by scanning. It needs to know where each frame starts.
