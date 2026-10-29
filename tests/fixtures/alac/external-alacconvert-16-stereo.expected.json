@@ -1,11 +1,11 @@
 {
  "container": "mp4",
- "length": 90115,
+ "length": 90222,
  "encoder": {
-  "tool": "alacconvert (Apple's ALAC reference implementation, commit c38887c5c5e64a4b31108733bd79ca9b2496d987, built by alac_tool.py), CAF copied into MP4 by ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers (ffmpeg package of Ubuntu 24.04)",
+  "tool": "alacconvert (Apple's ALAC reference implementation, commit c38887c5c5e64a4b31108733bd79ca9b2496d987, built by alac_tool.py), CAF copied into MP4 by MP4Box - GPAC version 2.2.1-rev2.2.1+dfsg1-3.1build2",
   "arguments": [
    "alacconvert in.wav out.caf",
-   "ffmpeg -i out.caf -c copy out.m4a"
+   "MP4Box -add out.caf:name= -new out.m4a"
   ],
   "input": {
    "kind": "music",
@@ -54,7 +54,7 @@
  },
  "frames": [
   {
-   "offset": 44,
+   "offset": 785,
    "size": 4538,
    "status": "ok",
    "samples": 4096,
@@ -117,7 +117,7 @@
    ]
   },
   {
-   "offset": 4582,
+   "offset": 5323,
    "size": 4071,
    "status": "ok",
    "samples": 4096,
@@ -188,7 +188,7 @@
    ]
   },
   {
-   "offset": 8653,
+   "offset": 9394,
    "size": 2985,
    "status": "ok",
    "samples": 4096,
@@ -255,7 +255,7 @@
    ]
   },
   {
-   "offset": 11638,
+   "offset": 12379,
    "size": 3805,
    "status": "ok",
    "samples": 4096,
@@ -318,7 +318,7 @@
    ]
   },
   {
-   "offset": 15443,
+   "offset": 16184,
    "size": 4538,
    "status": "ok",
    "samples": 4096,
@@ -381,7 +381,7 @@
    ]
   },
   {
-   "offset": 19981,
+   "offset": 20722,
    "size": 3563,
    "status": "ok",
    "samples": 4096,
@@ -448,7 +448,7 @@
    ]
   },
   {
-   "offset": 23544,
+   "offset": 24285,
    "size": 2960,
    "status": "ok",
    "samples": 4096,
@@ -511,7 +511,7 @@
    ]
   },
   {
-   "offset": 26504,
+   "offset": 27245,
    "size": 4269,
    "status": "ok",
    "samples": 4096,
@@ -574,7 +574,7 @@
    ]
   },
   {
-   "offset": 30773,
+   "offset": 31514,
    "size": 13424,
    "status": "ok",
    "samples": 4096,
@@ -641,7 +641,7 @@
    ]
   },
   {
-   "offset": 44197,
+   "offset": 44938,
    "size": 14097,
    "status": "ok",
    "samples": 4096,
@@ -708,7 +708,7 @@
    ]
   },
   {
-   "offset": 58294,
+   "offset": 59035,
    "size": 14058,
    "status": "ok",
    "samples": 4096,
@@ -775,7 +775,7 @@
    ]
   },
   {
-   "offset": 72352,
+   "offset": 73093,
    "size": 14067,
    "status": "ok",
    "samples": 4096,
@@ -842,7 +842,7 @@
    ]
   },
   {
-   "offset": 86419,
+   "offset": 87160,
    "size": 2990,
    "status": "ok",
    "samples": 848,
@@ -1016,14 +1016,7 @@
   "fill_bytes": 0,
   "data_stream_bytes": 0
  },
- "findings": [
-  {
-   "code": "mp4.edit-beyond-media"
-  },
-  {
-   "code": "mp4.moov-after-mdat"
-  }
- ],
+ "findings": [],
  "stream_infos": [
   {
    "codec": "Apple Lossless",

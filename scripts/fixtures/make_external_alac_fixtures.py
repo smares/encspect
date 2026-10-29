@@ -8,7 +8,8 @@ Three encoders write them, all run as black boxes (their sources are not read fo
   stream whose loud part is stored uncompressed (escape frames) beside frames that are predicted. The encoder writes no 20-bit or 32-bit stream (a 32-bit
   input gives a 24-bit stream), which the hand-built fixtures of make_alac_fixtures.py cover.
 - Apple's own reference encoder, `alacconvert` built unpatched from the pinned source by alac_tool.py, files named external-alacconvert-<name>.m4a: it
-  writes CAF files, which ffmpeg copies into an MP4 file without touching a frame (`-c copy`, the muxer is the only other tool). 16, 24 and 32 bits,
+  writes CAF files, which MP4Box (GPAC) copies into an MP4 file without touching a frame (`-add`, the muxer is the only other tool; it rounds the media's
+  duration up to whole frames). 16, 24 and 32 bits,
   1, 2, 3, 6 and 8 channels, streams that end part way into a frame.
 - mkvmerge (MKVToolNix) copies an MP4 file of ALAC into Matroska, files named external-mkvmerge-<name>.mka.
 
@@ -42,17 +43,18 @@ OUT = ROOT / "tests" / "fixtures" / "alac"
 WIDTH = {16: 2, 24: 3, 32: 4}
 
 # name: (input (kind, rate, channels, bits, samples), arguments before the output). A kind "mixed" is music with a stretch of loud noise in the middle.
+# FFmpeg 6.1.1's encoder takes 1, 2, 4, 5, 6 and 7 channels and mixes any other input down (3 to stereo, 8 to 7): the layouts named below are given to the input
+# (-ch_layout), so that no channel is mixed. alacconvert writes 3 and 8 channels.
+LAYOUTS = {4: "4.0", 5: "5.0", 6: "5.1", 7: "6.1(back)"}
 FFMPEG = {
     "16-stereo": (("music", 44100, 2, 16, 100000), []),
     "16-mono": (("music", 44100, 1, 16, 100000), []),
     "24-stereo": (("music", 48000, 2, 24, 60000), []),
     "24-mono": (("music", 48000, 1, 24, 30000), []),
-    "16-3ch": (("music", 22050, 3, 16, 30000), []),
     "16-4ch": (("music", 22050, 4, 16, 30000), []),
     "16-5ch": (("music", 22050, 5, 16, 30000), []),
     "16-6ch": (("music", 22050, 6, 16, 30000), []),
     "16-7ch": (("music", 22050, 7, 16, 30000), []),
-    "16-8ch": (("music", 22050, 8, 16, 30000), []),
     "24-6ch": (("music", 48000, 6, 24, 20000), []),
     "16-stereo-last-frame-one-sample": (("music", 44100, 2, 16, 8193), []),
     "16-stereo-whole-frames": (("music", 44100, 2, 16, 16384), []),
@@ -79,8 +81,14 @@ ALACCONVERT = {
     "16-loud-noise": ("loud", 22050, 2, 16, 20000),
 }
 
-# name: the alacconvert fixture mkvmerge copies, written as external-mkvmerge-<name>.mka.
-MKVMERGE = {"16-stereo": "16-stereo", "24-stereo": "24-stereo", "16-6ch": "16-6ch"}
+# name: the MP4 fixture mkvmerge copies (its stem), written as external-mkvmerge-<name>.mka. MP4Box writes a btrt box beside the alac box of its sample entry, which mkvmerge
+# takes into the CodecPrivate after the 24 bytes of the configuration (`alac.cookie-extra`); the files of FFmpeg's muxer have none.
+MKVMERGE = {
+    "16-stereo": "external-ffmpeg-16-stereo",
+    "24-stereo": "external-ffmpeg-24-stereo",
+    "16-6ch": "external-ffmpeg-16-6ch",
+    "16-stereo-btrt-in-cookie": "external-alacconvert-16-stereo",
+}
 
 
 def tool_version(command):
@@ -132,10 +140,11 @@ def encode_ffmpeg(name, spec, arguments, work):
     (work / "in.wav").write_bytes(wav_of(spec))
     out = work / "out.m4a"
     out.unlink(missing_ok=True)
-    run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(work / "in.wav"), "-c:a", "alac", *arguments, "-fflags", "+bitexact", "-flags:a", "+bitexact", str(out)],
+    layout = ["-ch_layout", LAYOUTS[spec[2]]] if spec[2] in LAYOUTS else []
+    run(["ffmpeg", "-y", "-loglevel", "error", *layout, "-i", str(work / "in.wav"), "-c:a", "alac", *arguments, "-fflags", "+bitexact", "-flags:a", "+bitexact", str(out)],
         f"ffmpeg {name}")
     shutil.copy(out, target)
-    return target, {"tool": f"{tool_version(['ffmpeg', '-version'])} (ffmpeg package of Ubuntu 24.04)", "arguments": arguments, "input": describe(spec)}
+    return target, {"tool": f"{tool_version(['ffmpeg', '-version'])} (ffmpeg package of Ubuntu 24.04)", "arguments": [*layout, *arguments] if layout else arguments, "input": describe(spec)}
 
 
 def encode_alacconvert(name, spec, program, work):
@@ -145,23 +154,23 @@ def encode_alacconvert(name, spec, program, work):
     alac_tool.encode(program, work / "in.wav", caf)
     out = work / "out.m4a"
     out.unlink(missing_ok=True)
-    run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(caf), "-c", "copy", "-fflags", "+bitexact", "-flags:a", "+bitexact", str(out)], f"ffmpeg remux {name}")
+    run(["MP4Box", "-add", f"{caf}:name=", "-new", str(out)], f"MP4Box {name}")
     shutil.copy(out, target)
     tool = (f"alacconvert (Apple's ALAC reference implementation, commit {alac_tool.COMMIT}, built by alac_tool.py), "
-            f"CAF copied into MP4 by {tool_version(['ffmpeg', '-version'])} (ffmpeg package of Ubuntu 24.04)")
-    return target, {"tool": tool, "arguments": ["alacconvert in.wav out.caf", "ffmpeg -i out.caf -c copy out.m4a"], "input": describe(spec)}
+            f"CAF copied into MP4 by {tool_version(['MP4Box', '-version'])}")
+    return target, {"tool": tool, "arguments": ["alacconvert in.wav out.caf", "MP4Box -add out.caf:name= -new out.m4a"], "input": describe(spec)}
 
 
 def encode_mkvmerge(name, source, work):
     target = OUT / f"external-mkvmerge-{name}.mka"
     out = work / "out.mka"
     out.unlink(missing_ok=True)
-    result = subprocess.run(["mkvmerge", "--deterministic", "encspect", "-o", str(out), str(OUT / f"external-alacconvert-{source}.m4a")], capture_output=True, text=True)
+    result = subprocess.run(["mkvmerge", "--deterministic", "encspect", "-o", str(out), str(OUT / f"{source}.m4a")], capture_output=True, text=True)
     if result.returncode > 1 or not out.exists():
         raise SystemExit(f"mkvmerge {name} failed: {result.stdout[-400:]}")
     shutil.copy(out, target)
     return target, {"tool": f"{tool_version(['mkvmerge', '--version'])} (mkvtoolnix package of Ubuntu 24.04)",
-                    "arguments": ["--deterministic", "encspect", f"external-alacconvert-{source}.m4a"], "source": f"external-alacconvert-{source}.m4a"}
+                    "arguments": ["--deterministic", "encspect", f"{source}.m4a"], "source": f"{source}.m4a"}
 
 
 def manifest_path(path):
@@ -221,7 +230,7 @@ def main():
             else:
                 path = OUT / f"external-mkvmerge-{name}.mka"
                 encoder = previous(path)["encoder"]
-            write_manifest(path, encoder, input_of(ALACCONVERT[source]))
+            write_manifest(path, encoder, input_of(FFMPEG[source[len("external-ffmpeg-"):]][0] if source.startswith("external-ffmpeg-") else ALACCONVERT[source[len("external-alacconvert-"):]]))
             count += 1
         for path in sorted(OUT.glob("apple-alac-m4a-*.m4a")):
             write_manifest(path, provenance_encoder(path))

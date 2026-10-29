@@ -43,6 +43,18 @@ def planes(channels, bits, rate, count, kind="music"):
     if kind == "sparse":
         # Zeros but for the first and the last sample: the residuals are one long run of zeros.
         return [[5] + [0] * (count - 2) + [-7] for _ in range(channels)]
+    if kind == "spikes":
+        # Faint noise with a full-scale spike every 37 samples: the residual of a spike is far above the running mean, so it is written with the long prefix.
+        state = 987
+        out = [[] for _ in range(channels)]
+        for i in range(count):
+            for c in range(channels):
+                state = (state * 1103515245 + 12345) & 0x7FFFFFFF
+                value = ((state >> 10) & 7) - 3
+                if i % 37 == 5 + c:
+                    value = (24000 if i % 2 else -24000) << (bits - 16)
+                out[c].append(value)
+        return out
     frames = list(sig.samples(kind, rate, channels, count, bits))
     return [[f[c] for f in frames] for c in range(channels)]
 
@@ -111,7 +123,8 @@ def md5_of(plane, width, shift=0):
     return hashlib.md5(b"".join(((v << shift) if shift else v).to_bytes(width, "little", signed=True) for v in plane)).hexdigest()
 
 
-def case(name, description, packets, cookie_bytes, channels, bits, rate, count, frame_length=4096, container="mp4", data=None, input_=None, decoders=("ffmpeg", "alacconvert")):
+def case(name, description, packets, cookie_bytes, channels, bits, rate, count, frame_length=4096, container="mp4", data=None, input_=None, decoders=("ffmpeg", "alacconvert"),
+         probes=True):
     """A fixture: the file of the packets and the cookie, and for a stream that is valid the hashes of its input channels (data: the planes)."""
     file = (m4a_file if container == "mp4" else mka_file)(packets, cookie_bytes, channels, bits, rate, frame_length, count)
     extra = {"description": description}
@@ -122,13 +135,17 @@ def case(name, description, packets, cookie_bytes, channels, bits, rate, count, 
                           "channel_md5": [md5_of(plane, width, shift) for plane in data]}
     if input_:
         extra.setdefault("input", {}).update(input_)
+    if not probes:
+        extra["crosscheck"] = {"ffprobe": False, "mediainfo": False}
     CASES[name] = {"data": file, "container": container, "extra": extra}
 
 
 def valid(name, description, channels, bits, rate, count, parameters=None, frame_length=4096, cookie_fields=None, container="mp4", kind="music", layout=None, options=None,
           per_frame=None, decoders=("ffmpeg", "alacconvert"), cookie_bytes=None, **common):
     packets, data = stream(channels, bits, rate, count, parameters, frame_length, kind, layout, options, per_frame, **common)
-    cookie_bytes = cookie_bytes if cookie_bytes is not None else m.cookie(channels, frame_length=frame_length, bit_depth=bits, rate=rate, **(cookie_fields or {}))
+    # The cookie states the largest packet, as every encoder's does: alacconvert sizes its read buffer by it.
+    fields = {"max_frame_bytes": max(len(p) for p in packets), **(cookie_fields or {})}
+    cookie_bytes = cookie_bytes if cookie_bytes is not None else m.cookie(channels, frame_length=frame_length, bit_depth=bits, rate=rate, **fields)
     case(name, description, packets, cookie_bytes, channels, bits, rate, count, frame_length, container, data, decoders=decoders)
 
 
@@ -158,9 +175,10 @@ def build():
     valid("stereo-20", "20-bit audio, a bit depth Apple's encoder takes; Apple's alacconvert cannot decode it, FFmpeg gives the samples left-aligned in 32 bits.", 2, 20, 44100, 10000, STEREO,
           mix_res=2, decoders=("ffmpeg",))
     valid("mono-16-silence-long-run", "A single frame of 70,000 samples (the cookie's frame length) that are silent but for the first and the last: one run of zero residuals longer than 65,535, which "
-          "the code splits.", 1, 16, 44100, 70000, [m.Channel([])], frame_length=70000, kind="sparse")
-    valid("stereo-16-noise", "Loud noise in a channel pair: many residuals are written with the long prefix, nine ones and then the value as it is.", 2, 16, 44100, 10000, STEREO,
-          mix_res=2, kind="loud")
+          "the code splits. FFmpeg 8.0.1 decodes one sample of it other than Apple's decoder does (sample 65,551 comes out as -1, not 0), so only alacconvert decodes it back to the input.",
+          1, 16, 44100, 70000, [m.Channel([])], frame_length=70000, kind="sparse", decoders=("alacconvert",))
+    valid("stereo-16-spikes", "Faint noise in a channel pair with a full-scale spike every 37 samples: the spikes' residuals are written with the long prefix, nine ones and then the value as it is.",
+          2, 16, 44100, 10000, STEREO, mix_res=2, kind="spikes")
     valid("stereo-16-uncompressed-only", "A stream of uncompressed frames only, with a cookie whose tuning parameters (pb, mb and kb) are all 0, as FFmpeg's encoder writes it at compression level 0.", 2, 16, 44100, 10000, STEREO,
           mix_res=0, escape=True, cookie_fields={"pb": 0, "mb": 0, "kb": 0})
     valid("stereo-16-whole-frames", "Exactly 8,192 samples: two whole frames, no partial one.", 2, 16, 44100, 8192, STEREO, mix_res=2)
@@ -170,8 +188,8 @@ def build():
           mix_res=2, per_frame={1: {0: {"escape": True}}, 3: {0: {"escape": True}}})
     valid("stereo-24-escape", "24-bit audio with an uncompressed second frame, whose samples are 24 bits each.", 2, 24, 48000, 10000, STEREO, mix_res=2, shifted=1,
           per_frame={1: {0: {"escape": True, "shifted": 0}}})
-    valid("stereo-32-escape", "32-bit audio with an uncompressed second frame, whose samples are 32 bits each.", 2, 32, 48000, 10000, STEREO, mix_res=2, shifted=2,
-          per_frame={1: {0: {"escape": True, "shifted": 0}}})
+    valid("stereo-32-escape", "32-bit audio with an uncompressed second frame, whose samples are 32 bits each; FFmpeg 8.0.1 refuses it (\"bps 33 is not implemented\"), so only alacconvert decodes it.",
+          2, 32, 48000, 10000, STEREO, mix_res=2, shifted=2, per_frame={1: {0: {"escape": True, "shifted": 0}}}, decoders=("alacconvert",))
     valid("mono-24-escape", "24-bit mono audio with an uncompressed second frame.", 1, 24, 48000, 10000, MONO, shifted=1, per_frame={1: {0: {"escape": True, "shifted": 0}}})
     valid("three-channels-16", "Three channels (center, left, right) as Apple's encoder writes them: a single channel element and a channel pair element, with the channel layout info in the cookie.",
           3, 16, 48000, 10000, STEREO)
@@ -197,16 +215,17 @@ def build():
         m.write_end(w)
         packets.append(w.data())
     case("stereo-16-fill-and-data-stream", "Fill and data stream elements around the audio: a fill element of 3 bytes before the channel pair element, then a data stream element of 7 bytes, an aligned one of 280 bytes "
-         "(a count of 255 and 25 more) and a fill element of 20 bytes (a count of 15 and 6 more).", packets, m.cookie(2, bit_depth=16, rate=44100), 2, 16, 44100, 10000, data=stereo)
+         "(a count of 255 and 25 more) and a fill element of 20 bytes (a count of 15 and 6 more). FFmpeg 8.0.1 does not decode the element types (\"Not yet implemented\"), so only alacconvert does.",
+         packets, m.cookie(2, bit_depth=16, rate=44100, max_frame_bytes=max(len(p) for p in packets)), 2, 16, 44100, 10000, data=stereo, decoders=("alacconvert",))
 
     # The older forms of the cookie, in Matroska, whose CodecPrivate holds the cookie as the container stores it.
     packets, data = stream(2, 16, 44100, 10000, STEREO, mix_res=2)
     plain = m.cookie(2, bit_depth=16, rate=44100)
     case("mka-cookie-plain", "A Matroska file whose CodecPrivate is the 24-byte ALACSpecificConfig alone.", packets, plain, 2, 16, 44100, 10000, container="mka", data=data)
-    case("mka-cookie-atom", "A Matroska file whose CodecPrivate is the cookie in an alac atom of 36 bytes, the form FFmpeg keeps for an MP4 file's cookie.", packets, m.atom_cookie(plain), 2, 16, 44100, 10000,
-         container="mka", data=data)
-    case("mka-cookie-old-form", "A Matroska file whose CodecPrivate is the older encoders' cookie: the format atom, the alac atom, the config and the terminator atom, 56 bytes.", packets,
-         m.atom_cookie(plain, frma=True, terminator=True), 2, 16, 44100, 10000, container="mka", data=data)
+    case("mka-cookie-atom", "A Matroska file whose CodecPrivate is the cookie in an alac atom of 36 bytes, the form FFmpeg keeps for an MP4 file's cookie; FFmpeg 8.0.1 reads a Matroska track's CodecPrivate as the configuration alone and refuses this one, so only alacconvert decodes it.",
+         packets, m.atom_cookie(plain), 2, 16, 44100, 10000, container="mka", data=data, decoders=("alacconvert",), probes=False)
+    case("mka-cookie-old-form", "A Matroska file whose CodecPrivate is the older encoders' cookie: the format atom, the alac atom, the config and the terminator atom, 56 bytes; FFmpeg 8.0.1 refuses it, as the 36-byte form.", packets,
+         m.atom_cookie(plain, frma=True, terminator=True), 2, 16, 44100, 10000, container="mka", data=data, decoders=("alacconvert",), probes=False)
     five = stream(6, 16, 48000, 10000, STEREO, mix_res=2)
     case("mka-cookie-five-one", "A Matroska file of 5.1 audio whose CodecPrivate holds the config and the channel layout info (48 bytes), as Apple's encoder writes it.", five[0], m.cookie(6, rate=48000), 6, 16, 48000,
          10000, container="mka", data=five[1])

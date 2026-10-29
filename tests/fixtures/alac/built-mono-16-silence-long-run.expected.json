@@ -1,7 +1,7 @@
 {
  "container": "mp4",
  "length": 611,
- "description": "A single frame of 70,000 samples (the cookie's frame length) that are silent but for the first and the last: one run of zero residuals longer than 65,535, which the code splits.",
+ "description": "A single frame of 70,000 samples (the cookie's frame length) that are silent but for the first and the last: one run of zero residuals longer than 65,535, which the code splits. FFmpeg 8.0.1 decodes one sample of it other than Apple's decoder does (sample 65,551 comes out as -1, not 0), so only alacconvert decodes it back to the input.",
  "input": {
   "channels": 1,
   "bits": 16,
@@ -10,7 +10,6 @@
   "width": 2,
   "left_shift": 0,
   "decoders": [
-   "ffmpeg",
    "alacconvert"
   ],
   "channel_md5": [
@@ -34,7 +33,7 @@
   "kb": 14,
   "channels": 1,
   "max_run": 255,
-  "max_frame_bytes": 0,
+  "max_frame_bytes": 22,
   "average_bitrate": 0,
   "rate": 44100
  },

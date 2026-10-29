@@ -544,6 +544,21 @@ TTA is a format parser of its own (`src/Encspect.Formats.Tta`, "TTA") for `.tta`
 
 Not covered: the coded samples (no decoder), TTA2, and the compression ratio per frame of the coding graphs.
 
+## Phase 3: ALAC
+
+ALAC is read frame by frame by a codec parser of its own (`src/Encspect.Formats.Alac`, "alac") for the `alac` sample entries of MP4 and M4A and Matroska's `A_ALAC`; it has no format parser (CAF waits for a CAF parser) and no decoder (decoders.md, decision 5: it stores no checksum over decoded audio). The walk follows Apple's reference implementation (macosforge/alac, Apache License 2.0, pinned by commit in `alac_tool.py` and `check_sources.py`, notice in `THIRD-PARTY-NOTICES.md`), and `alacconvert` built from it decodes the test files. Done (October 2026).
+
+- **Structure:** the magic cookie (the ALACSpecificConfig, the channel layout info, the older atom forms) and, per packet, a list of elements (single channel, channel pair, LFE, data stream, fill, end) whose headers, mixing numbers, filters and adaptive Golomb residuals are walked to the bit; the walk must consume exactly the packet's bytes.
+- **Nodes and records:** the cookie and the first 4,096 frames have nodes (64 elements to a frame, bit positions); every frame has a compact record (`BlockedChildren`, `ChunkedList`, `ByteStore`), up to 2,097,152, for the statistics, graphs and findings.
+- **Routes:** MP4 and Matroska hand over the cookie and the packets; an MP4 entry with no `alac` box stays at container level; encrypted tracks hand over the cookie only.
+- **Findings:** the cookie's (`alac.cookie-too-short`, `alac.compatible-version`, `alac.frame-length-invalid`, `alac.bit-depth-invalid`, `alac.channels-invalid`, `alac.channel-layout-differs`, `alac.cookie-extra`, `alac.cookie-missing`), the frames' (`alac.frame-overrun`, `alac.frame-underrun`, `alac.end-missing`, `alac.element-unknown`, `alac.element-invalid`, `alac.element-reserved-bits`, `alac.tuning-invalid`, `alac.residual-invalid`, `alac.channels-exceed`, `alac.channels-missing`, `alac.element-samples-differ`, `alac.partial-frame-too-long`, `alac.escape-shifted`), `alac.entries-limit`, `alac.payload-not-analyzed` and the writer's.
+- **Streams:** codec "Apple Lossless", rate, channels and layout, bits per sample, samples, duration, average and per-frame bitrate, statistics of the elements, filters and residual codes, and category series of the element kinds and the pair coding; no checksum is declared.
+- **Encoder detection:** the containers' claims only; the frames name no encoder and no rule is applied to them.
+- **Fixtures and checks:** 58 hand-built files (`make_alac_fixtures.py`, `alac_model.py`), 34 encoder-made (FFmpeg's encoder, Apple's `alacconvert`, mkvmerge) and 2 from `afconvert`; `crosscheck_alac_fixtures.py`, a CI job on Ubuntu 26.04, confirms the manifests with ffprobe, MediaInfo and the decoding of FFmpeg and `alacconvert` against the encoders' input (docs/development.md).
+- **Articles:** `alac`, `alac-adaptive-golomb` and `alac-prediction`; `mid-side-stereo`, `wasted-bits` and `channel-layouts` are shared.
+
+Not covered: the samples (no decoder), CAF, and the program and coupling channel elements, which the reference decoder refuses.
+
 ## Format detection
 
 Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and the host picks the format from the evidence of all of them, never from the order of the parser list.
@@ -695,7 +710,7 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
    - arm64 and x86-64 produce different bytes (other access unit sizes and spectral data) with the same structure, so the rule uses structure only.
    - The fixtures found a bug: the SBR frame class FIXVAR sends its frequency resolutions last envelope first, which the SBR reader took in order, so stereo HE-AAC from Apple (and three of the SBR conformance streams, whose manifest had recorded `aac.sbr-past-fill`) ran past its fill elements; fixed, with faad2's trace as the second opinion.
    - Apple window shapes: done, no rule, documented. 12 varied 8-second signals and 171 `win-*` encodes per runner (159 worked) showed sine windows only except at `-q 127`, which writes KBD (up to 100% of the channel streams), so window shape cannot rule Apple out and the analyzer does not use it; three q127 files are fixtures and `AppleEncoderTests` holds their naming (docs/formats/aac.md, docs/development.md).
-   - ALAC files are encoded at the same time for phase 3 (tests/fixtures/alac) and shown at container level; CAF files (ALAC ones in tests/fixtures/alac; none of AAC is committed) wait for a CAF parser.
+   - ALAC files are encoded at the same time for phase 3 (tests/fixtures/alac) and read frame by frame (see "Phase 3: ALAC"); CAF files (ALAC ones in tests/fixtures/alac; none of AAC is committed) wait for a CAF parser.
 3. Dolby Atmos detection in E-AC-3, from the dec3 box's extension fields and the EMDF and JOC data in the frames (ETSI TS 102 366, ETSI TS 103 420). Done (October 2026).
    - The extension is defined by TS 103 420 (V1.2.1, 2018-10; V1.1.1 is the first), not by TS 102 366, whose V1.4.1 is its latest and reserves the bytes (F.6): dec3's flag_ec3_extension_type_a and complexity_index_type_a (C.3.1), the same two fields in the frames' addbsi (8.3), EMDF containers (TS 102 366 Annex H) with the OAMD (11) and JOC (14) payloads (Table 55), the JOC header and the OAMD object count.
    - `StreamInfo.HasObjectAudio` and `JocObjectCount`, in the JSON writer, the GUI's stream line, the summary row, the CSV (`Has Object Audio`, `JOC Object Count`) and the GUI's summary cache. See docs/formats/ac3.md.

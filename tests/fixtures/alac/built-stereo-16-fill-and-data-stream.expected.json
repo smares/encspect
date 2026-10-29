@@ -1,7 +1,7 @@
 {
  "container": "mp4",
  "length": 21903,
- "description": "Fill and data stream elements around the audio: a fill element of 3 bytes before the channel pair element, then a data stream element of 7 bytes, an aligned one of 280 bytes (a count of 255 and 25 more) and a fill element of 20 bytes (a count of 15 and 6 more).",
+ "description": "Fill and data stream elements around the audio: a fill element of 3 bytes before the channel pair element, then a data stream element of 7 bytes, an aligned one of 280 bytes (a count of 255 and 25 more) and a fill element of 20 bytes (a count of 15 and 6 more). FFmpeg 8.0.1 does not decode the element types (\"Not yet implemented\"), so only alacconvert does.",
  "input": {
   "channels": 2,
   "bits": 16,
@@ -10,7 +10,6 @@
   "width": 2,
   "left_shift": 0,
   "decoders": [
-   "ffmpeg",
    "alacconvert"
   ],
   "channel_md5": [
@@ -35,7 +34,7 @@
   "kb": 14,
   "channels": 2,
   "max_run": 255,
-  "max_frame_bytes": 0,
+  "max_frame_bytes": 9218,
   "average_bitrate": 0,
   "rate": 44100
  },

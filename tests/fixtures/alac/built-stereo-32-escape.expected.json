@@ -1,7 +1,7 @@
 {
  "container": "mp4",
  "length": 68199,
- "description": "32-bit audio with an uncompressed second frame, whose samples are 32 bits each.",
+ "description": "32-bit audio with an uncompressed second frame, whose samples are 32 bits each; FFmpeg 8.0.1 refuses it (\"bps 33 is not implemented\"), so only alacconvert decodes it.",
  "input": {
   "channels": 2,
   "bits": 32,
@@ -10,7 +10,6 @@
   "width": 4,
   "left_shift": 0,
   "decoders": [
-   "ffmpeg",
    "alacconvert"
   ],
   "channel_md5": [
@@ -35,7 +34,7 @@
   "kb": 14,
   "channels": 2,
   "max_run": 255,
-  "max_frame_bytes": 0,
+  "max_frame_bytes": 32772,
   "average_bitrate": 0,
   "rate": 48000
  },

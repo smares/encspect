@@ -62,6 +62,7 @@ jobs:
       flac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.flac-crosscheck }}
       monkeys-audio-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.monkeys-audio-crosscheck }}
       tta-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.tta-crosscheck }}
+      alac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.alac-crosscheck }}
       asf-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.asf-crosscheck }}
       ac3-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ac3-crosscheck }}
       dts-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.dts-crosscheck }}
@@ -622,6 +623,11 @@ jobs:
           python3 scripts/fixtures/make_tta_fixtures.py
           python3 scripts/fixtures/make_external_tta_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built ALAC fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_alac_fixtures.py
+          python3 scripts/fixtures/make_external_alac_fixtures.py --manifests-only
+
       - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ac3_fixtures.py
@@ -1103,6 +1109,28 @@ jobs:
       - name: Cross-check the TTA fixtures
         run: python3 scripts/fixtures/crosscheck_tta_fixtures.py
 
+  alac-crosscheck:
+    name: ALAC fixtures agree with FFmpeg, MediaInfo and Apple's reference decoder
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.alac-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts, both black boxes. The reference decoder, alacconvert,
+      # is built unpatched by alac_tool.py from the commit of Apple's source that is pinned there (gcc and g++ from build-essential, git).
+      - name: Install ffmpeg, mediainfo and the compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo build-essential git
+
+      - name: Cross-check the ALAC fixtures
+        run: python3 scripts/fixtures/crosscheck_alac_fixtures.py
+
   wav-crosscheck:
     name: WAV and AIFF fixtures agree with FFmpeg and MediaInfo
     runs-on: ubuntu-26.04
@@ -1443,6 +1471,7 @@ jobs:
       - flac-crosscheck
       - monkeys-audio-crosscheck
       - tta-crosscheck
+      - alac-crosscheck
       - asf-crosscheck
       - ac3-crosscheck
       - dts-crosscheck

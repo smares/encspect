@@ -63,6 +63,13 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(run("scripts/fixtures/check_monkeys_audio_samples.py"), {"monkeys-audio-crosscheck", "fixtures"})
         self.assertNotIn("monkeys-audio-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
 
+    def test_alac_parser_scripts_and_fixtures_belong_to_the_alac_job(self):
+        for path in ("src/Encspect.Formats.Alac/AlacCodecParser.cs", "tests/fixtures/alac/a.m4a", "scripts/fixtures/alac_model.py", "scripts/fixtures/make_alac_fixtures.py",
+                     "scripts/fixtures/make_external_alac_fixtures.py", "scripts/fixtures/alac_tool.py"):
+            self.assertIn("alac-crosscheck", run(path), path)
+        self.assertEqual(run("scripts/fixtures/crosscheck_alac_fixtures.py"), {"alac-crosscheck", "fixtures"})
+        self.assertNotIn("alac-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
+
     def test_tta_parser_scripts_and_fixtures_belong_to_the_tta_job(self):
         for path in ("src/Encspect.Formats.Tta/TtaParser.cs", "tests/fixtures/tta/a.tta", "scripts/fixtures/tta_model.py", "scripts/fixtures/make_tta_fixtures.py",
                      "scripts/fixtures/make_external_tta_fixtures.py"):

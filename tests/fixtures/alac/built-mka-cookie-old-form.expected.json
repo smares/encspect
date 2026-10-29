@@ -1,7 +1,7 @@
 {
  "container": "matroska",
  "length": 20590,
- "description": "A Matroska file whose CodecPrivate is the older encoders' cookie: the format atom, the alac atom, the config and the terminator atom, 56 bytes.",
+ "description": "A Matroska file whose CodecPrivate is the older encoders' cookie: the format atom, the alac atom, the config and the terminator atom, 56 bytes; FFmpeg 8.0.1 refuses it, as the 36-byte form.",
  "input": {
   "channels": 2,
   "bits": 16,
@@ -10,13 +10,16 @@
   "width": 2,
   "left_shift": 0,
   "decoders": [
-   "ffmpeg",
    "alacconvert"
   ],
   "channel_md5": [
    "964e67df1128b8f184e0c0892a651b75",
    "4467a74bda97fb0947ad9f342a7751c8"
   ]
+ },
+ "crosscheck": {
+  "ffprobe": false,
+  "mediainfo": false
  },
  "cookie": {
   "length": 56,
