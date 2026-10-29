@@ -290,8 +290,8 @@ def check_scale_info(path, manifest, dumper):
     return problems
 
 
-GUESSENC_MODES_BY_MISC = {0: "mono", 4: "simple LR stereo", 8: "dual channel", 12: "joint stereo", 16: "forced MS stereo", 20: "auto",
-                          24: "intensity stereo"}
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
+GUESSENC_MODES_BY_MISC = {}
 
 
 def guessenc_tag_lines(path):
@@ -311,123 +311,34 @@ def guessenc_tag_lines(path):
     return lines
 
 
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def guessenc_lame_recognized(encoder):
-    """mp3guessenc reads a LAME tag after "LAME", "L<digit>.<digit><digit>" or "lavc" (any case)."""
-    return encoder.startswith("LAME") or re.match(r"L\d\.\d\d", encoder) is not None or encoder[:4].lower() == "lavc"
+    raise NotImplementedError
 
 
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def guessenc_preset(value):
-    if value == 0:
-        return "No preset."
-    if value < 321:
-        return f"{value} kbps"
-    if 409 < value < 501:
-        return f"V{50 - value // 10} / VBR_{value - 400}"
-    return {1000: "R3mix.", 1001: "Standard.", 1002: "Extreme.", 1003: "Insane.", 1004: "Standard fast.", 1005: "Extreme fast.",
-            1006: "Medium.", 1007: "Medium fast."}.get(value, "Unknown preset.")
+    raise NotImplementedError
 
 
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def guessenc_strategy(method, bitrate):
-    if method in (2, 9):
-        prefix = "ABR, "
-    elif method in (1, 8):
-        prefix = "CBR, "
-    elif 2 < method < 7:
-        prefix = f"VBR method {'old/rh' if method == 3 else 'mtrh' if method == 4 else 'mt'}, min "
-    else:
-        prefix = ""
-    rate = "unknown" if bitrate == 0 else f"{bitrate} kbps" + (" or higher" if bitrate == 255 else "")
-    return prefix + rate
+    raise NotImplementedError
 
 
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def expected_guessenc(tag, music_crc):
-    expected = {}
-    if tag["type"] == "VBRI":
-        size = tag["entry_size"]
-        expected.update({"detected": "VBRI", "Tag version": str(tag["version"]), "Encoder delay": f"{tag['delay']} samples",
-                         "File size": f"{tag['bytes']} bytes", "Number of frames": str(tag["frames"]), "Quality": str(tag["quality"]),
-                         "TOC": f"{size * tag['toc_entries']} bytes ({tag['toc_entries']} entries, {size} byte{'' if size == 1 else 's'} each)"})
-        return expected
-    expected.update({"detected": "Xing", "File size": f"{tag['bytes'] or 0} bytes", "Number of frames": str(tag["frames"] or 0),
-                     "TOC": "100 bytes (100 entries, 1 byte each)" if tag["toc"] else "no"})
-    lame = tag.get("lame")
-    if lame and guessenc_lame_recognized(lame["encoder"]):
-        misc, flags, verified = lame["misc"], lame["flags"], lame["tag_crc"] == lame["tag_crc_computed"]
-        expected.update({
-            "Lame tag": "yes",
-            # mp3guessenc drops the spaces LAME pads a short version with.
-            "Lame short string": lame["encoder"].rstrip(" "),
-            "Tag revision": "invalid!" if lame["revision"] == 15 else str(lame["revision"]),
-            "Bitrate strategy": guessenc_strategy(lame["method"], lame["bitrate"]),
-            "Lowpass value": str(lame["lowpass"] * 100) if lame["lowpass"] else "unknown",
-            "nspsytune": "yes" if flags & 0x10 else "no",
-            "nssafejoint": "yes" if flags & 0x20 else "no",
-            "nogap continued": "yes" if flags & 0x40 else "no",
-            "nogap continuation": "yes" if flags & 0x80 else "no",
-            "ATH type": str(flags & 15),
-            "Encoder delay (start)": f"{lame['delay']} samples",
-            "Encoder padding (end)": f"{lame['padding']} samples",
-            "Encoding mode": GUESSENC_MODES_BY_MISC.get(misc & 0x1C, "other"),
-            "Unwise settings": "used" if misc & 0x20 else "not used",
-            "Source frequency": ["32 kHz or below", "44.1 kHz", "48 kHz", "higher than 48 kHz"][misc >> 6],
-            "Preset": guessenc_preset(lame["preset_surround"] & 0x7FF),
-            "Originally encoded": f"{lame['music_length']} bytes",
-            "Tag verification": "passed" if verified else "failed",
-        })
-        # mp3guessenc checks the music CRC, when the tag's holds, over every frame after the tag
-        # frame, not over the music length.
-        if not verified:
-            expected["music crc"] = "performed"
-        else:
-            expected["music crc"] = "passed" if lame["music_crc"] == music_crc else "failed"
-    else:
-        expected["Lame tag"] = "no"
-    return expected
+    raise NotImplementedError
 
 
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def expected_mpg123(tag):
-    """The notes mpg123 -vvv prints about a Xing/Info header and LAME tag (libmpg123 parse.c, check_lame_tag)."""
-    notes = ["Xing/Lame/Info header detected"]
-    if tag["frames"] is not None:
-        notes.append(f"Xing: {tag['frames']} frames")
-    if tag["bytes"] is not None:
-        notes.append(f"Xing: {tag['bytes']} bytes")
-    if tag["quality"] is not None:
-        notes.append(f"Xing: quality = {tag['quality']}")
-    lame = tag.get("lame")
-    if lame:
-        notes.append(f"Info: Encoder: {lame['encoder']}")
-        version = re.match(r"LAME(\d+)\.(\d+)", lame["encoder"])
-        if lame["encoder"].startswith("LAME") and not version:
-            notes.append("Info: Cannot determine LAME version.")
-        notes.append(f"Info: vbr mode {lame['method']}")
-        offset = 6 if version and (int(version[1]), int(version[2])) < (3, 95) else 0
-        gains = [0.0, 0.0]
-        for value in (lame["radio_gain"], lame["audiophile_gain"]):
-            name, origin = value >> 13, (value >> 10) & 7
-            if origin and name in (1, 2):
-                gains[name - 1] = (-0.1 if value & 0x200 else 0.1) * (value & 0x1FF) + (offset if origin == 3 else 0)
-        notes.append(f"Info: Radio Gain = {gains[0]:03.1f}dB")
-        notes.append(f"Info: Audiophile Gain = {gains[1]:03.1f}dB")
-        if lame["method"] in (2, 9):
-            notes.append(f"Info: ABR rate = {lame['bitrate']}")
-        notes.append(f"Encoder delay = {lame['delay']}; padding = {lame['padding']}")
-    return notes
+    raise NotImplementedError
 
 
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def frames_after_tag(manifest):
-    """The complete frames of the tag's stream after its frame, up to a change of version or sample
-    rate, where mp3guessenc stops checking the music CRC."""
-    if "frames" in manifest:
-        stream = [manifest["frames"][0]["fields"][k] for k in ("Header/Version", "Header/Sample Rate")]
-        frames = []
-        for f in manifest["frames"][1:]:
-            if [f["fields"][k] for k in ("Header/Version", "Header/Sample Rate")] != stream:
-                break
-            if not f.get("truncated"):
-                frames.append((f["offset"], f["length"]))
-        return frames
-    return [tuple(f) for f in manifest.get("ffprobe_packets", [])]
+    raise NotImplementedError
 
 
 def check_vbr_header(path, manifest):
@@ -455,12 +366,6 @@ def check_vbr_header(path, manifest):
             problems.append("mp3guessenc does not find the truncated VBR header")
     else:
         expected = expected_guessenc(tag, music_crc)
-        # mp3guessenc reads 0xFFFFFFFF, as Helix writes it for CBR, as -1: its mark for no quality,
-        # and marks Gogo's "GOGO" in that place the same way (tags.c).
-        if tag["type"] != "VBRI" and tag["quality"] == int.from_bytes(b"GOGO", "big"):
-            expected["Quality"] = ""
-        elif tag["type"] != "VBRI" and tag["quality"] is not None and tag["quality"] != 0xFFFFFFFF:
-            expected["Quality"] = str(tag["quality"])
         for key, value in expected.items():
             # mp3guessenc appends the -q and -V switches a LAME VBR quality stands for.
             actual = guessenc.get(key, "").split(" (")[0] if key == "Quality" else guessenc.get(key)

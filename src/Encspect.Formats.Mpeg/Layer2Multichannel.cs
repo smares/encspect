@@ -15,29 +15,14 @@ internal sealed class Layer2Multichannel
     private static readonly string[] CenterNames = ["None", "Present", "Reserved", "Phantom"];
     private static readonly string[] SurroundNames = ["None", "Mono", "Stereo", "Second stereo programme"];
 
-    // [surround][center present]: additional channels, tc_allocation bits, dyn_cross_mode bits and
-    // the row of the predictor table.
-    private static readonly (int Channels, int TcBits, int DynBits, int Prediction)[][] Shapes =
-    [
-        [(0, 0, 0, 5), (1, 2, 1, 2)],
-        [(1, 2, 1, 4), (2, 3, 3, 1)],
-        [(2, 2, 3, 3), (3, 3, 4, 0)],
-        [(2, 0, 0, 5), (3, 2, 1, 2)],
-    ];
+    // Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
+    private static readonly (int Channels, int TcBits, int DynBits, int Prediction)[][] Shapes = [];
 
-    // Predictors per subband group, by predictor table row and dynamic crosstalk mode.
-    private static readonly int[][] Predictors =
-    [
-        [6, 4, 4, 4, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0],
-        [4, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [4, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ];
+    // Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
+    private static readonly int[][] Predictors = [];
 
-    // Subband to subband group.
-    private static readonly int[] Groups = [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11];
+    // Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
+    private static readonly int[] Groups = [];
 
     private readonly List<(string Name, int Bit, int Length, NodeValue Value, string Description)> _header = [];
     private readonly List<(string Name, int Bit, int Length, NodeValue Value, string Description)> _status = [];
@@ -273,65 +258,10 @@ internal sealed class Layer2Multichannel
         return mc;
     }
 
-    // ISO/IEC 13818-3: which allocations of T2 to T4 a subband transmits, which it copies from the
-    // base channels or another additional channel under dynamic crosstalk, and which are absent
-    // (the center above subband 11 with phantom coding).
+    // Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
     private static void Allocate(Layer2Multichannel mc, int[,] a, int sb, int channels, int dynBits, int mode, int second,
-        int tc, int fromRight, int left, int right, Func<int, int> transmit)
-    {
-        bool phantomHigh = mc.Center == 3 && sb >= 12;
-        if (mode == 0)
-        {
-            for (int ch = 2; ch < 2 + channels; ch++)
-            {
-                bool shared = mc.Surround == 3 && second == 1 && ((mc.Center != 0 && ch == 4) || (mc.Center == 0 && ch == 3));
-                a[ch, sb] = phantomHigh && ch == 2 ? 0 : shared ? a[ch - 1, sb] : transmit(ch);
-            }
-
-            return;
-        }
-
-        switch (dynBits)
-        {
-            case 1:
-                a[2, sb] = phantomHigh ? 0 : tc == 1 ? left : tc == 2 || fromRight == 1 ? right : left;
-                if (mc.Surround == 3)
-                {
-                    a[3, sb] = transmit(3);
-                    a[4, sb] = second == 1 ? a[3, sb] : transmit(4);
-                }
-
-                break;
-            case 3:
-                a[2, sb] = phantomHigh ? 0 : mode is 1 or 4 ? transmit(2) : (mc.Surround == 2 || tc != 2) && fromRight == 0 ? left : right;
-                a[3, sb] = mode == 2 ? transmit(3) : mode == 4 ? a[2, sb]
-                    : (mc.Surround == 2 || tc is 4 or 5 || tc < 3) && fromRight == 1 ? right : left;
-                break;
-            case 4:
-                a[2, sb] = phantomHigh ? 0 : mode switch
-                {
-                    1 or 2 or 4 or 8 or 9 or 10 or 11 or 12 or 14 => transmit(2),
-                    3 or 5 or 6 or 7 or 13 => tc is 1 or 7 ? left : tc is 2 or 6 || fromRight == 1 ? right : left,
-                    _ => 0,
-                };
-                a[3, sb] = mode switch
-                {
-                    1 or 3 or 5 or 8 or 10 or 13 => transmit(3),
-                    2 or 4 or 6 or 7 or 12 => left,
-                    9 or 11 or 14 => a[2, sb],
-                    _ => 0,
-                };
-                a[4, sb] = mode switch
-                {
-                    2 or 3 or 6 or 9 => transmit(4),
-                    1 or 4 or 5 or 7 or 11 => right,
-                    10 or 12 or 14 => a[2, sb],
-                    8 or 13 => a[3, sb],
-                    _ => 0,
-                };
-                break;
-        }
-    }
+        int tc, int fromRight, int left, int right, Func<int, int> transmit) =>
+        throw new NotImplementedException();
 
     // fileOffset is where data starts in the file.
     public Node ToNode(long fileOffset, int rate)

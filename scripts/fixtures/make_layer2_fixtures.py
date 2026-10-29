@@ -60,33 +60,15 @@ SCALEFACTORS_PER_SCFSI = {0: 3, 1: 2, 2: 1, 3: 2}
 
 CENTER = ["None", "Present", "Reserved", "Phantom"]
 SURROUND = ["None", "Mono", "Stereo", "Second stereo programme"]
-# (surround, center present): additional channels, tc_allocation bits, dyn_cross_mode bits,
-# prediction table
-MC_SHAPE = {
-    (0, 0): (0, 0, 0, 5), (0, 1): (1, 2, 1, 2),
-    (1, 0): (1, 2, 1, 4), (1, 1): (2, 3, 3, 1),
-    (2, 0): (2, 2, 3, 3), (2, 1): (3, 3, 4, 0),
-    (3, 0): (2, 0, 0, 5), (3, 1): (3, 2, 1, 2),
-}
-PREDICTORS = [6, 4, 2, 4, 2, 0]  # predictors per subband group without dynamic crosstalk
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
+MC_SHAPE = {}
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
+PREDICTORS = []
 
 
+# Clean-room rewrite pending: docs/design/mpeg-clean-room-rules.md
 def table_for(version, rate, bitrate, channels):
-    """Table B.2a to B.2d by bitrate per channel and sample rate (2.4.3.3.1), B.1 for MPEG-2. The
-    captions of Tables 3-B.2a and 3-B.2b give free format (bitrate None) B.2a at 48000 Hz and B.2b
-    at the other rates, as libmad reads it."""
-    if version != "1":
-        return 4
-    if bitrate is None:
-        return 0 if rate == 48000 else 1
-    per = bitrate // channels
-    if (rate == 48000 and per >= 56) or 56 <= per <= 80:
-        return 0
-    if rate != 48000 and per >= 96:
-        return 1
-    if rate != 32000 and per <= 48:
-        return 2
-    return 3
+    raise NotImplementedError
 
 
 def zero_code(levels):
