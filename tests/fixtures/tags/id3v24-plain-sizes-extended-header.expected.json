@@ -1,0 +1,28 @@
+{
+  "description": "ID3v2.4 tag with an extended header whose frame sizes are plain integers: TIT2's 300 bytes are $00 00 01 2C. The frames start after the extended header, and only the plain reading leads from TIT2 to TPE1 and the padding.",
+  "length": 867,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
+        "TPE1/Text": "Artist"
+      },
+      "offset": 0,
+      "length": 355
+    },
+    {
+      "name": "Data",
+      "offset": 355,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-size-not-syncsafe",
+      "contains": "TIT2"
+    }
+  ]
+}
