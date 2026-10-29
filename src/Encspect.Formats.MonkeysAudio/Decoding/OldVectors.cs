@@ -12,7 +12,7 @@ internal static class OldVectors
 {
     public const int Taps = 16;
 
-    // Returns the dot product of values[0..16) and weights, then adds the sign of each value (1 for zero or above, −1 below) to its weight where direction is 1, subtracts
+    // Returns the dot product of values[0..16) and weights, then adds the sign of each value (−1 for zero or above, 1 below) to its weight where direction is 1, subtracts
     // it where direction is −1, and leaves the weights where it is 0.
     public static int HighTaps(ReadOnlySpan<int> values, Span<int> weights, int direction)
     {
@@ -79,84 +79,6 @@ internal static class OldVectors
     {
         int dot = 0;
         for (int j = 0; j < Taps; j++)
-        {
-            int value = values[j];
-            dot += value * weights[j];
-            int step = ((value >> 30) & 2) - 1;
-            if (direction > 0)
-            {
-                weights[j] += step;
-            }
-            else if (direction < 0)
-            {
-                weights[j] -= step;
-            }
-        }
-
-        return dot;
-    }
-
-    public const int ShortTaps = 8;
-
-    // The same for the filter of 8 taps of CAntiPredictorExtraHigh3800To3929 (the weights are in the order of the values, oldest first).
-    public static int EightTaps(ReadOnlySpan<int> values, Span<int> weights, int direction)
-    {
-        if (Vector256.IsHardwareAccelerated)
-        {
-            return EightTaps256(values, weights, direction);
-        }
-
-        return Vector128.IsHardwareAccelerated ? EightTaps128(values, weights, direction) : EightTapsScalar(values, weights, direction);
-    }
-
-    internal static int EightTaps256(ReadOnlySpan<int> values, Span<int> weights, int direction)
-    {
-        ref int pv = ref MemoryMarshal.GetReference(values);
-        ref int pw = ref MemoryMarshal.GetReference(weights);
-        if (values.Length < ShortTaps || weights.Length < ShortTaps)
-        {
-            throw new ArgumentException("Eight taps are needed");
-        }
-
-        Vector256<int> v = Vector256.LoadUnsafe(ref pv, 0);
-        Vector256<int> w = Vector256.LoadUnsafe(ref pw, 0);
-        int dot = Vector256.Sum(v * w);
-        Vector256<int> neg = Vector256.Create(direction >> 31);
-        Vector256<int> nz = Vector256.Create(direction | -direction) >> 31;
-        Vector256<int> s = ((v >> 30) & Vector256.Create(2)) - Vector256.Create(1);
-        (w + (((s ^ neg) - neg) & nz)).StoreUnsafe(ref pw, 0);
-        return dot;
-    }
-
-    internal static int EightTaps128(ReadOnlySpan<int> values, Span<int> weights, int direction)
-    {
-        ref int pv = ref MemoryMarshal.GetReference(values);
-        ref int pw = ref MemoryMarshal.GetReference(weights);
-        if (values.Length < ShortTaps || weights.Length < ShortTaps)
-        {
-            throw new ArgumentException("Eight taps are needed");
-        }
-
-        Vector128<int> two = Vector128.Create(2);
-        Vector128<int> one = Vector128.Create(1);
-        Vector128<int> neg = Vector128.Create(direction >> 31);
-        Vector128<int> nz = Vector128.Create(direction | -direction) >> 31;
-        Vector128<int> v0 = Vector128.LoadUnsafe(ref pv, 0);
-        Vector128<int> v1 = Vector128.LoadUnsafe(ref pv, 4);
-        Vector128<int> w0 = Vector128.LoadUnsafe(ref pw, 0);
-        Vector128<int> w1 = Vector128.LoadUnsafe(ref pw, 4);
-        int dot = Vector128.Sum((v0 * w0) + (v1 * w1));
-        Vector128<int> s0 = ((v0 >> 30) & two) - one;
-        Vector128<int> s1 = ((v1 >> 30) & two) - one;
-        (w0 + (((s0 ^ neg) - neg) & nz)).StoreUnsafe(ref pw, 0);
-        (w1 + (((s1 ^ neg) - neg) & nz)).StoreUnsafe(ref pw, 4);
-        return dot;
-    }
-
-    internal static int EightTapsScalar(ReadOnlySpan<int> values, Span<int> weights, int direction)
-    {
-        int dot = 0;
-        for (int j = 0; j < ShortTaps; j++)
         {
             int value = values[j];
             dot += value * weights[j];

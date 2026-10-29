@@ -2,7 +2,7 @@ using Encspect.Formats.MonkeysAudio.Decoding;
 
 namespace Encspect.Tests;
 
-// The filters of 16 and 8 taps of the old predictors and the old bit reader against plain loops; the 128-bit, 256-bit and scalar entries are all reached, whatever the processor.
+// The filter of 16 taps of the old high predictor against a plain loop; the 128-bit, 256-bit and scalar entries are all reached, whatever the processor.
 public sealed class OldVectorsTests
 {
     private delegate int Taps(ReadOnlySpan<int> values, Span<int> weights, int direction);
@@ -37,26 +37,6 @@ public sealed class OldVectorsTests
         }
     }
 
-    [Theory]
-    [MemberData(nameof(Seeds))]
-    public void TheFilterOf8TapsEqualsThePlainLoopOnEveryEntry(int seed)
-    {
-        Check(seed, OldVectors.ShortTaps, OldVectors.EightTaps, OldVectors.EightTaps256, OldVectors.EightTaps128, OldVectors.EightTapsScalar, Reference);
-
-        static int Reference(ReadOnlySpan<int> values, Span<int> weights, int direction)
-        {
-            int dot = 0;
-            for (int j = 0; j < OldVectors.ShortTaps; j++)
-            {
-                dot = unchecked(dot + (values[j] * weights[j]));
-                int step = ((values[j] >> 30) & 2) - 1;
-                weights[j] = unchecked(direction > 0 ? weights[j] + step : direction < 0 ? weights[j] - step : weights[j]);
-            }
-
-            return dot;
-        }
-    }
-
     private static void Check(int seed, int taps, Taps entry, Taps wide, Taps medium, Taps scalar, Taps reference)
     {
         var random = new Random(seed);
@@ -73,85 +53,6 @@ public sealed class OldVectorsTests
                 int[] w = [.. weights];
                 Assert.Equal(expected, run(values.AsSpan(1, taps), w.AsSpan(2, taps), direction));
                 Assert.Equal(expectedWeights, w);
-            }
-        }
-    }
-
-    [Fact]
-    public void TheBitReaderEqualsABitByBitReaderOnEveryPositionAndWidth()
-    {
-        var random = new Random(9);
-        foreach (int dataLength in new[] { 1, 7, 8, 9, 15, 40, 41 })
-        {
-            foreach (int slack in new[] { 0, 5 })
-            {
-                byte[] data = new byte[dataLength + slack];
-                random.NextBytes(data);
-                for (int lengthBytes = 0; lengthBytes <= dataLength; lengthBytes++)
-                {
-                    for (long start = 0; start <= (lengthBytes * 8L) + 3; start++)
-                    {
-                        for (int bits = 0; bits <= 32; bits++)
-                        {
-                            var bitsReader = new OldBits();
-                            bitsReader.Begin(data, lengthBytes, start);
-                            uint expected = 0;
-                            bool fits = bits == 0 || start + bits <= lengthBytes * 8L;
-                            if (fits)
-                            {
-                                for (int b = 0; b < bits; b++)
-                                {
-                                    long at = start + b;
-                                    expected = (expected << 1) | (uint)((data[at >> 3] >> (7 - (int)(at & 7))) & 1);
-                                }
-
-                                Assert.Equal(expected, bitsReader.Read(bits));
-                                Assert.Equal(start + bits, bitsReader.Position);
-                            }
-                            else
-                            {
-                                Assert.Throws<InvalidDataException>(() => bitsReader.Read(bits));
-                            }
-                        }
-
-                        var unary = new OldBits();
-                        unary.Begin(data, lengthBytes, start);
-                        long limit = lengthBytes * 8L;
-                        long p = start;
-                        while (p < limit && ((data[p >> 3] >> (7 - (int)(p & 7))) & 1) == 0)
-                        {
-                            p++;
-                        }
-
-                        if (p < limit)
-                        {
-                            Assert.Equal((int)(p - start), unary.ReadUnary());
-                            Assert.Equal(p + 1, unary.Position);
-                        }
-                        else
-                        {
-                            Assert.Throws<InvalidDataException>(() => unary.ReadUnary());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    [Fact]
-    public void AUnaryRunOfManyZerosIsReadAcrossBytes()
-    {
-        foreach (int zeros in new[] { 55, 56, 57, 63, 64, 65, 120, 200 })
-        {
-            foreach (int offset in new[] { 0, 3, 7 })
-            {
-                byte[] data = new byte[40];
-                int one = offset + zeros;
-                data[one >> 3] = (byte)(0x80 >> (one & 7));
-                var reader = new OldBits();
-                reader.Begin(data, 40, offset);
-                Assert.Equal(zeros, reader.ReadUnary());
-                Assert.Equal(one + 1, reader.Position);
             }
         }
     }

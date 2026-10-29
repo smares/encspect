@@ -255,7 +255,8 @@ internal sealed class ExtraHighPredictor : OldPredictor
     private readonly int _shift;
     private readonly ThreeStages _stages = new();
     private readonly short[] _weights = new short[256];
-    private readonly int[] _short = new int[OldVectors.ShortTaps];
+    private readonly int[] _fm = new int[9];
+    private readonly int[] _fp = new int[9];
     private short[] _values = [];
     private short[] _adapt = [];
     private int[] _input = [];
@@ -275,7 +276,8 @@ internal sealed class ExtraHighPredictor : OldPredictor
         _input = input;
         _output = output;
         Array.Clear(_weights);
-        Array.Clear(_short);
+        Array.Clear(_fm);
+        Array.Clear(_fp);
         _isPredicted = count >= _minimum;
         if (!_isPredicted)
         {
@@ -315,7 +317,7 @@ internal sealed class ExtraHighPredictor : OldPredictor
             int ip = input[q];
             if (!_isShort)
             {
-                ip -= EightTaps(input, q) >> 9;
+                ip -= EightTaps(ip) >> 9;
             }
 
             int original = ip;
@@ -332,23 +334,40 @@ internal sealed class ExtraHighPredictor : OldPredictor
         }
     }
 
-    // The filter of 8 taps over the last eight values the array gave (zero before the first value this predictor takes, the one at taps), which then adapts to the
-    // sign of the value at q.
-    private int EightTaps(int[] input, int q)
+    // The filter of 8 taps over the last eight values the array gave: the sum over the history, which then takes the value and adapts to its sign.
+    private int EightTaps(int value)
     {
-        int taps = OldVectors.ShortTaps;
-        int direction = Math.Sign(input[q]);
-        if (q >= _taps + taps)
+        int[] fp = _fp;
+        int[] fm = _fm;
+        fp[0] = value;
+        int dot = 0;
+        if (value == 0)
         {
-            return OldVectors.EightTaps(input.AsSpan(q - taps, taps), _short, direction);
+            for (int j = 8; j >= 1; j--)
+            {
+                dot += fp[j] * fm[j];
+                fp[j] = fp[j - 1];
+            }
+        }
+        else if (value > 0)
+        {
+            for (int j = 8; j >= 1; j--)
+            {
+                dot += fp[j] * fm[j];
+                fm[j] += ((fp[j] >> 30) & 2) - 1;
+                fp[j] = fp[j - 1];
+            }
+        }
+        else
+        {
+            for (int j = 8; j >= 1; j--)
+            {
+                dot += fp[j] * fm[j];
+                fm[j] -= ((fp[j] >> 30) & 2) - 1;
+                fp[j] = fp[j - 1];
+            }
         }
 
-        Span<int> window = stackalloc int[taps];
-        for (int k = 0; k < taps; k++)
-        {
-            window[k] = q - taps + k >= _taps ? input[q - taps + k] : 0;
-        }
-
-        return OldVectors.EightTaps(window, _short, direction);
+        return dot;
     }
 }
