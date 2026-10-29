@@ -276,84 +276,9 @@ def individual_channel_stream(w, ics, object_type, rate_index, common, short_fra
 # --- SBR -----------------------------------------------------------------------------------------
 
 def sbr_bands(header, rate):
-    """The high and low resolution band counts and noise floor bands an SBR header gives at an output rate (ISO/IEC 14496-3 4.6.18,
-    frequency band tables): the master table from the start and stop frequencies, frequency scale and alter scale, cut at the crossover
-    band; the noise bands from bs_noise_bands. Single precision, rounded half to even, as decoders evaluate it."""
-    import struct
-
-    def f32(x):
-        return struct.unpack("f", struct.pack("f", x))[0]
-
-    def rint(x):
-        return int(round(f32(x)))
-
-    row = {16000: 0, 22050: 1, 24000: 2, 32000: 3, 44100: 4, 48000: 4, 64000: 4}.get(rate, 5)
-    base = 3000 if rate < 32000 else 4000 if rate < 64000 else 5000
-    start_min = ((base << 7) + rate // 2) // rate
-    stop_min = ((base << 8) + rate // 2) // rate
-    k0 = start_min + T.SBR_OFFSET[row][header["start"]]
-
-    def widths(start, stop, count):
-        factor = f32(f32(stop / start) ** f32(1 / count))
-        product = f32(start)
-        previous = start
-        out = []
-        for _ in range(count - 1):
-            product = f32(product * factor)
-            present = rint(product)
-            out.append(present - previous)
-            previous = present
-        out.append(stop - previous)
-        return out
-
-    stop = header["stop"]
-    if stop < 14:
-        k2 = stop_min + sum(sorted(widths(stop_min, 64, 13))[:stop])
-    else:
-        k2 = 2 * k0 if stop == 14 else 3 * k0
-    k2 = min(64, k2)
-    scale, alter = header.get("freq_scale", 2), header.get("alter_scale", 1)
-    if scale == 0:
-        dk = alter + 1
-        count = ((k2 - k0 + (dk & 2)) >> dk) << 1
-        steps = [dk] * count
-        difference = k2 - k0 - count * dk
-        if difference < 0:
-            steps[0] -= 1
-            if difference < -1:
-                steps[1] -= 1
-        elif difference > 0:
-            steps[-1] += 1
-        master = [k0]
-        for s in steps:
-            master.append(master[-1] + s)
-    else:
-        half = 7 - scale
-        two = 49 * k2 > 110 * k0
-        k1 = 2 * k0 if two else k2
-        n0 = rint(f32(half * math.log2(f32(k1 / k0)))) * 2
-        first = sorted(widths(k0, k1, n0))
-        master = [k0]
-        for s in first:
-            master.append(master[-1] + s)
-        if two:
-            warp = f32(0.76923076923076923077) if alter else 1.0
-            n1 = rint(f32(half * warp * math.log2(f32(k2 / k1)))) * 2
-            second = widths(k1, k2, n1)
-            if min(second) < first[-1]:
-                second.sort()
-                change = min(first[-1] - second[0], (second[-1] - second[0]) >> 1)
-                second[0] += change
-                second[-1] -= change
-            second.sort()
-            for s in second:
-                master.append(master[-1] + s)
-    count = len(master) - 1
-    high = count - header["xover"]
-    low = (high + 1) >> 1
-    kx = master[header["xover"]]
-    noise = max(1, rint(f32(header.get("noise_bands", 2) * math.log2(f32(master[-1] / kx)))))
-    return high, low, noise
+    """The high and low resolution band counts and the noise floor bands, (high, low, noise), that an SBR header gives at an output rate."""
+    # Clean-room rewrite pending: docs/design/aac-sbr-frequency-tables.md
+    raise NotImplementedError
 
 
 def sbr_header(w, header):
