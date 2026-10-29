@@ -245,7 +245,11 @@ Let m be the frame count, and "a frame is in progress" mean that the reservoir h
 
 1. **Frames to decode:** d = m − 1 where no frame is in progress, else d = m.
 2. **d < 0** (count 0 and nothing in progress), or **d = 0 with 8 or fewer bits left after the 8 header bits** (a block alignment of 2 bytes or less): the header is invalid ("nb_frames is %d bits left %d", logged as an error). Encspect reports `wma.superframe-header` and does not read the superframe. Neither empties the reservoir.
-3. **d = 0 otherwise** (count 0 with a frame in progress, or count 1 with none): a superframe inside a frame. There is no bit offset. All A − 1 bytes after the first byte are appended to the reservoir, and nothing is decoded ("nb_frames is 0 bits left %d", logged as a warning). Encspect appends them, and so continues the frame in progress (see [FFmpeg's implementation choices](#ffmpegs-implementation-choices) for how FFmpeg differs). Where the count is 1 and no frame was in progress, the bytes appended start with what would have been the bit offset, and the frame read from the reservoir later starts there (start bit 0); the hand-built fixtures have this case. FFmpeg instead skips as many bits at the start of that frame as it last computed for the end of some earlier superframe's frames (0 at the start of the stream, and never cleared by an error), so it reads a stale value there.
+3. **d = 0 otherwise** (count 0 with a frame in progress, or count 1 with none): a superframe inside a frame.
+   - There is no bit offset. All A − 1 bytes after the first byte are appended to the reservoir, and nothing is decoded ("nb_frames is 0 bits left %d", logged as a warning).
+   - Encspect appends them, and so continues the frame in progress (see [FFmpeg's implementation choices](#ffmpegs-implementation-choices) for how FFmpeg differs).
+   - Where the count is 1 and no frame was in progress, the bytes appended start with what would have been the bit offset, and the frame read from the reservoir later starts there (start bit 0); the hand-built fixtures have this case.
+   - FFmpeg instead skips, at the start of that frame, the number of bits it last computed for the end of some earlier superframe's frames (0 at the start of the stream, and never cleared by an error), so it reads a stale value there.
 4. **Otherwise** the bit offset is read. Where it is larger than the bits left in the superframe after the header, the superframe is rejected ("Invalid last frame bit offset %d > buf size %d (%d)") and the reservoir emptied (`wma.bit-offset`).
 5. **The frame spanning superframes:** where a frame is in progress, the first bit-offset bits after the header are appended to the reservoir, and the frame is read from the reservoir, starting at the reservoir's start bit (below). It counts as one of the d frames. A frame that fails here empties the reservoir and ends the superframe.
 6. **The frames of this superframe:** the remaining frames (d − 1 after a frame spanning superframes, else d) are read one after another, the first from the bit right after the header and the bit offset's bits, that is bit 8 + w_o + bit offset of the superframe (bit 8 + w_o when no frame was in progress and the offset is 0). Before the first of them the block sizes are reset (see [Block sizes and their state](#block-sizes-and-their-state)). A frame that fails empties the reservoir and ends the superframe.
@@ -439,7 +443,11 @@ This section describes the current reader's output, which the golden reports hol
 - A stream node named "Windows Media Audio 1" or "Windows Media Audio 2", kind Stream, covering the container's node for the stream, with the value "n frames" (the valid frames).
 - Its children, in order: the "Encoder" node where a trait names one (below), "Statistics" (only where at least one frame was read), "Superframes" ("n superframes") and "Frames" ("n frames"), the last two built lazily, a child per superframe and per frame.
 - `StreamInfo`: the codec name, r and C from the WAVEFORMATEX, "Mono" or "Stereo" with the matching layout, the samples and duration above, the average bitrate (below), IsVbr from the container, the encoder and writer and the series.
-- Encrypted media objects (`AreSamplesEncrypted`) take precedence over an unsupported configuration: no `wma.format-unsupported` is reported for them. They give the codec data nodes, and a stream node (kind Stream, over the container's node, topic `wma-standard`) with the value "frames not read: encrypted", whose `StreamInfo` has the container's duration, samples of round(duration × r) and an average bitrate of 8 × average bytes per second / 1000 where that is above 0. A configuration that is not decoded: `wma.format-unsupported` and the same stream node with the value "not analyzed", 0 samples and no bitrate. The Professional parser and the header-only parsers of Lossless and Voice build their streams with the same helper of `WmaStandardParser.cs` (with their own description and topic), so the replacement keeps it, with the signature given under [Implementer's sources](#implementers-sources).
+- Encrypted media objects (`AreSamplesEncrypted`) take precedence over an unsupported configuration: no `wma.format-unsupported` is reported for them.
+  - They give the codec data nodes and a stream node (kind Stream, over the container's node, topic `wma-standard`) with the value "frames not read: encrypted".
+  - Its `StreamInfo` has the container's duration, samples of round(duration × r) and an average bitrate of 8 × average bytes per second / 1000 where that is above 0.
+- A configuration that is not decoded: `wma.format-unsupported` and the same stream node with the value "not analyzed", 0 samples and no bitrate.
+- The Professional parser and the header-only parsers of Lossless and Voice build their streams with the same helper of `WmaStandardParser.cs` (with their own description and topic), so the replacement keeps it, with the signature given under [Implementer's sources](#implementers-sources).
 - A stream handed over as one payload instead of media objects gives `wma.payload-not-analyzed` (info), and one without a WAVEFORMATEX `wma.no-format` (info).
 
 ### Codec data nodes
@@ -468,10 +476,27 @@ A "Superframe" node (kind Frame) over the media object's first A bytes (or its r
 - A "Frame" node (kind Frame) per frame in reading order, the ones spanning superframes included, with the value "n blocks, m bits" or "invalid: reason". It covers the bytes of its bits; a frame across superframes has ranges in each.
 - **A frame's bits** are counted in its buffer, the concatenation of its parts. A frame read in one superframe has one part, the whole superframe. A frame spanning superframes has: the tail of the superframe it began in (from byte floor(e / 8), so its start bit is e mod 8), the A − 1 bytes after the first of each superframe inside a frame, and the bit offset's bits after the header of the superframe it ends in. Its length is end bit − start bit in that buffer.
 - A child "Block" per block, with the value "L samples", followed by ", mid/side", ", not coded" (no channel coded) and ", invalid" (the block a failed frame stopped in) where they apply. A block that failed before its size was known shows "1 sample" and counts under no size in "Block Sizes"; a block size field whose index was out of range shows "1 sample" too, and so do the sizes the failed block had not yet read.
-- The block's fields as in [Block layout](#block-layout), each over its bits. A field is shown only where its first bit lies inside the block as far as it was read, so a failed block shows the fields up to where it stopped. The values: block sizes in samples; mid/side and coded flags as booleans; the total gain; the noise flags as "n of m high bands"; the noise levels as their count in bands, only where there is one (where H_k is 0 the noise flags node is still shown, with the length 0 and the value "0 of 0 high bands"; no fixture has it); "Exponents Sent" only where the flag was read; the exponents as "scale factor codes" or "line spectral pairs"; the coefficients as "n non-zero, last at p".
+- The block's fields as in [Block layout](#block-layout), each over its bits. A field is shown only where its first bit lies inside the block as far as it was read, so a failed block shows the fields up to where it stopped.
+- The values:
+  - block sizes in samples; mid/side and coded flags as booleans; the total gain;
+  - the noise flags as "n of m high bands" (where H_k is 0 the node is still shown, with the length 0 and the value "0 of 0 high bands"; no fixture has it);
+  - the noise levels as their count in bands, only where there is one;
+  - "Exponents Sent" only where the flag was read;
+  - the exponents as "scale factor codes" or "line spectral pairs";
+  - the coefficients as "n non-zero, last at p".
 - The exponents' node of a channel runs from the end of the field before to the end of its own exponents; the coefficients' node likewise, so for version 1 stereo it includes the alignment bits after the channel. The alignment bits after an uncoded channel belong to no node: the next node starts after them. A failed channel's exponents or coefficients get no node.
 
-The reason texts of an invalid frame, by the rule it broke: "a block size index outside the stream's block sizes", "its blocks add up to more samples than a frame holds", "the total gain runs past the data", "an exponent is outside the range of the table of powers", "a block codes a channel but reuses exponents it never received", "coefficients run past the end of the block" and "the frame needs more bits than it has (FFmpeg accepts a frame read from a superframe's bit offset that ends up to 7 bits past the superframe, and does not check the other frames; this analysis reports any)". Since every codebook is complete, "bits that are no code of the coefficient codebook" never occurs.
+The reason texts of an invalid frame, by the rule it broke:
+
+- "a block size index outside the stream's block sizes";
+- "its blocks add up to more samples than a frame holds";
+- "the total gain runs past the data";
+- "an exponent is outside the range of the table of powers";
+- "a block codes a channel but reuses exponents it never received";
+- "coefficients run past the end of the block";
+- "the frame needs more bits than it has (FFmpeg accepts a frame read from a superframe's bit offset that ends up to 7 bits past the superframe, and does not check the other frames; this analysis reports any)".
+
+Since every codebook is complete, "bits that are no code of the coefficient codebook" never occurs.
 
 ### Statistics
 
@@ -549,7 +574,10 @@ Numbers in messages have no thousands separators except the fixed "32,768" and "
 
 The stream adds two traits to the shared encoder detection (`WmaEncoder`):
 
-- **FFmpeg (wmavN encoder)**, family FFmpeg: without the bit reservoir (bit 1) and without variable block lengths (effective), a superframe whose frame was read without error and ends before its last byte is padded. Where there is at least one padded superframe and every padded one has only 'N' bytes from the byte after the frame's last byte to its end, the trait names "FFmpeg (wmav1 encoder)" or "FFmpeg (wmav2 encoder)" by the version: high confidence with two or more padded superframes, medium with one. Its evidence text: "All N padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmavV encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths", or with one, "The superframe has bytes after the frame …" and the same ending.
+- **FFmpeg (wmavN encoder)**, family FFmpeg:
+  - It applies without the bit reservoir (bit 1) and without variable block lengths (effective). A superframe whose frame was read without error and ends before its last byte is padded.
+  - Where there is at least one padded superframe and every padded one has only 'N' bytes from the byte after the frame's last byte to its end, the trait names "FFmpeg (wmav1 encoder)" or "FFmpeg (wmav2 encoder)" by the version: high confidence with two or more padded superframes, medium with one.
+  - Its evidence text: "All N padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmavV encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths", or with one, "The superframe has bytes after the frame …" and the same ending.
 - **Microsoft's Windows Media Audio encoder**, family Microsoft, medium: version 2, codec data of at least 10 bytes, bit 1 (the bit reservoir) and effective variable block lengths, and "Samples Per Block" equal to 17 × F. Its evidence text: "The codec data states S samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them", S without separators ("34816").
 - The traits go to the shared detection with the codec data's trait first; it adds the "Encoder" and "Writer" nodes and their findings.
 
@@ -583,7 +611,7 @@ These are choices of FFmpeg 6.1.1's decoder, not rules of the format; a cross-ch
 - **Rejected superframes:** FFmpeg outputs nothing for a superframe with a failed frame, also not the frames decoded before it; Encspect counts those (see [Samples and duration](#samples-and-duration)).
 - **The bit offset of the first superframe** is read and the bits before it skipped, whatever they hold.
 - **Bitrate fallback:** with 0 average bytes per second FFmpeg's ASF reader takes the Stream Bitrate Properties Object's figure; Encspect does not analyze the stream.
-- **Version 1 with variable block lengths:** the band lists FFmpeg reads for the exponents depend on memory past its tables (see [Not determined](#not-determined)).
+- **Version 1 with variable block lengths:** the band list FFmpeg reads for the exponents is the smallest size's, followed by leftovers of the larger sizes (see [Not determined](#not-determined)).
 
 ## Observations on the test files
 
@@ -598,7 +626,11 @@ Observed behavior of the encoders behind the fixtures; none of it is a rule the 
 
 ## Not determined
 
-- **Version 1 with variable block lengths and scale factor exponents:** FFmpeg's band list for a block of the full size is the smallest size's, and for the other sizes none; past their ends it reads widths from memory outside the band tables. Encspect counts 4 coefficients for each band past the list. No file of this kind is at hand; one would show whether the format meant per-size lists, as version 2 has.
+- **Version 1 with variable block lengths and scale factor exponents:** the exponents of a block read widths from the row of size index 0 of FFmpeg's table, which after the smallest size's list holds the leftovers of the larger sizes' lists.
+  - A full-size block reads the smallest size's list, then the entries the larger sizes' lists left behind in the same row, then zeros, which count as 4 coefficients each. Only past the end of the row would it read outside the table.
+  - The other sizes have empty lists and read the same row from its start.
+  - Encspect counts 4 coefficients for each band past the list instead of the leftovers.
+  - No file of this kind is at hand; one would show whether the format meant per-size lists, as version 2 has.
 - **Version 2 at 49,048 Hz and above:** the bands of the two largest sizes stop 4 to 40 coefficients short of the block; FFmpeg takes the next widths from the following size's list, Encspect counts 4 each. No file is at hand.
 - The meaning of "Samples Per Block", "Super Block Align", options bits 5 to 15 and the superframe index; whether 0x000D with variable blocks is really an encoder that sends one block size.
 - Whether the bits before the bit offset of a stream's first superframe can hold anything.
@@ -628,6 +660,7 @@ The implementer may read the files marked safe: they hold nothing taken from FFm
 | `src/Encspect.Formats.Wma/PartsMap.cs`, `FindingCollector.cs`, `WmaEncoder.cs`, `Topics.cs` | Encspect's own mapping of bits to the file, findings, encoder detection and topic IDs, shared with the other WMA parsers |
 | `src/Encspect.Formats.Wma/WmaHeaderOnly.cs` | the header-only streams of the Lossless and Voice parsers; no bitstream syntax |
 | `src/Encspect.Host/Topics/wma-standard.md`, `wma-superframes.md`, `wma-bit-reservoir.md`, `wma-frames-and-blocks.md`, `noise-substitution.md`, `mid-side-stereo.md`, `bit-reservoir.md` | prose articles |
+| `tests/Encspect.Tests/WmaVoiceTests.cs`, `VoiceFixtureTests.cs`, `VoiceBuilder.cs` | Voice tests and packet builder: safe to read, nothing in them derives from FFmpeg's code (comments name FFmpeg's behavior and file names only); the Voice implementation adapts them to its members |
 | `tests/Encspect.Tests/WmaFixtureTests.cs`, `WmaCorruptionTests.cs`, `WmaBitsPeekTests.cs`, `VlcTests.cs`, `AsfBuilder.cs`, `AsfFixtureTests.cs`, `AsfFindingTests.cs`, `MemoryTests.cs`, `ComplexityTests.cs`, `LongInputs.cs`, `ParallelAnalysisTests.cs`, `ProtectionTests.cs`, `WriterRoleTests.cs`, `DescriptionTests.cs`, `FindingCoverageTests.cs` | tests of outputs, of the generic readers and of the container; no bitstream syntax |
 | `scripts/fixtures/make_asf_fixtures.py`, `asf_model.py`, `make_external_asf_fixtures.py`, `import_windows_wma_fixtures.py`, `wma_signals.py`, `crosscheck_asf_fixtures.py`, `asf_specs.py`, `scripts/fixtures/windows/*`, `.github/workflows/wma-fixtures.yml` | the container, the signals, the encoder and tool runs; the hand-built WMA media objects are constant bytes |
 | `scripts/fixtures/wma_tables.py` | extracts the arrays from FFmpeg's source text into `Tables.cs`; no decoding logic (its Voice part is the Voice description's concern) |
@@ -642,7 +675,6 @@ The implementer may read the files marked safe: they hold nothing taken from FFm
 | `src/Encspect.Formats.Wma/Pro*.cs`, `WmaProParser.cs` | the Professional parser and decoder, which follow another FFmpeg decoder; the Professional description's concern |
 | `src/Encspect.Formats.Wma/Voice*.cs`, `WmaVoiceParser.cs` | the Voice parser and decoder; the Voice description's concern |
 | `src/Encspect.Formats.Wma/WmaLosslessParser.cs` | the Lossless header reader, which cites FFmpeg's names; not needed |
-| `tests/Encspect.Tests/WmaVoiceTests.cs`, `VoiceFixtureTests.cs` | Voice tests; the Voice description's concern |
 | `tests/Encspect.Tests/WmaNoiseTests.cs` | builds a frame bit by bit in FFmpeg's reading order, including the zero-width band rule |
 | `tests/Encspect.Tests/WmaFindingTests.cs` | its version 1 and 2 cases build superframe headers from FFmpeg's layout and cite FFmpeg's reservoir arithmetic; its Professional and Voice cases belong to the other descriptions |
 
