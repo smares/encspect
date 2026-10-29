@@ -13,6 +13,8 @@
 - build_interim_mac builds a second mac from the same source with one line of the encoder changed, so that it writes 24-bit files the way the encoders
   of Monkey's Audio 5.01 to 8.51 did (their predictor summed the first stage in 64 bits, which the decoder's "interim mode" undoes,
   Interim.cpp). The unchanged mac verifies and decodes those files through that mode; no unchanged encoder can write one.
+- build_w64_mac builds a third mac with one line of the SDK's GUID structure changed (its first field is 32 bits wide), so that the SDK's Wave64 reader
+  accepts files on 64-bit Linux and macOS, where the unchanged reader refuses every Wave64 file; the files it writes are read by the unchanged mac.
 
 Usage: python3 scripts/fixtures/monkeys_audio_tool.py [directory]    builds mac in the directory and prints its path.
 """
@@ -84,25 +86,44 @@ INTERIM_LINE = "nOutput = nA - static_cast<INTTYPE>((static_cast<int>(nPredictio
 INTERIM_PATCHED = "nOutput = nA - static_cast<INTTYPE>((nPredictionA + (nPredictionB >> 1)) >> 10);"
 
 
-def build_interim_mac(directory=None):
-    """The path of a mac whose encoder writes 24-bit files in the 64-bit first stage of the 2019-2022 encoders, built in directory from a copy of the SDK
-    with INTERIM_LINE replaced."""
-    directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="mac-interim-"))
+def build_patched_mac(directory, path, line, replacement):
+    """The path of a mac built in directory from a copy of the SDK with the one line of the source file `path` (relative to the SDK's Source folder) replaced.
+    The source files have CRLF line ends; the line is matched without its end."""
+    directory = pathlib.Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     binary = directory / "build" / "mac"
     if binary.exists():
         return binary
     source = directory / "sdk"
     shutil.copytree(extract(directory / "original"), source, dirs_exist_ok=True)
-    path = source / "Source" / "MACLib" / "NewPredictor.cpp"
-    text = path.read_bytes().decode("utf-8")
-    if text.count(INTERIM_LINE) != 1:
-        raise RuntimeError("the line of the encoder to change is not in the SDK source exactly once")
-    path.write_bytes(text.replace(INTERIM_LINE, INTERIM_PATCHED).encode("utf-8"))
+    file = source / "Source" / path
+    text = file.read_bytes().decode("utf-8")
+    if text.count(line) != 1:
+        raise RuntimeError("the line of the source to change is not in the SDK source exactly once")
+    file.write_bytes(text.replace(line, replacement).encode("utf-8"))
     build = directory / "build"
     subprocess.run(["cmake", "-S", str(source), "-B", str(build), "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED=OFF"], check=True, stdout=subprocess.DEVNULL)
     subprocess.run(["cmake", "--build", str(build), "--parallel", "4"], check=True, stdout=subprocess.DEVNULL)
     return binary
+
+
+def build_interim_mac(directory=None):
+    """The path of a mac whose encoder writes 24-bit files in the 64-bit first stage of the 2019-2022 encoders, built in directory from a copy of the SDK
+    with INTERIM_LINE replaced."""
+    return build_patched_mac(directory or tempfile.mkdtemp(prefix="mac-interim-"), "MACLib/NewPredictor.cpp", INTERIM_LINE, INTERIM_PATCHED)
+
+
+# The SDK's Wave64 reader (WAVInputSource.cpp, CW64InputSource) reads and compares GUIDs as the 16-byte structure of Windows, whose first field is a 32-bit
+# unsigned long. NoWindows.h, the SDK's header for platforms other than Windows, declares that field as an unsigned long too, which is 64 bits on LP64 platforms
+# (64-bit Linux and macOS): the structure is 24 bytes there, and the reader refuses every Wave64 file with error 1002. The patch gives the field the 32 bits it has on Windows.
+GUID_LINE = "    unsigned long  Data1;"
+GUID_PATCHED = "    unsigned int   Data1;"
+
+
+def build_w64_mac(directory=None):
+    """The path of a mac that reads Wave64 files on 64-bit Linux: the SDK with the first field of its GUID structure made 32 bits wide (GUID_LINE). The
+    files it writes are read by the unchanged mac like any other; only its input source differs."""
+    return build_patched_mac(directory or tempfile.mkdtemp(prefix="mac-w64-"), "Shared/NoWindows.h", GUID_LINE, GUID_PATCHED)
 
 
 def run(binary, *arguments):

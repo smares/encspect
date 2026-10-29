@@ -91,20 +91,52 @@ def chunk(name, payload):
     return name + struct.pack("<I", len(payload)) + payload + (b"\0" if len(payload) % 2 else b"")
 
 
-def wav(kind, rate, channels, count, bits, mask=None, is_float=False, before=b"", after=b""):
-    """A WAVE file; with a channel mask (or more than 2 channels, or more than 16 bits) the format is WAVE_FORMAT_EXTENSIBLE. before and after are
-    chunks put before the data chunk and after it."""
-    body = floats(kind, rate, channels, count) if is_float else pcm(kind, rate, channels, count, bits)
+def wave_format(channels, rate, bits, mask, is_float=False):
+    """The fmt chunk's data: the 16-byte format of tag 1 for the mask "plain" (or no mask with at most two channels of at most 16 bits), otherwise a
+    WAVEFORMATEXTENSIBLE with the mask (the default one of mono and stereo, else 0)."""
     align = channels * bits // 8
-    if mask is None and channels <= 2 and bits <= 16 and not is_float:
-        fmt = struct.pack("<HHIIHH", 1, channels, rate, rate * align, align, bits)
-    else:
-        if mask is None:
-            mask = {1: 4, 2: 3}.get(channels, 0)
-        sub = struct.pack("<IHH", 3 if is_float else 1, 0, 0x10) + bytes([0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71])
-        fmt = struct.pack("<HHIIHHHHI", 0xFFFE, channels, rate, rate * align, align, bits, 22, bits, mask) + sub
+    if mask == "plain" or (mask is None and channels <= 2 and bits <= 16 and not is_float):
+        return struct.pack("<HHIIHH", 1, channels, rate, rate * align, align, bits)
+    if mask is None:
+        mask = {1: 4, 2: 3}.get(channels, 0)
+    sub = struct.pack("<IHH", 3 if is_float else 1, 0, 0x10) + bytes([0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71])
+    return struct.pack("<HHIIHHHHI", 0xFFFE, channels, rate, rate * align, align, bits, 22, bits, mask) + sub
+
+
+def wav(kind, rate, channels, count, bits, mask=None, is_float=False, before=b"", after=b""):
+    """A WAVE file; with a channel mask (or more than 2 channels, or more than 16 bits) the format is WAVE_FORMAT_EXTENSIBLE, except for the mask "plain",
+    which writes the 16-byte format of tag 1 whatever the channel count. before and after are chunks put before the data chunk and after it."""
+    body = floats(kind, rate, channels, count) if is_float else pcm(kind, rate, channels, count, bits)
+    fmt = wave_format(channels, rate, bits, mask, is_float)
     chunks = b"fmt " + struct.pack("<I", len(fmt)) + fmt + before + b"data" + struct.pack("<I", len(body)) + body + (b"\0" if len(body) % 2 else b"") + after
     return b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
+
+
+def bw64(kind, rate, channels, count, bits, mask=None):
+    """A BW64 file (ITU-R BS.2088): the ds64 chunk first, with the sizes of the file and of the data, which the 32-bit fields of the BW64 and the data
+    chunk leave at 0xFFFFFFFF."""
+    body = pcm(kind, rate, channels, count, bits)
+    fmt = wave_format(channels, rate, bits, mask)
+    rest = chunk(b"fmt ", fmt) + b"data" + struct.pack("<I", 0xFFFFFFFF) + body
+    ds64 = struct.pack("<QQQI", 4 + 8 + 28 + len(rest), len(body), 0, 0)
+    return b"BW64" + struct.pack("<I", 0xFFFFFFFF) + b"WAVE" + chunk(b"ds64", ds64) + rest
+
+
+W64_RIFF = bytes.fromhex("726966662E91CF11A5D628DB04C10000")
+W64_WAVE = bytes.fromhex("77617665F3ACD3118CD100C04F8EDB8A")
+W64_TEXT_TAIL = bytes.fromhex("F3ACD3118CD100C04F8EDB8A")
+
+
+def w64_chunk(name, payload):
+    """A Wave64 chunk: the GUID of a four-character name, the 64-bit size that counts the 24 bytes of header, the data, padded to a multiple of 8 bytes."""
+    return name + W64_TEXT_TAIL + struct.pack("<Q", 24 + len(payload)) + payload + b"\0" * (-len(payload) % 8)
+
+
+def w64(kind, rate, channels, count, bits, mask=None):
+    """A Wave64 file (Sony): the riff GUID with the size of the whole file, the wave GUID, and the fmt and data chunks."""
+    body = pcm(kind, rate, channels, count, bits)
+    chunks = w64_chunk(b"fmt ", wave_format(channels, rate, bits, mask)) + w64_chunk(b"data", body)
+    return W64_RIFF + struct.pack("<Q", 40 + len(chunks)) + W64_WAVE + chunks
 
 
 def aiff(kind, rate, channels, count, bits):

@@ -190,7 +190,36 @@
               "name": "WAV Header Data",
               "value": "68 bytes, a RIFF WAVE header",
               "offset": 80,
-              "length": 68
+              "length": 68,
+              "children": [
+                {
+                  "name": "Format Tag",
+                  "value": "0xFFFE (extensible)",
+                  "offset": 100,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 102,
+                  "length": 2
+                },
+                {
+                  "name": "Channel Mask",
+                  "value": 4,
+                  "offset": 120,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Speakers",
+                      "value": "front center",
+                      "offset": 120,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Encoder",

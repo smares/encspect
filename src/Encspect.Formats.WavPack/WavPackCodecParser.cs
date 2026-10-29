@@ -397,7 +397,7 @@ public sealed class WavPackCodecParser : ICodecParser
                 Codec = first.IsHybrid ? "WavPack hybrid" : "WavPack lossless",
                 SampleRate = _rate,
                 Channels = _channels,
-                ChannelLayout = Decode.Layout(_channelMask, _channels),
+                ChannelLayout = ChannelLayouts.FromWaveMask(_channelMask, _channels),
                 BitsPerSample = first.IsDsd ? 1 : first.IsFloat ? 32 : shifted > 0 ? shifted : null,
                 Samples = _samples * (first.IsDsd ? 8 : 1),
                 Duration = duration,

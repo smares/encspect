@@ -190,7 +190,36 @@
               "name": "WAV Header Data",
               "value": "68 bytes, a RIFF WAVE header",
               "offset": 80,
-              "length": 68
+              "length": 68,
+              "children": [
+                {
+                  "name": "Format Tag",
+                  "value": "0xFFFE (extensible)",
+                  "offset": 100,
+                  "length": 2
+                },
+                {
+                  "name": "Channels",
+                  "value": 4,
+                  "unit": "channels",
+                  "offset": 102,
+                  "length": 2
+                },
+                {
+                  "name": "Channel Mask",
+                  "value": 51,
+                  "offset": 120,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Speakers",
+                      "value": "front left, front right, back left, back right",
+                      "offset": 120,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Encoder",
@@ -250,6 +279,12 @@
                   "name": "Channels",
                   "value": 4,
                   "unit": "channels",
+                  "offset": 0,
+                  "length": 87500
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "quadraphonic (front left, front right, back left, back right)",
                   "offset": 0,
                   "length": 87500
                 },
@@ -373,6 +408,13 @@
         "sampleRate": 48000,
         "channels": 4,
         "channelMode": "Multichannel",
+        "channelLayout": [
+          "front left",
+          "front right",
+          "back left",
+          "back right"
+        ],
+        "channelLayoutName": "quadraphonic",
         "bitsPerSample": 16,
         "samples": 24000,
         "duration": 0.5,

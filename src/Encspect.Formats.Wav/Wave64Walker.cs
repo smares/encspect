@@ -58,7 +58,7 @@ internal static class Wave64Walker
                 Node unread = parent.Add(new Node("Unread Data", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.Wave64UnreadData });
                 long at = position;
                 s.Findings.Add(Severity.Warning, "wav.w64-chunk-size-invalid", unread, _ =>
-                    $"The chunk at 0x{at:X} states {stated}, but a size counts the 24 bytes of the chunk's own header, so none is under 24; the remaining {Counts.Of(end - at, "byte", "bytes")} are not read.");
+                    $"The chunk at 0x{at:X} states {Counts.Of(stated, "byte", "bytes")}, but a size counts the 24 bytes of the chunk's own header, so none is under 24; the remaining {Counts.Of(end - at, "byte", "bytes")} are not read.");
                 return end;
             }
 

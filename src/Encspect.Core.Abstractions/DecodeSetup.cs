@@ -19,7 +19,7 @@ public sealed record DecodeSetup
     // the decoder reads with the parser's code; null for a coding whose frames carry it (TrueHD's major sync).
     public MappedBytes? Configuration { get; init; }
 
-    // The WAVEFORMATEX a container states (ASF's WMA Lossless, WAV's PCM), or null.
+    // The WAVEFORMATEX a container states (ASF's WMA Lossless, WAV's PCM), or null. Monkey's Audio gives the fmt chunk of its stored WAV header when it holds a channel mask.
     public AudioFormat? Format { get; init; }
 
     // How the samples of a PCM data chunk are laid out (WAV, Wave64, AIFF), for the decoder "pcm"; null for every other coding.

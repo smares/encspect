@@ -306,7 +306,7 @@ internal static class DataChunks
 
         if (format.IsExtensible && format.ChannelMask is { } mask && mask != 0)
         {
-            return FormatChunk.Layout(mask, format.Channels);
+            return ChannelLayouts.FromWaveMask(mask, format.Channels);
         }
 
         return format.Channels switch { 1 => ChannelLayouts.Mono, 2 => ChannelLayouts.Stereo, _ => null };

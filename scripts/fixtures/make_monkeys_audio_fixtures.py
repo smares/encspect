@@ -39,9 +39,11 @@ STEREO, STEREO_A, STEREO_FRAMES = load("level-normal-16-stereo")
 SILENT, SILENT_A, SILENT_FRAMES = load("silent-then-tone-stereo")
 CHUNKS, CHUNKS_A, CHUNKS_FRAMES = load("wav-chunks")
 LOUD24, LOUD24_A, LOUD24_FRAMES = load("loud-24-stereo")
+MASKED, MASKED_A, MASKED_FRAMES = load("mask-5.1-sides")
 MONO_PCM = sig.canonical("music", 44100, 1, 160000, 16)
 LOUD24_PCM = sig.canonical("loud-sine-noise", 44100, 2, 8000, 24) * 4
 STEREO_PCM = sig.canonical("music", 44100, 2, 24000, 16)
+MASKED_PCM = sig.canonical("music", 48000, 6, 8000, 16)
 SILENT_PCM = sig.canonical("silent-then-tone", 44100, 2, 160000, 16)
 MONO_BLOCKS = [73728, 73728, 12544]
 
@@ -145,6 +147,8 @@ add("version-4110", rebuild(MONO, MONO_A, frames, version=4110))
 add("version-4000", rebuild(MONO, MONO_A, frames, version=4000))
 add("signature-float", rebuild(MONO, MONO_A, frames, signature=b"MACF"))
 add("wav-header-created", rebuild(MONO, MONO_A, frames, header_data=b"", flags=32))
+# The header data ends 10 bytes into the fmt chunk, before its channel mask: the layout is then the default one, which has none for six channels.
+add("wav-header-cut-in-fmt", rebuild(MASKED, MASKED_A, MASKED_FRAMES, header_data=MASKED_A.header_data[:30]))
 
 # --- the header
 add("channels-zero", rebuild(MONO, MONO_A, frames, channels=0))
@@ -259,6 +263,7 @@ EXPECT = {
     "version-4000": {"findings": ["monkeys-audio.version"], "decode": ("notPossible", 0, 0, 0, ["decode.not-possible"])},
     "signature-float": {},
     "wav-header-created": {},
+    "wav-header-cut-in-fmt": {"pcm": "masked", "decode": ("decoded", 1, 0, 8000, [])},
     "channels-zero": {"findings": ["monkeys-audio.channels"], "decode": ("notPossible", 0, 0, 0, ["decode.not-possible"])},
     "channels-33": {"findings": ["monkeys-audio.channels"], "decode": ("notPossible", 0, 0, 0, ["decode.not-possible"])},
     "bits-12": {"findings": ["monkeys-audio.bits-per-sample"], "decode": ("notPossible", 0, 0, 0, ["decode.not-possible"])},
@@ -293,8 +298,8 @@ OLD = {
     "old-3910-residual-bit-flipped": (True, ("decoded", 0, 0, 0, [("decode.frame-invalid", 1)]), False, []),
     "old-3910-last-frame-cut": (True, ("decoded", 0, 0, 0, [("decode.frame-invalid", 1)]), False, ["monkeys-audio.frame-cut"]),
 }
-PCM = {"mono": MONO_PCM, "chunks": STEREO_PCM, "loud24": LOUD24_PCM}
-TOTAL = {"mono": FULL, "chunks": 24000, "loud24": 32000}
+PCM = {"mono": MONO_PCM, "chunks": STEREO_PCM, "loud24": LOUD24_PCM, "masked": MASKED_PCM}
+TOTAL = {"mono": FULL, "chunks": 24000, "loud24": 32000, "masked": 8000}
 
 
 def prefix_md5(kind, samples):
@@ -344,7 +349,7 @@ def old_manifest(name, data):
             "frames": frames, "stream_infos": [m.old_stream_info(a, bits, samples)], "decoded_samples": written, "pcm_samples": written,
             "verification": {"default": {"isVerified": m.verdict(default), "decoding": "notRequested", "checksums": default},
                              "verify": {"isVerified": m.verdict(verify), "decoding": status, "checksums": verify}},
-            "decode_findings": [{"code": code, "count": count} for code, count in found], "findings": [finding(c) for c in findings], "encoder": {"tool": TOOL if name.startswith("old-version-") else TOOL_OLD},
+            "decode_findings": [{"code": code, "count": count} for code, count in found], "findings": [*[finding(c) for c in findings], *m.wav_header(a.header_data, a.channels)[1]], "encoder": {"tool": TOOL if name.startswith("old-version-") else TOOL_OLD},
             "crosscheck": {"mac_verify": mac}, "header": {"flags": a.flags}}
 
 

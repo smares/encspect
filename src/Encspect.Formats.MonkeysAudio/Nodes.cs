@@ -159,7 +159,7 @@ internal static class Nodes
         [
             (FormatFlags.Is8Bit, "8-bit"), (FormatFlags.HasCrc, "frame CRCs"), (FormatFlags.HasPeakLevel, "peak level"), (FormatFlags.Is24Bit, "24-bit"),
             (FormatFlags.HasSeekElements, "seek element count"), (FormatFlags.CreatesWavHeader, "WAV header created on decompression"), (FormatFlags.IsAiff, "AIFF source"),
-            (FormatFlags.IsW64, "W64 source"), (FormatFlags.IsSnd, "SND source"), (FormatFlags.IsBigEndian, "big-endian"), (FormatFlags.IsCaf, "CAF source"),
+            (FormatFlags.IsW64, "Wave64 source"), (FormatFlags.IsSnd, "SND source"), (FormatFlags.IsBigEndian, "big-endian"), (FormatFlags.IsCaf, "CAF source"),
             (FormatFlags.IsSigned8Bit, "signed 8-bit"), (FormatFlags.IsFloatingPoint, "floating point"),
         ];
         foreach ((FormatFlags flag, string name) in table)

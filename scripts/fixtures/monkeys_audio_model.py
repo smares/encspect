@@ -63,6 +63,102 @@ def stream_bytes(data, start, first, last):
     return bytes(data[stream_offset(start, j)] for j in range(first, last) if stream_offset(start, j) < len(data))
 
 
+SPEAKERS = ["front left", "front right", "front center", "LFE", "back left", "back right", "front left of center", "front right of center", "back center",
+            "side left", "side right", "top center", "top front left", "top front center", "top front right", "top back left", "top back center",
+            "top back right"]
+
+
+def mask_layout(mask, channels):
+    """The speakers of a WAVE channel mask for channels: the set bits in order (bits from 18 up have no position), cut or filled to the count (Microsoft,
+    "Multiple channel audio data and WAVE files", "Details about dwChannelMask")."""
+    names = [SPEAKERS[bit] if bit < 18 else "discrete" for bit in range(32) if mask >> bit & 1]
+    return (names + ["discrete"] * channels)[:channels]
+
+
+W64_RIFF = bytes.fromhex("726966662E91CF11A5D628DB04C10000")
+W64_WAVE = bytes.fromhex("77617665F3ACD3118CD100C04F8EDB8A")
+W64_TEXT_TAIL = bytes.fromhex("F3ACD3118CD100C04F8EDB8A")
+
+
+def wav_header(header_data, channels):
+    """What the analyzer reads of the stored header data, worked out from the WAVE chunk layout (Multimedia Programming Interface and Data Specifications
+    1.0, "WAVE Format Chunk"; Microsoft, WAVEFORMATEXTENSIBLE; for Wave64 the layout of docs/formats/wav.md and the SDK's CW64InputSource): the layout the
+    channel mask gives (None without a nonzero mask) and the findings about the header data as [{"code", "contains"}]. RIFF, RF64 and BW64 headers
+    are walked by 32-bit sizes (the ds64 chunk is one more chunk before the fmt chunk), Wave64 by GUIDs and 64-bit sizes that count the chunk's
+    24 bytes of header, chunks aligned to 8 bytes."""
+    data = header_data
+    is_w64 = len(data) >= 40 and data[:16] == W64_RIFF and data[24:40] == W64_WAVE
+    if not is_w64 and (len(data) < 12 or data[:4] not in (b"RIFF", b"RF64", b"BW64") or data[8:12] != b"WAVE"):
+        return None, []
+    found = []
+
+    def problem(contains):
+        found.append({"code": "monkeys-audio.wav-header-damaged", "contains": contains})
+
+    position = 40 if is_w64 else 12
+    head = 24 if is_w64 else 8
+    fmt = None
+    for _ in range(64):
+        if position >= len(data):
+            problem("holds no fmt chunk before its end")
+            break
+        if len(data) - position < head:
+            problem("ends inside a chunk header")
+            break
+        if is_w64:
+            guid, size = data[position:position + 16], int.from_bytes(data[position + 16:position + 24], "little")
+            if size < 24:
+                problem("under 24")
+                break
+            name = guid[:4] if guid[4:] == W64_TEXT_TAIL and all(0x20 <= c <= 0x7E for c in guid[:4]) else None
+            size -= 24
+        else:
+            name, size = data[position:position + 4], u32(data, position + 4)
+        body = position + head
+        if name == b"data":
+            problem("holds no fmt chunk before its data chunk")
+            break
+        if name == b"fmt ":
+            fmt = (position, body, size)
+            break
+        if body + size > len(data):
+            problem(f"ends inside the {name.decode('latin-1').strip()} chunk" if name else "ends inside the")
+            break
+        position = body + size + (-(size + 24) % 8 if is_w64 else size & 1)
+    else:
+        problem("more than 64 chunks")
+    if fmt is None:
+        return None, found
+    _, body, size = fmt
+    held = min(size, len(data) - body)
+    if size > held:
+        problem("ends inside the fmt chunk")
+    elif size < 16:
+        problem("fewer than the 16 of the common fields")
+    if held < 4:
+        return None, found
+    tag, count = u16(data, body), u16(data, body + 2)
+    layout = None
+    mask = None
+    if tag == 0xFFFE and held >= 18:
+        stated = u16(data, body + 16)
+        if min(stated, held - 18) >= 22:
+            mask = u32(data, body + 20)
+        else:
+            found.append({"code": "monkeys-audio.wav-extensible-incomplete", "contains": f"states {stated} byte"})
+    elif tag == 0xFFFE and held >= 16:
+        found.append({"code": "monkeys-audio.wav-extensible-incomplete", "contains": "holds no cbSize"})
+    if count != channels and channels > 0:
+        found.append({"code": "monkeys-audio.wav-channels-differ", "contains": f"states {count} channel"})
+    if mask:
+        if 1 <= channels <= 32:
+            layout = mask_layout(mask, channels)
+        ones = bin(mask).count("1")
+        if mask & 0x80000000 == 0 and ones != channels:
+            found.append({"code": "monkeys-audio.channel-mask-mismatch", "contains": f"names {ones} speaker"})
+    return layout, found
+
+
 class Ape:
     """What parse() found."""
 
@@ -229,9 +325,11 @@ def manifest(data, a, regions, encoder, findings, pcm, decode, frame_limit=64, f
     samples = 0 if a.total_frames == 0 else (a.total_frames - 1) * a.blocks_per_frame + a.final_blocks
     default = tallies(a, data, frames_complete, stored_crcs, md5_checked, md5_failed)
     verify = tallies(a, data, frames_complete, stored_crcs, md5_checked, md5_failed, decode.get("checked", 0), decode.get("failed", 0))
+    wav_layout, wav_findings = wav_header(a.header_data, a.channels)
+    findings = [*findings, *wav_findings]
     info = {
         "codec": "Monkey's Audio",
-        "layout": {1: ["front center"], 2: ["front left", "front right"]}.get(a.channels),
+        "layout": wav_layout or {1: ["front center"], 2: ["front left", "front right"]}.get(a.channels),
         "sample_rate": a.rate,
         "channels": a.channels,
         "channel_mode": {0: None, 1: "Mono", 2: "Mid/side stereo"}.get(a.channels, "Multichannel"),
@@ -305,6 +403,7 @@ def parse_old(data):
         elements = u32(data, at)
         at += 4
     a.header_bytes = at
+    a.header_data = data[at:at + a.header_data_bytes]
     a.bits = 8 if a.flags & 1 else 24 if a.flags & 8 else 16
     a.blocks_per_frame = old_blocks_per_frame(a.version, a.level)
     a.seek_at = at + a.header_data_bytes
@@ -351,7 +450,7 @@ def old_frame_entries(data, a):
 
 
 def old_stream_info(a, entries_bits, samples):
-    layout = {1: ["front center"], 2: ["front left", "front right"]}.get(a.channels)
+    layout = wav_header(a.header_data, a.channels)[0] or {1: ["front center"], 2: ["front left", "front right"]}.get(a.channels)
     return {"codec": "Monkey's Audio", "layout": layout, "sample_rate": a.rate, "channels": a.channels,
             "channel_mode": {0: None, 1: "Mono", 2: "Mid/side stereo"}.get(a.channels, "Multichannel"), "samples": samples,
             "duration": samples / a.rate if a.rate else 0, "bits_per_sample": a.bits,

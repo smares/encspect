@@ -241,7 +241,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     private IPcmSink Sink() => _sink ??= _context.DeclareOutput(new PcmFormat((int)Math.Min(_header.SampleRate, int.MaxValue), _channels, _bits, _isFloat ? SampleFormat.Float32 : SampleFormat.Integer)
     {
-        ChannelLayout = Summary.Layout(_channels),
+        ChannelLayout = Summary.Layout(_channels, _context.Setup.Format?.ChannelMask),
     });
 
     // Decodes the coded samples chunk by chunk and returns the CRC the decoded audio has (APEDecompressCore.cpp, StartFrame and EndFrame).

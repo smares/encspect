@@ -341,7 +341,7 @@ internal sealed class OldFrameDecoder : IFrameDecoder
 
     private IPcmSink Sink() => _sink ??= _context.DeclareOutput(new PcmFormat((int)Math.Min(_header.SampleRate, int.MaxValue), _channels, _bits, SampleFormat.Integer)
     {
-        ChannelLayout = Summary.Layout(_channels),
+        ChannelLayout = Summary.Layout(_channels, _context.Setup.Format?.ChannelMask),
     });
 
     private void WriteChunk(long position, int n) =>
