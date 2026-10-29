@@ -30,7 +30,7 @@ internal static class LongInputs
         "ogg-vorbis" => VorbisPackets(2060),
         "ogg-opus" => OpusPackets(2060),
         "asf-wma" => AsfWma("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161, 2060),
-        "asf-wma-pro" => AsfWma("asf/external-windows-wma10pro-cbr-stereo-44k-256.wma", 0x0162, 515),
+        "asf-wma-pro" => AsfWma("asf/external-windows-wma10pro-cbr-stereo-44k-256.wma", 0x0162, 2060),
         "asf-pcm" => AsfBuilder.Build(PcmStreamProperties(), new byte[160], 2060, 10),
         "wavpack" => WavPackTinyBlocks(2060),
         "flac" => FlacBuilder.Stream(2060),

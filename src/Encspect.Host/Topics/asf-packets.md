@@ -1,7 +1,7 @@
 ---
 id: asf-packets
 title: ASF data packets and payloads
-related: asf-container, wma-superframes, asf-index
+related: asf-container, asf-index
 references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sections 5.2 and 7.3; FFmpeg libavformat/asfdec_f.c
 ---
 

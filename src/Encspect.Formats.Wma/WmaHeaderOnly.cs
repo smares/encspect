@@ -1,8 +1,9 @@
+using System.Globalization;
 using Encspect.Core;
 
 namespace Encspect.Formats.Wma;
 
-// What the codec parsers of Windows Media Audio Lossless and Voice share: the stream is described by what the
+// What the codec parsers of Windows Media Audio versions 1 and 2, Professional, Lossless and Voice share: the stream is described by what the
 // container and the codec-specific data say (and its packets counted); the frames are not read.
 internal static class WmaHeaderOnly
 {
@@ -26,7 +27,7 @@ internal static class WmaHeaderOnly
 
         if (config.AreSamplesEncrypted)
         {
-            WmaStandardParser.AddBasicStream(context, context.Parent, codecName, format, 3, config, ProExplain.EncryptedHeaderOnlyStream, topic);
+            AddEncryptedStream(context, codecName, format, config, topic);
             findings.Flush(context);
             return;
         }
@@ -51,36 +52,36 @@ internal static class WmaHeaderOnly
         var stream = parent.Add(new Node(codecName, parent.Offset, parent.Length, NodeValue.Text("frames not read"))
         {
             Kind = NodeKind.Stream,
-            Description = ProExplain.HeaderOnlyStream,
+            Description = Explain.HeaderOnlyStream,
             Topic = topic,
         });
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings, []);
         double? duration = config.Duration;
-        Node statistics = stream.Add(new Node("Statistics", parent.Offset, parent.Length, WmaStandardParser.Count(count, "packet", "packets"))
+        Node statistics = stream.Add(new Node("Statistics", parent.Offset, parent.Length, Count(count, "packet", "packets"))
         {
             Kind = NodeKind.Statistics,
-            Description = ProExplain.Statistics,
+            Description = Explain.Statistics,
             Topic = topic,
         });
-        statistics.Add("Packets", parent.Offset, parent.Length, NodeValue.Integer(count), ProExplain.StatPackets);
-        statistics.Add("Packet Bytes", parent.Offset, parent.Length, NodeValue.Integer(bytes, "bytes"), ProExplain.StatPacketBytes);
-        statistics.Add("Block Alignment", parent.Offset, parent.Length, NodeValue.Integer(format.BlockAlign, "bytes"), ProExplain.StatBlockAlignment);
+        statistics.Add("Packets", parent.Offset, parent.Length, NodeValue.Integer(count), Explain.StatPackets);
+        statistics.Add("Packet Bytes", parent.Offset, parent.Length, NodeValue.Integer(bytes, "bytes"), Explain.StatPacketBytes);
+        statistics.Add("Block Alignment", parent.Offset, parent.Length, NodeValue.Integer(format.BlockAlign, "bytes"), Explain.StatBlockAlignment);
         if (count > 0)
         {
-            statistics.Add("Smallest Packet", parent.Offset, parent.Length, NodeValue.Integer(smallest, "bytes"), ProExplain.StatSmallestPacket);
-            statistics.Add("Largest Packet", parent.Offset, parent.Length, NodeValue.Integer(largest, "bytes"), ProExplain.StatLargestPacket);
+            statistics.Add("Smallest Packet", parent.Offset, parent.Length, NodeValue.Integer(smallest, "bytes"), Explain.StatSmallestPacket);
+            statistics.Add("Largest Packet", parent.Offset, parent.Length, NodeValue.Integer(largest, "bytes"), Explain.StatLargestPacket);
         }
 
         if (duration is > 0)
         {
-            statistics.Add("Duration", parent.Offset, parent.Length, NodeValue.Decimal(duration.Value, 3, "s"), ProExplain.StatContainerDuration);
+            statistics.Add("Duration", parent.Offset, parent.Length, NodeValue.Decimal(duration.Value, 3, "s"), Explain.StatContainerDuration);
         }
 
         double nominal = format.BytesPerSecond * 8.0 / 1000;
         if (nominal > 0)
         {
-            statistics.Add("Nominal Bitrate", parent.Offset, parent.Length, NodeValue.Decimal(nominal, 1, "kbps"), ProExplain.StatNominalBitrate);
+            statistics.Add("Nominal Bitrate", parent.Offset, parent.Length, NodeValue.Decimal(nominal, 1, "kbps"), Explain.StatNominalBitrate);
         }
 
         findings.AddNow(Severity.Info, notReadCode, notReadMessage, stream);
@@ -118,4 +119,31 @@ internal static class WmaHeaderOnly
 
         findings.Flush(context);
     }
+
+    // A stream whose samples are encrypted takes the container's duration and the nominal bitrate of the format.
+    private static void AddEncryptedStream(CodecContext context, string codec, AudioFormat format, CodecConfiguration configuration, string topic)
+    {
+        Node parent = context.Parent;
+        var node = parent.Add(new Node(codec, parent.Offset, parent.Length, NodeValue.Text("frames not read: encrypted"))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.EncryptedHeaderOnlyStream,
+            Topic = topic,
+        });
+        double duration = configuration.Duration ?? 0;
+        context.AddStream(new StreamInfo
+        {
+            Nodes = [node],
+            Codec = codec,
+            SampleRate = format.SampleRate,
+            Channels = format.Channels,
+            ChannelMode = format.Channels == 1 ? "Mono" : format.Channels == 2 ? "Stereo" : null,
+            ChannelLayout = format.Channels == 1 ? ChannelLayouts.Mono : format.Channels == 2 ? ChannelLayouts.Stereo : null,
+            Samples = (long)Math.Round(duration * format.SampleRate),
+            Duration = duration,
+            AverageBitrate = format.BytesPerSecond > 0 ? format.BytesPerSecond * 8.0 / 1000 : null,
+        });
+    }
+
+    private static string Count(long count, string singular, string plural) => $"{count.ToString(CultureInfo.InvariantCulture)} {(count == 1 ? singular : plural)}";
 }

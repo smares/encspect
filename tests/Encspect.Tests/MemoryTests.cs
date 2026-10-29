@@ -623,11 +623,8 @@ public class MemoryTests(ITestOutputHelper output)
 
     // An ASF file keeps a compact record per packet and per payload (the nodes are built when read), and its media
     // objects, which go to the codec parser one at a time and are never kept (plan, "Large inputs"). Measured over
-    // a Windows Media Audio stream of ffmpeg's encoder, a 185-byte superframe repeated, and over Professional and
-    // PCM payloads: the bounds are about twice what linux-x64 measures and far below what keeping each media
-    // object's bytes or nodes would cost: 273 bytes kept per superframe and a peak of 274 for the WMA stream (the
-    // ASF packet, payload, superframe, frame, block and series records), 574 and 593 per frame for Professional, and
-    // 89 and 86 per packet for PCM payloads.
+    // a Windows Media Audio stream of ffmpeg's encoder, a 185-byte superframe repeated, and over PCM payloads: the
+    // bounds are far below what keeping each media object's bytes or nodes would cost.
     [Fact]
     public void ManyAsfPacketsStayCompact()
     {
@@ -638,7 +635,7 @@ public class MemoryTests(ITestOutputHelper output)
         (Report report, long kept, long peak) = Measure("packets.wma", data, data[..4096]);
 
         Assert.Equal("Windows Media Audio 2", Assert.Single(report.Streams).Codec);
-        Assert.Equal(packets - 1L, Assert.Single(report.Streams).Samples / 2048);
+        Assert.Contains(report.Findings, f => f.Code == "wma.standard-not-read");
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * AsfWmaKeptBound, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * AsfWmaPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
@@ -680,127 +677,6 @@ public class MemoryTests(ITestOutputHelper output)
     {
         byte[] data = AsfBuilder.Build(PcmStreamProperties(), new byte[1], (1 << 16) + 5_000, 1);
         Bounded("undetailed.asf", data, 300_000_000, "asf.packets-undetailed");
-    }
-
-    // A stream of millions of tiny Windows Media Audio superframes: records are kept up to a count.
-    [Fact]
-    public void ManyTinyWmaSuperframesAreBounded()
-    {
-        (byte[] properties, _) = AsfBuilder.Take("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161);
-        byte[] data = AsfBuilder.Build(properties, new byte[3], 600_000, 1);
-        Bounded("tiny.wma", data, 300_000_000, "wma.records-limit");
-    }
-
-    // Professional packets of a Microsoft-encoded file, each with its frames, subframes and channel records.
-    [Fact]
-    public void ManyProfessionalPacketsStayCompact()
-    {
-        const int packets = 6_000;
-        (byte[] properties, byte[] mediaObject) = AsfBuilder.Take("asf/external-windows-wma10pro-cbr-stereo-44k-64.wma", 0x0162);
-        byte[] data = AsfBuilder.Build(properties, mediaObject, packets, 300);
-
-        (Report report, long kept, long peak) = Measure("packets.wma", data, data[..4096]);
-
-        Assert.Equal("Windows Media Audio Professional", Assert.Single(report.Streams).Codec);
-        long frames = Assert.IsType<long>(Assert.Single(report.Streams).Samples / 2048);
-        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame ({frames} frames)");
-        Assert.True(kept < frames * ProKeptBound, $"The report keeps {kept / frames} bytes per frame.");
-        Assert.True(peak < frames * ProPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
-        GC.KeepAlive(report);
-    }
-
-    private const long ProKeptBound = 1150;
-    private const long ProPeakBound = 1200;
-
-    // Voice packets of a Microsoft-encoded file, repeated: 14 packets of 187 bytes hold 50 superframes of three frames, each kept
-    // as a record of 36 bytes, three of 16, and a part of 12 or 24, with the packet record, the tail owner and the series: 175 bytes
-    // kept per superframe on linux-x64 and a peak of 195. The bounds are about twice that.
-    [Fact]
-    public void ManyVoiceSuperframesStayCompact()
-    {
-        const int cycles = 800;
-        const string fixture = "asf/external-windows-wmavoice-cbr-mono-8k-5.wma";
-        (byte[] properties, _) = AsfBuilder.Take(fixture, 0x000A);
-        List<byte[]> objects = AsfBuilder.Objects(fixture, 0x000A);
-        var packets = new List<byte[]>();
-        for (int i = 0; i < cycles; i++)
-        {
-            foreach (byte[] mediaObject in objects)
-            {
-                byte[] packet = AsfBuilder.Packet(23 + mediaObject.Length, 1, packets.Count & 0xFF, 0, (uint)mediaObject.Length, (uint)(packets.Count * 299));
-                mediaObject.CopyTo(packet, 23);
-                packets.Add(packet);
-            }
-        }
-
-        byte[] data = AsfBuilder.Assemble(properties, 23 + objects[0].Length, packets);
-        (Report report, long kept, long peak) = Measure("packets.wma", data, data[..4096]);
-
-        Assert.Equal("Windows Media Audio Voice", Assert.Single(report.Streams).Codec);
-        long superframes = Assert.Single(report.Streams).Samples / 480;
-        Assert.True(superframes > cycles * 45L);
-        output.WriteLine($"{kept / superframes} bytes kept and {peak / superframes} bytes peak per superframe ({superframes} superframes)");
-        Assert.True(kept < superframes * VoiceKeptBound, $"The report keeps {kept / superframes} bytes per superframe.");
-        Assert.True(peak < superframes * VoicePeakBound, $"The live heap grew by {peak / superframes} bytes per superframe.");
-        GC.KeepAlive(report);
-    }
-
-    private const long VoiceKeptBound = 380;
-    private const long VoicePeakBound = 420;
-
-    // Packets of nothing but the smallest superframes (87 bits, 16 to a packet of 187 bytes): more than the stream keeps records for.
-    [Fact]
-    public void ManyTinyVoiceSuperframesAreBounded()
-    {
-        const string fixture = "asf/external-windows-wmavoice-cbr-mono-8k-5.wma";
-        (byte[] properties, _) = AsfBuilder.Take(fixture, 0x000A);
-        var body = new VoiceBitWriter();
-        for (int i = 0; i < 16; i++)
-        {
-            body.Append(VoiceBuilder.Superframe());
-        }
-
-        var packets = new List<byte[]>();
-        int count = 36_000;
-        for (int i = 0; i < count; i++)
-        {
-            byte[] mediaObject = VoiceBuilder.Packet(187, i & 15, true, 16, 0, body);
-            byte[] packet = AsfBuilder.Packet(23 + mediaObject.Length, 1, i & 0xFF, 0, (uint)mediaObject.Length, (uint)(i * 299));
-            mediaObject.CopyTo(packet, 23);
-            packets.Add(packet);
-        }
-
-        byte[] data = AsfBuilder.Assemble(properties, 23 + 187, packets);
-        Bounded("tiny.wma", data, 300_000_000, "wma.records-limit");
-    }
-
-    // Media objects of nothing but blocks of 2 bytes, each a valid header that counts no superframe: one media object holds
-    // thousands of packets, which the count of media objects does not limit. The packets are kept up to a count.
-    [Fact]
-    public void ManyTinyVoiceBlocksAreBounded()
-    {
-        const string fixture = "asf/external-windows-wmavoice-cbr-mono-8k-5.wma";
-        (byte[] properties, _) = AsfBuilder.Take(fixture, 0x000A);
-
-        // The WAVEFORMATEX starts 78 bytes into the Stream Properties Object; its block alignment is 12 bytes in.
-        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(properties.AsSpan(90), 2);
-        var packets = new List<byte[]>();
-        const int blocksPerObject = 16_000;
-        for (int i = 0; i < 400; i++)
-        {
-            byte[] mediaObject = new byte[blocksPerObject * 2];
-            for (int block = 0; block < blocksPerObject; block++)
-            {
-                VoiceBuilder.Packet(2, block & 15, true, 0, 0, new VoiceBitWriter()).CopyTo(mediaObject, block * 2);
-            }
-
-            byte[] packet = AsfBuilder.Packet(23 + mediaObject.Length, 1, i & 0xFF, 0, (uint)mediaObject.Length, (uint)(i * 299));
-            mediaObject.CopyTo(packet, 23);
-            packets.Add(packet);
-        }
-
-        byte[] data = AsfBuilder.Assemble(properties, 23 + (blocksPerObject * 2), packets);
-        Bounded("blocks.wma", data, 120_000_000, "wma.records-limit");
     }
 
     // A Matroska file keeps a compact record per block and per frame inside Clusters (the nodes are built when read).

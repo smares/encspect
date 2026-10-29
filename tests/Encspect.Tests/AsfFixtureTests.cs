@@ -141,7 +141,8 @@ public class AsfFixtureTests
         Assert.NotNull(rejected.Path);
     }
 
-    // WM/ToolName holds ffmpeg's encoder ID: it is encoder evidence, weighed because the stream shows ffmpeg's superframe padding, and no writer.
+    // WM/ToolName holds ffmpeg's encoder ID: an encoder claim, and no writer. A claim of ffmpeg's names the encoder only where the stream shows ffmpeg's,
+    // and the frames are not read, so no encoder is named.
     [Fact]
     public void ALibavcodecToolNameIsEncoderEvidenceAndNoWriter()
     {
@@ -149,11 +150,9 @@ public class AsfFixtureTests
         Report report = Analyzer.CreateDefault().Analyze(path, new MemoryStream(File.ReadAllBytes(path)));
 
         StreamInfo stream = Assert.Single(report.Streams);
-        Assert.Equal(("FFmpeg (wmav2 encoder)", Confidence.High), (stream.Encoder, stream.EncoderConfidence));
+        Assert.Null(stream.Encoder);
         Assert.Null(stream.Writer);
         Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
-        Node encoder = Find(report.Root, "Encoder");
-        Assert.Contains(encoder.Children, c => c.Name == "Evidence" && c.Value?.ToString()?.Contains("WM/ToolName", StringComparison.Ordinal) == true);
     }
 
     // The version attributes of the two Microsoft writers are writer claims by what they name, whatever their text looks like.
@@ -170,7 +169,7 @@ public class AsfFixtureTests
         Report report = Analyzer.CreateDefault().Analyze("version.asf", new MemoryStream(data));
 
         StreamInfo stream = Assert.Single(report.Streams);
-        Assert.Equal("FFmpeg (wmav2 encoder)", stream.Encoder);
+        Assert.Null(stream.Encoder);
         Assert.Equal(writer, stream.Writer);
     }
 

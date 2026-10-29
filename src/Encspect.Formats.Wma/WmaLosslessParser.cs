@@ -10,6 +10,8 @@ public sealed class WmaLosslessParser : ICodecParser
 {
     public const string CodecId = "wma-lossless";
 
+    private const int ExtraDataSize = 18;
+
     public string Id => CodecId;
 
     public void Parse(CodecContext context)
@@ -25,7 +27,7 @@ public sealed class WmaLosslessParser : ICodecParser
         MappedBytes data = configuration.Data;
         ReadOnlySpan<byte> bytes = data.Span;
         long offset = data.FileStart;
-        if (bytes.Length < ProParameters.ExtraDataSize)
+        if (bytes.Length < ExtraDataSize)
         {
             findings.AddNow(Severity.Warning, "wma.codec-data-size",
                 $"The codec-specific data of Windows Media Audio Lossless is {Counts.Of(bytes.Length, "byte", "bytes")}; FFmpeg's decoder needs 18 and refuses fewer.", holder);
@@ -39,24 +41,24 @@ public sealed class WmaLosslessParser : ICodecParser
             findings.AddNow(Severity.Warning, "wma.lossless-bit-depth", $"The sample size is {Counts.Of(bits, "bit", "bits")}; FFmpeg's decoder handles 16 and 24.", holder.Children[^1]);
         }
 
-        holder.Add("Channel Mask", offset + 2, 4, NodeValue.Hex(BinaryPrimitives.ReadUInt32LittleEndian(bytes[2..]), 8), ProExplain.ChannelMask, Topics.ChannelLayouts);
-        holder.Add("Unknown 1", offset + 6, 8, NodeValue.Hex(BinaryPrimitives.ReadUInt64LittleEndian(bytes[6..]), 16), ProExplain.Unknown);
+        holder.Add("Channel Mask", offset + 2, 4, NodeValue.Hex(BinaryPrimitives.ReadUInt32LittleEndian(bytes[2..]), 8), LosslessExplain.ChannelMask, Topics.ChannelLayouts);
+        holder.Add("Unknown 1", offset + 6, 8, NodeValue.Hex(BinaryPrimitives.ReadUInt64LittleEndian(bytes[6..]), 16), LosslessExplain.Unknown);
         int value = BinaryPrimitives.ReadUInt16LittleEndian(bytes[14..]);
         Node flags = holder.Add("Decode Flags", offset + 14, 2, NodeValue.Hex((uint)value, 4), LosslessExplain.DecodeFlags, Topics.WmaLossless);
-        holder.Add("Unknown 2", offset + 16, 2, NodeValue.Hex(BinaryPrimitives.ReadUInt16LittleEndian(bytes[16..]), 4), ProExplain.Unknown);
-        if (bytes.Length > ProParameters.ExtraDataSize)
+        holder.Add("Unknown 2", offset + 16, 2, NodeValue.Hex(BinaryPrimitives.ReadUInt16LittleEndian(bytes[16..]), 4), LosslessExplain.Unknown);
+        if (bytes.Length > ExtraDataSize)
         {
-            holder.Add("Extra Data", offset + ProParameters.ExtraDataSize, bytes.Length - ProParameters.ExtraDataSize, NodeValue.Integer(bytes.Length - ProParameters.ExtraDataSize, "bytes", "byte"), ProExplain.ExtraData);
+            holder.Add("Extra Data", offset + ExtraDataSize, bytes.Length - ExtraDataSize, NodeValue.Integer(bytes.Length - ExtraDataSize, "bytes", "byte"), LosslessExplain.ExtraData);
         }
 
         long at = flags.Offset;
-        Bit(flags, at, 0, 1, NodeValue.Integer(value & 1), "Unread Flag", ProExplain.FlagOthers);
-        Bit(flags, at, 1, 2, NodeValue.Integer((value >> 1) & 3), "Frame Length Adjustment", ProExplain.FlagFrameLength);
-        Bit(flags, at, 3, 3, NodeValue.Integer((value >> 3) & 7), "Subframe Count Code", ProExplain.FlagSubframes);
-        Bit(flags, at, 6, 1, NodeValue.Boolean((value & 0x40) != 0), "Has Length Prefix", ProExplain.FlagLengthPrefix);
-        Bit(flags, at, 7, 1, NodeValue.Boolean((value & 0x80) != 0), "Uses Dynamic Range Compression", ProExplain.FlagDynamicRange);
+        Bit(flags, at, 0, 1, NodeValue.Integer(value & 1), "Unread Flag", LosslessExplain.FlagOthers);
+        Bit(flags, at, 1, 2, NodeValue.Integer((value >> 1) & 3), "Frame Length Adjustment", LosslessExplain.FlagFrameLength);
+        Bit(flags, at, 3, 3, NodeValue.Integer((value >> 3) & 7), "Subframe Count Code", LosslessExplain.FlagSubframes);
+        Bit(flags, at, 6, 1, NodeValue.Boolean((value & 0x40) != 0), "Has Length Prefix", LosslessExplain.FlagLengthPrefix);
+        Bit(flags, at, 7, 1, NodeValue.Boolean((value & 0x80) != 0), "Uses Dynamic Range Compression", LosslessExplain.FlagDynamicRange);
         Bit(flags, at, 8, 1, NodeValue.Boolean((value & 0x100) != 0), "Is Version 3 RTM", LosslessExplain.FlagV3Rtm);
-        Bit(flags, at, 9, 7, NodeValue.Hex((uint)(value >> 9), 2), "Other Flags", ProExplain.FlagOthers);
+        Bit(flags, at, 9, 7, NodeValue.Hex((uint)(value >> 9), 2), "Other Flags", LosslessExplain.FlagOthers);
     }
 
     private static void Bit(Node flags, long offset, int first, int width, NodeValue value, string name, string description) =>
@@ -65,6 +67,14 @@ public sealed class WmaLosslessParser : ICodecParser
 
 internal static class LosslessExplain
 {
+    public const string ExtraData = "Bytes after the fields the format defines, which decoders ignore.";
+    public const string ChannelMask = "Which speakers the channels feed, as a WAVE channel mask (bytes 2 to 5 of the codec-specific data). FFmpeg's decoder takes the channel count from it, and the position of the low-frequency channel (wmaprodec.c).";
+    public const string Unknown = "Bytes of the codec-specific data that FFmpeg's decoder does not read.";
+    public const string FlagFrameLength = "Raises (2) or lowers (4, 6) the frame length from the one the sample rate gives: 2 doubles it, 4 halves it, 6 quarters it (wma_common.c: ff_wma_get_frame_len_bits).";
+    public const string FlagSubframes = "The base-2 logarithm of the most subframes a frame is divided into (wmaprodec.c: max_num_subframes).";
+    public const string FlagLengthPrefix = "Set if every frame starts with its length in bits, which lets a decoder find the frames of a packet without reading them (wmaprodec.c: len_prefix).";
+    public const string FlagDynamicRange = "Set if every frame carries a gain for dynamic range compression (wmaprodec.c: dynamic_range_compression).";
+    public const string FlagOthers = "Bits of the decode flags that FFmpeg's decoder does not read.";
     public const string BitsPerSample = "The sample size of the audio, 16 or 24 bits (the first two bytes of the codec-specific data); FFmpeg's decoder takes it to decode to 16-bit or 24-bit samples (wmalosslessdec.c).";
     public const string DecodeFlags = "The decode flags (bytes 14 and 15 of the codec-specific data), laid out as Professional's: the frame length adjustment (bits 1 and 2), the number of subframes (bits 3 to 5), the length prefix of frames (bit 6), dynamic range compression (bit 7) and bit 8, which FFmpeg's decoder calls bV3RTM (wmalosslessdec.c).";
     public const string FlagV3Rtm = "A flag that FFmpeg's decoder reads as bV3RTM: it changes where the adaptive filters keep their updates and adds a flag for an LPC filter to each subframe, which FFmpeg's decoder does not support (wmalosslessdec.c).";
