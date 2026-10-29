@@ -2,39 +2,22 @@ name: sources
 
 # Every file the fixture scripts download, from its original address and from each copy, so a
 # source that disappears is noticed while a copy still serves it. Weekly, and on changes to the
-# lists of addresses. A pull request checks only the addresses it adds or changes (the entries of
-# `check_sources.py --list` on its merge commit that the base commit lacks), so a host that is down
-# for an address nobody touched does not fail it; it checks everything when it changes downloads.py,
-# check_sources.py or this file. The weekly and manual runs check everything.
+# lists of addresses. A pull request checks only the entries it adds or changes (those of
+# `check_sources.py --list` on its merge commit that the base commit lacks, plus all of a kind when it
+# changes the module that checks that kind), so a host that is down for an address nobody touched does
+# not fail it; it checks everything when it changes downloads.py, check_sources.py, sources_plan.py or
+# this file. The weekly and manual runs check everything. A change to any script of the fixtures starts
+# the job, which downloads nothing when no entry is affected.
 on:
   schedule:
     - cron: "17 5 * * 1"
   workflow_dispatch:
   pull_request:
     paths:
-      - scripts/fixtures/downloads.py
-      - scripts/fixtures/check_sources.py
-      - scripts/fixtures/conformance_mpeg_audio.py
-      - scripts/fixtures/check_mp3pro_samples.py
-      - scripts/fixtures/check_eac3_samples.py
-      - scripts/fixtures/check_usac_samples.py
-      - scripts/fixtures/check_sbr_samples.py
-      - scripts/fixtures/mctoolamed_tool.py
-      - scripts/fixtures/fhg_tool.py
-      - scripts/fixtures/xing_tool.py
-      - scripts/fixtures/blade_tool.py
-      - scripts/fixtures/helix_tool.py
-      - scripts/fixtures/gogo_tool.py
-      - scripts/fixtures/old_lame_tool.py
-      - scripts/fixtures/lame_win_tool.py
-      - scripts/fixtures/wavpack_tool.py
-      - scripts/fixtures/monkeys_audio_tool.py
-      - scripts/fixtures/ffmpeg_sources.py
-      - scripts/fixtures/faac_tool.py
-      - scripts/fixtures/dts_specs.py
-      - scripts/fixtures/libdca_source.py
-      - scripts/fixtures/gpac_tool.py
+      - scripts/fixtures/**
       - tests/conformance/**
+      - scripts/ci/sources_plan.py
+      - scripts/ci/test_sources_plan.py
       - .github/workflows/sources.yml
 
 permissions:
@@ -54,16 +37,15 @@ jobs:
         id: plan
         env:
           EVENT: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ "$EVENT" != "pull_request" ]; then
             echo "Full check: $EVENT run."
             exit 0
           fi
           # The merge commit's first parent is the base; a worktree of it gives the base's own list.
-          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          BASE_SHA="$(git rev-parse HEAD^1)"
           git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
-          git diff --name-only "$BASE_SHA" HEAD > "$RUNNER_TEMP/changed.txt"
+          git diff --no-renames --name-only "$BASE_SHA" HEAD > "$RUNNER_TEMP/changed.txt"
           # Decided before any list: a base without --list cannot be diffed, and the change that adds it changes check_sources.py.
           reason="$(python3 scripts/ci/sources_plan.py --files "$RUNNER_TEMP/changed.txt")"
           if [ -n "$reason" ]; then
