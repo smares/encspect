@@ -151,7 +151,7 @@ Effect: no golden report, test or conformance figure changes. The fixture writer
 
 ### The fixture writer
 
-`make_layer2_fixtures.py` needs, per configuration (surround, center coded), the additional channels, the `tc_allocation` bits and the number of `predsi` fields at mode 0, all from the tables above. It writes `dyn_cross_on` 0 only. `MC_SHAPE` and `PREDICTORS` are stubbed; rebuild them from the tables, keyed as the writer uses them.
+`make_layer2_fixtures.py` needs, per configuration (surround, center coded), the additional channels, the `tc_allocation` bits and the number of `predsi` fields at mode 0, all from the tables above. It writes `dyn_cross_on` 0 only. `MC_SHAPE` and `PREDICTORS` are stubbed. Rebuild them from the tables; their shape is free, so change the writer's two uses (in `Multichannel.__init__` and `write`) to fit the tables, the same way `Read` may be adapted to the C# tables that replace `Shapes`, `Predictors` and `Groups`.
 
 ### Checks
 
