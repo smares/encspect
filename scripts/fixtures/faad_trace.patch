@@ -6,7 +6,10 @@ faad2 is Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com. The "a
 
 The changes add fprintf calls to libfaad/syntax.c, libfaad/ms.c and libfaad/sbr_syntax.c that print what the parser reads, each line starting with "@@"
 on standard error (see scripts/fixtures/faad_trace_tool.py). The patch is applied by that tool to a build of faad2 for checking this project's
-fixtures. It is a test tool: it is in neither the command line build nor the GUI build and is not redistributed (docs/development.md).
+fixtures. It is a test tool: it is in neither the command line build nor the GUI build (docs/development.md), but this repository carries the patch and so distributes it.
+
+The license of faad2 is in its COPYING: https://github.com/knik0/faad2/blob/216f00e8ddba6f2c64caf481a04f1ddd78b93e78/COPYING (GPL-2.0-or-later).
+Date of the change (section 2a of the GPLv2): 2026-10-29, the day this patch was added to the repository.
 
 diff --git a/libfaad/ms.c b/libfaad/ms.c
 index eb4d266..811c2b2 100644
