@@ -331,7 +331,93 @@
                           "value": 18,
                           "unit": "bytes",
                           "offset": 230,
-                          "length": 18
+                          "length": 18,
+                          "children": [
+                            {
+                              "name": "Bits Per Sample",
+                              "value": 16,
+                              "unit": "bits",
+                              "offset": 230,
+                              "length": 2
+                            },
+                            {
+                              "name": "Channel Mask",
+                              "value": 3,
+                              "offset": 232,
+                              "length": 4
+                            },
+                            {
+                              "name": "Unknown 1",
+                              "value": 0,
+                              "offset": 236,
+                              "length": 8
+                            },
+                            {
+                              "name": "Decode Flags",
+                              "value": 224,
+                              "offset": 244,
+                              "length": 2,
+                              "children": [
+                                {
+                                  "name": "Unread Flag",
+                                  "value": 0,
+                                  "offset": 244,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Frame Length Adjustment",
+                                  "value": 0,
+                                  "offset": 244,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Subframe Count Code",
+                                  "value": 4,
+                                  "offset": 244,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Has Length Prefix",
+                                  "value": true,
+                                  "offset": 244,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Uses Dynamic Range Compression",
+                                  "value": true,
+                                  "offset": 244,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Other Flags",
+                                  "value": 0,
+                                  "offset": 245,
+                                  "length": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Unknown 2",
+                              "value": 0,
+                              "offset": 246,
+                              "length": 2
+                            }
+                          ]
                         }
                       ]
                     }

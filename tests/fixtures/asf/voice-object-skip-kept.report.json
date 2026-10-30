@@ -1953,6 +1953,13 @@
                           "unit": "kbps",
                           "offset": 330,
                           "length": 1202
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 36.66666666666667,
+                          "unit": "kbps",
+                          "offset": 330,
+                          "length": 1202
                         }
                       ]
                     }
@@ -1976,13 +1983,14 @@
         "codec": "Windows Media Audio Voice",
         "sampleRate": 8000,
         "channels": 1,
+        "channelMode": "Mono",
         "channelLayout": [
           "front center"
         ],
         "channelLayoutName": "mono",
         "samples": 960,
         "duration": 0.12,
-        "averageBitrate": 8,
+        "averageBitrate": 36.66666666666667,
         "isVbr": false,
         "playbackGroup": 1,
         "series": []

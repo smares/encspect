@@ -75,7 +75,7 @@ Options that were considered:
 The earlier draft limited a decoder to a `Syntax` namespace of its parser, to keep the coupling across an assembly boundary deliberate. That limit is dropped:
 
 - Inside one assembly the coupling that can do harm is the parser's on the decoder, and the test below forbids it.
-- The existing parsers (WavPack, WMA Lossless) keep their readers where they are; moving them into a `Syntax` namespace would be churn with no check behind it.
+- The existing parsers (WavPack) keep their readers where they are; moving them into a `Syntax` namespace would be churn with no check behind it.
 
 ### How a test enforces it
 

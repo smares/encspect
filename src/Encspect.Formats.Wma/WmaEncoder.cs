@@ -3,11 +3,9 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Wma;
 
-// The encoder of a Windows Media Audio stream, from what the stream carries, how the container lays out its
-// header and what its metadata says (EncoderClaim). Evidence of three strengths:
+// The encoder of a Windows Media Audio stream, from how the container lays out its header and what its metadata
+// says (EncoderClaim). Evidence of two strengths:
 //
-// - The stream's own trait: ffmpeg's wmav1 and wmav2 encoders pad every superframe with 'N' bytes
-//   (wmaenc.c), which no other encoder at hand does; with two or more padded superframes, high.
 // - A pattern the project's fixtures show Microsoft's encoders keep, or the layout of the header of the
 //   Windows Media Format SDK's writer or Media Foundation's ASF sink: medium, since neither is in a
 //   specification and the fixtures come from one Windows build.
@@ -19,9 +17,6 @@ namespace Encspect.Formats.Wma;
 internal static partial class WmaEncoder
 {
     private const int MaxClaimedName = 64;
-
-    // What the stream itself shows.
-    public sealed record Trait(string Name, string Family, Confidence Confidence, string Description);
 
     private sealed record Candidate(string Name, string Family, Confidence Confidence, string Description, EncoderClaim? Claim);
 
@@ -36,13 +31,12 @@ internal static partial class WmaEncoder
 
     // Names the encoder under the stream's node: adds the Encoder node as its first child and returns the
     // name and confidence for the stream's figures, or nulls where nothing names one.
-    public static Detected Apply(CodecContext context, Node stream, FindingCollector findings, IReadOnlyList<Trait> traits)
+    public static Detected Apply(CodecContext context, Node stream, FindingCollector findings)
     {
         Node Cover(string name, NodeValue? value, string description) =>
             new(name, stream.Offset, stream.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) };
 
         Node? encoder = Detect(
-            traits,
             context.EncoderClaims,
             Cover,
             (claim, text, name) => findings.Add(Severity.Info, "wma.encoder-claim-differs", claim.Source, _ =>
@@ -84,15 +78,9 @@ internal static partial class WmaEncoder
 
     // The Encoder node, covering the stream, or null where nothing names one. differs reports a claim that
     // names another encoder than the evidence points to.
-    public static Node? Detect(IReadOnlyList<Trait> traits, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string, string> differs)
+    public static Node? Detect(IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string, string> differs)
     {
         var candidates = new List<Candidate>();
-        foreach (Trait trait in traits)
-        {
-            candidates.Add(new Candidate(trait.Name, trait.Family, trait.Confidence, trait.Description, null));
-        }
-
-        bool ffmpegStream = traits.Any(t => t.Family == "FFmpeg");
         foreach (EncoderClaim claim in ClaimRoles.Encoders(claims))
         {
             string text = claim.Text.Trim();
@@ -102,8 +90,9 @@ internal static partial class WmaEncoder
             }
 
             string family = FamilyOf(text);
-            // Only an encoder ID reaches here (a muxer's version is a writer claim), and ffmpeg's ID names the encoder only where the stream shows ffmpeg's.
-            if (family == "FFmpeg" && !ffmpegStream)
+            // Only an encoder ID reaches here (a muxer's version is a writer claim), and ffmpeg's ID names the encoder only where the stream
+            // shows ffmpeg's, which nothing in a stream read at header level does.
+            if (family == "FFmpeg")
             {
                 continue;
             }

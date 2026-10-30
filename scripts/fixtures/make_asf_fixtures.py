@@ -377,13 +377,13 @@ def stamp_file(attributes):
     return m.asf_file([stream, m.extended_content_description(attributes)], packets, 512, file_id=FILE_ID, play=1_000_000)
 
 
-WMA_NOT_READ = [finding("wma.standard-not-read", "Windows Media Audio versions 1 and 2 are not read")]
+WMA_NOISE = [finding("wma.frame-invalid", "coefficients run past the end of the block")]
 fixture("writer-stamp-last", "A Windows Media Audio stream whose Extended Content Description Object lists WMFSDKVersion and then, as its last attribute, WM/EncodingSettings with an ffmpeg muxer version, as ffmpeg's ASF muxer leaves a remux: the stamp names the writer.",
         lambda: stamp_file([("WMFSDKVersion", 0, "12.0.26100.1"), ("WM/EncodingSettings", 0, "Lavf60.16.100")]),
-        WMA_NOT_READ + [finding("wma.writer-claim-differs", "WMFSDKVersion")], {"ffprobe": False, "reason": "the media objects are not Windows Media Audio superframes."})
+        WMA_NOISE + [finding("wma.writer-claim-differs", "WMFSDKVersion")], {"ffprobe": False, "reason": "the media objects are not Windows Media Audio superframes."})
 fixture("writer-stamp-not-last", "The same attributes with another attribute (WM/ToolName) after the ffmpeg muxer version, which other software added: the stamp keeps its place in file order, behind WMFSDKVersion.",
         lambda: stamp_file([("WMFSDKVersion", 0, "12.0.26100.1"), ("WM/EncodingSettings", 0, "Lavf60.16.100"), ("WM/ToolName", 0, "Tagger 1.0")]),
-        WMA_NOT_READ + [finding("wma.writer-claim-differs", "Lavf60.16.100")] , {"ffprobe": False, "reason": "the media objects are not Windows Media Audio superframes."})
+        WMA_NOISE + [finding("wma.writer-claim-differs", "Lavf60.16.100")] , {"ffprobe": False, "reason": "the media objects are not Windows Media Audio superframes."})
 
 def fragments_in_two_streams_file():
     codec = struct.pack("<IHI", 17 * 2048, 0x000F, 0)
@@ -404,7 +404,7 @@ def fragments_in_two_streams_file():
 fixture("fragments-in-two-streams", "Two Windows Media Audio streams, each with fragments of a media object that never began (one in stream 1, two in stream 2): the findings count them per stream and name their own stream.",
         fragments_in_two_streams_file,
         [finding("asf.fragment-order", "A fragment of a media object of stream 1 does not"), finding("asf.fragment-order", "2 fragments of media objects of stream 2"),
-         finding("wma.standard-not-read", "Windows Media Audio versions 1 and 2 are not read"), finding("wma.standard-not-read", "Windows Media Audio versions 1 and 2 are not read")],
+         finding("wma.frame-invalid", "coefficients run past the end of the block"), finding("wma.bit-offset", "bit offset past its end")],
         {"ffprobe": False, "reason": "the media objects are not Windows Media Audio superframes."})
 
 
@@ -431,8 +431,8 @@ def tool_name_file():
 
 
 fixture("derived-ffmpeg-wmav2-tool-name-lavc", "The ffmpeg wmav2 file external-ffmpeg-wmav2-mono-44k-48k.wma, whose superframes are padded with 'N' bytes, with a WM/ToolName attribute added that holds ffmpeg's libavcodec encoder ID: "
-        "the frames are not read, so the stream shows no encoder, the ID names none and the attribute names no writer.",
-        tool_name_file, WMA_NOT_READ)
+        "the ID counts as encoder evidence only where the stream shows ffmpeg, as it does here, so it is listed under the encoder the stream names and the attribute names no writer.",
+        tool_name_file, [])
 
 
 def two_codecs():

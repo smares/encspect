@@ -5130,7 +5130,7 @@
                         },
                         {
                           "name": "Duration",
-                          "value": 6.000000000000001,
+                          "value": 6,
                           "unit": "s",
                           "offset": 4943,
                           "length": 4574
@@ -5138,6 +5138,13 @@
                         {
                           "name": "Nominal Bitrate",
                           "value": 4,
+                          "unit": "kbps",
+                          "offset": 4943,
+                          "length": 4574
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 5,
                           "unit": "kbps",
                           "offset": 4943,
                           "length": 4574
@@ -5164,13 +5171,14 @@
         "codec": "Windows Media Audio Voice",
         "sampleRate": 8000,
         "channels": 1,
+        "channelMode": "Mono",
         "channelLayout": [
           "front center"
         ],
         "channelLayoutName": "mono",
         "samples": 48000,
-        "duration": 6.000000000000001,
-        "averageBitrate": 4,
+        "duration": 6,
+        "averageBitrate": 5,
         "isVbr": false,
         "playbackGroup": 1,
         "writer": "Windows Media Format SDK 12.0.26100.33438",
