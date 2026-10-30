@@ -54,13 +54,15 @@ internal readonly record struct SbrBands(int Kx, int K2, int High, int Low, int 
 
 internal static class Sbr
 {
-    // The most envelopes one channel's frame holds, which sizes the per-channel buffers.
+    // The most envelopes one channel's frame holds, which sizes the per-channel buffers; it is also the
+    // limit of a VARVAR frame (the other classes hold at most 4).
     private const int MaxEnvelopes = 5;
 
     // ceil(log2(envelopes + 1)): the bits of bs_pointer.
     private static readonly int[] PointerBits = [0, 1, 2, 2, 3, 3];
 
-    private const int MaxMasterBands = 64;
+    // The number of QMF bands (ISO/IEC 14496-3 4.6.18.3).
+    private const int QmfBands = 64;
 
     // The frequency band tables of ISO/IEC 14496-3 4.6.18.3 for a header and the SBR output rate.
     public static (SbrBands? Bands, string? Error) Derive(SbrHeader header, int rate)
@@ -87,7 +89,7 @@ internal static class Sbr
         int k2;
         if (header.StopFrequency <= 13)
         {
-            int[] widths = LogWidths(stopMin, MaxMasterBands, 13);
+            int[] widths = LogWidths(stopMin, QmfBands, 13);
             Array.Sort(widths);
             k2 = stopMin;
             for (int i = 0; i < header.StopFrequency; i++)
@@ -100,7 +102,7 @@ internal static class Sbr
             k2 = header.StopFrequency == 14 ? 2 * k0 : 3 * k0;
         }
 
-        k2 = Math.Min(k2, MaxMasterBands);
+        k2 = Math.Min(k2, QmfBands);
         int limit = rate <= 32000 ? 48 : rate == 44100 ? 35 : 32;
         if (k2 - k0 > limit)
         {
@@ -136,7 +138,7 @@ internal static class Sbr
 
         int kx = master[header.XoverBand];
         int end = master[bandCount];
-        if (end > MaxMasterBands)
+        if (end > QmfBands)
         {
             return (null, string.Create(CultureInfo.InvariantCulture, $"the SBR range ends at QMF band {end}, beyond 64"));
         }

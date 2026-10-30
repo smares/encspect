@@ -65,9 +65,11 @@ public class AacSbrFrequencyTablesTests
         Assert.Equal(message, error);
     }
 
-    private static string? ReadGrid(string bitText)
+    private static string? ReadGrid(string bitText) => Read(bitText, 0).Error;
+
+    private static (int PsAt, string? Error, bool Plain) Read(string bitText, int ampRes)
     {
-        SbrHeader header = Header(5, 9, 2, 1, 0, 2) with { Bands = Sbr.Derive(Header(5, 9, 2, 1, 0, 2), 44100).Bands };
+        SbrHeader header = Header(5, 9, 2, 1, 0, 2) with { Bands = Sbr.Derive(Header(5, 9, 2, 1, 0, 2), 44100).Bands, AmpRes = ampRes };
         string padded = ("0" + bitText).PadRight(512, '0');
         byte[] data = new byte[padded.Length / 8];
         for (int i = 0; i < padded.Length; i++)
@@ -79,7 +81,7 @@ public class AacSbrFrequencyTablesTests
         }
 
         var bits = new AacBits(data, 0, data.Length * 8);
-        return Sbr.ReadData(ref bits, header, false).Error;
+        return Sbr.ReadData(ref bits, header, false);
     }
 
     [Fact]
@@ -97,4 +99,43 @@ public class AacSbrFrequencyTablesTests
     [Fact]
     public void Grid_FixfixWithFourEnvelopes_IsAccepted() =>
         Assert.Null(ReadGrid("00" + "10"));
+
+    [Fact]
+    public void Grid_VarvarWithFiveEnvelopes_IsAccepted() =>
+        Assert.Null(ReadGrid("11" + "0000" + "10" + "10" + "00000000" + "000" + "00000"));
+
+    [Theory]
+    [InlineData("01" + "00" + "11" + "000000" + "101" + "0000")] // FIXVAR, 4 envelopes, bs_pointer 5
+    [InlineData("11" + "0000" + "10" + "10" + "00000000" + "110" + "00000")] // VARVAR, 5 envelopes, bs_pointer 6
+    public void Grid_PointerOfEnvelopesPlusOne_IsAccepted(string bits) =>
+        Assert.Null(ReadGrid(bits));
+
+    [Fact]
+    public void Grid_FixfixWithOneEnvelope_IgnoresTheHeaderAmplitudeResolution()
+    {
+        // One envelope: the amplitude resolution is 0 whatever bs_amp_res says, so the envelope codebooks
+        // and start bits do not change with the header.
+        var random = new Random(7);
+        bool differsWithTwo = false;
+        for (int i = 0; i < 64; i++)
+        {
+            string payload = string.Concat(Enumerable.Range(0, 300).Select(_ => random.Next(2) == 1 ? '1' : '0'));
+            Assert.Equal(Outcome("00" + "00" + "0" + payload, 0), Outcome("00" + "00" + "0" + payload, 1));
+            differsWithTwo |= Outcome("00" + "01" + "0" + payload, 0) != Outcome("00" + "01" + "0" + payload, 1);
+        }
+
+        Assert.True(differsWithTwo);
+
+        static string Outcome(string bits, int ampRes)
+        {
+            try
+            {
+                return Read(bits, ampRes).ToString();
+            }
+            catch (Exception e) when (e is InvalidDataException or EndOfStreamException)
+            {
+                return e.GetType().Name;
+            }
+        }
+    }
 }
