@@ -26,8 +26,8 @@ internal sealed partial class UnitSyntax
     private const int XllMaxSampleRate = 192000;
     private const int MaxNavigationEntries = 1024;
 
-    private static bool IsXllCommonRefused(int sets, int frameSize, int segmentsLog, int samplesLog) =>
-        frameSize > XllMaxFrameSize || segmentsLog > XllMaxSegmentsLog || samplesLog is 0 or > XllMaxSamplesLog
+    internal static bool IsXllCommonRefused(int sets, int frameSize, int segmentsLog, int samplesLog) =>
+        (uint)(frameSize - 1) >= XllMaxFrameSize || segmentsLog > XllMaxSegmentsLog || samplesLog is 0 or > XllMaxSamplesLog
         || segmentsLog + samplesLog > XllMaxSamplesInFrameLog || sets > XllMaxSets;
 
     // Table 8-8: the channels each downmix type mixes the primary channel set to, as 5.8.2 counts them.

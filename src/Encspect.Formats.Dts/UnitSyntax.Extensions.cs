@@ -8,8 +8,10 @@ internal sealed partial class UnitSyntax
     private const uint X96Sync = 0x1D95F262;
     private const uint XxchSync = 0x47004A03;
 
-    // 6.4.2, 6.2.4.2, 6.5.2: the extension's sync word is aligned to 32 bits from the frame's start and the extension runs to the end of
-    // the frame as FSIZE gives it. Searching from the end of the frame means a pseudo sync word inside the audio data cannot hide the real one.
+    // 6.4.2, 6.2.4.2, 6.5.2: the extension's sync word is aligned to 32 bits from the frame's start. XCh and X96 run to the end of the
+    // frame as FSIZE gives it, which their size fields tie the word to. XXCH does not: its size field is that of its header only (the
+    // channel sets' sizes follow), so a word is taken as XXCH when the CRC-16 over the header holds (6.5.2). Searching from the end of the
+    // frame means a pseudo sync word inside the audio data cannot hide the real one.
     private FoundExtension? FindExtension(CoreHeader header, int baseByte, int availablePacked, int declared)
     {
         if (!header.HasExtendedAudio || header.ExtensionAudioId is not (0 or 2 or 6))
