@@ -8,10 +8,10 @@ internal sealed partial class UnitSyntax
     private const uint X96Sync = 0x1D95F262;
     private const uint XxchSync = 0x47004A03;
 
-    // 6.4.2 (XCh), 6.2.4.2 (X96): the sync word's distance from the end of the frame must equal the size the extension states, since the
-    // word may also occur inside the audio data, and the word lies on a 32-bit boundary. FFmpeg searches backwards from the end
-    // of the frame, so a word inside the data does not hide the true one (dca_core.c, parse_optional_info); so does this. XXCH
-    // states no size to the frame's end, so its header's CRC-16 is the test, as FFmpeg's.
+    // 6.4.2, 6.2.4.2, 6.5.2: the extension's sync word is aligned to 32 bits from the frame's start. XCh and X96 run to the end of the
+    // frame as FSIZE gives it, which their size fields tie the word to. XXCH does not: its size field is that of its header only (the
+    // channel sets' sizes follow), so a word is taken as XXCH when the CRC-16 over the header holds (6.5.2). Searching from the end of the
+    // frame means a pseudo sync word inside the audio data cannot hide the real one.
     private FoundExtension? FindExtension(CoreHeader header, int baseByte, int availablePacked, int declared)
     {
         if (!header.HasExtendedAudio || header.ExtensionAudioId is not (0 or 2 or 6))
@@ -19,32 +19,33 @@ internal sealed partial class UnitSyntax
             return null;
         }
 
-        int firstWord = (((_pos - (baseByte * 8)) + 7) / 8 + 3) / 4;
-        int lastWord = (Math.Min(declared, availablePacked) / 4) - 1;
-        uint wanted = header.ExtensionAudioId switch { 0 => XchSync, 2 => X96Sync, _ => XxchSync };
-        FoundExtension? damaged = null;
-        for (int word = lastWord; word >= firstWord; word--)
+        int id = header.ExtensionAudioId;
+        uint sync = id switch { 0 => XchSync, 2 => X96Sync, _ => XxchSync };
+        int first = (((_pos + 7) / 8) - baseByte + 3) & ~3;
+        int last = Math.Min(declared, availablePacked) - 4;
+        int fallback = -1;
+        for (int offset = last & ~3; offset >= first; offset -= 4)
         {
-            int at = baseByte + (word * 4);
-            if (PeekWord(at) != wanted || PeekWord(at + 4) is not { } next)
+            int at = baseByte + offset;
+            if (PeekWord(at) != sync || PeekWord(at + 4) is not uint next)
             {
                 continue;
             }
 
-            int distance = declared - (word * 4);
-            switch (header.ExtensionAudioId)
+            int distance = declared - offset;
+            switch (id)
             {
                 case 0:
-                    int size = (int)(next >> 22) + 1;
-                    if (size >= 96 && (size == distance || size - 1 == distance))
+                    int xchSize = (int)(next >> 22);
+                    if (xchSize + 1 >= 96 && (distance == xchSize + 1 || distance == xchSize))
                     {
-                        return new FoundExtension(CoreExtension.Xch, at, size != distance);
+                        return new FoundExtension(CoreExtension.Xch, at, distance == xchSize);
                     }
 
                     break;
                 case 2:
-                    size = (int)(next >> 20) + 1;
-                    if (size >= 96 && size == distance)
+                    int size96 = (int)(next >> 20) + 1;
+                    if (size96 >= 96 && distance == size96)
                     {
                         return new FoundExtension(CoreExtension.X96, at, false);
                     }
@@ -52,25 +53,26 @@ internal sealed partial class UnitSyntax
                     break;
                 default:
                     int headerSize = (int)(next >> 26) + 1;
-                    if (headerSize >= 11 && headerSize <= distance)
+                    if (headerSize < 11 || headerSize > distance)
                     {
-                        if (Crc16.Compute(_view.Peek(at + 4, headerSize - 4)) == 0)
-                        {
-                            return new FoundExtension(CoreExtension.Xxch, at, false);
-                        }
+                        break;
+                    }
 
-                        // A header whose CRC-16 fails is still the extension's where its channel set sizes lead to the end of the frame.
-                        if (damaged is null && XxchSizesReachEnd(at, headerSize, distance))
-                        {
-                            damaged = new FoundExtension(CoreExtension.Xxch, at, false);
-                        }
+                    if (Crc16.Compute(_view.Peek(at + 4, headerSize - 4)) == 0)
+                    {
+                        return new FoundExtension(CoreExtension.Xxch, at, false);
+                    }
+
+                    if (fallback < 0 && XxchSizesReachEnd(at, headerSize, distance))
+                    {
+                        fallback = at;
                     }
 
                     break;
             }
         }
 
-        return damaged;
+        return fallback >= 0 ? new FoundExtension(CoreExtension.Xxch, fallback, false) : null;
     }
 
     // 6.5.2 Table 6-21: the header and the channel sets' sizes (14 bits each, after the 14 bits that give the header size, the

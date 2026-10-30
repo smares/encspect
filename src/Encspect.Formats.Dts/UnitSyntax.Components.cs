@@ -425,9 +425,7 @@ internal sealed partial class UnitSyntax
             return;
         }
 
-        // dca_xll.c's parse_common_header refuses a frame of more than 240 KiB, more than 1,024 segments, no samples in a segment or more than 512,
-        // and more than 65,536 samples in a frame, before it reads a channel set.
-        bool refused = (uint)(frameSize - 1) >= XllMaxFrameSize || segmentsLog > 10 || samplesLog == 0 || samplesLog > 9 || segmentsLog + samplesLog > 16;
+        bool refused = IsXllCommonRefused(sets, frameSize, segmentsLog, samplesLog);
         ReadXllFrame(at, endBit, asset, headerSize, new XllCommon(sets, frameSize, segmentsLog, segmentBits, scalable, maskBits, frameSizeStart, frameSizeEnd, refused));
     }
 }

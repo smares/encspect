@@ -247,4 +247,15 @@ public class DtsLosslessTests
         Assert.Contains("from DTS, 48000 Hz, 2/0 (16-bit words, big endian) to DTS, 48000 Hz, 2/0 (16-bit words, little endian)", message, StringComparison.Ordinal);
         Assert.DoesNotContain("extension substream", message, StringComparison.Ordinal);
     }
+
+    // A 32-bit frame size field of 0xFFFFFFFF wraps to 0 once 1 is added; it is no size the common header accepts.
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(-5, true)]
+    [InlineData(int.MinValue, true)]
+    [InlineData(1, false)]
+    [InlineData(245760, false)]
+    [InlineData(245761, true)]
+    public void AFrameSizeOutsideOneToTheLimitIsRefused(int frameSize, bool expected) =>
+        Assert.Equal(expected, Encspect.Formats.Dts.UnitSyntax.IsXllCommonRefused(1, frameSize, 0, 4));
 }
