@@ -638,10 +638,9 @@ jobs:
           python3 scripts/fixtures/make_truehd_fixtures.py
           python3 scripts/fixtures/make_external_truehd_fixtures.py --manifests-only
 
-      - name: Regenerate the hand-built ASF and WMA Voice fixtures and the encoder-made WMA ones' manifests
+      - name: Regenerate the hand-built ASF fixtures and the encoder-made WMA ones' manifests
         run: |
           python3 scripts/fixtures/make_asf_fixtures.py
-          python3 scripts/fixtures/make_voice_fixtures.py
           python3 scripts/fixtures/make_external_asf_fixtures.py --manifests-only
 
       - name: Regenerate the hand-built Matroska and WebM fixtures and the encoder-made ones' manifests
@@ -1173,22 +1172,11 @@ jobs:
       - name: Cross-check the ASF and WMA fixtures
         run: python3 scripts/fixtures/crosscheck_asf_fixtures.py
 
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
-
-      # The real-sample check below runs the analyzer on the downloaded files.
-      - name: Build the CLI
-        run: dotnet build --configuration Release src/Encspect.Cli
-
       # Real Windows Media Audio Voice files (ten from Microsoft's Windows Media 9 Speech Codec samples and an ASF video file with a Voice
       # track) from the FFmpeg sample archive, which allows downloading and states no license for redistribution, so they are fetched and
       # checked against their SHA-256 rather than committed. The download cache keeps them; every address is public.
       - name: Check the real WMA Voice samples with ffprobe, ffmpeg and MediaInfo
         run: python3 scripts/fixtures/check_wmavoice_samples.py .cache/wmavoice
-
-      - name: Check the analyzer against the real WMA Voice samples
-        run: python3 scripts/fixtures/check_wmavoice_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/wmavoice
 
   matroska-crosscheck:
     name: Matroska and WebM fixtures agree with mkvinfo, ffprobe, ffmpeg and MediaInfo, and the element table with the RFCs

@@ -163,7 +163,7 @@ What each parser reads per frame, packet or block today that is worth a graph or
 
 - **Read** says whether the parser reads the field now; **Tallied** whether its Statistics node counts it now.
 - **Kept per unit** is what the design adds per frame, packet or block to what the parser keeps now: one byte per value of a category series (plus a count byte per unit where the number of values varies, and a weight byte per value where a weight is used), 8 bytes per value of a numeric series. "Derived" means the codes are computed at the end from the kept records; "recorded" means the parser adds them while reading. The x values (frame offsets) are shared with the stream's per-frame bitrate series and cost nothing more.
-- **Status:** "code" is verified from the parser's code at 2310aa3 (FLAC's at f9b67fb), "spec" from a specification or reference source cited there, **unverified** otherwise. Monkey's Audio, TTA and WAV have no parser yet, so their rows are "spec" at most, and "planned" in **Read** and **Tallied** means what the parser of the decoder design's rollout step 3 is to read.
+- **Status:** "code" is verified from the parser's code at 2310aa3 (FLAC's at f9b67fb), "spec" from a specification or reference source cited there, **unverified** otherwise, and "removed" that the reader behind the row was removed. Monkey's Audio, TTA and WAV have no parser yet, so their rows are "spec" at most, and "planned" in **Read** and **Tallied** means what the parser of the decoder design's rollout step 3 is to read.
 - **Wave:** 1 is the first rollout, 2 the second wave, "later" waits for the entropy pass or a parser change; "not a series" is a fact of the whole stream or nothing a parser can split per frame.
 
 ### MPEG audio, all layers
@@ -303,14 +303,16 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 ### WMA standard, Pro and Voice
 
+The readers behind this table were removed on 2026-10-29 for their provenance (see docs/development.md); the table stays as the plan for the graphs when the frames return from the clean-room rewrites, and the `wma-frames-and-blocks` article it names went with the readers.
+
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Block sizes, standard | block length per block, from frame length >> n (FFmpeg 6.1.1 `wmadec.c` `wma_decode_block`) | yes, `BlockRecord.BlockBits` | "Block Sizes" | 1 byte per block, derived | code | 2 |
-| Mid/side stereo, standard | ms_stereo bit per block | yes, `BlockRecord.IsMidSide` | "Mid/Side Blocks" ("x of y stereo blocks") | 1 byte per block, derived; a flag series over stereo blocks, `None` for mono | code | 2 |
-| Noise substitution, standard | noise-coded bands per block | yes, `NoiseBands0`, `NoiseBands1` | "Noise-Substituted Blocks" | 1 byte per block, derived | code | 2 |
-| Coded bandwidth, standard | the last nonzero coefficient of each channel, from the run-level codes the parser walks; (first coded line + last + 1) × (fs / 2) / block length, where version 1 codes from line 3 (`CoefsStart`). This is a coded value, not a signaled bound | yes, `BlockRecord.Last0`, `Last1` | no | 16 bytes per block: the value, and its own x because blocks share their frame's offset | code | 2 |
-| Subframe sizes and channel transforms, Pro | subframe length per channel; transform per channel group | yes (`ProSubframeRecord`, `ProGroupRecord`) | "Subframe Sizes", "Channel Groups" | 1 byte per subframe and group | code | later |
-| Frame types, Voice | the frame type of each frame (`wmavoice.c`) | yes, `VoiceFrameRecord.Type` | frames by type | 1 byte per frame, derived | code | 2 |
+| Block sizes, standard | block length per block, from frame length >> n (FFmpeg 6.1.1 `wmadec.c` `wma_decode_block`) | yes, `BlockRecord.BlockBits` | "Block Sizes" | 1 byte per block, derived | removed | 2 |
+| Mid/side stereo, standard | ms_stereo bit per block | yes, `BlockRecord.IsMidSide` | "Mid/Side Blocks" ("x of y stereo blocks") | 1 byte per block, derived; a flag series over stereo blocks, `None` for mono | removed | 2 |
+| Noise substitution, standard | noise-coded bands per block | yes, `NoiseBands0`, `NoiseBands1` | "Noise-Substituted Blocks" | 1 byte per block, derived | removed | 2 |
+| Coded bandwidth, standard | the last nonzero coefficient of each channel, from the run-level codes the parser walks; (first coded line + last + 1) × (fs / 2) / block length, where version 1 codes from line 3 (`CoefsStart`). This is a coded value, not a signaled bound | yes, `BlockRecord.Last0`, `Last1` | no | 16 bytes per block: the value, and its own x because blocks share their frame's offset | removed | 2 |
+| Subframe sizes and channel transforms, Pro | subframe length per channel; transform per channel group | yes (`ProSubframeRecord`, `ProGroupRecord`) | "Subframe Sizes", "Channel Groups" | 1 byte per subframe and group | removed | later |
+| Frame types, Voice | the frame type of each frame (`wmavoice.c`) | yes, `VoiceFrameRecord.Type` | frames by type | 1 byte per frame, derived | removed | 2 |
 
 - WMA fixes two bounds per block size for the whole stream (`StandardParameters`, after `ff_wma_init`): `CoefsEnd`, 91% of the block's lines, past which no coefficient is coded, and `HighBandStart`, from the bits per sample, where noise coding may begin. The last nonzero coefficient is where each block's coded spectrum really ends; noise-substituted bands are synthesized and not counted.
 - Blocks lie inside frames that may span superframes, so a block's x value is its frame's offset, and choosing a block selects its frame. Several blocks then share an x value, so the block series carry their own x (8 bytes per block, counted in the table) and are not shared with the bitrate series.
@@ -933,7 +935,7 @@ Existing articles, extended with one paragraph each, where they say what you see
 - `block-switching`: the Block Usage and Block Sizes graphs and summary, and how the other formats' block mechanisms correspond (AAC's window sequences, AC-3's block switching, Vorbis's two block sizes, WMA's block sizes), each linking its own article.
 - `joint-stereo`: the graphs of stereo coding and joint stereo modes over time, and EncSpot's counting of every frame that is not joint stereo as mode 0: its mode 0 share is the report's "Left/right stereo", "Dual channel" and "Mono" entries together, which the report now shows apart.
 - `lowpass`: that coded bandwidth, from the syntax, shows where the coded spectrum ends without decoding, and why it is not the lowpass.
-- The format articles as their formats land: `aac-windows-and-blocks`, `ac3-audio-blocks`, `vorbis-blocks`, `opus-toc`, `speex-modes`, `musepack-subband-coding`, `wma-frames-and-blocks`.
+- The format articles as their formats land: `aac-windows-and-blocks`, `ac3-audio-blocks`, `vorbis-blocks`, `opus-toc`, `speex-modes`, `musepack-subband-coding`, and `wma-frames-and-blocks` once the clean-room rewrites of the WMA frame readers land.
 
 A new shared article, `coded-bandwidth`:
 
