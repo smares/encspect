@@ -87,7 +87,7 @@ public class AlacCodecParserTests
         Node stream = packets.Children.Single(c => c.Kind == NodeKind.Stream);
         Node[] nodes = [.. stream.Children.Where(c => c.Name == "Frame")];
         Assert.Equal(2, nodes.Length);
-        Node element = nodes[0].Children.Single(c => c.Name == "Element");
+        Node element = nodes[0].Children.Single(c => c.Name == "Channel Pair Element");
         Assert.True(element.Children.Single(c => c.Name == "IsUncompressed").Value?.AsBoolean());
     }
 
