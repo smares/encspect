@@ -1,10 +1,10 @@
-// Follows the Monkey's Audio SDK 13.42 (MACLib.h, APEHeader.cpp, APEInfo.h), 3-clause BSD license:
+// Follows the Monkey's Audio SDK 13.44 (MACLib.h, APEHeader.cpp, APEInfo.h), 3-clause BSD license:
 // Copyright 2000-2026 Matthew T. Ashland. See THIRD-PARTY-NOTICES.md.
 using System.Buffers.Binary;
 
 namespace Encspect.Formats.MonkeysAudio;
 
-// The bits of the header's format flags (Monkey's Audio SDK 13.42, MACLib.h, APE_FORMAT_FLAG_*).
+// The bits of the header's format flags (Monkey's Audio SDK 13.44, MACLib.h, APE_FORMAT_FLAG_*).
 [Flags]
 internal enum FormatFlags : ushort
 {
@@ -49,7 +49,7 @@ internal readonly struct ApeHeader
     // Encoder file version times 1000 (3.99 is 3990).
     public int FileVersion { get; init; }
 
-    // The program's version times 1000 from 13.17 on (13.42 is 13420), 0 before and in old files.
+    // The program's version times 1000 from 13.17 on (13.44 is 13440), 0 before and in old files.
     public int ProgramVersion { get; init; }
 
     public uint DescriptorBytes { get; init; }

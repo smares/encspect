@@ -1,4 +1,4 @@
-"""A second reading of Monkey's Audio files, written from the SDK 13.42's description of the format (MACLib.h, APEHeader.cpp, APECompressCreate.cpp,
+"""A second reading of Monkey's Audio files, written from the SDK 13.44's description of the format (MACLib.h, APEHeader.cpp, APECompressCreate.cpp,
 APEDecompress.cpp) and not from the analyzer, and the writer that assembles a file from its parts, which the hand-built fixtures use.
 
 A file is a descriptor, a header, a seek table, the WAV header data, the frames and the terminating data. The frames are one stream of bytes that the
@@ -232,7 +232,7 @@ def start_fields(data, a, f, version_has_special=True):
     return word & 0x7FFFFFFF, None
 
 
-def build(frames, level, bits, channels, rate, blocks_per_frame, final_blocks, header_data=b"", terminating=b"", junk=b"", version=3990, program=13420,
+def build(frames, level, bits, channels, rate, blocks_per_frame, final_blocks, header_data=b"", terminating=b"", junk=b"", version=3990, program=13420,  # 13420: the program version (13.42) these hand-built files imitate
           flags=0, signature=b"MAC ", total_frames=None, seek=None, descriptor_bytes=DESCRIPTOR, header_bytes=HEADER, md5=None, frame_data_bytes=None,
           terminating_bytes=None, header_data_bytes=None, seek_bytes=None, seek_pad=0):
     """Assembles a file. frames are the stream bytes of each frame (the last one including the padding to a whole word); the optional arguments

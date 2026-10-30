@@ -1006,7 +1006,7 @@ jobs:
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
 
       # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts (the manifests were checked with 6.1.1 and 26.01);
-      # mac is built from the pinned Monkey's Audio SDK 13.42 source with CMake and the runner's compiler.
+      # mac is built from the pinned Monkey's Audio SDK 13.44 source with CMake and the runner's compiler.
       - name: Install ffmpeg, mediainfo and the build tools
         run: |
           sudo apt-get update

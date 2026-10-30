@@ -2,7 +2,7 @@ using Encspect.Core;
 
 namespace Encspect.Formats.MonkeysAudio.Decoding;
 
-// The decoder of Monkey's Audio files of versions 3.80 to 3.99 and 4.11 (which the SDK reads like 3.99), after the SDK 13.42's: the range decoders
+// The decoder of Monkey's Audio files of versions 3.80 to 3.99 and 4.11 (which the SDK reads like 3.99), after the SDK 13.44's: the range decoders
 // of 3.91 on, the predictors with their neural network filters, the undoing of the mid/side coding of channel pairs and the CRC over the decoded audio.
 // The parser finds the frames, reads each one's CRC and special codes and hands the frame's bytes; this decoder reads the coded samples from there.
 // Files before 3.93 use another core of the SDK (Old/UnMACOld.cpp), which OldFrameDecoder follows (docs/formats/monkeys-audio.md, "Decoding").

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Writes the Monkey's Audio fixtures of versions 3.80 to 3.98 in tests/fixtures/monkeys-audio (legacy-*.ape).
 
-The SDK 13.42 decodes these versions and cannot write them, and the public files of them are few (the FFmpeg sample archive has one of 3.97 that this
+The SDK 13.44 decodes these versions and cannot write them, and the public files of them are few (the FFmpeg sample archive has one of 3.97 that this
 repository may not hold; docs/formats/monkeys-audio.md, "Decoding"). monkeys_audio_legacy.py (3.93 to 3.98) and monkeys_audio_old.py (3.80 to 3.92) are
 encoders written as the inverse of the SDK's decoders, and every file they write is held to the SDK, not to the encoder: crosscheck_monkeys_audio_fixtures.py
 runs `mac -V`, which decodes each frame with the SDK's own decoder of the version and compares its CRC or checksum, and `mac -d`, whose samples must have the MD5

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Writes the encoder-made Monkey's Audio fixtures in tests/fixtures/monkeys-audio (external-*.ape).
 
-They come from mac, the console tool of the Monkey's Audio SDK 13.42, built from the pinned source (monkeys_audio_tool.py): every compression level
+They come from mac, the console tool of the Monkey's Audio SDK 13.44, built from the pinned source (monkeys_audio_tool.py): every compression level
 (fast to insane), 8, 16, 24 and 32-bit integer and 32-bit floating point audio, 1 to 9 channels with the channel masks of the stored WAV header, several sample
 rates, frames of every size the levels use (a file with a full frame of the highest level holds 1,179,648 samples), digital silence and identical channels (which the encoder stores as special
-frames), a silent channel, WAV headers with chunks before and after the audio, an AIFF, a BW64 and a Wave64 source, and an APEv2 and an ID3v1 tag. The inputs are
+frames), a silent channel, WAV headers with chunks before and after the audio, an AIFF, a BW64 and a Wave64 source, and an APEv2 and an ID3v1 tag, and the seven-channel file once more as SDK 13.42 wrote it. The inputs are
 deterministic signals written by monkeys_audio_signal.py.
 
 The encoder's output depends on its version, so the files are committed and --manifests-only recomputes the manifests from them without the encoder.
@@ -64,6 +64,12 @@ FIXTURES = {
     "normal-16-5.1": (("wav", "music", 48000, 6, 16, SHORT, 0x3F), ["-c2000"]),
     "high-16-5.1": (("wav", "music", 48000, 6, 16, SHORT, 0x3F), ["-c3000"]),
     "normal-16-7ch": (("wav", "music", 48000, 7, 16, 12000, 0x13F), ["-c2000"]),
+    # The same file from SDK 13.42, whose encoder never stored the seventh channel (13.44 does): the file fails its frame CRC-32, as 13.44's mac -V says.
+    "normal-16-7ch-sdk-1342": (("wav", "music", 48000, 7, 16, 12000, 0x13F), ["-c2000"]),
+    # SDK 13.44 codes the seventh channel of seven-channel files at every depth; the 24-bit branch of Prepare.cpp has its own loop over the remaining channels.
+    "normal-24-7ch": (("wav", "music", 48000, 7, 24, 6000, 0x13F), ["-c2000"]),
+    # Files of 8 bits and more than two channels keep every channel as a plain sample (Prepare.cpp pairs none of them).
+    "normal-8-6ch": (("wav", "music", 48000, 6, 8, MASKED, 0x3F), ["-c2000"]),
     "normal-24-7.1": (("wav", "music", 48000, 8, 24, 12000, 0x63F), ["-c2000"]),
     "normal-16-9ch": (("wav", "music", 48000, 9, 16, 12000, 0), ["-c2000"]),
     # The channel mask of the stored WAV header sets the layout: 5.1 with the surround pair at the sides, a mask with fewer bits than channels, one with
@@ -100,6 +106,9 @@ FIXTURES = {
 }
 
 TOOL = f"mac, the console tool of the Monkey's Audio SDK {monkeys_audio_tool.VERSION}, built from {monkeys_audio_tool.NAME}"
+TOOL_1342 = f"mac, the console tool of the Monkey's Audio SDK {monkeys_audio_tool.VERSION_1342}, built from {monkeys_audio_tool.NAME_1342}"
+# Fixtures written by SDK 13.42, which (as every SDK before 13.44) did not code the seventh channel of a file of seven channels.
+FROM_1342 = {"normal-16-7ch-sdk-1342"}
 
 
 def make_input(spec, work):
@@ -128,7 +137,7 @@ def describe(spec):
 
 
 def encode(name, spec, arguments, work):
-    mac = MAC_W64 if spec[0] == "w64" else MAC
+    mac = MAC_1342 if name in FROM_1342 else MAC
     for old in OUT.glob(f"external-{name}.*"):
         old.unlink()
     path, data = make_input(spec, work)
@@ -145,20 +154,21 @@ def encode(name, spec, arguments, work):
         if code != 0:
             raise SystemExit(f"mac -L failed for {name}: {text}")
     shutil.copy(target, OUT / f"external-{name}.ape")
-    return {"tool": TOOL, "arguments": arguments, "input": describe(spec)}
+    return {"tool": TOOL_1342 if name in FROM_1342 else TOOL, "arguments": arguments, "input": describe(spec)}
 
 
-def decode_outcome(a, data, spec, pcm_ok=True):
-    """What decoding the file does: version 3.99 files decode every frame and the CRC of each holds, except in the seven-channel case the SDK's own code
-    cannot decode (its tool reports error 1009 for it)."""
+def decode_outcome(a, data, spec, old=False):
+    """What decoding the file does: version 3.99 files decode every frame and the CRC of each holds, except in the seven-channel case of SDK 13.42 (old),
+    like every SDK before 13.44, which did not code the seventh channel (13.44's tool reports error 1009 for such a file)."""
     kind, signal, rate, channels, bits, count, *rest = spec
     frames = len(a.frames)
-    failed = 1 if channels == 7 else 0
+    failed = 1 if old and channels == 7 else 0
     return {"status": "decoded", "checked": frames, "failed": failed, "samples": count,
             "findings": [{"code": "monkeys-audio.frame-crc-mismatch", "count": 1}] if failed else []}
 
 
 def build_manifest(path, encoder, spec, findings):
+    old = path.name.removeprefix("external-").removesuffix(".ape") in FROM_1342
     data = path.read_bytes()
     a = m.parse(data)
     tag = None
@@ -176,9 +186,9 @@ def build_manifest(path, encoder, spec, findings):
     if tag is not None:
         regions.append({"name": kind, "offset": tag, "length": len(data) - tag})
     channels = spec[3]
-    pcm = None if channels == 7 else {"md5": hashlib.md5(pcm_of(spec)).hexdigest()}
-    result = m.manifest(data, a, regions, encoder, findings, pcm, decode_outcome(a, data, spec), stored_crcs=len(a.frames))
-    result["crosscheck"] = {"mac_verify": channels != 7, "samples": spec[5]}
+    pcm = None if old else {"md5": hashlib.md5(pcm_of(spec)).hexdigest()}
+    result = m.manifest(data, a, regions, encoder, findings, pcm, decode_outcome(a, data, spec, old), stored_crcs=len(a.frames))
+    result["crosscheck"] = {"mac_verify": not old, "samples": spec[5]}
     return result
 
 
@@ -193,16 +203,15 @@ def findings_of(name):
 
 
 def main():
-    global MAC, MAC_W64
+    global MAC, MAC_1342
     only_manifests = "--manifests-only" in sys.argv
     chosen = [a for a in sys.argv[1:] if not a.startswith("--")]
     OUT.mkdir(parents=True, exist_ok=True)
-    MAC = MAC_W64 = None
+    MAC = MAC_1342 = None
     if not only_manifests:
         MAC = monkeys_audio_tool.build_mac(pathlib.Path(tempfile.gettempdir()) / "monkeys-audio-sdk")
-        # The SDK's Wave64 reader needs a one-line patch to work on 64-bit Linux (monkeys_audio_tool.build_w64_mac); it is built only when a Wave64 input is encoded.
-        if any(spec[0] == "w64" for name, (spec, _) in FIXTURES.items() if not chosen or name in chosen):
-            MAC_W64 = monkeys_audio_tool.build_w64_mac(pathlib.Path(tempfile.gettempdir()) / "monkeys-audio-sdk-w64")
+        if any(name in FROM_1342 for name in FIXTURES if not chosen or name in chosen):
+            MAC_1342 = monkeys_audio_tool.build_mac_1342(pathlib.Path(tempfile.gettempdir()) / "monkeys-audio-sdk-1342")
     count = 0
     with tempfile.TemporaryDirectory() as work:
         for name, (spec, arguments) in FIXTURES.items():

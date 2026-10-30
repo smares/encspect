@@ -1,6 +1,6 @@
-"""Follows the Monkey's Audio SDK 13.42 (BSD 3-clause license, Copyright 2000-2026 Matthew T. Ashland; THIRD-PARTY-NOTICES.md).
+"""Follows the Monkey's Audio SDK 13.44 (BSD 3-clause license, Copyright 2000-2026 Matthew T. Ashland; THIRD-PARTY-NOTICES.md).
 
-An encoder for the coding of Monkey's Audio files from version 3.80 to 3.92, which the SDK 13.42 can only decode (through Old/UnMACOld.cpp; it writes the
+An encoder for the coding of Monkey's Audio files from version 3.80 to 3.92, which the SDK 13.44 can only decode (through Old/UnMACOld.cpp; it writes the
 current format), written as the inverse of what that decoder does (Old/UnMACOld.cpp, Old/APEDecompressCoreOld.cpp, Old/UnBitArrayOld.cpp,
 Old/AntiPredictorFastOld.cpp, Old/AntiPredictorNormalOld.cpp, Old/AntiPredictorHighOld.cpp, Old/AntiPredictorExtraHighOld.cpp, UnBitArrayBase.cpp). The coding of
 3.93 and later is monkeys_audio_legacy.py's.
@@ -9,7 +9,7 @@ The files it writes are held to the SDK, not to this script: `mac -V` decodes ea
 or checksum, so a file that verifies is valid by that decoder's reading, and `mac -d` gives the audio the analyzer's decoder must reproduce. Real files of these
 versions are rare; the encoder makes the combinations of version, level, sample size and special frames that no public file has.
 
-What the versions change (SDK 13.42):
+What the versions change (SDK 13.44):
   - Bit coding. Up to 3.85 (GenerateArrayOld): the first five values of a channel's array coded with Rice parameter 10, the next 59 with a parameter that follows the
     mean so far, the rest with one that follows a sum over the last 64 values. 3.86 to 3.89 (GenerateArrayRice): one parameter that follows a running sum, above version
     3880 with the overflow capped at 16 (each 16 more add 4 to the parameter). 3.90 to 3.92: the range coder of 3.93 and later, an array at a time.

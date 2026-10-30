@@ -72,6 +72,7 @@ internal static class MonkeysAudioBuilder
         var descriptor = new byte[DescriptorLength];
         "MAC "u8.CopyTo(descriptor);
         BinaryPrimitives.WriteUInt16LittleEndian(descriptor.AsSpan(4), 3990);
+        // 13420 is the program version (13.42) these hand-built files imitate.
         BinaryPrimitives.WriteUInt16LittleEndian(descriptor.AsSpan(6), 13420);
         BinaryPrimitives.WriteUInt32LittleEndian(descriptor.AsSpan(8), DescriptorLength);
         BinaryPrimitives.WriteUInt32LittleEndian(descriptor.AsSpan(12), HeaderLength);
