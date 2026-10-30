@@ -378,7 +378,7 @@ Encspect's Monkey's Audio decoder is written in C#; the parts derived from the M
 
 ## libspeex
 
-Encspect's Speex parser is written in C#; the walk over a packet's frames (`src/Encspect.Formats.Speex/SpeexFrames.cs`) follows libspeex 1.2.1 (`nb_decode` of `nb_celp.c`, `wb_skip_table` and the in-band handler of `speex_callbacks.c`) and says so in its source file. The `COPYING` of libspeex, which names Jean-Marc Valin, the Xiph.org Foundation and the other copyright holders:
+Encspect's Speex parser is written in C#; the walk over a packet's frames (`src/Encspect.Formats.Speex/SpeexFrames.cs`) follows libspeex 1.2.1 (`nb_decode` and `wb_skip_table` of `nb_celp.c`, `sb_decode` of `sb_celp.c`, `speex_inband_handler` of `speex_callbacks.c`); its tables of bits per submode are those of `modes.c` (narrowband) and `modes_wb.c` (wideband and ultra-wideband), and its table of in-band request sizes that of `speex_callbacks.c`. The source file says so. The `COPYING` of libspeex, which names Jean-Marc Valin, the Xiph.org Foundation and the other copyright holders:
 
 ```
 {libspeex}```
@@ -397,7 +397,7 @@ The license comment at the top of the source files of r495:
 
 ## The Matroska element registry
 
-`src/Encspect.Formats.Matroska/Elements.cs` is generated from RFC 9559 and RFC 8794 and from the Matroska element registry (`ebml_matroska.xml` of github.com/ietf-wg-cellar/matroska-specification, at commit 1a943ead9bb4c67b02b966cebafe51c8c074e703, pinned by SHA-256 in `scripts/fixtures/matroska_specs.py`), a work of the IETF CELLAR working group and the Matroska project. It takes the default value of every element and the descriptions of the elements RFC 9559 does not list from the registry, each description reduced to the first sentence of the registry's definition with its references written as plain text. The registry is licensed under the Creative Commons Attribution 4.0 International license (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/legalcode), as the `LICENSE.md` of that repository says. The changes are the ones named here.
+`src/Encspect.Formats.Matroska/Elements.cs` is generated from RFC 9559 and RFC 8794 and from the Matroska element registry (`ebml_matroska.xml` of github.com/ietf-wg-cellar/matroska-specification, at commit 1a943ead9bb4c67b02b966cebafe51c8c074e703, pinned by SHA-256 in `scripts/fixtures/matroska_specs.py`), a work of the IETF CELLAR working group and the Matroska project. It takes the default value of every element and the descriptions of the elements RFC 9559 does not list from the registry, each description reduced to the first sentence of the registry's definition with its references written as plain text. The registry is licensed under the Creative Commons Attribution 4.0 International license (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/legalcode), as the `LICENSE.md` of that repository says. The file at the pinned commit is https://github.com/ietf-wg-cellar/matroska-specification/blob/1a943ead9bb4c67b02b966cebafe51c8c074e703/ebml_matroska.xml. The changes are the ones named here. The material is provided under the license's disclaimer of warranties and limitation of liability (section 5 of the license, https://creativecommons.org/licenses/by/4.0/legalcode), to which this notice refers: it is offered as is, without representations or warranties of any kind.
 
 ## libebur128: the K-weighting filter of the loudness measurement
 
